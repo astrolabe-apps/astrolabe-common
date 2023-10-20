@@ -1,29 +1,27 @@
-"use client";
-import { useControl } from "@react-typed-forms/core";
+import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import clsx from "clsx";
 import { Button } from "../Button";
 
-interface ResetPasswordFormData {
+export interface ResetPasswordFormData {
   email: string;
-  password: string;
-  confirm: string;
 }
+
+export const emptyResetPasswordForm = {
+  email: "",
+};
 
 export function ResetPasswordForm({
   className,
-  loginHref = "/login",
+  control,
+  resetPassword,
 }: {
   className?: string;
-  loginHref?: string;
+  control: Control<ResetPasswordFormData>;
+  resetPassword: () => Promise<boolean>;
 }) {
-  const form = useControl<ResetPasswordFormData>({
-    password: "",
-    confirm: "",
-    email: "",
-  });
-  const { password, confirm, email } = form.fields;
-
+  const { email } = control.fields;
+  const hasBeenReset = useControl(false);
   return (
     <div
       className={clsx(
@@ -32,16 +30,33 @@ export function ResetPasswordForm({
       )}
     >
       <div className="p-6 space-y-4 md:space-y-6 sm:p-8">
-        <h2>Forgot your password?</h2>
-        <p className="font-light text-gray-500 dark:text-gray-400">
-          Don't fret! Just type in your email and we will send you a code to
-          reset your password!
-        </p>
-        <form className="space-y-4 md:space-y-6" action="#">
-          <Textfield control={email} label="Email" />
-          <Button className="w-full">Reset Password</Button>
-        </form>
+        {hasBeenReset.value ? (
+          <>
+            <h2>Check email to continue</h2>
+            <p className="font-light text-gray-500 dark:text-gray-400">
+              You will receive an email with furthers instructions on how to
+              reset your password
+            </p>
+          </>
+        ) : (
+          <>
+            <h2>Forgot your password?</h2>
+            <p className="font-light text-gray-500 dark:text-gray-400">
+              Don't fret! Just type in your email and we will send you a code to
+              reset your password!
+            </p>
+            <div className="space-y-4 md:space-y-6">
+              <Textfield control={email} label="Email" />
+              <Button className="w-full" onClick={doReset}>
+                Reset Password
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
+  async function doReset() {
+    hasBeenReset.value = await resetPassword();
+  }
 }
