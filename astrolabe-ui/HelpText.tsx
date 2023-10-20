@@ -7,7 +7,7 @@ export function HelpText({
 	iconClass,
 	className = "max-w-2xl",
 	...spread
-}: PopoverProps & {
+}: Partial<PopoverProps> & {
 	children: ReactNode;
 	iconClass?: string;
 	className?: string;
