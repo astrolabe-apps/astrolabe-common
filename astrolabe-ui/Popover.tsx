@@ -7,7 +7,7 @@ import { cn } from "@astrolabe/client/util/utils";
 import { ReactNode } from "react";
 import { PopoverContentProps } from "@radix-ui/react-popover";
 
-interface PopoverProps {
+export interface PopoverProps {
 	children: ReactNode;
 	content: ReactNode;
 	className?: string;

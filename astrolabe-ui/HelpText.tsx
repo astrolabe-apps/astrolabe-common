@@ -1,24 +1,25 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
-import { Popover } from "./Popover";
-import { clsx } from "clsx";
+import { Popover, PopoverProps } from "./Popover";
+import { cn } from "@astrolabe/client/util/utils";
 
 export function HelpText({
 	children,
 	iconClass,
 	className = "max-w-2xl",
-}: {
+	...spread
+}: PopoverProps & {
 	children: ReactNode;
 	iconClass?: string;
 	className?: string;
 }) {
 	const [open, setOpen] = useState({ open: false, hoverOpen: false });
-	const hoverRef = useRef(false);
 	const openTimerRef = useRef(0);
 	const closeTimerRef = useRef(0);
 	const contentRef = useRef(false);
 	useEffect(() => {
 		return clearTimeout;
 	}, []);
+	const { content, ...props } = spread;
 	return (
 		<Popover
 			content={
@@ -31,17 +32,17 @@ export function HelpText({
 				clearTimeout();
 			}}
 			className={className}
-			children={
-				<i
-					className={clsx(
-						"text-primary-500 fa fa-question-circle cursor-help print:hidden",
-						iconClass
-					)}
-					onMouseEnter={triggerEnter}
-					onMouseLeave={triggerLeave}
-				/>
-			}
-		/>
+			{...props}
+		>
+			<i
+				className={cn(
+					"text-primary-500 fa fa-question-circle cursor-help print:hidden",
+					iconClass
+				)}
+				onMouseEnter={triggerEnter}
+				onMouseLeave={triggerLeave}
+			/>
+		</Popover>
 	);
 
 	function clearTimeout() {
