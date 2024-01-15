@@ -130,23 +130,57 @@ export interface TreeDragState {
   overId?: number;
   offsetLeft: number;
 }
+
+type List<V> = null | [V, List<V>];
+
+export function listHead<V>(list: List<V> | undefined): V | undefined {
+  return list == null ? undefined : list[0];
+}
+
+export function listToArray<V>(list: List<V> | undefined): V[] {
+  const outList: V[] = [];
+  while (list != null) {
+    outList.push(list[0]);
+    list = list[1];
+  }
+  return outList;
+}
 export function findAllTreeParentsInArray(
   node: Control<any>,
   nodes: Control<any[]>,
 ): Control<any>[] {
-  return nodes.elements.flatMap((x) => findAllTreeParents(node, x)) ?? [];
+  return listToArray(
+    findMatchingNodeInArray(nodes.current.elements, (c) => c === node),
+  );
 }
 
-export function findAllTreeParents(
+export function findMatchingNode(
   node: Control<any>,
-  rootNode: Control<any>,
-): Control<any>[] {
-  if (node === rootNode) return [rootNode];
-  const children = getTreeNodeData(rootNode).getChildren();
-  if (!children) return [];
-  const childParents = findAllTreeParentsInArray(node, children);
-  if (childParents.length > 0) return [rootNode, ...childParents];
-  return [];
+  match: (c: Control<any>) => boolean,
+  parents: List<Control<any>>,
+): List<Control<any>> | undefined {
+  const withParent = [node, parents] satisfies List<Control<any>>;
+  if (match(node)) {
+    return withParent;
+  }
+  const children = getControlTreeChildren(node);
+  if (!children) return undefined;
+  return findMatchingNodeInArray(children.current.elements, match, withParent);
+}
+export function findMatchingNodeInArray<V>(
+  nodes: Control<V>[],
+  match: (c: Control<any>) => boolean,
+  parents: List<Control<any>> = null,
+): List<Control<any>> {
+  for (const node of nodes) {
+    const r = findMatchingNode(node, match, parents);
+    if (r) return r;
+  }
+  return null;
+}
+
+function getControlTreeChildren(c: Control<any>): Control<any[]> | undefined {
+  return c.meta.treeNode?.build(c)?.getChildren();
 }
 
 export function getTreeNodeData(c: Control<any>): TreeNodeData {

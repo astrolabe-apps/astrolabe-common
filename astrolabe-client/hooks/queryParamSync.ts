@@ -28,10 +28,10 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
 ): Control<A> {
   useControlEffect(
     () => queryControl.value,
+    () => {},
     (urlQuery) => {
       control.value = convert.fromParam(convert.normalise(urlQuery[paramName]));
     },
-    true,
   );
 
   useControlEffect(
