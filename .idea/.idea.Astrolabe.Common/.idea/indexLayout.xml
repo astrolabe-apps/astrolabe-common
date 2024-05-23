@@ -11,6 +11,7 @@
       <Path>astrolabe-ui</Path>
       <Path>astrolabe-ui-tree</Path>
       <Path>schemas</Path>
+      <Path>schemas-datepicker</Path>
       <Path>schemas-mui</Path>
     </attachedFolders>
     <explicitIncludes />
