@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/datagrid",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "",
   "source": "src/index.ts",
   "main": "lib/index.js",

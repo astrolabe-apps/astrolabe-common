@@ -36,8 +36,6 @@ export const defaultTableClasses: DataGridClasses = {
 
 export interface DataGridProps<T, D = unknown> extends DataGridClasses {
   columns: ColumnDef<T, D>[];
-  bodyRows: number;
-  getBodyRow(index: number): T;
   extraHeaderRows?: ReactElement[];
   wrapBodyContent?: (render: () => ReactNode) => ReactNode;
   renderHeaderContent?: (col: ColumnDef<T, D>) => ReactNode;
@@ -53,7 +51,26 @@ export interface DataGridProps<T, D = unknown> extends DataGridClasses {
   style?: CSSProperties;
 }
 
-export function DataGrid<T, D = unknown>(props: DataGridProps<T, D>) {
+export function DataGrid<T, D = unknown>(
+  props: DataGridProps<T, D> & {
+    bodyRows: number;
+    getBodyRow(index: number): T;
+  },
+): ReactElement;
+
+export function DataGrid<T, D = unknown>(
+  props: DataGridProps<T, D> & {
+    rows: T[];
+  },
+): ReactElement;
+
+export function DataGrid<T, D = unknown>(
+  props: DataGridProps<T, D> & {
+    bodyRows?: number;
+    getBodyRow?: (index: number) => T;
+    rows?: T[];
+  },
+) {
   const {
     style,
     className,
@@ -64,15 +81,19 @@ export function DataGrid<T, D = unknown>(props: DataGridProps<T, D>) {
     columns,
     wrapHeaderRow,
     defaultColumnTemplate = "auto",
-    bodyRows,
-    getBodyRow,
+    bodyRows: rowCount,
+    getBodyRow: gbr,
     lastRowClass,
     renderHeaderContent,
     wrapBodyContent,
     extraHeaderRows = [],
     renderExtraRows,
     wrapBodyRow,
+    rows,
   } = { ...defaultTableClasses, ...props };
+
+  const getBodyRow = gbr ? gbr : (i: number) => rows![i];
+  const bodyRows = rowCount !== undefined ? rowCount : rows!.length;
 
   const visibleColumns = useMemo(
     () => columns.filter((c) => !c.hidden),

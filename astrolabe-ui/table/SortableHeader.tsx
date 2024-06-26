@@ -1,7 +1,9 @@
 import { findSortField, SearchingState } from "@astroapps/client/app/searching";
-import { ColumnDef, rotateSort } from "./index";
+
 import { ReactNode } from "react";
 import clsx from "clsx";
+import { ColumnDef } from "@astroapps/datagrid";
+import { rotateSort } from "./index";
 
 export function SortableHeader({
   state,

@@ -1,11 +1,13 @@
 import { Popover } from "../Popover";
 import { SearchingState } from "@astroapps/client/app/searching";
-import { ColumnDef, setFilterValue } from "./index";
+
 import {
   RenderArrayElements,
   RenderControl,
   useComputed,
 } from "@react-typed-forms/core";
+import { ColumnDef } from "@astroapps/datagrid";
+import { setFilterValue } from "./index";
 
 export function FilterPopover({
   state,
@@ -20,7 +22,7 @@ export function FilterPopover({
 }) {
   return (
     <Popover content={<RenderControl render={showValues} />} className="w-72">
-      <i className="fa-light fa-filter ml-2" />{" "}
+      <i aria-hidden className="fa-light fa-filter ml-2" />{" "}
     </Popover>
   );
 
@@ -30,8 +32,8 @@ export function FilterPopover({
       <RenderArrayElements
         array={filterValues}
         children={([n, v]) => {
-          const checked = useComputed(
-            () => state.fields.filters.value[filterField]?.includes(v),
+          const checked = useComputed(() =>
+            state.fields.filters.value[filterField]?.includes(v),
           ).value;
           return (
             <div

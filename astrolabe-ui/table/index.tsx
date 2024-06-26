@@ -1,5 +1,6 @@
 import React, {
   CSSProperties,
+  Key,
   ReactElement,
   ReactNode,
   useEffect,
@@ -16,219 +17,15 @@ import {
   stringToSortField,
   useSearchingState,
 } from "@astroapps/client/app/searching";
+import { ColumnDef, ColumnHeader, Sortable } from "@astroapps/datagrid";
 
 export { DataTableView } from "./DataTableView";
 export { DataTable } from "./DataTable";
-
-export interface GridPlacementStyles {
-  display?: string;
-  gridColumnStart?: string;
-  gridColumnEnd?: string;
-  gridRowStart?: string;
-}
-
-export type Sortable = string | number | undefined | null | boolean | Date;
-
-export function compareAny(first: any, second: any): number {
-  return first === second ? 0 : first > second ? 1 : -1;
-}
+export { columnDefinitions } from "@astroapps/datagrid";
 
 export type DataTableState = SearchingState;
 
 export const useDataTableState = useSearchingState;
-
-type IdOrTitle =
-  | { title: string; id?: string }
-  | { id: string; title?: string };
-
-type FilterField<T> = {
-  filterField: string;
-  filterValue: (row: T) => [string, string];
-};
-
-interface GetterColumn<T, D> {
-  getter: (row: T) => Sortable;
-  render?: CellRenderer<T, D>;
-  filterField?: string;
-  filterValue?: (row: T) => [string, string];
-}
-
-type ChildRowsInit<T, T2, D> = {
-  getRows: (row: T) => T2[];
-  columns: ColumnDef<T2, D>[];
-};
-
-export function childRowColumns<T, T2, D>(
-  getRows: (t: T) => T2[],
-  ...defs: ColumnDefInit<T2, D>[]
-): ChildRowsInit<T, any, D> {
-  return {
-    getRows,
-    columns: columnDefinitions(...defs),
-  };
-}
-
-type ChildColumnsInit<T, D> = ColumnDefInit<T, D>[] | ChildRowsInit<T, any, D>;
-
-type ColumnRenderInit<T, D> =
-  | GetterColumn<T, D>
-  | ({
-      render: CellRenderer<T, D>;
-    } & (FilterField<T> | {}))
-  | {
-      children: ChildColumnsInit<T, D>;
-      render?: CellRenderer<T, D>;
-    };
-
-export interface ColumnHeader<D> {
-  id: string;
-  title: string;
-  columnTemplate?: string;
-  columnContainerStyles?: CSSProperties;
-  hidden?: boolean;
-  filterField?: string;
-  sortField?: string;
-  defaultSort?: SortDirection;
-  cellClass?: string;
-  headerCellClass?: string;
-  bodyCellClass?: string;
-  renderHeaderElement?: ColumnHeaderRenderer<D>;
-}
-
-/**
- * A function that takes a row of data, its index, and a function to render a cell, and returns a ReactNode representing the cell.
- * @template T The type of the data in the row.
- * @template D The type of the additional data passed to the column renderer.
- * @param {T} row The row of data to render.
- * @param {number} rowIndex The index of the row to render.
- * @param {(column: ColumnRender<T, D>) => ReactNode} renderCell A function that takes a `ColumnRender` object and returns a ReactNode representing the cell.
- * @returns {ReactNode} A ReactNode representing the cell.
- */
-export type CellRenderer<T, D> = (
-  row: T,
-  rowIndex: number,
-  col: ColumnDef<T, D>,
-) => ReactNode;
-
-export interface RowPlacementProps {
-  startRow: number;
-  rowSpan: number;
-  lastRow: boolean;
-}
-
-export type GridItemsRenderer = (placement: RowPlacementProps) => ReactElement;
-export type GridItemsSpan =
-  | GridItemsRenderer
-  | {
-      render: GridItemsRenderer;
-      rowSpan: number;
-    };
-
-export interface GridElementRendererProps<T, D> {
-  column: ColumnDef<T, D>;
-  className: string;
-  lastRow: boolean;
-  content: GridItemsRenderer;
-  rowSpan: number;
-}
-
-export type ColumnHeaderRenderer<D> = (
-  props: GridElementRendererProps<any, D>,
-) => GridItemsSpan;
-
-export type ColumnBodyRenderer<T, D> = (
-  props: GridElementRendererProps<T, D> & { row: T; rowIndex: number },
-) => GridItemsSpan;
-
-export interface ColumnRender<T, D = undefined> extends ColumnHeader<D> {
-  render: CellRenderer<T, D>;
-  data?: D;
-  renderBodyElement?: ColumnBodyRenderer<T, D>;
-}
-
-export interface ChildColumns<T, D> {
-  getChildRows?: (row: T) => any[];
-  columns: ColumnDef<any, D>[];
-}
-
-export interface ColumnDef<T, D = undefined> extends ColumnRender<T, D> {
-  compare?: (first: T, second: T) => number;
-  getter?: (row: T) => Sortable;
-  filterValue?: (row: T) => [string, string];
-  children?: ChildColumns<T, D>;
-}
-
-/**
- * Represents the initialization properties for a `ColumnDef` object.
- *
- * @template T The type of the row data.
- * @template D The type of the additional data passed to the `CellRenderer`.
- */
-export type ColumnDefInit<T, D = undefined> = Omit<
-  ColumnHeader<D>,
-  "id" | "title" | "filterField"
-> &
-  IdOrTitle &
-  ColumnRenderInit<T, D> & {
-    data?: D;
-    compare?: (first: T, second: T) => number;
-    renderBodyElement?: ColumnBodyRenderer<T, D>;
-  };
-/**
- * Returns an array of `ColumnDef` objects based on the provided `ColumnDefInit` objects.
- *
- * @template T The type of the row data.
- * @template D The type of the additional data passed to the `CellRenderer`.
- * @param {...ColumnDefInit<T, D>[]} defs The `ColumnDefInit` objects to use to create the `ColumnDef` objects.
- * @returns {ColumnDef<T, D>[]} An array of `ColumnDef` objects.
- */
-export function columnDefinitions<T, D = undefined>(
-  ...defs: ColumnDefInit<T, D>[]
-): ColumnDef<T, D>[] {
-  return defs.map((x, i) => {
-    const render: CellRenderer<T, D> =
-      "render" in x
-        ? x.render!
-        : "children" in x
-        ? () => <></>
-        : (r: T) => (x as GetterColumn<T, D>).getter(r)?.toString();
-    const columnDef: ColumnDef<T, D> = {
-      ...x,
-      id: x.id ?? (x.title ? x.title : i.toString()),
-      title: x.title ?? "",
-      render,
-      children:
-        "children" in x
-          ? Array.isArray(x.children)
-            ? {
-                columns: columnDefinitions(...x.children),
-              }
-            : {
-                getChildRows: x.children.getRows,
-                columns: x.children.columns,
-              }
-          : undefined,
-    };
-    if (columnDef.sortField && !columnDef.compare) {
-      const getter = columnDef.getter;
-      if (!getter)
-        throw new Error("Must supply getter or compare for sortField");
-      {
-        columnDef.compare = (f: T, s: T) => compareAny(getter(f), getter(s));
-      }
-    }
-    if (columnDef.filterField && !columnDef.filterValue) {
-      const getter = columnDef.getter;
-      if (!getter)
-        throw new Error("Must supply getter or compare for filterField");
-      {
-        columnDef.filterValue = getterToFilter(getter);
-      }
-    }
-    return columnDef;
-  });
-}
-
 /**
  * Returns a function that filters rows based on the provided `columns` and `filters`.
  *
@@ -257,7 +54,6 @@ function makeFilterFunc<T>(
   }
   return (row) => fv.every(([f, vals]) => vals.includes(f(row)[0]));
 }
-
 /**
  * Returns a function that sets the filter value for a given column in a `ColumnFilters` object.
  *
@@ -318,7 +114,7 @@ export function getterToFilter<T>(
  * @returns {(existing: string[]) => string[]} A function that sets the sort direction for a given column in a list of sort fields.
  */
 export function setColumnSort(
-  column: ColumnHeader<any>,
+  column: ColumnHeader,
   dir?: SortDirection,
 ): (existing: string[]) => string[] {
   return (cols) => {
@@ -342,7 +138,7 @@ export function setColumnSort(
  * @returns {(existing: string[]) => string[]} A function that rotates the sort direction for a given column in a list of sort fields.
  */
 export function rotateSort(
-  column: ColumnHeader<any>,
+  column: ColumnHeader,
 ): (existing: string[]) => string[] {
   return (cols) => {
     const sortField = column.sortField!;
@@ -382,23 +178,8 @@ export interface TablePageData<T> {
 export interface TableBaseData<T, D = unknown> extends TablePageData<T> {
   columns: ColumnDef<T, D>[];
   rowId?: (row: T, index: number) => string | number;
-  state: DataTableState;
+  state: SearchingState;
 }
-
-export interface TableViewClasses {
-  className?: string;
-  headerCellClass?: string;
-  lastRowClass?: string;
-  cellClass?: string;
-  bodyCellClass?: string;
-  defaultColumnTemplate?: string;
-}
-
-export const defaultTableClasses: TableViewClasses = {
-  headerCellClass: "font-bold",
-  cellClass: "px-1",
-  bodyCellClass: "border-t py-1 flex items-center",
-};
 
 export interface TableRenderData<T> extends TableBaseData<T> {
   loading: boolean;
@@ -419,8 +200,9 @@ export function createClientFilterValues<T>(
   refreshFilterDep?: Control<any>,
 ): (field: string) => [string, string][] {
   return (field: string) => {
-    const filterValue = columns.find((x) => x.filterField === field)!
-      .filterValue!;
+    const filterValue = columns.find(
+      (x) => x.filterField === field,
+    )!.filterValue!;
     const doRefresh = refreshFilterDep ? refreshFilterDep.value : undefined;
     return useMemo(() => {
       const allValues: { [k: string]: string } = {};
@@ -451,7 +233,7 @@ export function createClientFilterValues<T>(
  * @returns A tuple containing the page data and the sorted data based on the client-side filters, sorting, and pagination.
  */
 export function useClientSideFilter<T>(
-  state: DataTableState,
+  state: SearchingState,
   columns: ColumnDef<T, any>[],
   data: T[],
   isPaginated: boolean,
@@ -575,8 +357,7 @@ export function findColumnRecurse<T, D>(
   f: (column: ColumnDef<T, D>) => boolean,
 ): ColumnDef<T, D> | undefined {
   if (f(m)) return m;
-  if (m.children && !m.children.getChildRows)
-    return findColumn(m.children.columns, f);
+  if (m.children) return findColumn(m.children, f);
   return undefined;
 }
 

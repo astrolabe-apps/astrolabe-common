@@ -255,6 +255,7 @@ importers:
   ../../../astrolabe-ui:
     specifiers:
       '@astroapps/client': workspace:^0.1.1
+      '@astroapps/datagrid': workspace:^1.0.6
       '@mui/base': ^5.0.0-beta.23
       '@radix-ui/react-accordion': 1.1.2
       '@radix-ui/react-dialog': 1.0.5
@@ -284,6 +285,7 @@ importers:
       typescript: 5.2.2
     dependencies:
       '@astroapps/client': link:../astrolabe-client
+      '@astroapps/datagrid': link:../astrolabe-datagrid
       '@mui/base': 5.0.0-beta.40_psuonouaqi5wuc37nxyknoubym
       '@radix-ui/react-accordion': 1.1.2_psuonouaqi5wuc37nxyknoubym
       '@radix-ui/react-dialog': 1.0.5_psuonouaqi5wuc37nxyknoubym
@@ -463,8 +465,10 @@ importers:
     specifiers:
       '@astroapps/client': workspace:*
       '@astroapps/client-nextjs': workspace:^0.1.2
+      '@astroapps/datagrid': workspace:^1.0.6
       '@astroapps/schemas-datepicker': workspace:*
       '@astroapps/schemas-editor': workspace:*
+      '@astrolabe/ui': workspace:*
       '@react-typed-forms/core': ^3.5.2
       '@react-typed-forms/schemas': workspace:*
       '@tailwindcss/forms': ^0.5.7
@@ -485,8 +489,10 @@ importers:
     dependencies:
       '@astroapps/client': link:../../../../astrolabe-client
       '@astroapps/client-nextjs': link:../../../../astrolabe-client-nextjs
+      '@astroapps/datagrid': link:../../../../astrolabe-datagrid
       '@astroapps/schemas-datepicker': link:../../../../schemas-datepicker
       '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
+      '@astrolabe/ui': link:../../../../astrolabe-ui
       '@react-typed-forms/core': 3.5.2
       '@react-typed-forms/schemas': link:../../../../schemas
       next: 14.0.4_nnrd3gsncyragczmpvfhocinkq
