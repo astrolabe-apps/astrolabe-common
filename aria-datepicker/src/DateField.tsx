@@ -1,11 +1,16 @@
-import { DateFieldState, DateSegment, useDateFieldState } from "react-stately";
+import {
+  DateFieldState,
+  DateSegment,
+  useDateFieldState,
+  useTimeFieldState,
+} from "react-stately";
 import {
   AriaDateFieldProps,
   useDateField,
   useDateSegment,
   useLocale,
 } from "react-aria";
-import { createCalendar } from "@internationalized/date";
+import { createCalendar, Time } from "@internationalized/date";
 import React, { useRef } from "react";
 
 export function DateField(props: AriaDateFieldProps<any>) {
@@ -20,7 +25,7 @@ export function DateField(props: AriaDateFieldProps<any>) {
   let { labelProps, fieldProps } = useDateField(props, state, ref);
 
   return (
-    <div className="wrapper">
+    <div>
       <span {...labelProps}>{props.label}</span>
       <div {...fieldProps} ref={ref} className="flex">
         {state.segments.map((segment, i) => (

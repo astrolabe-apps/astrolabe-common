@@ -1,7 +1,7 @@
 import { AriaButtonProps, useButton } from "react-aria";
 import React, { useRef } from "react";
 
-export function AriaButton({
+export function Button({
   children,
   className,
   ...props

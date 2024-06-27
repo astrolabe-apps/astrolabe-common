@@ -463,6 +463,16 @@
       "projectFolder": "../schemas-mui",
       "shouldPublish": true
     },
+    {
+      "packageName": "@astroapps/aria-base",
+      "projectFolder": "../aria-base",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@astroapps/aria-datepicker",
+      "projectFolder": "../aria-datepicker",
+      "shouldPublish": true
+    },
 //    {
 //      "packageName": "@react-typed-forms/core",
 //      "projectFolder": "../react-typed-forms/packages/core"

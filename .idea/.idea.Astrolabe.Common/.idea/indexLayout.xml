@@ -2,6 +2,8 @@
 <project version="4">
   <component name="UserContentModel">
     <attachedFolders>
+      <Path>aria-base</Path>
+      <Path>aria-datepicker</Path>
       <Path>astrolabe-client</Path>
       <Path>astrolabe-client-nextjs</Path>
       <Path>astrolabe-datagrid</Path>

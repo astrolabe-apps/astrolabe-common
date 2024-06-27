@@ -12,6 +12,8 @@ import {
   createDefaultRenderers,
   createDisplayRenderer,
   createFormRenderer,
+  dateField,
+  dateTimeField,
   defaultSchemaInterface,
   defaultTailwindTheme,
   FieldType,
@@ -51,9 +53,13 @@ interface TestSchema {
       other: number;
     };
   };
+  date: string;
+  dateTime: string;
 }
 
 const TestSchema = buildSchema<TestSchema>({
+  dateTime: dateTimeField("Date and Time"),
+  date: dateField("Date Only"),
   things: compoundField(
     "Things",
 
@@ -114,19 +120,6 @@ export default function Editor() {
         saveForm={async (controls) => {
           if (selectedForm.value === "EditorControls") {
             await new Client().controlDefinition(controls);
-          } else {
-            visitControlData(
-              controls[0],
-              {
-                data: newControl({
-                  things: { sub: { thingId: "", other: 1 } },
-                } satisfies TestSchema),
-                fields: TestSchema,
-                schemaInterface: defaultSchemaInterface,
-                path: [],
-              },
-              (d, f, c) => console.log(d.field, c.value),
-            );
           }
         }}
         previewOptions={{

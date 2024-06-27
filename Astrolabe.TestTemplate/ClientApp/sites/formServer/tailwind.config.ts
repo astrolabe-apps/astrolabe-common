@@ -1,5 +1,6 @@
 import type { Config } from "tailwindcss";
 import * as ti from "./tail.include";
+import colors from "tailwindcss/colors";
 
 const config: Config = {
   content: [
@@ -7,6 +8,8 @@ const config: Config = {
     "node_modules/@react-typed-forms/schemas/lib/*.js",
     "node_modules/@astroapps/schemas-editor/lib/*.js",
     "./**/node_modules/@astroapps/ui-tree/*.js",
+    "node_modules/@astroapps/aria-datepicker/lib/*.js",
+    "node_modules/@astroapps/aria-base/lib/*.js",
     "node_modules/@astrolabe/ui/**/*.tsx",
     "node_modules/@astroapps/schemas-datepicker/lib/*.js",
   ],

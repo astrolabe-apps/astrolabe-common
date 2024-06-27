@@ -239,6 +239,7 @@ export interface HtmlEditorRenderOptions extends RenderOptions {
 export interface DateTimeRenderOptions extends RenderOptions {
   type: DataRenderType.DateTime;
   format?: string | null;
+  forceMidnight?: boolean;
 }
 
 export interface IconListRenderOptions extends RenderOptions {

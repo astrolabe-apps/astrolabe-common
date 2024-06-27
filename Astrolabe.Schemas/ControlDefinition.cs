@@ -126,7 +126,7 @@ public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText)
 
 public record UserSelectionRenderOptions(bool NoGroups, bool NoUsers) : RenderOptions(DataRenderType.UserSelection.ToString());
 
-public record DateTimeRenderOptions(string? Format) : RenderOptions(DataRenderType.DateTime.ToString());
+public record DateTimeRenderOptions(string? Format, [property: DefaultValue(false)] bool? ForceMidnight) : RenderOptions(DataRenderType.DateTime.ToString());
 
 public record SynchronisedRenderOptions([property: SchemaTag(SchemaTags.SchemaField)] string FieldToSync, SyncTextType SyncType) : RenderOptions(DataRenderType.Synchronised.ToString());
 

@@ -10,6 +10,62 @@ importers:
   .:
     specifiers: {}
 
+  ../../../aria-base:
+    specifiers:
+      '@react-types/shared': ^3.23.1
+      '@types/react': ^18.2.37
+      clsx: ^2
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      react: ^18.2.0
+      react-aria: ^3.33.0
+      react-dom: ^18.2.0
+      react-stately: ^3.31.0
+      rimraf: ^5.0.7
+      typescript: 5.2.2
+    dependencies:
+      clsx: 2.1.1
+      react: 18.3.1
+      react-aria: 3.33.1_nnrd3gsncyragczmpvfhocinkq
+      react-dom: 18.3.1_react@18.3.1
+      react-stately: 3.31.1_react@18.3.1
+    devDependencies:
+      '@react-types/shared': 3.23.1_react@18.3.1
+      '@types/react': 18.3.3
+      microbundle: 0.15.1
+      prettier: 3.3.2
+      rimraf: 5.0.7
+      typescript: 5.2.2
+
+  ../../../aria-datepicker:
+    specifiers:
+      '@astroapps/aria-base': workspace:^1.0.0
+      '@internationalized/date': ^3.5.3
+      '@types/react': ^18.2.37
+      clsx: ^2
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      react: ^18.2.0
+      react-aria: ^3.33.0
+      react-dom: ^18.2.0
+      react-stately: ^3.31.0
+      rimraf: ^5.0.7
+      typescript: 5.2.2
+    dependencies:
+      '@astroapps/aria-base': link:../aria-base
+      '@internationalized/date': 3.5.4
+      clsx: 2.1.1
+      react: 18.3.1
+      react-aria: 3.33.1_nnrd3gsncyragczmpvfhocinkq
+      react-dom: 18.3.1_react@18.3.1
+      react-stately: 3.31.1_react@18.3.1
+    devDependencies:
+      '@types/react': 18.3.3
+      microbundle: 0.15.1
+      prettier: 3.3.2
+      rimraf: 5.0.7
+      typescript: 5.2.2
+
   ../../../astrolabe-client:
     specifiers:
       '@babel/cli': ^7.23.4
@@ -256,7 +312,7 @@ importers:
     specifiers:
       '@astroapps/client': workspace:^0.1.1
       '@astroapps/datagrid': workspace:^1.0.6
-      '@mui/base': ^5.0.0-beta.23
+      '@mui/base': 5.0.0-beta.23
       '@radix-ui/react-accordion': 1.1.2
       '@radix-ui/react-dialog': 1.0.5
       '@radix-ui/react-popover': 1.0.7
@@ -286,7 +342,7 @@ importers:
     dependencies:
       '@astroapps/client': link:../astrolabe-client
       '@astroapps/datagrid': link:../astrolabe-datagrid
-      '@mui/base': 5.0.0-beta.40_psuonouaqi5wuc37nxyknoubym
+      '@mui/base': 5.0.0-beta.23_psuonouaqi5wuc37nxyknoubym
       '@radix-ui/react-accordion': 1.1.2_psuonouaqi5wuc37nxyknoubym
       '@radix-ui/react-dialog': 1.0.5_psuonouaqi5wuc37nxyknoubym
       '@radix-ui/react-popover': 1.0.7_psuonouaqi5wuc37nxyknoubym
@@ -387,11 +443,7 @@ importers:
 
   ../../../schemas-datepicker:
     specifiers:
-      '@babel/cli': ^7.23.4
-      '@babel/core': ^7.23.7
-      '@babel/preset-env': ^7.23.8
-      '@babel/preset-react': ^7.23.3
-      '@babel/preset-typescript': ^7.23.3
+      '@astroapps/aria-datepicker': workspace:^1.0.0
       '@internationalized/date': ^3.5.3
       '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/schemas': workspace:*
@@ -401,26 +453,18 @@ importers:
       microbundle: ^0.15.1
       prettier: ^3.0.3
       react: ^18.2.0
-      react-aria: ^3.33.0
       react-dom: ^18.2.0
-      react-stately: ^3.31.0
       rimraf: ^5.0.7
       typescript: 5.2.2
     dependencies:
+      '@astroapps/aria-datepicker': link:../aria-datepicker
       '@internationalized/date': 3.5.4
       '@react-typed-forms/core': 3.5.2
       '@react-typed-forms/schemas': link:../schemas
       clsx: 2.1.1
       react: 18.3.1
-      react-aria: 3.33.1_nnrd3gsncyragczmpvfhocinkq
       react-dom: 18.3.1_react@18.3.1
-      react-stately: 3.31.1_react@18.3.1
     devDependencies:
-      '@babel/cli': 7.24.7_@babel+core@7.24.7
-      '@babel/core': 7.24.7
-      '@babel/preset-env': 7.24.7_@babel+core@7.24.7
-      '@babel/preset-react': 7.24.7_@babel+core@7.24.7
-      '@babel/preset-typescript': 7.24.7_@babel+core@7.24.7
       '@react-typed-forms/transform': 0.2.0
       '@types/react': 18.3.3
       microbundle: 0.15.1
@@ -463,6 +507,8 @@ importers:
 
   ../../ClientApp/sites/formServer:
     specifiers:
+      '@astroapps/aria-base': workspace:*
+      '@astroapps/aria-datepicker': workspace:*
       '@astroapps/client': workspace:*
       '@astroapps/client-nextjs': workspace:^0.1.2
       '@astroapps/datagrid': workspace:^1.0.6
@@ -487,6 +533,8 @@ importers:
       tailwindcss: ^3.4.1
       typescript: ^5.2.2
     dependencies:
+      '@astroapps/aria-base': link:../../../../aria-base
+      '@astroapps/aria-datepicker': link:../../../../aria-datepicker
       '@astroapps/client': link:../../../../astrolabe-client
       '@astroapps/client-nextjs': link:../../../../astrolabe-client-nextjs
       '@astroapps/datagrid': link:../../../../astrolabe-datagrid
@@ -2596,29 +2644,8 @@ packages:
       - ts-node
     dev: false
 
-  /@mui/base/5.0.0-beta.40_3vdbhqr2ncalcx7opnshezpx3q:
-    resolution: {integrity: sha512-I/lGHztkCzvwlXpjD2+SNmvNQvB4227xBXhISPjEaJUXGImOQ9f3D2Yj/T3KasSI/h0MLWy74X0J6clhPmsRbQ==}
-    engines: {node: '>=12.0.0'}
-    peerDependencies:
-      '@types/react': ^17.0.0 || ^18.0.0
-      react: ^17.0.0 || ^18.0.0
-      react-dom: ^17.0.0 || ^18.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-    dependencies:
-      '@babel/runtime': 7.24.7
-      '@floating-ui/react-dom': 2.1.0_react@18.3.1
-      '@mui/types': 7.2.14_@types+react@18.3.3
-      '@mui/utils': 5.15.20_3vdbhqr2ncalcx7opnshezpx3q
-      '@popperjs/core': 2.11.8
-      '@types/react': 18.3.3
-      clsx: 2.1.1
-      prop-types: 15.8.1
-      react: 18.3.1
-
-  /@mui/base/5.0.0-beta.40_psuonouaqi5wuc37nxyknoubym:
-    resolution: {integrity: sha512-I/lGHztkCzvwlXpjD2+SNmvNQvB4227xBXhISPjEaJUXGImOQ9f3D2Yj/T3KasSI/h0MLWy74X0J6clhPmsRbQ==}
+  /@mui/base/5.0.0-beta.23_psuonouaqi5wuc37nxyknoubym:
+    resolution: {integrity: sha512-9L8SQUGAWtd/Qi7Qem26+oSSgpY7f2iQTuvcz/rsGpyZjSomMMO6lwYeQSA0CpWM7+aN7eGoSY/WV6wxJiIxXw==}
     engines: {node: '>=12.0.0'}
     peerDependencies:
       '@types/react': ^17.0.0 || ^18.0.0
@@ -2639,6 +2666,27 @@ packages:
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
     dev: false
+
+  /@mui/base/5.0.0-beta.40_3vdbhqr2ncalcx7opnshezpx3q:
+    resolution: {integrity: sha512-I/lGHztkCzvwlXpjD2+SNmvNQvB4227xBXhISPjEaJUXGImOQ9f3D2Yj/T3KasSI/h0MLWy74X0J6clhPmsRbQ==}
+    engines: {node: '>=12.0.0'}
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^18.0.0
+      react: ^17.0.0 || ^18.0.0
+      react-dom: ^17.0.0 || ^18.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+    dependencies:
+      '@babel/runtime': 7.24.7
+      '@floating-ui/react-dom': 2.1.0_react@18.3.1
+      '@mui/types': 7.2.14_@types+react@18.3.3
+      '@mui/utils': 5.15.20_3vdbhqr2ncalcx7opnshezpx3q
+      '@popperjs/core': 2.11.8
+      '@types/react': 18.3.3
+      clsx: 2.1.1
+      prop-types: 15.8.1
+      react: 18.3.1
 
   /@mui/core-downloads-tracker/5.15.20:
     resolution: {integrity: sha512-DoL2ppgldL16utL8nNyj/P12f8mCNdx/Hb/AJnX9rLY4b52hCMIx1kH83pbXQ6uMy6n54M3StmEbvSGoj2OFuA==}
@@ -5232,7 +5280,6 @@ packages:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0
     dependencies:
       react: 18.3.1
-    dev: false
 
   /@react-types/slider/3.7.3_react@18.3.1:
     resolution: {integrity: sha512-F8qFQaD2mqug2D0XeWMmjGBikiwbdERFlhFzdvNGbypPLz3AZICBKp1ZLPWdl0DMuy03G/jy6Gl4mDobl7RT2g==}

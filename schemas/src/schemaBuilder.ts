@@ -95,6 +95,28 @@ export function intField<S extends Partial<SchemaField>>(
   });
 }
 
+export function dateField<S extends Partial<SchemaField>>(
+  displayName: string,
+  options?: S,
+) {
+  return makeScalarField({
+    type: FieldType.Date as const,
+    displayName,
+    ...(options as S),
+  });
+}
+
+export function dateTimeField<S extends Partial<SchemaField>>(
+  displayName: string,
+  options?: S,
+) {
+  return makeScalarField({
+    type: FieldType.DateTime as const,
+    displayName,
+    ...(options as S),
+  });
+}
+
 export function boolField<S extends Partial<SchemaField>>(
   displayName: string,
   options?: S,

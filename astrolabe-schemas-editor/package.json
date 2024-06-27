@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-editor",
-  "version": "10.4.0",
+  "version": "10.5.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "author": "Astrolabe Enterprises",
@@ -21,7 +21,7 @@
   "dependencies": {
     "@react-typed-forms/core": "^3.5.2",
     "react-resizable-panels": "^0.0.55",
-    "@react-typed-forms/schemas": "workspace:^11.5.0",
+    "@react-typed-forms/schemas": "workspace:^11.5.1",
     "@astroapps/client": "workspace:^0.1.8",
     "@astroapps/ui-tree": "workspace:^1.0.0",
     "@dnd-kit/core": "^6.0.5",
