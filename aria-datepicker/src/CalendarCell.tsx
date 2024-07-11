@@ -1,7 +1,12 @@
 import { useCalendarCell } from "react-aria";
 import { CalendarState, RangeCalendarState } from "react-stately";
 import { useRef } from "react";
-import { CalendarDate } from "@internationalized/date";
+import {
+  CalendarDate,
+  getLocalTimeZone,
+  isToday,
+  parseDateTime,
+} from "@internationalized/date";
 import React from "react";
 import clsx from "clsx";
 
@@ -11,6 +16,7 @@ export interface CalendarCellClasses {
   unavailableClass?: string;
   disabledClass?: string;
   dayClass?: string;
+  todayClass?: string;
 }
 
 export interface CalendarCellProps extends CalendarCellClasses {
@@ -21,6 +27,7 @@ export const DefaultCalendarCellClasses = {
   selectedClass: "bg-secondary-400",
   cellClass: "size-8 text-center",
   dayClass: "hover:bg-primary-400 hover:text-white rounded-md",
+  todayClass: "border border-black",
   unavailableClass: "",
   disabledClass:
     "text-gray-400 hover:bg-transparent aria-disabled:hover:text-gray-400",
@@ -34,6 +41,7 @@ export function CalendarCell(props: CalendarCellProps) {
     selectedClass,
     unavailableClass,
     dayClass,
+    todayClass,
   } = {
     ...DefaultCalendarCellClasses,
     ...classes,
@@ -48,7 +56,7 @@ export function CalendarCell(props: CalendarCellProps) {
     isUnavailable,
     formattedDate,
   } = useCalendarCell({ date }, state, ref);
-
+  const isCellToday = isToday(date, getLocalTimeZone());
   return (
     <td {...cellProps} className={cellClass}>
       <div
@@ -60,6 +68,7 @@ export function CalendarCell(props: CalendarCellProps) {
           isSelected && selectedClass,
           isDisabled && disabledClass,
           isUnavailable && unavailableClass,
+          isCellToday && todayClass,
         )}
       >
         {formattedDate}
