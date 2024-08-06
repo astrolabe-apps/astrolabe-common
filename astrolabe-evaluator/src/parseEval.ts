@@ -5,7 +5,7 @@ import {
   EvalExpr,
   lambdaExpr,
   letExpr,
-  pathExpr,
+  propertyExpr,
   segmentPath,
   valueExpr,
   VarExpr,
@@ -65,7 +65,7 @@ export function parseEval(input: string) {
         const quoted = getNodeText(node);
         return valueExpr(quoted.substring(1, quoted.length - 1));
       case "Identifier":
-        return pathExpr(segmentPath(input.substring(node.from, node.to)));
+        return propertyExpr(input.substring(node.from, node.to));
       case "BinaryExpression":
         const callNode = node.getChild("Call")!;
         return callExpr(

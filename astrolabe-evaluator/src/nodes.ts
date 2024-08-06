@@ -9,11 +9,10 @@ export type Path = EmptyPath | SegmentPath;
 
 export const EmptyPath: EmptyPath = { segment: null };
 
-export function pathExpr(path: Path | string | number): PathExpr {
+export function propertyExpr(property: string): PropertyExpr {
   return {
-    type: "path",
-    path:
-      typeof path === "object" ? path : { segment: path, parent: EmptyPath },
+    type: "property",
+    property,
   };
 }
 
@@ -29,7 +28,7 @@ export type EvalExpr =
   | ValueExpr
   | FunctionExpr
   | BaseExpr
-  | PathExpr;
+  | PropertyExpr;
 
 export interface VarExpr {
   type: "var";
@@ -64,9 +63,9 @@ export interface ValueExpr {
   path?: Path;
 }
 
-export interface PathExpr {
-  type: "path";
-  path: Path;
+export interface PropertyExpr {
+  type: "property";
+  property: string;
 }
 
 export interface LambdaExpr {
@@ -105,6 +104,10 @@ export function letExpr(variables: VarAssign[], expr: EvalExpr): LetExpr {
   return { type: "let", variables, expr };
 }
 
+export function baseExpr(base: Path, expr: EvalExpr): BaseExpr {
+  return { type: "base", expr, base };
+}
+
 export function valueExpr(value: any, path?: Path): ValueExpr {
   return { type: "value", value, path };
 }
@@ -125,13 +128,42 @@ export function mapExpr(left: EvalExpr, right: EvalExpr) {
   return callExpr(".", [left, right]);
 }
 
+export function evaluateElem(
+  env: EvalEnv,
+  value: ValueExpr,
+  ind: number,
+  expr: EvalExpr,
+): EnvValue<ValueExpr> {
+  switch (expr.type) {
+    case "lambda":
+      return evaluate(
+        env.withVariables([
+          [expr.variable, value],
+          [expr.variable + "_index", { type: "value", value: ind }],
+        ]),
+        expr.expr,
+      );
+    default:
+      if (!value.path) throw new Error("No path for element, must use lambda");
+      return evaluate(env.withBasePath(value.path), expr);
+  }
+}
+
 export function evaluate(env: EvalEnv, expr: EvalExpr): EnvValue<ValueExpr> {
   if (!env) debugger;
   switch (expr.type) {
+    case "var":
+      const varExpr = env.getVariable(expr.variable);
+      return evaluate(env, varExpr);
     case "base":
       const oldBase = env.basePath;
       const [nextEnv, value] = evaluate(env.withBasePath(expr.base), expr.expr);
       return [nextEnv.withBasePath(oldBase), value];
+    case "let":
+      const withVars = env.withVariables(
+        expr.variables.map((x) => [x[0], baseExpr(env.basePath, x[1])]),
+      );
+      return evaluate(withVars, expr.expr);
     case "value":
       return [env, expr];
     case "call":
@@ -139,8 +171,8 @@ export function evaluate(env: EvalEnv, expr: EvalExpr): EnvValue<ValueExpr> {
       if (funcCall == null)
         throw new Error("Unknown function " + expr.function);
       return (funcCall as FunctionExpr).evaluate(env, expr);
-    case "path":
-      const actualPath = concatPath(env.basePath, expr.path);
+    case "property":
+      const actualPath = segmentPath(expr.property, env.basePath);
       let dataValue = env.getData(actualPath);
       if (Array.isArray(dataValue)) {
         dataValue = dataValue.map((x, i) =>
@@ -154,7 +186,7 @@ export function evaluate(env: EvalEnv, expr: EvalExpr): EnvValue<ValueExpr> {
         type: "value",
       }));
     default:
-      throw "Can't evaluate this";
+      throw "Can't evaluate this:" + expr.type;
   }
 }
 
@@ -242,7 +274,7 @@ export function basicEnv(data: any): EvalEnv {
     data,
     { segment: null },
     {
-      // "?": condFunction,
+      "?": condFunction,
       "!": evalFunction((a) => !a[0]),
       and: binFunction((a, b) => a && b),
       or: binFunction((a, b) => a || b),
@@ -256,61 +288,36 @@ export function basicEnv(data: any): EvalEnv {
       ">=": binFunction((a, b) => a >= b),
       "=": binFunction((a, b) => a == b),
       "!=": binFunction((a, b) => a != b),
-      // array: flatFunction,
+      array: flatFunction,
       string: stringFunction,
       sum: aggFunction(0, (acc, b) => acc + (b as number)),
       count: aggFunction(0, (acc, b) => acc + 1),
       min: aggFunction(Number.MAX_VALUE, (a, b) => Math.min(a, b as number)),
       max: aggFunction(Number.MIN_VALUE, (a, b) => Math.max(a, b as number)),
-      notEmpty: evalFunction((a) => !!a[0]),
-      // which: whichFunction,
+      notEmpty: evalFunction(([a]) => !(a === "" || a == null)),
+      which: whichFunction,
       ".": mapFunction,
       "[": filterFunction,
     },
   );
 }
 
-// interface WhichState {
-//   current: EvalExpr;
-//   compare?: EvalExpr;
-//   toExpr?: EvalExpr;
-// }
-// export const whichFunction: FunctionExpr = {
-//   type: "func",
-//   resolve: (e, x) => {
-//     return resolve(
-//       e,
-//       x.args.reduce(
-//         (acc, a) =>
-//           !acc.compare
-//             ? { ...acc, compare: a }
-//             : !acc.toExpr
-//               ? { ...acc, toExpr: a }
-//               : {
-//                   compare: acc.compare,
-//                   current: callExpr("?", [
-//                     callExpr("=", [acc.compare, acc.toExpr]),
-//                     a,
-//                     acc.current,
-//                   ]),
-//                 },
-//         {
-//           current: valueExpr(null),
-//         } as WhichState,
-//       ).current,
-//     );
-//   },
-//   evaluate: () => {
-//     throw new Error("No eval");
-//   },
-// };
-//
-// function resolveCall(env: EvalEnv, callExpr: CallExpr): EnvValue<CallExpr> {
-//   return mapEnv(mapAllEnv(env, callExpr.args, resolve), (args) => ({
-//     ...callExpr,
-//     args,
-//   }));
-// }
+export const whichFunction: FunctionExpr = {
+  type: "func",
+  evaluate: (e, call) => {
+    const [c, ...args] = call.args;
+    let [env, cond] = evaluate(e, c);
+    let i = 0;
+    while (i < args.length - 1) {
+      const compare = args[i++];
+      const value = args[i++];
+      const [nextEnv, compValue] = evaluate(env, compare);
+      env = nextEnv;
+      if (compValue.value == cond.value) return evaluate(nextEnv, value);
+    }
+    return [env, valueExpr(null)];
+  },
+};
 
 export function binFunction(func: (a: any, b: any) => unknown): FunctionExpr {
   return {
@@ -336,38 +343,6 @@ export function evalFunction(run: (args: unknown[]) => unknown): FunctionExpr {
       ),
   };
 }
-
-// function resolveElem(
-//   elem: EnvValue<EvalExpr>,
-//   right: EvalExpr,
-// ): EnvValue<EvalExpr> {
-//   const [nextEnv, firstArg] = elem;
-//   if (firstArg.type === "optional") {
-//     const resolvedVal = resolveElem([nextEnv, firstArg.value], right);
-//     return mapEnv(resolvedVal, (x) => ({ ...firstArg, value: x }));
-//   }
-//   if (firstArg.type === "path") {
-//     const pathData = nextEnv.getData(firstArg.path);
-//     if (pathData == null) return [nextEnv, valueExpr(null)];
-//     if (typeof pathData === "object") {
-//       return mapEnv(
-//         resolve(nextEnv.withBasePath(firstArg.path), right),
-//         (x) => x,
-//         (e) => e.withBasePath(nextEnv.basePath),
-//       );
-//     }
-//     throw new Error("Data can't be mapped");
-//   }
-//   if (firstArg.type === "array") {
-//     const elems = mapAllEnv(nextEnv, firstArg.values, (e, x) =>
-//       resolveElem([e, x], right),
-//     );
-//     return mapEnv(elems, (x) => arrayExpr(x));
-//   }
-//   debugger;
-//   throw new Error("Can't map:" + JSON.stringify(firstArg));
-// }
-
 function allElems(v: ValueExpr): ValueExpr[] {
   if (Array.isArray(v.value)) return v.value.flatMap(allElems);
   return [v];
@@ -377,16 +352,16 @@ const mapFunction: FunctionExpr = {
   type: "func",
   evaluate: (env: EvalEnv, call: CallExpr) => {
     const [left, right] = call.args;
-    const [leftEnv, { value, path }] = evaluate(env, left);
+    const [leftEnv, { value }] = evaluate(env, left);
     if (Array.isArray(value)) {
       return mapEnv(
-        mapAllEnv(leftEnv, value, (e, elem: ValueExpr) =>
-          evaluate(e.withBasePath(elem.path!), right),
+        mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
+          evaluateElem(e, elem, i, right),
         ),
         (vals) => valueExpr(vals.flatMap(allElems)),
       );
     }
-    console.error(value, path);
+    console.error(value, left);
     throw new Error("Can't map this:");
   },
 };
@@ -397,30 +372,32 @@ const filterFunction: FunctionExpr = {
     const [left, right] = call.args;
     const [leftEnv, { value, path }] = evaluate(env, left);
     if (Array.isArray(value)) {
-      return mapEnv(
-        mapAllEnv(leftEnv, value, (e, elem: ValueExpr) =>
-          evaluate(e.withBasePath(elem.path!), right),
-        ),
-        (vals) => valueExpr(vals.flatMap(allElems)),
+      const accArray: ValueExpr[] = [];
+      const outEnv = value.reduce(
+        (e, x: ValueExpr, ind) =>
+          envEffect(evaluateElem(e, x, ind, right), ({ value }) => {
+            if ((typeof value === "number" && ind === value) || value === true)
+              accArray.push(x);
+          }),
+        leftEnv,
       );
+      return [outEnv, valueExpr(accArray)];
     }
     console.error(value, path);
-    throw new Error("Can't map this:");
+    throw new Error("Can't filter this:");
   },
 };
-//
-// const condFunction: FunctionExpr = {
-//   type: "func",
-//   resolve: (env: EvalEnv, call: CallExpr) => {
-//     return mapEnv(mapAllEnv(env, call.args, resolve), (x) => ({
-//       ...call,
-//       args: x,
-//     }));
-//   },
-//   evaluate: (env: EvalEnv, args: any[]) => {
-//     return [env, args[0] ? args[1] : args[2]];
-//   },
-// };
+
+const condFunction: FunctionExpr = {
+  type: "func",
+  evaluate: (env: EvalEnv, call: CallExpr) => {
+    return mapEnv(
+      mapAllEnv(env, call.args, evaluate),
+      ([{ value: c }, e1, e2]) =>
+        c === true ? e1 : c === false ? e2 : valueExpr(null),
+    );
+  },
+};
 
 function asArray(v: unknown): unknown[] {
   return Array.isArray(v) ? v : [v];
@@ -463,15 +440,13 @@ function toString(v: unknown): string {
 
 const stringFunction: FunctionExpr = evalFunction(toString);
 
-// const flatFunction: FunctionExpr = {
-//   type: "func",
-//   resolve: (e, call) => {
-//     return mapEnv(resolveCall(e, call), (x) => arrayExpr(flattenExpr(x.args)));
-//   },
-//   evaluate: (e, vals) => {
-//     throw new Error("Should not get here");
-//   },
-// };
+const flatFunction: FunctionExpr = {
+  type: "func",
+  evaluate: (e, call) => {
+    const allArgs = mapAllEnv(e, call.args, evaluate);
+    return mapEnv(allArgs, (x) => valueExpr(x.flatMap(allElems)));
+  },
+};
 
 function toExpressions(expr: EvalExpr) {
   if (expr.type === "array") return flattenExpr(expr.values);
