@@ -1,12 +1,5 @@
 "use client";
-import {
-  basicEnv,
-  evaluate,
-  flatmapEnv,
-  parseEval,
-  printExpr,
-  resolve,
-} from "@astroapps/evaluator";
+import { basicEnv, evaluate, parseEval, toNative } from "@astroapps/evaluator";
 import {
   Fcheckbox,
   useControl,
@@ -48,11 +41,10 @@ export default function EvalPage() {
         } else {
           const exprTree = parseEval(v);
 
-          const resolved = resolve(basicEnv(dv), exprTree);
-          console.log(printExpr(resolved[1]));
+          const env = basicEnv(dv);
           let result;
           try {
-            result = flatmapEnv(resolved, evaluate)[1];
+            result = toNative(evaluate(env, exprTree)[1]);
           } catch (e) {
             console.error(e);
             result = e?.toString();
