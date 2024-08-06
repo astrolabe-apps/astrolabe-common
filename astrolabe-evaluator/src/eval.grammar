@@ -17,6 +17,7 @@ expression[@isGroup=Expression] {
     Identifier | 
     Lambda |
     @specialize[@name=BooleanLiteral]<Identifier, "true" | "false"> |
+    LetExpression |
     Number | 
     String | 
     BinaryExpression | 
@@ -29,6 +30,8 @@ expression[@isGroup=Expression] {
         expression !call ArgList
     }
 }
+
+LetExpression { @specialize<Identifier, "let"> Reference "=" expression @specialize<Identifier, "in"> expression } 
 
 Lambda { Reference "=>" expression }
 

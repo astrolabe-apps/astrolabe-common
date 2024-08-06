@@ -4,6 +4,7 @@ import {
   evaluate,
   flatmapEnv,
   parseEval,
+  printExpr,
   resolve,
 } from "@astroapps/evaluator";
 import {
@@ -46,9 +47,12 @@ export default function EvalPage() {
           output.value = result;
         } else {
           const exprTree = parseEval(v);
+
+          const resolved = resolve(basicEnv(dv), exprTree);
+          console.log(printExpr(resolved[1]));
           let result;
           try {
-            result = flatmapEnv(resolve(basicEnv(dv), exprTree), evaluate)[1];
+            result = flatmapEnv(resolved, evaluate)[1];
           } catch (e) {
             console.error(e);
             result = e?.toString();

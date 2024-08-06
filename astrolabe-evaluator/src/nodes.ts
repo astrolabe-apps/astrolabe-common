@@ -437,6 +437,7 @@ function resolveElem(
     );
     return mapEnv(elems, (x) => arrayExpr(x));
   }
+  debugger;
   throw new Error("Can't map:" + JSON.stringify(firstArg));
 }
 
