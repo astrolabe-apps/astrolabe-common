@@ -1,5 +1,18 @@
 "use client";
-import { basicEnv, evaluate, parseEval, toNative } from "@astroapps/evaluator";
+import {
+  addDefaults,
+  basicEnv,
+  BasicEvalEnv,
+  defaultEvaluate,
+  EmptyPath,
+  EnvValue,
+  EvalExpr,
+  parseEval,
+  Path,
+  printPath,
+  toNative,
+  ValueExpr,
+} from "@astroapps/evaluator";
 import {
   Fcheckbox,
   useControl,
@@ -41,10 +54,10 @@ export default function EvalPage() {
         } else {
           const exprTree = parseEval(v);
 
-          const env = basicEnv(dv);
+          const env = addDefaults(new TrackDataEnv(dv, EmptyPath, {}));
           let result;
           try {
-            result = toNative(evaluate(env, exprTree)[1]);
+            result = toNative(env.evaluate(exprTree)[1]);
           } catch (e) {
             console.error(e);
             result = e?.toString();
@@ -92,6 +105,28 @@ export default function EvalPage() {
       });
     } else {
       editor.value?.destroy();
+    }
+  }
+}
+
+class TrackDataEnv extends BasicEvalEnv {
+  constructor(data: any, basePath: Path, vars: Record<string, EvalExpr>) {
+    super(data, basePath, vars);
+  }
+  protected newEnv(
+    basePath: Path,
+    vars: Record<string, EvalExpr>,
+  ): BasicEvalEnv {
+    return new TrackDataEnv(this.data, basePath, vars);
+  }
+
+  evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
+    switch (expr.type) {
+      case "value":
+        if (expr.path) console.log(printPath(expr.path));
+        return [this, expr];
+      default:
+        return defaultEvaluate(this, expr);
     }
   }
 }

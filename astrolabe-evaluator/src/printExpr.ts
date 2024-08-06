@@ -8,8 +8,8 @@ export function printExpr(expr: EvalExpr): string {
       return `\$${expr.variable} => ${printExpr(expr.expr)}`;
     case "value":
       return expr.value?.toString() ?? "null";
-    case "path":
-      return printPath(expr.path);
+    case "property":
+      return expr.property;
     case "call":
       return `\$${expr.function}(${expr.args.map(printExpr).join(", ")})`;
     case "var":
@@ -23,7 +23,7 @@ export function printExpr(expr: EvalExpr): string {
   }
 }
 
-function printPath(path: Path): string {
+export function printPath(path: Path): string {
   if (path.segment != null) return printPath(path.parent) + "." + path.segment;
   else return "";
 }

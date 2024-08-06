@@ -84,10 +84,11 @@ export type EnvValue<T> = [EvalEnv, T];
 export abstract class EvalEnv {
   abstract basePath: Path;
   abstract getVariable(name: string): EvalExpr;
-  abstract getData(path: Path): unknown;
+  abstract getData(path: Path): ValueExpr;
   abstract withVariables(vars: [string, EvalExpr][]): EvalEnv;
   abstract withVariable(name: string, expr: EvalExpr): EvalEnv;
   abstract withBasePath(path: Path): EvalEnv;
+  abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
 }
 
 export function concatPath(path1: Path, path2: Path): Path {
@@ -136,34 +137,35 @@ export function evaluateElem(
 ): EnvValue<ValueExpr> {
   switch (expr.type) {
     case "lambda":
-      return evaluate(
-        env.withVariables([
+      return env
+        .withVariables([
           [expr.variable, value],
           [expr.variable + "_index", { type: "value", value: ind }],
-        ]),
-        expr.expr,
-      );
+        ])
+        .evaluate(expr.expr);
     default:
       if (!value.path) throw new Error("No path for element, must use lambda");
-      return evaluate(env.withBasePath(value.path), expr);
+      return env.withBasePath(value.path).evaluate(expr);
   }
 }
 
-export function evaluate(env: EvalEnv, expr: EvalExpr): EnvValue<ValueExpr> {
-  if (!env) debugger;
+export function defaultEvaluate(
+  env: EvalEnv,
+  expr: EvalExpr,
+): EnvValue<ValueExpr> {
   switch (expr.type) {
     case "var":
       const varExpr = env.getVariable(expr.variable);
-      return evaluate(env, varExpr);
+      return env.evaluate(varExpr);
     case "base":
       const oldBase = env.basePath;
-      const [nextEnv, value] = evaluate(env.withBasePath(expr.base), expr.expr);
+      const [nextEnv, value] = env.withBasePath(expr.base).evaluate(expr.expr);
       return [nextEnv.withBasePath(oldBase), value];
     case "let":
       const withVars = env.withVariables(
         expr.variables.map((x) => [x[0], baseExpr(env.basePath, x[1])]),
       );
-      return evaluate(withVars, expr.expr);
+      return withVars.evaluate(expr.expr);
     case "value":
       return [env, expr];
     case "call":
@@ -173,15 +175,9 @@ export function evaluate(env: EvalEnv, expr: EvalExpr): EnvValue<ValueExpr> {
       return (funcCall as FunctionExpr).evaluate(env, expr);
     case "property":
       const actualPath = segmentPath(expr.property, env.basePath);
-      let dataValue = env.getData(actualPath);
-      if (Array.isArray(dataValue)) {
-        dataValue = dataValue.map((x, i) =>
-          valueExpr(x, segmentPath(i, actualPath)),
-        );
-      }
-      return [env, { type: "value", value: dataValue, path: actualPath }];
+      return env.evaluate(env.getData(actualPath));
     case "array":
-      return mapEnv(mapAllEnv(env, expr.values, evaluate), (v) => ({
+      return mapEnv(mapAllEnv(env, expr.values, doEvaluate), (v) => ({
         value: v,
         type: "value",
       }));
@@ -230,29 +226,45 @@ export function mapAllEnv<T, T2>(
   return [outEnv, accArray];
 }
 
-class BasicEvalEnv extends EvalEnv {
+function doEvaluate(env: EvalEnv, expr: EvalExpr) {
+  return env.evaluate(expr);
+}
+
+export class BasicEvalEnv extends EvalEnv {
+  evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
+    return defaultEvaluate(this, expr);
+  }
   constructor(
-    private data: any,
+    public data: any,
     public basePath: Path,
-    private vars: Record<string, EvalExpr>,
+    protected vars: Record<string, EvalExpr>,
   ) {
     super();
+  }
+
+  protected newEnv(basePath: Path, vars: Record<string, EvalExpr>) {
+    return new BasicEvalEnv(this.data, basePath, vars);
   }
 
   getVariable(name: string): EvalExpr {
     return this.vars[name]!;
   }
-  getData(path: Path): unknown {
-    if (path.segment == null) return this.data;
-    const parentObject = this.getData(path.parent);
-    if (parentObject == null) return null;
-    return typeof parentObject == "object"
-      ? (parentObject as any)[path.segment]
-      : null;
+  getData(path: Path): ValueExpr {
+    if (path.segment == null) return valueExpr(this.data, path);
+    const { value: parentObject } = this.getData(path.parent);
+    if (parentObject == null) return valueExpr(null, path);
+    let dataValue =
+      typeof parentObject == "object"
+        ? (parentObject as any)[path.segment]
+        : null;
+
+    if (Array.isArray(dataValue)) {
+      dataValue = dataValue.map((x, i) => valueExpr(x, segmentPath(i, path)));
+    }
+    return valueExpr(dataValue, path);
   }
   withVariables(vars: [string, EvalExpr][]): EvalEnv {
-    return new BasicEvalEnv(
-      this.data,
+    return this.newEnv(
       this.basePath,
       Object.fromEntries(Object.entries(this.vars).concat(vars)),
     );
@@ -261,59 +273,33 @@ class BasicEvalEnv extends EvalEnv {
   withVariable(name: string, expr: EvalExpr): EvalEnv {
     const outVars = { ...this.vars };
     outVars[name] = expr;
-    return new BasicEvalEnv(this.data, this.basePath, outVars);
+    return this.newEnv(this.basePath, outVars);
   }
 
   withBasePath(path: Path): EvalEnv {
-    return new BasicEvalEnv(this.data, path, this.vars);
+    return this.newEnv(path, this.vars);
   }
 }
 
+export function addDefaults(evalEnv: EvalEnv) {
+  return evalEnv.withVariables(Object.entries(defaultFunctions));
+}
 export function basicEnv(data: any): EvalEnv {
-  return new BasicEvalEnv(
-    data,
-    { segment: null },
-    {
-      "?": condFunction,
-      "!": evalFunction((a) => !a[0]),
-      and: binFunction((a, b) => a && b),
-      or: binFunction((a, b) => a || b),
-      "+": binFunction((a, b) => a + b),
-      "-": binFunction((a, b) => a - b),
-      "*": binFunction((a, b) => a * b),
-      "/": binFunction((a, b) => a / b),
-      ">": binFunction((a, b) => a > b),
-      "<": binFunction((a, b) => a < b),
-      "<=": binFunction((a, b) => a <= b),
-      ">=": binFunction((a, b) => a >= b),
-      "=": binFunction((a, b) => a == b),
-      "!=": binFunction((a, b) => a != b),
-      array: flatFunction,
-      string: stringFunction,
-      sum: aggFunction(0, (acc, b) => acc + (b as number)),
-      count: aggFunction(0, (acc, b) => acc + 1),
-      min: aggFunction(Number.MAX_VALUE, (a, b) => Math.min(a, b as number)),
-      max: aggFunction(Number.MIN_VALUE, (a, b) => Math.max(a, b as number)),
-      notEmpty: evalFunction(([a]) => !(a === "" || a == null)),
-      which: whichFunction,
-      ".": mapFunction,
-      "[": filterFunction,
-    },
-  );
+  return addDefaults(new BasicEvalEnv(data, { segment: null }, {}));
 }
 
 export const whichFunction: FunctionExpr = {
   type: "func",
   evaluate: (e, call) => {
     const [c, ...args] = call.args;
-    let [env, cond] = evaluate(e, c);
+    let [env, cond] = e.evaluate(c);
     let i = 0;
     while (i < args.length - 1) {
       const compare = args[i++];
       const value = args[i++];
-      const [nextEnv, compValue] = evaluate(env, compare);
+      const [nextEnv, compValue] = env.evaluate(compare);
       env = nextEnv;
-      if (compValue.value == cond.value) return evaluate(nextEnv, value);
+      if (compValue.value == cond.value) return nextEnv.evaluate(value);
     }
     return [env, valueExpr(null)];
   },
@@ -326,7 +312,7 @@ export function binFunction(func: (a: any, b: any) => unknown): FunctionExpr {
       const [nextEnv, [{ value: a }, { value: b }]] = mapAllEnv(
         env,
         call.args,
-        evaluate,
+        doEvaluate,
       );
       if (a == null || b == null) return [nextEnv, valueExpr(null)];
       return [nextEnv, valueExpr(func(a, b))];
@@ -338,7 +324,7 @@ export function evalFunction(run: (args: unknown[]) => unknown): FunctionExpr {
   return {
     type: "func",
     evaluate: (e, call) =>
-      mapEnv(mapAllEnv(e, call.args, evaluate), (a) =>
+      mapEnv(mapAllEnv(e, call.args, doEvaluate), (a) =>
         valueExpr(run(a.map((x) => x.value))),
       ),
   };
@@ -352,7 +338,7 @@ const mapFunction: FunctionExpr = {
   type: "func",
   evaluate: (env: EvalEnv, call: CallExpr) => {
     const [left, right] = call.args;
-    const [leftEnv, { value }] = evaluate(env, left);
+    const [leftEnv, { value }] = env.evaluate(left);
     if (Array.isArray(value)) {
       return mapEnv(
         mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
@@ -370,7 +356,7 @@ const filterFunction: FunctionExpr = {
   type: "func",
   evaluate: (env: EvalEnv, call: CallExpr) => {
     const [left, right] = call.args;
-    const [leftEnv, { value, path }] = evaluate(env, left);
+    const [leftEnv, { value, path }] = env.evaluate(left);
     if (Array.isArray(value)) {
       const accArray: ValueExpr[] = [];
       const outEnv = value.reduce(
@@ -392,7 +378,7 @@ const condFunction: FunctionExpr = {
   type: "func",
   evaluate: (env: EvalEnv, call: CallExpr) => {
     return mapEnv(
-      mapAllEnv(env, call.args, evaluate),
+      mapAllEnv(env, call.args, doEvaluate),
       ([{ value: c }, e1, e2]) =>
         c === true ? e1 : c === false ? e2 : valueExpr(null),
     );
@@ -413,7 +399,7 @@ function aggFunction<A>(init: A, op: (acc: A, x: unknown) => A): FunctionExpr {
   return {
     type: "func",
     evaluate: (e, call) => {
-      const [ne, v] = mapAllEnv(e, call.args, evaluate);
+      const [ne, v] = mapAllEnv(e, call.args, doEvaluate);
       if (v.length == 1)
         return [ne, valueExpr(performOp(v[0].value as ValueExpr[]))];
       return [ne, valueExpr(performOp(v))];
@@ -443,7 +429,7 @@ const stringFunction: FunctionExpr = evalFunction(toString);
 const flatFunction: FunctionExpr = {
   type: "func",
   evaluate: (e, call) => {
-    const allArgs = mapAllEnv(e, call.args, evaluate);
+    const allArgs = mapAllEnv(e, call.args, doEvaluate);
     return mapEnv(allArgs, (x) => valueExpr(x.flatMap(allElems)));
   },
 };
@@ -462,3 +448,30 @@ export function toNative(value: ValueExpr): unknown {
   }
   return value.value;
 }
+
+const defaultFunctions = {
+  "?": condFunction,
+  "!": evalFunction((a) => !a[0]),
+  and: binFunction((a, b) => a && b),
+  or: binFunction((a, b) => a || b),
+  "+": binFunction((a, b) => a + b),
+  "-": binFunction((a, b) => a - b),
+  "*": binFunction((a, b) => a * b),
+  "/": binFunction((a, b) => a / b),
+  ">": binFunction((a, b) => a > b),
+  "<": binFunction((a, b) => a < b),
+  "<=": binFunction((a, b) => a <= b),
+  ">=": binFunction((a, b) => a >= b),
+  "=": binFunction((a, b) => a == b),
+  "!=": binFunction((a, b) => a != b),
+  array: flatFunction,
+  string: stringFunction,
+  sum: aggFunction(0, (acc, b) => acc + (b as number)),
+  count: aggFunction(0, (acc, b) => acc + 1),
+  min: aggFunction(Number.MAX_VALUE, (a, b) => Math.min(a, b as number)),
+  max: aggFunction(Number.MIN_VALUE, (a, b) => Math.max(a, b as number)),
+  notEmpty: evalFunction(([a]) => !(a === "" || a == null)),
+  which: whichFunction,
+  ".": mapFunction,
+  "[": filterFunction,
+};
