@@ -5,16 +5,15 @@ namespace Astrolabe.Evaluator;
 using EvaluatedExpr = EnvironmentValue<ValueExpr>;
 
 public record EvalEnvironment(
-    Func<DataPath, object?> GetDataFunc,
-    Func<DataPath, bool>? ValidData,
+    Func<DataPath, ValueExpr> GetDataFunc,
     DataPath BasePath,
     ImmutableDictionary<string, EvalExpr> Variables,
     IEnumerable<EvalError> Errors
 )
 {
-    public object? GetData(DataPath dataPath)
+    public ValueExpr GetData(DataPath dataPath)
     {
-        return ValidData == null || ValidData(dataPath) ? GetDataFunc(dataPath) : null;
+        return GetDataFunc(dataPath);
     }
 
     public EvalExpr? GetVariable(string name)
@@ -45,11 +44,10 @@ public record EvalEnvironment(
         return this with { Errors = Errors.Append(new EvalError(message)) };
     }
 
-    public static EvalEnvironment DataFrom(Func<DataPath, object?> data)
+    public static EvalEnvironment DataFrom(Func<DataPath, ValueExpr> data)
     {
         return new EvalEnvironment(
             data,
-            null,
             DataPath.Empty,
             ImmutableDictionary<string, EvalExpr>.Empty,
             []

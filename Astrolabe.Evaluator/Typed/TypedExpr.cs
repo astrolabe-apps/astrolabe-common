@@ -35,7 +35,8 @@ public interface TypedExpr<T> : WrappedExpr
     }
 }
 
-internal record SimpleTypedExpr<T>(EvalExpr Wrapped, EvalExpr? IndexExpr = null) : TypedElementExpr<T>
+internal record SimpleTypedExpr<T>(EvalExpr Wrapped, EvalExpr? IndexExpr = null)
+    : TypedElementExpr<T>
 {
     public NumberExpr Index => new(IndexExpr!);
 }
@@ -47,11 +48,9 @@ public interface TypedElementExpr<T> : TypedExpr<T>
 
 public static class TypedExprExtensions
 {
-    public static PathExpr FieldName<T, T2>(Expression<Func<T, T2>> getExpr)
+    public static PropertyExpr FieldName<T, T2>(Expression<Func<T, T2>> getExpr)
     {
         var propName = getExpr.GetPropertyInfo().Name;
-        return new PathExpr(
-            new FieldPath(JsonNamingPolicy.CamelCase.ConvertName(propName), DataPath.Empty)
-        );
+        return new PropertyExpr(JsonNamingPolicy.CamelCase.ConvertName(propName));
     }
 }

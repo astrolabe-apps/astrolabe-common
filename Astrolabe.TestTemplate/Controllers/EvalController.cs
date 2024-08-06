@@ -16,7 +16,8 @@ public class EvalController : ControllerBase
         var env = JsonDataLookup
             .EnvironmentFor(JsonSerializer.SerializeToNode(evalData.Data))
             .AddDefaultFunctions();
-        return Ok(env.ResolveAndEvaluate(ExprParser.Parse(evalData.Expression)).Value.ToNative());
+        var valueExpr = env.Evaluate(ExprParser.Parse(evalData.Expression)).Value;
+        return Ok(valueExpr.ToNative());
     }
 }
 

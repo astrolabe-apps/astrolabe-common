@@ -60,37 +60,23 @@ public record LetExpr(IEnumerable<(VarExpr, EvalExpr)> Vars, EvalExpr In) : Eval
     }
 }
 
-public record PathExpr(DataPath Path) : EvalExpr;
+public record PropertyExpr(string Property) : EvalExpr;
 
 public record LambdaExpr(string Variable, EvalExpr Value) : EvalExpr;
 
-public record OptionalExpr(EvalExpr Value, EvalExpr Condition) : EvalExpr;
-
 public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, CallExpr callExpr);
 
-public record FunctionHandler(CallHandler<EvalExpr> Resolve, CallHandler<ValueExpr> Evaluate)
+public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
 {
-    public static FunctionHandler ResolveOnly(CallHandler<EvalExpr> resolve) =>
-        new(resolve, (e, x) => throw new NotImplementedException());
-
-    public static FunctionHandler DefaultResolve(CallHandler<ValueExpr> eval) =>
-        new(ResolveArgs, eval);
-
     public static FunctionHandler DefaultEval(Func<IList<object?>, object?> eval) =>
         new(
-            ResolveArgs,
             (e, call) =>
                 e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x))
                     .Map(args => new ValueExpr(eval(args.Select(x => x.Value).ToList())))
         );
-
-    public static EnvironmentValue<EvalExpr> ResolveArgs(EvalEnvironment env, CallExpr callExpr)
-    {
-        return env.EvalSelect(callExpr.Args, (e, x) => e.ResolveExpr(x)).Map(callExpr.WithArgs);
-    }
 }
 
-public record ValueExpr(object? Value) : EvalExpr
+public record ValueExpr(object? Value, DataPath? Path = null) : EvalExpr
 {
     public static readonly ValueExpr Null = new((object?)null);
 
@@ -185,43 +171,19 @@ public record ValueExpr(object? Value) : EvalExpr
     {
         return v switch
         {
-            ArrayValue av => av.Values.Cast<object?>().Select(ToNative),
+            ArrayValue av => av.Values.Select(x => x.ToNative()),
             ObjectValue ov => ov.Object,
             _ => v
         };
     }
 
-    public static object? Flatten(object? v)
+    public IEnumerable<ValueExpr> AllValues()
     {
-        return v switch
+        return Value switch
         {
-            ArrayValue av
-                => av
-                    .Values.Cast<object?>()
-                    .SelectMany(v =>
-                        Flatten(v) switch
-                        {
-                            IEnumerable<object?> res => res,
-                            var o => [o]
-                        }
-                    ),
-            ObjectValue ov => ov.Object,
-            _ => v
+            ArrayValue av => av.Values.SelectMany(x => x.AllValues()),
+            _ => [this]
         };
-    }
-
-    public static IList<object?> ToList(object? value)
-    {
-        return value switch
-        {
-            ArrayValue av => av.Values.Cast<object?>().ToList(),
-            _ => [value]
-        };
-    }
-
-    public IList<object?> AsList()
-    {
-        return ToList(Value);
     }
 }
 
@@ -286,29 +248,7 @@ public record VarExpr(string Name) : EvalExpr
     }
 }
 
-public record ArrayValue(int Count, IEnumerable Values)
-{
-    public static ArrayValue From<T>(IEnumerable<T> enumerable)
-    {
-        var l = enumerable.ToList();
-        return new ArrayValue(l.Count, l);
-    }
-
-    public ArrayValue Flatten()
-    {
-        return From(
-            Values
-                .Cast<object?>()
-                .SelectMany(v =>
-                    ValueExpr.Flatten(v) switch
-                    {
-                        IEnumerable<object?> res => res,
-                        var o => [o]
-                    }
-                )
-        );
-    }
-}
+public record ArrayValue(IEnumerable<ValueExpr> Values);
 
 public record ObjectValue(object Object);
 
@@ -334,11 +274,6 @@ public static class ValueExtensions
         return expr is ValueExpr { Value: null };
     }
 
-    public static bool IsDataPath(this EvalExpr expr, DataPath dataPath)
-    {
-        return expr is PathExpr { Path: var dp } && dp.Equals(dataPath);
-    }
-
     public static ValueExpr AsValue(this EvalExpr expr)
     {
         return (ValueExpr)expr;
@@ -347,11 +282,6 @@ public static class ValueExtensions
     public static VarExpr AsVar(this EvalExpr expr)
     {
         return (VarExpr)expr;
-    }
-
-    public static DataPath AsPath(this EvalExpr expr)
-    {
-        return ((PathExpr)expr).Path;
     }
 
     public static ArrayValue AsArray(this ValueExpr v)
@@ -397,32 +327,5 @@ public static class ValueExtensions
     public static string AsString(this ValueExpr v)
     {
         return (string)v.Value!;
-    }
-
-    public static EvalExpr AndExpr(this EvalExpr expr, EvalExpr other)
-    {
-        return expr is ValueExpr(bool b)
-            ? b
-                ? other
-                : expr
-            : CallExpr.And(expr, other);
-    }
-
-    public static EvalExpr DotExpr(this EvalExpr expr, EvalExpr other)
-    {
-        return (expr, other) switch
-        {
-            (ValueExpr { Value: DataPath ps }, ValueExpr v) => new PathExpr(ApplyDot(ps, v)),
-            _ => CallExpr.Map(expr, other)
-        };
-    }
-
-    public static DataPath ApplyDot(DataPath basePath, ValueExpr segment)
-    {
-        return segment switch
-        {
-            { Value: string s } => new FieldPath(s, basePath),
-            _ => new IndexPath(segment.AsInt(), basePath)
-        };
     }
 }

@@ -9,7 +9,7 @@ public static class DefaultFunctions
         return value switch
         {
             null => "",
-            ArrayValue av => string.Join("", ValueExpr.ToList(av).Select(ExprValueToString)),
+            ArrayValue av => string.Join("", av.Values.Select(ExprValueToString)),
             ObjectValue => "{}",
             _ => value.ToString() ?? ""
         };
@@ -113,27 +113,27 @@ public static class DefaultFunctions
             }
     );
 
-    private static readonly FunctionHandler StringOp = FunctionHandler.DefaultEval(x =>
-        ExprValueToString(ArrayValue.From(x))
+    private static readonly FunctionHandler StringOp = FunctionHandler.DefaultEval(
+        ExprValueToString
     );
 
-    public static FunctionHandler ArrayOp(Func<IList<object?>, object?> arrayFunc)
+    public static FunctionHandler ArrayOp<T>(T init, Func<T, object?, T> arrayFunc)
     {
         return FunctionHandler.DefaultEval(args =>
             args switch
             {
-                [ArrayValue av] => CheckValues(ValueExpr.ToList(av)),
-                _ => CheckValues(args)
+                [ArrayValue av] => av.Values.Aggregate((T?)init, (acc, v) => RunOp(acc, v.Value)),
+                _ => args.Aggregate((T?)init, RunOp)
             }
         );
 
-        object? CheckValues(IList<object?> values)
+        T? RunOp(T? acc, object? o)
         {
-            if (values.Any(x => x == null))
-                return null;
-            return values.Any(x => x is ArrayValue)
-                ? ArrayValue.From(values.Select(x => CheckValues(ValueExpr.ToList(x))))
-                : arrayFunc(values);
+            if (acc is null || o == null)
+            {
+                return default;
+            }
+            return arrayFunc(acc, o);
         }
     }
 
@@ -154,24 +154,16 @@ public static class DefaultFunctions
             { "or", BoolOp((a, b) => a || b) },
             { "!", UnaryNullOp((a) => a is bool b ? !b : null) },
             { "?", IfElseOp },
+            { "sum", ArrayOp(0d, (acc, v) => acc + ValueExpr.AsDouble(v)) },
+            { "min", ArrayOp(double.MaxValue, (acc, v) => Math.Min(acc, ValueExpr.AsDouble(v))) },
+            { "max", ArrayOp(double.MinValue, (acc, v) => Math.Max(acc, ValueExpr.AsDouble(v))) },
+            { "count", ArrayOp(0, (acc, v) => acc + 1) },
             {
-                "sum",
-                ArrayOp(vals => vals.Select(ValueExpr.AsDouble).Aggregate(0d, (a, b) => a + b))
+                "array",
+                FunctionHandler.DefaultEval(args => new ArrayValue(
+                    args.SelectMany(x => new ValueExpr(x).AllValues())
+                ))
             },
-            {
-                "min",
-                ArrayOp(vals =>
-                    vals.Select(ValueExpr.AsDouble).Aggregate(double.MaxValue, Math.Min)
-                )
-            },
-            {
-                "max",
-                ArrayOp(vals =>
-                    vals.Select(ValueExpr.AsDouble).Aggregate(double.MinValue, Math.Max)
-                )
-            },
-            { "count", ArrayOp(vals => vals.Count) },
-            { "array", FunctionHandler.DefaultEval(args => ArrayValue.From(args).Flatten()) },
             {
                 "notEmpty",
                 FunctionHandler.DefaultEval(x =>
@@ -184,26 +176,20 @@ public static class DefaultFunctions
                 )
             },
             { "string", StringOp },
-            {
-                "resolve",
-                FunctionHandler.ResolveOnly(
-                    (e, call) => e.ResolveAndEvaluate(call.Args[0]).Map(x => (EvalExpr)x)
-                )
-            },
-            {
-                "which",
-                FunctionHandler.ResolveOnly(
-                    (e, call) =>
-                    {
-                        return e.ResolveExpr(
-                            call.Args.Aggregate(
-                                new WhichState(ValueExpr.Null, null, null),
-                                (s, x) => s.Next(x)
-                            ).Current
-                        );
-                    }
-                )
-            },
+            // {
+            //     "which",
+            //     FunctionHandler.ResolveOnly(
+            //         (e, call) =>
+            //         {
+            //             return e.ResolveExpr(
+            //                 call.Args.Aggregate(
+            //                     new WhichState(ValueExpr.Null, null, null),
+            //                     (s, x) => s.Next(x)
+            //                 ).Current
+            //             );
+            //         }
+            //     )
+            // },
             { "[", FilterFunctionHandler.Instance },
             { ".", MapFunctionHandler.Instance },
         };

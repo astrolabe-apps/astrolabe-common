@@ -10,18 +10,17 @@ public static class JsonDataLookup
     {
         return new EvalEnvironment(
             FromObject(data),
-            null,
             DataPath.Empty,
             ImmutableDictionary<string, EvalExpr>.Empty,
             []
         );
     }
 
-    public static Func<DataPath, object?> FromObject(JsonNode? data)
+    public static Func<DataPath, ValueExpr> FromObject(JsonNode? data)
     {
         Dictionary<DataPath, JsonNode?> cache = new();
 
-        return path => ToValue(GetNode(path));
+        return path => new ValueExpr(ToValue(path, GetNode(path)), path);
 
         JsonNode? GetNode(DataPath dp)
         {
@@ -49,12 +48,13 @@ public static class JsonDataLookup
         }
     }
 
-    private static object? ToValue(JsonNode? node)
+    private static object? ToValue(DataPath p, JsonNode? node)
     {
         return node switch
         {
             null => node,
-            JsonArray ja => new ArrayValue(ja.Count, ja),
+            JsonArray ja
+                => new ArrayValue(ja.Select((x, i) => new ValueExpr(x, new IndexPath(i, p)))),
             JsonObject obj => new ObjectValue(obj),
             JsonValue v
                 => v.GetValue<object>() switch
