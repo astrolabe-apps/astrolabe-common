@@ -1,5 +1,3 @@
-import { printPath } from "./printExpr";
-
 export interface EmptyPath {
   segment: null;
 }
@@ -85,12 +83,14 @@ export type EnvValue<T> = [EvalEnv, T];
 
 export abstract class EvalEnv {
   abstract basePath: Path;
-  abstract getVariable(name: string): EvalExpr;
+  abstract errors: string[];
+  abstract getVariable(name: string): EvalExpr | undefined;
   abstract getData(path: Path): ValueExpr;
   abstract withVariables(vars: [string, EvalExpr][]): EvalEnv;
   abstract withVariable(name: string, expr: EvalExpr): EvalEnv;
   abstract withBasePath(path: Path): EvalEnv;
   abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
+  abstract withError(error: string): EvalEnv;
 }
 
 export function concatPath(path1: Path, path2: Path): Path {
@@ -164,6 +164,11 @@ export function defaultEvaluate(
   switch (expr.type) {
     case "var":
       const varExpr = env.getVariable(expr.variable);
+      if (varExpr == null)
+        return [
+          env.withError("Variable " + expr.variable + " not declared"),
+          valueExpr(null),
+        ];
       return env.evaluate(varExpr);
     case "base":
       const oldBase = env.basePath;
@@ -179,7 +184,10 @@ export function defaultEvaluate(
     case "call":
       const funcCall = env.getVariable(expr.function);
       if (funcCall == null)
-        throw new Error("Unknown function " + expr.function);
+        return [
+          env.withError("Function " + expr.function + " not declared"),
+          valueExpr(null),
+        ];
       return (funcCall as FunctionExpr).evaluate(env, expr);
     case "property":
       const actualPath = segmentPath(expr.property, env.basePath);
@@ -239,28 +247,45 @@ function doEvaluate(env: EvalEnv, expr: EvalExpr) {
   return env.evaluate(expr);
 }
 
+export interface EvalState {
+  data: any;
+  basePath: Path;
+  vars: Record<string, EvalExpr>;
+  errors: string[];
+}
 export class BasicEvalEnv extends EvalEnv {
   evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
     return defaultEvaluate(this, expr);
   }
-  constructor(
-    public data: any,
-    public basePath: Path,
-    protected vars: Record<string, EvalExpr>,
-  ) {
+  constructor(protected state: EvalState) {
     super();
   }
 
-  protected newEnv(basePath: Path, vars: Record<string, EvalExpr>) {
-    return new BasicEvalEnv(this.data, basePath, vars);
+  get errors() {
+    return this.state.errors;
   }
 
-  getVariable(name: string): EvalExpr {
-    return this.vars[name]!;
+  get basePath() {
+    return this.state.basePath;
+  }
+
+  protected newEnv(newState: EvalState): EvalEnv {
+    return new BasicEvalEnv(newState);
+  }
+
+  withError(error: string): EvalEnv {
+    return this.newEnv({
+      ...this.state,
+      errors: [...this.state.errors, error],
+    });
+  }
+
+  getVariable(name: string): EvalExpr | undefined {
+    return this.state.vars[name];
   }
   getData(path: Path): ValueExpr {
     const getNode: (path: Path) => unknown = (path) => {
-      if (path.segment == null) return this.data;
+      if (path.segment == null) return this.state.data;
       const parentObject = getNode(path.parent);
       if (parentObject == null) return null;
       return typeof parentObject == "object"
@@ -274,28 +299,38 @@ export class BasicEvalEnv extends EvalEnv {
     return valueExpr(dataValue, path);
   }
   withVariables(vars: [string, EvalExpr][]): EvalEnv {
-    return this.newEnv(
-      this.basePath,
-      Object.fromEntries(Object.entries(this.vars).concat(vars)),
-    );
+    return this.newEnv({
+      ...this.state,
+      vars: Object.fromEntries(Object.entries(this.state.vars).concat(vars)),
+    });
   }
 
   withVariable(name: string, expr: EvalExpr): EvalEnv {
-    const outVars = { ...this.vars };
+    const outVars = { ...this.state.vars };
     outVars[name] = expr;
-    return this.newEnv(this.basePath, outVars);
+    return this.newEnv({ ...this.state, vars: outVars });
   }
 
   withBasePath(path: Path): EvalEnv {
-    return this.newEnv(path, this.vars);
+    return this.newEnv({ ...this.state, basePath: path });
   }
 }
 
 export function addDefaults(evalEnv: EvalEnv) {
   return evalEnv.withVariables(Object.entries(defaultFunctions));
 }
+
+export function emptyEvalState(data: any): EvalState {
+  return {
+    data,
+    basePath: { segment: null },
+    vars: {},
+    errors: [],
+  };
+}
+
 export function basicEnv(data: any): EvalEnv {
-  return addDefaults(new BasicEvalEnv(data, { segment: null }, {}));
+  return addDefaults(new BasicEvalEnv(emptyEvalState(data)));
 }
 
 export const whichFunction: FunctionExpr = {
