@@ -127,6 +127,12 @@ export function callExpr(name: string, args: EvalExpr[]): CallExpr {
   return { type: "call", function: name, args };
 }
 
+export function functionExpr(
+  evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<ValueExpr>,
+): FunctionExpr {
+  return { type: "func", evaluate };
+}
+
 export function mapExpr(left: EvalExpr, right: EvalExpr) {
   return callExpr(".", [left, right]);
 }
@@ -141,8 +147,8 @@ export function evaluateElem(
     case "lambda":
       return env
         .withVariables([
-          [expr.variable, value],
-          [expr.variable + "_index", { type: "value", value: ind }],
+          [expr.variable, { type: "value", value: ind }],
+          [expr.variable + "_elem", value],
         ])
         .evaluate(expr.expr);
     default:
@@ -324,11 +330,15 @@ export function binFunction(func: (a: any, b: any) => unknown): FunctionExpr {
   };
 }
 
+export function evaluateAll(e: EvalEnv, expr: EvalExpr[]) {
+  return mapAllEnv(e, expr, doEvaluate);
+}
+
 export function evalFunction(run: (args: unknown[]) => unknown): FunctionExpr {
   return {
     type: "func",
     evaluate: (e, call) =>
-      mapEnv(mapAllEnv(e, call.args, doEvaluate), (a) =>
+      mapEnv(evaluateAll(e, call.args), (a) =>
         valueExpr(run(a.map((x) => x.value))),
       ),
   };
@@ -420,7 +430,7 @@ function toString(v: unknown): string {
     case "undefined":
       return "null";
     case "object":
-      if (Array.isArray(v)) return v.map(toString).join("");
+      if (Array.isArray(v)) return v.map((x) => toString(x.value)).join("");
       if (v == null) return "null";
       return JSON.stringify(v);
     default:
@@ -428,7 +438,9 @@ function toString(v: unknown): string {
   }
 }
 
-const stringFunction: FunctionExpr = evalFunction(toString);
+const stringFunction: FunctionExpr = functionExpr((e, { args }) =>
+  mapEnv(evaluateAll(e, args), (x) => valueExpr(toString(x))),
+);
 
 const flatFunction: FunctionExpr = {
   type: "func",
