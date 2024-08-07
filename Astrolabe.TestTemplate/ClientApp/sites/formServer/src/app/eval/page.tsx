@@ -1,11 +1,12 @@
 "use client";
 import {
   addDefaults,
-  basicEnv,
   BasicEvalEnv,
   defaultEvaluate,
+  emptyEnvState,
   EmptyPath,
   EnvValue,
+  EvalEnvState,
   EvalExpr,
   parseEval,
   Path,
@@ -54,7 +55,7 @@ export default function EvalPage() {
         } else {
           const exprTree = parseEval(v);
 
-          const env = addDefaults(new TrackDataEnv(dv, EmptyPath, {}));
+          const env = addDefaults(new TrackDataEnv(emptyEnvState(dv)));
           let result;
           try {
             result = toNative(env.evaluate(exprTree)[1]);
@@ -110,14 +111,11 @@ export default function EvalPage() {
 }
 
 class TrackDataEnv extends BasicEvalEnv {
-  constructor(data: any, basePath: Path, vars: Record<string, EvalExpr>) {
-    super(data, basePath, vars);
+  constructor(state: EvalEnvState) {
+    super(state);
   }
-  protected newEnv(
-    basePath: Path,
-    vars: Record<string, EvalExpr>,
-  ): BasicEvalEnv {
-    return new TrackDataEnv(this.data, basePath, vars);
+  protected newEnv(newState: EvalEnvState): BasicEvalEnv {
+    return new TrackDataEnv(newState);
   }
 
   evaluate(expr: EvalExpr): EnvValue<ValueExpr> {

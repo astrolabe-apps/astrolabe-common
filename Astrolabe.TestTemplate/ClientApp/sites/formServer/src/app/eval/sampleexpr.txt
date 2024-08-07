@@ -1,0 +1,21 @@
+components.$ComponentIndex => 
+let $IsHaulingUnitOrPrimeMover = (type = "PrimeMover") in 
+let $ComponentNameAndAxleGrouping = $string(type, $count(axleGroups.axles)) in
+let $FrontMinComponentTareMass=$which($ComponentNameAndAxleGrouping, "PrimeMover12", 3, 
+"SemiTrailer2", 0.8, "SemiTrailer3", 0.8, "SemiTrailer4", 0.8, "ConverterDolly2", 0.05, 
+"ConverterDolly3", 0.05, "LeadTrailer3", 0.8, "LeadTrailer4", 0.8) in
+let $RearMinComponentTareMass=$which($ComponentNameAndAxleGrouping, "PrimeMover12", 3, 
+"SemiTrailer2", 2.2, "SemiTrailer3", 3.2, "SemiTrailer4", 4.2, "ConverterDolly2", 1.95, 
+"ConverterDolly3", 2.95, "LeadTrailer3", 3.2, "LeadTrailer4", 4.2) in
+let $MinComponentTareMass=$FrontMinComponentTareMass + $RearMinComponentTareMass in
+let $MaxComponentTareMass=$which($ComponentNameAndAxleGrouping, "PrimeMover12", 13, 
+"SemiTrailer2", 12, "SemiTrailer3", 13, "SemiTrailer4", 14, "ConverterDolly2", 5, 
+"ConverterDolly3", 6, "LeadTrailer3", 13, "LeadTrailer4", 14) in 
+
+$object("IsHaulingUnitOrPrimeMover", $IsHaulingUnitOrPrimeMover, 
+"ComponentNameAndAxleGrouping", $ComponentNameAndAxleGrouping, 
+"FrontMinComponentTareMass", $FrontMinComponentTareMass, 
+"RearMinComponentTareMass", $RearMinComponentTareMass, 
+"MinComponentTareMass", $MinComponentTareMass, 
+"MaxComponentTareMass", $MaxComponentTareMass)
+

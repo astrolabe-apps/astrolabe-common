@@ -150,6 +150,7 @@ export function evaluateElem(
           [expr.variable, { type: "value", value: ind }],
           [expr.variable + "_elem", value],
         ])
+        .withBasePath(value.path ?? env.basePath)
         .evaluate(expr.expr);
     default:
       if (!value.path) throw new Error("No path for element, must use lambda");
@@ -247,7 +248,7 @@ function doEvaluate(env: EvalEnv, expr: EvalExpr) {
   return env.evaluate(expr);
 }
 
-export interface EvalState {
+export interface EvalEnvState {
   data: any;
   basePath: Path;
   vars: Record<string, EvalExpr>;
@@ -257,7 +258,7 @@ export class BasicEvalEnv extends EvalEnv {
   evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
     return defaultEvaluate(this, expr);
   }
-  constructor(protected state: EvalState) {
+  constructor(protected state: EvalEnvState) {
     super();
   }
 
@@ -269,7 +270,7 @@ export class BasicEvalEnv extends EvalEnv {
     return this.state.basePath;
   }
 
-  protected newEnv(newState: EvalState): EvalEnv {
+  protected newEnv(newState: EvalEnvState): EvalEnv {
     return new BasicEvalEnv(newState);
   }
 
@@ -320,7 +321,7 @@ export function addDefaults(evalEnv: EvalEnv) {
   return evalEnv.withVariables(Object.entries(defaultFunctions));
 }
 
-export function emptyEvalState(data: any): EvalState {
+export function emptyEnvState(data: any): EvalEnvState {
   return {
     data,
     basePath: { segment: null },
@@ -330,7 +331,7 @@ export function emptyEvalState(data: any): EvalState {
 }
 
 export function basicEnv(data: any): EvalEnv {
-  return addDefaults(new BasicEvalEnv(emptyEvalState(data)));
+  return addDefaults(new BasicEvalEnv(emptyEnvState(data)));
 }
 
 export const whichFunction: FunctionExpr = {
