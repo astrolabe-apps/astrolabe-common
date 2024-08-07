@@ -210,47 +210,7 @@ public static class RuleValidator
         var ruleEnv = variables != null ? baseEnv.Evaluate(variables).Env : baseEnv;
         var ruleList = ruleEnv.EvaluateRule(rule);
         return ruleList.Value.ToList();
-        // var byPath = allRules.ToLookup(x => x.Path);
-        // var dataOrder = allRules.GetDataOrder();
-        // var validationResult = ruleEnv.EvalConcat(
-        //     dataOrder,
-        //     (de, p) =>
-        //         de.EvalConcat(
-        //             adjustRules(p, byPath[p]),
-        //             (e, r) => e.EvaluateFailures(r).SingleOrEmpty()
-        //         )
-        // );
-        // return validationResult;
     }
-
-    // public static EnvironmentValue<RuleFailure?> EvaluateFailures(
-    //     this EvalEnvironment environment,
-    //     ResolvedRule rule
-    // )
-    // {
-    //     var (outEnv, result) = environment.Evaluate(rule.Must);
-    //     RuleFailure? failure = null;
-    //     var valEnv = outEnv.GetValidatorState();
-    //     if (result.IsFalse())
-    //     {
-    //         failure = new RuleFailure(valEnv.Failures, valEnv.Message.AsString(), rule);
-    //     }
-    //
-    //     var failedData = result.IsFalse() ? valEnv.FailedData.Add(rule.Path) : valEnv.FailedData;
-    //     var resetEnv = valEnv with
-    //     {
-    //         Properties = ImmutableDictionary<string, object?>.Empty,
-    //         Message = ValueExpr.Null,
-    //         Failures = [],
-    //         FailedData = failedData
-    //     };
-    //     return (
-    //         outEnv.UpdateValidatorState(_ => resetEnv) with
-    //         {
-    //             ValidData = dp => !failedData.Contains(dp)
-    //         }
-    //     ).WithValue(failure);
-    // }
 
     public static EnvironmentValue<IEnumerable<EvaluatedRule>> EvaluateRule(
         this EvalEnvironment environment,
