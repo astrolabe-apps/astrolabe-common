@@ -8,12 +8,7 @@ public static class JsonDataLookup
 {
     public static EvalEnvironment EnvironmentFor(JsonNode? data)
     {
-        return new EvalEnvironment(
-            FromObject(data),
-            DataPath.Empty,
-            ImmutableDictionary<string, EvalExpr>.Empty,
-            []
-        );
+        return EvalEnvironment.DataFrom(FromObject(data));
     }
 
     public static Func<DataPath, ValueExpr> FromObject(JsonNode? data)

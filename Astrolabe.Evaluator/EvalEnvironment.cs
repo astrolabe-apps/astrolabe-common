@@ -4,54 +4,79 @@ namespace Astrolabe.Evaluator;
 
 using EvaluatedExpr = EnvironmentValue<ValueExpr>;
 
-public record EvalEnvironment(
+public record EvalEnvironmentState(
     Func<DataPath, ValueExpr> GetDataFunc,
     DataPath BasePath,
     ImmutableDictionary<string, EvalExpr> Variables,
     IEnumerable<EvalError> Errors
 )
 {
-    public ValueExpr GetData(DataPath dataPath)
+    public static EvalEnvironmentState EmptyState(Func<DataPath, ValueExpr> data)
     {
-        return GetDataFunc(dataPath);
-    }
-
-    public EvalExpr? GetVariable(string name)
-    {
-        return CollectionExtensions.GetValueOrDefault(Variables, name);
-    }
-
-    public EvalEnvironment WithVariable(string name, EvalExpr? value)
-    {
-        return this with
-        {
-            Variables = value == null ? Variables.Remove(name) : Variables.SetItem(name, value)
-        };
-    }
-
-    public EvalEnvironment WithVariables(ICollection<KeyValuePair<string, EvalExpr>> vars)
-    {
-        return this with { Variables = Variables.AddRange(vars) };
-    }
-
-    public EvalEnvironment WithBasePath(DataPath basePath)
-    {
-        return this with { BasePath = basePath };
-    }
-
-    public EvalEnvironment WithError(string message)
-    {
-        return this with { Errors = Errors.Append(new EvalError(message)) };
-    }
-
-    public static EvalEnvironment DataFrom(Func<DataPath, ValueExpr> data)
-    {
-        return new EvalEnvironment(
+        return new EvalEnvironmentState(
             data,
             DataPath.Empty,
             ImmutableDictionary<string, EvalExpr>.Empty,
             []
         );
+    }
+}
+
+public class EvalEnvironment(EvalEnvironmentState state)
+{
+    public DataPath BasePath => state.BasePath;
+
+    public ValueExpr GetData(DataPath dataPath)
+    {
+        return state.GetDataFunc(dataPath);
+    }
+
+    public EvalExpr? GetVariable(string name)
+    {
+        return CollectionExtensions.GetValueOrDefault(state.Variables, name);
+    }
+
+    protected virtual EvalEnvironment NewEnv(EvalEnvironmentState newState)
+    {
+        return new EvalEnvironment(newState);
+    }
+
+    public EvalEnvironment WithVariable(string name, EvalExpr? value)
+    {
+        return NewEnv(
+            state with
+            {
+                Variables =
+                    value == null
+                        ? state.Variables.Remove(name)
+                        : state.Variables.SetItem(name, value)
+            }
+        );
+    }
+
+    public EvalEnvironment WithVariables(ICollection<KeyValuePair<string, EvalExpr>> vars)
+    {
+        return NewEnv(state with { Variables = state.Variables.SetItems(vars) });
+    }
+
+    public EvalEnvironment WithBasePath(DataPath basePath)
+    {
+        return NewEnv(state with { BasePath = basePath });
+    }
+
+    public EvalEnvironment WithError(string message)
+    {
+        return NewEnv(state with { Errors = state.Errors.Append(new EvalError(message)) });
+    }
+
+    public static EvalEnvironment DataFrom(Func<DataPath, ValueExpr> data)
+    {
+        return new EvalEnvironment(EvalEnvironmentState.EmptyState(data));
+    }
+
+    public virtual EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
+    {
+        return this.DefaultEvaluate(evalExpr);
     }
 }
 

@@ -1,3 +1,5 @@
+import { printPath } from "./printExpr";
+
 export interface EmptyPath {
   segment: null;
 }
@@ -175,7 +177,8 @@ export function defaultEvaluate(
       return (funcCall as FunctionExpr).evaluate(env, expr);
     case "property":
       const actualPath = segmentPath(expr.property, env.basePath);
-      return env.evaluate(env.getData(actualPath));
+      const dataValue = env.getData(actualPath);
+      return env.evaluate(dataValue);
     case "array":
       return mapEnv(mapAllEnv(env, expr.values, doEvaluate), (v) => ({
         value: v,
@@ -250,14 +253,15 @@ export class BasicEvalEnv extends EvalEnv {
     return this.vars[name]!;
   }
   getData(path: Path): ValueExpr {
-    if (path.segment == null) return valueExpr(this.data, path);
-    const { value: parentObject } = this.getData(path.parent);
-    if (parentObject == null) return valueExpr(null, path);
-    let dataValue =
-      typeof parentObject == "object"
+    const getNode: (path: Path) => unknown = (path) => {
+      if (path.segment == null) return this.data;
+      const parentObject = getNode(path.parent);
+      if (parentObject == null) return null;
+      return typeof parentObject == "object"
         ? (parentObject as any)[path.segment]
         : null;
-
+    };
+    let dataValue = getNode(path);
     if (Array.isArray(dataValue)) {
       dataValue = dataValue.map((x, i) => valueExpr(x, segmentPath(i, path)));
     }

@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Numerics;
 using Astrolabe.Annotation;
 using Astrolabe.Evaluator;
@@ -22,7 +23,7 @@ public record SingleRule(EvalExpr Path, EvalExpr Props, EvalExpr Must) : Rule(Ru
 
     public SingleRule AndMust(EvalExpr andMust)
     {
-        return this with { Must = Must.AndExpr(andMust) };
+        return this with { Must = new CallExpr("and", [Must, andMust]) };
     }
 
     public SingleRule When(EvalExpr whenExpr)
@@ -58,14 +59,6 @@ public record ForEachRule(EvalExpr Path, VarExpr Index, LetExpr? Variables, Rule
     }
 }
 
-public record ResolvedRule(DataPath Path, EvalExpr Must, IDictionary<string, object?> Properties)
-{
-    public T GetProperty<T>(string key)
-    {
-        return Properties.TryGetValue(key, out var v) ? (T)v! : default!;
-    }
-}
-
 public static class RuleExtensions
 {
     public static IEnumerable<Rule> GetRules(this Rule rule)
@@ -77,46 +70,46 @@ public static class RuleExtensions
         };
     }
 
-    public static List<DataPath> GetDataOrder(this IEnumerable<ResolvedRule> rules)
-    {
-        var dataOrder = new List<DataPath>();
-        var processed = new HashSet<DataPath>();
-
-        var ruleList = rules.ToList();
-        var ruleLookup = ruleList.ToLookup(x => x.Path);
-        ruleLookup.ToList().ForEach(x => AddRules(x.Key, x));
-        return dataOrder;
-
-        void AddRules(DataPath path, IEnumerable<ResolvedRule> pathRules)
-        {
-            if (!processed.Add(path))
-                return;
-            pathRules.ToList().ForEach(x => AddExprPaths(x.Must));
-            dataOrder.Add(path);
-        }
-
-        void AddPath(DataPath path)
-        {
-            if (!processed.Contains(path))
-            {
-                dataOrder.Add(path);
-            }
-        }
-
-        void AddExprPaths(EvalExpr e)
-        {
-            switch (e)
-            {
-                case PathExpr { Path: var fp }:
-                    AddRules(fp, ruleLookup[fp]);
-                    break;
-                case CallExpr { Args: var args }:
-                    foreach (var expr in args)
-                    {
-                        AddExprPaths(expr);
-                    }
-                    break;
-            }
-        }
-    }
+    // public static List<DataPath> GetDataOrder(this IEnumerable<ResolvedRule> rules)
+    // {
+    //     var dataOrder = new List<DataPath>();
+    //     var processed = new HashSet<DataPath>();
+    //
+    //     var ruleList = rules.ToList();
+    //     var ruleLookup = ruleList.ToLookup(x => x.Path);
+    //     ruleLookup.ToList().ForEach(x => AddRules(x.Key, x));
+    //     return dataOrder;
+    //
+    //     void AddRules(DataPath path, IEnumerable<ResolvedRule> pathRules)
+    //     {
+    //         if (!processed.Add(path))
+    //             return;
+    //         pathRules.ToList().ForEach(x => AddExprPaths(x.Must));
+    //         dataOrder.Add(path);
+    //     }
+    //
+    //     void AddPath(DataPath path)
+    //     {
+    //         if (!processed.Contains(path))
+    //         {
+    //             dataOrder.Add(path);
+    //         }
+    //     }
+    //
+    //     void AddExprPaths(EvalExpr e)
+    //     {
+    //         switch (e)
+    //         {
+    //             case PathExpr { Path: var fp }:
+    //                 AddRules(fp, ruleLookup[fp]);
+    //                 break;
+    //             case CallExpr { Args: var args }:
+    //                 foreach (var expr in args)
+    //                 {
+    //                     AddExprPaths(expr);
+    //                 }
+    //                 break;
+    //         }
+    //     }
+    // }
 }

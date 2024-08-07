@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.Text.Json.Nodes;
+using System.Transactions;
 using Astrolabe.Evaluator;
 using Astrolabe.Evaluator.Functions;
 
@@ -9,8 +10,8 @@ namespace Astrolabe.Validation;
 public record ValidatorState(
     IEnumerable<Failure> Failures,
     ValueExpr Message,
-    IEnumerable<ResolvedRule> Rules,
-    ImmutableHashSet<DataPath> FailedData,
+    ImmutableHashSet<DataPath> DependentData,
+    IEnumerable<EvaluatedRule> Rules,
     ImmutableDictionary<string, object?> Properties
 )
 {
@@ -18,10 +19,42 @@ public record ValidatorState(
         new(
             [],
             ValueExpr.Null,
-            [],
             ImmutableHashSet<DataPath>.Empty,
+            [],
             ImmutableDictionary<string, object?>.Empty
         );
+}
+
+public class ValidatorEvalEnvironment(EvalEnvironmentState state, ValidatorState validatorState)
+    : EvalEnvironment(state)
+{
+    protected override EvalEnvironment NewEnv(EvalEnvironmentState newState)
+    {
+        return new ValidatorEvalEnvironment(newState, validatorState);
+    }
+
+    public ValidatorState ValidatorState => validatorState;
+
+    public EvalEnvironment WithValidatorState(ValidatorState newState)
+    {
+        return new ValidatorEvalEnvironment(state, newState);
+    }
+
+    public override EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
+    {
+        return evalExpr switch
+        {
+            ValueExpr { Path: { } p } vp
+                => WithValidatorState(
+                        validatorState with
+                        {
+                            DependentData = validatorState.DependentData.Add(p)
+                        }
+                    )
+                    .WithValue(vp),
+            _ => base.Evaluate(evalExpr)
+        };
+    }
 }
 
 public static class RuleValidator
@@ -30,7 +63,7 @@ public static class RuleValidator
 
     public static ValidatorState GetValidatorState(this EvalEnvironment env)
     {
-        return (ValidatorState)env.GetVariable("$ValidatorState")!.AsValue().Value!;
+        return ((ValidatorEvalEnvironment)env).ValidatorState;
     }
 
     public static EvalEnvironment UpdateValidatorState(
@@ -38,30 +71,21 @@ public static class RuleValidator
         Func<ValidatorState, ValidatorState> update
     )
     {
-        return env.WithVariable("$ValidatorState", new ValueExpr(update(GetValidatorState(env))));
+        return ((ValidatorEvalEnvironment)env).WithValidatorState(update(env.GetValidatorState()));
     }
 
-    public static EvalEnvironment FromData(Func<DataPath, object?> data)
+    public static EvalEnvironment FromData(Func<DataPath, ValueExpr> data)
     {
-        return EvalEnvironment
-            .DataFrom(data)
-            .WithVariables(
-                ImmutableDictionary<string, EvalExpr>
-                    .Empty.AddRange(DefaultFunctions.FunctionHandlers.Select(ToVariable))
-                    .Add("$ValidatorState", new ValueExpr(ValidatorState.Empty))
-                    .Add(
-                        RuleFunction,
-                        new ValueExpr(FunctionHandler.ResolveOnly(ResolveValidation))
-                    )
-                    .Add(
-                        "WithMessage",
-                        new ValueExpr(FunctionHandler.DefaultResolve(EvalWithMessage))
-                    )
-                    .Add(
-                        "WithProperty",
-                        new ValueExpr(FunctionHandler.DefaultResolve(EvalWithProperty))
-                    )
-            );
+        return new ValidatorEvalEnvironment(
+            EvalEnvironmentState.EmptyState(data),
+            ValidatorState.Empty
+        ).WithVariables(
+            ImmutableDictionary<string, EvalExpr>
+                .Empty.AddRange(DefaultFunctions.FunctionHandlers.Select(ToVariable))
+                .Add(RuleFunction, new ValueExpr(new FunctionHandler(EvaluateValidation)))
+                .Add("WithMessage", new ValueExpr(new FunctionHandler(EvalWithMessage)))
+                .Add("WithProperty", new ValueExpr(new FunctionHandler(EvalWithProperty)))
+        );
     }
 
     private static KeyValuePair<string, EvalExpr> ToVariable(
@@ -107,7 +131,10 @@ public static class RuleValidator
         CallExpr callExpr
     )
     {
-        var (evalEnvironment, args) = environment.EvalSelect(callExpr.Args, Interpreter.Evaluate);
+        var (evalEnvironment, args) = environment.EvalSelect(
+            callExpr.Args.Take(2),
+            (e, x) => e.Evaluate(x)
+        );
         var argList = args.ToList();
         return evalEnvironment
             .UpdateValidatorState(valEnv =>
@@ -130,101 +157,106 @@ public static class RuleValidator
             .Evaluate(callExpr.Args[1]);
     }
 
-    public static EnvironmentValue<EvalExpr> ResolveValidation(
+    public static EnvironmentValue<ValueExpr> EvaluateValidation(
         EvalEnvironment environment,
         CallExpr callExpr
     )
     {
-        var args = callExpr.Args;
-        var path = environment.ResolveExpr(args[0]);
-        var resolvedMust = path.Env.ResolveExpr(args[1]);
-        var evalProps = resolvedMust.Env.Evaluate(args[2]);
-        return evalProps
-            .Env.UpdateValidatorState(valState =>
-                valState with
+        var results = environment
+            .UpdateValidatorState(
+                (x) =>
+                    x with
+                    {
+                        Failures = [],
+                        Message = ValueExpr.Null,
+                        DependentData = ImmutableHashSet<DataPath>.Empty,
+                        Properties = ImmutableDictionary<string, object?>.Empty
+                    }
+            )
+            .EvalSelect(callExpr.Args, (e, x) => e.Evaluate(x));
+        var argValues = results.Value.ToList();
+        return results
+            .Env.UpdateValidatorState(x =>
+                x with
                 {
-                    Rules = valState.Rules.Append(
-                        new ResolvedRule(
-                            path.Value.AsPath(),
-                            resolvedMust.Value,
-                            valState.Properties.ToDictionary()
+                    Rules = x.Rules.Append(
+                        new EvaluatedRule(
+                            argValues[0],
+                            argValues[1],
+                            x.Failures,
+                            x.Message.AsString(),
+                            x.DependentData,
+                            x.Properties
                         )
-                    ),
-                    Properties = ImmutableDictionary<string, object?>.Empty,
+                    )
                 }
             )
-            .WithNull();
+            .WithValue(argValues[0]);
     }
 
-    public static List<RuleFailure> ValidateJson(
-        JsonNode data,
-        Rule rule,
-        LetExpr? variables,
-        Func<DataPath, IEnumerable<ResolvedRule>, IEnumerable<ResolvedRule>> adjustRules
-    )
+    public static List<EvaluatedRule> ValidateJson(JsonNode data, Rule rule, LetExpr? variables)
     {
         var baseEnv = FromData(JsonDataLookup.FromObject(data));
-        return ValidateRules(baseEnv, rule, variables, adjustRules).Value.ToList();
+        return ValidateRules(baseEnv, rule, variables);
     }
 
-    public static EnvironmentValue<IEnumerable<RuleFailure>> ValidateRules(
+    public static List<EvaluatedRule> ValidateRules(
         EvalEnvironment baseEnv,
         Rule rule,
-        LetExpr? variables,
-        Func<DataPath, IEnumerable<ResolvedRule>, IEnumerable<ResolvedRule>> adjustRules
+        LetExpr? variables
     )
     {
-        var ruleEnv = variables != null ? baseEnv.ResolveAndEvaluate(variables).Env : baseEnv;
+        var ruleEnv = variables != null ? baseEnv.Evaluate(variables).Env : baseEnv;
         var ruleList = ruleEnv.EvaluateRule(rule);
-        var allRules = ruleList.Value.ToList();
-        var byPath = allRules.ToLookup(x => x.Path);
-        var dataOrder = allRules.GetDataOrder();
-        var validationResult = ruleEnv.EvalConcat(
-            dataOrder,
-            (de, p) =>
-                de.EvalConcat(
-                    adjustRules(p, byPath[p]),
-                    (e, r) => e.EvaluateFailures(r).SingleOrEmpty()
-                )
-        );
-        return validationResult;
+        return ruleList.Value.ToList();
+        // var byPath = allRules.ToLookup(x => x.Path);
+        // var dataOrder = allRules.GetDataOrder();
+        // var validationResult = ruleEnv.EvalConcat(
+        //     dataOrder,
+        //     (de, p) =>
+        //         de.EvalConcat(
+        //             adjustRules(p, byPath[p]),
+        //             (e, r) => e.EvaluateFailures(r).SingleOrEmpty()
+        //         )
+        // );
+        // return validationResult;
     }
 
-    public static EnvironmentValue<RuleFailure?> EvaluateFailures(
-        this EvalEnvironment environment,
-        ResolvedRule rule
-    )
-    {
-        var (outEnv, result) = environment.Evaluate(rule.Must);
-        RuleFailure? failure = null;
-        var valEnv = outEnv.GetValidatorState();
-        if (result.IsFalse())
-        {
-            failure = new RuleFailure(valEnv.Failures, valEnv.Message.AsString(), rule);
-        }
+    // public static EnvironmentValue<RuleFailure?> EvaluateFailures(
+    //     this EvalEnvironment environment,
+    //     ResolvedRule rule
+    // )
+    // {
+    //     var (outEnv, result) = environment.Evaluate(rule.Must);
+    //     RuleFailure? failure = null;
+    //     var valEnv = outEnv.GetValidatorState();
+    //     if (result.IsFalse())
+    //     {
+    //         failure = new RuleFailure(valEnv.Failures, valEnv.Message.AsString(), rule);
+    //     }
+    //
+    //     var failedData = result.IsFalse() ? valEnv.FailedData.Add(rule.Path) : valEnv.FailedData;
+    //     var resetEnv = valEnv with
+    //     {
+    //         Properties = ImmutableDictionary<string, object?>.Empty,
+    //         Message = ValueExpr.Null,
+    //         Failures = [],
+    //         FailedData = failedData
+    //     };
+    //     return (
+    //         outEnv.UpdateValidatorState(_ => resetEnv) with
+    //         {
+    //             ValidData = dp => !failedData.Contains(dp)
+    //         }
+    //     ).WithValue(failure);
+    // }
 
-        var failedData = result.IsFalse() ? valEnv.FailedData.Add(rule.Path) : valEnv.FailedData;
-        var resetEnv = valEnv with
-        {
-            Properties = ImmutableDictionary<string, object?>.Empty,
-            Message = ValueExpr.Null,
-            Failures = [],
-            FailedData = failedData
-        };
-        return (
-            outEnv.UpdateValidatorState(_ => resetEnv) with
-            {
-                ValidData = dp => !failedData.Contains(dp)
-            }
-        ).WithValue(failure);
-    }
-
-    public static EnvironmentValue<IEnumerable<ResolvedRule>> EvaluateRule(
+    public static EnvironmentValue<IEnumerable<EvaluatedRule>> EvaluateRule(
         this EvalEnvironment environment,
         Rule rule
     )
     {
-        return environment.ResolveExpr(ToExpr(rule)).Map((v, e) => e.GetValidatorState().Rules);
+        return environment.Evaluate(ToExpr(rule)).Map((v, e) => e.GetValidatorState().Rules);
     }
 
     private static EvalExpr ToExpr(Rule rule)
@@ -243,10 +275,7 @@ public static class RuleValidator
 
         EvalExpr DoPathRule(SingleRule pathRule)
         {
-            return new CallExpr(
-                RuleValidator.RuleFunction,
-                [pathRule.Path, pathRule.Must, pathRule.Props]
-            );
+            return new CallExpr(RuleFunction, [pathRule.Path, pathRule.Must, pathRule.Props]);
         }
 
         EvalExpr DoRulesForEach(ForEachRule rules)
@@ -261,4 +290,11 @@ public static class RuleValidator
 
 public record Failure(CallExpr Call, IList<ValueExpr> EvaluatedArgs);
 
-public record RuleFailure(IEnumerable<Failure> Failures, string? Message, ResolvedRule Rule);
+public record EvaluatedRule(
+    ValueExpr Path,
+    ValueExpr Result,
+    IEnumerable<Failure> Failures,
+    string? Message,
+    ImmutableHashSet<DataPath> DependentData,
+    IDictionary<string, object?> Properties
+);
