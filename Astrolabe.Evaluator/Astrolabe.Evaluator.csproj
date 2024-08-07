@@ -9,7 +9,7 @@
         <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>This is a simple expression language similar to JSONata.</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageTags>email sending</PackageTags>
+        <PackageTags>json expression language</PackageTags>
         <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>

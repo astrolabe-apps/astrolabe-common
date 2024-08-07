@@ -9,7 +9,7 @@
         <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>A validation library built on top of Astrolabe.Evaluator</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageTags>email sending</PackageTags>
+        <PackageTags>validation</PackageTags>
         <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
