@@ -354,11 +354,14 @@ const mapFunction: FunctionExpr = {
     const [left, right] = call.args;
     const [leftEnv, { value }] = env.evaluate(left);
     if (Array.isArray(value)) {
-      return mapEnv(
+      return withEnvValue(
         mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
           evaluateElem(e, elem, i, right),
         ),
-        (vals) => valueExpr(vals.flatMap(allElems)),
+        (e, vals) => [
+          e.withBasePath(env.basePath),
+          valueExpr(vals.flatMap(allElems)),
+        ],
       );
     }
     console.error(value, left);
@@ -381,7 +384,7 @@ const filterFunction: FunctionExpr = {
           }),
         leftEnv,
       );
-      return [outEnv, valueExpr(accArray)];
+      return [outEnv.withBasePath(env.basePath), valueExpr(accArray)];
     }
     console.error(value, path);
     throw new Error("Can't filter this:");
@@ -465,6 +468,17 @@ export function toNative(value: ValueExpr): unknown {
   return value.value;
 }
 
+export const objectFunction = functionExpr((e, call) => {
+  return mapEnv(evaluateAll(e, call.args), (args) => {
+    const outObj: Record<string, unknown> = {};
+    let i = 0;
+    while (i < args.length - 1) {
+      outObj[toNative(args[i++]) as string] = toNative(args[i++]);
+    }
+    return valueExpr(outObj);
+  });
+});
+
 const defaultFunctions = {
   "?": condFunction,
   "!": evalFunction((a) => !a[0]),
@@ -488,6 +502,7 @@ const defaultFunctions = {
   max: aggFunction(Number.MIN_VALUE, (a, b) => Math.max(a, b as number)),
   notEmpty: evalFunction(([a]) => !(a === "" || a == null)),
   which: whichFunction,
+  object: objectFunction,
   ".": mapFunction,
   "[": filterFunction,
 };

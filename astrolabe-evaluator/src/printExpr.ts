@@ -1,4 +1,4 @@
-import { EvalExpr, Path } from "./nodes";
+import { CallExpr, EvalExpr, Path, ValueExpr } from "./nodes";
 
 export function printExpr(expr: EvalExpr): string {
   switch (expr.type) {
@@ -7,11 +7,11 @@ export function printExpr(expr: EvalExpr): string {
     case "lambda":
       return `\$${expr.variable} => ${printExpr(expr.expr)}`;
     case "value":
-      return expr.value?.toString() ?? "null";
+      return printValue(expr);
     case "property":
       return expr.property;
     case "call":
-      return `\$${expr.function}(${expr.args.map(printExpr).join(", ")})`;
+      return printCall(expr);
     case "var":
       return `\$${expr.variable}`;
     case "let":
@@ -23,7 +23,43 @@ export function printExpr(expr: EvalExpr): string {
   }
 }
 
+export function printValue({ value }: ValueExpr) {
+  if (value == null) return "null";
+  switch (typeof value) {
+    case "string":
+      return `"${value}"`;
+    default:
+      return value.toString();
+  }
+}
+
+export function printCall(call: CallExpr) {
+  const args = call.args;
+  switch (call.function) {
+    case ".":
+      return `${printExpr(args[0])}.${printExpr(args[1])}`;
+    case "[":
+      return `${printExpr(args[0])}[${printExpr(args[1])}]`;
+    case "+":
+    case "-":
+    case "*":
+    case "/":
+    case "=":
+    case "!=":
+    case "<":
+    case ">":
+    case ">=":
+    case "<=":
+    case "and":
+    case "or":
+      return `${printExpr(args[0])} ${call.function} ${printExpr(args[1])}`;
+    default:
+      return `\$${call.function}(${args.map(printExpr).join(", ")})`;
+  }
+}
 export function printPath(path: Path): string {
-  if (path.segment != null) return printPath(path.parent) + "." + path.segment;
-  else return "";
+  if (path.segment != null) {
+    if (path.parent.segment == null) return path.segment.toString();
+    return printPath(path.parent) + "." + path.segment;
+  } else return "";
 }
