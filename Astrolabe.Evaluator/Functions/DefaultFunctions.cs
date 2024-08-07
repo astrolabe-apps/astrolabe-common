@@ -122,19 +122,14 @@ public static class DefaultFunctions
         return FunctionHandler.DefaultEval(args =>
             args switch
             {
-                [ArrayValue av] => av.Values.Aggregate((T?)init, (acc, v) => RunOp(acc, v.Value)),
-                _ => args.Aggregate((T?)init, RunOp)
+                [ArrayValue av]
+                    => av.Values.All(x => x.Value != null)
+                        ? av.Values.Aggregate(init, (acc, v) => arrayFunc(acc, v.Value))
+                        : null,
+                _ when args.All(x => x != null) => args.Aggregate(init, arrayFunc),
+                _ => null
             }
         );
-
-        T? RunOp(T? acc, object? o)
-        {
-            if (acc is null || o == null)
-            {
-                return default;
-            }
-            return arrayFunc(acc, o);
-        }
     }
 
     public static readonly Dictionary<string, FunctionHandler> FunctionHandlers =
@@ -155,8 +150,20 @@ public static class DefaultFunctions
             { "!", UnaryNullOp((a) => a is bool b ? !b : null) },
             { "?", IfElseOp },
             { "sum", ArrayOp(0d, (acc, v) => acc + ValueExpr.AsDouble(v)) },
-            { "min", ArrayOp(double.MaxValue, (acc, v) => Math.Min(acc, ValueExpr.AsDouble(v))) },
-            { "max", ArrayOp(double.MinValue, (acc, v) => Math.Max(acc, ValueExpr.AsDouble(v))) },
+            {
+                "min",
+                ArrayOp(
+                    (double?)null,
+                    (acc, v) => Math.Min(acc ?? double.MaxValue, ValueExpr.AsDouble(v))
+                )
+            },
+            {
+                "max",
+                ArrayOp(
+                    (double?)null,
+                    (acc, v) => Math.Max(acc ?? double.MinValue, ValueExpr.AsDouble(v))
+                )
+            },
             { "count", ArrayOp(0, (acc, v) => acc + 1) },
             {
                 "array",
