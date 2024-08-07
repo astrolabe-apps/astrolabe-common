@@ -181,7 +181,8 @@ public static class RuleValidator
                 {
                     Rules = x.Rules.Append(
                         new EvaluatedRule(
-                            argValues[0],
+                            argValues[0].Path!,
+                            argValues[0].Value,
                             argValues[1],
                             x.Failures,
                             x.Message.AsString(),
@@ -256,7 +257,8 @@ public static class RuleValidator
         Rule rule
     )
     {
-        return environment.Evaluate(ToExpr(rule)).Map((v, e) => e.GetValidatorState().Rules);
+        var ruleAsExpr = ToExpr(rule);
+        return environment.Evaluate(ruleAsExpr).Map((v, e) => e.GetValidatorState().Rules);
     }
 
     private static EvalExpr ToExpr(Rule rule)
@@ -291,10 +293,21 @@ public static class RuleValidator
 public record Failure(CallExpr Call, IList<ValueExpr> EvaluatedArgs);
 
 public record EvaluatedRule(
-    ValueExpr Path,
+    DataPath Path,
+    object? PathValue,
     ValueExpr Result,
     IEnumerable<Failure> Failures,
     string? Message,
     ImmutableHashSet<DataPath> DependentData,
     IDictionary<string, object?> Properties
-);
+)
+{
+    public T GetProperty<T>(string key)
+    {
+        if (Properties.TryGetValue(key, out var res) && res is T asT)
+        {
+            return asT;
+        }
+        return default;
+    }
+}

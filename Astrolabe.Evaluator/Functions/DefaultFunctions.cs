@@ -176,20 +176,7 @@ public static class DefaultFunctions
                 )
             },
             { "string", StringOp },
-            // {
-            //     "which",
-            //     FunctionHandler.ResolveOnly(
-            //         (e, call) =>
-            //         {
-            //             return e.ResolveExpr(
-            //                 call.Args.Aggregate(
-            //                     new WhichState(ValueExpr.Null, null, null),
-            //                     (s, x) => s.Next(x)
-            //                 ).Current
-            //             );
-            //         }
-            //     )
-            // },
+            { "which", new(WhichFunction) },
             { "[", FilterFunctionHandler.Instance },
             { ".", MapFunctionHandler.Instance },
         };
@@ -203,24 +190,36 @@ public static class DefaultFunctions
         );
     }
 
-    record WhichState(EvalExpr Current, EvalExpr? Compare, EvalExpr? ToExpr)
+    public static EnvironmentValue<ValueExpr> WhichFunction(EvalEnvironment env, CallExpr call)
     {
-        public WhichState Next(EvalExpr expr)
+        return call.Args.ToList() switch
         {
-            if (Compare is null)
-                return this with { Compare = expr };
-            if (ToExpr is null)
-                return this with { ToExpr = expr };
-            return this with
-            {
-                Current = new CallExpr("?", [new CallExpr("=", [Compare, ToExpr]), expr, Current]),
-                ToExpr = null
-            };
-        }
-    }
+            [var cond, .. var others] when env.Evaluate(cond) is var (nextEnv, condValue)
+                => FindWhich(nextEnv, condValue, others)
+        };
 
-    public static object CreateEnvironment(Func<DataPath, object?> fromObject)
-    {
-        throw new NotImplementedException();
+        EnvironmentValue<ValueExpr> FindWhich(
+            EvalEnvironment curEnv,
+            ValueExpr condValue,
+            List<EvalExpr> others
+        )
+        {
+            if (condValue.IsNull())
+                return curEnv.WithNull();
+            var condCompare = AsEqualityCheck(condValue.Value);
+            var i = 0;
+            while (i < others.Count - 1)
+            {
+                var compare = others[i++];
+                var value = others[i++];
+                var (nextEnv, compValue) = curEnv.Evaluate(compare);
+                if (condCompare.Equals(AsEqualityCheck(compValue.Value)))
+                {
+                    return nextEnv.Evaluate(value);
+                }
+                curEnv = nextEnv;
+            }
+            return curEnv.WithNull();
+        }
     }
 }
