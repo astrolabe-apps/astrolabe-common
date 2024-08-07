@@ -1,12 +1,13 @@
 @precedence {
   call,
+  prefix,
   filter @left
   map @left,
-  and @left,
-  or @left,
   times @left,
   plus @left,
   rel @left,
+  and @left,
+  or @left,
   ternary @right
 }
 
@@ -20,8 +21,8 @@ expression[@isGroup=Expression] {
     LetExpression |
     Number | 
     String | 
-    BinaryExpression | 
     UnaryExpression | 
+    BinaryExpression | 
     ParenthesizedExpression |
     ConditionalExpression {
         expression !ternary "?" expression ":" expression
@@ -44,7 +45,7 @@ commaSep<content> {
 }
 
 UnaryExpression {
-  ("!" | "+" | "-")
+  !prefix ("!" | "+" | "-")
   expression
 }
 
