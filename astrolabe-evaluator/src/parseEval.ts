@@ -72,6 +72,8 @@ export function parseEval(input: string) {
           input.substring(callNode.from, callNode.to),
           node.getChildren("Expression").map(visit),
         );
+      case "ConditionalExpression":
+        return callExpr("?", node.getChildren("Expression").map(visit));
       default:
         throw "Don't know what to do with:" + nodeName;
     }

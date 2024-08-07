@@ -539,6 +539,10 @@ const defaultFunctions = {
   notEmpty: evalFunction(([a]) => !(a === "" || a == null)),
   which: whichFunction,
   object: objectFunction,
+  elem: evalFunction((args) => {
+    const elem = (args[0] as ValueExpr[])[args[1] as number];
+    return elem == null ? null : elem.value;
+  }),
   ".": mapFunction,
   "[": filterFunction,
 };

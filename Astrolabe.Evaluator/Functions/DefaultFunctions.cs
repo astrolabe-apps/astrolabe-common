@@ -183,7 +183,21 @@ public static class DefaultFunctions
                 )
             },
             { "string", StringOp },
-            { "which", new(WhichFunction) },
+            { "which", new FunctionHandler(WhichFunction) },
+            {
+                "elem",
+                FunctionHandler.DefaultEval(args =>
+                    args switch
+                    {
+                        [ArrayValue av, var indO]
+                            when ValueExpr.MaybeIndex(indO) is { } ind
+                                && av.Values.ToList() is var vl
+                                && vl.Count > ind
+                            => vl[ind].Value,
+                        _ => null
+                    }
+                )
+            },
             { "[", FilterFunctionHandler.Instance },
             { ".", MapFunctionHandler.Instance },
         };

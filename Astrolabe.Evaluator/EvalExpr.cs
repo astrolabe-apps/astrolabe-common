@@ -123,6 +123,17 @@ public record ValueExpr(object? Value, DataPath? Path = null) : EvalExpr
         return MaybeDouble(Value);
     }
 
+    public static int? MaybeIndex(object? v)
+    {
+        return v switch
+        {
+            int i => i,
+            long l => (int)l,
+            double d => (int)d,
+            _ => null
+        };
+    }
+
     public static double? MaybeDouble(object? v)
     {
         return v switch
