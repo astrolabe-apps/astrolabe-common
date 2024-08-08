@@ -26,7 +26,6 @@ export function parseEval(input: string) {
       case "Reference":
         return varExpr(getNodeText(node).substring(1));
       case "LetExpression":
-        console.log("LetExpression");
         const assignments = node.getChildren("VariableAssignment");
         return letExpr(
           assignments.map((a) => {

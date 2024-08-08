@@ -34,7 +34,7 @@ expression[@isGroup=Expression] {
 
 VariableAssignment { Reference ":=" expression }
 
-LetExpression { @specialize<Identifier, "let"> commaSep<VariableAssignment>  @specialize<Identifier, "in"> expression } 
+LetExpression { @specialize<Identifier, "let"> commaSep<VariableAssignment> @specialize<Identifier, "in"> expression } 
 
 Lambda { Reference "=>" expression }
 
@@ -47,8 +47,7 @@ commaSep<content> {
 }
 
 UnaryExpression {
-  !prefix ("!" | "+" | "-")
-  expression
+  !prefix ("!" | "+" | "-") expression
 }
 
 BinaryExpression {
