@@ -17,8 +17,6 @@ export function printExpr(expr: EvalExpr): string {
     case "let":
       if (expr.variables.length == 0) return printExpr(expr.expr);
       return `let ${expr.variables.map((x) => "$" + x[0] + ":=" + printExpr(x[1]))} in ${printExpr(expr.expr)}`;
-    case "func":
-      return "INTERNAL";
   }
 }
 
