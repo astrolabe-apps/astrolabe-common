@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from /home/doolse/astrolabe/hvams.roadmanager.server/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
+// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -63,17 +63,23 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFunctionCall([NotNull] AstroExprParser.FunctionCallContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.variableAssign"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVariableAssign([NotNull] AstroExprParser.VariableAssignContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.letExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLetExpr([NotNull] AstroExprParser.LetExprContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.lambdaExpr"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitLambdaExpr([NotNull] AstroExprParser.LambdaExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.unionExprNoRoot"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitUnionExprNoRoot([NotNull] AstroExprParser.UnionExprNoRootContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.filterExpr"/>.
 	/// </summary>

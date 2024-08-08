@@ -20,6 +20,7 @@ primaryExpr
     | lambdaExpr
     | variableReference
     | '(' expr ')'
+    | letExpr
     | Literal
     | Number
     | 'false'
@@ -31,13 +32,16 @@ functionCall
     : variableReference '(' (expr ( ',' expr)*)? ')'
     ;
 
-lambdaExpr
-    : variableReference '=>' expr
+variableAssign
+    : variableReference ':=' expr
     ;
 
-unionExprNoRoot
-    : Identifier
-    | filterExpr
+letExpr
+    : 'let' (variableAssign (',' variableAssign)*) 'in' expr
+    ;
+    
+lambdaExpr
+    : variableReference '=>' expr
     ;
 
 filterExpr
@@ -77,7 +81,7 @@ mapExpr
     ;
 
 unaryExprNoRoot
-    : '-'* unionExprNoRoot
+    : ('-'|'!'|'+')* filterExpr
     ;
 
 variableReference
@@ -176,6 +180,10 @@ False
 
 True
     : 'true'
+    ;
+
+COND
+    : '?'
     ;
 
 Literal
