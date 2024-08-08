@@ -15,7 +15,8 @@ export function printExpr(expr: EvalExpr): string {
     case "var":
       return `\$${expr.variable}`;
     case "let":
-      return `let ${expr.variables.map((x) => "$" + x[0] + "=" + printExpr(x[1]))} in ${printExpr(expr.expr)}`;
+      if (expr.variables.length == 0) return printExpr(expr.expr);
+      return `let ${expr.variables.map((x) => "$" + x[0] + ":=" + printExpr(x[1]))} in ${printExpr(expr.expr)}`;
     case "func":
       return "INTERNAL";
     default:
