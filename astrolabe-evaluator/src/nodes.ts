@@ -540,7 +540,7 @@ const defaultFunctions = {
   which: whichFunction,
   object: objectFunction,
   elem: evalFunction((args) => {
-    const elem = (args[0] as ValueExpr[])[args[1] as number];
+    const elem = (args[0] as ValueExpr[])?.[args[1] as number];
     return elem == null ? null : elem.value;
   }),
   ".": mapFunction,

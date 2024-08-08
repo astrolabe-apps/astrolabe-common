@@ -81,7 +81,7 @@ mapExpr
     ;
 
 unaryExprNoRoot
-    : ('-'|'!'|'+')* filterExpr
+    : ('-'|'!'|'+')? filterExpr
     ;
 
 variableReference
@@ -185,7 +185,10 @@ True
 COND
     : '?'
     ;
-
+NOT 
+    : '!'
+    ;
+    
 Literal
     : '"' ~'"'* '"'
     | '\'' ~'\''* '\''

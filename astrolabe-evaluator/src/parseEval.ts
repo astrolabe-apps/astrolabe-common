@@ -26,15 +26,14 @@ export function parseEval(input: string) {
       case "Reference":
         return varExpr(getNodeText(node).substring(1));
       case "LetExpression":
-        const [_, assExpr, inExpr] = node.getChildren("Expression");
+        console.log("LetExpression");
+        const assignments = node.getChildren("VariableAssignment");
         return letExpr(
-          [
-            [
-              (visit(node.getChild("Reference")) as VarExpr).variable,
-              visit(assExpr),
-            ],
-          ],
-          visit(inExpr),
+          assignments.map((a) => {
+            const [assign, expr] = a.getChildren("Expression");
+            return [(visit(assign) as VarExpr).variable, visit(expr)];
+          }),
+          visit(node.getChild("Expression")),
         );
       case "Lambda":
         const [v, e] = node.getChildren("Expression").map(visit);

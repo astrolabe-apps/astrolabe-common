@@ -38,6 +38,30 @@ public class ExprParser
             return new VarExpr(context.Identifier().GetText());
         }
 
+        public override EvalExpr VisitLetExpr(AstroExprParser.LetExprContext context)
+        {
+            var assignments = context
+                .variableAssign()
+                .Select(x => ((VarExpr)Visit(x.variableReference()), Visit(x.expr())!));
+            return new LetExpr(assignments, Visit(context.expr()));
+        }
+
+        public override EvalExpr VisitUnaryExprNoRoot(
+            AstroExprParser.UnaryExprNoRootContext context
+        )
+        {
+            if (context.NOT() != null)
+            {
+                return new CallExpr("!", [Visit(context.filterExpr())]);
+            }
+
+            if (context.MINUS() != null)
+            {
+                return new CallExpr("-", [new ValueExpr(0), Visit(context.filterExpr())]);
+            }
+            return Visit(context.filterExpr());
+        }
+
         public override EvalExpr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)
         {
             return new LambdaExpr(
@@ -50,8 +74,7 @@ public class ExprParser
         {
             return node.Symbol.Type switch
             {
-                AstroExprParser.Identifier
-                    => new PropertyExpr(node.GetText()),
+                AstroExprParser.Identifier => new PropertyExpr(node.GetText()),
                 AstroExprParser.Number => ValueExpr.From(double.Parse(node.GetText())),
                 AstroExprParser.False => ValueExpr.False,
                 AstroExprParser.True => ValueExpr.True,

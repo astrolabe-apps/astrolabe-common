@@ -32,7 +32,9 @@ expression[@isGroup=Expression] {
     }
 }
 
-LetExpression { @specialize<Identifier, "let"> Reference "=" expression @specialize<Identifier, "in"> expression } 
+VariableAssignment { Reference ":=" expression }
+
+LetExpression { @specialize<Identifier, "let"> commaSep<VariableAssignment>  @specialize<Identifier, "in"> expression } 
 
 Lambda { Reference "=>" expression }
 
