@@ -23,7 +23,7 @@ import {
 import React, { useCallback } from "react";
 import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client/hooks/useApiClient";
-import { Client } from "../../client";
+import { Client, EvalResult } from "../../client";
 import { basicSetup, EditorView } from "codemirror";
 import { Evaluator } from "@astroapps/codemirror-evaluator";
 
@@ -50,20 +50,21 @@ export default function EvalPage() {
     useDebounced(async ([v, dv, sm]: [string, any, any]) => {
       try {
         if (sm) {
-          const result = await client.eval({ expression: v, data: dv });
-          output.value = result;
+          try {
+            setEvalResult(await client.eval({ expression: v, data: dv }));
+          } catch (e) {
+            output.value = e;
+          }
         } else {
           const exprTree = parseEval(v);
-
           const env = addDefaults(new TrackDataEnv(emptyEnvState(dv)));
-          let result;
           try {
-            result = toNative(env.evaluate(exprTree)[1]);
+            const [outEnv, value] = env.evaluate(exprTree);
+            setEvalResult({ result: toNative(value), errors: outEnv.errors });
           } catch (e) {
             console.error(e);
-            result = e?.toString();
+            output.value = e;
           }
-          output.value = result;
         }
       } catch (e) {
         console.error(e);
@@ -90,6 +91,11 @@ export default function EvalPage() {
       />
     </div>
   );
+
+  function setEvalResult(result: EvalResult) {
+    output.value =
+      result.errors && result.errors.length > 0 ? result : result.result;
+  }
 
   function setupEditor(elem: HTMLElement | null) {
     if (elem) {

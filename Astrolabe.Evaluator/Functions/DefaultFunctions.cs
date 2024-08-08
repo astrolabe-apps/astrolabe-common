@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json.Nodes;
 
 namespace Astrolabe.Evaluator.Functions;
 
@@ -200,7 +201,32 @@ public static class DefaultFunctions
             },
             { "[", FilterFunctionHandler.Instance },
             { ".", MapFunctionHandler.Instance },
+            {
+                "object",
+                FunctionHandler.DefaultEval(args =>
+                {
+                    var i = 0;
+                    var obj = new JsonObject();
+                    while (i < args.Count - 1)
+                    {
+                        var name = (string)args[i++]!;
+                        var value = ToJsonNode(args[i++]);
+                        obj[name] = value;
+                    }
+                    return new ObjectValue(obj);
+                })
+            }
         };
+
+    public static JsonNode? ToJsonNode(object? objValue)
+    {
+        return objValue switch
+        {
+            ObjectValue ov => (JsonObject)ov.Object,
+            ArrayValue av => new JsonArray(av.Values.Select(x => ToJsonNode(x.Value)).ToArray()),
+            _ => JsonValue.Create(objValue),
+        };
+    }
 
     public static EvalEnvironment AddDefaultFunctions(this EvalEnvironment eval)
     {

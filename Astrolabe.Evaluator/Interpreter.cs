@@ -53,17 +53,22 @@ public static class Interpreter
                 => environment
                     .WithVariables(
                         le.Vars.Select(x => new KeyValuePair<string, EvalExpr>(
-                            x.Item1.Name,
-                            x.Item2
-                        ))
+                                x.Item1.Name,
+                                x.Item2
+                            ))
                             .ToList()
                     )
                     .Evaluate(le.In),
-            VarExpr ve when environment.GetVariable(ve.Name) is { } v => environment.Evaluate(v),
+            VarExpr ve when environment.GetVariable(ve.Name) is var v
+                => v != null
+                    ? environment.Evaluate(v)
+                    : environment.WithError("No variable $" + ve.Name + " declared").WithNull(),
             ValueExpr v => environment.WithValue(v),
             CallExpr { Function: var func, Args: var args } callExpr
                 when environment.GetVariable(func) is ValueExpr { Value: FunctionHandler handler }
                 => handler.Evaluate(environment, callExpr),
+            CallExpr ce
+                => environment.WithError("No function $" + ce.Function + " declared").WithNull(),
             PropertyExpr { Property: var dp }
                 => environment.Evaluate(
                     environment.GetData(new FieldPath(dp, environment.BasePath))

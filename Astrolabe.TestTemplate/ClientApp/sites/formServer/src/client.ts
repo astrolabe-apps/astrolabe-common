@@ -96,7 +96,7 @@ export class Client {
      * @param body (optional) 
      * @return OK
      */
-    eval(body: EvalData | undefined): Promise<any> {
+    eval(body: EvalData | undefined): Promise<EvalResult> {
         let url_ = this.baseUrl + "/api/Eval";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -116,13 +116,13 @@ export class Client {
         });
     }
 
-    protected processEval(response: Response): Promise<any> {
+    protected processEval(response: Response): Promise<EvalResult> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
-            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as any;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as EvalResult;
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -130,13 +130,18 @@ export class Client {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<any>(null as any);
+        return Promise.resolve<EvalResult>(null as any);
     }
 }
 
 export interface EvalData {
     expression: string | null;
     data: { [key: string]: any; } | null;
+}
+
+export interface EvalResult {
+    result: any | null;
+    errors: string[] | null;
 }
 
 export class ApiException extends Error {

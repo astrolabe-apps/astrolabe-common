@@ -26,6 +26,7 @@ public class EvalEnvironment(EvalEnvironmentState state)
 {
     public EvalEnvironmentState State => state;
     public DataPath BasePath => state.BasePath;
+    public IEnumerable<EvalError> Errors => state.Errors;
 
     public ValueExpr GetData(DataPath dataPath)
     {

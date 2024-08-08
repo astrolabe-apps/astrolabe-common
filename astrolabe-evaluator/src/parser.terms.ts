@@ -4,7 +4,7 @@ export const
   Reference = 2,
   Identifier = 3,
   Lambda = 4,
-  BooleanLiteral = 5,
+  ConstantLiteral = 5,
   LetExpression = 6,
   VariableAssignment = 7,
   Number = 8,

@@ -27,18 +27,11 @@ export type EvalExpr =
   | LambdaExpr
   | ValueExpr
   | FunctionExpr
-  | BaseExpr
   | PropertyExpr;
 
 export interface VarExpr {
   type: "var";
   variable: string;
-}
-
-export interface BaseExpr {
-  type: "base";
-  base: Path;
-  expr: EvalExpr;
 }
 
 export interface LetExpr {
@@ -84,6 +77,7 @@ export type EnvValue<T> = [EvalEnv, T];
 export abstract class EvalEnv {
   abstract basePath: Path;
   abstract errors: string[];
+  abstract state: EvalEnvState;
   abstract getVariable(name: string): EvalExpr | undefined;
   abstract getData(path: Path): ValueExpr;
   abstract withVariables(vars: [string, EvalExpr][]): EvalEnv;
@@ -105,10 +99,6 @@ export function varExpr(variable: string): VarExpr {
 export type VarAssign = [string, EvalExpr];
 export function letExpr(variables: VarAssign[], expr: EvalExpr): LetExpr {
   return { type: "let", variables, expr };
-}
-
-export function baseExpr(base: Path, expr: EvalExpr): BaseExpr {
-  return { type: "base", expr, base };
 }
 
 export function valueExpr(value: any, path?: Path): ValueExpr {
@@ -145,16 +135,21 @@ export function evaluateElem(
 ): EnvValue<ValueExpr> {
   switch (expr.type) {
     case "lambda":
-      return env
-        .withVariables([
-          [expr.variable, { type: "value", value: ind }],
-          [expr.variable + "_elem", value],
-        ])
-        .withBasePath(value.path ?? env.basePath)
-        .evaluate(expr.expr);
+      return alterEnv(
+        env
+          .withVariables([
+            [expr.variable, valueExpr(ind)],
+            [expr.variable + "_elem", value],
+          ])
+          .withBasePath(value.path ?? env.basePath)
+          .evaluate(expr.expr),
+        (x) => x.withBasePath(env.basePath),
+      );
     default:
       if (!value.path) throw new Error("No path for element, must use lambda");
-      return env.withBasePath(value.path).evaluate(expr);
+      return alterEnv(env.withBasePath(value.path).evaluate(expr), (x) =>
+        x.withBasePath(env.basePath),
+      );
   }
 }
 
@@ -167,26 +162,19 @@ export function defaultEvaluate(
       const varExpr = env.getVariable(expr.variable);
       if (varExpr == null)
         return [
-          env.withError("Variable " + expr.variable + " not declared"),
+          env.withError("Variable $" + expr.variable + " not declared"),
           valueExpr(null),
         ];
       return env.evaluate(varExpr);
-    case "base":
-      const oldBase = env.basePath;
-      const [nextEnv, value] = env.withBasePath(expr.base).evaluate(expr.expr);
-      return [nextEnv.withBasePath(oldBase), value];
     case "let":
-      const withVars = env.withVariables(
-        expr.variables.map((x) => [x[0], baseExpr(env.basePath, x[1])]),
-      );
-      return withVars.evaluate(expr.expr);
+      return env.withVariables(expr.variables).evaluate(expr.expr);
     case "value":
       return [env, expr];
     case "call":
       const funcCall = env.getVariable(expr.function);
       if (funcCall == null)
         return [
-          env.withError("Function " + expr.function + " not declared"),
+          env.withError("Function $" + expr.function + " not declared"),
           valueExpr(null),
         ];
       return (funcCall as FunctionExpr).evaluate(env, expr);
@@ -211,6 +199,13 @@ export function mapEnv<T, T2>(
 ): EnvValue<T2> {
   const [e, v] = envVal;
   return [envFunc?.(e) ?? e, func(v)];
+}
+
+export function alterEnv<T>(
+  envVal: EnvValue<T>,
+  envFunc: (e: EvalEnv) => EvalEnv,
+): EnvValue<T> {
+  return [envFunc(envVal[0]), envVal[1]];
 }
 
 export function flatmapEnv<T, T2>(
@@ -258,7 +253,7 @@ export class BasicEvalEnv extends EvalEnv {
   evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
     return defaultEvaluate(this, expr);
   }
-  constructor(protected state: EvalEnvState) {
+  constructor(public state: EvalEnvState) {
     super();
   }
 
@@ -289,9 +284,11 @@ export class BasicEvalEnv extends EvalEnv {
       if (path.segment == null) return this.state.data;
       const parentObject = getNode(path.parent);
       if (parentObject == null) return null;
-      return typeof parentObject == "object"
-        ? (parentObject as any)[path.segment]
-        : null;
+      const value =
+        typeof parentObject == "object"
+          ? (parentObject as any)[path.segment]
+          : null;
+      return value == null ? null : value;
     };
     let dataValue = getNode(path);
     if (Array.isArray(dataValue)) {
@@ -300,16 +297,14 @@ export class BasicEvalEnv extends EvalEnv {
     return valueExpr(dataValue, path);
   }
   withVariables(vars: [string, EvalExpr][]): EvalEnv {
-    return this.newEnv({
-      ...this.state,
-      vars: Object.fromEntries(Object.entries(this.state.vars).concat(vars)),
-    });
+    return vars.reduce((e, v) => e.withVariable(v[0], v[1]), this as EvalEnv);
   }
 
   withVariable(name: string, expr: EvalExpr): EvalEnv {
-    const outVars = { ...this.state.vars };
+    const [nextEnv, value] = this.evaluate(expr);
+    const outVars = { ...nextEnv.state.vars };
     outVars[name] = expr;
-    return this.newEnv({ ...this.state, vars: outVars });
+    return this.newEnv({ ...nextEnv.state, vars: outVars });
   }
 
   withBasePath(path: Path): EvalEnv {
@@ -390,14 +385,11 @@ const mapFunction: FunctionExpr = {
     const [left, right] = call.args;
     const [leftEnv, { value }] = env.evaluate(left);
     if (Array.isArray(value)) {
-      return withEnvValue(
+      return mapEnv(
         mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
           evaluateElem(e, elem, i, right),
         ),
-        (e, vals) => [
-          e.withBasePath(env.basePath),
-          valueExpr(vals.flatMap(allElems)),
-        ],
+        (vals) => valueExpr(vals.flatMap(allElems)),
       );
     }
     console.error(value, left);
@@ -420,7 +412,7 @@ const filterFunction: FunctionExpr = {
           }),
         leftEnv,
       );
-      return [outEnv.withBasePath(env.basePath), valueExpr(accArray)];
+      return [outEnv, valueExpr(accArray)];
     }
     console.error(value, path);
     throw new Error("Can't filter this:");

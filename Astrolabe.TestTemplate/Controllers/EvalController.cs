@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using Astrolabe.Evaluator;
 using Astrolabe.Evaluator.Functions;
 using Astrolabe.Validation;
@@ -12,14 +13,19 @@ namespace Astrolabe.TestTemplate.Controllers;
 public class EvalController : ControllerBase
 {
     [HttpPost]
-    public async Task<ActionResult<JsonElement>> Eval([FromBody] EvalData evalData)
+    public async Task<EvalResult> Eval([FromBody] EvalData evalData)
     {
         var valEnv = RuleValidator.FromData(
             JsonDataLookup.FromObject(JsonSerializer.SerializeToNode(evalData.Data))
         );
         var result = valEnv.Evaluate(ExprParser.Parse(evalData.Expression));
-        return Ok(result.Value.ToNative());
+        return new EvalResult(result.Value.ToNative(), result.Env.Errors.Select(x => x.Message));
     }
 }
 
 public record EvalData(string Expression, IDictionary<string, object?> Data);
+
+public record EvalResult(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] object? Result,
+    IEnumerable<string> Errors
+);

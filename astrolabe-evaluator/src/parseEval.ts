@@ -37,8 +37,11 @@ export function parseEval(input: string) {
       case "Lambda":
         const [v, e] = node.getChildren("Expression").map(visit);
         return lambdaExpr((v as VarExpr).variable, e);
-      case "BooleanLiteral":
-        return valueExpr(getNodeText(node) === "true");
+      case "ConstantLiteral":
+        const constText = getNodeText(node);
+        return valueExpr(
+          constText === "true" ? true : constText === "false" ? false : null,
+        );
       case "UnaryExpression":
         const expr = visit(node.getChild("Expression"));
         switch (getNodeText(node).charAt(0)) {

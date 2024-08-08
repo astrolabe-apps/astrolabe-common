@@ -17,7 +17,7 @@ expression[@isGroup=Expression] {
     Reference |
     Identifier | 
     Lambda |
-    @specialize[@name=BooleanLiteral]<Identifier, "true" | "false"> |
+    @specialize[@name=ConstantLiteral]<Identifier, "true" | "false" | "null"> |
     LetExpression |
     Number | 
     String | 
