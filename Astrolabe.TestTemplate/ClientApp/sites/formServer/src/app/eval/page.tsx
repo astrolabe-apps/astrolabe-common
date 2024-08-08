@@ -83,11 +83,11 @@ export default function EvalPage() {
           value={dataText.value}
           onChange={(e) => (dataText.value = e.target.value)}
         />
-        <textarea
-          className="grow"
-          value={JSON.stringify(output.value, null, 2)}
-        />
       </div>
+      <textarea
+        className="grow"
+        value={JSON.stringify(output.value, null, 2)}
+      />
     </div>
   );
 
