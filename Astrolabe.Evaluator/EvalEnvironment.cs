@@ -24,6 +24,7 @@ public record EvalEnvironmentState(
 
 public class EvalEnvironment(EvalEnvironmentState state)
 {
+    public EvalEnvironmentState State => state;
     public DataPath BasePath => state.BasePath;
 
     public ValueExpr GetData(DataPath dataPath)
@@ -41,22 +42,20 @@ public class EvalEnvironment(EvalEnvironmentState state)
         return new EvalEnvironment(newState);
     }
 
-    public EvalEnvironment WithVariable(string name, EvalExpr? value)
+    public EvalEnvironment RemoveVariable(string name)
     {
-        return NewEnv(
-            state with
-            {
-                Variables =
-                    value == null
-                        ? state.Variables.Remove(name)
-                        : state.Variables.SetItem(name, value)
-            }
-        );
+        return NewEnv(state with { Variables = state.Variables.Remove(name) });
     }
 
-    public EvalEnvironment WithVariables(ICollection<KeyValuePair<string, EvalExpr>> vars)
+    public virtual EvalEnvironment WithVariable(string name, EvalExpr value)
     {
-        return NewEnv(state with { Variables = state.Variables.SetItems(vars) });
+        var (e, varValue) = Evaluate(value);
+        return e.NewEnv(e.State with { Variables = state.Variables.SetItem(name, varValue) });
+    }
+
+    public virtual EvalEnvironment WithVariables(ICollection<KeyValuePair<string, EvalExpr>> vars)
+    {
+        return vars.Aggregate(this, (e, v) => e.WithVariable(v.Key, v.Value));
     }
 
     public EvalEnvironment WithBasePath(DataPath basePath)

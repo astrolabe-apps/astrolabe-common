@@ -27,8 +27,13 @@ public static class Interpreter
                         ]
                     )
                     .WithBasePath(baseValue.Path ?? environment.BasePath)
-                    .Evaluate(valExpr),
-            _ when baseValue.Path is { } bp => environment.WithBasePath(bp).Evaluate(expr),
+                    .Evaluate(valExpr)
+                    .EnvMap(x => x.WithBasePath(environment.BasePath)),
+            _ when baseValue.Path is { } bp
+                => environment
+                    .WithBasePath(bp)
+                    .Evaluate(expr)
+                    .EnvMap(x => x.WithBasePath(environment.BasePath)),
             _ => throw new ArgumentException("Need a path")
         };
     }
@@ -49,16 +54,11 @@ public static class Interpreter
                     .WithVariables(
                         le.Vars.Select(x => new KeyValuePair<string, EvalExpr>(
                             x.Item1.Name,
-                            new BaseExpr(environment.BasePath, x.Item2)
+                            x.Item2
                         ))
                             .ToList()
                     )
                     .Evaluate(le.In),
-            BaseExpr be when environment.BasePath is var origPath
-                => environment
-                    .WithBasePath(be.BasePath)
-                    .Evaluate(be.Expr)
-                    .EnvMap(x => x.WithBasePath(origPath)),
             VarExpr ve when environment.GetVariable(ve.Name) is { } v => environment.Evaluate(v),
             ValueExpr v => environment.WithValue(v),
             CallExpr { Function: var func, Args: var args } callExpr

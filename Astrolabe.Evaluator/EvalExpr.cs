@@ -60,8 +60,6 @@ public record LetExpr(IEnumerable<(VarExpr, EvalExpr)> Vars, EvalExpr In) : Eval
     }
 }
 
-public record BaseExpr(DataPath BasePath, EvalExpr Expr) : EvalExpr;
-
 public record PropertyExpr(string Property) : EvalExpr;
 
 public record LambdaExpr(string Variable, EvalExpr Value) : EvalExpr;

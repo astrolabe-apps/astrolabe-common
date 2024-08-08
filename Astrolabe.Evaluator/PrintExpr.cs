@@ -9,7 +9,7 @@ public static class PrintExpr
             null => "null",
             EmptyPath => "",
             DataPath dp => dp.ToPathString(),
-            ArrayValue av => $"[{string.Join(", ", av.Values.Cast<object?>().Select(PrintValue))}]",
+            ArrayValue av => $"[{string.Join(", ", av.Values.Select(x => PrintValue(x.Value)))}]",
             _ => $"{value}"
         };
     }

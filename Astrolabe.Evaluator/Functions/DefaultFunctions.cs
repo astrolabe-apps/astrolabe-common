@@ -9,7 +9,7 @@ public static class DefaultFunctions
         return value switch
         {
             null => "",
-            ArrayValue av => string.Join("", av.Values.Select(ExprValueToString)),
+            ArrayValue av => string.Join("", av.Values.Select(x => ExprValueToString(x.Value))),
             ObjectValue => "{}",
             _ => value.ToString() ?? ""
         };
@@ -113,8 +113,8 @@ public static class DefaultFunctions
             }
     );
 
-    private static readonly FunctionHandler StringOp = FunctionHandler.DefaultEval(
-        ExprValueToString
+    private static readonly FunctionHandler StringOp = FunctionHandler.DefaultEval(args =>
+        string.Join("", args.Select(ExprValueToString))
     );
 
     public static FunctionHandler ArrayOp<T>(T init, Func<T, object?, T> arrayFunc)

@@ -12,7 +12,8 @@ public record ValidatorState(
     ValueExpr Message,
     ImmutableHashSet<DataPath> DependentData,
     IEnumerable<EvaluatedRule> Rules,
-    ImmutableDictionary<string, object?> Properties
+    ImmutableDictionary<string, object?> Properties,
+    ImmutableDictionary<string, ImmutableHashSet<DataPath>> VarDependencies
 )
 {
     public static readonly ValidatorState Empty =
@@ -21,7 +22,8 @@ public record ValidatorState(
             ValueExpr.Null,
             ImmutableHashSet<DataPath>.Empty,
             [],
-            ImmutableDictionary<string, object?>.Empty
+            ImmutableDictionary<string, object?>.Empty,
+            ImmutableDictionary<string, ImmutableHashSet<DataPath>>.Empty
         );
 }
 
@@ -40,6 +42,33 @@ public class ValidatorEvalEnvironment(EvalEnvironmentState state, ValidatorState
         return new ValidatorEvalEnvironment(state, newState);
     }
 
+    public override EvalEnvironment WithVariable(string name, EvalExpr value)
+    {
+        var previousDeps = ValidatorState.DependentData;
+        var cleanDeps = WithValidatorState(
+            validatorState with
+            {
+                DependentData = ImmutableHashSet<DataPath>.Empty
+            }
+        );
+        var (e, varValue) = cleanDeps.Evaluate(value);
+        var newValState = e.GetValidatorState();
+        return new ValidatorEvalEnvironment(
+            e.State with
+            {
+                Variables = state.Variables.SetItem(name, varValue)
+            },
+            newValState with
+            {
+                VarDependencies = newValState.VarDependencies.SetItem(
+                    name,
+                    newValState.DependentData
+                ),
+                DependentData = previousDeps
+            }
+        );
+    }
+
     public override EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
     {
         return evalExpr switch
@@ -52,6 +81,17 @@ public class ValidatorEvalEnvironment(EvalEnvironmentState state, ValidatorState
                         }
                     )
                     .WithValue(vp),
+            VarExpr ve
+                when validatorState.VarDependencies.TryGetValue(ve.Name, out var varDeps)
+                    && State.Variables.TryGetValue(ve.Name, out var varValue)
+                => WithValidatorState(
+                        validatorState with
+                        {
+                            DependentData = validatorState.DependentData.Union(varDeps)
+                        }
+                    )
+                    .Evaluate(varValue),
+
             _ => base.Evaluate(evalExpr)
         };
     }
