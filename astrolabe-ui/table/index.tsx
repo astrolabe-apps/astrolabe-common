@@ -118,7 +118,8 @@ export function setColumnSort(
   dir?: SortDirection,
 ): (existing: string[]) => string[] {
   return (cols) => {
-    const sortField = column.sortField!;
+    const sortField = column.sortField;
+    if (!sortField) throw new Error("Column must have a sort field.");
     const withoutExisting = cols.filter(
       (c) => stringToSortField(c)[0] !== sortField,
     );
@@ -141,7 +142,11 @@ export function rotateSort(
   column: ColumnHeader,
 ): (existing: string[]) => string[] {
   return (cols) => {
-    const sortField = column.sortField!;
+    const sortField = column.sortField;
+    if (!sortField) {
+      throw new Error("sortField is required");
+    }
+
     const currentSort = cols.find((c) => stringToSortField(c)[0] === sortField);
     const currentDirection = currentSort
       ? stringToSortField(currentSort)[1]
