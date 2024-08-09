@@ -78,6 +78,7 @@ public class ExprParser
                 AstroExprParser.Number => ValueExpr.From(double.Parse(node.GetText())),
                 AstroExprParser.False => ValueExpr.False,
                 AstroExprParser.True => ValueExpr.True,
+                AstroExprParser.Null => ValueExpr.Null,
                 AstroExprParser.Literal when node.GetText() is var text
                     => new ValueExpr(text.Substring(1, text.Length - 2)),
                 _ => throw new NotImplementedException()

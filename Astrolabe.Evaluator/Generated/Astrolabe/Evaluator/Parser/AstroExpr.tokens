@@ -27,11 +27,12 @@ EQ=26
 NE=27
 False=28
 True=29
-COND=30
-NOT=31
-Literal=32
-Whitespace=33
-Identifier=34
+Null=30
+COND=31
+NOT=32
+Literal=33
+Whitespace=34
+Identifier=35
 ':='=1
 'let'=2
 'in'=3
@@ -60,5 +61,6 @@ Identifier=34
 '!='=27
 'false'=28
 'true'=29
-'?'=30
-'!'=31
+'null'=30
+'?'=31
+'!'=32

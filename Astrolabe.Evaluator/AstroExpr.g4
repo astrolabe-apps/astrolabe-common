@@ -25,6 +25,7 @@ primaryExpr
     | Number
     | 'false'
     | 'true'
+    | 'null'
     | Identifier
     ;
 
@@ -180,6 +181,10 @@ False
 
 True
     : 'true'
+    ;
+    
+Null
+    : 'null'
     ;
 
 COND
