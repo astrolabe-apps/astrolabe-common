@@ -6,6 +6,7 @@ using EvaluatedExpr = EnvironmentValue<ValueExpr>;
 
 public record EvalEnvironmentState(
     Func<DataPath, ValueExpr> GetDataFunc,
+    Func<object?, object?, int> Compare,
     DataPath BasePath,
     ImmutableDictionary<string, EvalExpr> Variables,
     IEnumerable<EvalError> Errors
@@ -15,6 +16,7 @@ public record EvalEnvironmentState(
     {
         return new EvalEnvironmentState(
             data,
+            EvalEnvironment.DefaultComparison,
             DataPath.Empty,
             ImmutableDictionary<string, EvalExpr>.Empty,
             []
@@ -27,6 +29,36 @@ public class EvalEnvironment(EvalEnvironmentState state)
     public EvalEnvironmentState State => state;
     public DataPath BasePath => state.BasePath;
     public IEnumerable<EvalError> Errors => state.Errors;
+
+    public static readonly Func<object?, object?, int> DefaultComparison = CompareSignificantDigits(
+        5
+    );
+
+    public static Func<object?, object?, int> CompareSignificantDigits(int digits)
+    {
+        var multiply = (long)Math.Pow(10, digits);
+        return (v1, v2) =>
+            (v1, v2) switch
+            {
+                (long l1, long l2) => l1.CompareTo(l2),
+                (_, double d2)
+                    => ((long)(ValueExpr.AsDouble(v1) * multiply)).CompareTo((long)(d2 * multiply)),
+                (double d1, _)
+                    => ((long)(d1 * multiply)).CompareTo((long)(ValueExpr.AsDouble(v2) * multiply)),
+                (string s1, string s2) => string.Compare(s1, s2, StringComparison.InvariantCulture),
+                _
+                    => Equals(v1, v2)
+                        ? 0
+                        : v1 == null
+                            ? 1
+                            : -1
+            };
+    }
+
+    public EvalEnvironment WithComparison(Func<object?, object?, int> comparison)
+    {
+        return NewEnv(state with { Compare = comparison });
+    }
 
     public ValueExpr GetData(DataPath dataPath)
     {
@@ -77,6 +109,11 @@ public class EvalEnvironment(EvalEnvironmentState state)
     public virtual EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
     {
         return this.DefaultEvaluate(evalExpr);
+    }
+
+    public int Compare(object? v1, object? v2)
+    {
+        return State.Compare(v1, v2);
     }
 }
 

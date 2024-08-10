@@ -1,4 +1,6 @@
 export { parser } from "./parser";
-export * from "./nodes";
+export * from "./ast";
+export * from "./evaluate";
 export * from "./parseEval";
 export * from "./printExpr";
+export * from "./defaultFunctions";

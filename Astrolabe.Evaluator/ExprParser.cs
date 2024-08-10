@@ -75,7 +75,7 @@ public class ExprParser
             return node.Symbol.Type switch
             {
                 AstroExprParser.Identifier => new PropertyExpr(node.GetText()),
-                AstroExprParser.Number => ValueExpr.From(double.Parse(node.GetText())),
+                AstroExprParser.Number => new ValueExpr(double.Parse(node.GetText())),
                 AstroExprParser.False => ValueExpr.False,
                 AstroExprParser.True => ValueExpr.True,
                 AstroExprParser.Null => ValueExpr.Null,

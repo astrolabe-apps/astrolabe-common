@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text.Json.Nodes;
 
 namespace Astrolabe.Evaluator.Functions;
@@ -41,13 +40,13 @@ public static class DefaultFunctions
         );
     }
 
-    public static FunctionHandler BinNullOp(Func<object, object, object?> evaluate)
+    public static FunctionHandler BinNullOp(Func<EvalEnvironment, object, object, object?> evaluate)
     {
         return FunctionHandler.DefaultEval(
-            (args) =>
+            (e, args) =>
                 args switch
                 {
-                    [{ } v1, { } v2] => evaluate(v1, v2),
+                    [{ } v1, { } v2] => evaluate(e, v1, v2),
                     [_, _] => null,
                     _ => throw new ArgumentException("Wrong number of args:" + args)
                 }
@@ -57,7 +56,7 @@ public static class DefaultFunctions
     public static FunctionHandler BoolOp(Func<bool, bool, bool> func)
     {
         return BinNullOp(
-            (a, b) =>
+            (e, a, b) =>
                 (a, b) switch
                 {
                     (bool b1, bool b2) => func(b1, b2),
@@ -72,7 +71,7 @@ public static class DefaultFunctions
     )
     {
         return BinNullOp(
-            (o1, o2) =>
+            (e, o1, o2) =>
             {
                 if (ValueExpr.MaybeInteger(o1) is { } l1 && ValueExpr.MaybeInteger(o2) is { } l2)
                 {
@@ -83,35 +82,18 @@ public static class DefaultFunctions
         );
     }
 
-    public static FunctionHandler EqualityFunc(bool not)
+    public static FunctionHandler ComparisonFunc(Func<int, bool> toResult)
     {
-        return BinNullOp((v1, v2) => not ^ Equals(AsEqualityCheck(v1), AsEqualityCheck(v2)));
+        return BinNullOp((e, v1, v2) => toResult(e.Compare(v1, v2)));
     }
 
-    public static object AsEqualityCheck(this object? v)
-    {
-        return v switch
+    private static readonly FunctionHandler IfElseOp = FunctionHandler.DefaultEval(args =>
+        args switch
         {
-            int i => (double)i,
-            long l => (double)l,
-            not null => v,
-            _ => throw new ArgumentException("Cannot be compared: " + v)
-        };
-    }
-
-    private static readonly FunctionHandler AddNumberOp = NumberOp<double, long>(
-        (d1, d2) => d1 + d2,
-        (l1, l2) => l1 + l2
-    );
-
-    private static readonly FunctionHandler IfElseOp = FunctionHandler.DefaultEval(
-        (args) =>
-            args switch
-            {
-                [bool b, var thenVal, var elseVal] => b ? thenVal : elseVal,
-                [null, _, _] => null,
-                _ => throw new ArgumentException("Bad conditional: " + args),
-            }
+            [bool b, var thenVal, var elseVal] => b ? thenVal : elseVal,
+            [null, _, _] => null,
+            _ => throw new ArgumentException("Bad conditional: " + args),
+        }
     );
 
     private static readonly FunctionHandler StringOp = FunctionHandler.DefaultEval(args =>
@@ -136,19 +118,19 @@ public static class DefaultFunctions
     public static readonly Dictionary<string, FunctionHandler> FunctionHandlers =
         new()
         {
-            { "+", AddNumberOp },
-            { "-", NumberOp<double, long>((d1, d2) => d1 - d2, (l1, l2) => l1 - l2) },
-            { "*", NumberOp<double, long>((d1, d2) => d1 * d2, (l1, l2) => l1 * l2) },
-            { "/", NumberOp<double, double>((d1, d2) => d1 / d2, (l1, l2) => (double)l1 / l2) },
-            { "=", EqualityFunc(false) },
-            { "!=", EqualityFunc(true) },
-            { "<", NumberOp((d1, d2) => d1 < d2, (l1, l2) => l1 < l2) },
-            { "<=", NumberOp((d1, d2) => d1 <= d2, (l1, l2) => l1 <= l2) },
-            { ">", NumberOp((d1, d2) => d1 > d2, (l1, l2) => l1 > l2) },
-            { ">=", NumberOp((d1, d2) => d1 >= d2, (l1, l2) => l1 >= l2) },
+            { "+", NumberOp((d1, d2) => d1 + d2, (l1, l2) => l1 + l2) },
+            { "-", NumberOp((d1, d2) => d1 - d2, (l1, l2) => l1 - l2) },
+            { "*", NumberOp((d1, d2) => d1 * d2, (l1, l2) => l1 * l2) },
+            { "/", NumberOp((d1, d2) => d1 / d2, (l1, l2) => (double)l1 / l2) },
+            { "=", ComparisonFunc(v => v == 0) },
+            { "!=", ComparisonFunc(v => v != 0) },
+            { "<", ComparisonFunc(x => x < 0) },
+            { "<=", ComparisonFunc(x => x <= 0) },
+            { ">", ComparisonFunc(x => x > 0) },
+            { ">=", ComparisonFunc(x => x >= 0) },
             { "and", BoolOp((a, b) => a && b) },
             { "or", BoolOp((a, b) => a || b) },
-            { "!", UnaryNullOp((a) => a is bool b ? !b : null) },
+            { "!", UnaryNullOp(a => a is bool b ? !b : null) },
             { "?", IfElseOp },
             { "sum", ArrayOp(0d, (acc, v) => acc + ValueExpr.AsDouble(v)) },
             {
@@ -253,14 +235,14 @@ public static class DefaultFunctions
         {
             if (condValue.IsNull())
                 return curEnv.WithNull();
-            var condCompare = AsEqualityCheck(condValue.Value);
+            var condCompare = condValue.Value;
             var i = 0;
             while (i < others.Count - 1)
             {
                 var compare = others[i++];
                 var value = others[i++];
                 var (nextEnv, compValue) = curEnv.Evaluate(compare);
-                if (condCompare.Equals(AsEqualityCheck(compValue.Value)))
+                if (curEnv.Compare(condCompare, compValue.Value) == 0)
                 {
                     return nextEnv.Evaluate(value);
                 }

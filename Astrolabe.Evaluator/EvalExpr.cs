@@ -68,12 +68,17 @@ public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, 
 
 public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
 {
-    public static FunctionHandler DefaultEval(Func<IList<object?>, object?> eval) =>
+    public static FunctionHandler DefaultEval(
+        Func<EvalEnvironment, IList<object?>, object?> eval
+    ) =>
         new(
             (e, call) =>
                 e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x))
-                    .Map(args => new ValueExpr(eval(args.Select(x => x.Value).ToList())))
+                    .Map(args => new ValueExpr(eval(e, args.Select(x => x.Value).ToList())))
         );
+
+    public static FunctionHandler DefaultEval(Func<IList<object?>, object?> eval) =>
+        DefaultEval((_, a) => eval(a));
 }
 
 public record ValueExpr(object? Value, DataPath? Path = null) : EvalExpr
@@ -159,11 +164,6 @@ public record ValueExpr(object? Value, DataPath? Path = null) : EvalExpr
     }
 
     public static ValueExpr From(int? v)
-    {
-        return new ValueExpr(v);
-    }
-
-    public static ValueExpr From(double? v)
     {
         return new ValueExpr(v);
     }

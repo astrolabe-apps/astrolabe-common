@@ -6,11 +6,10 @@ import {
   lambdaExpr,
   letExpr,
   propertyExpr,
-  segmentPath,
   valueExpr,
   VarExpr,
   varExpr,
-} from "./nodes";
+} from "./ast";
 
 export function parseEval(input: string) {
   const parseTree = parser.parse(input);

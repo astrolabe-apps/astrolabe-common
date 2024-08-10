@@ -1,4 +1,4 @@
-import { CallExpr, EvalExpr, Path, ValueExpr } from "./nodes";
+import { CallExpr, EvalExpr, Path, ValueExpr } from "./ast";
 
 export function printExpr(expr: EvalExpr): string {
   switch (expr.type) {
