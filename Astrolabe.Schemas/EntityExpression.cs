@@ -9,10 +9,14 @@ namespace Astrolabe.Schemas;
 public enum ExpressionType
 {
     Jsonata,
+
     [Display(Name = "Data Match")]
     FieldValue,
     UserMatch,
-    Data
+    Data,
+
+    [Display(Name = "Not Empty")]
+    NotEmpty
 }
 
 [JsonBaseType("type", typeof(SimpleExpression))]
@@ -20,7 +24,10 @@ public enum ExpressionType
 [JsonSubType("Jsonata", typeof(JsonataExpression))]
 [JsonSubType("UserMatch", typeof(UserMatchExpression))]
 [JsonSubType("Data", typeof(DataExpression))]
-public abstract record EntityExpression([property: SchemaOptions(typeof(ExpressionType))] string Type)
+[JsonSubType("NotEmpty", typeof(NotEmptyExpression))]
+public abstract record EntityExpression(
+    [property: SchemaOptions(typeof(ExpressionType))] string Type
+)
 {
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
@@ -28,11 +35,19 @@ public abstract record EntityExpression([property: SchemaOptions(typeof(Expressi
 
 public record SimpleExpression(string Type) : EntityExpression(Type);
 
-public record JsonataExpression(string Expression) : EntityExpression(ExpressionType.Jsonata.ToString());
+public record JsonataExpression(string Expression)
+    : EntityExpression(ExpressionType.Jsonata.ToString());
 
-public record DataMatchExpression([property: SchemaTag(SchemaTags.SchemaField)] string Field,  [property: SchemaTag("_ValuesOf:field")] object Value) : EntityExpression(ExpressionType.FieldValue.ToString());
+public record DataMatchExpression(
+    [property: SchemaTag(SchemaTags.SchemaField)] string Field,
+    [property: SchemaTag("_ValuesOf:field")] object Value
+) : EntityExpression(ExpressionType.FieldValue.ToString());
 
-public record DataExpression(
-    [property: SchemaTag(SchemaTags.SchemaField)]
-    string Field) : EntityExpression(ExpressionType.Data.ToString());
-public record UserMatchExpression(string UserMatch) : EntityExpression(ExpressionType.UserMatch.ToString());
+public record NotEmptyExpression([property: SchemaTag(SchemaTags.SchemaField)] string Field)
+    : EntityExpression(ExpressionType.NotEmpty.ToString());
+
+public record DataExpression([property: SchemaTag(SchemaTags.SchemaField)] string Field)
+    : EntityExpression(ExpressionType.Data.ToString());
+
+public record UserMatchExpression(string UserMatch)
+    : EntityExpression(ExpressionType.UserMatch.ToString());

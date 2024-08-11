@@ -130,6 +130,7 @@ export enum ExpressionType {
   Data = "Data",
   DataMatch = "FieldValue",
   UserMatch = "UserMatch",
+  NotEmpty = "NotEmpty",
 }
 
 export interface JsonataExpression extends EntityExpression {
@@ -146,6 +147,11 @@ export interface DataMatchExpression extends EntityExpression {
   type: ExpressionType.DataMatch;
   field: string;
   value: any;
+}
+
+export interface NotEmptyExpression extends EntityExpression {
+  type: ExpressionType.DataMatch;
+  field: string;
 }
 
 export interface UserMatchExpression extends EntityExpression {
@@ -226,6 +232,7 @@ export enum DataRenderType {
   Dropdown = "Dropdown",
   DisplayOnly = "DisplayOnly",
   Group = "Group",
+  NullToggle = "NullToggle",
 }
 
 export interface TextfieldRenderOptions extends RenderOptions {

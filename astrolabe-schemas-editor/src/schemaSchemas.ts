@@ -363,6 +363,10 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
         name: "Data",
         value: "Data",
       },
+      {
+        name: "Not Empty",
+        value: "NotEmpty",
+      },
     ],
   }),
   expression: makeScalarField({
@@ -374,7 +378,7 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
   }),
   field: makeScalarField({
     type: FieldType.String,
-    onlyForTypes: ["FieldValue", "Data"],
+    onlyForTypes: ["FieldValue", "NotEmpty", "Data"],
     notNullable: true,
     required: true,
     displayName: "Field",
@@ -759,6 +763,10 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
       {
         name: "Group",
         value: "Group",
+      },
+      {
+        name: "Null Toggler",
+        value: "NullToggle",
       },
     ],
   }),

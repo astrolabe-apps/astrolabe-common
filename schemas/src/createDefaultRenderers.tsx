@@ -20,7 +20,13 @@ import {
   LabelRendererRegistration,
 } from "./renderers";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, { CSSProperties, Fragment, ReactElement, ReactNode } from "react";
+import React, {
+  CSSProperties,
+  Fragment,
+  ReactElement,
+  ReactNode,
+  useEffect,
+} from "react";
 import { hasOptions, rendererClass } from "./util";
 import clsx from "clsx";
 import {
@@ -50,7 +56,12 @@ import {
   SelectRendererOptions,
 } from "./components/SelectDataRenderer";
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
-import { Control, Fcheckbox } from "@react-typed-forms/core";
+import {
+  Control,
+  Fcheckbox,
+  newControl,
+  useControlEffect,
+} from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
 import {
   createDefaultArrayRenderer,
@@ -212,6 +223,7 @@ interface DefaultDataRendererOptions {
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
 ): DataRendererRegistration {
+  const nullToggler = createNullToggleRenderer();
   const checkboxRenderer = createCheckboxRenderer(
     options.checkOptions ?? options.checkboxOptions,
   );
@@ -268,6 +280,8 @@ export function createDefaultDataRenderer(
       return optionRenderer.render(props, renderers);
     }
     switch (renderType) {
+      case DataRenderType.NullToggle:
+        return nullToggler.render(props, renderers);
       case DataRenderType.CheckList:
         return checkListRenderer.render(props, renderers);
       case DataRenderType.Dropdown:
@@ -417,6 +431,60 @@ export function createDefaultLabelRenderer(
     },
     type: "label",
   };
+}
+
+export function createNullToggleRenderer() {
+  return createDataRenderer(
+    ({ control, field, renderOptions, ...props }, renderers) => {
+      const nullControl = (control.meta["nullControl"] ??= newControl(
+        control.current.value != null,
+      ));
+      return (layout) => {
+        const newLayout = renderers.renderData({
+          ...props,
+          control: nullControl,
+          field: { ...field, type: FieldType.Bool },
+          renderOptions: { type: DataRenderType.Checkbox },
+        })(layout);
+        return {
+          ...newLayout,
+          children: (
+            <NullWrapper
+              control={control}
+              nullControl={nullControl}
+              children={newLayout.children}
+              defaultValue={props.definition.defaultValue}
+            />
+          ),
+        };
+      };
+    },
+  );
+}
+
+function NullWrapper({
+  children,
+  nullControl,
+  control,
+  defaultValue,
+}: {
+  control: Control<any>;
+  nullControl: Control<boolean>;
+  children: ReactNode;
+  defaultValue: any;
+}) {
+  useControlEffect(
+    () => nullControl.value,
+    (e) => {
+      if (e) {
+        control.value = nullControl.meta["nonNullValue"] ?? defaultValue;
+      } else {
+        nullControl.meta["nonNullValue"] = control.value;
+        control.value = null;
+      }
+    },
+  );
+  return children;
 }
 
 export function createDefaultRenderers(

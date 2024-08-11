@@ -7,6 +7,7 @@ import {
   ExpressionType,
   isDataControlDefinition,
   JsonataExpression,
+  NotEmptyExpression,
   SchemaField,
   SchemaInterface,
 } from "./types";
@@ -37,6 +38,7 @@ import {
   isControlReadonly,
   jsonPathString,
   lookupChildControl,
+  lookupChildControlPath,
   toDepString,
 } from "./util";
 import jsonata from "jsonata";
@@ -128,6 +130,7 @@ export function useEvalAllowedOptionsHook(
 export function useEvalDisabledHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
+  fieldPath?: SchemaField[],
 ): EvalExpressionHook<boolean> {
   const dynamicDisabled = useEvalDynamicBoolHook(
     definition,
@@ -136,8 +139,13 @@ export function useEvalDisabledHook(
   );
   return makeDynamicPropertyHook(
     dynamicDisabled,
-    () => useComputed(() => isControlDisabled(definition)),
-    undefined,
+    (ctx, { fieldPath }) =>
+      useComputed(() => {
+        const dataControl = fieldPath && lookupChildControl(ctx, fieldPath);
+        const setToNull = dataControl?.meta["nullControl"]?.value === false;
+        return setToNull || isControlDisabled(definition);
+      }),
+    { fieldPath },
   );
 }
 
@@ -214,6 +222,22 @@ function useDataMatchExpression(
   });
 }
 
+function useNotEmptyExpression(
+  fvExpr: NotEmptyExpression,
+  fields: SchemaField[],
+  schemaInterface: SchemaInterface,
+  data: DataContext,
+  coerce: (v: any) => any = (x) => x,
+) {
+  const refField = findFieldPath(fields, fvExpr.field);
+  const otherField = refField ? lookupChildControl(data, refField) : undefined;
+  return useCalculatedControl(() => {
+    const fv = otherField?.value;
+    const field = refField?.at(-1);
+    return coerce(field && !schemaInterface.isEmptyValue(field, fv));
+  });
+}
+
 export function defaultEvalHooks(
   expr: EntityExpression,
   context: ControlDataContext,
@@ -238,6 +262,14 @@ export function defaultEvalHooks(
       return useDataMatchExpression(
         expr as DataMatchExpression,
         context.fields,
+        context,
+        coerce,
+      );
+    case ExpressionType.NotEmpty:
+      return useNotEmptyExpression(
+        expr as NotEmptyExpression,
+        context.fields,
+        context.schemaInterface,
         context,
         coerce,
       );

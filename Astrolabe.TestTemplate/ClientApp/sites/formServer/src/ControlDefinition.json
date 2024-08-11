@@ -291,11 +291,21 @@
       },
       {
         "type": "Data",
+        "title": "Default value",
+        "field": "defaultValue",
+        "renderOptions": {
+          "type": "NullToggle"
+        },
+        "labelClass": ""
+      },
+      {
+        "type": "Data",
         "title": "Default Value",
         "field": "defaultValue",
         "renderOptions": {
           "type": "Standard"
-        }
+        },
+        "hideTitle": true
       },
       {
         "type": "Data",

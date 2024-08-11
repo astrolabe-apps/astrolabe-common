@@ -25,6 +25,7 @@ import {
   ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
+  DataRenderType,
   DisplayData,
   DynamicPropertyType,
   FieldOption,
@@ -289,7 +290,7 @@ export function useControlRenderer(
     ),
     visibleControl: useEvalVisibilityHook(useExpr, definition, fieldPath),
     readonlyControl: useEvalReadonlyHook(useExpr, definition),
-    disabledControl: useEvalDisabledHook(useExpr, definition),
+    disabledControl: useEvalDisabledHook(useExpr, definition, fieldPath),
     allowedOptions: useEvalAllowedOptionsHook(useExpr, definition),
     labelText: useEvalLabelText(useExpr, definition),
     actionData: useEvalActionHook(useExpr, definition),
@@ -376,11 +377,13 @@ export function useControlRenderer(
             defaultValueControl.value,
             control?.isNull,
             isDataControlDefinition(definition) && definition.dontClearHidden,
+            isDataControlDefinition(definition) &&
+              definition.renderOptions?.type == DataRenderType.NullToggle,
             parentControl.isNull,
             options.hidden,
             readonlyControl.value,
           ],
-          ([vc, dv, _, dontClear, parentNull, hidden, ro]) => {
+          ([vc, dv, _, dontClear, dontDefault, parentNull, hidden, ro]) => {
             if (!ro) {
               if (control) {
                 if (vc && vc.visible === vc.showing) {
@@ -388,7 +391,8 @@ export function useControlRenderer(
                     if (options.clearHidden && !dontClear) {
                       control.value = undefined;
                     }
-                  } else control.setValue((x) => (x != null ? x : dv));
+                  } else if (!dontDefault)
+                    control.setValue((x) => (x != null ? x : dv));
                 }
               } else if (parentNull) {
                 parentControl.setValue((x) => x ?? {});
@@ -601,10 +605,10 @@ export function defaultDataProps({
         ? allowed.map((x) =>
             typeof x === "object"
               ? x
-              : fieldOptions?.find((y) => y.value == x) ?? {
+              : (fieldOptions?.find((y) => y.value == x) ?? {
                   name: x.toString(),
                   value: x,
-                },
+                }),
           )
         : fieldOptions,
     readonly: !!formOptions.readonly,
