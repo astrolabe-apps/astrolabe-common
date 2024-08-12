@@ -12,7 +12,7 @@ public static class Interpreter
     public static EvaluatedExprValue EvaluateElem(
         this EvalEnvironment environment,
         ValueExpr baseValue,
-        int index,
+        int? index,
         EvalExpr expr
     )
     {
@@ -21,10 +21,7 @@ public static class Interpreter
             LambdaExpr { Variable: var name, Value: var valExpr }
                 => environment
                     .WithVariables(
-                        [
-                            new KeyValuePair<string, EvalExpr>(name, ValueExpr.From(index)),
-                            new KeyValuePair<string, EvalExpr>(name + "_elem", baseValue)
-                        ]
+                        [new KeyValuePair<string, EvalExpr>(name, ValueExpr.From(index)),]
                     )
                     .WithBasePath(baseValue.Path ?? environment.BasePath)
                     .Evaluate(valExpr)
@@ -53,9 +50,9 @@ public static class Interpreter
                 => environment
                     .WithVariables(
                         le.Vars.Select(x => new KeyValuePair<string, EvalExpr>(
-                                x.Item1.Name,
-                                x.Item2
-                            ))
+                            x.Item1.Name,
+                            x.Item2
+                        ))
                             .ToList()
                     )
                     .Evaluate(le.In),

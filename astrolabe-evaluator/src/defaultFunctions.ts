@@ -17,6 +17,7 @@ import {
   evaluateElem,
 } from "./evaluate";
 import { allElems, toString } from "./values";
+import { printExpr } from "./printExpr";
 
 const stringFunction = functionValue((e, { args }) =>
   mapEnv(evaluateAll(e, args), (x) => valueExpr(toString(x))),
@@ -91,17 +92,24 @@ export const whichFunction: ValueExpr = functionValue((e, call) => {
 
 const mapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   const [left, right] = call.args;
-  const [leftEnv, { value }] = env.evaluate(left);
+  const [leftEnv, leftVal] = env.evaluate(left);
+  const { value } = leftVal;
   if (Array.isArray(value)) {
     return mapEnv(
-      mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
+      mapAllEnv(leftEnv, leftVal.value, (e, elem: ValueExpr, i) =>
         evaluateElem(e, elem, i, right),
       ),
       (vals) => valueExpr(vals.flatMap(allElems)),
     );
   }
-  console.error(value, left);
-  throw new Error("Can't map this:");
+  if (typeof value === "object" && value != null) {
+    return evaluateElem(leftEnv, leftVal, null, right);
+  } else {
+    return [
+      leftEnv.withError("Can't map value: " + printExpr(leftVal)),
+      valueExpr(null),
+    ];
+  }
 });
 
 const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
@@ -161,6 +169,7 @@ const defaultFunctions = {
   }),
   ".": mapFunction,
   "[": filterFunction,
+  this: functionValue((e, call) => [e, e.getData(e.basePath)]),
 };
 
 export function addDefaults(evalEnv: EvalEnv) {

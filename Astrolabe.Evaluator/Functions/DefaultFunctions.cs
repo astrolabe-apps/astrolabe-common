@@ -197,7 +197,8 @@ public static class DefaultFunctions
                     }
                     return new ObjectValue(obj);
                 })
-            }
+            },
+            { "this", new FunctionHandler((e, c) => e.WithValue(e.GetData(e.BasePath))) }
         };
 
     public static JsonNode? ToJsonNode(object? objValue)

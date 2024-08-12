@@ -19,7 +19,9 @@ public static class MapFunctionHandler
                                     )
                                     .Map(x => new ValueExpr(
                                         new ArrayValue(x.SelectMany(v => v.AllValues()))
-                                    ))
+                                    )),
+                            (var nextEnv, { Value: ObjectValue })
+                                => nextEnv.EvaluateElem(leftVar.Value, null, right)
                         }
                 };
             }

@@ -17,17 +17,14 @@ import {
 export function evaluateElem(
   env: EvalEnv,
   value: ValueExpr,
-  ind: number,
+  ind: number | null,
   expr: EvalExpr,
 ): EnvValue<ValueExpr> {
   switch (expr.type) {
     case "lambda":
       return alterEnv(
         env
-          .withVariables([
-            [expr.variable, valueExpr(ind)],
-            [expr.variable + "_elem", value],
-          ])
+          .withVariables([[expr.variable, valueExpr(ind)]])
           .withBasePath(value.path ?? env.basePath)
           .evaluate(expr.expr),
         (x) => x.withBasePath(env.basePath),

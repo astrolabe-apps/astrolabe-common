@@ -93,8 +93,6 @@ public record ValueExpr(object? Value, DataPath? Path = null) : EvalExpr
 
     public static readonly ValueExpr Undefined = new(UndefinedValue);
 
-    public static readonly ValueExpr EmptyPath = new(DataPath.Empty);
-
     public static double AsDouble(object? v)
     {
         return v switch

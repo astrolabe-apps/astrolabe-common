@@ -11,8 +11,6 @@ public interface WrappedExpr
 
 public static class TypedExpr
 {
-    public static TypedExpr<TRoot> Root<TRoot>() => new SimpleTypedExpr<TRoot>(ValueExpr.EmptyPath);
-
     public static TypedExpr<T> ForPathExpr<T>(EvalExpr expr) => new SimpleTypedExpr<T>(expr);
 }
 
@@ -22,6 +20,11 @@ public interface TypedExpr<T> : WrappedExpr
         where T2 : struct
     {
         return new SimpleTypedExpr<T2>(TypedExprExtensions.FieldName(getter));
+    }
+
+    public TypedExpr<T> This()
+    {
+        return new SimpleTypedExpr<T>(new CallExpr("this", []));
     }
 
     public TypedExpr<T2> Prop<T2>(Expression<Func<T, T2>> getter)
