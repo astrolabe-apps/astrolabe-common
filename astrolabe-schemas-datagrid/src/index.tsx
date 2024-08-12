@@ -4,12 +4,8 @@ import {
   ColumnHeader,
   DataGrid,
 } from "@astroapps/datagrid";
-import {
-  Control,
-  useComputed,
-  useTrackedComponent,
-} from "@react-typed-forms/core";
-import React, { ReactNode } from "react";
+import { Control, useTrackedComponent } from "@react-typed-forms/core";
+import React, { ReactNode, useMemo } from "react";
 import {
   ActionRendererProps,
   applyArrayLengthRestrictions,
@@ -284,22 +280,24 @@ function DataGridGroup({
   }>(
     ({ renderChild, definition, childDefinitions, dataContext }) => {
       const visibilities = visibilityHooks(dataContext);
-      const visibleRows = useComputed(() =>
-        childDefinitions.map((_, i) => {
-          let rowCount = 0;
-          const visibleRows: number[] = [];
-          let hasKey = false;
-          do {
-            const cellKey = `${i}_${rowCount}`;
-            hasKey = cellKey in visibilities;
-            if (hasKey && visibilities[cellKey].value) {
-              visibleRows.push(rowCount);
-            }
-            rowCount++;
-          } while (hasKey);
-          return visibleRows;
-        }),
-      ).value;
+      const visibleRows = useMemo(
+        () =>
+          childDefinitions.map((_, i) => {
+            let rowCount = 0;
+            const visibleRows: number[] = [];
+            let hasKey = false;
+            do {
+              const cellKey = `${i}_${rowCount}`;
+              hasKey = cellKey in visibilities;
+              if (hasKey && visibilities[cellKey].value) {
+                visibleRows.push(rowCount);
+              }
+              rowCount++;
+            } while (hasKey);
+            return visibleRows;
+          }),
+        [childDefinitions, visibilities],
+      );
       const maxRows = visibleRows.reduce((m, x) => Math.max(x.length, m), 0);
 
       const constantColumns: ColumnDefInit<undefined>[] =
