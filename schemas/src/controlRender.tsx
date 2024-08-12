@@ -290,7 +290,7 @@ export function useControlRenderer(
     ),
     visibleControl: useEvalVisibilityHook(useExpr, definition, fieldPath),
     readonlyControl: useEvalReadonlyHook(useExpr, definition),
-    disabledControl: useEvalDisabledHook(useExpr, definition, fieldPath),
+    disabledControl: useEvalDisabledHook(useExpr, definition, fieldPath, elementIndex),
     allowedOptions: useEvalAllowedOptionsHook(useExpr, definition),
     labelText: useEvalLabelText(useExpr, definition),
     actionData: useEvalActionHook(useExpr, definition),

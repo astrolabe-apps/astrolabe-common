@@ -35,18 +35,17 @@ import { Client } from "../client";
 import controlsJson from "../ControlDefinition.json";
 import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
 import { useMemo, useState } from "react";
+import {
+  DataGridRenderer,
+  DataGridExtension,
+} from "@astroapps/schemas-datagrid";
 
-const CustomControlSchema = applyEditorExtensions({});
-
-const customDisplay = createDisplayRenderer(
-  (p) => <div>PATH: {p.dataContext.path.join(",")}</div>,
-  { renderType: "Custom" },
-);
+const CustomControlSchema = applyEditorExtensions(DataGridExtension);
 
 function createStdFormRenderer(container: HTMLElement | null) {
   return createFormRenderer(
     [
-      customDisplay,
+      DataGridRenderer,
       createDatePickerRenderer(undefined, {
         portalContainer: container ? container : undefined,
       }),
@@ -58,44 +57,11 @@ function createStdFormRenderer(container: HTMLElement | null) {
 }
 
 interface TestSchema {
-  things: {
-    sub: {
-      thingId: string;
-      other: number;
-    };
-    bool?: boolean;
-  };
-  date: string;
-  dateTime: string;
-  time: string;
-  lengthTest: string;
+  array: number[];
 }
 
 const TestSchema = buildSchema<TestSchema>({
-  dateTime: dateTimeField("Date and Time"),
-  date: dateField("Date Only"),
-  time: timeField("Time only"),
-  lengthTest: stringField("Min and max"),
-  things: compoundField(
-    "Things",
-
-    buildSchema<TestSchema["things"]>({
-      bool: boolField("Radio"),
-      sub: compoundField(
-        "Sub",
-        buildSchema<TestSchema["things"]["sub"]>({
-          thingId: makeScalarField({
-            type: FieldType.String,
-            options: [
-              { name: "One", value: "one" },
-              { name: "Two", value: "two" },
-            ],
-          }),
-          other: intField("Test drop down", { required: true }),
-        }),
-      ),
-    }),
-  ),
+  array: intField("Numbers", { collection: true }),
 });
 
 export default function Editor() {

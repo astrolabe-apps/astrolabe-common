@@ -131,6 +131,7 @@ export function useEvalDisabledHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
   fieldPath?: SchemaField[],
+  elementIndex?: number,
 ): EvalExpressionHook<boolean> {
   const dynamicDisabled = useEvalDynamicBoolHook(
     definition,
@@ -141,11 +142,12 @@ export function useEvalDisabledHook(
     dynamicDisabled,
     (ctx, { fieldPath }) =>
       useComputed(() => {
-        const dataControl = fieldPath && lookupChildControl(ctx, fieldPath);
+        const dataControl =
+          fieldPath && lookupChildControl(ctx, fieldPath, elementIndex);
         const setToNull = dataControl?.meta["nullControl"]?.value === false;
         return setToNull || isControlDisabled(definition);
       }),
-    { fieldPath },
+    { fieldPath, elementIndex },
   );
 }
 

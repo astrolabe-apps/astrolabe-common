@@ -99,6 +99,17 @@ export function intField<S extends Partial<SchemaField>>(
   });
 }
 
+export function doubleField<S extends Partial<SchemaField>>(
+  displayName: string,
+  options?: S,
+) {
+  return makeScalarField({
+    type: FieldType.Double as const,
+    displayName,
+    ...(options as S),
+  });
+}
+
 export function dateField<S extends Partial<SchemaField>>(
   displayName: string,
   options?: S,

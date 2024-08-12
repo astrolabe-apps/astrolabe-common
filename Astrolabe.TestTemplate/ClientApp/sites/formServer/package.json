@@ -19,6 +19,7 @@
 		"@lezer/common": "^1.0.0",
 		"@astroapps/client-nextjs": "workspace:^0.2.0",
 		"@astroapps/datagrid": "workspace:^1.0.6",
+		"@astroapps/schemas-datagrid": "workspace:*",
 		"@astrolabe/ui": "workspace:*",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",

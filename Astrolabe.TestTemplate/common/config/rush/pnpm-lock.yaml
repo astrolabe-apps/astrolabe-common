@@ -597,6 +597,7 @@ importers:
       '@astroapps/codemirror-evaluator': workspace:*
       '@astroapps/datagrid': workspace:^1.0.6
       '@astroapps/evaluator': workspace:*
+      '@astroapps/schemas-datagrid': workspace:*
       '@astroapps/schemas-datepicker': workspace:*
       '@astroapps/schemas-editor': workspace:*
       '@astrolabe/ui': workspace:*
@@ -627,6 +628,7 @@ importers:
       '@astroapps/codemirror-evaluator': link:../../../../astrolabe-codemirror-evaluator
       '@astroapps/datagrid': link:../../../../astrolabe-datagrid
       '@astroapps/evaluator': link:../../../../astrolabe-evaluator
+      '@astroapps/schemas-datagrid': link:../../../../astrolabe-schemas-datagrid
       '@astroapps/schemas-datepicker': link:../../../../schemas-datepicker
       '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
       '@astrolabe/ui': link:../../../../astrolabe-ui

@@ -462,10 +462,12 @@ export function visitControlData<A>(
 export function lookupChildControl(
   data: DataContext,
   path: SchemaField[],
+  element?: number,
 ): Control<any> | undefined {
+  const fieldPath = path.map((x) => x.field);
   return lookupChildControlPath(
     data,
-    path.map((x) => x.field),
+    element == null ? fieldPath : [...fieldPath, element],
   );
 }
 
