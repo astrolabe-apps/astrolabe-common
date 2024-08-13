@@ -116,6 +116,8 @@ export function valueExpr(value: any, path?: Path): ValueExpr {
   return { type: "value", value, path };
 }
 
+export const NullExpr = valueExpr(null);
+
 export function lambdaExpr(variable: string, expr: EvalExpr): LambdaExpr {
   return { type: "lambda", variable, expr };
 }
@@ -215,7 +217,6 @@ export function emptyEnvState(data: any): EvalEnvState {
   };
 }
 
-
 function toExpressions(expr: EvalExpr) {
   if (expr.type === "array") return flattenExpr(expr.values);
   return [expr];
@@ -230,4 +231,3 @@ export function toNative(value: ValueExpr): unknown {
   }
   return value.value;
 }
-

@@ -13,47 +13,43 @@ public static class FilterFunctionHandler
                         {
                             (var nextEnv, { Value: ArrayValue av })
                                 when av.Values.Select((x, i) => (x, i)).ToList() is var indexed
-                                => nextEnv
-                                    .EvalSelect(
-                                        indexed,
-                                        (e2, v) => e2.EvaluateElem(v.x, v.i, right)
-                                    )
-                                    .Map(x =>
-                                    {
-                                        var filters = x.Select(v => v.Value).ToList();
-                                        return new ValueExpr(
-                                            new ArrayValue(
-                                                av.Values.Where(
-                                                    (_, i) =>
-                                                        filters[i] switch
-                                                        {
-                                                            bool b => b,
-                                                            double d => (int)d == i,
-                                                            int iv => iv == i,
-                                                            _ => false
-                                                        }
-                                                )
-                                            )
-                                        );
-                                    })
+                                => FilterArray(nextEnv, indexed, right)
                         }
                 };
-                throw new NotImplementedException();
-                //
-                // const [left, right] = call.args;
-                // const [leftEnv, { value, path }] = evaluate(env, left);
-                // if (Array.isArray(value)) {
-                //     const accArray: ValueExpr[] = [];
-                //     const outEnv = value.reduce(
-                //         (e, x: ValueExpr, ind) =>
-                //     envEffect(evaluateElem(e, x, ind, right), ({ value }) => {
-                //         if ((typeof value === "number" && ind === value) || value === true)
-                //         accArray.push(x);
-                //     }),
-                //     leftEnv,
-                //         );
-                //     return [outEnv, valueExpr(accArray)];
-                // }
+
+                EnvironmentValue<ValueExpr> FilterArray(
+                    EvalEnvironment nextEnv,
+                    List<(ValueExpr, int)> indexed,
+                    EvalExpr right
+                )
+                {
+                    var empty = indexed.Count == 0;
+                    var firstFilter = nextEnv.EvaluateElem(
+                        empty ? ValueExpr.Null : indexed[0].Item1,
+                        empty ? null : 0,
+                        right
+                    );
+                    if (firstFilter.Value.MaybeDouble() is not { } indLong)
+                        return indexed
+                            .Skip(1)
+                            .Aggregate(
+                                firstFilter.Map<IEnumerable<ValueExpr>>(x =>
+                                    x.IsTrue() ? [indexed[0].Item1] : []
+                                ),
+                                (acc, v) =>
+                                    acc
+                                        .Env.EvaluateElem(v.Item1, v.Item2, right)
+                                        .Map(result =>
+                                            result.IsTrue() ? acc.Value.Append(v.Item1) : acc.Value
+                                        )
+                            )
+                            .Map(x => new ValueExpr(new ArrayValue(x)));
+
+                    var ind = (int)indLong;
+                    return firstFilter.Map(x =>
+                        ind < indexed.Count ? indexed[ind].Item1 : ValueExpr.Null
+                    );
+                }
             }
         );
 }

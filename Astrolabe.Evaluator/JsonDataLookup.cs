@@ -15,7 +15,7 @@ public static class JsonDataLookup
     {
         Dictionary<DataPath, JsonNode?> cache = new();
 
-        return path => new ValueExpr(ToValue(path, GetNode(path)), path);
+        return path => ToValue(path, GetNode(path));
 
         JsonNode? GetNode(DataPath dp)
         {
@@ -43,33 +43,36 @@ public static class JsonDataLookup
         }
     }
 
-    private static object? ToValue(DataPath p, JsonNode? node)
+    private static ValueExpr ToValue(DataPath p, JsonNode? node)
     {
-        return node switch
-        {
-            null => node,
-            JsonArray ja
-                => new ArrayValue(ja.Select((x, i) => new ValueExpr(x, new IndexPath(i, p)))),
-            JsonObject obj => new ObjectValue(obj),
-            JsonValue v
-                => v.GetValue<object>() switch
-                {
-                    JsonElement e
-                        => e.ValueKind switch
-                        {
-                            JsonValueKind.False => false,
-                            JsonValueKind.True => true,
-                            JsonValueKind.String => e.GetString(),
-                            JsonValueKind.Number
-                                => e.TryGetInt64(out var l)
-                                    ? l
-                                    : e.TryGetDouble(out var d)
-                                        ? d
-                                        : null,
-                            _ => throw new ArgumentOutOfRangeException($"{e.ValueKind}-{e}")
-                        },
-                    var objValue => objValue
-                },
-        };
+        return new ValueExpr(
+            node switch
+            {
+                null => null,
+                JsonArray ja
+                    => new ArrayValue(ja.Select((x, i) => ToValue(new IndexPath(i, p), x))),
+                JsonObject obj => new ObjectValue(obj),
+                JsonValue v
+                    => v.GetValue<object>() switch
+                    {
+                        JsonElement e
+                            => e.ValueKind switch
+                            {
+                                JsonValueKind.False => false,
+                                JsonValueKind.True => true,
+                                JsonValueKind.String => e.GetString(),
+                                JsonValueKind.Number
+                                    => e.TryGetInt64(out var l)
+                                        ? l
+                                        : e.TryGetDouble(out var d)
+                                            ? d
+                                            : null,
+                                _ => throw new ArgumentOutOfRangeException($"{e.ValueKind}-{e}")
+                            },
+                        var objValue => objValue
+                    },
+            },
+            p
+        );
     }
 }

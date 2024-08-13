@@ -8,10 +8,10 @@ public static class MapFunctionHandler
             {
                 return call.Args switch
                 {
-                    [var left, var right] when e.Evaluate(left) is var leftVar
-                        => leftVar switch
+                    [var left, var right] when e.Evaluate(left) is var (nextEnv, leftValue)
+                        => leftValue switch
                         {
-                            (var nextEnv, { Value: ArrayValue av })
+                            { Value: ArrayValue av }
                                 => nextEnv
                                     .EvalSelect(
                                         av.Values.Select((x, i) => (x, i)),
@@ -20,8 +20,8 @@ public static class MapFunctionHandler
                                     .Map(x => new ValueExpr(
                                         new ArrayValue(x.SelectMany(v => v.AllValues()))
                                     )),
-                            (var nextEnv, { Value: ObjectValue })
-                                => nextEnv.EvaluateElem(leftVar.Value, null, right)
+                            { Value: ObjectValue } => nextEnv.EvaluateElem(leftValue, null, right),
+                            _ => nextEnv.WithError("Can't map " + leftValue.Print()).WithNull()
                         }
                 };
             }

@@ -6,6 +6,7 @@ import {
   functionValue,
   mapAllEnv,
   mapEnv,
+  NullExpr,
   toNative,
   valueExpr,
   ValueExpr,
@@ -107,35 +108,46 @@ const mapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   } else {
     return [
       leftEnv.withError("Can't map value: " + printExpr(leftVal)),
-      valueExpr(null),
+      NullExpr,
     ];
   }
 });
 
 const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   const [left, right] = call.args;
-  const [leftEnv, { value, path }] = env.evaluate(left);
+  const [leftEnv, leftVal] = env.evaluate(left);
+  const { value } = leftVal;
   if (Array.isArray(value)) {
-    const accArray: ValueExpr[] = [];
-    const outEnv = value.reduce(
-      (e, x: ValueExpr, ind) =>
-        envEffect(evaluateElem(e, x, ind, right), ({ value }) => {
-          if ((typeof value === "number" && ind === value) || value === true)
-            accArray.push(x);
-        }),
+    const empty = value.length === 0;
+    const [firstEnv, { value: firstFilter }] = evaluateElem(
       leftEnv,
+      empty ? NullExpr : value[0],
+      empty ? null : 0,
+      right,
     );
+    if (typeof firstFilter === "number") {
+      return [firstEnv, value[firstFilter] ?? NullExpr];
+    }
+    const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
+    const outEnv = value.reduce((e, x: ValueExpr, ind) => {
+      if (ind > 0) {
+        envEffect(evaluateElem(e, x, ind, right), ({ value }) => {
+          if (value === true) accArray.push(x);
+        });
+      }
+    }, firstEnv);
     return [outEnv, valueExpr(accArray)];
   }
-  console.error(value, path);
-  throw new Error("Can't filter this:");
+  return [
+    leftEnv.withError("Can't filter value: " + printExpr(leftVal)),
+    NullExpr,
+  ];
 });
 
 const condFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   return mapEnv(
     mapAllEnv(env, call.args, doEvaluate),
-    ([{ value: c }, e1, e2]) =>
-      c === true ? e1 : c === false ? e2 : valueExpr(null),
+    ([{ value: c }, e1, e2]) => (c === true ? e1 : c === false ? e2 : NullExpr),
   );
 });
 
