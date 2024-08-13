@@ -184,7 +184,9 @@ const defaultFunctions = {
     return elem == null ? null : elem.value;
   }),
   fixed: evalFunction(([num, digits]) =>
-    (num as number).toFixed(digits as number),
+    typeof num === "number" && typeof digits === "number"
+      ? num.toFixed(digits)
+      : null,
   ),
   ".": mapFunction,
   "[": filterFunction,

@@ -186,7 +186,14 @@ public static class DefaultFunctions
             {
                 "fixed",
                 FunctionHandler.DefaultEval(a =>
-                    ValueExpr.AsDouble(a[0]).ToString("F" + (int)ValueExpr.AsDouble(a[1]))
+                    a switch
+                    {
+                        [var numV, var digitsV]
+                            when ValueExpr.MaybeDouble(numV) is { } num
+                                && ValueExpr.MaybeDouble(digitsV) is { } digits
+                            => num.ToString("F" + (int)digits),
+                        _ => null
+                    }
                 )
             },
             {
