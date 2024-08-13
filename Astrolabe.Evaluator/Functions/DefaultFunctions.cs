@@ -184,6 +184,12 @@ public static class DefaultFunctions
             { "[", FilterFunctionHandler.Instance },
             { ".", MapFunctionHandler.Instance },
             {
+                "fixed",
+                FunctionHandler.DefaultEval(a =>
+                    ValueExpr.AsDouble(a[0]).ToString("F" + (int)ValueExpr.AsDouble(a[1]))
+                )
+            },
+            {
                 "object",
                 FunctionHandler.DefaultEval(args =>
                 {

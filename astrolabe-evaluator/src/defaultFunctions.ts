@@ -167,6 +167,9 @@ const defaultFunctions = {
     const elem = (args[0] as ValueExpr[])?.[args[1] as number];
     return elem == null ? null : elem.value;
   }),
+  fixed: evalFunction(([num, digits]) =>
+    (num as number).toFixed(digits as number),
+  ),
   ".": mapFunction,
   "[": filterFunction,
   this: functionValue((e, call) => [e, e.getData(e.basePath)]),

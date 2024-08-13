@@ -48,6 +48,11 @@ public record TypedPathRule<T>(SingleRule Single) : TypedRule<T>
         return WithRuleExpr(r => r.WithMessage(ValueExpr.From(message)));
     }
 
+    public TypedPathRule<T> WithMessage(EvalExpr message)
+    {
+        return WithRuleExpr(r => r.WithMessage(message));
+    }
+
     public TypedPathRule<T> Must(EvalExpr mustExpr)
     {
         return WithRuleExpr(x => x.AndMust(mustExpr));
