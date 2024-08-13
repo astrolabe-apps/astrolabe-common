@@ -1,6 +1,5 @@
 import {
   alterEnv,
-  emptyEnvState,
   EnvValue,
   EvalEnv,
   EvalEnvState,
@@ -14,26 +13,27 @@ import {
   ValueExpr,
 } from "./ast";
 
-export function evaluateElem(
+export function evaluateWith(
   env: EvalEnv,
   value: ValueExpr,
   ind: number | null,
   expr: EvalExpr,
 ): EnvValue<ValueExpr> {
-  switch (expr.type) {
-    case "lambda":
-      return alterEnv(
-        env
-          .withVariables([[expr.variable, valueExpr(ind)]])
-          .withBasePath(value.path ?? env.basePath)
-          .evaluate(expr.expr),
-        (x) => x.withBasePath(env.basePath),
-      );
-    default:
-      if (!value.path) throw new Error("No path for element, must use lambda");
-      return alterEnv(env.withBasePath(value.path).evaluate(expr), (x) =>
-        x.withBasePath(env.basePath),
-      );
+  const [e, toEval] = checkLambda();
+  return alterEnv(e.withCurrent(value).evaluate(toEval), (e) =>
+    e.withCurrent(env.current),
+  );
+
+  function checkLambda(): EnvValue<EvalExpr> {
+    switch (expr.type) {
+      case "lambda":
+        return [
+          env.withVariables([[expr.variable, valueExpr(ind)]]),
+          expr.expr,
+        ];
+      default:
+        return [env, expr];
+    }
   }
 }
 
@@ -63,9 +63,9 @@ export function defaultEvaluate(
         ];
       return (funcCall.value as FunctionValue)(env, expr);
     case "property":
-      const actualPath = segmentPath(expr.property, env.basePath);
-      const dataValue = env.getData(actualPath);
-      return env.evaluate(dataValue);
+      return env.evaluate(
+        env.state.data.getProperty(env.current, expr.property),
+      );
     case "array":
       return mapEnv(mapAllEnv(env, expr.values, doEvaluate), (v) => ({
         value: v,
@@ -88,6 +88,7 @@ export class BasicEvalEnv extends EvalEnv {
   evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
     return defaultEvaluate(this, expr);
   }
+
   constructor(public state: EvalEnvState) {
     super();
   }
@@ -96,12 +97,16 @@ export class BasicEvalEnv extends EvalEnv {
     return this.state.compare(v1, v2);
   }
 
+  get current() {
+    return this.state.current;
+  }
+
   get errors() {
     return this.state.errors;
   }
 
-  get basePath() {
-    return this.state.basePath;
+  get data() {
+    return this.state.data;
   }
 
   protected newEnv(newState: EvalEnvState): EvalEnv {
@@ -118,23 +123,7 @@ export class BasicEvalEnv extends EvalEnv {
   getVariable(name: string): ValueExpr | undefined {
     return this.state.vars[name];
   }
-  getData(path: Path): ValueExpr {
-    const getNode: (path: Path) => unknown = (path) => {
-      if (path.segment == null) return this.state.data;
-      const parentObject = getNode(path.parent);
-      if (parentObject == null) return null;
-      const value =
-        typeof parentObject == "object"
-          ? (parentObject as any)[path.segment]
-          : null;
-      return value == null ? null : value;
-    };
-    let dataValue = getNode(path);
-    if (Array.isArray(dataValue)) {
-      dataValue = dataValue.map((x, i) => valueExpr(x, segmentPath(i, path)));
-    }
-    return valueExpr(dataValue, path);
-  }
+
   withVariables(vars: [string, EvalExpr][]): EvalEnv {
     return vars.reduce((e, v) => e.withVariable(v[0], v[1]), this as EvalEnv);
   }
@@ -146,7 +135,7 @@ export class BasicEvalEnv extends EvalEnv {
     return this.newEnv({ ...nextEnv.state, vars: outVars });
   }
 
-  withBasePath(path: Path): EvalEnv {
-    return this.newEnv({ ...this.state, basePath: path });
+  withCurrent(current: ValueExpr): EvalEnv {
+    return this.newEnv({ ...this.state, current });
   }
 }

@@ -4,20 +4,22 @@ namespace Astrolabe.Evaluator;
 
 using EvaluatedExpr = EnvironmentValue<ValueExpr>;
 
+public record EvalData(ValueExpr Root, Func<ValueExpr, string, ValueExpr> GetProperty);
+
 public record EvalEnvironmentState(
-    Func<DataPath, ValueExpr> GetDataFunc,
+    EvalData Data,
+    ValueExpr Current,
     Func<object?, object?, int> Compare,
-    DataPath BasePath,
     ImmutableDictionary<string, EvalExpr> Variables,
     IEnumerable<EvalError> Errors
 )
 {
-    public static EvalEnvironmentState EmptyState(Func<DataPath, ValueExpr> data)
+    public static EvalEnvironmentState EmptyState(EvalData data)
     {
         return new EvalEnvironmentState(
             data,
+            data.Root,
             EvalEnvironment.DefaultComparison,
-            DataPath.Empty,
             ImmutableDictionary<string, EvalExpr>.Empty,
             []
         );
@@ -27,7 +29,11 @@ public record EvalEnvironmentState(
 public class EvalEnvironment(EvalEnvironmentState state)
 {
     public EvalEnvironmentState State => state;
-    public DataPath BasePath => state.BasePath;
+
+    public EvalData Data => state.Data;
+
+    public ValueExpr Current => state.Current;
+
     public IEnumerable<EvalError> Errors => state.Errors;
 
     public static readonly Func<object?, object?, int> DefaultComparison = CompareSignificantDigits(
@@ -60,9 +66,9 @@ public class EvalEnvironment(EvalEnvironmentState state)
         return NewEnv(state with { Compare = comparison });
     }
 
-    public ValueExpr GetData(DataPath dataPath)
+    public ValueExpr GetProperty(string property)
     {
-        return state.GetDataFunc(dataPath);
+        return state.Data.GetProperty(state.Current, property);
     }
 
     public EvalExpr? GetVariable(string name)
@@ -91,9 +97,9 @@ public class EvalEnvironment(EvalEnvironmentState state)
         return vars.Aggregate(this, (e, v) => e.WithVariable(v.Key, v.Value));
     }
 
-    public EvalEnvironment WithBasePath(DataPath basePath)
+    public EvalEnvironment WithCurrent(ValueExpr current)
     {
-        return NewEnv(state with { BasePath = basePath });
+        return NewEnv(state with { Current = current });
     }
 
     public EvalEnvironment WithError(string message)
@@ -101,7 +107,7 @@ public class EvalEnvironment(EvalEnvironmentState state)
         return NewEnv(state with { Errors = state.Errors.Append(new EvalError(message)) });
     }
 
-    public static EvalEnvironment DataFrom(Func<DataPath, ValueExpr> data)
+    public static EvalEnvironment DataFrom(EvalData data)
     {
         return new EvalEnvironment(EvalEnvironmentState.EmptyState(data));
     }
@@ -174,12 +180,9 @@ public static class EvalEnvironmentExtensions
         return select(ev);
     }
 
-    public static EnvironmentValue<T> WithBasePath<T>(
-        this EnvironmentValue<T> ev,
-        DataPath basePath
-    )
+    public static EnvironmentValue<T> WithCurrent<T>(this EnvironmentValue<T> ev, ValueExpr current)
     {
-        return ev.EnvMap(x => x.WithBasePath(basePath));
+        return ev.EnvMap(x => x.WithCurrent(current));
     }
 
     public static EvalEnvironment EvalForEach<T>(

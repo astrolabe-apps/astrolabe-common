@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
@@ -6,51 +5,34 @@ namespace Astrolabe.Evaluator;
 
 public static class JsonDataLookup
 {
-    public static EvalEnvironment EnvironmentFor(JsonNode? data)
+    public static EvalData FromObject(JsonNode? data)
     {
-        return EvalEnvironment.DataFrom(FromObject(data));
+        return new EvalData(
+            ToValue(DataPath.Empty, data),
+            (e, property) =>
+            {
+                var childPath = e.Path != null ? new FieldPath(property, e.Path) : null;
+                return e.Value switch
+                {
+                    ObjectValue { Object: JsonObject jObj }
+                        when jObj.TryGetPropertyValue(property, out var prop)
+                        => ToValue(childPath, prop),
+                    _ => new ValueExpr(null, childPath)
+                };
+            }
+        );
     }
 
-    public static Func<DataPath, ValueExpr> FromObject(JsonNode? data)
-    {
-        Dictionary<DataPath, JsonNode?> cache = new();
-
-        return path => ToValue(path, GetNode(path));
-
-        JsonNode? GetNode(DataPath dp)
-        {
-            if (cache.TryGetValue(dp, out var v))
-                return v;
-            var res = dp switch
-            {
-                EmptyPath => data,
-                FieldPath fp => DoField(fp),
-                IndexPath ip => DoIndex(ip)
-            };
-            cache[dp] = res;
-            return res;
-
-            JsonNode? DoField(FieldPath fp)
-            {
-                var parentNode = GetNode(fp.Parent);
-                return parentNode == null ? parentNode : parentNode.AsObject()[fp.Field];
-            }
-            JsonNode? DoIndex(IndexPath ip)
-            {
-                var parentNode = GetNode(ip.Parent);
-                return parentNode == null ? parentNode : parentNode.AsArray()[ip.Index];
-            }
-        }
-    }
-
-    private static ValueExpr ToValue(DataPath p, JsonNode? node)
+    private static ValueExpr ToValue(DataPath? p, JsonNode? node)
     {
         return new ValueExpr(
             node switch
             {
                 null => null,
                 JsonArray ja
-                    => new ArrayValue(ja.Select((x, i) => ToValue(new IndexPath(i, p), x))),
+                    => new ArrayValue(
+                        ja.Select((x, i) => ToValue(p != null ? new IndexPath(i, p) : null, x))
+                    ),
                 JsonObject obj => new ObjectValue(obj),
                 JsonValue v
                     => v.GetValue<object>() switch

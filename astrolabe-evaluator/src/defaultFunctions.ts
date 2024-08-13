@@ -2,6 +2,7 @@ import {
   CallExpr,
   emptyEnvState,
   envEffect,
+  EvalData,
   EvalEnv,
   functionValue,
   mapAllEnv,
@@ -15,7 +16,7 @@ import {
   BasicEvalEnv,
   doEvaluate,
   evaluateAll,
-  evaluateElem,
+  evaluateWith,
 } from "./evaluate";
 import { allElems, toString } from "./values";
 import { printExpr } from "./printExpr";
@@ -98,14 +99,14 @@ const mapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   if (Array.isArray(value)) {
     return mapEnv(
       mapAllEnv(leftEnv, leftVal.value, (e, elem: ValueExpr, i) =>
-        evaluateElem(e, elem, i, right),
+        evaluateWith(e, elem, i, right),
       ),
       (vals) => valueExpr(vals.flatMap(allElems)),
     );
   }
   if (typeof value === "object") {
     if (value == null) return [leftEnv, NullExpr];
-    return evaluateElem(leftEnv, leftVal, null, right);
+    return evaluateWith(leftEnv, leftVal, null, right);
   } else {
     return [
       leftEnv.withError("Can't map value: " + printExpr(leftVal)),
@@ -120,7 +121,7 @@ const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   const { value } = leftVal;
   if (Array.isArray(value)) {
     const empty = value.length === 0;
-    const [firstEnv, { value: firstFilter }] = evaluateElem(
+    const [firstEnv, { value: firstFilter }] = evaluateWith(
       leftEnv,
       empty ? NullExpr : value[0],
       empty ? null : 0,
@@ -132,7 +133,7 @@ const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
     const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
     const outEnv = value.reduce((e, x: ValueExpr, ind) => {
       if (ind > 0) {
-        envEffect(evaluateElem(e, x, ind, right), ({ value }) => {
+        envEffect(evaluateWith(e, x, ind, right), ({ value }) => {
           if (value === true) accArray.push(x);
         });
       }
@@ -190,13 +191,13 @@ const defaultFunctions = {
   ),
   ".": mapFunction,
   "[": filterFunction,
-  this: functionValue((e, call) => [e, e.getData(e.basePath)]),
+  this: functionValue((e, call) => [e, e.current]),
 };
 
 export function addDefaults(evalEnv: EvalEnv) {
   return evalEnv.withVariables(Object.entries(defaultFunctions));
 }
 
-export function basicEnv(data: any): EvalEnv {
+export function basicEnv(data: EvalData): EvalEnv {
   return addDefaults(new BasicEvalEnv(emptyEnvState(data)));
 }

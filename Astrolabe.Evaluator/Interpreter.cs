@@ -9,30 +9,24 @@ public static class Interpreter
         return envExpr.Env.Evaluate(envExpr.Value);
     }
 
-    public static EvaluatedExprValue EvaluateElem(
+    public static EvaluatedExprValue EvaluateWith(
         this EvalEnvironment environment,
         ValueExpr baseValue,
         int? index,
         EvalExpr expr
     )
     {
-        return expr switch
+        var (e, toEval) = expr switch
         {
             LambdaExpr { Variable: var name, Value: var valExpr }
                 => environment
                     .WithVariables(
                         [new KeyValuePair<string, EvalExpr>(name, ValueExpr.From(index)),]
                     )
-                    .WithBasePath(baseValue.Path ?? environment.BasePath)
-                    .Evaluate(valExpr)
-                    .EnvMap(x => x.WithBasePath(environment.BasePath)),
-            _ when baseValue.Path is { } bp
-                => environment
-                    .WithBasePath(bp)
-                    .Evaluate(expr)
-                    .EnvMap(x => x.WithBasePath(environment.BasePath)),
-            _ => throw new ArgumentException("Need a path")
+                    .WithValue(valExpr),
+            _ => environment.WithValue(expr)
         };
+        return e.WithCurrent(baseValue).Evaluate(toEval).WithCurrent(e.Current);
     }
 
     public static EvaluatedExprValue DefaultEvaluate(
@@ -66,10 +60,7 @@ public static class Interpreter
                 => handler.Evaluate(environment, callExpr),
             CallExpr ce
                 => environment.WithError("No function $" + ce.Function + " declared").WithNull(),
-            PropertyExpr { Property: var dp }
-                => environment.Evaluate(
-                    environment.GetData(new FieldPath(dp, environment.BasePath))
-                ),
+            PropertyExpr { Property: var dp } => environment.Evaluate(environment.GetProperty(dp)),
             _ => throw new ArgumentOutOfRangeException(expr.ToString())
         };
     }

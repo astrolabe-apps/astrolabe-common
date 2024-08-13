@@ -27,7 +27,7 @@ public static class FilterFunctionHandler
                 )
                 {
                     var empty = indexed.Count == 0;
-                    var firstFilter = nextEnv.EvaluateElem(
+                    var firstFilter = nextEnv.EvaluateWith(
                         empty ? ValueExpr.Null : indexed[0].Item1,
                         empty ? null : 0,
                         right
@@ -41,7 +41,7 @@ public static class FilterFunctionHandler
                                 ),
                                 (acc, v) =>
                                     acc
-                                        .Env.EvaluateElem(v.Item1, v.Item2, right)
+                                        .Env.EvaluateWith(v.Item1, v.Item2, right)
                                         .Map(result =>
                                             result.IsTrue() ? acc.Value.Append(v.Item1) : acc.Value
                                         )

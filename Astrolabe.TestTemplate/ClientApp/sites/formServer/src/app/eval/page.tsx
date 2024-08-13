@@ -4,12 +4,10 @@ import {
   BasicEvalEnv,
   defaultEvaluate,
   emptyEnvState,
-  EmptyPath,
   EnvValue,
   EvalEnvState,
   EvalExpr,
   parseEval,
-  Path,
   printPath,
   toNative,
   ValueExpr,
@@ -57,7 +55,8 @@ export default function EvalPage() {
           }
         } else {
           const exprTree = parseEval(v);
-          const env = addDefaults(new TrackDataEnv(emptyEnvState(dv)));
+          const emptyState = emptyEnvState(dv);
+          const env = addDefaults(new TrackDataEnv(emptyState));
           try {
             const [outEnv, value] = env.evaluate(exprTree);
             setEvalResult({ result: toNative(value), errors: outEnv.errors });

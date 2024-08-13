@@ -1,5 +1,3 @@
-import { evaluateElem } from "./evaluate";
-
 export interface EmptyPath {
   segment: null;
 }
@@ -25,23 +23,28 @@ export function segmentPath(segment: string | number, parent?: Path) {
 export type EnvValue<T> = [EvalEnv, T];
 
 export interface EvalEnvState {
-  data: any;
-  basePath: Path;
+  data: EvalData;
+  current: ValueExpr;
   vars: Record<string, ValueExpr>;
   errors: string[];
   compare: (v1: unknown, v2: unknown) => number;
 }
 
+export interface EvalData {
+  root: ValueExpr;
+  getProperty(object: ValueExpr, property: string): ValueExpr;
+}
+
 export abstract class EvalEnv {
-  abstract basePath: Path;
+  abstract data: EvalData;
+  abstract current: ValueExpr;
   abstract errors: string[];
   abstract state: EvalEnvState;
   abstract getVariable(name: string): ValueExpr | undefined;
-  abstract getData(path: Path): ValueExpr;
   abstract compare(v1: unknown, v2: unknown): number;
   abstract withVariables(vars: [string, EvalExpr][]): EvalEnv;
   abstract withVariable(name: string, expr: EvalExpr): EvalEnv;
-  abstract withBasePath(path: Path): EvalEnv;
+  abstract withCurrent(path: ValueExpr): EvalEnv;
   abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
   abstract withError(error: string): EvalEnv;
 }
@@ -207,10 +210,34 @@ function compareSignificantDigits(
   };
 }
 
-export function emptyEnvState(data: any): EvalEnvState {
+export function toValue(path: Path | undefined, value: unknown): ValueExpr {
+  if (Array.isArray(value)) {
+    return valueExpr(
+      value.map((x, i) =>
+        toValue(path != null ? segmentPath(i, path) : undefined, x),
+      ),
+    );
+  }
+  return valueExpr(value, path);
+}
+
+export function emptyEnvState(root: unknown): EvalEnvState {
+  const data: EvalData = {
+    root: toValue(EmptyPath, root),
+    getProperty(object: ValueExpr, property: string): ValueExpr {
+      const propPath = object.path
+        ? segmentPath(property, object.path)
+        : undefined;
+      const value = object.value;
+      if (typeof value === "object" && value != null) {
+        return toValue(propPath, value[property] ?? null);
+      }
+      return valueExpr(null, propPath);
+    },
+  };
   return {
     data,
-    basePath: { segment: null },
+    current: data.root,
     vars: {},
     errors: [],
     compare: compareSignificantDigits(5),

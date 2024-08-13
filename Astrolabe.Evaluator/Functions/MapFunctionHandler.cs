@@ -16,12 +16,12 @@ public static class MapFunctionHandler
                                 => nextEnv
                                     .EvalSelect(
                                         av.Values.Select((x, i) => (x, i)),
-                                        (e2, v) => e2.EvaluateElem(v.x, v.i, right)
+                                        (e2, v) => e2.EvaluateWith(v.x, v.i, right)
                                     )
                                     .Map(x => new ValueExpr(
                                         new ArrayValue(x.SelectMany(v => v.AllValues()))
                                     )),
-                            ObjectValue => nextEnv.EvaluateElem(leftValue, null, right),
+                            ObjectValue => nextEnv.EvaluateWith(leftValue, null, right),
                             null => leftEval,
                             _ => nextEnv.WithError("Can't map " + leftValue.Print()).WithNull()
                         }

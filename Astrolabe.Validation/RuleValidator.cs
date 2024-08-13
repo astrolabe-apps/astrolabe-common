@@ -114,7 +114,7 @@ public static class RuleValidator
         return ((ValidatorEvalEnvironment)env).WithValidatorState(update(env.GetValidatorState()));
     }
 
-    public static EvalEnvironment FromData(Func<DataPath, ValueExpr> data)
+    public static EvalEnvironment FromData(EvalData data)
     {
         return new ValidatorEvalEnvironment(
             EvalEnvironmentState.EmptyState(data),
