@@ -103,7 +103,8 @@ const mapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
       (vals) => valueExpr(vals.flatMap(allElems)),
     );
   }
-  if (typeof value === "object" && value != null) {
+  if (typeof value === "object") {
+    if (value == null) return [leftEnv, NullExpr];
     return evaluateElem(leftEnv, leftVal, null, right);
   } else {
     return [
@@ -137,6 +138,9 @@ const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
       }
     }, firstEnv);
     return [outEnv, valueExpr(accArray)];
+  }
+  if (leftVal == null) {
+    return [leftEnv, NullExpr];
   }
   return [
     leftEnv.withError("Can't filter value: " + printExpr(leftVal)),

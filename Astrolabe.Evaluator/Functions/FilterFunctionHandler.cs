@@ -8,12 +8,15 @@ public static class FilterFunctionHandler
             {
                 return call.Args switch
                 {
-                    [var left, var right] when e.Evaluate(left) is var leftVar
-                        => leftVar switch
+                    [var left, var right]
+                        when e.Evaluate(left) is (var nextEnv, var leftValue) leftEval
+                        => leftValue.Value switch
                         {
-                            (var nextEnv, { Value: ArrayValue av })
+                            ArrayValue av
                                 when av.Values.Select((x, i) => (x, i)).ToList() is var indexed
-                                => FilterArray(nextEnv, indexed, right)
+                                => FilterArray(nextEnv, indexed, right),
+                            null => leftEval,
+                            _ => nextEnv.WithError("Can't filter: " + leftValue.Print()).WithNull()
                         }
                 };
 
