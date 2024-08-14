@@ -131,13 +131,15 @@ const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
       return [firstEnv, value[firstFilter] ?? NullExpr];
     }
     const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
-    const outEnv = value.reduce((e, x: ValueExpr, ind) => {
-      if (ind > 0) {
-        envEffect(evaluateWith(e, x, ind, right), ({ value }) => {
-          if (value === true) accArray.push(x);
-        });
-      }
-    }, firstEnv);
+    const outEnv = value.reduce(
+      (e, x: ValueExpr, ind) =>
+        ind === 0
+          ? e
+          : envEffect(evaluateWith(e, x, ind, right), ({ value }) => {
+              if (value === true) accArray.push(x);
+            }),
+      firstEnv,
+    );
     return [outEnv, valueExpr(accArray)];
   }
   if (leftVal == null) {
