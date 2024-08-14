@@ -17,6 +17,7 @@ import {
   dateTimeField,
   defaultSchemaInterface,
   defaultTailwindTheme,
+  doubleField,
   FieldType,
   intField,
   makeScalarField,
@@ -58,10 +59,14 @@ function createStdFormRenderer(container: HTMLElement | null) {
 
 interface TestSchema {
   array: number[];
+  text: string;
+  number: number;
 }
 
 const TestSchema = buildSchema<TestSchema>({
   array: intField("Numbers", { collection: true }),
+  text: stringField("String"),
+  number: doubleField("Double"),
 });
 
 export default function Editor() {
@@ -114,6 +119,7 @@ export default function Editor() {
         }}
         previewOptions={{
           actionOnClick: (aid, data) => () => console.log("Clicked", aid, data),
+          customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
         }}
         controlDefinitionSchemaMap={CustomControlSchema}
         editorControls={controlsJson}

@@ -124,6 +124,14 @@
           },
           {
             "type": "Data",
+            "title": "Multiline",
+            "field": "multiline",
+            "renderOptions": {
+              "type": "Checkbox"
+            }
+          },
+          {
+            "type": "Data",
             "title": "Placeholder",
             "field": "placeholder",
             "renderOptions": {
@@ -282,6 +290,15 @@
             "renderOptions": {
               "type": "Standard"
             }
+          },
+          {
+            "type": "Data",
+            "title": "Expression",
+            "field": "expression",
+            "renderOptions": {
+              "type": "Textfield",
+              "multiline": true
+            }
           }
         ],
         "hideTitle": true,
@@ -336,7 +353,8 @@
             "field": "text",
             "required": true,
             "renderOptions": {
-              "type": "Standard"
+              "type": "Textfield",
+              "multiline": true
             }
           },
           {
@@ -346,6 +364,14 @@
             "required": true,
             "renderOptions": {
               "type": "HtmlEditor"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Custom Id",
+            "field": "customId",
+            "renderOptions": {
+              "type": "Standard"
             }
           }
         ],
@@ -628,7 +654,8 @@
                 "field": "expression",
                 "required": true,
                 "renderOptions": {
-                  "type": "Standard"
+                  "type": "Textfield",
+                  "multiline": true
                 }
               },
               {
@@ -658,9 +685,15 @@
                   "type": "Standard"
                 }
               }
-            ]
+            ],
+            "renderOptions": {
+              "type": "Standard"
+            }
           }
-        ]
+        ],
+        "renderOptions": {
+          "type": "Standard"
+        }
       }
     ],
     "groupOptions": {

@@ -356,6 +356,7 @@ export function useJsonataExpression(
 ): Control<any> {
   const pathString = jsonPathString(dataContext.path, (x) => `#$i[${x}]`);
   const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
+  console.log(fullExpr);
   const compiledExpr = useMemo(() => {
     try {
       return jsonata(fullExpr);

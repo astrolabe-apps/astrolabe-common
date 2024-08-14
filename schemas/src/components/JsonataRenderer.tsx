@@ -3,6 +3,7 @@ import { useJsonataExpression } from "../hooks";
 import { DataRenderType, JsonataRenderOptions } from "../types";
 import { ControlDataContext, rendererClass } from "../util";
 import { Control } from "@react-typed-forms/core";
+import React from "react";
 
 export function createJsonataRenderer(className?: string) {
   return createDataRenderer(
@@ -10,7 +11,7 @@ export function createJsonataRenderer(className?: string) {
       <JsonataRenderer
         renderOptions={p.renderOptions as JsonataRenderOptions}
         className={rendererClass(p.className, className)}
-        dataContext={p.dataContext}
+        dataContext={p.parentContext}
         control={p.control}
         readonly={p.readonly}
       />
@@ -36,8 +37,10 @@ export function JsonataRenderer({
     expression,
     dataContext,
     () => ({ value: control.value, readonly, disabled: control.disabled }),
-    (v) => (typeof v === "string" ? v : "error: " + JSON.stringify(v)),
+    (v) =>
+      typeof v === "object" ? "error: " + JSON.stringify(v) : v.toString(),
   );
+  console.log(expression);
   return (
     <div
       className={className}

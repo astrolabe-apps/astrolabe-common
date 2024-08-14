@@ -24,9 +24,11 @@ import {
   ControlAdornment,
   ControlDefinition,
   ControlDefinitionType,
+  CustomDisplay,
   DataControlDefinition,
   DataRenderType,
   DisplayData,
+  DisplayDataType,
   DynamicPropertyType,
   FieldOption,
   GroupRenderOptions,
@@ -254,6 +256,10 @@ export type CreateDataProps = (
 export interface ControlRenderOptions extends FormContextOptions {
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
   actionOnClick?: (actionId: string, actionData: any) => () => void;
+  customDisplay?: (
+    customId: string,
+    displayProps: DisplayRendererProps,
+  ) => ReactNode;
   useValidationHook?: (
     validator: SchemaValidator,
     ctx: ValidationContext,
@@ -290,7 +296,12 @@ export function useControlRenderer(
     ),
     visibleControl: useEvalVisibilityHook(useExpr, definition, fieldPath),
     readonlyControl: useEvalReadonlyHook(useExpr, definition),
-    disabledControl: useEvalDisabledHook(useExpr, definition, fieldPath, elementIndex),
+    disabledControl: useEvalDisabledHook(
+      useExpr,
+      definition,
+      fieldPath,
+      elementIndex,
+    ),
     allowedOptions: useEvalAllowedOptionsHook(useExpr, definition),
     labelText: useEvalLabelText(useExpr, definition),
     actionData: useEvalActionHook(useExpr, definition),
@@ -464,6 +475,7 @@ export function useControlRenderer(
           displayControl,
           style: customStyle.value,
           allowedOptions,
+          customDisplay: options.customDisplay,
           actionDataControl: actionData,
           actionOnClick: options.actionOnClick,
           useChildVisibility: (childDef, context) => {
@@ -708,6 +720,10 @@ export interface RenderControlProps {
   actionOnClick?: (actionId: string, actionData: any) => () => void;
   schemaInterface?: SchemaInterface;
   designMode?: boolean;
+  customDisplay?: (
+    customId: string,
+    displayProps: DisplayRendererProps,
+  ) => ReactNode;
 }
 export function renderControlLayout(
   props: RenderControlProps,
@@ -726,6 +742,7 @@ export function renderControlLayout(
     parentContext,
     useChildVisibility,
     designMode,
+    customDisplay,
   } = props;
 
   if (isDataControlDefinition(c)) {
@@ -775,14 +792,21 @@ export function renderControlLayout(
     };
   }
   if (isDisplayControlsDefinition(c)) {
+    const data = c.displayData ?? {};
+    const displayProps = {
+      data,
+      className: cc(c.styleClass),
+      style,
+      display: displayControl,
+      dataContext,
+    };
+    if (data.type === DisplayDataType.Custom && customDisplay) {
+      return {
+        children: customDisplay((data as CustomDisplay).customId, displayProps),
+      };
+    }
     return {
-      children: renderer.renderDisplay({
-        data: c.displayData ?? {},
-        className: cc(c.styleClass),
-        style,
-        display: displayControl,
-        dataContext,
-      }),
+      children: renderer.renderDisplay(displayProps),
     };
   }
   return {};

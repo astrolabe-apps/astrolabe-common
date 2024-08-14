@@ -1,6 +1,7 @@
 import React from "react";
 import { DisplayRendererProps } from "../controlRender";
 import {
+  CustomDisplay,
   DisplayDataType,
   HtmlDisplay,
   IconDisplay,
@@ -57,9 +58,17 @@ export function DefaultDisplay({
           style={style}
           className={rendererClass(className, options.htmlClassName)}
           dangerouslySetInnerHTML={{
-            __html: display ? display.value ?? "" : (data as HtmlDisplay).html,
+            __html: display
+              ? (display.value ?? "")
+              : (data as HtmlDisplay).html,
           }}
         />
+      );
+    case DisplayDataType.Custom:
+      return (
+        <div>
+          Custom display placeholder: {(data as CustomDisplay).customId}
+        </div>
       );
     default:
       return <h1>Unknown display type: {data.type}</h1>;
