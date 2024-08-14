@@ -271,7 +271,7 @@ export function BasicFormEditor<A extends string>({
             </div>
           </Panel>
           <PanelResizeHandle className="w-2 bg-surface-200" />
-          <Panel maxSize={33}>
+          <Panel defaultSize={33}>
             <PanelGroup direction="vertical">
               <Panel>
                 <div className="p-4 overflow-auto w-full h-full">
