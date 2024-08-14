@@ -685,7 +685,9 @@ export function toIconMappingForm(v: IconMapping): IconMappingForm {
 
 export interface RenderOptionsForm {
   type: string;
+  expression: string;
   placeholder: string | null;
+  multiline: boolean | null;
   groupOptions: GroupRenderOptionsForm;
   emptyText: string | null;
   sampleText: string | null;
@@ -768,12 +770,28 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         name: "Null Toggler",
         value: "NullToggle",
       },
+      {
+        name: "Jsonata",
+        value: "Jsonata",
+      },
     ],
+  }),
+  expression: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Jsonata"],
+    notNullable: true,
+    required: true,
+    displayName: "Expression",
   }),
   placeholder: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["Textfield"],
     displayName: "Placeholder",
+  }),
+  multiline: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Textfield"],
+    displayName: "Multiline",
   }),
   groupOptions: makeCompoundField({
     children: GroupRenderOptionsSchema,
@@ -874,6 +892,7 @@ export interface DisplayDataForm {
   type: string;
   iconClass: string;
   text: string;
+  customId: string;
   html: string;
 }
 
@@ -897,6 +916,10 @@ export const DisplayDataSchema = buildSchema<DisplayDataForm>({
         name: "Icon",
         value: "Icon",
       },
+      {
+        name: "Custom",
+        value: "Custom",
+      },
     ],
   }),
   iconClass: makeScalarField({
@@ -912,6 +935,13 @@ export const DisplayDataSchema = buildSchema<DisplayDataForm>({
     notNullable: true,
     required: true,
     displayName: "Text",
+  }),
+  customId: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Custom"],
+    notNullable: true,
+    required: true,
+    displayName: "Custom Id",
   }),
   html: makeScalarField({
     type: FieldType.String,

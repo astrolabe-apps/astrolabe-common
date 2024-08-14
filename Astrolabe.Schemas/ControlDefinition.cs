@@ -130,6 +130,8 @@ public enum DataRenderType
 
     [Display(Name = "Null Toggler")]
     NullToggle,
+
+    Jsonata,
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]
@@ -141,6 +143,7 @@ public enum DataRenderType
 [JsonSubType("DisplayOnly", typeof(DisplayOnlyRenderOptions))]
 [JsonSubType("Group", typeof(DataGroupRenderOptions))]
 [JsonSubType("Textfield", typeof(TextfieldRenderOptions))]
+[JsonSubType("Jsonata", typeof(JsonataRenderOptions))]
 public abstract record RenderOptions(
     [property: DefaultValue("Standard")]
     [property: SchemaOptions(typeof(DataRenderType))]
@@ -153,7 +156,10 @@ public abstract record RenderOptions(
 
 public record SimpleRenderOptions(string Type) : RenderOptions(Type);
 
-public record TextfieldRenderOptions(string? Placeholder)
+public record JsonataRenderOptions(string Expression)
+    : RenderOptions(DataRenderType.Jsonata.ToString());
+
+public record TextfieldRenderOptions(string? Placeholder, bool? Multiline)
     : RenderOptions(DataRenderType.Textfield.ToString());
 
 public record DataGroupRenderOptions(GroupRenderOptions GroupOptions)
@@ -197,12 +203,14 @@ public enum DisplayDataType
     Text,
     Html,
     Icon,
+    Custom
 }
 
 [JsonBaseType("type", typeof(SimpleDisplayData))]
 [JsonSubType("Text", typeof(TextDisplay))]
 [JsonSubType("Html", typeof(HtmlDisplay))]
 [JsonSubType("Icon", typeof(IconDisplay))]
+[JsonSubType("Custom", typeof(CustomDisplay))]
 public abstract record DisplayData([property: SchemaOptions(typeof(DisplayDataType))] string Type)
 {
     [JsonExtensionData]
@@ -214,6 +222,8 @@ public record SimpleDisplayData(string Type) : DisplayData(Type);
 public record IconDisplay(string IconClass) : DisplayData(DisplayDataType.Icon.ToString());
 
 public record TextDisplay(string Text) : DisplayData(DisplayDataType.Text.ToString());
+
+public record CustomDisplay(string CustomId) : DisplayData(DisplayDataType.Custom.ToString());
 
 public record HtmlDisplay([property: SchemaTag(SchemaTags.HtmlEditor)] string Html)
     : DisplayData(DisplayDataType.Html.ToString());

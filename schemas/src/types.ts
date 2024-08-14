@@ -233,11 +233,13 @@ export enum DataRenderType {
   DisplayOnly = "DisplayOnly",
   Group = "Group",
   NullToggle = "NullToggle",
+  Jsonata = "Jsonata",
 }
 
 export interface TextfieldRenderOptions extends RenderOptions {
   type: DataRenderType.Textfield;
   placeholder?: string | null;
+  multiline?: boolean | null;
 }
 
 export interface RadioButtonRenderOptions extends RenderOptions {
@@ -277,6 +279,11 @@ export interface DisplayOnlyRenderOptions extends RenderOptions {
 export interface IconMapping {
   value: string;
   materialIcon?: string | null;
+}
+
+export interface JsonataRenderOptions extends RenderOptions {
+  type: DataRenderType.Jsonata;
+  expression: string;
 }
 
 export interface CheckListRenderOptions extends RenderOptions {
@@ -356,6 +363,7 @@ export enum DisplayDataType {
   Text = "Text",
   Html = "Html",
   Icon = "Icon",
+  Custom = "Custom",
 }
 export interface TextDisplay extends DisplayData {
   type: DisplayDataType.Text;
@@ -370,6 +378,11 @@ export interface IconDisplay extends DisplayData {
 export interface HtmlDisplay extends DisplayData {
   type: DisplayDataType.Html;
   html: string;
+}
+
+export interface CustomDisplay extends DisplayData {
+  type: DisplayDataType.Custom;
+  customId: string;
 }
 
 export interface ActionControlDefinition extends ControlDefinition {

@@ -74,6 +74,9 @@ import {
   createRadioRenderer,
 } from "./components/CheckRenderer";
 import { DefaultAccordion } from "./components/DefaultAccordion";
+import { createNullToggleRenderer } from "./components/NullToggle";
+import { createMultilineFieldRenderer } from "./components/MultilineTextfield";
+import { createJsonataRenderer } from "./components/JsonataRenderer";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -218,12 +221,18 @@ interface DefaultDataRendererOptions {
   checkListOptions?: CheckRendererOptions;
   booleanOptions?: FieldOption[];
   optionRenderer?: DataRendererRegistration;
+  multilineClass?: string;
+  jsonataClass?: string;
 }
 
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
 ): DataRendererRegistration {
+  const jsonataRenderer = createJsonataRenderer(options.jsonataClass);
   const nullToggler = createNullToggleRenderer();
+  const multilineRenderer = createMultilineFieldRenderer(
+    options.multilineClass,
+  );
   const checkboxRenderer = createCheckboxRenderer(
     options.checkOptions ?? options.checkboxOptions,
   );
@@ -290,7 +299,11 @@ export function createDefaultDataRenderer(
         return radioRenderer.render(props, renderers);
       case DataRenderType.Checkbox:
         return checkboxRenderer.render(props, renderers);
+      case DataRenderType.Jsonata:
+        return jsonataRenderer.render(props, renderers);
     }
+    if (isTextfieldRenderer(renderOptions) && renderOptions.multiline)
+      return multilineRenderer.render(props, renderers);
     const placeholder = isTextfieldRenderer(renderOptions)
       ? renderOptions.placeholder
       : undefined;
@@ -431,60 +444,6 @@ export function createDefaultLabelRenderer(
     },
     type: "label",
   };
-}
-
-export function createNullToggleRenderer() {
-  return createDataRenderer(
-    ({ control, field, renderOptions, ...props }, renderers) => {
-      const nullControl = (control.meta["nullControl"] ??= newControl(
-        control.current.value != null,
-      ));
-      return (layout) => {
-        const newLayout = renderers.renderData({
-          ...props,
-          control: nullControl,
-          field: { ...field, type: FieldType.Bool },
-          renderOptions: { type: DataRenderType.Checkbox },
-        })(layout);
-        return {
-          ...newLayout,
-          children: (
-            <NullWrapper
-              control={control}
-              nullControl={nullControl}
-              children={newLayout.children}
-              defaultValue={props.definition.defaultValue}
-            />
-          ),
-        };
-      };
-    },
-  );
-}
-
-function NullWrapper({
-  children,
-  nullControl,
-  control,
-  defaultValue,
-}: {
-  control: Control<any>;
-  nullControl: Control<boolean>;
-  children: ReactNode;
-  defaultValue: any;
-}) {
-  useControlEffect(
-    () => nullControl.value,
-    (e) => {
-      if (e) {
-        control.value = nullControl.meta["nonNullValue"] ?? defaultValue;
-      } else {
-        nullControl.meta["nonNullValue"] = control.value;
-        control.value = null;
-      }
-    },
-  );
-  return children;
 }
 
 export function createDefaultRenderers(
