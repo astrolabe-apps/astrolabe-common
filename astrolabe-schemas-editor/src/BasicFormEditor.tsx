@@ -96,6 +96,7 @@ export interface BasicFormEditorProps<A extends string> {
   editorPanelClass?: string;
   controlsClass?: string;
   handleIcon?: ReactNode;
+  extraPreviewControls?: ReactNode;
 }
 
 export function BasicFormEditor<A extends string>({
@@ -116,6 +117,7 @@ export function BasicFormEditor<A extends string>({
   collectClasses,
   controlsClass,
   handleIcon,
+  extraPreviewControls,
 }: BasicFormEditorProps<A>): ReactElement {
   const controls = useControl<ControlDefinitionForm[]>([], {
     elems: makeControlTree(treeActions),
@@ -248,6 +250,7 @@ export function BasicFormEditor<A extends string>({
                     rawRenderer={editorRenderer}
                     rootControlClass={rootControlClass}
                     controlsClass={controlsClass}
+                    extraPreviewControls={extraPreviewControls}
                   />
                 ) : (
                   <div className={controlsClass}>
@@ -382,6 +385,7 @@ function FormPreview({
   previewOptions,
   rawRenderer,
   controlsClass,
+  extraPreviewControls,
 }: {
   previewData: Control<PreviewData>;
   fields: SchemaField[];
@@ -392,6 +396,7 @@ function FormPreview({
   previewOptions?: ControlRenderOptions;
   rootControlClass?: string;
   controlsClass?: string;
+  extraPreviewControls?: ReactNode;
 }) {
   const { data, showJson, showRawEditor } = previewData.fields;
   const jsonControl = useControl(() =>
@@ -426,6 +431,7 @@ function FormPreview({
           actionId: "",
           actionText: "Toggle JSON",
         })}
+        {extraPreviewControls}
       </div>
       <RenderControl render={renderRaw} />
 

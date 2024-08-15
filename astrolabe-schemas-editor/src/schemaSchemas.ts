@@ -356,7 +356,7 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
         value: "FieldValue",
       },
       {
-        name: "UserMatch",
+        name: "User Match",
         value: "UserMatch",
       },
       {

@@ -5,25 +5,28 @@ import {
   BasicFormEditor,
   ControlDefinitionSchema,
 } from "@astroapps/schemas-editor";
-import { newControl, useControl } from "@react-typed-forms/core";
 import {
-  boolField,
+  ensureSelectableValues,
+  Fcheckbox,
+  RenderElements,
+  useComputed,
+  useControl,
+  useSelectableArray,
+} from "@react-typed-forms/core";
+import {
   buildSchema,
-  compoundField,
+  ControlDataContext,
   createDefaultRenderers,
-  createDisplayRenderer,
   createFormRenderer,
-  dateField,
-  dateTimeField,
-  defaultSchemaInterface,
+  defaultEvalHooks,
   defaultTailwindTheme,
   doubleField,
-  FieldType,
+  EntityExpression,
+  ExpressionType,
   intField,
-  makeScalarField,
+  makeEvalExpressionHook,
   stringField,
-  timeField,
-  visitControlData,
+  UserMatchExpression,
 } from "@react-typed-forms/schemas";
 import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
 import {
@@ -37,8 +40,8 @@ import controlsJson from "../ControlDefinition.json";
 import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
 import { useMemo, useState } from "react";
 import {
-  DataGridRenderer,
   DataGridExtension,
+  DataGridRenderer,
 } from "@astroapps/schemas-datagrid";
 
 const CustomControlSchema = applyEditorExtensions(DataGridExtension);
@@ -72,6 +75,11 @@ const TestSchema = buildSchema<TestSchema>({
 export default function Editor() {
   const qc = useQueryControl();
   const selectedForm = useControl("Test");
+  const roles = useControl<string[]>([]);
+  const rolesSelectable = useSelectableArray(
+    roles,
+    ensureSelectableValues(["Student", "Teacher"], (x) => x),
+  );
   const [container, setContainer] = useState<HTMLElement | null>(null);
   useSyncParam(
     qc,
@@ -87,6 +95,7 @@ export default function Editor() {
     () => createStdFormRenderer(container),
     [container],
   );
+  const evalHook = useMemo(() => makeEvalExpressionHook(evalExpr), [roles]);
   return (
     <DndProvider backend={HTML5Backend}>
       <div id="dialog_container" ref={setContainer} />
@@ -120,10 +129,40 @@ export default function Editor() {
         previewOptions={{
           actionOnClick: (aid, data) => () => console.log("Clicked", aid, data),
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
+          useEvalExpressionHook: evalHook,
         }}
         controlDefinitionSchemaMap={CustomControlSchema}
         editorControls={controlsJson}
+        extraPreviewControls={
+          <div>
+            <RenderElements control={rolesSelectable}>
+              {(c) => (
+                <div>
+                  <Fcheckbox control={c.fields.selected} />{" "}
+                  {c.fields.value.value}
+                </div>
+              )}
+            </RenderElements>
+          </div>
+        }
       />
     </DndProvider>
   );
+
+  function evalExpr(
+    expr: EntityExpression,
+    context: ControlDataContext,
+    coerce: (v: any) => any,
+  ) {
+    switch (expr.type) {
+      case ExpressionType.UserMatch:
+        return useComputed(() => {
+          return coerce(
+            roles.value.includes((expr as UserMatchExpression).userMatch),
+          );
+        });
+      default:
+        return defaultEvalHooks(expr, context, coerce);
+    }
+  }
 }

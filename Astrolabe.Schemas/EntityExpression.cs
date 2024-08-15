@@ -12,6 +12,8 @@ public enum ExpressionType
 
     [Display(Name = "Data Match")]
     FieldValue,
+
+    [Display(Name = "User Match")]
     UserMatch,
     Data,
 
