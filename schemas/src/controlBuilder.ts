@@ -131,10 +131,16 @@ export function useControlDefinitionForSchema(
   );
 }
 
+export interface EditorGroup {
+  parent: string;
+  group: GroupedControlsDefinition;
+}
+
 export interface CustomRenderOptions {
   value: string;
   name: string;
-  fields: SchemaField[];
+  fields?: SchemaField[];
+  groups?: EditorGroup[];
 }
 
 export type ControlDefinitionExtension = {
@@ -152,7 +158,7 @@ export function applyExtensionToSchema<A extends SchemaMap>(
   const outMap = { ...schemaMap };
   Object.entries(extension).forEach(([field, cro]) => {
     outMap[field as keyof A] = (Array.isArray(cro) ? cro : [cro]).reduce(
-      (a, cr) => mergeFields(a, cr.name, cr.value, cr.fields),
+      (a, cr) => mergeFields(a, cr.name, cr.value, cr.fields ?? []),
       outMap[field],
     ) as A[string];
   });

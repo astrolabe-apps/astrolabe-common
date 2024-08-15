@@ -101,7 +101,12 @@ export function useJsonataValidator(
   validator: JsonataValidator,
   ctx: ValidationContext,
 ) {
-  const errorMsg = useJsonataExpression(validator.expression, ctx.dataContext);
+  const errorMsg = useJsonataExpression(
+    validator.expression,
+    ctx.dataContext,
+    undefined,
+    (v) => (v == null ? null : typeof v === "string" ? v : JSON.stringify(v)),
+  );
   useValidator(
     ctx.control,
     () => (!ctx.hiddenControl.value ? errorMsg.value : null),

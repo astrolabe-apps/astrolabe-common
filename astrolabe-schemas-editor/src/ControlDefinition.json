@@ -571,7 +571,8 @@
             "field": "expression",
             "required": true,
             "renderOptions": {
-              "type": "Standard"
+              "type": "Textfield",
+              "multiline": true
             }
           },
           {
