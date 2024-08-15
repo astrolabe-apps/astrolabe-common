@@ -692,8 +692,9 @@ export function applyLengthRestrictions<Min, Max>(
 
 export function findFieldPath(
   fields: SchemaField[],
-  fieldPath: string,
+  fieldPath: string | undefined,
 ): SchemaField[] | undefined {
+  if (!fieldPath) return undefined;
   const fieldNames = fieldPath.split("/");
   const foundFields: SchemaField[] = [];
   let i = 0;

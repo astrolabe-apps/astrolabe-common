@@ -291,7 +291,7 @@ export function makeEvalExpressionHook(
   ) => Control<any>,
 ): UseEvalExpressionHook {
   return (expr, coerce) => ({
-    deps: expr?.type,
+    deps: expr != null ? expr.type : "!",
     state: expr,
     runHook: (ctx: ControlDataContext, state: EntityExpression | undefined) => {
       return state ? f(state, ctx, coerce) : undefined;
@@ -447,7 +447,7 @@ function makeDynamicPropertyHook<A, S = undefined>(
 ): EvalExpressionHook<A> {
   return {
     deps:
-      deps !== undefined
+      deps === undefined
         ? dynamicValue.deps
         : [deps, dynamicValue.deps].map(toDepString).join(),
     runHook: (ctx, s) => {
