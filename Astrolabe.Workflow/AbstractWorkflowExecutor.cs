@@ -1,6 +1,6 @@
 namespace Astrolabe.Workflow;
 
-public abstract class AbstractWorkflowExecutor<TContext, TLoadContext, TAction> 
+public abstract class AbstractWorkflowExecutor<TContext, TLoadContext, TAction>
     where TContext : IWorkflowActionList<TContext, TAction>
 {
     public abstract Task<IEnumerable<TContext>> LoadData(TLoadContext loadContext);
@@ -16,5 +16,5 @@ public abstract class AbstractWorkflowExecutor<TContext, TLoadContext, TAction>
         return Task.FromResult(context);
     }
 
-    protected abstract Task<TContext> PerformAction(TContext context, TAction action);
+    public abstract Task<TContext> PerformAction(TContext context, TAction action);
 }
