@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Immutable;
 using System.Text.Json.Nodes;
-using System.Transactions;
 using Astrolabe.Evaluator;
 using Astrolabe.Evaluator.Functions;
 
@@ -10,20 +8,16 @@ namespace Astrolabe.Validation;
 public record ValidatorState(
     IEnumerable<Failure> Failures,
     ValueExpr Message,
-    ImmutableHashSet<DataPath> DependentData,
     IEnumerable<EvaluatedRule> Rules,
-    ImmutableDictionary<string, object?> Properties,
-    ImmutableDictionary<string, ImmutableHashSet<DataPath>> VarDependencies
+    ImmutableDictionary<string, object?> Properties
 )
 {
     public static readonly ValidatorState Empty =
         new(
             [],
             ValueExpr.Null,
-            ImmutableHashSet<DataPath>.Empty,
             [],
-            ImmutableDictionary<string, object?>.Empty,
-            ImmutableDictionary<string, ImmutableHashSet<DataPath>>.Empty
+            ImmutableDictionary<string, object?>.Empty
         );
 }
 
@@ -40,60 +34,6 @@ public class ValidatorEvalEnvironment(EvalEnvironmentState state, ValidatorState
     public EvalEnvironment WithValidatorState(ValidatorState newState)
     {
         return new ValidatorEvalEnvironment(state, newState);
-    }
-
-    public override EvalEnvironment WithVariable(string name, EvalExpr value)
-    {
-        var previousDeps = ValidatorState.DependentData;
-        var cleanDeps = WithValidatorState(
-            validatorState with
-            {
-                DependentData = ImmutableHashSet<DataPath>.Empty
-            }
-        );
-        var (e, varValue) = cleanDeps.Evaluate(value);
-        var newValState = e.GetValidatorState();
-        return new ValidatorEvalEnvironment(
-            e.State with
-            {
-                Variables = state.Variables.SetItem(name, varValue)
-            },
-            newValState with
-            {
-                VarDependencies = newValState.VarDependencies.SetItem(
-                    name,
-                    newValState.DependentData
-                ),
-                DependentData = previousDeps
-            }
-        );
-    }
-
-    public override EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
-    {
-        return evalExpr switch
-        {
-            ValueExpr { Path: { } p } vp
-                => WithValidatorState(
-                        validatorState with
-                        {
-                            DependentData = validatorState.DependentData.Add(p)
-                        }
-                    )
-                    .WithValue(vp),
-            VarExpr ve
-                when validatorState.VarDependencies.TryGetValue(ve.Name, out var varDeps)
-                    && State.Variables.TryGetValue(ve.Name, out var varValue)
-                => WithValidatorState(
-                        validatorState with
-                        {
-                            DependentData = validatorState.DependentData.Union(varDeps)
-                        }
-                    )
-                    .Evaluate(varValue),
-
-            _ => base.Evaluate(evalExpr)
-        };
     }
 }
 
@@ -209,7 +149,6 @@ public static class RuleValidator
                     {
                         Failures = [],
                         Message = ValueExpr.Null,
-                        DependentData = ImmutableHashSet<DataPath>.Empty,
                         Properties = ImmutableDictionary<string, object?>.Empty
                     }
             )
@@ -226,7 +165,7 @@ public static class RuleValidator
                             argValues[1],
                             x.Failures,
                             x.Message.AsString(),
-                            x.DependentData,
+                            argValues[0].Deps ?? [],
                             x.Properties
                         )
                     )
@@ -298,7 +237,7 @@ public record EvaluatedRule(
     ValueExpr Result,
     IEnumerable<Failure> Failures,
     string? Message,
-    ImmutableHashSet<DataPath> DependentData,
+    IEnumerable<DataPath> DependentData,
     IDictionary<string, object?> Properties
 )
 {
