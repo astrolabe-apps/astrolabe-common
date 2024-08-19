@@ -77,7 +77,11 @@ export function createInputConversion(ft: string): InputConversion {
         (a) => (a ? a.substring(0, 5) : ""),
       ];
     case FieldType.Double:
-      return ["number", (a) => parseFloat(a), (a) => a];
+      return [
+        "number",
+        (a) => (a !== "" ? parseFloat(a) : null),
+        (a) => (a == null ? "" : a),
+      ];
     default:
       return ["text", (a) => a, (a) => a];
   }
