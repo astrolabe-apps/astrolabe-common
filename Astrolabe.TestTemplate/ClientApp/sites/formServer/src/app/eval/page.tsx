@@ -9,7 +9,7 @@ import {
   EvalExpr,
   parseEval,
   printPath,
-  toNative,
+  toNative, toValueDeps,
   ValueExpr,
 } from "@astroapps/evaluator";
 import {
@@ -59,7 +59,7 @@ export default function EvalPage() {
           const env = addDefaults(new TrackDataEnv(emptyState));
           try {
             const [outEnv, value] = env.evaluate(exprTree);
-            setEvalResult({ result: toNative(value), errors: outEnv.errors });
+            setEvalResult({ result: toValueDeps(value), errors: outEnv.errors });
           } catch (e) {
             console.error(e);
             output.value = e;

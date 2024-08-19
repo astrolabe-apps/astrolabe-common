@@ -11,6 +11,7 @@ import {
   toNative,
   valueExpr,
   ValueExpr,
+  valueExprWithDeps,
 } from "./ast";
 import {
   BasicEvalEnv,
@@ -18,11 +19,11 @@ import {
   evaluateAll,
   evaluateWith,
 } from "./evaluate";
-import { allElems, toString } from "./values";
+import { allElems, valuesToString } from "./values";
 import { printExpr } from "./printExpr";
 
 const stringFunction = functionValue((e, { args }) =>
-  mapEnv(evaluateAll(e, args), (x) => valueExpr(toString(x))),
+  mapEnv(evaluateAll(e, args), (x) => valuesToString(x)),
 );
 
 const flatFunction = functionValue((e, call) => {
@@ -37,7 +38,7 @@ export const objectFunction = functionValue((e, call) => {
     while (i < args.length - 1) {
       outObj[toNative(args[i++]) as string] = toNative(args[i++]);
     }
-    return valueExpr(outObj);
+    return valueExprWithDeps(outObj, args);
   });
 });
 
@@ -45,9 +46,13 @@ export function binFunction(
   func: (a: any, b: any, e: EvalEnv) => unknown,
 ): ValueExpr {
   return functionValue((env, call) => {
-    const [nextEnv, [{ value: a }, { value: b }]] = evaluateAll(env, call.args);
-    if (a == null || b == null) return [nextEnv, valueExpr(null)];
-    return [nextEnv, valueExpr(func(a, b, nextEnv))];
+    const [nextEnv, [a, b]] = evaluateAll(env, call.args);
+    if (a.value == null || b.value == null)
+      return [nextEnv, valueExprWithDeps(null, [a, b])];
+    return [
+      nextEnv,
+      valueExprWithDeps(func(a.value, b.value, nextEnv), [a, b]),
+    ];
   });
 }
 
@@ -58,9 +63,21 @@ export function compareFunction(toBool: (a: number) => boolean): ValueExpr {
 export function evalFunction(run: (args: unknown[]) => unknown): ValueExpr {
   return functionValue((e, call) =>
     mapEnv(evaluateAll(e, call.args), (a) =>
-      valueExpr(run(a.map((x) => x.value))),
+      valueExprWithDeps(run(a.map((x) => x.value)), a),
     ),
   );
+}
+
+function arrayFunc(
+  toValue: (values: ValueExpr[], arrayValue?: ValueExpr) => ValueExpr,
+) {
+  return functionValue((e, call) => {
+    let [ne, v] = mapAllEnv(e, call.args, doEvaluate);
+    if (v.length == 1) {
+      return [ne, toValue(v[0].value, v[0])];
+    }
+    return [ne, toValue(v)];
+  });
 }
 
 function aggFunction<A>(init: A, op: (acc: A, x: unknown) => A): ValueExpr {
@@ -70,12 +87,7 @@ function aggFunction<A>(init: A, op: (acc: A, x: unknown) => A): ValueExpr {
       init as A | null,
     );
   }
-  return functionValue((e, call) => {
-    const [ne, v] = mapAllEnv(e, call.args, doEvaluate);
-    if (v.length == 1)
-      return [ne, valueExpr(performOp(v[0].value as ValueExpr[]))];
-    return [ne, valueExpr(performOp(v))];
-  });
+  return arrayFunc((v) => valueExprWithDeps(performOp(v), v));
 }
 
 export const whichFunction: ValueExpr = functionValue((e, call) => {
@@ -87,9 +99,13 @@ export const whichFunction: ValueExpr = functionValue((e, call) => {
     const value = args[i++];
     const [nextEnv, compValue] = env.evaluate(compare);
     env = nextEnv;
-    if (compValue.value == cond.value) return nextEnv.evaluate(value);
+    if (compValue.value == cond.value) {
+      return mapEnv(nextEnv.evaluate(value), (v) =>
+        valueExprWithDeps(v.value, [cond, compValue]),
+      );
+    }
   }
-  return [env, valueExpr(null)];
+  return [env, valueExprWithDeps(null, [cond])];
 });
 
 const mapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
@@ -101,7 +117,7 @@ const mapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
       mapAllEnv(leftEnv, leftVal.value, (e, elem: ValueExpr, i) =>
         evaluateWith(e, elem, i, right),
       ),
-      (vals) => valueExpr(vals.flatMap(allElems)),
+      (vals) => ({ ...leftVal, value: vals.flatMap(allElems) }),
     );
   }
   if (typeof value === "object") {
@@ -176,7 +192,7 @@ const defaultFunctions = {
   array: flatFunction,
   string: stringFunction,
   sum: aggFunction(0, (acc, b) => acc + (b as number)),
-  count: aggFunction(0, (acc, b) => acc + 1),
+  count: arrayFunc((acc, v) => valueExprWithDeps(acc.length, v ? [v] : [])),
   min: aggFunction(Number.MAX_VALUE, (a, b) => Math.min(a, b as number)),
   max: aggFunction(Number.MIN_VALUE, (a, b) => Math.max(a, b as number)),
   notEmpty: evalFunction(([a]) => !(a === "" || a == null)),

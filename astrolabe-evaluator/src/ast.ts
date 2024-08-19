@@ -1,3 +1,5 @@
+import { printPath } from "./printExpr";
+
 export interface EmptyPath {
   segment: null;
 }
@@ -83,6 +85,7 @@ export interface ValueExpr {
   type: "value";
   value: any;
   path?: Path;
+  deps?: Path[];
 }
 
 export interface PropertyExpr {
@@ -117,6 +120,17 @@ export function letExpr(variables: VarAssign[], expr: EvalExpr): LetExpr {
 
 export function valueExpr(value: any, path?: Path): ValueExpr {
   return { type: "value", value, path };
+}
+
+export function valueExprWithDeps(value: any, deps: ValueExpr[]): ValueExpr {
+  return {
+    type: "value",
+    value,
+    deps: deps.flatMap(({ path, deps }) => [
+      ...(deps ?? []),
+      ...(path ? [path] : []),
+    ]),
+  };
 }
 
 export const NullExpr = valueExpr(null);
@@ -216,6 +230,7 @@ export function toValue(path: Path | undefined, value: unknown): ValueExpr {
       value.map((x, i) =>
         toValue(path != null ? segmentPath(i, path) : undefined, x),
       ),
+      path,
     );
   }
   return valueExpr(value, path);

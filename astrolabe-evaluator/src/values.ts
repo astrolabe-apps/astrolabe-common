@@ -1,4 +1,5 @@
-import { ValueExpr } from "./ast";
+import { ValueExpr, valueExprWithDeps } from "./ast";
+import { printPath } from "./printExpr";
 
 export function allElems(v: ValueExpr): ValueExpr[] {
   if (Array.isArray(v.value)) return v.value.flatMap(allElems);
@@ -9,19 +10,42 @@ export function asArray(v: unknown): unknown[] {
   return Array.isArray(v) ? v : [v];
 }
 
-export function toString(v: unknown): string {
-  switch (typeof v) {
-    case "string":
-      return v;
-    case "boolean":
-      return v ? "true" : "false";
-    case "undefined":
-      return "null";
-    case "object":
-      if (Array.isArray(v)) return v.map((x) => toString(x.value)).join("");
-      if (v == null) return "null";
-      return JSON.stringify(v);
-    default:
-      return (v as any).toString();
+export function valuesToString(value: ValueExpr[]): ValueExpr {
+  const allVals = value.map(toString);
+  return valueExprWithDeps(allVals.map((x) => x.value).join(""), allVals);
+}
+
+export function toString(value: ValueExpr): ValueExpr {
+  const v = value.value;
+  if (typeof v === "object") {
+    if (Array.isArray(v)) return valuesToString(v);
+    if (v == null) return { ...value, value: "null" };
+    return { ...value, value: JSON.stringify(v) };
   }
+  return { ...value, value: singleString() };
+  function singleString() {
+    switch (typeof v) {
+      case "string":
+        return v;
+      case "boolean":
+        return v ? "true" : "false";
+      case "undefined":
+        return "null";
+      default:
+        return (v as any).toString();
+    }
+  }
+}
+
+export function toValueDeps({ value, path, deps }: ValueExpr): {
+  value: unknown;
+  path?: string;
+  deps?: string[];
+} {
+  const val = Array.isArray(value) ? value.map(toValueDeps) : value;
+  return {
+    value: val,
+    path: path ? printPath(path) : undefined,
+    deps: deps?.map(printPath),
+  };
 }
