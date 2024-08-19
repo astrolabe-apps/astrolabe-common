@@ -4,14 +4,27 @@ namespace Astrolabe.Evaluator.Functions;
 
 public static class DefaultFunctions
 {
-    public static string ExprValueToString(object? value)
+    public static ValueExpr ExprValuesToString(IEnumerable<ValueExpr> values)
     {
-        return value switch
+        var allVals = values.Select(ExprValueToString).ToList();
+        return ValueExpr.WithDeps(string.Join("", allVals.Select(x => x.Value)), allVals);
+    }
+
+    public static ValueExpr ExprValueToString(ValueExpr value)
+    {
+        return value.Value switch
         {
-            null => "",
-            ArrayValue av => string.Join("", av.Values.Select(x => ExprValueToString(x.Value))),
-            ObjectValue => "{}",
-            _ => value.ToString() ?? ""
+            ArrayValue av => ExprValuesToString(av.Values),
+            var o
+                => value with
+                {
+                    Value = o switch
+                    {
+                        null => "null",
+                        bool b => b ? "true" : "false",
+                        _ => o.ToString()
+                    }
+                },
         };
     }
 
@@ -96,22 +109,33 @@ public static class DefaultFunctions
         }
     );
 
-    private static readonly FunctionHandler StringOp = FunctionHandler.DefaultEval(args =>
-        string.Join("", args.Select(ExprValueToString))
+    private static readonly FunctionHandler StringOp = FunctionHandler.DefaultEvalArgs(
+        (_, args) => ExprValuesToString(args)
     );
 
-    public static FunctionHandler ArrayOp<T>(T init, Func<T, object?, T> arrayFunc)
+    public static FunctionHandler ArrayOp(Func<List<ValueExpr>, ValueExpr?, ValueExpr> arrayFunc)
     {
-        return FunctionHandler.DefaultEval(args =>
-            args switch
-            {
-                [ArrayValue av]
-                    => av.Values.All(x => x.Value != null)
-                        ? av.Values.Aggregate(init, (acc, v) => arrayFunc(acc, v.Value))
+        return FunctionHandler.DefaultEvalArgs(
+            (_, args) =>
+                args switch
+                {
+                    [{ Value: ArrayValue av } singleArg]
+                        => arrayFunc(av.Values.ToList(), singleArg),
+                    _ => arrayFunc(args, null),
+                }
+        );
+    }
+
+    public static FunctionHandler ArrayAggOp<T>(T init, Func<T, object?, T> arrayFunc)
+    {
+        return ArrayOp(
+            (args, _) =>
+                ValueExpr.WithDeps(
+                    args.All(x => x.Value != null)
+                        ? args.Aggregate(init, (acc, next) => arrayFunc(acc, next.Value))
                         : null,
-                _ when args.All(x => x != null) => args.Aggregate(init, arrayFunc),
-                _ => null
-            }
+                    args
+                )
         );
     }
 
@@ -132,22 +156,22 @@ public static class DefaultFunctions
             { "or", BoolOp((a, b) => a || b) },
             { "!", UnaryNullOp(a => a is bool b ? !b : null) },
             { "?", IfElseOp },
-            { "sum", ArrayOp(0d, (acc, v) => acc + ValueExpr.AsDouble(v)) },
+            { "sum", ArrayAggOp(0d, (acc, v) => acc + ValueExpr.AsDouble(v)) },
             {
                 "min",
-                ArrayOp(
+                ArrayAggOp(
                     (double?)null,
                     (acc, v) => Math.Min(acc ?? double.MaxValue, ValueExpr.AsDouble(v))
                 )
             },
             {
                 "max",
-                ArrayOp(
+                ArrayAggOp(
                     (double?)null,
                     (acc, v) => Math.Max(acc ?? double.MinValue, ValueExpr.AsDouble(v))
                 )
             },
-            { "count", ArrayOp(0, (acc, v) => acc + 1) },
+            { "count", ArrayOp((args, o) => ValueExpr.WithDeps(args.Count, o != null ? [o] : [])) },
             {
                 "array",
                 FunctionHandler.DefaultEval(args => new ArrayValue(
@@ -258,11 +282,13 @@ public static class DefaultFunctions
                 var (nextEnv, compValue) = curEnv.Evaluate(compare);
                 if (curEnv.Compare(condCompare, compValue.Value) == 0)
                 {
-                    return nextEnv.Evaluate(value);
+                    return nextEnv
+                        .Evaluate(value)
+                        .Map(x => ValueExpr.WithDeps(x.Value, [condValue, compValue]));
                 }
                 curEnv = nextEnv;
             }
-            return curEnv.WithNull();
+            return curEnv.WithValue(ValueExpr.WithDeps(null, [condValue]));
         }
     }
 }

@@ -19,13 +19,34 @@ public class EvalController : ControllerBase
             JsonDataLookup.FromObject(JsonSerializer.SerializeToNode(evalData.Data))
         );
         var result = valEnv.Evaluate(ExprParser.Parse(evalData.Expression));
-        return new EvalResult(result.Value.ToNative(), result.Env.Errors.Select(x => x.Message));
+        return new EvalResult(
+            ToValueWithDeps(result.Value),
+            result.Env.Errors.Select(x => x.Message)
+        );
+    }
+
+    public static ValueWithDeps ToValueWithDeps(ValueExpr expr)
+    {
+        var value = expr.Value switch
+        {
+            ArrayValue av => av.Values.Select(ToValueWithDeps),
+            ObjectValue ov => ov.Object,
+            var v => v
+        };
+        return new ValueWithDeps(
+            value,
+            expr.Path?.ToPathString(),
+            expr.Deps?.Select(x => x.ToPathString())
+        );
     }
 }
 
 public record EvalData(string Expression, IDictionary<string, object?> Data);
 
-public record EvalResult(
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] object? Result,
-    IEnumerable<string> Errors
+public record EvalResult(ValueWithDeps Result, IEnumerable<string> Errors);
+
+public record ValueWithDeps(
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] object? Value,
+    string? Path,
+    IEnumerable<string>? Deps
 );

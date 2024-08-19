@@ -36,16 +36,3 @@ export function toString(value: ValueExpr): ValueExpr {
     }
   }
 }
-
-export function toValueDeps({ value, path, deps }: ValueExpr): {
-  value: unknown;
-  path?: string;
-  deps?: string[];
-} {
-  const val = Array.isArray(value) ? value.map(toValueDeps) : value;
-  return {
-    value: val,
-    path: path ? printPath(path) : undefined,
-    deps: deps?.map(printPath),
-  };
-}

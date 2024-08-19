@@ -68,20 +68,26 @@ public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, 
 
 public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
 {
-    public static FunctionHandler DefaultEval(
-        Func<EvalEnvironment, IList<object?>, object?> eval
+    public static FunctionHandler DefaultEvalArgs(
+        Func<EvalEnvironment, List<ValueExpr>, ValueExpr> eval
     ) =>
         new(
             (e, call) =>
                 e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x))
-                    .Map(args => new ValueExpr(eval(e, args.Select(x => x.Value).ToList())))
+                    .Map(args => eval(e, args.ToList()))
+        );
+
+    public static FunctionHandler DefaultEval(Func<EvalEnvironment, List<object?>, object?> eval) =>
+        DefaultEvalArgs(
+            (e, args) => ValueExpr.WithDeps(eval(e, args.Select(x => x.Value).ToList()), args)
         );
 
     public static FunctionHandler DefaultEval(Func<IList<object?>, object?> eval) =>
         DefaultEval((_, a) => eval(a));
 }
 
-public record ValueExpr(object? Value, DataPath? Path = null) : EvalExpr
+public record ValueExpr(object? Value, DataPath? Path = null, IEnumerable<DataPath>? Deps = null)
+    : EvalExpr
 {
     public static readonly ValueExpr Null = new((object?)null);
 
@@ -92,6 +98,17 @@ public record ValueExpr(object? Value, DataPath? Path = null) : EvalExpr
     private static readonly object UndefinedValue = new();
 
     public static readonly ValueExpr Undefined = new(UndefinedValue);
+
+    public static ValueExpr WithDeps(object? value, IEnumerable<ValueExpr> others)
+    {
+        return new ValueExpr(
+            value,
+            null,
+            others.SelectMany(x =>
+                ((IEnumerable<DataPath>)(x.Path != null ? [x.Path] : [])).Concat(x.Deps ?? [])
+            )
+        );
+    }
 
     public static double AsDouble(object? v)
     {
