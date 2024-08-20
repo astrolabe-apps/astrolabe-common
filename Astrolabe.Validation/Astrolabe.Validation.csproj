@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Version>2.6.0</Version>
+        <Version>2.7.0</Version>
         <Authors>doolse</Authors>
         <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>A validation library built on top of Astrolabe.Evaluator</Description>
