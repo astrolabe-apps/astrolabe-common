@@ -193,15 +193,15 @@ public static class DefaultFunctions
             { "which", new FunctionHandler(WhichFunction) },
             {
                 "elem",
-                FunctionHandler.DefaultEval(args =>
+                FunctionHandler.DefaultEvalArgs((_,args) =>
                     args switch
                     {
-                        [ArrayValue av, var indO]
+                        [{Value: ArrayValue av}, {Value: var indO}]
                             when ValueExpr.MaybeIndex(indO) is { } ind
                                 && av.Values.ToList() is var vl
                                 && vl.Count > ind
-                            => vl[ind].Value,
-                        _ => null
+                            => vl[ind],
+                        _ => ValueExpr.WithDeps(null, args)
                     }
                 )
             },
