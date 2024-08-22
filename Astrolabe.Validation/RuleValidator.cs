@@ -13,12 +13,7 @@ public record ValidatorState(
 )
 {
     public static readonly ValidatorState Empty =
-        new(
-            [],
-            ValueExpr.Null,
-            [],
-            ImmutableDictionary<string, object?>.Empty
-        );
+        new([], ValueExpr.Null, [], ImmutableDictionary<string, object?>.Empty);
 }
 
 public class ValidatorEvalEnvironment(EvalEnvironmentState state, ValidatorState validatorState)
@@ -165,7 +160,7 @@ public static class RuleValidator
                             argValues[1],
                             x.Failures,
                             x.Message.AsString(),
-                            argValues[0].Deps ?? [],
+                            argValues[1].Deps ?? [],
                             x.Properties
                         )
                     )
