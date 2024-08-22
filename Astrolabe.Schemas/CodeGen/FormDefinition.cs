@@ -42,7 +42,7 @@ public static class FormDefinition
         IEnumerable<FormDefinition<T>> definitions,
         string schemaModule,
         string formModuleDir,
-        Func<FormDefinition<T>, string>? formDefFilename
+        Func<FormDefinition<T>, string>? formDefFilename = null
     )
     {
         var formVars = definitions.Select(MakeAssignment).ToList();
