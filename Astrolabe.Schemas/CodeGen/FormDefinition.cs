@@ -32,11 +32,17 @@ public class FormBuilder<TConfig>
 
 public static class FormDefinition
 {
+    public static string DefaultFormDefFilename<T>(FormDefinition<T> definition)
+    {
+        return definition.Value + ".json";
+    }
+
     public static TsFile GenerateFormModule<T>(
         string formsVariable,
         IEnumerable<FormDefinition<T>> definitions,
         string schemaModule,
-        string formModuleDir
+        string formModuleDir,
+        Func<FormDefinition<T>, string>? formDefFilename
     )
     {
         var formVars = definitions.Select(MakeAssignment).ToList();
@@ -49,7 +55,7 @@ public static class FormDefinition
         TsAssignment MakeAssignment(FormDefinition<T> x)
         {
             var jsonFile = new TsImport(
-                formModuleDir + x.Value + ".json",
+                formModuleDir + (formDefFilename?.Invoke(x) ?? DefaultFormDefFilename(x)),
                 x.Value + "Json",
                 true
             ).Ref;
