@@ -25,7 +25,7 @@ public enum ItemStatus
     Published,
 }
 
-public class AppDbContext : DbContext
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<CarItem> Cars { get; set; }
 }
