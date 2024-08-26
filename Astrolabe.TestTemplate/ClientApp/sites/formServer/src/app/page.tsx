@@ -26,6 +26,7 @@ import {
   intField,
   makeEvalExpressionHook,
   stringField,
+  stringOptionsField,
   UserMatchExpression,
 } from "@react-typed-forms/schemas";
 import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
@@ -68,7 +69,11 @@ interface TestSchema {
 
 const TestSchema = buildSchema<TestSchema>({
   array: intField("Numbers", { collection: true }),
-  text: stringField("String"),
+  text: stringOptionsField(
+    "String",
+    { name: "One", value: "one" },
+    { name: "Two", value: "two" },
+  ),
   number: doubleField("Double"),
 });
 
