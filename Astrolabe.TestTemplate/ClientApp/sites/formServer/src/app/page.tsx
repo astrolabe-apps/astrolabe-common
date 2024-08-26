@@ -14,7 +14,9 @@ import {
   useSelectableArray,
 } from "@react-typed-forms/core";
 import {
+  boolField,
   buildSchema,
+  compoundField,
   ControlDataContext,
   createDefaultRenderers,
   createFormRenderer,
@@ -61,18 +63,29 @@ function createStdFormRenderer(container: HTMLElement | null) {
   );
 }
 
+interface DisabledStuff {
+  disable: boolean;
+  text: string;
+}
 interface TestSchema {
   array: number[];
-  text: string;
+  stuff: DisabledStuff[];
   number: number;
 }
 
 const TestSchema = buildSchema<TestSchema>({
   array: intField("Numbers", { collection: true }),
-  text: stringOptionsField(
-    "String",
-    { name: "One", value: "one" },
-    { name: "Two", value: "two" },
+  stuff: compoundField(
+    "Stuff",
+    buildSchema<DisabledStuff>({
+      disable: boolField("Disable"),
+      text: stringOptionsField(
+        "String",
+        { name: "One", value: "one" },
+        { name: "Two", value: "two" },
+      ),
+    }),
+    { collection: true },
   ),
   number: doubleField("Double"),
 });
