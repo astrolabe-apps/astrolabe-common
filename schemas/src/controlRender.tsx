@@ -96,6 +96,9 @@ export interface FormRenderer {
 
 export interface AdornmentProps {
   adornment: ControlAdornment;
+  dataContext?: ControlDataContext;
+  parentContext: ControlDataContext;
+  useExpr?: UseEvalExpressionHook;
   designMode?: boolean;
 }
 
@@ -447,7 +450,12 @@ export function useControlRenderer(
 
         const adornments =
           definition.adornments?.map((x) =>
-            renderer.renderAdornment({ adornment: x }),
+            renderer.renderAdornment({
+              adornment: x,
+              dataContext: controlDataContext,
+              parentContext: parentDataContext,
+              useExpr,
+            }),
           ) ?? [];
         const labelAndChildren = renderControlLayout({
           definition: c,

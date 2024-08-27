@@ -66,6 +66,7 @@ function createStdFormRenderer(container: HTMLElement | null) {
 interface DisabledStuff {
   disable: boolean;
   text: string;
+  options: string;
 }
 interface TestSchema {
   array: number[];
@@ -79,7 +80,8 @@ const TestSchema = buildSchema<TestSchema>({
     "Stuff",
     buildSchema<DisabledStuff>({
       disable: boolField("Disable"),
-      text: stringOptionsField(
+      text: stringField("Pure Text"),
+      options: stringOptionsField(
         "String",
         { name: "One", value: "one" },
         { name: "Two", value: "two" },

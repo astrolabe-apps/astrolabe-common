@@ -491,6 +491,9 @@ export interface ControlAdornmentForm {
   title: string;
   defaultExpanded: boolean;
   helpText: string;
+  defaultOnly: boolean | null;
+  field: string;
+  expression: EntityExpressionForm;
 }
 
 export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
@@ -516,6 +519,10 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
       {
         name: "Icon",
         value: "Icon",
+      },
+      {
+        name: "SetField",
+        value: "SetField",
       },
     ],
   }),
@@ -576,6 +583,26 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
     notNullable: true,
     required: true,
     displayName: "Help Text",
+  }),
+  defaultOnly: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["SetField"],
+    displayName: "Default Only",
+  }),
+  field: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["SetField"],
+    notNullable: true,
+    required: true,
+    displayName: "Field",
+    tags: ["_SchemaField"],
+  }),
+  expression: makeCompoundField({
+    children: EntityExpressionSchema,
+    schemaRef: "EntityExpression",
+    onlyForTypes: ["SetField"],
+    notNullable: true,
+    displayName: "Expression",
   }),
 });
 

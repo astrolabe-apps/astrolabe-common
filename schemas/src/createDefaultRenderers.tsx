@@ -17,6 +17,7 @@ import {
   GroupRendererRegistration,
   isAccordionAdornment,
   isIconAdornment,
+  isSetFieldAdornment,
   LabelRendererRegistration,
 } from "./renderers";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
@@ -25,9 +26,19 @@ import React, {
   Fragment,
   ReactElement,
   ReactNode,
+  useCallback,
   useEffect,
+  useRef,
 } from "react";
-import { hasOptions, rendererClass } from "./util";
+import {
+  ControlDataContext,
+  DataContext,
+  findFieldPath,
+  hasOptions,
+  lookupChildControl,
+  rendererClass,
+  useDynamicHooks,
+} from "./util";
 import clsx from "clsx";
 import {
   ActionRendererProps,
@@ -50,6 +61,7 @@ import {
   isFlexRenderer,
   isGridRenderer,
   isTextfieldRenderer,
+  SetFieldAdornment,
 } from "./types";
 import {
   createSelectRenderer,
@@ -77,6 +89,7 @@ import { DefaultAccordion } from "./components/DefaultAccordion";
 import { createNullToggleRenderer } from "./components/NullToggle";
 import { createMultilineFieldRenderer } from "./components/MultilineTextfield";
 import { createJsonataRenderer } from "./components/JsonataRenderer";
+import { UseEvalExpressionHook } from "./hooks";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -343,8 +356,48 @@ export function createDefaultAdornmentRenderer(
 ): AdornmentRendererRegistration {
   return {
     type: "adornment",
-    render: ({ adornment, designMode }, renderers) => ({
+    render: ({ adornment, designMode, parentContext, useExpr }, renderers) => ({
       apply: (rl) => {
+        if (isSetFieldAdornment(adornment) && useExpr) {
+          const hook = useExpr(adornment.expression, (x) => x);
+          const dynamicHooks = useDynamicHooks({ value: hook });
+          const SetFieldWrapper = useCallback(setFieldWrapper, [dynamicHooks]);
+          return wrapLayout((x) => (
+            <SetFieldWrapper
+              children={x}
+              parentContext={parentContext}
+              adornment={adornment}
+            />
+          ))(rl);
+
+          function setFieldWrapper({
+            children,
+            adornment,
+            parentContext,
+          }: {
+            children: ReactNode;
+            adornment: SetFieldAdornment;
+            parentContext: ControlDataContext;
+          }) {
+            const { value } = dynamicHooks(parentContext);
+            const refField = findFieldPath(
+              parentContext.fields,
+              adornment.field,
+            );
+            const otherField = refField
+              ? lookupChildControl(parentContext, refField)
+              : undefined;
+            const always = !adornment.defaultOnly;
+            useControlEffect(
+              () => [value?.value, otherField?.value == null],
+              ([v]) => {
+                otherField?.setValue((x) => (always || x == null ? v : x));
+              },
+              true,
+            );
+            return children;
+          }
+        }
         if (isIconAdornment(adornment)) {
           return appendMarkupAt(
             adornment.placement ?? AdornmentPlacement.ControlStart,
@@ -370,6 +423,18 @@ export function createDefaultAdornmentRenderer(
     }),
   };
 }
+
+function SetFieldWrapper({
+  children,
+  parentContext,
+  adornment,
+  dynamicHooks,
+}: {
+  children: ReactNode;
+  parentContext: ControlDataContext;
+  adornment: SetFieldAdornment;
+  dynamicHooks: (p: ControlDataContext) => { value: Control<any> | undefined };
+}) {}
 
 function createDefaultLayoutRenderer(
   options: DefaultLayoutRendererOptions = {},

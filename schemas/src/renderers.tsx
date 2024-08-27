@@ -19,6 +19,7 @@ import {
   ControlAdornment,
   ControlAdornmentType,
   IconAdornment,
+  SetFieldAdornment,
 } from "./types";
 
 export interface DefaultRenderers {
@@ -124,6 +125,12 @@ export function isAccordionAdornment(
   a: ControlAdornment,
 ): a is AccordionAdornment {
   return a.type === ControlAdornmentType.Accordion;
+}
+
+export function isSetFieldAdornment(
+  a: ControlAdornment,
+): a is SetFieldAdornment {
+  return a.type === ControlAdornmentType.SetField;
 }
 
 export function createLayoutRenderer(

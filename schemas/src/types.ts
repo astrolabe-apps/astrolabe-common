@@ -176,6 +176,7 @@ export enum ControlAdornmentType {
   Accordion = "Accordion",
   HelpText = "HelpText",
   Icon = "Icon",
+  SetField = "SetField",
 }
 
 export interface IconAdornment extends ControlAdornment {
@@ -199,6 +200,13 @@ export interface HelpTextAdornment extends ControlAdornment {
   type: ControlAdornmentType.HelpText;
   helpText: string;
   placement?: AdornmentPlacement | null;
+}
+
+export interface SetFieldAdornment extends ControlAdornment {
+  type: ControlAdornmentType.SetField;
+  field: string;
+  defaultOnly?: boolean | null;
+  expression?: EntityExpression;
 }
 
 export interface DataControlDefinition extends ControlDefinition {

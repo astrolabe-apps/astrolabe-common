@@ -118,7 +118,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const sampleData = useMemo(
     () =>
       displayOptions
-        ? displayOptions.sampleText ?? "Sample Data"
+        ? (displayOptions.sampleText ?? "Sample Data")
         : field &&
           (elementIndex == null
             ? field.collection
@@ -130,7 +130,12 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const control = useMemo(() => newControl(sampleData), [sampleData]);
   const adornments =
     definition.adornments?.map((x) =>
-      renderer.renderAdornment({ adornment: x, designMode: true }),
+      renderer.renderAdornment({
+        adornment: x,
+        designMode: true,
+        parentContext,
+        dataContext,
+      }),
     ) ?? [];
 
   const layout = renderControlLayout({
