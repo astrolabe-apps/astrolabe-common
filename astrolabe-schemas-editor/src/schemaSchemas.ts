@@ -367,6 +367,10 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
         name: "Not Empty",
         value: "NotEmpty",
       },
+      {
+        name: "UUID",
+        value: "UUID",
+      },
     ],
   }),
   expression: makeScalarField({

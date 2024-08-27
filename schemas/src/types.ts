@@ -131,6 +131,7 @@ export enum ExpressionType {
   DataMatch = "FieldValue",
   UserMatch = "UserMatch",
   NotEmpty = "NotEmpty",
+  UUID = "UUID",
 }
 
 export interface JsonataExpression extends EntityExpression {

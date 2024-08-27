@@ -399,9 +399,13 @@ export function useControlRenderer(
               if (control) {
                 if (vc && vc.visible === vc.showing) {
                   if (hidden || !vc.visible) {
-                    if (options.clearHidden && !dontClear) {
-                      control.value = undefined;
-                    }
+                    control.setValue((x) =>
+                      options.clearHidden && !dontClear
+                        ? undefined
+                        : x == null && dontClear && !dontDefault
+                          ? dv
+                          : x,
+                    );
                   } else if (!dontDefault)
                     control.setValue((x) => (x != null ? x : dv));
                 }

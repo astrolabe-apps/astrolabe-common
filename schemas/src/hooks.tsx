@@ -42,6 +42,7 @@ import {
   toDepString,
 } from "./util";
 import jsonata from "jsonata";
+import { v4 as uuidv4 } from "uuid";
 
 export type EvalExpressionHook<A = any> = DynamicHookGenerator<
   Control<A | undefined>,
@@ -253,6 +254,8 @@ export function defaultEvalHooks(
         undefined,
         coerce,
       );
+    case ExpressionType.UUID:
+      return useUuidExpression(coerce);
     case ExpressionType.Data:
       return useDataExpression(
         expr as DataExpression,
@@ -346,6 +349,10 @@ export function hideDisplayOnly(
       lookupChildControl(context, fieldPath)?.value,
     )
   );
+}
+
+export function useUuidExpression(coerce: (v: any) => any = (x) => x) {
+  return useControl(() => coerce(uuidv4()));
 }
 
 export function useJsonataExpression(
