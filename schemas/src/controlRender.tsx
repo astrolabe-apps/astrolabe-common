@@ -436,7 +436,11 @@ export function useControlRenderer(
         };
 
         useEffect(() => {
-          if (control && typeof myOptions.disabled === "boolean")
+          if (
+            control &&
+            typeof myOptions.disabled === "boolean" &&
+            control.disabled != myOptions.disabled
+          )
             control.disabled = myOptions.disabled;
         }, [control, myOptions.disabled]);
         if (parentControl.isNull) return <></>;
