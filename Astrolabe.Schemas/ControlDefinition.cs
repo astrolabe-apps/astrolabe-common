@@ -132,6 +132,7 @@ public enum DataRenderType
     NullToggle,
 
     Jsonata,
+    Array
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]
@@ -144,6 +145,7 @@ public enum DataRenderType
 [JsonSubType("Group", typeof(DataGroupRenderOptions))]
 [JsonSubType("Textfield", typeof(TextfieldRenderOptions))]
 [JsonSubType("Jsonata", typeof(JsonataRenderOptions))]
+[JsonSubType("Array", typeof(ArrayRenderOptions))]
 public abstract record RenderOptions(
     [property: DefaultValue("Standard")]
     [property: SchemaOptions(typeof(DataRenderType))]
@@ -158,6 +160,15 @@ public record SimpleRenderOptions(string Type) : RenderOptions(Type);
 
 public record JsonataRenderOptions(string Expression)
     : RenderOptions(DataRenderType.Jsonata.ToString());
+
+public record ArrayRenderOptions(
+    string? AddText,
+    string? RemoveText,
+    bool? NoAdd,
+    bool? NoRemove,
+    bool? NoReorder,
+    RenderOptions? ChildOptions
+) : RenderOptions(DataRenderType.Array.ToString());
 
 public record TextfieldRenderOptions(string? Placeholder, bool? Multiline)
     : RenderOptions(DataRenderType.Textfield.ToString());

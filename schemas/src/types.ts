@@ -243,6 +243,7 @@ export enum DataRenderType {
   Group = "Group",
   NullToggle = "NullToggle",
   Jsonata = "Jsonata",
+  Array = "Array",
 }
 
 export interface TextfieldRenderOptions extends RenderOptions {
@@ -293,6 +294,21 @@ export interface IconMapping {
 export interface JsonataRenderOptions extends RenderOptions {
   type: DataRenderType.Jsonata;
   expression: string;
+}
+
+export interface JsonataRenderOptions extends RenderOptions {
+  type: DataRenderType.Jsonata;
+  expression: string;
+}
+
+export interface ArrayRenderOptions extends RenderOptions {
+  type: DataRenderType.Array;
+  addText?: string | null;
+  removeText?: string | null;
+  noAdd?: boolean | null;
+  noRemove?: boolean | null;
+  noReorder?: boolean | null;
+  childOptions?: RenderOptions | null;
 }
 
 export interface CheckListRenderOptions extends RenderOptions {

@@ -717,6 +717,12 @@ export function toIconMappingForm(v: IconMapping): IconMappingForm {
 export interface RenderOptionsForm {
   type: string;
   expression: string;
+  addText: string | null;
+  removeText: string | null;
+  noAdd: boolean | null;
+  noRemove: boolean | null;
+  noReorder: boolean | null;
+  childOptions: RenderOptionsForm | null;
   placeholder: string | null;
   multiline: boolean | null;
   groupOptions: GroupRenderOptionsForm;
@@ -805,6 +811,10 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         name: "Jsonata",
         value: "Jsonata",
       },
+      {
+        name: "Array",
+        value: "Array",
+      },
     ],
   }),
   expression: makeScalarField({
@@ -813,6 +823,36 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     notNullable: true,
     required: true,
     displayName: "Expression",
+  }),
+  addText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Array"],
+    displayName: "Add Text",
+  }),
+  removeText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Array"],
+    displayName: "Remove Text",
+  }),
+  noAdd: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Array"],
+    displayName: "No Add",
+  }),
+  noRemove: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Array"],
+    displayName: "No Remove",
+  }),
+  noReorder: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Array"],
+    displayName: "No Reorder",
+  }),
+  childOptions: makeCompoundField({
+    treeChildren: true,
+    onlyForTypes: ["Array"],
+    displayName: "Child Options",
   }),
   placeholder: makeScalarField({
     type: FieldType.String,

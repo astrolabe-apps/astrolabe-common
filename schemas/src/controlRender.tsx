@@ -213,7 +213,6 @@ export interface DataRendererProps extends ParentRendererProps {
   required: boolean;
   options: FieldOption[] | undefined | null;
   hidden: boolean;
-  toArrayProps?: () => ArrayRendererProps;
 }
 
 export interface ActionRendererProps {
@@ -646,62 +645,6 @@ export function defaultDataProps({
     className,
     style,
     ...props,
-    toArrayProps:
-      field.collection && props.elementIndex == null
-        ? () =>
-            defaultArrayProps(
-              control,
-              field,
-              required,
-              style,
-              className,
-              (elementIndex) =>
-                props.renderChild(
-                  control.elements?.[elementIndex].uniqueId ?? elementIndex,
-                  {
-                    type: ControlDefinitionType.Data,
-                    field: definition.field,
-                    children: definition.children,
-                    hideTitle: true,
-                  } as DataControlDefinition,
-                  { elementIndex, dataContext: props.parentContext },
-                ),
-              lengthVal?.min,
-              lengthVal?.max,
-            )
-        : undefined,
-  };
-}
-
-export function defaultArrayProps(
-  arrayControl: Control<any[] | undefined | null>,
-  field: SchemaField,
-  required: boolean,
-  style: CSSProperties | undefined,
-  className: string | undefined,
-  renderElement: (elemIndex: number) => ReactNode,
-  min: number | undefined | null,
-  max: number | undefined | null,
-): ArrayRendererProps {
-  const noun = field.displayName ?? field.field;
-  return {
-    arrayControl,
-    required,
-    addAction: {
-      actionId: "add",
-      actionText: "Add " + noun,
-      onClick: () => addElement(arrayControl, elementValueForField(field)),
-    },
-    removeAction: (i: number) => ({
-      actionId: "",
-      actionText: "Remove",
-      onClick: () => removeElement(arrayControl, i),
-    }),
-    renderElement: (i) => renderElement(i),
-    className: cc(className),
-    style,
-    min,
-    max,
   };
 }
 

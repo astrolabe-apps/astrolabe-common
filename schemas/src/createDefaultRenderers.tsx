@@ -424,18 +424,6 @@ export function createDefaultAdornmentRenderer(
   };
 }
 
-function SetFieldWrapper({
-  children,
-  parentContext,
-  adornment,
-  dynamicHooks,
-}: {
-  children: ReactNode;
-  parentContext: ControlDataContext;
-  adornment: SetFieldAdornment;
-  dynamicHooks: (p: ControlDataContext) => { value: Control<any> | undefined };
-}) {}
-
 function createDefaultLayoutRenderer(
   options: DefaultLayoutRendererOptions = {},
 ) {
