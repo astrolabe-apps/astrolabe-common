@@ -76,6 +76,7 @@ import {
 } from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
 import {
+  createDefaultArrayDataRenderer,
   createDefaultArrayRenderer,
   DefaultArrayRendererOptions,
 } from "./components/DefaultArrayRenderer";
@@ -261,17 +262,15 @@ export function createDefaultDataRenderer(
     booleanOptions: DefaultBoolOptions,
     ...options,
   };
+  const arrayRenderer = createDefaultArrayDataRenderer();
 
   return createDataRenderer((props, renderers) => {
-    const fieldType = props.field.type;
+    const { field } = props;
+    const fieldType = field.type;
     const renderOptions = props.renderOptions;
+    if (field.collection && props.elementIndex == null)
+      return arrayRenderer.render(props, renderers);
     let renderType = renderOptions.type;
-    if (props.toArrayProps && renderType !== DataRenderType.CheckList) {
-      return (p) => ({
-        ...p,
-        children: renderers.renderArray(props.toArrayProps!()),
-      });
-    }
     if (fieldType === FieldType.Compound) {
       const groupOptions = (isDataGroupRenderer(renderOptions)
         ? renderOptions.groupOptions

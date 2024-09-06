@@ -613,9 +613,6 @@ export function defaultDataProps({
   schemaInterface = defaultSchemaInterface,
   ...props
 }: DataControlProps): DataRendererProps {
-  const lengthVal = definition.validators?.find(
-    (x) => x.type === ValidatorType.Length,
-  ) as LengthValidator | undefined;
   const className = cc(definition.styleClass);
   const required = !!definition.required;
   const fieldOptions = schemaInterface.getOptions(field);

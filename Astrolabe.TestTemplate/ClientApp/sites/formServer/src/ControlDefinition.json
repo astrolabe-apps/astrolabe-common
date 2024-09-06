@@ -299,6 +299,73 @@
               "type": "Textfield",
               "multiline": true
             }
+          },
+          {
+            "type": "Data",
+            "title": "Force Midnight",
+            "field": "forceMidnight",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Group",
+            "title": "Array Options",
+            "children": [
+              {
+                "type": "Data",
+                "title": "Add Text",
+                "field": "addText",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Remove Text",
+                "field": "removeText",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "No Add",
+                "field": "noAdd",
+                "renderOptions": {
+                  "type": "Checkbox"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "No Remove",
+                "field": "noRemove",
+                "renderOptions": {
+                  "type": "Checkbox"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "No Reorder",
+                "field": "noReorder",
+                "renderOptions": {
+                  "type": "Checkbox"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Child Options: TODO",
+                "field": "childOptions",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              }
+            ],
+            "groupOptions": {
+              "type": "Grid",
+              "hideTitle": true,
+              "columns": 2
+            }
           }
         ],
         "hideTitle": true,
@@ -548,6 +615,75 @@
             "renderOptions": {
               "type": "Standard"
             }
+          },
+          {
+            "type": "Data",
+            "title": "Default Only",
+            "field": "defaultOnly",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Field",
+            "field": "field",
+            "required": true,
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Expression",
+            "field": "expression",
+            "children": [
+              {
+                "type": "Data",
+                "title": "Type",
+                "field": "type",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Expression",
+                "field": "expression",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Field",
+                "field": "field",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Value",
+                "field": "value",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "User Match",
+                "field": "userMatch",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              }
+            ]
           }
         ]
       },

@@ -526,3 +526,9 @@ export function isDataGroupRenderer(
 ): options is DataGroupRenderOptions {
   return options.type === DataRenderType.Group;
 }
+
+export function isArrayRenderer(
+  options: RenderOptions,
+): options is ArrayRenderOptions {
+  return options.type === DataRenderType.Array;
+}

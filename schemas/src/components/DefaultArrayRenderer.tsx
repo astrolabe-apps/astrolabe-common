@@ -9,82 +9,88 @@ import {
   ArrayRendererProps,
 } from "../controlRender";
 import clsx from "clsx";
-import React, { CSSProperties, Fragment, ReactNode } from "react";
+import React, { Fragment, ReactNode } from "react";
 import {
   addElement,
-  Control,
   removeElement,
   RenderElements,
 } from "@react-typed-forms/core";
-import { applyLengthRestrictions, elementValueForField } from "../util";
+import { elementValueForField } from "../util";
 import {
+  ArrayRenderOptions,
   ControlDefinitionType,
   DataControlDefinition,
-  SchemaField,
+  DataRenderType,
+  isArrayRenderer,
+  LengthValidator,
+  ValidatorType,
 } from "../types";
 import { cc } from "../internal";
 
 export function createDefaultArrayDataRenderer(): DataRendererRegistration {
-  createDataRenderer((props, renderers) => {
-    renderers.renderArray();
-  });
-}
-
-// toArrayProps:
-//     field.collection && props.elementIndex == null
-//         ? () =>
-//             defaultArrayProps(
-//                 control,
-//                 field,
-//                 required,
-//                 style,
-//                 className,
-//                 (elementIndex) =>
-//                     props.renderChild(
-//                         control.elements?.[elementIndex].uniqueId ?? elementIndex,
-//                         {
-//                           type: ControlDefinitionType.Data,
-//                           field: definition.field,
-//                           children: definition.children,
-//                           hideTitle: true,
-//                         } as DataControlDefinition,
-//                         { elementIndex, dataContext: props.parentContext },
-//                     ),
-//                 lengthVal?.min,
-//                 lengthVal?.max,
-//             )
-//         : undefined,
-
-export function defaultArrayProps(
-  arrayControl: Control<any[] | undefined | null>,
-  field: SchemaField,
-  required: boolean,
-  style: CSSProperties | undefined,
-  className: string | undefined,
-  renderElement: (elemIndex: number) => ReactNode,
-  min: number | undefined | null,
-  max: number | undefined | null,
-): ArrayRendererProps {
-  const noun = field.displayName ?? field.field;
-  return {
-    arrayControl,
-    required,
-    addAction: {
-      actionId: "add",
-      actionText: "Add " + noun,
-      onClick: () => addElement(arrayControl, elementValueForField(field)),
+  return createDataRenderer(
+    (
+      {
+        definition,
+        control,
+        required,
+        field,
+        renderChild,
+        parentContext,
+        className,
+        style,
+        renderOptions,
+      },
+      renderers,
+    ) => {
+      const lengthVal = definition.validators?.find(
+        (x) => x.type === ValidatorType.Length,
+      ) as LengthValidator | undefined;
+      const { addText, noAdd, noRemove, noReorder, removeText } =
+        isArrayRenderer(renderOptions)
+          ? renderOptions
+          : ({} as ArrayRenderOptions);
+      const childOptions = isArrayRenderer(renderOptions)
+        ? renderOptions.childOptions
+        : undefined;
+      const noun = field.displayName ?? field.field;
+      const arrayProps = {
+        arrayControl: control,
+        required,
+        addAction: !noAdd
+          ? {
+              actionId: "add",
+              actionText: addText ? addText : "Add " + noun,
+              onClick: () => addElement(control, elementValueForField(field)),
+            }
+          : undefined,
+        removeAction: !noRemove
+          ? (i: number) => ({
+              actionId: "",
+              actionText: removeText ? removeText : "Remove",
+              onClick: () => removeElement(control, i),
+            })
+          : undefined,
+        renderElement: (i) =>
+          renderChild(
+            control.elements?.[i].uniqueId ?? i,
+            {
+              type: ControlDefinitionType.Data,
+              field: definition.field,
+              children: definition.children,
+              renderOptions: childOptions ?? { type: DataRenderType.Standard },
+              hideTitle: true,
+            } as DataControlDefinition,
+            { elementIndex: i, dataContext: parentContext },
+          ),
+        className: cc(className),
+        style,
+        min: lengthVal?.min,
+        max: lengthVal?.max,
+      } satisfies ArrayRendererProps;
+      return renderers.renderArray(arrayProps);
     },
-    removeAction: (i: number) => ({
-      actionId: "",
-      actionText: "Remove",
-      onClick: () => removeElement(arrayControl, i),
-    }),
-    renderElement: (i) => renderElement(i),
-    className: cc(className),
-    style,
-    min,
-    max,
-  };
+  );
 }
 
 export interface DefaultArrayRendererOptions {
