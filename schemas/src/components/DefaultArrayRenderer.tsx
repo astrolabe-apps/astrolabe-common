@@ -4,18 +4,14 @@ import {
   DataRendererRegistration,
 } from "../renderers";
 import {
-  ActionRendererProps,
-  applyArrayLengthRestrictions,
-  ArrayRendererProps,
+    ActionRendererProps,
+    applyArrayLengthRestrictions,
+    ArrayRendererProps,
+    createArrayActions, getLengthRestrictions,
 } from "../controlRender";
 import clsx from "clsx";
 import React, { Fragment, ReactNode } from "react";
-import {
-  addElement,
-  removeElement,
-  RenderElements,
-} from "@react-typed-forms/core";
-import { elementValueForField } from "../util";
+import { RenderElements } from "@react-typed-forms/core";
 import {
   ArrayRenderOptions,
   ControlDefinitionType,
@@ -43,9 +39,6 @@ export function createDefaultArrayDataRenderer(): DataRendererRegistration {
       },
       renderers,
     ) => {
-      const lengthVal = definition.validators?.find(
-        (x) => x.type === ValidatorType.Length,
-      ) as LengthValidator | undefined;
       const { addText, noAdd, noRemove, noReorder, removeText } =
         isArrayRenderer(renderOptions)
           ? renderOptions
@@ -53,24 +46,17 @@ export function createDefaultArrayDataRenderer(): DataRendererRegistration {
       const childOptions = isArrayRenderer(renderOptions)
         ? renderOptions.childOptions
         : undefined;
-      const noun = field.displayName ?? field.field;
+
       const arrayProps = {
-        arrayControl: control,
+        ...createArrayActions(
+          control,
+          field,
+          addText,
+          removeText,
+          noAdd,
+          noRemove,
+        ),
         required,
-        addAction: !noAdd
-          ? {
-              actionId: "add",
-              actionText: addText ? addText : "Add " + noun,
-              onClick: () => addElement(control, elementValueForField(field)),
-            }
-          : undefined,
-        removeAction: !noRemove
-          ? (i: number) => ({
-              actionId: "",
-              actionText: removeText ? removeText : "Remove",
-              onClick: () => removeElement(control, i),
-            })
-          : undefined,
         renderElement: (i) =>
           renderChild(
             control.elements?.[i].uniqueId ?? i,
@@ -85,8 +71,7 @@ export function createDefaultArrayDataRenderer(): DataRendererRegistration {
           ),
         className: cc(className),
         style,
-        min: lengthVal?.min,
-        max: lengthVal?.max,
+        ...getLengthRestrictions(definition),
       } satisfies ArrayRendererProps;
       return renderers.renderArray(arrayProps);
     },

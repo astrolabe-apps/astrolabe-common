@@ -887,6 +887,41 @@ export function controlTitle(
   return title ? title : fieldDisplayName(field);
 }
 
+export function getLengthRestrictions(definition: DataControlDefinition) {
+  const lengthVal = definition.validators?.find(
+    (x) => x.type === ValidatorType.Length,
+  ) as LengthValidator | undefined;
+
+  return { min: lengthVal?.min, max: lengthVal?.max };
+}
+export function createArrayActions(
+  control: Control<any[]>,
+  field: SchemaField,
+  addText?: string | null,
+  removeText?: string | null,
+  noAdd?: boolean | null,
+  noRemove?: boolean | null,
+): Pick<ArrayRendererProps, "addAction" | "removeAction" | "arrayControl"> {
+  const noun = field.displayName ?? field.field;
+  return {
+    arrayControl: control,
+    addAction: !noAdd
+      ? {
+          actionId: "add",
+          actionText: addText ? addText : "Add " + noun,
+          onClick: () => addElement(control, elementValueForField(field)),
+        }
+      : undefined,
+    removeAction: !noRemove
+      ? (i: number) => ({
+          actionId: "remove",
+          actionText: removeText ? removeText : "Remove",
+          onClick: () => removeElement(control, i),
+        })
+      : undefined,
+  };
+}
+
 export function applyArrayLengthRestrictions(
   {
     arrayControl,

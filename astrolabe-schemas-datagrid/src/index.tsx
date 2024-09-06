@@ -9,7 +9,6 @@ import React, { ReactNode, useMemo } from "react";
 import {
   ActionRendererProps,
   applyArrayLengthRestrictions,
-  ArrayRendererProps,
   boolField,
   buildSchema,
   ChildRenderer,
@@ -19,12 +18,15 @@ import {
   ControlDefinition,
   ControlDefinitionExtension,
   ControlDefinitionType,
+  createArrayActions,
   createDataRenderer,
   createGroupRenderer,
   CustomRenderOptions,
   DataControlDefinition,
   EvalExpressionHook,
+  getLengthRestrictions,
   RenderOptions,
+  SchemaField,
   stringField,
   useDynamicHooks,
 } from "@react-typed-forms/schemas";
@@ -111,9 +113,10 @@ export const DataGridRenderer = createDataRenderer(
       renderChild,
       renderOptions,
       childDefinitions,
-      toArrayProps,
+      field,
       className,
       readonly,
+      required,
     } = pareProps;
 
     const constantColumns: ColumnDefInit<Control<any>>[] =
@@ -155,15 +158,22 @@ export const DataGridRenderer = createDataRenderer(
       },
     );
     const allColumns = constantColumns.concat(columns);
+
+    const { removeAction, addAction } = applyArrayLengthRestrictions({
+      ...createArrayActions(control, field),
+      required,
+      ...getLengthRestrictions(definition),
+    });
     return (
       <DataGridControlRenderer
         renderOptions={renderOptions as DataGridOptions & RenderOptions}
         renderAction={renderers.renderAction}
         control={control}
         columns={allColumns}
-        arrayProps={toArrayProps!()}
         className={className}
         readonly={readonly}
+        addAction={addAction}
+        removeAction={removeAction}
       />
     );
   },
@@ -172,25 +182,25 @@ export const DataGridRenderer = createDataRenderer(
 
 interface DataGridRendererProps {
   renderOptions: DataGridOptions;
-  arrayProps: ArrayRendererProps;
   columns: ColumnDefInit<Control<any>>[];
   control: Control<any[] | undefined | null>;
   className?: string;
   renderAction: (action: ActionRendererProps) => ReactNode;
   readonly: boolean;
+  addAction?: ActionRendererProps;
+  removeAction?: (i: number) => ActionRendererProps;
 }
 
 function DataGridControlRenderer({
   renderOptions,
   columns,
-  arrayProps,
   control,
   className,
   renderAction,
   readonly,
+  addAction,
+  removeAction,
 }: DataGridRendererProps) {
-  const { removeAction, addAction } = applyArrayLengthRestrictions(arrayProps);
-
   const allColumns = columnDefinitions<Control<any>>(...columns, {
     id: "deleteCheck",
     columnTemplate: "1em",

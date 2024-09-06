@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-datagrid",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -21,7 +21,7 @@
   "dependencies": {
     "react": "^18.2.0",
     "@react-typed-forms/core": "^3.2.0",
-    "@react-typed-forms/schemas": "workspace:^11.0.0",
+    "@react-typed-forms/schemas": "workspace:^11.17.0",
     "@astroapps/datagrid": "workspace:*"
   },
   "devDependencies": {
