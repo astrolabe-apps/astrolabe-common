@@ -314,26 +314,46 @@
             "children": [
               {
                 "type": "Data",
-                "title": "Add Text",
-                "field": "addText",
-                "renderOptions": {
-                  "type": "Standard"
-                }
-              },
-              {
-                "type": "Data",
-                "title": "Remove Text",
-                "field": "removeText",
-                "renderOptions": {
-                  "type": "Standard"
-                }
-              },
-              {
-                "type": "Data",
                 "title": "No Add",
                 "field": "noAdd",
                 "renderOptions": {
                   "type": "Checkbox"
+                }
+              },
+              {
+                "type": "Group",
+                "title": "Add Options",
+                "dynamic": [
+                  {
+                    "type": "Disabled",
+                    "expr": {
+                      "type": "Data",
+                      "field": "noAdd",
+                      "value": false
+                    }
+                  }
+                ],
+                "children": [
+                  {
+                    "type": "Data",
+                    "title": "Add Text",
+                    "field": "addText",
+                    "renderOptions": {
+                      "type": "Standard"
+                    }
+                  },
+                  {
+                    "type": "Data",
+                    "title": "Add Action Id",
+                    "field": "addActionId",
+                    "renderOptions": {
+                      "type": "Standard"
+                    }
+                  }
+                ],
+                "groupOptions": {
+                  "type": "Flex",
+                  "hideTitle": true
                 }
               },
               {
@@ -342,6 +362,42 @@
                 "field": "noRemove",
                 "renderOptions": {
                   "type": "Checkbox"
+                }
+              },
+              {
+                "type": "Group",
+                "title": "Remove Options",
+                "dynamic": [
+                  {
+                    "type": "Disabled",
+                    "expr": {
+                      "type": "Data",
+                      "field": "noRemove"
+                    }
+                  }
+                ],
+                "styleClass": "",
+                "children": [
+                  {
+                    "type": "Data",
+                    "title": "Remove Text",
+                    "field": "removeText",
+                    "renderOptions": {
+                      "type": "Standard"
+                    }
+                  },
+                  {
+                    "type": "Data",
+                    "title": "Remove Action Id",
+                    "field": "removeActionId",
+                    "renderOptions": {
+                      "type": "Standard"
+                    }
+                  }
+                ],
+                "groupOptions": {
+                  "type": "Flex",
+                  "hideTitle": true
                 }
               },
               {
@@ -362,9 +418,8 @@
               }
             ],
             "groupOptions": {
-              "type": "Grid",
-              "hideTitle": true,
-              "columns": 2
+              "type": "Standard",
+              "hideTitle": true
             }
           }
         ],

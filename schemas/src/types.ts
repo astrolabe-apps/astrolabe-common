@@ -304,12 +304,19 @@ export interface JsonataRenderOptions extends RenderOptions {
 export interface ArrayRenderOptions extends RenderOptions {
   type: DataRenderType.Array;
   addText?: string | null;
+  addActionId?: string | null;
   removeText?: string | null;
+  removeActionId?: string | null;
   noAdd?: boolean | null;
   noRemove?: boolean | null;
   noReorder?: boolean | null;
   childOptions?: RenderOptions | null;
 }
+
+export type ArrayActionOptions = Pick<
+  ArrayRenderOptions,
+  "addText" | "addActionId" | "removeText" | "removeActionId"
+>;
 
 export interface CheckListRenderOptions extends RenderOptions {
   type: DataRenderType.CheckList;

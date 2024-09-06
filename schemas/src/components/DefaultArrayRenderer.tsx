@@ -4,15 +4,17 @@ import {
   DataRendererRegistration,
 } from "../renderers";
 import {
-    ActionRendererProps,
-    applyArrayLengthRestrictions,
-    ArrayRendererProps,
-    createArrayActions, getLengthRestrictions,
+  ActionRendererProps,
+  applyArrayLengthRestrictions,
+  ArrayRendererProps,
+  createArrayActions,
+  getLengthRestrictions,
 } from "../controlRender";
 import clsx from "clsx";
 import React, { Fragment, ReactNode } from "react";
 import { RenderElements } from "@react-typed-forms/core";
 import {
+  ArrayActionOptions,
   ArrayRenderOptions,
   ControlDefinitionType,
   DataControlDefinition,
@@ -48,14 +50,12 @@ export function createDefaultArrayDataRenderer(): DataRendererRegistration {
         : undefined;
 
       const arrayProps = {
-        ...createArrayActions(
-          control,
-          field,
+        ...createArrayActions(control, field, {
           addText,
           removeText,
           noAdd,
           noRemove,
-        ),
+        }),
         required,
         renderElement: (i) =>
           renderChild(
@@ -78,7 +78,7 @@ export function createDefaultArrayDataRenderer(): DataRendererRegistration {
   );
 }
 
-export interface DefaultArrayRendererOptions {
+export interface DefaultArrayRendererOptions extends ArrayActionOptions {
   className?: string;
   removableClass?: string;
   childClass?: string;

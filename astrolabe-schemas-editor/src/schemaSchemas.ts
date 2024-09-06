@@ -719,6 +719,8 @@ export interface RenderOptionsForm {
   expression: string;
   addText: string | null;
   removeText: string | null;
+  addActionId: string | null;
+  removeActionId: string | null;
   noAdd: boolean | null;
   noRemove: boolean | null;
   noReorder: boolean | null;
@@ -833,6 +835,16 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["Array"],
     displayName: "Remove Text",
+  }),
+  addActionId: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Array"],
+    displayName: "Add Action Id",
+  }),
+  removeActionId: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Array"],
+    displayName: "Remove Action Id",
   }),
   noAdd: makeScalarField({
     type: FieldType.Bool,

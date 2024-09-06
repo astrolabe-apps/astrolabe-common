@@ -712,3 +712,25 @@ export function findFieldPath(
   }
   return foundFields.length === fieldNames.length ? foundFields : undefined;
 }
+
+export function mergeObjects<A extends Record<string, any> | undefined>(
+  o1: A,
+  o2: A,
+  doMerge: (k: keyof NonNullable<A>, v1: unknown, v2: unknown) => unknown = (
+    _,
+    v1,
+    v2,
+  ) => v1 ?? v2,
+): A {
+  if (!o1) return o2;
+  if (!o2) return o1;
+  const result = { ...o1 };
+  for (const key in o2) {
+    if (o2.hasOwnProperty(key)) {
+      const value1 = o1[key];
+      const value2 = o2[key];
+      result[key] = doMerge(key, value1, value2) as any;
+    }
+  }
+  return result;
+}

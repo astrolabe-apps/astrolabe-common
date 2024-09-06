@@ -9,6 +9,7 @@ import React, { ReactNode, useMemo } from "react";
 import {
   ActionRendererProps,
   applyArrayLengthRestrictions,
+  ArrayActionOptions,
   boolField,
   buildSchema,
   ChildRenderer,
@@ -25,14 +26,14 @@ import {
   DataControlDefinition,
   EvalExpressionHook,
   getLengthRestrictions,
+  mergeObjects,
   RenderOptions,
   SchemaField,
   stringField,
   useDynamicHooks,
 } from "@react-typed-forms/schemas";
 
-interface DataGridOptions {
-  addText?: string;
+interface DataGridOptions extends ArrayActionOptions {
   noEntriesText?: string;
 }
 
@@ -60,6 +61,9 @@ const ColumnOptionsFields = buildSchema<ColumnOptions>({
 
 const DataGridFields = buildSchema<DataGridOptions>({
   addText: stringField("Add button text"),
+  removeText: stringField("Remove button text"),
+  addActionId: stringField("Add action id"),
+  removeActionId: stringField("Remove action id"),
   noEntriesText: stringField("No entries text"),
 });
 
@@ -103,82 +107,88 @@ function isColumnAdornment(
   return c.type === DataGridAdornmentDefinition.value;
 }
 
-export const DataGridRenderer = createDataRenderer(
-  (pareProps, renderers) => {
-    const {
-      control,
-      dataContext,
-      parentContext,
-      definition,
-      renderChild,
-      renderOptions,
-      childDefinitions,
-      field,
-      className,
-      readonly,
-      required,
-    } = pareProps;
+export const DataGridRenderer = createDataGridRenderer();
 
-    const constantColumns: ColumnDefInit<Control<any>>[] =
-      definition.adornments?.filter(isColumnAdornment).map((x, i) => {
-        const def: DataControlDefinition = {
-          type: ControlDefinitionType.Data,
-          field: definition.field,
-          hideTitle: true,
-          renderOptions: x.renderOptions,
-          layoutClass: x.layoutClass,
-        };
-        return {
-          ...x,
-          id: "cc" + i,
-          render: (_, ri) =>
-            x.rowIndex
-              ? ri + 1
-              : renderChild("c" + i + "_" + ri, def, {
-                  elementIndex: ri,
-                  dataContext: parentContext,
-                }),
-        };
-      }) ?? [];
-    const columns: ColumnDefInit<Control<any>>[] = childDefinitions.map(
-      (d, i) => {
-        const colOptions = d.adornments?.find(isColumnAdornment);
-        return {
-          ...colOptions,
-          id: "c" + i,
-          title: d.title ?? "Column " + i,
-          render: (_: Control<any>, rowIndex: number) =>
-            renderChild(i, d, {
-              dataContext: {
-                ...dataContext,
-                path: [...dataContext.path, rowIndex],
-              },
-            }),
-        };
-      },
-    );
-    const allColumns = constantColumns.concat(columns);
+export function createDataGridRenderer(options?: DataGridOptions) {
+  return createDataRenderer(
+    (pareProps, renderers) => {
+      const {
+        control,
+        dataContext,
+        parentContext,
+        definition,
+        renderChild,
+        renderOptions,
+        childDefinitions,
+        field,
+        className,
+        readonly,
+        required,
+      } = pareProps;
+      const dataGridOptions =
+        mergeObjects(
+          renderOptions as DataGridOptions & RenderOptions,
+          options,
+        ) ?? {};
+      const constantColumns: ColumnDefInit<Control<any>>[] =
+        definition.adornments?.filter(isColumnAdornment).map((x, i) => {
+          const def: DataControlDefinition = {
+            type: ControlDefinitionType.Data,
+            field: definition.field,
+            hideTitle: true,
+            renderOptions: x.renderOptions,
+            layoutClass: x.layoutClass,
+          };
+          return {
+            ...x,
+            id: "cc" + i,
+            render: (_, ri) =>
+              x.rowIndex
+                ? ri + 1
+                : renderChild("c" + i + "_" + ri, def, {
+                    elementIndex: ri,
+                    dataContext: parentContext,
+                  }),
+          };
+        }) ?? [];
+      const columns: ColumnDefInit<Control<any>>[] = childDefinitions.map(
+        (d, i) => {
+          const colOptions = d.adornments?.find(isColumnAdornment);
+          return {
+            ...colOptions,
+            id: "c" + i,
+            title: d.title ?? "Column " + i,
+            render: (_: Control<any>, rowIndex: number) =>
+              renderChild(i, d, {
+                dataContext: {
+                  ...dataContext,
+                  path: [...dataContext.path, rowIndex],
+                },
+              }),
+          };
+        },
+      );
+      const allColumns = constantColumns.concat(columns);
 
-    const { removeAction, addAction } = applyArrayLengthRestrictions({
-      ...createArrayActions(control, field),
-      required,
-      ...getLengthRestrictions(definition),
-    });
-    return (
-      <DataGridControlRenderer
-        renderOptions={renderOptions as DataGridOptions & RenderOptions}
-        renderAction={renderers.renderAction}
-        control={control}
-        columns={allColumns}
-        className={className}
-        readonly={readonly}
-        addAction={addAction}
-        removeAction={removeAction}
-      />
-    );
-  },
-  { renderType: DataGridDefinition.value, collection: true },
-);
+      return (
+        <DataGridControlRenderer
+          renderOptions={dataGridOptions}
+          renderAction={renderers.renderAction}
+          control={control}
+          columns={allColumns}
+          className={className}
+          readonly={readonly}
+          {...applyArrayLengthRestrictions({
+            ...createArrayActions(control, field, dataGridOptions),
+            ...getLengthRestrictions(definition),
+            required,
+          })}
+        />
+      );
+    },
+    { renderType: DataGridDefinition.value, collection: true },
+  );
+}
 
 interface DataGridRendererProps {
   renderOptions: DataGridOptions;
@@ -203,7 +213,7 @@ function DataGridControlRenderer({
 }: DataGridRendererProps) {
   const allColumns = columnDefinitions<Control<any>>(...columns, {
     id: "deleteCheck",
-    columnTemplate: "1em",
+    columnTemplate: "auto",
     render: (r, rowIndex) => (
       <div className="flex items-center h-full pl-1">
         {removeAction && !readonly && renderAction(removeAction(rowIndex))}

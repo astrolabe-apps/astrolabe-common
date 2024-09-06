@@ -43,8 +43,8 @@ import controlsJson from "../ControlDefinition.json";
 import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
 import { useMemo, useState } from "react";
 import {
+  createDataGridRenderer,
   DataGridExtension,
-  DataGridRenderer,
 } from "@astroapps/schemas-datagrid";
 
 const CustomControlSchema = applyEditorExtensions(DataGridExtension);
@@ -52,7 +52,7 @@ const CustomControlSchema = applyEditorExtensions(DataGridExtension);
 function createStdFormRenderer(container: HTMLElement | null) {
   return createFormRenderer(
     [
-      DataGridRenderer,
+      createDataGridRenderer({ addText: "Add", removeText: "Delete" }),
       createDatePickerRenderer(undefined, {
         portalContainer: container ? container : undefined,
       }),

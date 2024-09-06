@@ -21,6 +21,7 @@ import {
 } from "@react-typed-forms/core";
 import {
   AdornmentPlacement,
+  ArrayRenderOptions,
   ControlAdornment,
   ControlDefinition,
   ControlDefinitionType,
@@ -897,24 +898,31 @@ export function getLengthRestrictions(definition: DataControlDefinition) {
 export function createArrayActions(
   control: Control<any[]>,
   field: SchemaField,
-  addText?: string | null,
-  removeText?: string | null,
-  noAdd?: boolean | null,
-  noRemove?: boolean | null,
+  options?: Pick<
+    ArrayRenderOptions,
+    | "addText"
+    | "removeText"
+    | "noAdd"
+    | "noRemove"
+    | "addActionId"
+    | "removeActionId"
+  >,
 ): Pick<ArrayRendererProps, "addAction" | "removeAction" | "arrayControl"> {
   const noun = field.displayName ?? field.field;
+  const { addText, noAdd, removeText, noRemove, removeActionId, addActionId } =
+    options ?? {};
   return {
     arrayControl: control,
     addAction: !noAdd
       ? {
-          actionId: "add",
+          actionId: addActionId ? addActionId : "add",
           actionText: addText ? addText : "Add " + noun,
           onClick: () => addElement(control, elementValueForField(field)),
         }
       : undefined,
     removeAction: !noRemove
       ? (i: number) => ({
-          actionId: "remove",
+          actionId: removeActionId ? removeActionId : "remove",
           actionText: removeText ? removeText : "Remove",
           onClick: () => removeElement(control, i),
         })

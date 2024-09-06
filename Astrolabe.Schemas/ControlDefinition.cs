@@ -164,6 +164,8 @@ public record JsonataRenderOptions(string Expression)
 public record ArrayRenderOptions(
     string? AddText,
     string? RemoveText,
+    string? AddActionId,
+    string? RemoveActionId,
     bool? NoAdd,
     bool? NoRemove,
     bool? NoReorder,
