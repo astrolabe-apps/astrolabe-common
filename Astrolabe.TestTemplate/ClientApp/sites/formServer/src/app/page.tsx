@@ -30,6 +30,7 @@ import {
   stringField,
   stringOptionsField,
   UserMatchExpression,
+  withScalarOptions,
 } from "@react-typed-forms/schemas";
 import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
 import {
@@ -66,7 +67,7 @@ function createStdFormRenderer(container: HTMLElement | null) {
 interface DisabledStuff {
   disable: boolean;
   text: string;
-  options: string;
+  options: string[];
 }
 interface TestSchema {
   array: number[];
@@ -81,10 +82,13 @@ const TestSchema = buildSchema<TestSchema>({
     buildSchema<DisabledStuff>({
       disable: boolField("Disable"),
       text: stringField("Pure Text"),
-      options: stringOptionsField(
-        "String",
-        { name: "One", value: "one" },
-        { name: "Two", value: "two" },
+      options: withScalarOptions(
+        { collection: true },
+        stringOptionsField(
+          "String",
+          { name: "One", value: "one" },
+          { name: "Two", value: "two" },
+        ),
       ),
     }),
     { collection: true },

@@ -65,6 +65,9 @@ const DataGridFields = buildSchema<DataGridOptions>({
   addActionId: stringField("Add action id"),
   removeActionId: stringField("Remove action id"),
   noEntriesText: stringField("No entries text"),
+  noAdd: boolField("No Add"),
+  noRemove: boolField("No remove"),
+  noReorder: boolField("No reorder"),
 });
 
 export const DataGridAdornmentDefinition: CustomRenderOptions = {

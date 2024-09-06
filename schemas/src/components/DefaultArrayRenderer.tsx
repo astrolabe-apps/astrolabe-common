@@ -24,8 +24,11 @@ import {
   ValidatorType,
 } from "../types";
 import { cc } from "../internal";
+import { mergeObjects } from "../util";
 
-export function createDefaultArrayDataRenderer(): DataRendererRegistration {
+export function createDefaultArrayDataRenderer(
+  defaultActions?: ArrayActionOptions,
+): DataRendererRegistration {
   return createDataRenderer(
     (
       {
@@ -41,10 +44,12 @@ export function createDefaultArrayDataRenderer(): DataRendererRegistration {
       },
       renderers,
     ) => {
-      const { addText, noAdd, noRemove, noReorder, removeText } =
+      const { addText, noAdd, noRemove, noReorder, removeText } = mergeObjects(
         isArrayRenderer(renderOptions)
           ? renderOptions
-          : ({} as ArrayRenderOptions);
+          : ({} as ArrayRenderOptions),
+        defaultActions as ArrayRenderOptions,
+      );
       const childOptions = isArrayRenderer(renderOptions)
         ? renderOptions.childOptions
         : undefined;

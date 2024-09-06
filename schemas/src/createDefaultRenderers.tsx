@@ -50,7 +50,7 @@ import {
   wrapLayout,
 } from "./controlRender";
 import {
-  AdornmentPlacement,
+  AdornmentPlacement, ArrayActionOptions,
   DataRenderType,
   FieldOption,
   FieldType,
@@ -237,6 +237,7 @@ interface DefaultDataRendererOptions {
   optionRenderer?: DataRendererRegistration;
   multilineClass?: string;
   jsonataClass?: string;
+  arrayOptions?: ArrayActionOptions
 }
 
 export function createDefaultDataRenderer(
@@ -262,15 +263,20 @@ export function createDefaultDataRenderer(
     booleanOptions: DefaultBoolOptions,
     ...options,
   };
-  const arrayRenderer = createDefaultArrayDataRenderer();
+  const arrayRenderer = createDefaultArrayDataRenderer(options.arrayOptions);
 
   return createDataRenderer((props, renderers) => {
     const { field } = props;
     const fieldType = field.type;
     const renderOptions = props.renderOptions;
-    if (field.collection && props.elementIndex == null)
-      return arrayRenderer.render(props, renderers);
     let renderType = renderOptions.type;
+    if (
+      field.collection &&
+        props.elementIndex == null &&
+        renderType == DataRenderType.Standard
+    ) {
+      return arrayRenderer.render(props, renderers);
+    }
     if (fieldType === FieldType.Compound) {
       const groupOptions = (isDataGroupRenderer(renderOptions)
         ? renderOptions.groupOptions

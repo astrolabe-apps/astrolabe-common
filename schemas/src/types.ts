@@ -315,7 +315,13 @@ export interface ArrayRenderOptions extends RenderOptions {
 
 export type ArrayActionOptions = Pick<
   ArrayRenderOptions,
-  "addText" | "addActionId" | "removeText" | "removeActionId"
+  | "addText"
+  | "addActionId"
+  | "removeText"
+  | "removeActionId"
+  | "noAdd"
+  | "noRemove"
+  | "noReorder"
 >;
 
 export interface CheckListRenderOptions extends RenderOptions {
