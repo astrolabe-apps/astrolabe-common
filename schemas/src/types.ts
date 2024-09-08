@@ -193,7 +193,7 @@ export interface TooltipAdornment extends ControlAdornment {
 export interface AccordionAdornment extends ControlAdornment {
   type: ControlAdornmentType.Accordion;
   title: string;
-  defaultExpanded: boolean;
+  defaultExpanded?: boolean | null;
 }
 
 export interface HelpTextAdornment extends ControlAdornment {
@@ -426,7 +426,7 @@ export interface CustomDisplay extends DisplayData {
 export interface ActionControlDefinition extends ControlDefinition {
   type: ControlDefinitionType.Action;
   actionId: string;
-  actionData: string;
+  actionData?: string | null;
 }
 
 export enum ValidatorType {

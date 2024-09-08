@@ -1,6 +1,7 @@
 import { useControl } from "@react-typed-forms/core";
 import {
   accordionOptions,
+  actionControl,
   buildSchema,
   checkListOptions,
   ControlRenderer,
@@ -140,6 +141,9 @@ const allGroup = groupedControl([
   ),
   textDisplayControl("This is some plain text", { styleClass: "text-display" }),
   htmlDisplayControl('<b class="html-display">Html display</b>'),
+  actionControl("Do something", "doSomething", {
+    adornments: [accordionOptions({ title: "Show action" })],
+  }),
 ]);
 
 export function AllControls() {

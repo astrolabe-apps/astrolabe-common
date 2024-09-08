@@ -3,7 +3,6 @@ import {
   CheckListRenderOptions,
   ControlAdornmentType,
   ControlDefinition,
-  ControlDefinitionType,
   DataControlDefinition,
   DataExpression,
   DataMatchExpression,
@@ -35,6 +34,7 @@ import { ActionRendererProps } from "./controlRender";
 import { useMemo } from "react";
 import { addMissingControls } from "./util";
 import { mergeFields, resolveSchemas } from "./schemaBuilder";
+import { ActionControlDefinition, ControlDefinitionType } from "./types";
 
 export function dataControl(
   field: string,
@@ -176,6 +176,18 @@ export function compoundControl(
   };
 }
 
+export function actionControl(
+  actionText: string,
+  actionId: string,
+  options?: Partial<ActionControlDefinition>,
+): ActionControlDefinition {
+  return {
+    type: ControlDefinitionType.Action,
+    title: actionText,
+    actionId,
+    ...options,
+  };
+}
 export function createAction(
   actionId: string,
   onClick: () => void,

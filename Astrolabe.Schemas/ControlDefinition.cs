@@ -342,7 +342,7 @@ public record IconAdornment(string IconClass, AdornmentPlacement? Placement)
 public record TooltipAdornment(string Tooltip)
     : ControlAdornment(ControlAdornmentType.Tooltip.ToString());
 
-public record AccordionAdornment(string Title, bool DefaultExpanded)
+public record AccordionAdornment(string Title, bool? DefaultExpanded)
     : ControlAdornment(ControlAdornmentType.Accordion.ToString());
 
 public record HelpTextAdornment(string HelpText, AdornmentPlacement? Placement)

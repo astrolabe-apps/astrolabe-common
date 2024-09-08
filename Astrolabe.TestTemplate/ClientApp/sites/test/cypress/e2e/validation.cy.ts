@@ -6,7 +6,9 @@ function compareJson(compare: any): any {
   return compare;
 }
 const today = new Date();
-
+const todayStr = formatISO(today, { representation: "date" });
+const in2DaysStr = formatISO(addDays(today, 2), { representation: "date" });
+const tomorrowStr = formatISO(addDays(today, 1), { representation: "date" });
 describe("all controls", () => {
   it("passes", () => {
     cy.visit("http://localhost:5173/validation");
@@ -31,27 +33,17 @@ describe("all controls", () => {
     control("Not before today", () =>
       cy.contains("div", "Date must not be before"),
     );
-    control("Not before today", () =>
-      cy.get("input").type(formatISO(today, { representation: "date" })),
-    );
+    control("Not before today", () => cy.get("input").type(todayStr));
     control("Not before today", () =>
       cy.contains("div", "Date must not be before").should("not.exist"),
     );
 
-    control("Not after tomorrow", () =>
-      cy
-        .get("input")
-        .type(formatISO(addDays(today, 2), { representation: "date" })),
-    );
+    control("Not after tomorrow", () => cy.get("input").type(in2DaysStr));
     cy.get("pre").click();
     control("Not after tomorrow", () =>
       cy.contains("div", "Date must not be after"),
     );
-    control("Not after tomorrow", () =>
-      cy
-        .get("input")
-        .type(formatISO(addDays(today, 1), { representation: "date" })),
-    );
+    control("Not after tomorrow", () => cy.get("input").type(tomorrowStr));
     control("Not after tomorrow", () =>
       cy.contains("div", "Date must not be after").should("not.exist"),
     );
@@ -77,8 +69,8 @@ describe("all controls", () => {
       ...next,
       text: "Minimum now we've gone to far",
       stringArray: [null, null, null, null],
-      notBeforeDate: "2024-09-07",
-      notAfterDate: "2024-09-08",
+      notBeforeDate: todayStr,
+      notAfterDate: tomorrowStr,
       dateTime: "1980-04-21T00:00:10",
     });
 
