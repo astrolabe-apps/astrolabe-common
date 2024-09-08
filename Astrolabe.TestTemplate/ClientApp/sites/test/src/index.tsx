@@ -5,7 +5,7 @@ import { RealLife } from "./RealLife";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { DynamicControls } from "./DynamicControls";
 import { Validation } from "./Validation";
-import { Schemas } from "./Schemas";
+import { Schemas } from "./SchemasPage";
 
 const router = createBrowserRouter([
   {
