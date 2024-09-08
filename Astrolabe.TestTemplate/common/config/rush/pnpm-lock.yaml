@@ -657,6 +657,81 @@ importers:
       tailwindcss: 3.4.7
       typescript: 5.2.2
 
+  ../../ClientApp/sites/nextgen:
+    specifiers:
+      '@astroapps/aria-base': workspace:*
+      '@astroapps/aria-datepicker': workspace:*
+      '@astroapps/client': workspace:*
+      '@astroapps/client-nextjs': workspace:^0.2.0
+      '@astroapps/codemirror-evaluator': workspace:*
+      '@astroapps/datagrid': workspace:^1.0.6
+      '@astroapps/evaluator': workspace:*
+      '@astroapps/schemas-datagrid': workspace:*
+      '@astroapps/schemas-datepicker': workspace:*
+      '@astroapps/schemas-editor': workspace:*
+      '@astrolabe/ui': workspace:*
+      '@lezer/common': ^1.0.0
+      '@react-typed-forms/core': ^3.6.0
+      '@react-typed-forms/schemas': workspace:*
+      '@tailwindcss/forms': ^0.5.7
+      '@types/node': ^20.8.4
+      '@types/react': ^18.2.33
+      '@types/react-dom': ^18.2.14
+      '@vitejs/plugin-react': ^4.3.1
+      autoprefixer: 10.4.16
+      codemirror: ^6.0.1
+      date-fns: ^3.6.0
+      nswag: ^14.0.7
+      postcss: ^8.4.33
+      prettier: ^3.0.3
+      react: ^18.2.0
+      react-dnd: 16.0.1
+      react-dnd-html5-backend: 16.0.1
+      react-dom: ^18.2.0
+      react-router-dom: ^6.26.1
+      tailwindcss: ^3.4.1
+      typescript: ^5.2.2
+      vite: ^5.4.0
+      vite-plugin-istanbul: ^6.0.2
+      vite-plugin-svgr: ^4.2.0
+    dependencies:
+      '@astroapps/aria-base': link:../../../../aria-base
+      '@astroapps/aria-datepicker': link:../../../../aria-datepicker
+      '@astroapps/client': link:../../../../astrolabe-client
+      '@astroapps/client-nextjs': link:../../../../astrolabe-client-nextjs
+      '@astroapps/codemirror-evaluator': link:../../../../astrolabe-codemirror-evaluator
+      '@astroapps/datagrid': link:../../../../astrolabe-datagrid
+      '@astroapps/evaluator': link:../../../../astrolabe-evaluator
+      '@astroapps/schemas-datagrid': link:../../../../astrolabe-schemas-datagrid
+      '@astroapps/schemas-datepicker': link:../../../../schemas-datepicker
+      '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
+      '@astrolabe/ui': link:../../../../astrolabe-ui
+      '@lezer/common': 1.2.1
+      '@react-typed-forms/core': 3.6.0
+      '@react-typed-forms/schemas': link:../../../../schemas
+      codemirror: 6.0.1_@lezer+common@1.2.1
+      date-fns: 3.6.0
+      react: 18.3.1
+      react-dnd: 16.0.1_i2brm3utfowsq56ly4xyjenl3e
+      react-dnd-html5-backend: 16.0.1
+      react-dom: 18.3.1_react@18.3.1
+      react-router-dom: 6.26.1_nnrd3gsncyragczmpvfhocinkq
+      vite: 5.4.0_@types+node@20.14.13
+    devDependencies:
+      '@tailwindcss/forms': 0.5.7_tailwindcss@3.4.7
+      '@types/node': 20.14.13
+      '@types/react': 18.3.3
+      '@types/react-dom': 18.3.0
+      '@vitejs/plugin-react': 4.3.1_vite@5.4.0
+      autoprefixer: 10.4.16_postcss@8.4.40
+      nswag: 14.1.0
+      postcss: 8.4.40
+      prettier: 3.3.3
+      tailwindcss: 3.4.7
+      typescript: 5.2.2
+      vite-plugin-istanbul: 6.0.2_vite@5.4.0
+      vite-plugin-svgr: 4.2.0_cjcgrg5npg2wavsdrjd3qol7ry
+
   ../../ClientApp/sites/test:
     specifiers:
       '@astroapps/aria-base': workspace:*
