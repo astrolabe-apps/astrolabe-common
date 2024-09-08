@@ -1,9 +1,11 @@
 {
   "name": "@react-typed-forms/schemas",
-  "version": "11.18.1",
+  "version": "11.18.2",
   "description": "",
+  "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "exports": "./lib/index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/doolse/react-typed-forms.git"
@@ -44,8 +46,8 @@
   "gitHead": "698e16cd3ab31b7dd0528fc76536f4d3205ce8c6",
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle -w -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "build": "rimraf ./lib/ && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
     "update-readme": "md-magic --path README.md",
     "gencode": "nswag swagger2tsclient /input:http://localhost:5216/swagger/v1/swagger.json /runtime:Net60 /output:src/types.ts /GenerateClientClasses:false /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string"
   }

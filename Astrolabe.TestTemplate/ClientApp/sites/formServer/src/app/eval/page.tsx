@@ -136,7 +136,7 @@ class TrackDataEnv extends BasicEvalEnv {
   }
 }
 
-export function toValueDeps({ value, path, deps }: ValueExpr): {
+function toValueDeps({ value, path, deps }: ValueExpr): {
   value: unknown;
   path?: string;
   deps?: string[];

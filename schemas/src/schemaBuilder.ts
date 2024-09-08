@@ -7,7 +7,7 @@ import {
 } from "./types";
 import { isCompoundField } from "./util";
 
-type AllowedSchema<T> = T extends string
+export type AllowedSchema<T> = T extends string
   ? SchemaField & {
       type:
         | FieldType.String
@@ -45,12 +45,22 @@ export function buildSchema<T, Custom = "">(def: {
   );
 }
 
+export type FieldBuilder<T extends FieldType, K> = (
+  name: string,
+) => Omit<SchemaField, "type"> & { type: T } & K;
+
 export function stringField(
   displayName: string,
-  options?: Partial<Omit<SchemaField, "type">>,
-) {
+): FieldBuilder<FieldType.String, {}>;
+
+export function stringField<S extends Partial<SchemaField>>(
+  displayName: string,
+  options: S,
+): FieldBuilder<FieldType.String, S>;
+
+export function stringField(displayName: string, options?: any) {
   return makeScalarField({
-    type: FieldType.String as const,
+    type: FieldType.String,
     displayName,
     ...options,
   });
@@ -88,6 +98,13 @@ export function makeCompoundField<S extends Partial<CompoundField>>(
   return (n) => ({ ...defaultCompoundField(n, n, false), ...options });
 }
 
+export function intField(displayName: string): FieldBuilder<FieldType.Int, {}>;
+
+export function intField<S extends Partial<SchemaField>>(
+  displayName: string,
+  options: S,
+): FieldBuilder<FieldType.Int, S>;
+
 export function intField<S extends Partial<SchemaField>>(
   displayName: string,
   options?: S,
@@ -99,6 +116,15 @@ export function intField<S extends Partial<SchemaField>>(
   });
 }
 
+export function doubleField(
+  displayName: string,
+): FieldBuilder<FieldType.Double, {}>;
+
+export function doubleField<S extends Partial<SchemaField>>(
+  displayName: string,
+  options: S,
+): FieldBuilder<FieldType.Double, S>;
+
 export function doubleField<S extends Partial<SchemaField>>(
   displayName: string,
   options?: S,
@@ -109,6 +135,15 @@ export function doubleField<S extends Partial<SchemaField>>(
     ...(options as S),
   });
 }
+
+export function dateField(
+  displayName: string,
+): FieldBuilder<FieldType.Date, {}>;
+
+export function dateField<S extends Partial<SchemaField>>(
+  displayName: string,
+  options: S,
+): FieldBuilder<FieldType.Date, S>;
 
 export function dateField<S extends Partial<SchemaField>>(
   displayName: string,
@@ -143,14 +178,20 @@ export function dateTimeField<S extends Partial<SchemaField>>(
   });
 }
 
+export function boolField(
+  displayName: string,
+): FieldBuilder<FieldType.Bool, {}>;
+
 export function boolField<S extends Partial<SchemaField>>(
   displayName: string,
-  options?: S,
-) {
+  options: S,
+): FieldBuilder<FieldType.Bool, S>;
+
+export function boolField(displayName: string, options?: any) {
   return makeScalarField({
     type: FieldType.Bool as const,
     displayName,
-    ...(options as S),
+    ...options,
   });
 }
 

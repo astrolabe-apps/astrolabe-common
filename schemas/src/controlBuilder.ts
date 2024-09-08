@@ -1,10 +1,17 @@
 import {
+  AccordionAdornment,
+  CheckListRenderOptions,
+  ControlAdornmentType,
   ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
+  DataExpression,
   DataMatchExpression,
+  DataRenderType,
+  DateValidator,
   DisplayControlDefinition,
   DisplayDataType,
+  DisplayOnlyRenderOptions,
   DynamicProperty,
   DynamicPropertyType,
   EntityExpression,
@@ -13,13 +20,20 @@ import {
   GroupRenderType,
   HtmlDisplay,
   JsonataExpression,
+  JsonataRenderOptions,
+  JsonataValidator,
+  LengthValidator,
+  RadioButtonRenderOptions,
+  RenderOptions,
   SchemaField,
   SchemaMap,
   TextDisplay,
+  TextfieldRenderOptions,
+  ValidatorType,
 } from "./types";
 import { ActionRendererProps } from "./controlRender";
 import { useMemo } from "react";
-import { addMissingControls, isCompoundField } from "./util";
+import { addMissingControls } from "./util";
 import { mergeFields, resolveSchemas } from "./schemaBuilder";
 
 export function dataControl(
@@ -29,6 +43,60 @@ export function dataControl(
 ): DataControlDefinition {
   return { type: ControlDefinitionType.Data, field, title, ...options };
 }
+
+export function validatorOptions<A extends { type: string }>(
+  type: ValidatorType,
+): (options: Omit<A, "type">) => A {
+  return (o) => ({ type, ...o }) as A;
+}
+
+export function adornmentOptions<A extends { type: string }>(
+  type: ControlAdornmentType,
+): (options: Omit<A, "type">) => A {
+  return (o) => ({ type, ...o }) as A;
+}
+
+export function renderOptionsFor<A extends RenderOptions>(
+  type: DataRenderType,
+): (options: Omit<A, "type">) => { renderOptions: A } {
+  return (o) => ({ renderOptions: { type, ...o } as A });
+}
+
+export const checkListOptions = renderOptionsFor<CheckListRenderOptions>(
+  DataRenderType.CheckList,
+);
+
+export const radioButtonOptions = renderOptionsFor<RadioButtonRenderOptions>(
+  DataRenderType.Radio,
+);
+
+export const lengthValidatorOptions = validatorOptions<LengthValidator>(
+  ValidatorType.Length,
+);
+
+export const jsonataValidatorOptions = validatorOptions<JsonataValidator>(
+  ValidatorType.Jsonata,
+);
+
+export const dateValidatorOptions = validatorOptions<DateValidator>(
+  ValidatorType.Date,
+);
+
+export const accordionOptions = adornmentOptions<AccordionAdornment>(
+  ControlAdornmentType.Accordion,
+);
+
+export const textfieldOptions = renderOptionsFor<TextfieldRenderOptions>(
+  DataRenderType.Textfield,
+);
+
+export const displayOnlyOptions = renderOptionsFor<DisplayOnlyRenderOptions>(
+  DataRenderType.DisplayOnly,
+);
+
+export const jsonataOptions = renderOptionsFor<JsonataRenderOptions>(
+  DataRenderType.Jsonata,
+);
 
 export function textDisplayControl(
   text: string,
@@ -66,6 +134,10 @@ export function dynamicVisibility(expr: EntityExpression): DynamicProperty {
 
 export function dynamicDisabled(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.Disabled, expr };
+}
+
+export function fieldExpr(field: string): DataExpression {
+  return { type: ExpressionType.Data, field };
 }
 
 export function fieldEqExpr(field: string, value: any): DataMatchExpression {

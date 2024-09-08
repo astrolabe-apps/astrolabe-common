@@ -63,8 +63,10 @@ export function createInputConversion(ft: string): InputConversion {
         (a) => (a !== "" ? parseInt(a) : null),
         (a) => (a == null ? "" : a),
       ];
+    case FieldType.DateTime:
+      return ["datetime-local", (a) => (!a ? null : a), (a) => a];
     case FieldType.Date:
-      return ["date", (a) => a, (a) => a];
+      return ["date", (a) => (!a ? null : a), (a) => a];
     case FieldType.Time:
       return [
         "time",

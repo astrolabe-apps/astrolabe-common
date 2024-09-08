@@ -454,6 +454,10 @@
       "projectFolder": "ClientApp/sites/formServer"
     },
     {
+      "packageName": "common-tests",
+      "projectFolder": "ClientApp/sites/test"
+    },
+    {
       "packageName": "@react-typed-forms/schemas",
       "projectFolder": "../schemas",
       "shouldPublish": true

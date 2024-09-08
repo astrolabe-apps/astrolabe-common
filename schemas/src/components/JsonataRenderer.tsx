@@ -11,7 +11,7 @@ export function createJsonataRenderer(className?: string) {
       <JsonataRenderer
         renderOptions={p.renderOptions as JsonataRenderOptions}
         className={rendererClass(p.className, className)}
-        dataContext={p.dataContext}
+        dataContext={p.parentContext}
         control={p.control}
         readonly={p.readonly}
       />
@@ -36,9 +36,13 @@ export function JsonataRenderer({
   const rendered = useJsonataExpression(
     expression,
     dataContext,
-    () => ({ value: control.value, readonly, disabled: control.disabled }),
+    () => ({
+      value: control.value,
+      readonly,
+      disabled: control.disabled,
+    }),
     (v) =>
-      typeof v == null
+      v == null
         ? ""
         : typeof v === "object"
           ? "error: " + JSON.stringify(v)

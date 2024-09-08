@@ -2,8 +2,10 @@
   "name": "@astroapps/schemas-datagrid",
   "version": "1.1.1",
   "description": "",
+  "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "exports": "./lib/index.js",
   "author": "Astrolabe Enterprises",
   "license": "ISC",
   "bugs": {
@@ -15,8 +17,8 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle -w -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
+    "build": "rimraf ./lib/ && microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "dependencies": {
     "react": "^18.2.0",

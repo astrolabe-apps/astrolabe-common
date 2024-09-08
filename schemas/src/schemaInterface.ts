@@ -43,6 +43,9 @@ export class DefaultSchemaInterface implements SchemaInterface {
       return Array.isArray(value) ? value.length === 0 : value == null;
     switch (f.type) {
       case FieldType.String:
+      case FieldType.DateTime:
+      case FieldType.Date:
+      case FieldType.Time:
         return !value;
       default:
         return value == null;
@@ -54,10 +57,14 @@ export class DefaultSchemaInterface implements SchemaInterface {
     element?: boolean | undefined,
   ): string | undefined {
     switch (field.type) {
-      case FieldType.DateTime:
-        return new Date(value).toLocaleDateString();
       case FieldType.Date:
-        return new Date(value).toLocaleDateString();
+        return value ? new Date(value).toLocaleDateString() : undefined;
+      case FieldType.DateTime:
+        return value ? new Date(value).toLocaleString() : undefined;
+      case FieldType.Time:
+        return value
+          ? new Date("1970-01-01T" + value).toLocaleTimeString()
+          : undefined;
       case FieldType.Bool:
         return this.boolStrings[value ? 1 : 0];
       default:
@@ -66,7 +73,7 @@ export class DefaultSchemaInterface implements SchemaInterface {
   }
   controlLength(f: SchemaField, control: Control<any>): number {
     return f.collection
-      ? control.elements?.length ?? 0
+      ? (control.elements?.length ?? 0)
       : this.valueLength(f, control.value);
   }
   valueLength(field: SchemaField, value: any): number {

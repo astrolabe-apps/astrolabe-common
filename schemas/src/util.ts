@@ -104,7 +104,7 @@ export function defaultValueForField(
         : {}
       : undefined;
   }
-  if (sf.collection) {
+  if (sf.collection && sf.notNullable) {
     return [];
   }
   return undefined;
@@ -296,8 +296,7 @@ export function findNonDataGroups(
 }
 
 function cloneChildren(c: ControlDefinition): ControlDefinition {
-  if (c.children) return { ...c, children: c.children?.map(cloneChildren) };
-  return c;
+  return { ...c, children: c.children?.map(cloneChildren) };
 }
 
 export function addMissingControls(
@@ -324,7 +323,11 @@ export function addMissingControls(
       insertGroup = lookup.groups.find((x) => x.title === groupName);
     }
     if (!insertGroup) insertGroup = lookup.groups[0];
-    insertGroup?.children?.push(defaultControlForField(f));
+    if (insertGroup) {
+      const newControl = defaultControlForField(f);
+      if (insertGroup.children) insertGroup.children.push(newControl);
+      else insertGroup.children = [newControl];
+    }
   });
   return controls;
 }
@@ -486,8 +489,7 @@ export function cleanDataForSchema(
 ): any {
   if (!v) return v;
   const typeField = fields.find((x) => x.isTypeField);
-  if (!typeField) return v;
-  const typeValue = v[typeField.field];
+  const typeValue = typeField ? v[typeField.field] : undefined;
   const cleanableFields = !removeIfDefault
     ? fields.filter(
         (x) => isCompoundField(x) || (x.onlyForTypes?.length ?? 0) > 0,
