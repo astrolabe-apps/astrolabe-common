@@ -27,12 +27,9 @@ import React, {
   ReactElement,
   ReactNode,
   useCallback,
-  useEffect,
-  useRef,
 } from "react";
 import {
   ControlDataContext,
-  DataContext,
   findFieldPath,
   hasOptions,
   lookupChildControl,
@@ -50,7 +47,8 @@ import {
   wrapLayout,
 } from "./controlRender";
 import {
-  AdornmentPlacement, ArrayActionOptions,
+  AdornmentPlacement,
+  ArrayActionOptions,
   DataRenderType,
   FieldOption,
   FieldType,
@@ -68,12 +66,7 @@ import {
   SelectRendererOptions,
 } from "./components/SelectDataRenderer";
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
-import {
-  Control,
-  Fcheckbox,
-  newControl,
-  useControlEffect,
-} from "@react-typed-forms/core";
+import { Control, useControlEffect } from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
 import {
   createDefaultArrayDataRenderer,
@@ -90,7 +83,6 @@ import { DefaultAccordion } from "./components/DefaultAccordion";
 import { createNullToggleRenderer } from "./components/NullToggle";
 import { createMultilineFieldRenderer } from "./components/MultilineTextfield";
 import { createJsonataRenderer } from "./components/JsonataRenderer";
-import { UseEvalExpressionHook } from "./hooks";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -237,7 +229,7 @@ interface DefaultDataRendererOptions {
   optionRenderer?: DataRendererRegistration;
   multilineClass?: string;
   jsonataClass?: string;
-  arrayOptions?: ArrayActionOptions
+  arrayOptions?: ArrayActionOptions;
 }
 
 export function createDefaultDataRenderer(
@@ -272,8 +264,9 @@ export function createDefaultDataRenderer(
     let renderType = renderOptions.type;
     if (
       field.collection &&
-        props.elementIndex == null &&
-        renderType == DataRenderType.Standard
+      props.elementIndex == null &&
+      (renderType == DataRenderType.Standard ||
+        renderType == DataRenderType.Array)
     ) {
       return arrayRenderer.render(props, renderers);
     }
