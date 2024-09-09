@@ -20,8 +20,6 @@ import {
   DataControlDefinition,
   DataRenderType,
   isArrayRenderer,
-  LengthValidator,
-  ValidatorType,
 } from "../types";
 import { cc } from "../internal";
 import { mergeObjects } from "../util";
@@ -80,6 +78,7 @@ export function createDefaultArrayDataRenderer(
       } satisfies ArrayRendererProps;
       return renderers.renderArray(arrayProps);
     },
+    { renderType: DataRenderType.Array, collection: true },
   );
 }
 
