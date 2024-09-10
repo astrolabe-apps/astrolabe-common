@@ -6,7 +6,8 @@
 		"dev": "vite --force",
 		"build": "vite build",
 		"cypress:open": "cypress open",
-		"cypress:run": "cypress run"
+		"cypress:run": "cypress run",
+		"genschemas": "h get http://localhost:5000/api/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
 	},
 	"dependencies": {
 		"date-fns": "^3.6.0",
@@ -30,9 +31,11 @@
 		"@astroapps/aria-datepicker": "workspace:*",
 		"@astroapps/aria-base": "workspace:*",
 		"react-dnd": "16.0.1",
-		"react-dnd-html5-backend": "16.0.1"
+		"react-dnd-html5-backend": "16.0.1",
+		"formserver": "workspace:*"
 	},
 	"devDependencies": {
+		"http-request-cli": "^0.2.0",
 		"vite-plugin-istanbul": "^6.0.2",
 		"@vitejs/plugin-react":  "^4.3.1",
 		"vite-plugin-svgr": "^4.2.0",

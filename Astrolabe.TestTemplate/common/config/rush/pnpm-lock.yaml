@@ -681,6 +681,8 @@ importers:
       autoprefixer: 10.4.16
       codemirror: ^6.0.1
       date-fns: ^3.6.0
+      formserver: workspace:*
+      http-request-cli: ^0.2.0
       nswag: ^14.0.7
       postcss: ^8.4.33
       prettier: ^3.0.3
@@ -711,6 +713,7 @@ importers:
       '@react-typed-forms/schemas': link:../../../../schemas
       codemirror: 6.0.1_@lezer+common@1.2.1
       date-fns: 3.6.0
+      formserver: link:../formServer
       react: 18.3.1
       react-dnd: 16.0.1_i2brm3utfowsq56ly4xyjenl3e
       react-dnd-html5-backend: 16.0.1
@@ -724,6 +727,7 @@ importers:
       '@types/react-dom': 18.3.0
       '@vitejs/plugin-react': 4.3.1_vite@5.4.0
       autoprefixer: 10.4.16_postcss@8.4.40
+      http-request-cli: 0.2.0
       nswag: 14.1.0
       postcss: 8.4.40
       prettier: 3.3.3
