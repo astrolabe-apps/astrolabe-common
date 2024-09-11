@@ -19,11 +19,17 @@ import {
 } from "./schemaSchemas";
 import ControlDef from "formserver/src/ControlDefinition.json";
 import {
+  ControlAdornment,
   ControlDefinitionType,
+  createSelectConversion,
   defaultValueForField,
+  DynamicProperty,
+  FieldOption,
   isCompoundField,
   isDataControlDefinition,
   isGroupControlsDefinition,
+  rendererClass,
+  SelectDataRenderer,
 } from "@react-typed-forms/schemas";
 import { data } from "autoprefixer";
 
@@ -45,6 +51,21 @@ export function RenderForm() {
   );
 }
 
+export interface ControlState {
+  title: string;
+  hideTitle: boolean;
+  visible: boolean;
+  showing: boolean;
+  readonly: boolean;
+  disabled: boolean;
+  required: boolean;
+  styleClass?: string | null;
+  layoutClass?: string | null;
+  labelClass?: string | null;
+  adornments?: ControlAdornment[] | null;
+  options?: FieldOption[] | null;
+}
+
 function RenderNode({
   dataNode,
   formNode,
@@ -55,15 +76,42 @@ function RenderNode({
   const definition = formNode.definition;
   const { schema, control } = dataNode;
   const { field } = schema;
+  const state = useControl<ControlState>({
+    hideTitle: !!(
+      (isDataControlDefinition(definition) && definition.hideTitle) ||
+      (isGroupControlsDefinition(definition) &&
+        definition.groupOptions?.hideTitle)
+    ),
+    title: definition.title ?? "",
+    visible: true,
+    showing: true,
+    readonly: isDataControlDefinition(definition) && !!definition.readonly,
+    disabled: isDataControlDefinition(definition) && !!definition.disabled,
+    required: isDataControlDefinition(definition) && !!definition.required,
+    options: field.options,
+  }).fields;
   const children = getChildren();
   control?.setValue((x) =>
     x == null ? defaultValueForField(field, null, true) : x,
   );
+  const options = state.options.value;
   return (
-    <div>
-      <div>{definition.title ?? "Untitled"}</div>
+    <div className={rendererClass(state.layoutClass.value, "flex flex-col")}>
+      {!state.hideTitle.value && <label>{state.title.value}</label>}
       {!isCompoundField(schema.field) && control && (
-        <Finput control={control as Control<string>} />
+        <>
+          {options ? (
+            <SelectDataRenderer
+              options={options}
+              readonly={state.readonly.value}
+              required={state.required.value}
+              state={control}
+              convert={createSelectConversion(schema.field.type)}
+            />
+          ) : (
+            <Finput control={control as Control<string>} />
+          )}
+        </>
       )}
       <RenderArrayElements array={children}>
         {([f, d]) => <RenderNode formNode={f} dataNode={d} />}
