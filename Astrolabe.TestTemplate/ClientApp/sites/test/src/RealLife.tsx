@@ -5,13 +5,14 @@ import {
   createFormRenderer,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas";
-import React from "react";
+import React, { useContext } from "react";
 import {
   InitialFireRegistrationForm,
   InitialFireRegistrationSchema,
   TypeOfFireForm,
 } from "./schemas";
 import Controls from "./FireInitial.json";
+import { RenderFormContext } from "./index";
 
 const AllControls = Controls.controls;
 
@@ -25,6 +26,7 @@ export function RealLife() {
     burnRegistrationEnabled: true,
     initialType: TypeOfFireForm.Permit,
   });
+  const ControlRenderer = useContext(RenderFormContext);
   return (
     <div className="container">
       <RenderArrayElements array={AllControls}>

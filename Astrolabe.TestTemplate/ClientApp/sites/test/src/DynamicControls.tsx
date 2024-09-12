@@ -1,31 +1,26 @@
 import { useControl } from "@react-typed-forms/core";
 import {
+  boolField,
   buildSchema,
   ControlRenderer,
   createDefaultRenderers,
   createFormRenderer,
   dataControl,
-  doubleField,
-  defaultTailwindTheme,
-  stringField,
-  intField,
-  groupedControl,
-  textDisplayControl,
-  htmlDisplayControl,
-  boolField,
   DataRenderType,
-  timeField,
-  AllowedSchema,
+  defaultTailwindTheme,
+  dynamicDefaultValue,
+  dynamicDisabled,
+  dynamicReadonly,
   dynamicVisibility,
   fieldEqExpr,
-  dynamicDefaultValue,
   fieldExpr,
-  dynamicReadonly,
-  dynamicDisabled,
+  groupedControl,
+  stringField,
 } from "@react-typed-forms/schemas";
-import React from "react";
+import React, { useContext } from "react";
 import { applyEditorExtensions } from "@astroapps/schemas-editor";
 import { DataGridExtension } from "@astroapps/schemas-datagrid";
+import { RenderFormContext } from "./index";
 
 interface DynamicControls {
   visible: boolean;
@@ -84,6 +79,8 @@ export function DynamicControls() {
     readonly: false,
     dynamic: null,
   });
+  const ControlRenderer = useContext(RenderFormContext);
+
   return (
     <div className="container">
       <ControlRenderer

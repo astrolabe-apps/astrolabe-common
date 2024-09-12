@@ -492,10 +492,10 @@
       "projectFolder": "../astrolabe-schemas-datagrid",
       "shouldPublish": true
     },
-    {
-      "packageName": "nextgen",
-      "projectFolder": "ClientApp/sites/nextgen"
-    },
+//    {
+//      "packageName": "nextgen",
+//      "projectFolder": "ClientApp/sites/nextgen"
+//    },
 //    {
 //      "packageName": "@react-typed-forms/core",
 //      "projectFolder": "../react-typed-forms/packages/core"

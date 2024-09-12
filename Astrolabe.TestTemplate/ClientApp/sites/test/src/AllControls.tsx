@@ -18,7 +18,6 @@ import {
   htmlDisplayControl,
   intField,
   jsonataOptions,
-  lengthValidatorOptions,
   radioButtonOptions,
   stringField,
   stringOptionsField,
@@ -27,9 +26,10 @@ import {
   timeField,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
-import React from "react";
+import React, { useContext } from "react";
 import { applyEditorExtensions } from "@astroapps/schemas-editor";
 import { DataGridExtension } from "@astroapps/schemas-datagrid";
+import { RenderFormContext } from "./index";
 
 enum Choice {
   Cool = "Cool",
@@ -153,6 +153,7 @@ export function AllControls() {
     double: 2.5,
     stringArray: [],
   });
+  const ControlRenderer = useContext(RenderFormContext);
   return (
     <div className="container">
       <ControlRenderer

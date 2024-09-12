@@ -8,7 +8,6 @@ import {
   isDataControlDefinition,
   SchemaField,
 } from "@react-typed-forms/schemas";
-import { ControlDefinitionSchemaMap } from "../schemaSchemas";
 
 export interface FormNode {
   definition: ControlDefinition;

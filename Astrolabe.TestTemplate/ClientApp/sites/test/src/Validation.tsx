@@ -14,9 +14,9 @@ import {
   jsonataValidatorOptions,
   lengthValidatorOptions,
   stringField,
-  timeField,
 } from "@react-typed-forms/schemas";
-import React from "react";
+import React, { useContext } from "react";
+import { RenderFormContext } from "./index";
 
 interface AllControls {
   text: string;
@@ -84,6 +84,7 @@ export function Validation() {
   const control = useControl<AllControls>({
     text: "",
   });
+  const ControlRenderer = useContext(RenderFormContext);
   return (
     <div className="container">
       <ControlRenderer
