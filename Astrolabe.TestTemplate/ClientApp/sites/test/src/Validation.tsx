@@ -16,7 +16,7 @@ import {
   stringField,
 } from "@react-typed-forms/schemas";
 import React, { useContext } from "react";
-import { RenderFormContext } from "./index";
+import { RenderFormContext } from "./formTree";
 
 interface AllControls {
   text: string;

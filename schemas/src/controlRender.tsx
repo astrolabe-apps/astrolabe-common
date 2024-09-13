@@ -221,7 +221,7 @@ export interface ActionRendererProps {
   actionText: string;
   actionData?: any;
   onClick: () => void;
-  className?: string;
+  className?: string | null;
   style?: React.CSSProperties;
 }
 

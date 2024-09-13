@@ -1,19 +1,25 @@
 import {
-  ControlAdornment,
-  ControlDefinition,
-  defaultValueForField,
+  DisplayData,
+  DisplayDataType,
+  elementValueForField,
   FieldOption,
+  HtmlDisplay,
+  IconDisplay,
+  isActionControlsDefinition,
   isDataControlDefinition,
+  isDisplayControlsDefinition,
   isGroupControlsDefinition,
-  rendererClass,
+  TextDisplay,
 } from "@react-typed-forms/schemas";
 import {
+  addElement,
   Control,
-  RenderArrayElements,
+  removeElement,
   useControl,
 } from "@react-typed-forms/core";
-import { FormNode, schemaDataForForm, SchemaDataNode } from "./index";
-import React, { FC, ReactNode } from "react";
+import { FormNode, SchemaDataNode } from "./index";
+import React from "react";
+import { ActionRendererProps, FormOptions } from "./render";
 
 export interface FormNodeState {
   title: string;
@@ -26,49 +32,38 @@ export interface FormNodeState {
   styleClass?: string | null;
   layoutClass?: string | null;
   labelClass?: string | null;
-  adornments?: ControlAdornment[] | null;
   options?: FieldOption[] | null;
+  display?: string;
   style?: React.CSSProperties;
   layoutId?: string;
   id?: string;
+  actionId: string;
+  actionData?: string | null;
+  addAction?: ActionRendererProps;
+  removeAction?: (elemIndex: number) => ActionRendererProps;
 }
 
-interface ControlRenderProps {
-  state: Control<FormNodeState>;
-  formNode: FormNode;
-  dataNode: SchemaDataNode;
-  RenderForm: FC<ControlRenderProps>;
-}
-
-interface FormLayoutProps {
-  state: Control<FormNodeState>;
-  children: ReactNode;
-}
-
-export interface Renderer {
-  render: (props: ControlRenderProps) => ReactNode;
-  LayoutControl: FC<FormLayoutProps>;
-}
-
-export function RenderLayout({ state }: FormLayoutProps): ReactNode {
-  const { layoutClass, hideTitle, title } = state.fields;
-  return (
-    <div className={rendererClass(layoutClass.value, "flex flex-col")}>
-      {!hideTitle.value && <label>{title.value}</label>}
-      {mainNode}
-      <RenderArrayElements array={children}>
-        {([f, d]) => <RenderNode formNode={f} dataNode={d} />}
-      </RenderArrayElements>
-    </div>
-  );
+function displayData(display: DisplayData) {
+  switch (display.type) {
+    case DisplayDataType.Text:
+      return (display as TextDisplay).text;
+    case DisplayDataType.Html:
+      return (display as HtmlDisplay).html;
+    case DisplayDataType.Icon:
+      return (display as IconDisplay).iconClass;
+    default:
+      return undefined;
+  }
 }
 
 export function RenderNode({
   dataNode,
   formNode,
+  formOptions,
 }: {
   formNode: FormNode;
   dataNode: SchemaDataNode;
+  formOptions: FormOptions;
 }) {
   const definition = formNode.definition;
   const { schema, control } = dataNode;
@@ -76,7 +71,12 @@ export function RenderNode({
   const dataDefinition = isDataControlDefinition(definition)
     ? definition
     : undefined;
-  const state = useControl<ControlState>({
+  const { renderer } = formOptions;
+
+  const { add: defaultAdd, remove: defaultRemove } = renderer.defaultActions;
+  const noun = field.displayName ?? field.field;
+
+  const state = useControl<FormNodeState>({
     hideTitle: !!(
       dataDefinition?.hideTitle ||
       (isGroupControlsDefinition(definition) &&
@@ -88,43 +88,40 @@ export function RenderNode({
     readonly: !!dataDefinition?.readonly,
     disabled: !!dataDefinition?.disabled,
     required: !!dataDefinition?.required,
+    styleClass: definition.styleClass,
+    layoutClass: definition.layoutClass,
+    labelClass: definition.labelClass,
+    display: isDisplayControlsDefinition(definition)
+      ? displayData(definition.displayData)
+      : undefined,
     options: field.options,
-  }).fields;
-  const children = getChildren();
-  control?.setValue((x) =>
-    x == null ? defaultValueForField(field, null, true) : x,
-  );
-  const options = state.options.value;
-  let mainNode: ReactNode = <></>;
-  const clp = doRender({});
-  mainNode = clp.children;
+    actionId: isActionControlsDefinition(definition) ? definition.actionId : "",
+    actionData: isActionControlsDefinition(definition)
+      ? definition.actionData
+      : undefined,
+    addAction: {
+      ...defaultAdd,
+      actionText: defaultAdd.actionText ? defaultAdd.actionText : "Add " + noun,
+      perform: () => {
+        control &&
+          addElement(control as Control<any[]>, elementValueForField(field));
+      },
+    },
+    removeAction: (i) => ({
+      ...defaultRemove,
+      actionText: defaultRemove.actionText
+        ? defaultRemove.actionText
+        : "Remove",
+      perform: () => {
+        control && removeElement(control as Control<any[]>, i);
+      },
+    }),
+  });
 
-  return (
-    <div className={rendererClass(state.layoutClass.value, "flex flex-col")}>
-      {!state.hideTitle.value && <label>{state.title.value}</label>}
-      {mainNode}
-      <RenderArrayElements array={children}>
-        {([f, d]) => <RenderNode formNode={f} dataNode={d} />}
-      </RenderArrayElements>
-    </div>
-  );
-
-  function getChildren(): [FormNode, SchemaDataNode][] {
-    if (
-      (isGroupControlsDefinition(definition) ||
-        isDataControlDefinition(definition)) &&
-      dataNode.elementIndex == null
-    ) {
-      if (isDataControlDefinition(definition) && field.collection) {
-        return Array.from(
-          { length: (control as Control<unknown[]>)?.elements?.length ?? 0 },
-          (_, i) => [formNode, dataNode.getChildElement(i)],
-        );
-      }
-      return formNode
-        .getChildNodes()
-        .map((x) => [x, schemaDataForForm(x, dataNode)]);
-    }
-    return [];
-  }
+  return renderer.render({
+    formNode,
+    dataNode,
+    formOptions,
+    state,
+  });
 }

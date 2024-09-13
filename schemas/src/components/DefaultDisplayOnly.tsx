@@ -14,7 +14,7 @@ export function DefaultDisplayOnly({
   control: Control<any>;
   field: SchemaField;
   schemaInterface: SchemaInterface;
-  className?: string;
+  className?: string | null;
   style?: React.CSSProperties;
   emptyText?: string | null;
 }) {

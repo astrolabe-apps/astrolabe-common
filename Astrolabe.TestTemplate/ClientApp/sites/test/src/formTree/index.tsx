@@ -3,11 +3,13 @@ import {
   CompoundField,
   ControlDefinition,
   ControlDefinitionType,
+  ControlRenderer,
   FieldType,
   isCompoundField,
   isDataControlDefinition,
   SchemaField,
 } from "@react-typed-forms/schemas";
+import { createContext } from "react";
 
 export interface FormNode {
   definition: ControlDefinition;
@@ -185,3 +187,5 @@ export function schemaDataForForm(
   }
   return schema;
 }
+
+export const RenderFormContext = createContext(ControlRenderer);

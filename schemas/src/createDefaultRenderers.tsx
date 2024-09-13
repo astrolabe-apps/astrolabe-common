@@ -100,7 +100,7 @@ interface StyleProps {
   style?: CSSProperties;
 }
 
-interface DefaultActionRendererOptions {
+export interface DefaultActionRendererOptions {
   className?: string;
   renderContent?: (
     actionText: string,
@@ -137,7 +137,7 @@ export function createButtonActionRenderer(
   );
 }
 
-interface DefaultGroupRendererOptions {
+export interface DefaultGroupRendererOptions {
   className?: string;
   standardClassName?: string;
   gridStyles?: (columns: GridRenderer) => StyleProps;
@@ -217,7 +217,7 @@ export const DefaultBoolOptions: FieldOption[] = [
   { name: "No", value: false },
 ];
 
-interface DefaultDataRendererOptions {
+export interface DefaultDataRendererOptions {
   inputClass?: string;
   displayOnlyClass?: string;
   selectOptions?: SelectRendererOptions;

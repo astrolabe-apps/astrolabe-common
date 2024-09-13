@@ -25,34 +25,10 @@ describe("all controls", () => {
     control("String", () => cy.contains("button", "Remove").eq(0).click());
 
     next = compareJson({ ...next, stringArray: [null] });
-    control("Choice", () => cy.get("select").should("be.disabled"));
-
-    clickLabel("Can choose?");
-    control("Choice", () => cy.get("select").select("This is cool"));
-    next = compareJson({ ...next, choice: "Cool" });
-
-    clickLabel("Can choose?");
-    const { choice, ...others } = next;
-    next = compareJson(others);
-
-    clickLabel("Can choose?");
-    next = compareJson({ ...next, choice: "Cool" });
-
-    control("Jsonata control", () => cy.contains("b", "Jsonata value: 2.5"));
-
-    control("Double", () => cy.get("input").clear().type("1.56"));
-
-    control("Jsonata control", () => cy.contains("b", "Jsonata value: 1.56"));
-
-    control("Multiline textfield", () =>
-      cy.get("code").type("This\nis\nsome multi"),
-    );
 
     control(/^Date$/, () => cy.get("input").type("1980-04-22"));
     next = compareJson({
       ...next,
-      double: 1.56,
-      multiline: "This\nis\nsome multi",
       date: "1980-04-22",
     });
 
@@ -80,6 +56,32 @@ describe("all controls", () => {
       ...next,
       multiChoice: [1],
     });
+
+    control("Choice", () => cy.get("select").should("be.disabled"));
+
+    clickLabel("Can choose?");
+    control("Choice", () => cy.get("select").select("This is cool"));
+    next = compareJson({ ...next, choice: "Cool" });
+
+    clickLabel("Can choose?");
+    const { choice, ...others } = next;
+    next = compareJson(others);
+
+    clickLabel("Can choose?");
+    next = compareJson({ ...next, choice: "Cool" });
+
+    control("Jsonata control", () => cy.contains("b", "Jsonata value: 2.5"));
+
+    control("Double", () => cy.get("input").clear().type("1.56"));
+
+    control("Jsonata control", () => cy.contains("b", "Jsonata value: 1.56"));
+
+    control("Multiline textfield", () =>
+      cy.get("code").type("This\nis\nsome multi"),
+    );
+
+    next = { ...next, double: 1.56, multiline: "This\nis\nsome multi" };
+
     clickLabel("Hide Date");
     control(/^Date$/, () => cy.get("input").should("be.hidden"));
   });

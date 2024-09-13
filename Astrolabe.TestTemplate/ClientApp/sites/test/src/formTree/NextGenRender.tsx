@@ -1,8 +1,17 @@
-import React, { useMemo } from "react";
+import React, { createContext, useMemo } from "react";
 import { RenderNode } from "./RenderNode";
-import { ControlDefinition, SchemaField } from "@react-typed-forms/schemas";
+import {
+  ControlDefinition,
+  ControlRenderer,
+  defaultSchemaInterface,
+  defaultTailwindTheme,
+  SchemaField,
+} from "@react-typed-forms/schemas";
 import { createFormLookup, createSchemaLookup, schemaDataNode } from "./index";
 import { Control } from "@react-typed-forms/core";
+import { createDefaultFormRenderer } from "./render";
+
+const newRenderer = createDefaultFormRenderer(defaultTailwindTheme);
 
 export function NextGenRender({
   definition,
@@ -25,6 +34,11 @@ export function NextGenRender({
     <RenderNode
       dataNode={schemaDataNode(schemaLookup.getSchema("Self")!, control)}
       formNode={formTree.getForm("form")!.rootNode}
+      formOptions={{
+        RenderForm: RenderNode,
+        schemaInterface: defaultSchemaInterface,
+        renderer: newRenderer,
+      }}
     />
   );
 }

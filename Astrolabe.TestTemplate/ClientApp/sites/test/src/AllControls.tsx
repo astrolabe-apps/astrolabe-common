@@ -29,7 +29,7 @@ import {
 import React, { useContext } from "react";
 import { applyEditorExtensions } from "@astroapps/schemas-editor";
 import { DataGridExtension } from "@astroapps/schemas-datagrid";
-import { RenderFormContext } from "./index";
+import { RenderFormContext } from "./formTree";
 
 enum Choice {
   Cool = "Cool",

@@ -30,7 +30,8 @@
 		"@astroapps/aria-datepicker": "workspace:*",
 		"@astroapps/aria-base": "workspace:*",
 		"react-dnd": "16.0.1",
-		"react-dnd-html5-backend": "16.0.1"
+		"react-dnd-html5-backend": "16.0.1",
+		"clsx": "^2.1.1"
 	},
 	"devDependencies": {
 		"vite-plugin-istanbul": "^6.0.2",

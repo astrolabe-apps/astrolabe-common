@@ -12,8 +12,7 @@ import {
   TypeOfFireForm,
 } from "./schemas";
 import Controls from "./FireInitial.json";
-import { RenderFormContext } from "./index";
-
+import { RenderFormContext } from "./formTree";
 const AllControls = Controls.controls;
 
 const formRenderer = createFormRenderer(

@@ -1,15 +1,13 @@
 import { createRoot } from "react-dom/client";
-import React, {createContext} from "react";
+import React from "react";
 import { AllControls } from "./AllControls";
 import { RealLife } from "./RealLife";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { DynamicControls } from "./DynamicControls";
 import { Validation } from "./Validation";
 import { Schemas } from "./SchemasPage";
-import {ControlRenderer} from "@react-typed-forms/schemas";
-import {NextGenRender} from "./formTree/NextGenRender";
-
-export const RenderFormContext = createContext(ControlRenderer);
+import { RenderFormContext } from "./formTree";
+import { NextGenRender } from "./formTree/NextGenRender";
 
 const router = createBrowserRouter([
   {
