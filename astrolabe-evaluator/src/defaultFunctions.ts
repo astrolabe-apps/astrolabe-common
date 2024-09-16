@@ -83,7 +83,7 @@ function arrayFunc(
 function aggFunction<A>(init: A, op: (acc: A, x: unknown) => A): ValueExpr {
   function performOp(v: ValueExpr[]): unknown {
     return v.reduce(
-      (a, { value: b }) => (a != null && b != null ? op(a as A, b) : null),
+      (a, { value: b }) => (b != null ? op(a as A, b) : null),
       init as A | null,
     );
   }
@@ -193,8 +193,12 @@ const defaultFunctions = {
   string: stringFunction,
   sum: aggFunction(0, (acc, b) => acc + (b as number)),
   count: arrayFunc((acc, v) => valueExprWithDeps(acc.length, v ? [v] : [])),
-  min: aggFunction(Number.MAX_VALUE, (a, b) => Math.min(a, b as number)),
-  max: aggFunction(Number.MIN_VALUE, (a, b) => Math.max(a, b as number)),
+  min: aggFunction(null as number | null, (a, b) =>
+    Math.min(a ?? Number.MAX_VALUE, b as number),
+  ),
+  max: aggFunction(null as number | null, (a, b) =>
+    Math.max(a ?? Number.MIN_VALUE, b as number),
+  ),
   notEmpty: evalFunction(([a]) => !(a === "" || a == null)),
   which: whichFunction,
   object: objectFunction,
