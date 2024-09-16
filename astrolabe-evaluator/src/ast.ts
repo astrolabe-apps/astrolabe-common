@@ -212,7 +212,7 @@ function compareSignificantDigits(
     switch (typeof v1) {
       case "number":
         return (
-          Math.floor(multiplier * v1) - Math.floor(multiplier * (v2 as number))
+          Math.round(multiplier * v1) - Math.round(multiplier * (v2 as number))
         );
       case "string":
         return v1.localeCompare(v2 as string);

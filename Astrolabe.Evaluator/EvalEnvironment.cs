@@ -47,10 +47,8 @@ public class EvalEnvironment(EvalEnvironmentState state)
             (v1, v2) switch
             {
                 (long l1, long l2) => l1.CompareTo(l2),
-                (_, double d2)
-                    => ((long)(ValueExpr.AsDouble(v1) * multiply)).CompareTo((long)(d2 * multiply)),
-                (double d1, _)
-                    => ((long)(d1 * multiply)).CompareTo((long)(ValueExpr.AsDouble(v2) * multiply)),
+                (_, double d2) => NumberCompare(ValueExpr.AsDouble(v1), d2),
+                (double d1, _) => NumberCompare(d1, ValueExpr.AsDouble(v2)),
                 (string s1, string s2) => string.Compare(s1, s2, StringComparison.InvariantCulture),
                 _
                     => Equals(v1, v2)
@@ -59,6 +57,13 @@ public class EvalEnvironment(EvalEnvironmentState state)
                             ? 1
                             : -1
             };
+
+        int NumberCompare(double d1, double d2)
+        {
+            var l1 = (long)Math.Round(d1 * multiply);
+            var l2 = (long)Math.Round(d2 * multiply);
+            return l1.CompareTo(l2);
+        }
     }
 
     public EvalEnvironment WithComparison(Func<object?, object?, int> comparison)
