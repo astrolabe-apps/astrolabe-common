@@ -220,6 +220,6 @@ export function addDefaults(evalEnv: EvalEnv) {
   return evalEnv.withVariables(Object.entries(defaultFunctions));
 }
 
-export function basicEnv(data: EvalData): EvalEnv {
-  return addDefaults(new BasicEvalEnv(emptyEnvState(data)));
+export function basicEnv(root: unknown): EvalEnv {
+  return addDefaults(new BasicEvalEnv(emptyEnvState(root)));
 }
