@@ -44,6 +44,7 @@ export interface FieldOption {
   name: string;
   value: any;
   description?: string | null;
+  group?: string | null;
   disabled?: boolean | null;
 }
 

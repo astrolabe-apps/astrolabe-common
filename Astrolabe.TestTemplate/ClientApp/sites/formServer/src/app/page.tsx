@@ -86,8 +86,11 @@ const TestSchema = buildSchema<TestSchema>({
         { collection: true },
         stringOptionsField(
           "String",
-          { name: "One", value: "one" },
-          { name: "Two", value: "two" },
+          { name: "One", value: "one", group: "Number2" },
+          { name: "Two", value: "two", group: "Number1" },
+          { name: "Two", value: "3", group: "Number1" },
+          { name: "Two", value: "4", group: "Number2" },
+          { name: "Two", value: "5", group: "a" },
         ),
       ),
     }),

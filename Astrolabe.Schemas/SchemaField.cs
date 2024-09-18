@@ -6,36 +6,39 @@ namespace Astrolabe.Schemas;
 [JsonBaseType("type", typeof(SimpleSchemaField))]
 [JsonSubType("EntityRef", typeof(EntityRefField))]
 [JsonSubType("Compound", typeof(CompoundField))]
-public abstract record SchemaField([property: SchemaOptions(typeof(FieldType))] string Type, string Field)
+public abstract record SchemaField(
+    [property: SchemaOptions(typeof(FieldType))] string Type,
+    string Field
+)
 {
     public string? DisplayName { get; set; }
-    
+
     public bool? System { get; set; }
-    
+
     public IEnumerable<string>? Tags { get; set; }
-    
+
     public IEnumerable<string>? OnlyForTypes { get; set; }
-    
+
     public bool? Required { get; set; }
-    
+
     public bool? NotNullable { get; set; }
-    
+
     public bool? Collection { get; set; }
-    
+
     public object? DefaultValue { get; set; }
-    
+
     public bool? IsTypeField { get; set; }
-    
+
     public bool? Searchable { get; set; }
-    
+
     public string? SingularName { get; set; }
 
     public string? RequiredText { get; set; }
 
     public IEnumerable<FieldOption>? Options { get; set; }
-    
+
     public IEnumerable<SchemaValidator>? Validators { get; set; }
-    
+
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
 
@@ -47,9 +50,15 @@ public abstract record SchemaField([property: SchemaOptions(typeof(FieldType))] 
 
 public record SimpleSchemaField(string Type, string Field) : SchemaField(Type, Field);
 
-public record EntityRefField(string Field, string EntityRefType, string? ParentField) : SchemaField(FieldType.EntityRef.ToString(), Field);
+public record EntityRefField(string Field, string EntityRefType, string? ParentField)
+    : SchemaField(FieldType.EntityRef.ToString(), Field);
 
-public record CompoundField(string Field, IEnumerable<SchemaField> Children, bool? TreeChildren, string? SchemaRef = null) : SchemaField(FieldType.Compound.ToString(), Field);
+public record CompoundField(
+    string Field,
+    IEnumerable<SchemaField> Children,
+    bool? TreeChildren,
+    string? SchemaRef = null
+) : SchemaField(FieldType.Compound.ToString(), Field);
 
 [JsonString]
 public enum FieldType
@@ -70,10 +79,12 @@ public enum FieldType
 
 public record FieldOption(string Name, object Value)
 {
-    public string? Description { get; set; } 
-    
+    public string? Description { get; set; }
+
     public bool? Disabled { get; set; }
-    
+
+    public string? Group { get; set; }
+
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
 }

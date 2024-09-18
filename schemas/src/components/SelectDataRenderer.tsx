@@ -62,6 +62,11 @@ export function SelectDataRenderer({
     () => Object.fromEntries(options.map((x) => [convert(x.value), x.value])),
     [options],
   );
+  const optionGroups = useMemo(
+    () => new Set(options.filter((x) => x.group).map((x) => x.group!)),
+    [options],
+  );
+  console.log(optionGroups);
   return (
     <select
       {...props}
@@ -73,13 +78,22 @@ export function SelectDataRenderer({
       {showEmpty && (
         <option value="">{required ? requiredText : emptyText}</option>
       )}
-      {options.map((x, i) => (
-        <option key={i} value={convert(x.value)} disabled={!!x.disabled}>
-          {x.name}
-        </option>
+      {[...optionGroups.keys()].map((x) => (
+        <optgroup key={x} label={x}>
+          {options.filter((o) => o.group === x).map(renderOption)}
+        </optgroup>
       ))}
+      {options.filter((x) => !x.group).map(renderOption)}
     </select>
   );
+
+  function renderOption(x: FieldOption, i: number) {
+    return (
+      <option key={i} value={convert(x.value)} disabled={!!x.disabled}>
+        {x.name}
+      </option>
+    );
+  }
 }
 
 export function createSelectConversion(ft: string): SelectConversion {
