@@ -14,17 +14,34 @@ public class ExprParser
         var speakLexer = new AstroExprLexer(inputStream);
         var commonTokenStream = new CommonTokenStream(speakLexer);
         var speakParser = new AstroExprParser(commonTokenStream);
+        speakParser.AddErrorListener(new Errors());
         var chatContext = speakParser.main();
         var visitor = new AstroExprVisitor();
         return visitor.Visit(chatContext);
     }
 
+    public class Errors : BaseErrorListener
+    {
+        public override void SyntaxError(
+            TextWriter output,
+            IRecognizer recognizer,
+            IToken offendingSymbol,
+            int line,
+            int charPositionInLine,
+            string msg,
+            RecognitionException e
+        )
+        {
+            base.SyntaxError(output, recognizer, offendingSymbol, line, charPositionInLine, msg, e);
+        }
+    }
+
     public class AstroExprVisitor : AstroExprBaseVisitor<EvalExpr>
     {
-        public override EvalExpr VisitOrExpr(AstroExprParser.OrExprContext context)
-        {
-            return DoFunction(_ => "or", context);
-        }
+        // public override EvalExpr VisitOrExpr(AstroExprParser.OrExprContext context)
+        // {
+        //     return DoFunction(_ => "or", context);
+        // }
 
         public override EvalExpr VisitMain(AstroExprParser.MainContext context)
         {
@@ -46,21 +63,21 @@ public class ExprParser
             return new LetExpr(assignments, Visit(context.expr()));
         }
 
-        public override EvalExpr VisitUnaryExprNoRoot(
-            AstroExprParser.UnaryExprNoRootContext context
-        )
-        {
-            if (context.NOT() != null)
-            {
-                return new CallExpr("!", [Visit(context.primaryExpr())]);
-            }
-
-            if (context.MINUS() != null)
-            {
-                return new CallExpr("-", [new ValueExpr(0), Visit(context.primaryExpr())]);
-            }
-            return Visit(context.primaryExpr());
-        }
+        // public override EvalExpr VisitUnaryExprNoRoot(
+        //     AstroExprParser.UnaryExprNoRootContext context
+        // )
+        // {
+        //     if (context.NOT() != null)
+        //     {
+        //         return new CallExpr("!", [Visit(context.primaryExpr())]);
+        //     }
+        //
+        //     if (context.MINUS() != null)
+        //     {
+        //         return new CallExpr("-", [new ValueExpr(0), Visit(context.primaryExpr())]);
+        //     }
+        //     return Visit(context.primaryExpr());
+        // }
 
         public override EvalExpr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)
         {
@@ -85,28 +102,28 @@ public class ExprParser
             };
         }
 
-        public override EvalExpr VisitPrimaryExpr(AstroExprParser.PrimaryExprContext context)
-        {
-            var leftPar = context.LPAR();
-            return leftPar != null ? Visit(context.expr()) : base.VisitPrimaryExpr(context);
-        }
+        // public override EvalExpr VisitPrimaryExpr(AstroExprParser.PrimaryExprContext context)
+        // {
+        //     var leftPar = context.LPAR();
+        //     return leftPar != null ? Visit(context.expr()) : base.VisitPrimaryExpr(context);
+        // }
 
-        public override EvalExpr VisitFilterExpr(AstroExprParser.FilterExprContext context)
-        {
-            return DoFunction(_ => "[", context);
-        }
+        // public override EvalExpr VisitFilterExpr(AstroExprParser.FilterExprContext context)
+        // {
+        //     return DoFunction(_ => "[", context);
+        // }
 
-        public override EvalExpr VisitConditionExpression(
-            AstroExprParser.ConditionExpressionContext context
-        )
-        {
-            var ifExpr = Visit(context.orExpr());
-            var thenExpr = context.expr();
-            var elseExpr = context.conditionExpression();
-            if (thenExpr != null)
-                return new CallExpr("?", [ifExpr, Visit(thenExpr), Visit(elseExpr)]);
-            return ifExpr;
-        }
+        // public override EvalExpr VisitConditionExpression(
+        //     AstroExprParser.ConditionExpressionContext context
+        // )
+        // {
+        //     var ifExpr = Visit(context.orExpr());
+        //     var thenExpr = context.expr();
+        //     var elseExpr = context.conditionExpression();
+        //     if (thenExpr != null)
+        //         return new CallExpr("?", [ifExpr, Visit(thenExpr), Visit(elseExpr)]);
+        //     return ifExpr;
+        // }
 
         public override EvalExpr VisitFunctionCall(AstroExprParser.FunctionCallContext context)
         {
@@ -115,47 +132,47 @@ public class ExprParser
             return new CallExpr(variableString, args);
         }
 
-        public override EvalExpr VisitMapExpr(AstroExprParser.MapExprContext context)
-        {
-            return DoFunction(_ => ".", context);
-        }
-
-        public override EvalExpr VisitAndExpr(AstroExprParser.AndExprContext context)
-        {
-            return DoFunction(_ => "and", context);
-        }
-
-        public override EvalExpr VisitRelationalExpr(AstroExprParser.RelationalExprContext context)
-        {
-            return DoFunction(
-                x =>
-                    x.Symbol.Type switch
-                    {
-                        AstroExprParser.LESS => "<",
-                        AstroExprParser.MORE_ => ">",
-                        AstroExprParser.LE => "<=",
-                        AstroExprParser.GE => ">=",
-                    },
-                context
-            );
-        }
-
-        public override EvalExpr VisitEqualityExpr(AstroExprParser.EqualityExprContext context)
-        {
-            return DoFunction(t => t.Symbol.Type == AstroExprParser.EQ ? "=" : "!=", context);
-        }
-
-        public override EvalExpr VisitMultiplicativeExpr(
-            AstroExprParser.MultiplicativeExprContext context
-        )
-        {
-            return DoFunction(t => t.Symbol.Type == AstroExprParser.MUL ? "*" : "/", context);
-        }
-
-        public override EvalExpr VisitAdditiveExpr(AstroExprParser.AdditiveExprContext context)
-        {
-            return DoFunction(t => t.Symbol.Type == AstroExprParser.PLUS ? "+" : "-", context);
-        }
+        // public override EvalExpr VisitMapExpr(AstroExprParser.MapExprContext context)
+        // {
+        //     return DoFunction(_ => ".", context);
+        // }
+        //
+        // public override EvalExpr VisitAndExpr(AstroExprParser.AndExprContext context)
+        // {
+        //     return DoFunction(_ => "and", context);
+        // }
+        //
+        // public override EvalExpr VisitRelationalExpr(AstroExprParser.RelationalExprContext context)
+        // {
+        //     return DoFunction(
+        //         x =>
+        //             x.Symbol.Type switch
+        //             {
+        //                 AstroExprParser.LESS => "<",
+        //                 AstroExprParser.MORE_ => ">",
+        //                 AstroExprParser.LE => "<=",
+        //                 AstroExprParser.GE => ">=",
+        //             },
+        //         context
+        //     );
+        // }
+        //
+        // public override EvalExpr VisitEqualityExpr(AstroExprParser.EqualityExprContext context)
+        // {
+        //     return DoFunction(t => t.Symbol.Type == AstroExprParser.EQ ? "=" : "!=", context);
+        // }
+        //
+        // public override EvalExpr VisitMultiplicativeExpr(
+        //     AstroExprParser.MultiplicativeExprContext context
+        // )
+        // {
+        //     return DoFunction(t => t.Symbol.Type == AstroExprParser.MUL ? "*" : "/", context);
+        // }
+        //
+        // public override EvalExpr VisitAdditiveExpr(AstroExprParser.AdditiveExprContext context)
+        // {
+        //     return DoFunction(t => t.Symbol.Type == AstroExprParser.PLUS ? "+" : "-", context);
+        // }
 
         public EvalExpr DoFunction(Func<ITerminalNode, string> func, ParserRuleContext context)
         {

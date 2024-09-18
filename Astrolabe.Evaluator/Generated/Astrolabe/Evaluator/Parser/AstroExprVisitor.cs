@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
+// Generated from /home/doolse/astrolabe/hvams.roadmanager.server/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -45,12 +45,6 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitExpr([NotNull] AstroExprParser.ExprContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.primaryExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPrimaryExpr([NotNull] AstroExprParser.PrimaryExprContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.functionCall"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -74,66 +68,6 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitLambdaExpr([NotNull] AstroExprParser.LambdaExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.conditionExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitConditionExpression([NotNull] AstroExprParser.ConditionExpressionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.orExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitOrExpr([NotNull] AstroExprParser.OrExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.andExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitAndExpr([NotNull] AstroExprParser.AndExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.equalityExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitEqualityExpr([NotNull] AstroExprParser.EqualityExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.relationalExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitRelationalExpr([NotNull] AstroExprParser.RelationalExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.additiveExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitAdditiveExpr([NotNull] AstroExprParser.AdditiveExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.multiplicativeExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitMultiplicativeExpr([NotNull] AstroExprParser.MultiplicativeExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.mapExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitMapExpr([NotNull] AstroExprParser.MapExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.filterExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFilterExpr([NotNull] AstroExprParser.FilterExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.unaryExprNoRoot"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitUnaryExprNoRoot([NotNull] AstroExprParser.UnaryExprNoRootContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.variableReference"/>.
 	/// </summary>

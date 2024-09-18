@@ -6,13 +6,9 @@ grammar AstroExpr;
 main
     : expr EOF
     ;
-
 expr
-    : conditionExpression
-    ;
-
-primaryExpr
     : functionCall 
+    | ('-'|'!'|'+') expr
     | lambdaExpr
     | variableReference
     | '(' expr ')'
@@ -23,7 +19,16 @@ primaryExpr
     | 'true'
     | 'null'
     | Identifier
-    ;
+    | expr '[' expr ']'
+    | expr '.' expr
+    | expr ('*'|'/') expr
+    | expr ('+'|'-') expr
+    | expr ('<' | '>' | '<=' | '>=') expr
+    | expr ('=' | '!=') expr
+    | expr 'and' expr
+    | expr 'or' expr
+    |<assoc=right> expr '?' expr ':' expr
+    ; 
 
 functionCall
     : variableReference '(' (expr ( ',' expr)*)? ')'
@@ -39,46 +44,6 @@ letExpr
     
 lambdaExpr
     : variableReference '=>' expr
-    ;
-
-conditionExpression
-    : orExpr ('?' expr ':' conditionExpression)?
-    ;
-
-orExpr
-    : andExpr (OR andExpr)*
-    ;
-
-andExpr
-    : equalityExpr (AND equalityExpr)*
-    ;
-
-equalityExpr
-    : relationalExpr (('=' | '!=') relationalExpr)*
-    ;
-
-relationalExpr
-    : additiveExpr (('<' | '>' | '<=' | '>=') additiveExpr)*
-    ;
-
-additiveExpr
-    : multiplicativeExpr (('+' | '-') multiplicativeExpr)*
-    ;
-
-multiplicativeExpr
-    : mapExpr (('*'|'/') mapExpr)*
-    ;
-
-mapExpr
-    : filterExpr ('.' filterExpr)*
-    ;
-
-filterExpr
-    : unaryExprNoRoot ('[' unaryExprNoRoot ']')*
-    ;
-
-unaryExprNoRoot
-    : ('-'|'!'|'+')? primaryExpr
     ;
 
 variableReference
