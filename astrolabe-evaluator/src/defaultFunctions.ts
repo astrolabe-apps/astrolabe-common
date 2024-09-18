@@ -2,12 +2,12 @@ import {
   CallExpr,
   emptyEnvState,
   envEffect,
-  EvalData,
   EvalEnv,
   functionValue,
   mapAllEnv,
   mapEnv,
   NullExpr,
+  propertyExpr,
   toNative,
   valueExpr,
   ValueExpr,
@@ -160,6 +160,15 @@ const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   }
   if (leftVal == null) {
     return [leftEnv, NullExpr];
+  }
+  if (typeof leftVal === "object") {
+    const [firstEnv, { value: firstFilter }] = evaluateWith(
+      leftEnv,
+      leftVal,
+      null,
+      right,
+    );
+    return evaluateWith(firstEnv, leftVal, null, propertyExpr(firstFilter));
   }
   return [
     leftEnv.withError("Can't filter value: " + printExpr(leftVal)),
