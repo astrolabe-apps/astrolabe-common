@@ -16,9 +16,24 @@ public static class FilterFunctionHandler
                                 when av.Values.Select((x, i) => (x, i)).ToList() is var indexed
                                 => FilterArray(nextEnv, indexed, right),
                             null => leftEval,
+                            ObjectValue _ => FilterObject(nextEnv, leftValue, right),
                             _ => nextEnv.WithError("Can't filter: " + leftValue.Print()).WithNull()
                         }
                 };
+
+                EnvironmentValue<ValueExpr> FilterObject(
+                    EvalEnvironment nextEnv,
+                    ValueExpr leftValue,
+                    EvalExpr right
+                )
+                {
+                    var firstFilter = nextEnv.EvaluateWith(leftValue, null, right);
+                    return firstFilter.Env.EvaluateWith(
+                        leftValue,
+                        null,
+                        new PropertyExpr(firstFilter.Value.AsString())
+                    );
+                }
 
                 EnvironmentValue<ValueExpr> FilterArray(
                     EvalEnvironment nextEnv,

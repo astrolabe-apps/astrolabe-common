@@ -39,12 +39,6 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMain([NotNull] AstroExprParser.MainContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.predicate"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPredicate([NotNull] AstroExprParser.PredicateContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.expr"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -80,12 +74,6 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitLambdaExpr([NotNull] AstroExprParser.LambdaExprContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.filterExpr"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFilterExpr([NotNull] AstroExprParser.FilterExprContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.conditionExpression"/>.
 	/// </summary>
@@ -134,6 +122,12 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitMapExpr([NotNull] AstroExprParser.MapExprContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.filterExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFilterExpr([NotNull] AstroExprParser.FilterExprContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.unaryExprNoRoot"/>.
 	/// </summary>

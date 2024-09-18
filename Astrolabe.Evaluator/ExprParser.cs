@@ -52,14 +52,14 @@ public class ExprParser
         {
             if (context.NOT() != null)
             {
-                return new CallExpr("!", [Visit(context.filterExpr())]);
+                return new CallExpr("!", [Visit(context.primaryExpr())]);
             }
 
             if (context.MINUS() != null)
             {
-                return new CallExpr("-", [new ValueExpr(0), Visit(context.filterExpr())]);
+                return new CallExpr("-", [new ValueExpr(0), Visit(context.primaryExpr())]);
             }
-            return Visit(context.filterExpr());
+            return Visit(context.primaryExpr());
         }
 
         public override EvalExpr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)
@@ -91,16 +91,9 @@ public class ExprParser
             return leftPar != null ? Visit(context.expr()) : base.VisitPrimaryExpr(context);
         }
 
-        public override EvalExpr VisitPredicate(AstroExprParser.PredicateContext context)
-        {
-            return Visit(context.expr());
-        }
-
         public override EvalExpr VisitFilterExpr(AstroExprParser.FilterExprContext context)
         {
-            var baseExpr = Visit(context.primaryExpr());
-            var predicate = context.predicate();
-            return predicate != null ? new CallExpr("[", [baseExpr, Visit(predicate)]) : baseExpr;
+            return DoFunction(_ => "[", context);
         }
 
         public override EvalExpr VisitConditionExpression(

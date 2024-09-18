@@ -7,10 +7,6 @@ main
     : expr EOF
     ;
 
-predicate
-    : '[' expr ']'
-    ;
-
 expr
     : conditionExpression
     ;
@@ -45,10 +41,6 @@ lambdaExpr
     : variableReference '=>' expr
     ;
 
-filterExpr
-    : primaryExpr predicate?
-    ;
-
 conditionExpression
     : orExpr ('?' expr ':' conditionExpression)?
     ;
@@ -78,11 +70,15 @@ multiplicativeExpr
     ;
 
 mapExpr
-    : unaryExprNoRoot ('.' unaryExprNoRoot)*
+    : filterExpr ('.' filterExpr)*
+    ;
+
+filterExpr
+    : unaryExprNoRoot ('[' unaryExprNoRoot ']')*
     ;
 
 unaryExprNoRoot
-    : ('-'|'!'|'+')? filterExpr
+    : ('-'|'!'|'+')? primaryExpr
     ;
 
 variableReference
