@@ -11,7 +11,7 @@ export function createJsonataRenderer(className?: string) {
       <JsonataRenderer
         renderOptions={p.renderOptions as JsonataRenderOptions}
         className={rendererClass(p.className, className)}
-        dataContext={p.parentContext}
+        dataContext={p.dataContext}
         control={p.control}
         readonly={p.readonly}
       />
