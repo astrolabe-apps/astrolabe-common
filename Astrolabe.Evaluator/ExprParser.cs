@@ -14,26 +14,9 @@ public class ExprParser
         var speakLexer = new AstroExprLexer(inputStream);
         var commonTokenStream = new CommonTokenStream(speakLexer);
         var speakParser = new AstroExprParser(commonTokenStream);
-        speakParser.AddErrorListener(new Errors());
         var chatContext = speakParser.main();
         var visitor = new AstroExprVisitor();
         return visitor.Visit(chatContext);
-    }
-
-    public class Errors : BaseErrorListener
-    {
-        public override void SyntaxError(
-            TextWriter output,
-            IRecognizer recognizer,
-            IToken offendingSymbol,
-            int line,
-            int charPositionInLine,
-            string msg,
-            RecognitionException e
-        )
-        {
-            base.SyntaxError(output, recognizer, offendingSymbol, line, charPositionInLine, msg, e);
-        }
     }
 
     public class AstroExprVisitor : AstroExprBaseVisitor<EvalExpr>
