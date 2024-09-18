@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from /home/doolse/astrolabe/hvams.roadmanager.server/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
+// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162

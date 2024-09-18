@@ -6,7 +6,21 @@ grammar AstroExpr;
 main
     : expr EOF
     ;
+    
 expr
+    : primaryExpr # Primary
+    | expr '[' expr ']' # BinOp
+    | expr '.' expr # BinOp
+    | expr ('*'|'/') expr # BinOp
+    | expr ('+'|'-') expr # BinOp
+    | expr ('<' | '>' | '<=' | '>=') expr # BinOp
+    | expr ('=' | '!=') expr # BinOp
+    | expr 'and' expr # BinOp
+    | expr 'or' expr # BinOp
+    |<assoc=right> expr '?' expr ':' expr # TernaryOp
+    ; 
+    
+primaryExpr
     : functionCall 
     | ('-'|'!'|'+') expr
     | lambdaExpr
@@ -19,17 +33,8 @@ expr
     | 'true'
     | 'null'
     | Identifier
-    | expr '[' expr ']'
-    | expr '.' expr
-    | expr ('*'|'/') expr
-    | expr ('+'|'-') expr
-    | expr ('<' | '>' | '<=' | '>=') expr
-    | expr ('=' | '!=') expr
-    | expr 'and' expr
-    | expr 'or' expr
-    |<assoc=right> expr '?' expr ':' expr
-    ; 
-
+    ;
+    
 functionCall
     : variableReference '(' (expr ( ',' expr)*)? ')'
     ;

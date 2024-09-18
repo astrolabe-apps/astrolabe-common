@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from /home/doolse/astrolabe/hvams.roadmanager.server/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
+// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.1
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -39,11 +39,32 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMain([NotNull] AstroExprParser.MainContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="AstroExprParser.expr"/>.
+	/// Visit a parse tree produced by the <c>Primary</c>
+	/// labeled alternative in <see cref="AstroExprParser.expr"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitExpr([NotNull] AstroExprParser.ExprContext context);
+	Result VisitPrimary([NotNull] AstroExprParser.PrimaryContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>BinOp</c>
+	/// labeled alternative in <see cref="AstroExprParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBinOp([NotNull] AstroExprParser.BinOpContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>TernaryOp</c>
+	/// labeled alternative in <see cref="AstroExprParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTernaryOp([NotNull] AstroExprParser.TernaryOpContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.primaryExpr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPrimaryExpr([NotNull] AstroExprParser.PrimaryExprContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.functionCall"/>.
 	/// </summary>

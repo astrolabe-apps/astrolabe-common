@@ -38,11 +38,6 @@ public class ExprParser
 
     public class AstroExprVisitor : AstroExprBaseVisitor<EvalExpr>
     {
-        // public override EvalExpr VisitOrExpr(AstroExprParser.OrExprContext context)
-        // {
-        //     return DoFunction(_ => "or", context);
-        // }
-
         public override EvalExpr VisitMain(AstroExprParser.MainContext context)
         {
             return Visit(context.expr());
@@ -63,27 +58,27 @@ public class ExprParser
             return new LetExpr(assignments, Visit(context.expr()));
         }
 
-        // public override EvalExpr VisitUnaryExprNoRoot(
-        //     AstroExprParser.UnaryExprNoRootContext context
-        // )
-        // {
-        //     if (context.NOT() != null)
-        //     {
-        //         return new CallExpr("!", [Visit(context.primaryExpr())]);
-        //     }
-        //
-        //     if (context.MINUS() != null)
-        //     {
-        //         return new CallExpr("-", [new ValueExpr(0), Visit(context.primaryExpr())]);
-        //     }
-        //     return Visit(context.primaryExpr());
-        // }
-
         public override EvalExpr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)
         {
             return new LambdaExpr(
                 Visit(context.variableReference()).AsVar().Name,
                 Visit(context.expr())
+            );
+        }
+
+        public override EvalExpr VisitBinOp(AstroExprParser.BinOpContext context)
+        {
+            return new CallExpr(
+                context.GetChild(1).GetText(),
+                [Visit(context.expr(0)), Visit(context.expr(1))]
+            );
+        }
+
+        public override EvalExpr VisitTernaryOp(AstroExprParser.TernaryOpContext context)
+        {
+            return new CallExpr(
+                "?",
+                [Visit(context.expr(0)), Visit(context.expr(1)), Visit(context.expr(2))]
             );
         }
 
@@ -102,102 +97,24 @@ public class ExprParser
             };
         }
 
-        // public override EvalExpr VisitPrimaryExpr(AstroExprParser.PrimaryExprContext context)
-        // {
-        //     var leftPar = context.LPAR();
-        //     return leftPar != null ? Visit(context.expr()) : base.VisitPrimaryExpr(context);
-        // }
-
-        // public override EvalExpr VisitFilterExpr(AstroExprParser.FilterExprContext context)
-        // {
-        //     return DoFunction(_ => "[", context);
-        // }
-
-        // public override EvalExpr VisitConditionExpression(
-        //     AstroExprParser.ConditionExpressionContext context
-        // )
-        // {
-        //     var ifExpr = Visit(context.orExpr());
-        //     var thenExpr = context.expr();
-        //     var elseExpr = context.conditionExpression();
-        //     if (thenExpr != null)
-        //         return new CallExpr("?", [ifExpr, Visit(thenExpr), Visit(elseExpr)]);
-        //     return ifExpr;
-        // }
+        public override EvalExpr VisitPrimaryExpr(AstroExprParser.PrimaryExprContext context)
+        {
+            return context.LPAR() != null
+                ? Visit(context.expr())
+                : context.PLUS() != null
+                    ? Visit(context.expr())
+                    : context.MINUS() != null
+                        ? new CallExpr("-", [new ValueExpr(0), Visit(context.expr())])
+                        : context.NOT() != null
+                            ? new CallExpr("!", [Visit(context.expr())])
+                            : base.VisitPrimaryExpr(context);
+        }
 
         public override EvalExpr VisitFunctionCall(AstroExprParser.FunctionCallContext context)
         {
             var variableString = context.variableReference().Identifier().GetText();
             var args = context.expr().Select(Visit).ToList();
             return new CallExpr(variableString, args);
-        }
-
-        // public override EvalExpr VisitMapExpr(AstroExprParser.MapExprContext context)
-        // {
-        //     return DoFunction(_ => ".", context);
-        // }
-        //
-        // public override EvalExpr VisitAndExpr(AstroExprParser.AndExprContext context)
-        // {
-        //     return DoFunction(_ => "and", context);
-        // }
-        //
-        // public override EvalExpr VisitRelationalExpr(AstroExprParser.RelationalExprContext context)
-        // {
-        //     return DoFunction(
-        //         x =>
-        //             x.Symbol.Type switch
-        //             {
-        //                 AstroExprParser.LESS => "<",
-        //                 AstroExprParser.MORE_ => ">",
-        //                 AstroExprParser.LE => "<=",
-        //                 AstroExprParser.GE => ">=",
-        //             },
-        //         context
-        //     );
-        // }
-        //
-        // public override EvalExpr VisitEqualityExpr(AstroExprParser.EqualityExprContext context)
-        // {
-        //     return DoFunction(t => t.Symbol.Type == AstroExprParser.EQ ? "=" : "!=", context);
-        // }
-        //
-        // public override EvalExpr VisitMultiplicativeExpr(
-        //     AstroExprParser.MultiplicativeExprContext context
-        // )
-        // {
-        //     return DoFunction(t => t.Symbol.Type == AstroExprParser.MUL ? "*" : "/", context);
-        // }
-        //
-        // public override EvalExpr VisitAdditiveExpr(AstroExprParser.AdditiveExprContext context)
-        // {
-        //     return DoFunction(t => t.Symbol.Type == AstroExprParser.PLUS ? "+" : "-", context);
-        // }
-
-        public EvalExpr DoFunction(Func<ITerminalNode, string> func, ParserRuleContext context)
-        {
-            return DoBinOps((t, e1, e2) => new CallExpr(func(t), [e1, e2]), context);
-        }
-
-        public EvalExpr DoBinOps(
-            Func<ITerminalNode, EvalExpr, EvalExpr, EvalExpr> createExpr,
-            ParserRuleContext context
-        )
-        {
-            return context
-                .children.Aggregate(
-                    (BinState)(null, null),
-                    (acc, next) =>
-                        next switch
-                        {
-                            ITerminalNode tn => (acc.Item1, tn),
-                            _ when Visit(next) is { } e
-                                => acc is { Item2: not null, Item1: not null }
-                                    ? (createExpr(acc.Item2, acc.Item1, e), null)
-                                    : (e, null),
-                        }
-                )
-                .Item1;
         }
     }
 }
