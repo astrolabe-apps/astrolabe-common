@@ -66,7 +66,6 @@ export function SelectDataRenderer({
     () => new Set(options.filter((x) => x.group).map((x) => x.group!)),
     [options],
   );
-  console.log(optionGroups);
   return (
     <select
       {...props}
