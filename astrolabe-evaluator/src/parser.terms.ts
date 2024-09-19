@@ -10,8 +10,10 @@ export const
   Number = 8,
   String = 9,
   Escape = 10,
-  UnaryExpression = 11,
-  BinaryExpression = 12,
-  Call = 14,
-  ParenthesizedExpression = 27,
-  ArgList = 30
+  ArrayExpression = 11,
+  ObjectExpression = 12,
+  UnaryExpression = 13,
+  BinaryExpression = 14,
+  Call = 16,
+  ParenthesizedExpression = 30,
+  ArgList = 33

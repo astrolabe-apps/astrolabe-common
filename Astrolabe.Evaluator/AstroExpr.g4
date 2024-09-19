@@ -17,11 +17,14 @@ expr
     | expr ('=' | '!=') expr # BinOp
     | expr 'and' expr # BinOp
     | expr 'or' expr # BinOp
+    | expr '??' expr # BinOp
     |<assoc=right> expr '?' expr ':' expr # TernaryOp
     ; 
     
 primaryExpr
     : functionCall 
+    | arrayLiteral
+    | objectLiteral
     | ('-'|'!'|'+') expr
     | lambdaExpr
     | variableReference
@@ -33,6 +36,18 @@ primaryExpr
     | 'true'
     | 'null'
     | Identifier
+    ;
+
+objectField
+    : expr ':' expr
+    ;
+
+objectLiteral
+    : '{' objectField* '}'
+    ;
+    
+arrayLiteral
+    : '[' (expr ( ',' expr)*)? ']'
     ;
     
 functionCall

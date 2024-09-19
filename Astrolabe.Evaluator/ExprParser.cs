@@ -4,8 +4,6 @@ using Astrolabe.Evaluator.Parser;
 
 namespace Astrolabe.Evaluator;
 
-using BinState = (EvalExpr?, ITerminalNode?);
-
 public class ExprParser
 {
     public static EvalExpr Parse(string expression)
@@ -63,6 +61,19 @@ public class ExprParser
                 "?",
                 [Visit(context.expr(0)), Visit(context.expr(1)), Visit(context.expr(2))]
             );
+        }
+
+        public override EvalExpr VisitArrayLiteral(AstroExprParser.ArrayLiteralContext context)
+        {
+            var elems = context.expr().Select(x => Visit(x));
+            return new ArrayExpr(elems);
+        }
+
+        public override EvalExpr VisitObjectLiteral(AstroExprParser.ObjectLiteralContext context)
+        {
+            var fields = context.objectField();
+            var objectArgs = fields.SelectMany(x => new[] { Visit(x.expr(0)), Visit(x.expr(1)) });
+            return new CallExpr("object", objectArgs.ToList());
         }
 
         public override EvalExpr VisitTerminal(ITerminalNode node)

@@ -83,7 +83,7 @@ export interface CallExpr {
 
 export interface ValueExpr {
   type: "value";
-  value: any;
+  value: unknown;
   path?: Path;
   deps?: Path[];
 }
@@ -245,7 +245,10 @@ export function emptyEnvState(root: unknown): EvalEnvState {
         : undefined;
       const value = object.value;
       if (typeof value === "object" && value != null) {
-        return toValue(propPath, value[property] ?? null);
+        return toValue(
+          propPath,
+          (value as Record<string, unknown>)[property] ?? null,
+        );
       }
       return valueExpr(null, propPath);
     },

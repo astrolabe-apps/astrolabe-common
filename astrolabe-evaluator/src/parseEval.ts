@@ -1,6 +1,7 @@
 import { parser } from "./parser";
 import { SyntaxNode } from "@lezer/common";
 import {
+  arrayExpr,
   callExpr,
   EvalExpr,
   lambdaExpr,
@@ -66,6 +67,10 @@ export function parseEval(input: string) {
         return valueExpr(quoted.substring(1, quoted.length - 1));
       case "Identifier":
         return propertyExpr(input.substring(node.from, node.to));
+      case "ArrayExpression":
+        return arrayExpr(node.getChildren("Expression").map(visit));
+      case "ObjectExpression":
+        return callExpr("object", node.getChildren("Expression").map(visit));
       case "BinaryExpression":
         const callNode = node.getChild("Call")!;
         return callExpr(

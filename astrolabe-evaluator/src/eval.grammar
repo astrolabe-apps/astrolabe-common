@@ -8,6 +8,7 @@
   rel @left,
   and @left,
   or @left,
+  default @left
   ternary @right
 }
 
@@ -21,6 +22,8 @@ expression[@isGroup=Expression] {
     LetExpression |
     Number | 
     String | 
+    ArrayExpression |
+    ObjectExpression |
     UnaryExpression | 
     BinaryExpression | 
     ParenthesizedExpression |
@@ -42,6 +45,10 @@ ParenthesizedExpression { "(" expression ")" }
 
 ArgList { "(" commaSep<expression> ")" }
 
+ArrayExpression { "[" commaSep<expression> "]" }
+
+ObjectExpression { "{" (expression ":" expression)* "}" }
+
 commaSep<content> {
   (content ("," content)*)?
 }
@@ -57,7 +64,8 @@ BinaryExpression {
   expression !times (call<"/"> | call<"*">) expression |
   expression !plus (call<"+"> | call<"-">) expression |
   expression !rel (call<"<"> | call<">"> | call<"="> | call<"!="> | call<"<="> | call<">=">) expression |
-  expression !filter call<"["> expression "]"
+  expression !filter call<"["> expression "]" |
+  expression !default call<"??"> expression
 }
 
 @skip { space }

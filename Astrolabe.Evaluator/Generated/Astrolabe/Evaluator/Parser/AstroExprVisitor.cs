@@ -66,6 +66,24 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitPrimaryExpr([NotNull] AstroExprParser.PrimaryExprContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.objectField"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitObjectField([NotNull] AstroExprParser.ObjectFieldContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.objectLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitObjectLiteral([NotNull] AstroExprParser.ObjectLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.arrayLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitArrayLiteral([NotNull] AstroExprParser.ArrayLiteralContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.functionCall"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

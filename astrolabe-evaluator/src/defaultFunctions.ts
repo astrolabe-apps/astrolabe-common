@@ -61,11 +61,15 @@ export function compareFunction(toBool: (a: number) => boolean): ValueExpr {
 }
 
 export function evalFunction(run: (args: unknown[]) => unknown): ValueExpr {
-  return functionValue((e, call) =>
-    mapEnv(evaluateAll(e, call.args), (a) =>
-      valueExprWithDeps(run(a.map((x) => x.value)), a),
-    ),
+  return evalFunctionExpr((a) =>
+    valueExprWithDeps(run(a.map((x) => x.value)), a),
   );
+}
+
+export function evalFunctionExpr(
+  run: (args: ValueExpr[]) => ValueExpr,
+): ValueExpr {
+  return functionValue((e, call) => mapEnv(evaluateAll(e, call.args), run));
 }
 
 function arrayFunc(
@@ -73,8 +77,8 @@ function arrayFunc(
 ) {
   return functionValue((e, call) => {
     let [ne, v] = mapAllEnv(e, call.args, doEvaluate);
-    if (v.length == 1) {
-      return [ne, toValue(v[0].value, v[0])];
+    if (v.length == 1 && Array.isArray(v[0].value)) {
+      return [ne, toValue(v[0].value as ValueExpr[], v[0])];
     }
     return [ne, toValue(v)];
   });
@@ -114,7 +118,7 @@ const mapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   const { value } = leftVal;
   if (Array.isArray(value)) {
     return mapEnv(
-      mapAllEnv(leftEnv, leftVal.value, (e, elem: ValueExpr, i) =>
+      mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
         evaluateWith(e, elem, i, right),
       ),
       (vals) => ({ ...leftVal, value: vals.flatMap(allElems) }),
@@ -168,7 +172,9 @@ const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
       null,
       right,
     );
-    return evaluateWith(firstEnv, leftVal, null, propertyExpr(firstFilter));
+    if (typeof firstFilter === "string")
+      return evaluateWith(firstEnv, leftVal, null, propertyExpr(firstFilter));
+    return [firstEnv, valueExpr(null)];
   }
   return [
     leftEnv.withError("Can't filter value: " + printExpr(leftVal)),
@@ -198,6 +204,9 @@ const defaultFunctions = {
   ">=": compareFunction((x) => x >= 0),
   "=": compareFunction((x) => x === 0),
   "!=": compareFunction((x) => x !== 0),
+  "??": evalFunctionExpr((x) =>
+    x.length == 2 ? (x[0].value == null ? x[1] : x[0]) : NullExpr,
+  ),
   array: flatFunction,
   string: stringFunction,
   sum: aggFunction(0, (acc, b) => acc + (b as number)),

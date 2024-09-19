@@ -156,6 +156,17 @@ public static class DefaultFunctions
             { "or", BoolOp((a, b) => a || b) },
             { "!", UnaryNullOp(a => a is bool b ? !b : null) },
             { "?", IfElseOp },
+            {
+                "??",
+                FunctionHandler.DefaultEvalArgs(
+                    (e, x) =>
+                        x switch
+                        {
+                            [var v, var o] => v.IsNull() ? o : v,
+                            _ => ValueExpr.Null
+                        }
+                )
+            },
             { "sum", ArrayAggOp(0d, (acc, v) => acc + ValueExpr.AsDouble(v)) },
             {
                 "min",
@@ -193,16 +204,17 @@ public static class DefaultFunctions
             { "which", new FunctionHandler(WhichFunction) },
             {
                 "elem",
-                FunctionHandler.DefaultEvalArgs((_,args) =>
-                    args switch
-                    {
-                        [{Value: ArrayValue av}, {Value: var indO}]
-                            when ValueExpr.MaybeIndex(indO) is { } ind
-                                && av.Values.ToList() is var vl
-                                && vl.Count > ind
-                            => vl[ind],
-                        _ => ValueExpr.WithDeps(null, args)
-                    }
+                FunctionHandler.DefaultEvalArgs(
+                    (_, args) =>
+                        args switch
+                        {
+                            [{ Value: ArrayValue av }, { Value: var indO }]
+                                when ValueExpr.MaybeIndex(indO) is { } ind
+                                    && av.Values.ToList() is var vl
+                                    && vl.Count > ind
+                                => vl[ind],
+                            _ => ValueExpr.WithDeps(null, args)
+                        }
                 )
             },
             { "[", FilterFunctionHandler.Instance },
@@ -242,7 +254,7 @@ public static class DefaultFunctions
     {
         return objValue switch
         {
-            ObjectValue ov => (JsonObject)ov.Object,
+            ObjectValue ov => ((JsonObject)ov.Object).DeepClone(),
             ArrayValue av => new JsonArray(av.Values.Select(x => ToJsonNode(x.Value)).ToArray()),
             _ => JsonValue.Create(objValue),
         };
