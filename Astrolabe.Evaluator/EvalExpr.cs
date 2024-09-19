@@ -315,6 +315,15 @@ public static class ValueExtensions
         return (v.Value as ArrayValue)!;
     }
 
+    public static ArrayValue ToArray(this ValueExpr v)
+    {
+        return v.Value switch
+        {
+            ArrayValue av => av,
+            _ => new ArrayValue([v])
+        };
+    }
+
     public static bool AsBool(this ValueExpr v)
     {
         return (bool)v.Value!;

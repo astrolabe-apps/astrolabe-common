@@ -83,7 +83,15 @@ export interface CallExpr {
 
 export interface ValueExpr {
   type: "value";
-  value: unknown;
+  value:
+    | string
+    | number
+    | boolean
+    | Record<string, unknown>
+    | ValueExpr[]
+    | null
+    | FunctionValue
+    | undefined;
   path?: Path;
   deps?: Path[];
 }

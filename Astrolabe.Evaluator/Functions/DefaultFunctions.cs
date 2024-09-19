@@ -292,7 +292,12 @@ public static class DefaultFunctions
                 var compare = others[i++];
                 var value = others[i++];
                 var (nextEnv, compValue) = curEnv.Evaluate(compare);
-                if (curEnv.Compare(condCompare, compValue.Value) == 0)
+
+                if (
+                    compValue
+                        .ToArray()
+                        .Values.Any(x => curEnv.Compare(x.Value, condValue.Value) == 0)
+                )
                 {
                     return nextEnv
                         .Evaluate(value)

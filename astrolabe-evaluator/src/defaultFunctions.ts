@@ -103,7 +103,9 @@ export const whichFunction: ValueExpr = functionValue((e, call) => {
     const value = args[i++];
     const [nextEnv, compValue] = env.evaluate(compare);
     env = nextEnv;
-    if (compValue.value == cond.value) {
+    const cv = compValue.value;
+    const cva = Array.isArray(cv) ? cv.map((x) => x.value) : [cv];
+    if (cva.find((x) => nextEnv.state.compare(x, cond.value) === 0)) {
       return mapEnv(nextEnv.evaluate(value), (v) =>
         valueExprWithDeps(v.value, [cond, compValue]),
       );
