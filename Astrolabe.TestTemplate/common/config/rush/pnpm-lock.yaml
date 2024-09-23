@@ -330,6 +330,18 @@ importers:
       rimraf: 5.0.9
       typescript: 5.6.2
 
+  ../../../astrolabe-searchstate:
+    specifiers:
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      rimraf: ^5.0.5
+      typescript: ^5.6.2
+    devDependencies:
+      microbundle: 0.15.1
+      prettier: 3.3.3
+      rimraf: 5.0.9
+      typescript: 5.6.2
+
   ../../../astrolabe-storybook:
     specifiers:
       '@astroapps/client': workspace:^0.2.0

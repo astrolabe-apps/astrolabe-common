@@ -492,6 +492,10 @@
       "projectFolder": "../astrolabe-schemas-datagrid",
       "shouldPublish": true
     },
+    {
+      "packageName": "@astroapps/searchstate",
+      "projectFolder": "../astrolabe-searchstate"
+    }
 //    {
 //      "packageName": "nextgen",
 //      "projectFolder": "ClientApp/sites/nextgen"

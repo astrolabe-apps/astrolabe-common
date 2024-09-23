@@ -39,7 +39,7 @@ import {
 } from "@astroapps/client/hooks/queryParamSync";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
-import { Client } from "../client";
+import { CarEdit, Client } from "../client";
 import controlsJson from "../ControlDefinition.json";
 import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
 import { useMemo, useState } from "react";
@@ -99,6 +99,33 @@ const TestSchema = buildSchema<TestSchema>({
   number: doubleField("Double"),
 });
 
+interface SearchResult extends CarEdit {}
+
+interface SearchRequest {
+  sort: string[];
+  filters: string[];
+}
+interface GridSchema {
+  request: SearchRequest;
+  results: SearchResult[];
+}
+
+const ResultSchema = buildSchema<SearchResult>({
+  make: stringField("Make"),
+  model: stringField("Model"),
+  year: intField("Year"),
+});
+
+const RequestSchema = buildSchema<SearchRequest>({
+  sort: stringField("Sort", { collection: true }),
+  filters: stringField("Filters", { collection: true }),
+});
+
+const GridSchema = buildSchema<GridSchema>({
+  results: compoundField("Results", ResultSchema, { collection: true }),
+  request: compoundField("Request", RequestSchema),
+});
+
 export default function Editor() {
   const qc = useQueryControl();
   const selectedForm = useControl("Test");
@@ -115,7 +142,7 @@ export default function Editor() {
     convertStringParam(
       (x) => x,
       (x) => x,
-      "Test",
+      "Grid",
     ),
   );
   const StdFormRenderer = useMemo(
@@ -136,12 +163,15 @@ export default function Editor() {
                 fields: ControlDefinitionSchema,
                 controls: controlsJson,
               }
-            : { fields: TestSchema, controls: [] };
+            : c === "Test"
+              ? { fields: TestSchema, controls: [] }
+              : { fields: GridSchema, controls: [] };
         }}
         selectedForm={selectedForm}
         formTypes={[
           ["EditorControls", "EditorControls"],
           ["Test", "Test"],
+          ["Grid", "Grid"],
         ]}
         validation={async (data) => {
           data.touched = true;

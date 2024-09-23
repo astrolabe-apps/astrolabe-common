@@ -78,6 +78,7 @@ export interface SchemaInterface {
   controlLength(field: SchemaField, control: Control<any>): number;
   valueLength(field: SchemaField, value: any): number;
   getOptions(field: SchemaField): FieldOption[] | undefined | null;
+  getFilterOptions(field: SchemaField): FieldOption[] | undefined | null;
   parseToMillis(field: SchemaField, v: string): number;
   validationMessageText(
     field: SchemaField,

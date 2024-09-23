@@ -1,20 +1,18 @@
 import { Popover } from "./Popover";
 
-import {
-  Control,
-  RenderArrayElements,
-  RenderControl,
-} from "@react-typed-forms/core";
-import { ColumnDef } from "@astroapps/datagrid";
-import { FieldOption } from "@react-typed-forms/schemas";
+import { RenderArrayElements, RenderControl } from "@react-typed-forms/core";
+import { SchemaField, SchemaInterface } from "@react-typed-forms/schemas";
+import React from "react";
 
 export function FilterPopover({
-  column,
-  options,
+  field,
+  schemaInterface,
   setOption,
+  isChecked,
 }: {
-  column: ColumnDef<any>;
-  options: [FieldOption, Control<boolean>][];
+  field: SchemaField;
+  schemaInterface: SchemaInterface;
+  isChecked: (v: any) => boolean;
   setOption: (v: any, checked: boolean) => void;
 }) {
   return (
@@ -27,16 +25,17 @@ export function FilterPopover({
   );
 
   function showValues() {
+    const options = schemaInterface.getFilterOptions(field);
     return (
       <RenderArrayElements
         array={options}
-        children={([n, v]) => {
-          const checked = !v.value;
+        children={(n) => {
+          const checked = isChecked(n.value);
           return (
             <label
               className="grid grid-cols-[auto_1fr] cursor-pointer gap-2 align-text-top"
               onClick={() => {
-                setOption(n.value, checked);
+                setOption(n.value, !checked);
               }}
             >
               <input className="mt-0.5" type="checkbox" checked={checked} />

@@ -20,7 +20,7 @@ import {
 import React, { useCallback } from "react";
 import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client/hooks/useApiClient";
-import { Client, EvalResult } from "../../client";
+import { Client, EvalResult, ValueWithDeps } from "../../client";
 import { basicSetup, EditorView } from "codemirror";
 import { Evaluator } from "@astroapps/codemirror-evaluator";
 
@@ -136,15 +136,11 @@ class TrackDataEnv extends BasicEvalEnv {
   }
 }
 
-function toValueDeps({ value, path, deps }: ValueExpr): {
-  value: unknown;
-  path?: string;
-  deps?: string[];
-} {
+function toValueDeps({ value, path, deps }: ValueExpr): ValueWithDeps {
   const val = Array.isArray(value) ? value.map(toValueDeps) : value;
   return {
     value: val,
-    path: path ? printPath(path) : undefined,
-    deps: deps?.map(printPath),
+    path: path ? printPath(path) : null,
+    deps: deps?.map(printPath) ?? null,
   };
 }
