@@ -1,10 +1,15 @@
 import {
+  ColumnDef,
   ColumnDefInit,
   columnDefinitions,
   ColumnHeader,
   DataGrid,
 } from "@astroapps/datagrid";
-import { Control, useTrackedComponent } from "@react-typed-forms/core";
+import {
+  Control,
+  useSelectableArray,
+  useTrackedComponent,
+} from "@react-typed-forms/core";
 import React, { ReactNode, useMemo } from "react";
 import {
   ActionRendererProps,
@@ -32,6 +37,7 @@ import {
   stringField,
   useDynamicHooks,
 } from "@react-typed-forms/schemas";
+import { FilterPopover } from "./FilterPopover";
 
 interface DataGridOptions extends ArrayActionOptions {
   noEntriesText?: string;
@@ -39,7 +45,13 @@ interface DataGridOptions extends ArrayActionOptions {
 
 type ColumnOptions = Pick<
   ColumnHeader,
-  "cellClass" | "headerCellClass" | "columnTemplate" | "bodyCellClass" | "title"
+  | "cellClass"
+  | "headerCellClass"
+  | "columnTemplate"
+  | "bodyCellClass"
+  | "title"
+  | "filterField"
+  | "sortField"
 > & {
   renderOptions?: RenderOptions;
   rowIndex?: boolean;
@@ -57,6 +69,8 @@ const ColumnOptionsFields = buildSchema<ColumnOptions>({
   renderOptions: compoundField("Render Options", [], {
     schemaRef: "RenderOptions",
   }),
+  filterField: stringField("Filter field"),
+  sortField: stringField("Sort field"),
 });
 
 const DataGridFields = buildSchema<DataGridOptions>({
@@ -160,7 +174,7 @@ export function createDataGridRenderer(options?: DataGridOptions) {
           return {
             ...colOptions,
             id: "c" + i,
-            title: d.title ?? "Column " + i,
+          title: colOptions?.title ?? d.title ?? "Column " + i,
             render: (_: Control<any>, rowIndex: number) =>
               renderChild(i, d, {
                 dataContext: {
@@ -224,6 +238,35 @@ function DataGridControlRenderer({
     ),
   });
   const rowCount = control.elements?.length ?? 0;
+
+  // function renderHeaderContent(col: ColumnDef<T>) {
+  //   const { filterField, sortField, title } = col;
+  //   const filtered = (
+  //     <>
+  //       {title}
+  //       {filterField && (
+  //         <FilterPopover
+  //           state={state}
+  //           filterField={filterField}
+  //           column={col}
+  //           useFilterValues={useFilterValues}
+  //         />
+  //       )}
+  //     </>
+  //   );
+  //   return filtered;
+  // return sortField ? (
+  //   <SortableHeader
+  //     state={state}
+  //     sortField={sortField}
+  //     column={col}
+  //     children={filtered}
+  //   />
+  // ) : (
+  //   filtered
+  // );
+  // }
+
   return (
     <>
       <DataGrid

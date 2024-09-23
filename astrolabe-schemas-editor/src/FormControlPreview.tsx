@@ -113,7 +113,10 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     parentContext,
     elementIndex,
   );
-  const isRequired = isDataControlDefinition(definition) && definition.required;
+  const dataDefinition = isDataControlDefinition(definition)
+    ? definition
+    : undefined;
+  const isRequired = !!dataDefinition?.required;
   const displayOptions = getDisplayOnlyOptions(definition);
   const sampleData = useMemo(
     () =>
@@ -158,7 +161,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       );
     },
     createDataProps: defaultDataProps,
-    formOptions: {},
+    formOptions: { readonly: dataDefinition?.readonly },
     dataContext,
     control,
     schemaInterface,

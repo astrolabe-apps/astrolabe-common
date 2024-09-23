@@ -7,7 +7,7 @@
 		"build": "next build",
 		"start": "next start",
 		"lint": "next lint",
-		"genclient": "nswag openapi2tsclient /input:http://localhost:5000/swagger/v1/swagger.json /output:src/client.ts /NullValue:Null /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string /TypeScriptVersion:4.9"
+		"genclient": "nswag openapi2tsclient /input:http://localhost:5000/swagger/v1/swagger.json /output:src/client.ts /NullValue:Null /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string /TypeScriptVersion:4.9 && h get http://localhost:5000/api/SearchState/Schemas > src/schemas.ts && prettier -w src/schemas.ts"
 	},
 	"dependencies": {
 		"@react-typed-forms/core": "^3.6.0",
@@ -41,6 +41,7 @@
 		"tailwindcss": "^3.4.1",
 		"prettier": "^3.0.3",
 		"@tailwindcss/forms": "^0.5.7",
-		"nswag": "^14.0.7"
+		"nswag": "^14.0.7",
+		"http-request-cli": "^0.2.0"
 	}
 }

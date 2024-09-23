@@ -18,6 +18,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Evaluator\Astrolabe.Evaluator.csproj" />
       <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+      <ProjectReference Include="..\Astrolabe.SearchState\Astrolabe.SearchState.csproj" />
       <ProjectReference Include="..\Astrolabe.Validation\Astrolabe.Validation.csproj" />
       <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
       <ProjectReference Include="..\Astrolabe.Workflow\Astrolabe.Workflow.csproj" />
