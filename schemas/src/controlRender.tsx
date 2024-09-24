@@ -1,5 +1,4 @@
 import React, {
-  CSSProperties,
   FC,
   Fragment,
   Key,
@@ -24,7 +23,6 @@ import {
   ArrayRenderOptions,
   ControlAdornment,
   ControlDefinition,
-  ControlDefinitionType,
   CustomDisplay,
   DataControlDefinition,
   DataRenderType,
@@ -73,6 +71,14 @@ import {
 import { useMakeValidationHook, ValidationContext } from "./validators";
 import { cc } from "./internal";
 import { defaultSchemaInterface } from "./schemaInterface";
+import {
+  createSchemaLookup,
+  fieldPathForDefinition,
+  getRelativeFields,
+  makeSchemaDataNode,
+  schemaDataForFieldPath,
+  SchemaDataNode,
+} from "./treeNodes";
 
 export interface FormRenderer {
   renderData: (
@@ -277,13 +283,23 @@ export function useControlRenderer(
   fields: SchemaField[],
   renderer: FormRenderer,
   options: ControlRenderOptions = {},
+  parentDataNode?: SchemaDataNode,
 ): FC<ControlRenderProps> {
+  parentDataNode ??= makeSchemaDataNode(
+    createSchemaLookup({ "": fields }).getSchema("")!,
+  );
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
   const elementIndex = options.elementIndex;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const useExpr = options.useEvalExpressionHook ?? defaultUseEvalExpressionHook;
 
-  const fieldPath = lookupSchemaField(definition, fields);
+  const fieldNamePath = fieldPathForDefinition(definition);
+  const dataNode = fieldNamePath
+    ? schemaDataForFieldPath(fieldNamePath, parentDataNode)
+    : undefined;
+  const fieldPath = dataNode
+    ? getRelativeFields(parentDataNode.schema, dataNode.schema)
+    : undefined;
   const schemaField = fieldPath?.at(-1);
   const useValidation = useMakeValidationHook(
     definition,
@@ -327,11 +343,14 @@ export function useControlRenderer(
     fields,
     fieldPath,
     elementIndex,
+    parentDataNode,
+    dataNode,
   });
 
   const Component = useCallback(
     ({ control: rootControl, parentPath = [] }: ControlRenderProps) => {
       const stopTracking = useComponentTracking();
+
       try {
         const {
           definition: c,
@@ -339,7 +358,11 @@ export function useControlRenderer(
           fields,
           fieldPath,
           elementIndex,
+          parentDataNode: pdn,
+          dataNode: dn,
         } = r.current;
+        const [parentDataNode, schemaDataNode] =
+          pdn.control == null ? lookupDataNode() : [pdn, dn];
         const schemaField = fieldPath?.at(-1);
         const parentDataContext: ControlDataContext = {
           fields,
@@ -379,6 +402,23 @@ export function useControlRenderer(
               }));
           },
         );
+
+        function lookupDataNode(): [
+          SchemaDataNode,
+          SchemaDataNode | undefined,
+        ] {
+          const p = makeSchemaDataNode(pdn.schema, rootControl);
+          if (dn) {
+            return [
+              p,
+              schemaDataForFieldPath(
+                getRelativeFields(p.schema, dn!.schema).map((x) => x.field),
+                p,
+              ),
+            ];
+          }
+          return [p, undefined];
+        }
 
         const [parentControl, control, controlDataContext] = getControlData(
           fieldPath,
@@ -592,6 +632,7 @@ export function ControlRenderer({
   options,
   control,
   parentPath,
+  schemaDataNode,
 }: {
   definition: ControlDefinition;
   fields: SchemaField[];
@@ -599,8 +640,15 @@ export function ControlRenderer({
   options?: ControlRenderOptions;
   control: Control<any>;
   parentPath?: JsonPath[];
+  schemaDataNode?: SchemaDataNode;
 }) {
-  const Render = useControlRenderer(definition, fields, renderer, options);
+  const Render = useControlRenderer(
+    definition,
+    fields,
+    renderer,
+    options,
+    schemaDataNode,
+  );
   return <Render control={control} parentPath={parentPath} />;
 }
 

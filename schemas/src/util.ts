@@ -22,6 +22,7 @@ import {
   trackControlChange,
 } from "@react-typed-forms/core";
 import clsx from "clsx";
+import { SchemaDataNode } from "./treeNodes";
 
 export type JsonPath = string | number;
 

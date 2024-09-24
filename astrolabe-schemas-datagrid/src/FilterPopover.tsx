@@ -27,23 +27,26 @@ export function FilterPopover({
   function showValues() {
     const options = schemaInterface.getFilterOptions(field);
     return (
-      <RenderArrayElements
-        array={options}
-        children={(n) => {
-          const checked = isChecked(n.value);
-          return (
-            <label
-              className="grid grid-cols-[auto_1fr] cursor-pointer gap-2 align-text-top"
-              onClick={() => {
-                setOption(n.value, !checked);
-              }}
-            >
-              <input className="mt-0.5" type="checkbox" checked={checked} />
-              <span className="inline align-middle">{n.name}</span>
-            </label>
-          );
-        }}
-      />
+      <div>
+        COOL
+        <RenderArrayElements
+          array={options}
+          children={(n) => {
+            const checked = isChecked(n.value);
+            return (
+              <label
+                className="grid grid-cols-[auto_1fr] cursor-pointer gap-2 align-text-top"
+                onClick={() => {
+                  setOption(n.value, !checked);
+                }}
+              >
+                <input className="mt-0.5" type="checkbox" checked={checked} />
+                <span className="inline align-middle">{n.name}</span>
+              </label>
+            );
+          }}
+        />
+      </div>
     );
   }
 }

@@ -39,7 +39,12 @@ import {
 } from "@astroapps/client/hooks/queryParamSync";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
-import { CarEdit, Client } from "../client";
+import {
+  CarClient,
+  CarEdit,
+  CodeGenClient,
+  SearchStateClient,
+} from "../client";
 import controlsJson from "../ControlDefinition.json";
 import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
 import { useMemo, useState } from "react";
@@ -47,22 +52,10 @@ import {
   createDataGridRenderer,
   DataGridExtension,
 } from "@astroapps/schemas-datagrid";
+import { FormDefinitions } from "../forms";
+import { createStdFormRenderer } from "../renderers";
 
 const CustomControlSchema = applyEditorExtensions(DataGridExtension);
-
-function createStdFormRenderer(container: HTMLElement | null) {
-  return createFormRenderer(
-    [
-      createDataGridRenderer({ addText: "Add", removeText: "Delete" }),
-      createDatePickerRenderer(undefined, {
-        portalContainer: container ? container : undefined,
-      }),
-    ],
-    createDefaultRenderers({
-      ...defaultTailwindTheme,
-    }),
-  );
-}
 
 interface DisabledStuff {
   disable: boolean;
@@ -165,13 +158,18 @@ export default function Editor() {
               }
             : c === "Test"
               ? { fields: TestSchema, controls: [] }
-              : { fields: GridSchema, controls: [] };
+              : c === "Grid"
+                ? { fields: GridSchema, controls: [] }
+                : fromFormJson(c as any);
         }}
         selectedForm={selectedForm}
         formTypes={[
           ["EditorControls", "EditorControls"],
           ["Test", "Test"],
           ["Grid", "Grid"],
+          ...Object.values(FormDefinitions).map(
+            (x) => [x.value, x.name] as [string, string],
+          ),
         ]}
         validation={async (data) => {
           data.touched = true;
@@ -180,7 +178,14 @@ export default function Editor() {
         }}
         saveForm={async (controls) => {
           if (selectedForm.value === "EditorControls") {
-            await new Client().controlDefinition(controls);
+            await new CodeGenClient().editControlDefinition(controls);
+          } else {
+            if (selectedForm.value !== "Test") {
+              await new SearchStateClient().editControlDefinition(
+                selectedForm.value,
+                { controls, config: null },
+              );
+            }
           }
         }}
         previewOptions={{
@@ -206,6 +211,10 @@ export default function Editor() {
     </DndProvider>
   );
 
+  function fromFormJson(c: keyof typeof FormDefinitions) {
+    const { controls, schema } = FormDefinitions[c];
+    return { fields: schema, controls };
+  }
   function evalExpr(
     expr: EntityExpression,
     context: ControlDataContext,

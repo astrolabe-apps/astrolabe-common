@@ -23,7 +23,7 @@ const router = createBrowserRouter([
 const root = createRoot(document.getElementById("app")!);
 
 root.render(
-  <RenderFormContext.Provider value={NextGenRender}>
-    <RouterProvider router={router} />
-  </RenderFormContext.Provider>,
+  //<RenderFormContext.Provider value={NextGenRender}>
+  <RouterProvider router={router} />,
+  //</RenderFormContext.Provider>,
 );

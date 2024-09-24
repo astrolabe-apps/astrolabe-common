@@ -188,7 +188,6 @@ function DataGridControlRenderer({
       } = data;
       if (isDataControlDefinition(d)) {
         const theField = fields.find((x) => x.field == d.field);
-        console.log(theField, filterField);
         if (theField) {
           return (
             <>

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Astrolabe.CodeGen.Typescript;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
+using Astrolabe.TestTemplate.Forms;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Astrolabe.TestTemplate.Controllers;

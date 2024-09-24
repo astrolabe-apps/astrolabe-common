@@ -24,7 +24,11 @@ public record FormDefinition<TSchema, TConfig>(string Value, string Name, TConfi
 
 public class FormBuilder<TConfig>
 {
-    public FormDefinition<TSchema, TConfig> Form<TSchema>(string value, string name, TConfig config)
+    public static FormDefinition<TSchema, TConfig> Form<TSchema>(
+        string value,
+        string name,
+        TConfig config
+    )
     {
         return new FormDefinition<TSchema, TConfig>(value, name, config);
     }
