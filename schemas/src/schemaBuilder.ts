@@ -4,8 +4,8 @@ import {
   FieldType,
   SchemaField,
   SchemaMap,
+  isCompoundField,
 } from "./types";
-import { isCompoundField } from "./util";
 
 export type AllowedSchema<T> = T extends string
   ? SchemaField & {

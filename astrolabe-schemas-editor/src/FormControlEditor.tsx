@@ -6,6 +6,8 @@ import {
   GroupedControlsDefinition,
   SchemaField,
   useControlRenderer,
+  rootSchemaNode,
+  makeSchemaDataNode,
 } from "@react-typed-forms/schemas";
 import {
   findAllParentsInControls,
@@ -35,14 +37,15 @@ export function FormControlEditor({
       newControl<SchemaFieldForm[]>([])
     );
   }).value;
-  const useDataHook = useEditorDataHook(fieldList.value);
+  const useDataHook = useEditorDataHook(rootSchemaNode(fieldList.value));
+  const editorNode = makeSchemaDataNode(rootSchemaNode(editorFields), control);
   const RenderEditor = useControlRenderer(
     editorControls,
-    editorFields,
     renderer,
     {
       useDataHook,
     },
+    editorNode,
   );
-  return <RenderEditor control={control} />;
+  return <RenderEditor />;
 }

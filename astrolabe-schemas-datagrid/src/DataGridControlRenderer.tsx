@@ -15,7 +15,6 @@ import {
   isDataControlDefinition,
   mergeObjects,
   RenderOptions,
-  SchemaInterface,
   stringField,
 } from "@react-typed-forms/schemas";
 import {
@@ -61,7 +60,6 @@ export function createDataGridRenderer(options?: DataGridOptions) {
       const {
         control,
         dataContext,
-        parentContext,
         definition,
         renderChild,
         renderOptions,
@@ -94,10 +92,7 @@ export function createDataGridRenderer(options?: DataGridOptions) {
             render: (_, ri) =>
               x.rowIndex
                 ? ri + 1
-                : renderChild("c" + i + "_" + ri, def, {
-                    elementIndex: ri,
-                    dataContext: parentContext,
-                  }),
+                : renderChild("c" + i + "_" + ri, def, { elementIndex: ri }),
           };
         }) ?? [];
       const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
@@ -113,10 +108,7 @@ export function createDataGridRenderer(options?: DataGridOptions) {
             },
             render: (_: Control<any>, rowIndex: number) =>
               renderChild(i, d, {
-                dataContext: {
-                  ...dataContext,
-                  path: [...dataContext.path, rowIndex],
-                },
+                parentDataNode: dataContext.dataNode!.getChildElement(rowIndex),
               }),
           };
         });

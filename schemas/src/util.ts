@@ -7,10 +7,15 @@ import {
   DisplayOnlyRenderOptions,
   FieldOption,
   FieldType,
+  findField,
   GroupedControlsDefinition,
+  isCompoundField,
+  isDataControl,
   isDataControlDefinition,
   isDisplayOnlyRenderer,
+  isGroupControl,
   isGroupControlsDefinition,
+  isScalarField,
   SchemaField,
   SchemaInterface,
   visitControlDefinition,
@@ -22,7 +27,12 @@ import {
   trackControlChange,
 } from "@react-typed-forms/core";
 import clsx from "clsx";
-import { SchemaDataNode } from "./treeNodes";
+import {
+  getJsonPath,
+  getRootDataNode,
+  getSchemaFieldList,
+  SchemaDataNode,
+} from "./treeNodes";
 
 export type JsonPath = string | number;
 
@@ -34,8 +44,30 @@ export interface DataContext {
 export interface ControlDataContext extends DataContext {
   fields: SchemaField[];
   schemaInterface: SchemaInterface;
-  schemaNode: SchemaDataNode;
+  dataNode: SchemaDataNode | undefined;
+  parentNode: SchemaDataNode;
 }
+
+export class ControlDataContextImpl implements ControlDataContext {
+  constructor(
+    public schemaInterface: SchemaInterface,
+    public dataNode: SchemaDataNode | undefined,
+    public parentNode: SchemaDataNode,
+  ) {}
+
+  get fields() {
+    return getSchemaFieldList(this.parentNode.schema);
+  }
+
+  get data() {
+    return getRootDataNode(this.parentNode).control!;
+  }
+
+  get path() {
+    return getJsonPath(this.dataNode ?? this.parentNode);
+  }
+}
+
 export function applyDefaultValues(
   v: Record<string, any> | undefined,
   fields: SchemaField[],
@@ -131,33 +163,6 @@ export function findCompoundField(
   field: string,
 ): CompoundField | undefined {
   return findField(fields, field) as CompoundField | undefined;
-}
-
-export function findField(
-  fields: SchemaField[],
-  field: string,
-): SchemaField | undefined {
-  return fields.find((x) => x.field === field);
-}
-
-export function isScalarField(sf: SchemaField): sf is SchemaField {
-  return !isCompoundField(sf);
-}
-
-export function isCompoundField(sf: SchemaField): sf is CompoundField {
-  return sf.type === FieldType.Compound;
-}
-
-export function isDataControl(
-  c: ControlDefinition,
-): c is DataControlDefinition {
-  return c.type === ControlDefinitionType.Data;
-}
-
-export function isGroupControl(
-  c: ControlDefinition,
-): c is GroupedControlsDefinition {
-  return c.type === ControlDefinitionType.Group;
 }
 
 export function fieldHasTag(field: SchemaField, tag: string) {
@@ -354,21 +359,6 @@ export function getDisplayOnlyOptions(
     d.renderOptions &&
     isDisplayOnlyRenderer(d.renderOptions)
     ? d.renderOptions
-    : undefined;
-}
-
-export function getTypeField(
-  context: ControlDataContext,
-  fieldPath: SchemaField[],
-): Control<string> | undefined {
-  const withoutLast = fieldPath.slice(0, -1);
-  const fieldList =
-    withoutLast.length > 0
-      ? (withoutLast.at(-1) as CompoundField).children
-      : context.fields;
-  const typeSchemaField = fieldList.find((x) => x.isTypeField);
-  return typeSchemaField
-    ? lookupChildControl(context, [...withoutLast, typeSchemaField])
     : undefined;
 }
 

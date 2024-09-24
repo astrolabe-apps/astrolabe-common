@@ -354,7 +354,7 @@ export function createDefaultAdornmentRenderer(
 ): AdornmentRendererRegistration {
   return {
     type: "adornment",
-    render: ({ adornment, designMode, parentContext, useExpr }, renderers) => ({
+    render: ({ adornment, designMode, dataContext, useExpr }, renderers) => ({
       apply: (rl) => {
         if (isSetFieldAdornment(adornment) && useExpr) {
           const hook = useExpr(adornment.expression, (x) => x);
@@ -363,7 +363,7 @@ export function createDefaultAdornmentRenderer(
           return wrapLayout((x) => (
             <SetFieldWrapper
               children={x}
-              parentContext={parentContext}
+              parentContext={dataContext}
               adornment={adornment}
             />
           ))(rl);

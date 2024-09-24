@@ -57,6 +57,12 @@ public class SearchStateController : ControllerBase
             .ToSource();
     }
 
+    [HttpGet]
+    public CarSearchPage? GetExtraTypes()
+    {
+        return null;
+    }
+
     [HttpPut("ControlDefinition/{id}")]
     public async Task EditControlDefinition(
         string id,

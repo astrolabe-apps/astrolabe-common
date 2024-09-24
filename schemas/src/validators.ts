@@ -44,9 +44,9 @@ export function useMakeValidationHook(
   const depString = makeHookDepString(dd?.validators ?? [], (x) => x.type);
   return useCallback(
     (ctx) => {
-      const { field } = ctx.dataContext.schemaNode.schema;
+      const field = ctx.dataContext.dataNode?.schema.field;
       const { dd } = refData.current;
-      if (!dd) return;
+      if (!dd || !field) return;
       const {
         control,
         hiddenControl,

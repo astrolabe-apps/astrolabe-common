@@ -43,6 +43,7 @@ import {
   GroupedControlsDefinition,
   GroupRenderType,
   SchemaField,
+  rootSchemaNode,
 } from "@react-typed-forms/schemas";
 import {
   isControlDefinitionNode,
@@ -262,7 +263,7 @@ export function BasicFormEditor<A extends string>({
                           <FormControlPreview
                             keyPrefix={formType}
                             definition={trackedValue(c)}
-                            fields={trackedValue(fields)}
+                            parentNode={rootSchemaNode(trackedValue(fields))}
                             dropIndex={i}
                           />
                         </div>
