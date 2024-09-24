@@ -168,8 +168,6 @@ export function useEvalDisplayHook(
 export function useEvalDefaultValueHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
-  schemaField: SchemaField | undefined,
-  element: boolean,
 ): EvalExpressionHook {
   const dynamicValue = useEvalDynamicHook(
     definition,
@@ -178,23 +176,27 @@ export function useEvalDefaultValueHook(
   );
   return makeDynamicPropertyHook(
     dynamicValue,
-    (ctx, { definition, schemaField }) => {
+    (ctx, { definition }) => {
       return useComputed(calcDefault);
       function calcDefault() {
         const [required, dcv] = isDataControlDefinition(definition)
           ? [definition.required, definition.defaultValue]
           : [false, undefined];
+        const {
+          elementIndex,
+          schema: { field },
+        } = ctx.schemaNode;
         return (
           dcv ??
-          (schemaField
-            ? element
-              ? elementValueForField(schemaField)
-              : defaultValueForField(schemaField, required, true)
+          (field
+            ? elementIndex != null
+              ? elementValueForField(field)
+              : defaultValueForField(field, required, true)
             : undefined)
         );
       }
     },
-    { definition, schemaField },
+    { definition },
   );
 }
 

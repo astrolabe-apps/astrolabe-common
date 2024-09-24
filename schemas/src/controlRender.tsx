@@ -280,14 +280,10 @@ export interface ControlRenderOptions extends FormContextOptions {
 }
 export function useControlRenderer(
   definition: ControlDefinition,
-  fields: SchemaField[],
   renderer: FormRenderer,
   options: ControlRenderOptions = {},
-  parentDataNode?: SchemaDataNode,
+  parentDataNode: SchemaDataNode,
 ): FC<ControlRenderProps> {
-  parentDataNode ??= makeSchemaDataNode(
-    createSchemaLookup({ "": fields }).getSchema("")!,
-  );
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
   const elementIndex = options.elementIndex;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
@@ -300,19 +296,13 @@ export function useControlRenderer(
   const fieldPath = dataNode
     ? getRelativeFields(parentDataNode.schema, dataNode.schema)
     : undefined;
-  const schemaField = fieldPath?.at(-1);
+
   const useValidation = useMakeValidationHook(
     definition,
-    schemaField,
     options.useValidationHook,
   );
   const dynamicHooks = useDynamicHooks({
-    defaultValueControl: useEvalDefaultValueHook(
-      useExpr,
-      definition,
-      schemaField,
-      elementIndex != null,
-    ),
+    defaultValueControl: useEvalDefaultValueHook(useExpr, definition),
     visibleControl: useEvalVisibilityHook(useExpr, definition, fieldPath),
     readonlyControl: useEvalReadonlyHook(useExpr, definition),
     disabledControl: useEvalDisabledHook(

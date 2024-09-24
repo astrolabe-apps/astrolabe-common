@@ -34,6 +34,7 @@ export interface DataContext {
 export interface ControlDataContext extends DataContext {
   fields: SchemaField[];
   schemaInterface: SchemaInterface;
+  schemaNode: SchemaDataNode;
 }
 export function applyDefaultValues(
   v: Record<string, any> | undefined,
