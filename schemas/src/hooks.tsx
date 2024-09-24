@@ -32,13 +32,11 @@ import {
   elementValueForField,
   findFieldPath,
   getDisplayOnlyOptions,
-  getTypeField,
   HookDep,
   isControlDisabled,
   isControlReadonly,
   jsonPathString,
   lookupChildControl,
-  lookupChildControlPath,
   toDepString,
 } from "./util";
 import jsonata from "jsonata";
