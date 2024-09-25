@@ -173,6 +173,7 @@ public record TsArg(string Name, TsType? Type);
 
 public static class TsToSource
 {
+    // TODO proper precedence
     public static string MaybeBracketType(this TsType tsType)
     {
         var needsEscape = tsType switch
