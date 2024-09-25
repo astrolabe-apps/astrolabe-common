@@ -173,11 +173,21 @@ public record TsArg(string Name, TsType? Type);
 
 public static class TsToSource
 {
+    public static string MaybeBracketType(this TsType tsType)
+    {
+        var needsEscape = tsType switch
+        {
+            TsTypeSet typeSet when typeSet.Types.Count() > 1 => true,
+            _ => tsType.Undefinable || tsType.Nullable
+        };
+        return needsEscape ? $"({tsType.ToSource()})" : tsType.ToSource();
+    }
+
     public static string ToSource(this TsType tsType)
     {
         var mainType = tsType switch
         {
-            TsArrayType tsArrayType => $"{tsArrayType.OfType.ToSource()}[]",
+            TsArrayType tsArrayType => $"{tsArrayType.OfType.MaybeBracketType()}[]",
             TsTypeRef tsTypeRef => $"{tsTypeRef.Name}",
             TsGenericType tsGenType
                 => $"{tsGenType.BaseType.ToSource()}<{string.Join(", ", tsGenType.GenTypes.Select(x => x.ToSource()))}>",
