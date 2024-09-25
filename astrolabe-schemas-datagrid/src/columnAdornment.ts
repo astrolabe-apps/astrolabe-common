@@ -40,7 +40,7 @@ export const ColumnOptionsFields = buildSchema<ColumnOptions>({
   }),
   filterField: stringField("Filter field"),
   sortField: stringField("Sort field"),
-  visible: compoundField("Visible expression", [], {
+  visible: compoundField("Column visibility", [], {
     schemaRef: "EntityExpression",
   }),
 });

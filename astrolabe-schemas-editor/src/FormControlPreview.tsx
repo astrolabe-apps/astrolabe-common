@@ -167,6 +167,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     dataContext,
     control,
     schemaInterface,
+    useEvalExpression: () => makeHook(() => undefined, undefined),
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
     designMode: true,
   });

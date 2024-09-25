@@ -199,6 +199,7 @@ export interface ParentRendererProps {
   style?: React.CSSProperties;
   dataContext: ControlDataContext;
   useChildVisibility: ChildVisibilityFunc;
+  useEvalExpression: UseEvalExpressionHook;
   designMode?: boolean;
 }
 
@@ -251,6 +252,7 @@ export interface DataControlProps {
   elementIndex?: number;
   allowedOptions?: Control<any[] | undefined>;
   useChildVisibility: ChildVisibilityFunc;
+  useEvalExpression: UseEvalExpressionHook;
   schemaInterface?: SchemaInterface;
   designMode?: boolean;
 }
@@ -501,6 +503,7 @@ export function useControlRendererComponent(
         customDisplay: options.customDisplay,
         actionDataControl: actionData,
         actionOnClick: options.actionOnClick,
+        useEvalExpression: useExpr,
         useChildVisibility: (childDef, parentNode) => {
           const fieldNamePath = fieldPathForDefinition(childDef);
           const overrideNode = fieldNamePath
@@ -645,6 +648,7 @@ export interface RenderControlProps {
   allowedOptions?: Control<any[] | undefined>;
   actionDataControl?: Control<any | undefined | null>;
   useChildVisibility: ChildVisibilityFunc;
+  useEvalExpression: UseEvalExpressionHook;
   actionOnClick?: (actionId: string, actionData: any) => () => void;
   schemaInterface?: SchemaInterface;
   designMode?: boolean;
@@ -669,6 +673,7 @@ export function renderControlLayout(
     useChildVisibility,
     designMode,
     customDisplay,
+    useEvalExpression,
   } = props;
 
   if (isDataControlDefinition(c)) {
@@ -688,6 +693,7 @@ export function renderControlLayout(
         childDefinitions: c.children ?? [],
         definition: c,
         renderChild,
+        useEvalExpression,
         dataContext,
         renderOptions: c.groupOptions ?? { type: "Standard" },
         className: cc(c.styleClass),

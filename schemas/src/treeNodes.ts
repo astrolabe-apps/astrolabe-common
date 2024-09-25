@@ -175,17 +175,17 @@ export function fieldPathForDefinition(
 }
 
 export function schemaDataForFieldRef(
-  fieldRef: string,
+  fieldRef: string | undefined,
   schema: SchemaDataNode,
 ): SchemaDataNode {
-  return schemaDataForFieldPath(fieldRef.split("/"), schema);
+  return schemaDataForFieldPath(fieldRef?.split("/") ?? [], schema);
 }
 
 export function schemaForFieldRef(
-  fieldRef: string,
+  fieldRef: string | undefined,
   schema: SchemaNode,
 ): SchemaNode {
-  return schemaForFieldPath(fieldRef.split("/"), schema);
+  return schemaForFieldPath(fieldRef?.split("/") ?? [], schema);
 }
 
 export function schemaDataForFieldPath(

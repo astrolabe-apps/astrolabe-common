@@ -11,11 +11,15 @@ import {
   createDataRenderer,
   CustomRenderOptions,
   DataControlDefinition,
+  DynamicHookGenerator,
+  EvalExpressionHook,
   getLengthRestrictions,
   isDataControlDefinition,
+  makeHookDepString,
   mergeObjects,
   RenderOptions,
   stringField,
+  toDepString,
 } from "@react-typed-forms/schemas";
 import {
   ColumnDef,
@@ -23,8 +27,12 @@ import {
   columnDefinitions,
   DataGrid,
 } from "@astroapps/datagrid";
-import { Control } from "@react-typed-forms/core";
-import React, { ReactNode } from "react";
+import {
+  Control,
+  useComputed,
+  useTrackedComponent,
+} from "@react-typed-forms/core";
+import React, { ReactNode, useCallback } from "react";
 import { isColumnAdornment } from "./columnAdornment";
 import { FilterPopover } from "./FilterPopover";
 
@@ -35,6 +43,7 @@ interface DataGridOptions extends ArrayActionOptions {
 interface DataGridColumnExtension {
   dataContext: ControlDataContext;
   definition: ControlDefinition;
+  evalHidden?: EvalExpressionHook<boolean>;
 }
 
 const DataGridFields = buildSchema<DataGridOptions>({
@@ -68,6 +77,7 @@ export function createDataGridRenderer(options?: DataGridOptions) {
         className,
         readonly,
         required,
+        useEvalExpression,
       } = pareProps;
       const dataGridOptions =
         mergeObjects(
@@ -105,6 +115,10 @@ export function createDataGridRenderer(options?: DataGridOptions) {
             data: {
               dataContext,
               definition: d,
+              evalHidden: useEvalExpression(
+                colOptions?.visible,
+                (x) => !!x,
+              ) as EvalExpressionHook<boolean>,
             },
             render: (_: Control<any>, rowIndex: number) =>
               renderChild(i, d, {
@@ -115,7 +129,7 @@ export function createDataGridRenderer(options?: DataGridOptions) {
       const allColumns = constantColumns.concat(columns);
 
       return (
-        <DataGridControlRenderer
+        <DynamicGridVisibility
           renderOptions={dataGridOptions}
           renderAction={renderers.renderAction}
           control={control}
@@ -132,6 +146,32 @@ export function createDataGridRenderer(options?: DataGridOptions) {
     },
     { renderType: DataGridDefinition.value, collection: true },
   );
+}
+
+function DynamicGridVisibility(props: DataGridRendererProps) {
+  const depString = makeHookDepString(
+    props.columns.map((x) => x.data?.evalHidden),
+    (x) => x?.deps,
+  );
+
+  const Render = useTrackedComponent<DataGridRendererProps>(
+    (props: DataGridRendererProps) => {
+      const newColumns = props.columns.map((x) => {
+        const data = x.data;
+        if (data && data.evalHidden) {
+          const visible = data.evalHidden.runHook(
+            data.dataContext,
+            data.evalHidden.state,
+          );
+          if (visible) return { ...x, hidden: !visible.value };
+        }
+        return x;
+      });
+      return <DataGridControlRenderer {...props} columns={newColumns} />;
+    },
+    [depString],
+  );
+  return <Render {...props} />;
 }
 
 interface DataGridRendererProps {
@@ -167,6 +207,7 @@ function DataGridControlRenderer({
       ),
     },
   );
+
   const rowCount = control.elements?.length ?? 0;
 
   function renderHeaderContent(
