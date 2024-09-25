@@ -8,6 +8,9 @@ import {
   isGroupControlsDefinition,
   SchemaField,
   isCompoundField,
+  DataControlDefinition,
+  visitControlDefinition,
+  GroupedControlsDefinition,
 } from "./types";
 
 const MissingField: SchemaField = { field: "__missing", type: FieldType.Any };
@@ -272,4 +275,78 @@ export function rootSchemaNode(
     lookup,
     undefined,
   );
+}
+
+export function visitControlDataArray<A>(
+  controls: ControlDefinition[] | undefined | null,
+  context: SchemaDataNode,
+  cb: (
+    definition: DataControlDefinition,
+    node: SchemaDataNode,
+  ) => A | undefined,
+): A | undefined {
+  if (!controls) return undefined;
+  for (const c of controls) {
+    const r = visitControlData(c, context, cb);
+    if (r !== undefined) return r;
+  }
+  return undefined;
+}
+
+export function visitControlData<A>(
+  definition: ControlDefinition,
+  ctx: SchemaDataNode,
+  cb: (
+    definition: DataControlDefinition,
+    field: SchemaDataNode,
+  ) => A | undefined,
+): A | undefined {
+  if (!ctx.control || ctx.control.isNull) return undefined;
+  return visitControlDefinition<A | undefined>(
+    definition,
+    {
+      data(def: DataControlDefinition) {
+        return processData(def, def.field, def.children);
+      },
+      group(d: GroupedControlsDefinition) {
+        return processData(undefined, d.compoundField, d.children);
+      },
+      action: () => undefined,
+      display: () => undefined,
+    },
+    () => undefined,
+  );
+
+  function processData(
+    def: DataControlDefinition | undefined,
+    fieldName: string | undefined | null,
+    children: ControlDefinition[] | null | undefined,
+  ) {
+    const fieldNode = fieldName
+      ? ctx.schema.getChildNode(fieldName)
+      : undefined;
+    if (!fieldNode)
+      return !fieldName ? visitControlDataArray(children, ctx, cb) : undefined;
+    const childNode = ctx.getChild(fieldNode);
+    const result = def ? cb(def, childNode) : undefined;
+    if (result !== undefined) return result;
+    const compound = isCompoundField(fieldNode.field);
+    if (fieldNode.field.collection) {
+      const control = childNode.control as Control<unknown[]>;
+      let cIndex = 0;
+      for (const c of control!.elements ?? []) {
+        const elemChild = childNode.getChildElement(cIndex);
+        const elemResult = def ? cb(def, elemChild) : undefined;
+        if (elemResult !== undefined) return elemResult;
+        if (compound) {
+          const cfResult = visitControlDataArray(children, elemChild, cb);
+          if (cfResult !== undefined) return cfResult;
+        }
+        cIndex++;
+      }
+    } else if (compound) {
+      return visitControlDataArray(children, childNode, cb);
+    }
+    return undefined;
+  }
 }

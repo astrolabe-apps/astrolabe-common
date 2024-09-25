@@ -25,6 +25,40 @@ describe("schemas properties", () => {
         compoundArray: [],
       }),
     );
+    cy.get("pre#visitedNode").should(
+      compareJson([
+        "compound",
+        "compound.another",
+        1,
+        "compound",
+        "compound.choice",
+        null,
+        "type",
+        "hai",
+        "text",
+        "TEXT",
+        "double",
+        1.5,
+        "int",
+        56,
+        "compoundArray",
+        "compoundArray[0]",
+        "compoundArray[0].choice",
+        null,
+        "compoundArray[0].another",
+        45,
+      ]),
+    );
+    cy.get("pre#dataForVisit").should(
+      compareJson({
+        type: "hai",
+        text: "TEXT",
+        compound: { another: 1 },
+        int: 56,
+        double: 1.5,
+        compoundArray: [{ another: 45 }],
+      }),
+    );
     cy.get("pre#definition").should(
       compareJson([
         {

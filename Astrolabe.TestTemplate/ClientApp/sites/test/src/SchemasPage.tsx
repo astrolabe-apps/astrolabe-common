@@ -1,4 +1,4 @@
-import { useControl } from "@react-typed-forms/core";
+import { newControl, useControl } from "@react-typed-forms/core";
 import {
   accordionOptions,
   addMissingControls,
@@ -17,18 +17,25 @@ import {
   defaultTailwindTheme,
   displayOnlyOptions,
   doubleField,
+  FieldType,
+  getJsonPath,
   groupedControl,
   htmlDisplayControl,
   intField,
   jsonataOptions,
+  jsonPathString,
   lengthValidatorOptions,
+  makeSchemaDataNode,
   radioButtonOptions,
   resolveSchemas,
+  rootSchemaNode,
   stringField,
   stringOptionsField,
   textDisplayControl,
   textfieldOptions,
   timeField,
+  visitControlData,
+  visitControlDataArray,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
 import React from "react";
@@ -96,6 +103,32 @@ const definition = addMissingControls(Schema, [
   dataControl("compound"),
   dataControl("compound", "Secondary"),
 ]);
+
+const dataForVisit = newControl<AllControls>({
+  type: "hai",
+  text: "TEXT",
+  compound: {
+    another: 1,
+  },
+  int: 56,
+  double: 1.5,
+  compoundArray: [{ another: 45 }],
+});
+const visitedData = (() => {
+  const str: any[] = [];
+  visitControlDataArray(
+    definition,
+    makeSchemaDataNode(rootSchemaNode(Schema), dataForVisit),
+    (d, s) => {
+      str.push(jsonPathString(getJsonPath(s)));
+      if (s.schema.field.type !== FieldType.Compound)
+        str.push(s.control?.value);
+      return undefined;
+    },
+  );
+  return str;
+})();
+
 export function Schemas() {
   return (
     <div className="container">
@@ -103,6 +136,8 @@ export function Schemas() {
       <pre id="control2">{JSON.stringify(control2)}</pre>
       <pre id="cleaned">{JSON.stringify(cleaned)}</pre>
       <pre id="definition">{JSON.stringify(definition)}</pre>
+      <pre id="visitedNode">{JSON.stringify(visitedData)}</pre>
+      <pre id="dataForVisit">{JSON.stringify(dataForVisit.value)}</pre>
     </div>
   );
 }

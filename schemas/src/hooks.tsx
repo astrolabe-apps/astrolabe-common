@@ -8,7 +8,6 @@ import {
   isDataControlDefinition,
   JsonataExpression,
   NotEmptyExpression,
-  SchemaField,
   SchemaInterface,
 } from "./types";
 import React, { useEffect, useMemo, useRef } from "react";
@@ -30,13 +29,11 @@ import {
   defaultValueForField,
   DynamicHookGenerator,
   elementValueForField,
-  findFieldPath,
   getDisplayOnlyOptions,
   HookDep,
   isControlDisabled,
   isControlReadonly,
   jsonPathString,
-  lookupChildControl,
   toDepString,
 } from "./util";
 import jsonata from "jsonata";
@@ -219,16 +216,14 @@ function useDataMatchExpression(
 
 function useNotEmptyExpression(
   fvExpr: NotEmptyExpression,
-  fields: SchemaField[],
+  node: SchemaDataNode,
   schemaInterface: SchemaInterface,
-  data: DataContext,
   coerce: (v: any) => any = (x) => x,
 ) {
-  const refField = findFieldPath(fields, fvExpr.field);
-  const otherField = refField ? lookupChildControl(data, refField) : undefined;
+  const otherField = schemaDataForFieldRef(fvExpr.field, node);
   return useCalculatedControl(() => {
-    const fv = otherField?.value;
-    const field = refField?.at(-1);
+    const fv = otherField.control?.value;
+    const field = otherField.schema.field;
     return coerce(field && !schemaInterface.isEmptyValue(field, fv));
   });
 }
@@ -263,9 +258,8 @@ export function defaultEvalHooks(
     case ExpressionType.NotEmpty:
       return useNotEmptyExpression(
         expr as NotEmptyExpression,
-        context.fields,
+        context.parentNode,
         context.schemaInterface,
-        context,
         coerce,
       );
     default:

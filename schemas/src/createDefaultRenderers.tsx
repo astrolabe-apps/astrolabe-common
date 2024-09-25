@@ -30,9 +30,7 @@ import React, {
 } from "react";
 import {
   ControlDataContext,
-  findFieldPath,
   hasOptions,
-  lookupChildControl,
   rendererClass,
   useDynamicHooks,
 } from "./util";
