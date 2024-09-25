@@ -5,6 +5,7 @@ import {
   ControlAdornment,
   ControlDefinition,
   CustomRenderOptions,
+  EntityExpression,
   RenderOptions,
   stringField,
 } from "@react-typed-forms/schemas";
@@ -23,6 +24,7 @@ export type ColumnOptions = Pick<
   renderOptions?: RenderOptions;
   rowIndex?: boolean;
   layoutClass?: string;
+  visible?: EntityExpression;
 };
 
 export const ColumnOptionsFields = buildSchema<ColumnOptions>({
@@ -38,6 +40,9 @@ export const ColumnOptionsFields = buildSchema<ColumnOptions>({
   }),
   filterField: stringField("Filter field"),
   sortField: stringField("Sort field"),
+  visible: compoundField("Visible expression", [], {
+    schemaRef: "EntityExpression",
+  }),
 });
 
 export const DataGridAdornmentDefinition: CustomRenderOptions = {
