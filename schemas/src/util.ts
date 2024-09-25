@@ -6,7 +6,6 @@ import {
   DataRenderType,
   DisplayOnlyRenderOptions,
   FieldOption,
-  FieldType,
   findField,
   GroupedControlsDefinition,
   isCompoundField,
@@ -662,13 +661,6 @@ export function toDepString(x: any): string {
   if (x === undefined) return "_";
   if (x === null) return "~";
   return x.toString();
-}
-
-export function appendElementIndex(
-  dataContext: ControlDataContext,
-  elementIndex: number,
-): ControlDataContext {
-  return { ...dataContext, path: [...dataContext.path, elementIndex] };
 }
 
 export function applyLengthRestrictions<Min, Max>(
