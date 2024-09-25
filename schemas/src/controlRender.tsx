@@ -218,6 +218,7 @@ export interface DataRendererProps extends ParentRendererProps {
   required: boolean;
   options: FieldOption[] | undefined | null;
   hidden: boolean;
+  dataNode: SchemaDataNode;
 }
 
 export interface ActionRendererProps {
@@ -576,13 +577,15 @@ export function defaultDataProps({
   schemaInterface = defaultSchemaInterface,
   ...props
 }: DataControlProps): DataRendererProps {
-  const field = props.dataContext.dataNode!.schema.field;
+  const dataNode = props.dataContext.dataNode!;
+  const field = dataNode.schema.field;
   const className = cc(definition.styleClass);
   const required = !!definition.required;
   const fieldOptions = schemaInterface.getOptions(field);
   const _allowed = allowedOptions?.value ?? [];
   const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
   return {
+    dataNode,
     definition,
     childDefinitions: definition.children ?? [],
     control,
