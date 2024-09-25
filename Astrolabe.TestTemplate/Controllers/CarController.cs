@@ -73,7 +73,7 @@ public class CarController(AppDbContext dbContext) : ControllerBase
         // list all published cars from the dbcontext
         return await dbContext
             .Cars.Where(x => x.Status == ItemStatus.Published)
-            .Select(x => new CarEdit(x.Model, x.Model, x.Year))
+            .Select(x => new CarEdit(x.Make, x.Model, x.Year))
             .ToListAsync();
     }
 }

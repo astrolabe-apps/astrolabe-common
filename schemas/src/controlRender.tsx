@@ -32,7 +32,6 @@ import {
   FieldOption,
   GroupRenderOptions,
   isActionControlsDefinition,
-  isCompoundField,
   isDataControlDefinition,
   isDisplayControlsDefinition,
   isGroupControlsDefinition,
@@ -46,10 +45,8 @@ import {
 import {
   applyLengthRestrictions,
   ControlDataContext,
-  ControlDataContextImpl,
   elementValueForField,
   fieldDisplayName,
-  findFieldPath,
   JsonPath,
   useDynamicHooks,
   useUpdatedRef,
@@ -362,7 +359,11 @@ export function useControlRendererComponent(
         parentDataNode: pdn,
         dataNode: dn,
       } = r.current;
-      const dataContext = new ControlDataContextImpl(schemaInterface, dn, pdn);
+      const dataContext = {
+        schemaInterface,
+        dataNode: dn,
+        parentNode: pdn,
+      };
       const {
         readonlyControl,
         disabledControl,

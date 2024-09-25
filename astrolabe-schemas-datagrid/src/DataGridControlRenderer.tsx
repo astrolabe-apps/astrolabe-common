@@ -13,11 +13,16 @@ import {
   DataControlDefinition,
   DynamicHookGenerator,
   EvalExpressionHook,
+  fieldPathForDefinition,
   getLengthRestrictions,
   isDataControlDefinition,
   makeHookDepString,
   mergeObjects,
   RenderOptions,
+  schemaDataForFieldPath,
+  schemaDataForFieldRef,
+  schemaForFieldPath,
+  schemaForFieldRef,
   stringField,
   toDepString,
 } from "@react-typed-forms/schemas";
@@ -35,9 +40,12 @@ import {
 import React, { ReactNode, useCallback } from "react";
 import { isColumnAdornment } from "./columnAdornment";
 import { FilterPopover } from "./FilterPopover";
+import { SearchingState, setFilterValue } from "@astroapps/searchstate";
 
 interface DataGridOptions extends ArrayActionOptions {
   noEntriesText?: string;
+  searchField?: string;
+  popoverClass?: string;
 }
 
 interface DataGridColumnExtension {
@@ -55,13 +63,20 @@ const DataGridFields = buildSchema<DataGridOptions>({
   noAdd: boolField("No Add"),
   noRemove: boolField("No remove"),
   noReorder: boolField("No reorder"),
+  searchField: stringField("Search state field"),
+  popoverClass: stringField("Popover class"),
 });
 export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
   value: "DataGrid",
   fields: DataGridFields,
 };
-export const DataGridRenderer = createDataGridRenderer();
+
+export const defaultDataGridOptions: DataGridOptions = {
+  popoverClass:
+    "text-primary-950 animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 rounded-md border bg-white p-4 shadow-md outline-none",
+};
+export const DataGridRenderer = createDataGridRenderer(defaultDataGridOptions);
 
 export function createDataGridRenderer(options?: DataGridOptions) {
   return createDataRenderer(
@@ -82,7 +97,7 @@ export function createDataGridRenderer(options?: DataGridOptions) {
       const dataGridOptions =
         mergeObjects(
           renderOptions as DataGridOptions & RenderOptions,
-          options,
+          mergeObjects(defaultDataGridOptions, options),
         ) ?? {};
       const constantColumns: ColumnDefInit<
         Control<any>,
@@ -127,12 +142,18 @@ export function createDataGridRenderer(options?: DataGridOptions) {
           };
         });
       const allColumns = constantColumns.concat(columns);
-
+      const searchField = dataGridOptions.searchField;
       return (
         <DynamicGridVisibility
           renderOptions={dataGridOptions}
           renderAction={renderers.renderAction}
           control={control}
+          searchControl={
+            searchField
+              ? (schemaDataForFieldRef(searchField, dataContext.parentNode)
+                  .control as Control<SearchingState>)
+              : undefined
+          }
           columns={allColumns}
           className={className}
           readonly={readonly}
@@ -163,7 +184,7 @@ function DynamicGridVisibility(props: DataGridRendererProps) {
             data.dataContext,
             data.evalHidden.state,
           );
-          if (visible) return { ...x, hidden: !visible.value };
+          if (visible) return { ...x, hidden: visible.value === false };
         }
         return x;
       });
@@ -178,6 +199,7 @@ interface DataGridRendererProps {
   renderOptions: DataGridOptions;
   columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[];
   control: Control<any[] | undefined | null>;
+  searchControl?: Control<SearchingState>;
   className?: string;
   renderAction: (action: ActionRendererProps) => ReactNode;
   readonly: boolean;
@@ -189,6 +211,7 @@ function DataGridControlRenderer({
   renderOptions,
   columns,
   control,
+  searchControl,
   className,
   renderAction,
   readonly,
@@ -207,35 +230,40 @@ function DataGridControlRenderer({
       ),
     },
   );
-
   const rowCount = control.elements?.length ?? 0;
 
   function renderHeaderContent(
     col: ColumnDef<Control<any>, DataGridColumnExtension>,
   ) {
     const { filterField, sortField, title, data } = col;
-    if (data) {
+    if (data && filterField) {
       const {
-        dataContext: { schemaInterface, fields },
-        definition: d,
+        dataContext: { schemaInterface, dataNode },
+        definition,
       } = data;
-      if (isDataControlDefinition(d)) {
-        const theField = fields.find((x) => x.field == d.field);
-        if (theField) {
-          return (
-            <>
-              {title}
-              {filterField && (
-                <FilterPopover
-                  schemaInterface={schemaInterface}
-                  field={theField}
-                  isChecked={() => false}
-                  setOption={(v, ch) => console.log({ ch, v })}
-                />
-              )}
-            </>
-          );
-        }
+      const childPath = fieldPathForDefinition(definition);
+      if (dataNode && childPath && searchControl) {
+        const { filters } = searchControl.fields;
+        return (
+          <>
+            {title}
+            {filterField && (
+              <FilterPopover
+                baseId={"c" + dataNode.control!.uniqueId}
+                popoverClass={renderOptions.popoverClass}
+                schemaInterface={schemaInterface}
+                dataNode={dataNode}
+                valueNode={schemaForFieldPath(childPath, dataNode.schema)}
+                isChecked={(v) =>
+                  filters.value?.[filterField]?.includes(v) ?? false
+                }
+                setOption={(v, ch) =>
+                  filters.setValue(setFilterValue(filterField, v, ch))
+                }
+              />
+            )}
+          </>
+        );
       }
     }
     return <>{title}</>;

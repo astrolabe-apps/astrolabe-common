@@ -1,4 +1,5 @@
 import { Control } from "@react-typed-forms/core";
+import { SchemaDataNode, SchemaNode } from "./treeNodes";
 
 export interface SchemaField {
   type: string;
@@ -78,7 +79,10 @@ export interface SchemaInterface {
   controlLength(field: SchemaField, control: Control<any>): number;
   valueLength(field: SchemaField, value: any): number;
   getOptions(field: SchemaField): FieldOption[] | undefined | null;
-  getFilterOptions(field: SchemaField): FieldOption[] | undefined | null;
+  getFilterOptions(
+    array: SchemaDataNode,
+    field: SchemaNode,
+  ): FieldOption[] | undefined | null;
   parseToMillis(field: SchemaField, v: string): number;
   validationMessageText(
     field: SchemaField,

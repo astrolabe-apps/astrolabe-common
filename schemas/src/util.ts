@@ -35,36 +35,10 @@ import {
 
 export type JsonPath = string | number;
 
-export interface DataContext {
-  data: Control<any>;
-  path: JsonPath[];
-}
-
-export interface ControlDataContext extends DataContext {
-  fields: SchemaField[];
+export interface ControlDataContext {
   schemaInterface: SchemaInterface;
   dataNode: SchemaDataNode | undefined;
   parentNode: SchemaDataNode;
-}
-
-export class ControlDataContextImpl implements ControlDataContext {
-  constructor(
-    public schemaInterface: SchemaInterface,
-    public dataNode: SchemaDataNode | undefined,
-    public parentNode: SchemaDataNode,
-  ) {}
-
-  get fields() {
-    return getSchemaFieldList(this.parentNode.schema);
-  }
-
-  get data() {
-    return getRootDataNode(this.parentNode).control!;
-  }
-
-  get path() {
-    return getJsonPath(this.parentNode);
-  }
 }
 
 export function applyDefaultValues(

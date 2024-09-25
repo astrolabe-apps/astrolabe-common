@@ -254,6 +254,14 @@ export function getJsonPath(dataNode: SchemaDataNode) {
   );
 }
 
+export function getSchemaPath(schemaNode: SchemaNode): SchemaField[] {
+  return traverseParents(
+    schemaNode,
+    (d) => d.field,
+    (x) => !x.parent,
+  );
+}
+
 export function getSchemaFieldList(schema: SchemaNode): SchemaField[] {
   return schema.getChildNodes().map((x) => x.field);
 }

@@ -81,8 +81,9 @@ export function sortBySortFields<T>(
 
 export function makeFilterFunc<T>(
   getFilterValue: (f: string) => ((row: T) => string) | undefined,
-  filters: SearchFilters,
+  filters: SearchFilters | undefined,
 ): ((f: T) => boolean) | undefined {
+  if (!filters) return undefined;
   const fv: [(row: T) => string, string[]][] = [];
   Object.keys(filters).forEach((ch) => {
     const vals = filters[ch];
@@ -98,4 +99,36 @@ export function makeFilterFunc<T>(
     return undefined;
   }
   return (row) => fv.every(([f, vals]) => vals.includes(f(row)));
+}
+
+export function setFilterValue(
+  column: string,
+  value: string,
+  set: boolean,
+): (f: SearchFilters) => SearchFilters {
+  return (_filters) => {
+    const filters = _filters ?? {};
+    let curValues = filters[column];
+    if (!set && !curValues) {
+      return filters;
+    }
+    const newValues = !curValues ? [value] : setIncluded(curValues, value, set);
+    if (newValues === curValues) {
+      return filters;
+    }
+    const newFilters = { ...filters };
+    newFilters[column] = newValues;
+    return newFilters;
+  };
+}
+
+function setIncluded<A>(array: A[], elem: A, included: boolean): A[] {
+  const already = array.includes(elem);
+  if (included === already) {
+    return array;
+  }
+  if (included) {
+    return [...array, elem];
+  }
+  return array.filter((e) => e !== elem);
 }

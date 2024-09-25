@@ -68,9 +68,11 @@
               "renderOptions": {
                 "type": "Standard"
               },
-              "filterField": "make"
+              "filterField": "make",
+              "visible": {}
             }
-          ]
+          ],
+          "hideTitle": true
         },
         {
           "type": "Data",
@@ -79,7 +81,19 @@
           "required": true,
           "renderOptions": {
             "type": "Standard"
-          }
+          },
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "filterField": "model",
+              "sortField": "model",
+              "visible": {}
+            }
+          ],
+          "hideTitle": true
         },
         {
           "type": "Data",
@@ -88,11 +102,13 @@
           "required": true,
           "renderOptions": {
             "type": "Standard"
-          }
+          },
+          "hideTitle": true
         }
       ],
       "renderOptions": {
-        "type": "DataGrid"
+        "type": "DataGrid",
+        "searchField": "request"
       }
     }
   ],

@@ -19,6 +19,7 @@ import {
 import { useCallback } from "react";
 import { ControlDataContext, makeHookDepString, useUpdatedRef } from "./util";
 import { useJsonataExpression } from "./hooks";
+import { getJsonPath, getRootDataNode } from "./treeNodes";
 
 interface ValidationHookContext {
   hiddenControl: Control<boolean | null | undefined>;
@@ -100,9 +101,11 @@ export function useJsonataValidator(
   validator: JsonataValidator,
   ctx: ValidationContext,
 ) {
+  const sdn = ctx.dataContext.parentNode;
   const errorMsg = useJsonataExpression(
     validator.expression,
-    ctx.dataContext,
+    getRootDataNode(sdn).control!,
+    getJsonPath(sdn),
     undefined,
     (v) => (v == null ? null : typeof v === "string" ? v : JSON.stringify(v)),
   );

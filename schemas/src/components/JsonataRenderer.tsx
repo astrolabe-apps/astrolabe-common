@@ -4,6 +4,7 @@ import { DataRenderType, JsonataRenderOptions } from "../types";
 import { ControlDataContext, rendererClass } from "../util";
 import { Control } from "@react-typed-forms/core";
 import React from "react";
+import { getJsonPath, getRootDataNode } from "../treeNodes";
 
 export function createJsonataRenderer(className?: string) {
   return createDataRenderer(
@@ -33,9 +34,11 @@ export function JsonataRenderer({
   dataContext: ControlDataContext;
   readonly: boolean;
 }) {
+  const sdn = dataContext.parentNode;
   const rendered = useJsonataExpression(
     expression,
-    dataContext,
+    getRootDataNode(sdn).control!,
+    getJsonPath(sdn),
     () => ({
       value: control.value,
       readonly,

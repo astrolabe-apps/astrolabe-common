@@ -494,7 +494,8 @@
     },
     {
       "packageName": "@astroapps/searchstate",
-      "projectFolder": "../astrolabe-searchstate"
+      "projectFolder": "../astrolabe-searchstate",
+      "shouldPublish": true
     }
 //    {
 //      "packageName": "nextgen",

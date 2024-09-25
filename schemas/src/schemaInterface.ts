@@ -6,6 +6,7 @@ import {
   ValidationMessageType,
 } from "./types";
 import { Control } from "@react-typed-forms/core";
+import {SchemaDataNode, SchemaNode} from "./treeNodes";
 
 export class DefaultSchemaInterface implements SchemaInterface {
   constructor(protected boolStrings: [string, string] = ["No", "Yes"]) {}
@@ -39,8 +40,8 @@ export class DefaultSchemaInterface implements SchemaInterface {
     return options && options.length > 0 ? options : null;
   }
 
-  getFilterOptions(field: SchemaField): FieldOption[] | undefined | null {
-    return this.getOptions(field);
+  getFilterOptions(array: SchemaDataNode, field: SchemaNode): FieldOption[] | undefined | null {
+    return this.getOptions(field.field);
   }
 
   isEmptyValue(f: SchemaField, value: any): boolean {

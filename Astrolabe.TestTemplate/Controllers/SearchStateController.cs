@@ -74,12 +74,6 @@ public class SearchStateController : ControllerBase
             environment.ContentRootPath,
             $"ClientApp/sites/formServer/src/forms/{id}.json"
         );
-        await System.IO.File.WriteAllTextAsync(
-            path,
-            JsonSerializer.Serialize(
-                new { Controls = Enumerable.Empty<object>(), Config = new { } },
-                Indented
-            )
-        );
+        await System.IO.File.WriteAllTextAsync(path, JsonSerializer.Serialize(formData, Indented));
     }
 }

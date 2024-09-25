@@ -243,6 +243,7 @@ importers:
   ../../../astrolabe-schemas-datagrid:
     specifiers:
       '@astroapps/datagrid': workspace:*
+      '@astroapps/searchstate': workspace:*
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
@@ -260,6 +261,7 @@ importers:
       typescript: ^5.6.2
     dependencies:
       '@astroapps/datagrid': link:../astrolabe-datagrid
+      '@astroapps/searchstate': link:../astrolabe-searchstate
       '@radix-ui/react-popover': 1.0.7_3vdbhqr2ncalcx7opnshezpx3q
       '@react-typed-forms/core': 3.6.0
       '@react-typed-forms/schemas': link:../schemas
@@ -618,6 +620,7 @@ importers:
       '@astroapps/schemas-datagrid': workspace:*
       '@astroapps/schemas-datepicker': workspace:*
       '@astroapps/schemas-editor': workspace:*
+      '@astroapps/searchstate': workspace:*
       '@astrolabe/ui': workspace:*
       '@lezer/common': ^1.0.0
       '@react-typed-forms/core': ^3.6.0
@@ -650,6 +653,7 @@ importers:
       '@astroapps/schemas-datagrid': link:../../../../astrolabe-schemas-datagrid
       '@astroapps/schemas-datepicker': link:../../../../schemas-datepicker
       '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
+      '@astroapps/searchstate': link:../../../../astrolabe-searchstate
       '@astrolabe/ui': link:../../../../astrolabe-ui
       '@lezer/common': 1.2.1
       '@react-typed-forms/core': 3.6.0

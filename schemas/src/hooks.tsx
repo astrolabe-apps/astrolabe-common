@@ -25,7 +25,6 @@ import {
 
 import {
   ControlDataContext,
-  DataContext,
   defaultValueForField,
   DynamicHookGenerator,
   elementValueForField,
@@ -33,12 +32,18 @@ import {
   HookDep,
   isControlDisabled,
   isControlReadonly,
+  JsonPath,
   jsonPathString,
   toDepString,
 } from "./util";
 import jsonata from "jsonata";
 import { v4 as uuidv4 } from "uuid";
-import { schemaDataForFieldRef, SchemaDataNode } from "./treeNodes";
+import {
+  getJsonPath,
+  getRootDataNode,
+  schemaDataForFieldRef,
+  SchemaDataNode,
+} from "./treeNodes";
 
 export type EvalExpressionHook<A = any> = DynamicHookGenerator<
   Control<A | undefined>,
@@ -237,7 +242,8 @@ export function defaultEvalHooks(
     case ExpressionType.Jsonata:
       return useJsonataExpression(
         (expr as JsonataExpression).expression,
-        context,
+        getRootDataNode(context.parentNode).control!,
+        getJsonPath(context.parentNode),
         undefined,
         coerce,
       );
@@ -278,8 +284,8 @@ export function makeEvalExpressionHook(
   ) => Control<any>,
 ): UseEvalExpressionHook {
   return (expr, coerce) => ({
-    deps: expr != null ? expr.type : "!",
-    state: expr,
+    deps: expr?.type,
+    state: expr && expr.type ? expr : undefined,
     runHook: (ctx: ControlDataContext, state: EntityExpression | undefined) => {
       return state ? f(state, ctx, coerce) : undefined;
     },
@@ -337,11 +343,12 @@ export function useUuidExpression(coerce: (v: any) => any = (x) => x) {
 
 export function useJsonataExpression(
   jExpr: string,
-  dataContext: DataContext,
+  data: Control<any>,
+  path: JsonPath[],
   bindings?: () => Record<string, any>,
   coerce: (v: any) => any = (x) => x,
 ): Control<any> {
-  const pathString = jsonPathString(dataContext.path, (x) => `#$i[${x}]`);
+  const pathString = jsonPathString(path, (x) => `#$i[${x}]`);
   const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
   const compiledExpr = useMemo(() => {
     try {
@@ -377,10 +384,7 @@ export function useJsonataExpression(
           ? collectChanges(collect, bindings)
           : undefined;
         control.value = coerce(
-          await compiledExpr.evaluate(
-            trackedValue(dataContext.data, collect),
-            bindingData,
-          ),
+          await compiledExpr.evaluate(trackedValue(data, collect), bindingData),
         );
       } finally {
         if (!--updateRef.current) updateSubscriptions();
