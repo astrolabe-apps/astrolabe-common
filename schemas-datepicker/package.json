@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-datepicker",
-  "version": "4.0.0-dev",
+  "version": "4.0.0",
   "description": "",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

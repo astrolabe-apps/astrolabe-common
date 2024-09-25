@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/quill-editor",
-  "version": "8.0.0-dev",
+  "version": "8.0.0",
   "description": "",
   "type": "module",
   "main": "lib/index.js",
