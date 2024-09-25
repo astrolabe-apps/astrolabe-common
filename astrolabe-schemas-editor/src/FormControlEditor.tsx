@@ -4,10 +4,10 @@ import React, { ReactElement } from "react";
 import {
   FormRenderer,
   GroupedControlsDefinition,
-  SchemaField,
-  useControlRenderer,
-  rootSchemaNode,
   makeSchemaDataNode,
+  rootSchemaNode,
+  SchemaField,
+  useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import {
   findAllParentsInControls,
@@ -39,7 +39,7 @@ export function FormControlEditor({
   }).value;
   const useDataHook = useEditorDataHook(rootSchemaNode(fieldList.value));
   const editorNode = makeSchemaDataNode(rootSchemaNode(editorFields), control);
-  const RenderEditor = useControlRenderer(
+  const RenderEditor = useControlRendererComponent(
     editorControls,
     renderer,
     {
