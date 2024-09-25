@@ -58,6 +58,7 @@ import { createStdFormRenderer } from "../renderers";
 const CustomControlSchema = applyEditorExtensions(DataGridExtension);
 
 interface DisabledStuff {
+  type: string;
   disable: boolean;
   text: string;
   options: string[];
@@ -73,7 +74,11 @@ const TestSchema = buildSchema<TestSchema>({
   stuff: compoundField(
     "Stuff",
     buildSchema<DisabledStuff>({
-      disable: boolField("Disable"),
+      type: withScalarOptions(
+        { isTypeField: true },
+        stringOptionsField("Type", { name: "Some", value: "some" }),
+      ),
+      disable: boolField("Disable", { onlyForTypes: ["some"] }),
       text: stringField("Pure Text"),
       options: withScalarOptions(
         { collection: true },

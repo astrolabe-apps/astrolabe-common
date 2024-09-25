@@ -190,6 +190,7 @@ export interface DisplayRendererProps {
 
 export type ChildVisibilityFunc = (
   child: ControlDefinition,
+  parentNode?: SchemaDataNode,
 ) => EvalExpressionHook<boolean>;
 export interface ParentRendererProps {
   childDefinitions: ControlDefinition[];
@@ -500,8 +501,15 @@ export function useControlRendererComponent(
         customDisplay: options.customDisplay,
         actionDataControl: actionData,
         actionOnClick: options.actionOnClick,
-        useChildVisibility: (childDef) => {
-          return useEvalVisibilityHook(useExpr, childDef);
+        useChildVisibility: (childDef, parentNode) => {
+          const fieldNamePath = fieldPathForDefinition(childDef);
+          const overrideNode = fieldNamePath
+            ? schemaDataForFieldPath(
+                fieldNamePath,
+                parentNode ?? dataNode ?? parentDataNode,
+              )
+            : undefined;
+          return useEvalVisibilityHook(useExpr, childDef, overrideNode);
         },
       });
       const renderedControl = renderer.renderLayout({
@@ -595,10 +603,10 @@ export function defaultDataProps({
         ? allowed.map((x) =>
             typeof x === "object"
               ? x
-              : fieldOptions?.find((y) => y.value == x) ?? {
+              : (fieldOptions?.find((y) => y.value == x) ?? {
                   name: x.toString(),
                   value: x,
-                },
+                }),
           )
         : fieldOptions,
     readonly: !!formOptions.readonly,
