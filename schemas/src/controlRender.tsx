@@ -190,7 +190,6 @@ export interface DisplayRendererProps {
 
 export type ChildVisibilityFunc = (
   child: ControlDefinition,
-  parentDataNode?: SchemaDataNode,
 ) => EvalExpressionHook<boolean>;
 export interface ParentRendererProps {
   childDefinitions: ControlDefinition[];
@@ -596,10 +595,10 @@ export function defaultDataProps({
         ? allowed.map((x) =>
             typeof x === "object"
               ? x
-              : (fieldOptions?.find((y) => y.value == x) ?? {
+              : fieldOptions?.find((y) => y.value == x) ?? {
                   name: x.toString(),
                   value: x,
-                }),
+                },
           )
         : fieldOptions,
     readonly: !!formOptions.readonly,

@@ -229,22 +229,11 @@ export function traverseParents<A, B extends { parent?: B | undefined }>(
   until?: (b: B) => boolean,
 ): A[] {
   let outArray: A[] = [];
-  while (current && until?.(current)) {
+  while (current && !until?.(current)) {
     outArray.push(get(current));
     current = current.parent;
   }
   return outArray.reverse();
-}
-
-export function getRelativeFields(
-  base: SchemaNode,
-  target: SchemaNode | undefined,
-): SchemaField[] {
-  return traverseParents(
-    target,
-    (t) => t.field,
-    (c) => c !== base,
-  );
 }
 
 export function getRootDataNode(dataNode: SchemaDataNode) {
@@ -255,8 +244,10 @@ export function getRootDataNode(dataNode: SchemaDataNode) {
 }
 
 export function getJsonPath(dataNode: SchemaDataNode) {
-  return traverseParents(dataNode, (d) =>
-    d.elementIndex == null ? d.schema.field.field : d.elementIndex,
+  return traverseParents(
+    dataNode,
+    (d) => (d.elementIndex == null ? d.schema.field.field : d.elementIndex),
+    (x) => !x.parent,
   );
 }
 

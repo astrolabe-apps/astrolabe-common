@@ -83,6 +83,7 @@ import { DefaultAccordion } from "./components/DefaultAccordion";
 import { createNullToggleRenderer } from "./components/NullToggle";
 import { createMultilineFieldRenderer } from "./components/MultilineTextfield";
 import { createJsonataRenderer } from "./components/JsonataRenderer";
+import { schemaDataForFieldRef } from "./treeNodes";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -378,13 +379,11 @@ export function createDefaultAdornmentRenderer(
             parentContext: ControlDataContext;
           }) {
             const { value } = dynamicHooks(parentContext);
-            const refField = findFieldPath(
-              parentContext.fields,
+            const fieldNode = schemaDataForFieldRef(
               adornment.field,
+              parentContext.parentNode,
             );
-            const otherField = refField
-              ? lookupChildControl(parentContext, refField)
-              : undefined;
+            const otherField = fieldNode.control;
             const always = !adornment.defaultOnly;
             useControlEffect(
               () => [value?.value, otherField?.value == null],

@@ -56,6 +56,7 @@ export type UseEvalExpressionHook = (
 export function useEvalVisibilityHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
+  overrideDataNode?: SchemaDataNode,
 ): EvalExpressionHook<boolean> {
   const dynamicVisibility = useEvalDynamicBoolHook(
     definition,
@@ -64,16 +65,16 @@ export function useEvalVisibilityHook(
   );
   return makeDynamicPropertyHook(
     dynamicVisibility,
-    (ctx, { definition }) =>
+    (ctx, { definition, overrideDataNode }) =>
       useComputed(() => {
-        const dataNode = ctx.dataNode;
+        const dataNode = overrideDataNode ?? ctx.dataNode;
         return (
           !dataNode ||
           (matchesType(dataNode) &&
             !hideDisplayOnly(dataNode, ctx.schemaInterface, definition))
         );
       }),
-    { definition },
+    { definition, overrideDataNode },
   );
 }
 

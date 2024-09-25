@@ -63,7 +63,7 @@ export class ControlDataContextImpl implements ControlDataContext {
   }
 
   get path() {
-    return getJsonPath(this.dataNode ?? this.parentNode);
+    return getJsonPath(this.parentNode);
   }
 }
 
