@@ -38,6 +38,11 @@ export class DefaultSchemaInterface implements SchemaInterface {
   getOptions({ options }: SchemaField): FieldOption[] | null | undefined {
     return options && options.length > 0 ? options : null;
   }
+
+  getFilterOptions(field: SchemaField): FieldOption[] | undefined | null {
+    return this.getOptions(field);
+  }
+
   isEmptyValue(f: SchemaField, value: any): boolean {
     if (f.collection)
       return Array.isArray(value) ? value.length === 0 : value == null;

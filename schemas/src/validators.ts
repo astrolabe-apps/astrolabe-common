@@ -34,19 +34,18 @@ export interface ValidationContext extends ValidationHookContext {
 
 export function useMakeValidationHook(
   definition: ControlDefinition,
-  field: SchemaField | undefined,
   useValidatorFor: (
     validator: SchemaValidator,
     ctx: ValidationContext,
   ) => void = useDefaultValidator,
 ): (ctx: ValidationHookContext) => void {
-  const dd =
-    field && isDataControlDefinition(definition) ? definition : undefined;
-  const refData = useUpdatedRef({ dd, field, useValidatorFor });
+  const dd = isDataControlDefinition(definition) ? definition : undefined;
+  const refData = useUpdatedRef({ dd, useValidatorFor });
   const depString = makeHookDepString(dd?.validators ?? [], (x) => x.type);
   return useCallback(
     (ctx) => {
-      const { dd, field } = refData.current;
+      const field = ctx.dataContext.dataNode?.schema.field;
+      const { dd } = refData.current;
       if (!dd || !field) return;
       const {
         control,

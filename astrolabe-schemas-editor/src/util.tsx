@@ -1,19 +1,18 @@
 import { Control, newControl } from "@react-typed-forms/core";
 import {
   ActionControlDefinition,
-  CompoundField,
   ControlDefinition,
   ControlDefinitionType,
   CreateDataProps,
   defaultDataProps,
   FieldOption,
   FieldType,
-  findField,
-  findFieldPath,
+  getSchemaFieldList,
   isCompoundField,
-  lookupChildControl,
-  lookupChildControlPath,
+  schemaDataForFieldRef,
   SchemaField,
+  schemaForFieldRef,
+  SchemaNode,
   useUpdatedRef,
 } from "@react-typed-forms/schemas";
 import {
@@ -96,13 +95,15 @@ export interface InternalHooksContext {
 }
 
 export function useEditorDataHook(
-  fieldList: SchemaField[],
+  fieldNode: SchemaNode,
 ): (cd: ControlDefinition) => CreateDataProps {
-  const r = useUpdatedRef(fieldList);
+  const r = useUpdatedRef(fieldNode);
   const createCB: CreateDataProps = useCallback((props) => {
-    const fieldList = r.current;
+    const fieldNode = r.current;
+    const fieldList = getSchemaFieldList(fieldNode);
     const defaultProps = defaultDataProps(props);
-    const { field: sf, dataContext, parentContext } = props;
+    const { dataContext } = props;
+    const sf = dataContext.dataNode!.schema.field;
     const otherField = sf.tags?.find(isSchemaOptionTag);
 
     if (otherField) {
@@ -127,11 +128,12 @@ export function useEditorDataHook(
 
         default:
           const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
-          const otherFieldName = lookupChildControlPath(parentContext, [
+          const otherFieldName = schemaDataForFieldRef(
             otherField,
-          ])?.value;
+            dataContext.parentNode,
+          ).control?.value;
           const fieldInSchema = otherFieldName
-            ? findFieldPath(fieldList, otherFieldName)?.at(-1)
+            ? schemaForFieldRef(otherFieldName as string, fieldNode).field
             : undefined;
           const opts = fieldInSchema?.options;
           return [

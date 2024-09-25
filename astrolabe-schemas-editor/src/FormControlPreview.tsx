@@ -14,23 +14,24 @@ import React, {
 import { ControlDefinitionForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
 import {
-  ControlDataContext,
+  ControlDataContextImpl,
   ControlDefinition,
   defaultDataProps,
   defaultSchemaInterface,
   defaultValueForField,
   DynamicPropertyType,
   elementValueForField,
+  fieldPathForDefinition,
   FormRenderer,
-  getControlData,
   getDisplayOnlyOptions,
   isDataControlDefinition,
   isGroupControlsDefinition,
-  lookupSchemaField,
   makeHook,
+  makeSchemaDataNode,
   renderControlLayout,
-  SchemaField,
+  schemaForFieldPath,
   SchemaInterface,
+  SchemaNode,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import { ControlDragState, controlDropData, DragData, DropData } from "./util";
@@ -40,7 +41,7 @@ export interface FormControlPreviewProps {
   parent?: ControlDefinition;
   dropIndex: number;
   noDrop?: boolean;
-  fields: SchemaField[];
+  parentNode: SchemaNode;
   elementIndex?: number;
   schemaInterface?: SchemaInterface;
   keyPrefix?: string;
@@ -78,11 +79,11 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     definition,
     parent,
     elementIndex,
-    fields,
+    parentNode,
     dropIndex,
     noDrop,
     keyPrefix,
-    schemaInterface,
+    schemaInterface = defaultSchemaInterface,
   } = props;
   const { selected, dropSuccess, renderer } = usePreviewContext();
   const item = unsafeRestoreControl(definition) as
@@ -99,22 +100,18 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       dropSuccess,
     ),
   });
-  const fieldPath = lookupSchemaField(definition, fields);
-  const field = fieldPath?.at(-1);
   const groupControl = useControl({});
-  const parentContext: ControlDataContext = {
-    data: groupControl,
-    path: [],
-    fields,
-    schemaInterface: props.schemaInterface ?? defaultSchemaInterface,
-  };
-  const [, , dataContext] = getControlData(
-    fieldPath,
-    parentContext,
-    elementIndex,
-  );
-  const isRequired = isDataControlDefinition(definition) && definition.required;
+
+  const path = fieldPathForDefinition(definition);
+
+  const childNode =
+    path && elementIndex == null ? schemaForFieldPath(path, parentNode) : null;
+  const dataDefinition = isDataControlDefinition(definition)
+    ? definition
+    : undefined;
+  const isRequired = !!dataDefinition?.required;
   const displayOptions = getDisplayOnlyOptions(definition);
+  const field = childNode?.field;
   const sampleData = useMemo(
     () =>
       displayOptions
@@ -128,12 +125,21 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     [displayOptions?.sampleText, field, isRequired, elementIndex],
   );
   const control = useMemo(() => newControl(sampleData), [sampleData]);
+
+  const parentDataNode = makeSchemaDataNode(parentNode, groupControl);
+  const dataNode = childNode
+    ? makeSchemaDataNode(childNode, control, parentDataNode, elementIndex)
+    : undefined;
+  const dataContext = new ControlDataContextImpl(
+    schemaInterface,
+    dataNode ?? parentDataNode,
+    parentDataNode,
+  );
   const adornments =
     definition.adornments?.map((x) =>
       renderer.renderAdornment({
         adornment: x,
         designMode: true,
-        parentContext,
         dataContext,
       }),
     ) ?? [];
@@ -141,7 +147,6 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const layout = renderControlLayout({
     definition,
     renderer,
-    parentContext,
     elementIndex,
     renderChild: (k, def, c) => {
       return (
@@ -151,18 +156,18 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           parent={definition}
           dropIndex={0}
           elementIndex={c?.elementIndex}
-          fields={c?.dataContext?.fields ?? dataContext.fields}
+          parentNode={c?.parentDataNode?.schema ?? childNode ?? parentNode}
           keyPrefix={keyPrefix}
           schemaInterface={schemaInterface}
         />
       );
     },
     createDataProps: defaultDataProps,
-    formOptions: {},
+    formOptions: { readonly: dataDefinition?.readonly },
     dataContext,
     control,
     schemaInterface,
-    field,
+    useEvalExpression: () => makeHook(() => undefined, undefined),
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
     designMode: true,
   });

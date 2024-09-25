@@ -4,8 +4,10 @@ import React, { ReactElement } from "react";
 import {
   FormRenderer,
   GroupedControlsDefinition,
+  makeSchemaDataNode,
+  rootSchemaNode,
   SchemaField,
-  useControlRenderer,
+  useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import {
   findAllParentsInControls,
@@ -35,14 +37,15 @@ export function FormControlEditor({
       newControl<SchemaFieldForm[]>([])
     );
   }).value;
-  const useDataHook = useEditorDataHook(fieldList.value);
-  const RenderEditor = useControlRenderer(
+  const useDataHook = useEditorDataHook(rootSchemaNode(fieldList.value));
+  const editorNode = makeSchemaDataNode(rootSchemaNode(editorFields), control);
+  const RenderEditor = useControlRendererComponent(
     editorControls,
-    editorFields,
     renderer,
     {
       useDataHook,
     },
+    editorNode,
   );
-  return <RenderEditor control={control} />;
+  return <RenderEditor />;
 }

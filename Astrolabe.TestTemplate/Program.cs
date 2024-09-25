@@ -1,6 +1,10 @@
+using System.Reflection;
 using Astrolabe.JSON.Extensions;
 using Astrolabe.TestTemplate.Workflow;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +19,20 @@ builder
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SupportNonNullableReferenceTypes();
+    c.AddServer(new OpenApiServer() { Url = "https://localhost:5001" });
+    c.CustomOperationIds(apiDesc =>
+        apiDesc.TryGetMethodInfo(out var methodInfo)
+            ? $"{((ControllerActionDescriptor)apiDesc.ActionDescriptor).ControllerName}_{methodInfo.Name}"
+            : null
+    );
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+    c.UseAllOfForInheritance();
+    c.UseAllOfToExtendReferenceSchemas();
+});
+
 builder.Services.AddDbContext<AppDbContext>(op =>
     op.UseSqlServer(builder.Configuration.GetConnectionString("Default"))
 );

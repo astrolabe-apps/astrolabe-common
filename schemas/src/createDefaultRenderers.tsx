@@ -83,6 +83,7 @@ import { DefaultAccordion } from "./components/DefaultAccordion";
 import { createNullToggleRenderer } from "./components/NullToggle";
 import { createMultilineFieldRenderer } from "./components/MultilineTextfield";
 import { createJsonataRenderer } from "./components/JsonataRenderer";
+import { schemaDataForFieldRef } from "./treeNodes";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -354,7 +355,7 @@ export function createDefaultAdornmentRenderer(
 ): AdornmentRendererRegistration {
   return {
     type: "adornment",
-    render: ({ adornment, designMode, parentContext, useExpr }, renderers) => ({
+    render: ({ adornment, designMode, dataContext, useExpr }, renderers) => ({
       apply: (rl) => {
         if (isSetFieldAdornment(adornment) && useExpr) {
           const hook = useExpr(adornment.expression, (x) => x);
@@ -363,7 +364,7 @@ export function createDefaultAdornmentRenderer(
           return wrapLayout((x) => (
             <SetFieldWrapper
               children={x}
-              parentContext={parentContext}
+              parentContext={dataContext}
               adornment={adornment}
             />
           ))(rl);
@@ -378,13 +379,11 @@ export function createDefaultAdornmentRenderer(
             parentContext: ControlDataContext;
           }) {
             const { value } = dynamicHooks(parentContext);
-            const refField = findFieldPath(
-              parentContext.fields,
+            const fieldNode = schemaDataForFieldRef(
               adornment.field,
+              parentContext.parentNode,
             );
-            const otherField = refField
-              ? lookupChildControl(parentContext, refField)
-              : undefined;
+            const otherField = fieldNode.control;
             const always = !adornment.defaultOnly;
             useControlEffect(
               () => [value?.value, otherField?.value == null],

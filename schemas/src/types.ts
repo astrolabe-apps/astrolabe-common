@@ -78,6 +78,7 @@ export interface SchemaInterface {
   controlLength(field: SchemaField, control: Control<any>): number;
   valueLength(field: SchemaField, value: any): number;
   getOptions(field: SchemaField): FieldOption[] | undefined | null;
+  getFilterOptions(field: SchemaField): FieldOption[] | undefined | null;
   parseToMillis(field: SchemaField, v: string): number;
   validationMessageText(
     field: SchemaField,
@@ -545,4 +546,31 @@ export function isArrayRenderer(
   options: RenderOptions,
 ): options is ArrayRenderOptions {
   return options.type === DataRenderType.Array;
+}
+
+export function findField(
+  fields: SchemaField[],
+  field: string,
+): SchemaField | undefined {
+  return fields.find((x) => x.field === field);
+}
+
+export function isScalarField(sf: SchemaField): sf is SchemaField {
+  return !isCompoundField(sf);
+}
+
+export function isCompoundField(sf: SchemaField): sf is CompoundField {
+  return sf.type === FieldType.Compound;
+}
+
+export function isDataControl(
+  c: ControlDefinition,
+): c is DataControlDefinition {
+  return c.type === ControlDefinitionType.Data;
+}
+
+export function isGroupControl(
+  c: ControlDefinition,
+): c is GroupedControlsDefinition {
+  return c.type === ControlDefinitionType.Group;
 }

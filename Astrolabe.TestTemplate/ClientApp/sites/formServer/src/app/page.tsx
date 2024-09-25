@@ -39,7 +39,12 @@ import {
 } from "@astroapps/client/hooks/queryParamSync";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
-import { Client } from "../client";
+import {
+  CarClient,
+  CarEdit,
+  CodeGenClient,
+  SearchStateClient,
+} from "../client";
 import controlsJson from "../ControlDefinition.json";
 import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
 import { useMemo, useState } from "react";
@@ -47,24 +52,13 @@ import {
   createDataGridRenderer,
   DataGridExtension,
 } from "@astroapps/schemas-datagrid";
+import { FormDefinitions } from "../forms";
+import { createStdFormRenderer } from "../renderers";
 
 const CustomControlSchema = applyEditorExtensions(DataGridExtension);
 
-function createStdFormRenderer(container: HTMLElement | null) {
-  return createFormRenderer(
-    [
-      createDataGridRenderer({ addText: "Add", removeText: "Delete" }),
-      createDatePickerRenderer(undefined, {
-        portalContainer: container ? container : undefined,
-      }),
-    ],
-    createDefaultRenderers({
-      ...defaultTailwindTheme,
-    }),
-  );
-}
-
 interface DisabledStuff {
+  type: string;
   disable: boolean;
   text: string;
   options: string[];
@@ -80,7 +74,11 @@ const TestSchema = buildSchema<TestSchema>({
   stuff: compoundField(
     "Stuff",
     buildSchema<DisabledStuff>({
-      disable: boolField("Disable"),
+      type: withScalarOptions(
+        { isTypeField: true },
+        stringOptionsField("Type", { name: "Some", value: "some" }),
+      ),
+      disable: boolField("Disable", { onlyForTypes: ["some"] }),
       text: stringField("Pure Text"),
       options: withScalarOptions(
         { collection: true },
@@ -99,6 +97,33 @@ const TestSchema = buildSchema<TestSchema>({
   number: doubleField("Double"),
 });
 
+interface SearchResult extends CarEdit {}
+
+interface SearchRequest {
+  sort: string[];
+  filters: string[];
+}
+interface GridSchema {
+  request: SearchRequest;
+  results: SearchResult[];
+}
+
+const ResultSchema = buildSchema<SearchResult>({
+  make: stringField("Make"),
+  model: stringField("Model"),
+  year: intField("Year"),
+});
+
+const RequestSchema = buildSchema<SearchRequest>({
+  sort: stringField("Sort", { collection: true }),
+  filters: stringField("Filters", { collection: true }),
+});
+
+const GridSchema = buildSchema<GridSchema>({
+  results: compoundField("Results", ResultSchema, { collection: true }),
+  request: compoundField("Request", RequestSchema),
+});
+
 export default function Editor() {
   const qc = useQueryControl();
   const selectedForm = useControl("Test");
@@ -115,7 +140,7 @@ export default function Editor() {
     convertStringParam(
       (x) => x,
       (x) => x,
-      "Test",
+      "Grid",
     ),
   );
   const StdFormRenderer = useMemo(
@@ -136,12 +161,20 @@ export default function Editor() {
                 fields: ControlDefinitionSchema,
                 controls: controlsJson,
               }
-            : { fields: TestSchema, controls: [] };
+            : c === "Test"
+              ? { fields: TestSchema, controls: [] }
+              : c === "Grid"
+                ? { fields: GridSchema, controls: [] }
+                : fromFormJson(c as any);
         }}
         selectedForm={selectedForm}
         formTypes={[
           ["EditorControls", "EditorControls"],
           ["Test", "Test"],
+          ["Grid", "Grid"],
+          ...Object.values(FormDefinitions).map(
+            (x) => [x.value, x.name] as [string, string],
+          ),
         ]}
         validation={async (data) => {
           data.touched = true;
@@ -150,7 +183,14 @@ export default function Editor() {
         }}
         saveForm={async (controls) => {
           if (selectedForm.value === "EditorControls") {
-            await new Client().controlDefinition(controls);
+            await new CodeGenClient().editControlDefinition(controls);
+          } else {
+            if (selectedForm.value !== "Test") {
+              await new SearchStateClient().editControlDefinition(
+                selectedForm.value,
+                { controls, config: null },
+              );
+            }
           }
         }}
         previewOptions={{
@@ -176,6 +216,10 @@ export default function Editor() {
     </DndProvider>
   );
 
+  function fromFormJson(c: keyof typeof FormDefinitions) {
+    const { controls, schema } = FormDefinitions[c];
+    return { fields: schema, controls };
+  }
   function evalExpr(
     expr: EntityExpression,
     context: ControlDataContext,

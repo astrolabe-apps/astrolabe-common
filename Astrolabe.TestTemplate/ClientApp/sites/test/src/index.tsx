@@ -8,6 +8,7 @@ import { Validation } from "./Validation";
 import { Schemas } from "./SchemasPage";
 import { RenderFormContext } from "./formTree";
 import { NextGenRender } from "./formTree/NextGenRender";
+import { SimpleControls } from "./Simple";
 
 const router = createBrowserRouter([
   {
@@ -18,12 +19,13 @@ const router = createBrowserRouter([
   { path: "/dynamic", element: <DynamicControls /> },
   { path: "/validation", element: <Validation /> },
   { path: "/schemas", element: <Schemas /> },
+  { path: "/simple", element: <SimpleControls /> },
 ]);
 
 const root = createRoot(document.getElementById("app")!);
 
 root.render(
-  <RenderFormContext.Provider value={NextGenRender}>
-    <RouterProvider router={router} />
-  </RenderFormContext.Provider>,
+  //<RenderFormContext.Provider value={NextGenRender}>
+  <RouterProvider router={router} />,
+  //</RenderFormContext.Provider>,
 );

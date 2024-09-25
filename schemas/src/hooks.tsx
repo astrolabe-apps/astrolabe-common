@@ -32,17 +32,16 @@ import {
   elementValueForField,
   findFieldPath,
   getDisplayOnlyOptions,
-  getTypeField,
   HookDep,
   isControlDisabled,
   isControlReadonly,
   jsonPathString,
   lookupChildControl,
-  lookupChildControlPath,
   toDepString,
 } from "./util";
 import jsonata from "jsonata";
 import { v4 as uuidv4 } from "uuid";
+import { schemaDataForFieldRef, SchemaDataNode } from "./treeNodes";
 
 export type EvalExpressionHook<A = any> = DynamicHookGenerator<
   Control<A | undefined>,
@@ -57,7 +56,7 @@ export type UseEvalExpressionHook = (
 export function useEvalVisibilityHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
-  fieldPath?: SchemaField[],
+  overrideDataNode?: SchemaDataNode,
 ): EvalExpressionHook<boolean> {
   const dynamicVisibility = useEvalDynamicBoolHook(
     definition,
@@ -66,15 +65,16 @@ export function useEvalVisibilityHook(
   );
   return makeDynamicPropertyHook(
     dynamicVisibility,
-    (ctx, { fieldPath, definition }) =>
+    (ctx, { definition, overrideDataNode }) =>
       useComputed(() => {
+        const dataNode = overrideDataNode ?? ctx.dataNode;
         return (
-          matchesType(ctx, fieldPath) &&
-          (!fieldPath ||
-            !hideDisplayOnly(ctx, fieldPath, definition, ctx.schemaInterface))
+          !dataNode ||
+          (matchesType(dataNode) &&
+            !hideDisplayOnly(dataNode, ctx.schemaInterface, definition))
         );
       }),
-    { fieldPath, definition },
+    { definition, overrideDataNode },
   );
 }
 
@@ -131,8 +131,6 @@ export function useEvalAllowedOptionsHook(
 export function useEvalDisabledHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
-  fieldPath?: SchemaField[],
-  elementIndex?: number,
 ): EvalExpressionHook<boolean> {
   const dynamicDisabled = useEvalDynamicBoolHook(
     definition,
@@ -141,14 +139,13 @@ export function useEvalDisabledHook(
   );
   return makeDynamicPropertyHook(
     dynamicDisabled,
-    (ctx, { fieldPath }) =>
+    (ctx) =>
       useComputed(() => {
-        const dataControl =
-          fieldPath && lookupChildControl(ctx, fieldPath, elementIndex);
+        const dataControl = ctx.dataNode?.control;
         const setToNull = dataControl?.meta["nullControl"]?.value === false;
         return setToNull || isControlDisabled(definition);
       }),
-    { fieldPath, elementIndex },
+    undefined,
   );
 }
 
@@ -168,8 +165,6 @@ export function useEvalDisplayHook(
 export function useEvalDefaultValueHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,
-  schemaField: SchemaField | undefined,
-  element: boolean,
 ): EvalExpressionHook {
   const dynamicValue = useEvalDynamicHook(
     definition,
@@ -178,47 +173,44 @@ export function useEvalDefaultValueHook(
   );
   return makeDynamicPropertyHook(
     dynamicValue,
-    (ctx, { definition, schemaField }) => {
+    (ctx, { definition }) => {
       return useComputed(calcDefault);
       function calcDefault() {
         const [required, dcv] = isDataControlDefinition(definition)
           ? [definition.required, definition.defaultValue]
           : [false, undefined];
+        const field = ctx.dataNode?.schema.field;
         return (
           dcv ??
-          (schemaField
-            ? element
-              ? elementValueForField(schemaField)
-              : defaultValueForField(schemaField, required, true)
+          (field
+            ? ctx.dataNode!.elementIndex != null
+              ? elementValueForField(field)
+              : defaultValueForField(field, required, true)
             : undefined)
         );
       }
     },
-    { definition, schemaField },
+    { definition },
   );
 }
 
 function useDataExpression(
   fvExpr: DataExpression,
-  fields: SchemaField[],
-  data: DataContext,
+  node: SchemaDataNode,
   coerce: (v: any) => any = (x) => x,
 ) {
-  const refField = findFieldPath(fields, fvExpr.field);
-  const otherField = refField ? lookupChildControl(data, refField) : undefined;
-  return useCalculatedControl(() => coerce(otherField?.value));
+  const otherField = schemaDataForFieldRef(fvExpr.field, node);
+  return useCalculatedControl(() => coerce(otherField.control?.value));
 }
 
 function useDataMatchExpression(
   fvExpr: DataMatchExpression,
-  fields: SchemaField[],
-  data: DataContext,
+  node: SchemaDataNode,
   coerce: (v: any) => any = (x) => x,
 ) {
-  const refField = findFieldPath(fields, fvExpr.field);
-  const otherField = refField ? lookupChildControl(data, refField) : undefined;
+  const otherField = schemaDataForFieldRef(fvExpr.field, node);
   return useCalculatedControl(() => {
-    const fv = otherField?.value;
+    const fv = otherField.control?.value;
     return coerce(
       Array.isArray(fv) ? fv.includes(fvExpr.value) : fv === fvExpr.value,
     );
@@ -259,15 +251,13 @@ export function defaultEvalHooks(
     case ExpressionType.Data:
       return useDataExpression(
         expr as DataExpression,
-        context.fields,
-        context,
+        context.parentNode,
         coerce,
       );
     case ExpressionType.DataMatch:
       return useDataMatchExpression(
         expr as DataMatchExpression,
-        context.fields,
-        context,
+        context.parentNode,
         coerce,
       );
     case ExpressionType.NotEmpty:
@@ -322,32 +312,28 @@ export function useEvalDynamicHook(
   return useEvalExpressionHook(expression?.expr, coerce);
 }
 
-export function matchesType(
-  context: ControlDataContext,
-  fieldPath?: SchemaField[],
-) {
-  const types = fieldPath
-    ? fieldPath[fieldPath.length - 1].onlyForTypes
-    : undefined;
+export function matchesType(context: SchemaDataNode): boolean {
+  const types = context.schema.field.onlyForTypes;
   if (types == null || types.length === 0) return true;
-  const typeField = getTypeField(context, fieldPath!);
+  const parent = context.parent!;
+  const typeNode = parent.schema
+    .getChildNodes()
+    .find((x) => x.field.isTypeField);
+  if (typeNode == null) return true;
+  const typeField = parent.getChild(typeNode).control as Control<string>;
   return typeField && types.includes(typeField.value);
 }
 
 export function hideDisplayOnly(
-  context: ControlDataContext,
-  fieldPath: SchemaField[],
-  definition: ControlDefinition,
+  context: SchemaDataNode,
   schemaInterface: SchemaInterface,
+  definition: ControlDefinition,
 ) {
   const displayOptions = getDisplayOnlyOptions(definition);
   return (
     displayOptions &&
     !displayOptions.emptyText &&
-    schemaInterface.isEmptyValue(
-      fieldPath.at(-1)!,
-      lookupChildControl(context, fieldPath)?.value,
-    )
+    schemaInterface.isEmptyValue(context.schema.field, context.control?.value)
   );
 }
 

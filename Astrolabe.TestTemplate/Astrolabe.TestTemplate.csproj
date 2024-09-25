@@ -18,6 +18,7 @@
     <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Evaluator\Astrolabe.Evaluator.csproj" />
       <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+      <ProjectReference Include="..\Astrolabe.SearchState\Astrolabe.SearchState.csproj" />
       <ProjectReference Include="..\Astrolabe.Validation\Astrolabe.Validation.csproj" />
       <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
       <ProjectReference Include="..\Astrolabe.Workflow\Astrolabe.Workflow.csproj" />
@@ -45,6 +46,10 @@
       <_ContentIncludedByDefault Remove="common\temp\pnpm-local\package-lock.json" />
       <_ContentIncludedByDefault Remove="common\temp\pnpm-local\package.json" />
       <_ContentIncludedByDefault Remove="common\temp\pnpmfileSettings.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="ClientApp\sites\formServer\src\forms\" />
     </ItemGroup>
     
 </Project>

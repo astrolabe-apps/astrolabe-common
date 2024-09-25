@@ -36,6 +36,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Evaluator", "Astr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.EF.Search", "Astrolabe.EF.Search\Astrolabe.EF.Search.csproj", "{5AA0BA80-45C9-4A26-8003-06C6AC2D552A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.SearchState", "Astrolabe.SearchState\Astrolabe.SearchState.csproj", "{1D0E1047-6A44-43F9-B187-B62F5C97DD44}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -114,5 +116,9 @@ Global
 		{5AA0BA80-45C9-4A26-8003-06C6AC2D552A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5AA0BA80-45C9-4A26-8003-06C6AC2D552A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5AA0BA80-45C9-4A26-8003-06C6AC2D552A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D0E1047-6A44-43F9-B187-B62F5C97DD44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D0E1047-6A44-43F9-B187-B62F5C97DD44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D0E1047-6A44-43F9-B187-B62F5C97DD44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D0E1047-6A44-43F9-B187-B62F5C97DD44}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

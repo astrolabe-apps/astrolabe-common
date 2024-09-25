@@ -1,0 +1,100 @@
+{
+  "controls": [
+    {
+      "type": "Data",
+      "title": "Request",
+      "field": "request",
+      "children": [
+        {
+          "type": "Data",
+          "title": "Page",
+          "field": "page",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Per Page",
+          "field": "perPage",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Query",
+          "field": "query",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Sort",
+          "field": "sort",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Filters",
+          "field": "filters",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Data",
+      "title": "Results",
+      "field": "results",
+      "children": [
+        {
+          "type": "Data",
+          "title": "Make",
+          "field": "make",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "filterField": "make"
+            }
+          ]
+        },
+        {
+          "type": "Data",
+          "title": "Model",
+          "field": "model",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Year",
+          "field": "year",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          }
+        }
+      ],
+      "renderOptions": {
+        "type": "DataGrid"
+      }
+    }
+  ],
+  "config": null
+}
