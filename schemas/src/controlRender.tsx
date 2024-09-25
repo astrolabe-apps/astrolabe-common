@@ -229,7 +229,10 @@ export interface ActionRendererProps {
   style?: React.CSSProperties;
 }
 
-export interface ControlRenderProps {}
+export interface ControlRenderProps {
+  control: Control<any>;
+  parentPath?: JsonPath[];
+}
 
 export interface FormContextOptions {
   readonly?: boolean | null;
@@ -271,12 +274,33 @@ export interface ControlRenderOptions extends FormContextOptions {
   schemaInterface?: SchemaInterface;
   elementIndex?: number;
 }
+
 export function useControlRenderer(
+  definition: ControlDefinition,
+  fields: SchemaField[],
+  renderer: FormRenderer,
+  options: ControlRenderOptions = {},
+): FC<ControlRenderProps> {
+  const r = useUpdatedRef({ definition, fields, renderer, options });
+  return useCallback(
+    ({ control, parentPath }) => {
+      return (
+        <ControlRenderer
+          {...r.current}
+          control={control}
+          parentPath={parentPath}
+        />
+      );
+    },
+    [r],
+  );
+}
+export function useControlRendererComponent(
   definition: ControlDefinition,
   renderer: FormRenderer,
   options: ControlRenderOptions = {},
   parentDataNode: SchemaDataNode,
-): FC<ControlRenderProps> {
+): FC<{}> {
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
   const elementIndex = options.elementIndex;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
@@ -514,7 +538,7 @@ export function ControlRenderer({
     createSchemaLookup({ "": fields }).getSchema("")!,
     control,
   );
-  const Render = useControlRenderer(
+  const Render = useControlRendererComponent(
     definition,
     renderer,
     options,
@@ -534,7 +558,7 @@ export function NewControlRenderer({
   options?: ControlRenderOptions;
   parentDataNode: SchemaDataNode;
 }) {
-  const Render = useControlRenderer(
+  const Render = useControlRendererComponent(
     definition,
     renderer,
     options,
