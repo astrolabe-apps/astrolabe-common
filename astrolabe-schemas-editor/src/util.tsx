@@ -324,13 +324,19 @@ export function findSchemaFieldListForParents(
           ? p.fields.field.current.value
           : undefined;
     if (compoundField) {
-      const nextFields = fields.elements.find(
-        (x) => x.fields.field.current.value === compoundField,
-      );
-      if (!nextFields) return undefined;
-      fields = controlIsCompoundField(nextFields)
-        ? nextFields.fields.children
-        : fields;
+      const allFields = compoundField.split("/");
+      let i = 0;
+      while (i < allFields.length) {
+        const field = allFields[i];
+        const nextFields = fields.elements.find(
+          (x) => x.fields.field.current.value === field,
+        );
+        if (!nextFields) return undefined;
+        fields = controlIsCompoundField(nextFields)
+          ? nextFields.fields.children
+          : fields;
+        i++;
+      }
     }
   }
   return fields;
