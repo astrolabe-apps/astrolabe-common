@@ -81,6 +81,25 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         var resetCode = CreateEmailCode();
         await SetResetCodeAndEmail(email, resetCode);
     }
+
+
+    public async Task MfaCode(MfaCodeRequest mfaCodeRequest)
+    {
+       if(!await SendMfaCode(mfaCodeRequest)) 
+           throw new UnauthorizedException();
+    }
+
+    protected abstract Task<bool> SendMfaCode(MfaCodeRequest mfaCodeRequest);
+
+    public async Task<string> MfaAuthenticate(MfaAuthenticateRequest mfaAuthenticateRequest)
+    {
+        var token = await VerifyMfaCode(mfaAuthenticateRequest);
+        if (token == null) throw new UnauthorizedException();
+        return token;
+    }
+
+    protected abstract Task<string?> VerifyMfaCode(MfaAuthenticateRequest mfaAuthenticateRequest);
+    
     
     protected abstract Task SetResetCodeAndEmail(string email, string resetCode);
 

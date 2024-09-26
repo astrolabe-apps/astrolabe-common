@@ -30,6 +30,20 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         return _localUserService.Authenticate(authenticateRequest);
     }
+    
+    
+
+    [HttpPost("mfaCode")]
+    public async Task SendMfaCode([FromBody] MfaCodeRequest mfaCodeRequest)
+    {
+        await _localUserService.MfaCode(mfaCodeRequest);
+    }
+
+    [HttpPost("mfaAuthenticate")]
+    public async Task<string> MfaAuthenticate([FromBody] MfaAuthenticateRequest mfaAuthenticateRequest)
+    {
+        return await _localUserService.MfaAuthenticate(mfaAuthenticateRequest);
+    }
 
     [HttpPost("forgotPassword")]
     public Task ForgotPassword(string email)

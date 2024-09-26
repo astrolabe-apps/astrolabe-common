@@ -11,17 +11,23 @@ export interface AuthPageSetup {
     signup: string;
     resetPassword: string;
     changePassword: string;
+    mfa: string;
   };
   errors: {
     emptyEmail?: string;
     emptyUsername: string;
     emptyPassword: string;
+    emptyCode: string;
+    wrongCode: string;
     credentials: string;
     verify: string;
+    generic: string;
   };
   queryParams: {
     verifyCode: string;
     resetCode: string;
+    token: string;
+    message: string;
   };
 }
 
@@ -31,16 +37,22 @@ export const defaultUserAuthPageSetup: AuthPageSetup = {
     signup: "/signup",
     resetPassword: "/resetPassword",
     changePassword: "/changePassword",
+    mfa: "/mfa"
   },
   errors: {
     emptyUsername: "Please enter your email address",
     emptyPassword: "Please enter your password",
     credentials: "Incorrect username/password",
     verify: "You could not be verified",
+    emptyCode: "Please enter your code",
+    wrongCode: "The verification code you have entered does not match our records. Please try again, or request a new code.",
+    generic: "An unknown error occurred"
   },
   queryParams: {
     verifyCode: "verificationCode",
     resetCode: "resetCode",
+    token: "token",
+    message: "message",
   },
 };
 
@@ -196,6 +208,57 @@ export function useLoginPage(
   };
 }
 
+export interface MfaFormData {
+  token: string;
+  code: string;
+}
+
+interface MfaProps
+{
+  control: Control<MfaFormData>;
+  authenticate: () => Promise<boolean>;
+  send: () => Promise<boolean>;
+
+}
+
+export function useMfaPage( runAuthenticate: (login: MfaFormData) => Promise<any>, send: (login: MfaFormData) => Promise<any>) : MfaProps
+{
+  const {
+    queryParams, errors: {emptyCode, wrongCode, generic}
+  } = useAuthPageSetup();
+  const searchParams = useNavigationService();
+  const token = searchParams.get(queryParams.token)!;
+  
+  const control = useControl({token, code: ""}, {
+    fields: { code: { validator: notEmpty(emptyCode) } },
+  });
+
+  return {
+    control,
+    authenticate: () =>
+      validateAndRunResult(
+        control,
+        () => runAuthenticate(control.value),
+        (e) => {
+          if (isApiResponse(e) && e.status === 401) {
+            control.error = wrongCode;
+            return true;
+          } else return false;
+        },
+      ),
+    send: async () => {
+      try {  await send(control.value); return true;}
+      catch (e) {
+        if (isApiResponse(e)) {
+          control.error = generic;
+          return true;
+        } else return false;
+      }
+    }
+  };
+}
+
+
 export interface ResetPasswordProps {
   control: Control<ResetPasswordFormData>;
   resetPassword: () => Promise<any>;
@@ -279,6 +342,11 @@ export const defaultUserRoutes = {
   changeEmail: { label: "Change email", allowGuests: false },
   resetPassword: {
     label: "Reset password",
+    allowGuests: true,
+    forwardAuthenticated: true,
+  },
+  mfa: {
+    label: "Login",
     allowGuests: true,
     forwardAuthenticated: true,
   },
