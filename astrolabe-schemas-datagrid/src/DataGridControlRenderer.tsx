@@ -35,9 +35,10 @@ import {
 } from "./columnAdornment";
 import { FilterPopover } from "./FilterPopover";
 import {
+  FilterAndSortState,
   findSortField,
   rotateSort,
-  SearchingState,
+  SearchOptions,
   setFilterValue,
 } from "@astroapps/searchstate";
 import { SortableHeader } from "./SortableHeader";
@@ -154,7 +155,7 @@ export function createDataGridRenderer(options?: DataGridOptions) {
           searchControl={
             searchField
               ? (schemaDataForFieldRef(searchField, dataContext.parentNode)
-                  .control as Control<SearchingState>)
+                  .control as Control<FilterAndSortState>)
               : undefined
           }
           columns={allColumns}
@@ -202,7 +203,7 @@ interface DataGridRendererProps {
   renderOptions: DataGridOptions;
   columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[];
   control: Control<any[] | undefined | null>;
-  searchControl?: Control<SearchingState>;
+  searchControl?: Control<FilterAndSortState>;
   className?: string;
   renderAction: (action: ActionRendererProps) => ReactNode;
   readonly: boolean;
