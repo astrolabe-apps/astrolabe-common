@@ -1,3 +1,4 @@
+using Astrolabe.Annotation;
 using Astrolabe.TestTemplate.Workflow;
 using Astrolabe.Workflow;
 using Microsoft.AspNetCore.Mvc;
@@ -76,6 +77,16 @@ public class CarController(AppDbContext dbContext) : ControllerBase
             .Select(x => new CarEdit(x.Make, x.Model, x.Year))
             .ToListAsync();
     }
+
+    [HttpGet("all")]
+    public async Task<IEnumerable<CarInfo>> ListAll()
+    {
+        return await dbContext
+            .Cars.Select(x => new CarInfo(x.Make, x.Model, x.Year, x.Status))
+            .ToListAsync();
+    }
 }
 
 public record CarEdit(string Make, string Model, int Year);
+
+public record CarInfo(string Make, string Model, int Year, ItemStatus Status);

@@ -6,7 +6,7 @@ import {
   ValidationMessageType,
 } from "./types";
 import { Control } from "@react-typed-forms/core";
-import {SchemaDataNode, SchemaNode} from "./treeNodes";
+import { SchemaDataNode, SchemaNode } from "./treeNodes";
 
 export class DefaultSchemaInterface implements SchemaInterface {
   constructor(protected boolStrings: [string, string] = ["No", "Yes"]) {}
@@ -36,12 +36,23 @@ export class DefaultSchemaInterface implements SchemaInterface {
     }
   }
 
+  getDataOptions(node: SchemaDataNode): FieldOption[] | null | undefined {
+    return this.getNodeOptions(node.schema);
+  }
+
+  getNodeOptions(node: SchemaNode): FieldOption[] | null | undefined {
+    return this.getOptions(node.field);
+  }
+
   getOptions({ options }: SchemaField): FieldOption[] | null | undefined {
     return options && options.length > 0 ? options : null;
   }
 
-  getFilterOptions(array: SchemaDataNode, field: SchemaNode): FieldOption[] | undefined | null {
-    return this.getOptions(field.field);
+  getFilterOptions(
+    array: SchemaDataNode,
+    field: SchemaNode,
+  ): FieldOption[] | undefined | null {
+    return this.getNodeOptions(field);
   }
 
   isEmptyValue(f: SchemaField, value: any): boolean {
@@ -57,11 +68,19 @@ export class DefaultSchemaInterface implements SchemaInterface {
         return value == null;
     }
   }
+
+  searchText(field: SchemaField, value: any): string {
+    return this.textValue(field, value)?.toLowerCase() ?? "";
+  }
+
   textValue(
     field: SchemaField,
     value: any,
     element?: boolean | undefined,
   ): string | undefined {
+    const options = this.getOptions(field);
+    const option = options?.find((x) => x.value === value);
+    if (option) return option.name;
     switch (field.type) {
       case FieldType.Date:
         return value ? new Date(value).toLocaleDateString() : undefined;
@@ -84,6 +103,25 @@ export class DefaultSchemaInterface implements SchemaInterface {
   }
   valueLength(field: SchemaField, value: any): number {
     return (value && value?.length) ?? 0;
+  }
+
+  compareValue(field: SchemaField, v1: unknown, v2: unknown): number {
+    if (v1 == null) return v2 == null ? 0 : 1;
+    if (v2 == null) return -1;
+    switch (field.type) {
+      case FieldType.Date:
+      case FieldType.DateTime:
+      case FieldType.Time:
+      case FieldType.String:
+        return (v1 as string).localeCompare(v2 as string);
+      case FieldType.Bool:
+        return (v1 as boolean) ? ((v2 as boolean) ? 0 : 1) : -1;
+      case FieldType.Int:
+      case FieldType.Double:
+        return (v1 as number) - (v2 as number);
+      default:
+        return 0;
+    }
   }
 }
 

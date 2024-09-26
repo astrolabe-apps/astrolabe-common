@@ -7,7 +7,8 @@ import {
   SchemaInterface,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import React from "react";
+import React, { useId } from "react";
+import clsx from "clsx";
 
 export function FilterPopover({
   dataNode,
@@ -15,23 +16,27 @@ export function FilterPopover({
   schemaInterface,
   setOption,
   isChecked,
-  baseId,
   popoverClass,
+  isAnyChecked,
 }: {
-  baseId: string;
   popoverClass?: string;
   dataNode: SchemaDataNode;
   valueNode: SchemaNode;
   schemaInterface: SchemaInterface;
+  isAnyChecked: () => boolean;
   isChecked: (v: any) => boolean;
   setOption: (v: any, checked: boolean) => void;
 }) {
+  const baseId = useId();
   return (
     <Popover
       content={<RenderControl render={showValues} />}
       className={popoverClass}
     >
-      <i aria-hidden className="fa-light fa-filter" />{" "}
+      <i
+        aria-hidden
+        className={clsx(isAnyChecked() ? "fa-solid" : "fa-light", "fa-filter")}
+      />
     </Popover>
   );
 

@@ -1,53 +1,48 @@
-export type SearchFilters = { [colKey: string]: string[] };
-export type SortDirection = "asc" | "desc";
-export type SortField = [string, SortDirection];
+export type SearchFilters = { [colKey: string]: unknown[] };
 
-export interface SearchingState {
-  page: number;
-  perPage: number;
+export interface FilterAndSortState {
   query: string | undefined;
   sort: string[];
   filters: SearchFilters;
-  loading: boolean;
-  totalRows: number;
 }
 
-export const defaultSearchingState: SearchingState = {
+export interface SearchPagingState {
+  page: number;
+  perPage: number;
+}
+
+export interface SearchOptions extends FilterAndSortState, SearchPagingState {}
+
+export const defaultSearchPageState: SearchOptions = {
   filters: {},
   page: 0,
   perPage: 10,
-  loading: true,
   query: "",
   sort: [],
-  totalRows: 0,
 };
 
-export function sortFieldToString([sf, dir]: SortField): string {
-  return dir[0] + sf;
-}
-
-export function stringToSortField(str: string): SortField {
-  const dir = str[0] === "a" ? "asc" : "desc";
-  return [str.substring(1), dir];
+export interface ClientSideSearching<T> {
+  getSearchText: (row: T) => string;
+  getComparison: (field: string) => ((a: T, b: T) => number) | undefined;
+  getFilterValue: (field: string) => ((row: T) => unknown) | undefined;
 }
 
 export function findSortField(
-  sorts: string[],
+  sorts: string[] | null | undefined,
   field: string | undefined,
-): SortField | undefined {
-  const sortStr = field
-    ? sorts.find((s) => s.substring(1) === field)
+): string | undefined {
+  return field && sorts
+    ? sorts.find((s) => s?.substring(1) === field)
     : undefined;
-  return sortStr ? stringToSortField(sortStr) : undefined;
 }
 
 export function filterByQuery<V>(
-  query: string,
   getText: (v: V) => string,
+  query: string | undefined | null,
   rows: V[],
   additionalFilter?: (row: V) => boolean,
 ): V[] {
-  const lq = query.toLowerCase();
+  const lq = query?.toLowerCase() ?? "";
   if (!lq && !additionalFilter) {
     return rows;
   }
@@ -62,17 +57,20 @@ export function filterByQuery<V>(
 }
 
 export function sortBySortFields<T>(
-  sorts: SortField[],
   getComparison: (field: string) => ((a: T, b: T) => number) | undefined,
+  sorts: string[] | undefined | null,
   data: T[],
-) {
+): T[] {
+  if (!sorts) return data;
   return [...data].sort((first, second) => {
     for (const i in sorts) {
-      const [s, order] = sorts[i];
-      const c = getComparison(s);
-      const compared = c ? c(first, second) : 0;
-      if (compared) {
-        return compared * (order === "asc" ? 1 : -1);
+      const fullSort = sorts[i];
+      if (fullSort) {
+        const c = getComparison(fullSort.substring(1));
+        const compared = c ? c(first, second) : 0;
+        if (compared) {
+          return compared * (fullSort[0] === "a" ? 1 : -1);
+        }
       }
     }
     return 0;
@@ -80,11 +78,11 @@ export function sortBySortFields<T>(
 }
 
 export function makeFilterFunc<T>(
-  getFilterValue: (f: string) => ((row: T) => string) | undefined,
+  getFilterValue: (f: string) => ((row: T) => unknown) | undefined,
   filters: SearchFilters | undefined,
 ): ((f: T) => boolean) | undefined {
   if (!filters) return undefined;
-  const fv: [(row: T) => string, string[]][] = [];
+  const fv: [(row: T) => unknown, unknown[]][] = [];
   Object.keys(filters).forEach((ch) => {
     const vals = filters[ch];
     if (!vals || vals.length === 0) {
@@ -103,9 +101,9 @@ export function makeFilterFunc<T>(
 
 export function setFilterValue(
   column: string,
-  value: string,
+  value: unknown,
   set: boolean,
-): (f: SearchFilters) => SearchFilters {
+): (f: SearchFilters | undefined) => SearchFilters {
   return (_filters) => {
     const filters = _filters ?? {};
     let curValues = filters[column];
@@ -131,4 +129,49 @@ function setIncluded<A>(array: A[], elem: A, included: boolean): A[] {
     return [...array, elem];
   }
   return array.filter((e) => e !== elem);
+}
+
+export function rotateSort(
+  sortField: string,
+  defaultSort: string = "a",
+): (existing: string[] | undefined) => string[] {
+  return (_cols) => {
+    const cols = _cols ?? [];
+    const currentSort = findSortField(cols, sortField);
+    const currentDirection = currentSort ? currentSort[0] : undefined;
+    if (!currentDirection) {
+      return [defaultSort + sortField, ...cols];
+    }
+    let nextDir: string | undefined;
+    switch (currentDirection) {
+      case "a":
+        nextDir = defaultSort === "a" ? "d" : undefined;
+        break;
+      case "d":
+        nextDir = defaultSort === "d" ? "a" : undefined;
+    }
+    const withoutExisting = cols.filter((c) => c.substring(1) !== sortField);
+    return nextDir
+      ? [nextDir + sortField, ...withoutExisting]
+      : withoutExisting;
+  };
+}
+
+export function makeClientSortAndFilter<T>(
+  client: ClientSideSearching<T>,
+): (searchParams: FilterAndSortState, rows: T[]) => T[] {
+  return ({ sort, filters, query }, rows) => {
+    const f = makeFilterFunc<T>(client.getFilterValue, filters);
+    return sortBySortFields(
+      client.getComparison,
+      sort,
+      filterByQuery(client.getSearchText, query, rows, f),
+    );
+  };
+}
+
+export function getPageOfResults<T>(page: number, perPage: number, rows: T[]) {
+  const pp = perPage ? perPage : 10;
+  const offset = (page ?? 0) * pp;
+  return rows.slice(offset, offset + pp);
 }

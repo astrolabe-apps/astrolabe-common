@@ -191,22 +191,46 @@ export function schemaForFieldRef(
   return schemaForFieldPath(fieldRef?.split("/") ?? [], schema);
 }
 
+export function traverseSchemaPath<A>(
+  fieldPath: string[],
+  schema: SchemaNode,
+  acc: A,
+  next: (acc: A, node: SchemaNode) => A,
+): A {
+  let i = 0;
+  while (i < fieldPath.length) {
+    const nextField = fieldPath[i];
+    let childNode = schema.getChildNode(nextField);
+    if (!childNode) {
+      childNode = nodeForSchema(MissingField, schema, schema);
+    }
+    acc = next(acc, childNode);
+    schema = childNode;
+    i++;
+  }
+  return acc;
+}
+
+export function traverseData(
+  fieldPath: string[],
+  root: SchemaNode,
+  data: { [k: string]: any },
+): unknown {
+  return traverseSchemaPath(
+    fieldPath,
+    root,
+    data,
+    (acc, n) => acc?.[n.field.field] as any,
+  );
+}
+
 export function schemaDataForFieldPath(
   fieldPath: string[],
   schema: SchemaDataNode,
 ): SchemaDataNode {
-  let i = 0;
-  while (i < fieldPath.length) {
-    const nextField = fieldPath[i];
-    const node = schema.schema;
-    let childNode = node.getChildNode(nextField);
-    if (!childNode) {
-      childNode = nodeForSchema(MissingField, node, node);
-    }
-    schema = schema.getChild(childNode);
-    i++;
-  }
-  return schema;
+  return traverseSchemaPath(fieldPath, schema.schema, schema, (a, n) =>
+    a.getChild(n),
+  );
 }
 
 export function schemaForFieldPath(

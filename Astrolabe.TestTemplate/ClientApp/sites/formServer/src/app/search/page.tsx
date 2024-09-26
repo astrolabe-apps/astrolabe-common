@@ -1,48 +1,50 @@
 "use client";
 
 import { useApiClient } from "@astroapps/client/hooks/useApiClient";
-import { CarClient, CarEdit } from "../../client";
+import { CarClient, CarEdit, CarInfo } from "../../client";
 import { useEffect, useMemo } from "react";
 import {
   Control,
   RenderArrayElements,
   useControl,
-  useControlEffect,
 } from "@react-typed-forms/core";
 import {
   ControlRenderer,
+  createSchemaLookup,
   DefaultSchemaInterface,
   SchemaDataNode,
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import { FormDefinitions } from "../../forms";
-import { CarSearchPageForm, defaultCarSearchPageForm } from "../../schemas";
+import {
+  CarSearchPageForm,
+  defaultCarSearchPageForm,
+  SchemaMap,
+} from "../../schemas";
 import { createStdFormRenderer } from "../../renderers";
-import { makeFilterFunc } from "@astroapps/searchstate";
+import { useClientSearching } from "@astroapps/schemas-datagrid";
+import { SearchOptions } from "@astroapps/searchstate";
 
 const renderer = createStdFormRenderer(null);
+const schemaLookup = createSchemaLookup(SchemaMap);
+const carInfoNode = schemaLookup.getSchema("CarInfo")!;
+
 export default function SearchPage() {
   const carClient = useApiClient(CarClient);
   const pageControl = useControl<CarSearchPageForm>(defaultCarSearchPageForm);
-  const allResults = useControl<CarEdit[]>();
+  const allResults = useControl<CarInfo[]>();
   const schemaInterface = useMemo(
     () => new DataBackedSchema(allResults),
     [allResults],
   );
 
   const { results, request } = pageControl.fields;
-
-  useControlEffect(
-    () => [allResults.value, request.fields.filters.value],
-    ([x, fv]) => {
-      if (x) {
-        const f = makeFilterFunc<CarEdit>(
-          (field) => (r) => r[field as keyof CarEdit] as string,
-          fv,
-        );
-        results.value = f ? x.filter(f) : x;
-      }
-    },
+  useClientSearching(
+    allResults,
+    results.fields.entries,
+    request as Control<SearchOptions>,
+    carInfoNode,
+    schemaInterface,
   );
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export default function SearchPage() {
   );
 
   async function loadAll() {
-    allResults.value = await carClient.listPublished();
+    allResults.value = await carClient.listAll();
   }
 }
 

@@ -6,9 +6,15 @@ import {
   applyDefaultValues,
   makeCompoundField,
 } from "@react-typed-forms/schemas";
-import { SearchQueryState, CarEdit, CarSearchPage } from "./client";
+import {
+  SearchOptions,
+  ItemStatus,
+  CarInfo,
+  CarInfoSearchResults,
+  CarSearchPage,
+} from "./client";
 
-export interface SearchQueryStateForm {
+export interface SearchOptionsForm {
   page: number;
   perPage: number;
   query: string | null;
@@ -16,7 +22,7 @@ export interface SearchQueryStateForm {
   filters: any | null;
 }
 
-export const SearchQueryStateSchema = buildSchema<SearchQueryStateForm>({
+export const SearchOptionsSchema = buildSchema<SearchOptionsForm>({
   page: makeScalarField({
     type: FieldType.Int,
     notNullable: true,
@@ -44,22 +50,21 @@ export const SearchQueryStateSchema = buildSchema<SearchQueryStateForm>({
   }),
 });
 
-export const defaultSearchQueryStateForm: SearchQueryStateForm =
-  defaultValueForFields(SearchQueryStateSchema);
+export const defaultSearchOptionsForm: SearchOptionsForm =
+  defaultValueForFields(SearchOptionsSchema);
 
-export function toSearchQueryStateForm(
-  v: SearchQueryState,
-): SearchQueryStateForm {
-  return applyDefaultValues(v, SearchQueryStateSchema);
+export function toSearchOptionsForm(v: SearchOptions): SearchOptionsForm {
+  return applyDefaultValues(v, SearchOptionsSchema);
 }
 
-export interface CarEditForm {
+export interface CarInfoForm {
   make: string;
   model: string;
   year: number;
+  status: ItemStatus;
 }
 
-export const CarEditSchema = buildSchema<CarEditForm>({
+export const CarInfoSchema = buildSchema<CarInfoForm>({
   make: makeScalarField({
     type: FieldType.String,
     notNullable: true,
@@ -78,31 +83,82 @@ export const CarEditSchema = buildSchema<CarEditForm>({
     required: true,
     displayName: "Year",
   }),
+  status: makeScalarField({
+    type: FieldType.Int,
+    notNullable: true,
+    required: true,
+    displayName: "Status",
+    options: [
+      {
+        name: "Draft",
+        value: 0,
+      },
+      {
+        name: "Published",
+        value: 1,
+      },
+    ],
+  }),
 });
 
-export const defaultCarEditForm: CarEditForm =
-  defaultValueForFields(CarEditSchema);
+export const defaultCarInfoForm: CarInfoForm =
+  defaultValueForFields(CarInfoSchema);
 
-export function toCarEditForm(v: CarEdit): CarEditForm {
-  return applyDefaultValues(v, CarEditSchema);
+export function toCarInfoForm(v: CarInfo): CarInfoForm {
+  return applyDefaultValues(v, CarInfoSchema);
+}
+
+export interface CarInfoSearchResultsForm {
+  loading: boolean;
+  totalRows: number | null;
+  entries: CarInfoForm[] | null;
+}
+
+export const CarInfoSearchResultsSchema = buildSchema<CarInfoSearchResultsForm>(
+  {
+    loading: makeScalarField({
+      type: FieldType.Bool,
+      notNullable: true,
+      required: true,
+      displayName: "Loading",
+    }),
+    totalRows: makeScalarField({
+      type: FieldType.Int,
+      displayName: "Total Rows",
+    }),
+    entries: makeCompoundField({
+      children: CarInfoSchema,
+      schemaRef: "CarInfo",
+      collection: true,
+      displayName: "Entries",
+    }),
+  },
+);
+
+export const defaultCarInfoSearchResultsForm: CarInfoSearchResultsForm =
+  defaultValueForFields(CarInfoSearchResultsSchema);
+
+export function toCarInfoSearchResultsForm(
+  v: CarInfoSearchResults,
+): CarInfoSearchResultsForm {
+  return applyDefaultValues(v, CarInfoSearchResultsSchema);
 }
 
 export interface CarSearchPageForm {
-  request: SearchQueryStateForm;
-  results: CarEditForm[];
+  request: SearchOptionsForm;
+  results: CarInfoSearchResultsForm;
 }
 
 export const CarSearchPageSchema = buildSchema<CarSearchPageForm>({
   request: makeCompoundField({
-    children: SearchQueryStateSchema,
-    schemaRef: "SearchQueryState",
+    children: SearchOptionsSchema,
+    schemaRef: "SearchOptions",
     notNullable: true,
     displayName: "Request",
   }),
   results: makeCompoundField({
-    children: CarEditSchema,
-    schemaRef: "CarEdit",
-    collection: true,
+    children: CarInfoSearchResultsSchema,
+    schemaRef: "CarInfoSearchResults",
     notNullable: true,
     displayName: "Results",
   }),
@@ -116,7 +172,8 @@ export function toCarSearchPageForm(v: CarSearchPage): CarSearchPageForm {
 }
 
 export const SchemaMap = {
-  SearchQueryState: SearchQueryStateSchema,
-  CarEdit: CarEditSchema,
+  SearchOptions: SearchOptionsSchema,
+  CarInfo: CarInfoSchema,
+  CarInfoSearchResults: CarInfoSearchResultsSchema,
   CarSearchPage: CarSearchPageSchema,
 };

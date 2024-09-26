@@ -2,6 +2,103 @@
   "controls": [
     {
       "type": "Data",
+      "title": "Results",
+      "field": "results/entries",
+      "children": [
+        {
+          "type": "Data",
+          "title": "Make",
+          "field": "make",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "filterField": "",
+              "visible": {},
+              "enabledFilter": true
+            }
+          ],
+          "hideTitle": true
+        },
+        {
+          "type": "Data",
+          "title": "Model",
+          "field": "model",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "filterField": "",
+              "sortField": "",
+              "visible": {},
+              "enabledFilter": true,
+              "enabledSort": true
+            }
+          ],
+          "hideTitle": true
+        },
+        {
+          "type": "Data",
+          "title": "Year",
+          "field": "year",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "hideTitle": true,
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "sortField": "",
+              "visible": {},
+              "enabledSort": true
+            }
+          ]
+        },
+        {
+          "type": "Data",
+          "title": "Status",
+          "field": "status",
+          "hideTitle": true,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "filterField": "",
+              "visible": {},
+              "enabledFilter": true
+            }
+          ]
+        }
+      ],
+      "renderOptions": {
+        "type": "DataGrid",
+        "searchField": "request"
+      },
+      "readonly": true
+    },
+    {
+      "type": "Data",
       "title": "Request",
       "field": "request",
       "children": [
@@ -47,68 +144,9 @@
             "type": "Standard"
           }
         }
-      ]
-    },
-    {
-      "type": "Data",
-      "title": "Results",
-      "field": "results",
-      "children": [
-        {
-          "type": "Data",
-          "title": "Make",
-          "field": "make",
-          "required": true,
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "adornments": [
-            {
-              "type": "ColumnOptions",
-              "renderOptions": {
-                "type": "Standard"
-              },
-              "filterField": "make",
-              "visible": {}
-            }
-          ],
-          "hideTitle": true
-        },
-        {
-          "type": "Data",
-          "title": "Model",
-          "field": "model",
-          "required": true,
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "adornments": [
-            {
-              "type": "ColumnOptions",
-              "renderOptions": {
-                "type": "Standard"
-              },
-              "filterField": "model",
-              "sortField": "model",
-              "visible": {}
-            }
-          ],
-          "hideTitle": true
-        },
-        {
-          "type": "Data",
-          "title": "Year",
-          "field": "year",
-          "required": true,
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "hideTitle": true
-        }
       ],
       "renderOptions": {
-        "type": "DataGrid",
-        "searchField": "request"
+        "type": "Standard"
       }
     }
   ],

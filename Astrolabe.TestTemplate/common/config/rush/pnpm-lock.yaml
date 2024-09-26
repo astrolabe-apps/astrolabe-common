@@ -254,6 +254,7 @@ importers:
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.37
+      clsx: ^2
       microbundle: ^0.15.1
       prettier: ^3.0.3
       react: ^18.2.0
@@ -265,6 +266,7 @@ importers:
       '@radix-ui/react-popover': 1.0.7_3vdbhqr2ncalcx7opnshezpx3q
       '@react-typed-forms/core': 3.6.0
       '@react-typed-forms/schemas': link:../schemas
+      clsx: 2.1.1
       react: 18.3.1
     devDependencies:
       '@babel/cli': 7.24.8_@babel+core@7.25.2

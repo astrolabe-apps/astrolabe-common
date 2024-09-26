@@ -90,6 +90,8 @@ export interface SchemaInterface {
     actual: any,
     expected: any,
   ): string;
+  compareValue(field: SchemaField, v1: unknown, v2: unknown): number;
+  searchText(field: SchemaField, value: any): string;
 }
 export interface ControlDefinition {
   type: string;

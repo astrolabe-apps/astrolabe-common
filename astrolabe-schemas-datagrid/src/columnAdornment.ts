@@ -5,7 +5,9 @@ import {
   ControlAdornment,
   ControlDefinition,
   CustomRenderOptions,
+  DataControlDefinition,
   EntityExpression,
+  isDataControlDefinition,
   RenderOptions,
   stringField,
 } from "@react-typed-forms/schemas";
@@ -25,7 +27,42 @@ export type ColumnOptions = Pick<
   rowIndex?: boolean;
   layoutClass?: string;
   visible?: EntityExpression;
+  enabledSort?: boolean;
+  enabledFilter?: boolean;
 };
+
+export function getColumnHeaderFromOptions(
+  columnOptions: ColumnOptions | undefined,
+  definition: ControlDefinition,
+): Partial<ColumnHeader> {
+  if (!columnOptions) return {};
+  const {
+    cellClass,
+    headerCellClass,
+    columnTemplate,
+    bodyCellClass,
+    title,
+    filterField,
+    sortField,
+    enabledSort,
+    enabledFilter,
+  } = columnOptions;
+  return {
+    cellClass,
+    headerCellClass,
+    columnTemplate,
+    bodyCellClass,
+    title,
+    filterField: enabledFilter ? customField(filterField) : undefined,
+    sortField: enabledSort ? customField(sortField) : undefined,
+  };
+
+  function customField(custom: string | undefined) {
+    return !custom && isDataControlDefinition(definition)
+      ? definition.field
+      : custom;
+  }
+}
 
 export const ColumnOptionsFields = buildSchema<ColumnOptions>({
   columnTemplate: stringField("Column Template"),
@@ -38,8 +75,10 @@ export const ColumnOptionsFields = buildSchema<ColumnOptions>({
   renderOptions: compoundField("Render Options", [], {
     schemaRef: "RenderOptions",
   }),
-  filterField: stringField("Filter field"),
-  sortField: stringField("Sort field"),
+  enabledFilter: boolField("Enable filter"),
+  enabledSort: boolField("Enable sort"),
+  filterField: stringField("Custom filter field"),
+  sortField: stringField("Custom sort field"),
   visible: compoundField("Column visibility", [], {
     schemaRef: "EntityExpression",
   }),

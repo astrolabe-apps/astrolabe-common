@@ -11,20 +11,15 @@ import {
   createDataRenderer,
   CustomRenderOptions,
   DataControlDefinition,
-  DynamicHookGenerator,
   EvalExpressionHook,
   fieldPathForDefinition,
   getLengthRestrictions,
-  isDataControlDefinition,
   makeHookDepString,
   mergeObjects,
   RenderOptions,
-  schemaDataForFieldPath,
   schemaDataForFieldRef,
   schemaForFieldPath,
-  schemaForFieldRef,
   stringField,
-  toDepString,
 } from "@react-typed-forms/schemas";
 import {
   ColumnDef,
@@ -32,15 +27,20 @@ import {
   columnDefinitions,
   DataGrid,
 } from "@astroapps/datagrid";
+import { Control, useTrackedComponent } from "@react-typed-forms/core";
+import React, { ReactNode } from "react";
 import {
-  Control,
-  useComputed,
-  useTrackedComponent,
-} from "@react-typed-forms/core";
-import React, { ReactNode, useCallback } from "react";
-import { isColumnAdornment } from "./columnAdornment";
+  getColumnHeaderFromOptions,
+  isColumnAdornment,
+} from "./columnAdornment";
 import { FilterPopover } from "./FilterPopover";
-import { SearchingState, setFilterValue } from "@astroapps/searchstate";
+import {
+  findSortField,
+  rotateSort,
+  SearchingState,
+  setFilterValue,
+} from "@astroapps/searchstate";
+import { SortableHeader } from "./SortableHeader";
 
 interface DataGridOptions extends ArrayActionOptions {
   noEntriesText?: string;
@@ -111,8 +111,9 @@ export function createDataGridRenderer(options?: DataGridOptions) {
             renderOptions: x.renderOptions,
             layoutClass: x.layoutClass,
           };
+          const headerOptions = getColumnHeaderFromOptions(x, def);
           return {
-            ...x,
+            ...headerOptions,
             id: "cc" + i,
             render: (_, ri) =>
               x.rowIndex
@@ -123,10 +124,12 @@ export function createDataGridRenderer(options?: DataGridOptions) {
       const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
         childDefinitions.map((d, i) => {
           const colOptions = d.adornments?.find(isColumnAdornment);
+          const headerOptions = getColumnHeaderFromOptions(colOptions, d);
+
           return {
-            ...colOptions,
+            ...headerOptions,
             id: "c" + i,
-            title: colOptions?.title ?? d.title ?? "Column " + i,
+            title: headerOptions?.title ?? d.title ?? "Column " + i,
             data: {
               dataContext,
               definition: d,
@@ -236,47 +239,54 @@ function DataGridControlRenderer({
     col: ColumnDef<Control<any>, DataGridColumnExtension>,
   ) {
     const { filterField, sortField, title, data } = col;
-    if (data && filterField) {
+    let filtered: ReactNode = undefined;
+    let sorted: ReactNode = undefined;
+    if (data) {
       const {
         dataContext: { schemaInterface, dataNode },
         definition,
       } = data;
       const childPath = fieldPathForDefinition(definition);
+
       if (dataNode && childPath && searchControl) {
-        const { filters } = searchControl.fields;
-        return (
-          <>
-            {title}
-            {filterField && (
-              <FilterPopover
-                baseId={"c" + dataNode.control!.uniqueId}
-                popoverClass={renderOptions.popoverClass}
-                schemaInterface={schemaInterface}
-                dataNode={dataNode}
-                valueNode={schemaForFieldPath(childPath, dataNode.schema)}
-                isChecked={(v) =>
-                  filters.value?.[filterField]?.includes(v) ?? false
-                }
-                setOption={(v, ch) =>
-                  filters.setValue(setFilterValue(filterField, v, ch))
-                }
-              />
-            )}
-          </>
-        );
+        if (searchControl.current.isNull) searchControl.value = {} as any;
+        const { filters, sort } = searchControl.fields;
+        if (filterField) {
+          filtered = (
+            <FilterPopover
+              popoverClass={renderOptions.popoverClass}
+              schemaInterface={schemaInterface}
+              dataNode={dataNode}
+              valueNode={schemaForFieldPath(childPath, dataNode.schema)}
+              isAnyChecked={() =>
+                (filters.value?.[filterField]?.length ?? 0) > 0
+              }
+              isChecked={(v) =>
+                filters.value?.[filterField]?.includes(v) ?? false
+              }
+              setOption={(v, ch) =>
+                filters.setValue(setFilterValue(filterField, v, ch))
+              }
+            />
+          );
+        }
+        if (sortField) {
+          sorted = (
+            <SortableHeader
+              rotate={() =>
+                sort.setValue(rotateSort(sortField, col.defaultSort))
+              }
+              currentDir={() => findSortField(sort.value, sortField)?.[0]}
+            />
+          );
+        }
       }
     }
-    return <>{title}</>;
-    // return sortField ? (
-    //   <SortableHeader
-    //     state={state}
-    //     sortField={sortField}
-    //     column={col}
-    //     children={filtered}
-    //   />
-    // ) : (
-    //   filtered
-    // );
+    return (
+      <div className="flex gap-2">
+        {title} {filtered} {sorted}
+      </div>
+    );
   }
 
   return (

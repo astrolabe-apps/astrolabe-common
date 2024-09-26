@@ -46,9 +46,11 @@ public static class FormDefinition
         IEnumerable<FormDefinition<T>> definitions,
         string schemaModule,
         string formModuleDir,
-        Func<FormDefinition<T>, string>? formDefFilename = null
+        Func<FormDefinition<T>, string>? formDefFilename = null,
+        SchemaFieldsGeneratorOptions? options = null
     )
     {
+        options ??= new SchemaFieldsGeneratorOptions("");
         var formVars = definitions.Select(MakeAssignment).ToList();
         var formsAssignment = new TsAssignment(
             formsVariable,
@@ -72,10 +74,7 @@ public static class FormDefinition
                         TsObjectField.NamedField("name", new TsConstExpr(x.Name)),
                         TsObjectField.NamedField(
                             "schema",
-                            new TsImport(
-                                schemaModule,
-                                SchemaFieldsGenerator.SchemaConstName(x.GetSchema())
-                            ).Ref
+                            new TsImport(schemaModule, options.SchemaConstName(x.GetSchema())).Ref
                         ),
                         TsObjectField.NamedField("defaultConfig", new TsConstExpr(x.Config)),
                         TsObjectField.NamedField(
