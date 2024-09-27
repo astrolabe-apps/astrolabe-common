@@ -46,7 +46,14 @@ import { SortableHeader } from "./SortableHeader";
 interface DataGridOptions extends ArrayActionOptions {
   noEntriesText?: string;
   searchField?: string;
+}
+
+interface DataGridClasses {
   popoverClass?: string;
+  titleContainerClass?: string;
+  removeColumnClass?: string;
+  addContainerClass?: string;
+  noEntriesClass?: string;
 }
 
 interface DataGridColumnExtension {
@@ -65,7 +72,6 @@ const DataGridFields = buildSchema<DataGridOptions>({
   noRemove: boolField("No remove"),
   noReorder: boolField("No reorder"),
   searchField: stringField("Search state field"),
-  popoverClass: stringField("Popover class"),
 });
 export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
@@ -73,13 +79,23 @@ export const DataGridDefinition: CustomRenderOptions = {
   fields: DataGridFields,
 };
 
-export const defaultDataGridOptions: DataGridOptions = {
+export const defaultDataGridClasses: DataGridClasses = {
   popoverClass:
     "text-primary-950 animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 rounded-md border bg-white p-4 shadow-md outline-none",
+  titleContainerClass: "flex gap-2",
+  addContainerClass: "flex justify-center mt-2",
+  removeColumnClass: "flex items-center h-full pl-1",
+  noEntriesClass: "border-t text-center p-3",
 };
-export const DataGridRenderer = createDataGridRenderer(defaultDataGridOptions);
+export const DataGridRenderer = createDataGridRenderer(
+  undefined,
+  defaultDataGridClasses,
+);
 
-export function createDataGridRenderer(options?: DataGridOptions) {
+export function createDataGridRenderer(
+  options?: DataGridOptions,
+  classes?: DataGridClasses,
+) {
   return createDataRenderer(
     (pareProps, renderers) => {
       const {
@@ -95,10 +111,12 @@ export function createDataGridRenderer(options?: DataGridOptions) {
         required,
         useEvalExpression,
       } = pareProps;
+      const gridClasses =
+        mergeObjects(defaultDataGridClasses, classes) ?? defaultDataGridClasses;
       const dataGridOptions =
         mergeObjects(
           renderOptions as DataGridOptions & RenderOptions,
-          mergeObjects(defaultDataGridOptions, options),
+          options,
         ) ?? {};
       const constantColumns: ColumnDefInit<
         Control<any>,
@@ -149,6 +167,7 @@ export function createDataGridRenderer(options?: DataGridOptions) {
       const searchField = dataGridOptions.searchField;
       return (
         <DynamicGridVisibility
+          classes={gridClasses}
           renderOptions={dataGridOptions}
           renderAction={renderers.renderAction}
           control={control}
@@ -209,6 +228,7 @@ interface DataGridRendererProps {
   readonly: boolean;
   addAction?: ActionRendererProps;
   removeAction?: (i: number) => ActionRendererProps;
+  classes: DataGridClasses;
 }
 
 function DataGridControlRenderer({
@@ -221,6 +241,7 @@ function DataGridControlRenderer({
   readonly,
   addAction,
   removeAction,
+  classes,
 }: DataGridRendererProps) {
   const allColumns = columnDefinitions<Control<any>, DataGridColumnExtension>(
     ...columns,
@@ -228,7 +249,7 @@ function DataGridControlRenderer({
       id: "deleteCheck",
       columnTemplate: "auto",
       render: (r, rowIndex) => (
-        <div className="flex items-center h-full pl-1">
+        <div className={classes.removeColumnClass}>
           {removeAction && !readonly && renderAction(removeAction(rowIndex))}
         </div>
       ),
@@ -255,7 +276,7 @@ function DataGridControlRenderer({
         if (filterField) {
           filtered = (
             <FilterPopover
-              popoverClass={renderOptions.popoverClass}
+              popoverClass={classes.popoverClass}
               schemaInterface={schemaInterface}
               dataNode={dataNode}
               valueNode={schemaForFieldPath(childPath, dataNode.schema)}
@@ -284,7 +305,7 @@ function DataGridControlRenderer({
       }
     }
     return (
-      <div className="flex gap-2">
+      <div className={classes.titleContainerClass}>
         {title} {filtered} {sorted}
       </div>
     );
@@ -304,7 +325,7 @@ function DataGridControlRenderer({
           rowCount === 0 ? (
             <div
               style={{ gridColumn: "1 / -1" }}
-              className="border-t text-center p-3"
+              className={classes.noEntriesClass}
             >
               {renderOptions.noEntriesText ?? "No data"}
             </div>
@@ -313,7 +334,7 @@ function DataGridControlRenderer({
           )
         }
       />
-      <div className="flex justify-center mt-2">
+      <div className={classes.addContainerClass}>
         {addAction && !readonly && renderAction(addAction)}
       </div>
     </>
