@@ -32,8 +32,7 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     }
     
     
-
-    [HttpPost("mfaCode")]
+    [HttpPost("mfaCode/signin")]
     public async Task SendMfaCode([FromBody] MfaCodeRequest mfaCodeRequest)
     {
         await _localUserService.MfaCode(mfaCodeRequest);
@@ -56,13 +55,31 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         return _localUserService.ChangeEmail(email, GetUserId);
     }
-
+    
+    [HttpPost("changeMfaNumber")]
+    public Task ChangeMfaNumber(ChangeMfaNumber number)
+    {
+        return _localUserService.ChangeMfaNumber(number, GetUserId);
+    }
+    
+    [HttpPost("mfaChangeMfaNumber")]
+    public Task MfaChangeMfaNumber(MfaChangeNumber change)
+    {
+        return _localUserService.MfaChangeMfaNumber(change, GetUserId);
+    }
+    
     [Authorize]
     [AllowAnonymous]
     [HttpPost("changePassword")]
     public Task<string> ChangePassword([FromBody] ChangePassword change, [FromQuery] string? resetCode)
     {
         return _localUserService.ChangePassword(change, resetCode, GetUserId);
+    }
+    
+    [HttpPost("mfaCode/number")]
+    public async Task SendMfaCode(string number)
+    {
+        await _localUserService.MfaCode(number,  GetUserId);
     }
 
     protected abstract TUserId GetUserId();

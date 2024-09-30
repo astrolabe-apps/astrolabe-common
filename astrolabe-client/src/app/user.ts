@@ -22,6 +22,7 @@ export interface AuthPageSetup {
     credentials: string;
     verify: string;
     generic: string;
+    codeLimit: string;
   };
   queryParams: {
     verifyCode: string;
@@ -46,7 +47,8 @@ export const defaultUserAuthPageSetup: AuthPageSetup = {
     verify: "You could not be verified",
     emptyCode: "Please enter your code",
     wrongCode: "The verification code you have entered does not match our records. Please try again, or request a new code.",
-    generic: "An unknown error occurred"
+    generic: "An unknown error occurred",
+    codeLimit: "You hit the limit on the number of text messages."
   },
   queryParams: {
     verifyCode: "verificationCode",
@@ -224,14 +226,12 @@ interface MfaProps
 export function useMfaPage( runAuthenticate: (login: MfaFormData) => Promise<any>, send: (login: MfaFormData) => Promise<any>) : MfaProps
 {
   const {
-    queryParams, errors: {emptyCode, wrongCode, generic}
+    queryParams, errors: { wrongCode, generic, codeLimit}
   } = useAuthPageSetup();
   const searchParams = useNavigationService();
   const token = searchParams.get(queryParams.token)!;
   
-  const control = useControl({token, code: ""}, {
-    fields: { code: { validator: notEmpty(emptyCode) } },
-  });
+  const control = useControl({token, code: ""}, );
 
   return {
     control,
@@ -249,14 +249,90 @@ export function useMfaPage( runAuthenticate: (login: MfaFormData) => Promise<any
     send: async () => {
       try {  await send(control.value); return true;}
       catch (e) {
-        if (isApiResponse(e)) {
-          control.error = generic;
+        if (isApiResponse(e) ) {
+          if (e.status === 429) {
+            control.error = codeLimit;
+          } else {
+            control.error = generic;
+          }
           return true;
-        } else return false;
+        }  else return false;
       }
     }
   };
 }
+
+export interface ChangeMfaNumberFormData {
+  password: string;
+  newNumber: string;
+  code: string;
+}
+
+export const emptyChangeMfaNumberForm: ChangeMfaNumberFormData = {
+  password: "",
+  newNumber: "",
+  code: "",
+};
+
+export interface MfaNumberChangeProps {
+  control: Control<ChangeMfaNumberFormData>;
+  runChange: () => Promise<boolean>;
+  send: () => Promise<boolean>;
+  authenticate: () => Promise<boolean>;
+  
+}
+
+export function useChangeMfaNumberPage( runAuthenticate: (login: ChangeMfaNumberFormData) => Promise<any>, send: (login: ChangeMfaNumberFormData) => Promise<any>, runChange: (login: ChangeMfaNumberFormData) => Promise<any>) : MfaNumberChangeProps
+{
+  const {
+    queryParams, errors: {credentials, wrongCode, generic, codeLimit}
+  } = useAuthPageSetup();
+  const searchParams = useNavigationService();
+  const token = searchParams.get(queryParams.token)!;
+
+  const control = useControl(emptyChangeMfaNumberForm );
+
+  return {
+    control,
+    authenticate: () =>
+      validateAndRunResult(
+        control,
+        () => runAuthenticate(control.value),
+        (e) => {
+          if (isApiResponse(e) && e.status === 401) {
+            control.error = credentials;
+            return true;
+          } else return false;
+        },
+      ),
+    send: async () => {
+      try {  await send(control.value); return true;}
+      catch (e) {
+        if (isApiResponse(e) ) {
+          if (e.status === 429) {
+            control.error = codeLimit;
+          } else {
+            control.error = generic;
+          }
+          return true;
+        }  else return false;
+      }
+    },
+    runChange: async () => 
+      validateAndRunResult(
+        control,
+        () => runChange(control.value),
+        (e) => {
+          if (isApiResponse(e) && e.status === 401) {
+            control.error = wrongCode;
+            return true;
+          } else return false;
+        },
+      ),
+    
+  };
+}
+
 
 
 export interface ResetPasswordProps {
