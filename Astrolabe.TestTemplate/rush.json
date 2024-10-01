@@ -498,6 +498,11 @@
       "shouldPublish": true
     }
 //    {
+//      "packageName": "native",
+//      "projectFolder": "ClientApp/sites/native"
+//    }
+
+    //    {
 //      "packageName": "nextgen",
 //      "projectFolder": "ClientApp/sites/nextgen"
 //    },

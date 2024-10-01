@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+    .form-control {
+        @apply border bg-white p-2
+    }
+}
