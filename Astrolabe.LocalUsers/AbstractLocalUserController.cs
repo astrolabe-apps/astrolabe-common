@@ -24,6 +24,12 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         return _localUserService.VerifyAccount(code);
     }
+    
+    [HttpPost("mfaVerify")]
+    public Task<string> MfaVerifyAccount([FromBody] MfaVerifyAccountRequest mfaVerifyAccountRequest)
+    {
+        return _localUserService.MfaVerifyAccount(mfaVerifyAccountRequest);
+    }
 
     [HttpPost("authenticate")]
     public Task<string> Authenticate([FromBody] AuthenticateRequest authenticateRequest)
@@ -35,7 +41,7 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     [HttpPost("mfaCode/signin")]
     public async Task SendMfaCode([FromBody] MfaCodeRequest mfaCodeRequest)
     {
-        await _localUserService.MfaCode(mfaCodeRequest);
+        await _localUserService.SendMfaCode(mfaCodeRequest);
     }
 
     [HttpPost("mfaAuthenticate")]
@@ -79,7 +85,13 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     [HttpPost("mfaCode/number")]
     public async Task SendMfaCode(string number)
     {
-        await _localUserService.MfaCode(number,  GetUserId);
+        await _localUserService.SendMfaCode(number,  GetUserId);
+    }
+    
+    [HttpPost("mfaCode/verify")]
+    public async Task SendMfaCode([FromBody] VerifyAccountRequest verifyAccountRequest)
+    {
+        await _localUserService.SendMfaCode(verifyAccountRequest);
     }
 
     protected abstract TUserId GetUserId();

@@ -285,10 +285,8 @@ export interface MfaNumberChangeProps {
 export function useChangeMfaNumberPage( runAuthenticate: (login: ChangeMfaNumberFormData) => Promise<any>, send: (login: ChangeMfaNumberFormData) => Promise<any>, runChange: (login: ChangeMfaNumberFormData) => Promise<any>) : MfaNumberChangeProps
 {
   const {
-    queryParams, errors: {credentials, wrongCode, generic, codeLimit}
+     errors: {credentials, wrongCode, generic, codeLimit}
   } = useAuthPageSetup();
-  const searchParams = useNavigationService();
-  const token = searchParams.get(queryParams.token)!;
 
   const control = useControl(emptyChangeMfaNumberForm );
 
@@ -300,9 +298,13 @@ export function useChangeMfaNumberPage( runAuthenticate: (login: ChangeMfaNumber
         () => runAuthenticate(control.value),
         (e) => {
           if (isApiResponse(e) && e.status === 401) {
-            control.error = credentials;
+            control.error = credentials; 
             return true;
-          } else return false;
+          } else if(isApiResponse(e) && e.status === 429) {
+            control.error = codeLimit;
+            return true;
+          }
+          else return false;
         },
       ),
     send: async () => {
@@ -377,29 +379,102 @@ export function useSignupPage<A extends SignupFormData = SignupFormData>(
   };
 }
 
+export interface VerifyFormData {
+  token: string|null;
+  code: string;
+  otherNumber: boolean;
+  number: string|null;
+}
+
+const emptyVerifyFormData: VerifyFormData = {
+  token: null,
+  code: "",
+  otherNumber: false,
+  number: null,
+}
+
+interface VerifyProps
+{
+  control: Control<VerifyFormData>;
+  authenticate: () => Promise<boolean>;
+  send: () => Promise<boolean>;
+}
+
 export function useVerifyPage(
-  runVerify: (code: string) => Promise<unknown>,
-): Control<unknown> {
+  runVerify: (code: string) => Promise<any>,
+  runAuthenticate: (data: VerifyFormData) => Promise<any>,
+  send: (data: VerifyFormData) => Promise<any>
+): VerifyProps {
   const {
-    errors: { verify },
+    errors: { verify, codeLimit, wrongCode, generic },
     queryParams: { verifyCode },
   } = useAuthPageSetup();
 
   const searchParams = useNavigationService();
   const verificationCode = searchParams.get(verifyCode);
+  
 
-  const control = useControl(undefined);
+  const control = useControl(emptyVerifyFormData);
 
   useEffect(() => {
     doVerify();
   }, [verificationCode]);
 
-  return control;
+  return {
+    control: control,
+    authenticate: () =>
+      validateAndRunResult(
+        control,
+        () => runAuthenticate(control.value),
+        (e) => {
+          if (isApiResponse(e) && e.status === 401) {
+            control.error = wrongCode;
+            return true;
+          } else if(isApiResponse(e) && e.status === 429) {
+            control.error = codeLimit;
+            return true;
+          }
+          else return false;
+        },
+      ),
+    send: () =>
+      validateAndRunResult(
+        control,
+        () => send(control.value),
+        (e) => {
+          if(isApiResponse(e)) {
+            if (e.status === 429) {
+              control.error = codeLimit;
+              return true;
+            } else if (e.status === 401) {
+              control.error = generic;
+              return true;
+            }
+            return false;
+          }
+          else return false;
+        },
+      ),
+    // send: async () => {
+    //   try {  await send(control.value); return true;}
+    //   catch (e) {
+    //     if (isApiResponse(e) ) {
+    //       if (e.status === 429) {
+    //         control.error = codeLimit;
+    //       } else {
+    //         control.error = generic;
+    //       }
+    //     }
+    //     return false;
+    //   }
+    // },
+  };
 
   async function doVerify() {
     if (verificationCode) {
       try {
-        await runVerify(verificationCode);
+        control.fields.token.value = await runVerify(verificationCode);
+       // await runVerify(verificationCode);
       } catch (e) {
         if (isApiResponse(e) && e.status === 401) {
           control.error = verify;

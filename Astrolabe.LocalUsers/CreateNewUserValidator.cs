@@ -20,3 +20,22 @@ public class ChangeEmailValidator : AbstractValidator<ChangeEmail>
         this.RulesForEmail(x => x.NewEmail, sameEmail, messages);
     }
 }
+
+public class ChangeMfaNumberValidator: AbstractValidator<ChangeMfaNumber>
+{
+    public ChangeMfaNumberValidator()
+    {
+        RuleFor(x => x.Password).NotEmpty();
+        RuleFor(x => x.NewNumber).NotEmpty();
+    }
+}
+
+public class VerifyAccountValidator: AbstractValidator<VerifyAccountRequest>
+{
+    public VerifyAccountValidator()
+    {
+        When(x => x.OtherNumber, () => {
+            RuleFor(x => x.Number).NotEmpty();
+        });
+    }
+}
