@@ -34,13 +34,15 @@ import { createSelectRenderer } from './SelectDataRenderer';
 import { createDefaultVisibilityRenderer } from './DefaultVisibility';
 import { createDefaultGroupRenderer } from './DefaultGroupRenderer';
 import { createDefaultDisplayRenderer } from './DefaultDisplay';
+import { createCheckboxRenderer, createRadioRenderer } from './CheckRenderer';
 
 export function createDefaultRenderers(options: DefaultRendererOptions = {}): DefaultRenderers {
   return {
     data: createDefaultDataRenderer(options.data),
     display: createDefaultDisplayRenderer(options.display),
     label: createLabelRenderer((p) => (
-      <Text className={rendererClass(p.className, 'flex items-baseline gap-4 py-4 font-bold')}>
+      <Text
+        className={rendererClass(p.className, 'flex flex-row items-baseline gap-4 py-4 font-bold')}>
         {p.label}
       </Text>
     )),
@@ -85,7 +87,7 @@ export function createDefaultDataRenderer(
   // const multilineRenderer = createMultilineFieldRenderer(options.multilineClass);
   const checkboxRenderer = createCheckboxRenderer(options.checkOptions ?? options.checkboxOptions);
   const selectRenderer = createSelectRenderer(options.selectOptions);
-  // const radioRenderer = createRadioRenderer(options.radioOptions ?? options.checkOptions);
+  const radioRenderer = createRadioRenderer(options.radioOptions ?? options.checkOptions);
   // const checkListRenderer = createCheckListRenderer(
   //   options.checkListOptions ?? options.checkOptions
   // );
@@ -114,7 +116,7 @@ export function createDefaultDataRenderer(
         : undefined) ?? { type: 'Standard', hideTitle: true };
       return renderers.renderGroup({ ...props, renderOptions: groupOptions });
     }
-    if (fieldType == FieldType.Any) return <>No control for Any</>;
+    if (fieldType == FieldType.Any) return <Text>No control for Any</Text>;
     if (isDisplayOnlyRenderer(renderOptions))
       return (p) => ({
         ...p,
@@ -137,20 +139,20 @@ export function createDefaultDataRenderer(
     if (renderType === DataRenderType.Standard && hasOptions(props)) {
       return optionRenderer.render(props, renderers);
     }
-    // switch (renderType) {
-    //   case DataRenderType.NullToggle:
-    //     return nullToggler.render(props, renderers);
-    //   case DataRenderType.CheckList:
-    //     return checkListRenderer.render(props, renderers);
-    //   case DataRenderType.Dropdown:
-    //     return selectRenderer.render(props, renderers);
-    //   case DataRenderType.Radio:
-    //     return radioRenderer.render(props, renderers);
-    //   case DataRenderType.Checkbox:
-    //     return checkboxRenderer.render(props, renderers);
-    //   case DataRenderType.Jsonata:
-    //     return jsonataRenderer.render(props, renderers);
-    // }
+    switch (renderType) {
+      //   case DataRenderType.NullToggle:
+      //     return nullToggler.render(props, renderers);
+      //   case DataRenderType.CheckList:
+      //     return checkListRenderer.render(props, renderers);
+      //   case DataRenderType.Dropdown:
+      //     return selectRenderer.render(props, renderers);
+      case DataRenderType.Radio:
+        return radioRenderer.render(props, renderers);
+      case DataRenderType.Checkbox:
+        return checkboxRenderer.render(props, renderers);
+      //   case DataRenderType.Jsonata:
+      //     return jsonataRenderer.render(props, renderers);
+    }
     // if (isTextfieldRenderer(renderOptions) && renderOptions.multiline)
     //   return multilineRenderer.render(props, renderers);
     const placeholder = isTextfieldRenderer(renderOptions) ? renderOptions.placeholder : undefined;

@@ -11,7 +11,7 @@ import {
   rendererClass,
   TextDisplay,
 } from '@react-typed-forms/schemas';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import { StyleProp, Text, useWindowDimensions, View, ViewStyle } from 'react-native';
 import RenderHtml from 'react-native-render-html';
 
 export interface DefaultDisplayRendererOptions {
@@ -35,6 +35,7 @@ export function DefaultDisplay({
   style,
   ...options
 }: DefaultDisplayRendererOptions & DisplayRendererProps) {
+  const { width } = useWindowDimensions();
   switch (data.type) {
     case DisplayDataType.Icon:
       return (
@@ -51,18 +52,19 @@ export function DefaultDisplay({
         <View
           style={style as StyleProp<ViewStyle>}
           className={rendererClass(className, options.textClassName)}>
-          {display ? display.value : (data as TextDisplay).text}
+          <Text>{display ? display.value : (data as TextDisplay).text}</Text>
         </View>
       );
     case DisplayDataType.Html:
       return (
         <RenderHtml
+          contentWidth={width}
           source={{ html: display ? (display.value ?? '') : (data as HtmlDisplay).html }}
         />
       );
     case DisplayDataType.Custom:
-      return <div>Custom display placeholder: {(data as CustomDisplay).customId}</div>;
+      return <Text>Custom display placeholder: {(data as CustomDisplay).customId}</Text>;
     default:
-      return <h1>Unknown display type: {data.type}</h1>;
+      return <Text>Unknown display type: {data.type}</Text>;
   }
 }

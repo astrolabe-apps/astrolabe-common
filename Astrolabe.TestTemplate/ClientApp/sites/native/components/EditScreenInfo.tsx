@@ -22,7 +22,7 @@ const theme: DefaultRendererOptions = {
     requiredElement: <Text className="text-red-500"></Text>,
     className: 'font-bold py-4',
     groupLabelClass: 'text-2xl',
-    labelContainer: (c) => <Text className="flex items-baseline gap-4" children={c} />,
+    labelContainer: (c) => <Text className="flex flex-row items-baseline gap-4" children={c} />,
   },
   action: {
     className: 'border text-primary-600 p-3 border-neutral-400 font-bold',
@@ -35,12 +35,15 @@ const theme: DefaultRendererOptions = {
     inputClass: 'form-control',
     selectOptions: { className: 'form-control' },
     radioOptions: {
-      className: 'flex flex-wrap gap-x-4',
-      entryClass: 'flex items-center gap-2',
+      className: 'flex flex-row flex-wrap gap-x-4',
+      entryClass: 'flex flex-row items-center gap-2',
+    },
+    checkOptions: {
+      entryClass: 'flex flex-row items-center gap-1',
     },
     checkListOptions: {
-      className: 'flex flex-wrap gap-x-4',
-      entryClass: 'flex items-center gap-2',
+      className: 'flex flex-row flex-wrap gap-x-4',
+      entryClass: 'flex flex-row items-center gap-2',
     },
   },
   display: {
@@ -71,7 +74,7 @@ export const EditScreenInfo = ({ path }: { path: string }) => {
     initialType: TypeOfFireForm.Permit,
   });
   return (
-    <ScrollView>
+    <ScrollView className="px-4">
       <RenderArrayElements array={AllControls}>
         {(c) => (
           <ControlRenderer
@@ -82,7 +85,9 @@ export const EditScreenInfo = ({ path }: { path: string }) => {
           />
         )}
       </RenderArrayElements>
-      <pre>{JSON.stringify(data.value)}</pre>
+      <View className="py-10">
+        <Text>{JSON.stringify(data.value)}</Text>
+      </View>
     </ScrollView>
   );
 };

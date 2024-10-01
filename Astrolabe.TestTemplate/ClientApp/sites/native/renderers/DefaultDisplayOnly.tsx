@@ -1,6 +1,6 @@
 import { Control } from '@react-typed-forms/core';
 import { rendererClass, SchemaField, SchemaInterface } from '@react-typed-forms/schemas';
-import { StyleProp, View, ViewStyle } from 'react-native';
+import { StyleProp, Text, View, ViewStyle } from 'react-native';
 
 export function DefaultDisplayOnly({
   control,
@@ -23,7 +23,7 @@ export function DefaultDisplayOnly({
     '';
   return (
     <View style={style as StyleProp<ViewStyle>} className={rendererClass(className)}>
-      {text}
+      <Text>{text}</Text>
     </View>
   );
 }

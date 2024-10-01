@@ -6,6 +6,10 @@ import {
   FieldOption,
   rendererClass,
 } from '@react-typed-forms/schemas';
+import { Text, View } from 'react-native';
+import { Checkbox } from '../components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
+import { Label } from '../components/ui/label';
 
 export interface CheckRendererOptions {
   className?: string;
@@ -86,32 +90,42 @@ export function CheckButtons({
   const { disabled } = control;
   const name = 'r' + control.uniqueId;
   return (
-    <div className={className} id={id}>
-      <RenderArrayElements array={options?.filter((x) => x.value != null)}>
-        {(o, i) => {
-          const checked = useComputed(() => isChecked(control, o)).value;
-          return (
-            <div key={i} className={entryClass}>
-              <input
-                id={name + '_' + i}
-                className={checkClass}
-                type={type}
-                name={name}
-                readOnly={readonly}
-                disabled={disabled}
-                checked={checked}
-                onChange={(x) => {
-                  !readonly && setChecked(control, o, x.target.checked);
-                }}
-              />
-              <label className={labelClass} htmlFor={name + '_' + i}>
-                {o.name}
-              </label>
-            </div>
-          );
-        }}
-      </RenderArrayElements>
-    </div>
+    <View className={className} id={id}>
+      <RadioGroup
+        value={control.value?.toString() as string}
+        onValueChange={(v) => (control.value = v)}
+        className="gap-3">
+        <RenderArrayElements array={options?.filter((x) => x.value != null)}>
+          {(o, i) => {
+            const checked = useComputed(() => isChecked(control, o)).value;
+            return (
+              <View key={i} className={entryClass}>
+                <RadioGroupItem
+                  aria-labelledby={name + '_' + i}
+                  value={o.value.toString() as string}
+                />
+
+                {/*<input*/}
+                {/*  id={name + '_' + i}*/}
+                {/*  className={checkClass}*/}
+                {/*  type={type}*/}
+                {/*  name={name}*/}
+                {/*  readOnly={readonly}*/}
+                {/*  disabled={disabled}*/}
+                {/*  checked={checked}*/}
+                {/*  onChange={(x) => {*/}
+                {/*    !readonly && setChecked(control, o, x.target.checked);*/}
+                {/*  }}*/}
+                {/*/>*/}
+                <Label className={labelClass} nativeID={name + '_' + i}>
+                  {o.name}
+                </Label>
+              </View>
+            );
+          }}
+        </RenderArrayElements>
+      </RadioGroup>
+    </View>
   );
 }
 
@@ -132,15 +146,13 @@ export function createCheckboxRenderer(options: CheckRendererOptions = {}) {
       ...p,
       label: undefined,
       children: (
-        <div className={rendererClass(props.className, options.entryClass)}>
-          <Fcheckbox
-            id={props.id}
-            control={props.control}
-            style={props.style}
-            className={options.checkClass}
+        <View className={rendererClass(props.className, options.entryClass)}>
+          <Checkbox
+            checked={props.control.value}
+            onCheckedChange={(x) => (props.control.value = x)}
           />
-          {p.label && renderer.renderLabel(p.label, undefined, undefined)}
-        </div>
+          <Text>{p.label && renderer.renderLabel(p.label, undefined, undefined)}</Text>
+        </View>
       ),
     }),
     { renderType: DataRenderType.Checkbox }
