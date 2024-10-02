@@ -46,6 +46,12 @@
       <_ContentIncludedByDefault Remove="common\temp\pnpm-local\package-lock.json" />
       <_ContentIncludedByDefault Remove="common\temp\pnpm-local\package.json" />
       <_ContentIncludedByDefault Remove="common\temp\pnpmfileSettings.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\native\app.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\native\cesconfig.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\native\components\FireInitial.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\native\package-lock.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\native\package.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\native\tsconfig.json" />
     </ItemGroup>
 
     <ItemGroup>
