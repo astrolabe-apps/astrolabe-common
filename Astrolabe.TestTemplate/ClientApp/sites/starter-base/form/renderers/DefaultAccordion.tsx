@@ -1,6 +1,5 @@
-import React, { CSSProperties, Fragment, ReactElement } from "react";
+import React, { CSSProperties, ReactElement } from "react";
 import { useControl } from "@react-typed-forms/core";
-import clsx from "clsx";
 import {
   AccordionAdornment,
   DefaultAccordionRendererOptions,
