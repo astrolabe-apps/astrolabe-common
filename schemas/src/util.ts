@@ -35,10 +35,16 @@ import {
 
 export type JsonPath = string | number;
 
+export interface FormContextData {
+  option?: FieldOption;
+  optionSelected?: boolean;
+}
+
 export interface ControlDataContext {
   schemaInterface: SchemaInterface;
   dataNode: SchemaDataNode | undefined;
   parentNode: SchemaDataNode;
+  formData: FormContextData;
 }
 
 export function applyDefaultValues(

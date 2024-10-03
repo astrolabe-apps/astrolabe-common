@@ -12,6 +12,7 @@ import {
   Control,
   newControl,
   removeElement,
+  RenderArrayElements,
   trackedValue,
   useCalculatedControl,
   useComponentTracking,
@@ -20,6 +21,7 @@ import {
 } from "@react-typed-forms/core";
 import {
   AdornmentPlacement,
+  ArrayActionOptions,
   ArrayRenderOptions,
   ControlAdornment,
   ControlDefinition,
@@ -47,6 +49,7 @@ import {
   ControlDataContext,
   elementValueForField,
   fieldDisplayName,
+  FormContextData,
   JsonPath,
   useDynamicHooks,
   useUpdatedRef,
@@ -275,6 +278,7 @@ export interface ControlRenderOptions extends FormContextOptions {
   clearHidden?: boolean;
   schemaInterface?: SchemaInterface;
   elementIndex?: number;
+  formData?: FormContextData;
 }
 
 export function useControlRenderer(
@@ -361,10 +365,12 @@ export function useControlRendererComponent(
         parentDataNode: pdn,
         dataNode: dn,
       } = r.current;
-      const dataContext = {
+      const formData = options.formData ?? {};
+      const dataContext: ControlDataContext = {
         schemaInterface,
         dataNode: dn,
         parentNode: pdn,
+        formData,
       };
       const {
         readonlyControl,
@@ -450,6 +456,7 @@ export function useControlRendererComponent(
         ...options,
         ...myOptions,
         elementIndex: undefined,
+        formData,
       };
 
       useEffect(() => {
@@ -475,21 +482,17 @@ export function useControlRendererComponent(
         renderer,
         renderChild: (k, child, options) => {
           if (control && control.isNull) return <Fragment key={k} />;
+          const { parentDataNode, ...renderOptions } = options ?? {};
           const dContext =
-            options?.parentDataNode ??
-            dataContext.dataNode ??
-            dataContext.parentNode;
+            parentDataNode ?? dataContext.dataNode ?? dataContext.parentNode;
+
           return (
             <NewControlRenderer
               key={k}
               definition={child}
               renderer={renderer}
               parentDataNode={dContext}
-              options={
-                options
-                  ? { ...childOptions, elementIndex: options?.elementIndex }
-                  : childOptions
-              }
+              options={{ ...childOptions, ...renderOptions }}
             />
           );
         },
@@ -628,6 +631,7 @@ export function defaultDataProps({
 export interface ChildRendererOptions {
   elementIndex?: number;
   parentDataNode?: SchemaDataNode;
+  formData?: FormContextData;
 }
 
 export type ChildRenderer = (
@@ -874,16 +878,6 @@ export function getLengthRestrictions(definition: DataControlDefinition) {
   return { min: lengthVal?.min, max: lengthVal?.max };
 }
 
-export type ArrayActionOptions = Pick<
-  ArrayRenderOptions,
-  | "addText"
-  | "removeText"
-  | "noAdd"
-  | "noRemove"
-  | "addActionId"
-  | "removeActionId"
-> & { readonly?: boolean; disabled?: boolean; designMode?: boolean };
-
 export function createArrayActions(
   control: Control<any[]>,
   field: SchemaField,
@@ -955,4 +949,17 @@ export function applyArrayLengthRestrictions(
     removeDisabled: !removeAllowed,
     addDisabled: !addAllowed,
   };
+}
+
+export function fieldOptionAdornment(p: DataRendererProps) {
+  return (o: FieldOption, i: number, selected: boolean) => (
+    <RenderArrayElements array={p.childDefinitions}>
+      {(cd, i) =>
+        p.renderChild(i, cd, {
+          parentDataNode: p.dataContext.parentNode,
+          formData: { option: o, optionSelected: selected },
+        })
+      }
+    </RenderArrayElements>
+  );
 }

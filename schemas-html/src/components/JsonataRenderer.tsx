@@ -2,7 +2,7 @@ import { createDataRenderer } from "../renderers";
 import { useJsonataExpression } from "../hooks";
 import { DataRenderType, JsonataRenderOptions } from "../types";
 import { ControlDataContext, rendererClass } from "../util";
-import { Control, useComputed } from "@react-typed-forms/core";
+import { Control } from "@react-typed-forms/core";
 import React from "react";
 import { getJsonPath, getRootDataNode } from "../treeNodes";
 
@@ -35,17 +35,15 @@ export function JsonataRenderer({
   readonly: boolean;
 }) {
   const sdn = dataContext.parentNode;
-  const bindings = useComputed(() => ({
-    value: control.value,
-    readonly,
-    disabled: control.disabled,
-    formData: dataContext.formData,
-  }));
   const rendered = useJsonataExpression(
     expression,
     getRootDataNode(sdn).control!,
     getJsonPath(sdn),
-    bindings,
+    () => ({
+      value: control.value,
+      readonly,
+      disabled: control.disabled,
+    }),
     (v) =>
       v == null
         ? ""

@@ -240,11 +240,12 @@ export function defaultEvalHooks(
 ) {
   switch (expr.type) {
     case ExpressionType.Jsonata:
+      const bindings = useComputed(() => ({ formData: context.formData }));
       return useJsonataExpression(
         (expr as JsonataExpression).expression,
         getRootDataNode(context.parentNode).control!,
         getJsonPath(context.parentNode),
-        undefined,
+        bindings,
         coerce,
       );
     case ExpressionType.UUID:
@@ -345,7 +346,7 @@ export function useJsonataExpression(
   jExpr: string,
   data: Control<any>,
   path: JsonPath[],
-  bindings?: () => Record<string, any>,
+  bindings?: Control<Record<string, any>>,
   coerce: (v: any) => any = (x) => x,
 ): Control<any> {
   const pathString = jsonPathString(path, (x) => `#$i[${x}]`);
@@ -380,11 +381,11 @@ export function useJsonataExpression(
       const [collect, updateSubscriptions] = ref.current;
       try {
         updateRef.current++;
-        const bindingData = bindings
-          ? collectChanges(collect, bindings)
-          : undefined;
         control.value = coerce(
-          await compiledExpr.evaluate(trackedValue(data, collect), bindingData),
+          await compiledExpr.evaluate(
+            trackedValue(data, collect),
+            collectChanges(collect, () => bindings?.value),
+          ),
         );
       } finally {
         if (!--updateRef.current) updateSubscriptions();

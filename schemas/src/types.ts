@@ -330,7 +330,7 @@ export type ArrayActionOptions = Pick<
   | "noAdd"
   | "noRemove"
   | "noReorder"
->;
+> & { readonly?: boolean; disabled?: boolean; designMode?: boolean };
 
 export interface CheckListRenderOptions extends RenderOptions {
   type: DataRenderType.CheckList;
