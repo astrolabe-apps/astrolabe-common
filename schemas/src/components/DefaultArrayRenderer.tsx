@@ -38,6 +38,8 @@ export function createDefaultArrayDataRenderer(
         className,
         style,
         renderOptions,
+        readonly,
+        designMode,
       },
       renderers,
     ) => {
@@ -57,6 +59,9 @@ export function createDefaultArrayDataRenderer(
           removeText,
           noAdd,
           noRemove,
+          readonly,
+          disabled: control.disabled,
+          designMode,
         }),
         required,
         renderElement: (i) =>

@@ -181,7 +181,10 @@ export function createDataGridRenderer(
           className={className}
           readonly={readonly}
           {...applyArrayLengthRestrictions({
-            ...createArrayActions(control, field, dataGridOptions),
+            ...createArrayActions(control, field, {
+              ...dataGridOptions,
+              readonly,
+            }),
             ...getLengthRestrictions(definition),
             required,
           })}

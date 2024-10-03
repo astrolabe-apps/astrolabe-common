@@ -124,6 +124,7 @@ export interface ArrayRendererProps {
   style?: React.CSSProperties;
   min?: number | null;
   max?: number | null;
+  disabled?: boolean;
 }
 export interface Visibility {
   visible: boolean;
@@ -226,6 +227,7 @@ export interface ActionRendererProps {
   onClick: () => void;
   className?: string | null;
   style?: React.CSSProperties;
+  disabled?: boolean;
 }
 
 export interface ControlRenderProps {
@@ -871,38 +873,55 @@ export function getLengthRestrictions(definition: DataControlDefinition) {
 
   return { min: lengthVal?.min, max: lengthVal?.max };
 }
+
+export type ArrayActionOptions = Pick<
+  ArrayRenderOptions,
+  | "addText"
+  | "removeText"
+  | "noAdd"
+  | "noRemove"
+  | "addActionId"
+  | "removeActionId"
+> & { readonly?: boolean; disabled?: boolean; designMode?: boolean };
+
 export function createArrayActions(
   control: Control<any[]>,
   field: SchemaField,
-  options?: Pick<
-    ArrayRenderOptions,
-    | "addText"
-    | "removeText"
-    | "noAdd"
-    | "noRemove"
-    | "addActionId"
-    | "removeActionId"
-  >,
+  options?: ArrayActionOptions,
 ): Pick<ArrayRendererProps, "addAction" | "removeAction" | "arrayControl"> {
   const noun = field.displayName ?? field.field;
-  const { addText, noAdd, removeText, noRemove, removeActionId, addActionId } =
-    options ?? {};
+  const {
+    addText,
+    noAdd,
+    removeText,
+    noRemove,
+    removeActionId,
+    addActionId,
+    disabled,
+    readonly,
+    designMode,
+  } = options ?? {};
   return {
     arrayControl: control,
-    addAction: !noAdd
-      ? {
-          actionId: addActionId ? addActionId : "add",
-          actionText: addText ? addText : "Add " + noun,
-          onClick: () => addElement(control, elementValueForField(field)),
-        }
-      : undefined,
-    removeAction: !noRemove
-      ? (i: number) => ({
-          actionId: removeActionId ? removeActionId : "remove",
-          actionText: removeText ? removeText : "Remove",
-          onClick: () => removeElement(control, i),
-        })
-      : undefined,
+    addAction:
+      !readonly && !noAdd
+        ? {
+            actionId: addActionId ? addActionId : "add",
+            actionText: addText ? addText : "Add " + noun,
+            onClick: () =>
+              !designMode && addElement(control, elementValueForField(field)),
+            disabled,
+          }
+        : undefined,
+    removeAction:
+      !readonly && !noRemove
+        ? (i: number) => ({
+            actionId: removeActionId ? removeActionId : "remove",
+            actionText: removeText ? removeText : "Remove",
+            onClick: () => !designMode && removeElement(control, i),
+            disabled,
+          })
+        : undefined,
   };
 }
 

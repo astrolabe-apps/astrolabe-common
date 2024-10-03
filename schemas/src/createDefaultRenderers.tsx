@@ -121,11 +121,13 @@ export function createButtonActionRenderer(
       style,
       actionId,
       actionData,
+      disabled,
     }: ActionRendererProps) => {
       return (
         <button
           className={rendererClass(className, options.className)}
           style={style}
+          disabled={disabled}
           onClick={onClick}
         >
           {options.renderContent?.(actionText, actionId, actionData) ??

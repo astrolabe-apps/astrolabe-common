@@ -20,6 +20,7 @@
       <Path>schemas</Path>
       <Path>schemas-datepicker</Path>
       <Path>schemas-mui</Path>
+      <Path>schemas-html</Path>
     </attachedFolders>
     <explicitIncludes />
     <explicitExcludes />
