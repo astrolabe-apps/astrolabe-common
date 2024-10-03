@@ -3,6 +3,7 @@ import {
   DataControlDefinition,
   DateComparison,
   DateValidator,
+  FieldType,
   isDataControlDefinition,
   JsonataValidator,
   LengthValidator,
@@ -42,12 +43,17 @@ export function useMakeValidationHook(
 ): (ctx: ValidationHookContext) => void {
   const dd = isDataControlDefinition(definition) ? definition : undefined;
   const refData = useUpdatedRef({ dd, useValidatorFor });
-  const depString = makeHookDepString(dd?.validators ?? [], (x) => x.type);
+  const depString = dd
+    ? makeHookDepString(dd.validators ?? [], (x) => x.type)
+    : "~";
   return useCallback(
     (ctx) => {
-      const field = ctx.dataContext.dataNode?.schema.field;
       const { dd } = refData.current;
-      if (!dd || !field) return;
+      if (!dd) return;
+      const field = ctx.dataContext.dataNode?.schema.field ?? {
+        field: "__missing",
+        type: FieldType.Any,
+      };
       const {
         control,
         hiddenControl,
