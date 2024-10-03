@@ -213,6 +213,8 @@ export function useLoginPage(
 export interface MfaFormData {
   token: string;
   code: string;
+  updateNumber: boolean,
+  number: string|null,
 }
 
 interface MfaProps
@@ -231,7 +233,7 @@ export function useMfaPage( runAuthenticate: (login: MfaFormData) => Promise<any
   const searchParams = useNavigationService();
   const token = searchParams.get(queryParams.token)!;
   
-  const control = useControl({token, code: ""}, );
+  const control = useControl({token, code: "", updateNumber: false, number: null}, );
 
   return {
     control,
@@ -246,19 +248,24 @@ export function useMfaPage( runAuthenticate: (login: MfaFormData) => Promise<any
           } else return false;
         },
       ),
-    send: async () => {
-      try {  await send(control.value); return true;}
-      catch (e) {
-        if (isApiResponse(e) ) {
-          if (e.status === 429) {
-            control.error = codeLimit;
-          } else {
-            control.error = generic;
+    send: () =>
+      validateAndRunResult(
+        control,
+        () => send(control.value),
+        (e) => {
+          if(isApiResponse(e)) {
+            if (e.status === 429) {
+              control.error = codeLimit;
+              return true;
+            } else if (e.status === 401) {
+              control.error = generic;
+              return true;
+            }
+            return false;
           }
-          return true;
-        }  else return false;
-      }
-    }
+          else return false;
+        },
+      ),
   };
 }
 
@@ -382,14 +389,14 @@ export function useSignupPage<A extends SignupFormData = SignupFormData>(
 export interface VerifyFormData {
   token: string|null;
   code: string;
-  otherNumber: boolean;
+  updateNumber: boolean;
   number: string|null;
 }
 
 const emptyVerifyFormData: VerifyFormData = {
   token: null,
   code: "",
-  otherNumber: false,
+  updateNumber: false,
   number: null,
 }
 
@@ -407,7 +414,7 @@ export function useVerifyPage(
 ): VerifyProps {
   const {
     errors: { verify, codeLimit, wrongCode, generic },
-    queryParams: { verifyCode },
+    queryParams: { verifyCode, token },
   } = useAuthPageSetup();
 
   const searchParams = useNavigationService();
@@ -419,6 +426,7 @@ export function useVerifyPage(
   useEffect(() => {
     doVerify();
   }, [verificationCode]);
+  
 
   return {
     control: control,
@@ -455,26 +463,12 @@ export function useVerifyPage(
           else return false;
         },
       ),
-    // send: async () => {
-    //   try {  await send(control.value); return true;}
-    //   catch (e) {
-    //     if (isApiResponse(e) ) {
-    //       if (e.status === 429) {
-    //         control.error = codeLimit;
-    //       } else {
-    //         control.error = generic;
-    //       }
-    //     }
-    //     return false;
-    //   }
-    // },
   };
 
   async function doVerify() {
     if (verificationCode) {
       try {
         control.fields.token.value = await runVerify(verificationCode);
-       // await runVerify(verificationCode);
       } catch (e) {
         if (isApiResponse(e) && e.status === 401) {
           control.error = verify;

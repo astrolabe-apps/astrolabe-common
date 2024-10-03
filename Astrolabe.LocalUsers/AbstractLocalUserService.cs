@@ -55,7 +55,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         return Task.CompletedTask;
     }
     
-    protected virtual Task ApplyVerifyAccountRules(VerifyAccountRequest request, AbstractValidator<VerifyAccountRequest> validator)
+    protected virtual Task ApplyMfaCodeRules(MfaCodeRequest request, AbstractValidator<MfaCodeRequest> validator)
     {
         return Task.CompletedTask;
     }
@@ -84,15 +84,15 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         return token;
     }
 
-    public async Task<string> MfaVerifyAccount(MfaVerifyAccountRequest mfaVerifyAccountRequest)
+    public async Task<string> MfaVerifyAccount(MfaAuthenticateRequest mfaAuthenticateRequest)
     {
 
-        var token = await MfaVerifyAccountForUserId(mfaVerifyAccountRequest);
+        var token = await MfaVerifyAccountForUserId(mfaAuthenticateRequest);
         if (token == null) throw new UnauthorizedException();
         return token;
     }
 
-    protected abstract Task<string?> MfaVerifyAccountForUserId(MfaVerifyAccountRequest mfaVerifyAccountRequest);
+    protected abstract Task<string?> MfaVerifyAccountForUserId(MfaAuthenticateRequest mfaAuthenticateRequest);
 
     protected abstract Task<string?> AuthenticatedHashed(AuthenticateRequest authenticateRequest, string hashedPassword);
 
@@ -101,21 +101,14 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
         var resetCode = CreateEmailCode();
         await SetResetCodeAndEmail(email, resetCode);
     }
-
-
+    
     public async Task SendMfaCode(MfaCodeRequest mfaCodeRequest)
     {
-       if(!await SendCode(mfaCodeRequest)) 
-           throw new UnauthorizedException();
-    }
-    
-    public async Task SendMfaCode(VerifyAccountRequest verifyAccountRequest)
-    {
-        var validator = new VerifyAccountValidator();
-        await ApplyVerifyAccountRules(verifyAccountRequest, validator);
-        await validator.ValidateAndThrowAsync(verifyAccountRequest);
+        var validator = new MfaCodeValidator();
+        await ApplyMfaCodeRules(mfaCodeRequest, validator);
+        await validator.ValidateAndThrowAsync(mfaCodeRequest);
         
-        if(!await SendCode(verifyAccountRequest)) 
+        if(!await SendCode(mfaCodeRequest)) 
             throw new UnauthorizedException();
     }
 
@@ -123,18 +116,17 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
 
     protected abstract Task<bool> SendCode(TUserId userId, string? number=null);
     
-    protected abstract Task<bool> SendCode(VerifyAccountRequest verifyAccountRequest);
 
     public async Task<string> MfaAuthenticate(MfaAuthenticateRequest mfaAuthenticateRequest)
     {
-        var token = await VerifyMfaCode(mfaAuthenticateRequest.Token, mfaAuthenticateRequest.Code);
+        var token = await VerifyMfaCode(mfaAuthenticateRequest.Token, mfaAuthenticateRequest.Code, mfaAuthenticateRequest.Number);
         if (token == null) throw new UnauthorizedException();
         return token;
     }
 
-    protected abstract Task<string?> VerifyMfaCode(string token, string code);
+    protected abstract Task<string?> VerifyMfaCode(string token, string code, string? number);
     
-    protected abstract Task<bool> VerifyMfaCode(TUserId userId, string code);
+    protected abstract Task<bool> VerifyMfaCode(TUserId userId, string code, string? number);
     protected abstract Task SetResetCodeAndEmail(string email, string resetCode);
 
     public async Task ChangeEmail(ChangeEmail change, Func<TUserId> userId)
@@ -189,12 +181,9 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId> : ILocalUserSe
     public async Task MfaChangeMfaNumber(MfaChangeNumber change, Func<TUserId> userId)
     {
 
-        if (!await VerifyMfaCode(userId(), change.Code))
+        if (!await VerifyMfaCode(userId(), change.Code, change.Number))
             throw new UnauthorizedException();
-        await MfaChangeMfaNumberForUserId(userId(), change.Number);
     }
-    
-    protected abstract Task<bool> MfaChangeMfaNumberForUserId(TUserId userId, string newNumber);
 
     public async Task SendMfaCode(string number, Func<TUserId> userId)
     {

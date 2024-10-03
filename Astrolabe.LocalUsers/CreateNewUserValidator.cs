@@ -30,11 +30,11 @@ public class ChangeMfaNumberValidator: AbstractValidator<ChangeMfaNumber>
     }
 }
 
-public class VerifyAccountValidator: AbstractValidator<VerifyAccountRequest>
+public class MfaCodeValidator: AbstractValidator<MfaCodeRequest>
 {
-    public VerifyAccountValidator()
+    public MfaCodeValidator()
     {
-        When(x => x.OtherNumber, () => {
+        When(x => x.UpdateNumber, () => {
             RuleFor(x => x.Number).NotEmpty();
         });
     }

@@ -4,11 +4,10 @@ public interface ILocalUserService<TNewUser, TUserId> where TNewUser : ICreateNe
 {
     Task CreateAccount(TNewUser newUser);
     Task<string> VerifyAccount(string code);
-    Task<string> MfaVerifyAccount(MfaVerifyAccountRequest mfaVerifyAccountRequest);
+    Task<string> MfaVerifyAccount(MfaAuthenticateRequest mfaAuthenticateRequest);
     Task<string> Authenticate(AuthenticateRequest authenticateRequest);
     Task SendMfaCode(MfaCodeRequest mfaCodeRequest);
     Task SendMfaCode(string number, Func<TUserId> userId);
-    Task SendMfaCode(VerifyAccountRequest verifyAccountRequest);
     Task<string> MfaAuthenticate(MfaAuthenticateRequest mfaAuthenticateRequest);
     Task ForgotPassword(string email);
     Task<string> ChangePassword(ChangePassword change, string? resetCode, Func<TUserId> userId);
