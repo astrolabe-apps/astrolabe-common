@@ -7,6 +7,7 @@ import {
 } from "@react-typed-forms/schemas";
 import { Text } from "react-native";
 import { createDatePickerRenderer } from "~/form/renderers/DatePickerRenderer";
+import { createHelpTextRenderer } from "~/form/renderers/HelpTextRenderer";
 
 const theme: DefaultRendererOptions = {
   ...defaultTailwindTheme,
@@ -59,6 +60,9 @@ const theme: DefaultRendererOptions = {
   },
 };
 
-export const formRenderer = createFormRenderer([createDatePickerRenderer()], {
-  ...createDefaultRenderers(theme),
-});
+export const formRenderer = createFormRenderer(
+  [createDatePickerRenderer(), createHelpTextRenderer()],
+  {
+    ...createDefaultRenderers(theme),
+  },
+);

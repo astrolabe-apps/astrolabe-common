@@ -14,6 +14,7 @@ import { ScrollView, View } from "react-native";
 import React from "react";
 import { FormPager } from "./FormPager";
 const AllControls = Controls.controls;
+import { Text } from "~/components/ui/text";
 
 export function ShowForm() {
   const data = useControl<any>({
@@ -50,7 +51,9 @@ export function ShowForm() {
             InitialFireRegistrationSchema,
           )}
         />
-        {/*<RenderControl render={() => <Text>{JSON.stringify(data.value)}</Text>} />*/}
+        <RenderControl
+          render={() => <Text>{JSON.stringify(data.value)}</Text>}
+        />
       </View>
     </View>
   );
