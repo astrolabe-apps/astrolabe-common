@@ -11,17 +11,24 @@ export interface AuthPageSetup {
     signup: string;
     resetPassword: string;
     changePassword: string;
+    mfa: string;
   };
   errors: {
     emptyEmail?: string;
     emptyUsername: string;
     emptyPassword: string;
+    emptyCode: string;
+    wrongCode: string;
     credentials: string;
     verify: string;
+    generic: string;
+    codeLimit: string;
   };
   queryParams: {
     verifyCode: string;
     resetCode: string;
+    token: string;
+    message: string;
   };
 }
 
@@ -31,16 +38,23 @@ export const defaultUserAuthPageSetup: AuthPageSetup = {
     signup: "/signup",
     resetPassword: "/resetPassword",
     changePassword: "/changePassword",
+    mfa: "/mfa"
   },
   errors: {
     emptyUsername: "Please enter your email address",
     emptyPassword: "Please enter your password",
     credentials: "Incorrect username/password",
     verify: "You could not be verified",
+    emptyCode: "Please enter your code",
+    wrongCode: "The verification code you have entered does not match our records. Please try again, or request a new code.",
+    generic: "An unknown error occurred",
+    codeLimit: "You hit the limit on the number of text messages."
   },
   queryParams: {
     verifyCode: "verificationCode",
     resetCode: "resetCode",
+    token: "token",
+    message: "message",
   },
 };
 
@@ -196,6 +210,140 @@ export function useLoginPage(
   };
 }
 
+export interface MfaFormData {
+  token: string;
+  code: string;
+  updateNumber: boolean,
+  number: string|null,
+}
+
+interface MfaProps
+{
+  control: Control<MfaFormData>;
+  authenticate: () => Promise<boolean>;
+  send: () => Promise<boolean>;
+
+}
+
+export function useMfaPage( runAuthenticate: (login: MfaFormData) => Promise<any>, send: (login: MfaFormData) => Promise<any>) : MfaProps
+{
+  const {
+    queryParams, errors: { wrongCode, generic, codeLimit}
+  } = useAuthPageSetup();
+  const searchParams = useNavigationService();
+  const token = searchParams.get(queryParams.token)!;
+  
+  const control = useControl({token, code: "", updateNumber: false, number: null}, );
+
+  return {
+    control,
+    authenticate: () =>
+      validateAndRunResult(
+        control,
+        () => runAuthenticate(control.value),
+        (e) => {
+          if (isApiResponse(e) && e.status === 401) {
+            control.error = wrongCode;
+            return true;
+          } else return false;
+        },
+      ),
+    send: () =>
+      validateAndRunResult(
+        control,
+        () => send(control.value),
+        (e) => {
+          if(isApiResponse(e)) {
+            if (e.status === 429) {
+              control.error = codeLimit;
+              return true;
+            } else if (e.status === 401) {
+              control.error = generic;
+              return true;
+            }
+            return false;
+          }
+          else return false;
+        },
+      ),
+  };
+}
+
+export interface ChangeMfaNumberFormData {
+  password: string;
+  newNumber: string;
+  code: string;
+}
+
+export const emptyChangeMfaNumberForm: ChangeMfaNumberFormData = {
+  password: "",
+  newNumber: "",
+  code: "",
+};
+
+export interface MfaNumberChangeProps {
+  control: Control<ChangeMfaNumberFormData>;
+  runChange: () => Promise<boolean>;
+  send: () => Promise<boolean>;
+  authenticate: () => Promise<boolean>;
+  
+}
+
+export function useChangeMfaNumberPage( runAuthenticate: (login: ChangeMfaNumberFormData) => Promise<any>, send: (login: ChangeMfaNumberFormData) => Promise<any>, runChange: (login: ChangeMfaNumberFormData) => Promise<any>) : MfaNumberChangeProps
+{
+  const {
+     errors: {credentials, wrongCode, generic, codeLimit}
+  } = useAuthPageSetup();
+
+  const control = useControl(emptyChangeMfaNumberForm );
+
+  return {
+    control,
+    authenticate: () =>
+      validateAndRunResult(
+        control,
+        () => runAuthenticate(control.value),
+        (e) => {
+          if (isApiResponse(e) && e.status === 401) {
+            control.error = credentials; 
+            return true;
+          } else if(isApiResponse(e) && e.status === 429) {
+            control.error = codeLimit;
+            return true;
+          }
+          else return false;
+        },
+      ),
+    send: async () => {
+      try {  await send(control.value); return true;}
+      catch (e) {
+        if (isApiResponse(e) ) {
+          if (e.status === 429) {
+            control.error = codeLimit;
+          } else {
+            control.error = generic;
+          }
+          return true;
+        }  else return false;
+      }
+    },
+    runChange: async () => 
+      validateAndRunResult(
+        control,
+        () => runChange(control.value),
+        (e) => {
+          if (isApiResponse(e) && e.status === 401) {
+            control.error = wrongCode;
+            return true;
+          } else return false;
+        },
+      ),
+    
+  };
+}
+
+
+
 export interface ResetPasswordProps {
   control: Control<ResetPasswordFormData>;
   resetPassword: () => Promise<any>;
@@ -238,29 +386,89 @@ export function useSignupPage<A extends SignupFormData = SignupFormData>(
   };
 }
 
+export interface VerifyFormData {
+  token: string|null;
+  code: string;
+  updateNumber: boolean;
+  number: string|null;
+}
+
+const emptyVerifyFormData: VerifyFormData = {
+  token: null,
+  code: "",
+  updateNumber: false,
+  number: null,
+}
+
+interface VerifyProps
+{
+  control: Control<VerifyFormData>;
+  authenticate: () => Promise<boolean>;
+  send: () => Promise<boolean>;
+}
+
 export function useVerifyPage(
-  runVerify: (code: string) => Promise<unknown>,
-): Control<unknown> {
+  runVerify: (code: string) => Promise<any>,
+  runAuthenticate: (data: VerifyFormData) => Promise<any>,
+  send: (data: VerifyFormData) => Promise<any>
+): VerifyProps {
   const {
-    errors: { verify },
-    queryParams: { verifyCode },
+    errors: { verify, codeLimit, wrongCode, generic },
+    queryParams: { verifyCode, token },
   } = useAuthPageSetup();
 
   const searchParams = useNavigationService();
   const verificationCode = searchParams.get(verifyCode);
+  
 
-  const control = useControl(undefined);
+  const control = useControl(emptyVerifyFormData);
 
   useEffect(() => {
     doVerify();
   }, [verificationCode]);
+  
 
-  return control;
+  return {
+    control: control,
+    authenticate: () =>
+      validateAndRunResult(
+        control,
+        () => runAuthenticate(control.value),
+        (e) => {
+          if (isApiResponse(e) && e.status === 401) {
+            control.error = wrongCode;
+            return true;
+          } else if(isApiResponse(e) && e.status === 429) {
+            control.error = codeLimit;
+            return true;
+          }
+          else return false;
+        },
+      ),
+    send: () =>
+      validateAndRunResult(
+        control,
+        () => send(control.value),
+        (e) => {
+          if(isApiResponse(e)) {
+            if (e.status === 429) {
+              control.error = codeLimit;
+              return true;
+            } else if (e.status === 401) {
+              control.error = generic;
+              return true;
+            }
+            return false;
+          }
+          else return false;
+        },
+      ),
+  };
 
   async function doVerify() {
     if (verificationCode) {
       try {
-        await runVerify(verificationCode);
+        control.fields.token.value = await runVerify(verificationCode);
       } catch (e) {
         if (isApiResponse(e) && e.status === 401) {
           control.error = verify;
@@ -279,6 +487,11 @@ export const defaultUserRoutes = {
   changeEmail: { label: "Change email", allowGuests: false },
   resetPassword: {
     label: "Reset password",
+    allowGuests: true,
+    forwardAuthenticated: true,
+  },
+  mfa: {
+    label: "Login",
     allowGuests: true,
     forwardAuthenticated: true,
   },

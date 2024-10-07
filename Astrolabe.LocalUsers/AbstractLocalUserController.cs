@@ -24,11 +24,30 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         return _localUserService.VerifyAccount(code);
     }
+    
+    [HttpPost("mfaVerify")]
+    public Task<string> MfaVerifyAccount([FromBody] MfaAuthenticateRequest mfaVerifyAccountRequest)
+    {
+        return _localUserService.MfaVerifyAccount(mfaVerifyAccountRequest);
+    }
 
     [HttpPost("authenticate")]
     public Task<string> Authenticate([FromBody] AuthenticateRequest authenticateRequest)
     {
         return _localUserService.Authenticate(authenticateRequest);
+    }
+    
+    
+    [HttpPost("mfaCode/authenticate")]
+    public async Task SendMfaCode([FromBody] MfaCodeRequest mfaCodeRequest)
+    {
+        await _localUserService.SendMfaCode(mfaCodeRequest);
+    }
+
+    [HttpPost("mfaAuthenticate")]
+    public async Task<string> MfaAuthenticate([FromBody] MfaAuthenticateRequest mfaAuthenticateRequest)
+    {
+        return await _localUserService.MfaAuthenticate(mfaAuthenticateRequest);
     }
 
     [HttpPost("forgotPassword")]
@@ -42,7 +61,19 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         return _localUserService.ChangeEmail(email, GetUserId);
     }
-
+    
+    [HttpPost("changeMfaNumber")]
+    public Task ChangeMfaNumber(ChangeMfaNumber number)
+    {
+        return _localUserService.ChangeMfaNumber(number, GetUserId);
+    }
+    
+    [HttpPost("mfaChangeMfaNumber")]
+    public Task MfaChangeMfaNumber(MfaChangeNumber change)
+    {
+        return _localUserService.MfaChangeMfaNumber(change, GetUserId);
+    }
+    
     [Authorize]
     [AllowAnonymous]
     [HttpPost("changePassword")]
@@ -50,6 +81,13 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         return _localUserService.ChangePassword(change, resetCode, GetUserId);
     }
+    
+    [HttpPost("mfaCode/number")]
+    public async Task SendMfaCode(string number)
+    {
+        await _localUserService.SendMfaCode(number,  GetUserId);
+    }
+    
 
     protected abstract TUserId GetUserId();
 }
