@@ -22,7 +22,6 @@ import {
 import {
   AdornmentPlacement,
   ArrayActionOptions,
-  ArrayRenderOptions,
   ControlAdornment,
   ControlDefinition,
   CustomDisplay,

@@ -5,10 +5,10 @@ import {
   RenderArrayElements,
   useComputed,
 } from "@react-typed-forms/core";
-import React, { ReactElement, ReactNode } from "react";
+import React, { ReactNode } from "react";
 import { createDataRenderer } from "../renderers";
 import { rendererClass } from "../util";
-import { DataRendererProps, fieldOptionAdornment } from "../controlRender";
+import { fieldOptionAdornment } from "../controlRender";
 
 export interface CheckRendererOptions {
   className?: string;

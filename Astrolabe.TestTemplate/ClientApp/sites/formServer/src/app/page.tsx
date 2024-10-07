@@ -67,13 +67,6 @@ interface TestSchema {
   array: number[];
   stuff: DisabledStuff[];
   number: number;
-  selected: string;
-  selectables: Selectable[];
-}
-
-interface Selectable {
-  id: string;
-  name: string;
 }
 
 const TestSchema = buildSchema<TestSchema>({
@@ -102,19 +95,6 @@ const TestSchema = buildSchema<TestSchema>({
     { collection: true },
   ),
   number: doubleField("Double"),
-  selected: stringOptionsField(
-    "All",
-    { value: "choice1", name: "Choice1" },
-    { value: "choice2", name: "Choice2" },
-  ),
-  selectables: compoundField(
-    "Selectables",
-    buildSchema<Selectable>({
-      id: stringField("id"),
-      name: stringField("name"),
-    }),
-    { collection: true },
-  ),
 });
 
 interface SearchResult extends CarEdit {}

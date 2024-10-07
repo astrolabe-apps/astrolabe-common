@@ -1,7 +1,7 @@
 import { createDataRenderer } from "../renderers";
 import { useJsonataExpression } from "../hooks";
 import { DataRenderType, JsonataRenderOptions } from "../types";
-import { ControlDataContext, rendererClass } from "../util";
+import { coerceToString, ControlDataContext, rendererClass } from "../util";
 import { Control, useComputed } from "@react-typed-forms/core";
 import React from "react";
 import { getJsonPath, getRootDataNode } from "../treeNodes";
@@ -46,12 +46,7 @@ export function JsonataRenderer({
     getRootDataNode(sdn).control!,
     getJsonPath(sdn),
     bindings,
-    (v) =>
-      v == null
-        ? ""
-        : typeof v === "object"
-          ? "error: " + JSON.stringify(v)
-          : v.toString(),
+    coerceToString,
   );
   return (
     <div

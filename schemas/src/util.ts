@@ -568,3 +568,11 @@ export function mergeObjects<A extends Record<string, any> | undefined>(
   }
   return result;
 }
+
+export function coerceToString(v: unknown) {
+  return v == null
+    ? ""
+    : typeof v === "object"
+      ? "error: " + JSON.stringify(v)
+      : v.toString();
+}

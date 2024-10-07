@@ -1,44 +1,22 @@
 "use client";
 
-import { useApiClient } from "@astroapps/client/hooks/useApiClient";
-import { CarClient, CarEdit, CarInfo } from "../../client";
-import { useEffect, useMemo } from "react";
+import { useControl } from "@react-typed-forms/core";
 import {
-  Control,
-  RenderArrayElements,
-  useControl,
-} from "@react-typed-forms/core";
-import {
-  boolField,
   buildSchema,
   compoundField,
-  ControlRenderer,
   createSchemaLookup,
   dataControl,
   DataRenderType,
-  DefaultSchemaInterface,
-  doubleField,
   dynamicVisibility,
   groupedControl,
-  intField,
   jsonataExpr,
   makeSchemaDataNode,
-  SchemaDataNode,
-  SchemaNode,
   stringField,
   stringOptionsField,
   useControlRendererComponent,
-  withScalarOptions,
 } from "@react-typed-forms/schemas";
-import { FormDefinitions } from "../../forms";
-import {
-  CarSearchPageForm,
-  defaultCarSearchPageForm,
-  SchemaMap,
-} from "../../schemas";
 import { createStdFormRenderer } from "../../renderers";
-import { useClientSearching } from "@astroapps/schemas-datagrid";
-import { SearchOptions } from "@astroapps/searchstate";
+
 interface TestSchema {
   selected: string;
   selectables: Selectable[];

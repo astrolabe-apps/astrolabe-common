@@ -8,7 +8,7 @@ import {
   TextDisplay,
 } from "../types";
 import clsx from "clsx";
-import { getOverrideClass, rendererClass } from "../util";
+import { coerceToString, getOverrideClass, rendererClass } from "../util";
 import { DisplayRendererRegistration } from "../renderers";
 
 export interface DefaultDisplayRendererOptions {
@@ -49,7 +49,7 @@ export function DefaultDisplay({
           style={style}
           className={rendererClass(className, options.textClassName)}
         >
-          {display ? coerceText(display.value) : (data as TextDisplay).text}
+          {display ? coerceToString(display.value) : (data as TextDisplay).text}
         </div>
       );
     case DisplayDataType.Html:
@@ -59,7 +59,7 @@ export function DefaultDisplay({
           className={rendererClass(className, options.htmlClassName)}
           dangerouslySetInnerHTML={{
             __html: display
-              ? coerceText(display.value)
+              ? coerceToString(display.value)
               : (data as HtmlDisplay).html,
           }}
         />
@@ -72,13 +72,5 @@ export function DefaultDisplay({
       );
     default:
       return <h1>Unknown display type: {data.type}</h1>;
-  }
-
-  function coerceText(v: unknown) {
-    return v == null
-      ? ""
-      : typeof v === "object"
-        ? "error: " + JSON.stringify(v)
-        : v.toString();
   }
 }
