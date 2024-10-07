@@ -1,7 +1,9 @@
-import { VisibilityRendererProps } from "../controlRender";
 import React, { useEffect } from "react";
 import clsx from "clsx";
-import { createVisibilityRenderer } from "../renderers";
+import {
+  createVisibilityRenderer,
+  VisibilityRendererProps,
+} from "@react-typed-forms/schemas";
 
 export function createDefaultVisibilityRenderer() {
   return createVisibilityRenderer((props) => <DefaultVisibility {...props} />);

@@ -1,7 +1,10 @@
-import { createDataRenderer } from "../renderers";
 import { Control, newControl, useControlEffect } from "@react-typed-forms/core";
-import { DataRenderType, FieldType } from "../types";
 import React, { ReactNode } from "react";
+import {
+  createDataRenderer,
+  DataRenderType,
+  FieldType,
+} from "@react-typed-forms/schemas";
 
 export function createNullToggleRenderer() {
   return createDataRenderer(

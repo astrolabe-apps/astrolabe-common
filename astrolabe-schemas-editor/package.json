@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-editor",
-  "version": "11.0.2",
+  "version": "12.0.0",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -23,9 +23,9 @@
   "dependencies": {
     "@react-typed-forms/core": "^3.5.2",
     "react-resizable-panels": "^0.0.55",
-    "@react-typed-forms/schemas": "workspace:^12.0.2",
-    "@astroapps/client": "workspace:^0.2.0",
-    "@astroapps/ui-tree": "workspace:^1.0.0",
+    "@react-typed-forms/schemas": "workspace:^13.0.0",
+    "@astroapps/client": "workspace:^1.0.0",
+    "@astroapps/ui-tree": "workspace:^2.0.0",
     "@dnd-kit/core": "^6.0.5",
     "@mhsdesign/jit-browser-tailwindcss": "^0.4.0",
     "react": "^18.2.0",

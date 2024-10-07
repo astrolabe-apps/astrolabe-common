@@ -465,7 +465,7 @@
     {
       "packageName": "@react-typed-forms/schemas-html",
       "projectFolder": "../schemas-html",
-      "shouldPublish": false
+      "shouldPublish": true
     },
     {
       "packageName": "@react-typed-forms/schemas-mui",

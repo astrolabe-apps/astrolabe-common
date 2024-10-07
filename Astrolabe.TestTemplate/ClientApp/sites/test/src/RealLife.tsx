@@ -1,9 +1,7 @@
 import { RenderArrayElements, useControl } from "@react-typed-forms/core";
 import {
   ControlRenderer,
-  createDefaultRenderers,
   createFormRenderer,
-  defaultTailwindTheme,
 } from "@react-typed-forms/schemas";
 import React, { useContext } from "react";
 import {
@@ -13,6 +11,10 @@ import {
 } from "./schemas";
 import Controls from "./FireInitial.json";
 import { RenderFormContext } from "./formTree";
+import {
+  createDefaultRenderers,
+  defaultTailwindTheme,
+} from "@react-typed-forms/schemas-html";
 const AllControls = Controls.controls;
 
 const formRenderer = createFormRenderer(

@@ -1,9 +1,8 @@
-import React, { CSSProperties, Fragment, ReactElement, ReactNode } from "react";
-import { AccordionAdornment } from "../types";
-import { Control, useControl } from "@react-typed-forms/core";
+import React, { CSSProperties, Fragment, ReactElement } from "react";
+import { useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
-import { FormRenderer } from "../controlRender";
 import { DefaultAccordionRendererOptions } from "../createDefaultRenderers";
+import { AccordionAdornment, FormRenderer } from "@react-typed-forms/schemas";
 
 export function DefaultAccordion({
   children,

@@ -1,15 +1,17 @@
 import React from "react";
-import { DisplayRendererProps } from "../controlRender";
+import clsx from "clsx";
 import {
+  coerceToString,
   CustomDisplay,
   DisplayDataType,
+  DisplayRendererProps,
+  DisplayRendererRegistration,
+  getOverrideClass,
   HtmlDisplay,
   IconDisplay,
+  rendererClass,
   TextDisplay,
-} from "../types";
-import clsx from "clsx";
-import { getOverrideClass, rendererClass } from "../util";
-import { DisplayRendererRegistration } from "../renderers";
+} from "@react-typed-forms/schemas";
 
 export interface DefaultDisplayRendererOptions {
   textClassName?: string;
@@ -49,7 +51,7 @@ export function DefaultDisplay({
           style={style}
           className={rendererClass(className, options.textClassName)}
         >
-          {display ? display.value : (data as TextDisplay).text}
+          {display ? coerceToString(display.value) : (data as TextDisplay).text}
         </div>
       );
     case DisplayDataType.Html:
@@ -59,7 +61,7 @@ export function DefaultDisplay({
           className={rendererClass(className, options.htmlClassName)}
           dangerouslySetInnerHTML={{
             __html: display
-              ? (display.value ?? "")
+              ? coerceToString(display.value)
               : (data as HtmlDisplay).html,
           }}
         />

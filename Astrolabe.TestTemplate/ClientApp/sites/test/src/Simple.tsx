@@ -1,28 +1,16 @@
 import { useControl } from "@react-typed-forms/core";
 import {
-  accordionOptions,
-  actionControl,
   buildSchema,
-  checkListOptions,
   ControlRenderer,
-  createDefaultRenderers,
   createFormRenderer,
   dataControl,
-  DataRenderType,
   dateField,
   dateTimeField,
-  defaultTailwindTheme,
-  displayOnlyOptions,
   doubleField,
   groupedControl,
-  htmlDisplayControl,
   intField,
-  jsonataOptions,
-  radioButtonOptions,
   stringField,
   stringOptionsField,
-  textDisplayControl,
-  textfieldOptions,
   timeField,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
@@ -30,6 +18,10 @@ import React, { useContext } from "react";
 import { applyEditorExtensions } from "@astroapps/schemas-editor";
 import { DataGridExtension } from "@astroapps/schemas-datagrid";
 import { RenderFormContext } from "./formTree";
+import {
+  createDefaultRenderers,
+  defaultTailwindTheme,
+} from "@react-typed-forms/schemas-html";
 
 enum Choice {
   Cool = "Cool",

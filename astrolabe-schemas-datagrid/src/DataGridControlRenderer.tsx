@@ -1,7 +1,7 @@
 import {
   ActionRendererProps,
   applyArrayLengthRestrictions,
-  ArrayActionOptions,
+  ArrayRenderOptions,
   boolField,
   buildSchema,
   ControlDataContext,
@@ -38,12 +38,21 @@ import {
   FilterAndSortState,
   findSortField,
   rotateSort,
-  SearchOptions,
   setFilterValue,
 } from "@astroapps/searchstate";
 import { SortableHeader } from "./SortableHeader";
 
-interface DataGridOptions extends ArrayActionOptions {
+interface DataGridOptions
+  extends Pick<
+    ArrayRenderOptions,
+    | "addText"
+    | "addActionId"
+    | "removeText"
+    | "removeActionId"
+    | "noAdd"
+    | "noRemove"
+    | "noReorder"
+  > {
   noEntriesText?: string;
   searchField?: string;
 }

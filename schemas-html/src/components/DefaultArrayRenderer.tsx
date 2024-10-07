@@ -1,28 +1,23 @@
-import {
-  ArrayRendererRegistration,
-  createDataRenderer,
-  DataRendererRegistration,
-} from "../renderers";
-import {
-  ActionRendererProps,
-  applyArrayLengthRestrictions,
-  ArrayRendererProps,
-  createArrayActions,
-  getLengthRestrictions,
-} from "../controlRender";
 import clsx from "clsx";
 import React, { Fragment, ReactNode } from "react";
 import { RenderElements } from "@react-typed-forms/core";
 import {
+  ActionRendererProps,
+  applyArrayLengthRestrictions,
   ArrayActionOptions,
+  ArrayRendererProps,
+  ArrayRendererRegistration,
   ArrayRenderOptions,
   ControlDefinitionType,
+  createArrayActions,
+  createDataRenderer,
   DataControlDefinition,
+  DataRendererRegistration,
   DataRenderType,
+  getLengthRestrictions,
   isArrayRenderer,
-} from "../types";
-import { cc } from "../internal";
-import { mergeObjects } from "../util";
+  mergeObjects,
+} from "@react-typed-forms/schemas";
 
 export function createDefaultArrayDataRenderer(
   defaultActions?: ArrayActionOptions,
@@ -38,6 +33,8 @@ export function createDefaultArrayDataRenderer(
         className,
         style,
         renderOptions,
+        readonly,
+        designMode,
       },
       renderers,
     ) => {
@@ -57,6 +54,9 @@ export function createDefaultArrayDataRenderer(
           removeText,
           noAdd,
           noRemove,
+          readonly,
+          disabled: control.disabled,
+          designMode,
         }),
         required,
         renderElement: (i) =>
@@ -71,7 +71,7 @@ export function createDefaultArrayDataRenderer(
             } as DataControlDefinition,
             { elementIndex: i },
           ),
-        className: cc(className),
+        className: className ? className : undefined,
         style,
         ...getLengthRestrictions(definition),
       } satisfies ArrayRendererProps;

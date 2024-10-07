@@ -2,14 +2,12 @@ import { useControl } from "@react-typed-forms/core";
 import {
   buildSchema,
   ControlRenderer,
-  createDefaultRenderers,
   createFormRenderer,
   dataControl,
   DateComparison,
   dateField,
   dateTimeField,
   dateValidatorOptions,
-  defaultTailwindTheme,
   groupedControl,
   jsonataValidatorOptions,
   lengthValidatorOptions,
@@ -17,6 +15,10 @@ import {
 } from "@react-typed-forms/schemas";
 import React, { useContext } from "react";
 import { RenderFormContext } from "./formTree";
+import {
+  createDefaultRenderers,
+  defaultTailwindTheme,
+} from "@react-typed-forms/schemas-html";
 
 interface AllControls {
   text: string;

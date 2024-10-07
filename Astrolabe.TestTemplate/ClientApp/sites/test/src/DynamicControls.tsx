@@ -3,11 +3,9 @@ import {
   boolField,
   buildSchema,
   ControlRenderer,
-  createDefaultRenderers,
   createFormRenderer,
   dataControl,
   DataRenderType,
-  defaultTailwindTheme,
   dynamicDefaultValue,
   dynamicDisabled,
   dynamicReadonly,
@@ -21,6 +19,7 @@ import React, { useContext } from "react";
 import { applyEditorExtensions } from "@astroapps/schemas-editor";
 import { DataGridExtension } from "@astroapps/schemas-datagrid";
 import { RenderFormContext } from "./formTree";
+import {createDefaultRenderers, defaultTailwindTheme} from "@react-typed-forms/schemas-html";
 
 interface DynamicControls {
   visible: boolean;

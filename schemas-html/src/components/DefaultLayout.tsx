@@ -1,5 +1,5 @@
-import { RenderedLayout } from "../controlRender";
 import React, { ReactNode } from "react";
+import {RenderedLayout} from "@react-typed-forms/schemas";
 
 export interface DefaultLayoutRendererOptions {
   className?: string;

@@ -18,10 +18,7 @@ import {
   buildSchema,
   compoundField,
   ControlDataContext,
-  createDefaultRenderers,
-  createFormRenderer,
   defaultEvalHooks,
-  defaultTailwindTheme,
   doubleField,
   EntityExpression,
   ExpressionType,
@@ -39,19 +36,10 @@ import {
 } from "@astroapps/client/hooks/queryParamSync";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
-import {
-  CarClient,
-  CarEdit,
-  CodeGenClient,
-  SearchStateClient,
-} from "../client";
+import { CarEdit, CodeGenClient, SearchStateClient } from "../client";
 import controlsJson from "../ControlDefinition.json";
-import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
 import { useMemo, useState } from "react";
-import {
-  createDataGridRenderer,
-  DataGridExtension,
-} from "@astroapps/schemas-datagrid";
+import { DataGridExtension } from "@astroapps/schemas-datagrid";
 import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 

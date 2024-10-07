@@ -5,13 +5,11 @@ import {
   buildSchema,
   checkListOptions,
   ControlRenderer,
-  createDefaultRenderers,
   createFormRenderer,
   dataControl,
   DataRenderType,
   dateField,
   dateTimeField,
-  defaultTailwindTheme,
   displayOnlyOptions,
   doubleField,
   groupedControl,
@@ -30,6 +28,10 @@ import React, { useContext } from "react";
 import { applyEditorExtensions } from "@astroapps/schemas-editor";
 import { DataGridExtension } from "@astroapps/schemas-datagrid";
 import { RenderFormContext } from "./formTree";
+import {
+  createDefaultRenderers,
+  defaultTailwindTheme,
+} from "@react-typed-forms/schemas-html";
 
 enum Choice {
   Cool = "Cool",

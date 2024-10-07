@@ -1,8 +1,10 @@
-import { createDataRenderer } from "../renderers";
-import { DataRendererProps } from "../controlRender";
 import React, { useRef } from "react";
 import { useControlEffect } from "@react-typed-forms/core";
-import { rendererClass } from "../util";
+import {
+  createDataRenderer,
+  DataRendererProps,
+  rendererClass,
+} from "@react-typed-forms/schemas";
 
 export function createMultilineFieldRenderer(className?: string) {
   return createDataRenderer((p) => (

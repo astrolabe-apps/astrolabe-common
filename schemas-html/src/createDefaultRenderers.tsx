@@ -40,10 +40,41 @@ import { createJsonataRenderer } from "./components/JsonataRenderer";
 import {
   ActionRendererProps,
   ActionRendererRegistration,
+  AdornmentPlacement,
+  AdornmentRendererRegistration,
+  appendMarkupAt,
+  ArrayActionOptions,
+  ControlDataContext,
+  ControlLayoutProps,
   createActionRenderer,
+  createDataRenderer,
+  createLayoutRenderer,
+  DataRendererRegistration,
+  DataRenderType,
+  DefaultRenderers,
+  FieldOption,
+  FieldType,
+  FlexRenderer,
   GridRenderer,
+  GroupRendererProps,
   GroupRendererRegistration,
+  hasOptions,
+  isAccordionAdornment,
+  isDataGroupRenderer,
+  isDisplayOnlyRenderer,
+  isFlexRenderer,
+  isGridRenderer,
+  isIconAdornment,
+  isSetFieldAdornment,
+  isTextfieldRenderer,
+  LabelRendererRegistration,
+  LabelType,
   rendererClass,
+  renderLayoutParts,
+  schemaDataForFieldRef,
+  SetFieldAdornment,
+  useDynamicHooks,
+  wrapLayout,
 } from "@react-typed-forms/schemas";
 
 export interface DefaultRendererOptions {
@@ -471,4 +502,15 @@ export function createDefaultRenderers(
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
   };
+}
+
+export function createClassStyledRenderers() {
+  return createDefaultRenderers({
+    layout: { className: "control" },
+    group: { className: "group" },
+    array: { className: "control-array" },
+    action: { className: "action" },
+    data: { inputClass: "data" },
+    display: { htmlClassName: "html", textClassName: "text" },
+  });
 }

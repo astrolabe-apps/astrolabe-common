@@ -1,8 +1,11 @@
 import { Control } from "@react-typed-forms/core";
 import React, { useMemo, useState } from "react";
-import { rendererClass } from "../util";
-import { FieldOption, FieldType } from "../types";
-import { createDataRenderer } from "../renderers";
+import {
+  createDataRenderer,
+  FieldOption,
+  FieldType,
+  rendererClass,
+} from "@react-typed-forms/schemas";
 
 export interface SelectRendererOptions {
   className?: string;

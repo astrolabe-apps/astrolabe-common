@@ -1,7 +1,10 @@
 import { Control } from "@react-typed-forms/core";
-import { SchemaField, SchemaInterface } from "../types";
 import React from "react";
-import { rendererClass } from "../util";
+import {
+  rendererClass,
+  SchemaField,
+  SchemaInterface,
+} from "@react-typed-forms/schemas";
 
 export function DefaultDisplayOnly({
   control,

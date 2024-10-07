@@ -1,4 +1,3 @@
-import { FieldType } from "../types";
 import React from "react";
 import {
   Control,
@@ -6,6 +5,7 @@ import {
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
+import {FieldType} from "@react-typed-forms/schemas";
 
 export function ControlInput({
   control,

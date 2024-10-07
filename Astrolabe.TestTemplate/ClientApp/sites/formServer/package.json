@@ -14,6 +14,7 @@
 		"codemirror": "^6.0.1",
 		"@astroapps/codemirror-evaluator": "workspace:*",
 		"@react-typed-forms/schemas": "workspace:*",
+		"@react-typed-forms/schemas-html": "workspace:*",
 		"@astroapps/client": "workspace:*",
 		"@astroapps/evaluator": "workspace:*",
 		"@lezer/common": "^1.0.0",

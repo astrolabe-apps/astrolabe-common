@@ -283,8 +283,8 @@ importers:
 
   ../../../astrolabe-schemas-editor:
     specifiers:
-      '@astroapps/client': workspace:^0.2.0
-      '@astroapps/ui-tree': workspace:^1.0.0
+      '@astroapps/client': workspace:^1.0.0
+      '@astroapps/ui-tree': workspace:^2.0.0
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
@@ -348,7 +348,7 @@ importers:
 
   ../../../astrolabe-storybook:
     specifiers:
-      '@astroapps/client': workspace:^0.2.0
+      '@astroapps/client': workspace:^1.0.0
       '@astroapps/ui-tree': ^0.1.1
       '@astrolabe/ui': workspace:*
       '@react-typed-forms/core': ^3.2.0
@@ -411,7 +411,7 @@ importers:
 
   ../../../astrolabe-ui:
     specifiers:
-      '@astroapps/client': workspace:^0.2.0
+      '@astroapps/client': workspace:^1.0.0
       '@astroapps/datagrid': workspace:^1.0.6
       '@mui/base': 5.0.0-beta.23
       '@radix-ui/react-accordion': 1.1.2
@@ -474,7 +474,7 @@ importers:
 
   ../../../astrolabe-ui-tree:
     specifiers:
-      '@astroapps/client': workspace:^0.2.0
+      '@astroapps/client': workspace:^1.0.0
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
@@ -660,6 +660,7 @@ importers:
       '@lezer/common': ^1.0.0
       '@react-typed-forms/core': ^3.6.0
       '@react-typed-forms/schemas': workspace:*
+      '@react-typed-forms/schemas-html': workspace:*
       '@tailwindcss/forms': ^0.5.7
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
@@ -693,6 +694,7 @@ importers:
       '@lezer/common': 1.2.1
       '@react-typed-forms/core': 3.6.0
       '@react-typed-forms/schemas': link:../../../../schemas
+      '@react-typed-forms/schemas-html': link:../../../../schemas-html
       codemirror: 6.0.1_@lezer+common@1.2.1
       next: 14.0.4_nnrd3gsncyragczmpvfhocinkq
       react: 18.3.1
@@ -729,6 +731,7 @@ importers:
       '@lezer/common': ^1.0.0
       '@react-typed-forms/core': ^3.6.0
       '@react-typed-forms/schemas': workspace:*
+      '@react-typed-forms/schemas-html': workspace:*
       '@tailwindcss/forms': ^0.5.7
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
@@ -767,6 +770,7 @@ importers:
       '@lezer/common': 1.2.1
       '@react-typed-forms/core': 3.6.0
       '@react-typed-forms/schemas': link:../../../../schemas
+      '@react-typed-forms/schemas-html': link:../../../../schemas-html
       clsx: 2.1.1
       codemirror: 6.0.1_@lezer+common@1.2.1
       date-fns: 3.6.0

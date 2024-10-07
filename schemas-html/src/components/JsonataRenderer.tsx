@@ -1,10 +1,16 @@
-import { createDataRenderer } from "../renderers";
-import { useJsonataExpression } from "../hooks";
-import { DataRenderType, JsonataRenderOptions } from "../types";
-import { ControlDataContext, rendererClass } from "../util";
-import { Control } from "@react-typed-forms/core";
+import { Control, useComputed } from "@react-typed-forms/core";
 import React from "react";
-import { getJsonPath, getRootDataNode } from "../treeNodes";
+import {
+  coerceToString,
+  ControlDataContext,
+  createDataRenderer,
+  DataRenderType,
+  getJsonPath,
+  getRootDataNode,
+  JsonataRenderOptions,
+  rendererClass,
+  useJsonataExpression,
+} from "@react-typed-forms/schemas";
 
 export function createJsonataRenderer(className?: string) {
   return createDataRenderer(
@@ -35,21 +41,18 @@ export function JsonataRenderer({
   readonly: boolean;
 }) {
   const sdn = dataContext.parentNode;
+  const bindings = useComputed(() => ({
+    value: control.value,
+    readonly,
+    disabled: control.disabled,
+    formData: dataContext.formData,
+  }));
   const rendered = useJsonataExpression(
     expression,
     getRootDataNode(sdn).control!,
     getJsonPath(sdn),
-    () => ({
-      value: control.value,
-      readonly,
-      disabled: control.disabled,
-    }),
-    (v) =>
-      v == null
-        ? ""
-        : typeof v === "object"
-          ? "error: " + JSON.stringify(v)
-          : v.toString(),
+    bindings,
+    coerceToString,
   );
   return (
     <div

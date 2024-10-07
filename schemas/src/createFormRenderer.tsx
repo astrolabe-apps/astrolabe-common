@@ -26,12 +26,11 @@ import {
   RendererRegistration,
   VisibilityRendererRegistration,
 } from "./renderers";
-import { createDefaultRenderers } from "./createDefaultRenderers";
 import { DataRenderType } from "./types";
 
 export function createFormRenderer(
   customRenderers: RendererRegistration[] = [],
-  defaultRenderers: DefaultRenderers = createClassStyledRenderers(),
+  defaultRenderers: DefaultRenderers,
 ): FormRenderer {
   const dataRegistrations = customRenderers.filter(isDataRegistration);
   const groupRegistrations = customRenderers.filter(isGroupRegistration);
@@ -152,17 +151,6 @@ export function createFormRenderer(
   }
 
   return formRenderers;
-}
-
-function createClassStyledRenderers() {
-  return createDefaultRenderers({
-    layout: { className: "control" },
-    group: { className: "group" },
-    array: { className: "control-array" },
-    action: { className: "action" },
-    data: { inputClass: "data" },
-    display: { htmlClassName: "html", textClassName: "text" },
-  });
 }
 
 function isOneOf<A>(x: A | A[] | undefined, v: A) {

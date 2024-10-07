@@ -16,6 +16,7 @@
 		"react-router-dom": "^6.26.1",
 		"@astroapps/codemirror-evaluator": "workspace:*",
 		"@react-typed-forms/schemas": "workspace:*",
+		"@react-typed-forms/schemas-html": "workspace:*",
 		"@astroapps/schemas-datagrid": "workspace:*",
 		"@astroapps/client": "workspace:*",
 		"@astroapps/evaluator": "workspace:*",
