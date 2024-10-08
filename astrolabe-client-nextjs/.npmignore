@@ -2,3 +2,4 @@ src/
 .rush/
 *.log
 .babelrc
+*.tsbuildinfo
