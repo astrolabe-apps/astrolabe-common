@@ -7,16 +7,49 @@ import {
 import { useControl } from "@react-typed-forms/core";
 import { useMsal } from "@azure/msal-react";
 import { useEffect } from "react";
-import { SilentRequest } from "@azure/msal-browser";
+import {
+  AuthenticationResult,
+  PopupRequest,
+  RedirectRequest,
+  SilentRequest,
+} from "@azure/msal-browser";
 
-export interface MsalServiceOptions {}
+export type LoginUrlStorage = Pick<
+  Storage,
+  "setItem" | "getItem" | "removeItem"
+>;
 
-const tokenRequest: SilentRequest = {
-  scopes: [msalConfig.auth.clientId + "/.default"],
-};
+export interface MsalServiceOptions {
+  popupRequest?: PopupRequest;
+  redirectRequest?: RedirectRequest;
+  urlStorage?: () => LoginUrlStorage;
+  getTokenFromResult?: (result: AuthenticationResult) => string;
+  adjustRequest?: (req: Request) => Request;
+  defaultAfterLogin?: string;
+}
+
+const defaultMsalOptions = {
+  urlStorage: () => sessionStorage,
+  getTokenFromResult: (r) => r.accessToken,
+  defaultAfterLogin: "/",
+} satisfies MsalServiceOptions;
+
 export function useMsalSecurityService(
   nav: NavigationService,
+  tokenRequest: SilentRequest,
+  options?: MsalServiceOptions,
 ): SecurityService {
+  const {
+    urlStorage,
+    getTokenFromResult,
+    adjustRequest,
+    popupRequest,
+    redirectRequest,
+    defaultAfterLogin,
+  } = {
+    ...defaultMsalOptions,
+    ...options,
+  };
   const { inProgress, instance: msal, accounts } = useMsal();
   const currentUser = useControl<UserState>({ busy: true, loggedIn: false });
   useEffect(() => {
@@ -25,19 +58,40 @@ export function useMsalSecurityService(
   return {
     currentUser,
     fetch: createAccessTokenFetcher(
-      async () => (await msal.acquireTokenSilent(tokenRequest)).accessToken,
+      async () =>
+        getTokenFromResult(await msal.acquireTokenSilent(tokenRequest)),
+      adjustRequest,
     ),
     login,
     logout: async () => {},
   };
 
   async function login() {
-    const afterLogin = currentUser.fields.afterLoginHref.value;
-    sessionStorage.setItem("afterLogin", afterLogin ?? "/");
-    await msal.acquireTokenRedirect(tokenRequest);
-    console.log("Logging in");
+    const afterLogin =
+      currentUser.fields.afterLoginHref.value ?? defaultAfterLogin;
+    if (popupRequest) {
+      const result = await msal.acquireTokenPopup(popupRequest);
+      await loginWithToken(result);
+      return;
+    }
+    urlStorage().setItem("afterLogin", afterLogin);
+    await msal.acquireTokenRedirect(redirectRequest ?? tokenRequest);
   }
 
+  async function loginWithToken(
+    token: AuthenticationResult,
+    afterLogin?: string | null,
+  ) {
+    currentUser.setValue((cu) => ({
+      ...cu,
+      loggedIn: true,
+      busy: false,
+      accessToken: getTokenFromResult(token),
+    }));
+    if (afterLogin) {
+      nav.push(afterLogin);
+    }
+  }
   async function checkInitial() {
     const account = msal.getActiveAccount();
     if (!account) {
@@ -50,19 +104,12 @@ export function useMsalSecurityService(
     }
     try {
       const token = await msal.acquireTokenSilent(tokenRequest);
-      const afterLogin = sessionStorage.getItem("afterLogin");
+      const s = urlStorage();
+      const afterLogin = s.getItem("afterLogin");
       if (afterLogin) {
-        sessionStorage.removeItem("afterLogin");
+        s.removeItem("afterLogin");
       }
-      currentUser.setValue((cu) => ({
-        ...cu,
-        loggedIn: true,
-        busy: false,
-        accessToken: token.accessToken,
-      }));
-      if (afterLogin) {
-        nav.push(afterLogin);
-      }
+      await loginWithToken(token, afterLogin);
     } catch (e) {
       console.error(e);
     }

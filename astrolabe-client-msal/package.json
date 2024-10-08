@@ -24,8 +24,8 @@
     "@react-typed-forms/core": "^3.0.0",
     "@astroapps/client": "workspace:^1.1.0",
     "react": "^18.2.0",
-    "@azure/msal-browser": "^3.10.0",
-    "@azure/msal-react": "^2.0.12"
+    "@azure/msal-browser": "^3.25.0",
+    "@azure/msal-react": "^2.1.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.33",
