@@ -67,12 +67,14 @@ export const guestSecurityService: SecurityService = {
 
 export function createAccessTokenFetcher(
   getToken: () => Promise<string | null | undefined>,
+  adjustRequest?: (req: Request) => Request,
 ): (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> {
   return async (url, init) => {
     const token = await getToken();
-    if (token) {
+    if (token || adjustRequest) {
       const request = new Request(url, init);
-      request.headers.set("Authorization", "Bearer " + token);
+      if (token) request.headers.set("Authorization", "Bearer " + token);
+      adjustRequest?.(request);
       return fetch(request);
     }
     return await fetch(url, init);

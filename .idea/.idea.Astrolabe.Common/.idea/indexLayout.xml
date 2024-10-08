@@ -5,6 +5,7 @@
       <Path>aria-base</Path>
       <Path>aria-datepicker</Path>
       <Path>astrolabe-client</Path>
+      <Path>astrolabe-client-msal</Path>
       <Path>astrolabe-client-nextjs</Path>
       <Path>astrolabe-codemirror-evaluator</Path>
       <Path>astrolabe-datagrid</Path>
@@ -19,8 +20,8 @@
       <Path>react-typed-forms/packages/core</Path>
       <Path>schemas</Path>
       <Path>schemas-datepicker</Path>
-      <Path>schemas-mui</Path>
       <Path>schemas-html</Path>
+      <Path>schemas-mui</Path>
     </attachedFolders>
     <explicitIncludes />
     <explicitExcludes />

@@ -501,8 +501,13 @@
       "packageName": "@astroapps/searchstate",
       "projectFolder": "../astrolabe-searchstate",
       "shouldPublish": true
+    },
+    {
+      "packageName": "@astroapps/client-msal",
+      "projectFolder": "../astrolabe-client-msal",
+      "shouldPublish": true
     }
-//    {
+    //    {
 //      "packageName": "native",
 //      "projectFolder": "ClientApp/sites/native"
 //    }

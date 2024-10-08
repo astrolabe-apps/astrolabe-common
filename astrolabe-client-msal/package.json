@@ -1,0 +1,37 @@
+{
+  "name": "@astroapps/client-msal",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": "./lib/index.js",
+  "author": "Astrolabe Enterprises",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
+  },
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "rimraf ./lib/ && microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
+  },
+  "dependencies": {
+    "@react-typed-forms/core": "^3.0.0",
+    "@astroapps/client": "workspace:^1.1.0",
+    "react": "^18.2.0",
+    "@azure/msal-browser": "^3.10.0",
+    "@azure/msal-react": "^2.0.12"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.33",
+    "microbundle": "^0.15.1",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.6.2",
+    "prettier": "^3.0.3"
+  }
+}

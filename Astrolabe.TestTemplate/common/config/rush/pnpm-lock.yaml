@@ -107,6 +107,31 @@ importers:
       rimraf: 5.0.9
       typescript: 5.6.2
 
+  ../../../astrolabe-client-msal:
+    specifiers:
+      '@astroapps/client': workspace:^1.1.0
+      '@azure/msal-browser': ^3.10.0
+      '@azure/msal-react': ^2.0.12
+      '@react-typed-forms/core': ^3.0.0
+      '@types/react': ^18.2.33
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      react: ^18.2.0
+      rimraf: ^5.0.5
+      typescript: ^5.6.2
+    dependencies:
+      '@astroapps/client': link:../astrolabe-client
+      '@azure/msal-browser': 3.25.0
+      '@azure/msal-react': 2.1.1_oj6lq7sb5oww5s2rad5ladp47u
+      '@react-typed-forms/core': 3.6.0
+      react: 18.3.1
+    devDependencies:
+      '@types/react': 18.3.3
+      microbundle: 0.15.1
+      prettier: 3.3.3
+      rimraf: 5.0.9
+      typescript: 5.6.2
+
   ../../../astrolabe-client-nextjs:
     specifiers:
       '@astroapps/client': workspace:*
@@ -648,7 +673,7 @@ importers:
       '@astroapps/aria-base': workspace:*
       '@astroapps/aria-datepicker': workspace:*
       '@astroapps/client': workspace:*
-      '@astroapps/client-nextjs': workspace:^0.2.0
+      '@astroapps/client-nextjs': workspace:^1.0.0
       '@astroapps/codemirror-evaluator': workspace:*
       '@astroapps/datagrid': workspace:^1.0.6
       '@astroapps/evaluator': workspace:*
@@ -719,7 +744,7 @@ importers:
       '@astroapps/aria-base': workspace:*
       '@astroapps/aria-datepicker': workspace:*
       '@astroapps/client': workspace:*
-      '@astroapps/client-nextjs': workspace:^0.2.0
+      '@astroapps/client-nextjs': workspace:^1.0.0
       '@astroapps/codemirror-evaluator': workspace:*
       '@astroapps/datagrid': workspace:^1.0.6
       '@astroapps/evaluator': workspace:*
@@ -854,6 +879,29 @@ packages:
     dependencies:
       default-browser-id: 3.0.0
     dev: true
+
+  /@azure/msal-browser/3.25.0:
+    resolution: {integrity: sha512-a0Y7pmSy8SC1s9bvwr+REvyAA1nQcITlZvkElM2gNUPYFTTNUTEdcpg73TmawNucyMdZ9xb/GFcuhrLOqYAzwg==}
+    engines: {node: '>=0.8.0'}
+    dependencies:
+      '@azure/msal-common': 14.15.0
+    dev: false
+
+  /@azure/msal-common/14.15.0:
+    resolution: {integrity: sha512-ImAQHxmpMneJ/4S8BRFhjt1MZ3bppmpRPYYNyzeQPeFN288YKbb8TmmISQEbtfkQ1BPASvYZU5doIZOPBAqENQ==}
+    engines: {node: '>=0.8.0'}
+    dev: false
+
+  /@azure/msal-react/2.1.1_oj6lq7sb5oww5s2rad5ladp47u:
+    resolution: {integrity: sha512-XOBgAR0fbkfUUkQZyhIlwAZiy8WIzNWxAAFacJgyL8LiE2Y5pgM9var9X0Jh7Oz/1Oy5lhTQDtCYWSMHmTZ84Q==}
+    engines: {node: '>=10'}
+    peerDependencies:
+      '@azure/msal-browser': ^3.25.0
+      react: ^16.8.0 || ^17 || ^18
+    dependencies:
+      '@azure/msal-browser': 3.25.0
+      react: 18.3.1
+    dev: false
 
   /@babel/cli/7.24.8_@babel+core@7.25.2:
     resolution: {integrity: sha512-isdp+G6DpRyKc+3Gqxy2rjzgF7Zj9K0mzLNnxz+E/fgeag8qT3vVulX4gY9dGO1q0y+0lUv6V3a+uhUzMzrwXg==}
