@@ -391,8 +391,11 @@ export function useJsonataExpression(
         if (!--updateRef.current) updateSubscriptions();
       }
     }
-    return () => ref.current[1](true);
   }, [compiledExpr]);
+  useEffect(() => {
+    listenerRef.current = undefined;
+    return () => ref.current[1](true);
+  }, []);
   return control;
 }
 
