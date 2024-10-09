@@ -18,6 +18,7 @@ import {
   mergeObjects,
   RenderOptions,
   schemaDataForFieldRef,
+  SchemaField,
   schemaForFieldPath,
   stringField,
 } from "@react-typed-forms/schemas";
@@ -27,8 +28,12 @@ import {
   columnDefinitions,
   DataGrid,
 } from "@astroapps/datagrid";
-import { Control, useTrackedComponent } from "@react-typed-forms/core";
-import React, { ReactNode } from "react";
+import {
+  Control,
+  RenderControl,
+  useTrackedComponent,
+} from "@react-typed-forms/core";
+import React, { Fragment, ReactNode, useEffect } from "react";
 import {
   getColumnHeaderFromOptions,
   isColumnAdornment,
@@ -118,6 +123,7 @@ export function createDataGridRenderer(
         className,
         readonly,
         required,
+        dataNode,
         useEvalExpression,
       } = pareProps;
       const gridClasses =
@@ -176,6 +182,7 @@ export function createDataGridRenderer(
       const searchField = dataGridOptions.searchField;
       return (
         <DynamicGridVisibility
+          field={dataNode.schema.field}
           classes={gridClasses}
           renderOptions={dataGridOptions}
           renderAction={renderers.renderAction}
@@ -241,6 +248,7 @@ interface DataGridRendererProps {
   addAction?: ActionRendererProps;
   removeAction?: (i: number) => ActionRendererProps;
   classes: DataGridClasses;
+  field: SchemaField;
 }
 
 function DataGridControlRenderer({
@@ -254,6 +262,7 @@ function DataGridControlRenderer({
   addAction,
   removeAction,
   classes,
+  field,
 }: DataGridRendererProps) {
   const allColumns = columnDefinitions<Control<any>, DataGridColumnExtension>(
     ...columns,
@@ -268,6 +277,7 @@ function DataGridControlRenderer({
     },
   );
   const rowCount = control.elements?.length ?? 0;
+  console.log(field.field, rowCount);
 
   function renderHeaderContent(
     col: ColumnDef<Control<any>, DataGridColumnExtension>,
@@ -332,6 +342,10 @@ function DataGridControlRenderer({
         getBodyRow={(i) => control.elements![i]}
         defaultColumnTemplate="1fr"
         cellClass=""
+        wrapBodyRow={(rowIndex, render) => {
+          const c = control.elements![rowIndex];
+          return <Fragment key={c.uniqueId}>{render(c, rowIndex)}</Fragment>;
+        }}
         renderHeaderContent={renderHeaderContent}
         renderExtraRows={(r) =>
           rowCount === 0 ? (
