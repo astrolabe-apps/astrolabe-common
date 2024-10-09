@@ -123,7 +123,6 @@ export function createDataGridRenderer(
         className,
         readonly,
         required,
-        dataNode,
         useEvalExpression,
       } = pareProps;
       const gridClasses =
@@ -182,7 +181,6 @@ export function createDataGridRenderer(
       const searchField = dataGridOptions.searchField;
       return (
         <DynamicGridVisibility
-          field={dataNode.schema.field}
           classes={gridClasses}
           renderOptions={dataGridOptions}
           renderAction={renderers.renderAction}
@@ -248,7 +246,6 @@ interface DataGridRendererProps {
   addAction?: ActionRendererProps;
   removeAction?: (i: number) => ActionRendererProps;
   classes: DataGridClasses;
-  field: SchemaField;
 }
 
 function DataGridControlRenderer({
@@ -262,7 +259,6 @@ function DataGridControlRenderer({
   addAction,
   removeAction,
   classes,
-  field,
 }: DataGridRendererProps) {
   const allColumns = columnDefinitions<Control<any>, DataGridColumnExtension>(
     ...columns,
@@ -277,7 +273,6 @@ function DataGridControlRenderer({
     },
   );
   const rowCount = control.elements?.length ?? 0;
-  console.log(field.field, rowCount);
 
   function renderHeaderContent(
     col: ColumnDef<Control<any>, DataGridColumnExtension>,
