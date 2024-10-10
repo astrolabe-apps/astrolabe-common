@@ -14,6 +14,7 @@ import React, {
 import { ControlDefinitionForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
 import {
+  ControlDataContext,
   ControlDefinition,
   defaultDataProps,
   defaultSchemaInterface,
@@ -133,7 +134,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     schemaInterface,
     dataNode: dataNode ?? parentDataNode,
     parentNode: parentDataNode,
-  };
+    formData: {},
+  } satisfies ControlDataContext;
   const adornments =
     definition.adornments?.map((x) =>
       renderer.renderAdornment({

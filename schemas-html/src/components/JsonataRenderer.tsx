@@ -9,6 +9,7 @@ import {
   getRootDataNode,
   JsonataRenderOptions,
   rendererClass,
+  SchemaDataNode,
   useJsonataExpression,
 } from "@react-typed-forms/schemas";
 
@@ -18,6 +19,7 @@ export function createJsonataRenderer(className?: string) {
       <JsonataRenderer
         renderOptions={p.renderOptions as JsonataRenderOptions}
         className={rendererClass(p.className, className)}
+        dataNode={p.dataNode}
         dataContext={p.dataContext}
         control={p.control}
         readonly={p.readonly}
@@ -29,15 +31,17 @@ export function createJsonataRenderer(className?: string) {
 
 export function JsonataRenderer({
   control,
-  renderOptions: { expression },
+  renderOptions,
   readonly,
   className,
   dataContext,
+  dataNode,
 }: {
   control: Control<any>;
   renderOptions: JsonataRenderOptions;
   className?: string;
   dataContext: ControlDataContext;
+  dataNode: SchemaDataNode;
   readonly: boolean;
 }) {
   const sdn = dataContext.parentNode;
@@ -46,9 +50,10 @@ export function JsonataRenderer({
     readonly,
     disabled: control.disabled,
     formData: dataContext.formData,
+    dataPath: getJsonPath(dataNode),
   }));
   const rendered = useJsonataExpression(
-    expression,
+    renderOptions.expression,
     getRootDataNode(sdn).control!,
     getJsonPath(sdn),
     bindings,

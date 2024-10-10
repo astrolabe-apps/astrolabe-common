@@ -353,7 +353,7 @@ export function useJsonataExpression(
   const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
   const compiledExpr = useMemo(() => {
     try {
-      return jsonata(fullExpr);
+      return jsonata(jExpr ? fullExpr : "null");
     } catch (e) {
       console.error(e);
       return jsonata("null");
