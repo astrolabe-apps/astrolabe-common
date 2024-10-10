@@ -52,7 +52,7 @@ const theme: DefaultRendererOptions = {
   },
   adornment: {
     accordion: {
-      className: "flex items-center gap-2 my-2 p-0",
+      className: "flex flex-row justify-start items-center gap-2 my-2 p-0",
       titleClass: "cursor-pointer",
       iconOpenClass: "fa fa-chevron-up",
       iconClosedClass: "fa fa-chevron-down",
