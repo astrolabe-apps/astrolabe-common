@@ -44,7 +44,7 @@ export function JsonataRenderer({
   dataNode: SchemaDataNode;
   readonly: boolean;
 }) {
-  const sdn = dataContext.parentNode;
+  const sdn = dataNode.elementIndex != null ? dataNode : dataContext.parentNode;
   const bindings = useComputed(() => ({
     value: control.value,
     readonly,
