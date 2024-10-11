@@ -480,7 +480,6 @@ export function useControlRendererComponent(
         definition: c,
         renderer,
         renderChild: (k, child, options) => {
-          if (control && control.isNull) return <Fragment key={k} />;
           const { parentDataNode, ...renderOptions } = options ?? {};
           const dContext =
             parentDataNode ?? dataContext.dataNode ?? dataContext.parentNode;
