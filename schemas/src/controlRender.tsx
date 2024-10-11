@@ -73,9 +73,8 @@ import { cc } from "./internal";
 import { defaultSchemaInterface } from "./schemaInterface";
 import {
   createSchemaLookup,
-  fieldPathForDefinition,
+  lookupDataNode,
   makeSchemaDataNode,
-  schemaDataForFieldPath,
   SchemaDataNode,
 } from "./treeNodes";
 
@@ -120,7 +119,10 @@ export interface ArrayRendererProps {
   addAction?: ActionRendererProps;
   required: boolean;
   removeAction?: (elemIndex: number) => ActionRendererProps;
-  renderElement: (elemIndex: number) => ReactNode;
+  renderElement: (
+    elemIndex: number,
+    wrapEntry: (children: ReactNode) => ReactNode,
+  ) => ReactNode;
   arrayControl: Control<any[] | undefined | null>;
   className?: string;
   style?: React.CSSProperties;
@@ -191,6 +193,7 @@ export interface DisplayRendererProps {
 export type ChildVisibilityFunc = (
   child: ControlDefinition,
   parentNode?: SchemaDataNode,
+  dontOverride?: boolean,
 ) => EvalExpressionHook<boolean>;
 export interface ParentRendererProps {
   childDefinitions: ControlDefinition[];
@@ -315,10 +318,7 @@ export function useControlRendererComponent(
   if (elementIndex != null) {
     dataNode = parentDataNode.getChildElement(elementIndex);
   } else {
-    const fieldNamePath = fieldPathForDefinition(definition);
-    dataNode = fieldNamePath
-      ? schemaDataForFieldPath(fieldNamePath, parentDataNode)
-      : undefined;
+    dataNode = lookupDataNode(definition, parentDataNode);
   }
   const useValidation = useMakeValidationHook(
     definition,
@@ -509,15 +509,17 @@ export function useControlRendererComponent(
         actionDataControl: actionData,
         actionOnClick: options.actionOnClick,
         useEvalExpression: useExpr,
-        useChildVisibility: (childDef, parentNode) => {
-          const fieldNamePath = fieldPathForDefinition(childDef);
-          const overrideNode = fieldNamePath
-            ? schemaDataForFieldPath(
-                fieldNamePath,
-                parentNode ?? dataNode ?? parentDataNode,
-              )
-            : undefined;
-          return useEvalVisibilityHook(useExpr, childDef, overrideNode);
+        useChildVisibility: (childDef, parentNode, dontOverride) => {
+          return useEvalVisibilityHook(
+            useExpr,
+            childDef,
+            !dontOverride
+              ? lookupDataNode(
+                  childDef,
+                  parentNode ?? dataNode ?? parentDataNode,
+                )
+              : undefined,
+          );
         },
       });
       const renderedControl = renderer.renderLayout({

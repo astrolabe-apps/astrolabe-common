@@ -177,6 +177,16 @@ export function fieldPathForDefinition(
   return fieldName?.split("/");
 }
 
+export function lookupDataNode(
+  c: ControlDefinition,
+  parentNode: SchemaDataNode,
+) {
+  const fieldNamePath = fieldPathForDefinition(c);
+  return fieldNamePath
+    ? schemaDataForFieldPath(fieldNamePath, parentNode)
+    : undefined;
+}
+
 export function schemaDataForFieldRef(
   fieldRef: string | undefined,
   schema: SchemaDataNode,
