@@ -393,8 +393,10 @@ export function useJsonataExpression(
     }
   }, [compiledExpr]);
   useEffect(() => {
-    listenerRef.current = undefined;
-    return () => ref.current[1](true);
+    return () => {
+      listenerRef.current = undefined;
+      ref.current[1](true);
+    };
   }, []);
   return control;
 }
