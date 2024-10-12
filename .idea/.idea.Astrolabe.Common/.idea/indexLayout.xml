@@ -8,6 +8,7 @@
       <Path>astrolabe-client-msal</Path>
       <Path>astrolabe-client-nextjs</Path>
       <Path>astrolabe-codemirror-evaluator</Path>
+      <Path>astrolabe-controls</Path>
       <Path>astrolabe-datagrid</Path>
       <Path>astrolabe-evaluator</Path>
       <Path>astrolabe-quill-editor</Path>

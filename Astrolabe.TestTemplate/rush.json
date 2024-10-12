@@ -506,6 +506,10 @@
       "packageName": "@astroapps/client-msal",
       "projectFolder": "../astrolabe-client-msal",
       "shouldPublish": true
+    },
+    {
+      "packageName": "@astroapps/controls",
+      "projectFolder": "../astrolabe-controls"
     }
     //    {
 //      "packageName": "native",
