@@ -1,10 +1,6 @@
 import clsx from "clsx";
 import React, { Fragment, ReactNode } from "react";
-import {
-  Control,
-  RenderElements,
-  useTrackedComponent,
-} from "@react-typed-forms/core";
+import { RenderElements, useTrackedComponent } from "@react-typed-forms/core";
 import {
   ActionRendererProps,
   applyArrayLengthRestrictions,
@@ -12,7 +8,6 @@ import {
   ArrayRendererProps,
   ArrayRendererRegistration,
   ArrayRenderOptions,
-  ChildRenderer,
   ControlDataContext,
   ControlDefinition,
   ControlDefinitionType,
@@ -25,10 +20,14 @@ import {
   EvalExpressionHook,
   FormRenderer,
   getLengthRestrictions,
+  GroupedControlsDefinition,
+  GroupRenderType,
   isArrayRenderer,
+  isCompoundField,
   lookupDataNode,
   makeHookDepString,
   mergeObjects,
+  SchemaDataNode,
 } from "@react-typed-forms/schemas";
 
 export function createDefaultArrayDataRenderer(
@@ -79,13 +78,20 @@ export function DataArrayRenderer({
     ? renderOptions.childOptions
     : undefined;
 
-  const childDefinition = {
-    type: ControlDefinitionType.Data,
-    field: definition.field,
-    children: definition.children,
-    renderOptions: childOptions ?? { type: DataRenderType.Standard },
-    hideTitle: true,
-  } as DataControlDefinition;
+  const renderAsElement = !isCompoundField(field);
+  const childDefinition: ControlDefinition = !renderAsElement
+    ? ({
+        type: ControlDefinitionType.Group,
+        children: definition.children,
+        groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
+      } as GroupedControlsDefinition)
+    : ({
+        type: ControlDefinitionType.Data,
+        field: definition.field,
+        children: definition.children,
+        renderOptions: childOptions ?? { type: DataRenderType.Standard },
+        hideTitle: true,
+      } as DataControlDefinition);
 
   const visibilities = (definition.children ?? []).map(
     (x) => [useChildVisibility(x, undefined, true), x] as const,
@@ -107,10 +113,8 @@ export function DataArrayRenderer({
     renderElement: (i, wrap) => (
       <Entry
         index={i}
-        renderChild={renderChild}
-        control={control}
+        renderChildElement={renderChildElement}
         dataContext={dataContext}
-        definition={childDefinition}
         visibilities={visibilities}
         wrap={wrap}
       />
@@ -121,44 +125,48 @@ export function DataArrayRenderer({
   } satisfies ArrayRendererProps;
 
   return renderers.renderArray(arrayProps);
+
+  function renderChildElement(i: number, elementNode: SchemaDataNode) {
+    return renderChild(
+      control.elements?.[i].uniqueId ?? i,
+      childDefinition,
+      renderAsElement
+        ? {
+            elementIndex: i,
+          }
+        : { parentDataNode: elementNode },
+    );
+  }
 }
 
 function RenderEntry({
   index: i,
-  renderChild,
-  control,
-  definition,
+  renderChildElement,
   visibilities,
   wrap,
   dataContext,
 }: {
   index: number;
-  renderChild: ChildRenderer;
-  control: Control<any>;
+  renderChildElement: (i: number, element: SchemaDataNode) => ReactNode;
   visibilities: (readonly [EvalExpressionHook<boolean>, ControlDefinition])[];
-  definition: DataControlDefinition;
   dataContext: ControlDataContext;
   wrap: (n: ReactNode) => ReactNode;
 }) {
-  const parentNode = dataContext.dataNode!.getChildElement(i);
+  const elementNode = dataContext.dataNode!.getChildElement(i);
   const childVis = visibilities.map(
     ([hook, def]) =>
       hook.runHook(
         {
           ...dataContext,
-          parentNode,
-          dataNode: lookupDataNode(def, parentNode),
+          parentNode: elementNode,
+          dataNode: lookupDataNode(def, elementNode),
         },
         hook.state,
       ).value,
   );
   const anyVisible = childVis.length == 0 || childVis.some((x) => x === true);
   if (!anyVisible) return undefined;
-  return wrap(
-    renderChild(control.elements?.[i].uniqueId ?? i, definition, {
-      elementIndex: i,
-    }),
-  );
+  return wrap(renderChildElement(i, elementNode));
 }
 
 export interface DefaultArrayRendererOptions extends ArrayActionOptions {
