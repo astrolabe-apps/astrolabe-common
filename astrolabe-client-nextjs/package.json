@@ -2,8 +2,14 @@
 	"name": "@astroapps/client-nextjs",
 	"version": "1.1.0",
 	"type": "module",
-	"main": "index.js",
-	"types": "index.d.ts",
+	"main": "lib/index.cjs",
+	"module": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"exports": {
+		"types": "./lib/index.d.ts",
+		"require": "./lib/index.cjs",
+		"default": "./lib/index.js"
+	},
 	"author": "Astrolabe Enterprises",
 	"license": "ISC",
 	"bugs": {
@@ -15,6 +21,7 @@
 	},
 	"dependencies": {
 		"@astroapps/client": "workspace:^1.1.0",
+		"querystring": "^0.2.1",
 		"next": "14.0.4",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
@@ -22,7 +29,8 @@
 	},
 	"scripts": {
 		"prepack": "npm run build",
-		"build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps=inline"
+		"build": "rimraf ./lib/ && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
+		"watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
 	},
 	"devDependencies": {
 		"@react-typed-forms/transform": "^0.2.0",
@@ -31,7 +39,9 @@
 		"@babel/preset-env": "^7.23.8",
 		"@babel/preset-react": "^7.23.3",
 		"@babel/preset-typescript": "^7.23.3",
+		"microbundle": "^0.15.1",
 		"typescript": "^5.6.2",
+		"rimraf": "^3.0.2",
 		"@types/react": "^18.2.33",
 		"@types/node": "^20.8.4",
 		"prettier": "^3.0.3"

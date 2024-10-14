@@ -143,15 +143,19 @@ importers:
       '@react-typed-forms/transform': ^0.2.0
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
+      microbundle: ^0.15.1
       next: 14.0.4
       prettier: ^3.0.3
+      querystring: ^0.2.1
       react: ^18.2.0
       react-dom: ^18.2.0
+      rimraf: ^3.0.2
       tslib: ^2.6.2
       typescript: ^5.6.2
     dependencies:
       '@astroapps/client': link:../astrolabe-client
       next: 14.0.4_6ytbjvu3tyhiowdoc6wap4it5u
+      querystring: 0.2.1
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
       tslib: 2.6.3
@@ -164,7 +168,9 @@ importers:
       '@react-typed-forms/transform': 0.2.0
       '@types/node': 20.14.13
       '@types/react': 18.3.3
+      microbundle: 0.15.1
       prettier: 3.3.3
+      rimraf: 3.0.2
       typescript: 5.6.2
 
   ../../../astrolabe-codemirror-evaluator:
