@@ -42,8 +42,12 @@ import { useMemo, useState } from "react";
 import { DataGridExtension } from "@astroapps/schemas-datagrid";
 import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
+import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 
-const CustomControlSchema = applyEditorExtensions(DataGridExtension);
+const CustomControlSchema = applyEditorExtensions(
+  DataGridExtension,
+  QuickstreamExtension,
+);
 
 interface DisabledStuff {
   type: string;

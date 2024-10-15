@@ -15,6 +15,12 @@ export default function RootLayout({
   const security = useControlTokenSecurity();
   return (
     <html lang="en">
+      <head>
+        <script
+          type="text/javascript"
+          src="https://api.quickstream.support.qvalent.com/rest/v1/quickstream-api-1.0.min.js"
+        ></script>
+      </head>
       <AppContextProvider value={{ navigation, security }}>
         <body className="h-screen">{children}</body>
       </AppContextProvider>

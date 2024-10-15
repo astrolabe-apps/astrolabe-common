@@ -498,6 +498,10 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/schemas-quickstream",
+      "projectFolder": "../astrolabe-schemas-quickstream"
+    },
+    {
       "packageName": "@astroapps/searchstate",
       "projectFolder": "../astrolabe-searchstate",
       "shouldPublish": true

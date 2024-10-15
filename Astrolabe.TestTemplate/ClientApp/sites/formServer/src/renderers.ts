@@ -8,10 +8,15 @@ import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
+import { createQuickstreamCC } from "@astroapps/schemas-quickstream";
 
 export function createStdFormRenderer(container: HTMLElement | null) {
   return createFormRenderer(
     [
+      createQuickstreamCC(
+        process.env.NEXT_PUBLIC_QS_PUBLIC_KEY!,
+        process.env.NEXT_PUBLIC_QS_BUSINESS_CODE!,
+      ),
       createDataGridRenderer({
         addText: "Add",
         removeText: "Delete",

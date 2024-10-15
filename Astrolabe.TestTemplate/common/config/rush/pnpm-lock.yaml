@@ -390,6 +390,29 @@ importers:
       rimraf: 5.0.9
       typescript: 5.6.2
 
+  ../../../astrolabe-schemas-quickstream:
+    specifiers:
+      '@react-typed-forms/schemas': workspace:*
+      '@react-typed-forms/transform': ^0.2.0
+      '@types/react': ^18.2.28
+      markdown-magic: ^2.6.1
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      react: ^18
+      rimraf: ^3.0.2
+      typescript: ^5.6.2
+    dependencies:
+      '@react-typed-forms/schemas': link:../schemas
+      react: 18.3.1
+    devDependencies:
+      '@react-typed-forms/transform': 0.2.0
+      '@types/react': 18.3.3
+      markdown-magic: 2.6.1
+      microbundle: 0.15.1
+      prettier: 3.3.3
+      rimraf: 3.0.2
+      typescript: 5.6.2
+
   ../../../astrolabe-searchstate:
     specifiers:
       microbundle: ^0.15.1
@@ -711,6 +734,7 @@ importers:
       '@astroapps/schemas-datagrid': workspace:*
       '@astroapps/schemas-datepicker': workspace:*
       '@astroapps/schemas-editor': workspace:*
+      '@astroapps/schemas-quickstream': workspace:*
       '@astroapps/searchstate': workspace:*
       '@astrolabe/ui': workspace:*
       '@lezer/common': ^1.0.0
@@ -745,6 +769,7 @@ importers:
       '@astroapps/schemas-datagrid': link:../../../../astrolabe-schemas-datagrid
       '@astroapps/schemas-datepicker': link:../../../../schemas-datepicker
       '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
+      '@astroapps/schemas-quickstream': link:../../../../astrolabe-schemas-quickstream
       '@astroapps/searchstate': link:../../../../astrolabe-searchstate
       '@astrolabe/ui': link:../../../../astrolabe-ui
       '@lezer/common': 1.2.1
