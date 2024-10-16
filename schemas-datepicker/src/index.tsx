@@ -3,14 +3,14 @@ import {
   DataRenderType,
   DateTimeRenderOptions,
   FieldType,
+  rendererClass,
 } from "@react-typed-forms/schemas";
 import { DatePicker } from "@astroapps/aria-datepicker";
 import React from "react";
-import { rendererClass } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
 import {
-  CalendarDate,
   CalendarDateTime,
+  getLocalTimeZone,
   parseAbsolute,
   parseDate,
   toCalendarDate,
@@ -75,7 +75,7 @@ function DatePickerRenderer({
     dateValue = !control.value
       ? null
       : dateTime
-        ? toCalendarDateTime(parseAbsolute(control.value, "UTC"))
+        ? toCalendarDateTime(parseAbsolute(control.value, getLocalTimeZone()))
         : toCalendarDateTime(parseDate(control.value));
   } catch (e) {
     console.log(e);
@@ -96,7 +96,7 @@ function DatePickerRenderer({
         control.touched = true;
         control.value = c
           ? dateTime
-            ? toZoned(c, "UTC").toAbsoluteString()
+            ? toZoned(c, getLocalTimeZone()).toAbsoluteString()
             : toCalendarDate(c).toString()
           : null;
       }}

@@ -18,6 +18,8 @@ import {
   buildSchema,
   compoundField,
   ControlDataContext,
+  dateField,
+  dateTimeField,
   defaultEvalHooks,
   doubleField,
   EntityExpression,
@@ -26,6 +28,7 @@ import {
   makeEvalExpressionHook,
   stringField,
   stringOptionsField,
+  timeField,
   UserMatchExpression,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
@@ -56,12 +59,18 @@ interface DisabledStuff {
   options: string[];
 }
 interface TestSchema {
+  date: string;
+  dateTime: string;
+  time: string;
   array: number[];
   stuff: DisabledStuff[];
   number: number;
 }
 
 const TestSchema = buildSchema<TestSchema>({
+  date: dateField("Date"),
+  dateTime: dateTimeField("Date Time"),
+  time: timeField("Time"),
   array: intField("Numbers", { collection: true }),
   stuff: compoundField(
     "Stuff",

@@ -9,10 +9,13 @@ import { Control } from "@react-typed-forms/core";
 import { SchemaDataNode, SchemaNode } from "./treeNodes";
 
 export class DefaultSchemaInterface implements SchemaInterface {
-  constructor(protected boolStrings: [string, string] = ["No", "Yes"]) {}
+  constructor(
+    protected boolStrings: [string, string] = ["No", "Yes"],
+    protected parseDateTime: (s: string) => number = (s) => Date.parse(s),
+  ) {}
 
   parseToMillis(field: SchemaField, v: string): number {
-    return Date.parse(v);
+    return this.parseDateTime(v);
   }
   validationMessageText(
     field: SchemaField,
@@ -85,7 +88,9 @@ export class DefaultSchemaInterface implements SchemaInterface {
       case FieldType.Date:
         return value ? new Date(value).toLocaleDateString() : undefined;
       case FieldType.DateTime:
-        return value ? new Date(value).toLocaleString() : undefined;
+        return value
+          ? new Date(this.parseToMillis(field, value)).toLocaleString()
+          : undefined;
       case FieldType.Time:
         return value
           ? new Date("1970-01-01T" + value).toLocaleTimeString()
