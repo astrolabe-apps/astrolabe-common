@@ -18,5 +18,6 @@ public record SearchOptions(
     int PerPage,
     string? Query,
     IEnumerable<string>? Sort,
-    IDictionary<string, IEnumerable<string>>? Filters
+    IDictionary<string, IEnumerable<string>>? Filters,
+    bool? IncludeTotal
 ) : FilterAndSortOptions, SearchPagingOptions;
