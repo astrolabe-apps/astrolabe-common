@@ -9,6 +9,10 @@ public delegate IQueryable<T> QueryFilterer<T>(
     IDictionary<string, IEnumerable<string>>? filters,
     IQueryable<T> query
 );
+public delegate Task<SearchResults<T2>> PagedSearcher<in T, T2>(
+    IQueryable<T> query,
+    SearchOptions searchOptions
+);
 
 public record SearchMember(MemberInfo Member, Func<string, object>? Convert);
 
@@ -127,6 +131,34 @@ public static class SearchHelper
             }
 
             return orderedQueryable ?? query;
+        };
+    }
+
+    public static PagedSearcher<T, T2> CreatePagedSearcher<T, T2>(
+        Func<IQueryable<T>, Task<List<T2>>> select,
+        Func<IQueryable<T>, Task<int>> count,
+        QuerySorter<T>? sorter = null,
+        QueryFilterer<T>? filterer = null,
+        int minPerPage = 10,
+        int maxPerPage = 50
+    )
+    {
+        sorter ??= MakeSorter<T>();
+        filterer ??= MakeFilterer<T>();
+        return async (query, options) =>
+        {
+            var perPage = Math.Min(minPerPage, Math.Max(maxPerPage, options.PerPage));
+            var offset = options.Page & perPage;
+            var filteredQuery = filterer(options.Filters, query);
+            int? total = null;
+            if (options.IncludeTotal ?? offset == 0)
+            {
+                total = await count(filteredQuery);
+            }
+            var pageResults = await select(
+                sorter(options.Sort, filteredQuery).Skip(offset).Take(perPage)
+            );
+            return new SearchResults<T2>(total, pageResults);
         };
     }
 }
