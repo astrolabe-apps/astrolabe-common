@@ -192,8 +192,9 @@ export function createAction(
   actionId: string,
   onClick: () => void,
   actionText?: string,
+  options?: Partial<ActionRendererProps>,
 ): ActionRendererProps {
-  return { actionId, onClick, actionText: actionText ?? actionId };
+  return { actionId, onClick, actionText: actionText ?? actionId, ...options };
 }
 
 export const emptyGroupDefinition: GroupedControlsDefinition = {
