@@ -9,9 +9,10 @@ public delegate IQueryable<T> QueryFilterer<T>(
     IDictionary<string, IEnumerable<string>>? filters,
     IQueryable<T> query
 );
-public delegate Task<SearchResults<T2>> PagedSearcher<in T, T2>(
+public delegate Task<SearchResults<T2>> Searcher<in T, T2>(
     IQueryable<T> query,
-    SearchOptions searchOptions
+    SearchOptions searchOptions,
+    bool IncludeTotal
 );
 
 public record SearchMember(MemberInfo Member, Func<string, object>? Convert);
@@ -134,7 +135,7 @@ public static class SearchHelper
         };
     }
 
-    public static PagedSearcher<T, T2> CreatePagedSearcher<T, T2>(
+    public static Searcher<T, T2> CreateSearcher<T, T2>(
         Func<IQueryable<T>, Task<List<T2>>> select,
         Func<IQueryable<T>, Task<int>> count,
         QuerySorter<T>? sorter = null,
@@ -144,13 +145,13 @@ public static class SearchHelper
     {
         sorter ??= MakeSorter<T>();
         filterer ??= MakeFilterer<T>();
-        return async (query, options) =>
+        return async (query, options, includeTotal) =>
         {
-            var take = Math.Max(maxLength, options.Length);
+            var take = Math.Min(maxLength, options.Length);
             var offset = options.Offset;
             var filteredQuery = filterer(options.Filters, query);
             int? total = null;
-            if (options.IncludeTotal ?? offset == 0)
+            if (includeTotal)
             {
                 total = await count(filteredQuery);
             }

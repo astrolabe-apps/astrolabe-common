@@ -1,22 +1,22 @@
 export type SearchFilters = { [colKey: string]: unknown[] };
 
 export interface FilterAndSortState {
-  query: string | undefined;
+  query: string | null;
   sort: string[];
   filters: SearchFilters;
 }
 
 export interface SearchPagingState {
-  page: number;
-  perPage: number;
+  offset: number;
+  length: number;
 }
 
 export interface SearchOptions extends FilterAndSortState, SearchPagingState {}
 
-export const defaultSearchPageState: SearchOptions = {
+export const defaultSearchOptions: SearchOptions = {
   filters: {},
-  page: 0,
-  perPage: 10,
+  offset: 0,
+  length: 10,
   query: "",
   sort: [],
 };
@@ -170,8 +170,6 @@ export function makeClientSortAndFilter<T>(
   };
 }
 
-export function getPageOfResults<T>(page: number, perPage: number, rows: T[]) {
-  const pp = perPage ? perPage : 10;
-  const offset = (page ?? 0) * pp;
-  return rows.slice(offset, offset + pp);
+export function getPageOfResults<T>(offset: number, length: number, rows: T[]) {
+  return rows.slice(offset, offset + length);
 }

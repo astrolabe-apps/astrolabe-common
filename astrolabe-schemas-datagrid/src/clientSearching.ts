@@ -73,7 +73,7 @@ export function useClientSearching<T extends {}>(
     [schemaInterface],
   );
 
-  const { filters, sort, query, page, perPage } = request.fields;
+  const { filters, sort, query, offset, length } = request.fields;
 
   const filterAndSorted = useComputed(() => {
     const v = controlValues({ allResults: allRows, filters, sort, query })();
@@ -84,10 +84,10 @@ export function useClientSearching<T extends {}>(
   });
 
   useControlEffect(
-    () => [filterAndSorted.value, page.value, perPage.value] as const,
-    ([res, page, perPage]) => {
+    () => [filterAndSorted.value, offset.value, length.value] as const,
+    ([res, offset, length]) => {
       if (res) {
-        pageResults.value = getPageOfResults(page, perPage, res);
+        pageResults.value = getPageOfResults(offset, length, res);
       }
     },
     true,

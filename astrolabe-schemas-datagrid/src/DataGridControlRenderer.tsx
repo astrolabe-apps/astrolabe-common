@@ -30,6 +30,7 @@ import {
 } from "@astroapps/datagrid";
 import {
   Control,
+  groupedChanges,
   RenderControl,
   useTrackedComponent,
 } from "@react-typed-forms/core";
@@ -43,6 +44,7 @@ import {
   FilterAndSortState,
   findSortField,
   rotateSort,
+  SearchOptions,
   setFilterValue,
 } from "@astroapps/searchstate";
 import { SortableHeader } from "./SortableHeader";
@@ -188,7 +190,7 @@ export function createDataGridRenderer(
           searchControl={
             searchField
               ? (schemaDataForFieldRef(searchField, dataContext.parentNode)
-                  .control as Control<FilterAndSortState>)
+                  .control as Control<SearchOptions>)
               : undefined
           }
           columns={allColumns}
@@ -239,7 +241,7 @@ interface DataGridRendererProps {
   renderOptions: DataGridOptions;
   columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[];
   control: Control<any[] | undefined | null>;
-  searchControl?: Control<FilterAndSortState>;
+  searchControl?: Control<SearchOptions>;
   className?: string;
   renderAction: (action: ActionRendererProps) => ReactNode;
   readonly: boolean;
@@ -289,7 +291,7 @@ function DataGridControlRenderer({
 
       if (dataNode && childPath && searchControl) {
         if (searchControl.current.isNull) searchControl.value = {} as any;
-        const { filters, sort } = searchControl.fields;
+        const { filters, sort, offset } = searchControl.fields;
         if (filterField) {
           filtered = (
             <FilterPopover
@@ -304,7 +306,10 @@ function DataGridControlRenderer({
                 filters.value?.[filterField]?.includes(v) ?? false
               }
               setOption={(v, ch) =>
-                filters.setValue(setFilterValue(filterField, v, ch))
+                groupedChanges(() => {
+                  filters.setValue(setFilterValue(filterField, v, ch));
+                  offset.value = 0;
+                })
               }
             />
           );
@@ -313,7 +318,10 @@ function DataGridControlRenderer({
           sorted = (
             <SortableHeader
               rotate={() =>
-                sort.setValue(rotateSort(sortField, col.defaultSort))
+                groupedChanges(() => {
+                  sort.setValue(rotateSort(sortField, col.defaultSort));
+                  offset.value = 0;
+                })
               }
               currentDir={() => findSortField(sort.value, sortField)?.[0]}
             />

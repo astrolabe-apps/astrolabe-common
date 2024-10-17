@@ -12,9 +12,11 @@ import {
 import {
   Control,
   useComputed,
+  useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
 import React from "react";
+import { SearchOptions } from "@astroapps/searchstate";
 
 export const PagerDefinition: CustomRenderOptions = {
   name: "Pager",
@@ -27,7 +29,7 @@ export const PagerExtension: ControlDefinitionExtension = {
 
 export interface PagerRendererOptions {
   classes: PagerClasses;
-  defaultPerPage: number;
+  initialPerPage: number;
 }
 
 export interface PagerClasses {
@@ -46,7 +48,7 @@ export const defaultPagerClasses = {
 
 export const defaultPagerOptions = {
   classes: defaultPagerClasses,
-  defaultPerPage: 50,
+  initialPerPage: 50,
 } satisfies PagerRendererOptions;
 
 export function createPagerRenderer(options?: Partial<PagerRendererOptions>) {
@@ -83,46 +85,32 @@ export function PagerRenderer({
   options: PagerRendererOptions;
   formRenderer: FormRenderer;
 }) {
-  const { classes, defaultPerPage } = options;
+  const { classes, initialPerPage } = options;
   const {
     buttonGroupClass,
     currentClass,
     numberClass,
     className: cn,
   } = classes;
-
-  const { fields } = dataNode.control! as Control<{
-    page: number;
-    perPage: number;
-  }>;
-  const { page, perPage } = fields
+  const { fields } = dataNode.control! as Control<SearchOptions>;
+  const { offset, length } = fields
     ? fields
-    : { page: { value: 0 }, perPage: { value: defaultPerPage } };
+    : { offset: { value: 0 }, length: { value: initialPerPage } };
 
-  const total = schemaDataForFieldPath(["results", "totalRows"], parent)
+  const total = schemaDataForFieldPath(["results", "total"], parent)
     .control as Control<number>;
+  const currentTotal = total.value ?? 0;
 
-  const totalPages = useComputed(() => {
-    const pp = perPage.value ?? defaultPerPage;
-    return Math.floor((total.value - 1) / pp) + 1;
-  });
+  const perPage = length.value ?? initialPerPage;
+  const totalPages = Math.floor((currentTotal - 1) / perPage) + 1;
+  const currentPage = Math.floor((offset.value ?? 0) / perPage);
 
-  useControlEffect(
-    () => [totalPages.value, page.value] as const,
-    ([total, current]) => {
-      if (total > 0 && total < current + 1) {
-        page.value = current < 0 ? 0 : current - 1;
-      }
-    },
-  );
-
-  const currentPage = page.value ?? 0;
-
+  if (!currentTotal) return <></>;
   function changePage(dir: number) {
-    if (!designMode) page.value = currentPage + dir;
+    if (!designMode) offset.value = (currentPage + dir) * perPage;
   }
   const nextAction = createAction("nextPage", () => changePage(1), "Next", {
-    disabled: currentPage >= totalPages.value - 1,
+    disabled: currentPage >= totalPages - 1,
   });
   const prevAction = createAction(
     "prevPage",
@@ -133,7 +121,7 @@ export function PagerRenderer({
   return (
     <div className={rendererClass(className, cn)}>
       <span className={currentClass}>
-        Showing page {numText(currentPage + 1)} of {numText(totalPages.value)}
+        Showing page {numText(currentPage + 1)} of {numText(totalPages)}
       </span>
       <div className={buttonGroupClass}>
         {formRenderer.renderAction(prevAction)}
