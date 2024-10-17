@@ -1,5 +1,5 @@
-import React from 'react';
-import clsx from 'clsx';
+import React from "react";
+import clsx from "clsx";
 import {
   CustomDisplay,
   DisplayDataType,
@@ -10,10 +10,16 @@ import {
   IconDisplay,
   rendererClass,
   TextDisplay,
-} from '@react-typed-forms/schemas';
-import { StyleSheet } from 'react-native';
-import { StyleProp, Text, useWindowDimensions, View, ViewStyle } from 'react-native';
-import HTMLView from 'react-native-htmlview';
+} from "@react-typed-forms/schemas";
+import { StyleSheet } from "react-native";
+import {
+  StyleProp,
+  Text,
+  useWindowDimensions,
+  View,
+  ViewStyle,
+} from "react-native";
+import HTMLView from "react-native-htmlview";
 
 export interface DefaultDisplayRendererOptions {
   textClassName?: string;
@@ -21,11 +27,11 @@ export interface DefaultDisplayRendererOptions {
 }
 
 export function createDefaultDisplayRenderer(
-  options: DefaultDisplayRendererOptions = {}
+  options: DefaultDisplayRendererOptions = {},
 ): DisplayRendererRegistration {
   return {
     render: (props) => <DefaultDisplay {...options} {...props} />,
-    type: 'display',
+    type: "display",
   };
 }
 
@@ -44,7 +50,7 @@ export function DefaultDisplay({
           style={style}
           className={clsx(
             getOverrideClass(className),
-            display ? display.value : (data as IconDisplay).iconClass
+            display ? display.value : (data as IconDisplay).iconClass,
           )}
         />
       );
@@ -60,12 +66,16 @@ export function DefaultDisplay({
     case DisplayDataType.Html:
       return (
         <HTMLView
-          value={display ? (display.value ?? '') : (data as HtmlDisplay).html}
+          value={display ? (display.value ?? "") : (data as HtmlDisplay).html}
           stylesheet={styles}
         />
       );
     case DisplayDataType.Custom:
-      return <Text>Custom display placeholder: {(data as CustomDisplay).customId}</Text>;
+      return (
+        <Text>
+          Custom display placeholder: {(data as CustomDisplay).customId}
+        </Text>
+      );
     default:
       return <Text>Unknown display type: {data.type}</Text>;
   }
@@ -73,7 +83,7 @@ export function DefaultDisplay({
 
 const styles = StyleSheet.create({
   p: {
-    fontWeight: '400',
+    fontWeight: "400",
     marginBottom: 10,
   },
 });
