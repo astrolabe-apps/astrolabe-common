@@ -348,10 +348,10 @@ export function visitControlData<A>(
     definition,
     {
       data(def: DataControlDefinition) {
-        return processData(def, def.field, def.children);
+        return processData(def);
       },
       group(d: GroupedControlsDefinition) {
-        return processData(undefined, d.compoundField, d.children);
+        return processData(d);
       },
       action: () => undefined,
       display: () => undefined,
@@ -359,26 +359,21 @@ export function visitControlData<A>(
     () => undefined,
   );
 
-  function processData(
-    def: DataControlDefinition | undefined,
-    fieldName: string | undefined | null,
-    children: ControlDefinition[] | null | undefined,
-  ) {
-    const fieldNode = fieldName
-      ? ctx.schema.getChildNode(fieldName)
-      : undefined;
-    if (!fieldNode)
-      return !fieldName ? visitControlDataArray(children, ctx, cb) : undefined;
-    const childNode = ctx.getChild(fieldNode);
-    const result = def ? cb(def, childNode) : undefined;
+  function processData(def: ControlDefinition) {
+    const children = def.children;
+    const childNode = lookupDataNode(def, ctx);
+    if (!childNode) return visitControlDataArray(children, ctx, cb);
+    const dataControl = isDataControlDefinition(def) ? def : undefined;
+    const result = dataControl ? cb(dataControl, childNode) : undefined;
     if (result !== undefined) return result;
+    const fieldNode = childNode.schema;
     const compound = isCompoundField(fieldNode.field);
     if (fieldNode.field.collection) {
       const control = childNode.control as Control<unknown[]>;
       let cIndex = 0;
       for (const c of control!.elements ?? []) {
         const elemChild = childNode.getChildElement(cIndex);
-        const elemResult = def ? cb(def, elemChild) : undefined;
+        const elemResult = dataControl ? cb(dataControl, elemChild) : undefined;
         if (elemResult !== undefined) return elemResult;
         if (compound) {
           const cfResult = visitControlDataArray(children, elemChild, cb);
