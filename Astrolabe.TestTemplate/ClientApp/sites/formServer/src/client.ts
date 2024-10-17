@@ -602,9 +602,8 @@ export interface CarInfo {
 }
 
 export interface CarInfoSearchResults {
-    loading: boolean;
-    totalRows: number | null;
-    entries: CarInfo[] | null;
+    total: number | null;
+    entries: CarInfo[];
 }
 
 export interface CarSearchPage {
@@ -633,8 +632,8 @@ export enum ItemStatus {
 }
 
 export interface SearchOptions {
-    page: number;
-    perPage: number;
+    offset: number;
+    length: number;
     query: string | null;
     sort: string[] | null;
     filters: { [key: string]: string[]; } | null;

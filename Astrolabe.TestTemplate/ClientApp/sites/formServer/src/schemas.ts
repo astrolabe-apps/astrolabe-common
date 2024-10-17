@@ -15,25 +15,25 @@ import {
 } from "./client";
 
 export interface SearchOptionsForm {
-  page: number;
-  perPage: number;
+  offset: number;
+  length: number;
   query: string | null;
   sort: string[] | null;
   filters: any | null;
 }
 
 export const SearchOptionsSchema = buildSchema<SearchOptionsForm>({
-  page: makeScalarField({
+  offset: makeScalarField({
     type: FieldType.Int,
     notNullable: true,
     required: true,
-    displayName: "Page",
+    displayName: "Offset",
   }),
-  perPage: makeScalarField({
+  length: makeScalarField({
     type: FieldType.Int,
     notNullable: true,
     required: true,
-    displayName: "Per Page",
+    displayName: "Length",
   }),
   query: makeScalarField({
     type: FieldType.String,
@@ -109,27 +109,21 @@ export function toCarInfoForm(v: CarInfo): CarInfoForm {
 }
 
 export interface CarInfoSearchResultsForm {
-  loading: boolean;
-  totalRows: number | null;
-  entries: CarInfoForm[] | null;
+  total: number | null;
+  entries: CarInfoForm[];
 }
 
 export const CarInfoSearchResultsSchema = buildSchema<CarInfoSearchResultsForm>(
   {
-    loading: makeScalarField({
-      type: FieldType.Bool,
-      notNullable: true,
-      required: true,
-      displayName: "Loading",
-    }),
-    totalRows: makeScalarField({
+    total: makeScalarField({
       type: FieldType.Int,
-      displayName: "Total Rows",
+      displayName: "Total",
     }),
     entries: makeCompoundField({
       children: CarInfoSchema,
       schemaRef: "CarInfo",
       collection: true,
+      notNullable: true,
       displayName: "Entries",
     }),
   },
