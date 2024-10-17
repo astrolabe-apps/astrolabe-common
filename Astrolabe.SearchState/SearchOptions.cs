@@ -9,13 +9,13 @@ public interface FilterAndSortOptions
 
 public interface SearchPagingOptions
 {
-    int Page { get; }
-    int PerPage { get; }
+    int Offset { get; }
+    int Length { get; }
 }
 
 public record SearchOptions(
-    int Page,
-    int PerPage,
+    int Offset,
+    int Length,
     string? Query,
     IEnumerable<string>? Sort,
     IDictionary<string, IEnumerable<string>>? Filters,

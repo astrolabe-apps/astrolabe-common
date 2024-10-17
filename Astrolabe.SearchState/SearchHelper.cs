@@ -139,16 +139,15 @@ public static class SearchHelper
         Func<IQueryable<T>, Task<int>> count,
         QuerySorter<T>? sorter = null,
         QueryFilterer<T>? filterer = null,
-        int minPerPage = 10,
-        int maxPerPage = 50
+        int maxLength = 50
     )
     {
         sorter ??= MakeSorter<T>();
         filterer ??= MakeFilterer<T>();
         return async (query, options) =>
         {
-            var perPage = Math.Min(minPerPage, Math.Max(maxPerPage, options.PerPage));
-            var offset = options.Page & perPage;
+            var take = Math.Max(maxLength, options.Length);
+            var offset = options.Offset;
             var filteredQuery = filterer(options.Filters, query);
             int? total = null;
             if (options.IncludeTotal ?? offset == 0)
@@ -156,7 +155,7 @@ public static class SearchHelper
                 total = await count(filteredQuery);
             }
             var pageResults = await select(
-                sorter(options.Sort, filteredQuery).Skip(offset).Take(perPage)
+                sorter(options.Sort, filteredQuery).Skip(offset).Take(take)
             );
             return new SearchResults<T2>(total, pageResults);
         };
