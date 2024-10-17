@@ -3,3 +3,4 @@ export * from "./DataGridGroup";
 export * from "./extensions";
 export * from "./columnAdornment";
 export * from "./clientSearching";
+export * from "./PagerRenderer";
