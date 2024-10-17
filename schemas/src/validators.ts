@@ -1,6 +1,7 @@
 import {
   ControlDefinition,
   DataControlDefinition,
+  DataRenderType,
   DateComparison,
   DateValidator,
   FieldType,
@@ -42,9 +43,13 @@ export function useMakeValidationHook(
   ) => void = useDefaultValidator,
 ): (ctx: ValidationHookContext) => void {
   const dd = isDataControlDefinition(definition) ? definition : undefined;
+
   const refData = useUpdatedRef({ dd, useValidatorFor });
   const depString = dd
-    ? makeHookDepString(dd.validators ?? [], (x) => x.type)
+    ? makeHookDepString(
+        [{ type: "r" + dd.required }, ...(dd.validators ?? [])],
+        (x) => x.type,
+      )
     : "~";
   return useCallback(
     (ctx) => {
@@ -61,23 +66,23 @@ export function useMakeValidationHook(
       } = ctx;
 
       useValueChangeEffect(control, () => control.setError("default", ""));
-      useValidator(
-        control,
-        (v) =>
-          !hiddenControl.value &&
-          dd.required &&
-          schemaInterface.isEmptyValue(field, v)
-            ? schemaInterface.validationMessageText(
-                field,
-                ValidationMessageType.NotEmpty,
-                false,
-                true,
-              )
-            : null,
-        "required",
-        undefined,
-        [dd.required],
-      );
+      if (dd.required)
+        useValidator(
+          control,
+          (v) => {
+            return !hiddenControl.value &&
+              schemaInterface.isEmptyValue(field, v)
+              ? schemaInterface.validationMessageText(
+                  field,
+                  ValidationMessageType.NotEmpty,
+                  false,
+                  true,
+                )
+              : null;
+          },
+          "required",
+          undefined,
+        );
       dd.validators?.forEach((v, i) =>
         useValidatorFor(v, { ...ctx, index: i, field, definition: dd }),
       );
