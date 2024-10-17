@@ -46,10 +46,7 @@ export function useMakeValidationHook(
 
   const refData = useUpdatedRef({ dd, useValidatorFor });
   const depString = dd
-    ? makeHookDepString(
-        [{ type: "r" + dd.required }, ...(dd.validators ?? [])],
-        (x) => x.type,
-      )
+    ? makeHookDepString(dd.validators ?? [], (x) => x.type)
     : "~";
   return useCallback(
     (ctx) => {
@@ -87,7 +84,7 @@ export function useMakeValidationHook(
         useValidatorFor(v, { ...ctx, index: i, field, definition: dd }),
       );
     },
-    [!!dd, depString, useValidatorFor],
+    [!!dd, dd?.required, depString, useValidatorFor],
   );
 }
 
