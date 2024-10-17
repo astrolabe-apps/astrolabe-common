@@ -14,6 +14,7 @@ import {
   useComputed,
   useControlEffect,
 } from "@react-typed-forms/core";
+import React from "react";
 
 export const PagerDefinition: CustomRenderOptions = {
   name: "Pager",
