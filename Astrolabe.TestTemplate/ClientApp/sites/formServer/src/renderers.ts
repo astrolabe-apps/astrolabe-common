@@ -1,6 +1,7 @@
 import { createFormRenderer } from "@react-typed-forms/schemas";
 import {
   createDataGridRenderer,
+  createPagerRenderer,
   DataGridGroupRenderer,
 } from "@astroapps/schemas-datagrid";
 import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
@@ -18,6 +19,7 @@ export function createStdFormRenderer(container: HTMLElement | null) {
           supplierBusinessCode: process.env.NEXT_PUBLIC_QS_BUSINESS_CODE!,
         },
       }),
+      createPagerRenderer(),
       createDataGridRenderer({
         addText: "Add",
         removeText: "Delete",

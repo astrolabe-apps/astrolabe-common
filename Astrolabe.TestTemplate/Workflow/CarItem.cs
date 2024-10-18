@@ -1,3 +1,4 @@
+using Astrolabe.Annotation;
 using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.TestTemplate.Workflow;
@@ -19,6 +20,7 @@ public class CarItem
     public int Year { get; set; }
 }
 
+[JsonString]
 public enum ItemStatus
 {
     Draft,

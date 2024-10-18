@@ -84,18 +84,18 @@ export const CarInfoSchema = buildSchema<CarInfoForm>({
     displayName: "Year",
   }),
   status: makeScalarField({
-    type: FieldType.Int,
+    type: FieldType.String,
     notNullable: true,
     required: true,
     displayName: "Status",
     options: [
       {
         name: "Draft",
-        value: 0,
+        value: "Draft",
       },
       {
         name: "Published",
-        value: 1,
+        value: "Published",
       },
     ],
   }),
@@ -141,6 +141,7 @@ export function toCarInfoSearchResultsForm(
 export interface CarSearchPageForm {
   request: SearchOptionsForm;
   results: CarInfoSearchResultsForm;
+  loading: boolean;
 }
 
 export const CarSearchPageSchema = buildSchema<CarSearchPageForm>({
@@ -155,6 +156,12 @@ export const CarSearchPageSchema = buildSchema<CarSearchPageForm>({
     schemaRef: "CarInfoSearchResults",
     notNullable: true,
     displayName: "Results",
+  }),
+  loading: makeScalarField({
+    type: FieldType.Bool,
+    notNullable: true,
+    required: true,
+    displayName: "Loading",
   }),
 });
 

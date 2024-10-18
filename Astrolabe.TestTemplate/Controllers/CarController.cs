@@ -1,4 +1,5 @@
 using Astrolabe.Annotation;
+using Astrolabe.SearchState;
 using Astrolabe.TestTemplate.Workflow;
 using Astrolabe.Workflow;
 using Microsoft.AspNetCore.Mvc;
@@ -76,6 +77,24 @@ public class CarController(AppDbContext dbContext) : ControllerBase
             .Cars.Where(x => x.Status == ItemStatus.Published)
             .Select(x => new CarEdit(x.Make, x.Model, x.Year))
             .ToListAsync();
+    }
+
+    private static readonly Searcher<CarItem, CarInfo> Searcher = SearchHelper.CreateSearcher<
+        CarItem,
+        CarInfo
+    >(
+        q => q.Select(x => new CarInfo(x.Make, x.Model, x.Year, x.Status)).ToListAsync(),
+        q => q.CountAsync()
+    );
+
+    [HttpPost("search")]
+    public async Task<SearchResults<CarInfo>> SearchCars(SearchOptions search)
+    {
+        return await Searcher(
+            dbContext.Cars.Where(x => x.Make.Contains(search.Query)),
+            search,
+            search.Offset == 0
+        );
     }
 
     [HttpGet("all")]

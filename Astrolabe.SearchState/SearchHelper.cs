@@ -12,7 +12,7 @@ public delegate IQueryable<T> QueryFilterer<T>(
 public delegate Task<SearchResults<T2>> Searcher<in T, T2>(
     IQueryable<T> query,
     SearchOptions searchOptions,
-    bool IncludeTotal
+    bool includeTotal
 );
 
 public record SearchMember(MemberInfo Member, Func<string, object>? Convert);

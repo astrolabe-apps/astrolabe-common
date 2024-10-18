@@ -42,7 +42,7 @@ import { DndProvider } from "react-dnd";
 import { CarEdit, CodeGenClient, SearchStateClient } from "../client";
 import controlsJson from "../ControlDefinition.json";
 import { useMemo, useState } from "react";
-import { DataGridExtension } from "@astroapps/schemas-datagrid";
+import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
 import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
@@ -50,6 +50,7 @@ import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 const CustomControlSchema = applyEditorExtensions(
   DataGridExtension,
   QuickstreamExtension,
+  PagerExtension,
 );
 
 interface DisabledStuff {

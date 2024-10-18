@@ -2,7 +2,7 @@
   "controls": [
     {
       "type": "Data",
-      "title": "Results",
+      "title": "Entries",
       "field": "results/entries",
       "children": [
         {
@@ -11,20 +11,20 @@
           "field": "make",
           "required": true,
           "renderOptions": {
-            "type": "Standard"
+            "type": "DisplayOnly"
           },
+          "hideTitle": true,
           "adornments": [
             {
               "type": "ColumnOptions",
               "renderOptions": {
                 "type": "Standard"
               },
-              "filterField": "",
-              "visible": {},
-              "enabledFilter": true
+              "enabledFilter": true,
+              "enabledSort": true,
+              "visible": {}
             }
-          ],
-          "hideTitle": true
+          ]
         },
         {
           "type": "Data",
@@ -32,22 +32,21 @@
           "field": "model",
           "required": true,
           "renderOptions": {
-            "type": "Standard"
+            "type": "DisplayOnly",
+            "sampleText": "Honda"
           },
+          "hideTitle": true,
           "adornments": [
             {
               "type": "ColumnOptions",
               "renderOptions": {
                 "type": "Standard"
               },
-              "filterField": "",
-              "sortField": "",
-              "visible": {},
               "enabledFilter": true,
-              "enabledSort": true
+              "enabledSort": true,
+              "visible": {}
             }
-          ],
-          "hideTitle": true
+          ]
         },
         {
           "type": "Data",
@@ -55,42 +54,32 @@
           "field": "year",
           "required": true,
           "renderOptions": {
-            "type": "Standard"
+            "type": "DisplayOnly"
           },
-          "hideTitle": true,
-          "adornments": [
-            {
-              "type": "ColumnOptions",
-              "renderOptions": {
-                "type": "Standard"
-              },
-              "sortField": "",
-              "visible": {},
-              "enabledSort": true
-            }
-          ]
+          "hideTitle": true
         },
         {
           "type": "Data",
           "title": "Status",
           "field": "status",
-          "hideTitle": true,
+          "required": true,
           "renderOptions": {
-            "type": "Standard"
+            "type": "DisplayOnly"
           },
+          "hideTitle": true,
           "adornments": [
             {
               "type": "ColumnOptions",
               "renderOptions": {
                 "type": "Standard"
               },
-              "filterField": "",
-              "visible": {},
-              "enabledFilter": true
+              "enabledFilter": true,
+              "visible": {}
             }
           ]
         }
       ],
+      "hideTitle": false,
       "renderOptions": {
         "type": "DataGrid",
         "searchField": "request"
@@ -99,13 +88,40 @@
     },
     {
       "type": "Data",
+      "title": "Results",
+      "field": "results",
+      "children": [
+        {
+          "type": "Data",
+          "title": "Total",
+          "field": "total",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        }
+      ],
+      "renderOptions": {
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Data",
+      "title": "New",
+      "field": "request",
+      "renderOptions": {
+        "type": "Pager"
+      },
+      "hideTitle": true
+    },
+    {
+      "type": "Data",
       "title": "Request",
       "field": "request",
       "children": [
         {
           "type": "Data",
-          "title": "Page",
-          "field": "page",
+          "title": "Offset",
+          "field": "offset",
           "required": true,
           "renderOptions": {
             "type": "Standard"
@@ -113,8 +129,8 @@
         },
         {
           "type": "Data",
-          "title": "Per Page",
-          "field": "perPage",
+          "title": "Length",
+          "field": "length",
           "required": true,
           "renderOptions": {
             "type": "Standard"
@@ -144,10 +160,7 @@
             "type": "Standard"
           }
         }
-      ],
-      "renderOptions": {
-        "type": "Standard"
-      }
+      ]
     }
   ],
   "config": null

@@ -7,6 +7,8 @@ import {
   Control,
   RenderArrayElements,
   useControl,
+  useControlEffect,
+  useDebounced,
 } from "@react-typed-forms/core";
 import {
   ControlRenderer,
@@ -27,6 +29,7 @@ import {
   useClientSearching,
 } from "@astroapps/schemas-datagrid";
 import { SearchOptions } from "@astroapps/searchstate";
+import { CircularProgress } from "@astrolabe/ui/CircularProgress";
 
 const renderer = createStdFormRenderer(null);
 const schemaLookup = createSchemaLookup(SchemaMap);
@@ -38,31 +41,15 @@ export default function SearchPage() {
     ...defaultCarSearchPageForm,
     request: { ...defaultSearchOptions, length: 1 },
   });
-  const {
-    fields: {
-      results: {
-        fields: { total },
-      },
-    },
-  } = pageControl;
-  const allResults = useControl<CarInfo[]>();
-  const schemaInterface = useMemo(
-    () => new DataBackedSchema(allResults),
-    [allResults],
-  );
-
-  const { results, request } = pageControl.fields;
-  useClientSearching(
-    allResults,
-    results.fields.entries,
-    request as Control<SearchOptions>,
-    carInfoNode,
-    schemaInterface,
-  );
-
+  const { results, request, loading } = pageControl.fields;
   useEffect(() => {
-    loadAll();
+    doSearch();
   }, []);
+
+  useControlEffect(
+    () => pageControl.fields.request.value,
+    useDebounced(doSearch, 300),
+  );
 
   return (
     <div className="container">
@@ -73,35 +60,19 @@ export default function SearchPage() {
             fields={FormDefinitions.CarSearch.schema}
             renderer={renderer}
             control={pageControl}
-            options={{ schemaInterface }}
           />
         )}
       </RenderArrayElements>
+      {loading.value && <CircularProgress />}
     </div>
   );
 
-  async function loadAll() {
-    allResults.value = await carClient.listAll();
-    total.value = allResults.value.length;
-  }
-}
-
-class DataBackedSchema extends DefaultSchemaInterface {
-  constructor(private results: Control<CarInfo[] | undefined>) {
-    super();
-  }
-  getFilterOptions(array: SchemaDataNode, sdn: SchemaNode) {
-    const allResults = this.results.value;
-    if (allResults) {
-      const field = sdn.field;
-      const allValues = new Set(
-        allResults.map((x) => x[field.field as keyof CarInfo] as any),
-      );
-      return [...allValues].map((x) => ({
-        name: this.textValue(field, x) ?? "<null>",
-        value: x,
-      }));
+  async function doSearch() {
+    loading.value = true;
+    try {
+      results.value = await carClient.searchCars(request.value);
+    } finally {
+      loading.value = false;
     }
-    return super.getFilterOptions(array, sdn);
   }
 }
