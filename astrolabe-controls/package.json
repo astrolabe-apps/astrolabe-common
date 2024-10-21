@@ -34,19 +34,23 @@
     "@react-typed-forms/core": "^3.6.0"
   },
   "devDependencies": {
+    "jest": "^29.7.0",
     "@react-typed-forms/transform": "^0.2.0",
     "markdown-magic": "^2.6.1",
     "microbundle": "^0.15.1",
     "prettier": "^3.0.3",
     "rimraf": "^3.0.2",
     "typescript": "^5.6.2",
-    "tsx": "^4.19.1"
+    "tsx": "^4.19.1",
+    "fast-check": "^3.22.0",
+    "ts-jest": "^29.2.5",
+    "@jest/globals": "^29.7.0"
   },
   "scripts": {
     "prepack": "npm run build",
     "build": "rimraf ./lib/ && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
-    "test": "tsx src/index.ts",
+    "test": "jest --coverage",
     "update-readme": "md-magic --path README.md",
     "gencode": "nswag swagger2tsclient /input:http://localhost:5216/swagger/v1/swagger.json /runtime:Net60 /output:src/types.ts /GenerateClientClasses:false /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string"
   }

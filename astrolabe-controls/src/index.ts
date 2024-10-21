@@ -1,8 +1,9 @@
-import { ControlChange, newControl } from "./controlImpl";
+import { ControlChange, ControlImpl, newControl } from "./controlImpl";
 
 const parent = newControl({ ok: "sdads", umm: "cool" });
 
-const { ok } = parent.fields;
+const { ok: o } = parent.fields;
+const ok = o as ControlImpl<string>;
 // console.log(parent);
 // console.log(ok);
 // const hai = parent.value;
@@ -14,12 +15,21 @@ const { ok } = parent.fields;
 // parent.value = { ok: "Changed", umm: "Changed again" };
 // parent.initialValue = { ok: "Changed", umm: "Changed again" };
 // console.log(ok.value);
-ok.subscribe(() => console.log("Value Changed1"), ControlChange.Value);
-ok.subscribe(() => console.log("Dirty"), ControlChange.Dirty);
+const v1 = ok.subscribe(() => console.log("Changed1"), ControlChange.Value);
+const v2 = ok.subscribe(() => console.log("Dirty"), ControlChange.Dirty);
 ok.value = "WOW";
-ok.subscribe(() => console.log("Changed"), ControlChange.Value);
-// console.log(ok);
+const v3 = parent.subscribe(() => console.log("Changed2"), ControlChange.Value);
+console.log("#1", parent.value, parent.initialValue, parent.dirty);
 ok.runListeners();
 ok.value = "sdads";
+console.log("#2");
 ok.runListeners();
+console.log("#3");
+ok.runListeners();
+ok.value = "ValueMutating";
+ok.unsubscribe(v3);
+ok.unsubscribe(v2);
+console.log("#4");
+ok.runListeners();
+console.log("#5");
 ok.runListeners();

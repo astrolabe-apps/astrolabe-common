@@ -5,11 +5,11 @@ export type ChangeListenerFunc<V> = (
   cb: ControlChange,
 ) => void;
 
-export type Subscription = [
-  SubscriptionList,
-  ControlChange,
-  ChangeListenerFunc<any>,
-];
+export type Subscription = {
+  list: SubscriptionList;
+  mask: ControlChange;
+  listener: ChangeListenerFunc<any>;
+};
 
 export enum ControlFlags {
   None = 0,
@@ -64,13 +64,13 @@ interface ChildState<V> extends ParentListener {
   setInitialValue(v: V, from?: ControlImpl<unknown>): boolean;
 }
 
-interface Control<V> {
+export interface Control<V> {
   value: V;
   initialValue: V;
   fields: { [K in keyof V]-?: Control<V[K]> };
   readonly dirty: boolean;
   subscribe(listener: ChangeListenerFunc<V>, mask: ControlChange): Subscription;
-  runListeners(): void;
+  unsubscribe(subscription: Subscription): void;
 }
 
 export class ControlImpl<V> implements Control<V> {
@@ -91,7 +91,7 @@ export class ControlImpl<V> implements Control<V> {
 
   setValue(v: V, dontUpdate?: ControlImpl<unknown>): boolean {
     if (this._children) return this._children.setValue(v, dontUpdate);
-    const changed = this._value !== v;
+    const changed = !basicShallowEquals(this._value, v);
     if (changed) {
       this._value = v;
       this._parents?.childValueChange(v, dontUpdate);
@@ -102,11 +102,11 @@ export class ControlImpl<V> implements Control<V> {
 
   setInitialValue(v: V, dontUpdate?: ControlImpl<unknown>): boolean {
     if (this._children) return this._children.setInitialValue(v, dontUpdate);
-    const changed = this._value !== v;
+    const changed = !basicShallowEquals(this._initialValue, v);
     if (changed) {
-      this._value = v;
-      this._parents?.childValueChange(v, dontUpdate);
-      this._subscriptions?.applyChange(ControlChange.Value);
+      this._initialValue = v;
+      this._parents?.childInitialValueChange(v, dontUpdate);
+      this._subscriptions?.applyChange(ControlChange.InitialValue);
     }
     return changed;
   }
@@ -125,7 +125,7 @@ export class ControlImpl<V> implements Control<V> {
   }
 
   get dirty() {
-    return this._value !== this._initialValue;
+    return !basicShallowEquals(this._value, this._initialValue);
   }
 
   getChangeState(mask: ControlChange): ControlChange {
@@ -149,6 +149,10 @@ export class ControlImpl<V> implements Control<V> {
     this._subscriptions ??= new Subscriptions();
     const currentChanges = this.getChangeState(mask);
     return this._subscriptions.subscribe(listener, currentChanges, mask);
+  }
+
+  unsubscribe(subscription: Subscription) {
+    this._subscriptions?.unsubscribe(subscription);
   }
 
   runListeners() {
@@ -224,9 +228,18 @@ class ObjectControl<V> implements ChildState<V> {
       c._flags |= ControlFlags.ValueMutating;
     }
     (curValue as any)[prop] = v;
+    c._subscriptions?.applyChange(ControlChange.Value);
   }
   childInitialValueChange(prop: string | number, v: V): void {
-    throw new Error("Method not implemented.");
+    let c = this.control;
+    let curValue = c._initialValue;
+    if (!(c._flags & ControlFlags.InitialValueMutating)) {
+      curValue = { ...curValue };
+      c._initialValue = curValue;
+      c._flags |= ControlFlags.InitialValueMutating;
+    }
+    (curValue as any)[prop] = v;
+    c._subscriptions?.applyChange(ControlChange.InitialValue);
   }
   childFlagChange(prop: string | number, flags: ControlFlags): void {
     throw new Error("Method not implemented.");
@@ -279,6 +292,10 @@ class Subscriptions {
     return list.add(listener, mask);
   }
 
+  unsubscribe(sub: Subscription): void {
+    sub.list.remove(sub);
+  }
+
   runListeners(control: Control<any>, current: ControlChange) {
     this.lists.forEach((s) => s.runListeners(control, current));
   }
@@ -296,14 +313,18 @@ class SubscriptionList {
     private mask: ControlChange,
   ) {}
 
+  remove(sub: Subscription) {
+    this.subscriptions = this.subscriptions.filter((x) => x !== sub);
+  }
+
   runListeners(control: Control<any>, current: ControlChange) {
     const nextCurrent = current & this.mask;
     const actualChange = (nextCurrent ^ this.changeState) as ControlChange;
     this.changeState = nextCurrent;
     if (actualChange) {
       this.subscriptions.forEach((s) => {
-        const change = s[1] & actualChange;
-        if (change) s[2](control, change);
+        const change = s.mask & actualChange;
+        if (change) s.listener(control, change);
       });
     }
   }
@@ -312,7 +333,11 @@ class SubscriptionList {
     this.changeState |= change & this.mask;
   }
   add<V>(listener: ChangeListenerFunc<V>, mask: ControlChange): Subscription {
-    const sub: Subscription = [this, mask, listener as ChangeListenerFunc<any>];
+    const sub: Subscription = {
+      list: this,
+      mask,
+      listener: listener as ChangeListenerFunc<any>,
+    };
     this.mask |= mask;
     this.subscriptions.push(sub);
     return sub;
@@ -323,6 +348,34 @@ class SubscriptionList {
   }
 }
 
-export function newControl<V>(v: V): Control<V> {
+export function newControl<V>(v: V): ControlImpl<V> {
   return new ControlImpl(v, v, ControlFlags.None, undefined);
+}
+
+export function basicShallowEquals(a: any, b: any): boolean {
+  if (a === b) return true;
+  if (a && b && typeof a == "object" && typeof b == "object") {
+    if (a.constructor !== b.constructor) return false;
+
+    let length, i, keys;
+    if (Array.isArray(a)) {
+      length = a.length;
+      if (length != b.length) return false;
+      for (i = length; i-- !== 0; ) if (a[i] !== b[i]) return false;
+      return true;
+    }
+    keys = Object.keys(a);
+    length = keys.length;
+    if (length !== Object.keys(b).length) return false;
+
+    for (i = length; i-- !== 0; )
+      if (!Object.prototype.hasOwnProperty.call(b, keys[i])) return false;
+
+    for (i = length; i-- !== 0; ) {
+      let key = keys[i];
+      if (a[key] !== b[key]) return false;
+    }
+    return true;
+  }
+  return a !== a && b !== b;
 }
