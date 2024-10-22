@@ -1,7 +1,9 @@
 import { Control } from "@react-typed-forms/core";
 import { View } from "react-native";
-import { Button } from "~/components/ui/button";
+import { Button, buttonTextVariants } from "~/components/ui/button";
 import { Text } from "~/components/ui/text";
+import { ArrowBigLeft } from "~/lib/icons/ArrowLeft";
+import { ArrowBigRight } from "~/lib/icons/ArrowRight";
 
 export function FormPager({
   currentPage: cp,
@@ -24,7 +26,14 @@ export function FormPager({
           onPress={() => {
             changePage(-1);
           }}
+          className={"flex flex-row gap-2"}
         >
+          <ArrowBigLeft
+            className={buttonTextVariants({
+              variant: "default",
+            })}
+            size={18}
+          />
           <Text>Prev</Text>
         </Button>
       )}
@@ -35,8 +44,15 @@ export function FormPager({
           onPress={async () => {
             await doValidate(() => changePage(1));
           }}
+          className={"flex flex-row gap-2"}
         >
           <Text>Next</Text>
+          <ArrowBigRight
+            className={buttonTextVariants({
+              variant: "default",
+            })}
+            size={18}
+          />
         </Button>
       )}
     </View>

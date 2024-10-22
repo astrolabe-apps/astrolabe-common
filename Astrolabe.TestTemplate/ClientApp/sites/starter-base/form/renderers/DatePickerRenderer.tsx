@@ -131,6 +131,7 @@ function DatePickerRenderer({
             tempSelectedDateTime.value = dayjs(selectedDate);
           }}
           locale={"en-au"}
+          selectedItemColor={"#267150"}
         />
         <DialogFooter>
           <DialogClose asChild>

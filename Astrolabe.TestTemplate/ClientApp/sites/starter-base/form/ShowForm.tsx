@@ -10,11 +10,10 @@ import {
 } from "@react-typed-forms/schemas";
 import { InitialFireRegistrationSchema, TypeOfFireForm } from "~/form/schemas";
 import { formRenderer } from "~/form/renderers";
-import { ScrollView, View } from "react-native";
+import { View } from "react-native";
 import React from "react";
 import { FormPager } from "./FormPager";
 const AllControls = Controls.controls;
-import { Text } from "~/components/ui/text";
 
 export function ShowForm() {
   const data = useControl<any>({
@@ -27,21 +26,19 @@ export function ShowForm() {
 
   return (
     <View className={"flex flex-col h-full w-full"}>
-      <View className={"flex-1"}>
-        <ScrollView className={"w-full p-6"}>
-          <RenderControl key={currentPage}>
-            {() => {
-              const RenderForm = useControlRenderer(
-                AllControls[currentPage],
-                InitialFireRegistrationSchema,
-                formRenderer,
-              );
-              return <RenderForm control={data} />;
-            }}
-          </RenderControl>
-        </ScrollView>
+      <View className={"flex-1 p-6"}>
+        <RenderControl key={currentPage}>
+          {() => {
+            const RenderForm = useControlRenderer(
+              AllControls[currentPage],
+              InitialFireRegistrationSchema,
+              formRenderer,
+            );
+            return <RenderForm control={data} />;
+          }}
+        </RenderControl>
       </View>
-      <View className={"bg-background shadow-lg"}>
+      <View>
         <FormPager
           currentPage={page}
           totalPages={AllControls.length}
@@ -51,9 +48,9 @@ export function ShowForm() {
             InitialFireRegistrationSchema,
           )}
         />
-        <RenderControl
-          render={() => <Text>{JSON.stringify(data.value)}</Text>}
-        />
+        {/*<RenderControl*/}
+        {/*  render={() => <Text>{JSON.stringify(data.value)}</Text>}*/}
+        {/*/>*/}
       </View>
     </View>
   );
@@ -83,7 +80,6 @@ function scrollToFirstErrorOnPage(
       const v = s.control!;
       v.touched = true;
       v.validate();
-      console.log(v.error);
 
       if (!hasError && v.error) {
         hasError = true;
