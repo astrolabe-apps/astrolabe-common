@@ -1,6 +1,11 @@
 import fc from "fast-check";
 import { describe, expect, it } from "@jest/globals";
-import { ControlChange, newControl, ControlImpl } from "../src/controlImpl";
+import {
+  ControlChange,
+  newControl,
+  ControlImpl,
+  groupedChanges,
+} from "../src/controlImpl";
 
 // Properties
 describe("properties", () => {
@@ -12,9 +17,7 @@ describe("properties", () => {
         const f = newControl(text);
         f.subscribe((a, c) => changes.push(c), ControlChange.Value);
         f.value = text + "a";
-        f.runListeners();
         expect(changes).toStrictEqual([ControlChange.Value]);
-        f.runListeners();
         return f.dirty;
       }),
     );
@@ -32,15 +35,12 @@ describe("properties", () => {
         );
         f.value = text + "a";
         f.subscribe((a, c) => changes2.push(c), ControlChange.Value);
-        f.runListeners();
         f.value = text + "b";
-        f.runListeners();
         expect(changes).toStrictEqual([
           ControlChange.Value | ControlChange.Dirty,
           ControlChange.Value,
         ]);
         expect(changes2).toStrictEqual([ControlChange.Value]);
-        f.runListeners();
         return f.dirty;
       }),
     );
@@ -56,10 +56,8 @@ describe("properties", () => {
           ControlChange.Value,
         );
         f.value = text + "a";
-        f.runListeners();
         f.unsubscribe(sub1);
         f.value = text + "b";
-        f.runListeners();
         expect(changes).toStrictEqual([ControlChange.Value]);
       }),
     );
@@ -77,7 +75,6 @@ describe("properties", () => {
         } else {
           f.value = { ...obj };
         }
-        f.runListeners();
         expect(changes).toStrictEqual([]);
         return !f.dirty;
       }),
@@ -90,7 +87,8 @@ describe("properties", () => {
         fc.string(),
         fc.string(),
         fc.boolean(),
-        (v1, v2, useFields) => {
+        fc.boolean(),
+        (v1, v2, useFields, useFields2) => {
           fc.pre(v1 !== v2);
           const changes: ControlChange[] = [];
           const f = newControl({ v: v1 });
@@ -103,17 +101,49 @@ describe("properties", () => {
           } else {
             f.value = { v: v2 };
           }
-          f.runListeners();
-          if (useFields) {
+          if (useFields2) {
             f.fields.v.value = v1;
           } else {
             f.value = { v: v1 };
           }
-          f.runListeners();
           expect(changes).toStrictEqual([
             ControlChange.Value | ControlChange.Dirty,
             ControlChange.Value | ControlChange.Dirty,
           ]);
+          return !f.dirty;
+        },
+      ),
+    );
+  });
+
+  it("grouped updates prevent multiple events", () => {
+    fc.assert(
+      fc.property(
+        fc.string(),
+        fc.string(),
+        fc.boolean(),
+        fc.boolean(),
+        (v1, v2, useFields, useFields2) => {
+          fc.pre(v1 !== v2);
+          const changes: ControlChange[] = [];
+          const f = newControl({ v: v1 });
+          f.subscribe(
+            (a, c) => changes.push(c),
+            ControlChange.Value | ControlChange.Dirty,
+          );
+          groupedChanges(() => {
+            if (useFields) {
+              f.fields.v.value = v2;
+            } else {
+              f.value = { v: v2 };
+            }
+            if (useFields2) {
+              f.fields.v.value = v1;
+            } else {
+              f.value = { v: v1 };
+            }
+          });
+          expect(changes).toStrictEqual([ControlChange.Value]);
           return !f.dirty;
         },
       ),
@@ -127,7 +157,6 @@ describe("properties", () => {
         const f = newControl(obj);
         f.subscribe((a, c) => changes.push(c), ControlChange.Value);
         f.value = [...obj];
-        f.runListeners();
         expect(changes).toStrictEqual([]);
         return !f.dirty;
       }),
@@ -141,7 +170,6 @@ describe("properties", () => {
         const f = newControl(obj as Record<string, string>);
         f.subscribe((a, c) => changes.push(c), ControlChange.Value);
         f.fields.v1.value = obj.v1 + "a";
-        f.runListeners();
         expect(changes).toStrictEqual([ControlChange.Value]);
         return f.dirty;
       }),

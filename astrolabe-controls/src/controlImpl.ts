@@ -39,6 +39,7 @@ export enum ControlChange {
 }
 
 let transactionCount = 0;
+let runListenerList: ControlImpl<any>[] = [];
 
 interface ParentListeners {
   childValueChange(v: unknown, ignore: ControlImpl<unknown> | undefined): void;
@@ -90,14 +91,16 @@ export class ControlImpl<V> implements Control<V> {
   }
 
   setValue(v: V, dontUpdate?: ControlImpl<unknown>): boolean {
-    if (this._children) return this._children.setValue(v, dontUpdate);
-    const changed = !basicShallowEquals(this._value, v);
-    if (changed) {
-      this._value = v;
-      this._parents?.childValueChange(v, dontUpdate);
-      this._subscriptions?.applyChange(ControlChange.Value);
-    }
-    return changed;
+    return runTransaction(this, () => {
+      if (this._children) return this._children.setValue(v, dontUpdate);
+      const changed = !basicShallowEquals(this._value, v);
+      if (changed) {
+        this._value = v;
+        this._parents?.childValueChange(v, dontUpdate);
+        this._subscriptions?.applyChange(ControlChange.Value);
+      }
+      return changed;
+    });
   }
 
   setInitialValue(v: V, dontUpdate?: ControlImpl<unknown>): boolean {
@@ -246,6 +249,51 @@ class ObjectControl<V> implements ChildState<V> {
   }
 }
 
+export function groupedChanges<A>(run: () => A): A {
+  transactionCount++;
+  try {
+    return run();
+  } finally {
+    commit(undefined);
+  }
+}
+function runTransaction(
+  control: ControlImpl<unknown>,
+  run: () => boolean,
+): boolean {
+  transactionCount++;
+  let shouldRunListeners;
+  try {
+    shouldRunListeners = run();
+  } catch (e) {
+    console.error("Error in control", e);
+    shouldRunListeners = false;
+  }
+  commit(shouldRunListeners ? control : undefined);
+  return shouldRunListeners;
+}
+
+function commit(control?: ControlImpl<unknown>) {
+  const sub = control?._subscriptions;
+  if (transactionCount > 1) {
+    if (sub) {
+      sub.onListenerList = true;
+      runListenerList.push(control);
+    }
+  } else {
+    if (!runListenerList.length && sub) {
+      control!.runListeners();
+    }
+    while (runListenerList.length > 0) {
+      const listenersToRun = runListenerList;
+      runListenerList = [];
+      listenersToRun.forEach((c) => (c._subscriptions!.onListenerList = false));
+      listenersToRun.forEach((c) => c.runListeners());
+    }
+  }
+  transactionCount--;
+}
+
 const FieldsProxy: ProxyHandler<ObjectControl<unknown>> = {
   get(target: ObjectControl<unknown>, p: string | symbol, receiver: any): any {
     if (typeof p !== "string") return undefined;
@@ -259,8 +307,12 @@ class SingleParent implements ParentListeners {
     private child: string | number,
   ) {}
   childValueChange(v: unknown, ignore: ControlImpl<unknown> | undefined): void {
-    if (this.parent.control === ignore) return;
-    this.parent.childValueChange(this.child, v);
+    const c = this.parent.control;
+    if (c === ignore) return;
+    runTransaction(c, () => {
+      this.parent.childValueChange(this.child, v);
+      return true;
+    });
   }
   childInitialValueChange(v: unknown, ignore: ControlImpl<unknown>): void {
     if (this.parent.control === ignore) return;
@@ -278,6 +330,7 @@ class SingleParent implements ParentListeners {
 class Subscriptions {
   private lists: SubscriptionList[] = [];
   public mask: ControlChange = ControlChange.None;
+  public onListenerList = false;
   subscribe<V>(
     listener: ChangeListenerFunc<V>,
     current: ControlChange,
@@ -348,7 +401,7 @@ class SubscriptionList {
   }
 }
 
-export function newControl<V>(v: V): ControlImpl<V> {
+export function newControl<V>(v: V): Control<V> {
   return new ControlImpl(v, v, ControlFlags.None, undefined);
 }
 
