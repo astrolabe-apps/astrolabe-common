@@ -1,11 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "@jest/globals";
-import {
-  ControlChange,
-  newControl,
-  ControlImpl,
-  groupedChanges,
-} from "../src/controlImpl";
+import { ControlChange, groupedChanges, newControl } from "../src/controlImpl";
 
 // Properties
 describe("properties", () => {
@@ -65,19 +60,28 @@ describe("properties", () => {
 
   it("updating object doesnt change value", () => {
     fc.assert(
-      fc.property(fc.string(), fc.boolean(), (v1, useFields) => {
-        const obj = { v1 };
-        const changes: ControlChange[] = [];
-        const f = newControl(obj as Record<string, string>);
-        f.subscribe((a, c) => changes.push(c), ControlChange.Value);
-        if (useFields) {
-          f.fields.v1.value = obj.v1;
-        } else {
-          f.value = { ...obj };
-        }
-        expect(changes).toStrictEqual([]);
-        return !f.dirty;
-      }),
+      fc.property(
+        fc.string(),
+        fc.boolean(),
+        fc.boolean(),
+        (v1, useFields, useVal) => {
+          const obj = { v1 };
+          const changes: ControlChange[] = [];
+          const valProp = useVal ? "value" : "initialValue";
+          const f = newControl(obj as Record<string, string>);
+          f.subscribe(
+            (a, c) => changes.push(c),
+            ControlChange.Value | ControlChange.InitialValue,
+          );
+          if (useFields) {
+            f.fields.v1[valProp] = obj.v1;
+          } else {
+            f[valProp] = { ...obj };
+          }
+          expect(changes).toStrictEqual([]);
+          return !f.dirty;
+        },
+      ),
     );
   });
 
@@ -88,27 +92,34 @@ describe("properties", () => {
         fc.string(),
         fc.boolean(),
         fc.boolean(),
-        (v1, v2, useFields, useFields2) => {
+        fc.boolean(),
+        (v1, v2, useFields, useFields2, useVal) => {
           fc.pre(v1 !== v2);
+          const valProp = useVal ? "value" : "initialValue";
+          const change = useVal
+            ? ControlChange.Value
+            : ControlChange.InitialValue;
           const changes: ControlChange[] = [];
           const f = newControl({ v: v1 });
           f.subscribe(
             (a, c) => changes.push(c),
-            ControlChange.Value | ControlChange.Dirty,
+            ControlChange.Value |
+              ControlChange.InitialValue |
+              ControlChange.Dirty,
           );
           if (useFields) {
-            f.fields.v.value = v2;
+            f.fields.v[valProp] = v2;
           } else {
-            f.value = { v: v2 };
+            f[valProp] = { v: v2 };
           }
           if (useFields2) {
-            f.fields.v.value = v1;
+            f.fields.v[valProp] = v1;
           } else {
-            f.value = { v: v1 };
+            f[valProp] = { v: v1 };
           }
           expect(changes).toStrictEqual([
-            ControlChange.Value | ControlChange.Dirty,
-            ControlChange.Value | ControlChange.Dirty,
+            change | ControlChange.Dirty,
+            change | ControlChange.Dirty,
           ]);
           return !f.dirty;
         },

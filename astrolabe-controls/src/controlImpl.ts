@@ -104,14 +104,16 @@ export class ControlImpl<V> implements Control<V> {
   }
 
   setInitialValue(v: V, dontUpdate?: ControlImpl<unknown>): boolean {
-    if (this._children) return this._children.setInitialValue(v, dontUpdate);
-    const changed = !basicShallowEquals(this._initialValue, v);
-    if (changed) {
-      this._initialValue = v;
-      this._parents?.childInitialValueChange(v, dontUpdate);
-      this._subscriptions?.applyChange(ControlChange.InitialValue);
-    }
-    return changed;
+    return runTransaction(this, () => {
+      if (this._children) return this._children.setInitialValue(v, dontUpdate);
+      const changed = !basicShallowEquals(this._initialValue, v);
+      if (changed) {
+        this._initialValue = v;
+        this._parents?.childInitialValueChange(v, dontUpdate);
+        this._subscriptions?.applyChange(ControlChange.InitialValue);
+      }
+      return changed;
+    });
   }
 
   get initialValue(): V {
@@ -193,7 +195,7 @@ class ObjectControl<V> implements ChildState<V> {
       changed ||= fv.setInitialValue(cv, c);
     });
     if (changed) {
-      c._value = v;
+      c._initialValue = v;
       c._parents?.childInitialValueChange(v, from);
       c._subscriptions?.applyChange(ControlChange.InitialValue);
     }
@@ -315,8 +317,12 @@ class SingleParent implements ParentListeners {
     });
   }
   childInitialValueChange(v: unknown, ignore: ControlImpl<unknown>): void {
-    if (this.parent.control === ignore) return;
-    this.parent.childInitialValueChange(this.child, v);
+    const c = this.parent.control;
+    if (c === ignore) return;
+    runTransaction(c, () => {
+      this.parent.childInitialValueChange(this.child, v);
+      return true;
+    });
   }
   childFlagChange(
     flags: ControlFlags,
