@@ -1,0 +1,24 @@
+{
+  "name": "nativeapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "turbo dev:android"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "turbo": "^1.10.7",
+    "typescript": "^5.6.3"
+  },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "@babel/*",
+        "expo-modules-*",
+        "typescript"
+      ]
+    }
+  }
+}

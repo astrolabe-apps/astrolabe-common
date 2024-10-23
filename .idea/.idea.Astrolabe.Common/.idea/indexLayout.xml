@@ -24,6 +24,7 @@
       <Path>schemas-datepicker</Path>
       <Path>schemas-html</Path>
       <Path>schemas-mui</Path>
+      <Path>schemas-native</Path>
     </attachedFolders>
     <explicitIncludes />
     <explicitExcludes />

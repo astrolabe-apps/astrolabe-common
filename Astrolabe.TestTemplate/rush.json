@@ -468,6 +468,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@react-typed-forms/schemas-native",
+      "projectFolder": "../schemas-native",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@react-typed-forms/schemas-mui",
       "projectFolder": "../schemas-mui",
       "shouldPublish": true

@@ -79,3 +79,11 @@ common/autoinstallers/*/.npmrc
 # Heft temporary files
 .cache
 .heft
+/ClientApp/nativeapp/.turbo/cookies/1.cookie
+/ClientApp/nativeapp/.turbo/cookies/2.cookie
+/ClientApp/nativeapp/.turbo/cookies/3.cookie
+/ClientApp/nativeapp/.turbo/cookies/4.cookie
+/ClientApp/nativeapp/.turbo/cookies/5.cookie
+/ClientApp/nativeapp/.turbo/cookies/6.cookie
+/ClientApp/nativeapp/.turbo/cookies/7.cookie
+/ClientApp/nativeapp/.turbo/daemon/d0eaa87163f8ff0a-turbo.log.2024-10-23
