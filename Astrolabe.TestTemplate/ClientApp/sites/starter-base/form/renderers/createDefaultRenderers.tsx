@@ -4,16 +4,12 @@ import {
   appendMarkupAt,
   ControlDataContext,
   createActionRenderer,
-  createAdornmentRenderer,
   createDataRenderer,
   createDefaultArrayDataRenderer,
   createDefaultArrayRenderer,
-  createDisplayRenderer,
-  createGroupRenderer,
   createInputConversion,
   createLabelRenderer,
   createLayoutRenderer,
-  createVisibilityRenderer,
   DataRendererRegistration,
   DataRenderType,
   DefaultAdornmentRendererOptions,
@@ -31,7 +27,6 @@ import {
   isIconAdornment,
   isSetFieldAdornment,
   isTextfieldRenderer,
-  RenderedLayout,
   rendererClass,
   renderLayoutParts,
   schemaDataForFieldRef,
@@ -40,7 +35,7 @@ import {
   wrapLayout,
 } from "@react-typed-forms/schemas";
 import { ControlInput } from "./ControlInput";
-import { Button, Text, TextInput, View } from "react-native";
+import { Button } from "react-native";
 import { DefaultDisplayOnly } from "./DefaultDisplayOnly";
 import { createSelectRenderer } from "./SelectDataRenderer";
 import { createDefaultVisibilityRenderer } from "./DefaultVisibility";
@@ -50,6 +45,7 @@ import { createCheckboxRenderer, createRadioRenderer } from "./CheckRenderer";
 import { ReactNode, useCallback } from "react";
 import { useControlEffect } from "@react-typed-forms/core";
 import { DefaultAccordion } from "./DefaultAccordion";
+import { Text } from "~/components/ui/text";
 
 export function createDefaultRenderers(
   options: DefaultRendererOptions = {},
