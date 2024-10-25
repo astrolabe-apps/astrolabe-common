@@ -9,7 +9,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "turbo": "^1.10.7",
+    "turbo": "^1.13.4",
     "typescript": "^5.6.3"
   },
   "pnpm": {

@@ -16,6 +16,6 @@
     "jsx": "preserve",
     "outDir": "lib"
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "nativewind-env.d.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "lib"]
 }

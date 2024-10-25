@@ -3,10 +3,10 @@ import { Dimensions, View } from "react-native";
 import { ShowForm } from "~/form/ShowForm";
 import MainScrollView from "~/components/layout/MainScrollView";
 import { useControl } from "@react-typed-forms/core";
+import { verifyInstallation } from "nativewind";
 
 export default function Screen() {
   const screenWidth = useControl(Dimensions.get("window").width);
-
   return (
     <MainScrollView title={"Register a Burn"}>
       <View className="flex-1 justify-center items-center gap-5 bg-secondary/60 relative">

@@ -15,12 +15,13 @@ config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, "node_modules"),
   path.resolve(workspaceRoot, "node_modules"),
 ];
+// config.resolver.disableHierarchicalLookup = true;
 
-// // Use turborepo to restore the cache when possible
-// config.cacheStores = [
-//   new FileStore({
-//     root: path.join(projectRoot, "node_modules", ".cache", "metro"),
-//   }),
-// ];
+// Use turborepo to restore the cache when possible
+config.cacheStores = [
+  new FileStore({
+    root: path.join(projectRoot, "node_modules", ".cache", "metro"),
+  }),
+];
 
 module.exports = withNativeWind(config, { input: "./global.css" });

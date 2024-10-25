@@ -6,6 +6,9 @@
     "paths": {
       "~/*": [
         "*"
+      ],
+      "@react-typed-forms/schemas-native": [
+        "../schemas-native/src/index.ts"
       ]
     }
   },

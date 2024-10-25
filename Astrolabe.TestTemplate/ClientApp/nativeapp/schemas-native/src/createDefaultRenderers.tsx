@@ -76,6 +76,9 @@ import {
   useDynamicHooks,
   wrapLayout,
 } from "@react-typed-forms/schemas";
+import { Label } from "./ui/label";
+import { View } from "react-native";
+import { Button } from "./ui/button";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -118,15 +121,14 @@ export function createButtonActionRenderer(
       disabled,
     }: ActionRendererProps) => {
       return (
-        <button
+        <Button
           className={rendererClass(className, options.className)}
           disabled={disabled}
-          style={style}
-          onClick={onClick}
+          onPress={onClick}
         >
           {options.renderContent?.(actionText, actionId, actionData) ??
             actionText}
-        </button>
+        </Button>
       );
     },
   );
@@ -193,12 +195,11 @@ export function createDefaultGroupRenderer(
       return {
         ...cp,
         children: (
-          <div
+          <View
             className={rendererClass(props.className, clsx(className, gcn))}
-            style={style}
           >
             {childDefinitions?.map((c, i) => renderChild(i, c))}
-          </div>
+          </View>
         ),
       };
     };
@@ -467,7 +468,7 @@ export function createDefaultLabelRenderer(
       if (props.type == LabelType.Text) return props.label;
       return labelContainer(
         <>
-          <label
+          <Label
             htmlFor={props.forId}
             className={rendererClass(
               props.className,
@@ -481,7 +482,7 @@ export function createDefaultLabelRenderer(
             {labelStart}
             {renderers.renderLabelText(props.label)}
             {props.required && requiredElement}
-          </label>
+          </Label>
           {labelEnd}
         </>,
       );

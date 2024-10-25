@@ -1,5 +1,6 @@
 import React, { ReactNode } from "react";
-import {RenderedLayout} from "@react-typed-forms/schemas";
+import { RenderedLayout } from "@react-typed-forms/schemas";
+import { View } from "react-native";
 
 export interface DefaultLayoutRendererOptions {
   className?: string;
@@ -9,7 +10,7 @@ export interface DefaultLayoutRendererOptions {
 
 export function DefaultLayout({
   errorClass,
-  renderError = (e) => e && <div className={errorClass}>{e}</div>,
+  renderError = (e) => e && <View className={errorClass}>{e}</View>,
   layout: { controlEnd, controlStart, label, children, errorControl },
 }: DefaultLayoutRendererOptions & {
   layout: RenderedLayout;
