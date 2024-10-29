@@ -281,7 +281,7 @@ export function createDefaultDataRenderer(
             field={props.field}
             schemaInterface={props.dataContext.schemaInterface}
             control={props.control}
-            className={rendererClass(props.className, displayOnlyClass)}
+            className={props.className}
             style={props.style}
             emptyText={renderOptions.emptyText}
           />

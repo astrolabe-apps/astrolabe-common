@@ -367,6 +367,10 @@ export interface GroupedControlsDefinition extends ControlDefinition {
 export interface GroupRenderOptions {
   type: string;
   hideTitle?: boolean | null;
+  childStyleClass?: string | null;
+  childLayoutClass?: string | null;
+  childLabelClass?: string | null;
+  displayOnly?: boolean | null;
 }
 
 export enum GroupRenderType {

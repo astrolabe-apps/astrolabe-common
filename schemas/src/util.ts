@@ -399,11 +399,16 @@ export function getAllReferencedClasses(
   const childClasses = c.children?.flatMap((x) =>
     getAllReferencedClasses(x, collectExtra),
   );
+  const go = isGroupControlsDefinition(c) ? c.groupOptions : undefined;
+  const gc = go
+    ? [go.childLabelClass, go.childLayoutClass, go.childStyleClass]
+    : [];
   const tc = clsx(
     [
       c.styleClass,
       c.layoutClass,
       c.labelClass,
+      ...gc,
       ...(collectExtra?.(c) ?? []),
     ].map(getOverrideClass),
   );

@@ -282,6 +282,14 @@ public abstract record GroupRenderOptions(
 )
 {
     public bool? HideTitle { get; set; }
+
+    public string? ChildStyleClass { get; set; }
+
+    public string? ChildLayoutClass { get; set; }
+
+    public string? ChildLabelClass { get; set; }
+
+    public bool? DisplayOnly { get; set; }
 }
 
 public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);

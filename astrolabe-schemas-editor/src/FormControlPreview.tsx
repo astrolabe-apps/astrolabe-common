@@ -24,6 +24,7 @@ import {
   fieldPathForDefinition,
   FormRenderer,
   getDisplayOnlyOptions,
+  getGroupClassOverrides,
   isDataControlDefinition,
   isGroupControlsDefinition,
   makeHook,
@@ -45,6 +46,9 @@ export interface FormControlPreviewProps {
   elementIndex?: number;
   schemaInterface?: SchemaInterface;
   keyPrefix?: string;
+  styleClass?: string;
+  layoutClass?: string;
+  labelClass?: string;
 }
 
 export interface FormControlPreviewContext {
@@ -84,6 +88,9 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     noDrop,
     keyPrefix,
     schemaInterface = defaultSchemaInterface,
+    styleClass,
+    labelClass,
+    layoutClass,
   } = props;
   const { selected, dropSuccess, renderer } = usePreviewContext();
   const item = unsafeRestoreControl(definition) as
@@ -145,6 +152,10 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       }),
     ) ?? [];
 
+  const groupClasses = getGroupClassOverrides(
+    isGroupControlsDefinition(definition) ? definition.groupOptions : undefined,
+  );
+
   const layout = renderControlLayout({
     definition,
     renderer,
@@ -156,13 +167,16 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           definition={def}
           parent={definition}
           dropIndex={0}
-          elementIndex={c?.elementIndex}
+          {...groupClasses}
+          {...c}
           parentNode={c?.parentDataNode?.schema ?? childNode ?? parentNode}
           keyPrefix={keyPrefix}
           schemaInterface={schemaInterface}
         />
       );
     },
+    labelClass,
+    styleClass,
     createDataProps: defaultDataProps,
     formOptions: { readonly: dataDefinition?.readonly },
     dataContext,
@@ -197,7 +211,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   } = renderer.renderLayout({
     ...layout,
     adornments,
-    className: definition.layoutClass,
+    className: definition.layoutClass ? definition.layoutClass : layoutClass,
   });
   return (
     <div

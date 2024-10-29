@@ -26,6 +26,7 @@ export interface FieldOptionForm {
   value: any;
   description: string | null;
   disabled: boolean | null;
+  group: string | null;
 }
 
 export const FieldOptionSchema = buildSchema<FieldOptionForm>({
@@ -48,6 +49,10 @@ export const FieldOptionSchema = buildSchema<FieldOptionForm>({
   disabled: makeScalarField({
     type: FieldType.Bool,
     displayName: "Disabled",
+  }),
+  group: makeScalarField({
+    type: FieldType.String,
+    displayName: "Group",
   }),
 });
 
@@ -489,7 +494,7 @@ export interface ControlAdornmentForm {
   placement: AdornmentPlacement | null;
   tooltip: string;
   title: string;
-  defaultExpanded: boolean;
+  defaultExpanded: boolean | null;
   helpText: string;
   defaultOnly: boolean | null;
   field: string;
@@ -573,8 +578,6 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
   defaultExpanded: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["Accordion"],
-    notNullable: true,
-    required: true,
     displayName: "Default Expanded",
   }),
   helpText: makeScalarField({
@@ -618,6 +621,10 @@ export function toControlAdornmentForm(
 export interface GroupRenderOptionsForm {
   type: string;
   hideTitle: boolean | null;
+  childStyleClass: string | null;
+  childLayoutClass: string | null;
+  childLabelClass: string | null;
+  displayOnly: boolean | null;
   direction: string | null;
   gap: string | null;
   columns: number | null;
@@ -654,6 +661,22 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
   hideTitle: makeScalarField({
     type: FieldType.Bool,
     displayName: "Hide Title",
+  }),
+  childStyleClass: makeScalarField({
+    type: FieldType.String,
+    displayName: "Child Style Class",
+  }),
+  childLayoutClass: makeScalarField({
+    type: FieldType.String,
+    displayName: "Child Layout Class",
+  }),
+  childLabelClass: makeScalarField({
+    type: FieldType.String,
+    displayName: "Child Label Class",
+  }),
+  displayOnly: makeScalarField({
+    type: FieldType.Bool,
+    displayName: "Display Only",
   }),
   direction: makeScalarField({
     type: FieldType.String,
