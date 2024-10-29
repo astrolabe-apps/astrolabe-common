@@ -87,10 +87,7 @@ importers:
       tslib: ^2.6.2
       typescript: ^5.6.2
     dependencies:
-      '@react-typed-forms/core': 3.6.0
       clsx: 2.1.1
-      react: 18.3.1
-      react-dnd: 16.0.1_i2brm3utfowsq56ly4xyjenl3e
       tailwind-merge: 1.14.0
       tslib: 2.6.3
     devDependencies:
@@ -99,11 +96,14 @@ importers:
       '@babel/preset-env': 7.25.2_@babel+core@7.25.2
       '@babel/preset-react': 7.24.7_@babel+core@7.25.2
       '@babel/preset-typescript': 7.24.7_@babel+core@7.25.2
+      '@react-typed-forms/core': 3.6.1_react@18.3.1
       '@react-typed-forms/transform': 0.2.0
       '@types/node': 20.14.13
       '@types/react': 18.3.3
       '@types/shallowequal': 1.1.5
       prettier: 3.3.3
+      react: 18.3.1
+      react-dnd: 16.0.1_i2brm3utfowsq56ly4xyjenl3e
       rimraf: 5.0.9
       typescript: 5.6.2
 
@@ -433,8 +433,8 @@ importers:
 
   ../../../astrolabe-storybook:
     specifiers:
-      '@astroapps/client': workspace:^1.0.0
-      '@astroapps/ui-tree': ^0.1.1
+      '@astroapps/client': workspace:*
+      '@astroapps/ui-tree': workspace:*
       '@astrolabe/ui': workspace:*
       '@react-typed-forms/core': ^3.2.0
       '@react-typed-forms/schemas': workspace:*
@@ -468,7 +468,7 @@ importers:
       react-dom: 18.3.1_react@18.3.1
     devDependencies:
       '@astroapps/client': link:../astrolabe-client
-      '@astroapps/ui-tree': 0.1.1_vbo6bvpghaj5fhq6fbf762no5a
+      '@astroapps/ui-tree': link:../astrolabe-ui-tree
       '@astrolabe/ui': link:../astrolabe-ui
       '@react-typed-forms/core': 3.6.0
       '@react-typed-forms/schemas': link:../schemas
@@ -578,21 +578,21 @@ importers:
       tslib: ^2.6.2
       typescript: ^5.6.2
     dependencies:
-      '@astroapps/client': link:../astrolabe-client
-      '@dnd-kit/core': 6.1.0_react@18.3.1
-      '@dnd-kit/sortable': 7.0.2_lapgn5tcydgksdf34zqcxexmfu
-      '@dnd-kit/utilities': 3.2.2_react@18.3.1
-      '@react-typed-forms/core': 3.6.0
       clsx: 2.1.1
       immutability-helper: 3.1.1
       react: 18.3.1
       tslib: 2.6.3
     devDependencies:
+      '@astroapps/client': link:../astrolabe-client
       '@babel/cli': 7.24.8_@babel+core@7.25.2
       '@babel/core': 7.25.2
       '@babel/preset-env': 7.25.2_@babel+core@7.25.2
       '@babel/preset-react': 7.24.7_@babel+core@7.25.2
       '@babel/preset-typescript': 7.24.7_@babel+core@7.25.2
+      '@dnd-kit/core': 6.1.0_react@18.3.1
+      '@dnd-kit/sortable': 7.0.2_lapgn5tcydgksdf34zqcxexmfu
+      '@dnd-kit/utilities': 3.2.2_react@18.3.1
+      '@react-typed-forms/core': 3.6.1_react@18.3.1
       '@react-typed-forms/transform': 0.2.0
       '@types/react': 18.3.3
       prettier: 3.3.3
@@ -698,7 +698,7 @@ importers:
       '@mui/icons-material': ^5
       '@mui/material': ^5.14.13
       '@react-typed-forms/core': ^3.2.0
-      '@react-typed-forms/mui': ^3.0.2
+      '@react-typed-forms/mui': ^3.0.3
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.28
@@ -711,7 +711,7 @@ importers:
       typescript: ^5.6.2
     dependencies:
       '@react-typed-forms/core': 3.6.0
-      '@react-typed-forms/mui': 3.0.2_3vdbhqr2ncalcx7opnshezpx3q
+      '@react-typed-forms/mui': 3.0.3_dwpa6xj5tqboie6edm5sb5w5eu
       '@react-typed-forms/schemas': link:../schemas
       date-fns: 2.30.0
       react: 18.3.1
@@ -742,7 +742,7 @@ importers:
       '@astroapps/searchstate': workspace:*
       '@astrolabe/ui': workspace:*
       '@lezer/common': ^1.0.0
-      '@react-typed-forms/core': ^3.6.0
+      '@react-typed-forms/core': ^3.6.3
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/schemas-html': workspace:*
       '@tailwindcss/forms': ^0.5.7
@@ -777,7 +777,7 @@ importers:
       '@astroapps/searchstate': link:../../../../astrolabe-searchstate
       '@astrolabe/ui': link:../../../../astrolabe-ui
       '@lezer/common': 1.2.1
-      '@react-typed-forms/core': 3.6.0
+      '@react-typed-forms/core': 3.6.3_react@18.3.1
       '@react-typed-forms/schemas': link:../../../../schemas
       '@react-typed-forms/schemas-html': link:../../../../schemas-html
       codemirror: 6.0.1_@lezer+common@1.2.1
@@ -814,7 +814,7 @@ importers:
       '@astrolabe/ui': workspace:*
       '@cypress/code-coverage': ^3.12.44
       '@lezer/common': ^1.0.0
-      '@react-typed-forms/core': ^3.6.0
+      '@react-typed-forms/core': ^3.6.2
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/schemas-html': workspace:*
       '@tailwindcss/forms': ^0.5.7
@@ -853,7 +853,7 @@ importers:
       '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
       '@astrolabe/ui': link:../../../../astrolabe-ui
       '@lezer/common': 1.2.1
-      '@react-typed-forms/core': 3.6.0
+      '@react-typed-forms/core': 3.6.3_react@18.3.1
       '@react-typed-forms/schemas': link:../../../../schemas
       '@react-typed-forms/schemas-html': link:../../../../schemas-html
       clsx: 2.1.1
@@ -898,40 +898,6 @@ packages:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
-
-  /@astroapps/client/0.1.10_hpiraujoqssohj62tqfwtpihya:
-    resolution: {integrity: sha512-1KsgAcSH4nwvLZIv4ELza62UmsvPEvsBevKxbmRK3dFJkiBXPqNd2AbyywaA7X5f4cF/3QRVV+WQUVDphWTQ1Q==}
-    dependencies:
-      '@react-typed-forms/core': 3.6.1_react@18.3.1
-      clsx: 2.1.1
-      react: 18.3.1
-      react-dnd: 16.0.1_i2brm3utfowsq56ly4xyjenl3e
-      tailwind-merge: 1.14.0
-      tslib: 2.6.3
-    transitivePeerDependencies:
-      - '@types/hoist-non-react-statics'
-      - '@types/node'
-      - '@types/react'
-    dev: true
-
-  /@astroapps/ui-tree/0.1.1_vbo6bvpghaj5fhq6fbf762no5a:
-    resolution: {integrity: sha512-mGK1hVivG+exUFulND+fRYr60QoMpDEegVkr7vyJ//yvCY4/iW/bjoq2SkQHb0Zn4GIffYeeJPbItwITF4k16Q==}
-    dependencies:
-      '@astroapps/client': 0.1.10_hpiraujoqssohj62tqfwtpihya
-      '@dnd-kit/core': 6.1.0_nnrd3gsncyragczmpvfhocinkq
-      '@dnd-kit/sortable': 7.0.2_lapgn5tcydgksdf34zqcxexmfu
-      '@dnd-kit/utilities': 3.2.2_react@18.3.1
-      '@react-typed-forms/core': 3.6.0
-      clsx: 2.1.1
-      immutability-helper: 3.1.1
-      react: 18.3.1
-      tslib: 2.6.3
-    transitivePeerDependencies:
-      - '@types/hoist-non-react-statics'
-      - '@types/node'
-      - '@types/react'
-      - react-dom
-    dev: true
 
   /@aw-web-design/x-default-browser/1.4.126:
     resolution: {integrity: sha512-Xk1sIhyNC/esHGGVjL/niHLowM0csl/kFO5uawBy4IrWwy0o1G8LGt3jP6nmWGz+USxeeqbihAmp/oVZju6wug==}
@@ -4071,6 +4037,7 @@ packages:
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
       tslib: 2.6.3
+    dev: false
 
   /@dnd-kit/core/6.1.0_react@18.3.1:
     resolution: {integrity: sha512-J3cQBClB4TVxwGo3KEjssGEXNJqGVWx17aRTZ1ob0FliR5IjYgTxl5YJbKTzA6IzrtelotH19v6y7uoIRUZPSg==}
@@ -4082,6 +4049,7 @@ packages:
       '@dnd-kit/utilities': 3.2.2_react@18.3.1
       react: 18.3.1
       tslib: 2.6.3
+    dev: true
 
   /@dnd-kit/sortable/7.0.2_lapgn5tcydgksdf34zqcxexmfu:
     resolution: {integrity: sha512-wDkBHHf9iCi1veM834Gbk1429bd4lHX4RpAwT0y2cHLf246GAvU2sVw/oxWNpPKQNQRQaeGXhAVgrOl1IT+iyA==}
@@ -4093,6 +4061,7 @@ packages:
       '@dnd-kit/utilities': 3.2.2_react@18.3.1
       react: 18.3.1
       tslib: 2.6.3
+    dev: true
 
   /@dnd-kit/utilities/3.2.2_react@18.3.1:
     resolution: {integrity: sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg==}
@@ -7974,20 +7943,27 @@ packages:
       react: ^18
     dependencies:
       react: 18.3.1
+    dev: true
 
-  /@react-typed-forms/mui/3.0.2_3vdbhqr2ncalcx7opnshezpx3q:
-    resolution: {integrity: sha512-P1T+MiPumfhWoeBs4W1nA0JbhrRZoViJyRi4OsKXldqsVgR8mHWl/mfsIh0oxHmx2MTtWBWwMA1tgIhErg3R0Q==}
+  /@react-typed-forms/core/3.6.3_react@18.3.1:
+    resolution: {integrity: sha512-3p52bw79nDvPSc5K+R1VG25fgcpRjJDom6+IQLmyDNzNKHVcwKX+u5M+fZX/Q/ig0SbaM3bPQtc/5xby9HvjHg==}
     peerDependencies:
+      react: ^18
+    dependencies:
+      react: 18.3.1
+    dev: false
+
+  /@react-typed-forms/mui/3.0.3_dwpa6xj5tqboie6edm5sb5w5eu:
+    resolution: {integrity: sha512-OOTM4K4pSl5Vb56YyJuAAQQnMNqc82VHSx8JLMoHHEJEj2yKN9fp93nKtGD47gs9tkKKvrqkhwbztqs05y9arQ==}
+    peerDependencies:
+      '@mui/material': ^5.14.13
+      '@react-typed-forms/core': ^3.0.0
       react: 18.x
       react-dom: 18.x
     dependencies:
       '@mui/material': 5.16.6_3vdbhqr2ncalcx7opnshezpx3q
-      '@react-typed-forms/core': 3.6.1_react@18.3.1
+      '@react-typed-forms/core': 3.6.0
       react: 18.3.1
-    transitivePeerDependencies:
-      - '@emotion/react'
-      - '@emotion/styled'
-      - '@types/react'
     dev: false
 
   /@react-typed-forms/transform/0.2.0:
@@ -14907,6 +14883,7 @@ packages:
 
   /immutability-helper/3.1.1:
     resolution: {integrity: sha512-Q0QaXjPjwIju/28TsugCHNEASwoCcJSyJV3uO1sOIQGI0jKgm9f41Lvz0DZj3n46cNCyAZTsEYoY4C2bVRUzyQ==}
+    dev: false
 
   /import-cwd/3.0.0:
     resolution: {integrity: sha512-4pnzH16plW+hgvRECbDWpQl3cqtvSofHWh44met7ESfZ8UZOWWddm8hEyDTqREJ9RbYHY8gi8DqmaelApoOGMg==}
@@ -20355,6 +20332,7 @@ packages:
 
   /tailwind-merge/1.14.0:
     resolution: {integrity: sha512-3mFKyCo/MBcgyOTlrY8T7odzZFx+w+qKSMAmdFzRvqBfLlSigU6TZnlFHK0lkMwj9Bj8OYU+9yW9lmGuS0QEnQ==}
+    dev: false
 
   /tailwindcss/3.4.7:
     resolution: {integrity: sha512-rxWZbe87YJb4OcSopb7up2Ba4U82BoiSGUdoDr3Ydrg9ckxFS/YWsvhN323GMcddgU65QRy7JndC7ahhInhvlQ==}

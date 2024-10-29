@@ -17,7 +17,7 @@ export function DefaultDisplayOnly({
   control: Control<any>;
   field: SchemaField;
   schemaInterface: SchemaInterface;
-  className?: string | null;
+  className?: string;
   style?: React.CSSProperties;
   emptyText?: string | null;
 }) {
@@ -27,7 +27,7 @@ export function DefaultDisplayOnly({
       ? emptyText
       : schemaInterface.textValue(field, v)) ?? "";
   return (
-    <div style={style} className={rendererClass(className)}>
+    <div style={style} className={className}>
       {text}
     </div>
   );

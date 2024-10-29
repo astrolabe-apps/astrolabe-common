@@ -10,7 +10,7 @@
 		"genclient": "nswag openapi2tsclient /input:http://localhost:5000/swagger/v1/swagger.json /output:src/client.ts /NullValue:Null /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string /TypeScriptVersion:4.9 && h get http://localhost:5000/api/SearchState/Schemas > src/schemas.ts && prettier -w src/schemas.ts && h get http://localhost:5000/api/SearchState/Forms > src/forms.ts && prettier -w src/forms.ts"
 	},
 	"dependencies": {
-		"@react-typed-forms/core": "^3.6.0",
+		"@react-typed-forms/core": "^3.6.3",
 		"codemirror": "^6.0.1",
 		"@astroapps/codemirror-evaluator": "workspace:*",
 		"@react-typed-forms/schemas": "workspace:*",

@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/client",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"type": "module",
 	"main": "index.js",
 	"types": "index.d.ts",
@@ -14,12 +14,14 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@react-typed-forms/core": "^3.2.0",
 		"clsx": "^2.0.0",
 		"tailwind-merge": "^1.14.0",
-		"react": "^18.2.0",
-		"react-dnd": "^16.0.1",
 		"tslib": "^2.6.2"
+	},
+	"peerDependencies": {
+		"@react-typed-forms/core": "^3.2.0",
+		"react": "^18.2.0",
+		"react-dnd": "^16.0.1"
 	},
 	"scripts": {
 		"prepack": "npm run build",
@@ -27,6 +29,9 @@
 		"watch": "tsc -w & babel src --watch --out-dir . --extensions \".ts,.tsx\" --source-maps true"
 	},
 	"devDependencies": {
+		"@react-typed-forms/core": "^3.2.0",
+		"react": "^18.2.0",
+		"react-dnd": "^16.0.1",
 		"@react-typed-forms/transform": "^0.2.0",
 		"@babel/core": "^7.23.7",
 		"@babel/cli": "^7.23.4",

@@ -11,7 +11,7 @@
 	"dependencies": {
 		"date-fns": "^3.6.0",
 		"vite": "^5.4.0", 
-		"@react-typed-forms/core": "^3.6.0",
+		"@react-typed-forms/core": "^3.6.2",
 		"codemirror": "^6.0.1",
 		"react-router-dom": "^6.26.1",
 		"@astroapps/codemirror-evaluator": "workspace:*",
