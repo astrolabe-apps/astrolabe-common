@@ -26,9 +26,12 @@ public class ValidatorEvalEnvironment(EvalEnvironmentState state, ValidatorState
 
     public ValidatorState ValidatorState => validatorState;
 
-    public EvalEnvironment WithValidatorState(ValidatorState newState)
+    public EvalEnvironment WithValidatorState(
+        ValidatorState newState,
+        Func<EvalEnvironmentState, EvalEnvironmentState>? updateEvalState = null
+    )
     {
-        return new ValidatorEvalEnvironment(state, newState);
+        return new ValidatorEvalEnvironment(updateEvalState?.Invoke(state) ?? state, newState);
     }
 }
 
@@ -43,10 +46,14 @@ public static class RuleValidator
 
     public static EvalEnvironment UpdateValidatorState(
         this EvalEnvironment env,
-        Func<ValidatorState, ValidatorState> update
+        Func<ValidatorState, ValidatorState> update,
+        Func<EvalEnvironmentState, EvalEnvironmentState>? updateEvalState = null
     )
     {
-        return ((ValidatorEvalEnvironment)env).WithValidatorState(update(env.GetValidatorState()));
+        return ((ValidatorEvalEnvironment)env).WithValidatorState(
+            update(env.GetValidatorState()),
+            updateEvalState
+        );
     }
 
     public static EvalEnvironment FromData(EvalData data)
@@ -145,7 +152,8 @@ public static class RuleValidator
                         Failures = [],
                         Message = ValueExpr.Null,
                         Properties = ImmutableDictionary<string, object?>.Empty
-                    }
+                    },
+                e => e with { Errors = [] }
             )
             .EvalSelect(callExpr.Args, (e, x) => e.Evaluate(x));
         var argValues = results.Value.ToList();
@@ -159,6 +167,7 @@ public static class RuleValidator
                             argValues[0].Value,
                             argValues[1],
                             x.Failures,
+                            results.Env.Errors,
                             x.Message.AsString(),
                             argValues[1].Deps ?? [],
                             x.Properties
@@ -231,6 +240,7 @@ public record EvaluatedRule(
     object? PathValue,
     ValueExpr Result,
     IEnumerable<Failure> Failures,
+    IEnumerable<EvalError> Errors,
     string? Message,
     IEnumerable<DataPath> DependentData,
     IDictionary<string, object?> Properties
