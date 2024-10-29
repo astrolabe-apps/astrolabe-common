@@ -338,6 +338,7 @@ export interface DefaultAccordionRendererOptions {
     current: Control<boolean>,
   ) => ReactNode;
   renderToggler?: (current: Control<boolean>, title: ReactNode) => ReactNode;
+  useCss?: boolean;
 }
 
 export interface DefaultAdornmentRendererOptions {
@@ -404,6 +405,7 @@ export function createDefaultAdornmentRenderer(
               contentStyle={rl.style}
               contentClassName={rl.className}
               designMode={designMode}
+              dataContext={dataContext}
               {...options.accordion}
             />
           ))(rl);

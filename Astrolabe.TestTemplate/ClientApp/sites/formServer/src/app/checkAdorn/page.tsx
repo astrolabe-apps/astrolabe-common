@@ -2,6 +2,7 @@
 
 import { useControl } from "@react-typed-forms/core";
 import {
+  accordionOptions,
   buildSchema,
   compoundField,
   createSchemaLookup,
@@ -16,6 +17,8 @@ import {
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import { createStdFormRenderer } from "../../renderers";
+import { Button } from "@astrolabe/ui/Button";
+import { getAccordionState } from "@react-typed-forms/schemas-html";
 
 interface TestSchema {
   selected: string;
@@ -49,6 +52,7 @@ const schemaNode = schemaLookup.getSchema("TestSchema")!;
 const selectable = groupedControl([
   dataControl("selected", undefined, {
     renderOptions: { type: DataRenderType.Radio },
+    adornments: [accordionOptions({ title: "Open" })],
     children: [
       dataControl("selectables", "Selectables", {
         readonly: true,
@@ -85,6 +89,10 @@ export default function CheckAdorn() {
   return (
     <div>
       <Render />
+      <Button onClick={toggle}>Toggle</Button>
     </div>
   );
+  function toggle() {
+    getAccordionState(pageControl.fields.selected)?.setValue((x) => !x);
+  }
 }

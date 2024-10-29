@@ -1,8 +1,12 @@
 import React, { CSSProperties, Fragment, ReactElement } from "react";
-import { useControl } from "@react-typed-forms/core";
+import { Control, useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
 import { DefaultAccordionRendererOptions } from "../createDefaultRenderers";
-import { AccordionAdornment, FormRenderer } from "@react-typed-forms/schemas";
+import {
+  AccordionAdornment,
+  ControlDataContext,
+  FormRenderer,
+} from "@react-typed-forms/schemas";
 
 export function DefaultAccordion({
   children,
@@ -17,6 +21,8 @@ export function DefaultAccordion({
   renderToggler,
   renderers,
   titleClass,
+  useCss,
+  dataContext,
 }: {
   children: ReactElement;
   accordion: Partial<AccordionAdornment>;
@@ -24,8 +30,13 @@ export function DefaultAccordion({
   contentClassName?: string;
   designMode?: boolean;
   renderers: FormRenderer;
+  dataContext: ControlDataContext;
 } & DefaultAccordionRendererOptions) {
+  const dataControl = (dataContext.dataNode ?? dataContext.parentNode).control;
   const open = useControl(!!accordion.defaultExpanded);
+  if (dataControl && !dataControl.meta.accordionState) {
+    dataControl.meta.accordionState = open;
+  }
   const isOpen = open.value;
   const fullContentStyle =
     isOpen || designMode ? contentStyle : { ...contentStyle, display: "none" };
@@ -42,9 +53,17 @@ export function DefaultAccordion({
   return (
     <>
       {toggler}
-      <div style={fullContentStyle} className={contentClassName}>
-        {children}
-      </div>
+      {(useCss || isOpen || designMode) && (
+        <div style={fullContentStyle} className={contentClassName}>
+          {children}
+        </div>
+      )}
     </>
   );
+}
+
+export function getAccordionState(
+  c: Control<unknown>,
+): Control<boolean> | undefined {
+  return c.meta.accordionState;
 }
