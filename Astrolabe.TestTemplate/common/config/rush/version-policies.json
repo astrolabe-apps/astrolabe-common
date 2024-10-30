@@ -12,6 +12,10 @@
   {
     "definitionName": "individualVersion",
     "policyName": "client"
+  },
+  {
+    "definitionName": "individualVersion",
+    "policyName": "evaluator"
   }
   // {
   //   /**

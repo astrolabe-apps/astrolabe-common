@@ -485,7 +485,8 @@
     {
       "packageName": "@astroapps/evaluator",
       "projectFolder": "../astrolabe-evaluator",
-      "shouldPublish": true
+      "shouldPublish": true,
+      "versionPolicyName": "evaluator"
     },
     {
       "packageName": "@astroapps/codemirror-evaluator",
