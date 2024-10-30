@@ -264,7 +264,8 @@ public static class DefaultFunctions
                 )
             },
             { "[", FilterFunctionHandler.Instance },
-            { ".", MapFunctionHandler.Instance },
+            { "map", MapFunctionHandler.Instance },
+            { ".", FlatMapFunctionHandler.Instance },
             {
                 "fixed",
                 FunctionHandler.DefaultEval(a =>

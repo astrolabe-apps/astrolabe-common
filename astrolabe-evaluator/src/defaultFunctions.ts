@@ -4,6 +4,7 @@ import {
   envEffect,
   EnvValue,
   EvalEnv,
+  EvalExpr,
   functionValue,
   mapAllEnv,
   mapEnv,
@@ -19,6 +20,7 @@ import {
   doEvaluate,
   evaluateAll,
   evaluateWith,
+  evaluateWithValue,
 } from "./evaluate";
 import { allElems, valuesToString } from "./values";
 import { printExpr } from "./printExpr";
@@ -45,15 +47,28 @@ export const objectFunction = functionValue((e, call) => {
 
 export function binFunction(
   func: (a: any, b: any, e: EvalEnv) => unknown,
+  name?: string,
 ): ValueExpr {
-  return functionValue((env, call) => {
-    const [nextEnv, [a, b]] = evaluateAll(env, call.args);
+  return binEvalFunction(name ?? "_", (aE, bE, env) => {
+    const [nextEnv, [a, b]] = evaluateAll(env, [aE, bE]);
     if (a.value == null || b.value == null)
       return [nextEnv, valueExprWithDeps(null, [a, b])];
     return [
       nextEnv,
       valueExprWithDeps(func(a.value, b.value, nextEnv), [a, b]),
     ];
+  });
+}
+
+export function binEvalFunction(
+  name: string,
+  func: (a: EvalExpr, b: EvalExpr, e: EvalEnv) => EnvValue<ValueExpr>,
+): ValueExpr {
+  return functionValue((env, call) => {
+    if (call.args.length != 2)
+      return [env.withError(`$${name} expects 2 arguments`), NullExpr];
+    const [a, b] = call.args;
+    return func(a, b, env);
   });
 }
 
@@ -115,7 +130,24 @@ export const whichFunction: ValueExpr = functionValue((e, call) => {
   return [env, valueExprWithDeps(null, [cond])];
 });
 
-const mapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
+const mapFunction = binEvalFunction("map", (left, right, env) => {
+  const [leftEnv, leftVal] = env.evaluate(left);
+  const { value } = leftVal;
+  if (Array.isArray(value)) {
+    return mapEnv(
+      mapAllEnv(leftEnv, value, (e, elem) =>
+        evaluateWithValue(e, elem, elem, right),
+      ),
+      (vals) => ({ ...leftVal, value: vals }),
+    );
+  }
+  return [
+    leftEnv.withError("Can't map value: " + printExpr(leftVal)),
+    NullExpr,
+  ];
+});
+
+const flatmapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   const [left, right] = call.args;
   const [leftEnv, leftVal] = env.evaluate(left);
   const { value } = leftVal;
@@ -293,9 +325,10 @@ const defaultFunctions = {
       ? num.toFixed(digits)
       : null,
   ),
-  ".": mapFunction,
+  ".": flatmapFunction,
+  map: mapFunction,
   "[": filterFunction,
-  this: functionValue((e, call) => [e, e.current]),
+  this: functionValue((e) => [e, e.current]),
 };
 
 export function addDefaults(evalEnv: EvalEnv) {

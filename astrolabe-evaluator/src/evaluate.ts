@@ -19,6 +19,14 @@ export function evaluateWith(
   ind: number | null,
   expr: EvalExpr,
 ): EnvValue<ValueExpr> {
+  return evaluateWithValue(env, value, valueExpr(ind), expr);
+}
+export function evaluateWithValue(
+  env: EvalEnv,
+  value: ValueExpr,
+  bindValue: ValueExpr,
+  expr: EvalExpr,
+): EnvValue<ValueExpr> {
   const [e, toEval] = checkLambda();
   return alterEnv(e.withCurrent(value).evaluate(toEval), (e) =>
     e.withCurrent(env.current),
@@ -27,10 +35,7 @@ export function evaluateWith(
   function checkLambda(): EnvValue<EvalExpr> {
     switch (expr.type) {
       case "lambda":
-        return [
-          env.withVariables([[expr.variable, valueExpr(ind)]]),
-          expr.expr,
-        ];
+        return [env.withVariables([[expr.variable, bindValue]]), expr.expr];
       default:
         return [env, expr];
     }

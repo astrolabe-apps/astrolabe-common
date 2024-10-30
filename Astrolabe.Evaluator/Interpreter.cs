@@ -16,13 +16,21 @@ public static class Interpreter
         EvalExpr expr
     )
     {
+        return environment.EvaluateWithValue(baseValue, ValueExpr.From(index), expr);
+    }
+
+    public static EvaluatedExprValue EvaluateWithValue(
+        this EvalEnvironment environment,
+        ValueExpr baseValue,
+        ValueExpr bindValue,
+        EvalExpr expr
+    )
+    {
         var (e, toEval) = expr switch
         {
             LambdaExpr { Variable: var name, Value: var valExpr }
                 => environment
-                    .WithVariables(
-                        [new KeyValuePair<string, EvalExpr>(name, ValueExpr.From(index)),]
-                    )
+                    .WithVariables([new KeyValuePair<string, EvalExpr>(name, bindValue),])
                     .WithValue(valExpr),
             _ => environment.WithValue(expr)
         };
@@ -44,9 +52,9 @@ public static class Interpreter
                 => environment
                     .WithVariables(
                         le.Vars.Select(x => new KeyValuePair<string, EvalExpr>(
-                            x.Item1.Name,
-                            x.Item2
-                        ))
+                                x.Item1.Name,
+                                x.Item2
+                            ))
                             .ToList()
                     )
                     .Evaluate(le.In),
