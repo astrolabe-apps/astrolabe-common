@@ -2,6 +2,7 @@ import {
   CallExpr,
   emptyEnvState,
   envEffect,
+  EnvValue,
   EvalEnv,
   functionValue,
   mapAllEnv,
@@ -137,6 +138,42 @@ const mapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   }
 });
 
+function firstFunction(
+  name: string,
+  callback: (
+    index: number,
+    values: ValueExpr[],
+    result: ValueExpr,
+    env: EvalEnv,
+  ) => ValueExpr | undefined,
+  finished: ValueExpr = NullExpr,
+): ValueExpr {
+  return functionValue((env, call) => {
+    const [left, right] = call.args;
+    const [leftEnv, leftVal] = env.evaluate(left);
+    const { value } = leftVal;
+    if (value == null) {
+      return [leftEnv, NullExpr];
+    }
+    if (Array.isArray(value)) {
+      let curEnv = leftEnv;
+      for (let i = 0; i < value.length; i++) {
+        const [nextEnv, v] = evaluateWith(curEnv, value[i], i, right);
+        curEnv = nextEnv;
+        const res = callback(i, value, v, curEnv);
+        if (res) {
+          return [curEnv, res];
+        }
+      }
+      return [curEnv, finished];
+    }
+    return [
+      leftEnv.withError(`$${name} only works on arrays: ${printExpr(leftVal)}`),
+      NullExpr,
+    ];
+  });
+}
+
 const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   const [left, right] = call.args;
   const [leftEnv, leftVal] = env.evaluate(left);
@@ -211,6 +248,31 @@ const defaultFunctions = {
   ),
   array: flatFunction,
   string: stringFunction,
+  first: firstFunction("first", (x, v, r) =>
+    r.value === true ? v[x] : undefined,
+  ),
+  firstIndex: firstFunction("firstIndex", (x, _, r) =>
+    r.value === true ? valueExpr(x) : undefined,
+  ),
+  any: firstFunction(
+    "any",
+    (_, __, r) => (r.value === true ? valueExpr(true) : undefined),
+    valueExpr(false),
+  ),
+  all: firstFunction(
+    "all",
+    (_, __, r) => (r.value !== true ? valueExpr(false) : undefined),
+    valueExpr(true),
+  ),
+  contains: firstFunction(
+    "contains",
+    (i, v, r, env) =>
+      env.compare(v[i].value, r.value) === 0 ? valueExpr(true) : undefined,
+    valueExpr(false),
+  ),
+  indexOf: firstFunction("indexOf", (i, v, r, env) =>
+    env.compare(v[i].value, r.value) === 0 ? valueExpr(i) : undefined,
+  ),
   sum: aggFunction(0, (acc, b) => acc + (b as number)),
   count: arrayFunc((acc, v) => valueExprWithDeps(acc.length, v ? [v] : [])),
   min: aggFunction(null as number | null, (a, b) =>

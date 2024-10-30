@@ -217,6 +217,52 @@ public static class DefaultFunctions
                         }
                 )
             },
+            {
+                "first",
+                FirstFunctionHandler.Create(
+                    "first",
+                    (i, values, res, _) => res.IsTrue() ? values[i] : null
+                )
+            },
+            {
+                "firstIndex",
+                FirstFunctionHandler.Create(
+                    "firstIndex",
+                    (i, values, res, _) => res.IsTrue() ? ValueExpr.From(i) : null
+                )
+            },
+            {
+                "any",
+                FirstFunctionHandler.Create(
+                    "any",
+                    (_, __, r, _) => r.IsTrue() ? ValueExpr.True : null,
+                    ValueExpr.False
+                )
+            },
+            {
+                "all",
+                FirstFunctionHandler.Create(
+                    "all",
+                    (_, __, r, _) => !r.IsTrue() ? ValueExpr.False : null,
+                    ValueExpr.True
+                )
+            },
+            {
+                "contains",
+                FirstFunctionHandler.Create(
+                    "contains",
+                    (i, v, r, env) => env.Compare(v[i].Value, r.Value) == 0 ? ValueExpr.True : null,
+                    ValueExpr.False
+                )
+            },
+            {
+                "indexOf",
+                FirstFunctionHandler.Create(
+                    "indexOf",
+                    (i, v, r, env) =>
+                        env.Compare(v[i].Value, r.Value) == 0 ? ValueExpr.From(i) : null
+                )
+            },
             { "[", FilterFunctionHandler.Instance },
             { ".", MapFunctionHandler.Instance },
             {

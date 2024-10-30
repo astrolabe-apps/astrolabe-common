@@ -84,6 +84,23 @@ public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
 
     public static FunctionHandler DefaultEval(Func<IList<object?>, object?> eval) =>
         DefaultEval((_, a) => eval(a));
+
+    public static FunctionHandler BinFunctionHandler(
+        string name,
+        Func<EvalEnvironment, EvalExpr, EvalExpr, EnvironmentValue<ValueExpr>> handle
+    )
+    {
+        return new FunctionHandler(
+            (env, call) =>
+                call.Args switch
+                {
+                    [var a1, var a2] => handle(env, a1, a2),
+                    var a
+                        => env.WithError($"{name} expects 2 arguments, received {a.Count}")
+                            .WithNull()
+                }
+        );
+    }
 }
 
 public record ValueExpr(object? Value, DataPath? Path = null, IEnumerable<DataPath>? Deps = null)
