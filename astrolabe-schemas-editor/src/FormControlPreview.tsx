@@ -25,11 +25,13 @@ import {
   FormRenderer,
   getDisplayOnlyOptions,
   getGroupClassOverrides,
+  isControlDisplayOnly,
   isDataControlDefinition,
   isGroupControlsDefinition,
   makeHook,
   makeSchemaDataNode,
   renderControlLayout,
+  rendererClass,
   schemaForFieldPath,
   SchemaInterface,
   SchemaNode,
@@ -49,6 +51,7 @@ export interface FormControlPreviewProps {
   styleClass?: string;
   layoutClass?: string;
   labelClass?: string;
+  displayOnly?: boolean;
 }
 
 export interface FormControlPreviewContext {
@@ -91,11 +94,14 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     styleClass,
     labelClass,
     layoutClass,
+    displayOnly: dOnly,
   } = props;
   const { selected, dropSuccess, renderer } = usePreviewContext();
   const item = unsafeRestoreControl(definition) as
     | Control<ControlDefinitionForm>
     | undefined;
+  const displayOnly = dOnly || isControlDisplayOnly(definition);
+
   const isSelected = !!item && selected.value === item;
   const scrollRef = useScrollIntoView(isSelected);
   const { setNodeRef, isOver } = useDroppable({
@@ -152,9 +158,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       }),
     ) ?? [];
 
-  const groupClasses = getGroupClassOverrides(
-    isGroupControlsDefinition(definition) ? definition.groupOptions : undefined,
-  );
+  const groupClasses = getGroupClassOverrides(definition);
 
   const layout = renderControlLayout({
     definition,
@@ -172,13 +176,14 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           parentNode={c?.parentDataNode?.schema ?? childNode ?? parentNode}
           keyPrefix={keyPrefix}
           schemaInterface={schemaInterface}
+          displayOnly={c?.displayOnly || displayOnly}
         />
       );
     },
     labelClass,
     styleClass,
     createDataProps: defaultDataProps,
-    formOptions: { readonly: dataDefinition?.readonly },
+    formOptions: { readonly: dataDefinition?.readonly, displayOnly },
     dataContext,
     control,
     schemaInterface,
@@ -211,7 +216,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   } = renderer.renderLayout({
     ...layout,
     adornments,
-    className: definition.layoutClass ? definition.layoutClass : layoutClass,
+    className: rendererClass(layoutClass, definition.layoutClass),
   });
   return (
     <div

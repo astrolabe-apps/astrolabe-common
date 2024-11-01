@@ -31,6 +31,10 @@ export function createStdFormRenderer(container: HTMLElement | null) {
     ],
     createDefaultRenderers({
       ...defaultTailwindTheme,
+      data: {
+        ...defaultTailwindTheme.data,
+        defaultEmptyText: "<empty>",
+      },
     }),
   );
 }

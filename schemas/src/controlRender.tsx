@@ -45,10 +45,13 @@ import {
 } from "./types";
 import {
   applyLengthRestrictions,
+  ControlClasses,
   ControlDataContext,
   elementValueForField,
   fieldDisplayName,
   FormContextData,
+  getGroupClassOverrides,
+  isControlDisplayOnly,
   JsonPath,
   rendererClass,
   useDynamicHooks,
@@ -70,7 +73,6 @@ import {
   useEvalVisibilityHook,
 } from "./hooks";
 import { useMakeValidationHook, ValidationContext } from "./validators";
-import { cc } from "./internal";
 import { defaultSchemaInterface } from "./schemaInterface";
 import {
   createSchemaLookup,
@@ -224,6 +226,7 @@ export interface DataRendererProps extends ParentRendererProps {
   options: FieldOption[] | undefined | null;
   hidden: boolean;
   dataNode: SchemaDataNode;
+  displayOnly: boolean;
 }
 
 export interface ActionRendererProps {
@@ -262,17 +265,13 @@ export interface DataControlProps {
   schemaInterface?: SchemaInterface;
   designMode?: boolean;
   styleClass?: string;
+  layoutClass?: string;
 }
 
 export type CreateDataProps = (
   controlProps: DataControlProps,
 ) => DataRendererProps;
 
-export interface ControlClasses {
-  styleClass?: string;
-  layoutClass?: string;
-  labelClass?: string;
-}
 export interface ControlRenderOptions
   extends FormContextOptions,
     ControlClasses {
@@ -454,7 +453,7 @@ export function useControlRendererComponent(
         hidden: options.hidden || !visibility.fields?.showing.value,
         readonly: options.readonly || readonlyControl.value,
         disabled: options.disabled || disabledControl.value,
-        displayOnly: options.displayOnly,
+        displayOnly: options.displayOnly || isControlDisplayOnly(c),
       }));
       const myOptions = trackedValue(myOptionsControl);
       useValidation({
@@ -491,6 +490,7 @@ export function useControlRendererComponent(
         definition: c,
         renderer,
         renderChild: (k, child, options) => {
+          const overrideClasses = getGroupClassOverrides(c);
           const { parentDataNode, ...renderOptions } = options ?? {};
           const dContext =
             parentDataNode ?? dataContext.dataNode ?? dataContext.parentNode;
@@ -501,7 +501,11 @@ export function useControlRendererComponent(
               definition={child}
               renderer={renderer}
               parentDataNode={dContext}
-              options={{ ...childOptions, ...renderOptions }}
+              options={{
+                ...childOptions,
+                ...overrideClasses,
+                ...renderOptions,
+              }}
             />
           );
         },
@@ -537,7 +541,7 @@ export function useControlRendererComponent(
       const renderedControl = renderer.renderLayout({
         ...labelAndChildren,
         adornments,
-        className: c.layoutClass ? c.layoutClass : options.layoutClass,
+        className: rendererClass(options.layoutClass, c.layoutClass),
         style: layoutStyle.value,
       });
       return renderer.renderVisibility({ visibility, ...renderedControl });
@@ -609,8 +613,9 @@ export function defaultDataProps({
 }: DataControlProps): DataRendererProps {
   const dataNode = props.dataContext.dataNode!;
   const field = dataNode.schema.field;
-  const className = cc(definition.styleClass, styleClass);
-  const required = !!definition.required;
+  const className = rendererClass(styleClass, definition.styleClass);
+  const displayOnly = !!formOptions.displayOnly;
+  const required = !!definition.required && !displayOnly;
   const fieldOptions = schemaInterface.getOptions(field);
   const _allowed = allowedOptions?.value ?? [];
   const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
@@ -623,16 +628,19 @@ export function defaultDataProps({
     id: "c" + control.uniqueId,
     options:
       allowed.length > 0
-        ? allowed.map((x) =>
-            typeof x === "object"
-              ? x
-              : (fieldOptions?.find((y) => y.value == x) ?? {
-                  name: x.toString(),
-                  value: x,
-                }),
-          )
+        ? allowed
+            .map((x) =>
+              typeof x === "object"
+                ? x
+                : (fieldOptions?.find((y) => y.value == x) ?? {
+                    name: x.toString(),
+                    value: x,
+                  }),
+            )
+            .filter((x) => x != null)
         : fieldOptions,
     readonly: !!formOptions.readonly,
+    displayOnly,
     renderOptions: definition.renderOptions ?? { type: "Standard" },
     required,
     hidden: !!formOptions.hidden,
@@ -718,34 +726,22 @@ export function renderControlLayout(
       );
     }
 
-    function renderGroupChild(
-      groupOptions?: GroupRenderOptions,
-    ): ChildRenderer {
-      if (!groupOptions) return renderChild;
-      return (k, child, options) => {
-        return renderChild(k, child, {
-          ...getGroupClassOverrides(groupOptions),
-          ...options,
-        });
-      };
-    }
-
     return {
       processLayout: renderer.renderGroup({
         childDefinitions: c.children ?? [],
         definition: c,
-        renderChild: renderGroupChild(c.groupOptions),
+        renderChild,
         useEvalExpression,
         dataContext,
         renderOptions: c.groupOptions ?? { type: "Standard" },
-        className: cc(c.styleClass, styleClass),
+        className: rendererClass(styleClass, c.styleClass),
         useChildVisibility,
         style,
         designMode,
       }),
       label: {
         label: labelText?.value ?? c.title,
-        className: cc(c.labelClass, labelClass),
+        className: rendererClass(labelClass, c.labelClass),
         type: LabelType.Group,
         hide: c.groupOptions?.hideTitle,
       },
@@ -759,7 +755,7 @@ export function renderControlLayout(
         actionId: c.actionId,
         actionData,
         onClick: props.actionOnClick?.(c.actionId, actionData) ?? (() => {}),
-        className: cc(c.styleClass, styleClass),
+        className: rendererClass(styleClass, c.styleClass),
         style,
       }),
     };
@@ -768,7 +764,7 @@ export function renderControlLayout(
     const data = c.displayData ?? {};
     const displayProps = {
       data,
-      className: cc(c.styleClass, styleClass),
+      className: rendererClass(styleClass, c.styleClass),
       style,
       display: displayControl,
       dataContext,
@@ -806,24 +802,13 @@ export function renderControlLayout(
           (c.children?.length ?? 0) > 0 ? LabelType.Group : LabelType.Control,
         label,
         forId: rendererProps.id,
-        required: c.required,
+        required: c.required && !props.formOptions.displayOnly,
         hide: c.hideTitle,
-        className: cc(c.labelClass, labelClass),
+        className: rendererClass(labelClass, c.labelClass),
       },
       errorControl: control,
     };
   }
-}
-
-export function getGroupClassOverrides(
-  go?: GroupRenderOptions,
-): ControlClasses {
-  const { childLayoutClass, childStyleClass, childLabelClass } = go ?? {};
-  const out: ControlClasses = {};
-  if (childLayoutClass) out.layoutClass = childLayoutClass;
-  if (childStyleClass) out.styleClass = childStyleClass;
-  if (childLabelClass) out.labelClass = childLabelClass;
-  return out;
 }
 
 type MarkupKeys = keyof Omit<
@@ -896,7 +881,7 @@ export function renderLayoutParts(
     children,
     errorControl,
     style,
-    className: cc(className),
+    className: className!,
     wrapLayout: (x) => x,
   };
   (adornments ?? [])

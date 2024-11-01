@@ -31,7 +31,7 @@ export const defaultTailwindTheme = {
       entryClass: "flex gap-1 items-center",
     },
     selectOptions: { emptyText: "<select>" },
-    multilineClass: "border p-2 outline-0 whitespace-pre",
+    multilineClass: "border p-2 outline-0 whitespace-pre-wrap",
   },
   adornment: {
     accordion: {

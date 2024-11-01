@@ -3,7 +3,7 @@ import {
   DefaultDisplayRendererOptions,
 } from "./components/DefaultDisplay";
 import {
-  DefaultLayout,
+  createDefaultLayoutRenderer,
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
@@ -48,7 +48,6 @@ import {
   ControlLayoutProps,
   createActionRenderer,
   createDataRenderer,
-  createLayoutRenderer,
   DataRendererRegistration,
   DataRenderType,
   DefaultRenderers,
@@ -70,7 +69,6 @@ import {
   LabelRendererRegistration,
   LabelType,
   rendererClass,
-  renderLayoutParts,
   schemaDataForFieldRef,
   SetFieldAdornment,
   useDynamicHooks,
@@ -225,6 +223,7 @@ export interface DefaultDataRendererOptions {
   multilineClass?: string;
   jsonataClass?: string;
   arrayOptions?: ArrayActionOptions;
+  defaultEmptyText?: string;
 }
 
 export function createDefaultDataRenderer(
@@ -245,7 +244,13 @@ export function createDefaultDataRenderer(
   const checkListRenderer = createCheckListRenderer(
     options.checkListOptions ?? options.checkOptions,
   );
-  const { inputClass, booleanOptions, optionRenderer, displayOnlyClass } = {
+  const {
+    inputClass,
+    booleanOptions,
+    optionRenderer,
+    displayOnlyClass,
+    defaultEmptyText,
+  } = {
     optionRenderer: selectRenderer,
     booleanOptions: DefaultBoolOptions,
     ...options,
@@ -272,21 +277,27 @@ export function createDefaultDataRenderer(
       return renderers.renderGroup({ ...props, renderOptions: groupOptions });
     }
     if (fieldType == FieldType.Any) return <>No control for Any</>;
-    if (isDisplayOnlyRenderer(renderOptions))
-      return (p) => ({
-        ...p,
-        className: displayOnlyClass,
-        children: (
-          <DefaultDisplayOnly
-            field={props.field}
-            schemaInterface={props.dataContext.schemaInterface}
-            control={props.control}
-            className={props.className}
-            style={props.style}
-            emptyText={renderOptions.emptyText}
-          />
-        ),
-      });
+    if (props.displayOnly || isDisplayOnlyRenderer(renderOptions))
+      return (p) => {
+        return {
+          ...p,
+          className: "@ " + rendererClass(p.className, displayOnlyClass),
+          children: (
+            <DefaultDisplayOnly
+              field={props.field}
+              schemaInterface={props.dataContext.schemaInterface}
+              control={props.control}
+              className={props.className}
+              style={props.style}
+              emptyText={
+                isDisplayOnlyRenderer(renderOptions) && renderOptions.emptyText
+                  ? renderOptions.emptyText
+                  : defaultEmptyText
+              }
+            />
+          ),
+        };
+      };
     const isBool = fieldType === FieldType.Bool;
     if (booleanOptions != null && isBool && props.options == null) {
       return renderers.renderData({ ...props, options: booleanOptions });
@@ -415,31 +426,6 @@ export function createDefaultAdornmentRenderer(
       adornment,
     }),
   };
-}
-
-function createDefaultLayoutRenderer(
-  options: DefaultLayoutRendererOptions = {},
-) {
-  return createLayoutRenderer((props, renderers) => {
-    const layout = renderLayoutParts(
-      {
-        ...props,
-        className: rendererClass(props.className, options.className),
-      },
-      renderers,
-    );
-    return {
-      children: layout.wrapLayout(
-        <DefaultLayout layout={layout} {...options} />,
-      ),
-      className: layout.className,
-      style: layout.style,
-      divRef: (e) =>
-        e && props.errorControl
-          ? (props.errorControl.meta.scrollElement = e)
-          : undefined,
-    };
-  });
 }
 
 interface DefaultLabelRendererOptions {

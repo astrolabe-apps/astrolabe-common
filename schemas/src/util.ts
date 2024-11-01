@@ -7,31 +7,27 @@ import {
   DisplayOnlyRenderOptions,
   FieldOption,
   findField,
-  GroupedControlsDefinition,
+  GroupRenderOptions,
   isCompoundField,
   isDataControl,
   isDataControlDefinition,
+  isDataGroupRenderer,
   isDisplayOnlyRenderer,
   isGroupControl,
   isGroupControlsDefinition,
   isScalarField,
   SchemaField,
   SchemaInterface,
-  visitControlDefinition,
 } from "./types";
 import { MutableRefObject, useCallback, useRef } from "react";
-import {
-  Control,
-  ControlChange,
-  trackControlChange,
-} from "@react-typed-forms/core";
 import clsx from "clsx";
-import {
-  getJsonPath,
-  getRootDataNode,
-  getSchemaFieldList,
-  SchemaDataNode,
-} from "./treeNodes";
+import { SchemaDataNode } from "./treeNodes";
+
+export interface ControlClasses {
+  styleClass?: string;
+  layoutClass?: string;
+  labelClass?: string;
+}
 
 export type JsonPath = string | number;
 
@@ -399,16 +395,13 @@ export function getAllReferencedClasses(
   const childClasses = c.children?.flatMap((x) =>
     getAllReferencedClasses(x, collectExtra),
   );
-  const go = isGroupControlsDefinition(c) ? c.groupOptions : undefined;
-  const gc = go
-    ? [go.childLabelClass, go.childLayoutClass, go.childStyleClass]
-    : [];
+  const go = getGroupClassOverrides(c);
   const tc = clsx(
     [
       c.styleClass,
       c.layoutClass,
       c.labelClass,
-      ...gc,
+      ...Object.values(go),
       ...(collectExtra?.(c) ?? []),
     ].map(getOverrideClass),
   );
@@ -457,6 +450,8 @@ export function rendererClass(
   controlClass?: string | null,
   globalClass?: string | null,
 ) {
+  const gc = getOverrideClass(globalClass);
+  if (gc !== globalClass) return globalClass ? globalClass : undefined;
   const oc = getOverrideClass(controlClass);
   if (oc === controlClass) return clsx(controlClass, globalClass);
   return oc ? oc : undefined;
@@ -580,4 +575,29 @@ export function coerceToString(v: unknown) {
     : typeof v === "object"
       ? "error: " + JSON.stringify(v)
       : v.toString();
+}
+
+export function getGroupRendererOptions(
+  def: ControlDefinition,
+): GroupRenderOptions | undefined {
+  return isGroupControlsDefinition(def)
+    ? def.groupOptions
+    : isDataControlDefinition(def) && isDataGroupRenderer(def.renderOptions)
+      ? def.renderOptions.groupOptions
+      : undefined;
+}
+export function getGroupClassOverrides(def: ControlDefinition): ControlClasses {
+  let go = getGroupRendererOptions(def);
+
+  if (!go) return {};
+  const { childLayoutClass, childStyleClass, childLabelClass } = go;
+  const out: ControlClasses = {};
+  if (childLayoutClass) out.layoutClass = childLayoutClass;
+  if (childStyleClass) out.styleClass = childStyleClass;
+  if (childLabelClass) out.labelClass = childLabelClass;
+  return out;
+}
+
+export function isControlDisplayOnly(def: ControlDefinition): boolean {
+  return Boolean(getGroupRendererOptions(def)?.displayOnly);
 }

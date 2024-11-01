@@ -547,9 +547,9 @@ export function isTextfieldRenderer(
 }
 
 export function isDataGroupRenderer(
-  options: RenderOptions,
+  options?: RenderOptions | null,
 ): options is DataGroupRenderOptions {
-  return options.type === DataRenderType.Group;
+  return options?.type === DataRenderType.Group;
 }
 
 export function isArrayRenderer(
