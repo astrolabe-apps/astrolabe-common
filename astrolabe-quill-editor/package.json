@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/quill-editor",
-  "version": "9.0.0",
+  "version": "9.0.1",
   "description": "",
   "type": "module",
   "main": "lib/index.js",
@@ -21,12 +21,17 @@
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "dependencies": {
+    "react-quill": "^2.0.0"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0",
+    "@react-typed-forms/core": "^3.6.1",
+    "@react-typed-forms/schemas": "workspace:^13.0.0"
+  },
+  "devDependencies": {
     "react": "^18.2.0",
     "@react-typed-forms/core": "^3.2.0",
     "@react-typed-forms/schemas": "workspace:^13.0.0",
-    "react-quill": "^2.0.0"
-  },
-  "devDependencies": {
     "@react-typed-forms/transform": "^0.2.0",
     "@babel/core": "^7.23.7",
     "@babel/cli": "^7.23.4",

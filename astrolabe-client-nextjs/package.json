@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/client-nextjs",
-	"version": "1.1.1",
+	"version": "1.1.2",
 	"type": "module",
 	"main": "lib/index.cjs",
 	"module": "lib/index.js",
@@ -20,12 +20,13 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@astroapps/client": "workspace:^1.1.0",
 		"querystring": "^0.2.1",
-		"next": "14.0.4",
-		"react": "^18.2.0",
-		"react-dom": "^18.2.0",
 		"tslib": "^2.6.2"
+	},
+	"peerDependencies": {
+		"@astroapps/client": "workspace:^1.1.0",
+		"next": "14.0.4",
+		"react": "^18.2.0"
 	},
 	"scripts": {
 		"prepack": "npm run build",
@@ -33,6 +34,9 @@
 		"watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
 	},
 	"devDependencies": {
+		"@astroapps/client": "workspace:^1.1.0",
+		"next": "14.0.4",
+		"react": "^18.2.0",
 		"@react-typed-forms/transform": "^0.2.0",
 		"@babel/core": "^7.23.7",
 		"@babel/cli": "^7.23.4",
