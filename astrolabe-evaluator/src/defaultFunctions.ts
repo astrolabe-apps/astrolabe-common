@@ -314,11 +314,11 @@ const defaultFunctions = {
   ),
   count: arrayFunc((acc, v) => valueExprWithDeps(acc.length, v ? [v] : [])),
   min: aggFunction(
-    (v) => v[0].value as number,
+    (v) => v[0]?.value as number,
     (a, b) => Math.min(a, b as number),
   ),
   max: aggFunction(
-    (v) => v[0].value as number,
+    (v) => v[0]?.value as number,
     (a, b) => Math.max(a, b as number),
   ),
   notEmpty: evalFunction(([a]) => !(a === "" || a == null)),
