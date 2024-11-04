@@ -103,7 +103,7 @@ function arrayFunc(
 function aggFunction<A>(init: A, op: (acc: A, x: unknown) => A): ValueExpr {
   function performOp(v: ValueExpr[]): unknown {
     return v.reduce(
-      (a, { value: b }) => (b != null ? op(a as A, b) : null),
+      (a, { value: b }) => (a != null && b != null ? op(a as A, b) : null),
       init as A | null,
     );
   }
