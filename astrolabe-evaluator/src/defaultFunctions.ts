@@ -100,11 +100,14 @@ function arrayFunc(
   });
 }
 
-function aggFunction<A>(init: A, op: (acc: A, x: unknown) => A): ValueExpr {
+function aggFunction<A>(
+  init: (v: ValueExpr[]) => A | null,
+  op: (acc: A, x: unknown) => A,
+): ValueExpr {
   function performOp(v: ValueExpr[]): unknown {
     return v.reduce(
       (a, { value: b }) => (a != null && b != null ? op(a as A, b) : null),
-      init as A | null,
+      init(v),
     );
   }
   return arrayFunc((v) => valueExprWithDeps(performOp(v), v));
@@ -305,13 +308,18 @@ const defaultFunctions = {
   indexOf: firstFunction("indexOf", (i, v, r, env) =>
     env.compare(v[i].value, r.value) === 0 ? valueExpr(i) : undefined,
   ),
-  sum: aggFunction(0, (acc, b) => acc + (b as number)),
-  count: arrayFunc((acc, v) => valueExprWithDeps(acc.length, v ? [v] : [])),
-  min: aggFunction(null as number | null, (a, b) =>
-    Math.min(a ?? Number.MAX_VALUE, b as number),
+  sum: aggFunction(
+    () => 0,
+    (acc, b) => acc + (b as number),
   ),
-  max: aggFunction(null as number | null, (a, b) =>
-    Math.max(a ?? Number.MIN_VALUE, b as number),
+  count: arrayFunc((acc, v) => valueExprWithDeps(acc.length, v ? [v] : [])),
+  min: aggFunction(
+    (v) => v[0].value as number,
+    (a, b) => Math.min(a, b as number),
+  ),
+  max: aggFunction(
+    (v) => v[0].value as number,
+    (a, b) => Math.max(a, b as number),
   ),
   notEmpty: evalFunction(([a]) => !(a === "" || a == null)),
   which: whichFunction,
