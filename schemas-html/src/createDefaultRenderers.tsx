@@ -74,6 +74,10 @@ import {
   useDynamicHooks,
   wrapLayout,
 } from "@react-typed-forms/schemas";
+import {
+  createDefaultGroupRenderer,
+  DefaultGroupRendererOptions,
+} from "./components/DefaultGroupRenderer";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -84,11 +88,6 @@ export interface DefaultRendererOptions {
   label?: DefaultLabelRendererOptions;
   adornment?: DefaultAdornmentRendererOptions;
   layout?: DefaultLayoutRendererOptions;
-}
-
-interface StyleProps {
-  className?: string;
-  style?: CSSProperties;
 }
 
 export interface DefaultActionRendererOptions {
@@ -128,81 +127,6 @@ export function createButtonActionRenderer(
       );
     },
   );
-}
-
-export interface DefaultGroupRendererOptions {
-  className?: string;
-  standardClassName?: string;
-  gridStyles?: (columns: GridRenderer) => StyleProps;
-  gridClassName?: string;
-  defaultGridColumns?: number;
-  flexClassName?: string;
-  defaultFlexGap?: string;
-}
-
-export function createDefaultGroupRenderer(
-  options?: DefaultGroupRendererOptions,
-): GroupRendererRegistration {
-  const {
-    className,
-    gridStyles = defaultGridStyles,
-    defaultGridColumns = 2,
-    gridClassName,
-    standardClassName,
-    flexClassName,
-    defaultFlexGap,
-  } = options ?? {};
-
-  function defaultGridStyles({
-    columns = defaultGridColumns,
-  }: GridRenderer): StyleProps {
-    return {
-      className: gridClassName,
-      style: {
-        display: "grid",
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-      },
-    };
-  }
-
-  function flexStyles(options: FlexRenderer): StyleProps {
-    return {
-      className: flexClassName,
-      style: {
-        display: "flex",
-        gap: options.gap ? options.gap : defaultFlexGap,
-        flexDirection: options.direction
-          ? (options.direction as any)
-          : undefined,
-      },
-    };
-  }
-
-  function render(props: GroupRendererProps) {
-    const { renderChild, renderOptions, childDefinitions } = props;
-
-    const { style, className: gcn } = isGridRenderer(renderOptions)
-      ? gridStyles(renderOptions)
-      : isFlexRenderer(renderOptions)
-        ? flexStyles(renderOptions)
-        : ({ className: standardClassName } as StyleProps);
-
-    return (cp: ControlLayoutProps) => {
-      return {
-        ...cp,
-        children: (
-          <div
-            className={rendererClass(props.className, clsx(className, gcn))}
-            style={style}
-          >
-            {childDefinitions?.map((c, i) => renderChild(i, c))}
-          </div>
-        ),
-      };
-    };
-  }
-
-  return { type: "group", render };
 }
 
 export const DefaultBoolOptions: FieldOption[] = [

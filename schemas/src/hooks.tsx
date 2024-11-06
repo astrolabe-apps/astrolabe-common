@@ -51,7 +51,7 @@ export type EvalExpressionHook<A = any> = DynamicHookGenerator<
 >;
 
 export type UseEvalExpressionHook = (
-  expr: EntityExpression | undefined,
+  expr: EntityExpression | undefined | null,
   coerce: (v: any) => any,
 ) => DynamicHookGenerator<Control<any> | undefined, ControlDataContext>;
 

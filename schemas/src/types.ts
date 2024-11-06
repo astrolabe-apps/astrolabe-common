@@ -1,5 +1,6 @@
 import { Control } from "@react-typed-forms/core";
 import { SchemaDataNode, SchemaNode } from "./treeNodes";
+import { ControlDataContext } from "./util";
 
 export interface SchemaField {
   type: string;
@@ -534,6 +535,12 @@ export function isGridRenderer(
   return options.type === GroupRenderType.Grid;
 }
 
+export function isSelectChildRenderer(
+  options: GroupRenderOptions,
+): options is SelectChildRenderer {
+  return options.type === GroupRenderType.SelectChild;
+}
+
 export function isFlexRenderer(
   options: GroupRenderOptions,
 ): options is FlexRenderer {
@@ -590,3 +597,9 @@ export function isGroupControl(
 ): c is GroupedControlsDefinition {
   return c.type === ControlDefinitionType.Group;
 }
+
+export type ControlActionHandler = (
+  actionId: string,
+  actionData: any,
+  ctx: ControlDataContext,
+) => (() => void) | undefined;

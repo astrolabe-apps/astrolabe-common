@@ -22,6 +22,7 @@ import {
 import {
   AdornmentPlacement,
   ArrayActionOptions,
+  ControlActionHandler,
   ControlAdornment,
   ControlDefinition,
   CustomDisplay,
@@ -276,7 +277,7 @@ export interface ControlRenderOptions
   extends FormContextOptions,
     ControlClasses {
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
-  actionOnClick?: (actionId: string, actionData: any) => () => void;
+  actionOnClick?: ControlActionHandler;
   customDisplay?: (
     customId: string,
     displayProps: DisplayRendererProps,
@@ -632,10 +633,10 @@ export function defaultDataProps({
             .map((x) =>
               typeof x === "object"
                 ? x
-                : (fieldOptions?.find((y) => y.value == x) ?? {
+                : fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  }),
+                  },
             )
             .filter((x) => x != null)
         : fieldOptions,
@@ -682,7 +683,7 @@ export interface RenderControlProps {
   actionDataControl?: Control<any | undefined | null>;
   useChildVisibility: ChildVisibilityFunc;
   useEvalExpression: UseEvalExpressionHook;
-  actionOnClick?: (actionId: string, actionData: any) => () => void;
+  actionOnClick?: ControlActionHandler;
   schemaInterface?: SchemaInterface;
   designMode?: boolean;
   customDisplay?: (
@@ -754,7 +755,9 @@ export function renderControlLayout(
         actionText: labelText?.value ?? c.title ?? c.actionId,
         actionId: c.actionId,
         actionData,
-        onClick: props.actionOnClick?.(c.actionId, actionData) ?? (() => {}),
+        onClick:
+          props.actionOnClick?.(c.actionId, actionData, dataContext) ??
+          (() => {}),
         className: rendererClass(styleClass, c.styleClass),
         style,
       }),

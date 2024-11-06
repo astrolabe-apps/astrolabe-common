@@ -1,5 +1,6 @@
 import {
   CompoundField,
+  ControlActionHandler,
   ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
@@ -600,4 +601,16 @@ export function getGroupClassOverrides(def: ControlDefinition): ControlClasses {
 
 export function isControlDisplayOnly(def: ControlDefinition): boolean {
   return Boolean(getGroupRendererOptions(def)?.displayOnly);
+}
+
+export function actionHandlers(
+  ...handlers: (ControlActionHandler | undefined)[]
+): ControlActionHandler {
+  return (actionId, actionData, ctx) => {
+    for (let i = 0; i < handlers.length; i++) {
+      const res = handlers[i]?.(actionId, actionData, ctx);
+      if (res) return res;
+    }
+    return undefined;
+  };
 }
