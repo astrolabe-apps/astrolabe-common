@@ -629,6 +629,7 @@ export interface GroupRenderOptionsForm {
   gap: string | null;
   columns: number | null;
   value: any;
+  childIndexExpression: EntityExpressionForm;
 }
 
 export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
@@ -655,6 +656,10 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
       {
         name: "GroupElement",
         value: "GroupElement",
+      },
+      {
+        name: "SelectChild",
+        value: "SelectChild",
       },
     ],
   }),
@@ -700,6 +705,13 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     required: true,
     displayName: "Value",
     tags: ["_DefaultValue"],
+  }),
+  childIndexExpression: makeCompoundField({
+    children: EntityExpressionSchema,
+    schemaRef: "EntityExpression",
+    onlyForTypes: ["SelectChild"],
+    notNullable: true,
+    displayName: "Child Index Expression",
   }),
 });
 

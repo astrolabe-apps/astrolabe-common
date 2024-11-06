@@ -378,6 +378,7 @@ export enum GroupRenderType {
   Grid = "Grid",
   Flex = "Flex",
   GroupElement = "GroupElement",
+  SelectChild = "SelectChild",
 }
 
 export interface StandardGroupRenderer extends GroupRenderOptions {
@@ -398,6 +399,11 @@ export interface GroupElementRenderer extends GroupRenderOptions {
 export interface GridRenderer extends GroupRenderOptions {
   type: GroupRenderType.Grid;
   columns?: number | null;
+}
+
+export interface SelectChildRenderer extends GroupRenderOptions {
+  type: GroupRenderType.SelectChild;
+  childIndexExpression?: EntityExpression | null;
 }
 
 export interface DisplayControlDefinition extends ControlDefinition {

@@ -268,6 +268,7 @@ public enum GroupRenderType
     Grid,
     Flex,
     GroupElement,
+    SelectChild
 }
 
 [JsonBaseType("type", typeof(SimpleGroupRenderOptions))]
@@ -275,6 +276,7 @@ public enum GroupRenderType
 [JsonSubType("GroupElement", typeof(GroupElementRenderer))]
 [JsonSubType("Grid", typeof(GridRenderer))]
 [JsonSubType("Flex", typeof(FlexRenderer))]
+[JsonSubType("SelectChild", typeof(SelectChildRenderer))]
 public abstract record GroupRenderOptions(
     [property: SchemaOptions(typeof(GroupRenderType))]
     [property: DefaultValue("Standard")]
@@ -301,6 +303,9 @@ public record GridRenderer(int? Columns) : GroupRenderOptions(GroupRenderType.Gr
 
 public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)] object Value)
     : GroupRenderOptions(GroupRenderType.GroupElement.ToString());
+
+public record SelectChildRenderer(EntityExpression ChildIndexExpression)
+    : GroupRenderOptions(GroupRenderType.SelectChild.ToString());
 
 [JsonString]
 public enum AdornmentPlacement
