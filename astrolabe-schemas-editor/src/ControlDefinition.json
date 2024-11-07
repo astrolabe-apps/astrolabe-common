@@ -61,6 +61,14 @@
                 "renderOptions": {
                   "type": "Checkbox"
                 }
+              },
+              {
+                "type": "Data",
+                "title": "Display Only",
+                "field": "displayOnly",
+                "renderOptions": {
+                  "type": "Checkbox"
+                }
               }
             ],
             "field": "groupOptions",
@@ -192,6 +200,66 @@
                 "renderOptions": {
                   "type": "Standard"
                 }
+              },
+              {
+                "type": "Data",
+                "title": "Display Only",
+                "field": "displayOnly",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Child Index Expression",
+                "field": "childIndexExpression",
+                "children": [
+                  {
+                    "type": "Data",
+                    "title": "Type",
+                    "field": "type",
+                    "required": true,
+                    "renderOptions": {
+                      "type": "Standard"
+                    }
+                  },
+                  {
+                    "type": "Data",
+                    "title": "Expression",
+                    "field": "expression",
+                    "required": true,
+                    "renderOptions": {
+                      "type": "Standard"
+                    }
+                  },
+                  {
+                    "type": "Data",
+                    "title": "Field",
+                    "field": "field",
+                    "required": true,
+                    "renderOptions": {
+                      "type": "Standard"
+                    }
+                  },
+                  {
+                    "type": "Data",
+                    "title": "Value",
+                    "field": "value",
+                    "required": true,
+                    "renderOptions": {
+                      "type": "Standard"
+                    }
+                  },
+                  {
+                    "type": "Data",
+                    "title": "User Match",
+                    "field": "userMatch",
+                    "required": true,
+                    "renderOptions": {
+                      "type": "Standard"
+                    }
+                  }
+                ]
               }
             ],
             "renderOptions": {
@@ -328,8 +396,7 @@
                     "type": "Disabled",
                     "expr": {
                       "type": "Data",
-                      "field": "noAdd",
-                      "value": false
+                      "field": "noAdd"
                     }
                   }
                 ],
@@ -516,6 +583,58 @@
           },
           {
             "type": "Data",
+            "title": "Child Index Expression",
+            "field": "childIndexExpression",
+            "children": [
+              {
+                "type": "Data",
+                "title": "Type",
+                "field": "type",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Expression",
+                "field": "expression",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Field",
+                "field": "field",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Value",
+                "field": "value",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "User Match",
+                "field": "userMatch",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              }
+            ]
+          },
+          {
+            "type": "Data",
             "title": "Direction",
             "field": "direction",
             "renderOptions": {
@@ -588,8 +707,47 @@
       }
     ],
     "groupOptions": {
-      "type": "Grid",
-      "columns": 3
+      "type": "Flex",
+      "childStyleClass": "w-35"
+    }
+  },
+  {
+    "type": "Data",
+    "title": "Group Styles",
+    "children": [
+      {
+        "type": "Data",
+        "title": "Child Style Class",
+        "field": "childStyleClass",
+        "renderOptions": {
+          "type": "Standard"
+        }
+      },
+      {
+        "type": "Data",
+        "title": "Child Label Class",
+        "field": "childLabelClass",
+        "renderOptions": {
+          "type": "Standard"
+        }
+      },
+      {
+        "type": "Data",
+        "title": "Child Layout Class",
+        "field": "childLayoutClass",
+        "renderOptions": {
+          "type": "Standard"
+        }
+      }
+    ],
+    "field": "groupOptions",
+    "hideTitle": true,
+    "renderOptions": {
+      "type": "Group",
+      "groupOptions": {
+        "type": "Flex",
+        "childStyleClass": "w-35"
+      }
     }
   },
   {
