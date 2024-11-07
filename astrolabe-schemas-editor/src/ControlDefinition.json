@@ -708,7 +708,8 @@
     ],
     "groupOptions": {
       "type": "Flex",
-      "childStyleClass": "w-35"
+      "childStyleClass": "",
+      "childLayoutClass": "grow"
     }
   },
   {
@@ -746,9 +747,12 @@
       "type": "Group",
       "groupOptions": {
         "type": "Flex",
-        "childStyleClass": "w-35"
+        "childStyleClass": "",
+        "childLayoutClass": "grow"
       }
-    }
+    },
+    "styleClass": "",
+    "layoutClass": ""
   },
   {
     "type": "Group",
