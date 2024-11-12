@@ -124,6 +124,7 @@ export function CheckButtons({
                 ),
                 selOrUnsel,
               )}
+              onClick={() => !readonly && setChecked(control, o, !checked)}
             >
               <div className={classes.entryClass}>
                 <input
