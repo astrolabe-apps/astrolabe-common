@@ -146,6 +146,8 @@ public enum DataRenderType
 [JsonSubType("Textfield", typeof(TextfieldRenderOptions))]
 [JsonSubType("Jsonata", typeof(JsonataRenderOptions))]
 [JsonSubType("Array", typeof(ArrayRenderOptions))]
+[JsonSubType("Radio", typeof(RadioButtonRenderOptions))]
+[JsonSubType("CheckList", typeof(CheckListRenderOptions))]
 public abstract record RenderOptions(
     [property: DefaultValue("Standard")]
     [property: SchemaOptions(typeof(DataRenderType))]
@@ -171,6 +173,18 @@ public record ArrayRenderOptions(
     bool? NoReorder,
     RenderOptions? ChildOptions
 ) : RenderOptions(DataRenderType.Array.ToString());
+
+public record RadioButtonRenderOptions(
+    string? EntryWrapperClass,
+    string? SelectedClass,
+    string? NotSelectedClass
+) : RenderOptions(DataRenderType.Radio.ToString());
+
+public record CheckListRenderOptions(
+    string? EntryWrapperClass,
+    string? SelectedClass,
+    string? NotSelectedClass
+) : RenderOptions(DataRenderType.CheckList.ToString());
 
 public record TextfieldRenderOptions(string? Placeholder, bool? Multiline)
     : RenderOptions(DataRenderType.Textfield.ToString());

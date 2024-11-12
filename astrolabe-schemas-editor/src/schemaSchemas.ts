@@ -760,6 +760,9 @@ export interface RenderOptionsForm {
   noRemove: boolean | null;
   noReorder: boolean | null;
   childOptions: RenderOptionsForm | null;
+  entryWrapperClass: string | null;
+  selectedClass: string | null;
+  notSelectedClass: string | null;
   placeholder: string | null;
   multiline: boolean | null;
   groupOptions: GroupRenderOptionsForm;
@@ -900,6 +903,21 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     treeChildren: true,
     onlyForTypes: ["Array"],
     displayName: "Child Options",
+  }),
+  entryWrapperClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Radio", "CheckList"],
+    displayName: "Entry Wrapper Class",
+  }),
+  selectedClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Radio", "CheckList"],
+    displayName: "Selected Class",
+  }),
+  notSelectedClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Radio", "CheckList"],
+    displayName: "Not Selected Class",
   }),
   placeholder: makeScalarField({
     type: FieldType.String,

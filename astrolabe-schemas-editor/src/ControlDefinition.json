@@ -260,6 +260,30 @@
                     }
                   }
                 ]
+              },
+              {
+                "type": "Data",
+                "title": "Child Style Class",
+                "field": "childStyleClass",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Child Layout Class",
+                "field": "childLayoutClass",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Child Label Class",
+                "field": "childLabelClass",
+                "renderOptions": {
+                  "type": "Standard"
+                }
               }
             ],
             "renderOptions": {
@@ -710,6 +734,45 @@
       "type": "Flex",
       "childStyleClass": "",
       "childLayoutClass": "grow"
+    }
+  },
+  {
+    "type": "Data",
+    "title": "Render Option Styles",
+    "children": [
+      {
+        "type": "Data",
+        "title": "Entry Wrapper Class",
+        "field": "entryWrapperClass",
+        "renderOptions": {
+          "type": "Standard"
+        }
+      },
+      {
+        "type": "Data",
+        "title": "Selected Class",
+        "field": "selectedClass",
+        "renderOptions": {
+          "type": "Standard"
+        }
+      },
+      {
+        "type": "Data",
+        "title": "Not Selected Class",
+        "field": "notSelectedClass",
+        "renderOptions": {
+          "type": "Standard"
+        }
+      }
+    ],
+    "field": "renderOptions",
+    "hideTitle": true,
+    "renderOptions": {
+      "type": "Group",
+      "groupOptions": {
+        "type": "Flex",
+        "childLayoutClass": "grow"
+      }
     }
   },
   {

@@ -9,6 +9,7 @@ import {
   FieldOption,
   findField,
   GroupRenderOptions,
+  isCheckEntryClasses,
   isCompoundField,
   isDataControl,
   isDataControlDefinition,
@@ -17,6 +18,7 @@ import {
   isGroupControl,
   isGroupControlsDefinition,
   isScalarField,
+  RadioButtonRenderOptions,
   SchemaField,
   SchemaInterface,
 } from "./types";
@@ -397,6 +399,10 @@ export function getAllReferencedClasses(
     getAllReferencedClasses(x, collectExtra),
   );
   const go = getGroupClassOverrides(c);
+  const { entryWrapperClass, selectedClass, notSelectedClass } =
+    isDataControlDefinition(c) && isCheckEntryClasses(c.renderOptions)
+      ? c.renderOptions
+      : {};
   const tc = clsx(
     [
       c.styleClass,
@@ -404,6 +410,9 @@ export function getAllReferencedClasses(
       c.labelClass,
       ...Object.values(go),
       ...(collectExtra?.(c) ?? []),
+      entryWrapperClass,
+      selectedClass,
+      notSelectedClass,
     ].map(getOverrideClass),
   );
   if (childClasses && !tc) return childClasses;

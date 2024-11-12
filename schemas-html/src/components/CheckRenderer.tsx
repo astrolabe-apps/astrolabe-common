@@ -6,24 +6,30 @@ import {
 } from "@react-typed-forms/core";
 import React, { ReactNode } from "react";
 import {
+  CheckEntryClasses,
   createDataRenderer,
   DataRenderType,
   FieldOption,
   fieldOptionAdornment,
-  rendererClass
+  rendererClass,
 } from "@react-typed-forms/schemas";
+import clsx from "clsx";
 
 export interface CheckRendererOptions {
   className?: string;
   entryClass?: string;
   checkClass?: string;
   labelClass?: string;
+  entryWrapperClass?: string;
+  selectedClass?: string;
+  notSelectedClass?: string;
 }
 export function createRadioRenderer(options: CheckRendererOptions = {}) {
   return createDataRenderer(
     (p) => (
       <CheckButtons
-        {...options}
+        classes={options}
+        controlClasses={p.renderOptions as CheckEntryClasses}
         {...p}
         className={rendererClass(p.className, options.className)}
         isChecked={(control, o) => control.value == o.value}
@@ -43,7 +49,8 @@ export function createCheckListRenderer(options: CheckRendererOptions = {}) {
   return createDataRenderer(
     (p) => (
       <CheckButtons
-        {...options}
+        classes={options}
+        controlClasses={p.renderOptions as CheckEntryClasses}
         {...p}
         className={rendererClass(p.className, options.className)}
         isChecked={(control, o) => {
@@ -70,9 +77,8 @@ export interface CheckButtonsProps {
   className?: string;
   options?: FieldOption[] | null;
   control: Control<any>;
-  entryClass?: string;
-  checkClass?: string;
-  labelClass?: string;
+  classes: CheckRendererOptions;
+  controlClasses?: CheckEntryClasses;
   readonly?: boolean;
   type: "checkbox" | "radio";
   isChecked: (c: Control<any>, o: FieldOption) => boolean;
@@ -83,16 +89,15 @@ export interface CheckButtonsProps {
 export function CheckButtons({
   control,
   options,
-  labelClass,
-  checkClass,
   readonly,
-  entryClass,
   className,
   id,
   type,
   isChecked,
   setChecked,
   entryAdornment,
+  classes,
+  controlClasses = {},
 }: CheckButtonsProps) {
   const { disabled } = control;
   const name = "r" + control.uniqueId;
@@ -101,12 +106,29 @@ export function CheckButtons({
       <RenderArrayElements array={options?.filter((x) => x.value != null)}>
         {(o, i) => {
           const checked = useComputed(() => isChecked(control, o)).value;
+          const selOrUnsel = checked
+            ? rendererClass(
+                controlClasses?.selectedClass,
+                classes.selectedClass,
+              )
+            : rendererClass(
+                controlClasses?.notSelectedClass,
+                classes.notSelectedClass,
+              );
           return (
-            <>
-              <div key={i} className={entryClass}>
+            <div
+              className={clsx(
+                rendererClass(
+                  controlClasses?.entryWrapperClass,
+                  classes.entryWrapperClass,
+                ),
+                selOrUnsel,
+              )}
+            >
+              <div className={classes.entryClass}>
                 <input
                   id={name + "_" + i}
-                  className={checkClass}
+                  className={classes.checkClass}
                   type={type}
                   name={name}
                   readOnly={readonly}
@@ -116,12 +138,12 @@ export function CheckButtons({
                     !readonly && setChecked(control, o, x.target.checked);
                   }}
                 />
-                <label className={labelClass} htmlFor={name + "_" + i}>
+                <label className={classes.labelClass} htmlFor={name + "_" + i}>
                   {o.name}
                 </label>
               </div>
               {entryAdornment?.(o, i, checked)}
-            </>
+            </div>
           );
         }}
       </RenderArrayElements>

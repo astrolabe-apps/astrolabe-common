@@ -261,7 +261,14 @@ export interface TextfieldRenderOptions extends RenderOptions {
   multiline?: boolean | null;
 }
 
-export interface RadioButtonRenderOptions extends RenderOptions {
+export interface CheckEntryClasses {
+  entryWrapperClass?: string | null;
+  selectedClass?: string | null;
+  notSelectedClass?: string | null;
+}
+export interface RadioButtonRenderOptions
+  extends RenderOptions,
+    CheckEntryClasses {
   type: DataRenderType.Radio;
 }
 
@@ -333,7 +340,9 @@ export type ArrayActionOptions = Pick<
   | "noReorder"
 > & { readonly?: boolean; disabled?: boolean; designMode?: boolean };
 
-export interface CheckListRenderOptions extends RenderOptions {
+export interface CheckListRenderOptions
+  extends RenderOptions,
+    CheckEntryClasses {
   type: DataRenderType.CheckList;
 }
 
@@ -603,3 +612,15 @@ export type ControlActionHandler = (
   actionData: any,
   ctx: ControlDataContext,
 ) => (() => void) | undefined;
+
+export function isCheckEntryClasses(
+  options?: RenderOptions | null,
+): options is CheckEntryClasses & RenderOptions {
+  switch (options?.type) {
+    case DataRenderType.Radio:
+    case DataRenderType.CheckList:
+      return true;
+    default:
+      return false;
+  }
+}
