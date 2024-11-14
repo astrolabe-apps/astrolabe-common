@@ -617,7 +617,7 @@ export function defaultDataProps({
   const className = rendererClass(styleClass, definition.styleClass);
   const displayOnly = !!formOptions.displayOnly;
   const required = !!definition.required && !displayOnly;
-  const fieldOptions = schemaInterface.getOptions(field);
+  const fieldOptions = schemaInterface.getDataOptions(dataNode);
   const _allowed = allowedOptions?.value ?? [];
   const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
   return {
@@ -633,10 +633,10 @@ export function defaultDataProps({
             .map((x) =>
               typeof x === "object"
                 ? x
-                : fieldOptions?.find((y) => y.value == x) ?? {
+                : (fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  },
+                  }),
             )
             .filter((x) => x != null)
         : fieldOptions,

@@ -79,6 +79,8 @@ export interface SchemaInterface {
   ): string | undefined;
   controlLength(field: SchemaField, control: Control<any>): number;
   valueLength(field: SchemaField, value: any): number;
+  getDataOptions(node: SchemaDataNode): FieldOption[] | null | undefined;
+  getNodeOptions(node: SchemaNode): FieldOption[] | null | undefined;
   getOptions(field: SchemaField): FieldOption[] | undefined | null;
   getFilterOptions(
     array: SchemaDataNode,
