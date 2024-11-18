@@ -10,15 +10,21 @@ export function asArray(v: unknown): unknown[] {
   return Array.isArray(v) ? v : [v];
 }
 
-export function valuesToString(value: ValueExpr[]): ValueExpr {
+export function valuesToString(
+  value: ValueExpr[],
+  after: (s: string) => string,
+): ValueExpr {
   const allVals = value.map(toString);
-  return valueExprWithDeps(allVals.map((x) => x.value).join(""), allVals);
+  return valueExprWithDeps(
+    after(allVals.map((x) => x.value).join("")),
+    allVals,
+  );
 }
 
 export function toString(value: ValueExpr): ValueExpr {
   const v = value.value;
   if (typeof v === "object") {
-    if (Array.isArray(v)) return valuesToString(v);
+    if (Array.isArray(v)) return valuesToString(v, (x) => x);
     if (v == null) return { ...value, value: "null" };
     return { ...value, value: JSON.stringify(v) };
   }

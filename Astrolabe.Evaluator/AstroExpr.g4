@@ -11,7 +11,7 @@ expr
     : primaryExpr # Primary
     | expr '[' expr ']' # BinOp
     | expr '.' expr # BinOp
-    | expr ('*'|'/') expr # BinOp
+    | expr ('*'|'/'|'%') expr # BinOp
     | expr ('+'|'-') expr # BinOp
     | expr ('<' | '>' | '<=' | '>=') expr # BinOp
     | expr ('=' | '!=') expr # BinOp

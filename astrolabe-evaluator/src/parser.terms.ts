@@ -15,5 +15,5 @@ export const
   UnaryExpression = 13,
   BinaryExpression = 14,
   Call = 16,
-  ParenthesizedExpression = 30,
-  ArgList = 33
+  ParenthesizedExpression = 31,
+  ArgList = 34

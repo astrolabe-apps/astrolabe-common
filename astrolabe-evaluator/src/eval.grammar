@@ -61,7 +61,7 @@ BinaryExpression {
   expression !and @specialize[@name=Call]<Identifier, "and"> expression |
   expression !or @specialize[@name=Call]<Identifier, "or"> expression |
   expression !map call<"."> expression |
-  expression !times (call<"/"> | call<"*">) expression |
+  expression !times (call<"/"> | call<"*"> | call<"%">) expression |
   expression !plus (call<"+"> | call<"-">) expression |
   expression !rel (call<"<"> | call<">"> | call<"="> | call<"!="> | call<"<="> | call<">=">) expression |
   expression !filter call<"["> expression "]" |

@@ -4,17 +4,20 @@ namespace Astrolabe.Evaluator.Functions;
 
 public static class DefaultFunctions
 {
-    public static ValueExpr ExprValuesToString(IEnumerable<ValueExpr> values)
+    public static ValueExpr ExprValuesToString(
+        IEnumerable<ValueExpr> values,
+        Func<string, string> after
+    )
     {
         var allVals = values.Select(ExprValueToString).ToList();
-        return ValueExpr.WithDeps(string.Join("", allVals.Select(x => x.Value)), allVals);
+        return ValueExpr.WithDeps(after(string.Join("", allVals.Select(x => x.Value))), allVals);
     }
 
     public static ValueExpr ExprValueToString(ValueExpr value)
     {
         return value.Value switch
         {
-            ArrayValue av => ExprValuesToString(av.Values),
+            ArrayValue av => ExprValuesToString(av.Values, x => x),
             var o
                 => value with
                 {
@@ -109,9 +112,10 @@ public static class DefaultFunctions
         }
     );
 
-    private static readonly FunctionHandler StringOp = FunctionHandler.DefaultEvalArgs(
-        (_, args) => ExprValuesToString(args)
-    );
+    private static FunctionHandler StringOp(Func<string, string> after)
+    {
+        return FunctionHandler.DefaultEvalArgs((_, args) => ExprValuesToString(args, after));
+    }
 
     public static FunctionHandler ArrayOp(Func<List<ValueExpr>, ValueExpr?, ValueExpr> arrayFunc)
     {
@@ -146,6 +150,7 @@ public static class DefaultFunctions
             { "-", NumberOp((d1, d2) => d1 - d2, (l1, l2) => l1 - l2) },
             { "*", NumberOp((d1, d2) => d1 * d2, (l1, l2) => l1 * l2) },
             { "/", NumberOp((d1, d2) => d1 / d2, (l1, l2) => (double)l1 / l2) },
+            { "%", NumberOp((d1, d2) => d1 % d2, (l1, l2) => (double)l1 % l2) },
             { "=", ComparisonFunc(v => v == 0) },
             { "!=", ComparisonFunc(v => v != 0) },
             { "<", ComparisonFunc(x => x < 0) },
@@ -200,7 +205,9 @@ public static class DefaultFunctions
                     }
                 )
             },
-            { "string", StringOp },
+            { "string", StringOp(x => x) },
+            { "lower", StringOp(x => x.ToLower()) },
+            { "upper", StringOp(x => x.ToUpper()) },
             { "which", new FunctionHandler(WhichFunction) },
             {
                 "elem",

@@ -25,9 +25,11 @@ import {
 import { allElems, valuesToString } from "./values";
 import { printExpr } from "./printExpr";
 
-const stringFunction = functionValue((e, { args }) =>
-  mapEnv(evaluateAll(e, args), (x) => valuesToString(x)),
-);
+function stringFunction(after: (s: string) => string) {
+  return functionValue((e, { args }) =>
+    mapEnv(evaluateAll(e, args), (x) => valuesToString(x, after)),
+  );
+}
 
 const flatFunction = functionValue((e, call) => {
   const allArgs = mapAllEnv(e, call.args, doEvaluate);
@@ -272,6 +274,7 @@ const defaultFunctions = {
   "-": binFunction((a, b) => a - b),
   "*": binFunction((a, b) => a * b),
   "/": binFunction((a, b) => a / b),
+  "%": binFunction((a, b) => a % b),
   ">": compareFunction((x) => x > 0),
   "<": compareFunction((x) => x < 0),
   "<=": compareFunction((x) => x <= 0),
@@ -282,7 +285,9 @@ const defaultFunctions = {
     x.length == 2 ? (x[0].value == null ? x[1] : x[0]) : NullExpr,
   ),
   array: flatFunction,
-  string: stringFunction,
+  string: stringFunction((x) => x),
+  lower: stringFunction((x) => x.toLowerCase()),
+  upper: stringFunction((x) => x.toUpperCase()),
   first: firstFunction("first", (x, v, r) =>
     r.value === true ? v[x] : undefined,
   ),
