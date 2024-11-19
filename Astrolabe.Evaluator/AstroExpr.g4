@@ -43,7 +43,7 @@ objectField
     ;
 
 objectLiteral
-    : '{' objectField* '}'
+    : '{' objectField? (',' objectField)* '}'
     ;
     
 arrayLiteral
