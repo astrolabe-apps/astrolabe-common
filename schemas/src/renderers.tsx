@@ -1,4 +1,4 @@
-import { CSSProperties, ReactElement, ReactNode } from "react";
+import { ReactElement, ReactNode } from "react";
 import {
   ActionRendererProps,
   AdornmentProps,
@@ -20,7 +20,7 @@ import {
   ControlAdornmentType,
   IconAdornment,
   SetFieldAdornment,
-} from "./types";
+} from "./controlDefinition";
 
 export interface DefaultRenderers {
   data: DataRendererRegistration;

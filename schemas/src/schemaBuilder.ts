@@ -2,10 +2,10 @@ import {
   CompoundField,
   FieldOption,
   FieldType,
+  isCompoundField,
   SchemaField,
   SchemaMap,
-  isCompoundField,
-} from "./types";
+} from "./schemaField";
 
 export type AllowedSchema<T> = T extends string
   ? SchemaField & {

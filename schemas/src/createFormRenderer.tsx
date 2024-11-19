@@ -26,7 +26,7 @@ import {
   RendererRegistration,
   VisibilityRendererRegistration,
 } from "./renderers";
-import { DataRenderType } from "./types";
+import { DataRenderType } from "./controlDefinition";
 
 export function createFormRenderer(
   customRenderers: RendererRegistration[] = [],

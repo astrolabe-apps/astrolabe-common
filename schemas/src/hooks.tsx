@@ -1,15 +1,11 @@
 import {
   ControlDefinition,
-  DataExpression,
-  DataMatchExpression,
   DynamicPropertyType,
-  EntityExpression,
-  ExpressionType,
   isDataControlDefinition,
-  JsonataExpression,
-  NotEmptyExpression,
-  SchemaInterface,
-} from "./types";
+  ControlDataContext,
+  getRootDataNode,
+  getJsonPath,
+} from "./controlDefinition";
 import React, { useEffect, useMemo, useRef } from "react";
 import {
   addAfterChangesCallback,
@@ -24,26 +20,30 @@ import {
 } from "@react-typed-forms/core";
 
 import {
-  ControlDataContext,
   defaultValueForField,
-  DynamicHookGenerator,
   elementValueForField,
   getDisplayOnlyOptions,
-  HookDep,
   isControlDisabled,
   isControlReadonly,
   JsonPath,
   jsonPathString,
-  toDepString,
 } from "./util";
 import jsonata from "jsonata";
 import { v4 as uuidv4 } from "uuid";
+import { DynamicHookGenerator, HookDep, toDepString } from "./dynamicHooks";
 import {
-  getJsonPath,
-  getRootDataNode,
   schemaDataForFieldRef,
   SchemaDataNode,
-} from "./treeNodes";
+  SchemaInterface,
+} from "./schemaField";
+import {
+  DataExpression,
+  DataMatchExpression,
+  EntityExpression,
+  ExpressionType,
+  JsonataExpression,
+  NotEmptyExpression,
+} from "./entityExpression";
 
 export type EvalExpressionHook<A = any> = DynamicHookGenerator<
   Control<A | undefined>,

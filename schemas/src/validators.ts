@@ -1,27 +1,29 @@
 import {
   ControlDefinition,
   DataControlDefinition,
-  DataRenderType,
-  DateComparison,
-  DateValidator,
-  FieldType,
   isDataControlDefinition,
-  JsonataValidator,
-  LengthValidator,
-  SchemaField,
-  SchemaValidator,
-  ValidationMessageType,
-  ValidatorType,
-} from "./types";
+  ControlDataContext,
+  getRootDataNode,
+  getJsonPath,
+} from "./controlDefinition";
 import {
   Control,
   useValidator,
   useValueChangeEffect,
 } from "@react-typed-forms/core";
 import { useCallback } from "react";
-import { ControlDataContext, makeHookDepString, useUpdatedRef } from "./util";
+import { useUpdatedRef } from "./util";
 import { useJsonataExpression } from "./hooks";
-import { getJsonPath, getRootDataNode } from "./treeNodes";
+import { makeHookDepString } from "./dynamicHooks";
+import {
+  DateComparison,
+  DateValidator,
+  JsonataValidator,
+  LengthValidator,
+  SchemaValidator,
+  ValidatorType,
+} from "./schemaValidator";
+import { FieldType, SchemaField, ValidationMessageType } from "./schemaField";
 
 interface ValidationHookContext {
   hiddenControl: Control<boolean | null | undefined>;

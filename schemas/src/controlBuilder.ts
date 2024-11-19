@@ -1,40 +1,44 @@
 import {
   AccordionAdornment,
+  ActionControlDefinition,
   CheckListRenderOptions,
   ControlAdornmentType,
   ControlDefinition,
+  ControlDefinitionType,
   DataControlDefinition,
-  DataExpression,
-  DataMatchExpression,
   DataRenderType,
-  DateValidator,
   DisplayControlDefinition,
   DisplayDataType,
   DisplayOnlyRenderOptions,
   DynamicProperty,
   DynamicPropertyType,
-  EntityExpression,
-  ExpressionType,
   GroupedControlsDefinition,
   GroupRenderType,
   HtmlDisplay,
-  JsonataExpression,
   JsonataRenderOptions,
-  JsonataValidator,
-  LengthValidator,
   RadioButtonRenderOptions,
   RenderOptions,
-  SchemaField,
-  SchemaMap,
   TextDisplay,
   TextfieldRenderOptions,
-  ValidatorType,
-} from "./types";
+} from "./controlDefinition";
 import { ActionRendererProps } from "./controlRender";
 import { useMemo } from "react";
 import { addMissingControls } from "./util";
 import { mergeFields, resolveSchemas } from "./schemaBuilder";
-import { ActionControlDefinition, ControlDefinitionType } from "./types";
+import {
+  DateValidator,
+  JsonataValidator,
+  LengthValidator,
+  ValidatorType,
+} from "./schemaValidator";
+import { SchemaField, SchemaMap } from "./schemaField";
+import {
+  DataExpression,
+  DataMatchExpression,
+  EntityExpression,
+  ExpressionType,
+  JsonataExpression,
+} from "./entityExpression";
 
 export function dataControl(
   field: string,

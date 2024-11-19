@@ -1,51 +1,51 @@
 import {
-  CompoundField,
   ControlActionHandler,
   ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
   DataRenderType,
   DisplayOnlyRenderOptions,
-  FieldOption,
-  findField,
   GroupRenderOptions,
   isCheckEntryClasses,
-  isCompoundField,
   isDataControl,
   isDataControlDefinition,
   isDataGroupRenderer,
   isDisplayOnlyRenderer,
   isGroupControl,
   isGroupControlsDefinition,
-  isScalarField,
-  RadioButtonRenderOptions,
-  SchemaField,
-  SchemaInterface,
-} from "./types";
-import { MutableRefObject, useCallback, useRef } from "react";
+} from "./controlDefinition";
+import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
-import { SchemaDataNode } from "./treeNodes";
+import {
+  CompoundField,
+  FieldOption,
+  findField,
+  isCompoundField,
+  isScalarField,
+  SchemaField,
+} from "./schemaField";
 
+/**
+ * Interface representing the classes for a control.
+ */
 export interface ControlClasses {
   styleClass?: string;
   layoutClass?: string;
   labelClass?: string;
 }
 
+/**
+ * Type representing a JSON path, which can be a string or a number.
+ */
 export type JsonPath = string | number;
 
-export interface FormContextData {
-  option?: FieldOption;
-  optionSelected?: boolean;
-}
-
-export interface ControlDataContext {
-  schemaInterface: SchemaInterface;
-  dataNode: SchemaDataNode | undefined;
-  parentNode: SchemaDataNode;
-  formData: FormContextData;
-}
-
+/**
+ * Applies default values to the given record based on the provided schema fields.
+ * @param v - The record to apply default values to.
+ * @param fields - The schema fields to use for applying default values.
+ * @param doneSet - A set to keep track of processed records.
+ * @returns The record with default values applied.
+ */
 export function applyDefaultValues(
   v: Record<string, any> | undefined,
   fields: SchemaField[],
@@ -69,6 +69,15 @@ export function applyDefaultValues(
   return out;
 }
 
+/**
+ * Applies default values to a specific field based on the provided schema field.
+ * @param v - The value to apply default values to.
+ * @param field - The schema field to use for applying default values.
+ * @param parent - The parent schema fields.
+ * @param notElement - Flag indicating if the field is not an element.
+ * @param doneSet - A set to keep track of processed records.
+ * @returns The value with default values applied.
+ */
 export function applyDefaultForField(
   v: any,
   field: SchemaField,
@@ -92,12 +101,24 @@ export function applyDefaultForField(
   return defaultValueForField(field);
 }
 
+/**
+ * Returns the default values for the provided schema fields.
+ * @param fields - The schema fields to get default values for.
+ * @returns The default values for the schema fields.
+ */
 export function defaultValueForFields(fields: SchemaField[]): any {
   return Object.fromEntries(
     fields.map((x) => [x.field, defaultValueForField(x)]),
   );
 }
 
+/**
+ * Returns the default value for a specific schema field.
+ * @param sf - The schema field to get the default value for.
+ * @param required - Flag indicating if the field is required.
+ * @param forceNotNull - Flag indicating if the field should not be null.
+ * @returns The default value for the schema field.
+ */
 export function defaultValueForField(
   sf: SchemaField,
   required?: boolean | null,
@@ -122,6 +143,11 @@ export function defaultValueForField(
   return undefined;
 }
 
+/**
+ * Returns the element value for a specific schema field.
+ * @param sf - The schema field to get the element value for.
+ * @returns The element value for the schema field.
+ */
 export function elementValueForField(sf: SchemaField): any {
   if (isCompoundField(sf)) {
     return defaultValueForFields(sf.children);
@@ -129,6 +155,12 @@ export function elementValueForField(sf: SchemaField): any {
   return sf.defaultValue;
 }
 
+/**
+ * Finds a scalar field in the provided schema fields.
+ * @param fields - The schema fields to search in.
+ * @param field - The field name to search for.
+ * @returns The found scalar field, or undefined if not found.
+ */
 export function findScalarField(
   fields: SchemaField[],
   field: string,
@@ -136,6 +168,12 @@ export function findScalarField(
   return findField(fields, field);
 }
 
+/**
+ * Finds a compound field in the provided schema fields.
+ * @param fields - The schema fields to search in.
+ * @param field - The field name to search for.
+ * @returns The found compound field, or undefined if not found.
+ */
 export function findCompoundField(
   fields: SchemaField[],
   field: string,
@@ -143,18 +181,39 @@ export function findCompoundField(
   return findField(fields, field) as CompoundField | undefined;
 }
 
+/**
+ * Checks if a field has a specific tag.
+ * @param field - The field to check.
+ * @param tag - The tag to check for.
+ * @returns True if the field has the tag, false otherwise.
+ */
 export function fieldHasTag(field: SchemaField, tag: string) {
   return Boolean(field.tags?.includes(tag));
 }
 
+/**
+ * Returns the display name for a specific field.
+ * @param field - The field to get the display name for.
+ * @returns The display name for the field.
+ */
 export function fieldDisplayName(field: SchemaField) {
   return field.displayName ?? field.field;
 }
 
+/**
+ * Checks if an object has options.
+ * @param o - The object to check.
+ * @returns True if the object has options, false otherwise.
+ */
 export function hasOptions(o: { options: FieldOption[] | undefined | null }) {
   return (o.options?.length ?? 0) > 0;
 }
 
+/**
+ * Returns the default control definition for a specific schema field.
+ * @param sf - The schema field to get the default control definition for.
+ * @returns The default control definition for the schema field.
+ */
 export function defaultControlForField(sf: SchemaField): DataControlDefinition {
   if (isCompoundField(sf)) {
     return {
@@ -178,6 +237,13 @@ export function defaultControlForField(sf: SchemaField): DataControlDefinition {
   }
   throw "Unknown schema field";
 }
+
+/**
+ * Finds a referenced control in the provided control definition.
+ * @param field - The field name to search for.
+ * @param control - The control definition to search in.
+ * @returns The found control definition, or undefined if not found.
+ */
 function findReferencedControl(
   field: string,
   control: ControlDefinition,
@@ -191,6 +257,12 @@ function findReferencedControl(
   return undefined;
 }
 
+/**
+ * Finds a referenced control in an array of control definitions.
+ * @param field - The field name to search for.
+ * @param controls - The array of control definitions to search in.
+ * @returns The found control definition, or undefined if not found.
+ */
 function findReferencedControlInArray(
   field: string,
   controls: ControlDefinition[],
@@ -202,6 +274,12 @@ function findReferencedControlInArray(
   return undefined;
 }
 
+/**
+ * Finds control definitions for a specific compound field.
+ * @param compound - The compound field to search for.
+ * @param definition - The control definition to search in.
+ * @returns An array of found control definitions.
+ */
 export function findControlsForCompound(
   compound: CompoundField,
   definition: ControlDefinition,
@@ -223,10 +301,20 @@ export function findControlsForCompound(
   return [];
 }
 
+/**
+ * Interface representing a control group lookup.
+ */
 export interface ControlGroupLookup {
   groups: ControlDefinition[];
   children: Record<string, ControlGroupLookup>;
 }
+
+/**
+ * Finds compound groups in the provided schema fields and control definitions.
+ * @param fields - The schema fields to search in.
+ * @param controls - The control definitions to search in.
+ * @returns A record of found compound groups.
+ */
 export function findCompoundGroups(
   fields: SchemaField[],
   controls: ControlDefinition[],
@@ -250,6 +338,12 @@ export function findCompoundGroups(
   );
 }
 
+/**
+ * Checks if a field exists in the provided control group lookup.
+ * @param field - The field to check.
+ * @param lookup - The control group lookup to check in.
+ * @returns An array of tuples containing the field and the control group lookup.
+ */
 export function existsInGroups(
   field: SchemaField,
   lookup: ControlGroupLookup,
@@ -270,6 +364,11 @@ export function existsInGroups(
   return [];
 }
 
+/**
+ * Finds non-data groups in the provided control definitions.
+ * @param controls - The control definitions to search in.
+ * @returns An array of found non-data groups.
+ */
 export function findNonDataGroups(
   controls: ControlDefinition[],
 ): ControlDefinition[] {
@@ -280,10 +379,21 @@ export function findNonDataGroups(
   );
 }
 
+/**
+ * Clones the children of a control definition.
+ * @param c - The control definition to clone.
+ * @returns The cloned control definition.
+ */
 function cloneChildren(c: ControlDefinition): ControlDefinition {
   return { ...c, children: c.children?.map(cloneChildren) };
 }
 
+/**
+ * Adds missing controls to the provided control definitions based on the schema fields.
+ * @param fields - The schema fields to use for adding missing controls.
+ * @param controls - The control definitions to add missing controls to.
+ * @returns The control definitions with missing controls added.
+ */
 export function addMissingControls(
   fields: SchemaField[],
   controls: ControlDefinition[],
@@ -316,20 +426,41 @@ export function addMissingControls(
   });
   return controls;
 }
+
+/**
+ * Custom hook to use an updated reference.
+ * @param a - The value to create a reference for.
+ * @returns A mutable reference object.
+ */
 export function useUpdatedRef<A>(a: A): MutableRefObject<A> {
   const r = useRef(a);
   r.current = a;
   return r;
 }
 
+/**
+ * Checks if a control definition is readonly.
+ * @param c - The control definition to check.
+ * @returns True if the control definition is readonly, false otherwise.
+ */
 export function isControlReadonly(c: ControlDefinition): boolean {
   return isDataControl(c) && !!c.readonly;
 }
 
+/**
+ * Checks if a control definition is disabled.
+ * @param c - The control definition to check.
+ * @returns True if the control definition is disabled, false otherwise.
+ */
 export function isControlDisabled(c: ControlDefinition): boolean {
   return isDataControl(c) && !!c.disabled;
 }
 
+/**
+ * Returns the display-only render options for a control definition.
+ * @param d - The control definition to get the display-only render options for.
+ * @returns The display-only render options, or undefined if not applicable.
+ */
 export function getDisplayOnlyOptions(
   d: ControlDefinition,
 ): DisplayOnlyRenderOptions | undefined {
@@ -340,6 +471,13 @@ export function getDisplayOnlyOptions(
     : undefined;
 }
 
+/**
+ * Cleans data for a schema based on the provided schema fields.
+ * @param v - The data to clean.
+ * @param fields - The schema fields to use for cleaning the data.
+ * @param removeIfDefault - Flag indicating if default values should be removed.
+ * @returns The cleaned data.
+ */
 export function cleanDataForSchema(
   v: { [k: string]: any } | undefined,
   fields: SchemaField[],
@@ -391,6 +529,12 @@ export function cleanDataForSchema(
   return out;
 }
 
+/**
+ * Returns all referenced classes for a control definition.
+ * @param c - The control definition to get the referenced classes for.
+ * @param collectExtra - Optional function to collect extra classes.
+ * @returns An array of referenced classes.
+ */
 export function getAllReferencedClasses(
   c: ControlDefinition,
   collectExtra?: (c: ControlDefinition) => (string | undefined | null)[],
@@ -421,6 +565,12 @@ export function getAllReferencedClasses(
   return [tc];
 }
 
+/**
+ * Converts a JSON path array to a string.
+ * @param jsonPath - The JSON path array to convert.
+ * @param customIndex - Optional function to customize the index format.
+ * @returns The JSON path string.
+ */
 export function jsonPathString(
   jsonPath: JsonPath[],
   customIndex?: (n: number) => string,
@@ -437,6 +587,12 @@ export function jsonPathString(
   return out;
 }
 
+/**
+ * Finds a child control definition within a parent control definition.
+ * @param parent - The parent control definition.
+ * @param childPath - The path to the child control definition, either as a single index or an array of indices.
+ * @returns The found child control definition.
+ */
 export function findChildDefinition(
   parent: ControlDefinition,
   childPath: number | number[],
@@ -449,6 +605,12 @@ export function findChildDefinition(
   return parent.children![childPath];
 }
 
+/**
+ * Returns the override class name if the class name starts with "@ ".
+ * Otherwise, returns the original class name.
+ * @param className - The class name to check and potentially modify.
+ * @returns The override class name or the original class name.
+ */
 export function getOverrideClass(className?: string | null) {
   if (className && className.startsWith("@ ")) {
     return className.substring(2);
@@ -456,6 +618,15 @@ export function getOverrideClass(className?: string | null) {
   return className;
 }
 
+/**
+ * Returns the appropriate class name for a renderer.
+ * If the global class name starts with "@ ", it overrides the control class name.
+ * Otherwise, it combines the control class name and the global class name.
+ *
+ * @param controlClass - The class name for the control.
+ * @param globalClass - The global class name.
+ * @returns The appropriate class name for the renderer.
+ */
 export function rendererClass(
   controlClass?: string | null,
   globalClass?: string | null,
@@ -467,60 +638,17 @@ export function rendererClass(
   return oc ? oc : undefined;
 }
 
-export type HookDep = string | number | undefined | null;
-
-export interface DynamicHookGenerator<A, P> {
-  deps: HookDep;
-  state: any;
-  runHook(ctx: P, state: any): A;
-}
-
-export function makeHook<A, P, S = undefined>(
-  runHook: (ctx: P, state: S) => A,
-  state: S,
-  deps?: HookDep,
-): DynamicHookGenerator<A, P> {
-  return { deps, state, runHook };
-}
-
-export type DynamicHookValue<A> =
-  A extends DynamicHookGenerator<infer V, any> ? V : never;
-
-export function makeHookDepString<A>(
-  deps: A[],
-  asHookDep: (a: A) => HookDep,
-): string {
-  return deps.map((x) => toDepString(asHookDep(x))).join(",");
-}
-export function useDynamicHooks<
-  P,
-  Hooks extends Record<string, DynamicHookGenerator<any, P>>,
->(
-  hooks: Hooks,
-): (p: P) => {
-  [K in keyof Hooks]: DynamicHookValue<Hooks[K]>;
-} {
-  const hookEntries = Object.entries(hooks);
-  const deps = makeHookDepString(hookEntries, (x) => x[1].deps);
-  const ref = useRef<Record<string, any>>({});
-  const s = ref.current;
-  hookEntries.forEach((x) => (s[x[0]] = x[1].state));
-  return useCallback(
-    (p: P) => {
-      return Object.fromEntries(
-        hookEntries.map(([f, hg]) => [f, hg.runHook(p, ref.current[f])]),
-      ) as any;
-    },
-    [deps],
-  );
-}
-
-export function toDepString(x: any): string {
-  if (x === undefined) return "_";
-  if (x === null) return "~";
-  return x.toString();
-}
-
+/**
+ * Applies length restrictions to a value.
+ * @template Min - The type of the minimum value.
+ * @template Max - The type of the maximum value.
+ * @param {number} length - The length to check.
+ * @param {number | null | undefined} min - The minimum length.
+ * @param {number | null | undefined} max - The maximum length.
+ * @param {Min} minValue - The value to return if the length is greater than the minimum.
+ * @param {Max} maxValue - The value to return if the length is less than the maximum.
+ * @returns {[Min | undefined, Max | undefined]} - An array containing the minimum and maximum values if the length restrictions are met.
+ */
 export function applyLengthRestrictions<Min, Max>(
   length: number,
   min: number | null | undefined,
@@ -534,6 +662,12 @@ export function applyLengthRestrictions<Min, Max>(
   ];
 }
 
+/**
+ * Finds the path to a field in the schema fields.
+ * @param {SchemaField[]} fields - The schema fields to search in.
+ * @param {string | undefined} fieldPath - The path to the field.
+ * @returns {SchemaField[] | undefined} - An array of schema fields representing the path, or undefined if not found.
+ */
 export function findFieldPath(
   fields: SchemaField[],
   fieldPath: string | undefined,
@@ -557,6 +691,14 @@ export function findFieldPath(
   return foundFields.length === fieldNames.length ? foundFields : undefined;
 }
 
+/**
+ * Merges two objects.
+ * @template A - The type of the objects to merge.
+ * @param {A} o1 - The first object.
+ * @param {A} o2 - The second object.
+ * @param {(k: keyof NonNullable<A>, v1: unknown, v2: unknown) => unknown} [doMerge] - Optional function to merge values.
+ * @returns {A} - The merged object.
+ */
 export function mergeObjects<A extends Record<string, any> | undefined>(
   o1: A,
   o2: A,
@@ -579,6 +721,11 @@ export function mergeObjects<A extends Record<string, any> | undefined>(
   return result;
 }
 
+/**
+ * Coerces a value to a string.
+ * @param {unknown} v - The value to coerce.
+ * @returns {string} - The coerced string.
+ */
 export function coerceToString(v: unknown) {
   return v == null
     ? ""
@@ -587,6 +734,11 @@ export function coerceToString(v: unknown) {
       : v.toString();
 }
 
+/**
+ * Returns the group renderer options for a control definition.
+ * @param {ControlDefinition} def - The control definition to get the group renderer options for.
+ * @returns {GroupRenderOptions | undefined} - The group renderer options, or undefined if not applicable.
+ */
 export function getGroupRendererOptions(
   def: ControlDefinition,
 ): GroupRenderOptions | undefined {
@@ -596,6 +748,12 @@ export function getGroupRendererOptions(
       ? def.renderOptions.groupOptions
       : undefined;
 }
+
+/**
+ * Returns the group class overrides for a control definition.
+ * @param {ControlDefinition} def - The control definition to get the group class overrides for.
+ * @returns {ControlClasses} - The group class overrides.
+ */
 export function getGroupClassOverrides(def: ControlDefinition): ControlClasses {
   let go = getGroupRendererOptions(def);
 
@@ -608,10 +766,20 @@ export function getGroupClassOverrides(def: ControlDefinition): ControlClasses {
   return out;
 }
 
+/**
+ * Checks if a control definition is display-only.
+ * @param {ControlDefinition} def - The control definition to check.
+ * @returns {boolean} - True if the control definition is display-only, false otherwise.
+ */
 export function isControlDisplayOnly(def: ControlDefinition): boolean {
   return Boolean(getGroupRendererOptions(def)?.displayOnly);
 }
 
+/**
+ * Combines multiple action handlers into a single handler.
+ * @param {...(ControlActionHandler | undefined)[]} handlers - The action handlers to combine.
+ * @returns {ControlActionHandler} - The combined action handler.
+ */
 export function actionHandlers(
   ...handlers: (ControlActionHandler | undefined)[]
 ): ControlActionHandler {

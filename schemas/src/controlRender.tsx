@@ -31,31 +31,25 @@ import {
   DisplayData,
   DisplayDataType,
   DynamicPropertyType,
-  FieldOption,
   GroupRenderOptions,
   isActionControlsDefinition,
   isDataControlDefinition,
   isDisplayControlsDefinition,
   isGroupControlsDefinition,
-  LengthValidator,
   RenderOptions,
-  SchemaField,
-  SchemaInterface,
-  SchemaValidator,
-  ValidatorType,
-} from "./types";
+  ControlDataContext,
+  FormContextData,
+  lookupDataNode,
+} from "./controlDefinition";
 import {
   applyLengthRestrictions,
   ControlClasses,
-  ControlDataContext,
   elementValueForField,
   fieldDisplayName,
-  FormContextData,
   getGroupClassOverrides,
   isControlDisplayOnly,
   JsonPath,
   rendererClass,
-  useDynamicHooks,
   useUpdatedRef,
 } from "./util";
 import { dataControl } from "./controlBuilder";
@@ -74,32 +68,104 @@ import {
   useEvalVisibilityHook,
 } from "./hooks";
 import { useMakeValidationHook, ValidationContext } from "./validators";
-import { defaultSchemaInterface } from "./schemaInterface";
+import { useDynamicHooks } from "./dynamicHooks";
+import { defaultSchemaInterface } from "./defaultSchemaInterface";
+import {
+  LengthValidator,
+  SchemaValidator,
+  ValidatorType,
+} from "./schemaValidator";
 import {
   createSchemaLookup,
-  lookupDataNode,
+  FieldOption,
   makeSchemaDataNode,
   SchemaDataNode,
-} from "./treeNodes";
+  SchemaField,
+  SchemaInterface,
+} from "./schemaField";
 
+/**
+ * Interface for rendering different types of form controls.
+ */
 export interface FormRenderer {
+  /**
+   * Renders data control.
+   * @param props - Properties for data renderer.
+   * @returns A function that takes layout properties and returns layout properties.
+   */
   renderData: (
     props: DataRendererProps,
   ) => (layout: ControlLayoutProps) => ControlLayoutProps;
+
+  /**
+   * Renders group control.
+   * @param props - Properties for group renderer.
+   * @returns A function that takes layout properties and returns layout properties.
+   */
   renderGroup: (
     props: GroupRendererProps,
   ) => (layout: ControlLayoutProps) => ControlLayoutProps;
+
+  /**
+   * Renders display control.
+   * @param props - Properties for display renderer.
+   * @returns A React node.
+   */
   renderDisplay: (props: DisplayRendererProps) => ReactNode;
+
+  /**
+   * Renders action control.
+   * @param props - Properties for action renderer.
+   * @returns A React node.
+   */
   renderAction: (props: ActionRendererProps) => ReactNode;
+
+  /**
+   * Renders array control.
+   * @param props - Properties for array renderer.
+   * @returns A React node.
+   */
   renderArray: (props: ArrayRendererProps) => ReactNode;
+
+  /**
+   * Renders adornment.
+   * @param props - Properties for adornment renderer.
+   * @returns An adornment renderer.
+   */
   renderAdornment: (props: AdornmentProps) => AdornmentRenderer;
+
+  /**
+   * Renders label.
+   * @param props - Properties for label renderer.
+   * @param labelStart - React node to render at the start of the label.
+   * @param labelEnd - React node to render at the end of the label.
+   * @returns A React node.
+   */
   renderLabel: (
     props: LabelRendererProps,
     labelStart: ReactNode,
     labelEnd: ReactNode,
   ) => ReactNode;
+
+  /**
+   * Renders layout.
+   * @param props - Properties for control layout.
+   * @returns A rendered control.
+   */
   renderLayout: (props: ControlLayoutProps) => RenderedControl;
+
+  /**
+   * Renders visibility control.
+   * @param props - Properties for visibility renderer.
+   * @returns A React node.
+   */
   renderVisibility: (props: VisibilityRendererProps) => ReactNode;
+
+  /**
+   * Renders label text.
+   * @param props - React node for label text.
+   * @returns A React node.
+   */
   renderLabelText: (props: ReactNode) => ReactNode;
 }
 
@@ -173,24 +239,89 @@ export interface ControlLayoutProps {
   style?: React.CSSProperties;
 }
 
+/**
+ * Enum representing the types of labels that can be rendered.
+ */
 export enum LabelType {
+  /**
+   * Label for a control.
+   */
   Control,
+
+  /**
+   * Label for a group.
+   */
   Group,
+
+  /**
+   * Label for text.
+   */
   Text,
 }
+
+/**
+ * Properties for label renderers.
+ */
 export interface LabelRendererProps {
+  /**
+   * The type of the label.
+   */
   type: LabelType;
+
+  /**
+   * Whether to hide the label.
+   */
   hide?: boolean | null;
+
+  /**
+   * The content of the label.
+   */
   label: ReactNode;
+
+  /**
+   * Whether to show the label as being required.
+   * E.g. show an asterisk next to the label.
+   */
   required?: boolean | null;
+
+  /**
+   * The ID of the element the label is for.
+   */
   forId?: string;
+
+  /**
+   * The CSS class name for the label.
+   */
   className?: string;
 }
+
+/**
+ * Properties for display renderers.
+ */
 export interface DisplayRendererProps {
+  /**
+   * The data to be displayed.
+   */
   data: DisplayData;
+
+  /**
+   * A control with dynamic value for display.
+   */
   display?: Control<string | undefined>;
+
+  /**
+   * The context for the control data.
+   */
   dataContext: ControlDataContext;
+
+  /**
+   * The CSS class name for the display renderer.
+   */
   className?: string;
+
+  /**
+   * The CSS styles for the display renderer.
+   */
   style?: React.CSSProperties;
 }
 

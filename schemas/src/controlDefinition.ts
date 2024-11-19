@@ -1,101 +1,46 @@
+import { SchemaValidator } from "./schemaValidator";
+import {
+  FieldOption,
+  isCompoundField,
+  schemaDataForFieldPath,
+  SchemaDataNode,
+  SchemaField,
+  SchemaInterface,
+  SchemaNode,
+} from "./schemaField";
 import { Control } from "@react-typed-forms/core";
-import { SchemaDataNode, SchemaNode } from "./treeNodes";
-import { ControlDataContext } from "./util";
+import { EntityExpression } from "./entityExpression";
 
-export interface SchemaField {
-  type: string;
-  field: string;
-  displayName?: string | null;
-  tags?: string[] | null;
-  system?: boolean | null;
-  collection?: boolean | null;
-  onlyForTypes?: string[] | null;
-  required?: boolean | null;
-  notNullable?: boolean | null;
-  defaultValue?: any;
-  isTypeField?: boolean | null;
-  searchable?: boolean | null;
-  options?: FieldOption[] | null;
-  validators?: SchemaValidator[] | null;
+/**
+ * Interface representing the form context data.
+ */
+export interface FormContextData {
+  option?: FieldOption;
+  optionSelected?: boolean;
 }
 
-export type SchemaMap = Record<string, SchemaField[]>;
-
-export enum FieldType {
-  String = "String",
-  Bool = "Bool",
-  Int = "Int",
-  Date = "Date",
-  DateTime = "DateTime",
-  Time = "Time",
-  Double = "Double",
-  EntityRef = "EntityRef",
-  Compound = "Compound",
-  AutoId = "AutoId",
-  Image = "Image",
-  Any = "Any",
+/**
+ * Interface representing the control data context.
+ */
+export interface ControlDataContext {
+  schemaInterface: SchemaInterface;
+  dataNode: SchemaDataNode | undefined;
+  parentNode: SchemaDataNode;
+  formData: FormContextData;
 }
 
-export interface EntityRefField extends SchemaField {
-  type: FieldType.EntityRef;
-  entityRefType: string;
-  parentField: string;
-}
-
-export interface FieldOption {
-  name: string;
-  value: any;
-  description?: string | null;
-  group?: string | null;
-  disabled?: boolean | null;
-}
-
-export interface CompoundField extends SchemaField {
-  type: FieldType.Compound;
-  children: SchemaField[];
-  treeChildren?: boolean;
-  schemaRef?: string;
-}
-
+/**
+ * Represents any control definition.
+ */
 export type AnyControlDefinition =
   | DataControlDefinition
   | GroupedControlsDefinition
   | ActionControlDefinition
   | DisplayControlDefinition;
 
-export enum ValidationMessageType {
-  NotEmpty = "NotEmpty",
-  MinLength = "MinLength",
-  MaxLength = "MaxLength",
-  NotAfterDate = "NotAfterDate",
-  NotBeforeDate = "NotBeforeDate",
-}
-export interface SchemaInterface {
-  isEmptyValue(field: SchemaField, value: any): boolean;
-  textValue(
-    field: SchemaField,
-    value: any,
-    element?: boolean,
-  ): string | undefined;
-  controlLength(field: SchemaField, control: Control<any>): number;
-  valueLength(field: SchemaField, value: any): number;
-  getDataOptions(node: SchemaDataNode): FieldOption[] | null | undefined;
-  getNodeOptions(node: SchemaNode): FieldOption[] | null | undefined;
-  getOptions(field: SchemaField): FieldOption[] | undefined | null;
-  getFilterOptions(
-    array: SchemaDataNode,
-    field: SchemaNode,
-  ): FieldOption[] | undefined | null;
-  parseToMillis(field: SchemaField, v: string): number;
-  validationMessageText(
-    field: SchemaField,
-    messageType: ValidationMessageType,
-    actual: any,
-    expected: any,
-  ): string;
-  compareValue(field: SchemaField, v1: unknown, v2: unknown): number;
-  searchText(field: SchemaField, value: any): string;
-}
+/**
+ * Represents a control definition.
+ */
 export interface ControlDefinition {
   type: string;
   title?: string | null;
@@ -130,45 +75,6 @@ export enum DynamicPropertyType {
   AllowedOptions = "AllowedOptions",
   Label = "Label",
   ActionData = "ActionData",
-}
-
-export interface EntityExpression {
-  type: string;
-}
-
-export enum ExpressionType {
-  Jsonata = "Jsonata",
-  Data = "Data",
-  DataMatch = "FieldValue",
-  UserMatch = "UserMatch",
-  NotEmpty = "NotEmpty",
-  UUID = "UUID",
-}
-
-export interface JsonataExpression extends EntityExpression {
-  type: ExpressionType.Jsonata;
-  expression: string;
-}
-
-export interface DataExpression extends EntityExpression {
-  type: ExpressionType.Data;
-  field: string;
-}
-
-export interface DataMatchExpression extends EntityExpression {
-  type: ExpressionType.DataMatch;
-  field: string;
-  value: any;
-}
-
-export interface NotEmptyExpression extends EntityExpression {
-  type: ExpressionType.DataMatch;
-  field: string;
-}
-
-export interface UserMatchExpression extends EntityExpression {
-  type: ExpressionType.UserMatch;
-  userMatch: string;
 }
 
 export interface ControlAdornment {
@@ -459,38 +365,6 @@ export interface ActionControlDefinition extends ControlDefinition {
   actionData?: string | null;
 }
 
-export enum ValidatorType {
-  Jsonata = "Jsonata",
-  Date = "Date",
-  Length = "Length",
-}
-export interface SchemaValidator {
-  type: string;
-}
-
-export interface JsonataValidator extends SchemaValidator {
-  type: ValidatorType.Jsonata;
-  expression: string;
-}
-
-export interface LengthValidator extends SchemaValidator {
-  type: ValidatorType.Length;
-  min?: number | null;
-  max?: number | null;
-}
-
-export enum DateComparison {
-  NotBefore = "NotBefore",
-  NotAfter = "NotAfter",
-}
-
-export interface DateValidator extends SchemaValidator {
-  type: ValidatorType.Date;
-  comparison: DateComparison;
-  fixedDate?: string | null;
-  daysFromCurrent?: number | null;
-}
-
 export function isDataControlDefinition(
   x: ControlDefinition,
 ): x is DataControlDefinition {
@@ -582,21 +456,6 @@ export function isArrayRenderer(
   return options.type === DataRenderType.Array;
 }
 
-export function findField(
-  fields: SchemaField[],
-  field: string,
-): SchemaField | undefined {
-  return fields.find((x) => x.field === field);
-}
-
-export function isScalarField(sf: SchemaField): sf is SchemaField {
-  return !isCompoundField(sf);
-}
-
-export function isCompoundField(sf: SchemaField): sf is CompoundField {
-  return sf.type === FieldType.Compound;
-}
-
 export function isDataControl(
   c: ControlDefinition,
 ): c is DataControlDefinition {
@@ -624,5 +483,181 @@ export function isCheckEntryClasses(
       return true;
     default:
       return false;
+  }
+}
+
+export interface FormNode {
+  definition: ControlDefinition;
+  getChildNodes(): FormNode[];
+  parent?: FormNode;
+}
+
+export interface FormTreeLookup<A = string> {
+  getForm(formId: A): FormTreeNode | undefined;
+}
+export interface FormTreeNode extends FormTreeLookup {
+  rootNode: FormNode;
+}
+
+function nodeForControl(
+  definition: ControlDefinition,
+  parent?: FormNode,
+): FormNode {
+  const node = { definition, parent, getChildNodes };
+  return node;
+  function getChildNodes(): FormNode[] {
+    return definition.children?.map((x) => nodeForControl(x, node)) ?? [];
+  }
+}
+export function createFormLookup<A extends Record<string, ControlDefinition[]>>(
+  formMap: A,
+): FormTreeLookup<keyof A> {
+  const lookup = {
+    getForm,
+  };
+  return lookup;
+
+  function getForm(formId: keyof A): FormTreeNode | undefined {
+    const controls = formMap[formId];
+    if (controls) {
+      return {
+        rootNode: nodeForControl({
+          children: controls,
+          type: ControlDefinitionType.Group,
+        }),
+        getForm,
+      };
+    }
+    return undefined;
+  }
+}
+
+export function fieldPathForDefinition(
+  c: ControlDefinition,
+): string[] | undefined {
+  const fieldName = isGroupControlsDefinition(c)
+    ? c.compoundField
+    : isDataControlDefinition(c)
+      ? c.field
+      : undefined;
+  return fieldName?.split("/");
+}
+
+export function lookupDataNode(
+  c: ControlDefinition,
+  parentNode: SchemaDataNode,
+) {
+  const fieldNamePath = fieldPathForDefinition(c);
+  return fieldNamePath
+    ? schemaDataForFieldPath(fieldNamePath, parentNode)
+    : undefined;
+}
+
+export function traverseParents<A, B extends { parent?: B | undefined }>(
+  current: B | undefined,
+  get: (b: B) => A,
+  until?: (b: B) => boolean,
+): A[] {
+  let outArray: A[] = [];
+  while (current && !until?.(current)) {
+    outArray.push(get(current));
+    current = current.parent;
+  }
+  return outArray.reverse();
+}
+
+export function getRootDataNode(dataNode: SchemaDataNode) {
+  while (dataNode.parent) {
+    dataNode = dataNode.parent;
+  }
+  return dataNode;
+}
+
+export function getJsonPath(dataNode: SchemaDataNode) {
+  return traverseParents(
+    dataNode,
+    (d) => (d.elementIndex == null ? d.schema.field.field : d.elementIndex),
+    (x) => !x.parent,
+  );
+}
+
+export function getSchemaPath(schemaNode: SchemaNode): SchemaField[] {
+  return traverseParents(
+    schemaNode,
+    (d) => d.field,
+    (x) => !x.parent,
+  );
+}
+
+export function getSchemaFieldList(schema: SchemaNode): SchemaField[] {
+  return schema.getChildNodes().map((x) => x.field);
+}
+
+export function visitControlDataArray<A>(
+  controls: ControlDefinition[] | undefined | null,
+  context: SchemaDataNode,
+  cb: (
+    definition: DataControlDefinition,
+    node: SchemaDataNode,
+  ) => A | undefined,
+): A | undefined {
+  if (!controls) return undefined;
+  for (const c of controls) {
+    const r = visitControlData(c, context, cb);
+    if (r !== undefined) return r;
+  }
+  return undefined;
+}
+
+export function visitControlData<A>(
+  definition: ControlDefinition,
+  ctx: SchemaDataNode,
+  cb: (
+    definition: DataControlDefinition,
+    field: SchemaDataNode,
+  ) => A | undefined,
+): A | undefined {
+  if (!ctx.control || ctx.control.isNull) return undefined;
+  return visitControlDefinition<A | undefined>(
+    definition,
+    {
+      data(def: DataControlDefinition) {
+        return processData(def);
+      },
+      group(d: GroupedControlsDefinition) {
+        return processData(d);
+      },
+      action: () => undefined,
+      display: () => undefined,
+    },
+    () => undefined,
+  );
+
+  function processData(def: ControlDefinition) {
+    const children = def.children;
+    const childNode = lookupDataNode(def, ctx);
+    if (!childNode) return visitControlDataArray(children, ctx, cb);
+    const dataControl = isDataControlDefinition(def) ? def : undefined;
+    const result = dataControl ? cb(dataControl, childNode) : undefined;
+    if (result !== undefined) return result;
+    const fieldNode = childNode.schema;
+    const compound = isCompoundField(fieldNode.field);
+    if (fieldNode.field.collection) {
+      const control = childNode.control as Control<unknown[]>;
+      let cIndex = 0;
+      for (const c of control!.elements ?? []) {
+        const elemChild = childNode.getChildElement(cIndex);
+        const elemResult = dataControl ? cb(dataControl, elemChild) : undefined;
+        if (elemResult !== undefined) return elemResult;
+        if (compound) {
+          const cfResult = visitControlDataArray(children, elemChild, cb);
+          if (cfResult !== undefined) return cfResult;
+        }
+        cIndex++;
+      }
+    } else if (compound) {
+      return visitControlDataArray(children, childNode, cb);
+    }
+    return undefined;
   }
 }

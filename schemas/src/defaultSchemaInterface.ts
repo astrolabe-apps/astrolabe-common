@@ -1,12 +1,13 @@
+import { Control } from "@react-typed-forms/core";
 import {
   FieldOption,
   FieldType,
+  SchemaDataNode,
   SchemaField,
   SchemaInterface,
+  SchemaNode,
   ValidationMessageType,
-} from "./types";
-import { Control } from "@react-typed-forms/core";
-import { SchemaDataNode, SchemaNode } from "./treeNodes";
+} from "./schemaField";
 
 export class DefaultSchemaInterface implements SchemaInterface {
   constructor(
@@ -17,6 +18,7 @@ export class DefaultSchemaInterface implements SchemaInterface {
   parseToMillis(field: SchemaField, v: string): number {
     return this.parseDateTime(v);
   }
+
   validationMessageText(
     field: SchemaField,
     messageType: ValidationMessageType,
@@ -101,11 +103,13 @@ export class DefaultSchemaInterface implements SchemaInterface {
         return value != null ? value.toString() : undefined;
     }
   }
+
   controlLength(f: SchemaField, control: Control<any>): number {
     return f.collection
       ? (control.elements?.length ?? 0)
       : this.valueLength(f, control.value);
   }
+
   valueLength(field: SchemaField, value: any): number {
     return (value && value?.length) ?? 0;
   }

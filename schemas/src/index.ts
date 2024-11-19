@@ -1,4 +1,4 @@
-export * from "./types";
+export * from "./controlDefinition";
 export * from "./schemaBuilder";
 export * from "./controlBuilder";
 export * from "./controlRender";
@@ -6,6 +6,9 @@ export * from "./util";
 export * from "./renderers";
 export * from "./validators";
 export * from "./hooks";
-export * from "./treeNodes";
-export * from "./schemaInterface";
+export * from "./defaultSchemaInterface";
 export * from "./createFormRenderer";
+export * from "./dynamicHooks";
+export * from "./schemaValidator";
+export * from "./schemaField";
+export * from "./entityExpression";
