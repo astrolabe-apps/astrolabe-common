@@ -103,8 +103,17 @@ public static class SearchHelper
 
     private static readonly MethodInfo ContainsMethod = typeof(IList).GetMethod("Contains")!;
 
-    public static QueryFilterer<T> MakeFilterer<T>(Func<string, FieldFilter<T>?> getFilterProperty)
+    public static QueryFilterer<T> MakeFilterer<T>(
+        Func<string, FieldFilter<T>?> getFilterProperty,
+        bool includeDefault = false
+    )
     {
+        if (includeDefault)
+        {
+            var propFilterer = CreatePropertyFilterer<T>();
+            var origFilter = getFilterProperty;
+            getFilterProperty = f => origFilter(f) ?? propFilterer(f);
+        }
         return (filters, query) =>
         {
             if (filters == null)
@@ -124,9 +133,16 @@ public static class SearchHelper
     }
 
     public static QuerySorter<T> MakeSorter<T>(
-        Func<string, Expression<Func<T, object>>?> getSortField
+        Func<string, Expression<Func<T, object>>?> getSortField,
+        bool includeDefault = false
     )
     {
+        if (includeDefault)
+        {
+            var defaultGetSort = CreatePropertyGetterLookup<T>();
+            var origGetSort = getSortField;
+            getSortField = f => origGetSort(f) ?? defaultGetSort(f);
+        }
         return (sorts, query) =>
         {
             if (sorts == null)
