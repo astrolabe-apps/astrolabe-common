@@ -93,19 +93,19 @@ public static class SearchHelper
 
     public static QuerySorter<T> MakeSorter<T>()
     {
-        return MakeSorter(CreatePropertyGetterLookup<T>());
+        return MakeSorter(CreatePropertyGetterLookup<T>(), false);
     }
 
     public static QueryFilterer<T> MakeFilterer<T>()
     {
-        return MakeFilterer(CreatePropertyFilterer<T>());
+        return MakeFilterer(CreatePropertyFilterer<T>(), false);
     }
 
     private static readonly MethodInfo ContainsMethod = typeof(IList).GetMethod("Contains")!;
 
     public static QueryFilterer<T> MakeFilterer<T>(
         Func<string, FieldFilter<T>?> getFilterProperty,
-        bool includeDefault = false
+        bool includeDefault = true
     )
     {
         if (includeDefault)
@@ -134,7 +134,7 @@ public static class SearchHelper
 
     public static QuerySorter<T> MakeSorter<T>(
         Func<string, Expression<Func<T, object>>?> getSortField,
-        bool includeDefault = false
+        bool includeDefault = true
     )
     {
         if (includeDefault)
