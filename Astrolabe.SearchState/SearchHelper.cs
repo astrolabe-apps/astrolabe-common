@@ -15,11 +15,44 @@ public delegate Task<SearchResults<T2>> Searcher<in T, T2>(
     bool includeTotal
 );
 
-public record SearchMember(MemberInfo Member, Func<string, object>? Convert);
+public delegate IQueryable<T> FieldFilter<T>(IQueryable<T> query, List<string> filterValues);
+
+public record FilterableMember(MemberInfo Member, Func<string, object>? Convert);
 
 public static class SearchHelper
 {
-    public static Func<string, SearchMember?> CreatePropertyMemberLookup<T>()
+    public static Func<string, FieldFilter<T>?> CreatePropertyFilterer<T>(
+        Func<string, FilterableMember?>? lookupMember = null
+    )
+    {
+        lookupMember ??= CreatePropertyMemberLookup<T>();
+        var param = Expression.Parameter(typeof(T));
+        return field =>
+        {
+            var ff = lookupMember(field);
+            if (ff == null)
+                return null;
+            return (query, vals) =>
+            {
+                var realVals = (ff.Convert != null ? vals.Select(ff.Convert) : vals).ToList();
+                return query.Where(
+                    Expression.Lambda<Func<T, bool>>(
+                        Expression.Call(
+                            Expression.Constant(realVals),
+                            ContainsMethod,
+                            Expression.Convert(
+                                Expression.MakeMemberAccess(param, ff.Member),
+                                typeof(object)
+                            )
+                        ),
+                        param
+                    )
+                );
+            };
+        };
+    }
+
+    public static Func<string, FilterableMember?> CreatePropertyMemberLookup<T>()
     {
         var t = typeof(T);
         var props = t.GetProperties(BindingFlags.Instance | BindingFlags.Public)
@@ -32,7 +65,7 @@ public static class SearchHelper
             Func<string, object>? convert = member.PropertyType.IsEnum
                 ? s => Enum.Parse(member.PropertyType, s)
                 : null;
-            return new SearchMember(member, convert);
+            return new FilterableMember(member, convert);
         };
     }
 
@@ -65,14 +98,13 @@ public static class SearchHelper
 
     public static QueryFilterer<T> MakeFilterer<T>()
     {
-        return MakeFilterer<T>(CreatePropertyMemberLookup<T>());
+        return MakeFilterer(CreatePropertyFilterer<T>());
     }
 
     private static readonly MethodInfo ContainsMethod = typeof(IList).GetMethod("Contains")!;
 
-    public static QueryFilterer<T> MakeFilterer<T>(Func<string, SearchMember?> getFilterProperty)
+    public static QueryFilterer<T> MakeFilterer<T>(Func<string, FieldFilter<T>?> getFilterProperty)
     {
-        var param = Expression.Parameter(typeof(T));
         return (filters, query) =>
         {
             if (filters == null)
@@ -85,20 +117,7 @@ public static class SearchHelper
                 var ff = getFilterProperty(filterField.Key);
                 if (ff == null)
                     continue;
-                var realVals = (ff.Convert != null ? vals.Select(ff.Convert) : vals).ToList();
-                query = query.Where(
-                    Expression.Lambda<Func<T, bool>>(
-                        Expression.Call(
-                            Expression.Constant(realVals),
-                            ContainsMethod,
-                            Expression.Convert(
-                                Expression.MakeMemberAccess(param, ff.Member),
-                                typeof(object)
-                            )
-                        ),
-                        param
-                    )
-                );
+                query = ff(query, vals);
             }
             return query;
         };
