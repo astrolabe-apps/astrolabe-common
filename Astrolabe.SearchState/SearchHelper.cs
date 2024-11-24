@@ -11,7 +11,7 @@ public delegate IQueryable<T> QueryFilterer<T>(
 );
 public delegate Task<SearchResults<T2>> Searcher<in T, T2>(
     IQueryable<T> query,
-    SearchOptions searchOptions,
+    ISearchOptions searchOptions,
     bool includeTotal
 );
 

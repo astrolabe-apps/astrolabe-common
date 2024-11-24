@@ -1,22 +1,21 @@
 namespace Astrolabe.SearchState;
 
-public interface FilterAndSortOptions
+public interface ISearchOptions
 {
     string? Query { get; }
     IEnumerable<string>? Sort { get; }
     IDictionary<string, IEnumerable<string>>? Filters { get; }
-}
 
-public interface SearchPagingOptions
-{
     int Offset { get; }
     int Length { get; }
 }
 
-public record SearchOptions(
-    int Offset,
-    int Length,
-    string? Query,
-    IEnumerable<string>? Sort,
-    IDictionary<string, IEnumerable<string>>? Filters
-) : FilterAndSortOptions, SearchPagingOptions;
+public class SearchOptions : ISearchOptions
+{
+    public int Offset { get; set; }
+    public int Length { get; set; } = 10;
+    public string? Query { get; set; }
+    public IEnumerable<string>? Sort { get; set; }
+
+    public IDictionary<string, IEnumerable<string>>? Filters { get; set; }
+}
