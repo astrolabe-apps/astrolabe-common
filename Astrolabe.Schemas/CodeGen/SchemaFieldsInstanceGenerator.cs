@@ -27,7 +27,8 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
         return typeData switch
         {
             EnumerableTypeData enumerableTypeData => enumerableTypeData.Element().Type.Name + "[]",
-            ObjectTypeData objectTypeData => objectTypeData.Type.Name,
+            ObjectTypeData objectTypeData
+                => SchemaFieldsGenerator.FullKeyForObjectType(objectTypeData.Type),
             _ => ""
         };
     }
@@ -96,7 +97,7 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
         schemaField.Options = options;
         return schemaField;
     }
-    
+
     public static string GetFieldName(PropertyInfo propertyInfo)
     {
         var nameAttr = propertyInfo.GetCustomAttribute<JsonPropertyNameAttribute>();
@@ -104,7 +105,6 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
             return nameAttr.Name;
         return JsonNamingPolicy.CamelCase.ConvertName(propertyInfo.Name);
     }
-
 
     private Type? GetEnumType(SimpleTypeData data)
     {

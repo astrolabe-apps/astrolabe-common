@@ -160,12 +160,22 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             : _options.ImportType(type);
     }
 
+    public static string FullKeyForObjectType(Type t)
+    {
+        return t switch
+        {
+            { IsGenericType: true }
+                => $"{t.Name}[{string.Join(",", t.GetGenericArguments().Select(x => x.Name))}]",
+            _ => t.Name
+        };
+    }
+
     protected override string TypeKey(SchemaFieldData typeData)
     {
         return typeData switch
         {
             EnumerableData enumerableTypeData => enumerableTypeData.Element().Type.Name + "[]",
-            ObjectData objectTypeData => objectTypeData.Type.Name,
+            ObjectData objectTypeData => FullKeyForObjectType(objectTypeData.Type),
             _ => ""
         };
     }
