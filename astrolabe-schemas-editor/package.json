@@ -28,18 +28,18 @@
     "@dnd-kit/core": "^6.0.5"
   },
   "dependencies": {
-    "@astroapps/ui-tree": "workspace:^2.0.0",
     "react-resizable-panels": "^0.0.55",
     "@mhsdesign/jit-browser-tailwindcss": "^0.4.0",
     "immutability-helper": "^3.1.1",
     "clsx": "^2",
+    "react-arborist": "~3.4.0",
+    "use-resize-observer": "~9.1.0",
     "react-hook-inview": "^4.5.1"
   },
   "devDependencies": {
     "@react-typed-forms/core": "^3.6.1",
     "@react-typed-forms/schemas": "workspace:^13.0.0",
     "@astroapps/client": "workspace:^1.0.0",
-    "@astroapps/ui-tree": "workspace:^2.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dnd": "^16.0.1",

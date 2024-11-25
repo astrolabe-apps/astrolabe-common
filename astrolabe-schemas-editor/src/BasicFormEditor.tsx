@@ -1,8 +1,4 @@
 import {
-  ControlTree,
-  removeNodeFromParent,
-} from "@astroapps/ui-tree/ControlTree";
-import {
   FormControlPreview,
   PreviewContextProvider,
 } from "./FormControlPreview";
@@ -45,12 +41,6 @@ import {
   SchemaField,
   rootSchemaNode,
 } from "@react-typed-forms/schemas";
-import {
-  isControlDefinitionNode,
-  makeControlTree,
-  SchemaFieldsProvider,
-} from "./controlTree";
-import { ControlTreeNode, useTreeStateControl } from "@astroapps/ui-tree";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import React, { ReactElement, ReactNode, useMemo } from "react";
 import { controlIsCompoundField, controlIsGroupControl } from "./util";
@@ -60,6 +50,7 @@ import {
 } from "@mhsdesign/jit-browser-tailwindcss";
 import clsx from "clsx";
 import defaultEditorControls from "./ControlDefinition.json";
+import { FormControlTree } from "./FormControlTree";
 
 interface PreviewData {
   showing: boolean;
@@ -120,13 +111,10 @@ export function BasicFormEditor<A extends string>({
   handleIcon,
   extraPreviewControls,
 }: BasicFormEditorProps<A>): ReactElement {
-  const controls = useControl<ControlDefinitionForm[]>([], {
-    elems: makeControlTree(treeActions),
-  });
+  const controls = useControl<ControlDefinitionForm[]>([]);
   const fields = useControl<SchemaFieldForm[]>([]);
   const treeDrag = useControl();
-  const treeState = useTreeStateControl();
-  const selected = treeState.fields.selected;
+  const selected = useControl<Control<any>>();
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
   const previewData = useControl<PreviewData>({
     showing: false,
@@ -228,110 +216,113 @@ export function BasicFormEditor<A extends string>({
         renderer: formRenderer,
       }}
     >
-      <SchemaFieldsProvider value={fields}>
-        <PanelGroup direction="horizontal">
-          <Panel>
-            <RenderControl render={() => <style>{styles.value}</style>} />
-            <div
-              className={clsx(
-                editorPanelClass,
-                "overflow-auto w-full h-full p-8",
-              )}
-            >
-              <div className={editorClass}>
-                {previewMode ? (
-                  <FormPreview
-                    key={loadedForm.value ?? ""}
-                    fields={trackedValue(fields)}
-                    controls={trackedValue(controls)}
-                    previewData={previewData}
-                    formRenderer={formRenderer}
-                    validation={validation}
-                    previewOptions={previewOptions}
-                    rawRenderer={editorRenderer}
-                    rootControlClass={rootControlClass}
-                    controlsClass={controlsClass}
-                    extraPreviewControls={extraPreviewControls}
+      <PanelGroup direction="horizontal">
+        <Panel>
+          <RenderControl render={() => <style>{styles.value}</style>} />
+          <div
+            className={clsx(
+              editorPanelClass,
+              "overflow-auto w-full h-full p-8",
+            )}
+          >
+            <div className={editorClass}>
+              {previewMode ? (
+                <FormPreview
+                  key={loadedForm.value ?? ""}
+                  fields={trackedValue(fields)}
+                  controls={trackedValue(controls)}
+                  previewData={previewData}
+                  formRenderer={formRenderer}
+                  validation={validation}
+                  previewOptions={previewOptions}
+                  rawRenderer={editorRenderer}
+                  rootControlClass={rootControlClass}
+                  controlsClass={controlsClass}
+                  extraPreviewControls={extraPreviewControls}
+                />
+              ) : (
+                <div className={controlsClass}>
+                  <RenderElements
+                    key={formType}
+                    control={controls}
+                    children={(c, i) => (
+                      <div className={rootControlClass}>
+                        <FormControlPreview
+                          keyPrefix={formType}
+                          definition={trackedValue(c)}
+                          parentNode={rootSchemaNode(trackedValue(fields))}
+                          dropIndex={i}
+                        />
+                      </div>
+                    )}
                   />
-                ) : (
-                  <div className={controlsClass}>
-                    <RenderElements
-                      key={formType}
-                      control={controls}
-                      children={(c, i) => (
-                        <div className={rootControlClass}>
-                          <FormControlPreview
-                            keyPrefix={formType}
-                            definition={trackedValue(c)}
-                            parentNode={rootSchemaNode(trackedValue(fields))}
-                            dropIndex={i}
-                          />
-                        </div>
-                      )}
+                </div>
+              )}
+            </div>
+          </div>
+        </Panel>
+        <PanelResizeHandle className="w-2 bg-surface-200" />
+        <Panel defaultSize={33}>
+          <PanelGroup direction="vertical">
+            <Panel>
+              <div className="p-4 overflow-auto w-full h-full">
+                <div className="my-2 flex gap-2">
+                  <Fselect control={selectedForm}>
+                    <RenderArrayElements
+                      array={formTypes}
+                      children={(x) => <option value={x[0]}>{x[1]}</option>}
                     />
-                  </div>
+                  </Fselect>
+                  {button(doSave, "Save " + selectedForm.value)}
+                  {button(
+                    togglePreviewMode,
+                    previewMode ? "Edit Mode" : "Editable Preview",
+                  )}
+                  {button(addMissing, "Add missing controls")}
+                </div>
+                <FormControlTree
+                  controls={controls}
+                  selected={selected}
+                  onDeleted={(c) => {}}
+                />
+                {/*<ControlTree*/}
+                {/*  treeState={treeState}*/}
+                {/*  controls={controls}*/}
+                {/*  indicator={false}*/}
+                {/*  canDropAtRoot={() => true}*/}
+                {/*  itemConfig={{ handleIcon }}*/}
+                {/*/>*/}
+                {button(
+                  () =>
+                    addElement(controls, {
+                      ...defaultControlDefinitionForm,
+                      type: ControlDefinitionType.Group,
+                    }),
+                  "Add Page",
                 )}
               </div>
-            </div>
-          </Panel>
-          <PanelResizeHandle className="w-2 bg-surface-200" />
-          <Panel defaultSize={33}>
-            <PanelGroup direction="vertical">
-              <Panel>
-                <div className="p-4 overflow-auto w-full h-full">
-                  <div className="my-2 flex gap-2">
-                    <Fselect control={selectedForm}>
-                      <RenderArrayElements
-                        array={formTypes}
-                        children={(x) => <option value={x[0]}>{x[1]}</option>}
-                      />
-                    </Fselect>
-                    {button(doSave, "Save " + selectedForm.value)}
-                    {button(
-                      togglePreviewMode,
-                      previewMode ? "Edit Mode" : "Editable Preview",
-                    )}
-                    {button(addMissing, "Add missing controls")}
-                  </div>
-                  <ControlTree
-                    treeState={treeState}
-                    controls={controls}
-                    indicator={false}
-                    canDropAtRoot={() => true}
-                    itemConfig={{ handleIcon }}
-                  />
-                  {button(
-                    () =>
-                      addElement(controls, {
-                        ...defaultControlDefinitionForm,
-                        type: ControlDefinitionType.Group,
-                      }),
-                    "Add Page",
+            </Panel>
+            <PanelResizeHandle className="h-2 bg-surface-200" />
+            <Panel>
+              <div className="p-4 overflow-auto w-full h-full">
+                <RenderOptional control={selected}>
+                  {(c) => (
+                    <FormControlEditor
+                      key={c.value.uniqueId}
+                      control={c.value}
+                      fields={fields}
+                      renderer={editorRenderer}
+                      editorFields={ControlDefinitionSchema}
+                      rootControls={controls}
+                      editorControls={controlGroup}
+                    />
                   )}
-                </div>
-              </Panel>
-              <PanelResizeHandle className="h-2 bg-surface-200" />
-              <Panel>
-                <div className="p-4 overflow-auto w-full h-full">
-                  <RenderOptional control={selected}>
-                    {(c) => (
-                      <FormControlEditor
-                        key={c.value.uniqueId}
-                        control={c.value}
-                        fields={fields}
-                        renderer={editorRenderer}
-                        editorFields={ControlDefinitionSchema}
-                        rootControls={controls}
-                        editorControls={controlGroup}
-                      />
-                    )}
-                  </RenderOptional>
-                </div>
-              </Panel>
-            </PanelGroup>
-          </Panel>
-        </PanelGroup>
-      </SchemaFieldsProvider>
+                </RenderOptional>
+              </div>
+            </Panel>
+          </PanelGroup>
+        </Panel>
+      </PanelGroup>
     </PreviewContextProvider>
   );
 
@@ -342,37 +333,6 @@ export function BasicFormEditor<A extends string>({
   }
   function togglePreviewMode() {
     previewData.fields.showing.setValue((x) => !x);
-  }
-
-  function treeActions(
-    node: ControlTreeNode,
-    schema: Control<SchemaFieldForm>,
-  ) {
-    const c = node.control;
-    return (
-      <>
-        {isControlDefinitionNode(c) &&
-          (controlIsGroupControl(c) || controlIsCompoundField(schema)) && (
-            <i
-              className="fa fa-plus"
-              onClick={(e) => {
-                e.stopPropagation();
-                selected.value = addElement(c.fields.children, {
-                  ...defaultControlDefinitionForm,
-                  title: "New",
-                });
-              }}
-            />
-          )}
-        <i
-          className="fa fa-remove"
-          onClick={(e) => {
-            e.stopPropagation();
-            removeNodeFromParent(node, selected);
-          }}
-        />
-      </>
-    );
   }
 }
 
