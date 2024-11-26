@@ -5,6 +5,7 @@ import {
 import {
   addElement,
   Control,
+  Fcheckbox,
   Fselect,
   groupedChanges,
   RenderArrayElements,
@@ -51,6 +52,7 @@ import {
 import clsx from "clsx";
 import defaultEditorControls from "./ControlDefinition.json";
 import { FormControlTree } from "./FormControlTree";
+import { FormSchemaTree } from "./FormSchemaTree";
 
 interface PreviewData {
   showing: boolean;
@@ -115,6 +117,7 @@ export function BasicFormEditor<A extends string>({
   const fields = useControl<SchemaFieldForm[]>([]);
   const treeDrag = useControl();
   const selected = useControl<Control<any>>();
+  const hideFields = useControl(false);
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
   const previewData = useControl<PreviewData>({
     showing: false,
@@ -214,6 +217,7 @@ export function BasicFormEditor<A extends string>({
         VisibilityIcon: <i className="fa fa-eye" />,
         dropSuccess: () => {},
         renderer: formRenderer,
+        hideFields,
       }}
     >
       <PanelGroup direction="horizontal">
@@ -265,8 +269,8 @@ export function BasicFormEditor<A extends string>({
         <Panel defaultSize={33}>
           <PanelGroup direction="vertical">
             <Panel>
-              <div className="p-4 overflow-auto w-full h-full">
-                <div className="my-2 flex gap-2">
+              <div className="h-full flex flex-col p-2">
+                <div className="flex gap-2">
                   <Fselect control={selectedForm}>
                     <RenderArrayElements
                       array={formTypes}
@@ -280,26 +284,35 @@ export function BasicFormEditor<A extends string>({
                   )}
                   {button(addMissing, "Add missing controls")}
                 </div>
-                <FormControlTree
-                  controls={controls}
-                  selected={selected}
-                  onDeleted={(c) => {}}
-                />
-                {/*<ControlTree*/}
-                {/*  treeState={treeState}*/}
-                {/*  controls={controls}*/}
-                {/*  indicator={false}*/}
-                {/*  canDropAtRoot={() => true}*/}
-                {/*  itemConfig={{ handleIcon }}*/}
-                {/*/>*/}
-                {button(
-                  () =>
-                    addElement(controls, {
-                      ...defaultControlDefinitionForm,
-                      type: ControlDefinitionType.Group,
-                    }),
-                  "Add Page",
-                )}
+                <div className="my-2">
+                  <div className="flex items-center gap-2">
+                    <Fcheckbox control={hideFields} id="hideFields" />{" "}
+                    <label htmlFor="hideFields">Hide field names</label>
+                  </div>
+                </div>
+                <div className="grow flex overflow-y-hidden">
+                  <FormControlTree
+                    className="h-full w-full overflow-hidden"
+                    controls={controls}
+                    selected={selected}
+                    onDeleted={(c) => {}}
+                  />
+                  <FormSchemaTree
+                    className="h-full w-full overflow-hidden"
+                    controls={fields}
+                    onDeleted={(c) => {}}
+                  />
+                </div>
+                <div>
+                  {button(
+                    () =>
+                      addElement(controls, {
+                        ...defaultControlDefinitionForm,
+                        type: ControlDefinitionType.Group,
+                      }),
+                    "Add Page",
+                  )}
+                </div>
               </div>
             </Panel>
             <PanelResizeHandle className="h-2 bg-surface-200" />

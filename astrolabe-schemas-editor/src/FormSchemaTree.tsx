@@ -10,27 +10,27 @@ import {
 import {
   ControlDefinitionForm,
   defaultControlDefinitionForm,
+  defaultSchemaFieldForm,
+  SchemaFieldForm,
 } from "./schemaSchemas";
 import React from "react";
 import clsx from "clsx";
-import { ControlDefinitionType } from "@react-typed-forms/schemas";
+import { ControlDefinitionType, FieldType } from "@react-typed-forms/schemas";
 
-interface FormControlTreeProps {
+interface FormSchemaTreeProps {
   className?: string;
-  controls: Control<ControlDefinitionForm[]>;
-  selected: Control<Control<any> | undefined>;
-  onDeleted: (n: NodeApi<Control<ControlDefinitionForm>>) => void;
+  controls: Control<SchemaFieldForm[]>;
+  onDeleted: (n: NodeApi<Control<SchemaFieldForm>>) => void;
 }
 
-export function FormControlTree({
+export function FormSchemaTree({
   controls,
-  selected,
   onDeleted,
   className,
-}: FormControlTreeProps) {
+}: FormSchemaTreeProps) {
   const { ref, width, height } = useResizeObserver();
 
-  const doMove: MoveHandler<Control<ControlDefinitionForm>> = (props) => {
+  const doMove: MoveHandler<Control<SchemaFieldForm>> = (props) => {
     groupedChanges(() => {
       const parentChildren =
         props.parentId === null
@@ -55,12 +55,10 @@ export function FormControlTree({
 
   return (
     <div className={className} ref={ref}>
-      <Tree<Control<ControlDefinitionForm>>
+      <Tree<Control<SchemaFieldForm>>
         width={width}
         height={height}
-        onSelect={(n) => (selected.value = n[0]?.data)}
         data={controls.elements}
-        selection={selected.value?.uniqueId.toString()}
         childrenAccessor={(x) => {
           const c = x.fields.children.elements;
           return c && c.length > 0 ? c : null;
@@ -71,7 +69,7 @@ export function FormControlTree({
           if (props.parentNode) {
             const childElements = props.parentNode.data.fields.children;
             if (childElements) {
-              const c = addElement(childElements, defaultControlDefinitionForm);
+              const c = addElement(childElements, defaultSchemaFieldForm);
               return { id: c.uniqueId.toString() };
             }
           }
@@ -97,9 +95,7 @@ function ControlNode({
   node,
   style,
   dragHandle,
-}: NodeRendererProps<Control<ControlDefinitionForm>>) {
-  const canAdd = true;
-  const canDelete = true;
+}: NodeRendererProps<Control<SchemaFieldForm>>) {
   return (
     <div
       style={style}
@@ -123,38 +119,21 @@ function ControlNode({
           nodeIcon(node.data.fields.type.value),
         )}
       />
-      <span>{node.data.fields.title.value}</span>
-      {canAdd && (
-        <i
-          className="ml-2 fa-solid fa-plus w-4 h-4"
-          onClick={async (e) => {
-            e.stopPropagation();
-            await node.tree.create({ parentId: node.id });
-          }}
-        />
-      )}
-      {canDelete && (
-        <i
-          className="ml-2 fa-solid fa-remove w-4 h-4"
-          onClick={async (e) => {
-            e.stopPropagation();
-            await node.tree.delete(node);
-          }}
-        />
-      )}
+      <span>{node.data.fields.field.value}</span>
     </div>
   );
 
   function nodeIcon(t: string) {
     switch (t) {
-      case ControlDefinitionType.Data:
-        return "fa-pen";
-      case ControlDefinitionType.Display:
+      case FieldType.String:
         return "fa-text";
-      case ControlDefinitionType.Action:
-        return "fa-bolt";
-      case ControlDefinitionType.Group:
-        return "fa-layer-group";
+      case FieldType.Int:
+      case FieldType.Double:
+        return "fa-0";
+      case FieldType.Compound:
+        return "fa-brackets-curly";
+      case FieldType.Bool:
+        return "fa-y";
       default:
         return "fa-question";
     }

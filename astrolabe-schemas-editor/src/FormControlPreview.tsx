@@ -60,6 +60,7 @@ export interface FormControlPreviewContext {
   dropSuccess: (drag: DragData, drop: DropData) => void;
   readonly?: boolean;
   VisibilityIcon: ReactNode;
+  hideFields: Control<boolean>;
   renderer: FormRenderer;
 }
 
@@ -96,7 +97,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     layoutClass,
     displayOnly: dOnly,
   } = props;
-  const { selected, dropSuccess, renderer } = usePreviewContext();
+  const { selected, dropSuccess, renderer, hideFields } = usePreviewContext();
   const item = unsafeRestoreControl(definition) as
     | Control<ControlDefinitionForm>
     | undefined;
@@ -232,11 +233,13 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         setNodeRef(e);
       }}
     >
-      <EditorDetails
-        control={definition}
-        arrayElement={elementIndex != null}
-        schemaVisibility={!!field?.onlyForTypes?.length}
-      />
+      {!hideFields.value && (
+        <EditorDetails
+          control={definition}
+          arrayElement={elementIndex != null}
+          schemaVisibility={!!field?.onlyForTypes?.length}
+        />
+      )}
 
       {child}
     </div>
