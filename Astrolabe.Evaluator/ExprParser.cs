@@ -13,14 +13,38 @@ public class ExprParser
         var exprLexer = new AstroExprLexer(inputStream);
         var commonTokenStream = new CommonTokenStream(exprLexer);
         var exprParser = new AstroExprParser(commonTokenStream);
+        var errors = new SyntaxErrorListener();
+        exprParser.RemoveErrorListeners();
+        exprParser.AddErrorListener(errors);
         var exprContext = exprParser.main();
         var visitor = new AstroExprVisitor();
         var result = visitor.Visit(exprContext);
-        if (!allowSyntaxErrors && exprParser.NumberOfSyntaxErrors > 0)
+        if (!allowSyntaxErrors && errors.Errors.Count > 0)
         {
-            throw new SyntaxErrorException($"{exprParser.NumberOfSyntaxErrors} syntax errors");
+            throw new SyntaxErrorException(
+                $"{exprParser.NumberOfSyntaxErrors} syntax errors",
+                errors.Errors
+            );
         }
         return result;
+    }
+
+    private class SyntaxErrorListener : BaseErrorListener
+    {
+        public readonly List<SyntaxError> Errors = [];
+
+        public override void SyntaxError(
+            TextWriter output,
+            IRecognizer recognizer,
+            IToken offendingSymbol,
+            int line,
+            int charPositionInLine,
+            string msg,
+            RecognitionException e
+        )
+        {
+            Errors.Add(new SyntaxError(offendingSymbol, line, charPositionInLine, msg, e));
+        }
     }
 
     public class AstroExprVisitor : AstroExprBaseVisitor<EvalExpr>
