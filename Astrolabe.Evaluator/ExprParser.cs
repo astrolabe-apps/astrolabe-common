@@ -16,7 +16,7 @@ public class ExprParser
         var exprContext = exprParser.main();
         var visitor = new AstroExprVisitor();
         var result = visitor.Visit(exprContext);
-        if (allowSyntaxErrors && exprParser.NumberOfSyntaxErrors > 0)
+        if (!allowSyntaxErrors && exprParser.NumberOfSyntaxErrors > 0)
         {
             throw new SyntaxErrorException($"{exprParser.NumberOfSyntaxErrors} syntax errors");
         }
