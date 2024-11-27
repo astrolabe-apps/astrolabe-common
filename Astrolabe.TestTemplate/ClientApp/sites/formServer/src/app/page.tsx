@@ -18,6 +18,7 @@ import {
   buildSchema,
   compoundField,
   ControlDataContext,
+  createSchemaLookup,
   dateField,
   dateTimeField,
   defaultEvalHooks,
@@ -46,6 +47,7 @@ import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
 import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
+import { SchemaMap } from "../schemas";
 
 const CustomControlSchema = applyEditorExtensions(
   DataGridExtension,
@@ -126,6 +128,15 @@ const GridSchema = buildSchema<GridSchema>({
   request: compoundField("Request", RequestSchema),
 });
 
+const schemaLookup = createSchemaLookup({
+  TestSchema,
+  GridSchema,
+  RequestSchema,
+  ResultSchema,
+  ControlDefinitionSchema,
+  ...SchemaMap,
+});
+
 export default function Editor() {
   const qc = useQueryControl();
   const selectedForm = useControl("Test");
@@ -156,17 +167,18 @@ export default function Editor() {
       <BasicFormEditor<string>
         formRenderer={StdFormRenderer}
         editorRenderer={StdFormRenderer}
+        schemas={schemaLookup}
         // handleIcon={<div>WOAH</div>}
         loadForm={async (c) => {
           return c === "EditorControls"
             ? {
-                fields: ControlDefinitionSchema,
+                schemaName: "ControlDefinitionSchema",
                 controls: controlsJson,
               }
             : c === "Test"
-              ? { fields: TestSchema, controls: [] }
+              ? { schemaName: "TestSchema", controls: [] }
               : c === "Grid"
-                ? { fields: GridSchema, controls: [] }
+                ? { schemaName: "GridSchema", controls: [] }
                 : fromFormJson(c as any);
         }}
         selectedForm={selectedForm}
@@ -219,8 +231,7 @@ export default function Editor() {
   );
 
   function fromFormJson(c: keyof typeof FormDefinitions) {
-    const { controls, schema } = FormDefinitions[c];
-    return { fields: schema, controls };
+    return FormDefinitions[c];
   }
   function evalExpr(
     expr: EntityExpression,

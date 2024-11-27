@@ -38,6 +38,7 @@ import {
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import { ControlDragState, controlDropData, DragData, DropData } from "./util";
+import { ControlNode } from "./types";
 
 export interface FormControlPreviewProps {
   definition: ControlDefinition;
@@ -55,7 +56,7 @@ export interface FormControlPreviewProps {
 }
 
 export interface FormControlPreviewContext {
-  selected: Control<Control<any> | undefined>;
+  selected: Control<ControlNode | undefined>;
   treeDrag: Control<ControlDragState | undefined>;
   dropSuccess: (drag: DragData, drop: DropData) => void;
   readonly?: boolean;
@@ -103,7 +104,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     | undefined;
   const displayOnly = dOnly || isControlDisplayOnly(definition);
 
-  const isSelected = !!item && selected.value === item;
+  const isSelected = !!item && selected.value?.control === item;
   const scrollRef = useScrollIntoView(isSelected);
   const { setNodeRef, isOver } = useDroppable({
     id: item?.uniqueId ?? 0,
@@ -192,18 +193,21 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
     designMode: true,
   });
+  const asSelection = { control: item!, schema: parentNode };
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,
     "onClick" | "onClickCapture" | "onMouseDownCapture"
   > = isGroupControlsDefinition(definition) ||
   (isDataControlDefinition(definition) &&
     (definition.children?.length ?? 0) > 0)
-    ? { onClick: (e) => (selected.value = item) }
+    ? {
+        onClick: (e) => (selected.value = asSelection),
+      }
     : {
         onClickCapture: (e) => {
           e.preventDefault();
           e.stopPropagation();
-          selected.value = item;
+          selected.value = asSelection;
         },
         onMouseDownCapture: (e) => {
           e.stopPropagation();

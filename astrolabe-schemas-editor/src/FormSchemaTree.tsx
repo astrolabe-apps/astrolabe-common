@@ -5,6 +5,7 @@ import {
   Control,
   groupedChanges,
   removeElement,
+  trackedValue,
   updateElements,
 } from "@react-typed-forms/core";
 import {
@@ -13,89 +14,85 @@ import {
   defaultSchemaFieldForm,
   SchemaFieldForm,
 } from "./schemaSchemas";
-import React from "react";
+import React, { createContext } from "react";
 import clsx from "clsx";
-import { ControlDefinitionType, FieldType } from "@react-typed-forms/schemas";
+import {
+  ControlDefinitionType,
+  fieldPathForDefinition,
+  FieldType,
+  getSchemaNodePath,
+  isCompoundField,
+  isCompoundNode,
+  schemaForFieldPath,
+  SchemaNode,
+} from "@react-typed-forms/schemas";
+import { ControlNode } from "./types";
 
+interface SchemaNodeCtx {
+  schema: SchemaNode;
+  selectedControl: Control<ControlNode | undefined>;
+  id: string;
+}
 interface FormSchemaTreeProps {
   className?: string;
-  controls: Control<SchemaFieldForm[]>;
-  onDeleted: (n: NodeApi<Control<SchemaFieldForm>>) => void;
+  rootSchema: SchemaNode;
+  selectedControl: Control<ControlNode | undefined>;
+  selected: Control<SchemaNode | undefined>;
 }
 
 export function FormSchemaTree({
-  controls,
-  onDeleted,
+  rootSchema,
+  selected,
   className,
+  selectedControl,
 }: FormSchemaTreeProps) {
   const { ref, width, height } = useResizeObserver();
 
-  const doMove: MoveHandler<Control<SchemaFieldForm>> = (props) => {
-    groupedChanges(() => {
-      const parentChildren =
-        props.parentId === null
-          ? controls
-          : props.parentNode?.data?.fields.children;
-      if (parentChildren) {
-        props.dragNodes.forEach((x) => {
-          const parentControl =
-            x.level === 0 ? controls : x.parent!.data.fields.children;
-          if (parentControl) {
-            updateElements(parentControl, (e) => e.filter((c) => c !== x.data));
-          }
-        });
-        updateElements(parentChildren, (e) => {
-          const c = [...e];
-          c.splice(props.index, 0, ...props.dragNodes.map((x) => x.data));
-          return c;
-        });
-      }
-    });
-  };
-
   return (
     <div className={className} ref={ref}>
-      <Tree<Control<SchemaFieldForm>>
+      <Tree<SchemaNodeCtx>
         width={width}
         height={height}
-        data={controls.elements}
-        childrenAccessor={(x) => {
-          const c = x.fields.children.elements;
-          return c && c.length > 0 ? c : null;
-        }}
-        idAccessor={(x) => x.uniqueId.toString()}
-        children={ControlNode}
-        onCreate={(props) => {
-          if (props.parentNode) {
-            const childElements = props.parentNode.data.fields.children;
-            if (childElements) {
-              const c = addElement(childElements, defaultSchemaFieldForm);
-              return { id: c.uniqueId.toString() };
-            }
-          }
-          return null;
-        }}
-        onMove={doMove}
-        onDelete={(props) => {
-          props.nodes.forEach((x) => {
-            const parentElements =
-              x.level == 0 ? controls : x.parent!.data?.fields.children;
-            if (parentElements) {
-              removeElement(parentElements, x.data);
-              onDeleted(x);
-            }
-          });
-        }}
+        data={makeChildNodes(rootSchema)}
+        onSelect={(n) => (selected.value = n[0]?.data.schema)}
+        selection={selected.value ? getNodeId(selected.value) : undefined}
+        childrenAccessor={(x) =>
+          isCompoundNode(x.schema) ? makeChildNodes(x.schema) : null
+        }
+        children={SchemaNodeRenderer}
       />
     </div>
   );
+
+  function makeChildNodes(n: SchemaNode): SchemaNodeCtx[] {
+    return n
+      .getChildNodes()
+      .map((x) => ({ schema: x, selectedControl, id: getNodeId(x) }));
+  }
 }
 
-function ControlNode({
+function getNodeId(node: SchemaNode): string {
+  return getSchemaNodePath(node).join("/");
+}
+
+function SchemaNodeRenderer({
   node,
   style,
   dragHandle,
-}: NodeRendererProps<Control<SchemaFieldForm>>) {
+}: NodeRendererProps<SchemaNodeCtx>) {
+  const {
+    schema: { field },
+    selectedControl,
+  } = node.data;
+  const sel = selectedControl.value;
+  if (sel) {
+    const schemaPath = fieldPathForDefinition(trackedValue(sel.control));
+    let schema = sel.schema;
+    if (schemaPath) {
+      schema = schemaForFieldPath(schemaPath, schema);
+    }
+    console.log({ sel: getNodeId(schema), this: node.id });
+  }
   return (
     <div
       style={style}
@@ -113,13 +110,8 @@ function ControlNode({
           />
         )}
       </span>
-      <i
-        className={clsx(
-          "fa-solid w-4 h-4 mr-2",
-          nodeIcon(node.data.fields.type.value),
-        )}
-      />
-      <span>{node.data.fields.field.value}</span>
+      <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(field.type))} />
+      <span>{field.field}</span>
     </div>
   );
 

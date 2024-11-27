@@ -76,6 +76,10 @@ public static class FormDefinition
                             "schema",
                             new TsImport(schemaModule, options.SchemaConstName(x.GetSchema())).Ref
                         ),
+                        TsObjectField.NamedField(
+                            "schemaName",
+                            new TsConstExpr(options.SchemaRefName(x.GetSchema()))
+                        ),
                         TsObjectField.NamedField("defaultConfig", new TsConstExpr(x.Config)),
                         TsObjectField.NamedField(
                             "controls",

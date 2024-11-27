@@ -21,8 +21,11 @@ import {
   FieldOption,
   findField,
   isCompoundField,
+  isCompoundNode,
   isScalarField,
+  rootSchemaNode,
   SchemaField,
+  SchemaNode,
 } from "./schemaField";
 
 /**
@@ -274,24 +277,18 @@ function findReferencedControlInArray(
   return undefined;
 }
 
-/**
- * Finds control definitions for a specific compound field.
- * @param compound - The compound field to search for.
- * @param definition - The control definition to search in.
- * @returns An array of found control definitions.
- */
 export function findControlsForCompound(
-  compound: CompoundField,
+  compound: SchemaNode,
   definition: ControlDefinition,
 ): ControlDefinition[] {
   if (
     isDataControlDefinition(definition) &&
-    compound.field === definition.field
+    compound.field.field === definition.field
   ) {
     return [definition];
   }
   if (isGroupControlsDefinition(definition)) {
-    if (definition.compoundField === compound.field) return [definition];
+    if (definition.compoundField === compound.field.field) return [definition];
     return (
       definition.children?.flatMap((d) =>
         findControlsForCompound(compound, d),
@@ -316,11 +313,11 @@ export interface ControlGroupLookup {
  * @returns A record of found compound groups.
  */
 export function findCompoundGroups(
-  fields: SchemaField[],
+  fields: SchemaNode[],
   controls: ControlDefinition[],
 ): Record<string, ControlGroupLookup> {
   return Object.fromEntries(
-    fields.filter(isCompoundField).map((cf) => {
+    fields.filter(isCompoundNode).map((cf) => {
       const groups = controls.flatMap((x) => findControlsForCompound(cf, x));
       return [
         cf.field,
@@ -329,7 +326,7 @@ export function findCompoundGroups(
             findNonDataGroups(groups.flatMap((x) => x.children ?? [])),
           ),
           children: findCompoundGroups(
-            cf.children,
+            cf.getChildNodes(),
             groups.flatMap((x) => x.children ?? []),
           ),
         },
@@ -345,21 +342,22 @@ export function findCompoundGroups(
  * @returns An array of tuples containing the field and the control group lookup.
  */
 export function existsInGroups(
-  field: SchemaField,
+  field: SchemaNode,
   lookup: ControlGroupLookup,
-): [SchemaField, ControlGroupLookup][] {
+): [SchemaNode, ControlGroupLookup][] {
+  const fieldName = field.field.field;
   const itself = lookup.groups.find((c) =>
     c.children?.find(
       (x) =>
-        (isDataControlDefinition(x) && x.field === field.field) ||
-        (isGroupControlsDefinition(x) && x.compoundField === field.field),
+        (isDataControlDefinition(x) && x.field === fieldName) ||
+        (isGroupControlsDefinition(x) && x.compoundField === fieldName),
     ),
   );
   if (!itself) return [[field, lookup]];
-  if (isCompoundField(field)) {
-    const childLookup = lookup.children[field.field];
+  if (isCompoundNode(field)) {
+    const childLookup = lookup.children[fieldName];
     if (!childLookup) return [[field, lookup]];
-    return field.children.flatMap((c) => existsInGroups(c, childLookup));
+    return field.getChildNodes().flatMap((c) => existsInGroups(c, childLookup));
   }
   return [];
 }
@@ -398,7 +396,20 @@ export function addMissingControls(
   fields: SchemaField[],
   controls: ControlDefinition[],
 ) {
+  return addMissingControlsForSchema(rootSchemaNode(fields), controls);
+}
+/**
+ * Adds missing controls to the provided control definitions based on the schema fields.
+ * @param schema - The root schema node to use for adding missing controls.
+ * @param controls - The control definitions to add missing controls to.
+ * @returns The control definitions with missing controls added.
+ */
+export function addMissingControlsForSchema(
+  schema: SchemaNode,
+  controls: ControlDefinition[],
+) {
   controls = controls.map(cloneChildren);
+  const fields = schema.getChildNodes();
   const rootMapping = findCompoundGroups(fields, controls);
   const rootGroups = findNonDataGroups([
     {
@@ -408,10 +419,12 @@ export function addMissingControls(
   ]);
   const rootLookup = { children: rootMapping, groups: rootGroups };
   const missingFields = fields
-    .filter((x) => !fieldHasTag(x, "_NoControl"))
+    .filter((x) => !fieldHasTag(x.field, "_NoControl"))
     .flatMap((x) => existsInGroups(x, rootLookup));
   missingFields.forEach(([f, lookup]) => {
-    const groupToAdd = f.tags?.find((x) => x.startsWith("_ControlGroup:"));
+    const groupToAdd = f.field.tags?.find((x) =>
+      x.startsWith("_ControlGroup:"),
+    );
     let insertGroup: ControlDefinition | undefined = undefined;
     if (groupToAdd) {
       const groupName = groupToAdd.substring(14);
@@ -419,7 +432,7 @@ export function addMissingControls(
     }
     if (!insertGroup) insertGroup = lookup.groups[0];
     if (insertGroup) {
-      const newControl = defaultControlForField(f);
+      const newControl = defaultControlForField(f.field);
       if (insertGroup.children) insertGroup.children.push(newControl);
       else insertGroup.children = [newControl];
     }

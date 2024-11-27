@@ -234,7 +234,7 @@ export interface SchemaTreeLookup<A = string> {
 export interface SchemaNode extends SchemaTreeLookup {
   field: SchemaField;
   getChildNode(field: string): SchemaNode | undefined;
-  getChildNodes(): SchemaNode[];
+  getChildNodes(withParent?: SchemaNode): SchemaNode[];
   parent?: SchemaNode;
 }
 
@@ -283,14 +283,16 @@ function nodeForSchema(
       const childField = field.children.find((x) => x.field === fieldName);
       return childField ? nodeForSchema(childField, lookup, node) : undefined;
     }
-    return getChildNodes().find((x) => x.field.field === fieldName);
+    return getChildNodes(node).find((x) => x.field.field === fieldName);
   }
 
-  function getChildNodes(): SchemaNode[] {
+  function getChildNodes(withParent?: SchemaNode): SchemaNode[] {
     if (isCompoundField(field)) {
       const otherRef = field.schemaRef && lookup.getSchema(field.schemaRef);
-      if (otherRef) return otherRef.getChildNodes();
-      return field.children.map((x) => nodeForSchema(x, lookup, node));
+      if (otherRef) return otherRef.getChildNodes(withParent ?? node);
+      return field.children.map((x) =>
+        nodeForSchema(x, lookup, withParent ?? node),
+      );
     }
     return [];
   }
@@ -441,4 +443,18 @@ export function rootSchemaNode(
     lookup,
     undefined,
   );
+}
+
+export function getSchemaNodePath(node: SchemaNode) {
+  const paths: string[] = [];
+  let curNode: SchemaNode | undefined = node;
+  while (curNode) {
+    paths.push(curNode.field.field);
+    curNode = curNode.parent;
+  }
+  return paths.reverse();
+}
+
+export function isCompoundNode(node: SchemaNode) {
+  return isCompoundField(node.field);
 }

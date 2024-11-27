@@ -6,6 +6,7 @@ export const CarSearch = {
   value: "CarSearch",
   name: "Car Search Page",
   schema: CarSearchPageSchema,
+  schemaName: "CarSearchPage",
   defaultConfig: null,
   controls: CarSearchJson.controls as ControlDefinition[],
   config: CarSearchJson.config,

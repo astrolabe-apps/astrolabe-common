@@ -1,42 +1,29 @@
-import { Control, useComputed, useControl } from "@react-typed-forms/core";
+import { Control } from "@react-typed-forms/core";
 import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
 import React, { ReactElement } from "react";
 import {
   FormRenderer,
   GroupedControlsDefinition,
   makeSchemaDataNode,
-  rootSchemaNode,
-  SchemaField,
+  SchemaNode,
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
-import {
-  findAllParentsInControls,
-  findSchemaFieldListForParents,
-  useEditorDataHook,
-} from "./util";
+import { useEditorDataHook } from "./util";
+import { ControlNode } from "./types";
 
 export function FormControlEditor({
-  control,
+  controlNode,
   renderer,
   editorFields,
-  fields,
   editorControls,
-  rootControls,
 }: {
-  control: Control<ControlDefinitionForm>;
+  controlNode: ControlNode;
   editorControls: GroupedControlsDefinition;
-  editorFields: SchemaField[];
-  fields: Control<SchemaFieldForm[]>;
+  editorFields: SchemaNode;
   renderer: FormRenderer;
-  rootControls: Control<ControlDefinitionForm[]>;
 }): ReactElement {
-  const emptyFields = useControl<SchemaFieldForm[]>([]);
-  const fieldList = useComputed(() => {
-    const parentControls = findAllParentsInControls(control, rootControls);
-    return findSchemaFieldListForParents(fields, parentControls) ?? emptyFields;
-  });
-  const useDataHook = useEditorDataHook(rootSchemaNode(fieldList.value.value));
-  const editorNode = makeSchemaDataNode(rootSchemaNode(editorFields), control);
+  const useDataHook = useEditorDataHook(controlNode.schema);
+  const editorNode = makeSchemaDataNode(editorFields, controlNode.control);
   const RenderEditor = useControlRendererComponent(
     editorControls,
     renderer,

@@ -22,29 +22,27 @@ import {
   ControlDefinitionForm,
   ControlDefinitionSchemaMap,
   defaultControlDefinitionForm,
-  SchemaFieldForm,
   toControlDefinitionForm,
-  toSchemaFieldForm,
 } from "./schemaSchemas";
 import {
   addMissingControls,
+  addMissingControlsForSchema,
   applyExtensionsToSchema,
   cleanDataForSchema,
   ControlDefinition,
   ControlDefinitionExtension,
   ControlDefinitionType,
-  ControlRenderer,
   ControlRenderOptions,
   FormRenderer,
   getAllReferencedClasses,
   GroupedControlsDefinition,
   GroupRenderType,
-  SchemaField,
   rootSchemaNode,
+  SchemaNode,
+  SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import React, { ReactElement, ReactNode, useMemo } from "react";
-import { controlIsCompoundField, controlIsGroupControl } from "./util";
 import {
   createTailwindcss,
   TailwindConfig,
@@ -53,13 +51,8 @@ import clsx from "clsx";
 import defaultEditorControls from "./ControlDefinition.json";
 import { FormControlTree } from "./FormControlTree";
 import { FormSchemaTree } from "./FormSchemaTree";
-
-interface PreviewData {
-  showing: boolean;
-  showJson: boolean;
-  showRawEditor: boolean;
-  data: any;
-}
+import { FormPreview, PreviewData } from "./FormPreview";
+import { ControlNode } from "./types";
 
 export function applyEditorExtensions(
   ...extensions: ControlDefinitionExtension[]
@@ -70,9 +63,10 @@ export function applyEditorExtensions(
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
   editorRenderer: FormRenderer;
+  schemas: SchemaTreeLookup;
   loadForm: (
     formType: A,
-  ) => Promise<{ controls: ControlDefinition[]; fields: SchemaField[] }>;
+  ) => Promise<{ controls: ControlDefinition[]; schemaName: string }>;
   selectedForm: Control<A>;
   formTypes: [A, string][];
   saveForm: (controls: ControlDefinition[]) => Promise<any>;
@@ -109,14 +103,16 @@ export function BasicFormEditor<A extends string>({
   editorClass,
   rootControlClass,
   collectClasses,
+  schemas,
   controlsClass,
   handleIcon,
   extraPreviewControls,
 }: BasicFormEditorProps<A>): ReactElement {
   const controls = useControl<ControlDefinitionForm[]>([]);
-  const fields = useControl<SchemaFieldForm[]>([]);
+  const baseSchema = useControl<string>();
   const treeDrag = useControl();
-  const selected = useControl<Control<any>>();
+  const selected = useControl<ControlNode>();
+  const selectedField = useControl<SchemaNode>();
   const hideFields = useControl(false);
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
   const previewData = useControl<PreviewData>({
@@ -135,6 +131,7 @@ export function BasicFormEditor<A extends string>({
       groupOptions: { type: GroupRenderType.Standard },
     };
   }, [editorControls, defaultEditorControls]);
+  const rootSchema = schemas.getSchema(baseSchema.value ?? "");
 
   const loadedForm = useControl<A>();
   useControlEffect(
@@ -194,7 +191,7 @@ export function BasicFormEditor<A extends string>({
     const res = await loadForm(dt);
     groupedChanges(() => {
       controls.setInitialValue(res.controls.map(toControlDefinitionForm));
-      fields.setInitialValue(res.fields.map(toSchemaFieldForm));
+      baseSchema.setInitialValue(res.schemaName);
       loadedForm.value = dt;
     });
   }
@@ -230,38 +227,39 @@ export function BasicFormEditor<A extends string>({
             )}
           >
             <div className={editorClass}>
-              {previewMode ? (
-                <FormPreview
-                  key={loadedForm.value ?? ""}
-                  fields={trackedValue(fields)}
-                  controls={trackedValue(controls)}
-                  previewData={previewData}
-                  formRenderer={formRenderer}
-                  validation={validation}
-                  previewOptions={previewOptions}
-                  rawRenderer={editorRenderer}
-                  rootControlClass={rootControlClass}
-                  controlsClass={controlsClass}
-                  extraPreviewControls={extraPreviewControls}
-                />
-              ) : (
-                <div className={controlsClass}>
-                  <RenderElements
-                    key={formType}
-                    control={controls}
-                    children={(c, i) => (
-                      <div className={rootControlClass}>
-                        <FormControlPreview
-                          keyPrefix={formType}
-                          definition={trackedValue(c)}
-                          parentNode={rootSchemaNode(trackedValue(fields))}
-                          dropIndex={i}
-                        />
-                      </div>
-                    )}
+              {rootSchema &&
+                (previewMode ? (
+                  <FormPreview
+                    key={loadedForm.value ?? ""}
+                    rootSchema={rootSchema}
+                    controls={trackedValue(controls)}
+                    previewData={previewData}
+                    formRenderer={formRenderer}
+                    validation={validation}
+                    previewOptions={previewOptions}
+                    rawRenderer={editorRenderer}
+                    rootControlClass={rootControlClass}
+                    controlsClass={controlsClass}
+                    extraPreviewControls={extraPreviewControls}
                   />
-                </div>
-              )}
+                ) : (
+                  <div className={controlsClass}>
+                    <RenderElements
+                      key={formType}
+                      control={controls}
+                      children={(c, i) => (
+                        <div className={rootControlClass}>
+                          <FormControlPreview
+                            keyPrefix={formType}
+                            definition={trackedValue(c)}
+                            parentNode={rootSchema}
+                            dropIndex={i}
+                          />
+                        </div>
+                      )}
+                    />
+                  </div>
+                ))}
             </div>
           </div>
         </Panel>
@@ -290,18 +288,41 @@ export function BasicFormEditor<A extends string>({
                     <label htmlFor="hideFields">Hide field names</label>
                   </div>
                 </div>
-                <div className="grow flex overflow-y-hidden">
-                  <FormControlTree
-                    className="h-full w-full overflow-hidden"
-                    controls={controls}
-                    selected={selected}
-                    onDeleted={(c) => {}}
-                  />
-                  <FormSchemaTree
-                    className="h-full w-full overflow-hidden"
-                    controls={fields}
-                    onDeleted={(c) => {}}
-                  />
+                <div className="grow flex overflow-y-hidden border">
+                  {rootSchema && (
+                    <PanelGroup direction="horizontal">
+                      <Panel>
+                        <div className="flex flex-col h-full">
+                          <h2 className="text-xl my-2">Controls</h2>
+                          <FormControlTree
+                            className="overflow-hidden"
+                            controls={controls}
+                            rootSchema={rootSchema}
+                            selectedField={selectedField}
+                            selected={selected}
+                            onDeleted={(c) => {
+                              const sel = selected.value;
+                              if (sel && sel.control === c.data.control) {
+                                selected.value = undefined;
+                              }
+                            }}
+                          />
+                        </div>
+                      </Panel>
+                      <PanelResizeHandle className="w-2 bg-surface-200" />
+                      <Panel>
+                        <div className="flex flex-col h-full">
+                          <h2 className="text-xl my-2">Schema</h2>
+                          <FormSchemaTree
+                            className="overflow-hidden"
+                            selectedControl={selected}
+                            rootSchema={rootSchema}
+                            selected={selectedField}
+                          />
+                        </div>
+                      </Panel>
+                    </PanelGroup>
+                  )}
                 </div>
                 <div>
                   {button(
@@ -310,7 +331,7 @@ export function BasicFormEditor<A extends string>({
                         ...defaultControlDefinitionForm,
                         type: ControlDefinitionType.Group,
                       }),
-                    "Add Page",
+                    "Add Control",
                   )}
                 </div>
               </div>
@@ -321,12 +342,10 @@ export function BasicFormEditor<A extends string>({
                 <RenderOptional control={selected}>
                   {(c) => (
                     <FormControlEditor
-                      key={c.value.uniqueId}
-                      control={c.value}
-                      fields={fields}
+                      key={c.value.control.uniqueId}
+                      controlNode={c.value}
                       renderer={editorRenderer}
-                      editorFields={ControlDefinitionSchema}
-                      rootControls={controls}
+                      editorFields={rootSchemaNode(ControlDefinitionSchema)}
                       editorControls={controlGroup}
                     />
                   )}
@@ -340,140 +359,14 @@ export function BasicFormEditor<A extends string>({
   );
 
   function addMissing() {
-    controls.value = addMissingControls(fields.value, controls.value).map(
-      toControlDefinitionForm,
-    );
+    if (rootSchema) {
+      controls.value = addMissingControlsForSchema(
+        rootSchema,
+        controls.value,
+      ).map(toControlDefinitionForm);
+    }
   }
   function togglePreviewMode() {
     previewData.fields.showing.setValue((x) => !x);
-  }
-}
-
-function FormPreview({
-  previewData,
-  formRenderer,
-  controls,
-  fields,
-  validation,
-  rootControlClass,
-  previewOptions,
-  rawRenderer,
-  controlsClass,
-  extraPreviewControls,
-}: {
-  previewData: Control<PreviewData>;
-  fields: SchemaField[];
-  controls: ControlDefinition[];
-  formRenderer: FormRenderer;
-  rawRenderer: FormRenderer;
-  validation?: (data: any, controls: ControlDefinition[]) => Promise<any>;
-  previewOptions?: ControlRenderOptions;
-  rootControlClass?: string;
-  controlsClass?: string;
-  extraPreviewControls?: ReactNode;
-}) {
-  const { data, showJson, showRawEditor } = previewData.fields;
-  const jsonControl = useControl(() =>
-    JSON.stringify(data.current.value, null, 2),
-  );
-  const rawControls: GroupedControlsDefinition = useMemo(
-    () => ({
-      type: ControlDefinitionType.Group,
-      children: addMissingControls(fields, []),
-    }),
-    [],
-  );
-  useControlEffect(
-    () => data.value,
-    (v) => (jsonControl.value = JSON.stringify(v, null, 2)),
-  );
-  return (
-    <>
-      <div className="my-2 flex gap-2">
-        {formRenderer.renderAction({
-          onClick: runValidation,
-          actionId: "validate",
-          actionText: "Run Validation",
-        })}
-        {formRenderer.renderAction({
-          onClick: () => showRawEditor.setValue((x) => !x),
-          actionId: "",
-          actionText: "Toggle Raw Edit",
-        })}
-        {formRenderer.renderAction({
-          onClick: () => showJson.setValue((x) => !x),
-          actionId: "",
-          actionText: "Toggle JSON",
-        })}
-        {extraPreviewControls}
-      </div>
-      <RenderControl render={renderRaw} />
-
-      <div className={controlsClass}>
-        <RenderArrayElements
-          array={controls}
-          children={(c) => (
-            <div className={rootControlClass}>
-              <ControlRenderer
-                definition={c}
-                fields={fields}
-                renderer={formRenderer}
-                control={data}
-                options={previewOptions}
-              />
-            </div>
-          )}
-        />
-      </div>
-    </>
-  );
-
-  function renderRaw() {
-    const sre = showRawEditor.value;
-    const sj = showJson.value;
-    return (
-      (sre || sj) && (
-        <div className="grid grid-cols-2 gap-3 my-4 border p-4">
-          {sre && (
-            <div>
-              <div className="text-xl">Edit Data</div>
-              <ControlRenderer
-                definition={rawControls}
-                renderer={rawRenderer}
-                fields={fields}
-                control={data}
-              />
-            </div>
-          )}
-          {sj && (
-            <div>
-              <div className="text-xl">JSON</div>
-              <RenderControl>
-                {() => (
-                  <textarea
-                    className="w-full"
-                    rows={10}
-                    onChange={(e) => (jsonControl.value = e.target.value)}
-                    value={jsonControl.value}
-                  />
-                )}
-              </RenderControl>
-              {formRenderer.renderAction({
-                actionText: "Apply JSON",
-                onClick: () => {
-                  data.value = JSON.parse(jsonControl.value);
-                },
-                actionId: "applyJson",
-              })}
-            </div>
-          )}
-        </div>
-      )
-    );
-  }
-
-  async function runValidation() {
-    data.touched = true;
-    await validation?.(data, controls);
   }
 }
