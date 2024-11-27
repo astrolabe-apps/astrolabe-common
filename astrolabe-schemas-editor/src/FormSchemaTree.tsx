@@ -13,11 +13,13 @@ import {
   defaultControlDefinitionForm,
   defaultSchemaFieldForm,
   SchemaFieldForm,
+  toControlDefinitionForm,
 } from "./schemaSchemas";
 import React, { createContext } from "react";
 import clsx from "clsx";
 import {
   ControlDefinitionType,
+  defaultControlForField,
   fieldPathForDefinition,
   FieldType,
   getSchemaNodePath,
@@ -31,11 +33,13 @@ import { ControlNode } from "./types";
 interface SchemaNodeCtx {
   schema: SchemaNode;
   selectedControl: Control<ControlNode | undefined>;
+  rootControls: Control<ControlDefinitionForm[]>;
   id: string;
 }
 interface FormSchemaTreeProps {
   className?: string;
   rootSchema: SchemaNode;
+  rootControls: Control<ControlDefinitionForm[]>;
   selectedControl: Control<ControlNode | undefined>;
   selected: Control<SchemaNode | undefined>;
 }
@@ -44,6 +48,7 @@ export function FormSchemaTree({
   rootSchema,
   selected,
   className,
+  rootControls,
   selectedControl,
 }: FormSchemaTreeProps) {
   const { ref, width, height } = useResizeObserver();
@@ -65,9 +70,12 @@ export function FormSchemaTree({
   );
 
   function makeChildNodes(n: SchemaNode): SchemaNodeCtx[] {
-    return n
-      .getChildNodes()
-      .map((x) => ({ schema: x, selectedControl, id: getNodeId(x) }));
+    return n.getChildNodes().map((x) => ({
+      schema: x,
+      selectedControl,
+      id: getNodeId(x),
+      rootControls,
+    }));
   }
 }
 
@@ -85,13 +93,16 @@ function SchemaNodeRenderer({
     selectedControl,
   } = node.data;
   const sel = selectedControl.value;
+  let parentSelected = false;
   if (sel) {
     const schemaPath = fieldPathForDefinition(trackedValue(sel.control));
     let schema = sel.schema;
     if (schemaPath) {
       schema = schemaForFieldPath(schemaPath, schema);
     }
-    console.log({ sel: getNodeId(schema), this: node.id });
+    parentSelected = getNodeId(node.data.schema.parent!) == getNodeId(schema);
+  } else {
+    parentSelected = getNodeId(node.data.schema.parent!) == "";
   }
   return (
     <div
@@ -112,6 +123,24 @@ function SchemaNodeRenderer({
       </span>
       <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(field.type))} />
       <span>{field.field}</span>
+      {parentSelected && (
+        <i
+          className="ml-2 fa-solid fa-plus w-4 h-4"
+          onClick={async (e) => {
+            e.stopPropagation();
+            const sc = selectedControl.value;
+            const parent = sc
+              ? sc.control.fields.children
+              : node.data.rootControls;
+            addElement(
+              parent,
+              toControlDefinitionForm(
+                defaultControlForField(node.data.schema.field),
+              ),
+            );
+          }}
+        />
+      )}
     </div>
   );
 

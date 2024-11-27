@@ -320,7 +320,7 @@ export function findCompoundGroups(
     fields.filter(isCompoundNode).map((cf) => {
       const groups = controls.flatMap((x) => findControlsForCompound(cf, x));
       return [
-        cf.field,
+        cf.field.field,
         {
           groups: groups.concat(
             findNonDataGroups(groups.flatMap((x) => x.children ?? [])),
@@ -411,6 +411,7 @@ export function addMissingControlsForSchema(
   controls = controls.map(cloneChildren);
   const fields = schema.getChildNodes();
   const rootMapping = findCompoundGroups(fields, controls);
+  console.log(rootMapping);
   const rootGroups = findNonDataGroups([
     {
       type: ControlDefinitionType.Group,

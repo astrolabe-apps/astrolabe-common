@@ -316,6 +316,7 @@ export function BasicFormEditor<A extends string>({
                           <FormSchemaTree
                             className="overflow-hidden"
                             selectedControl={selected}
+                            rootControls={controls}
                             rootSchema={rootSchema}
                             selected={selectedField}
                           />
