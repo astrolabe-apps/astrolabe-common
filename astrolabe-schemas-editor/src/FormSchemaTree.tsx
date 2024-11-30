@@ -122,7 +122,7 @@ function SchemaNodeRenderer({
         )}
       </span>
       <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(field.type))} />
-      <span>{field.field}</span>
+      <span className="truncate">{field.field}</span>
       {parentSelected && (
         <i
           className="ml-2 fa-solid fa-plus w-4 h-4"

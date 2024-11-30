@@ -168,7 +168,7 @@ function ControlNodeRenderer({
           nodeIcon(control.fields.type.value),
         )}
       />
-      <span>{control.fields.title.value}</span>
+      <span className="truncate">{control.fields.title.value}</span>
       {canAdd && (
         <i
           className="ml-2 fa-solid fa-plus w-4 h-4"
