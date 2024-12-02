@@ -398,6 +398,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             || type == typeof(long)
             || type == typeof(short)
             || type == typeof(ushort)
+            || type == typeof(decimal)
         )
             return new TsTypeRef("number");
         if (type == typeof(bool))
@@ -444,7 +445,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         return call with { Args = args };
     }
 
-    private static FieldType FieldTypeForTypeOnly(Type type)
+    public static FieldType FieldTypeForTypeOnly(Type type)
     {
         return type switch
         {
@@ -461,7 +462,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
                     || type == typeof(short)
                     || type == typeof(ushort)
                 => FieldType.Int,
-            _ when type == typeof(double) => FieldType.Double,
+            _ when type == typeof(double) || type == typeof(decimal) => FieldType.Double,
             _ when type == typeof(bool) => FieldType.Bool,
             _ when type == typeof(object) => FieldType.Any,
             _ => FieldType.Any

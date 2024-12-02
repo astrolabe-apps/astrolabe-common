@@ -23,6 +23,7 @@ public abstract class TypeVisitor<T>
             typeof(int),
             typeof(short),
             typeof(ushort),
+            typeof(decimal),
             typeof(uint),
             typeof(ulong)
         };

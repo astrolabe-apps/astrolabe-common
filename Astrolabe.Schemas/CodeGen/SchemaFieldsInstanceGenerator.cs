@@ -116,25 +116,6 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
         };
     }
 
-    private static FieldType FieldTypeForTypeOnly(Type type)
-    {
-        return type switch
-        {
-            { IsEnum: true } when IsStringEnum(type) is var stringEnum
-                => stringEnum ? FieldType.String : FieldType.Int,
-            _ when type == typeof(DateTime) => FieldType.DateTime,
-            _ when type == typeof(DateTimeOffset) => FieldType.DateTime,
-            _ when type == typeof(DateOnly) => FieldType.Date,
-            _ when type == typeof(TimeOnly) => FieldType.Time,
-            _ when type == typeof(string) || type == typeof(Guid) => FieldType.String,
-            _ when type == typeof(int) || type == typeof(long) => FieldType.Int,
-            _ when type == typeof(double) => FieldType.Double,
-            _ when type == typeof(bool) => FieldType.Bool,
-            _ when type == typeof(object) => FieldType.Any,
-            _ => FieldType.Any
-        };
-    }
-
     private SchemaField FieldForType(
         SimpleTypeData simpleType,
         ObjectTypeData parentObject,
@@ -152,7 +133,11 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
             EnumerableTypeData enumerableTypeData
                 => MakeCollection(FieldForType(enumerableTypeData.Element(), parentObject, field)),
             ObjectTypeData objectTypeData => DoObject(objectTypeData),
-            _ => new SimpleSchemaField(FieldTypeForTypeOnly(simpleType.Type).ToString(), field)
+            _
+                => new SimpleSchemaField(
+                    SchemaFieldsGenerator.FieldTypeForTypeOnly(simpleType.Type).ToString(),
+                    field
+                )
         };
 
         SchemaField MakeCollection(SchemaField sf)
