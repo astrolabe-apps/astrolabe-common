@@ -17,6 +17,15 @@ public static class ControlDefinitionExtensions
         };
     }
 
+    public static LabelType GetLabelType(this ControlDefinition definition)
+    {
+        return definition switch
+        {
+            GroupedControlsDefinition gcd => LabelType.Group,
+            _ => LabelType.Control
+        };
+    }
+
     public static bool IsVisible(
         this ControlDefinition definition,
         JsonObject data,

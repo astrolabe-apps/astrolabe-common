@@ -126,7 +126,7 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
                     rootSchemaNode.WithData(JsonSerializer.SerializeToNode(pdfData.Data))
                 )
             );
-            dc.Page(p => pdfContext.RenderContainer(p.Content()));
+            dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
         });
         return File(doc.GeneratePdf(), "application/pdf");
     }

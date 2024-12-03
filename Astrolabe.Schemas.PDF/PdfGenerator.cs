@@ -21,7 +21,7 @@ public static class PdfGenerator
                 {
                     pdfContext
                         .WithFormNode(fn.WithData(formDataNode.DataNode ?? formDataNode.Parent))
-                        .RenderContainer(cd.Item());
+                        .RenderControlLayout(cd.Item());
                 });
         });
     }
@@ -44,13 +44,27 @@ public static class PdfGenerator
         }
     }
 
-    public static void RenderContainer(this PdfFormContext pdfContext, IContainer document)
+    public static void RenderLabel(
+        this PdfFormContext pdfContext,
+        LabelType labelType,
+        string labelText,
+        IContainer container
+    )
+    {
+        container.Text(labelText);
+    }
+
+    public static void RenderControlLayout(this PdfFormContext pdfContext, IContainer document)
     {
         var formNode = pdfContext.FormNode;
         document.Row(cd =>
         {
             if (!formNode.Definition.IsTitleHidden())
-                cd.AutoItem().Text(formNode.Title());
+                pdfContext.RenderLabel(
+                    formNode.Definition.GetLabelType(),
+                    formNode.Title(),
+                    cd.AutoItem()
+                );
             pdfContext.RenderContent(cd.AutoItem());
         });
     }
