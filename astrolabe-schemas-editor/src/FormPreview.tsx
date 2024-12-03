@@ -46,7 +46,9 @@ export function FormPreview({
   previewOptions?: ControlRenderOptions;
   rootControlClass?: string;
   controlsClass?: string;
-  extraPreviewControls?: ReactNode | ((c: ControlDefinition[]) => ReactNode);
+  extraPreviewControls?:
+    | ReactNode
+    | ((c: ControlDefinition[], data: Control<any>) => ReactNode);
 }) {
   const { data, showJson, showRawEditor } = previewData.fields;
   const jsonControl = useControl(() =>
@@ -86,7 +88,7 @@ export function FormPreview({
           actionText: "Toggle JSON",
         })}
         {typeof extraPreviewControls === "function"
-          ? extraPreviewControls(controls)
+          ? extraPreviewControls(controls, data)
           : extraPreviewControls}
       </div>
       <RenderControl render={renderRaw} />

@@ -7,6 +7,7 @@ import {
   ControlDefinitionSchema,
 } from "@astroapps/schemas-editor";
 import {
+  Control,
   ensureSelectableValues,
   Fcheckbox,
   RenderElements,
@@ -226,7 +227,7 @@ export default function Editor() {
         }}
         controlDefinitionSchemaMap={CustomControlSchema}
         editorControls={controlsJson}
-        extraPreviewControls={(c) => (
+        extraPreviewControls={(c, data) => (
           <div>
             <RenderElements control={rolesSelectable}>
               {(c) => (
@@ -236,15 +237,19 @@ export default function Editor() {
                 </div>
               )}
             </RenderElements>
-            <Button onClick={() => genPdf(c)}>PDF</Button>
+            <Button onClick={() => genPdf(c, data)}>PDF</Button>
           </div>
         )}
       />
     </DndProvider>
   );
 
-  async function genPdf(c: ControlDefinition[]) {
-    const file = await carClient.generatePdf(c as any[]);
+  async function genPdf(c: ControlDefinition[], data: Control<any>) {
+    const file = await carClient.generatePdf({
+      controls: c as any[],
+      schemaName: selectedForm.value,
+      data: data.value,
+    });
     saveAs(file.data, file.fileName);
   }
   function fromFormJson(c: keyof typeof FormDefinitions) {

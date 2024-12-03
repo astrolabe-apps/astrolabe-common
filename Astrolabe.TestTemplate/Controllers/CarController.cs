@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Astrolabe.Annotation;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.PDF;
@@ -114,23 +115,18 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
 
     [HttpPost("pdf")]
     [ProducesResponseType(typeof(FileResult), 200)]
-    public async Task<FileResult> GeneratePdf([FromBody] ControlDefinition[] controls)
+    public async Task<FileResult> GeneratePdf([FromBody] PdfData pdfData)
     {
-        var rootFormNode = FormNode.Create(controls);
-        var carInfo = await dbContext
-            .Cars.Select(x => new CarInfo(x.Make, x.Model, x.Year, x.Status))
-            .ToListAsync();
-        var carArray = JsonSerializer.SerializeToNode(carInfo, FormDataJson.Options)!.AsArray();
-        var carInfoNode = carService.SchemaLookup.GetSchema("CarInfo")!;
+        var rootFormNode = FormNode.Create(pdfData.Controls);
+        var rootSchemaNode = carService.SchemaLookup.GetSchema(pdfData.SchemaName)!;
         var doc = Document.Create(dc =>
         {
-            foreach (var car in carArray.ToList())
-            {
-                var pdfContext = new PdfFormContext(
-                    rootFormNode.WithData(carInfoNode.WithData(car))
-                );
-                dc.Page(p => pdfContext.RenderContainer(p.Content()));
-            }
+            var pdfContext = new PdfFormContext(
+                rootFormNode.WithData(
+                    rootSchemaNode.WithData(JsonSerializer.SerializeToNode(pdfData.Data))
+                )
+            );
+            dc.Page(p => pdfContext.RenderContainer(p.Content()));
         });
         return File(doc.GeneratePdf(), "application/pdf");
     }
@@ -139,3 +135,5 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
 public record CarEdit(string Make, string Model, int Year);
 
 public record CarInfo(string Make, string Model, int Year, ItemStatus Status);
+
+public record PdfData(ControlDefinition[] Controls, string SchemaName, JsonElement Data);

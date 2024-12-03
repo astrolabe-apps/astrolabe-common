@@ -335,7 +335,7 @@ export class CarClient {
      * @param body (optional) 
      * @return OK
      */
-    generatePdf(body: ControlDefinition[] | undefined): Promise<FileResponse> {
+    generatePdf(body: PdfData | undefined): Promise<FileResponse> {
         let url_ = this.baseUrl + "/api/Car/pdf";
         url_ = url_.replace(/[?&]$/, "");
 
@@ -982,6 +982,12 @@ export interface NotEmptyExpression extends EntityExpression {
     field: string;
 
     [key: string]: any;
+}
+
+export interface PdfData {
+    controls: ControlDefinition[];
+    schemaName: string;
+    data: any;
 }
 
 export interface RadioButtonRenderOptions extends RenderOptions {
