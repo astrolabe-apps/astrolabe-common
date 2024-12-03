@@ -6,11 +6,12 @@ namespace Astrolabe.Schemas.PDF;
 public static class PdfGenerator
 {
     public static void RenderGroupContent(
-        this FormDataNode formDataNode,
+        this PdfFormContext pdfContext,
         GroupRenderOptions? options,
         IContainer container
     )
     {
+        var formDataNode = pdfContext.FormNode;
         container.Column(cd =>
         {
             formDataNode
@@ -18,21 +19,23 @@ public static class PdfGenerator
                 .ToList()
                 .ForEach(fn =>
                 {
-                    fn.WithData(formDataNode.DataNode ?? formDataNode.Parent)
+                    pdfContext
+                        .WithFormNode(fn.WithData(formDataNode.DataNode ?? formDataNode.Parent))
                         .RenderContainer(cd.Item());
                 });
         });
     }
 
-    public static void RenderContent(this FormDataNode formDataNode, IContainer container)
+    public static void RenderContent(this PdfFormContext pdfContext, IContainer container)
     {
+        var formDataNode = pdfContext.FormNode;
         switch (formDataNode.FormNode.Definition)
         {
             case DataControlDefinition when formDataNode.DataNode is { Data: var data }:
                 container.Text(data?.ToString());
                 break;
             case GroupedControlsDefinition group:
-                formDataNode.RenderGroupContent(group.GroupOptions, container);
+                pdfContext.RenderGroupContent(group.GroupOptions, container);
                 break;
             case DisplayControlDefinition displayControlDefinition:
                 throw new NotImplementedException();
@@ -41,13 +44,14 @@ public static class PdfGenerator
         }
     }
 
-    public static void RenderContainer(this FormDataNode formNode, IContainer document)
+    public static void RenderContainer(this PdfFormContext pdfContext, IContainer document)
     {
+        var formNode = pdfContext.FormNode;
         document.Row(cd =>
         {
             if (!formNode.Definition.IsTitleHidden())
                 cd.AutoItem().Text(formNode.Title());
-            formNode.RenderContent(cd.AutoItem());
+            pdfContext.RenderContent(cd.AutoItem());
         });
     }
 }

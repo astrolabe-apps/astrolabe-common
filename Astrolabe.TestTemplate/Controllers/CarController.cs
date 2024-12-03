@@ -126,8 +126,10 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
         {
             foreach (var car in carArray.ToList())
             {
-                var node = rootFormNode.WithData(carInfoNode.WithData(car));
-                dc.Page(p => node.RenderContainer(p.Content()));
+                var pdfContext = new PdfFormContext(
+                    rootFormNode.WithData(carInfoNode.WithData(car))
+                );
+                dc.Page(p => pdfContext.RenderContainer(p.Content()));
             }
         });
         return File(doc.GeneratePdf(), "application/pdf");
