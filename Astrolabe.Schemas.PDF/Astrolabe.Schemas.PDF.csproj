@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="QuestPDF" Version="2024.10.4" />
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="2.88.6" />
+        <PackageReference Include="HarfBuzzSharp.NativeAssets.Linux" Version="7.3.0" />
+    </ItemGroup>
+
+</Project>

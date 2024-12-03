@@ -6,8 +6,13 @@ namespace Astrolabe.Schemas;
 public static class ControlDefinitionExtensions
 {
     private static readonly string VisibilityType = DynamicPropertyType.Visible.ToString();
-    
-    public static bool IsVisible(this ControlDefinition definition, JsonObject data, JsonPathSegments context, ExprEvalBool? evalBool = null)
+
+    public static bool IsVisible(
+        this ControlDefinition definition,
+        JsonObject data,
+        JsonPathSegments context,
+        ExprEvalBool? evalBool = null
+    )
     {
         var dynamicVisibility = definition.Dynamic?.FirstOrDefault(x => x.Type == VisibilityType);
         if (dynamicVisibility == null)
@@ -16,16 +21,27 @@ public static class ControlDefinitionExtensions
         return evalBool(dynamicVisibility.Expr, data, context);
     }
 
-    public static (JsonNode?, SchemaField)? FindChildField(this ControlDefinition definition, JsonObject data,
-        IEnumerable<SchemaField> fields)
+    public static string? GetControlFieldRef(this ControlDefinition definition)
     {
-        var childField = definition switch
+        return definition switch
         {
             DataControlDefinition { Field: var field } => field,
             GroupedControlsDefinition { CompoundField: { } field } => field,
             _ => null
         };
-        if (childField != null && fields.FirstOrDefault(x => x.Field == childField) is { } childSchema)
+    }
+
+    public static (JsonNode?, SchemaField)? FindChildField(
+        this ControlDefinition definition,
+        JsonObject data,
+        IEnumerable<SchemaField> fields
+    )
+    {
+        var childField = definition.GetControlFieldRef();
+        if (
+            childField != null
+            && fields.FirstOrDefault(x => x.Field == childField) is { } childSchema
+        )
         {
             return (data[childField], childSchema);
         }

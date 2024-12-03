@@ -330,6 +330,52 @@ export class CarClient {
         }
         return Promise.resolve<CarInfo[]>(null as any);
     }
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
+    generatePdf(body: ControlDefinition[] | undefined): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/Car/pdf";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGeneratePdf(_response);
+        });
+    }
+
+    protected processGeneratePdf(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
 }
 
 export class CodeGenClient {
@@ -629,6 +675,65 @@ export class SearchStateClient {
     }
 }
 
+export interface ControlAdornment {
+    type: string;
+
+    [key: string]: any;
+}
+
+export interface AccordionAdornment extends ControlAdornment {
+    title: string;
+    defaultExpanded: boolean | null;
+
+    [key: string]: any;
+}
+
+export interface ControlDefinition {
+    type: string;
+    title: string | null;
+    dynamic: DynamicProperty[] | null;
+    adornments: ControlAdornment[] | null;
+    styleClass: string | null;
+    layoutClass: string | null;
+    labelClass: string | null;
+    children: ControlDefinition[] | null;
+
+    [key: string]: any;
+}
+
+export interface ActionControlDefinition extends ControlDefinition {
+    actionId: string;
+    actionData: string | null;
+
+    [key: string]: any;
+}
+
+export enum AdornmentPlacement {
+    ControlStart = "ControlStart",
+    ControlEnd = "ControlEnd",
+    LabelStart = "LabelStart",
+    LabelEnd = "LabelEnd",
+}
+
+export interface RenderOptions {
+    type: string;
+
+    [key: string]: any;
+}
+
+export interface ArrayRenderOptions extends RenderOptions {
+    addText: string | null;
+    removeText: string | null;
+    addActionId: string | null;
+    removeActionId: string | null;
+    noAdd: boolean | null;
+    noRemove: boolean | null;
+    noReorder: boolean | null;
+    childOptions: RenderOptions | null;
+
+    [key: string]: any;
+}
+
 export interface CarEdit {
     make: string;
     model: string;
@@ -658,6 +763,109 @@ export enum CarWorkflow {
     Embarrassed = "Embarrassed",
 }
 
+export interface CheckListRenderOptions extends RenderOptions {
+    entryWrapperClass: string | null;
+    selectedClass: string | null;
+    notSelectedClass: string | null;
+
+    [key: string]: any;
+}
+
+export interface DisplayData {
+    type: string;
+
+    [key: string]: any;
+}
+
+export interface CustomDisplay extends DisplayData {
+    customId: string;
+
+    [key: string]: any;
+}
+
+export interface DataControlDefinition extends ControlDefinition {
+    field: string;
+    hideTitle: boolean | null;
+    required: boolean | null;
+    renderOptions: RenderOptions | null;
+    defaultValue: any | null;
+    readonly: boolean | null;
+    disabled: boolean | null;
+    dontClearHidden: boolean | null;
+    validators: SchemaValidator[] | null;
+
+    [key: string]: any;
+}
+
+export interface EntityExpression {
+    type: string;
+
+    [key: string]: any;
+}
+
+export interface DataExpression extends EntityExpression {
+    field: string;
+
+    [key: string]: any;
+}
+
+export interface DataGroupRenderOptions extends RenderOptions {
+    groupOptions: GroupRenderOptions;
+
+    [key: string]: any;
+}
+
+export interface DataMatchExpression extends EntityExpression {
+    field: string;
+    value: any;
+
+    [key: string]: any;
+}
+
+export enum DateComparison {
+    NotBefore = "NotBefore",
+    NotAfter = "NotAfter",
+}
+
+export interface DateTimeRenderOptions extends RenderOptions {
+    format: string | null;
+    forceMidnight: boolean | null;
+
+    [key: string]: any;
+}
+
+export interface SchemaValidator {
+    type: string;
+
+    [key: string]: any;
+}
+
+export interface DateValidator extends SchemaValidator {
+    comparison: DateComparison;
+    fixedDate: string | null;
+    daysFromCurrent: number | null;
+
+    [key: string]: any;
+}
+
+export interface DisplayControlDefinition extends ControlDefinition {
+    displayData: DisplayData;
+
+    [key: string]: any;
+}
+
+export interface DisplayOnlyRenderOptions extends RenderOptions {
+    emptyText: string | null;
+    sampleText: string | null;
+
+    [key: string]: any;
+}
+
+export interface DynamicProperty {
+    type: string;
+    expr: EntityExpression;
+}
+
 export interface EvalData {
     expression: string;
     data: { [key: string]: any; };
@@ -668,9 +876,120 @@ export interface EvalResult {
     errors: string[];
 }
 
+export interface GroupRenderOptions {
+    type: string;
+    hideTitle: boolean | null;
+    childStyleClass: string | null;
+    childLayoutClass: string | null;
+    childLabelClass: string | null;
+    displayOnly: boolean | null;
+}
+
+export interface FlexRenderer extends GroupRenderOptions {
+    direction: string | null;
+    gap: string | null;
+}
+
+export interface GridRenderer extends GroupRenderOptions {
+    columns: number | null;
+}
+
+export interface GroupElementRenderer extends GroupRenderOptions {
+    value: any;
+}
+
+export interface GroupedControlsDefinition extends ControlDefinition {
+    compoundField: string | null;
+    groupOptions: GroupRenderOptions | null;
+
+    [key: string]: any;
+}
+
+export interface HelpTextAdornment extends ControlAdornment {
+    helpText: string;
+    placement: AdornmentPlacement | null;
+
+    [key: string]: any;
+}
+
+export interface HtmlDisplay extends DisplayData {
+    html: string;
+
+    [key: string]: any;
+}
+
+export interface HtmlEditorRenderOptions extends RenderOptions {
+    allowImages: boolean;
+
+    [key: string]: any;
+}
+
+export interface IconAdornment extends ControlAdornment {
+    iconClass: string;
+    placement: AdornmentPlacement | null;
+
+    [key: string]: any;
+}
+
+export interface IconDisplay extends DisplayData {
+    iconClass: string;
+
+    [key: string]: any;
+}
+
+export interface IconListRenderOptions extends RenderOptions {
+    iconMappings: IconMapping[];
+
+    [key: string]: any;
+}
+
+export interface IconMapping {
+    value: string;
+    materialIcon: string | null;
+}
+
 export enum ItemStatus {
     Draft = "Draft",
     Published = "Published",
+}
+
+export interface JsonataExpression extends EntityExpression {
+    expression: string;
+
+    [key: string]: any;
+}
+
+export interface JsonataRenderOptions extends RenderOptions {
+    expression: string;
+
+    [key: string]: any;
+}
+
+export interface JsonataValidator extends SchemaValidator {
+    expression: string;
+
+    [key: string]: any;
+}
+
+export interface LengthValidator extends SchemaValidator {
+    min: number | null;
+    max: number | null;
+
+    [key: string]: any;
+}
+
+export interface NotEmptyExpression extends EntityExpression {
+    field: string;
+
+    [key: string]: any;
+}
+
+export interface RadioButtonRenderOptions extends RenderOptions {
+    entryWrapperClass: string | null;
+    selectedClass: string | null;
+    notSelectedClass: string | null;
+
+    [key: string]: any;
 }
 
 export interface SearchOptions {
@@ -681,10 +1000,97 @@ export interface SearchOptions {
     filters: { [key: string]: string[]; } | null;
 }
 
+export interface SelectChildRenderer extends GroupRenderOptions {
+    childIndexExpression: EntityExpression;
+}
+
+export interface SetFieldAdornment extends ControlAdornment {
+    defaultOnly: boolean | null;
+    field: string;
+    expression: EntityExpression;
+
+    [key: string]: any;
+}
+
+export interface SimpleDisplayData extends DisplayData {
+
+    [key: string]: any;
+}
+
+export interface SimpleExpression extends EntityExpression {
+
+    [key: string]: any;
+}
+
+export interface SimpleGroupRenderOptions extends GroupRenderOptions {
+}
+
+export interface SimpleRenderOptions extends RenderOptions {
+
+    [key: string]: any;
+}
+
+export interface SimpleValidator extends SchemaValidator {
+
+    [key: string]: any;
+}
+
+export enum SyncTextType {
+    Camel = "Camel",
+    Snake = "Snake",
+    Pascal = "Pascal",
+}
+
+export interface SynchronisedRenderOptions extends RenderOptions {
+    fieldToSync: string;
+    syncType: SyncTextType;
+
+    [key: string]: any;
+}
+
+export interface TextDisplay extends DisplayData {
+    text: string;
+
+    [key: string]: any;
+}
+
+export interface TextfieldRenderOptions extends RenderOptions {
+    placeholder: string | null;
+    multiline: boolean | null;
+
+    [key: string]: any;
+}
+
+export interface TooltipAdornment extends ControlAdornment {
+    tooltip: string;
+
+    [key: string]: any;
+}
+
+export interface UserMatchExpression extends EntityExpression {
+    userMatch: string;
+
+    [key: string]: any;
+}
+
+export interface UserSelectionRenderOptions extends RenderOptions {
+    noGroups: boolean;
+    noUsers: boolean;
+
+    [key: string]: any;
+}
+
 export interface ValueWithDeps {
     value: any | null;
     path: string | null;
     deps: string[] | null;
+}
+
+export interface FileResponse {
+    data: Blob;
+    status: number;
+    fileName?: string;
+    headers?: { [name: string]: any };
 }
 
 export class ApiException extends Error {

@@ -1,11 +1,14 @@
 using System.Reflection;
 using Astrolabe.JSON.Extensions;
+using Astrolabe.TestTemplate.Service;
 using Astrolabe.TestTemplate.Workflow;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
+QuestPDF.Settings.License = LicenseType.Community;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -16,6 +19,8 @@ builder
     {
         x.JsonSerializerOptions.AddStandardOptions();
     });
+
+builder.Services.AddSingleton<CarService>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

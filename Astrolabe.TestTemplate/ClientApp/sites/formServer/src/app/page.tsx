@@ -1,5 +1,6 @@
 "use client";
 
+import { saveAs } from "file-saver";
 import {
   applyEditorExtensions,
   BasicFormEditor,
@@ -18,6 +19,7 @@ import {
   buildSchema,
   compoundField,
   ControlDataContext,
+  ControlDefinition,
   createSchemaLookup,
   dateField,
   dateTimeField,
@@ -40,7 +42,12 @@ import {
 } from "@astroapps/client/hooks/queryParamSync";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
-import { CarEdit, CodeGenClient, SearchStateClient } from "../client";
+import {
+  CarClient,
+  CarEdit,
+  CodeGenClient,
+  SearchStateClient,
+} from "../client";
 import controlsJson from "../ControlDefinition.json";
 import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
@@ -48,6 +55,8 @@ import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
+import { Button } from "@astrolabe/ui/Button";
+import { useApiClient } from "@astroapps/client/hooks/useApiClient";
 
 const CustomControlSchema = applyEditorExtensions(
   DataGridExtension,
@@ -138,6 +147,7 @@ const schemaLookup = createSchemaLookup({
 });
 
 export default function Editor() {
+  const carClient = useApiClient(CarClient);
   const qc = useQueryControl();
   const selectedForm = useControl("Test");
   const roles = useControl<string[]>([]);
@@ -214,7 +224,7 @@ export default function Editor() {
         }}
         controlDefinitionSchemaMap={CustomControlSchema}
         editorControls={controlsJson}
-        extraPreviewControls={
+        extraPreviewControls={(c) => (
           <div>
             <RenderElements control={rolesSelectable}>
               {(c) => (
@@ -224,12 +234,17 @@ export default function Editor() {
                 </div>
               )}
             </RenderElements>
+            <Button onClick={() => genPdf(c)}>PDF</Button>
           </div>
-        }
+        )}
       />
     </DndProvider>
   );
 
+  async function genPdf(c: ControlDefinition[]) {
+    const file = await carClient.generatePdf(c as any[]);
+    saveAs(file.data, file.fileName);
+  }
   function fromFormJson(c: keyof typeof FormDefinitions) {
     return FormDefinitions[c];
   }

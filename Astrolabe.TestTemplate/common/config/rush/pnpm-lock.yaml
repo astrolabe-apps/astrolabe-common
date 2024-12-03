@@ -744,11 +744,13 @@ importers:
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/schemas-html': workspace:*
       '@tailwindcss/forms': ^0.5.7
+      '@types/file-saver': ^2.0.7
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
       '@types/react-dom': ^18.2.14
       autoprefixer: 10.4.16
       codemirror: ^6.0.1
+      file-saver: ~2.0.5
       http-request-cli: ^0.2.0
       next: 14.0.4
       nswag: ^14.0.7
@@ -779,6 +781,7 @@ importers:
       '@react-typed-forms/schemas': link:../../../../schemas
       '@react-typed-forms/schemas-html': link:../../../../schemas-html
       codemirror: 6.0.1_@lezer+common@1.2.3
+      file-saver: 2.0.5
       next: 14.0.4_nnrd3gsncyragczmpvfhocinkq
       react: 18.3.1
       react-dnd: 16.0.1_dhjhfklksilq7vybfge4vfljc4
@@ -786,6 +789,7 @@ importers:
       react-dom: 18.3.1_react@18.3.1
     devDependencies:
       '@tailwindcss/forms': 0.5.9_tailwindcss@3.4.14
+      '@types/file-saver': 2.0.7
       '@types/node': 20.17.2
       '@types/react': 18.3.12
       '@types/react-dom': 18.3.1
@@ -9526,6 +9530,10 @@ packages:
       '@types/serve-static': 1.15.7
     dev: true
 
+  /@types/file-saver/2.0.7:
+    resolution: {integrity: sha512-dNKVfHd/jk0SkR/exKGj2ggkB45MAkzvWCaqLUUgkyjITkGNzH8H+yUwr+BLJUBjZOe9w8X3wgmXhZDRg1ED6A==}
+    dev: true
+
   /@types/find-cache-dir/3.2.1:
     resolution: {integrity: sha512-frsJrz2t/CeGifcu/6uRo4b+SzAwT4NYCVPu1GN8IB9XTzrpPkGuV0tmh9mN+/L0PklAlsC3u5Fxt0ju00LXIw==}
     dev: true
@@ -13530,6 +13538,10 @@ packages:
     dependencies:
       flat-cache: 3.2.0
     dev: true
+
+  /file-saver/2.0.5:
+    resolution: {integrity: sha512-P9bmyZ3h/PRG+Nzga+rbdI4OEpNDzAVyy74uVO9ATgzLK6VtAsYybF/+TOCvrc0MO793d6+42lLyZTw7/ArVzA==}
+    dev: false
 
   /file-system-cache/2.3.0:
     resolution: {integrity: sha512-l4DMNdsIPsVnKrgEXbJwDJsA5mB8rGwHYERMgqQx/xAUtChPJMre1bXBzDEqqVbWv9AIbFezXMxeEkZDSrXUOQ==}

@@ -84,7 +84,7 @@ export interface BasicFormEditorProps<A extends string> {
   editorPanelClass?: string;
   controlsClass?: string;
   handleIcon?: ReactNode;
-  extraPreviewControls?: ReactNode;
+  extraPreviewControls?: ReactNode | ((c: ControlDefinition[]) => ReactNode);
 }
 
 export function BasicFormEditor<A extends string>({

@@ -1,15 +1,21 @@
+using System.Text.Json;
 using Astrolabe.Annotation;
+using Astrolabe.Schemas;
 using Astrolabe.SearchState;
+using Astrolabe.TestTemplate.Forms;
+using Astrolabe.TestTemplate.Service;
 using Astrolabe.TestTemplate.Workflow;
 using Astrolabe.Workflow;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
 
 namespace Astrolabe.TestTemplate.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class CarController(AppDbContext dbContext) : ControllerBase
+public class CarController(AppDbContext dbContext, CarService carService) : ControllerBase
 {
     private static readonly CarWorkflowExecutor Workflow = new();
 
@@ -103,6 +109,44 @@ public class CarController(AppDbContext dbContext) : ControllerBase
         return await dbContext
             .Cars.Select(x => new CarInfo(x.Make, x.Model, x.Year, x.Status))
             .ToListAsync();
+    }
+
+    [HttpPost("pdf")]
+    [ProducesResponseType(typeof(FileResult), 200)]
+    public async Task<FileResult> GeneratePdf([FromBody] ControlDefinition[] controls)
+    {
+        var rootFormNode = FormNode.Create(
+            new GroupedControlsDefinition { Children = controls },
+            null
+        );
+        var carInfo = await dbContext
+            .Cars.Select(x => new CarInfo(x.Make, x.Model, x.Year, x.Status))
+            .ToListAsync();
+        var carArray = JsonSerializer.SerializeToNode(carInfo)!.AsArray();
+        var carInfoNode = carService.SchemaLookup.GetSchema("CarInfo")!;
+        var doc = Document.Create(dc =>
+        {
+            dc.Page(page =>
+            {
+                page.Header()
+                    .Column(c =>
+                    {
+                        carArray
+                            .ToList()
+                            .ForEach(x =>
+                            {
+                                rootFormNode.VisitFormWithData(
+                                    SchemaDataNode.Root(carInfoNode, x!),
+                                    (fn, pd, d) =>
+                                    {
+                                        c.Item().Text((d ?? pd).Schema.Field.Field);
+                                    }
+                                );
+                            });
+                    });
+            });
+        });
+        return File(doc.GeneratePdf(), "application/pdf");
     }
 }
 
