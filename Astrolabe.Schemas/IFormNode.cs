@@ -16,52 +16,87 @@ public record FormNode(ControlDefinition Definition, IFormNode? Parent) : IFormN
         return Definition.Children?.Select(x => new FormNode(x, this)) ?? [];
     }
 
-    public SchemaDataNode? GetDataNode(SchemaDataNode parent)
-    {
-        throw new NotImplementedException();
-    }
-
-    public static IFormNode Create(ControlDefinition definition, IFormNode? parent)
+    public static IFormNode Create(ControlDefinition definition, IFormNode? parent = null)
     {
         return new FormNode(definition, parent);
     }
+
+    public static IFormNode Create(
+        IEnumerable<ControlDefinition> definitions,
+        IFormNode? parent = null
+    )
+    {
+        return new FormNode(
+            new GroupedControlsDefinition
+            {
+                Children = definitions,
+                GroupOptions = new SimpleGroupRenderOptions(GroupRenderType.Standard.ToString())
+                {
+                    HideTitle = true
+                }
+            },
+            parent
+        );
+    }
 }
 
-public delegate void FormDataVisitor(
-    IFormNode formNode,
-    SchemaDataNode parent,
-    SchemaDataNode? dataNode
-);
+public record FormDataNode(IFormNode FormNode, SchemaDataNode Parent, SchemaDataNode? DataNode)
+{
+    public ControlDefinition Definition => FormNode.Definition;
+}
 
 public static class FormNodeExtensions
 {
-    public static SchemaDataNode? GetDataNode(this IFormNode formNode, SchemaDataNode parent)
+    public static FormDataNode WithData(this IFormNode formNode, SchemaDataNode parent)
     {
         var fieldRef = formNode.Definition.GetControlFieldRef();
-        return fieldRef != null ? parent.GetChildForFieldRef(fieldRef) : null;
+        return new FormDataNode(
+            formNode,
+            parent,
+            fieldRef != null ? parent.GetChildForFieldRef(fieldRef) : null
+        );
     }
 
-    public static void VisitFormWithData(
-        this IFormNode formNode,
-        SchemaDataNode parent,
-        FormDataVisitor visitor
-    )
+    public static string Title(this ISchemaNode schemaNode)
     {
-        void Recurse(IFormNode fn, SchemaDataNode p)
-        {
-            var dataNode = fn.GetDataNode(p);
-            visitor(fn, p, dataNode);
-            if (p.ElementIndex == null && (p.Schema.Field.Collection ?? false) && dataNode != null)
-            {
-                var elements = dataNode.ElementCount();
-                for (var i = 0; i < elements; i++)
-                {
-                    var child = dataNode.GetChildElement(i);
-                    if (child != null)
-                        Recurse(fn, child);
-                }
-            }
-        }
-        Recurse(formNode, parent);
+        return schemaNode.Field.DisplayName ?? schemaNode.Field.Field;
     }
+
+    public static string Title(this FormDataNode formNode)
+    {
+        return formNode.FormNode.Definition.Title
+            ?? formNode.DataNode?.Schema.Title()
+            ?? "<untitled>";
+    }
+
+    // public static void VisitFormWithData(
+    //     this IFormNode formNode,
+    //     SchemaDataNode parent,
+    //     FormDataVisitor visitor
+    // )
+    // {
+    //     void Recurse(IFormNode fn, SchemaDataNode p)
+    //     {
+    //         var dataNode = fn.GetDataNode(p);
+    //         visitor(fn, p, dataNode);
+    //         if (p.ElementIndex == null && (p.Schema.Field.Collection ?? false) && dataNode != null)
+    //         {
+    //             var elements = dataNode.ElementCount();
+    //             for (var i = 0; i < elements; i++)
+    //             {
+    //                 var child = dataNode.GetChildElement(i);
+    //                 if (child != null)
+    //                     Recurse(fn, child);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             foreach (var childNode in fn.GetChildNodes())
+    //             {
+    //                 Recurse(childNode, dataNode ?? p);
+    //             }
+    //         }
+    //     }
+    //     Recurse(formNode, parent);
+    // }
 }

@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 namespace Astrolabe.Schemas;
 
 public interface ISchemaNode : ISchemaTreeLookup

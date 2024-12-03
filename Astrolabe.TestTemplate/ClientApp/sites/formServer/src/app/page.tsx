@@ -180,22 +180,24 @@ export default function Editor() {
         schemas={schemaLookup}
         // handleIcon={<div>WOAH</div>}
         loadForm={async (c) => {
-          return c === "EditorControls"
-            ? {
+          if (c in FormDefinitions)
+            return FormDefinitions[c as keyof typeof FormDefinitions];
+          switch (c) {
+            case "ControlDefinitionSchema":
+              return {
                 schemaName: "ControlDefinitionSchema",
                 controls: controlsJson,
-              }
-            : c === "Test"
-              ? { schemaName: "TestSchema", controls: [] }
-              : c === "Grid"
-                ? { schemaName: "GridSchema", controls: [] }
-                : fromFormJson(c as any);
+              };
+            default:
+              return { schemaName: c, controls: [] };
+          }
         }}
         selectedForm={selectedForm}
         formTypes={[
-          ["EditorControls", "EditorControls"],
-          ["Test", "Test"],
-          ["Grid", "Grid"],
+          ["ControlDefinitionSchema", "EditorControls"],
+          ["CarInfo", "Pdf test"],
+          ["TestSchema", "Test"],
+          ["GridSchema", "Grid"],
           ...Object.values(FormDefinitions).map(
             (x) => [x.value, x.name] as [string, string],
           ),

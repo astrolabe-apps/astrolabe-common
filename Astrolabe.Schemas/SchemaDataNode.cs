@@ -8,16 +8,15 @@ public record SchemaDataNode(
     JsonNode? Data,
     SchemaDataNode? Parent,
     int? ElementIndex = null
-)
-{
-    public static SchemaDataNode Root(ISchemaNode rootSchema, JsonNode data)
-    {
-        return new SchemaDataNode(rootSchema, data, null);
-    }
-}
+);
 
 public static class SchemaDataNodeExtensions
 {
+    public static SchemaDataNode WithData(this ISchemaNode schema, JsonNode? data)
+    {
+        return new SchemaDataNode(schema, data, null);
+    }
+
     public static int ElementCount(this SchemaDataNode dataNode)
     {
         return dataNode.Data switch

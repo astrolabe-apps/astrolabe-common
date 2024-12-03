@@ -82,3 +82,5 @@ common/autoinstallers/*/.npmrc
 
 *.tsbuildinfo
 
+*.DotSettings.user
+

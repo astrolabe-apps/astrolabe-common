@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Astrolabe.Annotation;
 using Astrolabe.Schemas;
+using Astrolabe.Schemas.PDF;
 using Astrolabe.SearchState;
 using Astrolabe.TestTemplate.Forms;
 using Astrolabe.TestTemplate.Service;
@@ -115,36 +116,19 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
     [ProducesResponseType(typeof(FileResult), 200)]
     public async Task<FileResult> GeneratePdf([FromBody] ControlDefinition[] controls)
     {
-        var rootFormNode = FormNode.Create(
-            new GroupedControlsDefinition { Children = controls },
-            null
-        );
+        var rootFormNode = FormNode.Create(controls);
         var carInfo = await dbContext
             .Cars.Select(x => new CarInfo(x.Make, x.Model, x.Year, x.Status))
             .ToListAsync();
-        var carArray = JsonSerializer.SerializeToNode(carInfo)!.AsArray();
+        var carArray = JsonSerializer.SerializeToNode(carInfo, FormDataJson.Options)!.AsArray();
         var carInfoNode = carService.SchemaLookup.GetSchema("CarInfo")!;
         var doc = Document.Create(dc =>
         {
-            dc.Page(page =>
+            foreach (var car in carArray.ToList())
             {
-                page.Header()
-                    .Column(c =>
-                    {
-                        carArray
-                            .ToList()
-                            .ForEach(x =>
-                            {
-                                rootFormNode.VisitFormWithData(
-                                    SchemaDataNode.Root(carInfoNode, x!),
-                                    (fn, pd, d) =>
-                                    {
-                                        c.Item().Text((d ?? pd).Schema.Field.Field);
-                                    }
-                                );
-                            });
-                    });
-            });
+                var node = rootFormNode.WithData(carInfoNode.WithData(car));
+                dc.Page(p => node.RenderContainer(p.Content()));
+            }
         });
         return File(doc.GeneratePdf(), "application/pdf");
     }

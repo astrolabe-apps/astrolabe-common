@@ -7,6 +7,16 @@ public static class ControlDefinitionExtensions
 {
     private static readonly string VisibilityType = DynamicPropertyType.Visible.ToString();
 
+    public static bool IsTitleHidden(this ControlDefinition definition)
+    {
+        return definition switch
+        {
+            DataControlDefinition dcd => dcd.HideTitle ?? false,
+            GroupedControlsDefinition gcd => gcd.GroupOptions?.HideTitle ?? false,
+            _ => true
+        };
+    }
+
     public static bool IsVisible(
         this ControlDefinition definition,
         JsonObject data,
