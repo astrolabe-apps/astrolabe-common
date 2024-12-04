@@ -1,6 +1,6 @@
 namespace Astrolabe.Schemas;
 
-public interface IFormNode
+public interface IFormNode : IFormLookup
 {
     ControlDefinition Definition { get; }
 
@@ -9,34 +9,17 @@ public interface IFormNode
     IEnumerable<IFormNode> GetChildNodes();
 }
 
-public record FormNode(ControlDefinition Definition, IFormNode? Parent) : IFormNode
+public record FormNode(ControlDefinition Definition, IFormNode? Parent, IFormLookup FormLookup)
+    : IFormNode
 {
     public IEnumerable<IFormNode> GetChildNodes()
     {
-        return Definition.Children?.Select(x => new FormNode(x, this)) ?? [];
+        return Definition.Children?.Select(x => new FormNode(x, this, FormLookup)) ?? [];
     }
 
-    public static IFormNode Create(ControlDefinition definition, IFormNode? parent = null)
+    public IFormNode? GetForm(string formName)
     {
-        return new FormNode(definition, parent);
-    }
-
-    public static IFormNode Create(
-        IEnumerable<ControlDefinition> definitions,
-        IFormNode? parent = null
-    )
-    {
-        return new FormNode(
-            new GroupedControlsDefinition
-            {
-                Children = definitions,
-                GroupOptions = new SimpleGroupRenderOptions(GroupRenderType.Standard.ToString())
-                {
-                    HideTitle = true
-                }
-            },
-            parent
-        );
+        return FormLookup.GetForm(formName);
     }
 }
 
