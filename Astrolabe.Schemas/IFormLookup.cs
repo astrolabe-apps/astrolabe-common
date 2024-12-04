@@ -5,38 +5,36 @@ public interface IFormLookup
     IFormNode? GetForm(string formName);
 }
 
-public class FormLookup(IDictionary<string, Func<IFormLookup, IFormNode>> formMap) : IFormLookup
+public class FormLookup(Func<string, IFormLookup, IFormNode?> formMap) : IFormLookup
 {
-    public static IFormLookup Create(IDictionary<string, IEnumerable<ControlDefinition>> formMap)
+    public static IFormLookup Create(Func<string, IEnumerable<ControlDefinition>?> formMap)
     {
         return new FormLookup(
-            new Dictionary<string, Func<IFormLookup, IFormNode>>(
-                formMap.Select(x =>
-                {
-                    return new KeyValuePair<string, Func<IFormLookup, IFormNode>>(
-                        x.Key,
-                        l => new FormNode(
-                            new GroupedControlsDefinition
+            (name, lookup) =>
+            {
+                var controls = formMap(name);
+                return controls != null
+                    ? new FormNode(
+                        new GroupedControlsDefinition
+                        {
+                            Children = controls,
+                            GroupOptions = new SimpleGroupRenderOptions(
+                                GroupRenderType.Standard.ToString()
+                            )
                             {
-                                Children = x.Value,
-                                GroupOptions = new SimpleGroupRenderOptions(
-                                    GroupRenderType.Standard.ToString()
-                                )
-                                {
-                                    HideTitle = true
-                                }
-                            },
-                            null,
-                            l
-                        )
-                    );
-                })
-            )
+                                HideTitle = true
+                            }
+                        },
+                        null,
+                        lookup
+                    )
+                    : null;
+            }
         );
     }
 
     public IFormNode? GetForm(string formName)
     {
-        return formMap.TryGetValue(formName, out var func) ? func(this) : null;
+        return formMap(formName, this);
     }
 }

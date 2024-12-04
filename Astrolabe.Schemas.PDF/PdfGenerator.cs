@@ -34,6 +34,9 @@ public static class PdfGenerator
             case DataControlDefinition when formDataNode.DataNode is { Data: var data }:
                 container.Text(data?.ToString());
                 break;
+            case DataControlDefinition:
+                container.Text("Missing data");
+                break;
             case GroupedControlsDefinition group:
                 pdfContext.RenderGroupContent(group.GroupOptions, container);
                 break;
