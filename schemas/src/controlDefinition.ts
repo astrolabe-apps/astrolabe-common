@@ -17,6 +17,7 @@ import { EntityExpression } from "./entityExpression";
 export interface FormContextData {
   option?: FieldOption;
   optionSelected?: boolean;
+  control?: Control<any>;
 }
 
 /**

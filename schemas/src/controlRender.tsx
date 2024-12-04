@@ -418,6 +418,10 @@ export interface ControlRenderOptions
     ctx: ValidationContext,
   ) => void;
   useEvalExpressionHook?: UseEvalExpressionHook;
+  adjustLayout?: (
+    context: ControlDataContext,
+    layout: ControlLayoutProps,
+  ) => ControlLayoutProps;
   clearHidden?: boolean;
   schemaInterface?: SchemaInterface;
   elementIndex?: number;
@@ -505,7 +509,7 @@ export function useControlRendererComponent(
         parentDataNode: pdn,
         dataNode: dn,
       } = r.current;
-      const formData = options.formData ?? {};
+      const formData = { ...options.formData, control: dn?.control };
       const dataContext: ControlDataContext = {
         schemaInterface,
         dataNode: dn,
@@ -670,12 +674,15 @@ export function useControlRendererComponent(
           );
         },
       });
-      const renderedControl = renderer.renderLayout({
+      const layoutProps: ControlLayoutProps = {
         ...labelAndChildren,
         adornments,
         className: rendererClass(options.layoutClass, c.layoutClass),
         style: layoutStyle.value,
-      });
+      };
+      const renderedControl = renderer.renderLayout(
+        options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,
+      );
       return renderer.renderVisibility({ visibility, ...renderedControl });
     } finally {
       stopTracking();

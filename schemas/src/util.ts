@@ -411,7 +411,6 @@ export function addMissingControlsForSchema(
   controls = controls.map(cloneChildren);
   const fields = schema.getChildNodes();
   const rootMapping = findCompoundGroups(fields, controls);
-  console.log(rootMapping);
   const rootGroups = findNonDataGroups([
     {
       type: ControlDefinitionType.Group,
