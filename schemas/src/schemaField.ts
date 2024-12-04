@@ -1,5 +1,7 @@
 import { SchemaValidator } from "./schemaValidator";
-import { Control } from "@react-typed-forms/core";
+import { Control, ControlSetup } from "@react-typed-forms/core";
+
+export type EqualityFunc = (a: any, b: any) => boolean;
 
 /**
  * Represents a schema field with various properties.
@@ -225,6 +227,10 @@ export interface SchemaInterface {
    * @returns The search text.
    */
   searchText(field: SchemaField, value: any): string;
+
+  makeEqualityFunc(field: SchemaNode): EqualityFunc;
+
+  makeControlSetup(field: SchemaNode): ControlSetup<any>;
 }
 
 export interface SchemaTreeLookup<A = string> {

@@ -117,7 +117,7 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
     [ProducesResponseType(typeof(FileResult), 200)]
     public async Task<FileResult> GeneratePdf([FromBody] PdfData pdfData)
     {
-        var rootFormNode = FormNode.Create(pdfData.Controls);
+        var rootFormNode = FormLookup.Create(_ => pdfData.Controls).GetForm("")!;
         var rootSchemaNode = carService.SchemaLookup.GetSchema(pdfData.SchemaName)!;
         var doc = Document.Create(dc =>
         {

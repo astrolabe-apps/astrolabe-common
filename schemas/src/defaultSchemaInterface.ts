@@ -1,5 +1,6 @@
-import { Control } from "@react-typed-forms/core";
+import { Control, ControlSetup } from "@react-typed-forms/core";
 import {
+  EqualityFunc,
   FieldOption,
   FieldType,
   SchemaDataNode,
@@ -131,6 +132,38 @@ export class DefaultSchemaInterface implements SchemaInterface {
       default:
         return 0;
     }
+  }
+
+  compoundFieldSetup(f: SchemaNode): [string, ControlSetup<any>][] {
+    return f.getChildNodes().map((x) => {
+      const { field } = x.field;
+      return [field, this.makeControlSetup(x)];
+    });
+  }
+
+  compoundFieldEquality(f: SchemaNode): [string, EqualityFunc][] {
+    return f.getChildNodes().map((x) => {
+      const { field } = x.field;
+      return [field, (a, b) => this.makeEqualityFunc(x)(a[field], b[field])];
+    });
+  }
+
+  makeEqualityFunc(field: SchemaNode): EqualityFunc {
+    switch (field.field.type) {
+      case FieldType.Compound:
+        const allChecks = this.compoundFieldEquality(field);
+        return (a, b) => allChecks.every((x) => x[1](a, b));
+      default:
+        return (a, b) => a === b;
+    }
+  }
+  makeControlSetup(field: SchemaNode): ControlSetup<any> {
+    let setup: ControlSetup<any> = { equals: this.makeEqualityFunc(field) };
+    switch (field.field.type) {
+      case FieldType.Compound:
+        setup.fields = Object.fromEntries(this.compoundFieldSetup(field));
+    }
+    return setup;
   }
 }
 
