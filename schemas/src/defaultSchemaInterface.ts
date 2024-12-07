@@ -152,7 +152,9 @@ export class DefaultSchemaInterface implements SchemaInterface {
     switch (field.field.type) {
       case FieldType.Compound:
         const allChecks = this.compoundFieldEquality(field);
-        return (a, b) => allChecks.every((x) => x[1](a, b));
+        return (a, b) =>
+          a === b ||
+          (a != null && b != null && allChecks.every((x) => x[1](a, b)));
       default:
         return (a, b) => a === b;
     }
