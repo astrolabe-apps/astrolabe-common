@@ -228,9 +228,9 @@ export interface SchemaInterface {
    */
   searchText(field: SchemaField, value: any): string;
 
-  makeEqualityFunc(field: SchemaNode): EqualityFunc;
+  makeEqualityFunc(field: SchemaNode, element?: boolean): EqualityFunc;
 
-  makeControlSetup(field: SchemaNode): ControlSetup<any>;
+  makeControlSetup(field: SchemaNode, element?: boolean): ControlSetup<any>;
 }
 
 export interface SchemaTreeLookup<A = string> {
