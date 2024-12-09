@@ -62,6 +62,7 @@ interface DataGridOptions
   > {
   noEntriesText?: string;
   searchField?: string;
+  displayOnly?: boolean;
 }
 
 interface DataGridClasses {
@@ -88,6 +89,7 @@ const DataGridFields = buildSchema<DataGridOptions>({
   noRemove: boolField("No remove"),
   noReorder: boolField("No reorder"),
   searchField: stringField("Search state field"),
+  displayOnly: boolField("Display only"),
 });
 export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
@@ -153,7 +155,10 @@ export function createDataGridRenderer(
             render: (_, ri) =>
               x.rowIndex
                 ? ri + 1
-                : renderChild("c" + i + "_" + ri, def, { elementIndex: ri }),
+                : renderChild("c" + i + "_" + ri, def, {
+                    elementIndex: ri,
+                    displayOnly: dataGridOptions.displayOnly,
+                  }),
           };
         }) ?? [];
       const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
@@ -176,6 +181,7 @@ export function createDataGridRenderer(
             render: (_: Control<any>, rowIndex: number) =>
               renderChild(i, d, {
                 parentDataNode: dataContext.dataNode!.getChildElement(rowIndex),
+                displayOnly: dataGridOptions.displayOnly,
               }),
           };
         });
