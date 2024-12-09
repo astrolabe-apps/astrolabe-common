@@ -11,7 +11,7 @@
           "field": "make",
           "required": true,
           "renderOptions": {
-            "type": "DisplayOnly"
+            "type": "Standard"
           },
           "hideTitle": true,
           "adornments": [
@@ -32,8 +32,7 @@
           "field": "model",
           "required": true,
           "renderOptions": {
-            "type": "DisplayOnly",
-            "sampleText": "Honda"
+            "type": "Standard"
           },
           "hideTitle": true,
           "adornments": [
@@ -54,7 +53,7 @@
           "field": "year",
           "required": true,
           "renderOptions": {
-            "type": "DisplayOnly"
+            "type": "Standard"
           },
           "hideTitle": true
         },
@@ -64,7 +63,7 @@
           "field": "status",
           "required": true,
           "renderOptions": {
-            "type": "DisplayOnly"
+            "type": "Standard"
           },
           "hideTitle": true,
           "adornments": [
@@ -82,7 +81,8 @@
       "hideTitle": false,
       "renderOptions": {
         "type": "DataGrid",
-        "searchField": "request"
+        "searchField": "request",
+        "displayOnly": true
       },
       "readonly": true
     },
