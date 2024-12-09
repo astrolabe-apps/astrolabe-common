@@ -1,10 +1,14 @@
 import fc from "fast-check";
 import { describe, expect, it } from "@jest/globals";
-import { ControlChange, groupedChanges, newControl } from "../src/controlImpl";
+import {
+  ControlChange,
+  groupedChanges,
+  newControl,
+  updateElements,
+} from "../src/controlImpl";
 
 // Properties
 describe("properties", () => {
-  // string text always contains itself
   it("dirty flag for value", () => {
     fc.assert(
       fc.property(fc.string(), (text) => {
@@ -174,7 +178,7 @@ describe("properties", () => {
     );
   });
 
-  it("updating child changes parent", () => {
+  it("updating object child changes parent", () => {
     fc.assert(
       fc.property(fc.record({ v1: fc.string() }), (obj) => {
         const changes: ControlChange[] = [];
@@ -184,6 +188,55 @@ describe("properties", () => {
         expect(changes).toStrictEqual([ControlChange.Value]);
         return f.dirty;
       }),
+    );
+  });
+
+  it("updating array child changes parent", () => {
+    fc.assert(
+      fc.property(fc.array(fc.string(), { minLength: 1 }), (obj) => {
+        const changes: ControlChange[] = [];
+        const f = newControl(obj);
+        f.subscribe((a, c) => changes.push(c), ControlChange.Value);
+        f.elements[0].value = obj[0] + "a";
+        expect(changes).toStrictEqual([ControlChange.Value]);
+        expect(f.value).toStrictEqual([obj[0] + "a", ...obj.slice(1)]);
+        return f.dirty;
+      }),
+    );
+  });
+
+  it("updating array parent changes child", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.record({ v1: fc.string(), v2: fc.string() }), {
+          minLength: 1,
+        }),
+        (obj) => {
+          const f = newControl(obj.map((x) => x.v1));
+          f.elements.forEach((x) => x.value);
+          f.value = obj.map((x) => x.v2);
+          expect(f.value).toStrictEqual(f.elements.map((x) => x.value));
+        },
+      ),
+    );
+  });
+
+  it("updating array elements changes parent", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.record({ v1: fc.string(), v2: fc.string() })),
+        (obj) => {
+          const arr1 = newControl(obj.map((x) => x.v1));
+          const arr2 = newControl(obj.map((x) => x.v2));
+          const elems2 = arr2.elements;
+          arr2.value = [];
+          updateElements(arr1, (x) => [...x, ...elems2]);
+          expect(arr1.value).toStrictEqual([
+            ...obj.map((x) => x.v1),
+            ...obj.map((x) => x.v2),
+          ]);
+        },
+      ),
     );
   });
 });
