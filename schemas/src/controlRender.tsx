@@ -509,7 +509,7 @@ export function useControlRendererComponent(
         parentDataNode: pdn,
         dataNode: dn,
       } = r.current;
-      const formData = { ...options.formData, control: dn?.control };
+      const formData = options.formData ?? {};
       const dataContext: ControlDataContext = {
         schemaInterface,
         dataNode: dn,
