@@ -51,10 +51,10 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "build": "rimraf ./lib/ && microbundle -f modern,cjs",
+    "watch": "microbundle -w -f modern,cjs --no-compress",
     "test": "jest --coverage",
-    "update-readme": "md-magic --path README.md",
-    "gencode": "nswag swagger2tsclient /input:http://localhost:5216/swagger/v1/swagger.json /runtime:Net60 /output:src/types.ts /GenerateClientClasses:false /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string"
+    "run": "tsx src/index.ts",
+    "update-readme": "md-magic --path README.md"
   }
 }

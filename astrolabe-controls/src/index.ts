@@ -1,35 +1,10 @@
 import { ControlChange, ControlImpl, newControl } from "./controlImpl";
 
-const parent = newControl({ ok: "sdads", umm: "cool" });
-
-const { ok: o } = parent.fields;
-const ok = o as ControlImpl<string>;
-// console.log(parent);
-// console.log(ok);
-// const hai = parent.value;
-// ok.value = "WOW";
-// parent.fields.umm.value = "Changed";
-// console.log(parent.value);
-// console.log(ok.value);
-// console.log(hai);
-// parent.value = { ok: "Changed", umm: "Changed again" };
-// parent.initialValue = { ok: "Changed", umm: "Changed again" };
-// console.log(ok.value);
-const v1 = ok.subscribe(() => console.log("Changed1"), ControlChange.Value);
-const v2 = ok.subscribe(() => console.log("Dirty"), ControlChange.Dirty);
-ok.value = "WOW";
-const v3 = parent.subscribe(() => console.log("Changed2"), ControlChange.Value);
-console.log("#1", parent.value, parent.initialValue, parent.dirty);
-ok.runListeners();
-ok.value = "sdads";
-console.log("#2");
-ok.runListeners();
-console.log("#3");
-ok.runListeners();
-ok.value = "ValueMutating";
-ok.unsubscribe(v3);
-ok.unsubscribe(v2);
-console.log("#4");
-ok.runListeners();
-console.log("#5");
-ok.runListeners();
+const parent = newControl<any>({ child: "hai" });
+const v1 = parent.subscribe(
+  () => console.log("Parent changed"),
+  ControlChange.Value,
+);
+const child = parent.fields.child;
+child.subscribe((a, c) => console.log("Child changed"), ControlChange.Value);
+parent.value = null;

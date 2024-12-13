@@ -208,20 +208,61 @@ describe("properties", () => {
   it("updating array parent changes child", () => {
     fc.assert(
       fc.property(
-        fc.array(fc.record({ v1: fc.string(), v2: fc.string() }), {
-          minLength: 1,
+        fc.record({
+          v: fc.array(fc.record({ v1: fc.string(), v2: fc.string() })),
+          iv: fc.array(fc.string()),
         }),
-        (obj) => {
+        ({ v: obj, iv }) => {
           const f = newControl(obj.map((x) => x.v1));
           f.elements.forEach((x) => x.value);
           f.value = obj.map((x) => x.v2);
           expect(f.value).toStrictEqual(f.elements.map((x) => x.value));
+          f.initialValue = iv;
+          expect(f.elements.map((_, i) => iv[i])).toStrictEqual(
+            f.elements.map((x) => x.initialValue),
+          );
         },
       ),
     );
   });
 
-  it("updating array elements changes parent", () => {
+  it("updating array element list changes parent", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.record({ v1: fc.string(), v2: fc.string() })),
+        (obj) => {
+          const val1 = obj.map((x) => x.v1);
+          const val2 = obj.map((x) => x.v2);
+          const arr1 = newControl(val1);
+          const elems2 = val2.map(newControl);
+          const origElems = arr1.elements;
+          updateElements(arr1, (x) => [...elems2, ...x]);
+          expect(arr1.value).toStrictEqual([...val2, ...val1]);
+          expect(arr1.initialValue).toStrictEqual(val1);
+          expect(elems2.map((x) => x.initialValue)).toStrictEqual(val1);
+          expect(origElems.map((x) => x.initialValue)).toStrictEqual(
+            val1.map((x) => undefined),
+          );
+        },
+      ),
+    );
+  });
+
+  it("updating array element values changes parent", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.record({ v1: fc.string(), v2: fc.string() })),
+        (obj) => {
+          const arr1 = newControl(obj.map((x) => x.v1));
+          const elems1 = arr1.elements;
+          elems1.forEach((c, i) => (c.value = obj[i].v2));
+          expect(arr1.value).toStrictEqual([...obj.map((x) => x.v2)]);
+        },
+      ),
+    );
+  });
+
+  it("updating array elements that were detached doesnt change parent", () => {
     fc.assert(
       fc.property(
         fc.array(fc.record({ v1: fc.string(), v2: fc.string() })),
@@ -230,13 +271,99 @@ describe("properties", () => {
           const arr2 = newControl(obj.map((x) => x.v2));
           const elems2 = arr2.elements;
           arr2.value = [];
+          elems2.forEach((c, i) => (c.value = obj[i].v1));
           updateElements(arr1, (x) => [...x, ...elems2]);
-          expect(arr1.value).toStrictEqual([
-            ...obj.map((x) => x.v1),
-            ...obj.map((x) => x.v2),
-          ]);
+          expect(arr2.value).toStrictEqual([]);
         },
       ),
+    );
+  });
+
+  it("updating child fields of null parent makes parent not null", () => {
+    fc.assert(
+      fc.property(fc.string(), (childValue) => {
+        const changes: ControlChange[] = [];
+        const control = newControl<{ child: string } | undefined>(undefined);
+        control.subscribe((a, c) => changes.push(c), ControlChange.Value);
+        const child = control.fields.child;
+        child.value = childValue;
+        expect(control.value).toStrictEqual({ child: childValue });
+        expect(changes).toStrictEqual([ControlChange.Value]);
+      }),
+    );
+  });
+
+  it("updating parent to null make child fields undefined", () => {
+    fc.assert(
+      fc.property(fc.string(), (childValue) => {
+        const changes: ControlChange[] = [];
+        const childChanges: ControlChange[] = [];
+        const control = newControl<{ child: string } | null>({
+          child: childValue,
+        });
+        control.subscribe((a, c) => changes.push(c), ControlChange.Value);
+        const child = control.fields.child;
+        child.value = childValue + "a";
+        child.subscribe((a, c) => childChanges.push(c), ControlChange.Value);
+        control.value = null;
+        expect(child.value).toStrictEqual(undefined);
+        child.value = childValue + "b";
+        expect(control.value).toStrictEqual({ child: childValue + "b" });
+        control.value = null;
+        expect(control.value).toStrictEqual(null);
+        expect(child.value).toStrictEqual(undefined);
+        expect(changes).toStrictEqual([
+          ControlChange.Value,
+          ControlChange.Value,
+          ControlChange.Value,
+          ControlChange.Value,
+        ]);
+        expect(childChanges).toStrictEqual([
+          ControlChange.Value,
+          ControlChange.Value,
+          ControlChange.Value,
+        ]);
+      }),
+    );
+  });
+
+  it("updating parent to null make child fields undefined (initial value)", () => {
+    fc.assert(
+      fc.property(fc.string(), (childValue) => {
+        const changes: ControlChange[] = [];
+        const childChanges: ControlChange[] = [];
+        const control = newControl<{ child: string } | null>({
+          child: childValue,
+        });
+        control.subscribe(
+          (a, c) => changes.push(c),
+          ControlChange.InitialValue,
+        );
+        const child = control.fields.child;
+        child.initialValue = childValue + "a";
+        child.subscribe(
+          (a, c) => childChanges.push(c),
+          ControlChange.InitialValue,
+        );
+        control.initialValue = null;
+        expect(child.initialValue).toStrictEqual(undefined);
+        child.initialValue = childValue + "b";
+        expect(control.initialValue).toStrictEqual({ child: childValue + "b" });
+        control.initialValue = null;
+        expect(control.initialValue).toStrictEqual(null);
+        expect(child.initialValue).toStrictEqual(undefined);
+        expect(changes).toStrictEqual([
+          ControlChange.InitialValue,
+          ControlChange.InitialValue,
+          ControlChange.InitialValue,
+          ControlChange.InitialValue,
+        ]);
+        expect(childChanges).toStrictEqual([
+          ControlChange.InitialValue,
+          ControlChange.InitialValue,
+          ControlChange.InitialValue,
+        ]);
+      }),
     );
   });
 });

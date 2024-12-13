@@ -87,15 +87,14 @@ export interface ControlProperties<V> {
   readonly dirty: boolean;
   // disabled: boolean;
   // touched: boolean;
-  readonly fields: { [K in keyof V]-?: Control<V[K]> };
+  readonly fields: {
+    [K in keyof NonNullable<V>]-?: Control<NonNullable<V>[K]>;
+  };
   readonly elements: Control<V extends Array<infer X> ? X : unknown>[];
   // readonly isNull: boolean;
 }
 
 export interface Control<V> extends ControlProperties<V> {
-  fields: { [K in keyof V]-?: Control<V[K]> };
-  elements: Control<V extends Array<infer X> ? X : unknown>[];
-  readonly dirty: boolean;
   subscribe(listener: ChangeListenerFunc<V>, mask: ControlChange): Subscription;
   unsubscribe(subscription: Subscription): void;
   isEqual: (v1: unknown, v2: unknown) => boolean;
@@ -123,13 +122,15 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
     return this._impl.getArrayChildren().getElements();
   }
 
-  get fields(): { [K in keyof V]-?: Control<V[K]> } {
+  get fields() {
     return this._impl.getObjectChildren().getFields();
   }
 }
 
+let uniqueIdCounter = 0;
 export class ControlImpl<V> implements Control<V> {
   current: ControlPropertiesImpl<V>;
+  public uniqueId: number;
   constructor(
     public _value: V,
     public _initialValue: V,
@@ -140,6 +141,7 @@ export class ControlImpl<V> implements Control<V> {
     public _subscriptions?: Subscriptions,
     public _setup?: ControlSetup<V>,
   ) {
+    this.uniqueId = ++uniqueIdCounter;
     this.current = new ControlPropertiesImpl<V>(this);
   }
 
@@ -300,7 +302,11 @@ class ArrayControl<V> implements ChildState {
     }
   }
   updateChildInitialValues(): void {
-    throw new Error("Method not implemented.");
+    const c = this.control;
+    const iv = (c._initialValue ?? []) as any[];
+    this._elems.forEach((x, i) => {
+      x.setInitialValue(iv[i], c);
+    });
   }
   childValueChange(prop: string | number, v: unknown): void {
     let c = this.control;
@@ -336,21 +342,23 @@ class ObjectControl<V> implements ChildState {
     const c = this.control;
     const v = c._value;
     Object.entries(this._fields).forEach(([k, fv]) => {
-      const cv = (v as any)[k];
+      const cv = v != null ? (v as any)[k] : undefined;
       fv.setValue(cv, c);
     });
   }
 
   updateChildInitialValues(): void {
     const c = this.control;
-    const v = c._value;
+    const v = c._initialValue;
     Object.entries(this._fields).forEach(([k, fv]) => {
-      const cv = (v as any)[k];
+      const cv = v != null ? (v as any)[k] : undefined;
       fv.setInitialValue(cv, c);
     });
   }
 
-  getFields(): { [K in keyof V]-?: Control<V[K]> } {
+  getFields(): {
+    [K in keyof NonNullable<V>]-?: Control<NonNullable<V>[K]>;
+  } {
     return new Proxy<any>(this, FieldsProxy);
   }
 
@@ -374,7 +382,7 @@ class ObjectControl<V> implements ChildState {
   childValueChange(prop: string | number, v: V): void {
     let c = this.control;
     let curValue = c._value;
-    if (!(c._flags & ControlFlags.ValueMutating)) {
+    if (!(c._flags & ControlFlags.ValueMutating) || curValue == null) {
       curValue = { ...curValue };
       c._value = curValue;
       c._flags |= ControlFlags.ValueMutating;
@@ -385,7 +393,7 @@ class ObjectControl<V> implements ChildState {
   childInitialValueChange(prop: string | number, v: V): void {
     let c = this.control;
     let curValue = c._initialValue;
-    if (!(c._flags & ControlFlags.InitialValueMutating)) {
+    if (!(c._flags & ControlFlags.InitialValueMutating) || curValue == null) {
       curValue = { ...curValue };
       c._initialValue = curValue;
       c._flags |= ControlFlags.InitialValueMutating;
@@ -432,12 +440,16 @@ function commit(control?: ControlImpl<unknown>) {
   } else {
     if (!runListenerList.length && sub) {
       control!.runListeners();
-    }
-    while (runListenerList.length > 0) {
-      const listenersToRun = runListenerList;
-      runListenerList = [];
-      listenersToRun.forEach((c) => (c._subscriptions!.onListenerList = false));
-      listenersToRun.forEach((c) => c.runListeners());
+    } else {
+      if (sub) runListenerList.push(control);
+      while (runListenerList.length > 0) {
+        const listenersToRun = runListenerList;
+        runListenerList = [];
+        listenersToRun.forEach(
+          (c) => (c._subscriptions!.onListenerList = false),
+        );
+        listenersToRun.forEach((c) => c.runListeners());
+      }
     }
   }
   transactionCount--;
