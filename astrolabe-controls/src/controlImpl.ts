@@ -1,3 +1,7 @@
+import { ObjectControl } from "./objectControl";
+import { ArrayControl } from "./arrayControl";
+import { Subscriptions, SubscriptionList } from "./subscriptions";
+
 type ChangeListener = [ControlChange, ChangeListenerFunc<any>];
 
 export type ChangeListenerFunc<V> = (
@@ -40,6 +44,7 @@ export enum ControlChange {
 
 let transactionCount = 0;
 let runListenerList: ControlImpl<any>[] = [];
+let subscriptionListener: ChangeListenerFunc<any> | undefined;
 
 interface ParentListeners {
   syncChildValueChange(
@@ -60,14 +65,14 @@ interface ParentListeners {
   ): ParentListeners | undefined;
 }
 
-interface ParentListener {
+export interface ParentListener {
   control: ControlImpl<unknown>;
   childValueChange(prop: string | number, v: unknown): void;
   childInitialValueChange(prop: string | number, v: unknown): void;
   childFlagChange(prop: string | number, flags: ControlFlags): void;
 }
 
-interface ChildState extends ParentListener {
+export interface ChildState extends ParentListener {
   updateChildValues(): void;
   updateChildInitialValues(): void;
 }
@@ -91,7 +96,7 @@ export interface ControlProperties<V> {
     [K in keyof NonNullable<V>]-?: Control<NonNullable<V>[K]>;
   };
   readonly elements: Control<V extends Array<infer X> ? X : unknown>[];
-  // readonly isNull: boolean;
+  readonly isNull: boolean;
 }
 
 export interface Control<V> extends ControlProperties<V> {
@@ -107,6 +112,10 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
   get initialValue() {
     this._impl._flags &= ~ControlFlags.InitialValueMutating;
     return this._impl._initialValue;
+  }
+
+  get isNull() {
+    return this._impl._value == null;
   }
 
   get dirty() {
@@ -160,34 +169,45 @@ export class ControlImpl<V> implements Control<V> {
     return controlEquals(v1, v2, this._setup);
   }
 
+  get isNull() {
+    subscriptionListener?.(this, ControlChange.Structure);
+    return this._value == null;
+  }
+
   get value(): V {
+    subscriptionListener?.(this, ControlChange.Value);
     return this.current.value;
   }
 
   get initialValue(): V {
+    subscriptionListener?.(this, ControlChange.InitialValue);
     return this.current.initialValue;
   }
 
   set value(v: V) {
-    this.setValue(v);
+    this.setValueImpl(v);
   }
 
   set initialValue(v: V) {
-    this.setInitialValue(v);
+    this.setInitialValueImpl(v);
   }
 
-  setValue(v: V, fromParent?: ControlImpl<unknown>): boolean {
+  setValueImpl(v: V, fromParent?: ControlImpl<unknown>): boolean {
     if (this.isEqual(this._value, v)) return false;
     return runTransaction(this, () => {
+      const structureFlag =
+        v == null || this._value == null
+          ? ControlChange.Structure
+          : ControlChange.None;
       this._value = v;
       this._children?.updateChildValues();
       this._parents?.syncChildValueChange(v, fromParent);
-      this._subscriptions?.applyChange(ControlChange.Value);
+      this._subscriptions?.applyChange(ControlChange.Value | structureFlag);
       return true;
     });
   }
 
-  setInitialValue(v: V, fromParent?: ControlImpl<unknown>): boolean {
+  setInitialValueImpl(v: V, fromParent?: ControlImpl<unknown>): boolean {
     if (this.isEqual(this._initialValue, v)) return false;
     return runTransaction(this, () => {
       this._initialValue = v;
@@ -210,10 +230,12 @@ export class ControlImpl<V> implements Control<V> {
   }
 
   get dirty() {
+    subscriptionListener?.(this, ControlChange.Dirty);
     return this.isDirty();
   }
 
   get elements() {
+    subscriptionListener?.(this, ControlChange.Structure);
     return this.getArrayChildren().getElements();
   }
 
@@ -254,155 +276,6 @@ export class ControlImpl<V> implements Control<V> {
       const currentChanges = this.getChangeState(s.mask);
       s.runListeners(this, currentChanges);
     }
-  }
-}
-
-class ArrayControl<V> implements ChildState {
-  public _elems: ControlImpl<unknown>[];
-
-  constructor(public control: ControlImpl<any>) {
-    const v = (control._value ?? []) as any[];
-    const iv = (control._initialValue ?? []) as any[];
-    this._elems = v.map((x, i) => {
-      return new ControlImpl(
-        x,
-        iv[i],
-        control._flags & ControlFlags.Disabled,
-        new SingleParent(this, i),
-      );
-    });
-  }
-
-  getElements(): ControlImpl<V extends Array<infer X> ? X : unknown>[] {
-    return this._elems as any;
-  }
-
-  updateChildValues(): void {
-    const c = this.control;
-    const v = (c._value ?? []) as any[];
-    const iv = (c._initialValue ?? []) as any[];
-    const oldElems = this._elems;
-    const newLength = v.length;
-    this._elems = v.map((x, i) => {
-      const old = oldElems[i];
-      if (old) {
-        old.setValue(x, c);
-        old.setParentAttach(c, i);
-        return old;
-      }
-      return new ControlImpl(
-        x,
-        iv[i],
-        c._flags & ControlFlags.Disabled,
-        new SingleParent(this, i),
-      );
-    });
-    if (newLength < oldElems.length) {
-      oldElems.slice(newLength).forEach((x) => x.setParentAttach(c, undefined));
-    }
-  }
-  updateChildInitialValues(): void {
-    const c = this.control;
-    const iv = (c._initialValue ?? []) as any[];
-    this._elems.forEach((x, i) => {
-      x.setInitialValue(iv[i], c);
-    });
-  }
-  childValueChange(prop: string | number, v: unknown): void {
-    let c = this.control;
-    let curValue = c._value;
-    if (!(c._flags & ControlFlags.ValueMutating)) {
-      curValue = [...curValue];
-      c._value = curValue;
-      c._flags |= ControlFlags.ValueMutating;
-    }
-    (curValue as any)[prop] = v;
-    c._subscriptions?.applyChange(ControlChange.Value);
-  }
-  childInitialValueChange(prop: string | number, v: unknown): void {
-    let c = this.control;
-    let curValue = c._value;
-    if (!(c._flags & ControlFlags.InitialValueMutating)) {
-      curValue = [...curValue];
-      c._value = curValue;
-      c._flags |= ControlFlags.InitialValueMutating;
-    }
-    (curValue as any)[prop] = v;
-    c._subscriptions?.applyChange(ControlChange.InitialValue);
-  }
-  childFlagChange(prop: string | number, flags: ControlFlags): void {
-    throw new Error("Method not implemented.");
-  }
-}
-
-class ObjectControl<V> implements ChildState {
-  private _fields: Record<string, ControlImpl<unknown>> = {};
-  constructor(public control: ControlImpl<any>) {}
-  updateChildValues(): void {
-    const c = this.control;
-    const v = c._value;
-    Object.entries(this._fields).forEach(([k, fv]) => {
-      const cv = v != null ? (v as any)[k] : undefined;
-      fv.setValue(cv, c);
-    });
-  }
-
-  updateChildInitialValues(): void {
-    const c = this.control;
-    const v = c._initialValue;
-    Object.entries(this._fields).forEach(([k, fv]) => {
-      const cv = v != null ? (v as any)[k] : undefined;
-      fv.setInitialValue(cv, c);
-    });
-  }
-
-  getFields(): {
-    [K in keyof NonNullable<V>]-?: Control<NonNullable<V>[K]>;
-  } {
-    return new Proxy<any>(this, FieldsProxy);
-  }
-
-  getField(p: string): ControlImpl<unknown> {
-    if (p in this._fields) {
-      return this._fields[p];
-    }
-    const { _value, _initialValue } = this.control;
-    const v = _value != null ? (_value as any)[p] : undefined;
-    const iv = _initialValue != null ? (_initialValue as any)[p] : undefined;
-    const c = new ControlImpl(
-      v,
-      iv,
-      this.control._flags & ControlFlags.Disabled,
-      new SingleParent(this, p),
-    );
-    this._fields[p] = c;
-    return c;
-  }
-
-  childValueChange(prop: string | number, v: V): void {
-    let c = this.control;
-    let curValue = c._value;
-    if (!(c._flags & ControlFlags.ValueMutating) || curValue == null) {
-      curValue = { ...curValue };
-      c._value = curValue;
-      c._flags |= ControlFlags.ValueMutating;
-    }
-    (curValue as any)[prop] = v;
-    c._subscriptions?.applyChange(ControlChange.Value);
-  }
-  childInitialValueChange(prop: string | number, v: V): void {
-    let c = this.control;
-    let curValue = c._initialValue;
-    if (!(c._flags & ControlFlags.InitialValueMutating) || curValue == null) {
-      curValue = { ...curValue };
-      c._initialValue = curValue;
-      c._flags |= ControlFlags.InitialValueMutating;
-    }
-    (curValue as any)[prop] = v;
-    c._subscriptions?.applyChange(ControlChange.InitialValue);
-  }
-  childFlagChange(prop: string | number, flags: ControlFlags): void {
-    throw new Error("Method not implemented.");
   }
 }
 
@@ -455,14 +328,7 @@ function commit(control?: ControlImpl<unknown>) {
   transactionCount--;
 }
 
-const FieldsProxy: ProxyHandler<ObjectControl<unknown>> = {
-  get(target: ObjectControl<unknown>, p: string | symbol, receiver: any): any {
-    if (typeof p !== "string") return undefined;
-    return target.getField(p);
-  },
-};
-
-class SingleParent implements ParentListeners {
+export class SingleParent implements ParentListeners {
   constructor(
     private parent: ParentListener,
     private child: string | number,
@@ -508,80 +374,6 @@ class SingleParent implements ParentListeners {
   ): void {
     if (this.parent.control === ignore) return;
     this.parent.childFlagChange(this.child, flags);
-  }
-}
-
-class Subscriptions {
-  private lists: SubscriptionList[] = [];
-  public mask: ControlChange = ControlChange.None;
-  public onListenerList = false;
-  subscribe<V>(
-    listener: ChangeListenerFunc<V>,
-    current: ControlChange,
-    mask: ControlChange,
-  ): Subscription {
-    let list = this.lists.find((x) => x.canBeAdded(current, mask));
-    if (!list) {
-      list = new SubscriptionList(current, mask);
-      this.lists.push(list);
-    }
-    this.mask |= mask;
-    return list.add(listener, mask);
-  }
-
-  unsubscribe(sub: Subscription): void {
-    sub.list.remove(sub);
-  }
-
-  runListeners(control: Control<any>, current: ControlChange) {
-    this.lists.forEach((s) => s.runListeners(control, current));
-  }
-
-  applyChange(change: ControlChange) {
-    this.lists.forEach((x) => x.applyChange(change));
-  }
-}
-
-class SubscriptionList {
-  private subscriptions: Subscription[] = [];
-
-  constructor(
-    private changeState: ControlChange,
-    private mask: ControlChange,
-  ) {}
-
-  remove(sub: Subscription) {
-    this.subscriptions = this.subscriptions.filter((x) => x !== sub);
-  }
-
-  runListeners(control: Control<any>, current: ControlChange) {
-    const nextCurrent = current & this.mask;
-    const actualChange = (nextCurrent ^ this.changeState) as ControlChange;
-    this.changeState = nextCurrent;
-    if (actualChange) {
-      this.subscriptions.forEach((s) => {
-        const change = s.mask & actualChange;
-        if (change) s.listener(control, change);
-      });
-    }
-  }
-
-  applyChange(change: ControlChange) {
-    this.changeState |= change & this.mask;
-  }
-  add<V>(listener: ChangeListenerFunc<V>, mask: ControlChange): Subscription {
-    const sub: Subscription = {
-      list: this,
-      mask,
-      listener: listener as ChangeListenerFunc<any>,
-    };
-    this.mask |= mask;
-    this.subscriptions.push(sub);
-    return sub;
-  }
-
-  canBeAdded(current: ControlChange, mask: ControlChange): boolean {
-    return (this.changeState & mask) === current;
   }
 }
 
@@ -637,7 +429,7 @@ export function updateElements<V>(
   runTransaction(c, () => {
     newElems.forEach((x, i) => {
       const xc = x as ControlImpl<V>;
-      xc.setInitialValue(iv[i], c);
+      xc.setInitialValueImpl(iv[i], c);
       xc.setParentAttach(c, i);
     });
     if (newElems.length < oldElems.length) {
@@ -646,7 +438,8 @@ export function updateElements<V>(
         .forEach((x) => x.setParentAttach(c, undefined));
     }
     arrayChildren._elems = newElems as unknown as ControlImpl<unknown>[];
-    c.setValue(newElems.map((x) => x.current.value));
+    c.setValueImpl(newElems.map((x) => x.current.value));
+    c._subscriptions?.applyChange(ControlChange.Structure);
     return true;
   });
 }

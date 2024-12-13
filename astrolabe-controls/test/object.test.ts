@@ -205,6 +205,20 @@ describe("properties", () => {
     );
   });
 
+  it("updating array child changes parent (initial value)", () => {
+    fc.assert(
+      fc.property(fc.array(fc.string(), { minLength: 1 }), (obj) => {
+        const changes: ControlChange[] = [];
+        const f = newControl(obj);
+        f.subscribe((a, c) => changes.push(c), ControlChange.InitialValue);
+        f.elements[0].initialValue = obj[0] + "a";
+        expect(changes).toStrictEqual([ControlChange.InitialValue]);
+        expect(f.initialValue).toStrictEqual([obj[0] + "a", ...obj.slice(1)]);
+        return f.dirty;
+      }),
+    );
+  });
+
   it("updating array parent changes child", () => {
     fc.assert(
       fc.property(
@@ -361,6 +375,100 @@ describe("properties", () => {
         expect(childChanges).toStrictEqual([
           ControlChange.InitialValue,
           ControlChange.InitialValue,
+          ControlChange.InitialValue,
+        ]);
+      }),
+    );
+  });
+
+  it("structure changes get notified", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.double({ noNaN: true })),
+        fc.array(fc.double({ noNaN: true })),
+        (arr1val, arr2val) => {
+          const changes: ControlChange[] = [];
+          const f = newControl<number[] | null>(arr1val);
+          f.elements;
+          f.subscribe((a, c) => changes.push(c), ControlChange.Structure);
+          f.value = arr2val;
+          expect(changes).toStrictEqual(
+            arr1val.length != arr2val.length ? [ControlChange.Structure] : [],
+          );
+          changes.length = 0;
+          f.value = null;
+          expect(changes).toStrictEqual([ControlChange.Structure]);
+        },
+      ),
+    );
+  });
+
+  it("structure changes get notified", () => {
+    fc.assert(
+      fc.property(fc.double({ noNaN: true }), (num) => {
+        const changes: ControlChange[] = [];
+        const f = newControl<{ num: number } | null>({ num });
+        f.subscribe((a, c) => changes.push(c), ControlChange.Structure);
+        f.value = null;
+        f.value = { num };
+        expect(changes).toStrictEqual([
+          ControlChange.Structure,
+          ControlChange.Structure,
+        ]);
+      }),
+    );
+  });
+
+  it("updating array parent to null make child fields detach", () => {
+    fc.assert(
+      fc.property(fc.string(), (childValue) => {
+        const changes: ControlChange[] = [];
+        const childChanges: ControlChange[] = [];
+        const control = newControl<string[] | null>([childValue]);
+        control.initialValue = [];
+        control.subscribe(
+          (a, c) => changes.push(c),
+          ControlChange.Value | ControlChange.InitialValue,
+        );
+        const child = control.elements[0];
+        child.value = childValue + "a";
+        child.subscribe(
+          (a, c) => childChanges.push(c),
+          ControlChange.Value | ControlChange.InitialValue,
+        );
+        control.value = null;
+        expect(child.value).toStrictEqual(childValue + "a");
+        // Should not update parent
+        child.value = childValue + "b";
+        child.initialValue = childValue + "c";
+        expect(control.value).toStrictEqual(null);
+        // Should not update child
+        control.value = [childValue];
+        expect(child.value).toStrictEqual(childValue + "b");
+        // should update parent value, child initial value
+        updateElements(control, () => [child]);
+        expect(child.value).toStrictEqual(childValue + "b");
+        expect(child.initialValue).toStrictEqual(undefined);
+        expect(control.value).toStrictEqual([childValue + "b"]);
+        // parent should change child
+        control.value = [childValue];
+        expect(child.value).toStrictEqual(childValue);
+        // Attached child should update parent initial value
+        child.initialValue = childValue + "c";
+        expect(control.initialValue).toStrictEqual([childValue + "c"]);
+        expect(changes).toStrictEqual([
+          ControlChange.Value,
+          ControlChange.Value,
+          ControlChange.Value,
+          ControlChange.Value,
+          ControlChange.Value,
+          ControlChange.InitialValue,
+        ]);
+        expect(childChanges).toStrictEqual([
+          ControlChange.Value,
+          ControlChange.InitialValue,
+          ControlChange.InitialValue,
+          ControlChange.Value,
           ControlChange.InitialValue,
         ]);
       }),
