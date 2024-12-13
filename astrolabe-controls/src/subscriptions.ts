@@ -3,8 +3,11 @@ import {
   Control,
   ControlChange,
   Subscription,
-} from "./controlImpl";
+} from "./types";
 
+export interface SubscriptionInternal extends Subscription {
+  list: SubscriptionList;
+}
 export class Subscriptions {
   private lists: SubscriptionList[] = [];
   public mask: ControlChange = ControlChange.None;
@@ -24,8 +27,8 @@ export class Subscriptions {
     return list.add(listener, mask);
   }
 
-  unsubscribe(sub: Subscription): void {
-    sub.list.remove(sub);
+  unsubscribe<V>(sub: Subscription | ChangeListenerFunc<V>): void {
+    (sub as SubscriptionInternal).list.remove(sub);
   }
 
   runListeners(control: Control<any>, current: ControlChange) {
@@ -45,8 +48,10 @@ export class SubscriptionList {
     private mask: ControlChange,
   ) {}
 
-  remove(sub: Subscription) {
-    this.subscriptions = this.subscriptions.filter((x) => x !== sub);
+  remove<V>(sub: Subscription | ChangeListenerFunc<V>) {
+    this.subscriptions = this.subscriptions.filter(
+      (x) => x !== sub && x.listener !== sub,
+    );
   }
 
   runListeners(control: Control<any>, current: ControlChange) {
@@ -65,7 +70,7 @@ export class SubscriptionList {
     this.changeState |= change & this.mask;
   }
   add<V>(listener: ChangeListenerFunc<V>, mask: ControlChange): Subscription {
-    const sub: Subscription = {
+    const sub: SubscriptionInternal = {
       list: this,
       mask,
       listener: listener as ChangeListenerFunc<any>,

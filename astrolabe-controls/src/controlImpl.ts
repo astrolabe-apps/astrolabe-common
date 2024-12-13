@@ -1,111 +1,45 @@
 import { ObjectControl } from "./objectControl";
 import { ArrayControl } from "./arrayControl";
-import { Subscriptions, SubscriptionList } from "./subscriptions";
+import { Subscriptions } from "./subscriptions";
+import {
+  ChangeListenerFunc,
+  Control,
+  ControlChange,
+  ControlProperties,
+  ControlSetup,
+  Subscription,
+} from "./types";
+import {
+  ChildState,
+  ControlFlags,
+  InternalControl,
+  ParentListener,
+} from "./internal";
+import { runTransaction } from "./transactions";
 
-type ChangeListener = [ControlChange, ChangeListenerFunc<any>];
+export let collectChange: ChangeListenerFunc<any> | undefined;
 
-export type ChangeListenerFunc<V> = (
-  control: Control<V>,
-  cb: ControlChange,
-) => void;
-
-export type Subscription = {
-  list: SubscriptionList;
-  mask: ControlChange;
-  listener: ChangeListenerFunc<any>;
-};
-
-export enum ControlFlags {
-  None = 0,
-  Invalid = 1,
-  Touched = 2,
-  Dirty = 4,
-  Disabled = 8,
-  CheckValid = 16,
-  StructureChanged = 32,
-  NeedsValidate = 64,
-  ValueMutating = 128,
-  InitialValueMutating = 256,
+export function setChangeCollector(c: ChangeListenerFunc<any> | undefined) {
+  collectChange = c;
 }
-
-export enum ControlChange {
-  None = 0,
-  Valid = 1,
-  Touched = 2,
-  Dirty = 4,
-  Disabled = 8,
-  Value = 16,
-  InitialValue = 32,
-  Error = 64,
-  All = Value | Valid | Touched | Disabled | Error | Dirty | InitialValue,
-  Structure = 128,
-  Validate = 256,
-}
-
-let transactionCount = 0;
-let runListenerList: ControlImpl<any>[] = [];
-let subscriptionListener: ChangeListenerFunc<any> | undefined;
-
 interface ParentListeners {
   syncChildValueChange(
     v: unknown,
-    ignore: ControlImpl<unknown> | undefined,
+    ignore: InternalControl<unknown> | undefined,
   ): void;
   syncChildInitialValueChange(
     v: unknown,
-    ignore: ControlImpl<unknown> | undefined,
+    ignore: InternalControl<unknown> | undefined,
   ): void;
   childFlagChange(
     flags: ControlFlags,
-    ignore: ControlImpl<unknown> | undefined,
+    ignore: InternalControl<unknown> | undefined,
   ): void;
   updateChildLink(
-    parent: ControlImpl<unknown>,
+    parent: InternalControl<unknown>,
     prop: string | number | undefined,
   ): ParentListeners | undefined;
 }
-
-export interface ParentListener {
-  control: ControlImpl<unknown>;
-  childValueChange(prop: string | number, v: unknown): void;
-  childInitialValueChange(prop: string | number, v: unknown): void;
-  childFlagChange(prop: string | number, flags: ControlFlags): void;
-}
-
-export interface ChildState extends ParentListener {
-  updateChildValues(): void;
-  updateChildInitialValues(): void;
-}
-
-export interface ControlSetup<V> {
-  isEqual?: (v1: unknown, v2: unknown) => boolean;
-  fields?: { [K in keyof V]?: ControlSetup<V[K]> };
-  elem?: V extends Array<infer X> ? ControlSetup<X> : never;
-}
-
-export interface ControlProperties<V> {
-  value: V;
-  initialValue: V;
-  // error: string | null | undefined;
-  // readonly errors: { [k: string]: string };
-  // readonly valid: boolean;
-  readonly dirty: boolean;
-  // disabled: boolean;
-  // touched: boolean;
-  readonly fields: {
-    [K in keyof NonNullable<V>]-?: Control<NonNullable<V>[K]>;
-  };
-  readonly elements: Control<V extends Array<infer X> ? X : unknown>[];
-  readonly isNull: boolean;
-}
-
-export interface Control<V> extends ControlProperties<V> {
-  subscribe(listener: ChangeListenerFunc<V>, mask: ControlChange): Subscription;
-  unsubscribe(subscription: Subscription): void;
-  isEqual: (v1: unknown, v2: unknown) => boolean;
-  current: ControlProperties<V>;
-}
-
 export class ControlPropertiesImpl<V> implements ControlProperties<V> {
   public constructor(public _impl: ControlImpl<V>) {}
 
@@ -116,6 +50,18 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
 
   get isNull() {
     return this._impl._value == null;
+  }
+
+  get touched() {
+    return !!(this._impl._flags & ControlFlags.Touched);
+  }
+
+  get valid(): boolean {
+    throw new Error("Method not implemented.");
+  }
+
+  get disabled() {
+    return !!(this._impl._flags & ControlFlags.Disabled);
   }
 
   get dirty() {
@@ -134,28 +80,53 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
   get fields() {
     return this._impl.getObjectChildren().getFields();
   }
+  get error() {
+    const errors = this._impl._errors;
+    if (!errors) return null;
+    return Object.values(errors)[0];
+  }
 }
 
 let uniqueIdCounter = 0;
-export class ControlImpl<V> implements Control<V> {
+export class ControlImpl<V> implements InternalControl<V> {
   current: ControlPropertiesImpl<V>;
   public uniqueId: number;
+  public meta: Record<string, any>;
   constructor(
     public _value: V,
     public _initialValue: V,
     public _flags: ControlFlags,
+    public _setup?: ControlSetup<V, any>,
     public _parents?: ParentListeners,
     public _errors?: { [k: string]: string },
     public _children?: ChildState,
     public _subscriptions?: Subscriptions,
-    public _setup?: ControlSetup<V>,
   ) {
     this.uniqueId = ++uniqueIdCounter;
     this.current = new ControlPropertiesImpl<V>(this);
+    this.meta = _setup?.meta ?? {};
+  }
+
+  get touched() {
+    collectChange?.(this, ControlChange.Touched);
+    return !!(this._flags & ControlFlags.Touched);
+  }
+
+  get disabled() {
+    collectChange?.(this, ControlChange.Disabled);
+    return !!(this._flags & ControlFlags.Disabled);
+  }
+
+  get valid(): boolean {
+    throw new Error("Method not implemented.");
+  }
+
+  setValue(cb: (v: V) => V): void {
+    this.setValueImpl(cb(this.current.value));
   }
 
   setParentAttach(
-    parent: ControlImpl<unknown>,
+    parent: InternalControl<unknown>,
     prop: string | number | undefined,
   ): void {
     if (this._parents) {
@@ -169,18 +140,23 @@ export class ControlImpl<V> implements Control<V> {
     return controlEquals(v1, v2, this._setup);
   }
 
+  get error(): string | null | undefined {
+    collectChange?.(this, ControlChange.Error);
+    return this.current.error;
+  }
+
   get isNull() {
-    subscriptionListener?.(this, ControlChange.Structure);
+    collectChange?.(this, ControlChange.Structure);
     return this._value == null;
   }
 
   get value(): V {
-    subscriptionListener?.(this, ControlChange.Value);
+    collectChange?.(this, ControlChange.Value);
     return this.current.value;
   }
 
   get initialValue(): V {
-    subscriptionListener?.(this, ControlChange.InitialValue);
+    collectChange?.(this, ControlChange.InitialValue);
     return this.current.initialValue;
   }
 
@@ -192,7 +168,27 @@ export class ControlImpl<V> implements Control<V> {
     this.setInitialValueImpl(v);
   }
 
-  setValueImpl(v: V, fromParent?: ControlImpl<unknown>): boolean {
+  newChild<V2>(
+    value: V2,
+    initialValue: V2,
+    childProp: number | string,
+    parent?: ParentListener,
+  ): InternalControl<V2> {
+    const setup = this._setup;
+    const childSetup = setup
+      ? typeof childProp === "string"
+        ? (setup as ControlSetup<Record<string, V2>>).fields?.[childProp]
+        : setup.elems
+      : undefined;
+    return new ControlImpl<V2>(
+      value,
+      initialValue,
+      this._flags & ControlFlags.Disabled,
+      childSetup as ControlSetup<V2>,
+      parent ? new SingleParent(parent, childProp) : undefined,
+    );
+  }
+  setValueImpl(v: V, fromParent?: InternalControl<unknown>): boolean {
     if (this.isEqual(this._value, v)) return false;
     return runTransaction(this, () => {
       const structureFlag =
@@ -207,7 +203,7 @@ export class ControlImpl<V> implements Control<V> {
     });
   }
 
-  setInitialValueImpl(v: V, fromParent?: ControlImpl<unknown>): boolean {
+  setInitialValueImpl(v: V, fromParent?: InternalControl<unknown>): boolean {
     if (this.isEqual(this._initialValue, v)) return false;
     return runTransaction(this, () => {
       this._initialValue = v;
@@ -230,12 +226,12 @@ export class ControlImpl<V> implements Control<V> {
   }
 
   get dirty() {
-    subscriptionListener?.(this, ControlChange.Dirty);
+    collectChange?.(this, ControlChange.Dirty);
     return this.isDirty();
   }
 
   get elements() {
-    subscriptionListener?.(this, ControlChange.Structure);
+    collectChange?.(this, ControlChange.Structure);
     return this.getArrayChildren().getElements();
   }
 
@@ -245,14 +241,14 @@ export class ControlImpl<V> implements Control<V> {
 
   getArrayChildren(): ArrayControl<V> {
     if (!this._children) {
-      this._children = new ArrayControl<V>(this);
+      this._children = new ArrayControl<V>(this as InternalControl<unknown>);
     }
     return this._children as ArrayControl<V>;
   }
 
   getObjectChildren(): ObjectControl<V> {
     if (!this._children) {
-      this._children = new ObjectControl<V>(this);
+      this._children = new ObjectControl<V>(this as InternalControl<unknown>);
     }
     return this._children as ObjectControl<V>;
   }
@@ -266,8 +262,16 @@ export class ControlImpl<V> implements Control<V> {
     return this._subscriptions.subscribe(listener, currentChanges, mask);
   }
 
-  unsubscribe(subscription: Subscription) {
+  unsubscribe(subscription: ChangeListenerFunc<V> | Subscription) {
     this._subscriptions?.unsubscribe(subscription);
+  }
+
+  setError(key: string, error?: string | null) {
+    throw new Error("Method not implemented.");
+  }
+
+  setErrors(errors: { [p: string]: string | null | undefined }) {
+    throw new Error("Method not implemented.");
   }
 
   runListeners() {
@@ -277,55 +281,13 @@ export class ControlImpl<V> implements Control<V> {
       s.runListeners(this, currentChanges);
     }
   }
-}
 
-export function groupedChanges<A>(run: () => A): A {
-  transactionCount++;
-  try {
-    return run();
-  } finally {
-    commit(undefined);
+  set element(v: any) {
+    this.meta.element = v;
   }
-}
-function runTransaction(
-  control: ControlImpl<unknown>,
-  run: () => boolean,
-): boolean {
-  transactionCount++;
-  let shouldRunListeners;
-  try {
-    shouldRunListeners = run();
-  } catch (e) {
-    console.error("Error in control", e);
-    shouldRunListeners = false;
+  get element(): any {
+    return this.meta.element;
   }
-  commit(shouldRunListeners ? control : undefined);
-  return shouldRunListeners;
-}
-
-function commit(control?: ControlImpl<unknown>) {
-  const sub = control?._subscriptions;
-  if (transactionCount > 1) {
-    if (sub) {
-      sub.onListenerList = true;
-      runListenerList.push(control);
-    }
-  } else {
-    if (!runListenerList.length && sub) {
-      control!.runListeners();
-    } else {
-      if (sub) runListenerList.push(control);
-      while (runListenerList.length > 0) {
-        const listenersToRun = runListenerList;
-        runListenerList = [];
-        listenersToRun.forEach(
-          (c) => (c._subscriptions!.onListenerList = false),
-        );
-        listenersToRun.forEach((c) => c.runListeners());
-      }
-    }
-  }
-  transactionCount--;
 }
 
 export class SingleParent implements ParentListeners {
@@ -335,7 +297,7 @@ export class SingleParent implements ParentListeners {
   ) {}
 
   updateChildLink(
-    parent: ControlImpl<unknown>,
+    parent: InternalControl<unknown>,
     prop: string | number | undefined,
   ) {
     if (this.parent.control === parent) {
@@ -351,7 +313,7 @@ export class SingleParent implements ParentListeners {
 
   syncChildValueChange(
     v: unknown,
-    ignore: ControlImpl<unknown> | undefined,
+    ignore: InternalControl<unknown> | undefined,
   ): void {
     const c = this.parent.control;
     if (c === ignore) return;
@@ -360,7 +322,10 @@ export class SingleParent implements ParentListeners {
       return true;
     });
   }
-  syncChildInitialValueChange(v: unknown, ignore: ControlImpl<unknown>): void {
+  syncChildInitialValueChange(
+    v: unknown,
+    ignore: InternalControl<unknown>,
+  ): void {
     const c = this.parent.control;
     if (c === ignore) return;
     runTransaction(c, () => {
@@ -370,15 +335,11 @@ export class SingleParent implements ParentListeners {
   }
   childFlagChange(
     flags: ControlFlags,
-    ignore: ControlImpl<unknown> | undefined,
+    ignore: InternalControl<unknown> | undefined,
   ): void {
     if (this.parent.control === ignore) return;
     this.parent.childFlagChange(this.child, flags);
   }
-}
-
-export function newControl<V>(v: V): Control<V> {
-  return new ControlImpl(v, v, ControlFlags.None, undefined);
 }
 
 export function controlEquals(
@@ -394,7 +355,7 @@ export function controlEquals(
     if (a.constructor !== b.constructor) return false;
     let length, i, keys;
     if (Array.isArray(a)) {
-      const elemSetup = setup?.elem;
+      const elemSetup = setup?.elems;
       if (a.length != b.length) return false;
       return a.every((x, i) => controlEquals(x, b[i], elemSetup));
     }
@@ -410,36 +371,16 @@ export function controlEquals(
   return a !== a && b !== b;
 }
 
-export function updateElements<V>(
-  control: Control<V[] | null | undefined>,
-  cb: (elems: Control<V>[]) => Control<V>[],
-): void {
-  const c = control as ControlImpl<V[]>;
-  const arrayChildren = c.getArrayChildren();
-  const oldElems = arrayChildren.getElements();
-  const newElems = cb(oldElems);
-  if (
-    oldElems === newElems ||
-    (oldElems.length === newElems.length &&
-      oldElems.every((x, i) => x === newElems[i]))
-  )
-    return;
+export function trackControlChange(c: Control<any>, change: ControlChange) {
+  collectChange?.(c, change);
+}
 
-  const iv = c._initialValue ?? [];
-  runTransaction(c, () => {
-    newElems.forEach((x, i) => {
-      const xc = x as ControlImpl<V>;
-      xc.setInitialValueImpl(iv[i], c);
-      xc.setParentAttach(c, i);
-    });
-    if (newElems.length < oldElems.length) {
-      oldElems
-        .slice(newElems.length)
-        .forEach((x) => x.setParentAttach(c, undefined));
-    }
-    arrayChildren._elems = newElems as unknown as ControlImpl<unknown>[];
-    c.setValueImpl(newElems.map((x) => x.current.value));
-    c._subscriptions?.applyChange(ControlChange.Structure);
-    return true;
-  });
+export function newControl<V>(
+  value: V,
+  setup?: ControlSetup<V, any>,
+  initialValue?: V,
+): Control<V> {
+  const c = new ControlImpl(value, value, ControlFlags.None, setup);
+  if (arguments.length == 3) c.initialValue = initialValue!;
+  return c;
 }

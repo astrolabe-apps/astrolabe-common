@@ -1,9 +1,18 @@
-import { ControlChange, ControlImpl, newControl } from "./controlImpl";
-
-const parent = newControl<number[] | null>([0]);
-parent.elements;
-const v1 = parent.subscribe(
-  (_, c) => console.log("Parent changed", c),
-  ControlChange.Structure,
-);
-parent.value = [];
+export {
+  controlEquals,
+  collectChange,
+  setChangeCollector,
+  trackControlChange,
+  newControl,
+} from "./controlImpl";
+export {
+  groupedChanges,
+  unsafeFreezeCountEdit,
+  runPendingChanges,
+  addAfterChangesCallback,
+} from "./transactions";
+export { notEmpty } from "./validation";
+export { updateElements, addElement, newElement } from "./arrayControl";
+export { setFields, controlGroup } from "./objectControl";
+export { ControlChange } from "./types";
+export type * from "./types";

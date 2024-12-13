@@ -1,28 +1,17 @@
-import {
-  ChildState,
-  ControlChange,
-  ControlFlags,
-  ControlImpl,
-  SingleParent,
-} from "./controlImpl";
+import { ChildState, ControlFlags, InternalControl } from "./internal";
+import { Control, ControlChange } from "./types";
+import { runTransaction } from "./transactions";
 
 export class ArrayControl<V> implements ChildState {
-  public _elems: ControlImpl<unknown>[];
+  public _elems: InternalControl<unknown>[];
 
-  constructor(public control: ControlImpl<any>) {
+  constructor(public control: InternalControl<unknown>) {
     const v = (control._value ?? []) as any[];
     const iv = (control._initialValue ?? []) as any[];
-    this._elems = v.map((x, i) => {
-      return new ControlImpl(
-        x,
-        iv[i],
-        control._flags & ControlFlags.Disabled,
-        new SingleParent(this, i),
-      );
-    });
+    this._elems = v.map((x, i) => control.newChild(x, iv[i], i, this));
   }
 
-  getElements(): ControlImpl<V extends Array<infer X> ? X : unknown>[] {
+  getElements(): InternalControl<V extends Array<infer X> ? X : unknown>[] {
     return this._elems as any;
   }
 
@@ -39,12 +28,7 @@ export class ArrayControl<V> implements ChildState {
         old.setParentAttach(c, i);
         return old;
       }
-      return new ControlImpl(
-        x,
-        iv[i],
-        c._flags & ControlFlags.Disabled,
-        new SingleParent(this, i),
-      );
+      return this.control.newChild(x, iv[i], i, this);
     });
     if (newLength < oldElems.length) {
       oldElems.slice(newLength).forEach((x) => x.setParentAttach(c, undefined));
@@ -63,29 +47,94 @@ export class ArrayControl<V> implements ChildState {
 
   childValueChange(prop: string | number, v: unknown): void {
     let c = this.control;
-    let curValue = c._value;
+    let curValue = c._value as any[];
     if (!(c._flags & ControlFlags.ValueMutating)) {
       curValue = [...curValue];
       c._value = curValue;
       c._flags |= ControlFlags.ValueMutating;
     }
-    (curValue as any)[prop] = v;
+    curValue[prop as number] = v;
     c._subscriptions?.applyChange(ControlChange.Value);
   }
 
   childInitialValueChange(prop: string | number, v: unknown): void {
     let c = this.control;
-    let curValue = c._initialValue;
+    let curValue = c._initialValue as any[];
     if (!(c._flags & ControlFlags.InitialValueMutating)) {
       curValue = [...curValue];
       c._initialValue = curValue;
       c._flags |= ControlFlags.InitialValueMutating;
     }
-    (curValue as any)[prop] = v;
+    curValue[prop as number] = v;
     c._subscriptions?.applyChange(ControlChange.InitialValue);
   }
 
   childFlagChange(prop: string | number, flags: ControlFlags): void {
     throw new Error("Method not implemented.");
   }
+}
+
+export function updateElements<V>(
+  control: Control<V[] | null | undefined>,
+  cb: (elems: Control<V>[]) => Control<V>[],
+): void {
+  const c = control as unknown as InternalControl<any>;
+  const arrayChildren = c.getArrayChildren() as ArrayControl<V[]>;
+  const oldElems = arrayChildren.getElements();
+  const newElems = cb(oldElems);
+  if (
+    oldElems === newElems ||
+    (oldElems.length === newElems.length &&
+      oldElems.every((x, i) => x === newElems[i]))
+  )
+    return;
+
+  const iv = c._initialValue ?? [];
+  runTransaction(c, () => {
+    newElems.forEach((x, i) => {
+      const xc = x as InternalControl<V>;
+      xc.setInitialValueImpl(iv[i], c);
+      xc.setParentAttach(c, i);
+    });
+    if (newElems.length < oldElems.length) {
+      oldElems
+        .slice(newElems.length)
+        .forEach((x) => x.setParentAttach(c, undefined));
+    }
+    arrayChildren._elems = newElems as unknown as InternalControl<unknown>[];
+    c.setValueImpl(newElems.map((x) => x.current.value));
+    c._subscriptions?.applyChange(ControlChange.Structure);
+    return true;
+  });
+}
+
+export function addElement<V>(
+  control: Control<V[] | undefined | null>,
+  child: V,
+  index?: number | Control<V> | undefined,
+  insertAfter?: boolean,
+): Control<V> {
+  const e = control.current.elements;
+  if (e) {
+    const c = control as InternalControl<V[]>;
+    const newChild = c.newChild(child, child, 0);
+    if (typeof index === "object") {
+      index = e.indexOf(index as any);
+    }
+    let newElems = [...e];
+    if (typeof index === "number" && index < e.length) {
+      newElems.splice(index + (insertAfter ? 1 : 0), 0, newChild);
+    } else {
+      newElems.push(newChild);
+    }
+    updateElements(control as Control<V[]>, () => newElems);
+    return newChild;
+  } else {
+    control.value = [child];
+    return control.current.elements[0];
+  }
+}
+
+export function newElement<V>(control: Control<V[]>, elem: V): Control<V> {
+  return (control as InternalControl<V[]>).newChild(elem, elem, 0);
 }
