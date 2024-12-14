@@ -11,6 +11,13 @@ export class ArrayControl<V> implements ChildState {
     this._elems = v.map((x, i) => control.newChild(x, iv[i], i, this));
   }
 
+  setTouched(b: boolean) {
+    this._elems.forEach(x => x.setTouched(b))
+  }
+  allValid(): boolean {
+    return this._elems.every((x) => x.valid);
+  }
+
   getElements(): InternalControl<V extends Array<infer X> ? X : unknown>[] {
     return this._elems as any;
   }
@@ -70,7 +77,7 @@ export class ArrayControl<V> implements ChildState {
   }
 
   childFlagChange(prop: string | number, flags: ControlFlags): void {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not implemented. childFlagChange");
   }
 }
 
@@ -104,7 +111,6 @@ export function updateElements<V>(
     arrayChildren._elems = newElems as unknown as InternalControl<unknown>[];
     c.setValueImpl(newElems.map((x) => x.current.value));
     c._subscriptions?.applyChange(ControlChange.Structure);
-    return true;
   });
 }
 

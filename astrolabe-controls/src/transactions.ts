@@ -20,22 +20,13 @@ export function groupedChanges<A>(run: () => A): A {
   }
 }
 
-export function runTransaction(
-  control: Control<any>,
-  run: () => boolean,
-): boolean {
+export function runTransaction(control: Control<any>, run: () => void): void {
   transactionCount++;
-  let shouldRunListeners;
   try {
-    shouldRunListeners = run();
-  } catch (e) {
-    console.error("Error in control", e);
-    shouldRunListeners = false;
+    run();
+  } finally {
+    commit(control as InternalControl<unknown>);
   }
-  commit(
-    shouldRunListeners ? (control as InternalControl<unknown>) : undefined,
-  );
-  return shouldRunListeners;
 }
 
 export function commit(control?: InternalControl<unknown>) {

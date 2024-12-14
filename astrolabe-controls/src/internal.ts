@@ -21,8 +21,8 @@ export interface InternalControl<V> extends Control<V> {
   _subscriptions?: Subscriptions;
   _setup?: ControlSetup<V>;
   _children?: ChildState;
-  setValueImpl(v: V, fromParent?: InternalControl<unknown>): boolean;
-  setInitialValueImpl(v: V, fromParent?: InternalControl<unknown>): boolean;
+  setValueImpl(v: V, fromParent?: InternalControl<unknown>): void;
+  setInitialValueImpl(v: V, fromParent?: InternalControl<unknown>): void;
   newChild<V2>(
     value: V2,
     initialValue: V2,
@@ -47,4 +47,6 @@ export interface ParentListener {
 export interface ChildState extends ParentListener {
   updateChildValues(): void;
   updateChildInitialValues(): void;
+  allValid(): boolean;
+  setTouched(b: boolean): void;
 }

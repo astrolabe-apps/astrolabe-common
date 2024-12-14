@@ -56,8 +56,13 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
     return !!(this._impl._flags & ControlFlags.Touched);
   }
 
+  set touched(touched: boolean) {
+    this._impl.setTouched(touched);
+  }
+
   get valid(): boolean {
-    throw new Error("Method not implemented.");
+    const i = this._impl;
+    return !i._errors && (i._children?.allValid() ?? true);
   }
 
   get disabled() {
@@ -112,13 +117,29 @@ export class ControlImpl<V> implements InternalControl<V> {
     return !!(this._flags & ControlFlags.Touched);
   }
 
+  set touched(touched: boolean) {
+    this.setTouched(touched);
+  }
+
+  setTouched(touched: boolean, notChildren?: boolean) {
+    runTransaction(this, () => {
+      if (touched) {
+        this._flags |= ControlFlags.Touched;
+      } else {
+        this._flags &= ~ControlFlags.Touched;
+      }
+      if (!notChildren) this._children?.setTouched(touched);
+    });
+  }
+
   get disabled() {
     collectChange?.(this, ControlChange.Disabled);
     return !!(this._flags & ControlFlags.Disabled);
   }
 
   get valid(): boolean {
-    throw new Error("Method not implemented.");
+    collectChange?.(this, ControlChange.Valid);
+    return this.current.valid;
   }
 
   setValue(cb: (v: V) => V): void {
@@ -188,29 +209,29 @@ export class ControlImpl<V> implements InternalControl<V> {
       parent ? new SingleParent(parent, childProp) : undefined,
     );
   }
-  setValueImpl(v: V, fromParent?: InternalControl<unknown>): boolean {
-    if (this.isEqual(this._value, v)) return false;
-    return runTransaction(this, () => {
+  setValueImpl(v: V, fromParent?: InternalControl<unknown>): void {
+    if (this.isEqual(this._value, v)) return;
+    runTransaction(this, () => {
       const structureFlag =
         v == null || this._value == null
           ? ControlChange.Structure
           : ControlChange.None;
       this._value = v;
+      const validator = this._setup?.validator;
+      if (validator !== null) this.setError("default", validator?.(v));
       this._children?.updateChildValues();
       this._parents?.syncChildValueChange(v, fromParent);
       this._subscriptions?.applyChange(ControlChange.Value | structureFlag);
-      return true;
     });
   }
 
-  setInitialValueImpl(v: V, fromParent?: InternalControl<unknown>): boolean {
-    if (this.isEqual(this._initialValue, v)) return false;
-    return runTransaction(this, () => {
+  setInitialValueImpl(v: V, fromParent?: InternalControl<unknown>): void {
+    if (this.isEqual(this._initialValue, v)) return;
+    runTransaction(this, () => {
       this._initialValue = v;
       this._children?.updateChildInitialValues();
       this._parents?.syncChildInitialValueChange(v, fromParent);
       this._subscriptions?.applyChange(ControlChange.InitialValue);
-      return true;
     });
   }
 
@@ -222,6 +243,8 @@ export class ControlImpl<V> implements InternalControl<V> {
     let changeFlags = ControlChange.None;
     if (mask & ControlChange.Dirty && this.isDirty())
       changeFlags |= ControlChange.Dirty;
+    if (mask & ControlChange.Valid && this.current.valid)
+      changeFlags |= ControlChange.Valid;
     return changeFlags;
   }
 
@@ -267,11 +290,35 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
 
   setError(key: string, error?: string | null) {
-    throw new Error("Method not implemented.");
+    runTransaction(this, () => {
+      const exE = this._errors;
+      if (!error) error = null;
+      if (exE?.[key] != error) {
+        if (error) {
+          if (exE) exE[key] = error;
+          else this._errors = { [key]: error };
+        } else {
+          if (exE) {
+            if (Object.values(exE).length === 1) this._errors = undefined;
+            else delete exE[key];
+          }
+        }
+      }
+      this._subscriptions?.applyChange(ControlChange.Error);
+    });
   }
 
   setErrors(errors: { [p: string]: string | null | undefined }) {
-    throw new Error("Method not implemented.");
+    runTransaction(this, () => {
+      const realErrors = Object.entries(errors).filter((x) => !!x[1]);
+      const exactErrors = realErrors.length
+        ? (Object.fromEntries(realErrors) as Record<string, string>)
+        : undefined;
+      if (!controlEquals(exactErrors, this._errors)) {
+        this._errors = exactErrors;
+        this._subscriptions?.applyChange(ControlChange.Error);
+      }
+    });
   }
 
   runListeners() {
@@ -319,7 +366,6 @@ export class SingleParent implements ParentListeners {
     if (c === ignore) return;
     runTransaction(c, () => {
       this.parent.childValueChange(this.child, v);
-      return true;
     });
   }
   syncChildInitialValueChange(
@@ -330,7 +376,6 @@ export class SingleParent implements ParentListeners {
     if (c === ignore) return;
     runTransaction(c, () => {
       this.parent.childInitialValueChange(this.child, v);
-      return true;
     });
   }
   childFlagChange(

@@ -62,6 +62,7 @@ export interface Control<V> extends ControlProperties<V> {
   setError(key: string, error?: string | null): void;
   setErrors(errors: { [k: string]: string | null | undefined }): void;
   setValue(cb: (v: V) => V): void;
+  setTouched(touched: boolean, notChildren?: boolean): void;
   element: any;
 }
 

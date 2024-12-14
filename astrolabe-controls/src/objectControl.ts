@@ -13,6 +13,16 @@ export class ObjectControl<V> implements ChildState {
 
   constructor(public control: InternalControl<unknown>) {}
 
+  setTouched(b: boolean) {
+    Object.values(this._fields).forEach((x) => x.setTouched(b));
+  }
+
+  allValid(): boolean {
+    return Object.keys(
+      (this.control as InternalControl<Record<string, unknown>>)._value,
+    ).every((x) => this._fields[x]?.valid ?? true);
+  }
+
   updateChildValues(): void {
     const c = this.control;
     const v = c._value;
@@ -76,7 +86,7 @@ export class ObjectControl<V> implements ChildState {
   }
 
   childFlagChange(prop: string | number, flags: ControlFlags): void {
-    throw new Error("Method not implemented.");
+    throw new Error("Method not implemented. childFlagChange");
   }
 }
 
@@ -86,11 +96,11 @@ export function setFields<V, OTHER extends { [p: string]: any }>(
     [K in keyof OTHER]-?: Control<OTHER[K]>;
   },
 ): Control<V & OTHER> {
-  throw new Error("Method not implemented.");
+  throw new Error("Method not implemented. setFields");
 }
 
 export function controlGroup<C extends { [k: string]: Control<any> }>(
   fields: C,
 ): Control<{ [K in keyof C]: ControlValue<C[K]> }> {
-  throw new Error("Method not implemented.");
+  throw new Error("Method not implemented. controlGroup");
 }
