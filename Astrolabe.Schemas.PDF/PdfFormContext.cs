@@ -30,7 +30,7 @@ public record PdfFormContext(FormDataNode FormNode)
                 }
         );
 
-    public PdfFormContext WithFormNode(FormDataNode formNode)
+    public static PdfFormContext WithFormNode(FormDataNode formNode)
     {
         return new PdfFormContext(formNode);
     }

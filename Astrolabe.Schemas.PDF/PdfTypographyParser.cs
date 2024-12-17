@@ -1,11 +1,23 @@
 ﻿using System.Text.RegularExpressions;
 using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
 using static Astrolabe.Schemas.PDF.common.Typography;
+using static Astrolabe.Schemas.PDF.utils.ColourUtils;
 
 namespace Astrolabe.Schemas.PDF;
 
 public static partial class PdfTypographyParser
 {
+    public static void RunTypographyParser<T>(this T descriptor, string className)
+        where T : TextSpanDescriptor
+    {
+        descriptor
+            .TryParseFontSize(className)
+            .TryParseFontStyle(className)
+            .TryParseTextStyle(className)
+            .TryParseFontColor(className);
+    }
+
     #region Alignment
 
     private static readonly HashSet<string> ValidAlignment =
@@ -46,16 +58,6 @@ public static partial class PdfTypographyParser
     }
 
     #endregion
-
-
-    public static void RunTypographyParser<T>(this T descriptor, string className)
-        where T : TextSpanDescriptor
-    {
-        descriptor
-            .TryParseFontSize(className)
-            .TryParseFontStyle(className)
-            .TryParseTextStyle(className);
-    }
 
     #region Font Size
 
@@ -217,6 +219,38 @@ public static partial class PdfTypographyParser
         return ValidTextStyles.Contains(className)
             ? TextDescriptor(descriptor, className)
             : descriptor;
+    }
+
+    #endregion
+
+    #region Font Colour
+
+    [GeneratedRegex(
+        @"text-\[#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\]",
+        RegexOptions.Compiled
+    )]
+    private static partial Regex FontArbitraryColourRegex();
+
+    private static readonly Regex _fontArbitraryColourRegex = FontArbitraryColourRegex();
+
+    private static T FontColorDescriptor<T>(this T descriptor, string fontColor)
+        where T : TextSpanDescriptor
+    {
+        var match = _fontArbitraryColourRegex.Match(fontColor);
+
+        var hex = match.Success ? ConvertHtmlHexToPdfHex(match.Groups[1].Value) : null;
+        return hex != null ? descriptor.FontColor(Color.FromHex(hex)) : descriptor;
+    }
+
+    private static T TryParseFontColor<T>(this T descriptor, string className)
+        where T : TextSpanDescriptor
+    {
+        return className switch
+        {
+            _ when _fontArbitraryColourRegex.IsMatch(className)
+                => descriptor.FontColorDescriptor(className),
+            _ => descriptor
+        };
     }
 
     #endregion

@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using Astrolabe.Schemas.PDF.utils;
 using QuestPDF.Fluent;
 using QuestPDF.Infrastructure;
 
@@ -6,6 +7,14 @@ namespace Astrolabe.Schemas.PDF;
 
 public static partial class PdfLayoutParser
 {
+    public static IContainer RunLayoutParser(this IContainer container, string[] classNames)
+    {
+        return container
+            .TryParseWidth(classNames)
+            .TryParseBackground(classNames)
+            .TryParsePadding(classNames);
+    }
+
     #region Width
 
     private record WidthGroup(float? Width, float? MinWidth, float? MaxWidth);
@@ -20,8 +29,13 @@ public static partial class PdfLayoutParser
 
     private static readonly Regex _arbitraryWidthRegex = ArbitraryWidthRegex();
 
-    public static IContainer TryParseWidth(this IContainer container, string[] classNames)
+    private static IContainer TryParseWidth(this IContainer container, string[] classNames)
     {
+        if (classNames.Contains("w-fit"))
+        {
+            return container.ShrinkHorizontal();
+        }
+
         var classNameList = classNames
             .Where(c => _widthRegex.IsMatch(c) || _arbitraryWidthRegex.IsMatch(c))
             .ToList();
@@ -139,7 +153,7 @@ public static partial class PdfLayoutParser
 
     private static readonly Regex _arbitraryPaddingRegex = ArbitraryPaddingRegex();
 
-    public static IContainer TryParsePadding(this IContainer container, string[] classNames)
+    private static IContainer TryParsePadding(this IContainer container, string[] classNames)
     {
         var basePadding = container.Padding(0);
         var paddingClassNames = classNames
@@ -211,6 +225,32 @@ public static partial class PdfLayoutParser
         }
 
         return padding;
+    }
+
+    #endregion
+
+    #region Background
+
+    [GeneratedRegex(
+        @"bg-\[#([0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})\]",
+        RegexOptions.Compiled
+    )]
+    private static partial Regex BackgroundArbitraryColourRegex();
+
+    private static readonly Regex _backgroundArbitraryColourRegex =
+        BackgroundArbitraryColourRegex();
+
+    private static IContainer TryParseBackground(this IContainer container, string[] classNames)
+    {
+        var className = classNames.LastOrDefault(c => _backgroundArbitraryColourRegex.IsMatch(c));
+
+        if (string.IsNullOrWhiteSpace(className))
+            return container;
+
+        var match = _backgroundArbitraryColourRegex.Match(className);
+
+        var hex = match.Success ? ColourUtils.ConvertHtmlHexToPdfHex(match.Groups[1].Value) : null;
+        return hex != null ? container.Background(Color.FromHex(hex)) : container;
     }
 
     #endregion

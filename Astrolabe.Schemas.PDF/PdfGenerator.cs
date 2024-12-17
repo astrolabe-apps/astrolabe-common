@@ -1,4 +1,5 @@
 ﻿using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace Astrolabe.Schemas.PDF;
@@ -84,8 +85,9 @@ public static class PdfGenerator
         var formDataNode = pdfContext.FormNode;
         var styleClassNames = pdfContext.StyleClassNames.Value;
         container
-            .Element(x => x.TryParseWidth(styleClassNames))
-            .Element(x => x.TryParsePadding(styleClassNames))
+            // .DebugArea("General group")
+            // .DebugPointer("General group")
+            .Element(x => x.RunLayoutParser(styleClassNames))
             .Column(c =>
             {
                 c.TryConfigColumnGap(styleClassNames);
@@ -96,7 +98,7 @@ public static class PdfGenerator
                     .ToList()
                     .ForEach(fn =>
                     {
-                        pdfContext
+                        PdfFormContext
                             .WithFormNode(fn.WithData(formDataNode.DataNode ?? formDataNode.Parent))
                             .RenderContent(c.Item());
                     });
@@ -109,8 +111,9 @@ public static class PdfGenerator
         var styleClassNames = pdfContext.StyleClassNames.Value;
 
         container
-            .Element(x => x.TryParseWidth(styleClassNames))
-            .Element(x => x.TryParsePadding(styleClassNames))
+            // .DebugArea("Paragraph group", Colors.Orange.Accent1)
+            // .DebugPointer("Paragraph group")
+            .Element(x => x.RunLayoutParser(styleClassNames))
             .Column(c =>
             {
                 c.Item()
@@ -124,7 +127,7 @@ public static class PdfGenerator
                             .ToList()
                             .ForEach(fn =>
                             {
-                                pdfContext
+                                PdfFormContext
                                     .WithFormNode(
                                         fn.WithData(formDataNode.DataNode ?? formDataNode.Parent)
                                     )
@@ -148,8 +151,9 @@ public static class PdfGenerator
         var formDataNode = pdfContext.FormNode;
         var styleClassNames = pdfContext.StyleClassNames.Value;
         container
-            .Element(x => x.TryParseWidth(styleClassNames))
-            .Element(x => x.TryParsePadding(styleClassNames))
+            // .DebugArea("List group", Colors.Blue.Accent1)
+            // .DebugPointer("List group")
+            .Element(x => x.RunLayoutParser(styleClassNames))
             .Column(c =>
             {
                 c.TryConfigColumnGap(styleClassNames);
@@ -161,7 +165,7 @@ public static class PdfGenerator
                     .ToList()
                     .ForEach(fn =>
                     {
-                        pdfContext
+                        PdfFormContext
                             .WithFormNode(fn.WithData(formDataNode.DataNode ?? formDataNode.Parent))
                             .RenderListItem(c.Item(), listType, index);
                         index++;
@@ -180,8 +184,7 @@ public static class PdfGenerator
         var textValue = pdfContext.TextValue.Value;
 
         container
-            .Element(x => x.TryParseWidth(styleClassNames))
-            .Element(x => x.TryParsePadding(styleClassNames))
+            .Element(x => x.RunLayoutParser(styleClassNames))
             .Row(r =>
             {
                 r.Spacing(5);
@@ -209,8 +212,7 @@ public static class PdfGenerator
         var formNode = pdfContext.FormNode;
         var styleClassNames = pdfContext.LayoutClassNames.Value;
         container
-            .Element(x => x.TryParseWidth(styleClassNames))
-            .Element(x => x.TryParsePadding(styleClassNames))
+            .Element(x => x.RunLayoutParser(styleClassNames))
             .Row(r =>
             {
                 if (!formNode.Definition.IsTitleHidden())
@@ -235,8 +237,7 @@ public static class PdfGenerator
     {
         var labelClassNames = pdfContext.LabelClassNames.Value;
         container
-            .Element(x => x.TryParseWidth(labelClassNames))
-            .Element(x => x.TryParsePadding(labelClassNames))
+            .Element(x => x.RunLayoutParser(labelClassNames))
             .Text(text =>
             {
                 text.RenderText(labelText, labelClassNames);
@@ -249,8 +250,7 @@ public static class PdfGenerator
         var styleClassNames = pdfContext.StyleClassNames.Value;
 
         container
-            .Element(x => x.TryParseWidth(styleClassNames))
-            .Element(x => x.TryParsePadding(styleClassNames))
+            .Element(x => x.RunLayoutParser(styleClassNames))
             .Text(text =>
             {
                 text.RenderText(textValue, styleClassNames);
