@@ -100,7 +100,7 @@ export function setFields<V, OTHER extends { [p: string]: any }>(
   throw new Error("Method not implemented. setFields");
 }
 
-export function controlGroup<C extends { [k: string]: Control<any> }>(
+export function controlGroup<C extends { [k: string]: Control<unknown> }>(
   fields: C,
 ): Control<{ [K in keyof C]: ControlValue<C[K]> }> {
   throw new Error("Method not implemented. controlGroup");

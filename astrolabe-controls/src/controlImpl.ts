@@ -309,7 +309,7 @@ export class ControlImpl<V> implements InternalControl<V> {
     return this._subscriptions.subscribe(listener, currentChanges, mask);
   }
 
-  unsubscribe(subscription: ChangeListenerFunc<V> | Subscription) {
+  unsubscribe(subscription: Subscription) {
     this._subscriptions?.unsubscribe(subscription);
   }
 

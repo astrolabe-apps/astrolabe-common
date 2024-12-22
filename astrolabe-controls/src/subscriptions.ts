@@ -27,7 +27,7 @@ export class Subscriptions {
     return list.add(listener, mask);
   }
 
-  unsubscribe<V>(sub: Subscription | ChangeListenerFunc<V>): void {
+  unsubscribe(sub: Subscription): void {
     (sub as SubscriptionInternal).list.remove(sub);
   }
 
@@ -48,10 +48,8 @@ export class SubscriptionList {
     private mask: ControlChange,
   ) {}
 
-  remove<V>(sub: Subscription | ChangeListenerFunc<V>) {
-    this.subscriptions = this.subscriptions.filter(
-      (x) => x !== sub && x.listener !== sub,
-    );
+  remove(sub: Subscription) {
+    this.subscriptions = this.subscriptions.filter((x) => x !== sub);
   }
 
   runListeners(control: Control<any>, current: ControlChange) {

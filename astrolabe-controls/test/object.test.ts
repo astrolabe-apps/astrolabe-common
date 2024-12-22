@@ -472,4 +472,22 @@ describe("properties", () => {
       }),
     );
   });
+
+  it("changing disabled updates subscriptions", () => {
+    fc.assert(
+      fc.property(fc.string(), (childValue) => {
+        const changes: ControlChange[] = [];
+        const control = newControl<string>(childValue);
+        control.subscribe((a, c) => changes.push(c), ControlChange.Disabled);
+        control.disabled = true;
+        control.disabled = false;
+        control.disabled = true;
+        expect(changes).toStrictEqual([
+          ControlChange.Disabled,
+          ControlChange.Disabled,
+          ControlChange.Disabled,
+        ]);
+      }),
+    );
+  });
 });

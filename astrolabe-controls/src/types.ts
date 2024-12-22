@@ -39,7 +39,7 @@ export type ControlFields<V> = V extends string | number
       [K in keyof V]-?: Control<V[K]>;
     };
 
-export type ControlElement<V> = V extends Array<infer X> ? X : never;
+export type ControlElement<V> = V extends Array<infer X> ? X : unknown;
 
 export interface ControlProperties<V> {
   value: V;
@@ -58,7 +58,7 @@ export interface ControlProperties<V> {
 export interface Control<V> extends ControlProperties<V> {
   uniqueId: number;
   subscribe(listener: ChangeListenerFunc<V>, mask: ControlChange): Subscription;
-  unsubscribe(subscription: ChangeListenerFunc<V> | Subscription): void;
+  unsubscribe(subscription: Subscription): void;
   isEqual: (v1: unknown, v2: unknown) => boolean;
   current: ControlProperties<V>;
   setError(key: string, error?: string | null): void;
