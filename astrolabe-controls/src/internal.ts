@@ -49,4 +49,5 @@ export interface ChildState extends ParentListener {
   updateChildInitialValues(): void;
   allValid(): boolean;
   setTouched(b: boolean): void;
+  setDisabled(b: boolean): void;
 }

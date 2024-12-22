@@ -69,6 +69,10 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
     return !!(this._impl._flags & ControlFlags.Disabled);
   }
 
+  set disabled(disabled: boolean) {
+    this._impl.setDisabled(disabled);
+  }
+
   get dirty() {
     return this._impl.isDirty();
   }
@@ -110,6 +114,8 @@ export class ControlImpl<V> implements InternalControl<V> {
     this.uniqueId = ++uniqueIdCounter;
     this.current = new ControlPropertiesImpl<V>(this);
     this.meta = _setup?.meta ?? {};
+    const validator = _setup?.validator;
+    if (validator !== null) this.setError("default", validator?.(_value));
   }
 
   get touched() {
@@ -135,6 +141,20 @@ export class ControlImpl<V> implements InternalControl<V> {
   get disabled() {
     collectChange?.(this, ControlChange.Disabled);
     return !!(this._flags & ControlFlags.Disabled);
+  }
+
+  set disabled(b: boolean) {
+    this.setDisabled(b);
+  }
+  setDisabled(disabled: boolean, notChildren?: boolean) {
+    runTransaction(this, () => {
+      if (disabled) {
+        this._flags |= ControlFlags.Disabled;
+      } else {
+        this._flags &= ~ControlFlags.Disabled;
+      }
+      if (!notChildren) this._children?.setDisabled(disabled);
+    });
   }
 
   get valid(): boolean {
@@ -245,6 +265,10 @@ export class ControlImpl<V> implements InternalControl<V> {
       changeFlags |= ControlChange.Dirty;
     if (mask & ControlChange.Valid && this.current.valid)
       changeFlags |= ControlChange.Valid;
+    if (mask & ControlChange.Disabled && this.current.disabled)
+      changeFlags |= ControlChange.Disabled;
+    if (mask & ControlChange.Touched && this.current.touched)
+      changeFlags |= ControlChange.Touched;
     return changeFlags;
   }
 

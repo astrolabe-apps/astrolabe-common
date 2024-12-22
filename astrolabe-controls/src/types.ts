@@ -33,6 +33,14 @@ export enum ControlChange {
   Validate = 256,
 }
 
+export type ControlFields<V> = V extends string | number
+  ? never
+  : {
+      [K in keyof V]-?: Control<V[K]>;
+    };
+
+export type ControlElement<V> = V extends Array<infer X> ? X : never;
+
 export interface ControlProperties<V> {
   value: V;
   initialValue: V;
@@ -42,14 +50,8 @@ export interface ControlProperties<V> {
   readonly dirty: boolean;
   disabled: boolean;
   touched: boolean;
-  readonly fields: V extends string | number | undefined | null
-    ? {}
-    : {
-        [K in keyof NonNullable<V>]-?: Control<NonNullable<V>[K]>;
-      };
-  readonly elements: Control<
-    NonNullable<V> extends Array<infer X> ? X : unknown
-  >[];
+  readonly fields: ControlFields<NonNullable<V>>;
+  readonly elements: Control<ControlElement<NonNullable<V>>>[];
   readonly isNull: boolean;
 }
 
@@ -63,6 +65,7 @@ export interface Control<V> extends ControlProperties<V> {
   setErrors(errors: { [k: string]: string | null | undefined }): void;
   setValue(cb: (v: V) => V): void;
   setTouched(touched: boolean, notChildren?: boolean): void;
+  setDisabled(disabled: boolean, notChildren?: boolean): void;
   element: any;
 }
 

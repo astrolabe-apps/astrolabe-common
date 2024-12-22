@@ -1,5 +1,5 @@
 import { ChildState, ControlFlags, InternalControl } from "./internal";
-import { Control, ControlChange, ControlValue } from "./types";
+import { Control, ControlChange, ControlFields, ControlValue } from "./types";
 
 export const FieldsProxy: ProxyHandler<ObjectControl<unknown>> = {
   get(target: ObjectControl<unknown>, p: string | symbol, receiver: any): any {
@@ -15,6 +15,11 @@ export class ObjectControl<V> implements ChildState {
 
   setTouched(b: boolean) {
     Object.values(this._fields).forEach((x) => x.setTouched(b));
+  }
+
+  setDisabled(b: boolean) {
+    console.log("Setting disabled on children", this._fields);
+    Object.values(this._fields).forEach((x) => x.setDisabled(b));
   }
 
   allValid(): boolean {
@@ -41,11 +46,7 @@ export class ObjectControl<V> implements ChildState {
     });
   }
 
-  getFields(): V extends string | number | undefined | null
-    ? {}
-    : {
-        [K in keyof NonNullable<V>]-?: Control<NonNullable<V>[K]>;
-      } {
+  getFields(): ControlFields<NonNullable<V>> {
     return new Proxy<any>(this, FieldsProxy);
   }
 

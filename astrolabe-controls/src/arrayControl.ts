@@ -1,5 +1,5 @@
 import { ChildState, ControlFlags, InternalControl } from "./internal";
-import { Control, ControlChange } from "./types";
+import { Control, ControlChange, ControlElement } from "./types";
 import { runTransaction } from "./transactions";
 
 export class ArrayControl<V> implements ChildState {
@@ -12,13 +12,17 @@ export class ArrayControl<V> implements ChildState {
   }
 
   setTouched(b: boolean) {
-    this._elems.forEach(x => x.setTouched(b))
+    this._elems.forEach((x) => x.setTouched(b));
+  }
+
+  setDisabled(b: boolean) {
+    this._elems.forEach((x) => x.setDisabled(b));
   }
   allValid(): boolean {
     return this._elems.every((x) => x.valid);
   }
 
-  getElements(): InternalControl<V extends Array<infer X> ? X : unknown>[] {
+  getElements(): InternalControl<ControlElement<NonNullable<V>>>[] {
     return this._elems as any;
   }
 

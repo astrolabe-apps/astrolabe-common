@@ -1,11 +1,9 @@
 import fc from "fast-check";
 import { describe, expect, it } from "@jest/globals";
-import {
-  ControlChange,
-  groupedChanges,
-  newControl,
-  updateElements,
-} from "../src/controlImpl";
+import { newControl } from "../src/controlImpl";
+import { ControlChange } from "../src/types";
+import { groupedChanges } from "../src/transactions";
+import { updateElements } from "../src/arrayControl";
 
 // Properties
 describe("properties", () => {
@@ -248,7 +246,7 @@ describe("properties", () => {
           const val1 = obj.map((x) => x.v1);
           const val2 = obj.map((x) => x.v2);
           const arr1 = newControl(val1);
-          const elems2 = val2.map(newControl);
+          const elems2 = val2.map((x) => newControl(x));
           const origElems = arr1.elements;
           updateElements(arr1, (x) => [...elems2, ...x]);
           expect(arr1.value).toStrictEqual([...val2, ...val1]);
