@@ -18,7 +18,6 @@ export class ObjectControl<V> implements ChildState {
   }
 
   setDisabled(b: boolean) {
-    console.log("Setting disabled on children", this._fields);
     Object.values(this._fields).forEach((x) => x.setDisabled(b));
   }
 

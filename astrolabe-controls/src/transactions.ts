@@ -3,6 +3,7 @@ import { Control } from "./types";
 
 let transactionCount = 0;
 let runListenerList: InternalControl<any>[] = [];
+let afterChangesCallbacks: (() => void)[] = [];
 
 export function runPendingChanges() {}
 export function unsafeFreezeCountEdit(dir: number) {
@@ -10,7 +11,9 @@ export function unsafeFreezeCountEdit(dir: number) {
   else commit(undefined);
 }
 
-export function addAfterChangesCallback(cb: () => void) {}
+export function addAfterChangesCallback(cb: () => void) {
+  afterChangesCallbacks.push(cb);
+}
 export function groupedChanges<A>(run: () => A): A {
   transactionCount++;
   try {
@@ -50,6 +53,7 @@ export function commit(control?: InternalControl<unknown>) {
         listenersToRun.forEach((c) => c.runListeners());
       }
     }
+    console.log("afterChangesCallbacks", afterChangesCallbacks);
   }
   transactionCount--;
 }

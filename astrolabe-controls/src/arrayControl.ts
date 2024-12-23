@@ -148,3 +148,22 @@ export function addElement<V>(
 export function newElement<V>(control: Control<V[]>, elem: V): Control<V> {
   return (control as InternalControl<V[]>).newChild(elem, elem, 0);
 }
+
+/**
+ * Remove an element from a `Control` containing an array.
+ * @param control The Control containing an array
+ * @param child The child index or `Control` to remove from the array.
+ */
+export function removeElement<V>(
+  control: Control<V[] | undefined | null>,
+  child: number | Control<V>,
+): void {
+  const c = control.current.elements;
+  if (c) {
+    const wantedIndex = typeof child === "number" ? child : c.indexOf(child);
+    if (wantedIndex < 0 || wantedIndex >= c.length) return;
+    updateElements(control as Control<V[]>, (ex) =>
+      ex.filter((x, i) => i !== wantedIndex),
+    );
+  }
+}
