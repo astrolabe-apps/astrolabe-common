@@ -18,7 +18,18 @@ export function DataTable<T, D = unknown>({
   pageSize,
   ...props
 }: DataTableProps<T, D>) {
-  const state = useDataTableState({ perPage: pageSize ?? 10, loading });
+  const defaultSort = props.columns
+    .map((v) =>
+      v.defaultSort?.at(0)
+        ? `${v.defaultSort?.at(0)}${v.sortField}`
+        : undefined,
+    )
+    .filter((v) => v !== undefined);
+  const state = useDataTableState({
+    perPage: pageSize ?? 10,
+    loading,
+    sort: defaultSort,
+  });
 
   useEffect(() => {
     state.fields.loading.value = loading;
