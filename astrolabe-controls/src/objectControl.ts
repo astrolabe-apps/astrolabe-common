@@ -22,9 +22,15 @@ export class ObjectControl<V> implements ChildState {
   }
 
   allValid(): boolean {
-    return Object.keys(
-      (this.control as InternalControl<Record<string, unknown>>)._value,
-    ).every((x) => this._fields[x]?.valid ?? true);
+    console.log("allValid-object", this.control._value);
+    const c = this.control as InternalControl<Record<string, unknown>>;
+    return Object.keys(c._value).every((x) => {
+      const v =
+        this._fields[x]?.valid ??
+        !c._setup?.fields?.[x]?.validator?.(c._value[x]);
+      console.log({ x, v });
+      return v;
+    });
   }
 
   updateChildValues(): void {
@@ -62,27 +68,20 @@ export class ObjectControl<V> implements ChildState {
   }
 
   childValueChange(prop: string | number, v: V): void {
+    // console.log("childValueChange-object", { prop, v });
+
     let c = this.control;
     let curValue = c._value as any;
-    if (!(c._flags & ControlFlags.ValueMutating) || curValue == null) {
+    if (
+      !(c._flags & ControlFlags.ValueMutating) ||
+      curValue == null ||
+      c._parents
+    ) {
       curValue = { ...curValue };
-      c._value = curValue;
       c._flags |= ControlFlags.ValueMutating;
     }
     curValue[prop] = v;
-    c._subscriptions?.applyChange(ControlChange.Value);
-  }
-
-  childInitialValueChange(prop: string | number, v: V): void {
-    let c = this.control;
-    let curValue = c._initialValue as any;
-    if (!(c._flags & ControlFlags.InitialValueMutating) || curValue == null) {
-      curValue = { ...curValue };
-      c._initialValue = curValue;
-      c._flags |= ControlFlags.InitialValueMutating;
-    }
-    curValue[prop] = v;
-    c._subscriptions?.applyChange(ControlChange.InitialValue);
+    c.applyValueChange(curValue, false);
   }
 
   childFlagChange(prop: string | number, flags: ControlFlags): void {

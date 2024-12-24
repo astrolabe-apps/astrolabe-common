@@ -53,7 +53,7 @@ export function commit(control?: InternalControl<unknown>) {
         listenersToRun.forEach((c) => c.runListeners());
       }
     }
-    console.log("afterChangesCallbacks", afterChangesCallbacks);
+    // console.log("afterChangesCallbacks", afterChangesCallbacks);
   }
   transactionCount--;
 }

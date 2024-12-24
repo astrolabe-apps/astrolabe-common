@@ -19,6 +19,7 @@ export class ArrayControl<V> implements ChildState {
     this._elems.forEach((x) => x.setDisabled(b));
   }
   allValid(): boolean {
+    console.log("allValid-array", this.control._value, this._elems.length);
     return this._elems.every((x) => x.valid);
   }
 
@@ -57,29 +58,16 @@ export class ArrayControl<V> implements ChildState {
   }
 
   childValueChange(prop: string | number, v: unknown): void {
+    // console.log("childValueChange-array", { prop, v });
     let c = this.control;
     let curValue = c._value as any[];
-    if (!(c._flags & ControlFlags.ValueMutating)) {
+    if (!(c._flags & ControlFlags.ValueMutating) || c._parents) {
       curValue = [...curValue];
-      c._value = curValue;
       c._flags |= ControlFlags.ValueMutating;
     }
     curValue[prop as number] = v;
-    c._subscriptions?.applyChange(ControlChange.Value);
+    c.applyValueChange(curValue, false);
   }
-
-  childInitialValueChange(prop: string | number, v: unknown): void {
-    let c = this.control;
-    let curValue = c._initialValue as any[];
-    if (!(c._flags & ControlFlags.InitialValueMutating)) {
-      curValue = [...curValue];
-      c._initialValue = curValue;
-      c._flags |= ControlFlags.InitialValueMutating;
-    }
-    curValue[prop as number] = v;
-    c._subscriptions?.applyChange(ControlChange.InitialValue);
-  }
-
   childFlagChange(prop: string | number, flags: ControlFlags): void {
     throw new Error("Method not implemented. childFlagChange");
   }
@@ -100,11 +88,9 @@ export function updateElements<V>(
   )
     return;
 
-  const iv = c._initialValue ?? [];
   runTransaction(c, () => {
     newElems.forEach((x, i) => {
       const xc = x as InternalControl<V>;
-      xc.setInitialValueImpl(iv[i], c);
       xc.setParentAttach(c, i);
     });
     if (newElems.length < oldElems.length) {

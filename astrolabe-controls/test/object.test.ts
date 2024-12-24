@@ -1,9 +1,11 @@
-import fc from "fast-check";
+import fc, { Arbitrary } from "fast-check";
 import { describe, expect, it } from "@jest/globals";
-import { newControl } from "../src/controlImpl";
-import { ControlChange } from "../src/types";
-import { groupedChanges } from "../src/transactions";
-import { updateElements } from "../src/arrayControl";
+import {
+  ControlChange,
+  groupedChanges,
+  newControl,
+  updateElements,
+} from "../src";
 
 // Properties
 describe("properties", () => {
@@ -94,30 +96,24 @@ describe("properties", () => {
         fc.string(),
         fc.boolean(),
         fc.boolean(),
-        fc.boolean(),
-        (v1, v2, useFields, useFields2, useVal) => {
+        (v1, v2, useFields, useFields2) => {
           fc.pre(v1 !== v2);
-          const valProp = useVal ? "value" : "initialValue";
-          const change = useVal
-            ? ControlChange.Value
-            : ControlChange.InitialValue;
+          const change = ControlChange.Value;
           const changes: ControlChange[] = [];
           const f = newControl({ v: v1 });
           f.subscribe(
             (a, c) => changes.push(c),
-            ControlChange.Value |
-              ControlChange.InitialValue |
-              ControlChange.Dirty,
+            ControlChange.Value | ControlChange.Dirty,
           );
           if (useFields) {
-            f.fields.v[valProp] = v2;
+            f.fields.v.value = v2;
           } else {
-            f[valProp] = { v: v2 };
+            f.value = { v: v2 };
           }
           if (useFields2) {
-            f.fields.v[valProp] = v1;
+            f.fields.v.value = v1;
           } else {
-            f[valProp] = { v: v1 };
+            f.value = { v: v1 };
           }
           expect(changes).toStrictEqual([
             change | ControlChange.Dirty,
@@ -203,16 +199,16 @@ describe("properties", () => {
     );
   });
 
-  it("updating array child changes parent (initial value)", () => {
+  it("updating array child's initial value doesnt affect parents initial value", () => {
     fc.assert(
-      fc.property(fc.array(fc.string(), { minLength: 1 }), (obj) => {
+      fc.property(arrayAndIndex(), ([obj, ind]) => {
         const changes: ControlChange[] = [];
         const f = newControl(obj);
         f.subscribe((a, c) => changes.push(c), ControlChange.InitialValue);
-        f.elements[0].initialValue = obj[0] + "a";
-        expect(changes).toStrictEqual([ControlChange.InitialValue]);
-        expect(f.initialValue).toStrictEqual([obj[0] + "a", ...obj.slice(1)]);
-        return f.dirty;
+        f.elements[ind].initialValue = obj[ind] + "a";
+        expect(changes).toStrictEqual([]);
+        expect(f.initialValue).toStrictEqual(obj);
+        return !f.dirty;
       }),
     );
   });
@@ -251,10 +247,8 @@ describe("properties", () => {
           updateElements(arr1, (x) => [...elems2, ...x]);
           expect(arr1.value).toStrictEqual([...val2, ...val1]);
           expect(arr1.initialValue).toStrictEqual(val1);
-          expect(elems2.map((x) => x.initialValue)).toStrictEqual(val1);
-          expect(origElems.map((x) => x.initialValue)).toStrictEqual(
-            val1.map((x) => undefined),
-          );
+          expect(elems2.map((x) => x.initialValue)).toStrictEqual(val2);
+          expect(origElems.map((x) => x.initialValue)).toStrictEqual(val1);
         },
       ),
     );
@@ -359,22 +353,8 @@ describe("properties", () => {
         );
         control.initialValue = null;
         expect(child.initialValue).toStrictEqual(undefined);
-        child.initialValue = childValue + "b";
-        expect(control.initialValue).toStrictEqual({ child: childValue + "b" });
-        control.initialValue = null;
-        expect(control.initialValue).toStrictEqual(null);
-        expect(child.initialValue).toStrictEqual(undefined);
-        expect(changes).toStrictEqual([
-          ControlChange.InitialValue,
-          ControlChange.InitialValue,
-          ControlChange.InitialValue,
-          ControlChange.InitialValue,
-        ]);
-        expect(childChanges).toStrictEqual([
-          ControlChange.InitialValue,
-          ControlChange.InitialValue,
-          ControlChange.InitialValue,
-        ]);
+        expect(changes).toStrictEqual([ControlChange.InitialValue]);
+        expect(childChanges).toStrictEqual([ControlChange.InitialValue]);
       }),
     );
   });
@@ -443,31 +423,28 @@ describe("properties", () => {
         // Should not update child
         control.value = [childValue];
         expect(child.value).toStrictEqual(childValue + "b");
-        // should update parent value, child initial value
+        // should update parent value, leave child initial value unchanged
         updateElements(control, () => [child]);
         expect(child.value).toStrictEqual(childValue + "b");
-        expect(child.initialValue).toStrictEqual(undefined);
+        expect(child.initialValue).toStrictEqual(childValue + "c");
         expect(control.value).toStrictEqual([childValue + "b"]);
         // parent should change child
         control.value = [childValue];
         expect(child.value).toStrictEqual(childValue);
-        // Attached child should update parent initial value
+        // Attached child does not update parent initial value
         child.initialValue = childValue + "c";
-        expect(control.initialValue).toStrictEqual([childValue + "c"]);
+        expect(control.initialValue).toStrictEqual([]);
         expect(changes).toStrictEqual([
           ControlChange.Value,
           ControlChange.Value,
           ControlChange.Value,
           ControlChange.Value,
           ControlChange.Value,
-          ControlChange.InitialValue,
         ]);
         expect(childChanges).toStrictEqual([
           ControlChange.Value,
           ControlChange.InitialValue,
-          ControlChange.InitialValue,
           ControlChange.Value,
-          ControlChange.InitialValue,
         ]);
       }),
     );
@@ -490,4 +467,46 @@ describe("properties", () => {
       }),
     );
   });
+
+  it("values never get mutated (object)", () => {
+    fc.assert(
+      fc.property(fc.string(), (childValue) => {
+        const changes: ControlChange[] = [];
+        const copy1 = { v1: childValue };
+        const copy2 = { v1: childValue };
+        const control = newControl(copy2);
+        const controlValue = control.value;
+        expect(controlValue).toStrictEqual(copy1);
+        control.fields.v1.value = childValue + "a";
+        control.fields.v1.value = childValue + "b";
+        expect(controlValue).toStrictEqual(copy1);
+      }),
+    );
+  });
+
+  it("values never get mutated (object array)", () => {
+    fc.assert(
+      fc.property(fc.string(), (childValue) => {
+        const changes: ControlChange[] = [];
+        const copy1 = [{ v1: childValue }];
+        const copy2 = [{ v1: childValue }];
+        const control = newControl(copy2);
+        const controlValue = control.value;
+        expect(controlValue).toStrictEqual(copy1);
+        control.elements[0].fields.v1.value = childValue + "a";
+        const controlValue2 = control.value;
+        control.elements[0].fields.v1.value = childValue + "b";
+        expect(controlValue).toStrictEqual(copy1);
+        expect(controlValue2).toStrictEqual([{ v1: childValue + "a" }]);
+      }),
+    );
+  });
 });
+
+function arrayAndIndex(): Arbitrary<[string[], number]> {
+  return fc
+    .array(fc.string(), { minLength: 1 })
+    .chain((x) =>
+      fc.tuple(fc.constant(x), fc.integer({ min: 0, max: x.length - 1 })),
+    );
+}

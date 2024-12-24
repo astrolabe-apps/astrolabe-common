@@ -66,6 +66,7 @@ export interface Control<V> extends ControlProperties<V> {
   setValue(cb: (v: V) => V): void;
   setTouched(touched: boolean, notChildren?: boolean): void;
   setDisabled(disabled: boolean, notChildren?: boolean): void;
+  markAsClean(): void;
   element: any;
 }
 

@@ -14,6 +14,7 @@ import {
   ControlFlags,
   InternalControl,
   ParentListener,
+  ParentListeners,
 } from "./internal";
 import { runTransaction } from "./transactions";
 
@@ -21,24 +22,6 @@ export let collectChange: ChangeListenerFunc<any> | undefined;
 
 export function setChangeCollector(c: ChangeListenerFunc<any> | undefined) {
   collectChange = c;
-}
-interface ParentListeners {
-  syncChildValueChange(
-    v: unknown,
-    ignore: InternalControl<unknown> | undefined,
-  ): void;
-  syncChildInitialValueChange(
-    v: unknown,
-    ignore: InternalControl<unknown> | undefined,
-  ): void;
-  childFlagChange(
-    flags: ControlFlags,
-    ignore: InternalControl<unknown> | undefined,
-  ): void;
-  updateChildLink(
-    parent: InternalControl<unknown>,
-    prop: string | number | undefined,
-  ): ParentListeners | undefined;
 }
 export class ControlPropertiesImpl<V> implements ControlProperties<V> {
   public constructor(public _impl: ControlImpl<V>) {}
@@ -62,7 +45,21 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
 
   get valid(): boolean {
     const i = this._impl;
-    return !i._errors && (i._children?.allValid() ?? true);
+    if (i._errors) return false;
+    if (i._children) return i._children.allValid();
+    // check validation for all child fields
+    if (i._setup?.fields) {
+      return Object.entries(i._setup.fields).every(([k, v]) => {
+        const val = (i._value as any)[k];
+        return !(v as any).validator?.(val);
+      });
+    }
+    // check validation for all array elements
+    const elemValidator = i._setup?.elems?.validator;
+    if (elemValidator) {
+      return (i._value as any[]).every((x) => elemValidator(x));
+    }
+    return true;
   }
 
   get disabled() {
@@ -229,19 +226,30 @@ export class ControlImpl<V> implements InternalControl<V> {
       parent ? new SingleParent(parent, childProp) : undefined,
     );
   }
+
+  applyValueChange(
+    v: V,
+    updateChildren: boolean,
+    fromParent?: InternalControl<unknown>,
+  ): void {
+    const structureFlag =
+      v == null || this._value == null
+        ? ControlChange.Structure
+        : ControlChange.None;
+    this._value = v;
+    const validator = this._setup?.validator;
+    if (validator !== null) this.setError("default", validator?.(v));
+    if (updateChildren) {
+      this._children?.updateChildValues();
+    }
+    this._parents?.syncChildValueChange(v, fromParent);
+    this._subscriptions?.applyChange(ControlChange.Value | structureFlag);
+  }
+
   setValueImpl(v: V, fromParent?: InternalControl<unknown>): void {
     if (this.isEqual(this._value, v)) return;
     runTransaction(this, () => {
-      const structureFlag =
-        v == null || this._value == null
-          ? ControlChange.Structure
-          : ControlChange.None;
-      this._value = v;
-      const validator = this._setup?.validator;
-      if (validator !== null) this.setError("default", validator?.(v));
-      this._children?.updateChildValues();
-      this._parents?.syncChildValueChange(v, fromParent);
-      this._subscriptions?.applyChange(ControlChange.Value | structureFlag);
+      this.applyValueChange(v, true, fromParent);
     });
   }
 
@@ -250,7 +258,6 @@ export class ControlImpl<V> implements InternalControl<V> {
     runTransaction(this, () => {
       this._initialValue = v;
       this._children?.updateChildInitialValues();
-      this._parents?.syncChildInitialValueChange(v, fromParent);
       this._subscriptions?.applyChange(ControlChange.InitialValue);
     });
   }
@@ -270,6 +277,10 @@ export class ControlImpl<V> implements InternalControl<V> {
     if (mask & ControlChange.Touched && this.current.touched)
       changeFlags |= ControlChange.Touched;
     return changeFlags;
+  }
+
+  markAsClean() {
+    this.setInitialValueImpl(this.current.value);
   }
 
   get dirty() {
@@ -386,20 +397,11 @@ export class SingleParent implements ParentListeners {
     v: unknown,
     ignore: InternalControl<unknown> | undefined,
   ): void {
+    // console.log("syncChildValueChange", { v, ignore });
     const c = this.parent.control;
     if (c === ignore) return;
     runTransaction(c, () => {
       this.parent.childValueChange(this.child, v);
-    });
-  }
-  syncChildInitialValueChange(
-    v: unknown,
-    ignore: InternalControl<unknown>,
-  ): void {
-    const c = this.parent.control;
-    if (c === ignore) return;
-    runTransaction(c, () => {
-      this.parent.childInitialValueChange(this.child, v);
     });
   }
   childFlagChange(
