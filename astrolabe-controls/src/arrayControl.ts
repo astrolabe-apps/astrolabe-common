@@ -8,7 +8,7 @@ export class ArrayControl<V> implements ChildState {
   constructor(public control: InternalControl<unknown>) {
     const v = (control._value ?? []) as any[];
     const iv = (control._initialValue ?? []) as any[];
-    this._elems = v.map((x, i) => control.newChild(x, iv[i], i, this));
+    this._elems = v.map((x, i) => control.newChild(x, iv[i], i, this.control));
   }
 
   setTouched(b: boolean) {
@@ -19,7 +19,6 @@ export class ArrayControl<V> implements ChildState {
     this._elems.forEach((x) => x.setDisabled(b));
   }
   allValid(): boolean {
-    console.log("allValid-array", this.control._value, this._elems.length);
     return this._elems.every((x) => x.valid);
   }
 
@@ -40,7 +39,7 @@ export class ArrayControl<V> implements ChildState {
         old.setParentAttach(c, i);
         return old;
       }
-      return this.control.newChild(x, iv[i], i, this);
+      return this.control.newChild(x, iv[i], i, this.control);
     });
     if (newLength < oldElems.length) {
       oldElems.slice(newLength).forEach((x) => x.setParentAttach(c, undefined));
@@ -67,9 +66,6 @@ export class ArrayControl<V> implements ChildState {
     }
     curValue[prop as number] = v;
     c.applyValueChange(curValue, false);
-  }
-  childFlagChange(prop: string | number, flags: ControlFlags): void {
-    throw new Error("Method not implemented. childFlagChange");
   }
 }
 

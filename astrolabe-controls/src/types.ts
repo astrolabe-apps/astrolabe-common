@@ -6,6 +6,7 @@ export interface ControlSetup<V, M = {}> {
   isEqual?: (v1: unknown, v2: unknown) => boolean;
   fields?: { [K in keyof NonNullable<V>]?: ControlSetup<NonNullable<V>[K], M> };
   elems?: ControlSetup<V extends Array<infer X> ? X : unknown, M>;
+  afterCreate?: (control: Control<V>) => void;
   meta?: Partial<M>;
 }
 
@@ -45,7 +46,7 @@ export interface ControlProperties<V> {
   value: V;
   initialValue: V;
   error: string | null | undefined;
-  // readonly errors: { [k: string]: string };
+  readonly errors: { [k: string]: string };
   readonly valid: boolean;
   readonly dirty: boolean;
   disabled: boolean;
@@ -67,6 +68,7 @@ export interface Control<V> extends ControlProperties<V> {
   setTouched(touched: boolean, notChildren?: boolean): void;
   setDisabled(disabled: boolean, notChildren?: boolean): void;
   markAsClean(): void;
+  clearErrors(): void;
   element: any;
 }
 

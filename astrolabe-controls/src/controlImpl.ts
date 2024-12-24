@@ -7,13 +7,13 @@ import {
   ControlChange,
   ControlProperties,
   ControlSetup,
+  ControlValue,
   Subscription,
 } from "./types";
 import {
   ChildState,
   ControlFlags,
   InternalControl,
-  ParentListener,
   ParentListeners,
 } from "./internal";
 import { runTransaction } from "./transactions";
@@ -91,6 +91,10 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
     if (!errors) return null;
     return Object.values(errors)[0];
   }
+
+  get errors() {
+    return this._impl._errors ?? {};
+  }
 }
 
 let uniqueIdCounter = 0;
@@ -113,6 +117,7 @@ export class ControlImpl<V> implements InternalControl<V> {
     this.meta = _setup?.meta ?? {};
     const validator = _setup?.validator;
     if (validator !== null) this.setError("default", validator?.(_value));
+    _setup?.afterCreate?.(this);
   }
 
   get touched() {
@@ -170,7 +175,7 @@ export class ControlImpl<V> implements InternalControl<V> {
     if (this._parents) {
       this._parents = this._parents.updateChildLink(parent, prop);
     } else if (prop != null) {
-      this._parents = new SingleParent(parent._children!, prop);
+      this._parents = new SingleParent(parent, prop);
     }
   }
 
@@ -181,6 +186,15 @@ export class ControlImpl<V> implements InternalControl<V> {
   get error(): string | null | undefined {
     collectChange?.(this, ControlChange.Error);
     return this.current.error;
+  }
+
+  set error(error: string | null | undefined) {
+    this.setError("default", error);
+  }
+
+  get errors() {
+    collectChange?.(this, ControlChange.Error);
+    return this.current.errors;
   }
 
   get isNull() {
@@ -206,11 +220,15 @@ export class ControlImpl<V> implements InternalControl<V> {
     this.setInitialValueImpl(v);
   }
 
+  childValueChange(prop: string | number, v: unknown) {
+    this._children?.childValueChange(prop, v);
+  }
+
   newChild<V2>(
     value: V2,
     initialValue: V2,
     childProp: number | string,
-    parent?: ParentListener,
+    parent?: InternalControl<unknown>,
   ): InternalControl<V2> {
     const setup = this._setup;
     const childSetup = setup
@@ -225,6 +243,10 @@ export class ControlImpl<V> implements InternalControl<V> {
       childSetup as ControlSetup<V2>,
       parent ? new SingleParent(parent, childProp) : undefined,
     );
+  }
+
+  clearErrors() {
+    this.setErrors({});
   }
 
   applyValueChange(
@@ -374,7 +396,7 @@ export class ControlImpl<V> implements InternalControl<V> {
 
 export class SingleParent implements ParentListeners {
   constructor(
-    private parent: ParentListener,
+    private parent: InternalControl<unknown>,
     private child: string | number,
   ) {}
 
@@ -382,13 +404,16 @@ export class SingleParent implements ParentListeners {
     parent: InternalControl<unknown>,
     prop: string | number | undefined,
   ) {
-    if (this.parent.control === parent) {
+    if (this.parent === parent) {
       if (prop == null) {
         return undefined;
       }
       this.child = prop;
     } else {
-      throw new Error("Only single parent supported atm");
+      return new MultiParent(
+        [parent, this.parent],
+        prop != null ? [prop, this.child] : [this.child],
+      );
     }
     return this;
   }
@@ -398,21 +423,54 @@ export class SingleParent implements ParentListeners {
     ignore: InternalControl<unknown> | undefined,
   ): void {
     // console.log("syncChildValueChange", { v, ignore });
-    const c = this.parent.control;
+    const c = this.parent;
     if (c === ignore) return;
     runTransaction(c, () => {
       this.parent.childValueChange(this.child, v);
     });
   }
-  childFlagChange(
-    flags: ControlFlags,
-    ignore: InternalControl<unknown> | undefined,
-  ): void {
-    if (this.parent.control === ignore) return;
-    this.parent.childFlagChange(this.child, flags);
-  }
 }
 
+class MultiParent implements ParentListeners {
+  constructor(
+    private parents: InternalControl<unknown>[],
+    private children: (string | number)[],
+  ) {}
+
+  updateChildLink(
+    parent: InternalControl<unknown>,
+    prop: string | number | undefined,
+  ) {
+    const i = this.parents.indexOf(parent);
+    if (i >= 0) {
+      if (prop == null) {
+        this.parents.splice(i, 1);
+        this.children.splice(i, 1);
+        if (this.parents.length === 1) {
+          return new SingleParent(this.parents[0], this.children[0]);
+        }
+      } else {
+        this.children[i] = prop;
+      }
+    } else {
+      this.parents.push(parent);
+      this.children.push(prop!);
+    }
+    return this;
+  }
+
+  syncChildValueChange(
+    v: unknown,
+    ignore: InternalControl<unknown> | undefined,
+  ): void {
+    this.parents.forEach((p, i) => {
+      if (p === ignore) return;
+      runTransaction(p, () => {
+        p.childValueChange(this.children[i], v);
+      });
+    });
+  }
+}
 export function controlEquals(
   a: any,
   b: any,
@@ -454,4 +512,22 @@ export function newControl<V>(
   const c = new ControlImpl(value, value, ControlFlags.None, setup);
   if (arguments.length == 3) c.initialValue = initialValue!;
   return c;
+}
+
+export function controlGroup<C extends { [k: string]: Control<unknown> }>(
+  fields: C,
+): Control<{ [K in keyof C]: ControlValue<C[K]> }> {
+  const v: Record<string, unknown> = {};
+  const iv: Record<string, unknown> = {};
+  Object.entries(fields).forEach(([k, f]) => {
+    v[k] = f.value;
+    iv[k] = f.initialValue;
+  });
+  const newParent = new ControlImpl(v, iv, ControlFlags.None);
+  Object.entries(fields).forEach(([k, f]) => {
+    const ic = f as InternalControl<unknown>;
+    ic.setParentAttach(newParent as InternalControl<unknown>, k);
+  });
+  newParent.getObjectChildren().setFields(fields);
+  return newParent as any;
 }

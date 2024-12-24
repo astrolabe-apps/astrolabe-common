@@ -1,5 +1,5 @@
 import { ChildState, ControlFlags, InternalControl } from "./internal";
-import { Control, ControlChange, ControlFields, ControlValue } from "./types";
+import { Control, ControlFields, ControlValue } from "./types";
 
 export const FieldsProxy: ProxyHandler<ObjectControl<unknown>> = {
   get(target: ObjectControl<unknown>, p: string | symbol, receiver: any): any {
@@ -9,7 +9,7 @@ export const FieldsProxy: ProxyHandler<ObjectControl<unknown>> = {
 };
 
 export class ObjectControl<V> implements ChildState {
-  private _fields: Record<string, InternalControl<unknown>> = {};
+  public _fields: Record<string, InternalControl<unknown>> = {};
 
   constructor(public control: InternalControl<unknown>) {}
 
@@ -22,15 +22,12 @@ export class ObjectControl<V> implements ChildState {
   }
 
   allValid(): boolean {
-    console.log("allValid-object", this.control._value);
     const c = this.control as InternalControl<Record<string, unknown>>;
-    return Object.keys(c._value).every((x) => {
-      const v =
+    return Object.keys(c._value).every(
+      (x) =>
         this._fields[x]?.valid ??
-        !c._setup?.fields?.[x]?.validator?.(c._value[x]);
-      console.log({ x, v });
-      return v;
-    });
+        !c._setup?.fields?.[x]?.validator?.(c._value[x]),
+    );
   }
 
   updateChildValues(): void {
@@ -62,14 +59,12 @@ export class ObjectControl<V> implements ChildState {
     const { _value, _initialValue } = this.control;
     const v = _value != null ? (_value as any)[p] : undefined;
     const iv = _initialValue != null ? (_initialValue as any)[p] : undefined;
-    const c = this.control.newChild(v, iv, p, this);
+    const c = this.control.newChild(v, iv, p, this.control);
     this._fields[p] = c;
     return c;
   }
 
   childValueChange(prop: string | number, v: V): void {
-    // console.log("childValueChange-object", { prop, v });
-
     let c = this.control;
     let curValue = c._value as any;
     if (
@@ -84,22 +79,22 @@ export class ObjectControl<V> implements ChildState {
     c.applyValueChange(curValue, false);
   }
 
-  childFlagChange(prop: string | number, flags: ControlFlags): void {
-    throw new Error("Method not implemented. childFlagChange");
+  setFields(fields: { [K in keyof V]-?: Control<V[K]> }) {
+    this._fields = fields as any;
   }
 }
 
-export function setFields<V, OTHER extends { [p: string]: any }>(
+export function setFields<
+  V extends Record<string, unknown>,
+  OTHER extends { [p: string]: unknown },
+>(
   control: Control<V>,
   fields: {
     [K in keyof OTHER]-?: Control<OTHER[K]>;
   },
 ): Control<V & OTHER> {
-  throw new Error("Method not implemented. setFields");
-}
-
-export function controlGroup<C extends { [k: string]: Control<unknown> }>(
-  fields: C,
-): Control<{ [K in keyof C]: ControlValue<C[K]> }> {
-  throw new Error("Method not implemented. controlGroup");
+  const c = control as InternalControl<V>;
+  const oc = c.getObjectChildren() as ObjectControl<V>;
+  oc.setFields({ ...oc._fields, ...fields } as any);
+  return control as any;
 }

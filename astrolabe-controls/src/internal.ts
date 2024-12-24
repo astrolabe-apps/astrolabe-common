@@ -19,10 +19,6 @@ export interface ParentListeners {
     v: unknown,
     ignore: InternalControl<unknown> | undefined,
   ): void;
-  childFlagChange(
-    flags: ControlFlags,
-    ignore: InternalControl<unknown> | undefined,
-  ): void;
   updateChildLink(
     parent: InternalControl<unknown>,
     prop: string | number | undefined,
@@ -48,23 +44,21 @@ export interface InternalControl<V> extends Control<V> {
     value: V2,
     initialValue: V2,
     childProps: number | string,
-    parent?: ParentListener,
+    parent?: InternalControl<unknown>,
   ): InternalControl<V2>;
   runListeners(): void;
   setParentAttach(
-    c: InternalControl<any>,
+    c: InternalControl<unknown>,
     i: number | string | undefined,
   ): void;
   getArrayChildren(): ChildState;
+  getObjectChildren(): ChildState;
+  childValueChange(prop: string | number, v: unknown): void;
 }
 
-export interface ParentListener {
+export interface ChildState {
   control: InternalControl<unknown>;
   childValueChange(prop: string | number, v: unknown): void;
-  childFlagChange(prop: string | number, flags: ControlFlags): void;
-}
-
-export interface ChildState extends ParentListener {
   updateChildValues(): void;
   updateChildInitialValues(): void;
   allValid(): boolean;
