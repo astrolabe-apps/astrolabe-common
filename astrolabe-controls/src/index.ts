@@ -19,6 +19,5 @@ export {
   newElement,
   removeElement,
 } from "./arrayControl";
-export { setFields } from "./objectControl";
 export { ControlChange } from "./types";
 export type * from "./types";

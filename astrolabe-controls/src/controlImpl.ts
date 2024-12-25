@@ -1,21 +1,16 @@
-import { ObjectControl } from "./objectControl";
-import { ArrayControl } from "./arrayControl";
 import { Subscriptions } from "./subscriptions";
 import {
   ChangeListenerFunc,
   Control,
   ControlChange,
+  ControlElement,
+  ControlFields,
   ControlProperties,
   ControlSetup,
   ControlValue,
   Subscription,
 } from "./types";
-import {
-  ChildState,
-  ControlFlags,
-  InternalControl,
-  ParentListeners,
-} from "./internal";
+import { ControlFlags, ControlStorage, InternalControl } from "./internal";
 import { runTransaction } from "./transactions";
 
 export let collectChange: ChangeListenerFunc<any> | undefined;
@@ -26,17 +21,14 @@ export function setChangeCollector(c: ChangeListenerFunc<any> | undefined) {
 export class ControlPropertiesImpl<V> implements ControlProperties<V> {
   public constructor(public _impl: ControlImpl<V>) {}
 
-  get initialValue() {
-    this._impl._flags &= ~ControlFlags.InitialValueMutating;
-    return this._impl._initialValue;
-  }
-
-  get isNull() {
-    return this._impl._value == null;
+  get isNull(): boolean {
+    throw new Error("Not implemented");
+    // return this._impl._value == null;
   }
 
   get touched() {
-    return !!(this._impl._flags & ControlFlags.Touched);
+    throw new Error("Not implemented");
+    // return !!(this._impl._flags & ControlFlags.Touched);
   }
 
   set touched(touched: boolean) {
@@ -44,26 +36,29 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
   }
 
   get valid(): boolean {
-    const i = this._impl;
-    if (i._errors) return false;
-    if (i._children) return i._children.allValid();
-    // check validation for all child fields
-    if (i._setup?.fields) {
-      return Object.entries(i._setup.fields).every(([k, v]) => {
-        const val = (i._value as any)[k];
-        return !(v as any).validator?.(val);
-      });
-    }
-    // check validation for all array elements
-    const elemValidator = i._setup?.elems?.validator;
-    if (elemValidator) {
-      return (i._value as any[]).every((x) => elemValidator(x));
-    }
-    return true;
+    throw new Error("Not implemented");
+    // const i = this._impl;
+    // if (i._errors) return false;
+    // if (i._children) return i._children.allValid();
+    // // check validation for all child fields
+    // if (i._setup?.fields) {
+    //   return Object.entries(i._setup.fields).every(([k, v]) => {
+    //     const val = (i._value as any)[k];
+    //     return !(v as any).validator?.(val);
+    //   });
+    // }
+    // // check validation for all array elements
+    // const elemValidator = i._setup?.elems?.validator;
+    // if (elemValidator) {
+    //   return (i._value as any[]).every((x) => elemValidator(x));
+    // }
+    // return true;
   }
 
   get disabled() {
-    return !!(this._impl._flags & ControlFlags.Disabled);
+    throw new Error("Not implemented");
+
+    // return !!(this._impl._flags & ControlFlags.Disabled);
   }
 
   set disabled(disabled: boolean) {
@@ -75,16 +70,21 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
   }
 
   get value(): V {
-    this._impl._flags &= ~ControlFlags.ValueMutating;
-    return this._impl._value;
+    return this._impl.getValue();
+  }
+
+  get initialValue(): V {
+    return this._impl.getInitialValue();
   }
 
   get elements(): Control<V extends Array<infer X> ? X : unknown>[] {
-    return this._impl.getArrayChildren().getElements();
+    throw new Error("Not implemented");
+    // return this._impl.getArrayChildren().getElements();
   }
 
-  get fields() {
-    return this._impl.getObjectChildren().getFields();
+  get fields(): ControlFields<NonNullable<V>> {
+    throw new Error("Not implemented");
+    // return this._impl.getObjectChildren().getFields();
   }
   get error() {
     const errors = this._impl._errors;
@@ -100,26 +100,19 @@ export class ControlPropertiesImpl<V> implements ControlProperties<V> {
 let uniqueIdCounter = 0;
 export class ControlImpl<V> implements InternalControl<V> {
   current: ControlPropertiesImpl<V>;
-  public uniqueId: number;
-  public meta: Record<string, any>;
+  uniqueId: number;
+  meta: Record<string, any> = {};
   constructor(
-    public _value: V,
-    public _initialValue: V,
+    public isEqual: (a: unknown, b: unknown) => boolean,
+    public _storage: ControlStorage,
     public _flags: ControlFlags,
-    public _setup?: ControlSetup<V, any>,
-    public _parents?: ParentListeners,
+    public _storageKey: string | number | undefined,
     public _errors?: { [k: string]: string },
-    public _children?: ChildState,
     public _subscriptions?: Subscriptions,
   ) {
     this.uniqueId = ++uniqueIdCounter;
     this.current = new ControlPropertiesImpl<V>(this);
-    this.meta = _setup?.meta ?? {};
-    const validator = _setup?.validator;
-    if (validator !== null) this.setError("default", validator?.(_value));
-    _setup?.afterCreate?.(this);
   }
-
   get touched() {
     collectChange?.(this, ControlChange.Touched);
     return !!(this._flags & ControlFlags.Touched);
@@ -131,12 +124,13 @@ export class ControlImpl<V> implements InternalControl<V> {
 
   setTouched(touched: boolean, notChildren?: boolean) {
     runTransaction(this, () => {
-      if (touched) {
-        this._flags |= ControlFlags.Touched;
-      } else {
-        this._flags &= ~ControlFlags.Touched;
-      }
-      if (!notChildren) this._children?.setTouched(touched);
+      if (touched) this._flags |= ControlFlags.Touched;
+      else this._flags &= ~ControlFlags.Touched;
+      if (!notChildren)
+        this._storage.visitChildren((c) => {
+          c.setTouched(touched);
+          return true;
+        });
     });
   }
 
@@ -150,12 +144,13 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
   setDisabled(disabled: boolean, notChildren?: boolean) {
     runTransaction(this, () => {
-      if (disabled) {
-        this._flags |= ControlFlags.Disabled;
-      } else {
-        this._flags &= ~ControlFlags.Disabled;
-      }
-      if (!notChildren) this._children?.setDisabled(disabled);
+      if (disabled) this._flags |= ControlFlags.Disabled;
+      else this._flags &= ~ControlFlags.Disabled;
+      if (!notChildren)
+        this._storage.visitChildren((c) => {
+          c.setDisabled(disabled);
+          return true;
+        });
     });
   }
 
@@ -165,22 +160,7 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
 
   setValue(cb: (v: V) => V): void {
-    this.setValueImpl(cb(this.current.value));
-  }
-
-  setParentAttach(
-    parent: InternalControl<unknown>,
-    prop: string | number | undefined,
-  ): void {
-    if (this._parents) {
-      this._parents = this._parents.updateChildLink(parent, prop);
-    } else if (prop != null) {
-      this._parents = new SingleParent(parent, prop);
-    }
-  }
-
-  isEqual(v1: unknown, v2: unknown): boolean {
-    return controlEquals(v1, v2, this._setup);
+    this.value = cb(this.current.value);
   }
 
   get error(): string | null | undefined {
@@ -197,95 +177,82 @@ export class ControlImpl<V> implements InternalControl<V> {
     return this.current.errors;
   }
 
-  get isNull() {
+  get isNull(): boolean {
     collectChange?.(this, ControlChange.Structure);
-    return this._value == null;
+    return this._storage.isNull(this);
   }
 
   get value(): V {
     collectChange?.(this, ControlChange.Value);
-    return this.current.value;
+    return this.getValue();
   }
 
+  getValue(): V {
+    return this._storage.getValue(this) as V;
+  }
+
+  getInitialValue(): V {
+    return this._storage.getInitialValue(this) as V;
+  }
   get initialValue(): V {
     collectChange?.(this, ControlChange.InitialValue);
     return this.current.initialValue;
   }
 
   set value(v: V) {
-    this.setValueImpl(v);
+    if (this.isEqual(this._storage.getValue(this), v)) return;
+    this._storage.setValue(this, v);
   }
 
   set initialValue(v: V) {
-    this.setInitialValueImpl(v);
-  }
-
-  childValueChange(prop: string | number, v: unknown) {
-    this._children?.childValueChange(prop, v);
-  }
-
-  newChild<V2>(
-    value: V2,
-    initialValue: V2,
-    childProp: number | string,
-    parent?: InternalControl<unknown>,
-  ): InternalControl<V2> {
-    const setup = this._setup;
-    const childSetup = setup
-      ? typeof childProp === "string"
-        ? (setup as ControlSetup<Record<string, V2>>).fields?.[childProp]
-        : setup.elems
-      : undefined;
-    return new ControlImpl<V2>(
-      value,
-      initialValue,
-      this._flags & ControlFlags.Disabled,
-      childSetup as ControlSetup<V2>,
-      parent ? new SingleParent(parent, childProp) : undefined,
-    );
+    if (this.isEqual(this._storage.getInitialValue(this), v)) return;
+    this._storage.setInitialValue(this, v);
   }
 
   clearErrors() {
     this.setErrors({});
   }
 
-  applyValueChange(
-    v: V,
-    updateChildren: boolean,
-    fromParent?: InternalControl<unknown>,
-  ): void {
-    const structureFlag =
-      v == null || this._value == null
-        ? ControlChange.Structure
-        : ControlChange.None;
-    this._value = v;
-    const validator = this._setup?.validator;
-    if (validator !== null) this.setError("default", validator?.(v));
-    if (updateChildren) {
-      this._children?.updateChildValues();
-    }
-    this._parents?.syncChildValueChange(v, fromParent);
-    this._subscriptions?.applyChange(ControlChange.Value | structureFlag);
-  }
+  // applyValueChange(
+  //   v: V,
+  //   updateChildren: boolean,
+  //   fromParent?: InternalControl<unknown>,
+  // ): void {
+  //   const structureFlag =
+  //     v == null || this._value == null
+  //       ? ControlChange.Structure
+  //       : ControlChange.None;
+  //   this._value = v;
+  //   const validator = this._setup?.validator;
+  //   if (validator !== null) this.setError("default", validator?.(v));
+  //   if (updateChildren) {
+  //     this._children?.updateChildValues();
+  //   }
+  //   this._parents?.syncChildValueChange(v, fromParent);
+  //   this._subscriptions?.applyChange(ControlChange.Value | structureFlag);
+  // }
 
-  setValueImpl(v: V, fromParent?: InternalControl<unknown>): void {
-    if (this.isEqual(this._value, v)) return;
-    runTransaction(this, () => {
-      this.applyValueChange(v, true, fromParent);
-    });
-  }
+  // setValueImpl(v: V, fromParent?: InternalControl<unknown>): void {
+  //   if (this.isEqual(this._storage.getValue(this) as V, v)) return;
+  //   runTransaction(this, () => {
+  //     this._storage.setValue(v, this);
+  //   });
+  // }
+  //
+  // setInitialValueImpl(v: V, fromParent?: InternalControl<unknown>): void {
+  //   if (this.isEqual(this._storage.getInitialValue(this), v)) return;
+  //   runTransaction(this, () => {
+  //     this._initialValue = v;
+  //     this._children?.updateChildInitialValues();
+  //     this._subscriptions?.applyChange(ControlChange.InitialValue);
+  //   });
+  // }
 
-  setInitialValueImpl(v: V, fromParent?: InternalControl<unknown>): void {
-    if (this.isEqual(this._initialValue, v)) return;
-    runTransaction(this, () => {
-      this._initialValue = v;
-      this._children?.updateChildInitialValues();
-      this._subscriptions?.applyChange(ControlChange.InitialValue);
-    });
-  }
-
-  isDirty() {
-    return !this.isEqual(this._value, this._initialValue);
+  isDirty(): boolean {
+    return !this.isEqual(
+      this._storage.getValue(this) as V,
+      this._storage.getInitialValue(this) as V,
+    );
   }
 
   getChangeState(mask: ControlChange): ControlChange {
@@ -302,7 +269,7 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
 
   markAsClean() {
-    this.setInitialValueImpl(this.current.value);
+    this.initialValue = this.current.value;
   }
 
   get dirty() {
@@ -310,28 +277,33 @@ export class ControlImpl<V> implements InternalControl<V> {
     return this.isDirty();
   }
 
-  get elements() {
+  get elements(): Control<ControlElement<NonNullable<V>>>[] {
     collectChange?.(this, ControlChange.Structure);
-    return this.getArrayChildren().getElements();
+    return this._storage.getElements(this) as any;
   }
 
-  get fields() {
-    return this.getObjectChildren().getFields();
+  get fields(): ControlFields<NonNullable<V>> {
+    const c = this as InternalControl<unknown>;
+    return new Proxy(this._storage, {
+      get(target: ControlStorage, p: string | symbol, receiver: any): any {
+        return target.getField(c, p as string);
+      },
+    }) as unknown as ControlFields<NonNullable<V>>;
   }
 
-  getArrayChildren(): ArrayControl<V> {
-    if (!this._children) {
-      this._children = new ArrayControl<V>(this as InternalControl<unknown>);
-    }
-    return this._children as ArrayControl<V>;
-  }
-
-  getObjectChildren(): ObjectControl<V> {
-    if (!this._children) {
-      this._children = new ObjectControl<V>(this as InternalControl<unknown>);
-    }
-    return this._children as ObjectControl<V>;
-  }
+  // getArrayChildren(): ArrayControl<V> {
+  //   if (!this._children) {
+  //     this._children = new ArrayControl<V>(this as InternalControl<unknown>);
+  //   }
+  //   return this._children as ArrayControl<V>;
+  // }
+  //
+  // getObjectChildren(): ObjectControl<V> {
+  //   if (!this._children) {
+  //     this._children = new ObjectControl<V>(this as InternalControl<unknown>);
+  //   }
+  //   return this._children as ObjectControl<V>;
+  // }
 
   subscribe(
     listener: ChangeListenerFunc<V>,
@@ -394,83 +366,6 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
 }
 
-export class SingleParent implements ParentListeners {
-  constructor(
-    private parent: InternalControl<unknown>,
-    private child: string | number,
-  ) {}
-
-  updateChildLink(
-    parent: InternalControl<unknown>,
-    prop: string | number | undefined,
-  ) {
-    if (this.parent === parent) {
-      if (prop == null) {
-        return undefined;
-      }
-      this.child = prop;
-    } else {
-      return new MultiParent(
-        [parent, this.parent],
-        prop != null ? [prop, this.child] : [this.child],
-      );
-    }
-    return this;
-  }
-
-  syncChildValueChange(
-    v: unknown,
-    ignore: InternalControl<unknown> | undefined,
-  ): void {
-    // console.log("syncChildValueChange", { v, ignore });
-    const c = this.parent;
-    if (c === ignore) return;
-    runTransaction(c, () => {
-      this.parent.childValueChange(this.child, v);
-    });
-  }
-}
-
-class MultiParent implements ParentListeners {
-  constructor(
-    private parents: InternalControl<unknown>[],
-    private children: (string | number)[],
-  ) {}
-
-  updateChildLink(
-    parent: InternalControl<unknown>,
-    prop: string | number | undefined,
-  ) {
-    const i = this.parents.indexOf(parent);
-    if (i >= 0) {
-      if (prop == null) {
-        this.parents.splice(i, 1);
-        this.children.splice(i, 1);
-        if (this.parents.length === 1) {
-          return new SingleParent(this.parents[0], this.children[0]);
-        }
-      } else {
-        this.children[i] = prop;
-      }
-    } else {
-      this.parents.push(parent);
-      this.children.push(prop!);
-    }
-    return this;
-  }
-
-  syncChildValueChange(
-    v: unknown,
-    ignore: InternalControl<unknown> | undefined,
-  ): void {
-    this.parents.forEach((p, i) => {
-      if (p === ignore) return;
-      runTransaction(p, () => {
-        p.childValueChange(this.children[i], v);
-      });
-    });
-  }
-}
 export function controlEquals(
   a: any,
   b: any,
@@ -500,6 +395,50 @@ export function controlEquals(
   return a !== a && b !== b;
 }
 
+function doEqual(
+  a: any,
+  b: any,
+  childEquals: (field?: string) => (a: any, b: any) => boolean = () => doEqual,
+): boolean {
+  if (a === b) return true;
+  if (a == null) return a === b;
+  if (b == null) return false;
+  if (typeof a == "object" && typeof b == "object") {
+    if (a.constructor !== b.constructor) return false;
+    let length, i, keys;
+    if (Array.isArray(a)) {
+      if (a.length != b.length) return false;
+      return a.every((x, i) => childEquals()(x, b[i]));
+    }
+    keys = Object.keys(a);
+    length = keys.length;
+    if (length !== Object.keys(b).length) return false;
+
+    for (i = length; i-- !== 0; )
+      if (!Object.prototype.hasOwnProperty.call(b, keys[i])) return false;
+
+    return keys.every((k) => childEquals(k)(a[k], b[k]));
+  }
+  return a !== a && b !== b;
+}
+
+export function equalityForSetup(
+  setup?: ControlSetup<any>,
+): (a: any, b: any) => boolean {
+  if (!setup) return doEqual;
+  if (setup.isEqual) return setup.isEqual;
+  if (setup.elems) {
+    const arrayEqual = equalityForSetup(setup.elems);
+    return (a, b) => doEqual(a, b, () => arrayEqual);
+  }
+  const fieldsEqual: Record<string, (a: any, b: any) => boolean> = setup?.fields
+    ? Object.fromEntries(
+        Object.entries(setup.fields).map(([k, v]) => [k, equalityForSetup(v)]),
+      )
+    : {};
+  return (a, b) => doEqual(a, b, (field) => fieldsEqual[field!] ?? doEqual);
+}
+
 export function trackControlChange(c: Control<any>, change: ControlChange) {
   collectChange?.(c, change);
 }
@@ -509,25 +448,110 @@ export function newControl<V>(
   setup?: ControlSetup<V, any>,
   initialValue?: V,
 ): Control<V> {
-  const c = new ControlImpl(value, value, ControlFlags.None, setup);
-  if (arguments.length == 3) c.initialValue = initialValue!;
-  return c;
+  return new ControlImpl(
+    equalityForSetup(setup),
+    new BasicStorage(value, arguments.length == 3 ? initialValue : value),
+    ControlFlags.None,
+    undefined,
+  );
+}
+
+class BasicStorage implements ControlStorage {
+  _fields?: Record<string, InternalControl<unknown>>;
+  constructor(
+    public _value: unknown,
+    public _initialValue: unknown,
+  ) {}
+
+  visitChildren(op: (c: InternalControl<unknown>) => boolean): boolean {
+    throw new Error("Method not implemented.");
+  }
+
+  getElements(c: InternalControl<unknown>): InternalControl<unknown>[] {
+    throw new Error("Method not implemented.");
+  }
+  getField(
+    c: InternalControl<unknown>,
+    field: string,
+  ): InternalControl<unknown> {
+    const f = (this._fields ??= {});
+    if (c._storageKey == null) {
+      const child = f[field];
+      if (child) return child;
+      const newChild = new ControlImpl(doEqual, this, ControlFlags.None, field);
+      f[field] = newChild;
+      return newChild;
+    }
+    throw new Error("getField");
+  }
+  setValue(c: InternalControl<unknown>, v: unknown): void {
+    runTransaction(c, () => {
+      c._subscriptions?.applyChange(ControlChange.Value);
+      const sk = c._storageKey;
+      if (sk == null) {
+        this._value = v;
+        return;
+      }
+      if (typeof sk === "string") {
+        this._value = { ...(this._value as object), [sk]: v };
+      } else {
+        const ok = [...(this._value as unknown[])];
+        ok[sk] = v;
+        this._value = ok;
+      }
+    });
+  }
+  getValue(c: InternalControl<unknown>): unknown {
+    const sk = c._storageKey;
+    if (sk == null) return this._value;
+    const cv = this._value;
+    if (cv == null) return undefined;
+    return (cv as Record<string | number, unknown>)[sk];
+  }
+  setInitialValue(c: InternalControl<unknown>, v: unknown): void {
+    runTransaction(c, () => {
+      c._subscriptions?.applyChange(ControlChange.InitialValue);
+      const sk = c._storageKey;
+      if (sk == null) {
+        this._initialValue = v;
+        return;
+      }
+      if (typeof sk === "string") {
+        this._initialValue = { ...(this._initialValue as object), [sk]: v };
+      } else {
+        const ok = [...(this._initialValue as unknown[])];
+        ok[sk] = v;
+        this._initialValue = ok;
+      }
+    });
+  }
+  getInitialValue(c: InternalControl<unknown>): unknown {
+    const sk = c._storageKey;
+    if (sk == null) return this._initialValue;
+    const cv = this._initialValue;
+    if (cv == null) return undefined;
+    return (cv as Record<string | number, unknown>)[sk];
+  }
+  isNull(c: InternalControl<unknown>): boolean {
+    throw new Error("Method not implemented.");
+  }
 }
 
 export function controlGroup<C extends { [k: string]: Control<unknown> }>(
   fields: C,
 ): Control<{ [K in keyof C]: ControlValue<C[K]> }> {
-  const v: Record<string, unknown> = {};
-  const iv: Record<string, unknown> = {};
-  Object.entries(fields).forEach(([k, f]) => {
-    v[k] = f.value;
-    iv[k] = f.initialValue;
-  });
-  const newParent = new ControlImpl(v, iv, ControlFlags.None);
-  Object.entries(fields).forEach(([k, f]) => {
-    const ic = f as InternalControl<unknown>;
-    ic.setParentAttach(newParent as InternalControl<unknown>, k);
-  });
-  newParent.getObjectChildren().setFields(fields);
-  return newParent as any;
+  throw new Error("Not implemented");
+  // const v: Record<string, unknown> = {};
+  // const iv: Record<string, unknown> = {};
+  // Object.entries(fields).forEach(([k, f]) => {
+  //   v[k] = f.value;
+  //   iv[k] = f.initialValue;
+  // });
+  // const newParent = new ControlImpl(v, iv, ControlFlags.None);
+  // Object.entries(fields).forEach(([k, f]) => {
+  //   const ic = f as InternalControl<unknown>;
+  //   ic.setParentAttach(newParent as InternalControl<unknown>, k);
+  // });
+  // newParent.getObjectChildren().setFields(fields);
+  // return newParent as any;
 }
