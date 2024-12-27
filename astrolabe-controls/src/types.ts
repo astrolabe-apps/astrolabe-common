@@ -63,7 +63,7 @@ export interface Control<V> extends ControlProperties<V> {
   isEqual: (v1: unknown, v2: unknown) => boolean;
   current: ControlProperties<V>;
   setError(key: string, error?: string | null): void;
-  setErrors(errors: { [k: string]: string | null | undefined }): void;
+  setErrors(errors?: { [k: string]: string | null | undefined } | null): void;
   setValue(cb: (v: V) => V): void;
   setTouched(touched: boolean, notChildren?: boolean): void;
   setDisabled(disabled: boolean, notChildren?: boolean): void;

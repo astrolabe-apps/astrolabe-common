@@ -1,88 +1,74 @@
-import { ChildState, ControlFlags, InternalControl } from "./internal";
-import { Control, ControlFields, ControlValue } from "./types";
+import { Control } from "./types";
+import {
+  ControlFlags,
+  ControlLogic,
+  InternalControl,
+  ParentLink,
+} from "./internal";
 
-// export const FieldsProxy: ProxyHandler<ObjectControl<unknown>> = {
-//   get(target: ObjectControl<unknown>, p: string | symbol, receiver: any): any {
-//     if (typeof p !== "string") return undefined;
-//     return target.getField(p);
-//   },
-// };
+export class ObjectLogic extends ControlLogic {
+  _fields: Record<string, InternalControl> = {};
 
-// export class ObjectControl<V> implements ChildState {
-//   public _fields: Record<string, InternalControl<unknown>> = {};
-//
-//   constructor(public control: InternalControl<unknown>) {}
-//
-//   setTouched(b: boolean) {
-//     Object.values(this._fields).forEach((x) => x.setTouched(b));
-//   }
-//
-//   setDisabled(b: boolean) {
-//     Object.values(this._fields).forEach((x) => x.setDisabled(b));
-//   }
-//
-//   allValid(): boolean {
-//     const c = this.control as InternalControl<Record<string, unknown>>;
-//     return Object.keys(c._value).every(
-//       (x) =>
-//         this._fields[x]?.valid ??
-//         !c._setup?.fields?.[x]?.validator?.(c._value[x]),
-//     );
-//   }
-//
-//   updateChildValues(): void {
-//     const c = this.control;
-//     const v = c._value;
-//     Object.entries(this._fields).forEach(([k, fv]) => {
-//       const cv = v != null ? (v as any)[k] : undefined;
-//       fv.setValueImpl(cv, c);
-//     });
-//   }
-//
-//   updateChildInitialValues(): void {
-//     const c = this.control;
-//     const v = c._initialValue;
-//     Object.entries(this._fields).forEach(([k, fv]) => {
-//       const cv = v != null ? (v as any)[k] : undefined;
-//       fv.setInitialValueImpl(cv, c);
-//     });
-//   }
-//
-//   getFields(): ControlFields<NonNullable<V>> {
-//     return new Proxy<any>(this, FieldsProxy);
-//   }
-//
-//   getField(p: string): InternalControl<unknown> {
-//     if (p in this._fields) {
-//       return this._fields[p];
-//     }
-//     const { _value, _initialValue } = this.control;
-//     const v = _value != null ? (_value as any)[p] : undefined;
-//     const iv = _initialValue != null ? (_initialValue as any)[p] : undefined;
-//     const c = this.control.newChild(v, iv, p, this.control);
-//     this._fields[p] = c;
-//     return c;
-//   }
-//
-//   childValueChange(prop: string | number, v: V): void {
-//     let c = this.control;
-//     let curValue = c._value as any;
-//     if (
-//       !(c._flags & ControlFlags.ValueMutating) ||
-//       curValue == null ||
-//       c._parents
-//     ) {
-//       curValue = { ...curValue };
-//       c._flags |= ControlFlags.ValueMutating;
-//     }
-//     curValue[prop] = v;
-//     c.applyValueChange(curValue, false);
-//   }
-//
-//   setFields(fields: { [K in keyof V]-?: Control<V[K]> }) {
-//     this._fields = fields as any;
-//   }
-// }
+  constructor(
+    isEqual: (v1: unknown, v2: unknown) => boolean,
+    public parents: ParentLink[] | undefined,
+    private makeChild: (
+      p: string,
+      v: unknown,
+      iv: unknown,
+      flags: ControlFlags,
+    ) => InternalControl,
+  ) {
+    super(isEqual);
+  }
+  getField(p: string): InternalControl {
+    if (p in this._fields) {
+      return this._fields[p];
+    }
+    const tc = this.control;
+    const v = (tc._value as any)?.[p];
+    const iv = (tc._initialValue as any)?.[p];
+    const child = this.makeChild(
+      p,
+      v,
+      iv,
+      tc._flags & (ControlFlags.Disabled | ControlFlags.Touched),
+    );
+    child._logic.addParent(this.control, p);
+    return (this._fields[p] = child);
+  }
+
+  getElements(): InternalControl[] {
+    throw new Error("This is an object control, not an array control.");
+  }
+  withChildren(f: (c: InternalControl) => void): void {
+    Object.values(this._fields).forEach(f);
+  }
+
+  copy(v: unknown): Record<string, unknown> {
+    return v == null ? {} : { ...v };
+  }
+
+  childValueChange(prop: string | number, v: unknown) {
+    const copied = this.copy(this.control._value);
+    copied[prop] = v;
+    this.control.setValueImpl(copied);
+  }
+  valueChanged(from?: InternalControl) {
+    const ov = this.control._value as Record<string, unknown> | null;
+    Object.entries(this._fields).forEach(([k, c]) => {
+      c.setValueImpl(ov?.[k], this.control);
+    });
+    super.valueChanged(from);
+  }
+
+  initialValueChanged() {
+    const ov = this.control._initialValue as Record<string, unknown> | null;
+    Object.entries(this._fields).forEach(([k, c]) => {
+      c.setInitialValueImpl(ov?.[k]);
+    });
+  }
+}
 
 export function setFields<
   V extends Record<string, unknown>,

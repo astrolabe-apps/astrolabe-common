@@ -1,5 +1,5 @@
 export {
-  controlEquals,
+  deepEquals,
   collectChange,
   setChangeCollector,
   trackControlChange,

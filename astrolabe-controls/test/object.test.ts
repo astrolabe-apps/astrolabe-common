@@ -213,6 +213,18 @@ describe("properties", () => {
     );
   });
 
+  it("updating object parent changes child", () => {
+    fc.assert(
+      fc.property(fc.string(), (v) => {
+        const parent = newControl({ v });
+        const child = parent.fields.v;
+        expect(child.value).toStrictEqual(v);
+        parent.value = { v: v + "a" };
+        expect(child.value).toStrictEqual(v + "a");
+      }),
+    );
+  });
+
   it("updating array parent changes child", () => {
     fc.assert(
       fc.property(
@@ -359,7 +371,7 @@ describe("properties", () => {
     );
   });
 
-  it("structure changes get notified", () => {
+  it("array structure changes get notified", () => {
     fc.assert(
       fc.property(
         fc.array(fc.double({ noNaN: true })),

@@ -49,7 +49,7 @@
     "build": "rimraf ./lib/ && microbundle -f modern,cjs",
     "watch": "microbundle -w -f modern,cjs --no-compress",
     "test": "jest --coverage",
-    "run": "tsx src/index.ts",
+    "run": "tsx test/play.ts",
     "update-readme": "md-magic --path README.md"
   }
 }

@@ -3,55 +3,84 @@ import { Subscriptions } from "./subscriptions";
 
 export enum ControlFlags {
   None = 0,
-  Invalid = 1,
-  Touched = 2,
-  Dirty = 4,
-  Disabled = 8,
-  CheckValid = 16,
-  StructureChanged = 32,
-  NeedsValidate = 64,
-  ValueMutating = 128,
-  InitialValueMutating = 256,
+  Touched = 1,
+  Disabled = 2,
+}
+
+export interface ParentLink {
+  control: InternalControl;
+  key: string | number;
+  origIndex?: number;
 }
 
 export interface InternalControl<V = unknown> extends Control<V> {
-  // _value: V;
-  // _initialValue: V;
-  // _flags: ControlFlags;
-  // _parents?: ParentListeners;
+  _value: V;
+  _initialValue: V;
+  _flags: ControlFlags;
   _subscriptions?: Subscriptions;
-  // _setup?: ControlSetup<V>;
-  // _children?: ChildState;
-  // setValueImpl(v: V, fromParent?: InternalControl<unknown>): void;
-  // applyValueChange(
-  //   v: V,
-  //   updateChildren: boolean,
-  //   fromParent?: InternalControl<unknown>,
-  // ): void;
-  // setInitialValueImpl(v: V, fromParent?: InternalControl<unknown>): void;
-  // newChild<V2>(
-  //   value: V2,
-  //   initialValue: V2,
-  //   childProps: number | string,
-  //   parent?: InternalControl<unknown>,
-  // ): InternalControl<V2>;
+  _logic: ControlLogic;
+  getField(p: string): InternalControl;
+  setValueImpl(v: V, from?: InternalControl): void;
+  setInitialValueImpl(v: V): void;
   runListeners(): void;
-  // setParentAttach(
-  //   c: InternalControl<unknown>,
-  //   i: number | string | undefined,
-  // ): void;
-  // getArrayChildren(): ChildState;
-  // getObjectChildren(): ChildState;
-  // childValueChange(prop: string | number, v: unknown): void;
 }
 
-export interface ChildState {
-  control: InternalControl;
-  isEqual(v1: unknown, v2: unknown): boolean;
-  // childValueChange(prop: string | number, v: unknown): void;
-  // updateChildValues(): void;
-  // updateChildInitialValues(): void;
-  // allValid(): boolean;
-  setTouched(b: boolean): void;
-  setDisabled(b: boolean): void;
+export abstract class ControlLogic {
+  control!: InternalControl;
+
+  constructor(
+    public isEqual: (v1: unknown, v2: unknown) => boolean,
+    public parents?: ParentLink[],
+  ) {}
+
+  attach(c: InternalControl): ControlLogic {
+    this.control = c;
+    this.control._logic = this;
+    return this;
+  }
+
+  detachParent(c: InternalControl) {
+    if (!this.parents) {
+      return;
+    }
+    this.parents = this.parents.filter((p) => p.control !== c);
+  }
+  addParent(c: InternalControl, key: string | number) {
+    if (!this.parents) {
+      this.parents = [];
+    }
+    const link: ParentLink = { control: c, key };
+    if (typeof key === "number") {
+      link.origIndex = key;
+    }
+    this.parents.push(link);
+  }
+
+  abstract withChildren(f: (c: InternalControl) => void): void;
+  abstract getField(p: string): InternalControl;
+  abstract getElements(): InternalControl[];
+  abstract initialValueChanged(): void;
+
+  childValueChange(prop: string | number, v: unknown): void {
+    throw new Error("Should never get here");
+  }
+
+  valueChanged(from?: InternalControl) {
+    this.parents?.forEach((l) => {
+      if (l.control !== from)
+        l.control._logic.childValueChange(l.key, this.control._value);
+    });
+  }
+
+  updateArrayIndex(parent: InternalControl, index: number) {
+    if (!this.parents) {
+      return;
+    }
+    const existing = this.parents.find((p) => p.control === parent);
+    if (existing) {
+      existing.key = index;
+    } else {
+      this.parents.push({ control: parent, key: index, origIndex: index });
+    }
+  }
 }
