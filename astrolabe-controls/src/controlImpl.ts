@@ -3,7 +3,7 @@ import {
   ChangeListenerFunc,
   Control,
   ControlChange,
-  ControlElement,
+  ControlElements,
   ControlFields,
   ControlProperties,
   ControlSetup,
@@ -46,14 +46,19 @@ export class ControlImpl<V> implements InternalControl<V> {
     _logic.attach(this);
   }
 
-  get fields(): ControlFields<NonNullable<V>> {
+  validate(): boolean {
+    throw new Error("Method not implemented.");
+  }
+
+  get fields(): ControlFields<V> {
     return new Proxy<any>(this, FieldsProxy);
   }
 
-  get elements(): Control<ControlElement<NonNullable<V>>>[] {
+  get elements(): ControlElements<V> {
     collectChange?.(this, ControlChange.Structure);
     return this.current.elements;
   }
+
   get current(): ControlProperties<V> {
     return new ControlPropertiesImpl(this);
   }
@@ -344,14 +349,12 @@ class ControlPropertiesImpl<V> implements ControlProperties<V> {
     this.control.setTouched(touched);
   }
 
-  get fields(): ControlFields<NonNullable<V>> {
+  get fields(): ControlFields<V> {
     return this.control.fields;
   }
 
-  get elements(): Control<ControlElement<NonNullable<V>>>[] {
-    return this.control._logic.getElements() as unknown as Control<
-      ControlElement<NonNullable<V>>
-    >[];
+  get elements(): ControlElements<V> {
+    return this.control._logic.getElements() as ControlElements<V>;
   }
 }
 
@@ -387,7 +390,7 @@ export function equalityForSetup(
   setup?: ControlSetup<any>,
 ): (a: any, b: any) => boolean {
   if (!setup) return deepEquals;
-  if (setup.isEqual) return setup.isEqual;
+  if (setup.equals) return setup.equals;
   if (setup.elems) {
     const arrayEqual = equalityForSetup(setup.elems);
     return (a, b) => deepEquals(a, b, () => arrayEqual);
@@ -490,8 +493,7 @@ class ConfiguredControlLogic extends ControlLogic {
     } else if (this.setup.elems) {
       this.getElements();
     }
-    if (this.setup.meta)
-      c.meta = {...this.setup.meta};
+    if (this.setup.meta) c.meta = { ...this.setup.meta };
     this.setup.afterCreate?.(c);
   }
 

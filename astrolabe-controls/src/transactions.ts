@@ -39,20 +39,27 @@ export function commit(control?: InternalControl<unknown>) {
       sub.onListenerList = true;
       runListenerList.push(control);
     }
+    transactionCount--;
+    return;
   } else {
     if (!runListenerList.length && sub) {
       control!.runListeners();
     } else {
       if (sub) runListenerList.push(control);
     }
-    while (runListenerList.length > 0) {
-      const listenersToRun = runListenerList;
-      runListenerList = [];
-      listenersToRun.forEach((c) => (c._subscriptions!.onListenerList = false));
-      listenersToRun.forEach((c) => c.runListeners());
+    while (transactionCount === 1) {
+      while (runListenerList.length > 0) {
+        const listenersToRun = runListenerList;
+        runListenerList = [];
+        listenersToRun.forEach(
+          (c) => (c._subscriptions!.onListenerList = false),
+        );
+        listenersToRun.forEach((c) => c.runListeners());
+      }
+      const cbToRun = afterChangesCallbacks;
+      afterChangesCallbacks = [];
+      cbToRun.forEach((cb) => cb());
+      transactionCount--;
     }
-
-    // console.log("afterChangesCallbacks", afterChangesCallbacks);
   }
-  transactionCount--;
 }

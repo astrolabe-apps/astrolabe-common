@@ -3,7 +3,7 @@ export type ControlValidator<V> = ((v: V) => string | undefined | null) | null;
 // export type DelayedSetup<V, M> = ControlSetup<V, M> | (() => ControlSetup<V, M>);
 export interface ControlSetup<V, M = {}> {
   validator?: ControlValidator<V>;
-  isEqual?: (v1: unknown, v2: unknown) => boolean;
+  equals?: (v1: unknown, v2: unknown) => boolean;
   fields?: { [K in keyof NonNullable<V>]?: ControlSetup<NonNullable<V>[K], M> };
   elems?: ControlSetup<V extends Array<infer X> ? X : unknown, M>;
   afterCreate?: (control: Control<V>) => void;
@@ -34,14 +34,22 @@ export enum ControlChange {
   Validate = 256,
 }
 
-export type ControlFields<V> = V extends string | number
-  ? never
-  : {
-      [K in keyof V]-?: Control<V[K]>;
-    };
+export type ControlFields<V> = V extends
+  | string
+  | number
+  | Array<any>
+  | undefined
+  | null
+  ? undefined
+  : V extends { [a: string]: any }
+    ? { [K in keyof V]-?: Control<V[K]> }
+    : V;
 
-export type ControlElement<V> = V extends Array<infer X> ? X : unknown;
-
+export type ControlElements<V> = V extends (infer A)[]
+  ? Control<A>[]
+  : V extends string | number | { [k: string]: any }
+    ? never[]
+    : V;
 export interface ControlProperties<V> {
   value: V;
   initialValue: V;
@@ -51,8 +59,8 @@ export interface ControlProperties<V> {
   readonly dirty: boolean;
   disabled: boolean;
   touched: boolean;
-  readonly fields: ControlFields<NonNullable<V>>;
-  readonly elements: Control<ControlElement<NonNullable<V>>>[];
+  readonly fields: ControlFields<V>;
+  readonly elements: ControlElements<V>;
   readonly isNull: boolean;
 }
 
@@ -71,7 +79,8 @@ export interface Control<V> extends ControlProperties<V> {
   markAsClean(): void;
   clearErrors(): void;
   element: any;
-  meta: { [k: string]: unknown };
+  meta: { [k: string]: any };
+  validate(): boolean;
 }
 
 export type ControlValue<C> = C extends Control<infer V> ? V : never;

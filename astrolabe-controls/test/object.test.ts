@@ -1,6 +1,6 @@
-import fc, { Arbitrary } from "fast-check";
+import fc from "fast-check";
 import { describe, expect, it } from "@jest/globals";
-import { ControlChange, groupedChanges, newControl } from "../src";
+import { Control, ControlChange, groupedChanges, newControl } from "../src";
 
 // Properties
 describe("object", () => {
@@ -365,3 +365,12 @@ describe("object", () => {
   });
 });
 
+function takeString(c: Control<string>) {
+  typeCheck(c);
+  throw new Error();
+}
+
+function typeCheck(c: Control<any>) {
+  takeString(c);
+  throw new Error();
+}
