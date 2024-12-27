@@ -65,11 +65,13 @@ export interface Control<V> extends ControlProperties<V> {
   setError(key: string, error?: string | null): void;
   setErrors(errors?: { [k: string]: string | null | undefined } | null): void;
   setValue(cb: (v: V) => V): void;
+  setValueAndInitial(v: V, iv: V): void;
   setTouched(touched: boolean, notChildren?: boolean): void;
   setDisabled(disabled: boolean, notChildren?: boolean): void;
   markAsClean(): void;
   clearErrors(): void;
   element: any;
+  meta: { [k: string]: unknown };
 }
 
 export type ControlValue<C> = C extends Control<infer V> ? V : never;

@@ -13,7 +13,7 @@ export class ArrayLogic extends ControlLogic {
   constructor(
     isEqual: (v1: unknown, v2: unknown) => boolean,
     public parents: ParentLink[] | undefined,
-    private makeChild: (
+    public makeChild: (
       v: unknown,
       iv: unknown,
       flags: ControlFlags,
@@ -87,6 +87,10 @@ export class ArrayLogic extends ControlLogic {
     copied[prop as number] = v;
     this.control.setValueImpl(copied);
   }
+
+  childrenValid(): boolean {
+    return this._elems.every((x) => x.isValid());
+  }
 }
 
 export function updateElements<V>(
@@ -94,8 +98,8 @@ export function updateElements<V>(
   cb: (elems: Control<V>[]) => Control<V>[],
 ): void {
   const c = control as unknown as InternalControl;
-  const arrayChildren = c._logic as ArrayLogic;
-  const oldElems = arrayChildren.getElements();
+  const oldElems = c.current.elements as InternalControl[];
+  const arrayLogic = c._logic as ArrayLogic;
   const newElems = cb(
     oldElems as unknown as Control<V>[],
   ) as unknown as InternalControl[];
@@ -114,7 +118,8 @@ export function updateElements<V>(
     if (newElems.length < oldElems.length) {
       oldElems.slice(newElems.length).forEach((x) => x._logic.detachParent(c));
     }
-    arrayChildren._elems = newElems as unknown as InternalControl<unknown>[];
+    arrayLogic._elems = newElems as unknown as InternalControl[];
+    c._flags &= ~ControlFlags.ChildInvalid;
     c.setValueImpl(newElems.map((x) => x.current.value));
     c._subscriptions?.applyChange(ControlChange.Structure);
   });
@@ -126,31 +131,29 @@ export function addElement<V>(
   index?: number | Control<V> | undefined,
   insertAfter?: boolean,
 ): Control<V> {
-  throw new Error("Not implemented");
-  // const e = control.current.elements;
-  // if (e) {
-  //   const c = control as InternalControl<V[]>;
-  //   const newChild = c.newChild(child, child, 0);
-  //   if (typeof index === "object") {
-  //     index = e.indexOf(index as any);
-  //   }
-  //   let newElems = [...e];
-  //   if (typeof index === "number" && index < e.length) {
-  //     newElems.splice(index + (insertAfter ? 1 : 0), 0, newChild);
-  //   } else {
-  //     newElems.push(newChild);
-  //   }
-  //   updateElements(control as Control<V[]>, () => newElems);
-  //   return newChild;
-  // } else {
-  //   control.value = [child];
-  //   return control.current.elements[0];
-  // }
+  const c = control as InternalControl<V[]>;
+  const e = c.current.elements;
+  const arrayLogic = c._logic as ArrayLogic;
+  const newChild = arrayLogic.makeChild(child, child, 0);
+  if (typeof index === "object") {
+    index = e.indexOf(index as any);
+  }
+  let newElems = [...e] as unknown as InternalControl[];
+  if (typeof index === "number" && index < e.length) {
+    newElems.splice(index + (insertAfter ? 1 : 0), 0, newChild);
+  } else {
+    newElems.push(newChild);
+  }
+  updateElements(c, () => newElems);
+  return newChild as unknown as Control<V>;
 }
 
 export function newElement<V>(control: Control<V[]>, elem: V): Control<V> {
-  throw new Error("Not implemented");
-  // return (control as InternalControl<V[]>).newChild(elem, elem, 0);
+  // ensure array logic is initialized
+  control.current.elements;
+  const arrayLogic = (control as unknown as InternalControl)
+    ._logic as ArrayLogic;
+  return arrayLogic.makeChild(elem, elem, 0) as unknown as Control<V>;
 }
 
 /**
@@ -162,12 +165,10 @@ export function removeElement<V>(
   control: Control<V[] | undefined | null>,
   child: number | Control<V>,
 ): void {
-  const c = control.current.elements;
-  if (c) {
-    const wantedIndex = typeof child === "number" ? child : c.indexOf(child);
-    if (wantedIndex < 0 || wantedIndex >= c.length) return;
-    updateElements(control as Control<V[]>, (ex) =>
-      ex.filter((x, i) => i !== wantedIndex),
-    );
-  }
+  const elems = control.current.elements;
+  const wantedIndex = typeof child === "number" ? child : elems.indexOf(child);
+  if (wantedIndex < 0 || wantedIndex >= elems.length) return;
+  updateElements(control as Control<V[]>, (ex) =>
+    ex.filter((x, i) => i !== wantedIndex),
+  );
 }

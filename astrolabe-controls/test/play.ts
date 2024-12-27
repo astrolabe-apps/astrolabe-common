@@ -1,6 +1,10 @@
-import { Control, newControl } from "../src";
+import { ControlChange, newControl } from "../src";
 
-const c = newControl({ hair: { length: 10, colour: "orange" } });
-c.fields.hair.fields.colour.value = "blonde";
-console.log(c.value);
+const numArray = [];
+const control = newControl(numArray, {
+  validator: (v) => (v.length == 0 ? "Need one element" : ""),
+});
+control.subscribe((a, c) => console.log(c), ControlChange.Valid);
 debugger;
+control.value = [1];
+console.log(control.valid, control.errors);

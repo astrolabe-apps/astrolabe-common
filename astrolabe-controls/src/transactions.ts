@@ -35,7 +35,7 @@ export function runTransaction(control: Control<any>, run: () => void): void {
 export function commit(control?: InternalControl<unknown>) {
   const sub = control?._subscriptions;
   if (transactionCount > 1) {
-    if (sub) {
+    if (sub && !sub.onListenerList) {
       sub.onListenerList = true;
       runListenerList.push(control);
     }
@@ -44,15 +44,14 @@ export function commit(control?: InternalControl<unknown>) {
       control!.runListeners();
     } else {
       if (sub) runListenerList.push(control);
-      while (runListenerList.length > 0) {
-        const listenersToRun = runListenerList;
-        runListenerList = [];
-        listenersToRun.forEach(
-          (c) => (c._subscriptions!.onListenerList = false),
-        );
-        listenersToRun.forEach((c) => c.runListeners());
-      }
     }
+    while (runListenerList.length > 0) {
+      const listenersToRun = runListenerList;
+      runListenerList = [];
+      listenersToRun.forEach((c) => (c._subscriptions!.onListenerList = false));
+      listenersToRun.forEach((c) => c.runListeners());
+    }
+
     // console.log("afterChangesCallbacks", afterChangesCallbacks);
   }
   transactionCount--;

@@ -1,10 +1,14 @@
 import { Control, ControlSetup } from "./types";
 import { Subscriptions } from "./subscriptions";
+import { run } from "jest";
+import { runTransaction } from "./transactions";
 
 export enum ControlFlags {
   None = 0,
   Touched = 1,
   Disabled = 2,
+  ChildInvalid = 4,
+  DontClearError = 8,
 }
 
 export interface ParentLink {
@@ -19,6 +23,7 @@ export interface InternalControl<V = unknown> extends Control<V> {
   _flags: ControlFlags;
   _subscriptions?: Subscriptions;
   _logic: ControlLogic;
+  isValid(): boolean;
   getField(p: string): InternalControl;
   setValueImpl(v: V, from?: InternalControl): void;
   setInitialValueImpl(v: V): void;
@@ -33,10 +38,9 @@ export abstract class ControlLogic {
     public parents?: ParentLink[],
   ) {}
 
-  attach(c: InternalControl): ControlLogic {
+  attach(c: InternalControl): void {
     this.control = c;
     this.control._logic = this;
-    return this;
   }
 
   detachParent(c: InternalControl) {
@@ -59,7 +63,7 @@ export abstract class ControlLogic {
   abstract withChildren(f: (c: InternalControl) => void): void;
   abstract getField(p: string): InternalControl;
   abstract getElements(): InternalControl[];
-  abstract initialValueChanged(): void;
+  initialValueChanged(): void {}
 
   childValueChange(prop: string | number, v: unknown): void {
     throw new Error("Should never get here");
@@ -73,14 +77,33 @@ export abstract class ControlLogic {
   }
 
   updateArrayIndex(parent: InternalControl, index: number) {
-    if (!this.parents) {
-      return;
-    }
-    const existing = this.parents.find((p) => p.control === parent);
+    const existing = this.parents?.find((p) => p.control === parent);
     if (existing) {
       existing.key = index;
     } else {
-      this.parents.push({ control: parent, key: index, origIndex: index });
+      const newEntry = { control: parent, key: index, origIndex: index };
+      if (!this.parents) this.parents = [newEntry];
+      else this.parents.push(newEntry);
     }
+  }
+
+  childrenValid() {
+    return true;
+  }
+
+  validityChanged(hasErrors: boolean) {
+    this.parents?.forEach((l) => {
+      const c = l.control;
+      const alreadyInvalid = !!(c._flags & ControlFlags.ChildInvalid);
+      if (!(hasErrors && alreadyInvalid)) {
+        runTransaction(c, () => {
+          if (hasErrors) c._flags |= ControlFlags.ChildInvalid;
+          else {
+            c._flags &= ~ControlFlags.ChildInvalid;
+          }
+        });
+      }
+      c._logic.validityChanged(hasErrors);
+    });
   }
 }

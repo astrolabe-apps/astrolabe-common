@@ -68,6 +68,24 @@ export class ObjectLogic extends ControlLogic {
       c.setInitialValueImpl(ov?.[k]);
     });
   }
+
+  childrenValid(): boolean {
+    return Object.values(this._fields).every((c) => c.isValid());
+  }
+
+  setFields(fields: Record<string, InternalControl>) {
+    Object.entries(fields).forEach(([k, f]) => {
+      (f as InternalControl)._logic.addParent(this.control, k);
+    });
+    this._fields = { ...fields } as unknown as Record<string, InternalControl>;
+    const v: Record<string, unknown> = {};
+    const iv: Record<string, unknown> = {};
+    Object.entries(fields).forEach(([k, f]) => {
+      v[k] = f.value;
+      iv[k] = f.initialValue;
+    });
+    this.control.setValueAndInitial(v, iv);
+  }
 }
 
 export function setFields<
@@ -79,9 +97,8 @@ export function setFields<
     [K in keyof OTHER]-?: Control<OTHER[K]>;
   },
 ): Control<V & OTHER> {
-  throw new Error("Not implemented");
-  // const c = control as InternalControl<V>;
-  // const oc = c.getObjectChildren() as ObjectControl<V>;
-  // oc.setFields({ ...oc._fields, ...fields } as any);
-  // return control as any;
+  const c = control as InternalControl<V>;
+  const oc = c._logic as ObjectLogic;
+  oc.setFields({ ...oc._fields, ...fields } as any);
+  return control as any;
 }
