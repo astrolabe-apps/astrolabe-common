@@ -116,4 +116,29 @@ describe("errors", () => {
       }),
     );
   });
+
+  it("validate revalidates", () => {
+    fc.assert(
+      fc.property(fc.string({ minLength: 1 }), (msg) => {
+        const control = newControl<string>("", {
+          validator: notEmpty("Not blank"),
+        });
+        const changes: ControlChange[] = [];
+        control.subscribe((a, c) => changes.push(c), ControlChange.Valid);
+        expect(control.error).toStrictEqual("Not blank");
+        expect(control.valid).toStrictEqual(false);
+        control.clearErrors();
+        expect(control.valid).toStrictEqual(true);
+        expect(control.error).toBeNull();
+        const isValid = control.validate();
+        expect(control.error).toStrictEqual("Not blank");
+        expect(control.valid).toStrictEqual(false);
+        expect(changes).toStrictEqual([
+          ControlChange.Valid,
+          ControlChange.Valid,
+        ]);
+        return !isValid;
+      }),
+    );
+  });
 });

@@ -37,19 +37,19 @@ export enum ControlChange {
 export type ControlFields<V> = V extends
   | string
   | number
+  | boolean
   | Array<any>
   | undefined
   | null
-  ? undefined
-  : V extends { [a: string]: any }
-    ? { [K in keyof V]-?: Control<V[K]> }
-    : V;
+  ? { [k: string]: Control<any> }
+  : { [K in keyof V]-?: Control<V[K]> };
 
 export type ControlElements<V> = V extends (infer A)[]
   ? Control<A>[]
   : V extends string | number | { [k: string]: any }
     ? never[]
-    : V;
+    : NonNullable<V>;
+
 export interface ControlProperties<V> {
   value: V;
   initialValue: V;

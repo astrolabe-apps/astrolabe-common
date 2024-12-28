@@ -37,7 +37,7 @@
     "microbundle": "^0.15.1",
     "prettier": "^3.0.3",
     "rimraf": "^3.0.2",
-    "typescript": "^5.6.2",
+    "typescript": "^5.7.2",
     "tsx": "^4.19.1",
     "fast-check": "^3.22.0",
     "ts-jest": "^29.2.5",

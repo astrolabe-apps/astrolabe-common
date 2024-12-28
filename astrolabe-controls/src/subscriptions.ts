@@ -34,6 +34,9 @@ export class Subscriptions {
   runListeners(control: Control<any>, current: ControlChange) {
     this.lists.forEach((s) => s.runListeners(control, current));
   }
+  runMatchingListeners(control: Control<any>, mask: ControlChange) {
+    this.lists.forEach((s) => s.runMatchingListeners(control, mask));
+  }
 
   applyChange(change: ControlChange) {
     this.lists.forEach((x) => x.applyChange(change));
@@ -52,15 +55,19 @@ export class SubscriptionList {
     this.subscriptions = this.subscriptions.filter((x) => x !== sub);
   }
 
+  runMatchingListeners(control: Control<any>, mask: ControlChange) {
+    this.subscriptions.forEach((s) => {
+      const change = s.mask & mask;
+      if (change) s.listener(control, change);
+    });
+  }
+
   runListeners(control: Control<any>, current: ControlChange) {
     const nextCurrent = current & this.mask;
     const actualChange = (nextCurrent ^ this.changeState) as ControlChange;
     this.changeState = nextCurrent;
     if (actualChange) {
-      this.subscriptions.forEach((s) => {
-        const change = s.mask & actualChange;
-        if (change) s.listener(control, change);
-      });
+      this.runMatchingListeners(control, actualChange);
     }
   }
 

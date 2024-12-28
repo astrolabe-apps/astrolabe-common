@@ -47,10 +47,12 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
 
   validate(): boolean {
-    throw new Error("Method not implemented.");
+    this._logic.withChildren((x) => x.validate());
+    this._subscriptions?.runMatchingListeners(this, ControlChange.Validate);
+    return this.valid;
   }
 
-  get fields(): ControlFields<V> {
+  get fields(): ControlFields<V> & {} {
     return new Proxy<any>(this, FieldsProxy);
   }
 
@@ -349,7 +351,7 @@ class ControlPropertiesImpl<V> implements ControlProperties<V> {
     this.control.setTouched(touched);
   }
 
-  get fields(): ControlFields<V> {
+  get fields() {
     return this.control.fields;
   }
 

@@ -367,10 +367,26 @@ describe("object", () => {
 
 function takeString(c: Control<string>) {
   typeCheck(c);
+  takeStringOpt(c);
+  throw new Error();
+}
+
+function takeStringOpt(c: Control<string | undefined>) {
+  typeCheck(c);
+  // @ts-expect-error
+  takeString(c);
+  throw new Error();
+}
+
+function takeObj(c: Control<{ hai: string } | undefined>) {
+  typeCheck(c);
+  // @ts-expect-error
+  c.fields.frog.value = "";
   throw new Error();
 }
 
 function typeCheck(c: Control<any>) {
   takeString(c);
+  takeObj(c);
   throw new Error();
 }
