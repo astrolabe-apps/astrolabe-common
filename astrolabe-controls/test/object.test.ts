@@ -386,7 +386,7 @@ function takeObj(c: Control<{ hai: string } | undefined>) {
 }
 
 function typeCheck(c: Control<any>) {
-  takeString(c);
-  takeObj(c);
+  takeString(c.as());
+  takeObj(c.as());
   throw new Error();
 }

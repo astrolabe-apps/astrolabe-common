@@ -46,6 +46,10 @@ export class ControlImpl<V> implements InternalControl<V> {
     _logic.attach(this);
   }
 
+  as<V2>(): V extends V2 ? Control<V2> : never {
+    return this as any;
+  }
+
   validate(): boolean {
     this._logic.withChildren((x) => x.validate());
     this._subscriptions?.runMatchingListeners(this, ControlChange.Validate);

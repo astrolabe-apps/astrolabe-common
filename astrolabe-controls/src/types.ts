@@ -41,7 +41,7 @@ export type ControlFields<V> = V extends
   | Array<any>
   | undefined
   | null
-  ? { [k: string]: Control<any> }
+  ? never
   : { [K in keyof V]-?: Control<V[K]> };
 
 export type ControlElements<V> = V extends (infer A)[]
@@ -81,6 +81,7 @@ export interface Control<V> extends ControlProperties<V> {
   element: any;
   meta: { [k: string]: any };
   validate(): boolean;
+  as<V2>(): V extends V2 ? Control<V2> : never;
 }
 
 export type ControlValue<C> = C extends Control<infer V> ? V : never;

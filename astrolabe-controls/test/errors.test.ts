@@ -7,6 +7,7 @@ import {
   removeElement,
   updateElements,
 } from "../src";
+import { arbitraryParentChild, getParentAndChild } from "./gen";
 
 describe("errors", () => {
   it("setting error makes control invalid", () => {
@@ -30,14 +31,13 @@ describe("errors", () => {
 
   it("setting child error makes control invalid", () => {
     fc.assert(
-      fc.property(fc.string({ minLength: 1 }), (msg) => {
-        const parent = newControl({ child: "" });
-        const control = parent.fields.child;
+      fc.property(arbitraryParentChild, (json) => {
+        const [parent, child] = getParentAndChild(json);
         const changes: ControlChange[] = [];
         parent.subscribe((a, c) => changes.push(c), ControlChange.Valid);
-        control.error = msg;
+        child.error = "Failed";
         expect(parent.valid).toStrictEqual(false);
-        control.error = "";
+        child.error = "";
         expect(parent.valid).toStrictEqual(true);
         expect(changes).toStrictEqual([
           ControlChange.Valid,
@@ -50,19 +50,21 @@ describe("errors", () => {
 
   it("error state is cleared by changing value", () => {
     fc.assert(
-      fc.property(fc.jsonValue(), (v) => {
-        const control = newControl(v);
+      fc.property(arbitraryParentChild, (json) => {
+        const [parent, child] = getParentAndChild(json);
         const changes: ControlChange[] = [];
-        control.subscribe((a, c) => changes.push(c), ControlChange.Valid);
-        control.error = "error";
-        expect(control.valid).toStrictEqual(false);
-        control.error = "";
-        expect(control.valid).toStrictEqual(true);
+        child.subscribe((a, c) => changes.push(c), ControlChange.Valid);
+        child.error = "error";
+        expect(child.valid).toStrictEqual(false);
+        expect(parent.valid).toStrictEqual(false);
+        child.error = "";
+        expect(child.valid).toStrictEqual(true);
+        expect(parent.valid).toStrictEqual(true);
         expect(changes).toStrictEqual([
           ControlChange.Valid,
           ControlChange.Valid,
         ]);
-        return control.valid;
+        return parent.valid;
       }),
     );
   });

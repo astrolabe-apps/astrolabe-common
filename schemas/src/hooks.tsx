@@ -158,7 +158,7 @@ export function useEvalDisplayHook(
   Control<string | undefined> | undefined,
   ControlDataContext
 > {
-  return useEvalDynamicHook(
+  return useEvalDynamicHook<string | undefined>(
     definition,
     DynamicPropertyType.Display,
     useEvalExpressionHook,
@@ -303,14 +303,17 @@ export function useEvalDynamicBoolHook(
   );
 }
 
-export function useEvalDynamicHook(
+export function useEvalDynamicHook<V>(
   definition: ControlDefinition,
   type: DynamicPropertyType,
   useEvalExpressionHook: UseEvalExpressionHook,
   coerce: (v: any) => any = (x) => x,
-): DynamicHookGenerator<Control<any> | undefined, ControlDataContext> {
+): DynamicHookGenerator<Control<V> | undefined, ControlDataContext> {
   const expression = definition.dynamic?.find((x) => x.type === type);
-  return useEvalExpressionHook(expression?.expr, coerce);
+  return useEvalExpressionHook(
+    expression?.expr,
+    coerce,
+  ) as DynamicHookGenerator<Control<V> | undefined, ControlDataContext>;
 }
 
 export function matchesType(context: SchemaDataNode): boolean {
@@ -448,7 +451,7 @@ function makeDynamicPropertyHook<A, S = undefined>(
         ? dynamicValue.deps
         : [deps, dynamicValue.deps].map(toDepString).join(),
     runHook: (ctx, s) => {
-      return dynamicValue.runHook(ctx, s[0]) ?? makeDefault(ctx, s[1]);
+      return dynamicValue.runHook(ctx, s[0])?.as() ?? makeDefault(ctx, s[1]);
     },
     state: [dynamicValue.state, state],
   };
