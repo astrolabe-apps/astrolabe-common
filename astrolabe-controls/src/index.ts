@@ -5,6 +5,9 @@ export {
   trackControlChange,
   newControl,
   controlGroup,
+  makeChangeTracker,
+  addCleanup,
+  collectChanges,
 } from "./controlImpl";
 export {
   groupedChanges,
@@ -19,6 +22,7 @@ export {
   newElement,
   removeElement,
 } from "./arrayControl";
+export { createEffect, type Effect } from "./effect";
 export { setFields } from "./objectControl";
 export { ControlChange } from "./types";
 export type * from "./types";

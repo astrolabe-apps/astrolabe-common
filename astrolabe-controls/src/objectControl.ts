@@ -22,7 +22,7 @@ export class ObjectLogic extends ControlLogic {
     super(isEqual);
   }
   getField(p: string): InternalControl {
-    if (p in this._fields) {
+    if (Object.hasOwn(this._fields, p)) {
       return this._fields[p];
     }
     const tc = this.control;

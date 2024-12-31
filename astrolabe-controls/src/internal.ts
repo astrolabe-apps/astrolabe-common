@@ -1,6 +1,5 @@
-import { Control, ControlSetup } from "./types";
+import { Control } from "./types";
 import { Subscriptions } from "./subscriptions";
-import { run } from "jest";
 import { runTransaction } from "./transactions";
 
 export enum ControlFlags {
@@ -9,6 +8,18 @@ export enum ControlFlags {
   Disabled = 2,
   ChildInvalid = 4,
   DontClearError = 8,
+}
+
+export interface InternalMeta {
+  cleanup?: () => void;
+}
+
+export function getInternalMeta(c: Control<any>): InternalMeta | undefined {
+  return c.meta["$internal"] as InternalMeta | undefined;
+}
+
+export function setInternalMeta(c: Control<any>, meta: InternalMeta) {
+  c.meta["$internal"] = meta;
 }
 
 export interface ParentLink {

@@ -1,9 +1,6 @@
-import fc from "fast-check";
-import { arbitraryParentChild } from "./gen";
+import { newControl } from "../src";
 
-fc.assert(
-  fc.property(arbitraryParentChild, (v) => {
-    v.child.error = "Broken";
-    return !v.parent.valid;
-  }),
-);
+const c = newControl({ toString: "" });
+const child = c.fields["toString"];
+console.log(child);
+child.as();

@@ -10,7 +10,13 @@ import {
   ControlValue,
   Subscription,
 } from "./types";
-import { ControlFlags, ControlLogic, InternalControl } from "./internal";
+import {
+  ControlFlags,
+  ControlLogic,
+  getInternalMeta,
+  InternalControl,
+  setInternalMeta,
+} from "./internal";
 import { groupedChanges, runTransaction } from "./transactions";
 import { ObjectLogic } from "./objectControl";
 import { ArrayLogic } from "./arrayControl";
@@ -56,7 +62,7 @@ export class ControlImpl<V> implements InternalControl<V> {
     return this.valid;
   }
 
-  get fields(): ControlFields<V> & {} {
+  get fields(): ControlFields<V> {
     return new Proxy<any>(this, FieldsProxy);
   }
 
@@ -540,5 +546,80 @@ class ConfiguredControlLogic extends ControlLogic {
     );
     arrayLogic.attach(this.control);
     return arrayLogic.getElements();
+  }
+}
+
+type TrackedSubscription = [
+  Control<any>,
+  Subscription | undefined,
+  ControlChange,
+];
+
+export function makeChangeTracker(
+  listen: ChangeListenerFunc<any>,
+): [ChangeListenerFunc<any>, (destroy?: boolean) => void] {
+  let subscriptions: TrackedSubscription[] = [];
+  return [
+    (c, change) => {
+      const existing = subscriptions.find((x) => x[0] === c);
+      if (existing) {
+        existing[2] |= change;
+      } else {
+        subscriptions.push([c, c.subscribe(listen, change), change]);
+      }
+    },
+    (destroy) => {
+      if (destroy) {
+        subscriptions.forEach((x) => x[1] && x[0].unsubscribe(x[1]));
+        subscriptions = [];
+        return;
+      }
+      let removed = false;
+      subscriptions.forEach((sub) => {
+        const [c, s, latest] = sub;
+        if (s) {
+          if (s.mask !== latest) {
+            c.unsubscribe(s);
+            if (!latest) {
+              removed = true;
+              sub[1] = undefined;
+            } else sub[1] = c.subscribe(listen, latest);
+          }
+        } else {
+          sub[1] = c.subscribe(listen, latest);
+        }
+        sub[2] = 0;
+      });
+      if (removed) subscriptions = subscriptions.filter((x) => x[1]);
+    },
+  ];
+}
+
+export function collectChanges<A>(
+  listener: ChangeListenerFunc<any>,
+  run: () => A,
+): A {
+  const prevCollect = collectChange;
+  setChangeCollector(listener);
+  try {
+    return run();
+  } finally {
+    setChangeCollector(prevCollect);
+  }
+}
+
+export function addCleanup(c: Control<any>, cleanup: () => void) {
+  const internalMeta = getInternalMeta(c);
+  if (internalMeta) {
+    // add cleanup to existing meta, calling previous if exists
+    const prevCleanup = internalMeta.cleanup;
+    internalMeta.cleanup = prevCleanup
+      ? () => {
+          prevCleanup();
+          cleanup();
+        }
+      : cleanup;
+  } else {
+    setInternalMeta(c, { cleanup });
   }
 }
