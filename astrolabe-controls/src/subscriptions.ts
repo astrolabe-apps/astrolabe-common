@@ -89,3 +89,47 @@ export class SubscriptionList {
     return (this.changeState & mask) === current;
   }
 }
+
+type TrackedSubscription = [
+  Control<any>,
+  Subscription | undefined,
+  ControlChange,
+];
+
+export class SubscriptionTracker {
+  subscriptions: TrackedSubscription[] = [];
+
+  constructor(public listen: ChangeListenerFunc<any>) {}
+
+  collectUsage: ChangeListenerFunc<any> = (c, change) => {
+    const existing = this.subscriptions.find((x) => x[0] === c);
+    if (existing) {
+      existing[2] |= change;
+    } else {
+      this.subscriptions.push([c, c.subscribe(this.listen, change), change]);
+    }
+  };
+  update() {
+    let removed = false;
+    this.subscriptions.forEach((sub) => {
+      const [c, s, latest] = sub;
+      if (s) {
+        if (s.mask !== latest) {
+          c.unsubscribe(s);
+          if (!latest) {
+            removed = true;
+            sub[1] = undefined;
+          } else sub[1] = c.subscribe(this.listen, latest);
+        }
+      } else {
+        sub[1] = c.subscribe(this.listen, latest);
+      }
+      sub[2] = 0;
+    });
+    if (removed) this.subscriptions = this.subscriptions.filter((x) => x[1]);
+  }
+
+  cleanup() {
+    this.subscriptions.forEach((x) => x[1] && x[0].unsubscribe(x[1]));
+  }
+}

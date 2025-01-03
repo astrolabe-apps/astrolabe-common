@@ -80,7 +80,6 @@ export function useMakeValidationHook(
               : null;
           },
           "required",
-          undefined,
         );
       dd.validators?.forEach((v, i) =>
         useValidatorFor(v, { ...ctx, index: i, field, definition: dd }),

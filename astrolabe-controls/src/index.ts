@@ -5,10 +5,10 @@ export {
   trackControlChange,
   newControl,
   controlGroup,
-  makeChangeTracker,
   addCleanup,
   collectChanges,
 } from "./controlImpl";
+export { SubscriptionTracker } from "./subscriptions";
 export {
   groupedChanges,
   unsafeFreezeCountEdit,

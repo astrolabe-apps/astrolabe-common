@@ -143,4 +143,25 @@ describe("errors", () => {
       }),
     );
   });
+
+  it("child errors are cleared by clearing parent", () => {
+    fc.assert(
+      fc.property(arbitraryParentChild, (json) => {
+        const [parent, child] = getParentAndChild(json);
+        const changes: ControlChange[] = [];
+        parent.subscribe((a, c) => changes.push(c), ControlChange.Valid);
+        child.error = "error";
+        expect(child.valid).toStrictEqual(false);
+        expect(parent.valid).toStrictEqual(false);
+        parent.clearErrors();
+        expect(child.valid).toStrictEqual(true);
+        expect(parent.valid).toStrictEqual(true);
+        expect(changes).toStrictEqual([
+          ControlChange.Valid,
+          ControlChange.Valid,
+        ]);
+        return parent.valid;
+      }),
+    );
+  });
 });

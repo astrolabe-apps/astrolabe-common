@@ -11,7 +11,7 @@ import {
   addAfterChangesCallback,
   collectChanges,
   Control,
-  makeChangeTracker,
+  SubscriptionTracker,
   trackedValue,
   useCalculatedControl,
   useComputed,
@@ -365,40 +365,41 @@ export function useJsonataExpression(
   const control = useControl();
   const listenerRef = useRef<() => void>();
   const updateRef = useRef(0);
-  const [ref] = useRefState(() =>
-    makeChangeTracker(() => {
-      const l = listenerRef.current;
-      if (l) {
-        listenerRef.current = undefined;
-        addAfterChangesCallback(() => {
-          listenerRef.current = l;
-          l();
-        });
-      }
-    }),
+  const [ref] = useRefState(
+    () =>
+      new SubscriptionTracker(() => {
+        const l = listenerRef.current;
+        if (l) {
+          listenerRef.current = undefined;
+          addAfterChangesCallback(() => {
+            listenerRef.current = l;
+            l();
+          });
+        }
+      }),
   );
   useEffect(() => {
     listenerRef.current = apply;
     apply();
     async function apply() {
-      const [collect, updateSubscriptions] = ref.current;
+      const tracker = ref.current;
       try {
         updateRef.current++;
         control.value = coerce(
           await compiledExpr.evaluate(
-            trackedValue(data, collect),
-            collectChanges(collect, () => bindings?.value),
+            trackedValue(data, tracker.collectUsage),
+            collectChanges(tracker.collectUsage, () => bindings?.value),
           ),
         );
       } finally {
-        if (!--updateRef.current) updateSubscriptions();
+        if (!--updateRef.current) tracker.update();
       }
     }
   }, [compiledExpr]);
   useEffect(() => {
     return () => {
       listenerRef.current = undefined;
-      ref.current[1](true);
+      ref.current.cleanup();
     };
   }, []);
   return control;

@@ -177,7 +177,10 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
 
   clearErrors() {
-    this.setErrors(null);
+    runTransaction(this, () => {
+      this._logic.withChildren((x) => x.clearErrors());
+      this.setErrors(null);
+    });
   }
 
   setValueImpl(v: V, from?: InternalControl): void {
@@ -284,6 +287,7 @@ export class ControlImpl<V> implements InternalControl<V> {
         : undefined;
       if (!deepEquals(exactErrors, this._errors)) {
         this._errors = exactErrors;
+        this._logic.validityChanged(exactErrors != null);
         this._subscriptions?.applyChange(ControlChange.Error);
       }
     });
@@ -547,52 +551,6 @@ class ConfiguredControlLogic extends ControlLogic {
     arrayLogic.attach(this.control);
     return arrayLogic.getElements();
   }
-}
-
-type TrackedSubscription = [
-  Control<any>,
-  Subscription | undefined,
-  ControlChange,
-];
-
-export function makeChangeTracker(
-  listen: ChangeListenerFunc<any>,
-): [ChangeListenerFunc<any>, (destroy?: boolean) => void] {
-  let subscriptions: TrackedSubscription[] = [];
-  return [
-    (c, change) => {
-      const existing = subscriptions.find((x) => x[0] === c);
-      if (existing) {
-        existing[2] |= change;
-      } else {
-        subscriptions.push([c, c.subscribe(listen, change), change]);
-      }
-    },
-    (destroy) => {
-      if (destroy) {
-        subscriptions.forEach((x) => x[1] && x[0].unsubscribe(x[1]));
-        subscriptions = [];
-        return;
-      }
-      let removed = false;
-      subscriptions.forEach((sub) => {
-        const [c, s, latest] = sub;
-        if (s) {
-          if (s.mask !== latest) {
-            c.unsubscribe(s);
-            if (!latest) {
-              removed = true;
-              sub[1] = undefined;
-            } else sub[1] = c.subscribe(listen, latest);
-          }
-        } else {
-          sub[1] = c.subscribe(listen, latest);
-        }
-        sub[2] = 0;
-      });
-      if (removed) subscriptions = subscriptions.filter((x) => x[1]);
-    },
-  ];
 }
 
 export function collectChanges<A>(

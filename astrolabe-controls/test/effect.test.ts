@@ -112,4 +112,21 @@ describe("effect", () => {
       ),
     );
   });
+
+  it("subscriptions are removed on cleanup", () => {
+    fc.assert(
+      fc.property(fc.string(), (v) => {
+        const control = newControl(v);
+        const effectRuns: string[] = [];
+        const effect = createEffect(
+          () => control.value,
+          (v, prev) => effectRuns.push(v),
+        );
+        control.value = v + "a";
+        effect.cleanup();
+        control.value = v + "b";
+        expect(effectRuns).toStrictEqual([v, v + "a"]);
+      }),
+    );
+  });
 });
