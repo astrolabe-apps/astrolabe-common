@@ -69,7 +69,7 @@ export class Effect<V> {
     public calculate: () => V,
     public run: (v: V, prev: V | undefined) => void,
   ) {
-    const result = collectChanges(this.listenCalc, () => this.calculate());
+    const result = this.updateCalc();
     this.previous = result;
     this.run(result, undefined);
   }
