@@ -1,11 +1,11 @@
 export type ControlValidator<V> = ((v: V) => string | undefined | null) | null;
 
-// export type DelayedSetup<V, M> = ControlSetup<V, M> | (() => ControlSetup<V, M>);
+export type DelayedSetup<V, M = {}> = ControlSetup<V, M> | (() => ControlSetup<V, M>);
 export interface ControlSetup<V, M = {}> {
   validator?: ControlValidator<V>;
   equals?: (v1: unknown, v2: unknown) => boolean;
-  fields?: { [K in keyof NonNullable<V>]?: ControlSetup<NonNullable<V>[K], M> };
-  elems?: ControlSetup<V extends Array<infer X> ? X : unknown, M>;
+  fields?: { [K in keyof NonNullable<V>]?: DelayedSetup<NonNullable<V>[K], M> };
+  elems?: V extends Array<infer X> ? DelayedSetup<X, M> : unknown;
   afterCreate?: (control: Control<V>) => void;
   meta?: Partial<M>;
 }
@@ -74,6 +74,7 @@ export interface Control<V> extends ControlProperties<V> {
   setErrors(errors?: { [k: string]: string | null | undefined } | null): void;
   setValue(cb: (v: V) => V): void;
   setValueAndInitial(v: V, iv: V): void;
+  setInitialValue(v: V): void;
   setTouched(touched: boolean, notChildren?: boolean): void;
   setDisabled(disabled: boolean, notChildren?: boolean): void;
   markAsClean(): void;

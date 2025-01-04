@@ -7,8 +7,8 @@ import {
   ControlFields,
   ControlProperties,
   ControlSetup,
-  ControlValue,
-  Subscription,
+  ControlValue, DelayedSetup,
+  Subscription
 } from "./types";
 import {
   ControlFlags,
@@ -133,6 +133,10 @@ export class ControlImpl<V> implements InternalControl<V> {
       this.value = v;
       this.initialValue = iv;
     });
+  }
+  
+  setInitialValue(v: V) {
+    this.setValueAndInitial(v, v);
   }
 
   isEqual(v1: unknown, v2: unknown): boolean {
@@ -402,18 +406,24 @@ export function deepEquals(
   return a !== a && b !== b;
 }
 
+function prepSetup(c: DelayedSetup<any>): ControlSetup<any>
+{
+  return typeof c === "function" ? c() : c;
+}
+
 export function equalityForSetup(
   setup?: ControlSetup<any>,
 ): (a: any, b: any) => boolean {
   if (!setup) return deepEquals;
   if (setup.equals) return setup.equals;
   if (setup.elems) {
-    const arrayEqual = equalityForSetup(setup.elems);
+    const arrayEqual = equalityForSetup(prepSetup(setup.elems));
     return (a, b) => deepEquals(a, b, () => arrayEqual);
   }
   const fieldsEqual: Record<string, (a: any, b: any) => boolean> = setup?.fields
     ? Object.fromEntries(
-        Object.entries(setup.fields).map(([k, v]) => [k, equalityForSetup(v)]),
+        Object.entries(setup.fields).map(([k, v]) => 
+          [k, equalityForSetup(v ? prepSetup(v) : undefined)]),
       )
     : {};
   return (a, b) =>
@@ -503,8 +513,9 @@ class ConfiguredControlLogic extends ControlLogic {
     }
     const f = this.setup.fields;
     if (f) {
-      Object.entries(f).forEach(([k, v]) => {
-        if (v?.validator !== undefined) this.getField(k);
+      const s = prepSetup(f);
+      Object.entries(s).forEach(([k, v]) => {
+        if (s?.validator !== undefined) this.getField(k);
       });
     } else if (this.setup.elems) {
       this.getElements();
@@ -524,7 +535,7 @@ class ConfiguredControlLogic extends ControlLogic {
           iv,
           flags,
           fieldSetup
-            ? new ConfiguredControlLogic(fieldSetup)
+            ? new ConfiguredControlLogic(prepSetup(fieldSetup))
             : new DefaultControlLogic(),
         );
       },
@@ -543,7 +554,7 @@ class ConfiguredControlLogic extends ControlLogic {
           iv,
           flags,
           elemSetup
-            ? new ConfiguredControlLogic(elemSetup)
+            ? new ConfiguredControlLogic(prepSetup(elemSetup))
             : new DefaultControlLogic(),
         );
       },
