@@ -69,6 +69,7 @@ export abstract class ControlLogic {
 
   abstract withChildren(f: (c: InternalControl) => void): void;
   abstract getField(p: string): InternalControl;
+  abstract ensureObject(): ControlLogic;
   abstract getElements(): InternalControl[];
   initialValueChanged(): void {}
 

@@ -522,14 +522,19 @@ class DefaultControlLogic extends ControlLogic {
   }
 
   withChildren(f: (c: InternalControl) => void): void {}
-  getField(p: string): InternalControl {
+
+  ensureObject(): ControlLogic {
     const objectLogic = new ObjectLogic(
       this.isEqual,
       (p, v, iv, flags) =>
         new ControlImpl(v, iv, flags, new DefaultControlLogic()),
     );
     objectLogic.attach(this.control);
-    return objectLogic.getField(p);
+    return objectLogic;
+  }
+
+  getField(p: string): InternalControl {
+    return this.ensureObject().getField(p);
   }
 
   getElements(): InternalControl[] {
@@ -572,7 +577,7 @@ class ConfiguredControlLogic extends ControlLogic {
     afterCreate?.(c);
   }
 
-  getField(p: string): InternalControl {
+  ensureObject(): ControlLogic {
     const objectLogic = new ObjectLogic(this.isEqual, (p, v, iv, flags) => {
       const fieldSetup = this.setup.fields?.[p];
       return new ControlImpl(
@@ -585,7 +590,11 @@ class ConfiguredControlLogic extends ControlLogic {
       );
     });
     objectLogic.attach(this.control);
-    return objectLogic.getField(p);
+    return objectLogic;
+  }
+
+  getField(p: string): InternalControl {
+    return this.ensureObject().getField(p);
   }
   getElements(): InternalControl[] {
     const arrayLogic = new ArrayLogic(this.isEqual, (v, iv, flags) => {

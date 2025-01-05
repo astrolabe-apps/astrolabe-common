@@ -20,6 +20,10 @@ export class ArrayLogic extends ControlLogic {
     throw new Error("This is an array control, not an object control.");
   }
 
+  ensureObject(): ControlLogic {
+    throw new Error("This is an array control, not an object control.");
+  }
+
   getElements(): InternalControl[] {
     if (!this._elems) {
       this.updateFromValue([]);

@@ -15,6 +15,11 @@ export class ObjectLogic extends ControlLogic {
   ) {
     super(isEqual);
   }
+
+  ensureObject(): ControlLogic {
+    return this;
+  }
+
   getField(p: string): InternalControl {
     if (Object.hasOwn(this._fields, p)) {
       return this._fields[p];
@@ -88,8 +93,9 @@ export function setFields<V, OTHER extends { [p: string]: unknown }>(
     [K in keyof OTHER]-?: Control<OTHER[K]>;
   },
 ): Control<V & OTHER> {
-  const c = control as InternalControl<V>;
-  const oc = c._logic as ObjectLogic;
+  const oc = (
+    control as InternalControl<V>
+  )._logic.ensureObject() as ObjectLogic;
   oc.setFields({ ...oc._fields, ...fields } as any);
   return control as any;
 }
