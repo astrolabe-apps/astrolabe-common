@@ -1,10 +1,5 @@
 import { Control, ControlChange } from "./types";
-import {
-  ControlFlags,
-  ControlLogic,
-  InternalControl,
-  ParentLink,
-} from "./internal";
+import { ControlFlags, ControlLogic, InternalControl } from "./internal";
 import { runTransaction } from "./transactions";
 
 export class ArrayLogic extends ControlLogic {
@@ -20,6 +15,7 @@ export class ArrayLogic extends ControlLogic {
   ) {
     super(isEqual);
   }
+
   getField(p: string): InternalControl {
     throw new Error("This is an array control, not an object control.");
   }

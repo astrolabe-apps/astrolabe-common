@@ -1,10 +1,5 @@
 import { Control } from "./types";
-import {
-  ControlFlags,
-  ControlLogic,
-  InternalControl,
-  ParentLink,
-} from "./internal";
+import { ControlFlags, ControlLogic, InternalControl } from "./internal";
 
 export class ObjectLogic extends ControlLogic {
   _fields: Record<string, InternalControl> = {};

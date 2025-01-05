@@ -17,6 +17,7 @@ import {
   getInternalMeta,
   InternalControl,
   ParentLink,
+  ResolvedControlSetup,
   setInternalMeta,
 } from "./internal";
 import { groupedChanges, runTransaction } from "./transactions";
@@ -448,30 +449,34 @@ export function deepEquals(
   }
   return a !== a && b !== b;
 }
-
-function prepSetup(c: DelayedSetup<any>): ControlSetup<any> {
-  return typeof c === "function" ? c() : c;
-}
-
-export function equalityForSetup(
-  setup?: ControlSetup<any>,
-): (a: any, b: any) => boolean {
-  if (!setup) return deepEquals;
-  if (setup.equals) return setup.equals;
+export function resolveSetup(
+  delayedSetup: DelayedSetup<any>,
+): ResolvedControlSetup {
+  const setup = (
+    typeof delayedSetup === "function" ? delayedSetup() : delayedSetup
+  ) as ResolvedControlSetup;
+  if (setup.resolved) return setup;
+  setup.resolved = true;
   if (setup.elems) {
-    const arrayEqual = equalityForSetup(prepSetup(setup.elems));
-    return (a, b) => deepEquals(a, b, () => arrayEqual);
+    setup.elems = resolveSetup(setup.elems);
+  } else if (setup.fields) {
+    const f = setup.fields;
+    for (const k in f) {
+      f[k] = resolveSetup(f[k]!);
+    }
   }
-  const fieldsEqual: Record<string, (a: any, b: any) => boolean> = setup?.fields
-    ? Object.fromEntries(
-        Object.entries(setup.fields).map(([k, v]) => [
-          k,
-          equalityForSetup(v ? prepSetup(v) : undefined),
-        ]),
-      )
-    : {};
-  return (a, b) =>
-    deepEquals(a, b, (field) => fieldsEqual[field!] ?? deepEquals);
+  if (setup.equals!) return setup;
+  if (setup.elems)
+    setup.equals = (a, b) => deepEquals(a, b, () => setup.elems!.equals!);
+  else if (setup.fields)
+    setup.equals = (a, b) =>
+      deepEquals(a, b, (field) => {
+        const childSetup = setup.fields![field!];
+        if (childSetup) return childSetup.equals!;
+        return deepEquals;
+      });
+  else setup.equals = deepEquals;
+  return setup;
 }
 
 export function trackControlChange(c: Control<any>, change: ControlChange) {
@@ -515,6 +520,7 @@ class DefaultControlLogic extends ControlLogic {
   constructor() {
     super(deepEquals);
   }
+
   withChildren(f: (c: InternalControl) => void): void {}
   getField(p: string): InternalControl {
     const objectLogic = new ObjectLogic(
@@ -538,31 +544,32 @@ class DefaultControlLogic extends ControlLogic {
 }
 
 class ConfiguredControlLogic extends ControlLogic {
+  setup: ResolvedControlSetup;
   withChildren(f: (c: InternalControl) => void): void {}
-  constructor(private setup: ControlSetup<any>) {
-    super(equalityForSetup(setup));
+  constructor(_setup: ControlSetup<any>) {
+    const setup = resolveSetup(_setup);
+    super(setup.equals);
+    this.setup = setup;
   }
 
   attach(c: InternalControl): void {
     super.attach(c);
-    const v = this.setup.validator;
+    const { meta, elems, fields, validator: v, afterCreate } = this.setup;
     if (v !== undefined) {
       const runValidation = () => c.setError("default", v?.(c.current.value));
       runValidation();
       c.subscribe(runValidation, ControlChange.Value | ControlChange.Validate);
       c._flags |= ControlFlags.DontClearError;
     }
-    const f = this.setup.fields;
-    if (f) {
-      const s = prepSetup(f);
-      Object.entries(s).forEach(([k, v]) => {
-        if (s?.validator !== undefined) this.getField(k);
+    if (fields) {
+      Object.entries(fields).forEach(([k, fc]) => {
+        if (fc?.validator !== undefined) this.getField(k);
       });
-    } else if (this.setup.elems) {
+    } else if (elems) {
       this.getElements();
     }
-    if (this.setup.meta) c.meta = { ...this.setup.meta };
-    this.setup.afterCreate?.(c);
+    if (meta) c.meta = { ...meta };
+    afterCreate?.(c);
   }
 
   getField(p: string): InternalControl {
@@ -573,7 +580,7 @@ class ConfiguredControlLogic extends ControlLogic {
         iv,
         flags,
         fieldSetup
-          ? new ConfiguredControlLogic(prepSetup(fieldSetup))
+          ? new ConfiguredControlLogic(fieldSetup)
           : new DefaultControlLogic(),
       );
     });
@@ -588,7 +595,7 @@ class ConfiguredControlLogic extends ControlLogic {
         iv,
         flags,
         elemSetup
-          ? new ConfiguredControlLogic(prepSetup(elemSetup))
+          ? new ConfiguredControlLogic(elemSetup)
           : new DefaultControlLogic(),
       );
     });

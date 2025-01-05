@@ -1,6 +1,5 @@
-import { Control } from "./types";
+import { Control, ControlValidator } from "./types";
 import { Subscriptions } from "./subscriptions";
-import { runTransaction } from "./transactions";
 
 export enum ControlFlags {
   None = 0,
@@ -20,6 +19,18 @@ export function getInternalMeta(c: Control<any>): InternalMeta | undefined {
 
 export function setInternalMeta(c: Control<any>, meta: InternalMeta) {
   c.meta["$internal"] = meta;
+}
+
+export interface ResolvedControlSetup {
+  validator?: ControlValidator<any>;
+  equals: (v1: unknown, v2: unknown) => boolean;
+  fields?: {
+    [k: string]: ResolvedControlSetup;
+  };
+  elems?: ResolvedControlSetup;
+  afterCreate?: (control: Control<any>) => void;
+  meta?: {};
+  resolved: boolean;
 }
 
 export interface ParentLink {
