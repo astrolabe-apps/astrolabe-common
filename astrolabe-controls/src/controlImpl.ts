@@ -7,14 +7,16 @@ import {
   ControlFields,
   ControlProperties,
   ControlSetup,
-  ControlValue, DelayedSetup,
-  Subscription
+  ControlValue,
+  DelayedSetup,
+  Subscription,
 } from "./types";
 import {
   ControlFlags,
   ControlLogic,
   getInternalMeta,
   InternalControl,
+  ParentLink,
   setInternalMeta,
 } from "./internal";
 import { groupedChanges, runTransaction } from "./transactions";
@@ -47,9 +49,50 @@ export class ControlImpl<V> implements InternalControl<V> {
     public _logic: ControlLogic,
     public _errors?: { [k: string]: string },
     public _subscriptions?: Subscriptions,
+    public parents?: ParentLink[],
   ) {
     this.uniqueId = ++uniqueIdCounter;
     _logic.attach(this);
+  }
+
+  updateParentLink(parent: InternalControl, key: string | number | undefined) {
+    let pareList = this.parents;
+    if (key == null) {
+      if (pareList) this.parents = pareList.filter((p) => p.control !== parent);
+      return;
+    }
+    const existing = pareList?.find((p) => p.control === parent);
+    if (existing) {
+      existing.key = key;
+    } else {
+      const newEntry = { control: parent, key, origKey: key };
+      if (!pareList) this.parents = [newEntry];
+      else pareList.push(newEntry);
+    }
+  }
+
+  valueChanged(from?: InternalControl) {
+    this._logic.valueChanged(from);
+    this.parents?.forEach((l) => {
+      if (l.control !== from)
+        l.control._logic.childValueChange(l.key, this._value);
+    });
+  }
+
+  validityChanged(hasErrors: boolean) {
+    this.parents?.forEach((l) => {
+      const c = l.control;
+      const alreadyInvalid = !!(c._flags & ControlFlags.ChildInvalid);
+      if (!(hasErrors && alreadyInvalid)) {
+        runTransaction(c, () => {
+          if (hasErrors) c._flags |= ControlFlags.ChildInvalid;
+          else {
+            c._flags &= ~ControlFlags.ChildInvalid;
+          }
+        });
+      }
+      c.validityChanged(hasErrors);
+    });
   }
 
   as<V2>(): V extends V2 ? Control<V2> : never {
@@ -134,7 +177,7 @@ export class ControlImpl<V> implements InternalControl<V> {
       this.initialValue = iv;
     });
   }
-  
+
   setInitialValue(v: V) {
     this.setValueAndInitial(v, v);
   }
@@ -198,7 +241,7 @@ export class ControlImpl<V> implements InternalControl<V> {
       if (!(this._flags & ControlFlags.DontClearError)) {
         this.setErrors(null);
       }
-      this._logic.valueChanged(from);
+      this.valueChanged(from);
       this._subscriptions?.applyChange(ControlChange.Value | structureFlag);
     });
   }
@@ -277,7 +320,7 @@ export class ControlImpl<V> implements InternalControl<V> {
         }
       }
       const hasErrors = this._errors != null;
-      if (hadErrors != hasErrors) this._logic.validityChanged(hasErrors);
+      if (hadErrors != hasErrors) this.validityChanged(hasErrors);
       this._subscriptions?.applyChange(ControlChange.Error);
     });
   }
@@ -291,7 +334,7 @@ export class ControlImpl<V> implements InternalControl<V> {
         : undefined;
       if (!deepEquals(exactErrors, this._errors)) {
         this._errors = exactErrors;
-        this._logic.validityChanged(exactErrors != null);
+        this.validityChanged(exactErrors != null);
         this._subscriptions?.applyChange(ControlChange.Error);
       }
     });
@@ -406,8 +449,7 @@ export function deepEquals(
   return a !== a && b !== b;
 }
 
-function prepSetup(c: DelayedSetup<any>): ControlSetup<any>
-{
+function prepSetup(c: DelayedSetup<any>): ControlSetup<any> {
   return typeof c === "function" ? c() : c;
 }
 
@@ -422,8 +464,10 @@ export function equalityForSetup(
   }
   const fieldsEqual: Record<string, (a: any, b: any) => boolean> = setup?.fields
     ? Object.fromEntries(
-        Object.entries(setup.fields).map(([k, v]) => 
-          [k, equalityForSetup(v ? prepSetup(v) : undefined)]),
+        Object.entries(setup.fields).map(([k, v]) => [
+          k,
+          equalityForSetup(v ? prepSetup(v) : undefined),
+        ]),
       )
     : {};
   return (a, b) =>
@@ -452,7 +496,6 @@ export function controlGroup<C extends { [k: string]: Control<unknown> }>(
 ): Control<{ [K in keyof C]: ControlValue<C[K]> }> {
   const obj = new ObjectLogic(
     deepEquals,
-    undefined,
     (f, v, iv, flags) =>
       new ControlImpl(v, iv, flags, new DefaultControlLogic()),
   );
@@ -476,7 +519,6 @@ class DefaultControlLogic extends ControlLogic {
   getField(p: string): InternalControl {
     const objectLogic = new ObjectLogic(
       this.isEqual,
-      this.parents,
       (p, v, iv, flags) =>
         new ControlImpl(v, iv, flags, new DefaultControlLogic()),
     );
@@ -487,7 +529,6 @@ class DefaultControlLogic extends ControlLogic {
   getElements(): InternalControl[] {
     const arrayLogic = new ArrayLogic(
       this.isEqual,
-      this.parents,
       (v, iv, flags) =>
         new ControlImpl(v, iv, flags, new DefaultControlLogic()),
     );
@@ -525,40 +566,32 @@ class ConfiguredControlLogic extends ControlLogic {
   }
 
   getField(p: string): InternalControl {
-    const objectLogic = new ObjectLogic(
-      this.isEqual,
-      this.parents,
-      (p, v, iv, flags) => {
-        const fieldSetup = this.setup.fields?.[p];
-        return new ControlImpl(
-          v,
-          iv,
-          flags,
-          fieldSetup
-            ? new ConfiguredControlLogic(prepSetup(fieldSetup))
-            : new DefaultControlLogic(),
-        );
-      },
-    );
+    const objectLogic = new ObjectLogic(this.isEqual, (p, v, iv, flags) => {
+      const fieldSetup = this.setup.fields?.[p];
+      return new ControlImpl(
+        v,
+        iv,
+        flags,
+        fieldSetup
+          ? new ConfiguredControlLogic(prepSetup(fieldSetup))
+          : new DefaultControlLogic(),
+      );
+    });
     objectLogic.attach(this.control);
     return objectLogic.getField(p);
   }
   getElements(): InternalControl[] {
-    const arrayLogic = new ArrayLogic(
-      this.isEqual,
-      this.parents,
-      (v, iv, flags) => {
-        const elemSetup = this.setup.elems;
-        return new ControlImpl(
-          v,
-          iv,
-          flags,
-          elemSetup
-            ? new ConfiguredControlLogic(prepSetup(elemSetup))
-            : new DefaultControlLogic(),
-        );
-      },
-    );
+    const arrayLogic = new ArrayLogic(this.isEqual, (v, iv, flags) => {
+      const elemSetup = this.setup.elems;
+      return new ControlImpl(
+        v,
+        iv,
+        flags,
+        elemSetup
+          ? new ConfiguredControlLogic(prepSetup(elemSetup))
+          : new DefaultControlLogic(),
+      );
+    });
     arrayLogic.attach(this.control);
     return arrayLogic.getElements();
   }

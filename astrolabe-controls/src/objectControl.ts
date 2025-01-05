@@ -11,7 +11,6 @@ export class ObjectLogic extends ControlLogic {
 
   constructor(
     isEqual: (v1: unknown, v2: unknown) => boolean,
-    public parents: ParentLink[] | undefined,
     private makeChild: (
       p: string,
       v: unknown,
@@ -34,7 +33,7 @@ export class ObjectLogic extends ControlLogic {
       iv,
       tc._flags & (ControlFlags.Disabled | ControlFlags.Touched),
     );
-    child._logic.addParent(this.control, p);
+    child.updateParentLink(this.control, p);
     return (this._fields[p] = child);
   }
 
@@ -74,12 +73,13 @@ export class ObjectLogic extends ControlLogic {
   }
 
   setFields(fields: Record<string, InternalControl>) {
+    this.withChildren((x) => x.updateParentLink(this.control, undefined));
     Object.entries(fields).forEach(([k, f]) => {
-      (f as InternalControl)._logic.addParent(this.control, k);
+      (f as InternalControl).updateParentLink(this.control, k);
     });
     this._fields = { ...fields } as unknown as Record<string, InternalControl>;
-    const v: Record<string, unknown> = {};
-    const iv: Record<string, unknown> = {};
+    const v = (this.control._value ?? {}) as Record<string, unknown>;
+    const iv = (this.control._initialValue ?? {}) as Record<string, unknown>;
     Object.entries(fields).forEach(([k, f]) => {
       v[k] = f.value;
       iv[k] = f.initialValue;
@@ -88,10 +88,7 @@ export class ObjectLogic extends ControlLogic {
   }
 }
 
-export function setFields<
-  V extends Record<string, unknown>,
-  OTHER extends { [p: string]: unknown },
->(
+export function setFields<V, OTHER extends { [p: string]: unknown }>(
   control: Control<V>,
   fields: {
     [K in keyof OTHER]-?: Control<OTHER[K]>;

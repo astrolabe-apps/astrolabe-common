@@ -12,7 +12,6 @@ export class ArrayLogic extends ControlLogic {
 
   constructor(
     isEqual: (v1: unknown, v2: unknown) => boolean,
-    public parents: ParentLink[] | undefined,
     public makeChild: (
       v: unknown,
       iv: unknown,
@@ -50,7 +49,7 @@ export class ArrayLogic extends ControlLogic {
         if (!noInitial) child.setInitialValueImpl(iv[i]);
       } else {
         child = this.makeChild(x, iv[i], flags);
-        child._logic.addParent(this.control, i);
+        child.updateParentLink(this.control, i);
       }
       return child;
     });
@@ -60,14 +59,13 @@ export class ArrayLogic extends ControlLogic {
     if (newElems.length < origLength) {
       existing
         .slice(newElems.length)
-        .forEach((x) => x._logic.detachParent(this.control));
+        .forEach((x) => x.updateParentLink(this.control, undefined));
     }
     this._elems = newElems;
   }
 
   valueChanged(from?: InternalControl) {
     this.updateFromValue(this._elems, true);
-    super.valueChanged(from);
   }
 
   initialValueChanged() {
@@ -113,10 +111,12 @@ export function updateElements<V>(
   runTransaction(c, () => {
     newElems.forEach((x, i) => {
       const xc = x as InternalControl<V>;
-      xc._logic.updateArrayIndex(c, i);
+      xc.updateParentLink(c, i);
     });
     if (newElems.length < oldElems.length) {
-      oldElems.slice(newElems.length).forEach((x) => x._logic.detachParent(c));
+      oldElems
+        .slice(newElems.length)
+        .forEach((x) => x.updateParentLink(c, undefined));
     }
     arrayLogic._elems = newElems as unknown as InternalControl[];
     c._flags &= ~ControlFlags.ChildInvalid;
