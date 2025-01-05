@@ -53,12 +53,11 @@ export class ObjectLogic extends ControlLogic {
     copied[prop] = v;
     this.control.setValueImpl(copied);
   }
-  valueChanged(from?: InternalControl) {
+  valueChanged() {
     const ov = this.control._value as Record<string, unknown> | null;
     Object.entries(this._fields).forEach(([k, c]) => {
       c.setValueImpl(ov?.[k], this.control);
     });
-    super.valueChanged(from);
   }
 
   initialValueChanged() {
@@ -74,12 +73,12 @@ export class ObjectLogic extends ControlLogic {
 
   setFields(fields: Record<string, InternalControl>) {
     this.withChildren((x) => x.updateParentLink(this.control, undefined));
-    Object.entries(fields).forEach(([k, f]) => {
-      (f as InternalControl).updateParentLink(this.control, k);
-    });
-    this._fields = { ...fields } as unknown as Record<string, InternalControl>;
-    const v = (this.control._value ?? {}) as Record<string, unknown>;
-    const iv = (this.control._initialValue ?? {}) as Record<string, unknown>;
+    Object.entries(fields).forEach(([k, f]) =>
+      f.updateParentLink(this.control, k),
+    );
+    this._fields = { ...fields };
+    const v = this.copy(this.control._value);
+    const iv = this.copy(this.control._initialValue);
     Object.entries(fields).forEach(([k, f]) => {
       v[k] = f.value;
       iv[k] = f.initialValue;

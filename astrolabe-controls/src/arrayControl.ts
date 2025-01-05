@@ -64,7 +64,7 @@ export class ArrayLogic extends ControlLogic {
     this._elems = newElems;
   }
 
-  valueChanged(from?: InternalControl) {
+  valueChanged() {
     this.updateFromValue(this._elems, true);
   }
 

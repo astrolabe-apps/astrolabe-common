@@ -72,7 +72,7 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
 
   valueChanged(from?: InternalControl) {
-    this._logic.valueChanged(from);
+    this._logic.valueChanged();
     this.parents?.forEach((l) => {
       if (l.control !== from)
         l.control._logic.childValueChange(l.key, this._value);

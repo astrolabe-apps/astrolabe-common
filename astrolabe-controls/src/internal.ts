@@ -61,7 +61,7 @@ export abstract class ControlLogic {
   abstract getElements(): InternalControl[];
   initialValueChanged(): void {}
 
-  valueChanged(from?: InternalControl): void {}
+  valueChanged(): void {}
 
   childValueChange(prop: string | number, v: unknown): void {
     throw new Error("Should never get here");
