@@ -1,5 +1,6 @@
 import { Control, ControlValidator } from "./types";
 import { Subscriptions } from "./subscriptions";
+import { Effect } from "./effect";
 
 export enum ControlFlags {
   None = 0,
@@ -11,6 +12,7 @@ export enum ControlFlags {
 
 export interface InternalMeta {
   cleanup?: () => void;
+  compute?: Effect<any>;
 }
 
 export function getInternalMeta(c: Control<any>): InternalMeta | undefined {

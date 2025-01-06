@@ -6,6 +6,7 @@ export {
   newControl,
   controlGroup,
   addCleanup,
+  cleanupControl,
   collectChanges,
 } from "./controlImpl";
 export { SubscriptionTracker } from "./subscriptions";
@@ -22,6 +23,7 @@ export {
   newElement,
   removeElement,
 } from "./arrayControl";
+export { updateComputedValue } from "./computed";
 export { createEffect, type Effect } from "./effect";
 export { setFields } from "./objectControl";
 export { ControlChange } from "./types";

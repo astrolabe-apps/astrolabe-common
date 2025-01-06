@@ -3,13 +3,9 @@ import { addAfterChangesCallback } from "./transactions";
 import { SubscriptionTracker } from "./subscriptions";
 
 export class Effect<V> extends SubscriptionTracker {
-  previous?: V;
   changedDetected = false;
   runEffect() {
-    const next = this.updateCalc();
-    const prev = this.previous;
-    this.previous = next;
-    this.run(next, prev);
+    this.run(this.updateCalc());
   }
 
   updateCalc() {
@@ -20,7 +16,7 @@ export class Effect<V> extends SubscriptionTracker {
 
   constructor(
     public calculate: () => V,
-    public run: (v: V, prev: V | undefined) => void,
+    public run: (v: V) => void,
   ) {
     super((control, change) => {
       if (this.changedDetected) {
@@ -32,14 +28,12 @@ export class Effect<V> extends SubscriptionTracker {
         this.runEffect();
       });
     });
-    const result = this.updateCalc();
-    this.previous = result;
-    this.run(result, undefined);
+    this.run(this.updateCalc());
   }
 }
 export function createEffect<V>(
   calculate: () => V,
-  run: (v: V, prev: V | undefined) => void,
+  run: (v: V) => void,
 ): Effect<V> {
   return new Effect<V>(calculate, run);
 }

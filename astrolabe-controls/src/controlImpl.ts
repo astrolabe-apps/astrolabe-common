@@ -573,7 +573,7 @@ class ConfiguredControlLogic extends ControlLogic {
     } else if (elems) {
       this.getElements();
     }
-    if (meta) c.meta = { ...meta };
+    if (meta) Object.assign(c.meta, meta);
     afterCreate?.(c);
   }
 
@@ -640,4 +640,9 @@ export function addCleanup(c: Control<any>, cleanup: () => void) {
   } else {
     setInternalMeta(c, { cleanup });
   }
+}
+
+export function cleanupControl(c: Control<any>) {
+  const internalMeta = getInternalMeta(c);
+  internalMeta?.cleanup?.();
 }
