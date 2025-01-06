@@ -1,23 +1,16 @@
-import { createEffect, newControl } from "../src";
-import { describe, expect, it } from "@jest/globals";
+import { getElementIndex, newControl, removeElement } from "../src";
 import fc from "fast-check";
+import { arrayAndIndex } from "./gen";
 
 fc.assert(
-  fc.property(
-    fc.array(fc.jsonValue(), { minLength: 1 }),
-    fc.array(fc.jsonValue(), { minLength: 1 }),
-    (data1, data2) => {
-      const effectRuns: any[] = [];
-      const control = newControl(true);
-      const list1 = newControl(data1);
-      const list2 = newControl(data2.map((x) => null));
-      const effect = createEffect(
-        () => (control.value ? list1 : list2).elements.map((x) => x.value),
-        (v, prev) => effectRuns.push(v),
-      );
-      list2.elements.forEach((x, i) => (x.as<any>().value = data2[i]));
-      control.value = false;
-      list1.elements.forEach((x, i) => (x.as<any>().value = undefined));
-    },
-  ),
+  fc.property(arrayAndIndex, arrayAndIndex, ([obj, ind], [obj2, ind2]) => {
+    const control = newControl(obj);
+    const allIndex = control.elements.map((x) => getElementIndex(x));
+    console.log(allIndex);
+    removeElement(control, ind);
+    debugger;
+    const nextIndex = control.elements.map((x) => getElementIndex(x));
+    console.log(nextIndex);
+    return false;
+  }),
 );

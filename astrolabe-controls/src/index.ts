@@ -22,6 +22,7 @@ export {
   addElement,
   newElement,
   removeElement,
+  getElementIndex,
 } from "./arrayControl";
 export { updateComputedValue } from "./computed";
 export { createEffect, type Effect } from "./effect";

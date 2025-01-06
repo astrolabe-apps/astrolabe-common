@@ -56,7 +56,11 @@ export class ControlImpl<V> implements InternalControl<V> {
     _logic.attach(this);
   }
 
-  updateParentLink(parent: InternalControl, key: string | number | undefined) {
+  updateParentLink(
+    parent: InternalControl,
+    key: string | number | undefined,
+    initial?: boolean,
+  ) {
     let pareList = this.parents;
     if (key == null) {
       if (pareList) this.parents = pareList.filter((p) => p.control !== parent);
@@ -65,8 +69,13 @@ export class ControlImpl<V> implements InternalControl<V> {
     const existing = pareList?.find((p) => p.control === parent);
     if (existing) {
       existing.key = key;
+      if (initial) existing.origKey = key;
     } else {
-      const newEntry = { control: parent, key, origKey: key };
+      const newEntry = {
+        control: parent,
+        key,
+        origKey: initial ? key : undefined,
+      };
       if (!pareList) this.parents = [newEntry];
       else pareList.push(newEntry);
     }
@@ -537,14 +546,18 @@ class DefaultControlLogic extends ControlLogic {
     return this.ensureObject().getField(p);
   }
 
-  getElements(): InternalControl[] {
+  ensureArray(): ControlLogic {
     const arrayLogic = new ArrayLogic(
       this.isEqual,
       (v, iv, flags) =>
         new ControlImpl(v, iv, flags, new DefaultControlLogic()),
     );
     arrayLogic.attach(this.control);
-    return arrayLogic.getElements();
+    return arrayLogic;
+  }
+
+  getElements(): InternalControl[] {
+    return this.ensureArray().getElements();
   }
 }
 
@@ -557,7 +570,7 @@ class ConfiguredControlLogic extends ControlLogic {
     this.setup = setup;
   }
 
-  attach(c: InternalControl): void {
+  attach(c: InternalControl): ControlLogic {
     super.attach(c);
     const { meta, elems, fields, validator: v, afterCreate } = this.setup;
     if (v !== undefined) {
@@ -575,6 +588,7 @@ class ConfiguredControlLogic extends ControlLogic {
     }
     if (meta) Object.assign(c.meta, meta);
     afterCreate?.(c);
+    return this;
   }
 
   ensureObject(): ControlLogic {
@@ -589,14 +603,14 @@ class ConfiguredControlLogic extends ControlLogic {
           : new DefaultControlLogic(),
       );
     });
-    objectLogic.attach(this.control);
-    return objectLogic;
+    return objectLogic.attach(this.control);
   }
 
   getField(p: string): InternalControl {
     return this.ensureObject().getField(p);
   }
-  getElements(): InternalControl[] {
+
+  ensureArray(): ControlLogic {
     const arrayLogic = new ArrayLogic(this.isEqual, (v, iv, flags) => {
       const elemSetup = this.setup.elems;
       return new ControlImpl(
@@ -608,8 +622,11 @@ class ConfiguredControlLogic extends ControlLogic {
           : new DefaultControlLogic(),
       );
     });
-    arrayLogic.attach(this.control);
-    return arrayLogic.getElements();
+    return arrayLogic.attach(this.control);
+  }
+
+  getElements(): InternalControl[] {
+    return this.ensureArray().getElements();
   }
 }
 

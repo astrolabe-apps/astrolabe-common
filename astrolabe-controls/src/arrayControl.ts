@@ -24,6 +24,10 @@ export class ArrayLogic extends ControlLogic {
     throw new Error("This is an array control, not an object control.");
   }
 
+  ensureArray(): ControlLogic {
+    return this;
+  }
+
   getElements(): InternalControl[] {
     if (!this._elems) {
       this.updateFromValue([]);
@@ -46,10 +50,13 @@ export class ArrayLogic extends ControlLogic {
       if (i < origLength) {
         child = existing[i];
         if (!noValue) child.setValueImpl(x, this.control);
-        if (!noInitial) child.setInitialValueImpl(iv[i]);
+        if (!noInitial) {
+          child.setInitialValueImpl(iv[i]);
+          child.updateParentLink(this.control, i, true);
+        }
       } else {
         child = this.makeChild(x, iv[i], flags);
-        child.updateParentLink(this.control, i);
+        child.updateParentLink(this.control, i, !noInitial);
       }
       return child;
     });
@@ -114,9 +121,9 @@ export function updateElements<V>(
       xc.updateParentLink(c, i);
     });
     if (newElems.length < oldElems.length) {
-      oldElems
-        .slice(newElems.length)
-        .forEach((x) => x.updateParentLink(c, undefined));
+      oldElems.slice(newElems.length).forEach((x) => {
+        if (!newElems.includes(x)) x.updateParentLink(c, undefined);
+      });
     }
     arrayLogic._elems = newElems as unknown as InternalControl[];
     c._flags &= ~ControlFlags.ChildInvalid;
@@ -149,10 +156,9 @@ export function addElement<V>(
 }
 
 export function newElement<V>(control: Control<V[]>, elem: V): Control<V> {
-  // ensure array logic is initialized
-  control.current.elements;
-  const arrayLogic = (control as unknown as InternalControl)
-    ._logic as ArrayLogic;
+  const arrayLogic = (
+    control as InternalControl<V[]>
+  )._logic.ensureArray() as ArrayLogic;
   return arrayLogic.makeChild(elem, elem, 0) as unknown as Control<V>;
 }
 
@@ -171,4 +177,17 @@ export function removeElement<V>(
   updateElements(control as Control<V[]>, (ex) =>
     ex.filter((x, i) => i !== wantedIndex),
   );
+}
+
+export function getElementIndex<V>(
+  child: Control<V>,
+  parent?: Control<V[]>,
+): { index: number; initialIndex: number | undefined } | undefined {
+  const c = child as InternalControl<V>;
+  const link = parent
+    ? c.parents?.find((x) => x.control === (parent as InternalControl<V[]>))
+    : c.parents?.[0];
+  return link
+    ? { index: link.key as number, initialIndex: link.origKey as number }
+    : undefined;
 }

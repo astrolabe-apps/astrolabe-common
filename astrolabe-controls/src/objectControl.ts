@@ -37,6 +37,9 @@ export class ObjectLogic extends ControlLogic {
     return (this._fields[p] = child);
   }
 
+  ensureArray(): ControlLogic {
+    throw new Error("This is an object control, not an array control.");
+  }
   getElements(): InternalControl[] {
     throw new Error("This is an object control, not an array control.");
   }

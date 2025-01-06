@@ -47,6 +47,7 @@ export interface InternalControl<V = unknown> extends Control<V> {
   _flags: ControlFlags;
   _subscriptions?: Subscriptions;
   _logic: ControlLogic;
+  parents?: ParentLink[];
   isValid(): boolean;
   getField(p: string): InternalControl;
   setValueImpl(v: V, from?: InternalControl): void;
@@ -56,6 +57,7 @@ export interface InternalControl<V = unknown> extends Control<V> {
   updateParentLink(
     parent: InternalControl,
     key: string | number | undefined,
+    initial?: boolean,
   ): void;
 }
 
@@ -64,14 +66,16 @@ export abstract class ControlLogic {
 
   constructor(public isEqual: (v1: unknown, v2: unknown) => boolean) {}
 
-  attach(c: InternalControl): void {
+  attach(c: InternalControl): ControlLogic {
     this.control = c;
     this.control._logic = this;
+    return this;
   }
 
   abstract withChildren(f: (c: InternalControl) => void): void;
   abstract getField(p: string): InternalControl;
   abstract ensureObject(): ControlLogic;
+  abstract ensureArray(): ControlLogic;
   abstract getElements(): InternalControl[];
   initialValueChanged(): void {}
 

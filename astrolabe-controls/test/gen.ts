@@ -64,3 +64,9 @@ export const arbitraryParentChild = fc
       (c) => ({ json: v, child: c }) satisfies JsonAndChild,
     );
   });
+
+export const arrayAndIndex: Arbitrary<[string[], number]> = fc
+  .array(fc.string(), { minLength: 1 })
+  .chain((x) =>
+    fc.tuple(fc.constant(x), fc.integer({ min: 0, max: x.length - 1 })),
+  );

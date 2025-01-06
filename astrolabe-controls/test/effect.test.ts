@@ -26,7 +26,7 @@ describe("effect", () => {
             const { value, disabled, touched, valid, error } = ctrl;
             return { value, disabled, touched, valid, error };
           },
-          (v, prev) => effectRuns.push(v),
+          (v) => effectRuns.push(v),
         );
         ctrl.value = v + "a";
         ctrl.disabled = true;
@@ -72,7 +72,7 @@ describe("effect", () => {
             const { value: value2 } = ctrl2;
             return { value, value2 };
           },
-          (v, prev) => effectRuns.push(v),
+          (v) => effectRuns.push(v),
         );
         ctrl.value = v + "a";
         ctrl2.value = v2 + "b";
@@ -102,7 +102,7 @@ describe("effect", () => {
           const list2 = newControl(data2.map((x) => null));
           const effect = createEffect(
             () => (control.value ? list1 : list2).elements.map((x) => x.value),
-            (v, prev) => effectRuns.push(v),
+            (v) => effectRuns.push(v),
           );
           list2.elements.forEach((x, i) => (x.as<any>().value = data2[i]));
           control.value = false;
@@ -120,7 +120,7 @@ describe("effect", () => {
         const effectRuns: string[] = [];
         const effect = createEffect(
           () => control.value,
-          (v, prev) => effectRuns.push(v),
+          (v) => effectRuns.push(v),
         );
         control.value = v + "a";
         effect.cleanup();

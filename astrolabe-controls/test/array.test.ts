@@ -1,7 +1,13 @@
 import { describe, expect, it } from "@jest/globals";
 import fc, { Arbitrary } from "fast-check";
-import { ControlChange, newControl, updateElements } from "../src";
-import { addElement } from "../src";
+import {
+  ControlChange,
+  getElementIndex,
+  newControl,
+  updateElements,
+} from "../src";
+import { addElement, removeElement } from "../src";
+import { arrayAndIndex } from "./gen";
 
 describe("array", () => {
   it("updating array element list changes parent", () => {
@@ -40,7 +46,7 @@ describe("array", () => {
 
   it("updating array child's initial value doesnt affect parents initial value", () => {
     fc.assert(
-      fc.property(arrayAndIndex(), ([obj, ind]) => {
+      fc.property(arrayAndIndex, ([obj, ind]) => {
         const changes: ControlChange[] = [];
         const f = newControl(obj);
         f.subscribe((a, c) => changes.push(c), ControlChange.InitialValue);
@@ -164,12 +170,70 @@ describe("array", () => {
       }),
     );
   });
-});
 
-function arrayAndIndex(): Arbitrary<[string[], number]> {
-  return fc
-    .array(fc.string(), { minLength: 1 })
-    .chain((x) =>
-      fc.tuple(fc.constant(x), fc.integer({ min: 0, max: x.length - 1 })),
+  it("getElementIndex is correct after removing element", () => {
+    fc.assert(
+      fc.property(arrayAndIndex, arrayAndIndex, ([obj, ind], [obj2, ind2]) => {
+        const control = newControl(obj);
+        expect(control.elements.map((x) => getElementIndex(x))).toStrictEqual(
+          control.elements.map((_, i) => ({ index: i, initialIndex: i })),
+        );
+        removeElement(control, ind);
+        expect(control.elements.map((x) => getElementIndex(x))).toStrictEqual(
+          control.elements.map((_, i) => ({
+            index: i,
+            initialIndex: i >= ind ? i + 1 : i,
+          })),
+        );
+        control.setInitialValue(obj2);
+        expect(control.elements.map((x) => getElementIndex(x))).toStrictEqual(
+          control.elements.map((_, i) => ({ index: i, initialIndex: i })),
+        );
+        removeElement(control, ind2);
+        expect(control.elements.map((x) => getElementIndex(x))).toStrictEqual(
+          control.elements.map((_, i) => ({
+            index: i,
+            initialIndex: i >= ind2 ? i + 1 : i,
+          })),
+        );
+      }),
     );
-}
+  });
+
+  it("getElementIndex is correct after adding element", () => {
+    fc.assert(
+      fc.property(arrayAndIndex, ([obj, ind]) => {
+        const control = newControl(obj);
+        addElement(control, "", ind);
+        expect(control.elements.map((x) => getElementIndex(x))).toStrictEqual(
+          control.elements.map((_, i) => ({
+            index: i,
+            initialIndex: i == ind ? undefined : i < ind ? i : i - 1,
+          })),
+        );
+      }),
+    );
+  });
+
+  it("getElementIndex is correct after re-ordering elements", () => {
+    fc.assert(
+      fc.property(
+        fc
+          .array(fc.integer())
+          .map((x) => Object.values(Object.fromEntries(x.map((n) => [n, n])))),
+        (obj) => {
+          const control = newControl(obj);
+          updateElements(control, (x) =>
+            [...x].sort((x, y) => x.value - y.value),
+          );
+          expect(control.elements.map((x) => getElementIndex(x))).toStrictEqual(
+            control.elements.map((c, i) => ({
+              index: i,
+              initialIndex: obj.indexOf(c.current.value),
+            })),
+          );
+        },
+      ),
+    );
+  });
+});

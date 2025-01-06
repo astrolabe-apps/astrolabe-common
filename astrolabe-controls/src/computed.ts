@@ -7,7 +7,6 @@ import { runTransaction } from "./transactions";
 export function updateComputedValue<V>(
   control: Control<V>,
   compute: () => V,
-  forceValueChange?: boolean,
 ): void {
   const c = control as InternalControl<V>;
   const meta = getInternalMeta(c) ?? {};
@@ -16,11 +15,6 @@ export function updateComputedValue<V>(
     const effect = createEffect(compute, (v) => c.setValueImpl(v));
     meta.compute = effect;
     addCleanup(c, () => effect.cleanup());
-    if (forceValueChange) {
-      runTransaction(c, () => {
-        c._subscriptions?.applyChange(ControlChange.Value);
-      });
-    }
   } else {
     meta.compute.calculate = compute;
     meta.compute.runEffect();
