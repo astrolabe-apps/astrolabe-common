@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "react-resizable-panels": "^0.0.55",
-    "@mhsdesign/jit-browser-tailwindcss": "^0.4.0",
+    "@mhsdesign/jit-browser-tailwindcss": "^0.4.2",
     "immutability-helper": "^3.1.1",
     "clsx": "^2",
     "react-arborist": "~3.4.0",

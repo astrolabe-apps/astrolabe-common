@@ -1,6 +1,8 @@
 export type ControlValidator<V> = ((v: V) => string | undefined | null) | null;
 
-export type DelayedSetup<V, M = {}> = ControlSetup<V, M> | (() => ControlSetup<V, M>);
+export type DelayedSetup<V, M = {}> =
+  | ControlSetup<V, M>
+  | (() => ControlSetup<V, M>);
 export interface ControlSetup<V, M = {}> {
   validator?: ControlValidator<V>;
   equals?: (v1: unknown, v2: unknown) => boolean;
@@ -83,6 +85,7 @@ export interface Control<V> extends ControlProperties<V> {
   meta: { [k: string]: any };
   validate(): boolean;
   as<V2>(): V extends V2 ? Control<V2> : never;
+  lookupControl(path: (string | number)[]): Control<any> | undefined;
 }
 
 export type ControlValue<C> = C extends Control<infer V> ? V : never;

@@ -1,6 +1,7 @@
 import {
   type Control,
   useControl,
+  useControlEffect,
   useValueChangeEffect,
 } from "@react-typed-forms/core";
 import { useEffect } from "react";
@@ -18,9 +19,12 @@ export function useQueryControl(): Control<ParsedUrlQuery> {
   const parsedQuery = router.query;
   const queryControl = useControl(parsedQuery, { equals: shallowEqual });
 
-  useEffect(() => {
-    queryControl.value = parsedQuery;
-  }, [parsedQuery, router.isReady]);
+  useControlEffect(
+    () => parsedQuery,
+    (pq) => {
+      queryControl.value = pq;
+    },
+  );
 
   useValueChangeEffect(
     queryControl,

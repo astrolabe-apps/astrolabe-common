@@ -473,6 +473,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@react-typed-forms/core",
+      "projectFolder": "../core",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@astroapps/aria-base",
       "projectFolder": "../aria-base",
       "shouldPublish": true

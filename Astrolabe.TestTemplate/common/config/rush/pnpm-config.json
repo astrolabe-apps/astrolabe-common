@@ -116,7 +116,7 @@
     "@react-typed-forms/schemas": "workspace:*",
     "@astrolabe/client": "workspace:*",
     "react-dnd": "16.0.1",
-//    "@react-typed-forms/core": "workspace:*",
+    "@react-typed-forms/core": "workspace:*",
   },
 
   /**

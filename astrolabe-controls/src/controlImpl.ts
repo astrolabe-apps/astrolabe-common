@@ -56,6 +56,10 @@ export class ControlImpl<V> implements InternalControl<V> {
     _logic.attach(this);
   }
 
+  lookupControl(path: (string | number)[]): Control<any> | undefined {
+    throw new Error("Method not implemented.");
+  }
+
   updateParentLink(
     parent: InternalControl,
     key: string | number | undefined,

@@ -192,7 +192,7 @@ export function createDataGridRenderer(
           classes={gridClasses}
           renderOptions={dataGridOptions}
           renderAction={renderers.renderAction}
-          control={control}
+          control={control.as()}
           searchControl={
             searchField
               ? (schemaDataForFieldRef(searchField, dataContext.parentNode)
@@ -203,7 +203,7 @@ export function createDataGridRenderer(
           className={className}
           readonly={readonly}
           {...applyArrayLengthRestrictions({
-            ...createArrayActions(control, field, {
+            ...createArrayActions(control.as(), field, {
               ...dataGridOptions,
               readonly,
             }),

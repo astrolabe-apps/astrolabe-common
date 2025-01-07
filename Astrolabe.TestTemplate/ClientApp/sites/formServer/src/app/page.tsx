@@ -164,7 +164,7 @@ export default function Editor() {
     convertStringParam(
       (x) => x,
       (x) => x,
-      "Grid",
+      "ControlDefinitionSchema",
     ),
   );
   const StdFormRenderer = useMemo(

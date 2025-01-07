@@ -4,7 +4,6 @@ import {
   newControl,
   updateElements,
   useControl,
-  useControlValue,
 } from "@react-typed-forms/core";
 import React, { Fragment, ReactElement, ReactNode } from "react";
 
@@ -27,9 +26,9 @@ export interface TreeNodeData {
   dragEnabled?: boolean;
 }
 
-export interface TreeNodeStructure {
+export interface TreeNodeStructure<V = any> {
   nodeType: string;
-  treeNode?: TreeNodeBuilder<any>;
+  treeNode?: TreeNodeBuilder<V>;
 }
 
 export interface TreeInsertState {
@@ -164,7 +163,7 @@ export function findMatchingNode<V>(
   if (match(node)) {
     return withParent;
   }
-  const children = getControlTreeChildren(node);
+  const children = getControlTreeChildren(node)?.as<V[]>();
   if (!children) return undefined;
   return findMatchingNodeInArray(children.current.elements, match, withParent);
 }
@@ -220,7 +219,7 @@ export function treeNode<V>(
   title: string | ((node: Control<V>) => Control<string | undefined | null>),
   configureOrEdit?: TreeNodeConfigure<V> | boolean,
   configure?: TreeNodeConfigure<V>,
-): ControlSetup<V, TreeNodeStructure> {
+): ControlSetup<V, TreeNodeStructure<V>> {
   const fixedTitle = typeof title === "string";
   const builder = fixedTitle
     ? new TreeNodeBuildImpl<V>((n) => ({
@@ -269,7 +268,7 @@ class TreeNodeBuildImpl<V> implements TreeNodeBuilder<V> {
   constructor(private init: (c: Control<V>) => TreeNodeData) {}
 
   get asChildren(): any {
-    return this.withChildren((n) => n as Control<any[]>);
+    return this.withChildren((n) => n.as());
   }
 
   and(p?: TreeNodeConfigure<V>): TreeNodeBuilder<V> {

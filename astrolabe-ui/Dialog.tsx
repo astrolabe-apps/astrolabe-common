@@ -8,7 +8,11 @@ import React, {
   useState,
 } from "react";
 import FocusTrap from "focus-trap-react";
-import { Control, useControl, useControlValue } from "@react-typed-forms/core";
+import {
+  Control,
+  useControl,
+  useTrackedComponent,
+} from "@react-typed-forms/core";
 import { CloseButton } from "./CloseButton";
 import { Button, ButtonProps } from "./Button";
 
@@ -135,7 +139,7 @@ export function useDialog(
     (b) => {
       openNode.value = b;
     },
-    useCallback(SDialog, []),
+    useTrackedComponent(SDialog, []),
   ];
 
   function SDialog({
@@ -149,7 +153,7 @@ export function useDialog(
     classes,
     ...props
   }: SimpleDialogProps) {
-    const isOpen = useControlValue(openNode);
+    const isOpen = openNode.value;
     const dialogRef = useRef<HTMLDivElement>(null);
     let registeredInteractionWithBackdrop = false;
     const {

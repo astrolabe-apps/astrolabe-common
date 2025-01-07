@@ -10,7 +10,7 @@
 		"genclient": "nswag openapi2tsclient /input:http://localhost:5000/swagger/v1/swagger.json /output:src/client.ts /NullValue:Null /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string /TypeScriptVersion:4.9 && h get http://localhost:5000/api/SearchState/Schemas > src/schemas.ts && prettier -w src/schemas.ts && h get http://localhost:5000/api/SearchState/Forms > src/forms.ts && prettier -w src/forms.ts"
 	},
 	"dependencies": {
-		"@react-typed-forms/core": "^3.6.3",
+		"@react-typed-forms/core": "workspace:*",
 		"file-saver": "~2.0.5",
 		"codemirror": "^6.0.1",
 		"@astroapps/codemirror-evaluator": "workspace:*",
@@ -22,18 +22,19 @@
 		"@astroapps/client-nextjs": "workspace:^1.0.0",
 		"@astroapps/datagrid": "workspace:^1.0.6",
 		"@astroapps/schemas-datagrid": "workspace:*",
-		"@astroapps/schemas-quickstream": "workspace:*",
+		"@astroapps/schemas-quickstream": "workspace:*",	
 		"@astrolabe/ui": "workspace:*",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
-		"next": "14.0.4",
+		"next": "14.2.22",
 		"@astroapps/schemas-editor": "workspace:*",
 		"@astroapps/schemas-datepicker": "workspace:*",
 		"@astroapps/searchstate": "workspace:*",
 		"@astroapps/aria-datepicker": "workspace:*",
 		"@astroapps/aria-base": "workspace:*",
 		"react-dnd": "16.0.1",
-		"react-dnd-html5-backend": "16.0.1"
+		"react-dnd-html5-backend": "16.0.1",
+		"@mhsdesign/jit-browser-tailwindcss": "^0.4.2"
 	},
 	"devDependencies": {
 		"typescript": "^5.6.2",

@@ -19,6 +19,7 @@
       <Path>astrolabe-storybook</Path>
       <Path>astrolabe-ui</Path>
       <Path>astrolabe-ui-tree</Path>
+      <Path>core</Path>
       <Path>react-typed-forms/packages/core</Path>
       <Path>schemas</Path>
       <Path>schemas-datepicker</Path>

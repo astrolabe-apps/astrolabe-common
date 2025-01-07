@@ -36,7 +36,7 @@ export function createDatePickerRenderer(
         dateTime={p.field.type == FieldType.DateTime}
         pickerOptions={pickerOptions}
         className={rendererClass(p.className, className)}
-        control={p.control}
+        control={p.control.as()}
         readonly={p.readonly}
         designMode={p.designMode}
         options={p.renderOptions as DateTimeRenderOptions}
