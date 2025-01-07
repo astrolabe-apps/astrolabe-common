@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/client-nextjs",
-	"version": "1.1.2",
+	"version": "1.1.3",
 	"type": "module",
 	"main": "lib/index.cjs",
 	"module": "lib/index.js",
@@ -25,7 +25,7 @@
 	},
 	"peerDependencies": {
 		"@astroapps/client": "workspace:^1.1.0",
-		"next": "14.0.4",
+		"next": "^14.0.4",
 		"react": "^18.2.0"
 	},
 	"scripts": {
