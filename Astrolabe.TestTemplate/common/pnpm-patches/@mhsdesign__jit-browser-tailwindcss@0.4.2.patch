@@ -1,0 +1,12 @@
+diff --git a/package.json b/package.json
+index ebf9619fcede06dbc14894114f1d68618d344862..b1a3d202af4685e98560d7cc85877cfa12dcb1f6 100644
+--- a/package.json
++++ b/package.json
+@@ -12,7 +12,6 @@
+     "index.d.ts",
+     "dist/*"
+   ],
+-  "type": "module",
+   "scripts": {
+     "build": "node build.js",
+     "example1": "npm --workspace esbuild-demo start",

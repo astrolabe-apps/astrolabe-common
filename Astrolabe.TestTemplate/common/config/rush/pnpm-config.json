@@ -205,7 +205,8 @@
    *
    * PNPM documentation: https://pnpm.io/package_json#pnpmpatcheddependencies
    */
-  "globalPatchedDependencies": { },
+  "globalPatchedDependencies": {"@mhsdesign/jit-browser-tailwindcss@0.4.2":"patches/@mhsdesign__jit-browser-tailwindcss@0.4.2.patch" },
+
 
   /**
    * (USE AT YOUR OWN RISK)  This is a free-form property bag that will be copied into
