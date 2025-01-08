@@ -28,7 +28,7 @@ export function muiTextfieldRenderer(
             fullWidth
             label={lc.label?.label}
             size="small"
-            state={control}
+            state={control.as()}
             InputProps={{ readOnly: readonly }}
           />
         ),
@@ -68,7 +68,7 @@ export function muiDateRenderer(
             fullWidth
             label={lc.label?.label}
             size="small"
-            state={control}
+            state={control.as()}
             InputProps={{ readOnly: readonly }}
           />
         ),

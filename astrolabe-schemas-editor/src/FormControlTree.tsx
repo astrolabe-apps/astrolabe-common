@@ -1,5 +1,11 @@
 import useResizeObserver from "use-resize-observer";
-import { MoveHandler, NodeApi, NodeRendererProps, Tree } from "react-arborist";
+import {
+  MoveHandler,
+  NodeApi,
+  NodeRendererProps,
+  Tree,
+  TreeApi,
+} from "react-arborist";
 import {
   addElement,
   Control,
@@ -12,7 +18,7 @@ import {
   ControlDefinitionForm,
   defaultControlDefinitionForm,
 } from "./schemaSchemas";
-import React from "react";
+import React, { MutableRefObject } from "react";
 import clsx from "clsx";
 import {
   ControlDefinitionType,
@@ -30,6 +36,7 @@ export interface FormControlTreeProps {
   selected: Control<ControlNode | undefined>;
   selectedField: Control<SchemaNode | undefined>;
   onDeleted: (n: NodeApi<ControlNode>) => void;
+  treeApi?: MutableRefObject<TreeApi<ControlNode> | null>;
 }
 
 export function FormControlTree({
@@ -39,6 +46,7 @@ export function FormControlTree({
   selectedField,
   onDeleted,
   className,
+  treeApi,
 }: FormControlTreeProps) {
   const { ref, width, height } = useResizeObserver();
 
@@ -70,10 +78,10 @@ export function FormControlTree({
       }
     });
   };
-
   return (
     <div className={className} ref={ref}>
       <Tree<ControlNode>
+        ref={treeApi}
         width={width}
         height={height}
         onSelect={(n) => {
@@ -92,24 +100,12 @@ export function FormControlTree({
           }
         }}
         data={controls.elements.map((x) => ({
+          id: x.uniqueId.toString(),
+          children: makeChildren(x, rootSchema),
           control: x,
           schema: rootSchema,
         }))}
         selection={selected.value?.control.uniqueId.toString()}
-        childrenAccessor={(x) => {
-          const c = x.control.fields.children.elements;
-          const childPath = fieldPathForDefinition(trackedValue(x.control));
-          const schema = childPath
-            ? schemaForFieldPath(childPath, x.schema)
-            : x.schema;
-          return c && c.length > 0
-            ? c.map((d) => ({
-                control: d,
-                schema,
-              }))
-            : null;
-        }}
-        idAccessor={(x) => x.control.uniqueId.toString()}
         children={ControlNodeRenderer}
         onCreate={(props) => {
           if (props.parentNode) {
@@ -135,6 +131,25 @@ export function FormControlTree({
       />
     </div>
   );
+
+  function makeChildren(
+    x: Control<ControlDefinitionForm>,
+    parentSchema: SchemaNode,
+  ): ControlNode[] | null {
+    const c = x.fields.children.elements;
+    const childPath = fieldPathForDefinition(trackedValue(x));
+    const schema = childPath
+      ? schemaForFieldPath(childPath, parentSchema)
+      : parentSchema;
+    return c && c.length > 0
+      ? c.map((d) => ({
+          id: d.uniqueId.toString(),
+          control: d,
+          schema,
+          children: makeChildren(d, schema),
+        }))
+      : null;
+  }
 }
 
 function ControlNodeRenderer({
@@ -144,7 +159,7 @@ function ControlNodeRenderer({
 }: NodeRendererProps<ControlNode>) {
   const canAdd = true;
   const canDelete = true;
-  const control = node.data.control;
+  const control = trackedValue(node.data.control);
   return (
     <div
       style={style}
@@ -162,13 +177,13 @@ function ControlNodeRenderer({
           />
         )}
       </span>
-      <i
-        className={clsx(
-          "fa-solid w-4 h-4 mr-2",
-          nodeIcon(control.fields.type.value),
-        )}
-      />
-      <span className="truncate">{control.fields.title.value}</span>
+      <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(control.type))} />
+      <span className="truncate">
+        {control.title}
+        {control.type == ControlDefinitionType.Data
+          ? ` (${control.field})`
+          : ""}
+      </span>
       {canAdd && (
         <i
           className="ml-2 fa-solid fa-plus w-4 h-4"

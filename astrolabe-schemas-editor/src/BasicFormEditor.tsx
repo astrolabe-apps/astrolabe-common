@@ -42,7 +42,7 @@ import {
   SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import React, { ReactElement, ReactNode, useMemo } from "react";
+import React, { ReactElement, ReactNode, useMemo, useRef } from "react";
 import {
   createTailwindcss,
   TailwindConfig,
@@ -53,6 +53,7 @@ import { FormControlTree } from "./FormControlTree";
 import { FormSchemaTree } from "./FormSchemaTree";
 import { FormPreview, PreviewData } from "./FormPreview";
 import { ControlNode } from "./types";
+import { TreeApi } from "react-arborist";
 
 export function applyEditorExtensions(
   ...extensions: ControlDefinitionExtension[]
@@ -84,7 +85,9 @@ export interface BasicFormEditorProps<A extends string> {
   editorPanelClass?: string;
   controlsClass?: string;
   handleIcon?: ReactNode;
-  extraPreviewControls?: ReactNode | ((c: ControlDefinition[], data: Control<any>) => ReactNode);
+  extraPreviewControls?:
+    | ReactNode
+    | ((c: ControlDefinition[], data: Control<any>) => ReactNode);
 }
 
 export function BasicFormEditor<A extends string>({
@@ -115,6 +118,7 @@ export function BasicFormEditor<A extends string>({
   const selectedField = useControl<SchemaNode>();
   const hideFields = useControl(false);
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
+  const controlTreeApi = useRef<TreeApi<ControlNode>>(null);
   const previewData = useControl<PreviewData>({
     showing: false,
     showJson: false,
@@ -179,11 +183,11 @@ export function BasicFormEditor<A extends string>({
     }
   }
 
-  function button(onClick: () => void, action: string) {
+  function button(onClick: () => void, action: string, actionId?: string) {
     return formRenderer.renderAction({
       onClick,
       actionText: action,
-      actionId: action,
+      actionId: actionId ?? action,
     });
   }
 
@@ -269,7 +273,7 @@ export function BasicFormEditor<A extends string>({
             <Panel>
               <div className="h-full flex flex-col p-2">
                 <div className="flex gap-2">
-                  <Fselect control={selectedForm}>
+                  <Fselect control={selectedForm.as()}>
                     <RenderArrayElements
                       array={formTypes}
                       children={(x) => <option value={x[0]}>{x[1]}</option>}
@@ -293,9 +297,16 @@ export function BasicFormEditor<A extends string>({
                     <PanelGroup direction="horizontal">
                       <Panel>
                         <div className="flex flex-col h-full">
-                          <h2 className="text-xl my-2">Controls</h2>
+                          <div className="flex gap-2">
+                            <h2 className="text-xl my-2">Controls</h2>
+                            {button(
+                              () => controlTreeApi.current?.closeAll(),
+                              "Collapse",
+                            )}
+                          </div>
                           <FormControlTree
-                            className="overflow-hidden"
+                            treeApi={controlTreeApi}
+                            className="overflow-hidden grow"
                             controls={controls}
                             rootSchema={rootSchema}
                             selectedField={selectedField}
@@ -314,7 +325,7 @@ export function BasicFormEditor<A extends string>({
                         <div className="flex flex-col h-full">
                           <h2 className="text-xl my-2">Schema</h2>
                           <FormSchemaTree
-                            className="overflow-hidden"
+                            className="overflow-hidden grow"
                             selectedControl={selected}
                             rootControls={controls}
                             rootSchema={rootSchema}
