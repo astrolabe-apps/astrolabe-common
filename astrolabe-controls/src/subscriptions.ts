@@ -4,6 +4,7 @@ import {
   ControlChange,
   Subscription,
 } from "./types";
+import { TrackedSubscription } from "./internal";
 
 export interface SubscriptionInternal extends Subscription {
   list: SubscriptionList;
@@ -89,12 +90,6 @@ export class SubscriptionList {
     return (this.changeState & mask) === current;
   }
 }
-
-type TrackedSubscription = [
-  Control<any>,
-  Subscription | undefined,
-  ControlChange,
-];
 
 export class SubscriptionTracker {
   subscriptions: TrackedSubscription[] = [];

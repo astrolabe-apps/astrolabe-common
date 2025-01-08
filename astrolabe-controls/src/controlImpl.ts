@@ -14,11 +14,11 @@ import {
 import {
   ControlFlags,
   ControlLogic,
+  ensureInternalMeta,
   getInternalMeta,
   InternalControl,
   ParentLink,
   ResolvedControlSetup,
-  setInternalMeta,
 } from "./internal";
 import { groupedChanges, runTransaction } from "./transactions";
 import { ObjectLogic } from "./objectControl";
@@ -57,7 +57,19 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
 
   lookupControl(path: (string | number)[]): Control<any> | undefined {
-    throw new Error("Method not implemented.");
+    let base = this as Control<any> | undefined;
+    let index = 0;
+    while (index < path.length && base) {
+      const childId = path[index];
+      const c = base.current;
+      if (typeof childId === "string") {
+        base = c.fields[childId];
+      } else {
+        base = c.elements[childId];
+      }
+      index++;
+    }
+    return base;
   }
 
   updateParentLink(
@@ -648,19 +660,15 @@ export function collectChanges<A>(
 }
 
 export function addCleanup(c: Control<any>, cleanup: () => void) {
-  const internalMeta = getInternalMeta(c);
-  if (internalMeta) {
-    // add cleanup to existing meta, calling previous if exists
-    const prevCleanup = internalMeta.cleanup;
-    internalMeta.cleanup = prevCleanup
-      ? () => {
-          prevCleanup();
-          cleanup();
-        }
-      : cleanup;
-  } else {
-    setInternalMeta(c, { cleanup });
-  }
+  const internalMeta = ensureInternalMeta(c);
+  // add cleanup to existing meta, calling previous if exists
+  const prevCleanup = internalMeta.cleanup;
+  internalMeta.cleanup = prevCleanup
+    ? () => {
+        prevCleanup();
+        cleanup();
+      }
+    : cleanup;
 }
 
 export function cleanupControl(c: Control<any>) {

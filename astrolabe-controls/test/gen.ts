@@ -1,7 +1,5 @@
 import fc, { Arbitrary, JsonValue } from "fast-check";
-import { Control } from "../src";
-import { newControl } from "../src";
-import { JsonObject } from "fast-check/lib/types/arbitrary/_internals/helpers/JsonConstraintsBuilder";
+import { Control, ControlChange, ControlProperties, newControl } from "../src";
 
 type JsonPath = (string | number)[];
 
@@ -69,4 +67,22 @@ export const arrayAndIndex: Arbitrary<[string[], number]> = fc
   .array(fc.string(), { minLength: 1 })
   .chain((x) =>
     fc.tuple(fc.constant(x), fc.integer({ min: 0, max: x.length - 1 })),
+  );
+
+export interface ChangeAndTrigger {
+  change: ControlChange;
+  trigger: (cp: ControlProperties<any>) => void;
+}
+
+export const arbitraryChangeAndTrigger: Arbitrary<ChangeAndTrigger> =
+  fc.constantFrom(
+    { change: ControlChange.Value, trigger: (p) => p.value },
+    { change: ControlChange.InitialValue, trigger: (p) => p.initialValue },
+    { change: ControlChange.Structure, trigger: (p) => p.isNull },
+    { change: ControlChange.Dirty, trigger: (p) => p.dirty },
+    { change: ControlChange.Valid, trigger: (p) => p.valid },
+    { change: ControlChange.Error, trigger: (p) => p.errors },
+    { change: ControlChange.Error, trigger: (p) => p.error },
+    { change: ControlChange.Touched, trigger: (p) => p.touched },
+    { change: ControlChange.Disabled, trigger: (p) => p.disabled },
   );

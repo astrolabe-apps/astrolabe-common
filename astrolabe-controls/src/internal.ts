@@ -1,4 +1,9 @@
-import { Control, ControlValidator } from "./types";
+import {
+  Control,
+  ControlChange,
+  ControlValidator,
+  Subscription,
+} from "./types";
 import { Subscriptions } from "./subscriptions";
 import { Effect } from "./effect";
 
@@ -10,17 +15,28 @@ export enum ControlFlags {
   DontClearError = 8,
 }
 
+export type TrackedSubscription = [
+  Control<any>,
+  Subscription | undefined,
+  ControlChange,
+];
+
 export interface InternalMeta {
   cleanup?: () => void;
   compute?: Effect<any>;
 }
 
-export function getInternalMeta(c: Control<any>): InternalMeta | undefined {
-  return c.meta["$internal"] as InternalMeta | undefined;
+export function ensureInternalMeta(c: Control<any>): InternalMeta {
+  let m = c.meta["$internal"] as InternalMeta | undefined;
+  if (!m) {
+    m = {};
+    c.meta["$internal"] = m;
+  }
+  return m;
 }
 
-export function setInternalMeta(c: Control<any>, meta: InternalMeta) {
-  c.meta["$internal"] = meta;
+export function getInternalMeta(c: Control<any>): InternalMeta | undefined {
+  return c.meta["$internal"] as InternalMeta | undefined;
 }
 
 export interface ResolvedControlSetup {

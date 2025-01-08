@@ -1,5 +1,9 @@
 import { Control, ControlChange } from "./types";
-import { getInternalMeta, InternalControl } from "./internal";
+import {
+  ensureInternalMeta,
+  getInternalMeta,
+  InternalControl,
+} from "./internal";
 import { createEffect } from "./effect";
 import { addCleanup } from "./controlImpl";
 import { runTransaction } from "./transactions";
@@ -9,7 +13,7 @@ export function updateComputedValue<V>(
   compute: () => V,
 ): void {
   const c = control as InternalControl<V>;
-  const meta = getInternalMeta(c) ?? {};
+  const meta = ensureInternalMeta(c);
   if (meta.compute?.calculate === compute) return;
   if (!meta.compute) {
     const effect = createEffect(compute, (v) => c.setValueImpl(v));
