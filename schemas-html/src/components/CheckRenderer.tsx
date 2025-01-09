@@ -172,7 +172,7 @@ export function createCheckboxRenderer(options: CheckRendererOptions = {}) {
         <div className={rendererClass(props.className, options.entryClass)}>
           <Fcheckbox
             id={props.id}
-            control={props.control}
+            control={props.control.as()}
             style={props.style}
             className={options.checkClass}
           />

@@ -295,6 +295,7 @@ export enum GroupRenderType {
   Standard = "Standard",
   Grid = "Grid",
   Flex = "Flex",
+  Tabs = "Tabs",
   GroupElement = "GroupElement",
   SelectChild = "SelectChild",
 }
@@ -317,6 +318,10 @@ export interface GroupElementRenderer extends GroupRenderOptions {
 export interface GridRenderer extends GroupRenderOptions {
   type: GroupRenderType.Grid;
   columns?: number | null;
+}
+
+export interface TabsGroupRenderer extends GroupRenderOptions {
+  type: GroupRenderType.Tabs;
 }
 
 export interface SelectChildRenderer extends GroupRenderOptions {
@@ -424,6 +429,12 @@ export function isSelectChildRenderer(
   options: GroupRenderOptions,
 ): options is SelectChildRenderer {
   return options.type === GroupRenderType.SelectChild;
+}
+
+export function isTabsRenderer(
+  options: GroupRenderOptions,
+): options is TabsGroupRenderer {
+  return options.type === GroupRenderType.Tabs;
 }
 
 export function isFlexRenderer(

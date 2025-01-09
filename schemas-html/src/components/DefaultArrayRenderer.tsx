@@ -100,7 +100,7 @@ export function DataArrayRenderer({
   const Entry = useTrackedComponent(RenderEntry, [deps]);
 
   const arrayProps = {
-    ...createArrayActions(control, field, {
+    ...createArrayActions(control.as(), field, {
       addText,
       removeText,
       noAdd,

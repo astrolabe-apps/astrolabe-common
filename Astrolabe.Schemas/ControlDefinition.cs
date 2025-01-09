@@ -281,6 +281,7 @@ public enum GroupRenderType
     Standard,
     Grid,
     Flex,
+    Tabs,
     GroupElement,
     SelectChild
 }

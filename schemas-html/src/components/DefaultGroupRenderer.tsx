@@ -1,18 +1,21 @@
 import {
   ControlLayoutProps,
   FlexRenderer,
+  FormRenderer,
   GridRenderer,
   GroupRendererProps,
   GroupRendererRegistration,
   isFlexRenderer,
   isGridRenderer,
   isSelectChildRenderer,
+  isTabsRenderer,
   rendererClass,
   SelectChildRenderer,
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
 import React, { CSSProperties, useCallback } from "react";
 import { useTrackedComponent } from "@react-typed-forms/core";
+import { createTabsRenderer, TabsRendererOptions } from "./TabsRenderer";
 
 interface StyleProps {
   className?: string;
@@ -27,11 +30,13 @@ export interface DefaultGroupRendererOptions {
   defaultGridColumns?: number;
   flexClassName?: string;
   defaultFlexGap?: string;
+  tabs?: TabsRendererOptions;
 }
 
 export function createDefaultGroupRenderer(
   options?: DefaultGroupRendererOptions,
 ): GroupRendererRegistration {
+  const tabsRenderer = createTabsRenderer(options?.tabs);
   const {
     className,
     gridStyles = defaultGridStyles,
@@ -67,8 +72,10 @@ export function createDefaultGroupRenderer(
     };
   }
 
-  function render(props: GroupRendererProps) {
+  function render(props: GroupRendererProps, renderers: FormRenderer) {
     const { renderChild, renderOptions, childDefinitions } = props;
+    if (isTabsRenderer(renderOptions))
+      return tabsRenderer.render(props, renderers);
     if (isSelectChildRenderer(renderOptions) && !props.designMode) {
       return (
         <SelectChildGroupRenderer {...props} renderOptions={renderOptions} />

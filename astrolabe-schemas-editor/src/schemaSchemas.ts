@@ -654,6 +654,10 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
         value: "Flex",
       },
       {
+        name: "Tabs",
+        value: "Tabs",
+      },
+      {
         name: "GroupElement",
         value: "GroupElement",
       },

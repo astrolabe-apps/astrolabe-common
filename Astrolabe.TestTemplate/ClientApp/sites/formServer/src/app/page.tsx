@@ -22,12 +22,15 @@ import {
   ControlDataContext,
   ControlDefinition,
   createSchemaLookup,
+  dataControl,
   dateField,
   dateTimeField,
   defaultEvalHooks,
   doubleField,
   EntityExpression,
   ExpressionType,
+  groupedControl,
+  GroupRenderType,
   intField,
   makeEvalExpressionHook,
   stringField,
@@ -64,6 +67,11 @@ const CustomControlSchema = applyEditorExtensions(
   QuickstreamExtension,
   PagerExtension,
 );
+
+interface TabSchema {
+  value1: string;
+  value2: string;
+}
 
 interface DisabledStuff {
   type: string;
@@ -138,12 +146,24 @@ const GridSchema = buildSchema<GridSchema>({
   request: compoundField("Request", RequestSchema),
 });
 
+const TabSchema = buildSchema<TabSchema>({
+  value1: stringField("Value 1"),
+  value2: stringField("Value 2"),
+});
+
+const TabControls = groupedControl(
+  [dataControl("value1"), dataControl("value2")],
+  "Tabs",
+  { groupOptions: { type: GroupRenderType.Tabs } },
+);
+
 const schemaLookup = createSchemaLookup({
   TestSchema,
   GridSchema,
   RequestSchema,
   ResultSchema,
   ControlDefinitionSchema,
+  TabSchema,
   ...SchemaMap,
 });
 
@@ -184,21 +204,24 @@ export default function Editor() {
           if (c in FormDefinitions)
             return FormDefinitions[c as keyof typeof FormDefinitions];
           switch (c) {
-            case "ControlDefinitionSchema":
+            case "EditorControls":
               return {
                 schemaName: "ControlDefinitionSchema",
                 controls: controlsJson,
               };
+            case "TabSchema":
+              return { schemaName: c, controls: [TabControls] };
             default:
               return { schemaName: c, controls: [] };
           }
         }}
         selectedForm={selectedForm}
         formTypes={[
-          ["ControlDefinitionSchema", "EditorControls"],
+          ["EditorControls", "EditorControls"],
           ["CarInfo", "Pdf test"],
           ["TestSchema", "Test"],
           ["GridSchema", "Grid"],
+          ["TabSchema", "Tabs"],
           ...Object.values(FormDefinitions).map(
             (x) => [x.value, x.name] as [string, string],
           ),
