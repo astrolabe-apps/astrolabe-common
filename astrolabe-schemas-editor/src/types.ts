@@ -8,3 +8,5 @@ export interface ControlNode {
   schema: SchemaNode;
   children: ControlNode[] | null;
 }
+
+export type SelectedControlNode = Pick<ControlNode, "control"|"schema">

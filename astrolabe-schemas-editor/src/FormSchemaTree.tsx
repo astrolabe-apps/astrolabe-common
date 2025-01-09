@@ -1,38 +1,26 @@
 import useResizeObserver from "use-resize-observer";
-import { MoveHandler, NodeApi, NodeRendererProps, Tree } from "react-arborist";
-import {
-  addElement,
-  Control,
-  groupedChanges,
-  removeElement,
-  trackedValue,
-  updateElements,
-} from "@react-typed-forms/core";
+import { NodeRendererProps, Tree } from "react-arborist";
+import { addElement, Control, trackedValue } from "@react-typed-forms/core";
 import {
   ControlDefinitionForm,
-  defaultControlDefinitionForm,
-  defaultSchemaFieldForm,
-  SchemaFieldForm,
   toControlDefinitionForm,
 } from "./schemaSchemas";
-import React, { createContext } from "react";
+import React from "react";
 import clsx from "clsx";
 import {
-  ControlDefinitionType,
   defaultControlForField,
   fieldPathForDefinition,
   FieldType,
   getSchemaNodePath,
-  isCompoundField,
   isCompoundNode,
   schemaForFieldPath,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import { ControlNode } from "./types";
+import { SelectedControlNode } from "./types";
 
 interface SchemaNodeCtx {
   schema: SchemaNode;
-  selectedControl: Control<ControlNode | undefined>;
+  selectedControl: Control<SelectedControlNode | undefined>;
   rootControls: Control<ControlDefinitionForm[]>;
   id: string;
 }
@@ -40,7 +28,7 @@ interface FormSchemaTreeProps {
   className?: string;
   rootSchema: SchemaNode;
   rootControls: Control<ControlDefinitionForm[]>;
-  selectedControl: Control<ControlNode | undefined>;
+  selectedControl: Control<SelectedControlNode | undefined>;
   selected: Control<SchemaNode | undefined>;
 }
 

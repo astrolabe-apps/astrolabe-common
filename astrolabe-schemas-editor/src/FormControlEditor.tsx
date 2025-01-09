@@ -1,5 +1,3 @@
-import { Control } from "@react-typed-forms/core";
-import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
 import React, { ReactElement } from "react";
 import {
   FormRenderer,
@@ -9,7 +7,7 @@ import {
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import { useEditorDataHook } from "./util";
-import { ControlNode } from "./types";
+import { SelectedControlNode } from "./types";
 
 export function FormControlEditor({
   controlNode,
@@ -17,7 +15,7 @@ export function FormControlEditor({
   editorFields,
   editorControls,
 }: {
-  controlNode: ControlNode;
+  controlNode: SelectedControlNode;
   editorControls: GroupedControlsDefinition;
   editorFields: SchemaNode;
   renderer: FormRenderer;

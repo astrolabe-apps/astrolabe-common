@@ -33,7 +33,7 @@ export interface FormControlTreeProps {
   className?: string;
   controls: Control<ControlDefinitionForm[]>;
   rootSchema: SchemaNode;
-  selected: Control<ControlNode | undefined>;
+  selected: Control<Pick<ControlNode, "control" | "schema"> | undefined>;
   selectedField: Control<SchemaNode | undefined>;
   onDeleted: (n: NodeApi<ControlNode>) => void;
   treeApi?: MutableRefObject<TreeApi<ControlNode> | null>;

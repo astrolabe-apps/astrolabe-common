@@ -38,7 +38,7 @@ import {
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import { ControlDragState, controlDropData, DragData, DropData } from "./util";
-import { ControlNode } from "./types";
+import { ControlNode, SelectedControlNode } from "./types";
 
 export interface FormControlPreviewProps {
   definition: ControlDefinition;
@@ -56,7 +56,7 @@ export interface FormControlPreviewProps {
 }
 
 export interface FormControlPreviewContext {
-  selected: Control<ControlNode | undefined>;
+  selected: Control<SelectedControlNode | undefined>;
   treeDrag: Control<ControlDragState | undefined>;
   dropSuccess: (drag: DragData, drop: DropData) => void;
   readonly?: boolean;

@@ -52,7 +52,7 @@ import defaultEditorControls from "./ControlDefinition.json";
 import { FormControlTree } from "./FormControlTree";
 import { FormSchemaTree } from "./FormSchemaTree";
 import { FormPreview, PreviewData } from "./FormPreview";
-import { ControlNode } from "./types";
+import { ControlNode, SelectedControlNode } from "./types";
 import { TreeApi } from "react-arborist";
 
 export function applyEditorExtensions(
@@ -114,7 +114,7 @@ export function BasicFormEditor<A extends string>({
   const controls = useControl<ControlDefinitionForm[]>([]);
   const baseSchema = useControl<string>();
   const treeDrag = useControl();
-  const selected = useControl<ControlNode>();
+  const selected = useControl<SelectedControlNode>();
   const selectedField = useControl<SchemaNode>();
   const hideFields = useControl(false);
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
