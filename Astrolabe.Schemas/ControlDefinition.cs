@@ -25,6 +25,9 @@ public abstract record ControlDefinition(
 {
     public string? Title { get; set; }
 
+    public string? Id { get; set; }
+
+    public string? ChildRefId { get; set; }
     public IEnumerable<DynamicProperty>? Dynamic { get; set; }
 
     public IEnumerable<ControlAdornment>? Adornments { get; set; }
@@ -189,8 +192,9 @@ public record CheckListRenderOptions(
 public record TextfieldRenderOptions(string? Placeholder, bool? Multiline)
     : RenderOptions(DataRenderType.Textfield.ToString());
 
-public record DataGroupRenderOptions(GroupRenderOptions GroupOptions)
-    : RenderOptions(DataRenderType.Group.ToString());
+public record DataGroupRenderOptions(
+    [property: SchemaTag(SchemaTags.NoControl)] GroupRenderOptions GroupOptions
+) : RenderOptions(DataRenderType.Group.ToString());
 
 public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText)
     : RenderOptions(DataRenderType.DisplayOnly.ToString());
@@ -291,6 +295,7 @@ public enum GroupRenderType
 [JsonSubType("GroupElement", typeof(GroupElementRenderer))]
 [JsonSubType("Grid", typeof(GridRenderer))]
 [JsonSubType("Flex", typeof(FlexRenderer))]
+[JsonSubType("Tabs", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("SelectChild", typeof(SelectChildRenderer))]
 public abstract record GroupRenderOptions(
     [property: SchemaOptions(typeof(GroupRenderType))]

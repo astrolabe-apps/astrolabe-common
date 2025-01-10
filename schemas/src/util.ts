@@ -421,6 +421,7 @@ export function addMissingControlsForSchema(
   const missingFields = fields
     .filter((x) => !fieldHasTag(x.field, "_NoControl"))
     .flatMap((x) => existsInGroups(x, rootLookup));
+  console.log(missingFields);
   missingFields.forEach(([f, lookup]) => {
     const groupToAdd = f.field.tags?.find((x) =>
       x.startsWith("_ControlGroup:"),

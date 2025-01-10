@@ -56,29 +56,18 @@
             "children": [
               {
                 "type": "Data",
-                "title": "Group flags",
-                "children": [
-                  {
-                    "type": "Data",
-                    "title": "Hide Title",
-                    "field": "hideTitle",
-                    "renderOptions": {
-                      "type": "Checkbox"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Display Only",
-                    "field": "displayOnly",
-                    "renderOptions": {
-                      "type": "Checkbox"
-                    }
-                  }
-                ],
-                "field": "groupOptions",
-                "hideTitle": true,
+                "title": "Hide Title",
+                "field": "groupOptions/hideTitle",
                 "renderOptions": {
-                  "type": "Standard"
+                  "type": "Checkbox"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Display Only",
+                "field": "groupOptions/displayOnly",
+                "renderOptions": {
+                  "type": "Checkbox"
                 }
               },
               {
@@ -122,17 +111,46 @@
           },
           {
             "type": "Data",
+            "title": "Apply default value",
+            "field": "defaultValue",
+            "renderOptions": {
+              "type": "NullToggle"
+            },
+            "labelClass": ""
+          },
+          {
+            "type": "Data",
+            "title": "Default Value",
+            "field": "defaultValue",
+            "renderOptions": {
+              "type": "Standard"
+            },
+            "hideTitle": true
+          }
+        ],
+        "groupOptions": {
+          "type": "Standard",
+          "hideTitle": true
+        }
+      },
+      {
+        "type": "Group",
+        "title": "Display",
+        "children": [
+          {
+            "type": "Data",
             "title": "Render Options",
             "field": "renderOptions",
             "children": [
               {
                 "type": "Data",
-                "title": "Renderer",
+                "title": "Type",
                 "field": "type",
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                }
+                },
+                "defaultValue": null
               },
               {
                 "type": "Data",
@@ -146,150 +164,6 @@
                 "type": "Data",
                 "title": "Placeholder",
                 "field": "placeholder",
-                "renderOptions": {
-                  "type": "Standard"
-                }
-              },
-              {
-                "type": "Data",
-                "title": "Group Options",
-                "field": "groupOptions",
-                "children": [
-                  {
-                    "type": "Data",
-                    "title": "Type",
-                    "field": "type",
-                    "required": true,
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Hide Title",
-                    "field": "hideTitle",
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Direction",
-                    "field": "direction",
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Gap",
-                    "field": "gap",
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Columns",
-                    "field": "columns",
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Value",
-                    "field": "value",
-                    "required": true,
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Display Only",
-                    "field": "displayOnly",
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Child Index Expression",
-                    "field": "childIndexExpression",
-                    "children": [
-                      {
-                        "type": "Data",
-                        "title": "Type",
-                        "field": "type",
-                        "required": true,
-                        "renderOptions": {
-                          "type": "Standard"
-                        }
-                      },
-                      {
-                        "type": "Data",
-                        "title": "Expression",
-                        "field": "expression",
-                        "required": true,
-                        "renderOptions": {
-                          "type": "Standard"
-                        }
-                      },
-                      {
-                        "type": "Data",
-                        "title": "Field",
-                        "field": "field",
-                        "required": true,
-                        "renderOptions": {
-                          "type": "Standard"
-                        }
-                      },
-                      {
-                        "type": "Data",
-                        "title": "Value",
-                        "field": "value",
-                        "required": true,
-                        "renderOptions": {
-                          "type": "Standard"
-                        }
-                      },
-                      {
-                        "type": "Data",
-                        "title": "User Match",
-                        "field": "userMatch",
-                        "required": true,
-                        "renderOptions": {
-                          "type": "Standard"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Child Style Class",
-                    "field": "childStyleClass",
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Child Layout Class",
-                    "field": "childLayoutClass",
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Child Label Class",
-                    "field": "childLabelClass",
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  }
-                ],
                 "renderOptions": {
                   "type": "Standard"
                 }
@@ -516,6 +390,12 @@
                   "type": "Standard",
                   "hideTitle": true
                 }
+              },
+              {
+                "type": "Data",
+                "title": "Data Group Options",
+                "childRefId": "GroupOptions",
+                "field": "groupOptions"
               }
             ],
             "hideTitle": true,
@@ -525,85 +405,11 @@
           },
           {
             "type": "Data",
-            "title": "Default value",
-            "field": "defaultValue",
-            "renderOptions": {
-              "type": "NullToggle"
-            },
-            "labelClass": ""
-          },
-          {
-            "type": "Data",
-            "title": "Default Value",
-            "field": "defaultValue",
-            "renderOptions": {
-              "type": "Standard"
-            },
-            "hideTitle": true
-          },
-          {
-            "type": "Data",
-            "title": "Display Data",
-            "field": "displayData",
-            "children": [
-              {
-                "type": "Data",
-                "title": "Format",
-                "field": "type",
-                "required": true,
-                "renderOptions": {
-                  "type": "Radio"
-                }
-              },
-              {
-                "type": "Data",
-                "title": "Icon Class",
-                "field": "iconClass",
-                "required": true,
-                "renderOptions": {
-                  "type": "Standard"
-                }
-              },
-              {
-                "type": "Data",
-                "title": "Text",
-                "field": "text",
-                "required": true,
-                "renderOptions": {
-                  "type": "Textfield",
-                  "multiline": true
-                }
-              },
-              {
-                "type": "Data",
-                "title": "Html",
-                "field": "html",
-                "required": true,
-                "renderOptions": {
-                  "type": "HtmlEditor"
-                }
-              },
-              {
-                "type": "Data",
-                "title": "Custom Id",
-                "field": "customId",
-                "renderOptions": {
-                  "type": "Standard"
-                }
-              }
-            ],
-            "renderOptions": {
-              "type": "Standard"
-            },
-            "hideTitle": true
-          },
-          {
-            "type": "Data",
             "title": "Group Options",
             "children": [
               {
                 "type": "Data",
-                "title": "Renderer",
+                "title": "Type",
                 "field": "type",
                 "renderOptions": {
                   "type": "Radio"
@@ -698,15 +504,64 @@
             "hideTitle": true,
             "renderOptions": {
               "type": "Standard"
-            }
+            },
+            "id": "GroupOptions"
           },
           {
             "type": "Data",
-            "title": "Compound Field (deprecated)",
-            "field": "compoundField",
+            "title": "Display Data",
+            "field": "displayData",
+            "children": [
+              {
+                "type": "Data",
+                "title": "Format",
+                "field": "type",
+                "required": true,
+                "renderOptions": {
+                  "type": "Radio"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Icon Class",
+                "field": "iconClass",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Text",
+                "field": "text",
+                "required": true,
+                "renderOptions": {
+                  "type": "Textfield",
+                  "multiline": true
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Html",
+                "field": "html",
+                "required": true,
+                "renderOptions": {
+                  "type": "HtmlEditor"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Custom Id",
+                "field": "customId",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              }
+            ],
             "renderOptions": {
               "type": "Standard"
-            }
+            },
+            "hideTitle": true
           }
         ],
         "groupOptions": {
@@ -835,6 +690,30 @@
         "type": "Group",
         "title": "Advanced",
         "children": [
+          {
+            "type": "Data",
+            "title": "Compound Field (deprecated)",
+            "field": "compoundField",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Id",
+            "field": "id",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Child Ref Id",
+            "field": "childRefId",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
           {
             "type": "Data",
             "title": "Dont Clear Hidden",

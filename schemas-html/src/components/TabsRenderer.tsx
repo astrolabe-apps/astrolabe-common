@@ -1,6 +1,7 @@
 import {
   controlTitle,
   createGroupRenderer,
+  FormNode,
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
@@ -29,7 +30,7 @@ export function createTabsRenderer(options: TabsRendererOptions = {}) {
 }
 
 export function TabsGroupRenderer({
-  childDefinitions,
+  formNode,
   className,
   options,
   renderChild,
@@ -45,39 +46,40 @@ export function TabsGroupRenderer({
     contentClass,
   } = options;
   const currentTab = tabIndex.value;
-  const actualDefinitions = designMode
-    ? childDefinitions.map((x) => [x])
-    : [childDefinitions];
-  return (
-    <>
-      {actualDefinitions.map((tabs, i) => (
-        <div key={i} className={rendererClass(className, options.className)}>
-          <ul className={rendererClass(null, tabListClass)}>
-            {tabs.map((x, i) => (
-              <li
-                key={i}
-                className={rendererClass(null, tabClass)}
-                onClick={() => (tabIndex.value = i)}
-              >
-                <span
-                  className={rendererClass(
-                    null,
-                    clsx(
-                      labelClass,
-                      i == currentTab ? activeClass : inactiveClass,
-                    ),
-                  )}
-                >
-                  {x.title ? x.title : "<untitled>"}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <div className={rendererClass(null, contentClass)}>
-            {renderChild(currentTab, tabs[currentTab])}
-          </div>
-        </div>
-      ))}
-    </>
+  return designMode ? (
+    <>{formNode.getChildNodes().map((x, i) => renderTabs([x], i))}</>
+  ) : (
+    renderTabs(formNode.getChildNodes(), 0)
   );
+
+  function renderTabs(tabs: FormNode[], key: number) {
+    return (
+      <div key={key} className={rendererClass(className, options.className)}>
+        <ul className={rendererClass(null, tabListClass)}>
+          {tabs.map((x, i) => (
+            <li
+              key={i}
+              className={rendererClass(null, tabClass)}
+              onClick={() => (tabIndex.value = i)}
+            >
+              <span
+                className={rendererClass(
+                  null,
+                  clsx(
+                    labelClass,
+                    i == currentTab ? activeClass : inactiveClass,
+                  ),
+                )}
+              >
+                {x.definition.title ? x.definition.title : "<untitled>"}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <div className={rendererClass(null, contentClass)}>
+          {renderChild(currentTab, tabs[currentTab])}
+        </div>
+      </div>
+    );
+  }
 }

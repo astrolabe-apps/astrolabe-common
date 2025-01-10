@@ -184,7 +184,7 @@ export default function Editor() {
     convertStringParam(
       (x) => x,
       (x) => x,
-      "ControlDefinitionSchema",
+      "EditorControls",
     ),
   );
   const StdFormRenderer = useMemo(

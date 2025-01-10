@@ -73,7 +73,7 @@ export function createDefaultGroupRenderer(
   }
 
   function render(props: GroupRendererProps, renderers: FormRenderer) {
-    const { renderChild, renderOptions, childDefinitions } = props;
+    const { renderChild, renderOptions, formNode } = props;
     if (isTabsRenderer(renderOptions))
       return tabsRenderer.render(props, renderers);
     if (isSelectChildRenderer(renderOptions) && !props.designMode) {
@@ -93,7 +93,7 @@ export function createDefaultGroupRenderer(
         className={rendererClass(props.className, clsx(className, gcn))}
         style={style}
       >
-        {childDefinitions?.map((c, i) => renderChild(i, c))}
+        {formNode.getChildNodes().map((c, i) => renderChild(i, c))}
       </div>
     );
   }
@@ -103,7 +103,7 @@ export function createDefaultGroupRenderer(
 
 type SelectChildProps = Pick<
   GroupRendererProps,
-  "useEvalExpression" | "dataContext" | "childDefinitions" | "renderChild"
+  "useEvalExpression" | "dataContext" | "formNode" | "renderChild"
 > & {
   renderOptions: SelectChildRenderer;
 };
@@ -116,12 +116,13 @@ function SelectChildGroupRenderer(props: SelectChildProps) {
     (p: SelectChildProps) => {
       const ctrl = dynHook.runHook(p.dataContext, dynHook.state);
       const childIndex = ctrl?.value;
+      const childDefinitions = p.formNode.getChildNodes();
       return (
         <div>
           {typeof childIndex === "number" &&
-            childIndex < p.childDefinitions.length &&
+            childIndex < childDefinitions.length &&
             childIndex >= 0 &&
-            p.renderChild(childIndex, p.childDefinitions[childIndex])}
+            p.renderChild(childIndex, childDefinitions[childIndex])}
         </div>
       );
     },

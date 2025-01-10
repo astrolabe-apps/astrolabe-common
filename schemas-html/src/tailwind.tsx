@@ -17,7 +17,7 @@ export const defaultTailwindTheme = {
     gridClassName: "gap-x-2 gap-y-4",
     flexClassName: "gap-2",
     tabs: {
-      className: "border-b border-gray-200 dark:border-gray-700",
+      className: "",
       tabListClass:
         "flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200 dark:border-gray-700 dark:text-gray-400",
       tabClass: "me-2",
@@ -27,8 +27,7 @@ export const defaultTailwindTheme = {
         "border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300",
       activeClass:
         "text-blue-600 border-blue-600 rounded-t-lg active dark:text-blue-500 dark:border-blue-500",
-      contentClass:
-        "my-2"
+      contentClass: "my-2",
     },
   },
   action: {

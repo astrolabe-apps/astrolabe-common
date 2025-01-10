@@ -939,6 +939,7 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["Group"],
     notNullable: true,
     displayName: "Group Options",
+    tags: ["_NoControl"],
   }),
   emptyText: makeScalarField({
     type: FieldType.String,
@@ -1103,6 +1104,8 @@ export function toDisplayDataForm(v: DisplayData): DisplayDataForm {
 export interface ControlDefinitionForm {
   type: string;
   title: string | null;
+  id: string | null;
+  childRefId: string | null;
   dynamic: DynamicPropertyForm[] | null;
   adornments: ControlAdornmentForm[] | null;
   styleClass: string | null;
@@ -1154,6 +1157,14 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   title: makeScalarField({
     type: FieldType.String,
     displayName: "Title",
+  }),
+  id: makeScalarField({
+    type: FieldType.String,
+    displayName: "Id",
+  }),
+  childRefId: makeScalarField({
+    type: FieldType.String,
+    displayName: "Child Ref Id",
   }),
   dynamic: makeCompoundField({
     children: DynamicPropertySchema,

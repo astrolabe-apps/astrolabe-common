@@ -22,6 +22,7 @@ import {
   DynamicPropertyType,
   elementValueForField,
   fieldPathForDefinition,
+  FormNode,
   FormRenderer,
   getDisplayOnlyOptions,
   getGroupClassOverrides,
@@ -41,8 +42,8 @@ import { ControlDragState, controlDropData, DragData, DropData } from "./util";
 import { ControlNode, SelectedControlNode } from "./types";
 
 export interface FormControlPreviewProps {
-  definition: ControlDefinition;
-  parent?: ControlDefinition;
+  node: FormNode;
+  parent?: FormNode;
   dropIndex: number;
   noDrop?: boolean;
   parentNode: SchemaNode;
@@ -85,7 +86,7 @@ function usePreviewContext() {
 
 export function FormControlPreview(props: FormControlPreviewProps) {
   const {
-    definition,
+    node,
     parent,
     elementIndex,
     parentNode,
@@ -98,6 +99,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     layoutClass,
     displayOnly: dOnly,
   } = props;
+  const definition = node.definition;
   const { selected, dropSuccess, renderer, hideFields } = usePreviewContext();
   const item = unsafeRestoreControl(definition) as
     | Control<ControlDefinitionForm>
@@ -166,12 +168,13 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     definition,
     renderer,
     elementIndex,
-    renderChild: (k, def, c) => {
+    formNode: node,
+    renderChild: (k, child, c) => {
       return (
         <FormControlPreview
-          key={unsafeRestoreControl(def)?.uniqueId ?? k}
-          definition={def}
-          parent={definition}
+          key={unsafeRestoreControl(child.definition)?.uniqueId ?? k}
+          node={child}
+          parent={node}
           dropIndex={0}
           {...groupClasses}
           {...c}

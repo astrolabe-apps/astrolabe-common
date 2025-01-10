@@ -120,11 +120,9 @@ export function updateElements<V>(
       const xc = x as InternalControl<V>;
       xc.updateParentLink(c, i);
     });
-    if (newElems.length < oldElems.length) {
-      oldElems.slice(newElems.length).forEach((x) => {
-        if (!newElems.includes(x)) x.updateParentLink(c, undefined);
-      });
-    }
+    oldElems.forEach((x) => {
+      if (!newElems.includes(x)) x.updateParentLink(c, undefined);
+    });
     arrayLogic._elems = newElems as unknown as InternalControl[];
     c._flags &= ~ControlFlags.ChildInvalid;
     c.setValueImpl(newElems.map((x) => x.current.value));

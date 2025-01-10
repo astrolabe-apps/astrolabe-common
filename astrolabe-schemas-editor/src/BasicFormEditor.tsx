@@ -10,7 +10,6 @@ import {
   groupedChanges,
   RenderArrayElements,
   RenderControl,
-  RenderElements,
   RenderOptional,
   trackedValue,
   useComputed,
@@ -33,6 +32,7 @@ import {
   ControlDefinitionExtension,
   ControlDefinitionType,
   ControlRenderOptions,
+  createFormLookup,
   FormRenderer,
   getAllReferencedClasses,
   GroupedControlsDefinition,
@@ -112,6 +112,7 @@ export function BasicFormEditor<A extends string>({
   extraPreviewControls,
 }: BasicFormEditorProps<A>): ReactElement {
   const controls = useControl<ControlDefinitionForm[]>([]);
+  const treeLookup = createFormLookup({ "": trackedValue(controls) });
   const baseSchema = useControl<string>();
   const treeDrag = useControl();
   const selected = useControl<SelectedControlNode>();
@@ -248,14 +249,14 @@ export function BasicFormEditor<A extends string>({
                   />
                 ) : (
                   <div className={controlsClass}>
-                    <RenderElements
+                    <RenderArrayElements
                       key={formType}
-                      control={controls}
+                      array={treeLookup.getForm("")!.rootNode.getChildNodes()}
                       children={(c, i) => (
                         <div className={rootControlClass}>
                           <FormControlPreview
                             keyPrefix={formType}
-                            definition={trackedValue(c)}
+                            node={c}
                             parentNode={rootSchema}
                             dropIndex={i}
                           />

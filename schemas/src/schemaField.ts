@@ -238,6 +238,7 @@ export interface SchemaTreeLookup<A = string> {
 }
 
 export interface SchemaNode extends SchemaTreeLookup {
+  id: string;
   field: SchemaField;
   getChildNode(field: string): SchemaNode | undefined;
   getChildNodes(withParent?: SchemaNode): SchemaNode[];
@@ -245,6 +246,7 @@ export interface SchemaNode extends SchemaTreeLookup {
 }
 
 export interface SchemaDataNode {
+  id: string;
   schema: SchemaNode;
   elementIndex?: number;
   control?: Control<unknown>;
@@ -276,6 +278,7 @@ function nodeForSchema(
   parent: SchemaNode | undefined,
 ): SchemaNode {
   const node = {
+    id: parent ? parent.id + "/" + field.field : field.field,
     field,
     getSchema: lookup.getSchema,
     parent,
@@ -327,7 +330,11 @@ export function makeSchemaDataNode(
   parent?: SchemaDataNode,
   elementIndex?: number,
 ): SchemaDataNode {
+  const indexId = typeof elementIndex === "number" ? "/" + elementIndex : "";
   const dataNode = {
+    id:
+      (parent ? parent.id + "/" + schema.field.field : schema.field.field) +
+      indexId,
     schema,
     control,
     parent,

@@ -50,6 +50,13 @@ export function FormControlTree({
 }: FormControlTreeProps) {
   const { ref, width, height } = useResizeObserver();
 
+  const treeNodes = controls.elements.map((x) => ({
+    id: x.uniqueId.toString(),
+    children: makeChildren(x, rootSchema),
+    control: x,
+    schema: rootSchema,
+  }));
+
   const doMove: MoveHandler<ControlNode> = (props) => {
     groupedChanges(() => {
       const parentChildren =
@@ -99,12 +106,7 @@ export function FormControlTree({
             }
           }
         }}
-        data={controls.elements.map((x) => ({
-          id: x.uniqueId.toString(),
-          children: makeChildren(x, rootSchema),
-          control: x,
-          schema: rootSchema,
-        }))}
+        data={treeNodes}
         selection={selected.value?.control.uniqueId.toString()}
         children={ControlNodeRenderer}
         onCreate={(props) => {

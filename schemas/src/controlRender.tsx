@@ -16,6 +16,7 @@ import {
   trackedValue,
   useCalculatedControl,
   useComponentTracking,
+  useComputed,
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
@@ -40,6 +41,8 @@ import {
   ControlDataContext,
   FormContextData,
   lookupDataNode,
+  FormNode,
+  createFormLookup,
 } from "./controlDefinition";
 import {
   applyLengthRestrictions,
@@ -331,7 +334,7 @@ export type ChildVisibilityFunc = (
   dontOverride?: boolean,
 ) => EvalExpressionHook<boolean>;
 export interface ParentRendererProps {
-  childDefinitions: ControlDefinition[];
+  formNode: FormNode;
   renderChild: ChildRenderer;
   className?: string;
   style?: React.CSSProperties;
@@ -384,6 +387,7 @@ export interface FormContextOptions {
 }
 
 export interface DataControlProps {
+  formNode: FormNode;
   definition: DataControlDefinition;
   dataContext: ControlDataContext;
   control: Control<any>;
@@ -449,11 +453,17 @@ export function useControlRenderer(
   );
 }
 export function useControlRendererComponent(
-  definition: ControlDefinition,
+  formNode: ControlDefinition | FormNode,
   renderer: FormRenderer,
   options: ControlRenderOptions = {},
   parentDataNode: SchemaDataNode,
 ): FC<{}> {
+  const definition =
+    formNode instanceof FormNode ? formNode.definition : formNode;
+  const realFormNode =
+    formNode instanceof FormNode
+      ? formNode
+      : createFormLookup({ "": [definition] }).getForm("")!.rootNode;
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
   const elementIndex = options.elementIndex;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
@@ -465,6 +475,7 @@ export function useControlRendererComponent(
   } else {
     dataNode = lookupDataNode(definition, parentDataNode);
   }
+  // console.log(parentDataNode.id, dataNode?.id, realFormNode.id);
   const useValidation = useMakeValidationHook(
     definition,
     options.useValidationHook,
@@ -585,7 +596,7 @@ export function useControlRendererComponent(
         },
         true,
       );
-      const myOptionsControl = useCalculatedControl<FormContextOptions>(() => ({
+      const myOptionsControl = useComputed<FormContextOptions>(() => ({
         hidden: options.hidden || !visibility.fields?.showing.value,
         readonly: options.readonly || readonlyControl.value,
         disabled: options.disabled || disabledControl.value,
@@ -623,6 +634,7 @@ export function useControlRendererComponent(
           }),
         ) ?? [];
       const labelAndChildren = renderControlLayout({
+        formNode: realFormNode,
         definition: c,
         renderer,
         renderChild: (k, child, options) => {
@@ -726,7 +738,7 @@ export function NewControlRenderer({
   options,
   parentDataNode,
 }: {
-  definition: ControlDefinition;
+  definition: ControlDefinition | FormNode;
   renderer: FormRenderer;
   options?: ControlRenderOptions;
   parentDataNode: SchemaDataNode;
@@ -761,7 +773,6 @@ export function defaultDataProps({
   return {
     dataNode,
     definition,
-    childDefinitions: definition.children ?? [],
     control,
     field,
     id: "c" + control.uniqueId,
@@ -801,12 +812,13 @@ export interface ChildRendererOptions {
 
 export type ChildRenderer = (
   k: Key,
-  child: ControlDefinition,
+  child: FormNode,
   options?: ChildRendererOptions,
 ) => ReactNode;
 
 export interface RenderControlProps {
   definition: ControlDefinition;
+  formNode: FormNode;
   renderer: FormRenderer;
   renderChild: ChildRenderer;
   createDataProps: CreateDataProps;
@@ -850,6 +862,7 @@ export function renderControlLayout(
     useEvalExpression,
     labelClass,
     styleClass,
+    formNode,
   } = props;
 
   if (isDataControlDefinition(c)) {
@@ -867,7 +880,7 @@ export function renderControlLayout(
 
     return {
       processLayout: renderer.renderGroup({
-        childDefinitions: c.children ?? [],
+        formNode,
         definition: c,
         renderChild,
         useEvalExpression,
@@ -1125,7 +1138,7 @@ export function applyArrayLengthRestrictions(
 
 export function fieldOptionAdornment(p: DataRendererProps) {
   return (o: FieldOption, i: number, selected: boolean) => (
-    <RenderArrayElements array={p.childDefinitions}>
+    <RenderArrayElements array={p.formNode.getChildNodes()}>
       {(cd, i) =>
         p.renderChild(i, cd, {
           parentDataNode: p.dataContext.parentNode,
