@@ -387,16 +387,7 @@
               "type": "Standard"
             },
             "id": "RenderOptions",
-            "childRefId": "",
-            "adornments": [
-              {
-                "type": "ColumnOptions",
-                "renderOptions": {
-                  "type": "Radio"
-                },
-                "visible": {}
-              }
-            ]
+            "childRefId": ""
           },
           {
             "type": "Data",
