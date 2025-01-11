@@ -95,6 +95,8 @@ public static class SchemaTags
     public const string NestedSchemaField = "_NestedSchemaField";
     public const string NoControl = "_NoControl";
     public const string ValuesOf = "_ValuesOf:";
+    public const string ControlGroup = "_ControlGroup:";
+    public const string ControlRef = "_ControlRef:";
     public const string TableList = "_TableList";
     public const string ThemeList = "_ThemeList";
     public const string DefaultValue = "_DefaultValue";

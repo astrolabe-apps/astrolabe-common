@@ -27,8 +27,8 @@ import {
   getDisplayOnlyOptions,
   getGroupClassOverrides,
   isControlDisplayOnly,
-  isDataControlDefinition,
-  isGroupControlsDefinition,
+  isDataControl,
+  isGroupControl,
   makeHook,
   makeSchemaDataNode,
   renderControlLayout,
@@ -36,6 +36,7 @@ import {
   schemaForFieldPath,
   SchemaInterface,
   SchemaNode,
+  textDisplayControl,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import { ControlDragState, controlDropData, DragData, DropData } from "./util";
@@ -123,9 +124,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
 
   const childNode =
     path && elementIndex == null ? schemaForFieldPath(path, parentNode) : null;
-  const dataDefinition = isDataControlDefinition(definition)
-    ? definition
-    : undefined;
+  const dataDefinition = isDataControl(definition) ? definition : undefined;
   const isRequired = !!dataDefinition?.required;
   const displayOptions = getDisplayOnlyOptions(definition);
   const field = childNode?.field;
@@ -168,7 +167,11 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     definition,
     renderer,
     elementIndex,
-    formNode: node,
+    formNode: node.definition.childRefId
+      ? node.withOverrideChildren([
+          textDisplayControl("Reference:" + node.definition.childRefId),
+        ])
+      : node,
     renderChild: (k, child, c) => {
       return (
         <FormControlPreview
@@ -200,9 +203,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,
     "onClick" | "onClickCapture" | "onMouseDownCapture"
-  > = isGroupControlsDefinition(definition) ||
-  (isDataControlDefinition(definition) &&
-    (definition.children?.length ?? 0) > 0)
+  > = isGroupControl(definition) ||
+  (isDataControl(definition) && (definition.children?.length ?? 0) > 0)
     ? {
         onClick: (e) => (selected.value = asSelection),
       }
@@ -268,9 +270,9 @@ function EditorDetails({
   );
 
   const fieldName = !arrayElement
-    ? isDataControlDefinition(control)
+    ? isDataControl(control)
       ? control.field
-      : isGroupControlsDefinition(control)
+      : isGroupControl(control)
         ? control.compoundField
         : null
     : null;

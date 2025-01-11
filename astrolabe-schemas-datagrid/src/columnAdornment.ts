@@ -7,8 +7,10 @@ import {
   CustomRenderOptions,
   DataControlDefinition,
   EntityExpression,
-  isDataControlDefinition,
+  isDataControl,
+  makeParamTag,
   RenderOptions,
+  SchemaTags,
   stringField,
 } from "@react-typed-forms/schemas";
 import { ColumnHeader } from "@astroapps/datagrid";
@@ -58,9 +60,7 @@ export function getColumnHeaderFromOptions(
   };
 
   function customField(custom: string | undefined) {
-    return !custom && isDataControlDefinition(definition)
-      ? definition.field
-      : custom;
+    return !custom && isDataControl(definition) ? definition.field : custom;
   }
 }
 
@@ -74,6 +74,7 @@ export const ColumnOptionsFields = buildSchema<ColumnOptions>({
   layoutClass: stringField("Layout Class"),
   renderOptions: compoundField("Render Options", [], {
     schemaRef: "RenderOptions",
+    tags: [makeParamTag(SchemaTags.ControlRef, "RenderOptions")],
   }),
   enabledFilter: boolField("Enable filter"),
   enabledSort: boolField("Enable sort"),
@@ -81,6 +82,7 @@ export const ColumnOptionsFields = buildSchema<ColumnOptions>({
   sortField: stringField("Custom sort field"),
   visible: compoundField("Column visibility", [], {
     schemaRef: "EntityExpression",
+    tags: [makeParamTag(SchemaTags.ControlRef, "Expression")],
   }),
 });
 

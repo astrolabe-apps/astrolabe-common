@@ -606,6 +606,7 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
     onlyForTypes: ["SetField"],
     notNullable: true,
     displayName: "Expression",
+    tags: ["_ControlGroup:Expression"],
   }),
 });
 
@@ -716,6 +717,7 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     onlyForTypes: ["SelectChild"],
     notNullable: true,
     displayName: "Child Index Expression",
+    tags: ["_ControlRef:Expression"],
   }),
 });
 
@@ -907,6 +909,7 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     treeChildren: true,
     onlyForTypes: ["Array"],
     displayName: "Child Options",
+    tags: ["_ControlRef:RenderOptions"],
   }),
   entryWrapperClass: makeScalarField({
     type: FieldType.String,

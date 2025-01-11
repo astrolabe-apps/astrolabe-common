@@ -371,31 +371,6 @@ export interface ActionControlDefinition extends ControlDefinition {
   actionId: string;
   actionData?: string | null;
 }
-
-export function isDataControlDefinition(
-  x: ControlDefinition,
-): x is DataControlDefinition {
-  return x.type === ControlDefinitionType.Data;
-}
-
-export function isGroupControlsDefinition(
-  x: ControlDefinition,
-): x is GroupedControlsDefinition {
-  return x.type === ControlDefinitionType.Group;
-}
-
-export function isDisplayControlsDefinition(
-  x: ControlDefinition,
-): x is DisplayControlDefinition {
-  return x.type === ControlDefinitionType.Display;
-}
-
-export function isActionControlsDefinition(
-  x: ControlDefinition,
-): x is ActionControlDefinition {
-  return x.type === ControlDefinitionType.Action;
-}
-
 export interface ControlVisitor<A> {
   data(d: DataControlDefinition): A;
   group(d: GroupedControlsDefinition): A;
@@ -481,6 +456,18 @@ export function isGroupControl(
   return c.type === ControlDefinitionType.Group;
 }
 
+export function isActionControl(
+  c: ControlDefinition,
+): c is ActionControlDefinition {
+  return c.type === ControlDefinitionType.Action;
+}
+
+export function isDisplayControl(
+  c: ControlDefinition,
+): c is DisplayControlDefinition {
+  return c.type === ControlDefinitionType.Display;
+}
+
 export type ControlActionHandler = (
   actionId: string,
   actionData: any,
@@ -507,12 +494,14 @@ export class FormNode {
     public definition: ControlDefinition,
     public tree: FormTree,
     public parent?: FormNode,
+    public overrideChildren?: FormNode[],
   ) {
     this.id = id;
     this.definition = definition;
   }
 
   getChildNodes(): FormNode[] {
+    if (this.overrideChildren) return this.overrideChildren;
     let children = this.definition.children;
     if (this.definition.childRefId) {
       const ref = this.tree.controlMap[this.definition.childRefId];
@@ -522,6 +511,16 @@ export class FormNode {
       children?.map(
         (x, i) => new FormNode(this.id + "/" + i, x, this.tree, this),
       ) ?? []
+    );
+  }
+
+  withOverrideChildren(children: ControlDefinition[]) {
+    return new FormNode(
+      this.id,
+      this.definition,
+      this.tree,
+      this.parent,
+      children.map((x) => nodeForControl(x, this.tree)),
     );
   }
 }
@@ -594,9 +593,9 @@ export function createFormLookup<A extends Record<string, ControlDefinition[]>>(
 export function fieldPathForDefinition(
   c: ControlDefinition,
 ): string[] | undefined {
-  const fieldName = isGroupControlsDefinition(c)
+  const fieldName = isGroupControl(c)
     ? c.compoundField
-    : isDataControlDefinition(c)
+    : isDataControl(c)
       ? c.field
       : undefined;
   return fieldName?.split("/");
@@ -696,7 +695,7 @@ export function visitControlData<A>(
     const children = def.children;
     const childNode = lookupDataNode(def, ctx);
     if (!childNode) return visitControlDataArray(children, ctx, cb);
-    const dataControl = isDataControlDefinition(def) ? def : undefined;
+    const dataControl = isDataControl(def) ? def : undefined;
     const result = dataControl ? cb(dataControl, childNode) : undefined;
     if (result !== undefined) return result;
     const fieldNode = childNode.schema;

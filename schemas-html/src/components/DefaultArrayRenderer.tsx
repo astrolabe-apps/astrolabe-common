@@ -71,6 +71,7 @@ export function DataArrayRenderer({
     style,
     useChildVisibility,
     dataContext,
+    formNode,
   } = dataProps;
   const { addText, noAdd, noRemove, noReorder, removeText } = mergeObjects(
     isArrayRenderer(renderOptions) ? renderOptions : ({} as ArrayRenderOptions),
@@ -95,6 +96,7 @@ export function DataArrayRenderer({
           renderOptions: childOptions ?? { type: DataRenderType.Standard },
           hideTitle: true,
         } as DataControlDefinition),
+    formNode.tree,
   );
 
   const visibilities = (definition.children ?? []).map(

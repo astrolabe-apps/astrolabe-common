@@ -241,7 +241,7 @@ export interface SchemaNode extends SchemaTreeLookup {
   id: string;
   field: SchemaField;
   getChildNode(field: string): SchemaNode | undefined;
-  getChildNodes(withParent?: SchemaNode): SchemaNode[];
+  getChildNodes(noRecurse?: boolean, withParent?: SchemaNode): SchemaNode[];
   parent?: SchemaNode;
 }
 
@@ -288,17 +288,25 @@ function nodeForSchema(
   return node;
 
   function getChildNode(fieldName: string) {
-    if (isCompoundField(field) && !field.schemaRef) {
+    if (isCompoundField(field) && !field.schemaRef && !field.treeChildren) {
       const childField = field.children.find((x) => x.field === fieldName);
       return childField ? nodeForSchema(childField, lookup, node) : undefined;
     }
-    return getChildNodes(node).find((x) => x.field.field === fieldName);
+    return getChildNodes(false, node).find((x) => x.field.field === fieldName);
   }
 
-  function getChildNodes(withParent?: SchemaNode): SchemaNode[] {
+  function getChildNodes(
+    noRecurse?: boolean,
+    withParent?: SchemaNode,
+  ): SchemaNode[] {
     if (isCompoundField(field)) {
+      if (field.treeChildren) {
+        return noRecurse
+          ? []
+          : parent!.getChildNodes(false, withParent ?? node);
+      }
       const otherRef = field.schemaRef && lookup.getSchema(field.schemaRef);
-      if (otherRef) return otherRef.getChildNodes(withParent ?? node);
+      if (otherRef) return otherRef.getChildNodes(false, withParent ?? node);
       return field.children.map((x) =>
         nodeForSchema(x, lookup, withParent ?? node),
       );
@@ -470,4 +478,49 @@ export function getSchemaNodePath(node: SchemaNode) {
 
 export function isCompoundNode(node: SchemaNode) {
   return isCompoundField(node.field);
+}
+
+/**
+ * Returns the relative path from a parent node to a child node.
+ * @param parent
+ * @param child
+ */
+export function relativePath(parent: SchemaNode, child: SchemaNode): string {
+  // return the path from child to parent
+  if (parent.id === child.id) return "";
+
+  const parentPath = getSchemaNodePath(parent);
+  const childPath = getSchemaNodePath(child);
+
+  let i = 0;
+  while (
+    i < parentPath.length &&
+    i < childPath.length &&
+    parentPath[i] === childPath[i]
+  ) {
+    i++;
+  }
+
+  const upLevels = parentPath.length - i;
+  const downPath = childPath.slice(i).join("/");
+
+  return "../".repeat(upLevels) + downPath;
+}
+
+export enum SchemaTags {
+  NoControl = "_NoControl",
+  HtmlEditor = "_HtmlEditor",
+  ControlGroup = "_ControlGroup:",
+  ControlRef = "_ControlRef:",
+}
+
+export function getTagParam(
+  field: SchemaField,
+  tag: string,
+): string | undefined {
+  return field.tags?.find((x) => x.startsWith(tag))?.substring(tag.length);
+}
+
+export function makeParamTag(tag: string, value: string): string {
+  return `${tag}${value}`;
 }

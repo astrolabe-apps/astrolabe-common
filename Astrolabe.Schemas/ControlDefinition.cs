@@ -174,7 +174,7 @@ public record ArrayRenderOptions(
     bool? NoAdd,
     bool? NoRemove,
     bool? NoReorder,
-    RenderOptions? ChildOptions
+    [property: SchemaTag(SchemaTags.ControlRef + "RenderOptions")] RenderOptions? ChildOptions
 ) : RenderOptions(DataRenderType.Array.ToString());
 
 public record RadioButtonRenderOptions(
@@ -324,8 +324,10 @@ public record GridRenderer(int? Columns) : GroupRenderOptions(GroupRenderType.Gr
 public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)] object Value)
     : GroupRenderOptions(GroupRenderType.GroupElement.ToString());
 
-public record SelectChildRenderer(EntityExpression ChildIndexExpression)
-    : GroupRenderOptions(GroupRenderType.SelectChild.ToString());
+public record SelectChildRenderer(
+    [property: SchemaTag(SchemaTags.ControlRef + "Expression")]
+        EntityExpression ChildIndexExpression
+) : GroupRenderOptions(GroupRenderType.SelectChild.ToString());
 
 [JsonString]
 public enum AdornmentPlacement
@@ -384,5 +386,5 @@ public record HelpTextAdornment(string HelpText, AdornmentPlacement? Placement)
 public record SetFieldAdornment(
     bool? DefaultOnly,
     [property: SchemaTag(SchemaTags.SchemaField)] string Field,
-    EntityExpression Expression
+    [property: SchemaTag(SchemaTags.ControlGroup + "Expression")] EntityExpression Expression
 ) : ControlAdornment(ControlAdornmentType.SetField.ToString());

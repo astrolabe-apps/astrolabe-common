@@ -58,7 +58,7 @@ export function FormSchemaTree({
   );
 
   function makeChildNodes(n: SchemaNode): SchemaNodeCtx[] {
-    return n.getChildNodes().map((x) => ({
+    return n.getChildNodes(true).map((x) => ({
       schema: x,
       selectedControl,
       id: getNodeId(x),

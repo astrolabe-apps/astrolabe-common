@@ -122,7 +122,7 @@ export function createDataGridRenderer(
         definition,
         renderChild,
         renderOptions,
-        childDefinitions,
+        formNode,
         field,
         className,
         readonly,
@@ -155,14 +155,15 @@ export function createDataGridRenderer(
             render: (_, ri) =>
               x.rowIndex
                 ? ri + 1
-                : renderChild("c" + i + "_" + ri, def, {
+                : renderChild("c" + i + "_" + ri, formNode, {
                     elementIndex: ri,
                     displayOnly: dataGridOptions.displayOnly,
                   }),
           };
         }) ?? [];
       const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
-        childDefinitions.map((d, i) => {
+        formNode.getChildNodes().map((cn, i) => {
+          const d = cn.definition;
           const colOptions = d.adornments?.find(isColumnAdornment);
           const headerOptions = getColumnHeaderFromOptions(colOptions, d);
 
@@ -179,7 +180,7 @@ export function createDataGridRenderer(
               ) as EvalExpressionHook<boolean>,
             },
             render: (_: Control<any>, rowIndex: number) =>
-              renderChild(i, d, {
+              renderChild(i, cn, {
                 parentDataNode: dataContext.dataNode!.getChildElement(rowIndex),
                 displayOnly: dataGridOptions.displayOnly,
               }),

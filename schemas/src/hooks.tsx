@@ -1,10 +1,10 @@
 import {
   ControlDefinition,
   DynamicPropertyType,
-  isDataControlDefinition,
   ControlDataContext,
   getRootDataNode,
   getJsonPath,
+  isDataControl,
 } from "./controlDefinition";
 import React, { useEffect, useMemo, useRef } from "react";
 import {
@@ -178,7 +178,7 @@ export function useEvalDefaultValueHook(
     (ctx, { definition }) => {
       return useComputed(calcDefault);
       function calcDefault() {
-        const [required, dcv] = isDataControlDefinition(definition)
+        const [required, dcv] = isDataControl(definition)
           ? [definition.required, definition.defaultValue]
           : [false, undefined];
         const field = ctx.dataNode?.schema.field;

@@ -33,10 +33,10 @@ import {
   DisplayDataType,
   DynamicPropertyType,
   GroupRenderOptions,
-  isActionControlsDefinition,
-  isDataControlDefinition,
-  isDisplayControlsDefinition,
-  isGroupControlsDefinition,
+  isActionControl,
+  isDataControl,
+  isDisplayControl,
+  isGroupControl,
   RenderOptions,
   ControlDataContext,
   FormContextData,
@@ -567,8 +567,8 @@ export function useControlRendererComponent(
           visibility.value,
           defaultValueControl.value,
           control?.isNull,
-          isDataControlDefinition(definition) && definition.dontClearHidden,
-          isDataControlDefinition(definition) &&
+          isDataControl(definition) && definition.dontClearHidden,
+          isDataControl(definition) &&
             definition.renderOptions?.type == DataRenderType.NullToggle,
           parentControl.isNull,
           options.hidden,
@@ -865,10 +865,10 @@ export function renderControlLayout(
     formNode,
   } = props;
 
-  if (isDataControlDefinition(c)) {
+  if (isDataControl(c)) {
     return renderData(c);
   }
-  if (isGroupControlsDefinition(c)) {
+  if (isGroupControl(c)) {
     if (c.compoundField) {
       return renderData(
         dataControl(c.compoundField, c.title, {
@@ -899,7 +899,7 @@ export function renderControlLayout(
       },
     };
   }
-  if (isActionControlsDefinition(c)) {
+  if (isActionControl(c)) {
     const actionData = props.actionDataControl?.value ?? c.actionData;
     return {
       children: renderer.renderAction({
@@ -914,7 +914,7 @@ export function renderControlLayout(
       }),
     };
   }
-  if (isDisplayControlsDefinition(c)) {
+  if (isDisplayControl(c)) {
     const data = c.displayData ?? {};
     const displayProps = {
       data,

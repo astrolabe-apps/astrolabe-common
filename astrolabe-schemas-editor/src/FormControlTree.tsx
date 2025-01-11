@@ -182,9 +182,14 @@ function ControlNodeRenderer({
       <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(control.type))} />
       <span className="truncate">
         {control.title}
-        {control.type == ControlDefinitionType.Data
-          ? ` (${control.field})`
-          : ""}
+        {control.type == ControlDefinitionType.Data ? (
+          <span>
+            {" "}
+            <i>({control.field})</i>
+          </span>
+        ) : (
+          ""
+        )}
       </span>
       {canAdd && (
         <i

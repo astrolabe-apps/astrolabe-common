@@ -5,27 +5,29 @@ import {
   DataControlDefinition,
   DataRenderType,
   DisplayOnlyRenderOptions,
+  fieldPathForDefinition,
   GroupRenderOptions,
   isCheckEntryClasses,
   isDataControl,
-  isDataControlDefinition,
   isDataGroupRenderer,
   isDisplayOnlyRenderer,
   isGroupControl,
-  isGroupControlsDefinition,
 } from "./controlDefinition";
-import { MutableRefObject, useRef } from "react";
+import { act, MutableRefObject, useRef } from "react";
 import clsx from "clsx";
 import {
   CompoundField,
   FieldOption,
   findField,
+  getTagParam,
   isCompoundField,
   isCompoundNode,
   isScalarField,
   rootSchemaNode,
   SchemaField,
+  schemaForFieldPath,
   SchemaNode,
+  SchemaTags,
 } from "./schemaField";
 
 /**
@@ -219,15 +221,21 @@ export function hasOptions(o: { options: FieldOption[] | undefined | null }) {
  */
 export function defaultControlForField(sf: SchemaField): DataControlDefinition {
   if (isCompoundField(sf)) {
+    const ref = getTagParam(sf, SchemaTags.ControlRef);
     return {
       type: ControlDefinitionType.Data,
       title: sf.displayName,
       field: sf.field,
       required: sf.required,
-      children: sf.children.map(defaultControlForField),
+      childRefId: ref,
+      children: !ref
+        ? sf.children
+            .filter((x) => !fieldHasTag(x, SchemaTags.NoControl))
+            .map(defaultControlForField)
+        : undefined,
     };
   } else if (isScalarField(sf)) {
-    const htmlEditor = sf.tags?.includes("_HtmlEditor");
+    const htmlEditor = fieldHasTag(sf, SchemaTags.HtmlEditor);
     return {
       type: ControlDefinitionType.Data,
       title: sf.displayName,
@@ -281,13 +289,10 @@ export function findControlsForCompound(
   compound: SchemaNode,
   definition: ControlDefinition,
 ): ControlDefinition[] {
-  if (
-    isDataControlDefinition(definition) &&
-    compound.field.field === definition.field
-  ) {
+  if (isDataControl(definition) && compound.field.field === definition.field) {
     return [definition];
   }
-  if (isGroupControlsDefinition(definition)) {
+  if (isGroupControl(definition)) {
     if (definition.compoundField === compound.field.field) return [definition];
     return (
       definition.children?.flatMap((d) =>
@@ -349,8 +354,8 @@ export function existsInGroups(
   const itself = lookup.groups.find((c) =>
     c.children?.find(
       (x) =>
-        (isDataControlDefinition(x) && x.field === fieldName) ||
-        (isGroupControlsDefinition(x) && x.compoundField === fieldName),
+        (isDataControl(x) && x.field === fieldName) ||
+        (isGroupControl(x) && x.compoundField === fieldName),
     ),
   );
   if (!itself) return [[field, lookup]];
@@ -371,19 +376,10 @@ export function findNonDataGroups(
   controls: ControlDefinition[],
 ): ControlDefinition[] {
   return controls.flatMap((control) =>
-    isGroupControlsDefinition(control) && !control.compoundField
+    isGroupControl(control) && !control.compoundField
       ? [control, ...findNonDataGroups(control.children ?? [])]
       : [],
   );
-}
-
-/**
- * Clones the children of a control definition.
- * @param c - The control definition to clone.
- * @returns The cloned control definition.
- */
-function cloneChildren(c: ControlDefinition): ControlDefinition {
-  return { ...c, children: c.children?.map(cloneChildren) };
 }
 
 /**
@@ -398,6 +394,13 @@ export function addMissingControls(
 ) {
   return addMissingControlsForSchema(rootSchemaNode(fields), controls);
 }
+
+interface ControlAndSchema {
+  control: ControlDefinition;
+  children: ControlAndSchema[];
+  schema?: SchemaNode;
+  parent?: ControlAndSchema;
+}
 /**
  * Adds missing controls to the provided control definitions based on the schema fields.
  * @param schema - The root schema node to use for adding missing controls.
@@ -408,37 +411,89 @@ export function addMissingControlsForSchema(
   schema: SchemaNode,
   controls: ControlDefinition[],
 ) {
-  controls = controls.map(cloneChildren);
+  const controlMap: { [k: string]: ControlAndSchema } = {};
+  const schemaControlMap: { [k: string]: ControlAndSchema[] } = {};
+  const rootControls = controls.map((c) => toControlAndSchema(c, schema));
+  rootControls.forEach(addReferences);
   const fields = schema.getChildNodes();
-  const rootMapping = findCompoundGroups(fields, controls);
-  const rootGroups = findNonDataGroups([
-    {
-      type: ControlDefinitionType.Group,
-      children: controls,
-    },
-  ]);
-  const rootLookup = { children: rootMapping, groups: rootGroups };
-  const missingFields = fields
-    .filter((x) => !fieldHasTag(x.field, "_NoControl"))
-    .flatMap((x) => existsInGroups(x, rootLookup));
-  console.log(missingFields);
-  missingFields.forEach(([f, lookup]) => {
-    const groupToAdd = f.field.tags?.find((x) =>
-      x.startsWith("_ControlGroup:"),
-    );
-    let insertGroup: ControlDefinition | undefined = undefined;
-    if (groupToAdd) {
-      const groupName = groupToAdd.substring(14);
-      insertGroup = lookup.groups.find((x) => x.title === groupName);
+  fields.forEach(addMissing);
+  return rootControls.map(toDefinition);
+
+  function toDefinition(c: ControlAndSchema): ControlDefinition {
+    const children = c.children.length ? c.children.map(toDefinition) : null;
+    return { ...c.control, children };
+  }
+
+  function addMissing(schemaNode: SchemaNode) {
+    if (fieldHasTag(schemaNode.field, SchemaTags.NoControl)) return;
+    const existingControls = schemaControlMap[schemaNode.id];
+    if (!existingControls) {
+      const eligibleParents: string[] = [];
+      let parent = schemaNode.parent;
+      while (parent) {
+        eligibleParents.push(parent.id);
+        if (parent.field.collection) break;
+        parent = parent.parent;
+      }
+      const desiredGroup = getTagParam(
+        schemaNode.field,
+        SchemaTags.ControlGroup,
+      );
+      let parentGroup = desiredGroup ? controlMap[desiredGroup] : undefined;
+      if (!parentGroup && desiredGroup)
+        console.warn("Missing group", desiredGroup);
+      parentGroup ??= schemaControlMap[eligibleParents[0]][0];
+      const newControl = defaultControlForField(schemaNode.field);
+      parentGroup.children.push(
+        toControlAndSchema(newControl, parentGroup.schema!, parentGroup),
+      );
+      return;
     }
-    if (!insertGroup) insertGroup = lookup.groups[0];
-    if (insertGroup) {
-      const newControl = defaultControlForField(f.field);
-      if (insertGroup.children) insertGroup.children.push(newControl);
-      else insertGroup.children = [newControl];
+    schemaNode.getChildNodes(true).forEach(addMissing);
+  }
+
+  function addReferences(c: ControlAndSchema) {
+    c.children.forEach(addReferences);
+    if (c.control.childRefId) {
+      const ref = controlMap[c.control.childRefId];
+      if (ref) {
+        ref.children.forEach((x) =>
+          toControlAndSchema(x.control, c.schema!, c, true),
+        );
+        return;
+      }
+      console.warn("Missing reference", c.control.childRefId);
     }
-  });
-  return controls;
+  }
+  function toControlAndSchema(
+    c: ControlDefinition,
+    parentSchema: SchemaNode,
+    parentNode?: ControlAndSchema,
+    dontRegister?: boolean,
+  ): ControlAndSchema {
+    const controlPath = fieldPathForDefinition(c);
+    let dataSchema = controlPath
+      ? schemaForFieldPath(controlPath, parentSchema)
+      : undefined;
+    if (isGroupControl(c) && dataSchema == null) dataSchema = parentSchema;
+    const entry: ControlAndSchema = {
+      schema: dataSchema,
+      control: c,
+      children: [],
+      parent: parentNode,
+    };
+    entry.children =
+      c.children?.map((x) =>
+        toControlAndSchema(x, dataSchema ?? parentSchema, entry, dontRegister),
+      ) ?? [];
+    if (!dontRegister && c.id) controlMap[c.id] = entry;
+    if (dataSchema) {
+      const schemaId = dataSchema.id;
+      if (!schemaControlMap[schemaId]) schemaControlMap[schemaId] = [];
+      schemaControlMap[schemaId].push(entry);
+    }
+    return entry;
+  }
 }
 
 /**
@@ -478,7 +533,7 @@ export function isControlDisabled(c: ControlDefinition): boolean {
 export function getDisplayOnlyOptions(
   d: ControlDefinition,
 ): DisplayOnlyRenderOptions | undefined {
-  return isDataControlDefinition(d) &&
+  return isDataControl(d) &&
     d.renderOptions &&
     isDisplayOnlyRenderer(d.renderOptions)
     ? d.renderOptions
@@ -558,7 +613,7 @@ export function getAllReferencedClasses(
   );
   const go = getGroupClassOverrides(c);
   const { entryWrapperClass, selectedClass, notSelectedClass } =
-    isDataControlDefinition(c) && isCheckEntryClasses(c.renderOptions)
+    isDataControl(c) && isCheckEntryClasses(c.renderOptions)
       ? c.renderOptions
       : {};
   const tc = clsx(
@@ -756,9 +811,9 @@ export function coerceToString(v: unknown) {
 export function getGroupRendererOptions(
   def: ControlDefinition,
 ): GroupRenderOptions | undefined {
-  return isGroupControlsDefinition(def)
+  return isGroupControl(def)
     ? def.groupOptions
-    : isDataControlDefinition(def) && isDataGroupRenderer(def.renderOptions)
+    : isDataControl(def) && isDataGroupRenderer(def.renderOptions)
       ? def.renderOptions.groupOptions
       : undefined;
 }

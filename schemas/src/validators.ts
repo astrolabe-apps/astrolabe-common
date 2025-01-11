@@ -1,7 +1,7 @@
 import {
   ControlDefinition,
   DataControlDefinition,
-  isDataControlDefinition,
+  isDataControl,
   ControlDataContext,
   getRootDataNode,
   getJsonPath,
@@ -44,7 +44,7 @@ export function useMakeValidationHook(
     ctx: ValidationContext,
   ) => void = useDefaultValidator,
 ): (ctx: ValidationHookContext) => void {
-  const dd = isDataControlDefinition(definition) ? definition : undefined;
+  const dd = isDataControl(definition) ? definition : undefined;
 
   const refData = useUpdatedRef({ dd, useValidatorFor });
   const depString = dd
