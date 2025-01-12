@@ -6,6 +6,11 @@ overrides:
   react-dnd: 16.0.1
   '@react-typed-forms/core': workspace:*
 
+patchedDependencies:
+  '@mhsdesign/jit-browser-tailwindcss@0.4.2':
+    hash: ozxlbmy37ax35fhqexzdkqxfce
+    path: patches/@mhsdesign__jit-browser-tailwindcss@0.4.2.patch
+
 importers:
 
   .:
@@ -104,7 +109,7 @@ importers:
 
   ../../../astrolabe-client-msal:
     specifiers:
-      '@astroapps/client': workspace:^1.1.0
+      '@astroapps/client': workspace:*
       '@azure/msal-browser': ^3.25.0
       '@azure/msal-react': ^2.1.1
       '@react-typed-forms/core': workspace:*
@@ -129,7 +134,7 @@ importers:
 
   ../../../astrolabe-client-nextjs:
     specifiers:
-      '@astroapps/client': workspace:^1.1.0
+      '@astroapps/client': workspace:*
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
@@ -333,7 +338,7 @@ importers:
 
   ../../../astrolabe-schemas-editor:
     specifiers:
-      '@astroapps/client': workspace:^1.0.0
+      '@astroapps/client': workspace:*
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
@@ -361,7 +366,7 @@ importers:
       typescript: ^5.6.2
       use-resize-observer: ~9.1.0
     dependencies:
-      '@mhsdesign/jit-browser-tailwindcss': 0.4.2
+      '@mhsdesign/jit-browser-tailwindcss': 0.4.2_ozxlbmy37ax35fhqexzdkqxfce
       clsx: 2.1.1
       immutability-helper: 3.1.1
       react-arborist: 3.4.0_2ofog7qulf6u2hqhy5xzoh2fvu
@@ -491,7 +496,7 @@ importers:
 
   ../../../astrolabe-ui:
     specifiers:
-      '@astroapps/client': workspace:^1.0.0
+      '@astroapps/client': workspace:*
       '@astroapps/datagrid': workspace:^1.0.6
       '@mui/base': 5.0.0-beta.23
       '@radix-ui/react-accordion': 1.1.2
@@ -554,7 +559,7 @@ importers:
 
   ../../../astrolabe-ui-tree:
     specifiers:
-      '@astroapps/client': workspace:^1.0.0
+      '@astroapps/client': workspace:*
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
@@ -758,7 +763,7 @@ importers:
       '@astroapps/aria-base': workspace:*
       '@astroapps/aria-datepicker': workspace:*
       '@astroapps/client': workspace:*
-      '@astroapps/client-nextjs': workspace:^1.0.0
+      '@astroapps/client-nextjs': workspace:*
       '@astroapps/codemirror-evaluator': workspace:*
       '@astroapps/datagrid': workspace:^1.0.6
       '@astroapps/evaluator': workspace:*
@@ -807,7 +812,7 @@ importers:
       '@astroapps/searchstate': link:../../../../astrolabe-searchstate
       '@astrolabe/ui': link:../../../../astrolabe-ui
       '@lezer/common': 1.2.3
-      '@mhsdesign/jit-browser-tailwindcss': 0.4.2
+      '@mhsdesign/jit-browser-tailwindcss': 0.4.2_ozxlbmy37ax35fhqexzdkqxfce
       '@react-typed-forms/core': link:../../../../core
       '@react-typed-forms/schemas': link:../../../../schemas
       '@react-typed-forms/schemas-html': link:../../../../schemas-html
@@ -837,7 +842,7 @@ importers:
       '@astroapps/aria-base': workspace:*
       '@astroapps/aria-datepicker': workspace:*
       '@astroapps/client': workspace:*
-      '@astroapps/client-nextjs': workspace:^1.0.0
+      '@astroapps/client-nextjs': workspace:*
       '@astroapps/codemirror-evaluator': workspace:*
       '@astroapps/datagrid': workspace:^1.0.6
       '@astroapps/evaluator': workspace:*
@@ -3724,7 +3729,7 @@ packages:
       react: 18.3.1
     dev: true
 
-  /@mhsdesign/jit-browser-tailwindcss/0.4.2:
+  /@mhsdesign/jit-browser-tailwindcss/0.4.2_ozxlbmy37ax35fhqexzdkqxfce:
     resolution: {integrity: sha512-8QdjmP6RKpCS5ZP5GezBx2fMIQQ8qjFqEfkIXXjnr2GtOT8GKBrpPWUJmXn1UEvZ9FyCISdaGue8MkQ8gZLRXw==}
     dependencies:
       color-name: 1.1.4
@@ -3740,6 +3745,7 @@ packages:
     transitivePeerDependencies:
       - ts-node
     dev: false
+    patched: true
 
   /@mui/base/5.0.0-beta.23_vsw25juzkyj7spaf6wjn5upvjq:
     resolution: {integrity: sha512-9L8SQUGAWtd/Qi7Qem26+oSSgpY7f2iQTuvcz/rsGpyZjSomMMO6lwYeQSA0CpWM7+aN7eGoSY/WV6wxJiIxXw==}

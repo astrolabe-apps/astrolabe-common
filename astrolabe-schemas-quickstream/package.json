@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-quickstream",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -30,13 +30,13 @@
     "forms"
   ],
   "peerDependencies": {
-    "@react-typed-forms/core": "^3.6.1",
-    "@react-typed-forms/schemas": "workspace:^13.0.5",
+    "@react-typed-forms/core": "^4.0.0",
+    "@react-typed-forms/schemas": "workspace:^*",
     "react": "^18"
   },
   "devDependencies": {
-    "@react-typed-forms/core": "^3.6.1",
-    "@react-typed-forms/schemas": "workspace:^13.0.5",
+    "@react-typed-forms/core": "workspace:*",
+    "@react-typed-forms/schemas": "workspace:*",
     "react": "^18",
     "@react-typed-forms/transform": "^0.2.0",
     "@types/react": "^18.2.28",

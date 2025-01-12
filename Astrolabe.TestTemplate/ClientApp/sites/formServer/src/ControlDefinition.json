@@ -25,32 +25,6 @@
             }
           },
           {
-            "type": "Data",
-            "title": "Action Id",
-            "field": "actionId",
-            "required": true,
-            "renderOptions": {
-              "type": "Standard"
-            }
-          },
-          {
-            "type": "Data",
-            "title": "Action Data",
-            "field": "actionData",
-            "renderOptions": {
-              "type": "Standard"
-            }
-          },
-          {
-            "type": "Data",
-            "title": "Field",
-            "field": "field",
-            "required": true,
-            "renderOptions": {
-              "type": "Standard"
-            }
-          },
-          {
             "type": "Group",
             "title": "Flags",
             "children": [
@@ -107,6 +81,32 @@
               "type": "Grid",
               "hideTitle": true,
               "columns": 4
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Action Id",
+            "field": "actionId",
+            "required": true,
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Action Data",
+            "field": "actionData",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Field",
+            "field": "field",
+            "required": true,
+            "renderOptions": {
+              "type": "Standard"
             }
           }
         ],

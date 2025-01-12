@@ -19,7 +19,7 @@
 		"@astroapps/client": "workspace:*",
 		"@astroapps/evaluator": "workspace:*",
 		"@lezer/common": "^1.0.0",
-		"@astroapps/client-nextjs": "workspace:^1.0.0",
+		"@astroapps/client-nextjs": "workspace:*",
 		"@astroapps/datagrid": "workspace:^1.0.6",
 		"@astroapps/schemas-datagrid": "workspace:*",
 		"@astroapps/schemas-quickstream": "workspace:*",	

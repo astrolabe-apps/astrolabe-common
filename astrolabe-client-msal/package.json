@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/client-msal",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -30,13 +30,13 @@
     "@azure/msal-react": "^2.1.1"
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^3.6.1",
-    "@astroapps/client": "workspace:^1.1.0",
+    "@react-typed-forms/core": "^4.0.0",
+    "@astroapps/client": "^2.0.0",
     "react": "^18.2.0"
   },
   "devDependencies": {
-    "@react-typed-forms/core": "^3.6.1",
-    "@astroapps/client": "workspace:^1.1.0",
+    "@react-typed-forms/core": "workspace:*",
+    "@astroapps/client": "workspace:*",
     "react": "^18.2.0",
     "@types/react": "^18.2.33",
     "microbundle": "^0.15.1",

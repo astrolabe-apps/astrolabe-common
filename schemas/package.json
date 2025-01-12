@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas",
-  "version": "13.5.3",
+  "version": "14.0.0",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -37,11 +37,11 @@
   },
   "peerDependencies": {
     "react": "^18.2.0",
-    "@react-typed-forms/core": "^3.7.0"
+    "@react-typed-forms/core": "^4.0.0"
   },
   "devDependencies": {
     "react": "^18.2.0",
-    "@react-typed-forms/core": "workspace:^3.7.0",
+    "@react-typed-forms/core": "workspace:*",
     "@react-typed-forms/transform": "^0.2.0",
     "typedoc": "^0.27.2",
     "@types/uuid": "^10.0.0",

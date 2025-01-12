@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas-mui",
-  "version": "8.0.1",
+  "version": "9.0.0",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -34,18 +34,18 @@
     "date-fns": "^2.29.3"
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^3.6.1",
+    "@react-typed-forms/core": "^4.0.0",
     "@react-typed-forms/mui": "^3.0.5",
-    "@react-typed-forms/schemas": "workspace:^13",
+    "@react-typed-forms/schemas": "workspace:^*",
     "react": "^18.2.0",
     "@mui/icons-material": "^5",
     "@mui/material": "^5"
   },
   "devDependencies": {
     "react": "^18.2.0",
-    "@react-typed-forms/core": "^3.6.1",
+    "@react-typed-forms/core": "workspace:*",
     "@react-typed-forms/mui": "^3.0.4",
-    "@react-typed-forms/schemas": "workspace:^13",
+    "@react-typed-forms/schemas": "workspace:*",
     "@mui/icons-material": "^5",
     "@mui/material": "^5.14.13",
     "@react-typed-forms/transform": "^0.2.0",

@@ -414,6 +414,8 @@ export function addMissingControlsForSchema(
   const controlMap: { [k: string]: ControlAndSchema } = {};
   const schemaControlMap: { [k: string]: ControlAndSchema[] } = {};
   const rootControls = controls.map((c) => toControlAndSchema(c, schema));
+  const rootSchema = { schema, children: rootControls } as ControlAndSchema;
+  addSchemaMapEntry("", rootSchema);
   rootControls.forEach(addReferences);
   const fields = schema.getChildNodes();
   fields.forEach(addMissing);
@@ -442,7 +444,16 @@ export function addMissingControlsForSchema(
       let parentGroup = desiredGroup ? controlMap[desiredGroup] : undefined;
       if (!parentGroup && desiredGroup)
         console.warn("Missing group", desiredGroup);
-      parentGroup ??= schemaControlMap[eligibleParents[0]][0];
+      if (!eligibleParents.length) {
+        console.warn("No eligible parents");
+        debugger;
+      }
+      const eligibleControls = schemaControlMap[eligibleParents[0]];
+      if (!eligibleControls) {
+        console.warn("No eligible parents");
+        debugger;
+      }
+      parentGroup ??= eligibleControls[0];
       const newControl = defaultControlForField(schemaNode.field);
       parentGroup.children.push(
         toControlAndSchema(newControl, parentGroup.schema!, parentGroup),
@@ -464,6 +475,11 @@ export function addMissingControlsForSchema(
       }
       console.warn("Missing reference", c.control.childRefId);
     }
+  }
+
+  function addSchemaMapEntry(schemaId: string, entry: ControlAndSchema) {
+    if (!schemaControlMap[schemaId]) schemaControlMap[schemaId] = [];
+    schemaControlMap[schemaId].push(entry);
   }
   function toControlAndSchema(
     c: ControlDefinition,
@@ -488,9 +504,7 @@ export function addMissingControlsForSchema(
       ) ?? [];
     if (!dontRegister && c.id) controlMap[c.id] = entry;
     if (dataSchema) {
-      const schemaId = dataSchema.id;
-      if (!schemaControlMap[schemaId]) schemaControlMap[schemaId] = [];
-      schemaControlMap[schemaId].push(entry);
+      addSchemaMapEntry(dataSchema.id, entry);
     }
     return entry;
   }

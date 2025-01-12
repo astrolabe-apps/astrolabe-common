@@ -19,7 +19,7 @@
     "@astroapps/client": "workspace:*",
     "@astroapps/ui-tree": "workspace:*",
     "@astrolabe/ui": "workspace:*",
-    "@react-typed-forms/core": "^3.2.0",
+    "@react-typed-forms/core": "workspace:*",
     "@react-typed-forms/schemas": "workspace:*",
     "@storybook/addon-essentials": "^7.6.10",
     "@storybook/addon-interactions": "^7.6.10",
