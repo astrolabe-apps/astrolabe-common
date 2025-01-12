@@ -1,4 +1,4 @@
-import { Control, useControlEffect } from "@react-typed-forms/core";
+import { Control, useControl, useControlEffect } from "@react-typed-forms/core";
 import { ParsedUrlQuery } from "querystring";
 import { compareAsSet } from "../util/arrays";
 
@@ -15,17 +15,24 @@ interface ConvertParam<A, P extends string | string[] | undefined> {
  * @template A The type of the control's value.
  * @template P The type of the query parameter.
  * @param {Control<ParsedUrlQuery>} queryControl The control that represents the URL query.
- * @param {Control<A>} control The control to synchronize with the query parameter.
  * @param {string} paramName The name of the query parameter to synchronize with.
  * @param {ConvertParam<A, P>} convert The conversion functions to use for the synchronization.
+ * @param use An optional control to use for the synchronized control.
  * @returns {Control<A>} The synchronized control.
  */
 export function useSyncParam<A, P extends string | string[] | undefined>(
   queryControl: Control<ParsedUrlQuery>,
-  control: Control<A>,
   paramName: string,
   convert: ConvertParam<A, P>,
+  use?: Control<A>,
 ): Control<A> {
+  const control = useControl(
+    () =>
+      convert.fromParam(
+        convert.normalise(queryControl.current.value[paramName]),
+      ),
+    { use },
+  );
   useControlEffect(
     () => queryControl.value[paramName],
     (urlQuery) => {
