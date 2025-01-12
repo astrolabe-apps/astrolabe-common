@@ -13,7 +13,7 @@ import {
   isDisplayOnlyRenderer,
   isGroupControl,
 } from "./controlDefinition";
-import { act, MutableRefObject, useRef } from "react";
+import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
 import {
   CompoundField,
