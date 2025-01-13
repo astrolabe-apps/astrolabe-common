@@ -251,7 +251,7 @@ export interface SchemaDataNode {
   elementIndex?: number;
   control?: Control<unknown>;
   parent?: SchemaDataNode;
-  getChild(field: string): SchemaDataNode | undefined;
+  getChild(schemaNode: SchemaNode): SchemaDataNode;
   getChildElement(index: number): SchemaDataNode;
 }
 
@@ -354,14 +354,16 @@ export function makeSchemaDataNode(
   };
   return dataNode;
 
-  function getChild(field: string): SchemaDataNode | undefined {
+  function getChild(childNode: SchemaNode): SchemaDataNode {
     const objControl = control as Control<Record<string, unknown>>;
     if (objControl && objControl.current.isNull) {
       objControl.value = {};
     }
-    const childSchema = schema.getChildNode(field);
-    if (!childSchema) return undefined;
-    return makeSchemaDataNode(childSchema, objControl?.fields[field], dataNode);
+    return makeSchemaDataNode(
+      childNode,
+      objControl?.fields[childNode.field.field],
+      dataNode,
+    );
   }
 
   function getChildElement(elementIndex: number): SchemaDataNode {
@@ -429,17 +431,23 @@ export function schemaDataForFieldPath(
   let i = 0;
   while (i < fieldPath.length) {
     const nextField = fieldPath[i];
-    let childNode =
-      nextField === ".." ? schema.parent : schema.getChild(nextField);
+    let childNode = nextField === ".." ? schema.parent : lookupField(nextField);
     if (!childNode) {
       childNode = makeSchemaDataNode(
         nodeForSchema(missingField(nextField), schema.schema, schema.schema),
       );
     }
-    schema = childNode;
     i++;
   }
   return schema;
+
+  function lookupField(field: string): SchemaDataNode | undefined {
+    const childNode = schema.schema.getChildNode(field);
+    if (childNode) {
+      return schema.getChild(childNode);
+    }
+    return undefined;
+  }
 }
 
 export function schemaForFieldPath(

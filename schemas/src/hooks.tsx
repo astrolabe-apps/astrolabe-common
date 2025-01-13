@@ -324,8 +324,7 @@ export function matchesType(context: SchemaDataNode): boolean {
     .getChildNodes()
     .find((x) => x.field.isTypeField);
   if (typeNode == null) return true;
-  const typeField = parent.getChild(typeNode.field.field)!
-    .control as Control<string>;
+  const typeField = parent.getChild(typeNode).control as Control<string>;
   return typeField && types.includes(typeField.value);
 }
 
