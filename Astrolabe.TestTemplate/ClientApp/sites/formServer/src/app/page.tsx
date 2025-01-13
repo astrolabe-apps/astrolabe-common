@@ -33,6 +33,7 @@ import {
   GroupRenderType,
   intField,
   makeEvalExpressionHook,
+  SchemaTags,
   stringField,
   stringOptionsField,
   timeField,
@@ -79,6 +80,10 @@ interface DisabledStuff {
   text: string;
   options: string[];
 }
+
+interface NestedSchema {
+  data: string;
+}
 interface TestSchema {
   date: string;
   dateTime: string;
@@ -86,12 +91,13 @@ interface TestSchema {
   array: number[];
   stuff: DisabledStuff[];
   number: number;
+  nested: NestedSchema;
 }
 
 const TestSchema = buildSchema<TestSchema>({
   date: dateField("Date"),
   dateTime: dateTimeField("Date Time"),
-  time: timeField("Time"),
+  time: timeField("Time", { tags: [SchemaTags.ControlGroup + "Nested"] }),
   array: intField("Numbers", { collection: true }),
   stuff: compoundField(
     "Stuff",
@@ -100,7 +106,10 @@ const TestSchema = buildSchema<TestSchema>({
         { isTypeField: true },
         stringOptionsField("Type", { name: "Some", value: "some" }),
       ),
-      disable: boolField("Disable", { onlyForTypes: ["some"] }),
+      disable: boolField("Disable", {
+        onlyForTypes: ["some"],
+        tags: [SchemaTags.ControlGroup + "Root"],
+      }),
       text: stringField("Pure Text"),
       options: withScalarOptions(
         { collection: true },
@@ -117,6 +126,12 @@ const TestSchema = buildSchema<TestSchema>({
     { collection: true },
   ),
   number: doubleField("Double"),
+  nested: compoundField(
+    "Nested",
+    buildSchema<NestedSchema>({
+      data: stringField("Data", { tags: [SchemaTags.ControlGroup + "Root"] }),
+    }),
+  ),
 });
 
 interface SearchResult extends CarEdit {}
@@ -170,16 +185,14 @@ const schemaLookup = createSchemaLookup({
 export default function Editor() {
   const carClient = useApiClient(CarClient);
   const qc = useQueryControl();
-  const selectedForm = useControl("Test");
   const roles = useControl<string[]>([]);
   const rolesSelectable = useSelectableArray(
     roles,
     ensureSelectableValues(["Student", "Teacher"], (x) => x),
   );
   const [container, setContainer] = useState<HTMLElement | null>(null);
-  useSyncParam(
+  const selectedForm = useSyncParam(
     qc,
-    selectedForm,
     "form",
     convertStringParam(
       (x) => x,

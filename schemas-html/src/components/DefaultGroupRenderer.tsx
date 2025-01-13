@@ -87,7 +87,6 @@ export function createDefaultGroupRenderer(
       : isFlexRenderer(renderOptions)
         ? flexStyles(renderOptions)
         : ({ className: standardClassName } as StyleProps);
-
     return (
       <div
         className={rendererClass(props.className, clsx(className, gcn))}

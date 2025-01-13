@@ -251,7 +251,7 @@ export interface SchemaDataNode {
   elementIndex?: number;
   control?: Control<unknown>;
   parent?: SchemaDataNode;
-  getChild(node: SchemaNode): SchemaDataNode;
+  getChild(field: string): SchemaDataNode | undefined;
   getChildElement(index: number): SchemaDataNode;
 }
 
@@ -270,7 +270,9 @@ export function isCompoundField(sf: SchemaField): sf is CompoundField {
   return sf.type === FieldType.Compound;
 }
 
-const MissingField: SchemaField = { field: "__missing", type: FieldType.Any };
+function missingField(field: string): SchemaField {
+  return { field: "__missing", type: FieldType.Any, displayName: field };
+}
 
 function nodeForSchema(
   field: SchemaField,
@@ -352,16 +354,14 @@ export function makeSchemaDataNode(
   };
   return dataNode;
 
-  function getChild(schemaNode: SchemaNode): SchemaDataNode {
+  function getChild(field: string): SchemaDataNode | undefined {
     const objControl = control as Control<Record<string, unknown>>;
     if (objControl && objControl.current.isNull) {
       objControl.value = {};
     }
-    return makeSchemaDataNode(
-      schemaNode,
-      objControl?.fields?.[schemaNode.field.field],
-      dataNode,
-    );
+    const childSchema = schema.getChildNode(field);
+    if (!childSchema) return undefined;
+    return makeSchemaDataNode(childSchema, objControl?.fields[field], dataNode);
   }
 
   function getChildElement(elementIndex: number): SchemaDataNode {
@@ -397,9 +397,10 @@ export function traverseSchemaPath<A>(
   let i = 0;
   while (i < fieldPath.length) {
     const nextField = fieldPath[i];
-    let childNode = schema.getChildNode(nextField);
+    let childNode =
+      nextField === ".." ? schema.parent : schema.getChildNode(nextField);
     if (!childNode) {
-      childNode = nodeForSchema(MissingField, schema, schema);
+      childNode = nodeForSchema(missingField(nextField), schema, schema);
     }
     acc = next(acc, childNode);
     schema = childNode;
@@ -425,9 +426,20 @@ export function schemaDataForFieldPath(
   fieldPath: string[],
   schema: SchemaDataNode,
 ): SchemaDataNode {
-  return traverseSchemaPath(fieldPath, schema.schema, schema, (a, n) =>
-    a.getChild(n),
-  );
+  let i = 0;
+  while (i < fieldPath.length) {
+    const nextField = fieldPath[i];
+    let childNode =
+      nextField === ".." ? schema.parent : schema.getChild(nextField);
+    if (!childNode) {
+      childNode = makeSchemaDataNode(
+        nodeForSchema(missingField(nextField), schema.schema, schema.schema),
+      );
+    }
+    schema = childNode;
+    i++;
+  }
+  return schema;
 }
 
 export function schemaForFieldPath(
@@ -437,9 +449,10 @@ export function schemaForFieldPath(
   let i = 0;
   while (i < fieldPath.length) {
     const nextField = fieldPath[i];
-    let childNode = schema.getChildNode(nextField);
+    let childNode =
+      nextField === ".." ? schema.parent : schema.getChildNode(nextField);
     if (!childNode) {
-      childNode = nodeForSchema(MissingField, schema, schema);
+      childNode = nodeForSchema(missingField(nextField), schema, schema);
     }
     schema = childNode;
     i++;

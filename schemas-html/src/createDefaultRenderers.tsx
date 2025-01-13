@@ -200,7 +200,9 @@ export function createDefaultDataRenderer(
         : undefined) ?? { type: "Standard", hideTitle: true };
       return renderers.renderGroup({ ...props, renderOptions: groupOptions });
     }
-    if (fieldType == FieldType.Any) return <>No control for Any</>;
+    if (fieldType == FieldType.Any) {
+      return <>Can't render field: {field.displayName ?? field.field}</>;
+    }
     if (props.displayOnly || isDisplayOnlyRenderer(renderOptions))
       return (p) => {
         return {

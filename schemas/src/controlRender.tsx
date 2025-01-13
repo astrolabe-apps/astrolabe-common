@@ -453,17 +453,21 @@ export function useControlRenderer(
   );
 }
 export function useControlRendererComponent(
-  formNode: ControlDefinition | FormNode,
+  controlOrFormNode: ControlDefinition | FormNode,
   renderer: FormRenderer,
   options: ControlRenderOptions = {},
   parentDataNode: SchemaDataNode,
 ): FC<{}> {
   const definition =
-    formNode instanceof FormNode ? formNode.definition : formNode;
-  const realFormNode =
-    formNode instanceof FormNode
-      ? formNode
-      : createFormLookup({ "": [definition] }).getForm("")!.rootNode;
+    controlOrFormNode instanceof FormNode
+      ? controlOrFormNode.definition
+      : controlOrFormNode;
+  const formNode =
+    controlOrFormNode instanceof FormNode
+      ? controlOrFormNode
+      : createFormLookup({ "": [definition] })
+          .getForm("")!
+          .rootNode.getChildNodes()[0];
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
   const elementIndex = options.elementIndex;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
@@ -475,7 +479,7 @@ export function useControlRendererComponent(
   } else {
     dataNode = lookupDataNode(definition, parentDataNode);
   }
-  // console.log(parentDataNode.id, dataNode?.id, realFormNode.id);
+  // console.log(parentDataNode.id, dataNode?.id, formNode.id);
   const useValidation = useMakeValidationHook(
     definition,
     options.useValidationHook,
@@ -634,7 +638,7 @@ export function useControlRendererComponent(
           }),
         ) ?? [];
       const labelAndChildren = renderControlLayout({
-        formNode: realFormNode,
+        formNode,
         definition: c,
         renderer,
         renderChild: (k, child, options) => {

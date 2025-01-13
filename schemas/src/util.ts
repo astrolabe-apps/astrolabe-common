@@ -23,6 +23,7 @@ import {
   isCompoundField,
   isCompoundNode,
   isScalarField,
+  relativePath,
   rootSchemaNode,
   SchemaField,
   schemaForFieldPath,
@@ -217,9 +218,13 @@ export function hasOptions(o: { options: FieldOption[] | undefined | null }) {
 /**
  * Returns the default control definition for a specific schema field.
  * @param sf - The schema field to get the default control definition for.
+ * @param noChildren - Flag indicating if children should not be included.
  * @returns The default control definition for the schema field.
  */
-export function defaultControlForField(sf: SchemaField): DataControlDefinition {
+export function defaultControlForField(
+  sf: SchemaField,
+  noChildren?: boolean,
+): DataControlDefinition {
   if (isCompoundField(sf)) {
     const ref = getTagParam(sf, SchemaTags.ControlRef);
     return {
@@ -228,11 +233,12 @@ export function defaultControlForField(sf: SchemaField): DataControlDefinition {
       field: sf.field,
       required: sf.required,
       childRefId: ref,
-      children: !ref
-        ? sf.children
-            .filter((x) => !fieldHasTag(x, SchemaTags.NoControl))
-            .map(defaultControlForField)
-        : undefined,
+      children:
+        !noChildren && !ref
+          ? sf.children
+              .filter((x) => !fieldHasTag(x, SchemaTags.NoControl))
+              .map((x) => defaultControlForField(x))
+          : undefined,
     };
   } else if (isScalarField(sf)) {
     const htmlEditor = fieldHasTag(sf, SchemaTags.HtmlEditor);
@@ -430,37 +436,52 @@ export function addMissingControlsForSchema(
     if (fieldHasTag(schemaNode.field, SchemaTags.NoControl)) return;
     const existingControls = schemaControlMap[schemaNode.id];
     if (!existingControls) {
-      const eligibleParents: string[] = [];
-      let parent = schemaNode.parent;
-      while (parent) {
-        eligibleParents.push(parent.id);
-        if (parent.field.collection) break;
-        parent = parent.parent;
-      }
+      const eligibleParents = getEligibleParents(schemaNode);
       const desiredGroup = getTagParam(
         schemaNode.field,
         SchemaTags.ControlGroup,
       );
       let parentGroup = desiredGroup ? controlMap[desiredGroup] : undefined;
       if (!parentGroup && desiredGroup)
-        console.warn("Missing group", desiredGroup);
-      if (!eligibleParents.length) {
-        console.warn("No eligible parents");
-        debugger;
+        console.warn("No group '" + desiredGroup + "' for " + schemaNode.id);
+      if (parentGroup && eligibleParents.indexOf(parentGroup.schema!.id) < 0) {
+        console.warn(
+          `Target group '${desiredGroup}' is not an eligible parent for '${schemaNode.id}'`,
+        );
+        parentGroup = undefined;
       }
-      const eligibleControls = schemaControlMap[eligibleParents[0]];
-      if (!eligibleControls) {
-        console.warn("No eligible parents");
-        debugger;
+      if (!parentGroup && eligibleParents.length) {
+        parentGroup = schemaControlMap[eligibleParents[0]]?.[0];
       }
-      parentGroup ??= eligibleControls[0];
-      const newControl = defaultControlForField(schemaNode.field);
-      parentGroup.children.push(
-        toControlAndSchema(newControl, parentGroup.schema!, parentGroup),
-      );
-      return;
+      if (parentGroup) {
+        const newControl = defaultControlForField(schemaNode.field, true);
+        newControl.field = relativePath(parentGroup.schema!, schemaNode);
+        parentGroup.children.push(
+          toControlAndSchema(newControl, parentGroup.schema!, parentGroup),
+        );
+      } else
+        console.warn("Could not find a parent group for: " + schemaNode.id);
     }
     schemaNode.getChildNodes(true).forEach(addMissing);
+  }
+
+  function getEligibleParents(schemaNode: SchemaNode) {
+    const eligibleParents: string[] = [];
+    let parent = schemaNode.parent;
+    while (parent) {
+      eligibleParents.push(parent.id);
+      if (parent.field.collection) break;
+      if (!parent.parent) parent.getChildNodes(true).forEach(addCompound);
+      parent = parent.parent;
+    }
+    return eligibleParents;
+
+    function addCompound(node: SchemaNode) {
+      if (isCompoundNode(node) && !node.field.collection) {
+        eligibleParents.push(node.id);
+        node.getChildNodes(true).forEach(addCompound);
+      }
+    }
   }
 
   function addReferences(c: ControlAndSchema) {
