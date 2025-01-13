@@ -548,7 +548,9 @@ export function nodeForControl(
 }
 
 export function legacyFormNode(definition: ControlDefinition) {
-  return new FormNode("", definition, {} as FormTree);
+  return createFormLookup({ $legacy: [definition] })
+    .getForm("$legacy")!
+    .rootNode.getChildNodes()[0];
 }
 
 function getControlIds(
