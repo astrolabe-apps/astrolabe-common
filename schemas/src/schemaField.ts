@@ -1,5 +1,6 @@
 import { SchemaValidator } from "./schemaValidator";
 import { Control, ControlSetup } from "@react-typed-forms/core";
+import {EntityExpression} from "./entityExpression";
 
 export type EqualityFunc = (a: any, b: any) => boolean;
 

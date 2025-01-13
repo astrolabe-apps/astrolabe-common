@@ -2,7 +2,6 @@
 
 import { saveAs } from "file-saver";
 import {
-  applyEditorExtensions,
   BasicFormEditor,
   ControlDefinitionSchema,
 } from "@astroapps/schemas-editor";
@@ -63,11 +62,7 @@ import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
 import { useApiClient } from "@astroapps/client/hooks/useApiClient";
 
-const CustomControlSchema = applyEditorExtensions(
-  DataGridExtension,
-  QuickstreamExtension,
-  PagerExtension,
-);
+const Extensions = [DataGridExtension, QuickstreamExtension, PagerExtension];
 
 interface TabSchema {
   value1: string;
@@ -261,7 +256,7 @@ export default function Editor() {
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
           useEvalExpressionHook: evalHook,
         }}
-        controlDefinitionSchemaMap={CustomControlSchema}
+        extensions={Extensions}
         editorControls={controlsJson}
         extraPreviewControls={(c, data) => (
           <div>

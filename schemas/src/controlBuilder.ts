@@ -31,7 +31,7 @@ import {
   LengthValidator,
   ValidatorType,
 } from "./schemaValidator";
-import { SchemaField, SchemaMap } from "./schemaField";
+import { SchemaField, SchemaMap, SchemaNode } from "./schemaField";
 import {
   DataExpression,
   DataMatchExpression,
@@ -230,6 +230,7 @@ export interface CustomRenderOptions {
   name: string;
   fields?: SchemaField[];
   groups?: EditorGroup[];
+  applies?: (sf: SchemaNode) => boolean;
 }
 
 export type ControlDefinitionExtension = {

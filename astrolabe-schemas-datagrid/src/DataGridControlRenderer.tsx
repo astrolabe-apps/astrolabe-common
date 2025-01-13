@@ -95,6 +95,7 @@ export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
   value: "DataGrid",
   fields: DataGridFields,
+  applies: (sf) => !!sf.field.collection,
 };
 
 export const defaultDataGridClasses: DataGridClasses = {

@@ -49,7 +49,7 @@ export const NonExistentField = newControl<SchemaFieldForm>(
   defaultSchemaFieldForm,
 );
 
-enum SchemaOptionTag {
+export enum SchemaOptionTag {
   SchemaField = "_SchemaField",
   NestedSchemaField = "_NestedSchemaField",
   ValuesOf = "_ValuesOf:",
@@ -94,57 +94,57 @@ export interface InternalHooksContext {
   tableFields?: Control<SchemaFieldForm[]>;
 }
 
-export function useEditorDataHook(
-  fieldNode: SchemaNode,
-): (cd: ControlDefinition) => CreateDataProps {
-  const r = useUpdatedRef(fieldNode);
-  const createCB: CreateDataProps = useCallback((props) => {
-    const fieldNode = r.current;
-    const fieldList = getSchemaFieldList(fieldNode);
-    const defaultProps = defaultDataProps(props);
-    const { dataContext } = props;
-    const sf = dataContext.dataNode!.schema.field;
-    const otherField = sf.tags?.find(isSchemaOptionTag);
-
-    if (otherField) {
-      const [newOptions, newField] = otherFieldOptions(otherField);
-      return { ...defaultProps, field: newField, options: newOptions };
-    }
-    return defaultProps;
-
-    function otherFieldOptions(
-      ot: SchemaOptionTag,
-    ): [FieldOption[] | undefined, SchemaField] {
-      switch (ot) {
-        case SchemaOptionTag.SchemaField:
-          return [fieldList.flatMap((x) => schemaFieldOptions(x)), sf];
-        case SchemaOptionTag.NestedSchemaField:
-          return [
-            fieldList.filter(isCompoundField).map((x) => schemaFieldOption(x)),
-            sf,
-          ];
-        // case SchemaOptionTag.TableList:
-        //   return [context?.tableList?.value ?? [], sf];
-
-        default:
-          const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
-          const otherFieldName = schemaDataForFieldRef(
-            otherField,
-            dataContext.parentNode,
-          ).control?.value;
-          const fieldInSchema = otherFieldName
-            ? schemaForFieldRef(otherFieldName as string, fieldNode).field
-            : undefined;
-          const opts = fieldInSchema?.options;
-          return [
-            opts && opts.length > 0 ? opts : undefined,
-            fieldInSchema ? { ...sf, type: fieldInSchema.type } : sf,
-          ];
-      }
-    }
-  }, []);
-  return useCallback(() => createCB, [r]);
-}
+// export function useEditorDataHook(
+//   fieldNode: SchemaNode,
+// ): (cd: ControlDefinition) => CreateDataProps {
+//   const r = useUpdatedRef(fieldNode);
+//   const createCB: CreateDataProps = useCallback((props) => {
+//     const fieldNode = r.current;
+//     const fieldList = getSchemaFieldList(fieldNode);
+//     const defaultProps = defaultDataProps(props);
+//     const { dataContext } = props;
+//     const sf = dataContext.dataNode!.schema.field;
+//     const otherField = sf.tags?.find(isSchemaOptionTag);
+//
+//     if (otherField) {
+//       const [newOptions, newField] = otherFieldOptions(otherField);
+//       return { ...defaultProps, field: newField, options: newOptions };
+//     }
+//     return defaultProps;
+//
+//     function otherFieldOptions(
+//       ot: SchemaOptionTag,
+//     ): [FieldOption[] | undefined, SchemaField] {
+//       switch (ot) {
+//         case SchemaOptionTag.SchemaField:
+//           return [fieldList.flatMap((x) => schemaFieldOptions(x)), sf];
+//         case SchemaOptionTag.NestedSchemaField:
+//           return [
+//             fieldList.filter(isCompoundField).map((x) => schemaFieldOption(x)),
+//             sf,
+//           ];
+//         // case SchemaOptionTag.TableList:
+//         //   return [context?.tableList?.value ?? [], sf];
+//
+//         default:
+//           const otherField = ot.substring(SchemaOptionTag.ValuesOf.length);
+//           const otherFieldName = schemaDataForFieldRef(
+//             otherField,
+//             dataContext.parentNode,
+//           ).control?.value;
+//           const fieldInSchema = otherFieldName
+//             ? schemaForFieldRef(otherFieldName as string, fieldNode).field
+//             : undefined;
+//           const opts = fieldInSchema?.options;
+//           return [
+//             opts && opts.length > 0 ? opts : undefined,
+//             fieldInSchema ? { ...sf, type: fieldInSchema.type } : sf,
+//           ];
+//       }
+//     }
+//   }, []);
+//   return useCallback(() => createCB, [r]);
+// }
 
 // export function makeEditorFormHooks(
 //   fields: Control<SchemaFieldForm[]>,
@@ -299,7 +299,10 @@ function schemaFieldOption(c: SchemaField, prefix?: string): FieldOption {
   return { name: `${c.displayName ?? c.field} (${value})`, value };
 }
 
-function schemaFieldOptions(c: SchemaField, prefix?: string): FieldOption[] {
+export function schemaFieldOptions(
+  c: SchemaField,
+  prefix?: string,
+): FieldOption[] {
   const self = schemaFieldOption(c, prefix);
   if (isCompoundField(c) && !c.collection) {
     const newPrefix = (prefix ?? "") + c.field + "/";

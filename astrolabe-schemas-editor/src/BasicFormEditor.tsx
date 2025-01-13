@@ -55,12 +55,6 @@ import { FormPreview, PreviewData } from "./FormPreview";
 import { ControlNode, SelectedControlNode } from "./types";
 import { TreeApi } from "react-arborist";
 
-export function applyEditorExtensions(
-  ...extensions: ControlDefinitionExtension[]
-): typeof ControlDefinitionSchemaMap {
-  return applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions);
-}
-
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
   editorRenderer: FormRenderer;
@@ -75,7 +69,7 @@ export interface BasicFormEditorProps<A extends string> {
     data: Control<any>,
     controls: ControlDefinition[],
   ) => Promise<any>;
-  controlDefinitionSchemaMap?: typeof ControlDefinitionSchemaMap;
+  extensions?: ControlDefinitionExtension[];
   editorControls?: ControlDefinition[];
   previewOptions?: ControlRenderOptions;
   tailwindConfig?: TailwindConfig;
@@ -98,7 +92,7 @@ export function BasicFormEditor<A extends string>({
   formTypes,
   validation,
   saveForm,
-  controlDefinitionSchemaMap = ControlDefinitionSchemaMap,
+  extensions,
   editorControls,
   previewOptions,
   tailwindConfig,
@@ -111,6 +105,10 @@ export function BasicFormEditor<A extends string>({
   handleIcon,
   extraPreviewControls,
 }: BasicFormEditorProps<A>): ReactElement {
+  const controlDefinitionSchemaMap = useMemo(
+    () => applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions ?? []),
+    [extensions],
+  );
   const controls = useControl<ControlDefinitionForm[]>([]);
   const treeLookup = createFormLookup({ "": trackedValue(controls) });
   const baseSchema = useControl<string>();
@@ -358,6 +356,7 @@ export function BasicFormEditor<A extends string>({
                       key={c.value.control.uniqueId}
                       controlNode={c.value}
                       renderer={editorRenderer}
+                      extensions={extensions}
                       editorFields={rootSchemaNode(ControlDefinitionSchema)}
                       editorControls={controlGroup}
                     />
