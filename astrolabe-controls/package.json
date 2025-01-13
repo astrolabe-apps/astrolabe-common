@@ -45,7 +45,7 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ && microbundle -f modern,cjs",
+    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs",
     "watch": "microbundle -w -f modern,cjs --no-compress",
     "test": "jest --coverage",
     "run": "tsx test/play.ts",

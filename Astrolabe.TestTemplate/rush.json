@@ -475,7 +475,7 @@
     {
       "packageName": "@react-typed-forms/core",
       "projectFolder": "../core",
-      "shouldPublish": false
+      "shouldPublish": true
     },
     {
       "packageName": "@astroapps/aria-base",
@@ -519,7 +519,8 @@
     },
     {
       "packageName": "@astroapps/controls",
-      "projectFolder": "../astrolabe-controls"
+      "projectFolder": "../astrolabe-controls",
+      "shouldPublish": true
     }
     //    {
 //      "packageName": "native",
