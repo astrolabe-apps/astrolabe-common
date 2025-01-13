@@ -14,7 +14,6 @@ import {
   removeElement,
   RenderArrayElements,
   trackedValue,
-  useCalculatedControl,
   useComponentTracking,
   useComputed,
   useControl,
@@ -25,6 +24,7 @@ import {
   ArrayActionOptions,
   ControlActionHandler,
   ControlAdornment,
+  ControlDataContext,
   ControlDefinition,
   CustomDisplay,
   DataControlDefinition,
@@ -32,17 +32,16 @@ import {
   DisplayData,
   DisplayDataType,
   DynamicPropertyType,
+  FormContextData,
+  FormNode,
   GroupRenderOptions,
   isActionControl,
   isDataControl,
   isDisplayControl,
   isGroupControl,
-  RenderOptions,
-  ControlDataContext,
-  FormContextData,
+  legacyFormNode,
   lookupDataNode,
-  FormNode,
-  createFormLookup,
+  RenderOptions,
 } from "./controlDefinition";
 import {
   applyLengthRestrictions,
@@ -458,16 +457,10 @@ export function useControlRendererComponent(
   options: ControlRenderOptions = {},
   parentDataNode: SchemaDataNode,
 ): FC<{}> {
-  const definition =
+  const [definition, formNode] =
     controlOrFormNode instanceof FormNode
-      ? controlOrFormNode.definition
-      : controlOrFormNode;
-  const formNode =
-    controlOrFormNode instanceof FormNode
-      ? controlOrFormNode
-      : createFormLookup({ "": [definition] })
-          .getForm("")!
-          .rootNode.getChildNodes()[0];
+      ? [controlOrFormNode.definition, controlOrFormNode]
+      : [controlOrFormNode, legacyFormNode(controlOrFormNode)];
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
   const elementIndex = options.elementIndex;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
@@ -479,7 +472,7 @@ export function useControlRendererComponent(
   } else {
     dataNode = lookupDataNode(definition, parentDataNode);
   }
-  // console.log(parentDataNode.id, dataNode?.id, formNode.id);
+  // console.log(parentDataNode.id, dataNode?.control, formNode.id);
   const useValidation = useMakeValidationHook(
     definition,
     options.useValidationHook,
@@ -511,6 +504,7 @@ export function useControlRendererComponent(
     elementIndex,
     parentDataNode,
     dataNode,
+    formNode,
   });
 
   const Component = useCallback(() => {
@@ -523,6 +517,7 @@ export function useControlRendererComponent(
         elementIndex,
         parentDataNode: pdn,
         dataNode: dn,
+        formNode,
       } = r.current;
       const formData = options.formData ?? {};
       const dataContext: ControlDataContext = {

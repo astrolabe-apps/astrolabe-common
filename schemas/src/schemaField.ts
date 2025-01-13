@@ -426,25 +426,25 @@ export function traverseData(
 
 export function schemaDataForFieldPath(
   fieldPath: string[],
-  schema: SchemaDataNode,
+  dataNode: SchemaDataNode,
 ): SchemaDataNode {
   let i = 0;
   while (i < fieldPath.length) {
     const nextField = fieldPath[i];
-    let childNode = nextField === ".." ? schema.parent : lookupField(nextField);
-    if (!childNode) {
-      childNode = makeSchemaDataNode(
-        nodeForSchema(missingField(nextField), schema.schema, schema.schema),
-      );
-    }
+    let nextNode =
+      nextField === ".." ? dataNode.parent : lookupField(nextField);
+    nextNode ??= makeSchemaDataNode(
+      nodeForSchema(missingField(nextField), dataNode.schema, dataNode.schema),
+    );
+    dataNode = nextNode;
     i++;
   }
-  return schema;
+  return dataNode;
 
   function lookupField(field: string): SchemaDataNode | undefined {
-    const childNode = schema.schema.getChildNode(field);
+    const childNode = dataNode.schema.getChildNode(field);
     if (childNode) {
-      return schema.getChild(childNode);
+      return dataNode.getChild(childNode);
     }
     return undefined;
   }

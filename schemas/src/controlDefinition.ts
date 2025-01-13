@@ -547,6 +547,10 @@ export function nodeForControl(
   );
 }
 
+export function legacyFormNode(definition: ControlDefinition) {
+  return new FormNode("", definition, {} as FormTree);
+}
+
 function getControlIds(
   definition: ControlDefinition,
 ): [string, ControlDefinition][] {
