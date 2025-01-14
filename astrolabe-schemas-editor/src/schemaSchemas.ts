@@ -769,6 +769,8 @@ export interface RenderOptionsForm {
   entryWrapperClass: string | null;
   selectedClass: string | null;
   notSelectedClass: string | null;
+  listContainerClass: string | null;
+  listEntryClass: string | null;
   placeholder: string | null;
   multiline: boolean | null;
   groupOptions: GroupRenderOptionsForm;
@@ -854,6 +856,10 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         value: "NullToggle",
       },
       {
+        name: "Autocomplete",
+        value: "Autocomplete",
+      },
+      {
         name: "Jsonata",
         value: "Jsonata",
       },
@@ -925,6 +931,16 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["Radio", "CheckList"],
     displayName: "Not Selected Class",
+  }),
+  listContainerClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Autocomplete"],
+    displayName: "List Container Class",
+  }),
+  listEntryClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Autocomplete"],
+    displayName: "List Entry Class",
   }),
   placeholder: makeScalarField({
     type: FieldType.String,

@@ -606,6 +606,22 @@
                 "renderOptions": {
                   "type": "Standard"
                 }
+              },
+              {
+                "type": "Data",
+                "title": "List Container Class",
+                "field": "listContainerClass",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "List Entry Class",
+                "field": "listEntryClass",
+                "renderOptions": {
+                  "type": "Standard"
+                }
               }
             ],
             "field": "renderOptions",
@@ -625,7 +641,8 @@
           "childStyleClass": "",
           "childLayoutClass": "grow",
           "hideTitle": true
-        }
+        },
+        "id": "Styling"
       },
       {
         "type": "Group",

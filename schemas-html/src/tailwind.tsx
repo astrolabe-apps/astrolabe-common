@@ -45,6 +45,12 @@ export const defaultTailwindTheme = {
     },
     selectOptions: { emptyText: "<select>" },
     multilineClass: "border p-2 outline-0 whitespace-pre-wrap",
+    autocompleteOptions: {
+      listContainerClass:
+        "absolute w-full text-sm box-border p-1.5 my-3 mx-0 min-w-[320px] rounded-xl overflow-auto outline-0 max-h-[300px] z-[1] bg-white border border-solid border-surface-200 text-surface-900 shadow-[0_4px_30px_transparent] shadow-surface-200",
+      listEntryClass:
+        "list-none p-2 rounded-lg cursor-default last-of-type:border-b-0 hover:cursor-pointer hover:bg-primary-100 aria-selected:bg-primary-200 aria-selected:text-primary-900 focused:bg-surface-100 focus-visible:bg-surface-100 focused:text-surface-900 focus-visible:text-surface-900 focus-visible:shadow-[0_0_0_3px_transparent] focus-visible:shadow-primary-200  focused:aria-selected:bg-primary-200 focus-visible:aria-selected:bg-primary-200 focused:aria-selected:text-primary-900 focus-visible:aria-selected:text-primary-900",
+    },
   },
   adornment: {
     accordion: {

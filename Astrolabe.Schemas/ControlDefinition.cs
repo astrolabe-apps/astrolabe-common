@@ -134,6 +134,9 @@ public enum DataRenderType
     [Display(Name = "Null Toggler")]
     NullToggle,
 
+    [Display(Name = "Autocomplete")]
+    Autocomplete,
+
     Jsonata,
     Array
 }
@@ -151,6 +154,7 @@ public enum DataRenderType
 [JsonSubType("Array", typeof(ArrayRenderOptions))]
 [JsonSubType("Radio", typeof(RadioButtonRenderOptions))]
 [JsonSubType("CheckList", typeof(CheckListRenderOptions))]
+[JsonSubType("Autocomplete", typeof(AutocompleteRenderOptions))]
 public abstract record RenderOptions(
     [property: DefaultValue("Standard")]
     [property: SchemaOptions(typeof(DataRenderType))]
@@ -182,6 +186,9 @@ public record RadioButtonRenderOptions(
     string? SelectedClass,
     string? NotSelectedClass
 ) : RenderOptions(DataRenderType.Radio.ToString());
+
+public record AutocompleteRenderOptions(string? ListContainerClass, string? ListEntryClass)
+    : RenderOptions(DataRenderType.Autocomplete.ToString());
 
 public record CheckListRenderOptions(
     string? EntryWrapperClass,

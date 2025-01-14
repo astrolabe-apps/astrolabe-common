@@ -78,6 +78,10 @@ import {
   createDefaultGroupRenderer,
   DefaultGroupRendererOptions,
 } from "./components/DefaultGroupRenderer";
+import {
+  AutocompleteRendererOptions,
+  createAutocompleteRenderer,
+} from "./components/AutocompleteRenderer";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -142,6 +146,7 @@ export interface DefaultDataRendererOptions {
   checkOptions?: CheckRendererOptions;
   radioOptions?: CheckRendererOptions;
   checkListOptions?: CheckRendererOptions;
+  autocompleteOptions?: AutocompleteRendererOptions;
   booleanOptions?: FieldOption[];
   optionRenderer?: DataRendererRegistration;
   multilineClass?: string;
@@ -180,6 +185,10 @@ export function createDefaultDataRenderer(
     ...options,
   };
   const arrayRenderer = createDefaultArrayDataRenderer(options.arrayOptions);
+
+  const autocompleteRenderer = createAutocompleteRenderer(
+    options.autocompleteOptions,
+  );
 
   return createDataRenderer((props, renderers) => {
     const { field } = props;
@@ -244,6 +253,8 @@ export function createDefaultDataRenderer(
         return checkboxRenderer.render(props, renderers);
       case DataRenderType.Jsonata:
         return jsonataRenderer.render(props, renderers);
+      case DataRenderType.Autocomplete:
+        return autocompleteRenderer.render(props, renderers);
     }
     if (isTextfieldRenderer(renderOptions) && renderOptions.multiline)
       return multilineRenderer.render(props, renderers);

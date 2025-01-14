@@ -22,7 +22,7 @@
     "react-stately": "^3.34.0",
     "react-aria": "^3.36.0",
     "clsx": "^2",
-    "@internationalized/date": "^3.5.3",
+    "@internationalized/date": "^3.6.0",
     "@astroapps/aria-base": "workspace:^1.1.0"
   },
   "peerDependencies": {

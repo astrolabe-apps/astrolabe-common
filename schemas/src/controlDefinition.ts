@@ -161,6 +161,7 @@ export enum DataRenderType {
   DisplayOnly = "DisplayOnly",
   Group = "Group",
   NullToggle = "NullToggle",
+  Autocomplete = "Autocomplete",
   Jsonata = "Jsonata",
   Array = "Array",
 }
@@ -169,6 +170,17 @@ export interface TextfieldRenderOptions extends RenderOptions {
   type: DataRenderType.Textfield;
   placeholder?: string | null;
   multiline?: boolean | null;
+}
+
+export interface AutocompleteRenderOptions
+  extends RenderOptions,
+    AutocompleteClasses {
+  type: DataRenderType.Autocomplete;
+}
+
+export interface AutocompleteClasses {
+  listContainerClass?: string | null;
+  listEntryClass?: string | null;
 }
 
 export interface CheckEntryClasses {

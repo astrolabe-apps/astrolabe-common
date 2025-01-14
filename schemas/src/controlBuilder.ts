@@ -1,6 +1,7 @@
 import {
   AccordionAdornment,
   ActionControlDefinition,
+  AutocompleteRenderOptions,
   CheckListRenderOptions,
   ControlAdornmentType,
   ControlDefinition,
@@ -65,6 +66,10 @@ export function renderOptionsFor<A extends RenderOptions>(
 ): (options: Omit<A, "type">) => { renderOptions: A } {
   return (o) => ({ renderOptions: { type, ...o } as A });
 }
+
+export const autocompleteOptions = renderOptionsFor<AutocompleteRenderOptions>(
+  DataRenderType.Autocomplete,
+);
 
 export const checkListOptions = renderOptionsFor<CheckListRenderOptions>(
   DataRenderType.CheckList,

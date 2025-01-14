@@ -32,7 +32,8 @@
   ],
   "dependencies": {
     "clsx": "^1 || ^2",
-    "jsonata": "^2.0.4"
+    "jsonata": "^2.0.4",
+    "@mui/base": "^5.0.0-beta.68"
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.0.0",
