@@ -187,8 +187,11 @@ public record RadioButtonRenderOptions(
     string? NotSelectedClass
 ) : RenderOptions(DataRenderType.Radio.ToString());
 
-public record AutocompleteRenderOptions(string? ListContainerClass, string? ListEntryClass)
-    : RenderOptions(DataRenderType.Autocomplete.ToString());
+public record AutocompleteRenderOptions(
+    string? ListContainerClass,
+    string? ListEntryClass,
+    string? Placeholder
+) : RenderOptions(DataRenderType.Autocomplete.ToString());
 
 public record CheckListRenderOptions(
     string? EntryWrapperClass,

@@ -79,6 +79,7 @@ interface DisabledStuff {
   disable: boolean;
   text: string;
   options: string[];
+  singleOption: string;
 }
 
 interface NestedSchema {
@@ -121,6 +122,12 @@ const TestSchema = buildSchema<TestSchema>({
           { name: "Four", value: "4", group: "Number2" },
           { name: "Five", value: "5", group: "a" },
         ),
+      ),
+      singleOption: stringOptionsField(
+        "String",
+        { name: "One", value: "1" },
+        { name: "Two", value: "2" },
+        { name: "Three", value: "3" },
       ),
     }),
     { collection: true },

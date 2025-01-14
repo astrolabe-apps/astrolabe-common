@@ -944,7 +944,7 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
   }),
   placeholder: makeScalarField({
     type: FieldType.String,
-    onlyForTypes: ["Textfield"],
+    onlyForTypes: ["Autocomplete", "Textfield"],
     displayName: "Placeholder",
   }),
   multiline: makeScalarField({

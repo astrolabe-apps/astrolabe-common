@@ -2,6 +2,7 @@
 import {
   Control,
   controlValues,
+  useComputed,
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
@@ -16,8 +17,18 @@ import { useAutocomplete, UseAutocompleteProps } from "@mui/base";
 import clsx from "clsx";
 
 export interface AutocompleteRendererOptions {
+  className?: string;
   listContainerClass?: string;
   listEntryClass?: string;
+  autocompletePlaceholder?: string;
+}
+
+export interface AutocompleteProps<A, Multiple extends boolean>
+  extends UseAutocompleteProps<A, Multiple, false, true> {
+  control: Control<any>;
+  className?: string;
+  classes: AutocompleteRendererOptions;
+  controlClasses?: AutocompleteClasses;
 }
 
 export function createAutocompleteRenderer(
@@ -25,13 +36,27 @@ export function createAutocompleteRenderer(
 ) {
   return createDataRenderer(
     (p) => {
-      return (
-        <Autocomplete
-          {...p}
+      // console.log(p);
+      // console.log(options);
+      return p.field.collection ? (
+        <MultipleAutocomplete
           options={p.options ?? []}
           control={p.control}
+          className={rendererClass(p.className, options.className)}
           classes={options}
-          controlClasses={p.renderOptions as AutocompleteRendererOptions}
+          controlClasses={p.renderOptions as AutocompleteClasses}
+          readOnly={p.readonly}
+          id={p.id}
+        />
+      ) : (
+        <SingleAutocomplete
+          options={p.options ?? []}
+          control={p.control}
+          className={rendererClass(p.className, options.className)}
+          classes={options}
+          controlClasses={p.renderOptions as AutocompleteClasses}
+          readOnly={p.readonly}
+          id={p.id}
         />
       );
     },
@@ -41,41 +66,27 @@ export function createAutocompleteRenderer(
   );
 }
 
-export interface AutocompleteProps<A>
-  extends UseAutocompleteProps<A, false, false, true> {
-  control: Control<any>;
-  textControl?: Control<string>;
-  selectedControl?: Control<A | null>;
-  options: A[];
-  classes: AutocompleteRendererOptions;
-  controlClasses?: AutocompleteClasses;
-}
-
-export function Autocomplete({
-  id,
-  textControl: tc,
-  selectedControl: sc,
-  options,
-  control,
-  classes,
-  controlClasses,
-  ...otherProps
-}: AutocompleteProps<FieldOption | string>) {
+function SingleAutocomplete({
+  ...props
+}: AutocompleteProps<FieldOption | string, false>) {
+  const { id, control, className, readOnly, classes, controlClasses } = props;
   const { disabled } = control;
-  const textControl = useControl("", { use: tc });
-  const selectedControl = useControl(null, { use: sc });
+
+  const inputControl = useControl<string>("");
+  const selectedOptionControl = useControl<string | FieldOption | null>(null);
 
   const listContainerClass = rendererClass(
     controlClasses?.listContainerClass,
     classes.listContainerClass,
   );
+
   const listEntryClass = rendererClass(
     controlClasses?.listEntryClass,
     classes.listEntryClass,
   );
 
   useControlEffect(
-    controlValues(textControl, selectedControl),
+    controlValues(inputControl, selectedOptionControl),
     ([text, selected]) => {
       control.value = selected
         ? typeof selected === "string"
@@ -95,12 +106,10 @@ export function Autocomplete({
     focused,
     getPopupIndicatorProps,
   } = useAutocomplete({
-    id: id,
-    options: options,
-    value: selectedControl.value,
-    inputValue: textControl.value,
     freeSolo: true,
-    disabled: disabled,
+    multiple: false,
+    value: selectedOptionControl.value,
+    inputValue: inputControl.value,
     getOptionLabel: (v) => (typeof v === "string" ? v : v.name),
     filterOptions: (o, s) =>
       o.filter((o) => {
@@ -108,22 +117,22 @@ export function Autocomplete({
         return label.toLowerCase().includes(s.inputValue.toLowerCase());
       }),
     onInputChange: (_, v, reason) => {
-      textControl.value = v;
-      if (reason === "input") selectedControl.value = null;
+      inputControl.value = v;
+      if (reason === "input") selectedOptionControl.value = null;
     },
     onChange: (_, v, reason) => {
-      if (reason === "selectOption")
-        selectedControl.value =
-          typeof v === "string" ? { name: v, value: v } : v;
+      if (reason === "selectOption") {
+        selectedOptionControl.value = v;
+      }
     },
-    ...otherProps,
+    ...props,
   });
 
   return (
     <div id={id} className={"relative"} {...getRootProps()}>
       <div
         className={clsx(
-          "w-full flex gap-[5px] pr-[5px] overflow-hidden w-80 rounded-lg bg-white border border-solid border-gray-200 hover:border-primary-400 focus-visible:outline-0 shadow-[0_2px_4px_rgb(0_0_0_/_0.05)] min-h-[48px]",
+          className,
           focused
             ? "border-primary-400 shadow-[0_0_0_3px_transparent] shadow-primary-200"
             : "shadow-[0_2px_2px_transparent] shadow-surface-50",
@@ -132,14 +141,15 @@ export function Autocomplete({
         <input
           type={"text"}
           {...getInputProps()}
+          placeholder={controlClasses?.placeholder ?? ""}
           className={
-            "leading-[1.5] text-gray-900 bg-inherit border-0 rounded-[inherit] px-3 py-2 outline-0 grow shrink-0 basis-auto focus:outline-0 focus:ring-0 focus:shadow-none"
+            "leading-[1.5] text-surface-900 bg-[inherit] border-0 rounded-[inherit] px-3 py-2 outline-0 grow shrink-0 basis-auto focus:outline-0 focus:ring-0 focus:shadow-none"
           }
         />
 
         <button
           {...getPopupIndicatorProps()}
-          disabled={disabled}
+          disabled={disabled || readOnly}
           className={
             "outline-0 shadow-none border-0 py-0 px-0.5 bg-transparent pr-[10px]"
           }
@@ -167,4 +177,24 @@ export function Autocomplete({
       )}
     </div>
   );
+}
+
+function MultipleAutocomplete({
+  ...props
+}: AutocompleteProps<FieldOption, true>) {
+  console.log("Multiple props", { ...props });
+
+  const textControl = useControl<string[]>();
+  const selectedOptions = useControl<(string | FieldOption)[]>();
+
+  const inputValue = useComputed(() => textControl.value?.join(","));
+
+  const {} = useAutocomplete({
+    ...props,
+    value: selectedOptions.value,
+    inputValue: inputValue.value,
+    onChange: (event, value, reason, details) => {},
+  });
+
+  return <>Multiple Autocomplete</>;
 }

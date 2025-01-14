@@ -181,6 +181,7 @@ export interface AutocompleteRenderOptions
 export interface AutocompleteClasses {
   listContainerClass?: string | null;
   listEntryClass?: string | null;
+  placeholder?: string | null;
 }
 
 export interface CheckEntryClasses {
@@ -442,6 +443,12 @@ export function isTextfieldRenderer(
   options: RenderOptions,
 ): options is TextfieldRenderOptions {
   return options.type === DataRenderType.Textfield;
+}
+
+export function isAutocompleteRenderer(
+  options: RenderOptions,
+): options is AutocompleteRenderOptions {
+  return options.type === DataRenderType.Autocomplete;
 }
 
 export function isDataGroupRenderer(
