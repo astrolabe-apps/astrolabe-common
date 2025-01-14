@@ -9,10 +9,9 @@ import {
   fieldPathForDefinition,
   FieldType,
   FormRenderer,
-  getSchemaNodePath,
   GroupedControlsDefinition,
   makeSchemaDataNode,
-  schemaDataForFieldPath,
+  RendererRegistration,
   SchemaDataNode,
   schemaForFieldPath,
   SchemaNode,
@@ -22,6 +21,7 @@ import { SelectedControlNode } from "./types";
 import { schemaFieldOptions, SchemaOptionTag } from "./util";
 import { ControlDefinitionForm } from "./schemaSchemas";
 import { Control, trackedValue } from "@react-typed-forms/core";
+import { createValueForFieldRenderer } from "@react-typed-forms/schemas-html";
 
 type ExtensionTypeFilterMap = { [key: string]: (n: SchemaNode) => boolean };
 
@@ -31,7 +31,7 @@ type ExtensionFilters = Record<
 >;
 export function FormControlEditor({
   controlNode,
-  renderer,
+  createEditorRenderer,
   editorFields,
   editorControls,
   extensions,
@@ -39,7 +39,7 @@ export function FormControlEditor({
   controlNode: SelectedControlNode;
   editorControls: GroupedControlsDefinition;
   editorFields: SchemaNode;
-  renderer: FormRenderer;
+  createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
   extensions?: ControlDefinitionExtension[];
 }): ReactElement {
   const extensionFilters = useMemo(() => {
@@ -61,7 +61,13 @@ export function FormControlEditor({
     () => new EditorSchemaInterface(controlNode.schema, extensionFilters),
     [controlNode.schema, extensionFilters],
   );
-  // const useDataHook = useEditorDataHook(controlNode.schema);
+  const renderer = useMemo(
+    () =>
+      createEditorRenderer([
+        createValueForFieldRenderer({ schema: controlNode.schema }),
+      ]),
+    [controlNode.schema.id],
+  );
   const editorNode = makeSchemaDataNode(editorFields, controlNode.control);
   const RenderEditor = useControlRendererComponent(
     editorControls,

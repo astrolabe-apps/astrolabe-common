@@ -14,6 +14,7 @@ import {
   GroupedControlsDefinition,
   makeSchemaDataNode,
   NewControlRenderer,
+  RendererRegistration,
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import React, { ReactNode, useMemo } from "react";
@@ -33,7 +34,7 @@ export function FormPreview({
   validation,
   rootControlClass,
   previewOptions,
-  rawRenderer,
+  createEditorRenderer,
   controlsClass,
   extraPreviewControls,
 }: {
@@ -41,7 +42,7 @@ export function FormPreview({
   rootSchema: SchemaNode;
   controls: ControlDefinition[];
   formRenderer: FormRenderer;
-  rawRenderer: FormRenderer;
+  createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
   validation?: (data: any, controls: ControlDefinition[]) => Promise<any>;
   previewOptions?: ControlRenderOptions;
   rootControlClass?: string;
@@ -50,6 +51,7 @@ export function FormPreview({
     | ReactNode
     | ((c: ControlDefinition[], data: Control<any>) => ReactNode);
 }) {
+  const rawRenderer = useMemo(() => createEditorRenderer([]), []);
   const { data, showJson, showRawEditor } = previewData.fields;
   const jsonControl = useControl(() =>
     JSON.stringify(data.current.value, null, 2),

@@ -94,7 +94,6 @@ public static class SchemaTags
     public const string SchemaField = "_SchemaField";
     public const string NestedSchemaField = "_NestedSchemaField";
     public const string NoControl = "_NoControl";
-    public const string ValuesOf = "_ValuesOf:";
     public const string ControlGroup = "_ControlGroup:";
     public const string ControlRef = "_ControlRef:";
     public const string TableList = "_TableList";

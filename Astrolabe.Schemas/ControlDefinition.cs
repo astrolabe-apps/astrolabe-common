@@ -55,7 +55,6 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
 
     public RenderOptions? RenderOptions { get; set; }
 
-    [SchemaTag(SchemaTags.ValuesOf + "field")]
     public object? DefaultValue { get; set; }
 
     [DefaultValue(false)]
@@ -135,7 +134,7 @@ public enum DataRenderType
     NullToggle,
 
     Jsonata,
-    Array
+    Array,
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]

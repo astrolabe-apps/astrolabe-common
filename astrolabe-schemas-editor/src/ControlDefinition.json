@@ -380,6 +380,14 @@
                 "title": "Data Group Options",
                 "childRefId": "GroupOptions",
                 "field": "groupOptions"
+              },
+              {
+                "type": "Data",
+                "title": "Field Reference",
+                "field": "fieldRef",
+                "renderOptions": {
+                  "type": "Standard"
+                }
               }
             ],
             "hideTitle": true,
@@ -645,7 +653,8 @@
             "title": "Default Value",
             "field": "defaultValue",
             "renderOptions": {
-              "type": "Standard"
+              "type": "ValueForField",
+              "fieldRef": "field"
             },
             "hideTitle": true
           },

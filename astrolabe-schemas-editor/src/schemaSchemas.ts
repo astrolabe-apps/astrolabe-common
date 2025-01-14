@@ -757,6 +757,7 @@ export function toIconMappingForm(v: IconMapping): IconMappingForm {
 
 export interface RenderOptionsForm {
   type: string;
+  fieldRef: string | null;
   expression: string;
   addText: string | null;
   removeText: string | null;
@@ -861,7 +862,17 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         name: "Array",
         value: "Array",
       },
+      {
+        name: "ValueForField",
+        value: "ValueForField",
+      },
     ],
+  }),
+  fieldRef: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["ValueForField"],
+    displayName: "Field Ref",
+    tags: ["_SchemaField"],
   }),
   expression: makeScalarField({
     type: FieldType.String,
@@ -1228,7 +1239,6 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     type: FieldType.Any,
     onlyForTypes: ["Data"],
     displayName: "Default Value",
-    tags: ["_ValuesOf:field"],
   }),
   readonly: makeScalarField({
     type: FieldType.Bool,

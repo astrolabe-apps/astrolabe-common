@@ -6,7 +6,7 @@ import {
   ControlRenderer,
   FieldType,
   isCompoundField,
-  isDataControlDefinition,
+  isDataControl,
   SchemaField,
 } from "@react-typed-forms/schemas";
 import { createContext } from "react";
@@ -172,7 +172,7 @@ export function schemaDataForForm(
   { definition }: FormNode,
   schema: SchemaDataNode,
 ): SchemaDataNode {
-  const fieldPath = isDataControlDefinition(definition)
+  const fieldPath = isDataControl(definition)
     ? definition.field.split("/")
     : [];
   let i = 0;

@@ -16,6 +16,11 @@ import {
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
+import {
+  createDefaultRenderers,
+  defaultTailwindTheme,
+  ValueForFieldExtension,
+} from "@react-typed-forms/schemas-html";
 import { FormControlEditor } from "./FormControlEditor";
 import {
   ControlDefinitionForm,
@@ -33,10 +38,12 @@ import {
   ControlDefinitionType,
   ControlRenderOptions,
   createFormLookup,
+  createFormRenderer,
   FormRenderer,
   getAllReferencedClasses,
   GroupedControlsDefinition,
   GroupRenderType,
+  RendererRegistration,
   rootSchemaNode,
   SchemaNode,
   SchemaTreeLookup,
@@ -57,7 +64,7 @@ import { TreeApi } from "react-arborist";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
-  editorRenderer: FormRenderer;
+  createEditorRenderer?: (renderers: RendererRegistration[]) => FormRenderer;
   schemas: SchemaTreeLookup;
   loadForm: (
     formType: A,
@@ -88,11 +95,12 @@ export function BasicFormEditor<A extends string>({
   formRenderer,
   selectedForm,
   loadForm,
-  editorRenderer,
+  createEditorRenderer = (e) =>
+    createFormRenderer(e, createDefaultRenderers(defaultTailwindTheme)),
   formTypes,
   validation,
   saveForm,
-  extensions,
+  extensions: _extensions,
   editorControls,
   previewOptions,
   tailwindConfig,
@@ -105,6 +113,10 @@ export function BasicFormEditor<A extends string>({
   handleIcon,
   extraPreviewControls,
 }: BasicFormEditorProps<A>): ReactElement {
+  const extensions = useMemo(
+    () => [...(_extensions ?? []), ValueForFieldExtension],
+    [_extensions],
+  );
   const controlDefinitionSchemaMap = useMemo(
     () => applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions ?? []),
     [extensions],
@@ -240,7 +252,7 @@ export function BasicFormEditor<A extends string>({
                     formRenderer={formRenderer}
                     validation={validation}
                     previewOptions={previewOptions}
-                    rawRenderer={editorRenderer}
+                    createEditorRenderer={createEditorRenderer}
                     rootControlClass={rootControlClass}
                     controlsClass={controlsClass}
                     extraPreviewControls={extraPreviewControls}
@@ -355,7 +367,7 @@ export function BasicFormEditor<A extends string>({
                     <FormControlEditor
                       key={c.value.control.uniqueId}
                       controlNode={c.value}
-                      renderer={editorRenderer}
+                      createEditorRenderer={createEditorRenderer}
                       extensions={extensions}
                       editorFields={rootSchemaNode(ControlDefinitionSchema)}
                       editorControls={controlGroup}
