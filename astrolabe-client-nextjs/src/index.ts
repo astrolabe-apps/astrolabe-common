@@ -9,6 +9,8 @@ import {
 import { parse, stringify } from "querystring";
 import { AnchorHTMLAttributes, FC } from "react";
 import { getMatchingRoute, RouteData } from "@astroapps/client/app/routeData";
+import { useControl } from "@react-typed-forms/core";
+import { useDefaultSyncRoute } from "@astroapps/client/src/hooks/useDefaultSyncRoute";
 
 export function useNextNavigationService<T = {}>(
   routes?: Record<string, RouteData<T>>,
@@ -28,15 +30,19 @@ export function useNextNavigationService<T = {}>(
     : [];
 
   const query = parse(searchParams.toString());
+  const queryControl = useControl({ query, isReady: true });
+  useDefaultSyncRoute(queryControl, (query) =>
+    router.replace(pathname + "?" + query),
+  );
   const route =
     (routes && getMatchingRoute(routes, pathSegments)) ??
     defaultRoute ??
     ({} as RouteData<T>);
   return {
     query,
+    queryControl,
     pathSegments,
     pathname,
-    isReady: true,
     ...router,
     get: (p: string) => searchParams.get(p),
     getAll: (p: string) => searchParams.getAll(p),

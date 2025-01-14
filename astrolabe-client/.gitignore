@@ -5,3 +5,4 @@ dist/
 *.js
 *.d.ts
 *.js.map
+lib/

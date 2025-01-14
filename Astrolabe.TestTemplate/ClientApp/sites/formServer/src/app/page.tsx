@@ -205,7 +205,6 @@ export default function Editor() {
       <div id="dialog_container" ref={setContainer} />
       <BasicFormEditor<string>
         formRenderer={StdFormRenderer}
-        editorRenderer={StdFormRenderer}
         schemas={schemaLookup}
         // handleIcon={<div>WOAH</div>}
         loadForm={async (c) => {

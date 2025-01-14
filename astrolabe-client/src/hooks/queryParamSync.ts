@@ -1,6 +1,7 @@
 import { Control, useControl, useControlEffect } from "@react-typed-forms/core";
 import { ParsedUrlQuery } from "querystring";
 import { compareAsSet } from "../util/arrays";
+import { QueryControl } from "../service/navigation";
 
 interface ConvertParam<A, P extends string | string[] | undefined> {
   normalise: (q: string | string[] | undefined) => P;
@@ -21,22 +22,21 @@ interface ConvertParam<A, P extends string | string[] | undefined> {
  * @returns {Control<A>} The synchronized control.
  */
 export function useSyncParam<A, P extends string | string[] | undefined>(
-  queryControl: Control<ParsedUrlQuery>,
+  queryControl: QueryControl,
   paramName: string,
   convert: ConvertParam<A, P>,
   use?: Control<A>,
 ): Control<A> {
   const control = useControl(
-    () =>
-      convert.fromParam(
-        convert.normalise(queryControl.current.value[paramName]),
-      ),
+    () => convert.fromParam(convert.normalise(undefined)),
     { use },
   );
+  const query = queryControl.fields.query;
+
   useControlEffect(
-    () => queryControl.value[paramName],
-    (urlQuery) => {
-      control.value = convert.fromParam(convert.normalise(urlQuery));
+    () => convert.normalise(query.value[paramName]),
+    (param) => {
+      control.value = convert.fromParam(param);
     },
     true,
   );
@@ -47,17 +47,17 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
       const newValue = convert.toParam(c);
       if (
         !convert.compare(
-          convert.normalise(queryControl.current.value[paramName]),
+          convert.normalise(query.current.value[paramName]),
           newValue,
         )
       ) {
-        const nq = { ...queryControl.current.value };
+        const nq = { ...query.current.value };
         if (newValue !== undefined) {
           nq[paramName] = newValue;
         } else {
           delete nq[paramName];
         }
-        queryControl.value = nq;
+        query.value = nq;
       }
     },
   );

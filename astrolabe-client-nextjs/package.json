@@ -25,15 +25,19 @@
 	},
 	"peerDependencies": {
 		"@astroapps/client": "^2.0.0",
+		"@react-typed-forms/core": "^4.0.0",
+		"@astroapps/controls": "^1.0.0",
 		"next": "^14.0.4",
 		"react": "^18.2.0"
 	},
 	"scripts": {
 		"prepack": "npm run build",
-		"build": "rimraf ./lib/ && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
+		"build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
 		"watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
 	},
 	"devDependencies": {
+		"@astroapps/controls": "workspace:*",
+		"@react-typed-forms/core": "^4.0.0",
 		"@astroapps/client": "workspace:*",
 		"next": "14.0.4",
 		"react": "^18.2.0",

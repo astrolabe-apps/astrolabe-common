@@ -65,6 +65,7 @@ importers:
 
   ../../../astrolabe-client:
     specifiers:
+      '@astroapps/controls': workspace:*
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
@@ -76,6 +77,7 @@ importers:
       '@types/react': ^18.2.33
       '@types/shallowequal': ^1.1.2
       clsx: ^2.0.0
+      microbundle: ^0.15.1
       prettier: ^3.0.3
       react: ^18.2.0
       react-dnd: 16.0.1
@@ -88,6 +90,7 @@ importers:
       tailwind-merge: 1.14.0
       tslib: 2.8.0
     devDependencies:
+      '@astroapps/controls': link:../astrolabe-controls
       '@babel/cli': 7.25.9_@babel+core@7.26.0
       '@babel/core': 7.26.0
       '@babel/preset-env': 7.26.0_@babel+core@7.26.0
@@ -98,6 +101,7 @@ importers:
       '@types/node': 20.17.2
       '@types/react': 18.3.12
       '@types/shallowequal': 1.1.5
+      microbundle: 0.15.1
       prettier: 3.3.3
       react: 18.3.1
       react-dnd: 16.0.1_dhjhfklksilq7vybfge4vfljc4
@@ -132,11 +136,13 @@ importers:
   ../../../astrolabe-client-nextjs:
     specifiers:
       '@astroapps/client': workspace:*
+      '@astroapps/controls': workspace:*
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
       '@babel/preset-react': ^7.23.3
       '@babel/preset-typescript': ^7.23.3
+      '@react-typed-forms/core': ^4.0.0
       '@react-typed-forms/transform': ^0.2.0
       '@types/node': ^20.8.4
       '@types/react': ^18.2.33
@@ -153,11 +159,13 @@ importers:
       tslib: 2.8.0
     devDependencies:
       '@astroapps/client': link:../astrolabe-client
+      '@astroapps/controls': link:../astrolabe-controls
       '@babel/cli': 7.25.9_@babel+core@7.26.0
       '@babel/core': 7.26.0
       '@babel/preset-env': 7.26.0_@babel+core@7.26.0
       '@babel/preset-react': 7.25.9_@babel+core@7.26.0
       '@babel/preset-typescript': 7.26.0_@babel+core@7.26.0
+      '@react-typed-forms/core': 4.0.0_unfd6qgpx6ezerhft2moof6blu
       '@react-typed-forms/transform': 0.2.0
       '@types/node': 20.17.2
       '@types/react': 18.3.12
@@ -764,6 +772,7 @@ importers:
       '@astroapps/client': workspace:*
       '@astroapps/client-nextjs': workspace:*
       '@astroapps/codemirror-evaluator': workspace:*
+      '@astroapps/controls': workspace:*
       '@astroapps/datagrid': workspace:^1.0.6
       '@astroapps/evaluator': workspace:*
       '@astroapps/schemas-datagrid': workspace:*
@@ -802,6 +811,7 @@ importers:
       '@astroapps/client': link:../../../../astrolabe-client
       '@astroapps/client-nextjs': link:../../../../astrolabe-client-nextjs
       '@astroapps/codemirror-evaluator': link:../../../../astrolabe-codemirror-evaluator
+      '@astroapps/controls': link:../../../../astrolabe-controls
       '@astroapps/datagrid': link:../../../../astrolabe-datagrid
       '@astroapps/evaluator': link:../../../../astrolabe-evaluator
       '@astroapps/schemas-datagrid': link:../../../../astrolabe-schemas-datagrid
@@ -7603,6 +7613,16 @@ packages:
       '@swc/helpers': 0.5.13
       react: 18.3.1
     dev: false
+
+  /@react-typed-forms/core/4.0.0_unfd6qgpx6ezerhft2moof6blu:
+    resolution: {integrity: sha512-MeLr1b0sNfZ2VKqI44/zihbZKyXNv+BF6Ko7S8JLZ2eu8i+U4PFl2R2Q/a1jLNpzGgkaKWhP3l1ijPiT7zMZbA==}
+    peerDependencies:
+      '@astroapps/controls': ^1.0.0
+      react: ^18
+    dependencies:
+      '@astroapps/controls': link:../../../astrolabe-controls
+      react: 18.3.1
+    dev: true
 
   /@react-typed-forms/mui/3.0.4_d6a7fes3ycg2cxx5adh67hc4dy:
     resolution: {integrity: sha512-JGrwlO+lJtY3cIP/TVxHTBuiC5AUW+cCoKIQ7WGPK3U/phs19EevmVd8c6UXhz5C4LUHmlCxtC8OKwWGZPTmVg==}

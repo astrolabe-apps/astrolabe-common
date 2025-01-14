@@ -18,7 +18,10 @@ export function updateComputedValue<V>(
   if (!meta.compute) {
     const effect = createEffect(compute, (v) => c.setValueImpl(v));
     meta.compute = effect;
-    addCleanup(c, () => effect.cleanup());
+    addCleanup(c, () => {
+      effect.cleanup();
+      meta.compute = undefined;
+    });
   } else {
     meta.compute.calculate = compute;
     meta.compute.runEffect();
