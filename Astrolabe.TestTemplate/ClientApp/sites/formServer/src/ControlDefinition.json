@@ -640,23 +640,34 @@
         "title": "Advanced",
         "children": [
           {
-            "type": "Data",
-            "title": "Apply default value",
-            "field": "defaultValue",
-            "renderOptions": {
-              "type": "NullToggle"
-            },
-            "labelClass": ""
-          },
-          {
-            "type": "Data",
+            "type": "Group",
             "title": "Default Value",
-            "field": "defaultValue",
-            "renderOptions": {
-              "type": "ValueForField",
-              "fieldRef": "field"
+            "children": [
+              {
+                "type": "Data",
+                "title": "Set to value if empty",
+                "field": "defaultValue",
+                "renderOptions": {
+                  "type": "NullToggle"
+                },
+                "labelClass": "",
+                "defaultValue": null
+              },
+              {
+                "type": "Data",
+                "title": "Default Value",
+                "field": "defaultValue",
+                "renderOptions": {
+                  "type": "ValueForField",
+                  "fieldRef": "field"
+                },
+                "hideTitle": true
+              }
+            ],
+            "groupOptions": {
+              "type": "Standard"
             },
-            "hideTitle": true
+            "layoutClass": "border p-2"
           },
           {
             "type": "Data",
@@ -664,7 +675,8 @@
             "field": "id",
             "renderOptions": {
               "type": "Standard"
-            }
+            },
+            "defaultValue": null
           },
           {
             "type": "Data",

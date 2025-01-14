@@ -187,7 +187,7 @@ export function useEvalDefaultValueHook(
           (field
             ? ctx.dataNode!.elementIndex != null
               ? elementValueForField(field)
-              : defaultValueForField(field, required, true)
+              : defaultValueForField(field, required)
             : undefined)
         );
       }

@@ -122,13 +122,11 @@ export function defaultValueForFields(fields: SchemaField[]): any {
  * Returns the default value for a specific schema field.
  * @param sf - The schema field to get the default value for.
  * @param required - Flag indicating if the field is required.
- * @param forceNotNull - Flag indicating if the field should not be null.
  * @returns The default value for the schema field.
  */
 export function defaultValueForField(
   sf: SchemaField,
   required?: boolean | null,
-  forceNotNull?: boolean,
 ): any {
   if (sf.defaultValue !== undefined) return sf.defaultValue;
   const isRequired = !!(required || sf.required);
@@ -137,11 +135,7 @@ export function defaultValueForField(
       const childValue = defaultValueForFields(sf.children);
       return sf.collection ? [childValue] : childValue;
     }
-    return sf.notNullable || forceNotNull
-      ? sf.collection
-        ? []
-        : {}
-      : undefined;
+    return sf.notNullable ? (sf.collection ? [] : {}) : undefined;
   }
   if (sf.collection && sf.notNullable) {
     return [];

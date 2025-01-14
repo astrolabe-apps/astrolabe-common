@@ -70,19 +70,27 @@ function ValueForField({
   renderer: FormRenderer;
   control: Control<any>;
 }) {
-  const field = schema.field.field;
-  const value = useControl<Record<string, any>>({}, undefined, (e) =>
-    setFields(e, { [field]: control }),
+  const value = useControl({ default: undefined }, undefined, (e) =>
+    setFields(e, { default: control }),
   );
-  const controls = useMemo(
-    () => addMissingControlsForSchema(rootSchemaNode([schema.field]), []),
-    [schema],
-  );
+  const [controls, rootSchema] = useMemo(() => {
+    const rootSchema = rootSchemaNode([
+      {
+        ...schema.field,
+        field: "default",
+        required: false,
+        notNullable: false,
+        onlyForTypes: null,
+        defaultValue: undefined,
+      },
+    ]);
+    return [addMissingControlsForSchema(rootSchema, []), rootSchema];
+  }, [schema]);
   const Render = useControlRendererComponent(
     groupedControl(controls),
     renderer,
     { disabled: control.disabled },
-    makeSchemaDataNode(schema.parent!, value),
+    makeSchemaDataNode(rootSchema, value),
   );
   return <Render />;
 }
