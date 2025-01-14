@@ -1,8 +1,15 @@
 {
 	"name": "@astroapps/client",
 	"version": "2.0.0",
-	"main": "index.js",
-	"types": "index.d.ts",
+	"type": "module",
+	"exports": {
+		".": "./dist/index.js",
+		"./hooks/*": "./dist/hooks/*.js",
+		"./app/*": "./dist/app/*.js",
+		"./util/*": "./dist/util/*.js",
+		"./service/*": "./dist/service/*.js",
+		"./service": "./dist/service/index.js"
+	},
 	"author": "Astrolabe Enterprises",
 	"license": "ISC",
 	"bugs": {
@@ -24,8 +31,8 @@
 	},
 	"scripts": {
 		"prepack": "npm run build",
-		"build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps true",
-		"watch": "tsc -w & babel src --watch --out-dir . --extensions \".ts,.tsx\" --source-maps true"
+		"build": "rimraf dist/ && tsc && babel src --out-dir dist --extensions \".ts,.tsx\" --source-maps true",
+		"watch": "tsc -w & babel src --watch --out-dir dist --extensions \".ts,.tsx\" --source-maps true"
 	},
 	"devDependencies": {
 		"@react-typed-forms/core": "workspace:*",

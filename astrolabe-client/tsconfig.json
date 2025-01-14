@@ -1,7 +1,7 @@
 {
 	"compilerOptions": {
-		"target": "es5",
-		"outDir": ".",
+		"target": "ES2023",
+		"outDir": "dist",
 		"emitDeclarationOnly": true,
 		"declaration": true,
 		"lib": ["es2017", "es7", "es6", "dom"],
@@ -10,7 +10,7 @@
 		"strict": true,
 		"forceConsistentCasingInFileNames": true,
 		"esModuleInterop": true,
-		"module": "commonjs",
+		"module": "ES6",
 		"moduleResolution": "node",
 		"resolveJsonModule": true,
 		"isolatedModules": true,

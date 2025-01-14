@@ -1,1 +1,1 @@
-export * from "util";
+export default {};
