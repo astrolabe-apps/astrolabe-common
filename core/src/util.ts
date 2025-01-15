@@ -6,6 +6,7 @@ export function useDebounced<T extends Function>(func: T, delay: number) {
     undefined,
     undefined,
   ]);
+  ref.current[0] = func;
   return (...args: any[]) => {
     const c = ref.current;
     if (c[1]) clearTimeout(c[1]);
