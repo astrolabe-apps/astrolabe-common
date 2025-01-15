@@ -48,7 +48,14 @@ export function useNextNavigationService<T = {}>(
     queryControl,
     pathSegments,
     pathname,
-    ...router,
+    replace(path: string) {
+      console.warn("Redirecting", path);
+      router.replace(path);
+    },
+    push(path: string) {
+      console.warn("Pushing", path);
+      router.push(path);
+    },
     get: (p: string) => searchParams.get(p),
     getAll: (p: string) => searchParams.getAll(p),
     Link: Link as FC<AnchorHTMLAttributes<HTMLAnchorElement>>,
