@@ -1,7 +1,6 @@
 import { Control, useControl, useControlEffect } from "@react-typed-forms/core";
-import { ParsedUrlQuery } from "querystring";
 import { compareAsSet } from "../util/arrays";
-import { QueryControl } from "../service/navigation";
+import { QueryControl, useNavigationService } from "../service/navigation";
 
 interface ConvertParam<A, P extends string | string[] | undefined> {
   normalise: (q: string | string[] | undefined) => P;
@@ -27,18 +26,17 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
   convert: ConvertParam<A, P>,
   use?: Control<A>,
 ): Control<A> {
+  const currentQuery = useNavigationService().query;
   const query = queryControl.fields.query;
   const control = useControl(
-    () => convert.fromParam(convert.normalise(query.current.value[paramName])),
+    () => convert.fromParam(convert.normalise(currentQuery[paramName])),
     { use },
   );
 
   useControlEffect(
     () => convert.normalise(query.value[paramName]),
-    (param) => {
-      control.value = convert.fromParam(param);
-    },
-    true,
+    (param) => (control.value = convert.fromParam(param)),
+    !!use,
   );
 
   useControlEffect(
