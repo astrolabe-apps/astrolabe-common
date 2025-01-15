@@ -47,11 +47,15 @@ export const defaultTailwindTheme = {
     multilineClass: "border p-2 outline-0 whitespace-pre-wrap",
     autocompleteOptions: {
       className:
-        "w-full flex gap-[5px] pr-[5px] overflow-hidden rounded-lg bg-white border border-solid border-gray-200 hover:border-primary-400 focus-visible:outline-0 shadow-[0_2px_4px_rgb(0_0_0_/_0.05)] min-h-[48px]",
+        "w-full flex gap-[5px] pr-[5px] overflow-hidden rounded-lg bg-white border border-solid border-gray-200 hover:border-primary-400 focus-visible:outline-0 shadow-[0_2px_4px_rgb(0_0_0_/_0.05)] min-h-[48px] py-1",
       listContainerClass:
         "absolute w-full text-sm box-border p-1.5 my-3 mx-0 min-w-[120px] rounded-xl overflow-auto outline-0 max-h-[300px] z-[1] bg-white border border-solid border-surface-200 text-surface-900 shadow-[0_4px_30px_transparent] shadow-surface-200",
       listEntryClass:
         "list-none p-2 rounded-lg cursor-default last-of-type:border-b-0 hover:cursor-pointer hover:bg-primary-100 aria-selected:bg-primary-200 aria-selected:text-primary-900 focused:bg-surface-100 focus-visible:bg-surface-100 focused:text-surface-900 focus-visible:text-surface-900 focus-visible:shadow-[0_0_0_3px_transparent] focus-visible:shadow-primary-200  focused:aria-selected:bg-primary-200 focus-visible:aria-selected:bg-primary-200 focused:aria-selected:text-primary-900 focus-visible:aria-selected:text-primary-900",
+      chipContainerClass:
+        "flex flex-row items-center px-3 py-1 rounded-full bg-surface-100 m-1 gap-2 truncate",
+      chipCloseButtonClass:
+        "fa-solid fa-xmark p-1 bg-surface-300 rounded-full min-w-[24px] flex justify-center text-surface-50 hover:bg-surface-400 hover:text-surface-100 hover:cursor-pointer",
     },
   },
   adornment: {

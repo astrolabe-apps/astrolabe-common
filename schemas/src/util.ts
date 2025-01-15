@@ -7,6 +7,7 @@ import {
   DisplayOnlyRenderOptions,
   fieldPathForDefinition,
   GroupRenderOptions,
+  isAutoCompleteClasses,
   isCheckEntryClasses,
   isDataControl,
   isDataGroupRenderer,
@@ -583,10 +584,22 @@ export function getAllReferencedClasses(
     getAllReferencedClasses(x, collectExtra),
   );
   const go = getGroupClassOverrides(c);
+
   const { entryWrapperClass, selectedClass, notSelectedClass } =
     isDataControl(c) && isCheckEntryClasses(c.renderOptions)
       ? c.renderOptions
       : {};
+
+  const {
+    listContainerClass,
+    listEntryClass,
+    chipContainerClass,
+    chipCloseButtonClass,
+  } =
+    isDataControl(c) && isAutoCompleteClasses(c.renderOptions)
+      ? c.renderOptions
+      : {};
+
   const tc = clsx(
     [
       c.styleClass,
@@ -597,6 +610,10 @@ export function getAllReferencedClasses(
       entryWrapperClass,
       selectedClass,
       notSelectedClass,
+      listContainerClass,
+      listEntryClass,
+      chipContainerClass,
+      chipCloseButtonClass,
     ].map(getOverrideClass),
   );
   if (childClasses && !tc) return childClasses;

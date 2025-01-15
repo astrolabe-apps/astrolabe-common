@@ -190,6 +190,8 @@ public record RadioButtonRenderOptions(
 public record AutocompleteRenderOptions(
     string? ListContainerClass,
     string? ListEntryClass,
+    string? ChipContainerClass,
+    string? ChipCloseButtonClass,
     string? Placeholder
 ) : RenderOptions(DataRenderType.Autocomplete.ToString());
 

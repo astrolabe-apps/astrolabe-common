@@ -771,6 +771,8 @@ export interface RenderOptionsForm {
   notSelectedClass: string | null;
   listContainerClass: string | null;
   listEntryClass: string | null;
+  chipContainerClass: string | null;
+  chipCloseButtonClass: string | null;
   placeholder: string | null;
   multiline: boolean | null;
   groupOptions: GroupRenderOptionsForm;
@@ -941,6 +943,16 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["Autocomplete"],
     displayName: "List Entry Class",
+  }),
+  chipContainerClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Autocomplete"],
+    displayName: "Chip Container Class",
+  }),
+  chipCloseButtonClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Autocomplete"],
+    displayName: "Chip Close Button Class",
   }),
   placeholder: makeScalarField({
     type: FieldType.String,

@@ -181,6 +181,8 @@ export interface AutocompleteRenderOptions
 export interface AutocompleteClasses {
   listContainerClass?: string | null;
   listEntryClass?: string | null;
+  chipContainerClass?: string | null;
+  chipCloseButtonClass?: string | null;
   placeholder?: string | null;
 }
 
@@ -449,6 +451,17 @@ export function isAutocompleteRenderer(
   options: RenderOptions,
 ): options is AutocompleteRenderOptions {
   return options.type === DataRenderType.Autocomplete;
+}
+
+export function isAutoCompleteClasses(
+  options?: RenderOptions | null,
+): options is AutocompleteClasses & RenderOptions {
+  switch (options?.type) {
+    case DataRenderType.Autocomplete:
+      return true;
+    default:
+      return false;
+  }
 }
 
 export function isDataGroupRenderer(

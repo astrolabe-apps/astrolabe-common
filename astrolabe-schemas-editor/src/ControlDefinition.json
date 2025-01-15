@@ -622,6 +622,22 @@
                 "renderOptions": {
                   "type": "Standard"
                 }
+              },
+              {
+                "type": "Data",
+                "title": "Chip Container Class",
+                "field": "chipContainerClass",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Chip Close Button Class",
+                "field": "chipCloseButtonClass",
+                "renderOptions": {
+                  "type": "Standard"
+                }
               }
             ],
             "field": "renderOptions",
