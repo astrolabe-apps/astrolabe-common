@@ -1,7 +1,7 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
-import { SignupFormData, useAuthPageSetup } from "@astroapps/client/app/user";
+import { SignupFormData, useAuthPageSetup } from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { ReactNode } from "react";
 import { UserFormContainer } from "./UserFormContainer";

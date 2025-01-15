@@ -1,4 +1,4 @@
-import { findSortField, SearchingState } from "@astroapps/client/app/searching";
+import { findSortField, SearchingState } from "@astroapps/client";
 
 import { ReactNode } from "react";
 import clsx from "clsx";

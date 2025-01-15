@@ -39,11 +39,8 @@ import {
   UserMatchExpression,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
-import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
-import {
-  convertStringParam,
-  useSyncParam,
-} from "@astroapps/client/hooks/queryParamSync";
+import { useQueryControl } from "@astroapps/client";
+import { convertStringParam, useSyncParam } from "@astroapps/client";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
 import {
@@ -60,7 +57,7 @@ import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
-import { useApiClient } from "@astroapps/client/hooks/useApiClient";
+import { useApiClient } from "@astroapps/client";
 
 const Extensions = [DataGridExtension, QuickstreamExtension, PagerExtension];
 
@@ -200,6 +197,7 @@ export default function Editor() {
     [container],
   );
   const evalHook = useMemo(() => makeEvalExpressionHook(evalExpr), [roles]);
+  if (!qc.fields.isReady.value) return <></>;
   return (
     <DndProvider backend={HTML5Backend}>
       <div id="dialog_container" ref={setContainer} />

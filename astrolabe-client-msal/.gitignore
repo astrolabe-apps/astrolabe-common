@@ -1,4 +1,4 @@
 node_modules/
 *.tsbuildinfo
 client.build.log
-lib/*
+lib/

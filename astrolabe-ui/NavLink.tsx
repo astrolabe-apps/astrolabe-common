@@ -1,7 +1,7 @@
 import { HTMLAttributes, ReactNode } from "react";
-import { useNavigationService } from "@astroapps/client/service/navigation";
-import { RouteData } from "@astroapps/client/app/routeData";
-import { PageSecurity } from "@astroapps/client/service/security";
+import { useNavigationService } from "@astroapps/client";
+import { RouteData } from "@astroapps/client";
+import { PageSecurity } from "@astroapps/client";
 
 export interface NavLink {
   /** The label to display for the link. */

@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { Popover, PopoverProps } from "./Popover";
-import { cn } from "@astroapps/client/util/utils";
+import { cn } from "@astroapps/client";
 
 export function HelpText({
   children,

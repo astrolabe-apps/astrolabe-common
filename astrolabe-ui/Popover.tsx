@@ -3,7 +3,7 @@
 import * as React from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
 
-import { cn } from "@astroapps/client/util/utils";
+import { cn } from "@astroapps/client";
 import { ReactNode } from "react";
 import { PopoverContentProps } from "@radix-ui/react-popover";
 

@@ -6,14 +6,7 @@ import {
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
-import React, {
-  CSSProperties,
-  FC,
-  HTMLAttributes,
-  PropsWithChildren,
-  ReactElement,
-  ReactNode,
-} from "react";
+import React, { ReactElement } from "react";
 import {
   closestCenter,
   defaultDropAnimation,
@@ -34,63 +27,15 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   AnimateLayoutChanges,
   SortableContext,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { setIncluded } from "@astroapps/client/util/arrays";
+import { setIncluded } from "@astroapps/client";
 import update from "immutability-helper";
-import {
-  ControlTreeNode,
-  findAllTreeParentsInArray,
-  listToArray,
-  toTreeNode,
-  TreeDragState,
-  TreeInsertState,
-  TreeState,
-} from "./index";
+import { ControlTreeNode, ControlTreeProps, TreeDragState } from "./types";
 import { DefaultTreeItem } from "./DefaultTreeItem";
+import { toTreeNode } from "./treeNode";
+import { findAllTreeParentsInArray, listToArray } from "./util";
 
-interface TreeItemConfig {
-  handleIcon?: ReactNode;
-}
-
-export interface ControlTreeItemProps {
-  node: ControlTreeNode;
-  clone?: boolean;
-  selected: Control<Control<any> | undefined>;
-  title: string;
-  indentationWidth: number;
-  indicator: boolean;
-  insertState: Control<TreeInsertState | undefined>;
-  active: Control<any>;
-  displayedNodes: ControlTreeNode[];
-  onCollapse?: () => void;
-  canHaveChildren?: boolean;
-  actions?: ReactNode;
-  itemConfig?: TreeItemConfig;
-}
-
-export interface ControlTreeContainerProps
-  extends HTMLAttributes<HTMLElement>,
-    PropsWithChildren<
-      Partial<{
-        displayedNodes: ControlTreeNode[];
-        active: Control<any>;
-        selected: Control<Control<any> | undefined>;
-      }>
-    > {}
-
-export interface ControlTreeProps {
-  treeState: Control<TreeState>;
-  controls: Control<any[]>;
-  canDropAtRoot: (c: Control<any>) => boolean;
-  indentationWidth?: number;
-  indicator?: boolean;
-  TreeItem?: FC<ControlTreeItemProps>;
-  TreeContainer?: FC<ControlTreeContainerProps>;
-  itemConfig?: TreeItemConfig;
-  actions?: (node: ControlTreeNode) => ReactNode | undefined;
-}
 export function ControlTree({
   controls,
   canDropAtRoot,
@@ -347,11 +292,6 @@ export function ControlTree({
     dragState.fields.offsetLeft.value = Math.round(delta.x / indentationWidth);
   }
 }
-const animateLayoutChanges: AnimateLayoutChanges = ({
-  isSorting,
-  wasDragging,
-}) => !(isSorting || wasDragging);
-
 const adjustTranslate: Modifier = ({ transform }) => {
   return {
     ...transform,
@@ -394,81 +334,6 @@ const measuring = {
     frequency: 1000,
   },
 };
-
-export interface SortableTreeItem {
-  handleProps: HTMLAttributes<HTMLElement>;
-  handleIcon?: ReactNode;
-  itemProps: {
-    style: CSSProperties;
-    onClick: () => void;
-  };
-  paddingLeft: number;
-  isDragging: boolean;
-  isSelected: boolean;
-  setDraggableNodeRef: (elem: HTMLElement | null) => void;
-  setDroppableNodeRef: (elem: HTMLElement | null) => void;
-  canHaveChildren: boolean;
-  title: string;
-  clone?: boolean;
-  actions: ReactNode;
-  expanded: boolean;
-  onCollapse?: () => void;
-}
-
-export function useSortableTreeItem({
-  node,
-  active,
-  insertState,
-  clone,
-  selected,
-  indentationWidth,
-  actions,
-  onCollapse,
-  canHaveChildren,
-  title,
-  itemConfig,
-}: ControlTreeItemProps): SortableTreeItem {
-  const {
-    transform,
-    transition,
-    attributes,
-    listeners,
-    isDragging,
-    setDraggableNodeRef,
-    setDroppableNodeRef,
-  } = useSortable({
-    id: node.control.uniqueId,
-    data: { control: node.control },
-    animateLayoutChanges,
-  });
-
-  const style: CSSProperties = {
-    transform: CSS.Translate.toString(transform),
-    transition,
-  };
-
-  const depth =
-    active.value === node.control && insertState.fields
-      ? insertState.fields.parent.value.indent + 1
-      : node.indent;
-
-  return {
-    handleProps: { ...attributes, ...listeners },
-    itemProps: { style, onClick: () => (selected.value = node.control) },
-    isSelected: selected.value === node.control,
-    canHaveChildren: canHaveChildren ?? !!node.children,
-    setDraggableNodeRef,
-    setDroppableNodeRef,
-    isDragging,
-    actions,
-    title,
-    clone,
-    expanded: node.expanded,
-    onCollapse,
-    paddingLeft: clone ? 0 : depth * indentationWidth,
-    ...itemConfig,
-  };
-}
 
 export function removeNodeFromParent(
   node: ControlTreeNode,

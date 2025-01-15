@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/client-nextjs",
-	"version": "2.0.0",
+	"version": "2.0.1",
 	"type": "module",
 	"main": "lib/index.cjs",
 	"module": "lib/index.js",
@@ -24,7 +24,7 @@
 		"tslib": "^2.6.2"
 	},
 	"peerDependencies": {
-		"@astroapps/client": "^2.0.0",
+		"@astroapps/client": "^2.0.1",
 		"@react-typed-forms/core": "^4.0.0",
 		"@astroapps/controls": "^1.0.0",
 		"next": "^14.0.4",

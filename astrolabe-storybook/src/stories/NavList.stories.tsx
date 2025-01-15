@@ -1,6 +1,6 @@
 ﻿import { NavList } from "@astrolabe/ui/NavLink";
 import { Meta, StoryObj } from "@storybook/react";
-import { AppContextProvider } from "@astroapps/client/service";
+import { AppContextProvider } from "@astroapps/client";
 
 const meta: Meta<typeof NavList> = {
   component: NavList,

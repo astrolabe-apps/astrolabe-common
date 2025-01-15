@@ -1,4 +1,4 @@
-import { NavigationService } from "@astroapps/client/service/navigation";
+import { NavigationService } from "@astroapps/client";
 import Link from "next/link";
 import {
   ReadonlyURLSearchParams,
@@ -7,30 +7,35 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { parse, stringify } from "querystring";
-import { AnchorHTMLAttributes, FC } from "react";
-import { getMatchingRoute, RouteData } from "@astroapps/client/app/routeData";
+import { AnchorHTMLAttributes, FC, useEffect } from "react";
+import { getMatchingRoute, RouteData } from "@astroapps/client";
 import { useControl } from "@react-typed-forms/core";
-import { useDefaultSyncRoute } from "@astroapps/client/src/hooks/useDefaultSyncRoute";
+import { useDefaultSyncRoute } from "@astroapps/client";
 
 export function useNextNavigationService<T = {}>(
   routes?: Record<string, RouteData<T>>,
   defaultRoute?: RouteData<T>,
 ): NavigationService<T> {
+  const browser = typeof window !== "undefined";
   const router = useRouter();
-  const searchParams =
-    typeof window === "undefined"
-      ? ({ get: () => null, getAll: () => [], size: 0 } as Pick<
-          ReadonlyURLSearchParams,
-          "get" | "getAll" | "size"
-        >)
-      : useSearchParams()!;
+  const searchParams = !browser
+    ? ({ get: () => null, getAll: () => [], size: 0 } as Pick<
+        ReadonlyURLSearchParams,
+        "get" | "getAll" | "size"
+      >)
+    : useSearchParams()!;
+  const paramString = searchParams.toString();
+  const query = parse(paramString);
+  const queryControl = useControl({ query, isReady: false });
   const pathname = usePathname()!;
   const pathSegments = pathname
     ? pathname.split("/").filter((x) => x.length)
     : [];
 
-  const query = parse(searchParams.toString());
-  const queryControl = useControl({ query, isReady: true });
+  useEffect(() => {
+    queryControl.value = { query, isReady: true };
+  }, [paramString]);
+
   useDefaultSyncRoute(queryControl, (query) =>
     router.replace(pathname + "?" + query),
   );

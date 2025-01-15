@@ -27,11 +27,11 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
   convert: ConvertParam<A, P>,
   use?: Control<A>,
 ): Control<A> {
+  const query = queryControl.fields.query;
   const control = useControl(
-    () => convert.fromParam(convert.normalise(undefined)),
+    () => convert.fromParam(convert.normalise(query.current.value[paramName])),
     { use },
   );
-  const query = queryControl.fields.query;
 
   useControlEffect(
     () => convert.normalise(query.value[paramName]),

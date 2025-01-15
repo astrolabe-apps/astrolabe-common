@@ -1,6 +1,6 @@
 "use client";
 
-import { useApiClient } from "@astroapps/client/hooks/useApiClient";
+import { useApiClient } from "@astroapps/client";
 import { CarClient, CarEdit, CarInfo } from "../../client";
 import { useEffect, useMemo } from "react";
 import {

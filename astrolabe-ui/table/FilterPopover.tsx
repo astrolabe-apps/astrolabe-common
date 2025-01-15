@@ -1,5 +1,5 @@
 import { Popover } from "../Popover";
-import { SearchingState } from "@astroapps/client/app/searching";
+import { SearchingState } from "@astroapps/client";
 
 import {
   RenderArrayElements,

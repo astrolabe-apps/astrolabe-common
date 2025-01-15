@@ -1,5 +1,5 @@
 import { cva, VariantProps } from "class-variance-authority";
-import { cn } from "@astroapps/client/util/utils";
+import { cn } from "@astroapps/client";
 import { HTMLAttributes } from "react";
 
 const circularProgressVariants = cva("stroke-current", {

@@ -19,7 +19,8 @@
     "watch": "microbundle -w -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "peerDependencies": {
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.0.0"
   },
   "dependencies": {
     "react-stately": "^3.34.0",

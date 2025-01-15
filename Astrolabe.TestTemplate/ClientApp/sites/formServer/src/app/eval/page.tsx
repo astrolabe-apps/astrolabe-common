@@ -19,7 +19,7 @@ import {
 } from "@react-typed-forms/core";
 import React, { useCallback } from "react";
 import sample from "./sample.json";
-import { useApiClient } from "@astroapps/client/hooks/useApiClient";
+import { useApiClient } from "@astroapps/client";
 import { EvalClient, EvalResult, ValueWithDeps } from "../../client";
 import { basicSetup, EditorView } from "codemirror";
 import { Evaluator } from "@astroapps/codemirror-evaluator";

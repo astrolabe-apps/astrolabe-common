@@ -2,7 +2,7 @@ import {
   createAccessTokenFetcher,
   SecurityService,
   UserState,
-} from "@astroapps/client/service/security";
+} from "@astroapps/client";
 import { useControl } from "@react-typed-forms/core";
 import { MsalProvider, useMsal } from "@azure/msal-react";
 import React, { FC, ReactNode, useEffect } from "react";

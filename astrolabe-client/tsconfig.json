@@ -1,9 +1,8 @@
 {
 	"compilerOptions": {
 		"target": "ES2023",
-		"outDir": "dist",
-		"emitDeclarationOnly": true,
-		"declaration": true,
+		"outDir": "lib",
+		"noEmit": true,
 		"lib": ["es2017", "es7", "es6", "dom"],
 		"allowJs": false,
 		"skipLibCheck": true,
