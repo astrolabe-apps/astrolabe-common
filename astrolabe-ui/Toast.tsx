@@ -7,15 +7,11 @@ import {
   useControl,
 } from "@react-typed-forms/core";
 import * as ToastPrim from "@radix-ui/react-toast";
-import {
-  Toast,
-  ToastService,
-  ToastSettings,
-} from "@astroapps/client/service/toast";
-import { AppProvider } from "@astroapps/client/service";
+import { Toast, ToastService, ToastSettings } from "@astroapps/client";
+import { AppProvider } from "@astroapps/client";
 import { cva } from "class-variance-authority";
 import { Button } from "./Button";
-import { cn } from "@astroapps/client/util/utils";
+import { cn } from "@astroapps/client";
 
 type ToastState = Toast[];
 

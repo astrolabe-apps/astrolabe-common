@@ -1,7 +1,7 @@
 ﻿import { defaultTooltipProvider, Tooltip } from "@astrolabe/ui/Tooltip";
 import { Meta, StoryObj } from "@storybook/react";
 import { Button } from "@astrolabe/ui/Button";
-import { AppContextProvider } from "@astroapps/client/service";
+import { AppContextProvider } from "@astroapps/client";
 import { useArgs } from "@storybook/preview-api";
 
 const meta: Meta<typeof Tooltip> = {

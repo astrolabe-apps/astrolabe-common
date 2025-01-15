@@ -1,5 +1,9 @@
 import clsx from "clsx";
-import { SortableTreeItem } from "./ControlTree";
+
+import { ControlTreeItemProps, SortableTreeItem } from "./types";
+import { AnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
+import { CSSProperties } from "react";
+import { CSS } from "@dnd-kit/utilities";
 
 export function DefaultSortableTreeItem({
   clone,
@@ -52,3 +56,63 @@ export function DefaultSortableTreeItem({
     </div>
   );
 }
+
+export function useSortableTreeItem({
+  node,
+  active,
+  insertState,
+  clone,
+  selected,
+  indentationWidth,
+  actions,
+  onCollapse,
+  canHaveChildren,
+  title,
+  itemConfig,
+}: ControlTreeItemProps): SortableTreeItem {
+  const {
+    transform,
+    transition,
+    attributes,
+    listeners,
+    isDragging,
+    setDraggableNodeRef,
+    setDroppableNodeRef,
+  } = useSortable({
+    id: node.control.uniqueId,
+    data: { control: node.control },
+    animateLayoutChanges,
+  });
+
+  const style: CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
+
+  const depth =
+    active.value === node.control && insertState.fields
+      ? insertState.fields.parent.value.indent + 1
+      : node.indent;
+
+  return {
+    handleProps: { ...attributes, ...listeners },
+    itemProps: { style, onClick: () => (selected.value = node.control) },
+    isSelected: selected.value === node.control,
+    canHaveChildren: canHaveChildren ?? !!node.children,
+    setDraggableNodeRef,
+    setDroppableNodeRef,
+    isDragging,
+    actions,
+    title,
+    clone,
+    expanded: node.expanded,
+    onCollapse,
+    paddingLeft: clone ? 0 : depth * indentationWidth,
+    ...itemConfig,
+  };
+}
+
+const animateLayoutChanges: AnimateLayoutChanges = ({
+  isSorting,
+  wasDragging,
+}) => !(isSorting || wasDragging);

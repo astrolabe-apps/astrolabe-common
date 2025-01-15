@@ -69,7 +69,7 @@ export function DefaultDisplay({
     case DisplayDataType.Custom:
       return (
         <div>
-          Custom display placeholder: {(data as CustomDisplay).customId}
+          <b>({(data as CustomDisplay).customId})</b>
         </div>
       );
     default:

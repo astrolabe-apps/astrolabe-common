@@ -2,7 +2,7 @@ import { Textfield } from "../Textfield";
 import { Control, Fcheckbox, useControlEffect } from "@react-typed-forms/core";
 import { Button } from "../Button";
 import clsx from "clsx";
-import { LoginFormData, useAuthPageSetup } from "@astroapps/client/app/user";
+import { LoginFormData, useAuthPageSetup } from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 

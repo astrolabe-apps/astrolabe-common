@@ -1,4 +1,4 @@
-import { createContext, ReactNode } from "react";
+import React, { createContext, ReactNode } from "react";
 
 export const AppContext = createContext<any>(undefined);
 
@@ -17,10 +17,10 @@ export type AppProvider<P> = [React.FC<P>, Omit<P, "children"> | undefined];
  * @returns {AppProvider<P>} A tuple containing the provider component and its props.
  */
 export function makeProvider<P extends {}>(
-	component: React.FC<P>,
-	props?: Omit<P, "children">
+  component: React.FC<P>,
+  props?: Omit<P, "children">,
 ): AppProvider<P> {
-	return [component, props];
+  return [component, props];
 }
 
 /**
@@ -33,18 +33,18 @@ export function makeProvider<P extends {}>(
  * @returns {JSX.Element} The component that provides the AppContext to its children.
  */
 export function AppContextProvider<A>({
-	value,
-	children,
-	providers,
+  value,
+  children,
+  providers,
 }: {
-	value: A;
-	children: ReactNode;
-	providers?: AppProvider<any>[];
+  value: A;
+  children: ReactNode;
+  providers?: AppProvider<any>[];
 }) {
-	const allChildren =
-		providers?.reduce(
-			(p, [Provider, props]) => <Provider {...props} children={p} />,
-			children
-		) ?? children;
-	return <AppContext.Provider value={value} children={allChildren} />;
+  const allChildren =
+    providers?.reduce(
+      (p, [Provider, props]) => <Provider {...props} children={p} />,
+      children,
+    ) ?? children;
+  return <AppContext.Provider value={value} children={allChildren} />;
 }

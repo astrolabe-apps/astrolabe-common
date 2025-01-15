@@ -2,7 +2,6 @@
 
 import { saveAs } from "file-saver";
 import {
-  applyEditorExtensions,
   BasicFormEditor,
   ControlDefinitionSchema,
 } from "@astroapps/schemas-editor";
@@ -40,11 +39,8 @@ import {
   UserMatchExpression,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
-import { useQueryControl } from "@astroapps/client/hooks/useQueryControl";
-import {
-  convertStringParam,
-  useSyncParam,
-} from "@astroapps/client/hooks/queryParamSync";
+import { useQueryControl } from "@astroapps/client";
+import { convertStringParam, useSyncParam } from "@astroapps/client";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
 import {
@@ -61,13 +57,9 @@ import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
-import { useApiClient } from "@astroapps/client/hooks/useApiClient";
+import { useApiClient } from "@astroapps/client";
 
-const CustomControlSchema = applyEditorExtensions(
-  DataGridExtension,
-  QuickstreamExtension,
-  PagerExtension,
-);
+const Extensions = [DataGridExtension, QuickstreamExtension, PagerExtension];
 
 interface TabSchema {
   value1: string;
@@ -289,12 +281,12 @@ export default function Editor() {
     [container],
   );
   const evalHook = useMemo(() => makeEvalExpressionHook(evalExpr), [roles]);
+  if (!qc.fields.isReady.value) return <></>;
   return (
     <DndProvider backend={HTML5Backend}>
       <div id="dialog_container" ref={setContainer} />
       <BasicFormEditor<string>
         formRenderer={StdFormRenderer}
-        editorRenderer={StdFormRenderer}
         schemas={schemaLookup}
         // handleIcon={<div>WOAH</div>}
         loadForm={async (c) => {
@@ -345,7 +337,7 @@ export default function Editor() {
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
           useEvalExpressionHook: evalHook,
         }}
-        controlDefinitionSchemaMap={CustomControlSchema}
+        extensions={Extensions}
         editorControls={controlsJson}
         extraPreviewControls={(c, data) => (
           <div>

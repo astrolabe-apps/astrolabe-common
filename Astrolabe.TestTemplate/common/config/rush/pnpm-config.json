@@ -113,7 +113,8 @@
    * PNPM documentation: https://pnpm.io/package_json#pnpmoverrides
    */
   "globalOverrides": {
-    "react-dnd": "16.0.1"
+    "react-dnd": "16.0.1",
+    "@react-typed-forms/core": "workspace:*"
   },
 
   /**

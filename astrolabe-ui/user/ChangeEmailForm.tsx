@@ -1,7 +1,7 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
-import { ChangeEmailFormData } from "@astroapps/client/app/user";
+import { ChangeEmailFormData } from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 

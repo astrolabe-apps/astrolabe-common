@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas-html",
-  "version": "2.0.0",
+  "version": "2.1.2",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -37,7 +37,7 @@
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.0.0",
-    "@react-typed-forms/schemas": "workspace:^*",
+    "@react-typed-forms/schemas": "^14.0.3",
     "react": "^18.2.0"
   },
   "devDependencies": {

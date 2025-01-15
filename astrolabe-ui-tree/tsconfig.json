@@ -2,8 +2,7 @@
 	"compilerOptions": {
 		"target": "es5",
 		"outDir": ".",
-		"emitDeclarationOnly": true,
-		"declaration": true,
+		"noEmit": true,
 		"lib": ["es2019", "es7", "es6", "dom"],
 		"allowJs": false,
 		"skipLibCheck": true,

@@ -6,13 +6,15 @@ export * from "./Finput";
 export * from "./components";
 export * from "./util";
 export * from "@astroapps/controls";
-const version = "4.0.0";
+
+const version = "4.0.1";
+
 const existingVersion = (globalThis as any)["_react_typed_forms"];
 if (existingVersion) {
   console.warn(
-    `Multiple versions of @react-typed-forms/core found: ${existingVersion} and ${version}`,
+    `${version} of @react-typed-forms/core loaded (existing ${existingVersion})`,
   );
 }
-(globalThis as any)["typedForms"] = version;
+(globalThis as any)["_react_typed_forms"] = version;
 if (typeof window !== "undefined")
   console.info("@react-typed-forms/core " + version + " loaded");

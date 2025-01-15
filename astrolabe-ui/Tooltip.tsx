@@ -5,7 +5,7 @@ import { ReactElement } from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import clsx from "clsx";
-import { makeProvider } from "@astroapps/client/service";
+import { makeProvider } from "@astroapps/client";
 import { cva, VariantProps } from "class-variance-authority";
 
 const tooltipVariants = cva(

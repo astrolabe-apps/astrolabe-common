@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-datagrid",
-  "version": "5.0.0",
+  "version": "5.0.2",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -31,7 +31,7 @@
   "peerDependencies": {
     "react": "^18.2.0",
     "@react-typed-forms/core": "^4.0.0",
-    "@react-typed-forms/schemas": "workspace:^*",
+    "@react-typed-forms/schemas": "workspace:^14.0.2",
     "@radix-ui/react-popover": "^1.0.7",
     "@astroapps/datagrid": "workspace:^1.0.7",
     "@astroapps/searchstate": "workspace:^2.0.0"

@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/core",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -13,7 +13,7 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
+    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
     "test": "jest --coverage",
     "update-readme": "md-magic --path README.md --path ../../README.md"
