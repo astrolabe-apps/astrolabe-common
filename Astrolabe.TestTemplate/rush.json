@@ -425,6 +425,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/dnd-list",
+      "projectFolder": "../astrolabe-dnd-list",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@astroapps/client-nextjs",
       "projectFolder": "../astrolabe-client-nextjs",
       "shouldPublish": true

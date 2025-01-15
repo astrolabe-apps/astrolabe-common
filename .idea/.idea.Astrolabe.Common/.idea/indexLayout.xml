@@ -2,30 +2,7 @@
 <project version="4">
   <component name="UserContentModel">
     <attachedFolders>
-      <Path>aria-base</Path>
-      <Path>aria-datepicker</Path>
-      <Path>astrolabe-client</Path>
-      <Path>astrolabe-client-msal</Path>
-      <Path>astrolabe-client-nextjs</Path>
-      <Path>astrolabe-codemirror-evaluator</Path>
-      <Path>astrolabe-controls</Path>
-      <Path>astrolabe-datagrid</Path>
-      <Path>astrolabe-evaluator</Path>
-      <Path>astrolabe-quill-editor</Path>
-      <Path>astrolabe-schemas-datagrid</Path>
-      <Path>astrolabe-schemas-editor</Path>
-      <Path>astrolabe-schemas-quickstream</Path>
-      <Path>astrolabe-searchstate</Path>
-      <Path>astrolabe-storybook</Path>
-      <Path>astrolabe-ui</Path>
-      <Path>astrolabe-ui-tree</Path>
-      <Path>core</Path>
-      <Path>react-typed-forms/packages/core</Path>
-      <Path>schemas</Path>
-      <Path>schemas-datepicker</Path>
-      <Path>schemas-html</Path>
-      <Path>schemas-mui</Path>
-      <Path>schemas-native</Path>
+      <Path>.</Path>
     </attachedFolders>
     <explicitIncludes />
     <explicitExcludes />

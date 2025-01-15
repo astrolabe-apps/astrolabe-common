@@ -1,5 +1,4 @@
 export * from "./hooks/useDefaultSyncRoute";
-export * from "./hooks/useListDrop";
 export * from "./hooks/useApiClient";
 export * from "./hooks/queryParamSync";
 export * from "./hooks/useIsOffscreen";
