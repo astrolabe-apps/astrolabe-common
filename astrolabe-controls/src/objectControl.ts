@@ -25,8 +25,8 @@ export class ObjectLogic extends ControlLogic {
       return this._fields[p];
     }
     const tc = this.control;
-    const v = (tc._value as any)?.[p];
-    const iv = (tc._initialValue as any)?.[p];
+    const v = getOwn(tc._value);
+    const iv = getOwn(tc._initialValue);
     const child = this.makeChild(
       p,
       v,
@@ -35,6 +35,13 @@ export class ObjectLogic extends ControlLogic {
     );
     child.updateParentLink(this.control, p);
     return (this._fields[p] = child);
+
+    function getOwn(v: any): unknown {
+      if (v != null && Object.hasOwn(v, p)) {
+        return v[p];
+      }
+      return undefined;
+    }
   }
 
   ensureArray(): ControlLogic {
