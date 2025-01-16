@@ -40,8 +40,6 @@ export function createAutocompleteRenderer(
 ) {
   return createDataRenderer(
     (p) => {
-      console.log(p);
-      console.log(options);
       return p.field.collection ? (
         <MultipleAutocomplete
           options={p.options ?? []}

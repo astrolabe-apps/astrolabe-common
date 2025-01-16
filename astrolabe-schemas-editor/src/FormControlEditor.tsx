@@ -22,6 +22,7 @@ import { schemaFieldOptions, SchemaOptionTag } from "./util";
 import { ControlDefinitionForm } from "./schemaSchemas";
 import { Control, trackedValue } from "@react-typed-forms/core";
 import { createValueForFieldRenderer } from "@react-typed-forms/schemas-html";
+import { createFieldSelectionRenderer } from "./FieldSelectionRenderer";
 
 type ExtensionTypeFilterMap = { [key: string]: (n: SchemaNode) => boolean };
 
@@ -57,17 +58,21 @@ export function FormControlEditor({
     });
     return appliesMap;
   }, [extensions]);
+
+  // console.log(extensions, extensionFilters);
   const schemaInterface = useMemo(
     () => new EditorSchemaInterface(controlNode.schema, extensionFilters),
     [controlNode.schema, extensionFilters],
   );
-  const renderer = useMemo(
-    () =>
-      createEditorRenderer([
-        createValueForFieldRenderer({ schema: controlNode.schema }),
-      ]),
-    [controlNode.schema.id],
-  );
+
+  const renderer = useMemo(() => {
+    console.log("schema id:", controlNode.schema.id);
+    return createEditorRenderer([
+      createValueForFieldRenderer({ schema: controlNode.schema }),
+      createFieldSelectionRenderer({}),
+    ]);
+  }, [controlNode.schema.id]);
+
   const editorNode = makeSchemaDataNode(editorFields, controlNode.control);
   const RenderEditor = useControlRendererComponent(
     editorControls,

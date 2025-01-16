@@ -106,7 +106,7 @@
             "field": "field",
             "required": true,
             "renderOptions": {
-              "type": "Standard"
+              "type": "FieldSelection"
             }
           }
         ],
