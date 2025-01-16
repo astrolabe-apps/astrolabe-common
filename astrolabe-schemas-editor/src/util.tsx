@@ -88,3 +88,19 @@ export function controlIsGroupControl(c: Control<ControlDefinitionForm>) {
 export function controlIsCompoundField(c: Control<SchemaFieldForm>) {
   return c.fields.type.value === FieldType.Compound;
 }
+
+export function schemaNodeIcon(t: string) {
+  switch (t) {
+    case FieldType.String:
+      return "fa-text";
+    case FieldType.Int:
+    case FieldType.Double:
+      return "fa-0";
+    case FieldType.Compound:
+      return "fa-brackets-curly";
+    case FieldType.Bool:
+      return "fa-y";
+    default:
+      return "fa-question";
+  }
+}

@@ -1,11 +1,6 @@
 import useResizeObserver from "use-resize-observer";
 import { NodeRendererProps, Tree } from "react-arborist";
-import {
-  addElement,
-  Control,
-  trackedValue,
-  useControl,
-} from "@react-typed-forms/core";
+import { addElement, Control, trackedValue } from "@react-typed-forms/core";
 import {
   ControlDefinitionForm,
   toControlDefinitionForm,
@@ -22,7 +17,7 @@ import {
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import { SelectedControlNode } from "./types";
-import { Button, ModalDialog } from "@astroapps/aria-base";
+import { schemaNodeIcon } from "./util";
 
 interface SchemaNodeCtx {
   schema: SchemaNode;
@@ -39,42 +34,6 @@ interface FormSchemaTreeProps {
   selected: Control<SchemaNode | undefined>;
 }
 
-// export function FormSchemaTreeModalDialog({
-//   trigger,
-//   formSchemaTreeProps,
-// }: {
-//   trigger: React.ReactElement;
-//   formSchemaTreeProps: FormSchemaTreeProps;
-// }) {
-//   const dialogOpen = useControl(false);
-//
-//   return (
-//     <ModalDialog
-//       isOpen={dialogOpen.value}
-//       onOpenChange={(v: boolean) => (dialogOpen.value = v)}
-//       title={"Schema"}
-//       trigger={trigger}
-//       titleClass={"text-2xl font-bold"}
-//       footer={
-//         <div className={"flex justify-end"}>
-//           <Button
-//             className={
-//               "bg-primary-500 hover:bg-primary-600 text-white rounded-lg px-4 py-2"
-//             }
-//             onPress={() => (dialogOpen.value = false)}
-//           >
-//             Close
-//           </Button>
-//         </div>
-//       }
-//     >
-//       <div className="flex flex-col h-full overflow-hidden">
-//         <FormSchemaTree {...formSchemaTreeProps} />
-//       </div>
-//     </ModalDialog>
-//   );
-// }
-
 export function FormSchemaTree({
   rootSchema,
   selected,
@@ -83,16 +42,8 @@ export function FormSchemaTree({
   selectedControl,
 }: FormSchemaTreeProps) {
   const { ref, width, height } = useResizeObserver();
-  // const term = useControl("");
   return (
     <div className={className} ref={ref}>
-      {/*<input*/}
-      {/*  className={"w-full"}*/}
-      {/*  value={term.value}*/}
-      {/*  onChange={(e) => (term.value = e.target.value)}*/}
-      {/*  placeholder={"Search nodes"}*/}
-      {/*/>*/}
-
       <Tree<SchemaNodeCtx>
         width={width}
         height={height}
@@ -103,12 +54,6 @@ export function FormSchemaTree({
           isCompoundNode(x.schema) ? makeChildNodes(x.schema) : null
         }
         children={SchemaNodeRenderer}
-        // searchTerm={term.value}
-        // searchMatch={(node, term) =>
-        //   node.data.schema.field.field
-        //     ?.toLowerCase()
-        //     .includes(term.toLowerCase()) ?? false
-        // }
       />
     </div>
   );
@@ -165,7 +110,9 @@ function SchemaNodeRenderer({
           />
         )}
       </span>
-      <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(field.type))} />
+      <i
+        className={clsx("fa-solid w-4 h-4 mr-2", schemaNodeIcon(field.type))}
+      />
       <span className="truncate">{field.field}</span>
       {parentSelected && (
         <i
@@ -187,20 +134,4 @@ function SchemaNodeRenderer({
       )}
     </div>
   );
-
-  function nodeIcon(t: string) {
-    switch (t) {
-      case FieldType.String:
-        return "fa-text";
-      case FieldType.Int:
-      case FieldType.Double:
-        return "fa-0";
-      case FieldType.Compound:
-        return "fa-brackets-curly";
-      case FieldType.Bool:
-        return "fa-y";
-      default:
-        return "fa-question";
-    }
-  }
 }

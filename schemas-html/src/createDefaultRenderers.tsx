@@ -265,7 +265,7 @@ export function createDefaultDataRenderer(
     const placeholder = isTextfieldRenderer(renderOptions)
       ? renderOptions.placeholder
       : undefined;
-    console.log("HAI", field.field, renderType);
+
     return (
       <ControlInput
         className={rendererClass(props.className, inputClass)}

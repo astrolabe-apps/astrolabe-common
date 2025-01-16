@@ -23,9 +23,9 @@ export const DefaultModalDialogClasses: ModalDialogClasses = {
   underlayClass:
     "fixed z-[100] inset-0 bg-black bg-opacity-50 flex items-center justify-center backdrop-blur-[2px]",
   containerClass:
-    "relative m-4 p-4 w-3/5 min-w-[40%] max-w-[80%] rounded-lg bg-white shadow-sm",
+    "relative m-4 p-4 w-3/5 min-w-[400px] max-w-[80%] rounded-lg bg-white shadow-sm",
   className:
-    "w-full h-full min-h-[100px] max-h-[500px] grid grid-rows-[min-content_,_1fr_,_min-content] focus-visible:outline-none gap-2",
+    "w-full h-full min-h-[100px] flex flex-col gap-2 focus-visible:outline-none gap-2",
 };
 
 export interface ModalProps extends AriaModalOverlayProps, ModalClasses {
@@ -107,6 +107,7 @@ export function ModalDialog({
   footer,
   defaultOpen = false,
   isDismissable = true,
+  titleClass = "text-2xl font-bold",
   ...props
 }: ModalDialogProps) {
   const { className } = {

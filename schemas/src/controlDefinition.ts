@@ -164,7 +164,6 @@ export enum DataRenderType {
   Autocomplete = "Autocomplete",
   Jsonata = "Jsonata",
   Array = "Array",
-  FieldSelection = "FieldSelection",
 }
 
 export interface TextfieldRenderOptions extends RenderOptions {
