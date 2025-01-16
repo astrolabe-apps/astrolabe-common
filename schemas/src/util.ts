@@ -14,7 +14,7 @@ import {
   isDisplayOnlyRenderer,
   isGroupControl,
 } from "./controlDefinition";
-import { MutableRefObject, useRef } from "react";
+import {MutableRefObject, useRef} from "react";
 import clsx from "clsx";
 import {
   CompoundField,
@@ -26,11 +26,13 @@ import {
   isScalarField,
   relativePath,
   rootSchemaNode,
+  SchemaDataNode,
   SchemaField,
   schemaForFieldPath,
   SchemaNode,
   SchemaTags,
 } from "./schemaField";
+import {Control, getElementIndex} from "@react-typed-forms/core";
 
 /**
  * Interface representing the classes for a control.
@@ -841,4 +843,36 @@ export function actionHandlers(
     }
     return undefined;
   };
+}
+
+export function getDiffObject(
+  dataNode: SchemaDataNode,
+  idField?: string | null,
+): any {
+  const c = dataNode.control!;
+  const sf = dataNode.schema.field;
+  const key = sf.field;
+  if (!c.dirty && idField !== key) return undefined;
+  if (c.isNull) return null;
+  if (sf.collection && dataNode.elementIndex == null) {
+    const idField = getTagParam(sf, SchemaTags.IdField);
+    return c.as<any[]>().elements.map((x, i) => {
+      const change = getDiffObject(dataNode.getChildElement(i), idField);
+      return idField !== undefined
+        ? change
+        : { old: getElementIndex(x)?.initialIndex, edit: change };
+    });
+  } else if (isCompoundField(sf)) {
+    const children = dataNode.schema.getChildNodes();
+    return Object.fromEntries(
+      children.flatMap((c) => {
+        const diff = getDiffObject(
+          dataNode.getChild(c),
+          dataNode.elementIndex != null ? idField : undefined,
+        );
+        return diff !== undefined ? [[c.field.field, diff]] : [];
+      }),
+    );
+  }
+  return c.value;
 }

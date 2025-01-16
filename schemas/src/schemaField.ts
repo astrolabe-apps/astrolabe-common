@@ -1,6 +1,6 @@
 import { SchemaValidator } from "./schemaValidator";
-import { Control, ControlSetup } from "@react-typed-forms/core";
-import {EntityExpression} from "./entityExpression";
+import { Control, ControlSetup, newControl } from "@react-typed-forms/core";
+import { EntityExpression } from "./entityExpression";
 
 export type EqualityFunc = (a: any, b: any) => boolean;
 
@@ -250,7 +250,7 @@ export interface SchemaDataNode {
   id: string;
   schema: SchemaNode;
   elementIndex?: number;
-  control?: Control<unknown>;
+  control: Control<any>;
   parent?: SchemaDataNode;
   getChild(schemaNode: SchemaNode): SchemaDataNode;
   getChildElement(index: number): SchemaDataNode;
@@ -337,7 +337,7 @@ export function createSchemaLookup<A extends Record<string, SchemaField[]>>(
 
 export function makeSchemaDataNode(
   schema: SchemaNode,
-  control?: Control<unknown>,
+  control: Control<unknown>,
   parent?: SchemaDataNode,
   elementIndex?: number,
 ): SchemaDataNode {
@@ -436,6 +436,7 @@ export function schemaDataForFieldPath(
       nextField === ".." ? dataNode.parent : lookupField(nextField);
     nextNode ??= makeSchemaDataNode(
       nodeForSchema(missingField(nextField), dataNode.schema, dataNode.schema),
+      newControl(undefined),
     );
     dataNode = nextNode;
     i++;
@@ -534,6 +535,7 @@ export enum SchemaTags {
   HtmlEditor = "_HtmlEditor",
   ControlGroup = "_ControlGroup:",
   ControlRef = "_ControlRef:",
+  IdField = "_IdField:",
 }
 
 export function getTagParam(
