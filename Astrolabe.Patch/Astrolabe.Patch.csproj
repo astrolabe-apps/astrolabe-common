@@ -4,19 +4,15 @@
         <TargetFramework>net7.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Version>1.2.0</Version>
+        <Version>1.0.0</Version>
         <Authors>doolse</Authors>
         <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
-        <Description>JSON utilities for System.Text.Json</Description>
+        <Description>Library for editing data from JSON PATCH requests</Description>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageTags>json adt</PackageTags>
+        <PackageTags>email sending</PackageTags>
         <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-
-    <ItemGroup>
-      <PackageReference Include="Astrolabe.Annotation" Version="1.0.0" />
-    </ItemGroup>
 
     <ItemGroup>
       <None Update="README.md">
@@ -25,5 +21,9 @@
       </None>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
+      <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
+    </ItemGroup>
 
 </Project>

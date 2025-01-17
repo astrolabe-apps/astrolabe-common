@@ -40,6 +40,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.SearchState", "As
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Schemas.PDF", "Astrolabe.Schemas.PDF\Astrolabe.Schemas.PDF.csproj", "{AEAD021F-DE24-44EC-B731-D5E2DEA958D7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Patch", "Astrolabe.Patch\Astrolabe.Patch.csproj", "{2C923459-B0E3-45E2-A7DC-717C3627DFB3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -126,5 +128,9 @@ Global
 		{AEAD021F-DE24-44EC-B731-D5E2DEA958D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEAD021F-DE24-44EC-B731-D5E2DEA958D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AEAD021F-DE24-44EC-B731-D5E2DEA958D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C923459-B0E3-45E2-A7DC-717C3627DFB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C923459-B0E3-45E2-A7DC-717C3627DFB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C923459-B0E3-45E2-A7DC-717C3627DFB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C923459-B0E3-45E2-A7DC-717C3627DFB3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
