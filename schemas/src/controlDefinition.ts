@@ -96,6 +96,7 @@ export enum ControlAdornmentType {
   HelpText = "HelpText",
   Icon = "Icon",
   SetField = "SetField",
+  Optional = "Optional",
 }
 
 export interface IconAdornment extends ControlAdornment {
@@ -126,6 +127,11 @@ export interface SetFieldAdornment extends ControlAdornment {
   field: string;
   defaultOnly?: boolean | null;
   expression?: EntityExpression;
+}
+
+export interface OptionalAdornment extends ControlAdornment {
+  type: ControlAdornmentType.Optional;
+  placement?: AdornmentPlacement | null;
 }
 
 export interface DataControlDefinition extends ControlDefinition {

@@ -27,6 +27,7 @@ export function createStdFormRenderer(container: HTMLElement | null) {
       DataGridGroupRenderer,
       createDatePickerRenderer(undefined, {
         portalContainer: container ? container : undefined,
+        containerClass: "w-full",
       }),
     ],
     createDefaultRenderers({

@@ -7,13 +7,7 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, {
-  CSSProperties,
-  Fragment,
-  ReactElement,
-  ReactNode,
-  useCallback,
-} from "react";
+import React, { Fragment, ReactElement, ReactNode, useCallback } from "react";
 import clsx from "clsx";
 import {
   createSelectRenderer,
@@ -45,7 +39,6 @@ import {
   appendMarkupAt,
   ArrayActionOptions,
   ControlDataContext,
-  ControlLayoutProps,
   createActionRenderer,
   createDataRenderer,
   DataRendererRegistration,
@@ -53,17 +46,12 @@ import {
   DefaultRenderers,
   FieldOption,
   FieldType,
-  FlexRenderer,
-  GridRenderer,
-  GroupRendererProps,
-  GroupRendererRegistration,
   hasOptions,
   isAccordionAdornment,
   isDataGroupRenderer,
   isDisplayOnlyRenderer,
-  isFlexRenderer,
-  isGridRenderer,
   isIconAdornment,
+  isOptionalAdornment,
   isSetFieldAdornment,
   isTextfieldRenderer,
   LabelRendererRegistration,
@@ -82,6 +70,10 @@ import {
   AutocompleteRendererOptions,
   createAutocompleteRenderer,
 } from "./components/AutocompleteRenderer";
+import {
+  createOptionalAdornment,
+  DefaultOptionalAdornmentOptions,
+} from "./adornments/optionalAdornment";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -295,77 +287,87 @@ export interface DefaultAccordionRendererOptions {
 
 export interface DefaultAdornmentRendererOptions {
   accordion?: DefaultAccordionRendererOptions;
+  optional?: DefaultOptionalAdornmentOptions;
 }
 
 export function createDefaultAdornmentRenderer(
   options: DefaultAdornmentRendererOptions = {},
 ): AdornmentRendererRegistration {
+  const optional = createOptionalAdornment(options.optional);
   return {
     type: "adornment",
-    render: ({ adornment, designMode, dataContext, useExpr }, renderers) => ({
-      apply: (rl) => {
-        if (isSetFieldAdornment(adornment) && useExpr) {
-          const hook = useExpr(adornment.expression, (x) => x);
-          const dynamicHooks = useDynamicHooks({ value: hook });
-          const SetFieldWrapper = useCallback(setFieldWrapper, [dynamicHooks]);
-          return wrapLayout((x) => (
-            <SetFieldWrapper
-              children={x}
-              parentContext={dataContext}
-              adornment={adornment}
-            />
-          ))(rl);
+    render: (props, renderers) => {
+      if (isOptionalAdornment(props.adornment)) {
+        return optional.render(props, renderers);
+      }
+      const { adornment, designMode, dataContext, useExpr } = props;
+      return {
+        apply: (rl) => {
+          if (isSetFieldAdornment(adornment) && useExpr) {
+            const hook = useExpr(adornment.expression, (x) => x);
+            const dynamicHooks = useDynamicHooks({ value: hook });
+            const SetFieldWrapper = useCallback(setFieldWrapper, [
+              dynamicHooks,
+            ]);
+            return wrapLayout((x) => (
+              <SetFieldWrapper
+                children={x}
+                parentContext={dataContext}
+                adornment={adornment}
+              />
+            ))(rl);
 
-          function setFieldWrapper({
-            children,
-            adornment,
-            parentContext,
-          }: {
-            children: ReactNode;
-            adornment: SetFieldAdornment;
-            parentContext: ControlDataContext;
-          }) {
-            const { value } = dynamicHooks(parentContext);
-            const fieldNode = schemaDataForFieldRef(
-              adornment.field,
-              parentContext.parentNode,
-            );
-            const otherField = fieldNode.control;
-            const always = !adornment.defaultOnly;
-            useControlEffect(
-              () => [value?.value, otherField?.value == null],
-              ([v]) => {
-                otherField?.setValue((x) => (always || x == null ? v : x));
-              },
-              true,
-            );
-            return children;
+            function setFieldWrapper({
+              children,
+              adornment,
+              parentContext,
+            }: {
+              children: ReactNode;
+              adornment: SetFieldAdornment;
+              parentContext: ControlDataContext;
+            }) {
+              const { value } = dynamicHooks(parentContext);
+              const fieldNode = schemaDataForFieldRef(
+                adornment.field,
+                parentContext.parentNode,
+              );
+              const otherField = fieldNode.control;
+              const always = !adornment.defaultOnly;
+              useControlEffect(
+                () => [value?.value, otherField?.value == null],
+                ([v]) => {
+                  otherField?.setValue((x) => (always || x == null ? v : x));
+                },
+                true,
+              );
+              return children;
+            }
           }
-        }
-        if (isIconAdornment(adornment)) {
-          return appendMarkupAt(
-            adornment.placement ?? AdornmentPlacement.ControlStart,
-            <i className={adornment.iconClass} />,
-          )(rl);
-        }
-        if (isAccordionAdornment(adornment)) {
-          return wrapLayout((x) => (
-            <DefaultAccordion
-              renderers={renderers}
-              children={x}
-              accordion={adornment}
-              contentStyle={rl.style}
-              contentClassName={rl.className}
-              designMode={designMode}
-              dataContext={dataContext}
-              {...options.accordion}
-            />
-          ))(rl);
-        }
-      },
-      priority: 0,
-      adornment,
-    }),
+          if (isIconAdornment(adornment)) {
+            return appendMarkupAt(
+              adornment.placement ?? AdornmentPlacement.ControlStart,
+              <i className={adornment.iconClass} />,
+            )(rl);
+          }
+          if (isAccordionAdornment(adornment)) {
+            return wrapLayout((x) => (
+              <DefaultAccordion
+                renderers={renderers}
+                children={x}
+                accordion={adornment}
+                contentStyle={rl.style}
+                contentClassName={rl.className}
+                designMode={designMode}
+                dataContext={dataContext}
+                {...options.accordion}
+              />
+            ))(rl);
+          }
+        },
+        priority: 0,
+        adornment,
+      };
+    },
   };
 }
 

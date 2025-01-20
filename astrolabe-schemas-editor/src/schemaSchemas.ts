@@ -490,8 +490,8 @@ export function toDynamicPropertyForm(v: DynamicProperty): DynamicPropertyForm {
 
 export interface ControlAdornmentForm {
   type: string;
-  iconClass: string;
   placement: AdornmentPlacement | null;
+  iconClass: string;
   tooltip: string;
   title: string;
   defaultExpanded: boolean | null;
@@ -529,18 +529,15 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
         name: "SetField",
         value: "SetField",
       },
+      {
+        name: "Optional",
+        value: "Optional",
+      },
     ],
-  }),
-  iconClass: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["Icon"],
-    notNullable: true,
-    required: true,
-    displayName: "Icon Class",
   }),
   placement: makeScalarField({
     type: FieldType.String,
-    onlyForTypes: ["Icon", "HelpText"],
+    onlyForTypes: ["Optional", "Icon", "HelpText"],
     displayName: "Placement",
     options: [
       {
@@ -560,6 +557,13 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
         value: "LabelEnd",
       },
     ],
+  }),
+  iconClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Icon"],
+    notNullable: true,
+    required: true,
+    displayName: "Icon Class",
   }),
   tooltip: makeScalarField({
     type: FieldType.String,
@@ -757,7 +761,6 @@ export function toIconMappingForm(v: IconMapping): IconMappingForm {
 
 export interface RenderOptionsForm {
   type: string;
-  fieldRef: string | null;
   expression: string;
   addText: string | null;
   removeText: string | null;
@@ -870,17 +873,7 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         name: "Array",
         value: "Array",
       },
-      {
-        name: "ValueForField",
-        value: "ValueForField",
-      },
     ],
-  }),
-  fieldRef: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["ValueForField"],
-    displayName: "Field Ref",
-    tags: ["_SchemaField"],
   }),
   expression: makeScalarField({
     type: FieldType.String,

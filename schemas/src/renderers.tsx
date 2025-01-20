@@ -18,7 +18,7 @@ import {
   AccordionAdornment,
   ControlAdornment,
   ControlAdornmentType,
-  IconAdornment,
+  IconAdornment, OptionalAdornment,
   SetFieldAdornment,
 } from "./controlDefinition";
 
@@ -131,6 +131,12 @@ export function isSetFieldAdornment(
   a: ControlAdornment,
 ): a is SetFieldAdornment {
   return a.type === ControlAdornmentType.SetField;
+}
+
+export function isOptionalAdornment(
+    a: ControlAdornment,
+): a is OptionalAdornment {
+  return a.type === ControlAdornmentType.Optional;
 }
 
 export function createLayoutRenderer(

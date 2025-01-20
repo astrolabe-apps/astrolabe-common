@@ -65,5 +65,10 @@ export const defaultTailwindTheme = {
       iconOpenClass: "fa fa-chevron-up",
       iconClosedClass: "fa fa-chevron-down",
     },
+    optional: {
+      className: "flex items-center gap-2 w-full",
+      multiValuesClass: "italic",
+      childWrapperClass: "grow",
+    },
   },
 } satisfies DefaultRendererOptions;

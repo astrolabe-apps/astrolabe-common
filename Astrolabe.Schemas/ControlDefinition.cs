@@ -365,7 +365,8 @@ public enum ControlAdornmentType
     [Display(Name = "Help Text")]
     HelpText,
     Icon,
-    SetField
+    SetField,
+    Optional
 }
 
 [JsonBaseType("type", typeof(HelpTextAdornment))]
@@ -374,6 +375,7 @@ public enum ControlAdornmentType
 [JsonSubType("HelpText", typeof(HelpTextAdornment))]
 [JsonSubType("Icon", typeof(IconAdornment))]
 [JsonSubType("SetField", typeof(SetFieldAdornment))]
+[JsonSubType("Optional", typeof(OptionalAdornment))]
 public abstract record ControlAdornment(
     [property: SchemaOptions(typeof(ControlAdornmentType))] string Type
 )
@@ -381,6 +383,9 @@ public abstract record ControlAdornment(
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
 }
+
+public record OptionalAdornment(AdornmentPlacement? Placement)
+    : ControlAdornment(ControlAdornmentType.Optional.ToString());
 
 public record IconAdornment(string IconClass, AdornmentPlacement? Placement)
     : ControlAdornment(ControlAdornmentType.Icon.ToString());
