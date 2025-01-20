@@ -2,3 +2,5 @@
 *.log
 .babelrc
 src/
+coverage/
+test/
