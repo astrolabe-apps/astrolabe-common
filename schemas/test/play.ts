@@ -1,50 +1,54 @@
-import { changeValue, FieldAndValue, makeDataNode } from "./gen";
+import {
+  changeValue,
+  FieldAndValue,
+  FieldAndValueChanged,
+  makeDataNode,
+} from "./gen";
 import { getDiffObject } from "../src";
+import { updateElements } from "@react-typed-forms/core";
 
-
-const fv = {
-  field: {
-    field: "",
-    type: "Compound",
-    collection: true,
-    notNullable: false,
-    children: [
-      {
-        field: "",
-        type: "String",
-        collection: false,
-        notNullable: false,
-        children: null,
-      },
+const testData = [
+  {
+    field: {
+      field: ")W",
+      type: "Compound",
+      collection: true,
+      notNullable: true,
+      children: [
+        {
+          field: "4N`rCgnDXm",
+          type: "DateTime",
+          collection: false,
+          notNullable: false,
+          children: null,
+        },
+      ],
+    },
+    value: [
+      { "4N`rCgnDXm": "1970-01-01T00:00:00.000Z" },
+      { "4N`rCgnDXm": "1970-01-01T00:00:00.000Z" },
+      { "4N`rCgnDXm": "1970-01-01T00:00:00.000Z" },
     ],
-  },
-  value: [{ "": "" }],
-  index: 0,
-  add: false,
-} as FieldAndValue;
+    newValue: [
+      { "4N`rCgnDXm": "1970-01-01T00:00:00.000Zx" },
+      { "4N`rCgnDXm": "1970-01-01T00:00:00.000Z" },
+      { "4N`rCgnDXm": "1970-01-01T00:00:00.000Zz" },
+    ],
+  } as FieldAndValueChanged,
+  [2, 0, 1],
+] as [FieldAndValueChanged, number[]];
 
+const [fv, indexes] = testData;
 const dataNode = makeDataNode(fv);
 const arrayControl = dataNode.control!;
-let results: any = undefined;
-arrayControl.as<any[]>().elements.forEach((control) => {
-  const result = { ...control.value };
-  const newValue = { ...control.value };
-  dataNode.schema.getChildNodes().forEach((child, i) => {
-    const field = child.field;
-    const fieldName = field.field;
-    if (i % 2 == 0) {
-      const nv = changeValue(newValue[fieldName], field);
-      newValue[fieldName] = nv;
-      result[fieldName] = nv;
-    } else {
-      delete result[fieldName];
-    }
+
+const newValue = fv.newValue as any[];
+updateElements(arrayControl.as<any[]>(), (x) => {
+  const sorted = indexes.map((ni, i) => {
+    const c = x[ni];
+    c.value = newValue[i];
+    return c;
   });
-  control.value = newValue;
-  if (!results) results = [];
-  results.push(result);
+  return sorted;
 });
-console.log(fv.value);
-console.log(arrayControl.value);
-console.log(results);
 console.log(getDiffObject(dataNode));

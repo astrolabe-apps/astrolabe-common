@@ -3,6 +3,7 @@ import {
   CompoundField,
   createSchemaLookup,
   FieldType,
+  getTagParam,
   isCompoundField,
   makeSchemaDataNode,
   SchemaDataNode,
@@ -16,12 +17,38 @@ export interface FieldAndValue {
   value: any;
 }
 
-export function valueAndSchema(
-  options?: SchemaFieldGenOptions,
-): Arbitrary<FieldAndValue> {
-  return randomSchemaField(options).chain((schema) =>
-    randomValueForField(schema).map((value) => ({ field: schema, value })),
+export interface FieldAndValueChanged extends FieldAndValue {
+  newValue: any;
+}
+
+export function newIndexes(arr: number): Arbitrary<number[]> {
+  return fc.array(fc.integer(), { minLength: arr, maxLength: arr }).map((x) =>
+    x
+      .map((n, i) => ({ n, i }))
+      .sort((a, b) => a.n - b.n)
+      .map((x) => x.i),
   );
+}
+export function valueAndSchema(
+  schemaOptions?: SchemaFieldGenOptions,
+): Arbitrary<FieldAndValueChanged> {
+  return randomSchemaField(schemaOptions)
+    .chain((schema) =>
+      randomValueForField(schema).map((value) => ({
+        field: schema,
+        value,
+      })),
+    )
+    .chain(changedValue);
+}
+
+export function changedValue(
+  val: FieldAndValue,
+): Arbitrary<FieldAndValueChanged> {
+  return changeValue(val.value, val.field, true).map((newValue) => ({
+    ...val,
+    newValue,
+  }));
 }
 
 export function makeDataNode(fv: FieldAndValue): SchemaDataNode {
@@ -122,7 +149,7 @@ function randomValueForField(
       }
       if (f.type === FieldType.String) return fc.string();
       if (f.type === FieldType.Int) return fc.integer();
-      if (f.type === FieldType.Double) return fc.double();
+      if (f.type === FieldType.Double) return fc.double({ noNaN: true });
       if (f.type === FieldType.Bool) return fc.boolean();
       if (f.type === FieldType.Date)
         return fc.date().map((x) => x.toISOString().substring(0, 10));
@@ -137,39 +164,57 @@ function randomValueForField(
           ),
         );
     }
-    return fc.constantFrom(null, undefined);
+    return fc.constantFrom(null);
   }) as (x: number) => Arbitrary<any>);
 }
 
 export function changeValue(
   value: any,
   field: SchemaField,
+  forceChange: boolean | undefined,
   element?: boolean,
-): any {
-  if (field.collection && !element) {
-    return [...(value ?? []), changeValue(undefined, field, true)];
-  }
-  switch (field.type) {
-    case FieldType.Compound:
-      const objValue = value ?? {};
-      return Object.fromEntries(
-        (field as CompoundField).children.map((x) => [
-          x.field,
-          changeValue(objValue[x.field], x),
-        ]),
+): Arbitrary<any> {
+  return fc.boolean().chain((shouldChange) => {
+    if (forceChange === false || (!shouldChange && !forceChange))
+      return fc.constant(value);
+    if (field.collection && !element) {
+      if (!value || !value.length)
+        return changeValue(undefined, field, true, true).map((x) => [x]);
+      return (value as any[]).reduce(
+        (acc, x) =>
+          acc.chain((nx: any[]) =>
+            changeValue(x, field, undefined, true).map((v) => [...nx, v]),
+          ),
+        fc.constant([] as any[]),
       );
-    case FieldType.String:
-    case FieldType.Date:
-    case FieldType.DateTime:
-    case FieldType.Time:
-      return (value ?? "") + "x";
-    case FieldType.Int:
-      const v = value ?? 0;
-      return !v ? 1 : -v;
-    case FieldType.Double:
-      const dv = value ?? 0;
-      return !dv ? 1 : -dv;
-    case FieldType.Bool:
-      return !(value ?? false);
-  }
+    }
+    if (isCompoundField(field)) {
+      return fc.record(
+        Object.fromEntries(
+          field.children.map((x) => [
+            x.field,
+            changeValue(value?.[x.field], x, value == null ? true : undefined),
+          ]),
+        ),
+      );
+    }
+    return fc.constant(changePrim() as any);
+    function changePrim() {
+      switch (field.type) {
+        case FieldType.String:
+        case FieldType.Date:
+        case FieldType.DateTime:
+        case FieldType.Time:
+          return (value ?? "") + "x";
+        case FieldType.Int:
+          const v = value ?? 0;
+          return !v ? 1 : -v;
+        case FieldType.Double:
+          const dv = value ?? 0;
+          return !dv ? 1 : -dv;
+        case FieldType.Bool:
+          return !(value ?? false);
+      }
+    }
+  });
 }
