@@ -1,7 +1,19 @@
 import { describe, expect, it } from "@jest/globals";
 import fc from "fast-check";
-import { makeDataNode, newIndexes, valueAndSchema } from "./gen";
-import { getDiffObject, getTagParam, SchemaDataNode, SchemaTags } from "../src";
+import {
+  makeDataNode,
+  newIndexes,
+  valueAndSchema,
+  valuesAndSchema,
+} from "./gen";
+import {
+  collectDifferences,
+  getDiffObject,
+  getTagParam,
+  isCompoundNode,
+  SchemaDataNode,
+  SchemaTags,
+} from "../src";
 import {
   deepEquals,
   newElement,
@@ -13,7 +25,9 @@ describe("diff", () => {
     fc.assert(
       fc.property(valueAndSchema(), (fv) => {
         const dataNode = makeDataNode(fv);
+        collectDifferences(dataNode, fv.value);
         expect(getDiffObject(dataNode)).toBeUndefined();
+        expect(dataNode.control.meta.changes).toStrictEqual(undefined);
       }),
     );
   });
@@ -128,7 +142,70 @@ describe("diff", () => {
       ),
     );
   });
+
+  it("primitive node collects all changes", () => {
+    fc.assert(
+      fc.property(
+        valuesAndSchema({
+          forceArray: false,
+          arrayChance: 0,
+          compoundChance: 0,
+        }),
+        (fv) => {
+          const dataNode = makeDataNode(fv);
+          const distinct = [dataNode.control.value];
+          fv.newValues.forEach((x) => {
+            collectDifferences(dataNode, x);
+            if (!distinct.includes(x)) distinct.push(x);
+          });
+          expect(dataNode.control.meta.changes).toStrictEqual(distinct);
+        },
+      ),
+    );
+  });
+
+  it("compound node collects child changes", () => {
+    fc.assert(
+      fc.property(
+        valuesAndSchema({
+          forceArray: false,
+          forceCompound: true,
+          arrayChance: 0,
+          compoundChance: 50,
+        }),
+        (fv) => {
+          const dataNode = makeDataNode(fv);
+          fv.newValues.forEach((x) => {
+            collectDifferences(dataNode, x);
+          });
+          checkCompound(dataNode, fv.newValues);
+        },
+      ),
+    );
+  });
 });
+
+function checkCompound(node: SchemaDataNode, newValues: any[]) {
+  node.schema.getChildNodes().forEach((x) => {
+    const childNode = node.getChild(x);
+    if (isCompoundNode(childNode.schema)) {
+      checkCompound(
+        childNode,
+        newValues.map((n) => n?.[x.field.field]),
+      );
+    } else {
+      let distinct: any[] | undefined = undefined;
+      newValues.forEach((newValue) => {
+        const nv = newValue?.[x.field.field];
+        if (nv !== childNode.control.value) {
+          if (distinct === undefined) distinct = [childNode.control.value];
+          if (!distinct.includes(nv)) distinct.push(nv);
+        }
+      });
+      expect(childNode.control.meta.changes).toStrictEqual(distinct);
+    }
+  });
+}
 
 function objectDiff(
   dataNode: SchemaDataNode,

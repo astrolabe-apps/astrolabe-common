@@ -21,6 +21,10 @@ export interface FieldAndValueChanged extends FieldAndValue {
   newValue: any;
 }
 
+export interface FieldAndValueChanges extends FieldAndValue {
+  newValues: any[];
+}
+
 export function newIndexes(arr: number): Arbitrary<number[]> {
   return fc.array(fc.integer(), { minLength: arr, maxLength: arr }).map((x) =>
     x
@@ -40,6 +44,39 @@ export function valueAndSchema(
       })),
     )
     .chain(changedValue);
+}
+
+export function valuesAndSchema(
+  schemaOptions?: SchemaFieldGenOptions,
+): Arbitrary<FieldAndValueChanges> {
+  return randomSchemaField(schemaOptions)
+    .chain((schema) =>
+      randomValueForField(schema).map((value) => ({
+        field: schema,
+        value,
+      })),
+    )
+    .chain((fv) =>
+      fc
+        .array(fc.constant(undefined as any), {
+          minLength: 1,
+          maxLength: 5,
+        })
+        .chain(
+          (vals) =>
+            vals.reduce(
+              (acc: Arbitrary<any[]>) =>
+                acc.chain((x) =>
+                  changeValue(x[x.length - 1], fv.field, true).map((y) => [
+                    ...x,
+                    y,
+                  ]),
+                ),
+              changeValue(fv.value, fv.field, true).map((x) => [x]),
+            ) as Arbitrary<any[]>,
+        )
+        .map((newValues) => ({ ...fv, newValues })),
+    );
 }
 
 export function changedValue(
@@ -66,6 +103,7 @@ export interface SchemaFieldGenOptions {
   forceArray?: boolean;
   compoundChance?: number;
   idField?: boolean;
+  maxDepth?: number;
 }
 function randomSchemaField(
   options: SchemaFieldGenOptions = {},
@@ -76,15 +114,17 @@ function randomSchemaField(
     forceCompound,
     forceArray,
     idField,
+    maxDepth = 3,
   } = options;
-  const nextOptions = { arrayChance, compoundChance };
+  const nextOptions = { arrayChance, compoundChance, maxDepth: maxDepth - 1 };
+  const realCompoundChance = maxDepth > 0 ? compoundChance : 0;
   const field = fc.oneof(
     {
-      weight: forceCompound ? 100 : compoundChance,
+      weight: forceCompound ? 100 : realCompoundChance,
       arbitrary: fc.constant(FieldType.Compound),
     },
     {
-      weight: forceCompound ? 0 : 100 - compoundChance,
+      weight: forceCompound ? 0 : 100 - realCompoundChance,
       arbitrary: fc.constantFrom(
         FieldType.String,
         FieldType.Int,
@@ -135,7 +175,7 @@ function randomSchemaField(
         })),
       );
 }
-function randomValueForField(
+export function randomValueForField(
   f: SchemaField,
   element?: boolean,
 ): Arbitrary<any> {

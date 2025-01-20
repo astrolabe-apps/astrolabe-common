@@ -846,7 +846,7 @@ export function actionHandlers(
 }
 
 export function getDiffObject(dataNode: SchemaDataNode, force?: boolean): any {
-  const c = dataNode.control!;
+  const c = dataNode.control;
   const sf = dataNode.schema.field;
   if (!c.dirty && !force) return undefined;
   if (c.isNull) return null;
@@ -875,4 +875,21 @@ export function getDiffObject(dataNode: SchemaDataNode, force?: boolean): any {
     );
   }
   return c.value;
+}
+
+export function collectDifferences(dataNode: SchemaDataNode, value: any): void {
+  const c = dataNode.control;
+  const sf = dataNode.schema.field;
+  if (c.isEqual(c.value, value)) return;
+  if (sf.collection) {
+    return;
+  } else if (isCompoundField(sf)) {
+    if (value == null) return;
+    dataNode.schema.getChildNodes().forEach((c) => {
+      collectDifferences(dataNode.getChild(c), value[c.field.field]);
+    });
+  } else {
+    const changes = (c.meta.changes ??= [c.value]);
+    if (changes.every((x: any) => !c.isEqual(x, value))) changes.push(value);
+  }
 }
