@@ -108,17 +108,7 @@
             "renderOptions": {
               "type": "FieldSelection"
             }
-          }
-        ],
-        "groupOptions": {
-          "type": "Standard",
-          "hideTitle": true
-        }
-      },
-      {
-        "type": "Group",
-        "title": "Display",
-        "children": [
+          },
           {
             "type": "Data",
             "title": "Render Options",

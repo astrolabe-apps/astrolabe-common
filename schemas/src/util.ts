@@ -38,7 +38,6 @@ import {
   ensureMetaValue,
   getElementIndex,
   newControl,
-  withMetaValues,
 } from "@react-typed-forms/core";
 
 /**
