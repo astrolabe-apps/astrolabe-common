@@ -5,10 +5,12 @@ import {
   ControlAdornmentType,
   ControlDataContext,
   createAdornmentRenderer,
+  getAllValues,
+  getIsEditing,
   OptionalAdornment,
   wrapMarkup,
 } from "@react-typed-forms/schemas";
-import { useControl, Fcheckbox } from "@react-typed-forms/core";
+import { useControl, Fcheckbox, Control } from "@react-typed-forms/core";
 import React, { ReactNode } from "react";
 
 export interface DefaultOptionalAdornmentOptions {
@@ -16,6 +18,7 @@ export interface DefaultOptionalAdornmentOptions {
   childWrapperClass?: string;
   multiValuesClass?: string;
   multiValuesText?: string;
+  renderMultiValues?: (allValues: Control<unknown[]>) => ReactNode;
 }
 export function createOptionalAdornment(
   options: DefaultOptionalAdornmentOptions = {},
@@ -48,23 +51,33 @@ function OptionalAdornmentCheck({
   dataContext: ControlDataContext;
   children: ReactNode;
 }) {
-  const editing = useControl(false);
   const dataControl = useControl(undefined, {
     use: dataContext.dataNode?.control,
   });
+  const editing = getIsEditing(dataControl);
   const isEditing = editing.value;
+  if (isEditing === undefined) editing.value = false;
   dataControl.disabled = !isEditing;
-  const multipleValues = !!dataControl.meta.changes;
+  if (!isEditing) dataControl.value = dataControl.initialValue;
+  const allValues = getAllValues(dataControl);
+  const multipleValues = allValues.value.length > 1;
+  const renderMulti = options.renderMultiValues ?? stdRenderMultiValues;
   return (
     <div className={options.className}>
       <Fcheckbox control={editing} />
       {multipleValues && !isEditing ? (
-        <span className={options.multiValuesClass}>
-          {options.multiValuesText ?? "Multiple values"}
-        </span>
+        renderMulti(allValues)
       ) : (
         <div className={options.childWrapperClass}>{children}</div>
       )}
     </div>
   );
+
+  function stdRenderMultiValues() {
+    return (
+      <div className={options.multiValuesClass}>
+        {options.multiValuesText ?? "Differing values"}
+      </div>
+    );
+  }
 }

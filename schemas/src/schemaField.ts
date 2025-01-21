@@ -234,8 +234,8 @@ export interface SchemaInterface {
   makeControlSetup(field: SchemaNode, element?: boolean): ControlSetup<any>;
 }
 
-export interface SchemaTreeLookup<A = string> {
-  getSchema(schemaId: A): SchemaNode | undefined;
+export interface SchemaTreeLookup {
+  getSchema(schemaId: string): SchemaNode | undefined;
 }
 
 export interface SchemaNode extends SchemaTreeLookup {
@@ -320,18 +320,20 @@ function nodeForSchema(
 
 export function createSchemaLookup<A extends Record<string, SchemaField[]>>(
   schemaMap: A,
-): SchemaTreeLookup<keyof A> {
+): {
+  getSchema(schemaId: keyof A): SchemaNode;
+} {
   const lookup = {
     getSchema,
   };
   return lookup;
 
-  function getSchema(schemaId: keyof A): SchemaNode | undefined {
+  function getSchema(schemaId: keyof A): SchemaNode {
     const fields = schemaMap[schemaId];
     if (fields) {
       return rootSchemaNode(fields, lookup);
     }
-    return undefined;
+    return undefined!;
   }
 }
 

@@ -24,6 +24,7 @@ export type TrackedSubscription = [
 export interface InternalMeta {
   cleanup?: () => void;
   compute?: Effect<any>;
+  values?: { [k: string]: unknown };
 }
 
 export function ensureInternalMeta(c: Control<any>): InternalMeta {

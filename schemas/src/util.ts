@@ -32,7 +32,12 @@ import {
   SchemaNode,
   SchemaTags,
 } from "./schemaField";
-import { Control, getElementIndex } from "@react-typed-forms/core";
+import {
+  Control,
+  ensureMetaValue,
+  getElementIndex,
+  newControl,
+} from "@react-typed-forms/core";
 
 /**
  * Interface representing the classes for a control.
@@ -877,19 +882,80 @@ export function getDiffObject(dataNode: SchemaDataNode, force?: boolean): any {
   return c.value;
 }
 
-export function collectDifferences(dataNode: SchemaDataNode, value: any): void {
+export function getIsEditing(
+  control: Control<any>,
+): Control<boolean | undefined> {
+  return ensureMetaValue(control, "$willEdit", () => newControl(undefined));
+}
+
+export function getAllValues(control: Control<any>): Control<unknown[]> {
+  return ensureMetaValue(control, "$allValues", () =>
+    newControl([control.value]),
+  );
+}
+
+export function applyValues(dataNode: SchemaDataNode, value: unknown): void {
   const c = dataNode.control;
   const sf = dataNode.schema.field;
-  if (c.isEqual(c.value, value)) return;
+  if (c.isEqual(c.initialValue, value)) return;
   if (sf.collection) {
     return;
   } else if (isCompoundField(sf)) {
     if (value == null) return;
     dataNode.schema.getChildNodes().forEach((c) => {
-      collectDifferences(dataNode.getChild(c), value[c.field.field]);
+      applyValues(
+        dataNode.getChild(c),
+        (value as Record<string, unknown>)[c.field.field],
+      );
     });
   } else {
-    const changes = (c.meta.changes ??= [c.value]);
-    if (changes.every((x: any) => !c.isEqual(x, value))) changes.push(value);
+    const allValues = getAllValues(c);
+    allValues.setValue((changes) =>
+      changes.every((x) => !c.isEqual(x, value))
+        ? [...changes, value]
+        : changes,
+    );
+  }
+}
+
+export function collectDifferences(
+  dataNode: SchemaDataNode,
+  values: unknown[],
+): () => { editable: number; editing: number } {
+  values.forEach((v, i) => {
+    if (i == 0) dataNode.control.setInitialValue(v);
+    else applyValues(dataNode, v);
+  });
+  const allEdits: Control<boolean | undefined>[] = [];
+  resetMultiValues(dataNode);
+  return () => {
+    let editable = 0;
+    let editing = 0;
+    allEdits.forEach((x) => {
+      const b = x.value;
+      if (b === undefined) return;
+      editable++;
+      if (b) editing++;
+    });
+    return { editing, editable };
+  };
+
+  function resetMultiValues(dataNode: SchemaDataNode): void {
+    const c = dataNode.control;
+    const sf = dataNode.schema.field;
+    if (sf.collection) {
+      return;
+    } else if (isCompoundField(sf)) {
+      if (c.value == null) return;
+      dataNode.schema.getChildNodes().forEach((c) => {
+        resetMultiValues(dataNode.getChild(c));
+      });
+    } else {
+      allEdits.push(getIsEditing(c));
+      const allValues = getAllValues(c);
+      if (allValues.value.length > 1) {
+        c.setInitialValue(undefined);
+      }
+    }
   }
 }

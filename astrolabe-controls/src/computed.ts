@@ -27,3 +27,21 @@ export function updateComputedValue<V>(
     meta.compute.runEffect();
   }
 }
+
+export function ensureMetaValue<V>(
+  control: Control<any>,
+  key: string,
+  init: () => V,
+): V {
+  const meta = ensureInternalMeta(control);
+  const v = (meta.values ??= {});
+  return ((v[key] as V) ??= init());
+}
+
+export function getMetaValue<V>(
+  control: Control<any>,
+  key: string,
+): V | undefined {
+  const meta = getInternalMeta(control);
+  return meta?.values?.[key] as V;
+}
