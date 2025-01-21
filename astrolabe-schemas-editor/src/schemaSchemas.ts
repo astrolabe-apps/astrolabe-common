@@ -491,6 +491,7 @@ export function toDynamicPropertyForm(v: DynamicProperty): DynamicPropertyForm {
 export interface ControlAdornmentForm {
   type: string;
   placement: AdornmentPlacement | null;
+  allowNull: boolean | null;
   iconClass: string;
   tooltip: string;
   title: string;
@@ -557,6 +558,11 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
         value: "LabelEnd",
       },
     ],
+  }),
+  allowNull: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Optional"],
+    displayName: "Allow Null",
   }),
   iconClass: makeScalarField({
     type: FieldType.String,
