@@ -24,7 +24,12 @@ export {
   removeElement,
   getElementIndex,
 } from "./arrayControl";
-export { updateComputedValue, ensureMetaValue, getMetaValue } from "./computed";
+export {
+  updateComputedValue,
+  ensureMetaValue,
+  getMetaValue,
+  withMetaValues,
+} from "./computed";
 export { createEffect, type Effect } from "./effect";
 export { setFields } from "./objectControl";
 export { ControlChange } from "./types";

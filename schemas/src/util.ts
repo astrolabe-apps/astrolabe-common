@@ -34,9 +34,11 @@ import {
 } from "./schemaField";
 import {
   Control,
+  ControlChange,
   ensureMetaValue,
   getElementIndex,
   newControl,
+  withMetaValues,
 } from "@react-typed-forms/core";
 
 /**
@@ -882,10 +884,48 @@ export function getDiffObject(dataNode: SchemaDataNode, force?: boolean): any {
   return c.value;
 }
 
+export function getNullToggler(c: Control<any>): Control<boolean> {
+  const lastDefined = getLastDefinedValue(c);
+  return ensureMetaValue(lastDefined, "$nullToggler", () => {
+    const currentNotNull = c.current.value != null;
+    c.disabled = !currentNotNull;
+    const notNull = newControl(currentNotNull);
+    notNull.subscribe(() => {
+      const currentNotNull = notNull.current.value;
+      c.value = currentNotNull ? lastDefined.current.value : null;
+      c.disabled = !currentNotNull;
+    }, ControlChange.Value);
+    return notNull;
+  });
+}
+
+export function getLastDefinedValue<V>(control: Control<V>): Control<V> {
+  return ensureMetaValue(control, "$lastDefined", () => {
+    const lastDefined = newControl(control.current.value);
+    control.subscribe(() => {
+      const nv = control.current.value;
+      if (nv != null) lastDefined.value = nv;
+    }, ControlChange.Value);
+    return lastDefined;
+  });
+}
+
 export function getIsEditing(
   control: Control<any>,
 ): Control<boolean | undefined> {
-  return ensureMetaValue(control, "$willEdit", () => newControl(undefined));
+  const lastDefined = getLastDefinedValue(control);
+  return ensureMetaValue(control, "$willEdit", () => {
+    const c = newControl(undefined);
+    c.subscribe(() => {
+      const currentEdit = c.current.value;
+      if (currentEdit !== undefined) {
+        control.value = currentEdit
+          ? lastDefined.current.value
+          : control.initialValue;
+      }
+    }, ControlChange.Value);
+    return c;
+  });
 }
 
 export function getAllValues(control: Control<any>): Control<unknown[]> {
@@ -955,6 +995,7 @@ export function collectDifferences(
       const allValues = getAllValues(c);
       if (allValues.value.length > 1) {
         c.setInitialValue(undefined);
+        getLastDefinedValue(c).value = null;
       }
     }
   }

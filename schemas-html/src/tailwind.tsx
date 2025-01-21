@@ -66,6 +66,7 @@ export const defaultTailwindTheme = {
       iconClosedClass: "fa fa-chevron-down",
     },
     optional: {
+      checkClass: "m-2",
       className: "flex items-center gap-2 w-full",
       multiValuesClass: "italic",
       childWrapperClass: "grow",
