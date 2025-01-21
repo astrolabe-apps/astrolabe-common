@@ -257,6 +257,7 @@ export function createDefaultDataRenderer(
     const placeholder = isTextfieldRenderer(renderOptions)
       ? renderOptions.placeholder
       : undefined;
+
     return (
       <ControlInput
         className={rendererClass(props.className, inputClass)}

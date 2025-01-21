@@ -4,6 +4,7 @@ import { saveAs } from "file-saver";
 import {
   BasicFormEditor,
   ControlDefinitionSchema,
+  FieldSelectionExtension,
 } from "@astroapps/schemas-editor";
 import {
   Control,
@@ -59,7 +60,12 @@ import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
 import { useApiClient } from "@astroapps/client";
 
-const Extensions = [DataGridExtension, QuickstreamExtension, PagerExtension];
+const Extensions = [
+  DataGridExtension,
+  QuickstreamExtension,
+  PagerExtension,
+  FieldSelectionExtension,
+];
 
 interface TabSchema {
   value1: string;

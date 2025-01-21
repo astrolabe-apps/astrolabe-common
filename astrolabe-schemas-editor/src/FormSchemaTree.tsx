@@ -17,6 +17,7 @@ import {
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import { SelectedControlNode } from "./types";
+import { schemaNodeIcon } from "./util";
 
 interface SchemaNodeCtx {
   schema: SchemaNode;
@@ -24,6 +25,7 @@ interface SchemaNodeCtx {
   rootControls: Control<ControlDefinitionForm[]>;
   id: string;
 }
+
 interface FormSchemaTreeProps {
   className?: string;
   rootSchema: SchemaNode;
@@ -40,7 +42,6 @@ export function FormSchemaTree({
   selectedControl,
 }: FormSchemaTreeProps) {
   const { ref, width, height } = useResizeObserver();
-
   return (
     <div className={className} ref={ref}>
       <Tree<SchemaNodeCtx>
@@ -109,7 +110,9 @@ function SchemaNodeRenderer({
           />
         )}
       </span>
-      <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(field.type))} />
+      <i
+        className={clsx("fa-solid w-4 h-4 mr-2", schemaNodeIcon(field.type))}
+      />
       <span className="truncate">{field.field}</span>
       {parentSelected && (
         <i
@@ -131,20 +134,4 @@ function SchemaNodeRenderer({
       )}
     </div>
   );
-
-  function nodeIcon(t: string) {
-    switch (t) {
-      case FieldType.String:
-        return "fa-text";
-      case FieldType.Int:
-      case FieldType.Double:
-        return "fa-0";
-      case FieldType.Compound:
-        return "fa-brackets-curly";
-      case FieldType.Bool:
-        return "fa-y";
-      default:
-        return "fa-question";
-    }
-  }
 }

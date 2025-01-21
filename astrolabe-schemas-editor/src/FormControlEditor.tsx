@@ -4,7 +4,6 @@ import {
   CustomRenderOptions,
   DataRenderType,
   DefaultSchemaInterface,
-  fieldHasTag,
   FieldOption,
   fieldPathForDefinition,
   FieldType,
@@ -18,10 +17,10 @@ import {
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import { SelectedControlNode } from "./types";
-import { schemaFieldOptions, SchemaOptionTag } from "./util";
 import { ControlDefinitionForm } from "./schemaSchemas";
 import { Control, trackedValue } from "@react-typed-forms/core";
 import { createValueForFieldRenderer } from "@react-typed-forms/schemas-html";
+import { createFieldSelectionRenderer } from "./FieldSelectionRenderer";
 
 type ExtensionTypeFilterMap = { [key: string]: (n: SchemaNode) => boolean };
 
@@ -57,17 +56,21 @@ export function FormControlEditor({
     });
     return appliesMap;
   }, [extensions]);
+
   const schemaInterface = useMemo(
     () => new EditorSchemaInterface(controlNode.schema, extensionFilters),
     [controlNode.schema, extensionFilters],
   );
+
   const renderer = useMemo(
     () =>
       createEditorRenderer([
         createValueForFieldRenderer({ schema: controlNode.schema }),
+        createFieldSelectionRenderer({ schema: controlNode.schema }),
       ]),
     [controlNode.schema.id],
   );
+
   const editorNode = makeSchemaDataNode(editorFields, controlNode.control);
   const RenderEditor = useControlRendererComponent(
     editorControls,
@@ -103,13 +106,14 @@ class EditorSchemaInterface extends DefaultSchemaInterface {
   }
 
   getDataOptions(node: SchemaDataNode): FieldOption[] | null | undefined {
-    const isField = fieldHasTag(node.schema.field, SchemaOptionTag.SchemaField);
-    if (isField) {
-      return this.schemaNode
-        .getChildNodes()
-        .map((x) => x.field)
-        .flatMap((x) => schemaFieldOptions(x));
-    }
+    // INFO: Not right
+    // const isField = fieldHasTag(node.schema.field, SchemaOptionTag.SchemaField);
+    // if (isField) {
+    //   return this.schemaNode
+    //     .getChildNodes()
+    //     .map((x) => x.field)
+    //     .flatMap((x) => schemaFieldOptions(x));
+    // }
     const original = super.getDataOptions(node);
     if (node.id === "/renderOptions/type" && original) {
       const definitionControl = node.parent?.parent?.control as

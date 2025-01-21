@@ -40,7 +40,8 @@
     "clsx": "^2",
     "react-arborist": "~3.4.0",
     "use-resize-observer": "~9.1.0",
-    "react-hook-inview": "^4.5.1"
+    "react-hook-inview": "^4.5.1",
+    "@astroapps/aria-base": "workspace:*"
   },
   "devDependencies": {
     "@react-typed-forms/core": "workspace:*",

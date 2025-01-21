@@ -370,6 +370,7 @@ importers:
 
   ../../../astrolabe-schemas-editor:
     specifiers:
+      '@astroapps/aria-base': workspace:*
       '@astroapps/client': workspace:*
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
@@ -399,6 +400,7 @@ importers:
       typescript: ^5.6.2
       use-resize-observer: ~9.1.0
     dependencies:
+      '@astroapps/aria-base': link:../aria-base
       '@mhsdesign/jit-browser-tailwindcss': 0.4.2_ozxlbmy37ax35fhqexzdkqxfce
       clsx: 2.1.1
       immutability-helper: 3.1.1

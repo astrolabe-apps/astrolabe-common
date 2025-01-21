@@ -40,8 +40,6 @@ export function createAutocompleteRenderer(
 ) {
   return createDataRenderer(
     (p) => {
-      console.log(p);
-      console.log(options);
       return p.field.collection ? (
         <MultipleAutocomplete
           options={p.options ?? []}
@@ -188,8 +186,6 @@ function SingleAutocomplete({
 function MultipleAutocomplete({
   ...props
 }: AutocompleteProps<FieldOption, true>) {
-  // console.log("Multiple props", { ...props });
-
   const { id, control, className, readOnly, classes, controlClasses } = props;
   const { disabled } = control;
 
@@ -217,8 +213,6 @@ function MultipleAutocomplete({
     classes.chipCloseButtonClass,
   );
 
-  console.log("Chip container class", chipContainerClass);
-  console.log("Chip close button class", chipCloseButtonClass);
   useControlEffect(
     controlValues(inputControl, selectedOptionsControl),
     ([text, selected]) => {
@@ -228,21 +222,6 @@ function MultipleAutocomplete({
         }) ?? [];
       control.value = text ? selectedValues.concat(text) : selectedValues;
     },
-  );
-
-  useControlEffect(
-    () => control.value,
-    (v) => console.log("control value:", v),
-  );
-
-  useControlEffect(
-    () => inputControl.value,
-    (v) => console.log("Text control:", v),
-  );
-
-  useControlEffect(
-    () => selectedOptionsControl.value,
-    (v) => console.log("Selected options:", v),
   );
 
   const {
