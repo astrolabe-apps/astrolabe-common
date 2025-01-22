@@ -492,6 +492,7 @@ export interface ControlAdornmentForm {
   type: string;
   placement: AdornmentPlacement | null;
   allowNull: boolean | null;
+  editSelectable: boolean | null;
   iconClass: string;
   tooltip: string;
   title: string;
@@ -563,6 +564,11 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
     type: FieldType.Bool,
     onlyForTypes: ["Optional"],
     displayName: "Allow Null",
+  }),
+  editSelectable: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Optional"],
+    displayName: "Edit Selectable",
   }),
   iconClass: makeScalarField({
     type: FieldType.String,

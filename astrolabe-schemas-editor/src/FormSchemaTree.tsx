@@ -113,7 +113,10 @@ function SchemaNodeRenderer({
       <i
         className={clsx("fa-solid w-4 h-4 mr-2", schemaNodeIcon(field.type))}
       />
-      <span className="truncate">{field.field}</span>
+      <span className="truncate">
+        {field.field}
+        {field.collection ? " []" : ""}
+      </span>
       {parentSelected && (
         <i
           className="ml-2 fa-solid fa-plus w-4 h-4"

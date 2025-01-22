@@ -152,12 +152,14 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     parentNode: parentDataNode,
     formData: {},
   } satisfies ControlDataContext;
+  const formOptions = { readonly: dataDefinition?.readonly, displayOnly };
   const adornments =
     definition.adornments?.map((x) =>
       renderer.renderAdornment({
         adornment: x,
         designMode: true,
         dataContext,
+        formOptions,
       }),
     ) ?? [];
 
@@ -191,7 +193,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     labelClass,
     styleClass,
     createDataProps: defaultDataProps,
-    formOptions: { readonly: dataDefinition?.readonly, displayOnly },
+    formOptions,
     dataContext,
     control,
     schemaInterface,

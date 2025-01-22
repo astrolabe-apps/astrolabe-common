@@ -384,7 +384,7 @@ public abstract record ControlAdornment(
     public IDictionary<string, object?>? Extensions { get; set; }
 }
 
-public record OptionalAdornment(AdornmentPlacement? Placement, bool? AllowNull)
+public record OptionalAdornment(AdornmentPlacement? Placement, bool? AllowNull, bool? EditSelectable)
     : ControlAdornment(ControlAdornmentType.Optional.ToString());
 
 public record IconAdornment(string IconClass, AdornmentPlacement? Placement)
