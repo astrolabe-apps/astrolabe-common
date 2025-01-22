@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-editor",
-  "version": "14.1.0",
+  "version": "14.1.1",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
@@ -41,13 +41,13 @@
     "react-arborist": "~3.4.0",
     "use-resize-observer": "~9.1.0",
     "react-hook-inview": "^4.5.1",
-    "@astroapps/aria-base": "workspace:*"
+    "@astroapps/aria-base": "^1.2.0"
   },
   "devDependencies": {
     "@react-typed-forms/core": "^4.0.0",
     "@react-typed-forms/schemas": "^14.1.1",
     "@react-typed-forms/schemas-html": "^2.2.0",
-    "@astroapps/client": "workspace:*",
+    "@astroapps/client": "^2.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dnd": "^16.0.1",
