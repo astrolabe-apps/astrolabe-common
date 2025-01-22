@@ -889,6 +889,7 @@ export function getNullToggler(c: Control<any>): Control<boolean> {
     const currentNotNull = c.current.value != null;
     c.disabled = !currentNotNull;
     const notNull = newControl(currentNotNull);
+    if (!currentNotNull) c.value = null;
     notNull.subscribe(() => {
       const currentNotNull = notNull.current.value;
       c.value = currentNotNull ? lastDefined.current.value : null;

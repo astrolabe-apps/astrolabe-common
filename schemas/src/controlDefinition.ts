@@ -133,6 +133,7 @@ export interface OptionalAdornment extends ControlAdornment {
   type: ControlAdornmentType.Optional;
   placement?: AdornmentPlacement | null;
   allowNull?: boolean;
+  editSelectable?: boolean;
 }
 
 export interface DataControlDefinition extends ControlDefinition {

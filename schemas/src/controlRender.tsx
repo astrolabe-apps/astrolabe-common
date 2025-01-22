@@ -24,6 +24,7 @@ import {
   ArrayActionOptions,
   ControlActionHandler,
   ControlAdornment,
+  ControlAdornmentType,
   ControlDataContext,
   ControlDefinition,
   CustomDisplay,
@@ -176,6 +177,7 @@ export interface AdornmentProps {
   dataContext: ControlDataContext;
   useExpr?: UseEvalExpressionHook;
   designMode?: boolean;
+  formOptions: FormContextOptions;
 }
 
 export const AppendAdornmentPriority = 0;
@@ -567,8 +569,11 @@ export function useControlRendererComponent(
           defaultValueControl.value,
           control?.isNull,
           isDataControl(definition) && definition.dontClearHidden,
-          isDataControl(definition) &&
-            definition.renderOptions?.type == DataRenderType.NullToggle,
+          definition.adornments?.some(
+            (x) => x.type === ControlAdornmentType.Optional,
+          ) ||
+            (isDataControl(definition) &&
+              definition.renderOptions?.type == DataRenderType.NullToggle),
           parentControl.isNull,
           options.hidden,
           readonlyControl.value,
@@ -630,6 +635,7 @@ export function useControlRendererComponent(
             adornment: x,
             dataContext,
             useExpr,
+            formOptions: myOptions,
           }),
         ) ?? [];
       const labelAndChildren = renderControlLayout({
@@ -933,7 +939,7 @@ export function renderControlLayout(
   }
   return {};
 
-  function renderData(c: DataControlDefinition) {
+  function renderData(c: DataControlDefinition): ControlLayoutProps {
     if (!control) return { children: "No control for: " + c.field };
     const rendererProps = dataProps(
       props as RenderControlProps & {
@@ -966,7 +972,12 @@ export function renderControlLayout(
 
 type MarkupKeys = keyof Omit<
   RenderedLayout,
-  "errorControl" | "style" | "className" | "wrapLayout"
+  | "errorControl"
+  | "style"
+  | "className"
+  | "wrapLayout"
+  | "readonly"
+  | "disabled"
 >;
 export function appendMarkup(
   k: MarkupKeys,
