@@ -126,5 +126,6 @@ export class SubscriptionTracker {
 
   cleanup() {
     this.subscriptions.forEach((x) => x[1] && x[0].unsubscribe(x[1]));
+    this.subscriptions = [];
   }
 }
