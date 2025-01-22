@@ -576,11 +576,11 @@ export interface FormTree extends FormTreeLookup {
 export function nodeForControl(
   definition: ControlDefinition,
   tree: FormTree,
-  index?: number,
+  indexOrId?: number | string,
   parent?: FormNode,
 ): FormNode {
   return new FormNode(
-    parent ? parent.id + "/" + index : "",
+    parent ? parent.id + "/" + indexOrId : "",
     definition,
     tree,
     parent,

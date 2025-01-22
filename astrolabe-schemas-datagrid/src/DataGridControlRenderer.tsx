@@ -16,9 +16,9 @@ import {
   getLengthRestrictions,
   makeHookDepString,
   mergeObjects,
+  nodeForControl,
   RenderOptions,
   schemaDataForFieldRef,
-  SchemaField,
   schemaForFieldPath,
   stringField,
 } from "@react-typed-forms/schemas";
@@ -31,17 +31,15 @@ import {
 import {
   Control,
   groupedChanges,
-  RenderControl,
   useTrackedComponent,
 } from "@react-typed-forms/core";
-import React, { Fragment, ReactNode, useEffect } from "react";
+import React, { Fragment, ReactNode } from "react";
 import {
   getColumnHeaderFromOptions,
   isColumnAdornment,
 } from "./columnAdornment";
 import { FilterPopover } from "./FilterPopover";
 import {
-  FilterAndSortState,
   findSortField,
   rotateSort,
   SearchOptions,
@@ -117,6 +115,7 @@ export function createDataGridRenderer(
 ) {
   return createDataRenderer(
     (pareProps, renderers) => {
+      console.log(pareProps);
       const {
         control,
         dataContext,
@@ -150,13 +149,14 @@ export function createDataGridRenderer(
             layoutClass: x.layoutClass,
           };
           const headerOptions = getColumnHeaderFromOptions(x, def);
+          const colNode = nodeForControl(def, formNode.tree, "col" + i);
           return {
             ...headerOptions,
             id: "cc" + i,
             render: (_, ri) =>
               x.rowIndex
                 ? ri + 1
-                : renderChild("c" + i + "_" + ri, formNode, {
+                : renderChild("c" + i + "_" + ri, colNode, {
                     elementIndex: ri,
                     displayOnly: dataGridOptions.displayOnly,
                   }),
