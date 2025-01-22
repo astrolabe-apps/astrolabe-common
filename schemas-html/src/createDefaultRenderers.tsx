@@ -7,14 +7,18 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, { Fragment, ReactElement, ReactNode, useCallback } from "react";
+import React, { Fragment, ReactElement, ReactNode } from "react";
 import clsx from "clsx";
 import {
   createSelectRenderer,
   SelectRendererOptions,
 } from "./components/SelectDataRenderer";
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
-import { Control, useControlEffect } from "@react-typed-forms/core";
+import {
+  Control,
+  useControlEffect,
+  useTrackedComponent,
+} from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
 import {
   createDefaultArrayDataRenderer,
@@ -307,7 +311,7 @@ export function createDefaultAdornmentRenderer(
           if (isSetFieldAdornment(adornment) && useExpr) {
             const hook = useExpr(adornment.expression, (x) => x);
             const dynamicHooks = useDynamicHooks({ value: hook });
-            const SetFieldWrapper = useCallback(setFieldWrapper, [
+            const SetFieldWrapper = useTrackedComponent(setFieldWrapper, [
               dynamicHooks,
             ]);
             return wrapLayout((x) => (

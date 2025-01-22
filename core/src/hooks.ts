@@ -55,6 +55,7 @@ export function useControlEffect<V>(
 ) {
   const c = useComputed(compute, (c) => {
     const m = c.meta;
+    m.__onChange = onChange;
     m.__onInitial =
       typeof initial === "function" ? initial : initial ? onChange : () => {};
     c.subscribe((v) => {
