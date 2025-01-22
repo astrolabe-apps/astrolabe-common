@@ -10,22 +10,18 @@ import {
   getNullToggler,
   OptionalAdornment,
   wrapMarkup,
-  wrapMarkupAt,
 } from "@react-typed-forms/schemas";
-import {
-  useControl,
-  Fcheckbox,
-  Control,
-  newControl,
-} from "@react-typed-forms/core";
+import { Control, Fcheckbox, newControl } from "@react-typed-forms/core";
 import React, { ReactNode } from "react";
 
 export interface OptionalRenderProps {
   allValues: Control<unknown[]>;
-  editing: Control<boolean>;
+  editing: Control<boolean | undefined>;
   children: ReactNode;
   adornment: OptionalAdornment;
   nullToggler: Control<boolean>;
+  dataContext: ControlDataContext;
+  options: DefaultOptionalAdornmentOptions;
 }
 export interface DefaultOptionalAdornmentOptions {
   className?: string;
@@ -35,6 +31,8 @@ export interface DefaultOptionalAdornmentOptions {
   multiValuesText?: string;
   nullWrapperClass?: string;
   setNullText?: string;
+  defaultPlacement?: AdornmentPlacement;
+  hideEdit?: boolean;
   customRender?: (props: OptionalRenderProps) => ReactNode;
 }
 export function createOptionalAdornment(
@@ -49,25 +47,41 @@ export function createOptionalAdornment(
       const editing = getIsEditing(dataControl);
       const isEditing = editing.value;
       const nullToggler = getNullToggler(dataControl);
-      if (isEditing === undefined) editing.value = false;
+      if (isEditing === undefined && adornment.editSelectable)
+        editing.value = false;
       dataControl.disabled =
         !isEditing || !!(adornment.allowNull && !nullToggler.value);
       return {
         apply: (rl) => {
-          appendMarkupAt(
-            adornment.placement ?? AdornmentPlacement.LabelStart,
-            <Fcheckbox control={editing} className={options.checkClass} />,
+          if (props.formOptions.readonly) return rl;
+          if (!options.hideEdit && adornment.editSelectable)
+            appendMarkupAt(
+              adornment.placement ??
+                options.defaultPlacement ??
+                AdornmentPlacement.LabelStart,
+              <Fcheckbox control={editing} className={options.checkClass} />,
+            )(rl);
+          wrapMarkup("children", (children) =>
+            options.customRender ? (
+              options.customRender({
+                allValues: getAllValues(dataControl),
+                editing,
+                children,
+                adornment,
+                nullToggler,
+                dataContext,
+                options,
+              })
+            ) : (
+              <OptionalEditRenderer
+                children={children}
+                options={options}
+                editing={editing.as()}
+                adornment={adornment}
+                dataControl={dataControl}
+              />
+            ),
           )(rl);
-          wrapMarkup("children", (children) => (
-            <OptionalValue
-              dataContext={dataContext}
-              children={children}
-              options={options}
-              editing={editing}
-              adornment={adornment}
-              dataControl={dataControl}
-            />
-          ))(rl);
         },
         priority: 0,
         adornment,
@@ -77,8 +91,7 @@ export function createOptionalAdornment(
   );
 }
 
-function OptionalValue({
-  dataContext,
+export function OptionalEditRenderer({
   children,
   options,
   adornment,
@@ -86,23 +99,13 @@ function OptionalValue({
   dataControl,
 }: {
   options: DefaultOptionalAdornmentOptions;
-  dataContext: ControlDataContext;
   children: ReactNode;
   adornment: OptionalAdornment;
   editing: Control<boolean | undefined>;
   dataControl: Control<any>;
 }) {
   const nullToggler = getNullToggler(dataControl);
-  const isEditing = !!editing.value;
   const allValues = getAllValues(dataControl);
-  if (options.customRender)
-    return options.customRender({
-      allValues,
-      editing: editing.as(),
-      children,
-      adornment,
-      nullToggler,
-    });
   const multipleValues = allValues.value.length > 1;
   const nullEdit = adornment.allowNull ? (
     <div className={options.nullWrapperClass}>
@@ -117,7 +120,7 @@ function OptionalValue({
   ) : undefined;
   return (
     <div className={options.className}>
-      {multipleValues && !isEditing ? (
+      {multipleValues && editing.value === false ? (
         <div className={options.multiValuesClass}>
           {options.multiValuesText ?? "Differing values"}
         </div>
