@@ -884,18 +884,24 @@ export function getDiffObject(dataNode: SchemaDataNode, force?: boolean): any {
 }
 
 export function getNullToggler(c: Control<any>): Control<boolean> {
-  const lastDefined = getLastDefinedValue(c);
-  return ensureMetaValue(lastDefined, "$nullToggler", () => {
+  return ensureMetaValue(c, "$nullToggler", () => {
+    const lastDefined = getLastDefinedValue(c);
+    const isEditing = getIsEditing(c);
     const currentNotNull = c.current.value != null;
     c.disabled = !currentNotNull;
     const notNull = newControl(currentNotNull);
     if (!currentNotNull) c.value = null;
+    disableIfNotEditing();
+    isEditing.subscribe(disableIfNotEditing, ControlChange.Value);
     notNull.subscribe(() => {
       const currentNotNull = notNull.current.value;
       c.value = currentNotNull ? lastDefined.current.value : null;
       c.disabled = !currentNotNull;
     }, ControlChange.Value);
     return notNull;
+    function disableIfNotEditing() {
+      notNull.disabled = isEditing.current.value === false;
+    }
   });
 }
 

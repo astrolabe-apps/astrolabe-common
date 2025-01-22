@@ -109,13 +109,12 @@ export function OptionalEditRenderer({
   const multipleValues = allValues.value.length > 1;
   const nullEdit = adornment.allowNull ? (
     <div className={options.nullWrapperClass}>
-      <input
-        type="checkbox"
+      <Fcheckbox
+        control={nullToggler}
         className={options.checkClass}
-        checked={!nullToggler.value}
-        onChange={(e) => (nullToggler.value = !e.target.checked)}
+        notValue
       />
-      <span>{options.setNullText ?? "Set to null"}</span>
+      <span>{options.setNullText ?? "Null"}</span>
     </div>
   ) : undefined;
   return (
