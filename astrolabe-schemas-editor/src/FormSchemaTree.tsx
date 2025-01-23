@@ -100,7 +100,7 @@ function SchemaNodeRenderer({
       className={clsx("flex items-center", node.isSelected && "bg-primary-100")}
       onClick={() => node.isInternal && node.toggle()}
     >
-      <span className="w-4 mr-2">
+      <span className="w-4 mr-2 shrink-0">
         {node.isInternal && (
           <i
             className={clsx(

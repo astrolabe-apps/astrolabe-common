@@ -59,3 +59,15 @@ export function Popover({
     </Overlay>
   );
 }
+
+export function createOverlayState(ref: {
+  value: boolean;
+}): OverlayTriggerState {
+  return {
+    isOpen: ref.value,
+    setOpen: (o) => (ref.value = o),
+    open: () => (ref.value = true),
+    close: () => (ref.value = false),
+    toggle: () => (ref.value = !ref.value),
+  };
+}

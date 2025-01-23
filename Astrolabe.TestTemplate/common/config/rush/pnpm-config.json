@@ -114,7 +114,10 @@
    */
   "globalOverrides": {
     "react-dnd": "16.0.1",
-    "@react-typed-forms/core": "workspace:*"
+    "@react-typed-forms/core": "workspace:*",
+    "@react-typed-forms/schemas": "workspace:*",
+    "@react-typed-forms/schemas-html": "workspace:*",
+    "@astroapps/aria-base": "workspace:*"
   },
 
   /**

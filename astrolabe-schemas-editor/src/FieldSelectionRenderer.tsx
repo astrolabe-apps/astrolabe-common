@@ -8,9 +8,14 @@
   schemaForFieldRef,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import React from "react";
+import React, { useRef } from "react";
 import { Control, RenderOptional, useControl } from "@react-typed-forms/core";
-import { Button, ModalDialog } from "@astroapps/aria-base";
+import {
+  Button,
+  createOverlayState,
+  ModalDialog,
+  Popover,
+} from "@astroapps/aria-base";
 
 import { NodeRendererProps, Tree } from "react-arborist";
 import clsx from "clsx";
@@ -67,58 +72,77 @@ export function FieldSelection({
   const open = useControl(false);
   const term = useControl("");
   const selNode = schemaForFieldRef(control.value, schema);
-
+  const triggerRef = useRef<HTMLDivElement | null>(null);
   return (
-    <ModalDialog
-      isOpen={open.value}
-      onOpenChange={(v: boolean) => (open.value = v)}
-      title={"Field Selection"}
-      trigger={
-        <div
-          className={
-            "w-full border-primary-500 border rounded p-2 hover:cursor-pointer min-h-[42px]"
-          }
+    <>
+      <div
+        className={
+          "w-full border-primary-500 border rounded p-2 hover:cursor-pointer min-h-[42px]"
+        }
+        onClick={() => (open.value = true)}
+        ref={triggerRef}
+      >
+        <RenderOptional
+          control={control}
+          notDefined={<span className={"text-gray-500"}>Please select</span>}
         >
-          <RenderOptional
-            control={control}
-            notDefined={<span className={"text-gray-500"}>Please select</span>}
-          >
-            {(c) => (
-              <span>
-                {selNode.field.displayName} ({c.value})
-              </span>
-            )}
-          </RenderOptional>
-        </div>
-      }
-      footer={
-        <div className={"w-full flex justify-end"}>
-          <Button
-            className={
-              "bg-primary-500 hover:bg-primary-600 px-4 py-2 rounded text-white"
-            }
-            onPress={() => (open.value = false)}
-          >
-            Close
-          </Button>
-        </div>
-      }
-    >
-      <div className={"flex flex-col gap-2 w-full"}>
-        <input
-          className={"w-full"}
-          value={term.value}
-          onChange={(e) => (term.value = e.target.value)}
-          placeholder={"Search node(s)"}
-        />
-        <NodeSchemaTree
-          schemaNode={schema}
-          selectedField={control}
-          term={term}
-        />
+          {(c) => (
+            <span>
+              {selNode.field.displayName} ({c.value})
+            </span>
+          )}
+        </RenderOptional>
       </div>
-    </ModalDialog>
+      {open.value && (
+        <Popover
+          state={createOverlayState(open)}
+          triggerRef={triggerRef}
+          placement="top left"
+        >
+          <div
+            className={
+              "flex flex-col gap-2 min-w-[500px] border border-black p-2"
+            }
+          >
+            <input
+              className={"w-full"}
+              value={term.value}
+              onChange={(e) => (term.value = e.target.value)}
+              placeholder={"Search node(s)"}
+            />
+            <NodeSchemaTree
+              schemaNode={schema}
+              selectedField={control}
+              term={term}
+            />
+          </div>
+        </Popover>
+      )}
+    </>
   );
+  // return (
+  //   <ModalDialog
+  //     isOpen={open.value}
+  //     onOpenChange={(v: boolean) => (open.value = v)}
+  //     title={"Field Selection"}
+  //     trigger={
+  //
+  //     }
+  //     footer={
+  //       <div className={"w-full flex justify-end"}>
+  //         <Button
+  //           className={
+  //             "bg-primary-500 hover:bg-primary-600 px-4 py-2 rounded text-white"
+  //           }
+  //           onPress={() => (open.value = false)}
+  //         >
+  //           Close
+  //         </Button>
+  //       </div>
+  //     }
+  //   >
+  //   </ModalDialog>
+  // );
 }
 
 function NodeSchemaTree({
@@ -201,12 +225,12 @@ function NodeRenderer({
     <div
       style={style}
       className={clsx(
-        "flex flex-row gap-1 items-center rounded hover:bg-primary-100 hover:cursor-pointer",
+        "flex flex-row gap-1 items-center rounded hover:bg-primary-100 hover:cursor-pointer text-nowrap",
         isSelected && "bg-primary-200 hover:bg-primary-200",
       )}
     >
       <span
-        className="w-4 mr-2"
+        className="w-4 mr-2 shrink-0"
         onClick={(e) => {
           e.stopPropagation();
           node.isInternal && node.toggle();
@@ -228,7 +252,7 @@ function NodeRenderer({
             schemaNodeIcon(nodeSchema.field.type),
           )}
         />
-        <span className={"truncate"}>
+        <span>
           {node.data.schema.field.displayName} ({node.data.schema.field.field})
         </span>
       </div>
