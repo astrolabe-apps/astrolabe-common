@@ -14,7 +14,7 @@ import {
   groupedChanges,
   RenderElements,
   SelectionGroup,
-  useControlValue,
+  useComputed,
 } from "@react-typed-forms/core";
 import React, { CSSProperties } from "react";
 
@@ -89,7 +89,7 @@ export function FSelectionList<A>({
 
   function handleToggleAll(items: Control<SelectionGroup<A>>[]) {
     groupedChanges(() =>
-      items.forEach((x) => x.fields.selected.setValue((x) => !x))
+      items.forEach((x) => x.fields.selected.setValue((x) => !x)),
     );
   }
 }
@@ -106,11 +106,11 @@ function SelectionEntry<A>({
   disabled: boolean;
 }) {
   const { selected, value } = control.fields;
-  const isSelected = useControlValue(selected);
-  const isEntrySelected = useControlValue(
-    () => entrySelected?.value === control
-  );
-  const name = useControlValue(() => entryName(value.value));
+  const isSelected = selected.value;
+  const isEntrySelected = useComputed(
+    () => entrySelected?.value === control,
+  ).value;
+  const name = entryName(value.value);
   return (
     <ListItemButton
       role="listitem"
