@@ -1,0 +1,149 @@
+{
+  "name": "@react-typed-forms/mui",
+  "entries": [
+    {
+      "version": "2.5.22",
+      "tag": "@react-typed-forms/mui_v2.5.22",
+      "date": "Mon, 05 Sep 2022 02:11:26 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.10`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.21",
+      "tag": "@react-typed-forms/mui_v2.5.21",
+      "date": "Wed, 03 Aug 2022 02:32:52 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.9`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.20",
+      "tag": "@react-typed-forms/mui_v2.5.20",
+      "date": "Wed, 27 Jul 2022 01:19:11 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.8`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.19",
+      "tag": "@react-typed-forms/mui_v2.5.19",
+      "date": "Fri, 22 Jul 2022 00:29:38 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.7`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.18",
+      "tag": "@react-typed-forms/mui_v2.5.18",
+      "date": "Tue, 19 Jul 2022 00:50:49 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.6`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.17",
+      "tag": "@react-typed-forms/mui_v2.5.17",
+      "date": "Thu, 09 Jun 2022 06:46:33 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.5`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.16",
+      "tag": "@react-typed-forms/mui_v2.5.16",
+      "date": "Mon, 16 May 2022 12:59:53 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.4`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.15",
+      "tag": "@react-typed-forms/mui_v2.5.15",
+      "date": "Mon, 16 May 2022 10:03:17 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.3`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.14",
+      "tag": "@react-typed-forms/mui_v2.5.14",
+      "date": "Mon, 16 May 2022 09:46:15 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.2`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.13",
+      "tag": "@react-typed-forms/mui_v2.5.13",
+      "date": "Thu, 12 May 2022 03:38:44 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.1`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.12",
+      "tag": "@react-typed-forms/mui_v2.5.12",
+      "date": "Wed, 11 May 2022 02:25:48 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.7.0`"
+          }
+        ]
+      }
+    },
+    {
+      "version": "2.5.11",
+      "tag": "@react-typed-forms/mui_v2.5.11",
+      "date": "Sun, 08 May 2022 10:00:40 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `2.6.0`"
+          }
+        ]
+      }
+    }
+  ]
+}

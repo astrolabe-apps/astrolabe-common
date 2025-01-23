@@ -483,6 +483,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@react-typed-forms/mui",
+      "projectFolder": "../mui",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@astroapps/aria-base",
       "projectFolder": "../aria-base",
       "shouldPublish": true
