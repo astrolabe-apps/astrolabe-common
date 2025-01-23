@@ -115,7 +115,6 @@ export function createDataGridRenderer(
 ) {
   return createDataRenderer(
     (pareProps, renderers) => {
-      console.log(pareProps);
       const {
         control,
         dataContext,
