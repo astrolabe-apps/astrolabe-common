@@ -32,3 +32,18 @@ export function useNavigationService<T = {}>(): NavigationService<T> {
   if (!sc) throw "No NavigationService present";
   return sc;
 }
+
+export function toParsedQuery(qp: URLSearchParams): ParsedUrlQuery {
+  const result: ParsedUrlQuery = {};
+  for (const [key, value] of qp.entries()) {
+    const existing = result[key];
+    if (existing === undefined) {
+      result[key] = value;
+    } else if (Array.isArray(existing)) {
+      existing.push(value);
+    } else {
+      result[key] = [existing, value];
+    }
+  }
+  return result;
+}
