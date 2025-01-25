@@ -534,24 +534,23 @@ export class FormNode {
     public definition: ControlDefinition,
     public tree: FormTree,
     public parent?: FormNode,
-    public overrideChildren?: FormNode[],
+    public overrideChildren?: ControlDefinition[],
   ) {
     this.id = id;
     this.definition = definition;
   }
 
-  getChildNodes(): FormNode[] {
-    if (this.overrideChildren) return this.overrideChildren;
-    let children = this.definition.children;
-    if (this.definition.childRefId) {
+  getChildNodes(dontFollowRef?: boolean): FormNode[] {
+    let children = this.overrideChildren ?? this.definition.children;
+    if (
+      !this.overrideChildren &&
+      !dontFollowRef &&
+      this.definition.childRefId
+    ) {
       const ref = this.tree.controlMap[this.definition.childRefId];
       children = ref?.children;
     }
-    return (
-      children?.map(
-        (x, i) => new FormNode(this.id + "/" + i, x, this.tree, this),
-      ) ?? []
-    );
+    return children?.map((x, i) => nodeForControl(x, this.tree, i, this)) ?? [];
   }
 
   withOverrideChildren(children: ControlDefinition[]) {
@@ -560,17 +559,18 @@ export class FormNode {
       this.definition,
       this.tree,
       this.parent,
-      children.map((x) => nodeForControl(x, this.tree)),
+      children,
     );
   }
 }
 
-export interface FormTreeLookup<A = string> {
-  getForm(formId: A): FormTree | undefined;
+export interface FormTreeLookup {
+  getForm(formId: string): FormTree | undefined;
 }
 export interface FormTree extends FormTreeLookup {
   rootNode: FormNode;
   controlMap: ControlMap;
+  schemaId: string;
 }
 
 export function nodeForControl(
@@ -602,14 +602,17 @@ function getControlIds(
     : [[definition.id, definition], ...childEntries];
 }
 
-function makeFormTree(
+export function createFormTree(
   controls: ControlDefinition[],
-  getForm: FormTreeLookup,
+  schemaId: string,
+  getForm: FormTreeLookup = { getForm: () => undefined },
 ): FormTree {
   const tree = {
-    getForm,
+    ...getForm,
     controlMap: Object.fromEntries(controls.flatMap(getControlIds)),
-  } as unknown as FormTree;
+    rootNode: undefined! as FormNode,
+    schemaId,
+  } satisfies FormTree;
   tree.rootNode = nodeForControl(
     {
       children: controls,
@@ -622,16 +625,18 @@ function makeFormTree(
 
 export function createFormLookup<A extends Record<string, ControlDefinition[]>>(
   formMap: A,
-): FormTreeLookup<keyof A> {
+): {
+  getForm(formId: keyof A): FormTree;
+} {
   const lookup = {
     getForm,
   };
   const forms = Object.fromEntries(
-    Object.entries(formMap).map(([k, v]) => [k, makeFormTree(v, lookup)]),
+    Object.entries(formMap).map(([k, v]) => [k, createFormTree(v, "", lookup)]),
   );
   return lookup;
 
-  function getForm(formId: keyof A): FormTree | undefined {
+  function getForm(formId: keyof A): FormTree {
     return forms[formId as string];
   }
 }

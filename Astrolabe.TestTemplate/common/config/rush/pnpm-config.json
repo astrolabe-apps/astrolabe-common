@@ -117,7 +117,8 @@
     "@react-typed-forms/core": "workspace:*",
     "@react-typed-forms/schemas": "workspace:*",
     "@react-typed-forms/schemas-html": "workspace:*",
-    "@astroapps/aria-base": "workspace:*"
+    "@astroapps/aria-base": "workspace:*",
+    "@astroapps/schemas-editor": "workspace:*"
   },
 
   /**

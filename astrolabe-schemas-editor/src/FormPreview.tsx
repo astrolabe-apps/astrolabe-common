@@ -10,6 +10,7 @@ import {
   ControlDefinition,
   ControlDefinitionType,
   ControlRenderOptions,
+  FormNode,
   FormRenderer,
   GroupedControlsDefinition,
   makeSchemaDataNode,
@@ -40,16 +41,16 @@ export function FormPreview({
 }: {
   previewData: Control<PreviewData>;
   rootSchema: SchemaNode;
-  controls: ControlDefinition[];
+  controls: FormNode;
   formRenderer: FormRenderer;
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
-  validation?: (data: any, controls: ControlDefinition[]) => Promise<any>;
+  validation?: (data: any, controls: FormNode) => Promise<any>;
   previewOptions?: ControlRenderOptions;
   rootControlClass?: string;
   controlsClass?: string;
   extraPreviewControls?:
     | ReactNode
-    | ((c: ControlDefinition[], data: Control<any>) => ReactNode);
+    | ((c: FormNode, data: Control<any>) => ReactNode);
 }) {
   const rawRenderer = useMemo(() => createEditorRenderer([]), []);
   const { data, showJson, showRawEditor } = previewData.fields;
@@ -96,18 +97,11 @@ export function FormPreview({
       <RenderControl render={renderRaw} />
 
       <div className={controlsClass}>
-        <RenderArrayElements
-          array={controls}
-          children={(c) => (
-            <div className={rootControlClass}>
-              <NewControlRenderer
-                definition={c}
-                parentDataNode={rootDataNode}
-                renderer={formRenderer}
-                options={previewOptions}
-              />
-            </div>
-          )}
+        <NewControlRenderer
+          definition={controls}
+          parentDataNode={rootDataNode}
+          renderer={formRenderer}
+          options={previewOptions}
         />
       </div>
     </>

@@ -18,7 +18,11 @@ import {
 } from "@react-typed-forms/schemas";
 import { SelectedControlNode } from "./types";
 import { ControlDefinitionForm } from "./schemaSchemas";
-import { Control, trackedValue } from "@react-typed-forms/core";
+import {
+  Control,
+  trackedValue,
+  unsafeRestoreControl,
+} from "@react-typed-forms/core";
 import { createValueForFieldRenderer } from "@react-typed-forms/schemas-html";
 import { createFieldSelectionRenderer } from "./FieldSelectionRenderer";
 
@@ -71,7 +75,10 @@ export function FormControlEditor({
     [controlNode.schema.id],
   );
 
-  const editorNode = makeSchemaDataNode(editorFields, controlNode.control);
+  const editorNode = makeSchemaDataNode(
+    editorFields,
+    unsafeRestoreControl(controlNode.form.definition)!,
+  );
   const RenderEditor = useControlRendererComponent(
     editorControls,
     renderer,

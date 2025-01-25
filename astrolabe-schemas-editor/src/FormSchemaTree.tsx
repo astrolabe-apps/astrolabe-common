@@ -22,14 +22,14 @@ import { schemaNodeIcon } from "./util";
 interface SchemaNodeCtx {
   schema: SchemaNode;
   selectedControl: Control<SelectedControlNode | undefined>;
-  rootControls: Control<ControlDefinitionForm[]>;
+  onAdd: (node: SchemaNode) => void;
   id: string;
 }
 
 interface FormSchemaTreeProps {
   className?: string;
   rootSchema: SchemaNode;
-  rootControls: Control<ControlDefinitionForm[]>;
+  onAdd: (node: SchemaNode) => void;
   selectedControl: Control<SelectedControlNode | undefined>;
   selected: Control<SchemaNode | undefined>;
 }
@@ -38,8 +38,8 @@ export function FormSchemaTree({
   rootSchema,
   selected,
   className,
-  rootControls,
   selectedControl,
+  onAdd,
 }: FormSchemaTreeProps) {
   const { ref, width, height } = useResizeObserver();
   return (
@@ -63,7 +63,7 @@ export function FormSchemaTree({
       schema: x,
       selectedControl,
       id: getNodeId(x),
-      rootControls,
+      onAdd,
     }));
   }
 }
@@ -84,7 +84,7 @@ function SchemaNodeRenderer({
   const sel = selectedControl.value;
   let parentSelected = false;
   if (sel) {
-    const schemaPath = fieldPathForDefinition(trackedValue(sel.control));
+    const schemaPath = fieldPathForDefinition(sel.form.definition);
     let schema = sel.schema;
     if (schemaPath) {
       schema = schemaForFieldPath(schemaPath, schema);
@@ -122,16 +122,17 @@ function SchemaNodeRenderer({
           className="ml-2 fa-solid fa-plus w-4 h-4"
           onClick={async (e) => {
             e.stopPropagation();
-            const sc = selectedControl.value;
-            const parent = sc
-              ? sc.control.fields.children
-              : node.data.rootControls;
-            addElement(
-              parent,
-              toControlDefinitionForm(
-                defaultControlForField(node.data.schema.field),
-              ),
-            );
+            node.data.onAdd(node.data.schema);
+            // const sc = selectedControl.value;
+            // const parent = sc
+            //   ? sc.control.fields.children
+            //   : node.data.rootControls;
+            // addElement(
+            //   parent,
+            //   toControlDefinitionForm(
+            //     defaultControlForField(node.data.schema.field),
+            //   ),
+            // );
           }}
         />
       )}

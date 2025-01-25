@@ -1,5 +1,6 @@
 "use client";
 
+import "rc-dock/dist/rc-dock.css";
 import { saveAs } from "file-saver";
 import {
   BasicFormEditor,

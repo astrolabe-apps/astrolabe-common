@@ -5,9 +5,11 @@ import {
 import {
   addElement,
   Control,
+  ensureMetaValue,
   Fcheckbox,
   Fselect,
   groupedChanges,
+  newControl,
   RenderArrayElements,
   RenderControl,
   RenderOptional,
@@ -39,10 +41,15 @@ import {
   ControlRenderOptions,
   createFormLookup,
   createFormRenderer,
+  createFormTree,
+  createSchemaLookup,
+  FormNode,
   FormRenderer,
+  FormTree,
   getAllReferencedClasses,
   GroupedControlsDefinition,
   GroupRenderType,
+  nodeForControl,
   RendererRegistration,
   rootSchemaNode,
   SchemaNode,
@@ -61,6 +68,9 @@ import { FormSchemaTree } from "./FormSchemaTree";
 import { FormPreview, PreviewData } from "./FormPreview";
 import { ControlNode, SelectedControlNode } from "./types";
 import { TreeApi } from "react-arborist";
+import { DockLayout, TabBase, TabData } from "rc-dock/es";
+import { ViewContext } from "./views";
+import { createView } from "./views/createView";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
@@ -72,10 +82,7 @@ export interface BasicFormEditorProps<A extends string> {
   selectedForm: Control<A>;
   formTypes: [A, string][];
   saveForm: (controls: ControlDefinition[]) => Promise<any>;
-  validation?: (
-    data: Control<any>,
-    controls: ControlDefinition[],
-  ) => Promise<any>;
+  validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   extensions?: ControlDefinitionExtension[];
   editorControls?: ControlDefinition[];
   previewOptions?: ControlRenderOptions;
@@ -88,7 +95,7 @@ export interface BasicFormEditorProps<A extends string> {
   handleIcon?: ReactNode;
   extraPreviewControls?:
     | ReactNode
-    | ((c: ControlDefinition[], data: Control<any>) => ReactNode);
+    | ((c: FormNode, data: Control<any>) => ReactNode);
 }
 
 export function BasicFormEditor<A extends string>({
@@ -121,6 +128,7 @@ export function BasicFormEditor<A extends string>({
     () => applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions ?? []),
     [extensions],
   );
+  const loadedForms = useControl<Record<string, FormTree | undefined>>({});
   const controls = useControl<ControlDefinitionForm[]>([]);
   const treeLookup = createFormLookup({ "": trackedValue(controls) });
   const baseSchema = useControl<string>();
@@ -221,6 +229,24 @@ export function BasicFormEditor<A extends string>({
 
   const previewMode = previewData.fields.showing.value;
   const formType = selectedForm.value;
+  const viewContext: ViewContext = {
+    formRenderer,
+    validation,
+    previewOptions,
+    currentForm: loadedForm.as(),
+    schemaLookup: schemas,
+    getForm: (formId) => {
+      const form = loadedForms.fields[formId];
+      ensureMetaValue(form, "loader", () => loadFormNode(formId, form));
+      return form;
+    },
+    extensions,
+    editorControls: controlGroup,
+    createEditorRenderer,
+    editorFields: rootSchemaNode(ControlDefinitionSchema),
+    selectedControl: selected,
+    selectedField,
+  };
   return (
     <PreviewContextProvider
       value={{
@@ -232,155 +258,219 @@ export function BasicFormEditor<A extends string>({
         hideFields,
       }}
     >
-      <PanelGroup direction="horizontal">
-        <Panel>
-          <RenderControl render={() => <style>{styles.value}</style>} />
-          <div
-            className={clsx(
-              editorPanelClass,
-              "overflow-auto w-full h-full p-8",
-            )}
-          >
-            <div className={editorClass}>
-              {rootSchema &&
-                (previewMode ? (
-                  <FormPreview
-                    key={loadedForm.value ?? ""}
-                    rootSchema={rootSchema}
-                    controls={trackedValue(controls)}
-                    previewData={previewData}
-                    formRenderer={formRenderer}
-                    validation={validation}
-                    previewOptions={previewOptions}
-                    createEditorRenderer={createEditorRenderer}
-                    rootControlClass={rootControlClass}
-                    controlsClass={controlsClass}
-                    extraPreviewControls={extraPreviewControls}
-                  />
-                ) : (
-                  <div className={controlsClass}>
-                    <RenderArrayElements
-                      key={formType}
-                      array={treeLookup.getForm("")!.rootNode.getChildNodes()}
-                      children={(c, i) => (
-                        <div className={rootControlClass}>
-                          <FormControlPreview
-                            keyPrefix={formType}
-                            node={c}
-                            parentNode={rootSchema}
-                            dropIndex={i}
-                          />
-                        </div>
-                      )}
-                    />
-                  </div>
-                ))}
-            </div>
-          </div>
-        </Panel>
-        <PanelResizeHandle className="w-2 bg-surface-200" />
-        <Panel defaultSize={33}>
-          <PanelGroup direction="vertical">
-            <Panel>
-              <div className="h-full flex flex-col p-2">
-                <div className="flex gap-2">
-                  <Fselect control={selectedForm.as()}>
-                    <RenderArrayElements
-                      array={formTypes}
-                      children={(x) => <option value={x[0]}>{x[1]}</option>}
-                    />
-                  </Fselect>
-                  {button(doSave, "Save " + selectedForm.value)}
-                  {button(
-                    togglePreviewMode,
-                    previewMode ? "Edit Mode" : "Editable Preview",
-                  )}
-                  {button(addMissing, "Add missing controls")}
-                </div>
-                <div className="my-2">
-                  <div className="flex items-center gap-2">
-                    <Fcheckbox control={hideFields} id="hideFields" />{" "}
-                    <label htmlFor="hideFields">Hide field names</label>
-                  </div>
-                </div>
-                <div className="grow flex overflow-y-hidden border">
-                  {rootSchema && (
-                    <PanelGroup direction="horizontal">
-                      <Panel>
-                        <div className="flex flex-col h-full">
-                          <div className="flex gap-2">
-                            <h2 className="text-xl my-2">Controls</h2>
-                            {button(
-                              () => controlTreeApi.current?.closeAll(),
-                              "Collapse",
-                            )}
-                          </div>
-                          <FormControlTree
-                            treeApi={controlTreeApi}
-                            className="overflow-hidden grow"
-                            controls={controls}
-                            rootSchema={rootSchema}
-                            selectedField={selectedField}
-                            selected={selected}
-                            onDeleted={(c) => {
-                              const sel = selected.value;
-                              if (sel && sel.control === c.data.control) {
-                                selected.value = undefined;
-                              }
-                            }}
-                          />
-                        </div>
-                      </Panel>
-                      <PanelResizeHandle className="w-2 bg-surface-200" />
-                      <Panel>
-                        <div className="flex flex-col h-full">
-                          <h2 className="text-xl my-2">Schema</h2>
-                          <FormSchemaTree
-                            className="overflow-hidden grow"
-                            selectedControl={selected}
-                            rootControls={controls}
-                            rootSchema={rootSchema}
-                            selected={selectedField}
-                          />
-                        </div>
-                      </Panel>
-                    </PanelGroup>
-                  )}
-                </div>
-                <div>
-                  {button(
-                    () =>
-                      addElement(controls, {
-                        ...defaultControlDefinitionForm,
-                        type: ControlDefinitionType.Group,
-                      }),
-                    "Add Control",
-                  )}
-                </div>
-              </div>
-            </Panel>
-            <PanelResizeHandle className="h-2 bg-surface-200" />
-            <Panel>
-              <div className="p-4 overflow-auto w-full h-full">
-                <RenderOptional control={selected}>
-                  {(c) => (
-                    <FormControlEditor
-                      key={c.value.control.uniqueId}
-                      controlNode={c.value}
-                      createEditorRenderer={createEditorRenderer}
-                      extensions={extensions}
-                      editorFields={rootSchemaNode(ControlDefinitionSchema)}
-                      editorControls={controlGroup}
-                    />
-                  )}
-                </RenderOptional>
-              </div>
-            </Panel>
-          </PanelGroup>
-        </Panel>
-      </PanelGroup>
+      <DockLayout
+        defaultLayout={{
+          dockbox: {
+            mode: "horizontal",
+            children: [
+              {
+                tabs: [{ id: "form:EditorControls" } as TabData],
+              },
+              {
+                mode: "vertical",
+                children: [
+                  {
+                    mode: "horizontal",
+                    children: [
+                      { tabs: [{ id: "formStructure" } as TabData] },
+                      { tabs: [{ id: "currentSchema" } as TabData] },
+                    ],
+                  },
+                  {
+                    tabs: [{ id: "controlProperties" } as TabData],
+                  },
+                ],
+              },
+            ],
+          },
+        }}
+        loadTab={loadTab}
+        style={{
+          position: "absolute",
+          left: 10,
+          top: 10,
+          right: 10,
+          bottom: 10,
+        }}
+      />
     </PreviewContextProvider>
   );
+
+  function loadTab(savedTab: TabBase): TabData {
+    const [title, content] = createView(savedTab.id!, viewContext);
+    return { ...savedTab, title, content };
+  }
+
+  async function loadFormNode(
+    formId: string,
+    control: Control<FormTree | undefined>,
+  ) {
+    const res = await loadForm(formId as A);
+    const controlControls = newControl(res.controls);
+    const tree = createFormTree(trackedValue(controlControls), res.schemaName);
+    control.setInitialValue(tree);
+  }
+
+  // return (
+  //   <PreviewContextProvider
+  //     value={{
+  //       selected,
+  //       treeDrag,
+  //       VisibilityIcon: <i className="fa fa-eye" />,
+  //       dropSuccess: () => {},
+  //       renderer: formRenderer,
+  //       hideFields,
+  //     }}
+  //   >
+  //     <PanelGroup direction="horizontal">
+  //       <Panel>
+  //         <RenderControl render={() => <style>{styles.value}</style>} />
+  //         <div
+  //           className={clsx(
+  //             editorPanelClass,
+  //             "overflow-auto w-full h-full p-8",
+  //           )}
+  //         >
+  //           <div className={editorClass}>
+  //             {rootSchema &&
+  //               (previewMode ? (
+  //                 <FormPreview
+  //                   key={loadedForm.value ?? ""}
+  //                   rootSchema={rootSchema}
+  //                   controls={trackedValue(controls)}
+  //                   previewData={previewData}
+  //                   formRenderer={formRenderer}
+  //                   validation={validation}
+  //                   previewOptions={previewOptions}
+  //                   createEditorRenderer={createEditorRenderer}
+  //                   rootControlClass={rootControlClass}
+  //                   controlsClass={controlsClass}
+  //                   extraPreviewControls={extraPreviewControls}
+  //                 />
+  //               ) : (
+  //                 <div className={controlsClass}>
+  //                   <RenderArrayElements
+  //                     key={formType}
+  //                     array={treeLookup.getForm("")!.rootNode.getChildNodes()}
+  //                     children={(c, i) => (
+  //                       <div className={rootControlClass}>
+  //                         <FormControlPreview
+  //                           keyPrefix={formType}
+  //                           node={c}
+  //                           parentNode={rootSchema}
+  //                           dropIndex={i}
+  //                         />
+  //                       </div>
+  //                     )}
+  //                   />
+  //                 </div>dt
+  //               ))}
+  //           </div>
+  //         </div>
+  //       </Panel>
+  //       <PanelResizeHandle className="w-2 bg-surface-200" />
+  //       <Panel defaultSize={33}>
+  //         <PanelGroup direction="vertical">
+  //           <Panel>
+  //             <div className="h-full flex flex-col p-2">
+  //               <div className="flex gap-2">
+  //                 <Fselect control={selectedForm.as()}>
+  //                   <RenderArrayElements
+  //                     array={formTypes}
+  //                     children={(x) => <option value={x[0]}>{x[1]}</option>}
+  //                   />
+  //                 </Fselect>
+  //                 {button(doSave, "Save " + selectedForm.value)}
+  //                 {button(
+  //                   togglePreviewMode,
+  //                   previewMode ? "Edit Mode" : "Editable Preview",
+  //                 )}
+  //                 {button(addMissing, "Add missing controls")}
+  //               </div>
+  //               <div className="my-2">
+  //                 <div className="flex items-center gap-2">
+  //                   <Fcheckbox control={hideFields} id="hideFields" />{" "}
+  //                   <label htmlFor="hideFields">Hide field names</label>
+  //                 </div>
+  //               </div>
+  //               <div className="grow flex overflow-y-hidden border">
+  //                 {rootSchema && (
+  //                   <PanelGroup direction="horizontal">
+  //                     <Panel>
+  //                       <div className="flex flex-col h-full">
+  //                         <div className="flex gap-2">
+  //                           <h2 className="text-xl my-2">Controls</h2>
+  //                           {button(
+  //                             () => controlTreeApi.current?.closeAll(),
+  //                             "Collapse",
+  //                           )}
+  //                         </div>
+  //                         <FormControlTree
+  //                           treeApi={controlTreeApi}
+  //                           className="overflow-hidden grow"
+  //                           controls={controls}
+  //                           rootSchema={rootSchema}
+  //                           selectedField={selectedField}
+  //                           selected={selected}
+  //                           onDeleted={(c) => {
+  //                             const sel = selected.value;
+  //                             if (sel && sel.control === c.data.control) {
+  //                               selected.value = undefined;
+  //                             }
+  //                           }}
+  //                         />
+  //                       </div>
+  //                     </Panel>
+  //                     <PanelResizeHandle className="w-2 bg-surface-200" />
+  //                     <Panel>
+  //                       <div className="flex flex-col h-full">
+  //                         <h2 className="text-xl my-2">Schema</h2>
+  //                         <FormSchemaTree
+  //                           className="overflow-hidden grow"
+  //                           selectedControl={selected}
+  //                           rootControls={controls}
+  //                           rootSchema={rootSchema}
+  //                           selected={selectedField}
+  //                         />
+  //                       </div>
+  //                     </Panel>
+  //                   </PanelGroup>
+  //                 )}
+  //               </div>
+  //               <div>
+  //                 {button(
+  //                   () =>
+  //                     addElement(controls, {
+  //                       ...defaultControlDefinitionForm,
+  //                       type: ControlDefinitionType.Group,
+  //                     }),
+  //                   "Add Control",
+  //                 )}
+  //               </div>
+  //             </div>
+  //           </Panel>
+  //           <PanelResizeHandle className="h-2 bg-surface-200" />
+  //           <Panel>
+  //             <div className="p-4 overflow-auto w-full h-full">
+  //               <RenderOptional control={selected}>
+  //                 {(c) => (
+  //                   <FormControlEditor
+  //                     key={c.value.control.uniqueId}
+  //                     controlNode={c.value}
+  //                     createEditorRenderer={createEditorRenderer}
+  //                     extensions={extensions}
+  //                     editorFields={rootSchemaNode(ControlDefinitionSchema)}
+  //                     editorControls={controlGroup}
+  //                   />
+  //                 )}
+  //               </RenderOptional>
+  //             </div>
+  //           </Panel>
+  //         </PanelGroup>
+  //       </Panel>
+  //     </PanelGroup>
+  //   </PreviewContextProvider>
+  // );
 
   function addMissing() {
     if (rootSchema) {

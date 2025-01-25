@@ -2,6 +2,7 @@ import {
   Control,
   newControl,
   unsafeRestoreControl,
+  useComputed,
   useControl,
 } from "@react-typed-forms/core";
 import React, {
@@ -11,11 +12,11 @@ import React, {
   useContext,
   useMemo,
 } from "react";
-import { ControlDefinitionForm } from "./schemaSchemas";
 import { useDroppable } from "@dnd-kit/core";
 import {
   ControlDataContext,
   ControlDefinition,
+  DataControlDefinition,
   defaultDataProps,
   defaultSchemaInterface,
   defaultValueForField,
@@ -40,7 +41,7 @@ import {
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import { ControlDragState, controlDropData, DragData, DropData } from "./util";
-import { ControlNode, SelectedControlNode } from "./types";
+import { SelectedControlNode } from "./types";
 
 export interface FormControlPreviewProps {
   node: FormNode;
@@ -102,15 +103,19 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   } = props;
   const definition = node.definition;
   const { selected, dropSuccess, renderer, hideFields } = usePreviewContext();
-  const item = unsafeRestoreControl(definition) as
-    | Control<ControlDefinitionForm>
-    | undefined;
   const displayOnly = dOnly || isControlDisplayOnly(definition);
 
-  const isSelected = !!item && selected.value?.control === item;
+  const defControlId = unsafeRestoreControl(definition)?.uniqueId;
+  const isSelected = useComputed(() => {
+    const selDef = selected.value?.form.definition;
+    return (
+      (selDef && defControlId === unsafeRestoreControl(selDef)?.uniqueId) ??
+      false
+    );
+  }).value;
   const scrollRef = useScrollIntoView(isSelected);
   const { setNodeRef, isOver } = useDroppable({
-    id: item?.uniqueId ?? 0,
+    id: node.id,
     disabled: Boolean(noDrop),
     data: controlDropData(
       parent ? unsafeRestoreControl(parent)?.as() : undefined,
@@ -201,7 +206,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
     designMode: true,
   });
-  const asSelection = { control: item!, schema: parentNode };
+  const asSelection = { form: node, schema: parentNode };
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,
     "onClick" | "onClickCapture" | "onMouseDownCapture"

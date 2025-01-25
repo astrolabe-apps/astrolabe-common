@@ -1,12 +1,17 @@
 import { Control } from "@react-typed-forms/core";
 import { ControlDefinitionForm } from "./schemaSchemas";
-import { SchemaNode } from "@react-typed-forms/schemas";
+import {
+  ControlDefinition,
+  FormNode,
+  SchemaNode,
+} from "@react-typed-forms/schemas";
 
-export interface ControlNode {
+export interface ControlNode extends SelectedControlNode {
   id: string;
-  control: Control<ControlDefinitionForm>;
-  schema: SchemaNode;
   children: ControlNode[] | null;
 }
 
-export type SelectedControlNode = Pick<ControlNode, "control"|"schema">
+export type SelectedControlNode = {
+  form: FormNode;
+  schema: SchemaNode;
+};
