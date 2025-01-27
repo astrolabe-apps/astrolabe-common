@@ -1,5 +1,4 @@
 import {
-  ControlDefinition,
   ControlDefinitionExtension,
   ControlRenderOptions,
   FormNode,
@@ -25,6 +24,7 @@ export interface ViewContext {
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
   extensions?: ControlDefinitionExtension[];
   formRenderer: FormRenderer;
+  button: (onClick: () => void, action: string, actionId?: string) => ReactNode;
   previewOptions?: ControlRenderOptions;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   extraPreviewControls?:

@@ -41,18 +41,11 @@ function RenderFormDesign({
     previewOptions,
     validation,
     extraPreviewControls,
+    button,
   } = context;
   const rootNode = c.fields.rootNode.value;
   const rootSchema = context.schemaLookup.getSchema(c.fields.schemaId.value)!;
   const previewMode = preview.fields.showing.value;
-
-  function button(onClick: () => void, action: string, actionId?: string) {
-    return formRenderer.renderAction({
-      onClick,
-      actionText: action,
-      actionId: actionId ?? action,
-    });
-  }
 
   return (
     <div>

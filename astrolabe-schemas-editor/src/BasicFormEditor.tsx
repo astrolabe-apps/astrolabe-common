@@ -233,6 +233,7 @@ export function BasicFormEditor<A extends string>({
     formRenderer,
     validation,
     previewOptions,
+    button,
     currentForm: loadedForm.as(),
     schemaLookup: schemas,
     getForm: (formId) => {

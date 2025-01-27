@@ -4,6 +4,7 @@ import { ViewContext } from "./index";
 import { FormStructureView } from "./FormStructureView";
 import { ControlPropertiesView } from "./ControlPropertiesView";
 import { FormView } from "./FormView";
+import { FormListView } from "./FormListView";
 
 export function createView(
   viewId: string,
@@ -15,6 +16,8 @@ export function createView(
 
   function title() {
     switch (viewType) {
+      case "formList":
+        return "Forms";
       case "currentSchema":
         return "Current Schema";
       case "form":
@@ -30,6 +33,8 @@ export function createView(
 
   function element() {
     switch (viewType) {
+      case "formList":
+        return <FormListView context={context} />;
       case "formStructure":
         return <FormStructureView context={context} />;
       case "currentSchema":
