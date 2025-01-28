@@ -78,6 +78,10 @@ import {
   createOptionalAdornment,
   DefaultOptionalAdornmentOptions,
 } from "./adornments/optionalAdornment";
+import {
+  ArrayElementRendererOptions,
+  createArrayElementRenderer,
+} from "./components/ArrayElementRenderer";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -143,6 +147,7 @@ export interface DefaultDataRendererOptions {
   radioOptions?: CheckRendererOptions;
   checkListOptions?: CheckRendererOptions;
   autocompleteOptions?: AutocompleteRendererOptions;
+  arrayElementOptions?: ArrayElementRendererOptions;
   booleanOptions?: FieldOption[];
   optionRenderer?: DataRendererRegistration;
   multilineClass?: string;
@@ -168,6 +173,9 @@ export function createDefaultDataRenderer(
   );
   const checkListRenderer = createCheckListRenderer(
     options.checkListOptions ?? options.checkOptions,
+  );
+  const arrayElementRenderer = createArrayElementRenderer(
+    options.arrayElementOptions,
   );
   const {
     inputClass,
@@ -195,8 +203,11 @@ export function createDefaultDataRenderer(
       field.collection &&
       props.elementIndex == null &&
       (renderType == DataRenderType.Standard ||
-        renderType == DataRenderType.Array)
+        renderType == DataRenderType.Array ||
+        renderType == DataRenderType.ArrayElement)
     ) {
+      if (renderType == DataRenderType.ArrayElement)
+        return arrayElementRenderer.render(props, renderers);
       return arrayRenderer.render(props, renderers);
     }
     if (fieldType === FieldType.Compound) {

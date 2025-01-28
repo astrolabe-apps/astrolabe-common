@@ -13,6 +13,7 @@ import {
   DataControlDefinition,
   EvalExpressionHook,
   fieldPathForDefinition,
+  getExternalEditData,
   getLengthRestrictions,
   makeHookDepString,
   mergeObjects,
@@ -57,6 +58,9 @@ interface DataGridOptions
     | "noAdd"
     | "noRemove"
     | "noReorder"
+    | "editExternal"
+    | "editText"
+    | "editActionId"
   > {
   noEntriesText?: string;
   searchField?: string;
@@ -80,14 +84,17 @@ interface DataGridColumnExtension {
 const DataGridFields = buildSchema<DataGridOptions>({
   addText: stringField("Add button text"),
   removeText: stringField("Remove button text"),
+  editText: stringField("Edit button text"),
   addActionId: stringField("Add action id"),
   removeActionId: stringField("Remove action id"),
+  editActionId: stringField("Edit action id"),
   noEntriesText: stringField("No entries text"),
   noAdd: boolField("No Add"),
   noRemove: boolField("No remove"),
   noReorder: boolField("No reorder"),
   searchField: stringField("Search state field"),
   displayOnly: boolField("Display only"),
+  editExternal: boolField("Edit external"),
 });
 export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
@@ -101,7 +108,7 @@ export const defaultDataGridClasses: DataGridClasses = {
     "text-primary-950 animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 rounded-md border bg-white p-4 shadow-md outline-none",
   titleContainerClass: "flex gap-2",
   addContainerClass: "flex justify-center mt-2",
-  removeColumnClass: "flex items-center h-full pl-1",
+  removeColumnClass: "flex items-center h-full pl-1 gap-2",
   noEntriesClass: "border-t text-center p-3",
 };
 export const DataGridRenderer = createDataGridRenderer(
@@ -254,6 +261,7 @@ interface DataGridRendererProps {
   readonly: boolean;
   addAction?: ActionRendererProps;
   removeAction?: (i: number) => ActionRendererProps;
+  editAction?: (i: number) => ActionRendererProps;
   classes: DataGridClasses;
 }
 
@@ -267,6 +275,7 @@ function DataGridControlRenderer({
   readonly,
   addAction,
   removeAction,
+  editAction,
   classes,
 }: DataGridRendererProps) {
   const allColumns = columnDefinitions<Control<any>, DataGridColumnExtension>(
@@ -276,7 +285,10 @@ function DataGridControlRenderer({
       columnTemplate: "auto",
       render: (r, rowIndex) => (
         <div className={classes.removeColumnClass}>
-          {removeAction && !readonly && renderAction(removeAction(rowIndex))}
+          {editAction && !readonly && disableActionIfEdit(editAction(rowIndex))}
+          {removeAction &&
+            !readonly &&
+            disableActionIfEdit(removeAction(rowIndex))}
         </div>
       ),
     },
@@ -343,6 +355,13 @@ function DataGridControlRenderer({
     );
   }
 
+  function disableActionIfEdit(action: ActionRendererProps): ReactNode {
+    if (!action.disabled && getExternalEditData(control).value !== undefined) {
+      return renderAction({ ...action, disabled: true });
+    }
+    return renderAction(action);
+  }
+
   return (
     <>
       <DataGrid
@@ -371,7 +390,7 @@ function DataGridControlRenderer({
         }
       />
       <div className={classes.addContainerClass}>
-        {addAction && !readonly && renderAction(addAction)}
+        {addAction && !readonly && disableActionIfEdit(addAction)}
       </div>
     </>
   );

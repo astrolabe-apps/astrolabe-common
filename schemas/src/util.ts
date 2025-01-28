@@ -39,6 +39,7 @@ import {
   getElementIndex,
   newControl,
 } from "@react-typed-forms/core";
+import { ActionRendererProps } from "./controlRender";
 
 /**
  * Interface representing the classes for a control.
@@ -903,6 +904,17 @@ export function getNullToggler(c: Control<any>): Control<boolean> {
       notNull.disabled = isEditing.current.value === false;
     }
   });
+}
+
+export interface ExternalEditData {
+  data: unknown;
+  actions: ActionRendererProps[];
+}
+
+export function getExternalEditData(
+  c: Control<any>,
+): Control<ExternalEditData | undefined> {
+  return ensureMetaValue(c, "$externalEditIndex", () => newControl(undefined));
 }
 
 export function getLastDefinedValue<V>(control: Control<V>): Control<V> {

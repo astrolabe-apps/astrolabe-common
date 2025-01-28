@@ -49,6 +49,7 @@ import {
   ControlClasses,
   elementValueForField,
   fieldDisplayName,
+  getExternalEditData,
   getGroupClassOverrides,
   isControlDisplayOnly,
   JsonPath,
@@ -193,6 +194,7 @@ export interface ArrayRendererProps {
   addAction?: ActionRendererProps;
   required: boolean;
   removeAction?: (elemIndex: number) => ActionRendererProps;
+  editAction?: (elemIndex: number) => ActionRendererProps;
   renderElement: (
     elemIndex: number,
     wrapEntry: (children: ReactNode) => ReactNode,
@@ -474,7 +476,6 @@ export function useControlRendererComponent(
   } else {
     dataNode = lookupDataNode(definition, parentDataNode);
   }
-  // console.log(parentDataNode.id, dataNode?.control, formNode.id);
   const useValidation = useMakeValidationHook(
     definition,
     options.useValidationHook,
@@ -1077,7 +1078,10 @@ export function createArrayActions(
   control: Control<any[]>,
   field: SchemaField,
   options?: ArrayActionOptions,
-): Pick<ArrayRendererProps, "addAction" | "removeAction" | "arrayControl"> {
+): Pick<
+  ArrayRendererProps,
+  "addAction" | "removeAction" | "editAction" | "arrayControl"
+> {
   const noun = field.displayName ?? field.field;
   const {
     addText,
@@ -1086,32 +1090,102 @@ export function createArrayActions(
     noRemove,
     removeActionId,
     addActionId,
+    editActionId,
+    editText,
     disabled,
     readonly,
     designMode,
+    editExternal,
   } = options ?? {};
   return {
     arrayControl: control,
     addAction:
       !readonly && !noAdd
-        ? {
-            actionId: addActionId ? addActionId : "add",
-            actionText: addText ? addText : "Add " + noun,
-            onClick: () =>
-              !designMode && addElement(control, elementValueForField(field)),
-            disabled,
-          }
+        ? makeAdd(() => {
+            if (!designMode) {
+              const newValue = elementValueForField(field);
+
+              if (editExternal) {
+                const editData = getExternalEditData(control);
+                editData.value = {
+                  data: [elementValueForField(field)],
+                  actions: [
+                    makeCancel(),
+                    makeAdd(() => {
+                      const newValue = (editData.fields.data.value as any[])[0];
+                      addElement(control, newValue);
+                      editData.value = undefined;
+                    }),
+                  ],
+                };
+              } else {
+                addElement(control, newValue);
+              }
+            }
+          })
         : undefined,
+    editAction: editExternal
+      ? (i: number) => ({
+          actionId: editActionId ? editActionId : "edit",
+          actionText: editText ? editText : "Edit",
+          onClick: () => {
+            if (!designMode) {
+              const editData = getExternalEditData(control);
+              const elementToEdit = control.as<any[]>().elements[i];
+              editData.value = {
+                data: [elementToEdit.current.value],
+                actions: [
+                  makeCancel(),
+                  {
+                    actionId: "apply",
+                    actionText: "Apply",
+                    onClick: () => {
+                      elementToEdit.value = (
+                        editData.fields.data.value as any[]
+                      )[0];
+                      editData.value = undefined;
+                    },
+                  },
+                ],
+              };
+            }
+          },
+        })
+      : undefined,
     removeAction:
       !readonly && !noRemove
         ? (i: number) => ({
             actionId: removeActionId ? removeActionId : "remove",
             actionText: removeText ? removeText : "Remove",
-            onClick: () => !designMode && removeElement(control, i),
+            onClick: () => {
+              if (!designMode) {
+                removeElement(control, i);
+              }
+            },
             disabled,
           })
         : undefined,
   };
+
+  function makeAdd(onClick: () => void): ActionRendererProps {
+    return {
+      actionId: addActionId ? addActionId : "add",
+      actionText: addText ? addText : "Add " + noun,
+      onClick,
+      disabled,
+    };
+  }
+
+  function makeCancel(): ActionRendererProps {
+    return {
+      actionId: "cancel",
+      actionText: "Cancel",
+      onClick: () => {
+        getExternalEditData(control).value = undefined;
+      },
+      disabled,
+    };
+  }
 }
 
 export function applyArrayLengthRestrictions(
@@ -1119,15 +1193,22 @@ export function applyArrayLengthRestrictions(
     arrayControl,
     min,
     max,
+    editAction,
     addAction: aa,
     removeAction: ra,
     required,
   }: Pick<
     ArrayRendererProps,
-    "addAction" | "removeAction" | "arrayControl" | "min" | "max" | "required"
+    | "addAction"
+    | "removeAction"
+    | "editAction"
+    | "arrayControl"
+    | "min"
+    | "max"
+    | "required"
   >,
   disable?: boolean,
-): Pick<ArrayRendererProps, "addAction" | "removeAction"> & {
+): Pick<ArrayRendererProps, "addAction" | "removeAction" | "editAction"> & {
   addDisabled: boolean;
   removeDisabled: boolean;
 } {
@@ -1143,6 +1224,7 @@ export function applyArrayLengthRestrictions(
     removeAction: disable || removeAllowed ? ra : undefined,
     removeDisabled: !removeAllowed,
     addDisabled: !addAllowed,
+    editAction,
   };
 }
 
