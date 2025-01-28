@@ -49,7 +49,7 @@ function ArrayElementRenderer({
   formRenderer: FormRenderer;
   renderOptions: ArrayElementRenderOptions;
 }) {
-  const { control, formNode, renderChild } = dataProps;
+  const { control, formNode, renderChild, designMode } = dataProps;
   const extData = getExternalEditData(control);
   const overlayState = useOverlayTriggerState({
     isOpen: true,
@@ -58,7 +58,7 @@ function ArrayElementRenderer({
     },
   });
 
-  if (extData.value !== undefined) {
+  if (designMode || extData.value !== undefined) {
     const parentDataNode = makeSchemaDataNode(
       dataProps.dataNode.schema,
       extData.fields.data,
@@ -84,7 +84,7 @@ function ArrayElementRenderer({
         </div>
       </div>
     );
-    if (renderOptions.showInline) return editContent;
+    if (renderOptions.showInline || designMode) return editContent;
     return (
       <Modal state={overlayState}>
         <Dialog children={editContent} />
