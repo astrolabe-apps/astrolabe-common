@@ -765,7 +765,9 @@ importers:
 
   ../../../schemas-html:
     specifiers:
+      '@astroapps/aria-base': workspace:*
       '@mui/base': ^5.0.0-beta.68
+      '@react-stately/overlays': ^3.6.13
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/transform': ^0.2.0
@@ -781,7 +783,9 @@ importers:
       rimraf: ^3.0.2
       typescript: ^5.6.3
     dependencies:
+      '@astroapps/aria-base': link:../aria-base
       '@mui/base': 5.0.0-beta.68_ryhct6r6jz2fex4xfo2quarxhi
+      '@react-stately/overlays': 3.6.13_react@18.3.1
       clsx: 2.1.1
       jsonata: 2.0.5
     devDependencies:
@@ -6441,7 +6445,7 @@ packages:
       '@react-aria/ssr': 3.9.7
       '@react-aria/utils': 3.26.0
       '@react-aria/visually-hidden': 3.8.18
-      '@react-stately/overlays': 3.6.12
+      '@react-stately/overlays': 3.6.13
       '@react-types/button': 3.10.1
       '@react-types/overlays': 3.8.11
       '@react-types/shared': 3.26.0
@@ -6460,7 +6464,7 @@ packages:
       '@react-aria/ssr': 3.9.7_react@18.3.1
       '@react-aria/utils': 3.26.0_react@18.3.1
       '@react-aria/visually-hidden': 3.8.18_react@18.3.1
-      '@react-stately/overlays': 3.6.12_react@18.3.1
+      '@react-stately/overlays': 3.6.13_react@18.3.1
       '@react-types/button': 3.10.1_react@18.3.1
       '@react-types/overlays': 3.8.11_react@18.3.1
       '@react-types/shared': 3.26.0_react@18.3.1
@@ -7174,7 +7178,7 @@ packages:
       '@react-stately/collections': 3.12.0
       '@react-stately/form': 3.1.0
       '@react-stately/list': 3.11.1
-      '@react-stately/overlays': 3.6.12
+      '@react-stately/overlays': 3.6.13
       '@react-stately/select': 3.6.9
       '@react-stately/utils': 3.10.5
       '@react-types/combobox': 3.13.1
@@ -7190,7 +7194,7 @@ packages:
       '@react-stately/collections': 3.12.0_react@18.3.1
       '@react-stately/form': 3.1.0_react@18.3.1
       '@react-stately/list': 3.11.1_react@18.3.1
-      '@react-stately/overlays': 3.6.12_react@18.3.1
+      '@react-stately/overlays': 3.6.13_react@18.3.1
       '@react-stately/select': 3.6.9_react@18.3.1
       '@react-stately/utils': 3.10.5_react@18.3.1
       '@react-types/combobox': 3.13.1_react@18.3.1
@@ -7226,7 +7230,7 @@ packages:
       '@internationalized/date': 3.6.0
       '@internationalized/string': 3.2.5
       '@react-stately/form': 3.1.0
-      '@react-stately/overlays': 3.6.12
+      '@react-stately/overlays': 3.6.13
       '@react-stately/utils': 3.10.5
       '@react-types/datepicker': 3.9.0
       '@react-types/shared': 3.26.0
@@ -7241,7 +7245,7 @@ packages:
       '@internationalized/date': 3.6.0
       '@internationalized/string': 3.2.5
       '@react-stately/form': 3.1.0_react@18.3.1
-      '@react-stately/overlays': 3.6.12_react@18.3.1
+      '@react-stately/overlays': 3.6.13_react@18.3.1
       '@react-stately/utils': 3.10.5_react@18.3.1
       '@react-types/datepicker': 3.9.0_react@18.3.1
       '@react-types/shared': 3.26.0_react@18.3.1
@@ -7371,7 +7375,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@react-stately/overlays': 3.6.12
+      '@react-stately/overlays': 3.6.13
       '@react-types/menu': 3.9.13
       '@react-types/shared': 3.26.0
       '@swc/helpers': 0.5.13
@@ -7382,7 +7386,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@react-stately/overlays': 3.6.12_react@18.3.1
+      '@react-stately/overlays': 3.6.13_react@18.3.1
       '@react-types/menu': 3.9.13_react@18.3.1
       '@react-types/shared': 3.26.0_react@18.3.1
       '@swc/helpers': 0.5.13
@@ -7414,23 +7418,23 @@ packages:
       react: 18.3.1
     dev: false
 
-  /@react-stately/overlays/3.6.12:
-    resolution: {integrity: sha512-QinvZhwZgj8obUyPIcyURSCjTZlqZYRRCS60TF8jH8ZpT0tEAuDb3wvhhSXuYA3Xo9EHLwvLjEf3tQKKdAQArw==}
+  /@react-stately/overlays/3.6.13:
+    resolution: {integrity: sha512-WsU85Gf/b+HbWsnnYw7P/Ila3wD+C37Uk/WbU4/fHgJ26IEOWsPE6wlul8j54NZ1PnLNhV9Fn+Kffi+PaJMQXQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
       '@react-stately/utils': 3.10.5
-      '@react-types/overlays': 3.8.11
+      '@react-types/overlays': 3.8.12
       '@swc/helpers': 0.5.13
     dev: false
 
-  /@react-stately/overlays/3.6.12_react@18.3.1:
-    resolution: {integrity: sha512-QinvZhwZgj8obUyPIcyURSCjTZlqZYRRCS60TF8jH8ZpT0tEAuDb3wvhhSXuYA3Xo9EHLwvLjEf3tQKKdAQArw==}
+  /@react-stately/overlays/3.6.13_react@18.3.1:
+    resolution: {integrity: sha512-WsU85Gf/b+HbWsnnYw7P/Ila3wD+C37Uk/WbU4/fHgJ26IEOWsPE6wlul8j54NZ1PnLNhV9Fn+Kffi+PaJMQXQ==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
       '@react-stately/utils': 3.10.5_react@18.3.1
-      '@react-types/overlays': 3.8.11_react@18.3.1
+      '@react-types/overlays': 3.8.12_react@18.3.1
       '@swc/helpers': 0.5.13
       react: 18.3.1
     dev: false
@@ -7488,7 +7492,7 @@ packages:
     dependencies:
       '@react-stately/form': 3.1.0
       '@react-stately/list': 3.11.1
-      '@react-stately/overlays': 3.6.12
+      '@react-stately/overlays': 3.6.13
       '@react-types/select': 3.9.8
       '@react-types/shared': 3.26.0
       '@swc/helpers': 0.5.13
@@ -7501,7 +7505,7 @@ packages:
     dependencies:
       '@react-stately/form': 3.1.0_react@18.3.1
       '@react-stately/list': 3.11.1_react@18.3.1
-      '@react-stately/overlays': 3.6.12_react@18.3.1
+      '@react-stately/overlays': 3.6.13_react@18.3.1
       '@react-types/select': 3.9.8_react@18.3.1
       '@react-types/shared': 3.26.0_react@18.3.1
       '@swc/helpers': 0.5.13
@@ -7638,7 +7642,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@react-stately/overlays': 3.6.12
+      '@react-stately/overlays': 3.6.13
       '@react-types/tooltip': 3.4.13
       '@swc/helpers': 0.5.13
     dev: false
@@ -7648,7 +7652,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@react-stately/overlays': 3.6.12_react@18.3.1
+      '@react-stately/overlays': 3.6.13_react@18.3.1
       '@react-types/tooltip': 3.4.13_react@18.3.1
       '@swc/helpers': 0.5.13
       react: 18.3.1
@@ -7977,6 +7981,23 @@ packages:
       react: 18.3.1
     dev: false
 
+  /@react-types/overlays/3.8.12:
+    resolution: {integrity: sha512-ZvR1t0YV7/6j+6OD8VozKYjvsXT92+C/2LOIKozy7YUNS5KI4MkXbRZzJvkuRECVZOmx8JXKTUzhghWJM/3QuQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+    dependencies:
+      '@react-types/shared': 3.27.0
+    dev: false
+
+  /@react-types/overlays/3.8.12_react@18.3.1:
+    resolution: {integrity: sha512-ZvR1t0YV7/6j+6OD8VozKYjvsXT92+C/2LOIKozy7YUNS5KI4MkXbRZzJvkuRECVZOmx8JXKTUzhghWJM/3QuQ==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+    dependencies:
+      '@react-types/shared': 3.27.0_react@18.3.1
+      react: 18.3.1
+    dev: false
+
   /@react-types/progress/3.5.8:
     resolution: {integrity: sha512-PR0rN5mWevfblR/zs30NdZr+82Gka/ba7UHmYOW9/lkKlWeD7PHgl1iacpd/3zl/jUF22evAQbBHmk1mS6Mpqw==}
     peerDependencies:
@@ -8063,6 +8084,20 @@ packages:
 
   /@react-types/shared/3.26.0_react@18.3.1:
     resolution: {integrity: sha512-6FuPqvhmjjlpEDLTiYx29IJCbCNWPlsyO+ZUmCUXzhUv2ttShOXfw8CmeHWHftT/b2KweAWuzqSlfeXPR76jpw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+    dependencies:
+      react: 18.3.1
+    dev: false
+
+  /@react-types/shared/3.27.0:
+    resolution: {integrity: sha512-gvznmLhi6JPEf0bsq7SwRYTHAKKq/wcmKqFez9sRdbED+SPMUmK5omfZ6w3EwUFQHbYUa4zPBYedQ7Knv70RMw==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
+    dev: false
+
+  /@react-types/shared/3.27.0_react@18.3.1:
+    resolution: {integrity: sha512-gvznmLhi6JPEf0bsq7SwRYTHAKKq/wcmKqFez9sRdbED+SPMUmK5omfZ6w3EwUFQHbYUa4zPBYedQ7Knv70RMw==}
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
@@ -19091,7 +19126,7 @@ packages:
       '@react-stately/list': 3.11.1
       '@react-stately/menu': 3.9.0
       '@react-stately/numberfield': 3.9.8
-      '@react-stately/overlays': 3.6.12
+      '@react-stately/overlays': 3.6.13
       '@react-stately/radio': 3.10.9
       '@react-stately/searchfield': 3.5.8
       '@react-stately/select': 3.6.9
@@ -19123,7 +19158,7 @@ packages:
       '@react-stately/list': 3.11.1_react@18.3.1
       '@react-stately/menu': 3.9.0_react@18.3.1
       '@react-stately/numberfield': 3.9.8_react@18.3.1
-      '@react-stately/overlays': 3.6.12_react@18.3.1
+      '@react-stately/overlays': 3.6.13_react@18.3.1
       '@react-stately/radio': 3.10.9_react@18.3.1
       '@react-stately/searchfield': 3.5.8_react@18.3.1
       '@react-stately/select': 3.6.9_react@18.3.1

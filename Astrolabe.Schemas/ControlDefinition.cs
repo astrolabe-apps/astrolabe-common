@@ -138,6 +138,9 @@ public enum DataRenderType
 
     Jsonata,
     Array,
+
+    [Display(Name = "Array Element")]
+    ArrayElement
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]
@@ -154,6 +157,7 @@ public enum DataRenderType
 [JsonSubType("Radio", typeof(RadioButtonRenderOptions))]
 [JsonSubType("CheckList", typeof(CheckListRenderOptions))]
 [JsonSubType("Autocomplete", typeof(AutocompleteRenderOptions))]
+[JsonSubType("ArrayElement", typeof(ArrayElementRenderOptions))]
 public abstract record RenderOptions(
     [property: DefaultValue("Standard")]
     [property: SchemaOptions(typeof(DataRenderType))]
@@ -174,11 +178,17 @@ public record ArrayRenderOptions(
     string? RemoveText,
     string? AddActionId,
     string? RemoveActionId,
+    string? EditText,
+    string? EditActionId,
     bool? NoAdd,
     bool? NoRemove,
     bool? NoReorder,
-    [property: SchemaTag(SchemaTags.ControlRef + "RenderOptions")] RenderOptions? ChildOptions
+    [property: SchemaTag(SchemaTags.ControlRef + "RenderOptions")] RenderOptions? ChildOptions,
+    bool? EditExternal
 ) : RenderOptions(DataRenderType.Array.ToString());
+
+public record ArrayElementRenderOptions(bool? ShowInline)
+    : RenderOptions(DataRenderType.ArrayElement.ToString());
 
 public record RadioButtonRenderOptions(
     string? EntryWrapperClass,
@@ -384,8 +394,11 @@ public abstract record ControlAdornment(
     public IDictionary<string, object?>? Extensions { get; set; }
 }
 
-public record OptionalAdornment(AdornmentPlacement? Placement, bool? AllowNull, bool? EditSelectable)
-    : ControlAdornment(ControlAdornmentType.Optional.ToString());
+public record OptionalAdornment(
+    AdornmentPlacement? Placement,
+    bool? AllowNull,
+    bool? EditSelectable
+) : ControlAdornment(ControlAdornmentType.Optional.ToString());
 
 public record IconAdornment(string IconClass, AdornmentPlacement? Placement)
     : ControlAdornment(ControlAdornmentType.Icon.ToString());

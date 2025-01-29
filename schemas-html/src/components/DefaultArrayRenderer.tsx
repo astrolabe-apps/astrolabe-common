@@ -73,10 +73,14 @@ export function DataArrayRenderer({
     dataContext,
     formNode,
   } = dataProps;
-  const { addText, noAdd, noRemove, noReorder, removeText } = mergeObjects(
-    isArrayRenderer(renderOptions) ? renderOptions : ({} as ArrayRenderOptions),
-    defaultActions as ArrayRenderOptions,
-  );
+  const { addText, noAdd, noRemove, noReorder, removeText, editExternal } =
+    mergeObjects(
+      isArrayRenderer(renderOptions)
+        ? renderOptions
+        : ({} as ArrayRenderOptions),
+      defaultActions as ArrayRenderOptions,
+    );
+
   const childOptions = isArrayRenderer(renderOptions)
     ? renderOptions.childOptions
     : undefined;
@@ -114,6 +118,7 @@ export function DataArrayRenderer({
       readonly,
       disabled: control.disabled,
       designMode,
+      editExternal,
     }),
     required,
     renderElement: (i, wrap) => (
@@ -217,6 +222,7 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     arrayControl,
     renderAction,
     style,
+    editAction,
   } = props;
   const { addAction, removeAction } = applyArrayLengthRestrictions(props);
   return (
@@ -225,13 +231,14 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
         <RenderElements control={arrayControl}>
           {(_, x) =>
             renderElement(x, (children) =>
-              removeAction ? (
+              removeAction || editAction ? (
                 <>
                   <div className={clsx(childClass, removableChildClass)}>
                     {children}
                   </div>
                   <div className={removeActionClass}>
-                    {renderAction(removeAction(x))}
+                    {editAction && renderAction(editAction(x))}
+                    {removeAction && renderAction(removeAction(x))}
                   </div>
                 </>
               ) : (

@@ -172,6 +172,7 @@ export enum DataRenderType {
   Autocomplete = "Autocomplete",
   Jsonata = "Jsonata",
   Array = "Array",
+  ArrayElement = "ArrayElement",
 }
 
 export interface TextfieldRenderOptions extends RenderOptions {
@@ -256,10 +257,18 @@ export interface ArrayRenderOptions extends RenderOptions {
   addActionId?: string | null;
   removeText?: string | null;
   removeActionId?: string | null;
+  editText?: string | null;
+  editActionId?: string | null;
   noAdd?: boolean | null;
   noRemove?: boolean | null;
   noReorder?: boolean | null;
   childOptions?: RenderOptions | null;
+  editExternal?: boolean | null;
+}
+
+export interface ArrayElementRenderOptions extends RenderOptions {
+  type: DataRenderType.ArrayElement;
+  showInline?: boolean | null;
 }
 
 export type ArrayActionOptions = Pick<
@@ -271,6 +280,9 @@ export type ArrayActionOptions = Pick<
   | "noAdd"
   | "noRemove"
   | "noReorder"
+  | "editExternal"
+  | "editActionId"
+  | "editText"
 > & { readonly?: boolean; disabled?: boolean; designMode?: boolean };
 
 export interface CheckListRenderOptions

@@ -11,6 +11,7 @@ export const defaultTailwindTheme = {
     removableClass: "grid grid-cols-[1fr_auto] items-center gap-x-2",
     childClass: "grow my-2",
     addActionClass: "my-2",
+    removeActionClass: "flex gap-2",
   },
   group: {
     standardClassName: "flex flex-col gap-4",
@@ -44,6 +45,7 @@ export const defaultTailwindTheme = {
       entryClass: "flex gap-1 items-center",
     },
     selectOptions: { emptyText: "<select>" },
+    arrayElementOptions: { actionsClass: "my-2 flex gap-2" },
     multilineClass: "border p-2 outline-0 whitespace-pre-wrap",
     autocompleteOptions: {
       className:

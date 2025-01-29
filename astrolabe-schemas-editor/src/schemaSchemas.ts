@@ -778,10 +778,14 @@ export interface RenderOptionsForm {
   removeText: string | null;
   addActionId: string | null;
   removeActionId: string | null;
+  editText: string | null;
+  editActionId: string | null;
   noAdd: boolean | null;
   noRemove: boolean | null;
   noReorder: boolean | null;
   childOptions: RenderOptionsForm | null;
+  editExternal: boolean | null;
+  showInline: boolean | null;
   entryWrapperClass: string | null;
   selectedClass: string | null;
   notSelectedClass: string | null;
@@ -885,6 +889,10 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
         name: "Array",
         value: "Array",
       },
+      {
+        name: "Array Element",
+        value: "ArrayElement",
+      },
     ],
   }),
   expression: makeScalarField({
@@ -914,6 +922,16 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["Array"],
     displayName: "Remove Action Id",
   }),
+  editText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Array"],
+    displayName: "Edit Text",
+  }),
+  editActionId: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Array"],
+    displayName: "Edit Action Id",
+  }),
   noAdd: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["Array"],
@@ -934,6 +952,16 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["Array"],
     displayName: "Child Options",
     tags: ["_ControlRef:RenderOptions"],
+  }),
+  editExternal: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Array"],
+    displayName: "Edit External",
+  }),
+  showInline: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["ArrayElement"],
+    displayName: "Show Inline",
   }),
   entryWrapperClass: makeScalarField({
     type: FieldType.String,

@@ -370,6 +370,40 @@
                     }
                   },
                   {
+                    "type": "Group",
+                    "title": "Edit Options",
+                    "children": [
+                      {
+                        "type": "Data",
+                        "title": "Edit Text",
+                        "field": "editText",
+                        "renderOptions": {
+                          "type": "Standard"
+                        }
+                      },
+                      {
+                        "type": "Data",
+                        "title": "Edit Action Id",
+                        "field": "editActionId",
+                        "renderOptions": {
+                          "type": "Standard"
+                        }
+                      },
+                      {
+                        "type": "Data",
+                        "title": "Edit External",
+                        "field": "editExternal",
+                        "renderOptions": {
+                          "type": "Standard"
+                        }
+                      }
+                    ],
+                    "groupOptions": {
+                      "type": "Flex",
+                      "hideTitle": true
+                    }
+                  },
+                  {
                     "type": "Data",
                     "title": "Child Options",
                     "field": "childOptions",
