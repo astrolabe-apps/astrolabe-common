@@ -68,7 +68,14 @@ import { FormSchemaTree } from "./FormSchemaTree";
 import { FormPreview, PreviewData } from "./FormPreview";
 import { ControlNode, SelectedControlNode } from "./types";
 import { TreeApi } from "react-arborist";
-import { DockLayout, TabBase, TabData } from "rc-dock/es";
+import {
+  DockLayout,
+  LayoutBase,
+  PanelBase,
+  PanelData,
+  TabBase,
+  TabData,
+} from "rc-dock/es";
 import { ViewContext } from "./views";
 import { createView } from "./views/createView";
 
@@ -128,22 +135,15 @@ export function BasicFormEditor<A extends string>({
     () => applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions ?? []),
     [extensions],
   );
+  const dockRef = useRef<DockLayout | null>(null);
   const loadedForms = useControl<Record<string, FormTree | undefined>>({});
   const controls = useControl<ControlDefinitionForm[]>([]);
-  const treeLookup = createFormLookup({ "": trackedValue(controls) });
   const baseSchema = useControl<string>();
   const treeDrag = useControl();
   const selected = useControl<SelectedControlNode>();
   const selectedField = useControl<SchemaNode>();
   const hideFields = useControl(false);
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
-  const controlTreeApi = useRef<TreeApi<ControlNode>>(null);
-  const previewData = useControl<PreviewData>({
-    showing: false,
-    showJson: false,
-    showRawEditor: false,
-    data: {},
-  });
   const controlGroup: GroupedControlsDefinition = useMemo(() => {
     return {
       children: addMissingControls(
@@ -154,16 +154,8 @@ export function BasicFormEditor<A extends string>({
       groupOptions: { type: GroupRenderType.Standard },
     };
   }, [editorControls, defaultEditorControls]);
-  const rootSchema = schemas.getSchema(baseSchema.value ?? "");
 
   const loadedForm = useControl<A>();
-  useControlEffect(
-    () => selectedForm.value,
-    (ft) => {
-      doLoadForm(ft);
-    },
-    true,
-  );
 
   const genStyles = useMemo(
     () =>
@@ -227,8 +219,6 @@ export function BasicFormEditor<A extends string>({
     );
   }
 
-  const previewMode = previewData.fields.showing.value;
-  const formType = selectedForm.value;
   const viewContext: ViewContext = {
     formRenderer,
     validation,
@@ -247,7 +237,46 @@ export function BasicFormEditor<A extends string>({
     editorFields: rootSchemaNode(ControlDefinitionSchema),
     selectedControl: selected,
     selectedField,
+    formList: formTypes.map(([id, name]) => ({ id, name })),
+    openForm,
   };
+  const layout = useControl<LayoutBase>(
+    () =>
+      ({
+        dockbox: {
+          mode: "horizontal",
+          children: [
+            {
+              id: "documents",
+              panelLock: {},
+              group: "documents",
+              tabs: [],
+            } as PanelData,
+            {
+              mode: "vertical",
+              children: [
+                {
+                  mode: "horizontal",
+                  children: [
+                    {
+                      tabs: [
+                        { id: "formStructure" } as TabData,
+                        { id: "formList" } as TabData,
+                      ],
+                    },
+                    { tabs: [{ id: "currentSchema" } as TabData] },
+                  ],
+                },
+                {
+                  tabs: [{ id: "controlProperties" } as TabData],
+                },
+              ],
+            },
+          ],
+        },
+      }) satisfies LayoutBase,
+  );
+
   return (
     <PreviewContextProvider
       value={{
@@ -260,32 +289,26 @@ export function BasicFormEditor<A extends string>({
       }}
     >
       <DockLayout
-        defaultLayout={{
-          dockbox: {
-            mode: "horizontal",
-            children: [
-              {
-                tabs: [{ id: "form:EditorControls" } as TabData],
-              },
-              {
-                mode: "vertical",
-                children: [
-                  {
-                    mode: "horizontal",
-                    children: [
-                      { tabs: [{ id: "formStructure" } as TabData] },
-                      { tabs: [{ id: "currentSchema" } as TabData] },
-                    ],
-                  },
-                  {
-                    tabs: [{ id: "controlProperties" } as TabData],
-                  },
-                ],
-              },
-            ],
-          },
-        }}
+        ref={dockRef}
+        layout={layout.value}
         loadTab={loadTab}
+        groups={{ documents: {} }}
+        afterPanelLoaded={(savedPanel, loadedPanel) => {
+          if (loadedPanel.id === "documents") {
+            loadedPanel.panelLock = {};
+          }
+        }}
+        onLayoutChange={(newLayout, currentTabId, direction) => {
+          layout.value = newLayout;
+          if (
+            direction === "active" &&
+            currentTabId &&
+            currentTabId.startsWith("form:")
+          ) {
+            loadedForm.value = currentTabId.slice(5) as A;
+          }
+          console.log(currentTabId, direction);
+        }}
         style={{
           position: "absolute",
           left: 10,
@@ -297,9 +320,18 @@ export function BasicFormEditor<A extends string>({
     </PreviewContextProvider>
   );
 
+  function openForm(formId: string) {
+    const tabId = "form:" + formId;
+    const dockApi = dockRef.current!;
+    dockApi.dockMove(
+      { id: tabId } as TabData,
+      dockApi.find("documents")!,
+      "middle",
+    );
+  }
+
   function loadTab(savedTab: TabBase): TabData {
-    const [title, content] = createView(savedTab.id!, viewContext);
-    return { ...savedTab, title, content };
+    return { ...savedTab, ...createView(savedTab.id!, viewContext) };
   }
 
   async function loadFormNode(
@@ -473,15 +505,12 @@ export function BasicFormEditor<A extends string>({
   //   </PreviewContextProvider>
   // );
 
-  function addMissing() {
-    if (rootSchema) {
-      controls.value = addMissingControlsForSchema(
-        rootSchema,
-        controls.value,
-      ).map(toControlDefinitionForm);
-    }
-  }
-  function togglePreviewMode() {
-    previewData.fields.showing.setValue((x) => !x);
-  }
+  // function addMissing() {
+  //   if (rootSchema) {
+  //     controls.value = addMissingControlsForSchema(
+  //       rootSchema,
+  //       controls.value,
+  //     ).map(toControlDefinitionForm);
+  //   }
+  // }
 }

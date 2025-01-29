@@ -30,6 +30,7 @@ import {
   doubleField,
   EntityExpression,
   ExpressionType,
+  FormNode,
   groupedControl,
   GroupRenderType,
   intField,
@@ -363,9 +364,9 @@ export default function Editor() {
     </DndProvider>
   );
 
-  async function genPdf(c: ControlDefinition[], data: Control<any>) {
+  async function genPdf(c: FormNode, data: Control<any>) {
     const file = await carClient.generatePdf({
-      controls: c as any[],
+      controls: c.definition.children!,
       schemaName: selectedForm.value,
       data: data.value,
     });

@@ -540,7 +540,15 @@ export function isCheckEntryClasses(
 
 export type ControlMap = { [k: string]: ControlDefinition };
 
-export class FormNode {
+export interface FormNode {
+  id: string;
+  definition: ControlDefinition;
+  tree: FormTree;
+  parent?: FormNode;
+  getChildNodes(dontFollowRef?: boolean): FormNode[];
+}
+
+export class FormNodeImpl {
   constructor(
     public id: string,
     public definition: ControlDefinition,
@@ -566,7 +574,7 @@ export class FormNode {
   }
 
   withOverrideChildren(children: ControlDefinition[]) {
-    return new FormNode(
+    return new FormNodeImpl(
       this.id,
       this.definition,
       this.tree,
@@ -591,7 +599,7 @@ export function nodeForControl(
   indexOrId?: number | string,
   parent?: FormNode,
 ): FormNode {
-  return new FormNode(
+  return new FormNodeImpl(
     parent ? parent.id + "/" + indexOrId : "",
     definition,
     tree,

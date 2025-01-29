@@ -462,7 +462,7 @@ export function useControlRendererComponent(
   parentDataNode: SchemaDataNode,
 ): FC<{}> {
   const [definition, formNode] =
-    controlOrFormNode instanceof FormNode
+    "definition" in controlOrFormNode
       ? [controlOrFormNode.definition, controlOrFormNode]
       : [controlOrFormNode, legacyFormNode(controlOrFormNode)];
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;

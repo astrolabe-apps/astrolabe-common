@@ -5,17 +5,18 @@ import { FormStructureView } from "./FormStructureView";
 import { ControlPropertiesView } from "./ControlPropertiesView";
 import { FormView } from "./FormView";
 import { FormListView } from "./FormListView";
+import { HelpView } from "./HelpView";
+import { TabData } from "rc-dock/es";
 
-export function createView(
-  viewId: string,
-  context: ViewContext,
-): [string, ReactElement] {
+export function createView(viewId: string, context: ViewContext): TabData {
   const [viewType, viewParams] = viewId.split(":", 2);
 
-  return [title(), element()];
+  return { title: title(), content: element(), closable: true };
 
   function title() {
     switch (viewType) {
+      case "help":
+        return "Help";
       case "formList":
         return "Forms";
       case "currentSchema":
@@ -33,6 +34,8 @@ export function createView(
 
   function element() {
     switch (viewType) {
+      case "help":
+        return <HelpView />;
       case "formList":
         return <FormListView context={context} />;
       case "formStructure":

@@ -1,9 +1,18 @@
 import { ViewContext } from "./index";
-import { Control, RenderOptional, useControl } from "@react-typed-forms/core";
+import {
+  Control,
+  RenderOptional,
+  unsafeRestoreControl,
+  useControl,
+} from "@react-typed-forms/core";
 import { FormControlPreview } from "../FormControlPreview";
-import { FormTree } from "@react-typed-forms/schemas";
+import {
+  addMissingControlsForSchema,
+  FormTree,
+} from "@react-typed-forms/schemas";
 import React from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
+import { toControlDefinitionForm } from "../schemaSchemas";
 
 export function FormView(props: { formId: string; context: ViewContext }) {
   const { formId, context } = props;
@@ -54,10 +63,25 @@ function RenderFormDesign({
           () => preview.fields.showing.setValue((x) => !x),
           previewMode ? "Edit Mode" : "Editable Preview",
         )}
+        {button(addMissing, "Add Missing Controls")}
       </div>
       {renderContent()}
     </div>
   );
+
+  function addMissing() {
+    if (rootSchema) {
+      const existingChildren = unsafeRestoreControl(
+        rootNode.definition.children,
+      )!;
+      const afterNew = addMissingControlsForSchema(
+        rootSchema,
+        existingChildren.value ?? [],
+      ).map(toControlDefinitionForm);
+      existingChildren.value = afterNew;
+      console.log({ existingChildren, rootNode, afterNew });
+    }
+  }
 
   function renderContent() {
     if (preview.fields.showing.value)

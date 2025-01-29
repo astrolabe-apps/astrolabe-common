@@ -16,6 +16,7 @@ import { ReactNode } from "react";
 export interface ViewContext {
   schemaLookup: SchemaTreeLookup;
   selectedControl: Control<SelectedControlNode | undefined>;
+  formList: FormInfo[];
   selectedField: Control<SchemaNode | undefined>;
   currentForm: Control<string | undefined>;
   getForm: (formId: string) => Control<FormTree | undefined>;
@@ -27,7 +28,13 @@ export interface ViewContext {
   button: (onClick: () => void, action: string, actionId?: string) => ReactNode;
   previewOptions?: ControlRenderOptions;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
+  openForm: (formId: string) => void;
   extraPreviewControls?:
     | ReactNode
     | ((c: FormNode, data: Control<any>) => ReactNode);
+}
+
+export interface FormInfo {
+  id: string;
+  name: string;
 }
