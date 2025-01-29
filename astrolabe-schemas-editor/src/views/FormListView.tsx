@@ -12,9 +12,7 @@ export function FormListView({ context }: { context: ViewContext }) {
         height={height}
         data={context.formList}
         onSelect={(n) => {
-          const formId = n[0]?.data.id;
-          context.currentForm.value = formId;
-          if (formId) context.openForm(formId);
+          context.currentForm.value = n[0]?.data.id;
         }}
         selection={context.currentForm.value}
       />

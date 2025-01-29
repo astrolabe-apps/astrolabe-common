@@ -42,6 +42,7 @@ import {
   createFormLookup,
   createFormRenderer,
   createFormTree,
+  createFormTreeWithRoot,
   createSchemaLookup,
   FormNode,
   FormRenderer,
@@ -56,7 +57,13 @@ import {
   SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import React, { ReactElement, ReactNode, useMemo, useRef } from "react";
+import React, {
+  ReactElement,
+  ReactNode,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   createTailwindcss,
   TailwindConfig,
@@ -76,8 +83,10 @@ import {
   TabBase,
   TabData,
 } from "rc-dock/es";
-import { ViewContext } from "./views";
+import { getViewAndParams, ViewContext } from "./views";
 import { createView } from "./views/createView";
+import { EditorFormNode } from "./EditorFormNode";
+import { find } from "./dockHelper";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
@@ -202,6 +211,13 @@ export function BasicFormEditor<A extends string>({
     });
   }
 
+  useControlEffect(
+    () => loadedForm.value,
+    (formId) => {
+      if (formId) openForm(formId);
+    },
+  );
+
   async function doLoadForm(dt: A) {
     const res = await loadForm(dt);
     groupedChanges(() => {
@@ -300,14 +316,13 @@ export function BasicFormEditor<A extends string>({
         }}
         onLayoutChange={(newLayout, currentTabId, direction) => {
           layout.value = newLayout;
-          if (
-            direction === "active" &&
-            currentTabId &&
-            currentTabId.startsWith("form:")
-          ) {
-            loadedForm.value = currentTabId.slice(5) as A;
-          }
-          console.log(currentTabId, direction);
+          const docPanel = find(newLayout, "documents") as PanelData;
+          if (docPanel.activeId) {
+            const [viewType, viewParams] = getViewAndParams(docPanel.activeId);
+            if (viewType === "form" && viewParams) {
+              loadedForm.value = viewParams as A;
+            }
+          } else loadedForm.value = undefined;
         }}
         style={{
           position: "absolute",
@@ -323,11 +338,13 @@ export function BasicFormEditor<A extends string>({
   function openForm(formId: string) {
     const tabId = "form:" + formId;
     const dockApi = dockRef.current!;
-    dockApi.dockMove(
-      { id: tabId } as TabData,
-      dockApi.find("documents")!,
-      "middle",
-    );
+    if (!dockApi.find(tabId)) {
+      dockApi.dockMove(
+        { id: tabId } as TabData,
+        dockApi.find("documents")!,
+        "middle",
+      );
+    }
   }
 
   function loadTab(savedTab: TabBase): TabData {
@@ -339,8 +356,15 @@ export function BasicFormEditor<A extends string>({
     control: Control<FormTree | undefined>,
   ) {
     const res = await loadForm(formId as A);
-    const controlControls = newControl(res.controls);
-    const tree = createFormTree(trackedValue(controlControls), res.schemaName);
+    const rootControl = newControl<GroupedControlsDefinition>({
+      children: res.controls,
+      type: ControlDefinitionType.Group,
+    });
+    const tree = createFormTreeWithRoot(
+      (t) => new EditorFormNode("root", t, undefined, rootControl),
+      res.schemaName,
+      {},
+    );
     control.setInitialValue(tree);
   }
 

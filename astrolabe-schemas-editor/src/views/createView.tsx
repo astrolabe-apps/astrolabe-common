@@ -1,6 +1,6 @@
 import React, { ReactElement } from "react";
 import { CurrentSchemaView } from "./CurrentSchemaView";
-import { ViewContext } from "./index";
+import { getViewAndParams, ViewContext } from "./index";
 import { FormStructureView } from "./FormStructureView";
 import { ControlPropertiesView } from "./ControlPropertiesView";
 import { FormView } from "./FormView";
@@ -9,8 +9,7 @@ import { HelpView } from "./HelpView";
 import { TabData } from "rc-dock/es";
 
 export function createView(viewId: string, context: ViewContext): TabData {
-  const [viewType, viewParams] = viewId.split(":", 2);
-
+  const [viewType, viewParams] = getViewAndParams(viewId);
   return { title: title(), content: element(), closable: true };
 
   function title() {
@@ -43,7 +42,7 @@ export function createView(viewId: string, context: ViewContext): TabData {
       case "currentSchema":
         return <CurrentSchemaView context={context} />;
       case "form":
-        return <FormView formId={viewParams} context={context} />;
+        return <FormView formId={viewParams!} context={context} />;
       case "controlProperties":
         return <ControlPropertiesView context={context} />;
       default:

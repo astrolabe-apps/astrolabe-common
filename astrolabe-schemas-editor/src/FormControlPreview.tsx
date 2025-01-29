@@ -18,6 +18,7 @@ import {
   ControlDefinition,
   DataControlDefinition,
   defaultDataProps,
+  defaultGetChildNodes,
   defaultSchemaInterface,
   defaultValueForField,
   DynamicPropertyType,
@@ -38,6 +39,7 @@ import {
   SchemaInterface,
   SchemaNode,
   textDisplayControl,
+  wrapFormNode,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import { ControlDragState, controlDropData, DragData, DropData } from "./util";
@@ -45,7 +47,6 @@ import { SelectedControlNode } from "./types";
 
 export interface FormControlPreviewProps {
   node: FormNode;
-  parent?: FormNode;
   dropIndex: number;
   noDrop?: boolean;
   parentNode: SchemaNode;
@@ -89,7 +90,6 @@ function usePreviewContext() {
 export function FormControlPreview(props: FormControlPreviewProps) {
   const {
     node,
-    parent,
     elementIndex,
     parentNode,
     dropIndex,
@@ -175,16 +175,17 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     renderer,
     elementIndex,
     formNode: node.definition.childRefId
-      ? node.withOverrideChildren([
-          textDisplayControl("Reference:" + node.definition.childRefId),
-        ])
+      ? wrapFormNode(node, () =>
+          defaultGetChildNodes(node, [
+            textDisplayControl("Reference:" + node.definition.childRefId),
+          ]),
+        )
       : node,
     renderChild: (k, child, c) => {
       return (
         <FormControlPreview
           key={unsafeRestoreControl(child.definition)?.uniqueId ?? k}
           node={child}
-          parent={node}
           dropIndex={0}
           {...groupClasses}
           {...c}

@@ -10,7 +10,6 @@ export function FormStructureView({ context }: { context: ViewContext }) {
     context;
   const formId = currentForm.value;
   const formTree = formId ? context.getForm(formId) : undefined;
-  console.log(formTree);
   const schemaId = formTree?.fields.schemaId.value;
   const rootSchema = schemaId ? schemaLookup.getSchema(schemaId) : undefined;
   const rootControls = formTree?.fields.rootNode.value;
