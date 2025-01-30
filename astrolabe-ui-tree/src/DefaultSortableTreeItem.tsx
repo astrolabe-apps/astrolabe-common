@@ -89,9 +89,10 @@ export function useSortableTreeItem({
     transition,
   };
 
+  const insertParent = insertState.fields.parent.value;
   const depth =
-    active.value === node.control && insertState.fields
-      ? insertState.fields.parent.value.indent + 1
+    active.value === node.control && insertParent
+      ? insertParent.indent + 1
       : node.indent;
 
   return {

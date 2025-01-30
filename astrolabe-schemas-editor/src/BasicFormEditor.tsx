@@ -83,7 +83,7 @@ import {
   TabBase,
   TabData,
 } from "rc-dock/es";
-import { getViewAndParams, ViewContext } from "./views";
+import { EditableForm, getViewAndParams, ViewContext } from "./views";
 import { createView } from "./views/createView";
 import { EditorFormNode } from "./EditorFormNode";
 import { find } from "./dockHelper";
@@ -145,7 +145,7 @@ export function BasicFormEditor<A extends string>({
     [extensions],
   );
   const dockRef = useRef<DockLayout | null>(null);
-  const loadedForms = useControl<Record<string, FormTree | undefined>>({});
+  const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
   const controls = useControl<ControlDefinitionForm[]>([]);
   const baseSchema = useControl<string>();
   const treeDrag = useControl();
@@ -242,17 +242,13 @@ export function BasicFormEditor<A extends string>({
     button,
     currentForm: loadedForm.as(),
     schemaLookup: schemas,
-    getForm: (formId) => {
-      const form = loadedForms.fields[formId];
-      ensureMetaValue(form, "loader", () => loadFormNode(formId, form));
-      return form;
-    },
+    getForm,
+    getCurrentForm: () =>
+      loadedForm.value ? getForm(loadedForm.value) : undefined,
     extensions,
     editorControls: controlGroup,
     createEditorRenderer,
     editorFields: rootSchemaNode(ControlDefinitionSchema),
-    selectedControl: selected,
-    selectedField,
     formList: formTypes.map(([id, name]) => ({ id, name })),
     openForm,
   };
@@ -335,6 +331,12 @@ export function BasicFormEditor<A extends string>({
     </PreviewContextProvider>
   );
 
+  function getForm(formId: string) {
+    const form = loadedForms.fields[formId];
+    ensureMetaValue(form, "loader", () => loadFormNode(formId, form));
+    return form;
+  }
+
   function openForm(formId: string) {
     const tabId = "form:" + formId;
     const dockApi = dockRef.current!;
@@ -353,19 +355,13 @@ export function BasicFormEditor<A extends string>({
 
   async function loadFormNode(
     formId: string,
-    control: Control<FormTree | undefined>,
+    control: Control<EditableForm | undefined>,
   ) {
     const res = await loadForm(formId as A);
-    const rootControl = newControl<GroupedControlsDefinition>({
-      children: res.controls,
-      type: ControlDefinitionType.Group,
+    control.setInitialValue({
+      root: { children: res.controls, type: ControlDefinitionType.Group },
+      schemaId: res.schemaName,
     });
-    const tree = createFormTreeWithRoot(
-      (t) => new EditorFormNode("root", t, undefined, rootControl),
-      res.schemaName,
-      {},
-    );
-    control.setInitialValue(tree);
   }
 
   // return (

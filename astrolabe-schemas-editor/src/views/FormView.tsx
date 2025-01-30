@@ -1,4 +1,4 @@
-import { ViewContext } from "./index";
+import { EditableForm, getEditorFormTree, ViewContext } from "./index";
 import {
   Control,
   RenderOptional,
@@ -40,7 +40,7 @@ function RenderFormDesign({
   context,
   preview,
 }: {
-  c: Control<FormTree>;
+  c: Control<EditableForm>;
   preview: Control<PreviewData>;
   context: ViewContext;
 }) {
@@ -52,7 +52,7 @@ function RenderFormDesign({
     extraPreviewControls,
     button,
   } = context;
-  const rootNode = c.fields.rootNode.value;
+  const rootNode = getEditorFormTree(c).rootNode;
   const rootSchema = context.schemaLookup.getSchema(c.fields.schemaId.value)!;
   const previewMode = preview.fields.showing.value;
 

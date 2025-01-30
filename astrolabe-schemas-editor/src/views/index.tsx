@@ -2,6 +2,7 @@ import {
   ControlDefinition,
   ControlDefinitionExtension,
   ControlRenderOptions,
+  createFormTreeWithRoot,
   FormNode,
   FormRenderer,
   GroupedControlsDefinition,
@@ -12,6 +13,7 @@ import {
 import { Control } from "@react-typed-forms/core";
 import { SelectedControlNode } from "../types";
 import { ReactNode } from "react";
+import { EditorFormNode } from "../EditorFormNode";
 
 export interface ViewContext {
   schemaLookup: SchemaTreeLookup;
@@ -45,6 +47,13 @@ export function getViewAndParams(tabId: string): [string, string?] {
 export interface EditableForm {
   selectedControl?: SelectedControlNode;
   selectedField?: SchemaNode;
-  controls: ControlDefinition[];
+  root: ControlDefinition;
   schemaId: string;
+}
+
+export function getEditorFormTree(cf: Control<EditableForm>) {
+  return createFormTreeWithRoot(
+    (t) => new EditorFormNode("", t, undefined, cf.fields.root),
+    () => [],
+  );
 }

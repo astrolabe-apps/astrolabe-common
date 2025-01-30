@@ -36,15 +36,19 @@ export enum ControlChange {
   Validate = 256,
 }
 
-export type ControlFields<V> = V extends
-  | string
-  | number
-  | boolean
-  | Array<any>
-  | undefined
-  | null
+export type FieldsUndefined<V> = { [K in keyof V]-?: V[K] | undefined };
+
+type FieldsMapNull<T> = undefined extends T
+  ? FieldsUndefined<T>
+  : null extends T
+    ? FieldsUndefined<T>
+    : T;
+
+export type ControlFields2<V> = V extends string | number | boolean | Array<any>
   ? never
   : { [K in keyof V]-?: Control<V[K]> };
+
+export type ControlFields<V> = NonNullable<ControlFields2<FieldsMapNull<V>>>;
 
 export type ControlElements<V> = V extends (infer A)[]
   ? Control<A>[]
@@ -89,3 +93,15 @@ export interface Control<V> extends ControlProperties<V> {
 }
 
 export type ControlValue<C> = C extends Control<infer V> ? V : never;
+
+export type Fields<V> = { [K in keyof V]-?: V[K] | undefined };
+
+type MappedType<T> = undefined extends T
+  ? Fields<T>
+  : null extends T
+    ? Fields<T>
+    : T;
+
+const test1: Control<{ a: number } | null> = undefined as any;
+// test1.fields.a.value.valueOf();
+// const test2: NonNullable<MappedType<{ a: number } | undefined>> = undefined;

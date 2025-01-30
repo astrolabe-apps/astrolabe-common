@@ -1,21 +1,21 @@
-import { ViewContext } from "./index";
+import { getEditorFormTree, ViewContext } from "./index";
 import { FormControlTree } from "../FormControlTree";
 import React from "react";
 import { TreeApi } from "react-arborist";
 import { ControlNode } from "../types";
+import { createFormTreeWithRoot } from "@react-typed-forms/schemas";
+import { EditorFormNode } from "../EditorFormNode";
+import { controlNotNull } from "@react-typed-forms/core";
 
 export function FormStructureView({ context }: { context: ViewContext }) {
   const controlTreeApi = React.useRef<TreeApi<ControlNode> | null>(null);
-  const { selectedField, schemaLookup, currentForm, selectedControl, button } =
-    context;
-  const formId = currentForm.value;
-  const formTree = formId ? context.getForm(formId) : undefined;
-  const schemaId = formTree?.fields.schemaId.value;
+  const { schemaLookup, currentForm, button } = context;
+  const cf = controlNotNull(context.getCurrentForm());
+  if (!cf) return <div>Select a form</div>;
+  const schemaId = cf.fields.schemaId.value;
   const rootSchema = schemaId ? schemaLookup.getSchema(schemaId) : undefined;
-  const rootControls = formTree?.fields.rootNode.value;
-  if (!rootControls) return <div>Select a form</div>;
   if (!rootSchema) return <div>Missing schema: {schemaId}</div>;
-
+  const tree = getEditorFormTree(cf);
   return (
     <div className="flex flex-col h-full">
       <div className="flex gap-2">
@@ -23,10 +23,10 @@ export function FormStructureView({ context }: { context: ViewContext }) {
       </div>
 
       <FormControlTree
-        rootNode={rootControls}
+        rootNode={tree.rootNode}
         rootSchema={rootSchema}
-        selected={selectedControl}
-        selectedField={selectedField}
+        selected={cf.fields.selectedControl}
+        selectedField={cf.fields.selectedField}
         onDeleted={() => {}}
         treeApi={controlTreeApi}
         className="grow"
