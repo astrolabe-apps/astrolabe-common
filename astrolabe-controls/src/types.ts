@@ -44,11 +44,11 @@ type FieldsMapNull<T> = undefined extends T
     ? FieldsUndefined<T>
     : T;
 
-export type ControlFields2<V> = V extends string | number | boolean | Array<any>
+type OnlyObjects<V> = V extends string | number | boolean | Array<any>
   ? never
   : { [K in keyof V]-?: Control<V[K]> };
 
-export type ControlFields<V> = NonNullable<ControlFields2<FieldsMapNull<V>>>;
+export type ControlFields<V> = NonNullable<OnlyObjects<FieldsMapNull<V>>>;
 
 export type ControlElements<V> = V extends (infer A)[]
   ? Control<A>[]
