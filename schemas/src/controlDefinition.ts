@@ -568,7 +568,6 @@ export interface FormTreeLookup {
 export interface FormTree extends FormTreeLookup {
   rootNode: FormNode;
   controlMap: ControlMap;
-  schemaId: string;
 }
 
 export function wrapFormNode(
@@ -619,7 +618,6 @@ function getControlIds(
 
 export function createFormTreeWithRoot(
   createRootNode: (tree: FormTree) => FormNode,
-  schemaId: string,
   controlMap: ControlMap,
   getForm: FormTreeLookup = { getForm: () => undefined },
 ): FormTree {
@@ -627,7 +625,6 @@ export function createFormTreeWithRoot(
     ...getForm,
     controlMap,
     rootNode: undefined! as FormNode,
-    schemaId,
   } satisfies FormTree;
   tree.rootNode = createRootNode(tree);
   return tree;
@@ -635,7 +632,6 @@ export function createFormTreeWithRoot(
 
 export function createFormTree(
   controls: ControlDefinition[],
-  schemaId: string,
   getForm: FormTreeLookup = { getForm: () => undefined },
 ): FormTree {
   return createFormTreeWithRoot(
@@ -644,7 +640,6 @@ export function createFormTree(
         { children: controls, type: ControlDefinitionType.Group },
         tree,
       ),
-    schemaId,
     Object.fromEntries(controls.flatMap(getControlIds)),
     getForm,
   );
@@ -659,7 +654,7 @@ export function createFormLookup<A extends Record<string, ControlDefinition[]>>(
     getForm,
   };
   const forms = Object.fromEntries(
-    Object.entries(formMap).map(([k, v]) => [k, createFormTree(v, "", lookup)]),
+    Object.entries(formMap).map(([k, v]) => [k, createFormTree(v, lookup)]),
   );
   return lookup;
 

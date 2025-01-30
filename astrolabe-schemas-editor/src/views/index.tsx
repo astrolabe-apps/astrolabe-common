@@ -1,9 +1,9 @@
 import {
+  ControlDefinition,
   ControlDefinitionExtension,
   ControlRenderOptions,
   FormNode,
   FormRenderer,
-  FormTree,
   GroupedControlsDefinition,
   RendererRegistration,
   SchemaNode,
@@ -15,11 +15,10 @@ import { ReactNode } from "react";
 
 export interface ViewContext {
   schemaLookup: SchemaTreeLookup;
-  selectedControl: Control<SelectedControlNode | undefined>;
   formList: FormInfo[];
-  selectedField: Control<SchemaNode | undefined>;
   currentForm: Control<string | undefined>;
-  getForm: (formId: string) => Control<FormTree | undefined>;
+  getForm: (formId: string) => Control<EditableForm | undefined>;
+  getCurrentForm: () => Control<EditableForm | undefined> | undefined;
   editorControls: GroupedControlsDefinition;
   editorFields: SchemaNode;
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
@@ -41,4 +40,11 @@ export interface FormInfo {
 
 export function getViewAndParams(tabId: string): [string, string?] {
   return tabId.split(":", 2) as [string, string?];
+}
+
+export interface EditableForm {
+  selectedControl?: SelectedControlNode;
+  selectedField?: SchemaNode;
+  controls: ControlDefinition[];
+  schemaId: string;
 }

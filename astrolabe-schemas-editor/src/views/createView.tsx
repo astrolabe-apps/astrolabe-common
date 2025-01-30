@@ -1,4 +1,4 @@
-import React, { ReactElement } from "react";
+import React from "react";
 import { CurrentSchemaView } from "./CurrentSchemaView";
 import { getViewAndParams, ViewContext } from "./index";
 import { FormStructureView } from "./FormStructureView";
