@@ -1,6 +1,5 @@
 .rush/
 *.log
 .babelrc
-src/
 coverage/
 test/
