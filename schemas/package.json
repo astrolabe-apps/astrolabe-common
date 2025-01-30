@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas",
-  "version": "14.2.0",
+  "version": "14.3.0",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -64,6 +64,7 @@
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
     "test": "jest --coverage",
+    "play": "tsx test/play.ts",
     "update-readme": "md-magic --path README.md",
     "gencode": "nswag swagger2tsclient /input:http://localhost:5216/swagger/v1/swagger.json /runtime:Net60 /output:src/types.ts /GenerateClientClasses:false /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string"
   }

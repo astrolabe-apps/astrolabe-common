@@ -1,14 +1,12 @@
 import { SchemaValidator } from "./schemaValidator";
 import {
   FieldOption,
-  isCompoundField,
   schemaDataForFieldPath,
   SchemaDataNode,
   SchemaField,
   SchemaInterface,
   SchemaNode,
 } from "./schemaField";
-import { Control } from "@react-typed-forms/core";
 import { EntityExpression } from "./entityExpression";
 
 /**
@@ -224,6 +222,7 @@ export interface DateTimeRenderOptions extends RenderOptions {
   type: DataRenderType.DateTime;
   format?: string | null;
   forceMidnight?: boolean;
+  forceStandard?: boolean;
 }
 
 export interface IconListRenderOptions extends RenderOptions {
@@ -465,6 +464,12 @@ export function isTextfieldRenderer(
   options: RenderOptions,
 ): options is TextfieldRenderOptions {
   return options.type === DataRenderType.Textfield;
+}
+
+export function isDateTimeRenderer(
+  options: RenderOptions,
+): options is DateTimeRenderOptions {
+  return options.type === DataRenderType.DateTime;
 }
 
 export function isAutocompleteRenderer(
@@ -709,6 +714,9 @@ export function getSchemaFieldList(schema: SchemaNode): SchemaField[] {
   return schema.getChildNodes().map((x) => x.field);
 }
 
+/**
+ * @deprecated use visitFormNodeData instead
+ */
 export function visitControlDataArray<A>(
   controls: ControlDefinition[] | undefined | null,
   context: SchemaDataNode,
@@ -725,6 +733,9 @@ export function visitControlDataArray<A>(
   return undefined;
 }
 
+/**
+ * @deprecated use visitFormDataInContext instead
+ */
 export function visitControlData<A>(
   definition: ControlDefinition,
   ctx: SchemaDataNode,
@@ -733,47 +744,49 @@ export function visitControlData<A>(
     field: SchemaDataNode,
   ) => A | undefined,
 ): A | undefined {
-  if (!ctx.control || ctx.control.isNull) return undefined;
-  return visitControlDefinition<A | undefined>(
-    definition,
-    {
-      data(def: DataControlDefinition) {
-        return processData(def);
-      },
-      group(d: GroupedControlsDefinition) {
-        return processData(d);
-      },
-      action: () => undefined,
-      display: () => undefined,
-    },
-    () => undefined,
+  return visitFormDataInContext(ctx, legacyFormNode(definition), (n, d) =>
+    cb(d, n),
   );
+}
 
-  function processData(def: ControlDefinition) {
-    const children = def.children;
-    const childNode = lookupDataNode(def, ctx);
-    if (!childNode) return visitControlDataArray(children, ctx, cb);
-    const dataControl = isDataControl(def) ? def : undefined;
-    const result = dataControl ? cb(dataControl, childNode) : undefined;
-    if (result !== undefined) return result;
-    const fieldNode = childNode.schema;
-    const compound = isCompoundField(fieldNode.field);
-    if (fieldNode.field.collection) {
-      const control = childNode.control as Control<unknown[]>;
-      let cIndex = 0;
-      for (const c of control!.elements ?? []) {
-        const elemChild = childNode.getChildElement(cIndex);
-        const elemResult = dataControl ? cb(dataControl, elemChild) : undefined;
-        if (elemResult !== undefined) return elemResult;
-        if (compound) {
-          const cfResult = visitControlDataArray(children, elemChild, cb);
-          if (cfResult !== undefined) return cfResult;
-        }
-        cIndex++;
-      }
-    } else if (compound) {
-      return visitControlDataArray(children, childNode, cb);
+export type ControlDataVisitor<A> = (
+  dataNode: SchemaDataNode,
+  definition: DataControlDefinition,
+) => A | undefined;
+
+export function visitFormData<A>(
+  node: FormNode,
+  dataNode: SchemaDataNode,
+  cb: ControlDataVisitor<A>,
+  notSelf?: boolean,
+): A | undefined {
+  const def = node.definition;
+  const result = !notSelf && isDataControl(def) ? cb(dataNode, def) : undefined;
+  if (result !== undefined) return result;
+  if (dataNode.elementIndex == null && dataNode.schema.field.collection) {
+    const l = dataNode.control.elements.length;
+    for (let i = 0; i < l; i++) {
+      const elemChild = dataNode.getChildElement(i);
+      const elemResult = visitFormData(node, elemChild, cb);
+      if (elemResult !== undefined) return elemResult;
     }
     return undefined;
   }
+  if (dataNode.control.isNull) return undefined;
+  const children = node.getChildNodes();
+  const l = children.length;
+  for (let i = 0; i < l; i++) {
+    const elemResult = visitFormDataInContext(dataNode, children[i], cb);
+    if (elemResult !== undefined) return elemResult;
+  }
+  return undefined;
+}
+
+export function visitFormDataInContext<A>(
+  parentContext: SchemaDataNode,
+  node: FormNode,
+  cb: ControlDataVisitor<A>,
+): A | undefined {
+  const dataNode = lookupDataNode(node.definition, parentContext);
+  return visitFormData(node, dataNode ?? parentContext, cb, !dataNode);
 }

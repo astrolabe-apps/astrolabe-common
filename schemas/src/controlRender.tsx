@@ -48,6 +48,7 @@ import {
   applyLengthRestrictions,
   ControlClasses,
   elementValueForField,
+  ExternalEditAction,
   fieldDisplayName,
   getExternalEditData,
   getGroupClassOverrides,
@@ -56,7 +57,7 @@ import {
   rendererClass,
   useUpdatedRef,
 } from "./util";
-import { dataControl } from "./controlBuilder";
+import { createAction, dataControl } from "./controlBuilder";
 import {
   defaultUseEvalExpressionHook,
   EvalExpressionHook,
@@ -1111,11 +1112,15 @@ export function createArrayActions(
                   data: [elementValueForField(field)],
                   actions: [
                     makeCancel(),
-                    makeAdd(() => {
-                      const newValue = (editData.fields.data.value as any[])[0];
-                      addElement(control, newValue);
-                      editData.value = undefined;
-                    }),
+                    {
+                      action: makeAdd(() => {
+                        const newValue = (
+                          editData.fields.data.value as any[]
+                        )[0];
+                        addElement(control, newValue);
+                        editData.value = undefined;
+                      }),
+                    },
                   ],
                 };
               } else {
@@ -1137,14 +1142,16 @@ export function createArrayActions(
                 actions: [
                   makeCancel(),
                   {
-                    actionId: "apply",
-                    actionText: "Apply",
-                    onClick: () => {
-                      elementToEdit.value = (
-                        editData.fields.data.value as any[]
-                      )[0];
-                      editData.value = undefined;
-                    },
+                    action: createAction(
+                      "apply",
+                      () => {
+                        elementToEdit.value = (
+                          editData.fields.data.value as any[]
+                        )[0];
+                        editData.value = undefined;
+                      },
+                      "Apply",
+                    ),
                   },
                 ],
               };
@@ -1168,22 +1175,25 @@ export function createArrayActions(
   };
 
   function makeAdd(onClick: () => void): ActionRendererProps {
-    return {
-      actionId: addActionId ? addActionId : "add",
-      actionText: addText ? addText : "Add " + noun,
+    return createAction(
+      addActionId ? addActionId : "add",
       onClick,
-      disabled,
-    };
+      addText ? addText : "Add " + noun,
+      { disabled },
+    );
   }
 
-  function makeCancel(): ActionRendererProps {
+  function makeCancel(): ExternalEditAction {
     return {
-      actionId: "cancel",
-      actionText: "Cancel",
-      onClick: () => {
-        getExternalEditData(control).value = undefined;
+      dontValidate: true,
+      action: {
+        actionId: "cancel",
+        actionText: "Cancel",
+        onClick: () => {
+          getExternalEditData(control).value = undefined;
+        },
+        disabled,
       },
-      disabled,
     };
   }
 }

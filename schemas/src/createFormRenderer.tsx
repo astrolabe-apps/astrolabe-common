@@ -99,28 +99,34 @@ export function createFormRenderer(
   function renderData(
     props: DataRendererProps,
   ): (layout: ControlLayoutProps) => ControlLayoutProps {
-    const {
-      renderOptions: { type: renderType },
-      field,
-    } = props;
+    const { renderOptions, field } = props;
 
     const options = hasOptions(props);
+    const renderType = renderOptions.type;
     const renderer =
-      dataRegistrations.find(
-        (x) =>
-          (x.collection ?? false) ===
-            (props.elementIndex == null && (field.collection ?? false)) &&
-          (x.options ?? false) === options &&
-          ((x.schemaType &&
-            renderType == DataRenderType.Standard &&
-            isOneOf(x.schemaType, field.type)) ||
-            (x.renderType && isOneOf(x.renderType, renderType)) ||
-            (x.match && x.match(props))),
-      ) ?? defaultRenderers.data;
+      dataRegistrations.find(matchesRenderer) ?? defaultRenderers.data;
 
     const result = renderer.render(props, formRenderers);
     if (typeof result === "function") return result;
     return (l) => ({ ...l, children: result });
+
+    function matchesRenderer(x: DataRendererRegistration) {
+      const matchCollection =
+        (x.collection ?? false) ===
+        (props.elementIndex == null && (field.collection ?? false));
+      const matchSchemaType =
+        x.schemaType &&
+        renderType == DataRenderType.Standard &&
+        isOneOf(x.schemaType, field.type);
+      const matchRenderType =
+        !x.renderType || isOneOf(x.renderType, renderType);
+      return (
+        matchCollection &&
+        (x.options ?? false) === options &&
+        (matchSchemaType || matchRenderType) &&
+        (!x.match || x.match(props, renderOptions))
+      );
+    }
   }
 
   function renderGroup(

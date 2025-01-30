@@ -225,7 +225,8 @@ public record UserSelectionRenderOptions(bool NoGroups, bool NoUsers)
 
 public record DateTimeRenderOptions(
     string? Format,
-    [property: DefaultValue(false)] bool? ForceMidnight
+    [property: DefaultValue(false)] bool? ForceMidnight,
+    bool? ForceStandard
 ) : RenderOptions(DataRenderType.DateTime.ToString());
 
 public record SynchronisedRenderOptions(

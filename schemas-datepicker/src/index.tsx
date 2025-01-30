@@ -3,6 +3,7 @@ import {
   DataRenderType,
   DateTimeRenderOptions,
   FieldType,
+  isDateTimeRenderer,
   rendererClass,
 } from "@react-typed-forms/schemas";
 import { DatePicker } from "@astroapps/aria-datepicker";
@@ -45,6 +46,8 @@ export function createDatePickerRenderer(
     {
       schemaType: [FieldType.Date, FieldType.DateTime],
       renderType: DataRenderType.DateTime,
+      match: (p, renderOptions) =>
+        !isDateTimeRenderer(renderOptions) || !renderOptions.forceStandard,
     },
   );
 }
