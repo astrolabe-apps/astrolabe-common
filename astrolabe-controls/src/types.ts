@@ -93,15 +93,3 @@ export interface Control<V> extends ControlProperties<V> {
 }
 
 export type ControlValue<C> = C extends Control<infer V> ? V : never;
-
-export type Fields<V> = { [K in keyof V]-?: V[K] | undefined };
-
-type MappedType<T> = undefined extends T
-  ? Fields<T>
-  : null extends T
-    ? Fields<T>
-    : T;
-
-const test1: Control<{ a: number } | null> = undefined as any;
-// test1.fields.a.value.valueOf();
-// const test2: NonNullable<MappedType<{ a: number } | undefined>> = undefined;
