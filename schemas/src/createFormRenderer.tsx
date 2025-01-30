@@ -103,28 +103,33 @@ export function createFormRenderer(
 
     const options = hasOptions(props);
     const renderType = renderOptions.type;
-    const renderer =
-      dataRegistrations.find(matchesRenderer) ?? defaultRenderers.data;
+    const renderer = dataRegistrations.find(matchesRenderer);
 
-    const result = renderer.render(props, formRenderers);
+    const result = (renderer ?? defaultRenderers.data).render(
+      props,
+      formRenderers,
+    );
     if (typeof result === "function") return result;
     return (l) => ({ ...l, children: result });
 
     function matchesRenderer(x: DataRendererRegistration) {
+      const noMatch = x.match ? !x.match(props, renderOptions) : undefined;
+      if (noMatch === true) return false;
       const matchCollection =
         (x.collection ?? false) ===
         (props.elementIndex == null && (field.collection ?? false));
-      const matchSchemaType =
-        x.schemaType &&
-        renderType == DataRenderType.Standard &&
-        isOneOf(x.schemaType, field.type);
-      const matchRenderType =
-        !x.renderType || isOneOf(x.renderType, renderType);
+      const isSchemaAllowed =
+        !!x.schemaType && renderType == DataRenderType.Standard
+          ? isOneOf(x.schemaType, field.type)
+          : undefined;
+      const isRendererAllowed =
+        !!x.renderType && isOneOf(x.renderType, renderType);
       return (
         matchCollection &&
         (x.options ?? false) === options &&
-        (matchSchemaType || matchRenderType) &&
-        (!x.match || x.match(props, renderOptions))
+        (isSchemaAllowed ||
+          isRendererAllowed ||
+          (!x.renderType && !x.schemaType && noMatch === false))
       );
     }
   }
