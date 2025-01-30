@@ -8,6 +8,7 @@ export {
   addCleanup,
   cleanupControl,
   collectChanges,
+  controlNotNull,
 } from "./controlImpl";
 export { SubscriptionTracker } from "./subscriptions";
 export {

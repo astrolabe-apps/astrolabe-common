@@ -230,7 +230,6 @@ export class ControlImpl<V> implements InternalControl<V> {
     collectChange?.(this, ControlChange.Structure);
     return this._value == null;
   }
-
   get value(): V {
     collectChange?.(this, ControlChange.Value);
     return this.current.value;
@@ -392,7 +391,6 @@ class ControlPropertiesImpl<V> implements ControlProperties<V> {
   get isNull() {
     return this.control._value == null;
   }
-
   set value(v: V) {
     this.control.setValueImpl(v);
   }
@@ -674,4 +672,10 @@ export function addCleanup(c: Control<any>, cleanup: () => void) {
 export function cleanupControl(c: Control<any>) {
   const internalMeta = getInternalMeta(c);
   internalMeta?.cleanup?.();
+}
+
+export function controlNotNull<V>(
+  c: Control<V | null | undefined> | undefined | null,
+): Control<V> | undefined {
+  return !c || c.isNull ? undefined : (c as Control<V>);
 }
