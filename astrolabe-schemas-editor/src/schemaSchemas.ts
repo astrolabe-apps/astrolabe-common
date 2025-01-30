@@ -802,6 +802,7 @@ export interface RenderOptionsForm {
   noUsers: boolean;
   format: string | null;
   forceMidnight: boolean | null;
+  forceStandard: boolean | null;
   fieldToSync: string;
   syncType: SyncTextType;
   iconMappings: IconMappingForm[];
@@ -1050,6 +1051,11 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["DateTime"],
     defaultValue: false,
     displayName: "Force Midnight",
+  }),
+  forceStandard: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["DateTime"],
+    displayName: "Force Standard",
   }),
   fieldToSync: makeScalarField({
     type: FieldType.String,

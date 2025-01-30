@@ -1,5 +1,6 @@
 import {
   ControlActionHandler,
+  ControlDataVisitor,
   ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
@@ -906,9 +907,13 @@ export function getNullToggler(c: Control<any>): Control<boolean> {
   });
 }
 
+export interface ExternalEditAction {
+  action: ActionRendererProps;
+  dontValidate?: boolean;
+}
 export interface ExternalEditData {
   data: unknown;
-  actions: ActionRendererProps[];
+  actions: ExternalEditAction[];
 }
 
 export function getExternalEditData(
@@ -1017,4 +1022,18 @@ export function collectDifferences(
       }
     }
   }
+}
+
+export function validationVisitor(
+  onInvalid: (data: Control<unknown>) => void,
+): ControlDataVisitor<any> {
+  return (s) => {
+    if (isCompoundNode(s.schema)) return undefined;
+    const v = s.control;
+    v.touched = true;
+    if (!v.validate()) {
+      onInvalid(v);
+    }
+    return undefined;
+  };
 }

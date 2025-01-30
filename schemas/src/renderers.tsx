@@ -18,7 +18,8 @@ import {
   AccordionAdornment,
   ControlAdornment,
   ControlAdornmentType,
-  IconAdornment, OptionalAdornment,
+  IconAdornment,
+  OptionalAdornment, RenderOptions,
   SetFieldAdornment,
 } from "./controlDefinition";
 
@@ -48,7 +49,7 @@ export interface DataRendererRegistration {
   renderType?: string | string[];
   options?: boolean;
   collection?: boolean;
-  match?: (props: DataRendererProps) => boolean;
+  match?: (props: DataRendererProps, renderOptions: RenderOptions) => boolean;
   render: (
     props: DataRendererProps,
     renderers: FormRenderer,
@@ -134,7 +135,7 @@ export function isSetFieldAdornment(
 }
 
 export function isOptionalAdornment(
-    a: ControlAdornment,
+  a: ControlAdornment,
 ): a is OptionalAdornment {
   return a.type === ControlAdornmentType.Optional;
 }

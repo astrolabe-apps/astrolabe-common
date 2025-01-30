@@ -188,9 +188,15 @@ function ControlNodeRenderer({
         "flex cursor-pointer items-center",
         node.isSelected && "bg-primary-100",
       )}
-      onClick={() => node.isInternal && node.toggle()}
+      onClick={() => node.isInternal && node.open()}
     >
-      <span className="w-4 mr-2 shrink-0">
+      <span
+        className="w-4 mr-2 shrink-0"
+        onClick={(e) => {
+          e.stopPropagation();
+          node.isInternal && node.toggle();
+        }}
+      >
         {node.isInternal && (
           <i
             className={clsx(

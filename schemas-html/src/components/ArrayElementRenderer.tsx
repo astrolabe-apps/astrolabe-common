@@ -1,9 +1,11 @@
 import {
+  ActionRendererProps,
   ArrayElementRenderOptions,
   ControlDefinitionType,
   createDataRenderer,
   DataRendererProps,
   DataRenderType,
+  ExternalEditAction,
   FormNode,
   FormRenderer,
   getExternalEditData,
@@ -12,6 +14,8 @@ import {
   makeSchemaDataNode,
   nodeForControl,
   rendererClass,
+  validationVisitor,
+  visitFormDataInContext,
 } from "@react-typed-forms/schemas";
 import React from "react";
 import { Dialog, Modal } from "@astroapps/aria-base";
@@ -63,7 +67,7 @@ function ArrayElementRenderer({
       dataProps.dataNode.schema,
       extData.fields.data,
     );
-    const childDefinition: FormNode = nodeForControl(
+    const elementGroup: FormNode = nodeForControl(
       {
         type: ControlDefinitionType.Group,
         children: formNode.definition.children,
@@ -73,22 +77,46 @@ function ArrayElementRenderer({
     );
     const editContent = (
       <div className={rendererClass(dataProps.className, options.className)}>
-        {renderChild("", childDefinition, {
+        {renderChild("", elementGroup, {
           parentDataNode,
           elementIndex: 0,
         })}
         <div className={options.actionsClass}>
           <RenderElements control={extData.fields.actions}>
-            {(c) => formRenderer.renderAction(c.value)}
+            {(c) => formRenderer.renderAction(applyValidation(c.value))}
           </RenderElements>
         </div>
       </div>
     );
     if (renderOptions.showInline || designMode) return editContent;
+
     return (
       <Modal state={overlayState}>
         <Dialog children={editContent} />
       </Modal>
     );
+
+    function runValidation(onClick: () => void) {
+      let hasErrors = false;
+      visitFormDataInContext(
+        parentDataNode,
+        elementGroup,
+        validationVisitor(() => {
+          hasErrors = true;
+        }),
+      );
+      if (!hasErrors) onClick();
+    }
+    function applyValidation({
+      action,
+      dontValidate,
+    }: ExternalEditAction): ActionRendererProps {
+      return dontValidate
+        ? action
+        : {
+            ...action,
+            onClick: () => runValidation(action.onClick),
+          };
+    }
   } else return <></>;
 }

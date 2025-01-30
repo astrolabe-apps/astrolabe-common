@@ -3,7 +3,7 @@ import fc from "fast-check";
 import {
   makeDataNode,
   newIndexes,
-  valueAndSchema,
+  valueSchemaAndChange,
   valuesAndSchema,
 } from "./gen";
 import {
@@ -23,9 +23,9 @@ import {
 describe("diff", () => {
   it("unchanged value always returns undefined", () => {
     fc.assert(
-      fc.property(valueAndSchema(), (fv) => {
+      fc.property(valueSchemaAndChange(), (fv) => {
         const dataNode = makeDataNode(fv);
-        collectDifferences(dataNode, fv.value);
+        collectDifferences(dataNode, [fv.value]);
         expect(getDiffObject(dataNode)).toBeUndefined();
         expect(dataNode.control.meta.changes).toStrictEqual(undefined);
       }),
@@ -35,7 +35,7 @@ describe("diff", () => {
   it("primitive value always returns new value", () => {
     fc.assert(
       fc.property(
-        valueAndSchema({ arrayChance: 0, compoundChance: 0 }),
+        valueSchemaAndChange({ arrayChance: 0, compoundChance: 0 }),
         (fv) => {
           const dataNode = makeDataNode(fv);
           const control = dataNode.control!;
@@ -49,7 +49,7 @@ describe("diff", () => {
   it("compound fields only return changed values", () => {
     fc.assert(
       fc.property(
-        valueAndSchema({
+        valueSchemaAndChange({
           arrayChance: 0,
           compoundChance: 0,
           forceCompound: true,
@@ -74,7 +74,7 @@ describe("diff", () => {
   it("array compound with id field always returns id field and changes", () => {
     fc.assert(
       fc.property(
-        valueAndSchema({
+        valueSchemaAndChange({
           forceArray: true,
           forceCompound: true,
           arrayChance: 0,
@@ -106,7 +106,7 @@ describe("diff", () => {
   it("array without id always returns array index edit format", () => {
     fc.assert(
       fc.property(
-        valueAndSchema({
+        valueSchemaAndChange({
           forceArray: true,
           forceCompound: true,
           arrayChance: 0,
@@ -154,8 +154,8 @@ describe("diff", () => {
         (fv) => {
           const dataNode = makeDataNode(fv);
           const distinct = [dataNode.control.value];
+          collectDifferences(dataNode, fv.newValues);
           fv.newValues.forEach((x) => {
-            collectDifferences(dataNode, x);
             if (!distinct.includes(x)) distinct.push(x);
           });
           expect(dataNode.control.meta.changes).toStrictEqual(distinct);
@@ -175,9 +175,7 @@ describe("diff", () => {
         }),
         (fv) => {
           const dataNode = makeDataNode(fv);
-          fv.newValues.forEach((x) => {
-            collectDifferences(dataNode, x);
-          });
+          collectDifferences(dataNode, fv.newValues);
           checkCompound(dataNode, fv.newValues);
         },
       ),

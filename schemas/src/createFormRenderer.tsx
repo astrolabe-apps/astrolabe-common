@@ -99,28 +99,39 @@ export function createFormRenderer(
   function renderData(
     props: DataRendererProps,
   ): (layout: ControlLayoutProps) => ControlLayoutProps {
-    const {
-      renderOptions: { type: renderType },
-      field,
-    } = props;
+    const { renderOptions, field } = props;
 
     const options = hasOptions(props);
-    const renderer =
-      dataRegistrations.find(
-        (x) =>
-          (x.collection ?? false) ===
-            (props.elementIndex == null && (field.collection ?? false)) &&
-          (x.options ?? false) === options &&
-          ((x.schemaType &&
-            renderType == DataRenderType.Standard &&
-            isOneOf(x.schemaType, field.type)) ||
-            (x.renderType && isOneOf(x.renderType, renderType)) ||
-            (x.match && x.match(props))),
-      ) ?? defaultRenderers.data;
+    const renderType = renderOptions.type;
+    const renderer = dataRegistrations.find(matchesRenderer);
 
-    const result = renderer.render(props, formRenderers);
+    const result = (renderer ?? defaultRenderers.data).render(
+      props,
+      formRenderers,
+    );
     if (typeof result === "function") return result;
     return (l) => ({ ...l, children: result });
+
+    function matchesRenderer(x: DataRendererRegistration) {
+      const noMatch = x.match ? !x.match(props, renderOptions) : undefined;
+      if (noMatch === true) return false;
+      const matchCollection =
+        (x.collection ?? false) ===
+        (props.elementIndex == null && (field.collection ?? false));
+      const isSchemaAllowed =
+        !!x.schemaType && renderType == DataRenderType.Standard
+          ? isOneOf(x.schemaType, field.type)
+          : undefined;
+      const isRendererAllowed =
+        !!x.renderType && isOneOf(x.renderType, renderType);
+      return (
+        matchCollection &&
+        (x.options ?? false) === options &&
+        (isSchemaAllowed ||
+          isRendererAllowed ||
+          (!x.renderType && !x.schemaType && noMatch === false))
+      );
+    }
   }
 
   function renderGroup(

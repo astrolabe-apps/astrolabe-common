@@ -113,10 +113,10 @@ export function RenderElements<V>({
   container = (children) => <>{children}</>,
   empty,
 }: RenderElementsProps<V>) {
-  const v = control.elements;
   const ndc = useContext(NotDefinedContext());
+  const v = control.elements;
   notDefined ??= ndc;
-  return v ? (
+  return !control.isNull ? (
     container(v.length ? renderAll(v) : empty, v)
   ) : (
     <>{notDefined ?? empty}</>

@@ -1,10 +1,11 @@
 import fc, { Arbitrary } from "fast-check";
 import {
-  CompoundField,
   createSchemaLookup,
+  defaultControlForField,
   FieldType,
-  getTagParam,
+  FormNode,
   isCompoundField,
+  legacyFormNode,
   makeSchemaDataNode,
   SchemaDataNode,
   SchemaField,
@@ -16,7 +17,6 @@ export interface FieldAndValue {
   field: SchemaField;
   value: any;
 }
-
 export interface FieldAndValueChanged extends FieldAndValue {
   newValue: any;
 }
@@ -33,17 +33,21 @@ export function newIndexes(arr: number): Arbitrary<number[]> {
       .map((x) => x.i),
   );
 }
+
 export function valueAndSchema(
   schemaOptions?: SchemaFieldGenOptions,
+): Arbitrary<FieldAndValue> {
+  return randomSchemaField(schemaOptions).chain((schema) =>
+    randomValueForField(schema).map((value) => ({
+      field: schema,
+      value,
+    })),
+  );
+}
+export function valueSchemaAndChange(
+  schemaOptions?: SchemaFieldGenOptions,
 ): Arbitrary<FieldAndValueChanged> {
-  return randomSchemaField(schemaOptions)
-    .chain((schema) =>
-      randomValueForField(schema).map((value) => ({
-        field: schema,
-        value,
-      })),
-    )
-    .chain(changedValue);
+  return valueAndSchema(schemaOptions).chain(changedValue);
 }
 
 export function valuesAndSchema(
@@ -97,6 +101,13 @@ export function makeDataNode(fv: FieldAndValue): SchemaDataNode {
   );
 }
 
+export function makeDataAndDefinition(
+  fv: FieldAndValue,
+): [SchemaDataNode, FormNode] {
+  const d = makeDataNode(fv);
+  return [d, legacyFormNode(defaultControlForField(fv.field))];
+}
+
 export interface SchemaFieldGenOptions {
   arrayChance?: number;
   forceCompound?: boolean;
@@ -104,6 +115,7 @@ export interface SchemaFieldGenOptions {
   compoundChance?: number;
   idField?: boolean;
   maxDepth?: number;
+  notNullable?: boolean;
 }
 function randomSchemaField(
   options: SchemaFieldGenOptions = {},
@@ -149,10 +161,13 @@ function randomSchemaField(
 
   const withoutId = field.chain((fieldType) =>
     fc.record({
-      field: fc.string(),
+      field: fc.string().filter((x) => !x.includes("/")),
       type: fc.constant(fieldType),
       collection,
-      notNullable: fc.boolean(),
+      notNullable:
+        options.notNullable != null
+          ? fc.constant(options.notNullable)
+          : fc.boolean(),
       children:
         fieldType == FieldType.Compound
           ? fc

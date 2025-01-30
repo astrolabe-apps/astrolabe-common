@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-editor",
-  "version": "14.2.0",
+  "version": "14.3.0",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
@@ -27,8 +27,8 @@
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.0.0",
-    "@react-typed-forms/schemas": "^14.2.0",
-    "@react-typed-forms/schemas-html": "^2.3.0",
+    "@react-typed-forms/schemas": "^14.3.0",
+    "@react-typed-forms/schemas-html": "^2.3.2",
     "@astroapps/client": "^2.0.0",
     "react": "^18.2.0",
     "@dnd-kit/core": "^6.0.5"
@@ -46,8 +46,8 @@
   },
   "devDependencies": {
     "@react-typed-forms/core": "^4.0.0",
-    "@react-typed-forms/schemas": "^14.1.1",
-    "@react-typed-forms/schemas-html": "^2.2.0",
+    "@react-typed-forms/schemas": "^14.3.0",
+    "@react-typed-forms/schemas-html": "^2.3.2",
     "@astroapps/client": "^2.0.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
