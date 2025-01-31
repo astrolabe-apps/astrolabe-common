@@ -21,7 +21,7 @@ export function createView(viewId: string, context: ViewContext): TabData {
       case "currentSchema":
         return "Current Schema";
       case "form":
-        return "Form " + viewParams;
+        return "Loading " + viewParams;
       case "formStructure":
         return "Control Structure";
       case "controlProperties":

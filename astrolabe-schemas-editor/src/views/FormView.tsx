@@ -4,6 +4,7 @@ import {
   RenderOptional,
   unsafeRestoreControl,
   useControl,
+  useControlEffect,
 } from "@react-typed-forms/core";
 import { FormControlPreview } from "../FormControlPreview";
 import {
@@ -23,6 +24,17 @@ export function FormView(props: { formId: string; context: ViewContext }) {
     showRawEditor: false,
     data: {},
   });
+  useControlEffect(
+    () => control.fields.root.dirty,
+    (unsaved) => {
+      if (unsaved) console.log(control.fields.root);
+      context.updateTabTitle(
+        "form:" + formId,
+        unsaved ? formId + " *" : formId,
+      );
+    },
+    true,
+  );
   return (
     <RenderOptional
       control={control}
@@ -79,7 +91,6 @@ function RenderFormDesign({
         existingChildren.value ?? [],
       ).map(toControlDefinitionForm);
       existingChildren.value = afterNew;
-      console.log({ existingChildren, rootNode, afterNew });
     }
   }
 
@@ -106,6 +117,12 @@ function RenderFormDesign({
         node={rootNode}
         parentNode={rootSchema}
         dropIndex={0}
+        context={{
+          selected: c.fields.selectedControl,
+          VisibilityIcon: <i className="fa fa-eye" />,
+          renderer: formRenderer,
+          hideFields: c.fields.hideFields,
+        }}
       />
     );
   }

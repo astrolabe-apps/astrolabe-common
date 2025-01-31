@@ -2,6 +2,7 @@ lockfileVersion: 5.4
 
 overrides:
   react-dnd: 16.0.1
+  '@astroapps/controls': workspace:*
   '@react-typed-forms/core': workspace:*
   '@react-typed-forms/schemas': workspace:*
   '@react-typed-forms/schemas-html': workspace:*
@@ -400,7 +401,6 @@ importers:
       react-dnd: 16.0.1
       react-dom: ^18.2.0
       react-hook-inview: ^4.5.1
-      react-resizable-panels: ^0.0.55
       rimraf: ^5.0.5
       typescript: ^5.6.2
       use-resize-observer: ~9.1.0
@@ -412,7 +412,6 @@ importers:
       rc-dock: 3.3.0_nnrd3gsncyragczmpvfhocinkq
       react-arborist: 3.4.0_2ofog7qulf6u2hqhy5xzoh2fvu
       react-hook-inview: 4.5.1_nnrd3gsncyragczmpvfhocinkq
-      react-resizable-panels: 0.0.55_nnrd3gsncyragczmpvfhocinkq
       use-resize-observer: 9.1.0_nnrd3gsncyragczmpvfhocinkq
     devDependencies:
       '@astroapps/client': 2.0.2_l4uaxjyug2d7jrumg2o74fnwmq
@@ -636,7 +635,7 @@ importers:
 
   ../../../core:
     specifiers:
-      '@astroapps/controls': ^1.0.2
+      '@astroapps/controls': workspace:*
       '@jest/globals': ^29.7.0
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^18.2.28
@@ -650,7 +649,7 @@ importers:
       tsx: ^4.19.1
       typescript: ^5.2.2
     dependencies:
-      '@astroapps/controls': 1.0.2
+      '@astroapps/controls': link:../astrolabe-controls
     devDependencies:
       '@jest/globals': 29.7.0
       '@react-typed-forms/transform': 0.2.0
@@ -1047,10 +1046,6 @@ packages:
       tailwind-merge: 1.14.0
       tslib: 2.8.0
     dev: true
-
-  /@astroapps/controls/1.0.2:
-    resolution: {integrity: sha512-53DEVKeFucfHirnF96wayP28zxcLgAFbmUBI0PZ06EvFssbkX/Z/CuxPlGaF4P09NGe5BWJGAOl4tc1NO/j46Q==}
-    dev: false
 
   /@astroapps/datagrid/1.0.8:
     resolution: {integrity: sha512-xRI44oRtknNzs8Y9wD2d0C4JQk44WFA0TEU45RRdOUj9Qu0Dyt8qOuJf9jfm5U2QvLbXAX9yTaMKCV6wSVEQ9A==}
@@ -18979,16 +18974,6 @@ packages:
       tslib: 2.8.0
       use-callback-ref: 1.3.2_ryhct6r6jz2fex4xfo2quarxhi
       use-sidecar: 1.1.2_ryhct6r6jz2fex4xfo2quarxhi
-
-  /react-resizable-panels/0.0.55_nnrd3gsncyragczmpvfhocinkq:
-    resolution: {integrity: sha512-J/LTFzUEjJiqwSjVh8gjUXkQDA8MRPjARASfn++d2+KOgA+9UcRYUfE3QBJixer2vkk+ffQ4cq3QzWzzHgqYpQ==}
-    peerDependencies:
-      react: ^16.14.0 || ^17.0.0 || ^18.0.0
-      react-dom: ^16.14.0 || ^17.0.0 || ^18.0.0
-    dependencies:
-      react: 18.3.1
-      react-dom: 18.3.1_react@18.3.1
-    dev: false
 
   /react-router-dom/6.27.0_nnrd3gsncyragczmpvfhocinkq:
     resolution: {integrity: sha512-+bvtFWMC0DgAFrfKXKG9Fc+BcXWRUO1aJIihbB79xaeq0v5UzfvnM5houGUm1Y461WVRcgAQ+Clh5rdb1eCx4g==}

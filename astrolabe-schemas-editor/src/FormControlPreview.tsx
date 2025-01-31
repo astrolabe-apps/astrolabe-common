@@ -57,12 +57,11 @@ export interface FormControlPreviewProps {
   layoutClass?: string;
   labelClass?: string;
   displayOnly?: boolean;
+  context: FormControlPreviewContext;
 }
 
 export interface FormControlPreviewContext {
   selected: Control<SelectedControlNode | undefined>;
-  treeDrag: Control<ControlDragState | undefined>;
-  dropSuccess: (drag: DragData, drop: DropData) => void;
   readonly?: boolean;
   VisibilityIcon: ReactNode;
   hideFields: Control<boolean>;
@@ -75,17 +74,6 @@ export interface FormControlPreviewDataProps extends FormControlPreviewProps {
 }
 
 const defaultLayoutChange = "position";
-
-const PreviewContext = createContext<FormControlPreviewContext | undefined>(
-  undefined,
-);
-export const PreviewContextProvider = PreviewContext.Provider;
-
-function usePreviewContext() {
-  const pc = useContext(PreviewContext);
-  if (!pc) throw "Must supply a PreviewContextProvider";
-  return pc;
-}
 
 export function FormControlPreview(props: FormControlPreviewProps) {
   const {
@@ -100,29 +88,22 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     labelClass,
     layoutClass,
     displayOnly: dOnly,
+    context,
   } = props;
   const definition = node.definition;
-  const { selected, dropSuccess, renderer, hideFields } = usePreviewContext();
+  const { selected, renderer, hideFields } = context;
   const displayOnly = dOnly || isControlDisplayOnly(definition);
 
-  const defControlId = unsafeRestoreControl(definition)?.uniqueId;
+  const defControl = unsafeRestoreControl(definition);
   const isSelected = useComputed(() => {
     const selDef = selected.value?.form.definition;
-    return (
-      (selDef && defControlId === unsafeRestoreControl(selDef)?.uniqueId) ??
-      false
-    );
+    const defControlId = defControl?.uniqueId;
+    const selControlId = selDef
+      ? unsafeRestoreControl(selDef)?.uniqueId
+      : undefined;
+    return selControlId !== undefined && defControlId == selControlId;
   }).value;
   const scrollRef = useScrollIntoView(isSelected);
-  const { setNodeRef, isOver } = useDroppable({
-    id: node.id,
-    disabled: Boolean(noDrop),
-    data: controlDropData(
-      parent ? unsafeRestoreControl(parent)?.as() : undefined,
-      dropIndex,
-      dropSuccess,
-    ),
-  });
   const groupControl = useControl({});
 
   const path = fieldPathForDefinition(definition);
@@ -193,6 +174,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           keyPrefix={keyPrefix}
           schemaInterface={schemaInterface}
           displayOnly={c?.displayOnly || displayOnly}
+          context={context}
         />
       );
     },
@@ -247,11 +229,11 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       className={className!}
       ref={(e) => {
         scrollRef(e);
-        setNodeRef(e);
       }}
     >
       {!hideFields.value && (
         <EditorDetails
+          context={context}
           control={definition}
           arrayElement={elementIndex != null}
           schemaVisibility={!!field?.onlyForTypes?.length}
@@ -266,12 +248,14 @@ function EditorDetails({
   control,
   schemaVisibility,
   arrayElement,
+  context,
 }: {
   control: ControlDefinition;
+  context: FormControlPreviewContext;
   arrayElement: boolean;
   schemaVisibility?: boolean;
 }) {
-  const { VisibilityIcon } = usePreviewContext();
+  const { VisibilityIcon } = context;
   const { dynamic } = control;
   const hasVisibilityScripting = dynamic?.some(
     (x) => x.type === DynamicPropertyType.Visible,

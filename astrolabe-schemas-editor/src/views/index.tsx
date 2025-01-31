@@ -33,6 +33,7 @@ export interface ViewContext {
   extraPreviewControls?:
     | ReactNode
     | ((c: FormNode, data: Control<any>) => ReactNode);
+  updateTabTitle: (tabId: string, title: string) => void;
 }
 
 export interface FormInfo {
@@ -49,6 +50,7 @@ export interface EditableForm {
   selectedField?: SchemaNode;
   root: ControlDefinition;
   schemaId: string;
+  hideFields: boolean;
 }
 
 export function getEditorFormTree(cf: Control<EditableForm>) {
