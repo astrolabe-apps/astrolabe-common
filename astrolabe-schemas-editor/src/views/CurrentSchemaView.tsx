@@ -9,8 +9,11 @@ export function CurrentSchemaView({ context }: { context: ViewContext }) {
   const { schemaLookup, currentForm } = context;
   const cf = controlNotNull(context.getCurrentForm());
   if (!cf) return <div>No form selected</div>;
-  const nonNull = cf;
-  const schemaId = cf.fields.schemaId.value;
+  const {
+    selectedControl,
+    selectedField,
+    schemaId: { value: schemaId },
+  } = cf.fields;
   const rootSchema = schemaLookup.getSchema(schemaId);
   if (!rootSchema) return <div>Missing schema: {schemaId}</div>;
   return (
@@ -18,14 +21,13 @@ export function CurrentSchemaView({ context }: { context: ViewContext }) {
       <FormSchemaTree
         rootSchema={rootSchema}
         onAdd={(c) => {
-          const v = nonNull.fields.selectedControl.fields.form.value;
-          console.log(v);
+          const v = selectedControl.fields.form.value;
           if (v instanceof EditorFormNode) {
             v.addChild(defaultControlForField(c.field));
           }
         }}
-        selectedControl={cf.fields.selectedControl}
-        selected={cf.fields.selectedField}
+        selectedControl={selectedControl}
+        selected={selectedField}
         className="grow overflow-y-auto overflow-x-hidden"
       />
     </div>
