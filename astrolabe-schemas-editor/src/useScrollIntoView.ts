@@ -7,21 +7,18 @@ export function useScrollIntoView<E extends HTMLElement = HTMLDivElement>(
 ) {
   const inViewControl = useControl(true);
   const itemRef = useRef<HTMLElement | null>();
-  const haveScrolled = useRef(false);
   const setElement = useInViewEffect(
     ([entry], observer) => (inViewControl.value = entry.isIntersecting),
   );
   useControlEffect(
-    () => [inViewControl.value, shouldBeInView],
-    ([iv, sbiv]) => {
-      if (!iv && sbiv && itemRef.current && !haveScrolled.current) {
-        haveScrolled.current = true;
+    () => shouldBeInView,
+    (sbiv) => {
+      if (!inViewControl.current.value && sbiv && itemRef.current) {
         itemRef.current.scrollIntoView({
           behavior: "smooth",
           block: "start",
         });
       }
-      if (!sbiv) haveScrolled.current = false;
     },
   );
   return (e: HTMLElement | null) => {

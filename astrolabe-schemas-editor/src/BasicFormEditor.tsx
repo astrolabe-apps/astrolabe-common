@@ -108,7 +108,6 @@ export function BasicFormEditor<A extends string>({
   );
   const dockRef = useRef<DockLayout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
-  const controls = useControl<ControlDefinitionForm[]>([]);
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
   const controlGroup: GroupedControlsDefinition = useMemo(() => {
     return {
@@ -136,8 +135,9 @@ export function BasicFormEditor<A extends string>({
   );
 
   const allClasses = useComputed(() => {
-    const cv = trackedValue(controls);
-    return cv
+    const cv = trackedValue(loadedForms);
+    return Object.values(cv)
+      .flatMap((x) => x?.root.children ?? [])
       .flatMap((x) => getAllReferencedClasses(x, collectClasses))
       .join(" ");
   });
@@ -174,11 +174,11 @@ export function BasicFormEditor<A extends string>({
       if (formId) openForm(formId);
     },
   );
-  async function doSave() {
-    saveForm(
-      controls.value.map((c) =>
+  async function doSaveForm(c: Control<EditableForm>) {
+    await saveForm(
+      c.fields.root.value.children?.map((c) =>
         cleanDataForSchema(c, ControlDefinitionSchema, true),
-      ),
+      ) ?? [],
     );
   }
 
@@ -199,6 +199,7 @@ export function BasicFormEditor<A extends string>({
     formList: formTypes.map(([id, name]) => ({ id, name })),
     openForm,
     updateTabTitle,
+    saveForm: doSaveForm,
   };
   const layout = useControl<LayoutBase>(
     () =>
@@ -207,18 +208,25 @@ export function BasicFormEditor<A extends string>({
           mode: "horizontal",
           children: [
             {
+              id: "project",
+              tabs: [{ id: "formList" }],
+              size: 1,
+            },
+            {
               id: "documents",
               group: "documents",
+              size: 5,
               tabs: [],
             },
             {
               mode: "vertical",
+              size: 4,
               children: [
                 {
                   mode: "horizontal",
                   children: [
                     {
-                      tabs: [{ id: "formStructure" }, { id: "formList" }],
+                      tabs: [{ id: "formStructure" }],
                     },
                     { tabs: [{ id: "currentSchema" }] },
                   ],

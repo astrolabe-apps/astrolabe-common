@@ -34,6 +34,7 @@ export interface ViewContext {
     | ReactNode
     | ((c: FormNode, data: Control<any>) => ReactNode);
   updateTabTitle: (tabId: string, title: string) => void;
+  saveForm(c: Control<EditableForm>): void;
 }
 
 export interface FormInfo {

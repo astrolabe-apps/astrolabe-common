@@ -1,16 +1,15 @@
 import { EditableForm, getEditorFormTree, ViewContext } from "./index";
 import {
   Control,
+  Fcheckbox,
+  RenderControl,
   RenderOptional,
   unsafeRestoreControl,
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
 import { FormControlPreview } from "../FormControlPreview";
-import {
-  addMissingControlsForSchema,
-  FormTree,
-} from "@react-typed-forms/schemas";
+import { addMissingControlsForSchema } from "@react-typed-forms/schemas";
 import React from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
 import { toControlDefinitionForm } from "../schemaSchemas";
@@ -39,9 +38,7 @@ export function FormView(props: { formId: string; context: ViewContext }) {
     <RenderOptional
       control={control}
       children={(x) => (
-        <div className="h-full w-full overflow-auto">
-          <RenderFormDesign c={x} context={context} preview={previewData} />
-        </div>
+        <RenderFormDesign c={x} context={context} preview={previewData} />
       )}
     />
   );
@@ -69,28 +66,44 @@ function RenderFormDesign({
   const previewMode = preview.fields.showing.value;
 
   return (
-    <div>
-      <div>
-        {button(
-          () => preview.fields.showing.setValue((x) => !x),
-          previewMode ? "Edit Mode" : "Editable Preview",
-        )}
-        {button(addMissing, "Add Missing Controls")}
+    <div className="flex flex-col h-full">
+      <div className="p-4">
+        <div className="flex gap-2 items-center">
+          <div>
+            <Fcheckbox control={preview.fields.showing} /> Preview Mode
+          </div>
+          {button(save, "Save")}
+        </div>
+        <div className="flex gap-2 items-center">
+          {!preview.fields.showing.value ? (
+            <>
+              <div>
+                <Fcheckbox control={c.fields.hideFields} /> Hide Field Names
+              </div>
+              {button(addMissing, "Add Missing Controls")}
+            </>
+          ) : (
+            <></>
+          )}
+        </div>
       </div>
-      {renderContent()}
+      <div className="grow overflow-auto">{renderContent()}</div>
     </div>
   );
+  
+  function save() {
+    context.saveForm(c);
+  }
 
   function addMissing() {
     if (rootSchema) {
       const existingChildren = unsafeRestoreControl(
         rootNode.definition.children,
       )!;
-      const afterNew = addMissingControlsForSchema(
+      existingChildren.value = addMissingControlsForSchema(
         rootSchema,
         existingChildren.value ?? [],
       ).map(toControlDefinitionForm);
-      existingChildren.value = afterNew;
     }
   }
 

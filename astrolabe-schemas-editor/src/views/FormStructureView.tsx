@@ -29,7 +29,7 @@ export function FormStructureView({ context }: { context: ViewContext }) {
         selectedField={cf.fields.selectedField}
         onDeleted={() => {}}
         treeApi={controlTreeApi}
-        className="grow"
+        className="grow overflow-y-auto overflow-x-hidden"
       />
     </div>
   );

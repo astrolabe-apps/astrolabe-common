@@ -11,11 +11,14 @@ export function CurrentSchemaView({ context }: { context: ViewContext }) {
   const rootSchema = schemaLookup.getSchema(schemaId);
   if (!rootSchema) return <div>Missing schema: {schemaId}</div>;
   return (
-    <FormSchemaTree
-      rootSchema={rootSchema}
-      onAdd={() => {}}
-      selectedControl={cf.fields.selectedControl}
-      selected={cf.fields.selectedField}
-    />
+    <div className="flex flex-col h-full">
+      <FormSchemaTree
+        rootSchema={rootSchema}
+        onAdd={() => {}}
+        selectedControl={cf.fields.selectedControl}
+        selected={cf.fields.selectedField}
+        className="grow overflow-y-auto overflow-x-hidden"
+      />
+    </div>
   );
 }
