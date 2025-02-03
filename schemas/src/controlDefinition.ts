@@ -356,8 +356,9 @@ export interface GridRenderer extends GroupRenderOptions {
   columns?: number | null;
 }
 
-export interface TabsGroupRenderer extends GroupRenderOptions {
+export interface TabsRenderOptions extends GroupRenderOptions {
   type: GroupRenderType.Tabs;
+  contentClass?: string;
 }
 
 export interface SelectChildRenderer extends GroupRenderOptions {
@@ -444,7 +445,7 @@ export function isSelectChildRenderer(
 
 export function isTabsRenderer(
   options: GroupRenderOptions,
-): options is TabsGroupRenderer {
+): options is TabsRenderOptions {
   return options.type === GroupRenderType.Tabs;
 }
 

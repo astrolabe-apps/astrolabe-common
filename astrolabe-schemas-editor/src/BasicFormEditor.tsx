@@ -180,6 +180,7 @@ export function BasicFormEditor<A extends string>({
         cleanDataForSchema(c, ControlDefinitionSchema, true),
       ) ?? [],
     );
+    c.fields.root.markAsClean();
   }
 
   const viewContext: ViewContext = {

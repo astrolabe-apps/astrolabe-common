@@ -1,4 +1,4 @@
-import { Control, trackedValue } from "@react-typed-forms/core";
+import { addElement, Control, trackedValue } from "@react-typed-forms/core";
 import {
   ControlDefinition,
   FormNode,
@@ -13,6 +13,9 @@ export class EditorFormNode implements FormNode {
     private control: Control<ControlDefinition>,
   ) {}
 
+  addChild(c: ControlDefinition) {
+    addElement(this.control.fields.children, c);
+  }
   getChildNodes(dontFollowRef?: boolean): FormNode[] {
     return this.control.fields.children.elements.map(
       (x) => new EditorFormNode(x.uniqueId.toString(), this.tree, this, x),

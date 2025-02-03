@@ -1,16 +1,16 @@
 import {
-  controlTitle,
   createGroupRenderer,
   FormNode,
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
+  TabsRenderOptions,
 } from "@react-typed-forms/schemas";
 import React from "react";
 import { useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
 
-export interface TabsRendererOptions {
+export interface DefaultTabsRenderOptions {
   className?: string;
   tabListClass?: string;
   tabClass?: string;
@@ -20,9 +20,15 @@ export interface TabsRendererOptions {
   contentClass?: string;
 }
 
-export function createTabsRenderer(options: TabsRendererOptions = {}) {
+export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
   return createGroupRenderer(
-    (p, renderer) => <TabsGroupRenderer {...p} options={options} />,
+    (p, renderer) => (
+      <TabsGroupRenderer
+        {...p}
+        tabOptions={p.renderOptions as TabsRenderOptions}
+        options={options}
+      />
+    ),
     {
       renderType: GroupRenderType.Tabs,
     },
@@ -35,7 +41,11 @@ export function TabsGroupRenderer({
   options,
   renderChild,
   designMode,
-}: GroupRendererProps & { options: TabsRendererOptions }) {
+  tabOptions,
+}: GroupRendererProps & {
+  options: DefaultTabsRenderOptions;
+  tabOptions: TabsRenderOptions;
+}) {
   const tabIndex = useControl(0);
   const {
     tabClass,
@@ -76,7 +86,7 @@ export function TabsGroupRenderer({
             </li>
           ))}
         </ul>
-        <div className={rendererClass(null, contentClass)}>
+        <div className={rendererClass(tabOptions.contentClass, contentClass)}>
           {renderChild(currentTab, tabs[currentTab])}
         </div>
       </div>

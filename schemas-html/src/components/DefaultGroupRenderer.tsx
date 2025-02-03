@@ -1,5 +1,4 @@
 import {
-  ControlLayoutProps,
   FlexRenderer,
   FormRenderer,
   GridRenderer,
@@ -13,9 +12,9 @@ import {
   SelectChildRenderer,
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
-import React, { CSSProperties, useCallback } from "react";
+import React, { CSSProperties } from "react";
 import { useTrackedComponent } from "@react-typed-forms/core";
-import { createTabsRenderer, TabsRendererOptions } from "./TabsRenderer";
+import { createTabsRenderer, DefaultTabsRenderOptions } from "./TabsRenderer";
 
 interface StyleProps {
   className?: string;
@@ -30,7 +29,7 @@ export interface DefaultGroupRendererOptions {
   defaultGridColumns?: number;
   flexClassName?: string;
   defaultFlexGap?: string;
-  tabs?: TabsRendererOptions;
+  tabs?: DefaultTabsRenderOptions;
 }
 
 export function createDefaultGroupRenderer(

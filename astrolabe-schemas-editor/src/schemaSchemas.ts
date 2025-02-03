@@ -642,6 +642,7 @@ export interface GroupRenderOptionsForm {
   childLayoutClass: string | null;
   childLabelClass: string | null;
   displayOnly: boolean | null;
+  contentClass: string | null;
   direction: string | null;
   gap: string | null;
   columns: number | null;
@@ -703,6 +704,11 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
   displayOnly: makeScalarField({
     type: FieldType.Bool,
     displayName: "Display Only",
+  }),
+  contentClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Tabs"],
+    displayName: "Content Class",
   }),
   direction: makeScalarField({
     type: FieldType.String,

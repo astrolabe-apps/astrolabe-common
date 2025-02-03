@@ -317,7 +317,7 @@ public enum GroupRenderType
 [JsonSubType("GroupElement", typeof(GroupElementRenderer))]
 [JsonSubType("Grid", typeof(GridRenderer))]
 [JsonSubType("Flex", typeof(FlexRenderer))]
-[JsonSubType("Tabs", typeof(SimpleGroupRenderOptions))]
+[JsonSubType("Tabs", typeof(TabsRenderOptions))]
 [JsonSubType("SelectChild", typeof(SelectChildRenderer))]
 public abstract record GroupRenderOptions(
     [property: SchemaOptions(typeof(GroupRenderType))]
@@ -337,6 +337,9 @@ public abstract record GroupRenderOptions(
 }
 
 public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
+
+public record TabsRenderOptions(string? ContentClass)
+    : GroupRenderOptions(GroupRenderType.Tabs.ToString());
 
 public record FlexRenderer(string? Direction, string? Gap)
     : GroupRenderOptions(GroupRenderType.Flex.ToString());

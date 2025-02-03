@@ -67,14 +67,12 @@ function RenderFormDesign({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4">
+      <div className="px-4 py-2">
         <div className="flex gap-2 items-center">
           <div>
             <Fcheckbox control={preview.fields.showing} /> Preview Mode
           </div>
           {button(save, "Save")}
-        </div>
-        <div className="flex gap-2 items-center">
           {!preview.fields.showing.value ? (
             <>
               <div>
@@ -90,7 +88,7 @@ function RenderFormDesign({
       <div className="grow overflow-auto">{renderContent()}</div>
     </div>
   );
-  
+
   function save() {
     context.saveForm(c);
   }
