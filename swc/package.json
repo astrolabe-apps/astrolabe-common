@@ -1,13 +1,20 @@
 {
-    "name": "rust-plugin",
+    "name": "@astroapps/swc-controls-plugin",
     "version": "0.1.0",
     "description": "",
     "author": "",
     "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/doolse/react-typed-forms/issues"
+    },
+    "homepage": "https://github.com/doolse/react-typed-forms#readme",
+    "publishConfig": {
+        "access": "public"
+    },
     "keywords": ["swc-plugin"],
-    "main": "target/wasm32-wasi/release/rust_plugin.wasm",
+    "main": "swc_controls_plugin.wasm",
     "scripts": {
-        "prepublishOnly": "cargo build-wasi --release"
+        "prepack": "cargo build-wasi --release && cp target/wasm32-wasi/release/swc_controls_plugin.wasm ."
     },
     "files": [],
     "preferUnplugged": true

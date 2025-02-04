@@ -1078,16 +1078,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "rust-plugin"
-version = "0.1.0"
-dependencies = [
- "regex",
- "serde",
- "serde_json",
- "swc_core",
-]
-
-[[package]]
 name = "rustc-demangle"
 version = "0.1.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1359,6 +1349,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8b945e45b417b125a8ec51f1b7df2f8df7920367700d1f98aedd21e5735f8b2"
 dependencies = [
  "atty",
+]
+
+[[package]]
+name = "swc-controls-plugin"
+version = "0.1.0"
+dependencies = [
+ "regex",
+ "serde",
+ "serde_json",
+ "swc_core",
 ]
 
 [[package]]
