@@ -182,6 +182,7 @@ pub fn wrap_with_use_signals(
     };
 
     let hook_call = Expr::Call(CallExpr {
+        ctxt: use_signals_ident.ctxt,
         span: DUMMY_SP,
         callee: Callee::Expr(Box::new(Expr::Ident(use_signals_ident))),
         args: match hook_arg {
@@ -211,6 +212,7 @@ pub fn wrap_with_use_signals(
 
     return vec![
         Stmt::Decl(Decl::Var(Box::new(VarDecl {
+            ctxt: signal_effect_ident.ctxt,
             span: DUMMY_SP,
             kind: VarDeclKind::Var,
             declare: false,
@@ -227,19 +229,22 @@ pub fn wrap_with_use_signals(
         Stmt::Try(Box::new(TryStmt {
             span: DUMMY_SP,
             block: BlockStmt {
+                ctxt: Mark::new().to_syntax_context(),
                 span: DUMMY_SP,
                 stmts: n.to_vec(),
             },
             handler: None,
             finalizer: Some(BlockStmt {
+                ctxt: Mark::new().to_syntax_context(),
                 span: DUMMY_SP,
                 stmts: vec![Stmt::Expr(ExprStmt {
                     span: DUMMY_SP,
                     expr: Box::new(Expr::Call(CallExpr {
+                        ctxt: signal_effect_ident.ctxt,
                         args: vec![],
                         span: DUMMY_SP,
                         type_args: None,
-                        callee: Callee::Expr(Box::new(Expr::Ident(signal_effect_ident))),
+                        callee: Callee::Expr(Box::new(Expr::Ident(signal_effect_ident)))
                     })),
                 })],
             }),
@@ -298,6 +303,7 @@ pub fn extract_fn_from_expr<'a>(expr: &'a mut Expr) -> Option<FunctionLike<'a>> 
             span: _,
             type_args: _,
             callee: _,
+            ctxt: _,
         }) => {
             if let Some(ExprOrSpread {
                 spread: None,
@@ -321,6 +327,7 @@ impl Blockable for BlockStmtOrExpr {
         match self {
             BlockStmtOrExpr::BlockStmt(block) => block.to_owned(),
             BlockStmtOrExpr::Expr(expr) => BlockStmt {
+                ctxt: Mark::new().to_syntax_context(),
                 span: DUMMY_SP,
                 stmts: vec![Stmt::Return(ReturnStmt {
                     span: DUMMY_SP,
@@ -472,8 +479,10 @@ pub fn add_require(
     ident: Ident,
     source: Str,
     source_member_ident: Option<Ident>,
+    ctxt: SyntaxContext,
 ) -> Stmt {
     Stmt::Decl(Decl::Var(Box::new(VarDecl {
+        ctxt: ctxt,
         span: DUMMY_SP,
         kind: VarDeclKind::Var,
         declare: false,
@@ -486,9 +495,11 @@ pub fn add_require(
             }),
             init: {
                 let import_call = Expr::Call(CallExpr {
+                    ctxt: ctxt,
                     span: DUMMY_SP,
                     type_args: None,
                     callee: Callee::Expr(Box::new(Expr::Ident(Ident {
+                        ctxt: ctxt,
                         span: DUMMY_SP,
                         sym: "require".into(),
                         optional: false,

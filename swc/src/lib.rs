@@ -1,7 +1,10 @@
 #![feature(box_patterns, let_chains, if_let_guard, slice_take)]
 
 mod utils;
-use swc_core::{common::{Mark, SyntaxContext}};
+use swc_core::{
+    common::{Mark, SyntaxContext},
+    ecma::visit::{fold_pass, visit_mut_pass, FoldPass},
+};
 use utils::*;
 
 use std::{
@@ -57,14 +60,14 @@ impl StrExt for Str {
     }
 }
 trait IdentExt {
-    fn use_signals() -> Ident;
+    fn use_signals(ctxt: SyntaxContext) -> Ident;
 }
 impl IdentExt for Ident {
-    fn use_signals() -> Ident {
+    fn use_signals(ctxt: SyntaxContext) -> Ident {
         Ident {
             span: DUMMY_SP,
             sym: "useComponentTracking".into(),
-         
+            ctxt,
             optional: false,
         }
     }
@@ -540,7 +543,7 @@ where
                     add_import(
                         ident.clone(),
                         self.use_signals_import_source.clone(),
-                        Some(Ident::use_signals()),
+                        Some(Ident::use_signals(ident.ctxt)),
                     )
                     .into(),
                 ),
@@ -558,8 +561,8 @@ where
                 add_require(
                     ident.clone(),
                     self.use_signals_import_source.clone(),
-                    Some(Ident::use_signals()),
-              
+                    Some(Ident::use_signals(ident.ctxt)),
+                    ident.ctxt,
                 ),
             )
         }
