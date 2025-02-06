@@ -20,6 +20,7 @@ import {
 } from "@react-typed-forms/schemas";
 import React, { ReactNode, useMemo } from "react";
 import { ViewContext } from "./views";
+import clsx from "clsx";
 
 export interface PreviewData {
   showing: boolean;
@@ -37,7 +38,7 @@ export function FormPreview({
   rootControlClass,
   previewOptions,
   createEditorRenderer,
-  controlsClass,
+  editorPanelClass,
   extraPreviewControls,
   viewContext,
 }: {
@@ -50,7 +51,7 @@ export function FormPreview({
   validation?: (data: any, controls: FormNode) => Promise<any>;
   previewOptions?: ControlRenderOptions;
   rootControlClass?: string;
-  controlsClass?: string;
+  editorPanelClass?: string;
   extraPreviewControls?:
     | ReactNode
     | ((c: FormNode, data: Control<any>) => ReactNode);
@@ -89,15 +90,17 @@ export function FormPreview({
           ? extraPreviewControls(controls, data)
           : extraPreviewControls}
       </div>
-      <RenderControl render={renderRaw} />
 
-      <div className={controlsClass}>
-        <NewControlRenderer
-          definition={controls}
-          parentDataNode={rootDataNode}
-          renderer={formRenderer}
-          options={previewOptions}
-        />
+      <div className="grow overflow-auto">
+        <RenderControl render={renderRaw} />
+        <div className={editorPanelClass}>
+          <NewControlRenderer
+            definition={controls}
+            parentDataNode={rootDataNode}
+            renderer={formRenderer}
+            options={previewOptions}
+          />
+        </div>
       </div>
     </>
   );

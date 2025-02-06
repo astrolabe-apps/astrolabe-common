@@ -109,6 +109,7 @@ export function BasicFormEditor<A extends string>({
     () => applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions ?? []),
     [extensions],
   );
+  const editorFormRenderer = useMemo(() => createEditorRenderer([]), []);
   const dockRef = useRef<DockLayout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
@@ -162,7 +163,7 @@ export function BasicFormEditor<A extends string>({
   }
 
   function button(onClick: () => void, action: string, actionId?: string) {
-    return formRenderer.renderAction({
+    return editorFormRenderer.renderAction({
       onClick,
       actionText: action,
       actionId: actionId ?? action,
@@ -174,7 +175,7 @@ export function BasicFormEditor<A extends string>({
     return (
       <div className="flex gap-2 items-center">
         <Fcheckbox control={control} id={cId} />
-        {formRenderer.renderLabel({
+        {editorFormRenderer.renderLabel({
           type: LabelType.Control,
           label: text,
           forId: cId,
@@ -209,6 +210,8 @@ export function BasicFormEditor<A extends string>({
     currentForm: selectedForm,
     schemaLookup: schemas,
     getForm,
+    extraPreviewControls,
+    editorPanelClass,
     getCurrentForm: () =>
       selectedForm.value ? getForm(selectedForm.value) : undefined,
     extensions,
@@ -348,7 +351,12 @@ export function BasicFormEditor<A extends string>({
   ) {
     const res = await loadForm(formId as A);
     control.setInitialValue({
-      root: { children: res.controls, type: ControlDefinitionType.Group },
+      root: { 
+        children: res.controls, type: ControlDefinitionType.Group, 
+        groupOptions: { 
+          type: GroupRenderType.Standard, childLayoutClass: rootControlClass, hideTitle: true
+        } 
+      } as ControlDefinition,
       schemaId: res.schemaName,
       hideFields: false,
     });

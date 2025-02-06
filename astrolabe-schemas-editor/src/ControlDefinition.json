@@ -622,6 +622,14 @@
                 "renderOptions": {
                   "type": "Standard"
                 }
+              },
+              {
+                "type": "Data",
+                "title": "Tab Content Class",
+                "field": "contentClass",
+                "renderOptions": {
+                  "type": "Standard"
+                }
               }
             ],
             "field": "groupOptions",
@@ -1041,7 +1049,8 @@
     ],
     "groupOptions": {
       "type": "Tabs",
-      "hideTitle": true
+      "hideTitle": true,
+      "contentClass": "p-4"
     }
   }
 ]

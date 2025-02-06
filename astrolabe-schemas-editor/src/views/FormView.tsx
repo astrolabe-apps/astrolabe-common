@@ -13,6 +13,7 @@ import { addMissingControlsForSchema } from "@react-typed-forms/schemas";
 import React from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
 import { toControlDefinitionForm } from "../schemaSchemas";
+import clsx from "clsx";
 
 export function FormView(props: { formId: string; context: ViewContext }) {
   const { formId, context } = props;
@@ -64,7 +65,6 @@ function RenderFormDesign({
   } = context;
   const rootNode = getEditorFormTree(c).rootNode;
   const rootSchema = context.schemaLookup.getSchema(c.fields.schemaId.value)!;
-  const previewMode = preview.fields.showing.value;
 
   return (
     <div className="flex flex-col h-full">
@@ -74,7 +74,7 @@ function RenderFormDesign({
           {button(save, "Save")}
         </div>
       </div>
-      <div className="grow overflow-auto">{renderContent()}</div>
+      {renderContent()}
     </div>
   );
 
@@ -106,6 +106,7 @@ function RenderFormDesign({
           validation={validation}
           previewOptions={previewOptions}
           createEditorRenderer={createEditorRenderer}
+          editorPanelClass={context.editorPanelClass}
           // rootControlClass={rootControlClass}
           // controlsClass={controlsClass}
           extraPreviewControls={extraPreviewControls}
@@ -114,22 +115,24 @@ function RenderFormDesign({
 
     return (
       <>
-        <div className="flex gap-4 px-4">
+        <div className="flex gap-4 px-4 mb-2">
           {checkbox(c.fields.hideFields, "Hide Field Names")}
           {button(addMissing, "Add Missing Controls")}
         </div>
-        <FormControlPreview
-          keyPrefix="HAI"
-          node={rootNode}
-          parentNode={rootSchema}
-          dropIndex={0}
-          context={{
-            selected: c.fields.selectedControl,
-            VisibilityIcon: <i className="fa fa-eye" />,
-            renderer: formRenderer,
-            hideFields: c.fields.hideFields,
-          }}
-        />
+        <div className={clsx("grow overflow-auto", context.editorPanelClass)}>
+          <FormControlPreview
+            keyPrefix="HAI"
+            node={rootNode}
+            parentNode={rootSchema}
+            dropIndex={0}
+            context={{
+              selected: c.fields.selectedControl,
+              VisibilityIcon: <i className="fa fa-eye" />,
+              renderer: formRenderer,
+              hideFields: c.fields.hideFields,
+            }}
+          />
+        </div>
       </>
     );
   }

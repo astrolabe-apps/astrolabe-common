@@ -40,7 +40,7 @@ function folders(forms: FormInfo[]): FormListNode[] {
     let folderNode = folderMap.get(folder);
     if (!folderNode) {
       folderNode = {
-        id: folder,
+        id: "_folder_"+folder,
         name: folder,
         children: [],
       };

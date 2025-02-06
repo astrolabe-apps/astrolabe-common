@@ -35,13 +35,14 @@ export interface ViewContext {
     | ReactNode
     | ((c: FormNode, data: Control<any>) => ReactNode);
   updateTabTitle: (tabId: string, title: string) => void;
+  editorPanelClass?: string;
   saveForm(c: Control<EditableForm>): void;
 }
 
 export interface FormInfo {
   id: string;
   name: string;
-  folder?: string;
+  folder?: string | null;
 }
 
 export function getViewAndParams(tabId: string): [string, string?] {
