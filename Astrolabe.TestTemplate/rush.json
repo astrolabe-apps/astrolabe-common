@@ -531,11 +531,6 @@
       "packageName": "@astroapps/controls",
       "projectFolder": "../astrolabe-controls",
       "shouldPublish": true
-    },
-    {
-      "packageName": "@astroapps/swc-controls-plugin",
-      "projectFolder": "../swc",
-      "shouldPublish": true
     }
     //    {
 //      "packageName": "native",
