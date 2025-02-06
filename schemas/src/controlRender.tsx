@@ -148,8 +148,8 @@ export interface FormRenderer {
    */
   renderLabel: (
     props: LabelRendererProps,
-    labelStart: ReactNode,
-    labelEnd: ReactNode,
+    labelStart?: ReactNode,
+    labelEnd?: ReactNode,
   ) => ReactNode;
 
   /**

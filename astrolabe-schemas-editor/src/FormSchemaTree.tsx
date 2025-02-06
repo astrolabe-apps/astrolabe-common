@@ -18,6 +18,7 @@ import {
 } from "@react-typed-forms/schemas";
 import { SelectedControlNode } from "./types";
 import { schemaNodeIcon } from "./util";
+import { StdTreeNode } from "./StdTreeNode";
 
 interface SchemaNodeCtx {
   schema: SchemaNode;
@@ -72,11 +73,8 @@ function getNodeId(node: SchemaNode): string {
   return getSchemaNodePath(node).join("/");
 }
 
-function SchemaNodeRenderer({
-  node,
-  style,
-  dragHandle,
-}: NodeRendererProps<SchemaNodeCtx>) {
+function SchemaNodeRenderer(props: NodeRendererProps<SchemaNodeCtx>) {
+  const { node } = props;
   const {
     schema: { field },
     selectedControl,
@@ -94,22 +92,7 @@ function SchemaNodeRenderer({
     parentSelected = getNodeId(node.data.schema.parent!) == "";
   }
   return (
-    <div
-      style={style}
-      ref={dragHandle}
-      className={clsx("flex items-center", node.isSelected && "bg-primary-100")}
-      onClick={() => node.isInternal && node.toggle()}
-    >
-      <span className="w-4 mr-2 shrink-0">
-        {node.isInternal && (
-          <i
-            className={clsx(
-              "w-4 fa-solid",
-              node.isOpen ? "fa-chevron-down" : "fa-chevron-right",
-            )}
-          />
-        )}
-      </span>
+    <StdTreeNode {...props}>
       <i
         className={clsx("fa-solid w-4 h-4 mr-2", schemaNodeIcon(field.type))}
       />
@@ -120,22 +103,12 @@ function SchemaNodeRenderer({
       {parentSelected && (
         <i
           className="ml-2 fa-solid fa-plus w-4 h-4"
-          onClick={async (e) => {
+          onClick={(e) => {
             e.stopPropagation();
             node.data.onAdd(node.data.schema);
-            // const sc = selectedControl.value;
-            // const parent = sc
-            //   ? sc.control.fields.children
-            //   : node.data.rootControls;
-            // addElement(
-            //   parent,
-            //   toControlDefinitionForm(
-            //     defaultControlForField(node.data.schema.field),
-            //   ),
-            // );
           }}
         />
       )}
-    </div>
+    </StdTreeNode>
   );
 }

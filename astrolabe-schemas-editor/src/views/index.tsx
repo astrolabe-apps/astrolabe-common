@@ -27,6 +27,7 @@ export interface ViewContext {
   extensions?: ControlDefinitionExtension[];
   formRenderer: FormRenderer;
   button: (onClick: () => void, action: string, actionId?: string) => ReactNode;
+  checkbox: (control: Control<boolean>, label: string) => ReactNode;
   previewOptions?: ControlRenderOptions;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   openForm: (formId: string) => void;
@@ -40,6 +41,7 @@ export interface ViewContext {
 export interface FormInfo {
   id: string;
   name: string;
+  folder?: string;
 }
 
 export function getViewAndParams(tabId: string): [string, string?] {

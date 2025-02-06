@@ -60,6 +60,7 @@ function RenderFormDesign({
     validation,
     extraPreviewControls,
     button,
+    checkbox,
   } = context;
   const rootNode = getEditorFormTree(c).rootNode;
   const rootSchema = context.schemaLookup.getSchema(c.fields.schemaId.value)!;
@@ -69,20 +70,8 @@ function RenderFormDesign({
     <div className="flex flex-col h-full">
       <div className="px-4 py-2">
         <div className="flex gap-2 items-center">
-          <div>
-            <Fcheckbox control={preview.fields.showing} /> Preview Mode
-          </div>
+          {checkbox(preview.fields.showing, "Preview Mode")}
           {button(save, "Save")}
-          {!preview.fields.showing.value ? (
-            <>
-              <div>
-                <Fcheckbox control={c.fields.hideFields} /> Hide Field Names
-              </div>
-              {button(addMissing, "Add Missing Controls")}
-            </>
-          ) : (
-            <></>
-          )}
         </div>
       </div>
       <div className="grow overflow-auto">{renderContent()}</div>
@@ -109,6 +98,7 @@ function RenderFormDesign({
     if (preview.fields.showing.value)
       return (
         <FormPreview
+          viewContext={context}
           rootSchema={rootSchema}
           controls={rootNode}
           previewData={preview}
@@ -123,18 +113,24 @@ function RenderFormDesign({
       );
 
     return (
-      <FormControlPreview
-        keyPrefix="HAI"
-        node={rootNode}
-        parentNode={rootSchema}
-        dropIndex={0}
-        context={{
-          selected: c.fields.selectedControl,
-          VisibilityIcon: <i className="fa fa-eye" />,
-          renderer: formRenderer,
-          hideFields: c.fields.hideFields,
-        }}
-      />
+      <>
+        <div className="flex gap-4 px-4">
+          {checkbox(c.fields.hideFields, "Hide Field Names")}
+          {button(addMissing, "Add Missing Controls")}
+        </div>
+        <FormControlPreview
+          keyPrefix="HAI"
+          node={rootNode}
+          parentNode={rootSchema}
+          dropIndex={0}
+          context={{
+            selected: c.fields.selectedControl,
+            VisibilityIcon: <i className="fa fa-eye" />,
+            renderer: formRenderer,
+            hideFields: c.fields.hideFields,
+          }}
+        />
+      </>
     );
   }
 }

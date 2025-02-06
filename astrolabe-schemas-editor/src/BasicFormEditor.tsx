@@ -1,7 +1,11 @@
 import {
+  addElement,
   Control,
   ensureMetaValue,
+  Fcheckbox,
+  groupedChanges,
   trackedValue,
+  unsafeRestoreControl,
   useComputed,
   useControl,
   useControlEffect,
@@ -11,10 +15,7 @@ import {
   defaultTailwindTheme,
   ValueForFieldExtension,
 } from "@react-typed-forms/schemas-html";
-import {
-  ControlDefinitionForm,
-  ControlDefinitionSchemaMap,
-} from "./schemaSchemas";
+import { ControlDefinitionSchemaMap } from "./schemaSchemas";
 import {
   addMissingControls,
   applyExtensionsToSchema,
@@ -29,6 +30,7 @@ import {
   getAllReferencedClasses,
   GroupedControlsDefinition,
   GroupRenderType,
+  LabelType,
   RendererRegistration,
   rootSchemaNode,
   SchemaTreeLookup,
@@ -42,23 +44,24 @@ import defaultEditorControls from "./ControlDefinition.json";
 import {
   DockLayout,
   LayoutBase,
+  PanelBase,
   PanelData,
   TabBase,
   TabData,
 } from "rc-dock/es";
-import { EditableForm, getViewAndParams, ViewContext } from "./views";
+import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
 import { createView } from "./views/createView";
-import { find } from "./dockHelper";
+import { AnyBase, find } from "./dockHelper";
 
-export interface BasicFormEditorProps<A extends string> {
+export interface BasicFormEditorProps {
   formRenderer: FormRenderer;
   createEditorRenderer?: (renderers: RendererRegistration[]) => FormRenderer;
   schemas: SchemaTreeLookup;
   loadForm: (
-    formType: A,
+    formId: string,
   ) => Promise<{ controls: ControlDefinition[]; schemaName: string }>;
-  selectedForm: Control<A>;
-  formTypes: [A, string][];
+  selectedForm: Control<string | undefined>;
+  formTypes: [string, string][] | FormInfo[];
   saveForm: (controls: ControlDefinition[]) => Promise<any>;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   extensions?: ControlDefinitionExtension[];
@@ -97,7 +100,7 @@ export function BasicFormEditor<A extends string>({
   controlsClass,
   handleIcon,
   extraPreviewControls,
-}: BasicFormEditorProps<A>): ReactElement {
+}: BasicFormEditorProps): ReactElement {
   const extensions = useMemo(
     () => [...(_extensions ?? []), ValueForFieldExtension],
     [_extensions],
@@ -119,8 +122,6 @@ export function BasicFormEditor<A extends string>({
       groupOptions: { type: GroupRenderType.Standard },
     };
   }, [editorControls, defaultEditorControls]);
-
-  const loadedForm = useControl<A>();
 
   const genStyles = useMemo(
     () =>
@@ -168,11 +169,28 @@ export function BasicFormEditor<A extends string>({
     });
   }
 
+  function checkbox(control: Control<boolean>, text: string) {
+    const cId = "c" + control.uniqueId;
+    return (
+      <div className="flex gap-2 items-center">
+        <Fcheckbox control={control} id={cId} />
+        {formRenderer.renderLabel({
+          type: LabelType.Control,
+          label: text,
+          forId: cId,
+        })}
+      </div>
+    );
+  }
+
   useControlEffect(
-    () => loadedForm.value,
+    () => selectedForm.value,
     (formId) => {
-      if (formId) openForm(formId);
+      if (formId) {
+        openForm(formId);
+      }
     },
+    true,
   );
   async function doSaveForm(c: Control<EditableForm>) {
     await saveForm(
@@ -188,19 +206,22 @@ export function BasicFormEditor<A extends string>({
     validation,
     previewOptions,
     button,
-    currentForm: loadedForm.as(),
+    currentForm: selectedForm,
     schemaLookup: schemas,
     getForm,
     getCurrentForm: () =>
-      loadedForm.value ? getForm(loadedForm.value) : undefined,
+      selectedForm.value ? getForm(selectedForm.value) : undefined,
     extensions,
     editorControls: controlGroup,
     createEditorRenderer,
     editorFields: rootSchemaNode(ControlDefinitionSchema),
-    formList: formTypes.map(([id, name]) => ({ id, name })),
+    formList: formTypes.map((e) =>
+      Array.isArray(e) ? { id: e[0], name: e[1] } : e,
+    ),
     openForm,
     updateTabTitle,
     saveForm: doSaveForm,
+    checkbox,
   };
   const layout = useControl<LayoutBase>(
     () =>
@@ -260,9 +281,9 @@ export function BasicFormEditor<A extends string>({
         if (docPanel.activeId) {
           const [viewType, viewParams] = getViewAndParams(docPanel.activeId);
           if (viewType === "form" && viewParams) {
-            loadedForm.value = viewParams as A;
+            selectedForm.value = viewParams;
           }
-        } else loadedForm.value = undefined;
+        } else selectedForm.value = undefined;
       }}
       style={{
         position: "absolute",
@@ -274,11 +295,17 @@ export function BasicFormEditor<A extends string>({
     />
   );
 
+  function findLayoutControl<V extends AnyBase>(
+    id: string,
+  ): Control<V> | undefined {
+    const layoutTracked = trackedValue(layout);
+    return unsafeRestoreControl(find(layoutTracked, id) as V)!;
+  }
+
   function updateTabTitle(tabId: string, title: string) {
-    const dockApi = dockRef.current!;
-    const tab = dockApi.find(tabId) as TabData;
+    const tab = findLayoutControl<TabData>(tabId);
     if (tab) {
-      dockApi.updateTab(tabId, { ...tab, title });
+      tab.fields.title.value = title;
     }
   }
 
@@ -288,16 +315,27 @@ export function BasicFormEditor<A extends string>({
     return form;
   }
 
+  function getTabInPanel(
+    panelId: string,
+    tabId: string,
+  ): [Control<PanelBase>, tab: Control<TabBase> | undefined] {
+    const panelBaseControl = findLayoutControl<PanelBase>(panelId)!;
+    const tabsControl = panelBaseControl.fields.tabs;
+    return [
+      panelBaseControl,
+      tabsControl.elements.find((x) => x.fields.id.value === tabId),
+    ];
+  }
+
   function openForm(formId: string) {
     const tabId = "form:" + formId;
-    const dockApi = dockRef.current!;
-    if (!dockApi.find(tabId)) {
-      dockApi.dockMove(
-        { id: tabId } as TabData,
-        dockApi.find("documents")!,
-        "middle",
-      );
-    }
+    const [docs, tab] = getTabInPanel("documents", tabId);
+    groupedChanges(() => {
+      if (!tab) {
+        addElement(docs.fields.tabs, { id: tabId });
+      }
+      docs.fields.activeId.value = tabId;
+    });
   }
 
   function loadTab(savedTab: TabBase): TabData {

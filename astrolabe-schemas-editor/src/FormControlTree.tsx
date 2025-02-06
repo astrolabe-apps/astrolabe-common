@@ -32,6 +32,7 @@ import {
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import { ControlNode, SelectedControlNode } from "./types";
+import { StdTreeNode } from "./StdTreeNode";
 
 export interface FormControlTreeProps {
   className?: string;
@@ -172,40 +173,13 @@ export function FormControlTree({
   }
 }
 
-function ControlNodeRenderer({
-  node,
-  style,
-  dragHandle,
-}: NodeRendererProps<ControlNode>) {
+function ControlNodeRenderer(props: NodeRendererProps<ControlNode>) {
+  const { node } = props;
   const canAdd = true;
   const canDelete = true;
   const control = node.data.form.definition;
   return (
-    <div
-      style={style}
-      ref={dragHandle}
-      className={clsx(
-        "flex cursor-pointer items-center",
-        node.isSelected && "bg-primary-100",
-      )}
-      onClick={() => node.isInternal && node.open()}
-    >
-      <span
-        className="w-4 mr-2 shrink-0"
-        onClick={(e) => {
-          e.stopPropagation();
-          node.isInternal && node.toggle();
-        }}
-      >
-        {node.isInternal && (
-          <i
-            className={clsx(
-              "w-4 fa-solid",
-              node.isOpen ? "fa-chevron-down" : "fa-chevron-right",
-            )}
-          />
-        )}
-      </span>
+    <StdTreeNode {...props}>
       <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(control.type))} />
       <span className="truncate">
         {control.title}
@@ -236,7 +210,7 @@ function ControlNodeRenderer({
           }}
         />
       )}
-    </div>
+    </StdTreeNode>
   );
 
   function nodeIcon(t: string) {

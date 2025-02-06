@@ -1,6 +1,6 @@
 import { BoxBase, LayoutBase, PanelBase, TabBase } from "rc-dock/es";
 
-type AnyBase = PanelBase | TabBase | BoxBase | undefined;
+export type AnyBase = PanelBase | TabBase | BoxBase | undefined;
 function findInPanel(
   panel: PanelBase,
   id: string,

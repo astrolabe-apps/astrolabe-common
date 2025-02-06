@@ -19,6 +19,7 @@ import {
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import React, { ReactNode, useMemo } from "react";
+import { ViewContext } from "./views";
 
 export interface PreviewData {
   showing: boolean;
@@ -38,7 +39,9 @@ export function FormPreview({
   createEditorRenderer,
   controlsClass,
   extraPreviewControls,
+  viewContext,
 }: {
+  viewContext: ViewContext;
   previewData: Control<PreviewData>;
   rootSchema: SchemaNode;
   controls: FormNode;
@@ -74,21 +77,13 @@ export function FormPreview({
   const rootDataNode = makeSchemaDataNode(rootSchema, data);
   return (
     <>
-      <div className="my-2 flex gap-2">
+      <div className="px-4 flex gap-4">
+        {viewContext.checkbox(showRawEditor, "Show Raw Editor")}
+        {viewContext.checkbox(showJson, "Show Json")}
         {formRenderer.renderAction({
           onClick: runValidation,
           actionId: "validate",
           actionText: "Run Validation",
-        })}
-        {formRenderer.renderAction({
-          onClick: () => showRawEditor.setValue((x) => !x),
-          actionId: "",
-          actionText: "Toggle Raw Edit",
-        })}
-        {formRenderer.renderAction({
-          onClick: () => showJson.setValue((x) => !x),
-          actionId: "",
-          actionText: "Toggle JSON",
         })}
         {typeof extraPreviewControls === "function"
           ? extraPreviewControls(controls, data)

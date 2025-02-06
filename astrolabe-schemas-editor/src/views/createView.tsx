@@ -10,7 +10,16 @@ import { TabData } from "rc-dock/es";
 
 export function createView(viewId: string, context: ViewContext): TabData {
   const [viewType, viewParams] = getViewAndParams(viewId);
-  return { title: title(), content: element(), closable: true };
+  return { title: title(), content: element(), closable: closable() };
+
+  function closable() {
+    switch (viewType) {
+      case "form":
+        return true;
+      default:
+        return false;
+    }
+  }
 
   function title() {
     switch (viewType) {
