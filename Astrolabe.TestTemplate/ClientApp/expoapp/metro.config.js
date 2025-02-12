@@ -6,7 +6,7 @@ const { withNativeWind } = require("nativewind/metro");
 const MetroSymlinksResolver = require("@rnx-kit/metro-resolver-symlinks");
 
 const projectDir = __dirname;
-const workspaceRoot = path.resolve(projectDir, "../..");
+const workspaceRoot = path.resolve(projectDir, "../../..");
 
 const symlinksResolver = MetroSymlinksResolver();
 
@@ -33,7 +33,12 @@ const config = makeMetroConfig({
         // If we have an error, we pass it on to the next resolver in the chain,
         // which should be one of expos.
         // https://github.com/expo/expo/blob/9c025ce7c10b23546ca889f3905f4a46d65608a4/packages/%40expo/cli/src/start/server/metro/withMetroResolvers.ts#L47
-        return context.resolveRequest(context, moduleName, platform);
+        try {
+          return context.resolveRequest(context, moduleName, platform);
+        } catch (e) {
+          console.error(context, moduleName, platform);
+          throw e;
+        }
       }
     },
   },
@@ -44,4 +49,4 @@ const config = makeMetroConfig({
     }),
   ],
 });
-module.exports = withNativeWind(config, { input: "./global.css" });;
+module.exports = withNativeWind(config, { input: "./global.css" });

@@ -172,6 +172,7 @@ export interface FormRenderer {
    * @returns A React node.
    */
   renderLabelText: (props: ReactNode) => ReactNode;
+  createHtmlElement: (tag: string, props: any, children: ReactNode) => ReactNode;
 }
 
 export interface AdornmentProps {

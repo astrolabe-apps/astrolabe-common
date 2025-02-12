@@ -101,12 +101,14 @@ export interface DefaultActionRendererOptions {
     actionId: string,
     actionData: any,
   ) => ReactNode;
+  renderButton?: (props: any) => ReactElement;
 }
 
 export function createButtonActionRenderer(
   actionId: string | string[] | undefined,
   options: DefaultActionRendererOptions = {},
 ): ActionRendererRegistration {
+  const doButton = options.renderButton ?? ((p) => <button {...p} />);
   return createActionRenderer(
     actionId,
     ({
@@ -118,17 +120,15 @@ export function createButtonActionRenderer(
       actionData,
       disabled,
     }: ActionRendererProps) => {
-      return (
-        <button
-          className={rendererClass(className, options.className)}
-          disabled={disabled}
-          style={style}
-          onClick={onClick}
-        >
-          {options.renderContent?.(actionText, actionId, actionData) ??
-            actionText}
-        </button>
-      );
+      return doButton({
+        className: rendererClass(className, options.className),
+        disabled: disabled,
+        style: style,
+        onClick: onClick,
+        children:
+          options.renderContent?.(actionText, actionId, actionData) ??
+          actionText,
+      });
     },
   );
 }
