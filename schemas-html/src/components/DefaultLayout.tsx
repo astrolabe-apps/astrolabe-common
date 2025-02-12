@@ -37,7 +37,7 @@ export function DefaultLayout({
   errorClass,
   renderer,
   renderError = (e) =>
-    e && renderer.html("div", { className: errorClass, children: e }),
+    e && renderer.h("div", { className: errorClass, children: e }),
   layout: { controlEnd, controlStart, label, children, errorControl },
 }: DefaultLayoutRendererOptions & {
   layout: RenderedLayout;
@@ -46,7 +46,7 @@ export function DefaultLayout({
   const ec = errorControl;
   const errorText = ec && ec.touched ? ec.error : undefined;
   const h = React.createElement;
-  const Fragment = "Fragment";
+  const Fragment = React.Fragment;
   return (
     <>
       {label}

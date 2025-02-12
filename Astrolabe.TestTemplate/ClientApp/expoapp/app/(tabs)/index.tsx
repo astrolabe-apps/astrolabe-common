@@ -28,16 +28,18 @@ import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
-import { createElement, ElementType, Key, ReactElement } from "react";
+import { createElement, ElementType, Fragment, Key, ReactElement } from "react";
 import { TestSchema } from "@/form";
 import { useControl, useControlEffect } from "@react-typed-forms/core";
 
-function renderHtml(tag: ElementType, props: any, key?: Key): ReactElement {
-  if ((tag as any) === "Fragment") {
-    console.log(tag);
-    return createElement(arguments as any);
-  }
-  const children = props.children ?? key;
+function renderHtml(
+  tag: ElementType,
+  props: any,
+  ...childs: any[]
+): ReactElement {
+  if (typeof tag !== "string") return createElement(arguments as any);
+  const children = props?.children ?? childs;
+
   switch (tag) {
     case "button":
       const onPress = props.onClick;
@@ -45,7 +47,6 @@ function renderHtml(tag: ElementType, props: any, key?: Key): ReactElement {
     case "label":
       return <Text {...props} />;
     case "div":
-      console.log(key);
       return <View {...props} children={children} />;
     case "input":
       const { onChange, value, ...rest } = props;
@@ -67,7 +68,7 @@ const renderer = createFormRenderer(
     label: {
       className: "font-bold",
     },
-    html: renderHtml,
+    h: renderHtml,
     renderText: (p) => <Text>{p}</Text>,
   }),
 );
