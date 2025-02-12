@@ -2,6 +2,7 @@ const path = require("path");
 const { FileStore } = require("metro-cache");
 const { makeMetroConfig } = require("@rnx-kit/metro-config");
 const { getDefaultConfig } = require("expo/metro-config");
+const { withNativeWind } = require("nativewind/metro");
 const MetroSymlinksResolver = require("@rnx-kit/metro-resolver-symlinks");
 
 const projectDir = __dirname;
@@ -43,4 +44,4 @@ const config = makeMetroConfig({
     }),
   ],
 });
-module.exports = config;
+module.exports = withNativeWind(config, { input: "./global.css" });;
