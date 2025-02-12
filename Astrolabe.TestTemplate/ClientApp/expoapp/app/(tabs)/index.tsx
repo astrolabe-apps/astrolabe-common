@@ -5,37 +5,82 @@ import {
   View,
   Text,
   Pressable,
+  TextInput,
 } from "react-native";
 
 import { HelloWave } from "@/components/HelloWave";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { createFormRenderer } from "@react-typed-forms/schemas";
+import {
+  addMissingControlsForSchema,
+  compoundField,
+  createFormRenderer,
+  createSchemaLookup,
+  defaultControlForField,
+  groupedControl,
+  makeSchemaDataNode,
+  NewControlRenderer,
+  useControlRenderer,
+  useControlRendererComponent,
+} from "@react-typed-forms/schemas";
 import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
+import { createElement, ElementType, Key, ReactElement } from "react";
+import { TestSchema } from "@/form";
+import { useControl, useControlEffect } from "@react-typed-forms/core";
+
+function renderHtml(tag: ElementType, props: any, key?: Key): ReactElement {
+  if ((tag as any) === "Fragment") {
+    console.log(tag);
+    return createElement(arguments as any);
+  }
+  const children = props.children ?? key;
+  switch (tag) {
+    case "button":
+      const onPress = props.onClick;
+      return <Pressable {...props} onPress={onPress} />;
+    case "label":
+      return <Text {...props} />;
+    case "div":
+      console.log(key);
+      return <View {...props} children={children} />;
+    case "input":
+      const { onChange, value, ...rest } = props;
+      return (
+        <TextInput
+          {...rest}
+          value={typeof value == "number" ? value.toString() : value}
+          onChangeText={(t) => onChange({ target: { value: t } })}
+        />
+      );
+  }
+  throw new Error(`Unknown tag: ${tag}`);
+}
 
 const renderer = createFormRenderer(
   [],
   createDefaultRenderers({
     ...defaultTailwindTheme,
-    action: {
-      ...defaultTailwindTheme.action,
-      renderButton: ({ className, ...c }) => {
-        console.log({ className });
-        return (
-          <Pressable className={className} {...c}>
-            <Text>{c.children}</Text>
-          </Pressable>
-        );
-      },
+    label: {
+      className: "font-bold",
     },
+    html: renderHtml,
+    renderText: (p) => <Text>{p}</Text>,
   }),
 );
 
+const schemaNode = createSchemaLookup({ "": TestSchema }).getSchema("");
+const controlDef = groupedControl(addMissingControlsForSchema(schemaNode, []));
 export default function HomeScreen() {
+  const data = useControl({});
+  useControlEffect(
+    () => data.value,
+    (v) => console.log(v),
+  );
+  console.log({ uniqueId: data.uniqueId });
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -47,11 +92,11 @@ export default function HomeScreen() {
       }
     >
       <ThemedView style={styles.titleContainer}>
-        {renderer.renderAction({
-          actionId: "",
-          actionText: "How about this?",
-          onClick(): void {},
-        })}
+        <NewControlRenderer
+          definition={controlDef}
+          renderer={renderer}
+          parentDataNode={makeSchemaDataNode(schemaNode, data)}
+        />
         <Text className="text-red-500 font-bold">Welcome!</Text>
         <HelloWave />
       </ThemedView>

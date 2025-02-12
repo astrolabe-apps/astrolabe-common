@@ -7,7 +7,14 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, { Fragment, ReactElement, ReactNode } from "react";
+import React, {
+  createElement,
+  ElementType,
+  Fragment,
+  Key,
+  ReactElement,
+  ReactNode,
+} from "react";
 import clsx from "clsx";
 import {
   createSelectRenderer,
@@ -50,6 +57,7 @@ import {
   DefaultRenderers,
   FieldOption,
   FieldType,
+  FormRenderer,
   hasOptions,
   isAccordionAdornment,
   isDataGroupRenderer,
@@ -82,6 +90,7 @@ import {
   ArrayElementRendererOptions,
   createArrayElementRenderer,
 } from "./components/ArrayElementRenderer";
+import { jsx } from "react/jsx-runtime";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -92,6 +101,8 @@ export interface DefaultRendererOptions {
   label?: DefaultLabelRendererOptions;
   adornment?: DefaultAdornmentRendererOptions;
   layout?: DefaultLayoutRendererOptions;
+  renderText?: (props: ReactNode) => ReactNode;
+  h?: FormRenderer["h"];
 }
 
 export interface DefaultActionRendererOptions {
@@ -101,34 +112,38 @@ export interface DefaultActionRendererOptions {
     actionId: string,
     actionData: any,
   ) => ReactNode;
-  renderButton?: (props: any) => ReactElement;
 }
 
 export function createButtonActionRenderer(
   actionId: string | string[] | undefined,
   options: DefaultActionRendererOptions = {},
 ): ActionRendererRegistration {
-  const doButton = options.renderButton ?? ((p) => <button {...p} />);
   return createActionRenderer(
     actionId,
-    ({
-      onClick,
-      actionText,
-      className,
-      style,
-      actionId,
-      actionData,
-      disabled,
-    }: ActionRendererProps) => {
-      return doButton({
-        className: rendererClass(className, options.className),
-        disabled: disabled,
-        style: style,
-        onClick: onClick,
-        children:
-          options.renderContent?.(actionText, actionId, actionData) ??
-          actionText,
-      });
+    (
+      {
+        onClick,
+        actionText,
+        className,
+        style,
+        actionId,
+        actionData,
+        disabled,
+      }: ActionRendererProps,
+      renderer,
+    ) => {
+      const h = renderer.h;
+      return (
+        <button
+          className={rendererClass(className, options.className)}
+          disabled={disabled}
+          style={style}
+          onClick={onClick}
+        >
+          {options.renderContent?.(actionText, actionId, actionData) ??
+            renderer.renderText(actionText)}
+        </button>
+      );
     },
   );
 }
@@ -159,6 +174,7 @@ export interface DefaultDataRendererOptions {
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
 ): DataRendererRegistration {
+  const h = React.createElement;
   const jsonataRenderer = createJsonataRenderer(options.jsonataClass);
   const nullToggler = createNullToggleRenderer();
   const multilineRenderer = createMultilineFieldRenderer(
@@ -282,6 +298,7 @@ export function createDefaultDataRenderer(
         control={props.control}
         placeholder={placeholder ?? undefined}
         convert={createInputConversion(props.field.type)}
+        renderer={renderers}
       />
     );
   });
@@ -391,27 +408,24 @@ interface DefaultLabelRendererOptions {
   className?: string;
   groupLabelClass?: string;
   controlLabelClass?: string;
-  requiredElement?: ReactNode;
+  requiredElement?: (h: FormRenderer["h"]) => ReactNode;
   labelContainer?: (children: ReactElement) => ReactElement;
 }
 
 export function createDefaultLabelRenderer(
   options?: DefaultLabelRendererOptions,
 ): LabelRendererRegistration {
-  const {
-    className,
-    groupLabelClass,
-    controlLabelClass,
-    requiredElement,
-    labelContainer,
-  } = {
-    requiredElement: <span> *</span>,
+  const { className, groupLabelClass, controlLabelClass, labelContainer } = {
     labelContainer: (c: ReactElement) => c,
     ...options,
   };
   return {
     render: (props, labelStart, labelEnd, renderers) => {
-      if (props.type == LabelType.Text) return props.label;
+      const h = renderers.h;
+      const requiredElement =
+        options?.requiredElement ?? ((h) => <span> *</span>);
+      if (props.type == LabelType.Text)
+        return renderers.renderText(props.label);
       return labelContainer(
         <>
           <label
@@ -427,7 +441,7 @@ export function createDefaultLabelRenderer(
           >
             {labelStart}
             {renderers.renderLabelText(props.label)}
-            {props.required && requiredElement}
+            {props.required && requiredElement(h)}
           </label>
           {labelEnd}
         </>,
@@ -450,6 +464,8 @@ export function createDefaultRenderers(
     adornment: createDefaultAdornmentRenderer(options.adornment),
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
+    renderText: options.renderText ?? ((x) => x),
+    h: options.h ?? createElement,
   };
 }
 

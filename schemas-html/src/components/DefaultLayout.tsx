@@ -5,6 +5,7 @@ import {
   rendererClass,
   renderLayoutParts,
 } from "@react-typed-forms/schemas";
+import { FormRenderer } from "@react-typed-forms/schemas/lib";
 
 export interface DefaultLayoutRendererOptions {
   className?: string;
@@ -17,9 +18,10 @@ export function createDefaultLayoutRenderer(
 ) {
   return createLayoutRenderer((props, renderers) => {
     const layout = renderLayoutParts(props, renderers);
+    const h = React.createElement;
     return {
       children: layout.wrapLayout(
-        <DefaultLayout layout={layout} {...options} />,
+        <DefaultLayout layout={layout} {...options} renderer={renderers} />,
       ),
       className: rendererClass(layout.className, options.className),
       style: layout.style,
@@ -33,13 +35,18 @@ export function createDefaultLayoutRenderer(
 
 export function DefaultLayout({
   errorClass,
-  renderError = (e) => e && <div className={errorClass}>{e}</div>,
+  renderer,
+  renderError = (e) =>
+    e && renderer.html("div", { className: errorClass, children: e }),
   layout: { controlEnd, controlStart, label, children, errorControl },
 }: DefaultLayoutRendererOptions & {
   layout: RenderedLayout;
+  renderer: FormRenderer;
 }) {
   const ec = errorControl;
   const errorText = ec && ec.touched ? ec.error : undefined;
+  const h = React.createElement;
+  const Fragment = "Fragment";
   return (
     <>
       {label}

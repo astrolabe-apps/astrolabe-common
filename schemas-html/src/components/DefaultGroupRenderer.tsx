@@ -72,10 +72,10 @@ export function createDefaultGroupRenderer(
     };
   }
 
-  function render(props: GroupRendererProps, renderers: FormRenderer) {
+  function render(props: GroupRendererProps, renderer: FormRenderer) {
     const { renderChild, renderOptions, formNode } = props;
     if (isTabsRenderer(renderOptions))
-      return tabsRenderer.render(props, renderers);
+      return tabsRenderer.render(props, renderer);
     if (isSelectChildRenderer(renderOptions) && !props.designMode) {
       return (
         <SelectChildGroupRenderer {...props} renderOptions={renderOptions} />
@@ -87,6 +87,7 @@ export function createDefaultGroupRenderer(
       : isFlexRenderer(renderOptions)
         ? flexStyles(renderOptions)
         : ({ className: standardClassName } as StyleProps);
+    const h = renderer.h;
     return (
       <div
         className={rendererClass(props.className, clsx(className, gcn))}

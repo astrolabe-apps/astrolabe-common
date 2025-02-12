@@ -1,11 +1,10 @@
 import React from "react";
-
 import { DefaultRendererOptions } from "./createDefaultRenderers";
 
 export const defaultTailwindTheme = {
   label: {
     groupLabelClass: "font-bold",
-    requiredElement: <span className="text-red-500"> *</span>,
+    requiredElement: (h) => <span className="text-red-500"> *</span>,
   },
   array: {
     removableClass: "grid grid-cols-[1fr_auto] items-center gap-x-2",
