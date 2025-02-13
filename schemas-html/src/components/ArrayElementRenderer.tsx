@@ -18,7 +18,7 @@ import {
   visitFormDataInContext,
 } from "@react-typed-forms/schemas";
 // noinspection ES6UnusedImports
-import React, { createElement as h } from "react";
+import React, { createElement as h, Fragment } from "react";
 import { Dialog, Modal } from "@astroapps/aria-base";
 import { useOverlayTriggerState } from "@react-stately/overlays";
 import { RenderElements } from "@react-typed-forms/core";
