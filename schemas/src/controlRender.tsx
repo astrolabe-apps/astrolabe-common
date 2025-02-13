@@ -1,6 +1,4 @@
 import React, {
-  createElement,
-  ElementType,
   FC,
   Fragment,
   Key,
