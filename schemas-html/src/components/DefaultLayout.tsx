@@ -36,7 +36,12 @@ export function createDefaultLayoutRenderer(
 export function DefaultLayout({
   errorClass,
   renderer: { h, renderText },
-  renderError = (e) => e && <div className={errorClass}>{renderText(e)}</div>,
+  renderError = (e) =>
+    e && (
+      <div>
+        <span className={errorClass}>{renderText(e)}</span>
+      </div>
+    ),
   layout: { controlEnd, controlStart, label, children, errorControl },
 }: DefaultLayoutRendererOptions & {
   layout: RenderedLayout;

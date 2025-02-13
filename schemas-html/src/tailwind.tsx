@@ -35,7 +35,7 @@ export const defaultTailwindTheme = {
   },
   layout: {
     className: "flex flex-col",
-    errorClass: "text-sm text-danger-500",
+    errorClass: "text-sm text-red-500",
   },
   data: {
     displayOnlyClass: "flex flex-row items-center gap-2",

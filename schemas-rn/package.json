@@ -32,7 +32,6 @@
   ],
   "dependencies": {
     "clsx": "^1 || ^2",
-    "nativewind": "^4.1.21",
     "@react-typed-forms/schemas-html": "workspace:*"
   },
   "peerDependencies": {
@@ -41,9 +40,19 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-native": "^0.76.7",
-    "react-native-web": "~0.19.13"
+    "react-native-web": "~0.19.13",
+    "nativewind": "^4.1.23",
+    "react-native-css-interop": "^0.1.22",
+    "react-native-reanimated": ">=3.6.2",
+    "react-native-safe-area-context": "4.12.0",
+    "tailwindcss": "~3"
   },
   "devDependencies": {
+    "tailwindcss": "^3.4.17",
+    "nativewind": "^4.1.23",
+    "react-native-safe-area-context": "4.12.0",
+    "react-native-reanimated": ">=3.6.2",
+    "react-native-css-interop": "^0.1.22",
     "react-native": "^0.76.7",
     "react-native-web": "~0.19.13",
     "@react-typed-forms/core": "^4.1.1",
