@@ -56,7 +56,6 @@ function RenderFormDesign({
 }) {
   const {
     createEditorRenderer,
-    formRenderer,
     previewOptions,
     validation,
     extraPreviewControls,
@@ -65,7 +64,7 @@ function RenderFormDesign({
   } = context;
   const rootNode = getEditorFormTree(c).rootNode;
   const rootSchema = context.schemaLookup.getSchema(c.fields.schemaId.value)!;
-
+  const formRenderer = c.fields.renderer.value;
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-2">

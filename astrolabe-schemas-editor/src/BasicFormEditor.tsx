@@ -59,7 +59,7 @@ export interface BasicFormEditorProps {
   schemas: SchemaTreeLookup;
   loadForm: (
     formId: string,
-  ) => Promise<{ controls: ControlDefinition[]; schemaName: string }>;
+  ) => Promise<{ controls: ControlDefinition[]; schemaName: string, renderer?: FormRenderer }>;
   selectedForm?: Control<string | undefined>;
   formTypes: [string, string][] | FormInfo[];
   saveForm: (controls: ControlDefinition[]) => Promise<any>;
@@ -79,7 +79,7 @@ export interface BasicFormEditorProps {
     | ((c: FormNode, data: Control<any>) => ReactNode);
 }
 
-export function BasicFormEditor<A extends string>({
+export function BasicFormEditor({
   formRenderer,
   selectedForm: sf,
   loadForm,
@@ -204,7 +204,6 @@ export function BasicFormEditor<A extends string>({
   }
 
   const viewContext: ViewContext = {
-    formRenderer,
     validation,
     previewOptions,
     button,
@@ -350,7 +349,7 @@ export function BasicFormEditor<A extends string>({
     formId: string,
     control: Control<EditableForm | undefined>,
   ) {
-    const res = await loadForm(formId as A);
+    const res = await loadForm(formId);
     control.setInitialValue({
       root: { 
         children: res.controls, type: ControlDefinitionType.Group, 
@@ -360,6 +359,7 @@ export function BasicFormEditor<A extends string>({
       } as ControlDefinition,
       schemaId: res.schemaName,
       hideFields: false,
+      renderer: res.renderer ?? formRenderer,
     });
   }
 }

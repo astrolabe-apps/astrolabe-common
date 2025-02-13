@@ -25,7 +25,6 @@ export interface ViewContext {
   editorFields: SchemaNode;
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
   extensions?: ControlDefinitionExtension[];
-  formRenderer: FormRenderer;
   button: (onClick: () => void, action: string, actionId?: string) => ReactNode;
   checkbox: (control: Control<boolean>, label: string) => ReactNode;
   previewOptions?: ControlRenderOptions;
@@ -53,6 +52,7 @@ export interface EditableForm {
   selectedControl?: SelectedControlNode;
   selectedField?: SchemaNode;
   root: ControlDefinition;
+  renderer: FormRenderer;
   schemaId: string;
   hideFields: boolean;
 }
