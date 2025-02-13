@@ -5,6 +5,9 @@ const nextConfig = {
     unoptimized: true,
   },
   reactStrictMode: false,
+  experimental: {
+    swcPlugins: [["@astroapps/swc-controls-plugin", {}]],
+  },
 };
 
 module.exports = nextConfig;
