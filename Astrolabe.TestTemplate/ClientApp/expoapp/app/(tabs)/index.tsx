@@ -5,14 +5,19 @@ import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import {
+  addMissingControlsForSchema,
   createFormRenderer,
   createSchemaLookup,
+  groupedControl,
+  makeSchemaDataNode,
+  NewControlRenderer,
 } from "@react-typed-forms/schemas";
 import { defaultRnTailwindTheme } from "@react-typed-forms/schemas-rn";
 import { createDefaultRenderers } from "@react-typed-forms/schemas-html";
 import { TestSchema } from "@/form";
 import React from "react";
 import { BasicFormEditor } from "@astroapps/schemas-editor";
+import { useControl, useControlEffect } from "@react-typed-forms/core";
 
 const renderer = createFormRenderer(
   [],
@@ -22,12 +27,15 @@ const renderer = createFormRenderer(
 );
 
 const schemas = createSchemaLookup({ TestSchema: TestSchema });
+const schemaNode = schemas.getSchema("TestSchema");
+const controlDef = groupedControl(addMissingControlsForSchema(schemaNode, []));
+
 export default function HomeScreen() {
-  // const data = useControl({});
-  // useControlEffect(
-  //   () => data.value,
-  //   (v) => console.log(v),
-  // );
+  const data = useControl({});
+  useControlEffect(
+    () => data.value,
+    (v) => console.log(v),
+  );
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -42,49 +50,21 @@ export default function HomeScreen() {
         <Text className="text-red-500 font-bold">Welcome!</Text>
         <HelloWave />
       </ThemedView>
-      <View className="min-h-screen">
-        <BasicFormEditor
-          schemas={schemas}
-          formRenderer={renderer}
-          formTypes={[["TestSchema", "Test"]]}
-          loadForm={async () => ({ controls: [], schemaName: "TestSchema" })}
-          saveForm={async (form) => console.log(form)}
-        />
-      </View>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit{" "}
-          <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText>{" "}
-          to see changes. Press{" "}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: "cmd + d",
-              android: "cmd + m",
-              web: "F12",
-            })}
-          </ThemedText>{" "}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this
-          starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{" "}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText>{" "}
-          to get a fresh <ThemedText type="defaultSemiBold">app</ThemedText>{" "}
-          directory. This will move the current{" "}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{" "}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
+      <NewControlRenderer
+        definition={controlDef}
+        renderer={renderer}
+        parentDataNode={makeSchemaDataNode(schemaNode, data)}
+      />
+
+      {/*<View className="min-h-screen">*/}
+      {/*  <BasicFormEditor*/}
+      {/*    schemas={schemas}*/}
+      {/*    formRenderer={renderer}*/}
+      {/*    formTypes={[["TestSchema", "Test"]]}*/}
+      {/*    loadForm={async () => ({ controls: [], schemaName: "TestSchema" })}*/}
+      {/*    saveForm={async (form) => console.log(form)}*/}
+      {/*  />*/}
+      {/*</View>*/}
     </ParallaxScrollView>
   );
 }

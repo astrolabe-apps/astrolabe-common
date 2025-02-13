@@ -35,7 +35,7 @@ interface TestSchema {
 }
 
 export const TestSchema = buildSchema<TestSchema>({
-  date: dateField("Date"),
+  date: dateField("Date", { required: true }),
   dateTime: dateTimeField("Date Time"),
   time: timeField("Time", { tags: [SchemaTags.ControlGroup + "Nested"] }),
   // array: intField("Numbers", { collection: true }),
