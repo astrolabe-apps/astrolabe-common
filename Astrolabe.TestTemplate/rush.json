@@ -473,6 +473,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@react-typed-forms/schemas-rn",
+      "projectFolder": "../schemas-rn",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@react-typed-forms/schemas-mui",
       "projectFolder": "../schemas-mui",
       "shouldPublish": true

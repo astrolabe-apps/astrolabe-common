@@ -90,7 +90,6 @@ import {
   ArrayElementRendererOptions,
   createArrayElementRenderer,
 } from "./components/ArrayElementRenderer";
-import { jsx } from "react/jsx-runtime";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;

@@ -1,87 +1,31 @@
-import {
-  Image,
-  StyleSheet,
-  Platform,
-  View,
-  Text,
-  Pressable,
-  TextInput,
-} from "react-native";
+import { Image, Platform, StyleSheet, Text, View } from "react-native";
 
 import { HelloWave } from "@/components/HelloWave";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import {
-  addMissingControlsForSchema,
-  compoundField,
   createFormRenderer,
   createSchemaLookup,
-  defaultControlForField,
-  groupedControl,
-  makeSchemaDataNode,
-  NewControlRenderer,
-  useControlRenderer,
-  useControlRendererComponent,
 } from "@react-typed-forms/schemas";
-import {
-  createDefaultRenderers,
-  defaultTailwindTheme,
-} from "@react-typed-forms/schemas-html";
-import { createElement, ElementType, Fragment, Key, ReactElement } from "react";
+import { defaultRnTailwindTheme } from "@react-typed-forms/schemas-rn";
+import { createDefaultRenderers } from "@react-typed-forms/schemas-html";
 import { TestSchema } from "@/form";
-import { useControl, useControlEffect } from "@react-typed-forms/core";
-
-function renderHtml(
-  tag: ElementType,
-  props: any,
-  ...childs: any[]
-): ReactElement {
-  if (typeof tag !== "string") return createElement(arguments as any);
-  const children = props?.children ?? childs;
-
-  switch (tag) {
-    case "button":
-      const onPress = props.onClick;
-      return <Pressable {...props} onPress={onPress} />;
-    case "label":
-      return <Text {...props} />;
-    case "div":
-      return <View {...props} children={children} />;
-    case "input":
-      const { onChange, value, ...rest } = props;
-      return (
-        <TextInput
-          {...rest}
-          value={typeof value == "number" ? value.toString() : value}
-          onChangeText={(t) => onChange({ target: { value: t } })}
-        />
-      );
-  }
-  throw new Error(`Unknown tag: ${tag}`);
-}
 
 const renderer = createFormRenderer(
   [],
   createDefaultRenderers({
-    ...defaultTailwindTheme,
-    label: {
-      className: "font-bold",
-    },
-    h: renderHtml,
-    renderText: (p) => <Text>{p}</Text>,
+    ...defaultRnTailwindTheme,
   }),
 );
 
-const schemaNode = createSchemaLookup({ "": TestSchema }).getSchema("");
-const controlDef = groupedControl(addMissingControlsForSchema(schemaNode, []));
+const schemas = createSchemaLookup({ TestSchema: TestSchema });
 export default function HomeScreen() {
-  const data = useControl({});
-  useControlEffect(
-    () => data.value,
-    (v) => console.log(v),
-  );
-  console.log({ uniqueId: data.uniqueId });
+  // const data = useControl({});
+  // useControlEffect(
+  //   () => data.value,
+  //   (v) => console.log(v),
+  // );
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#A1CEDC", dark: "#1D3D47" }}
@@ -93,14 +37,18 @@ export default function HomeScreen() {
       }
     >
       <ThemedView style={styles.titleContainer}>
-        <NewControlRenderer
-          definition={controlDef}
-          renderer={renderer}
-          parentDataNode={makeSchemaDataNode(schemaNode, data)}
-        />
         <Text className="text-red-500 font-bold">Welcome!</Text>
         <HelloWave />
       </ThemedView>
+      <View className="bg-red-500">
+        {/*<BasicFormEditor*/}
+        {/*  schemas={schemas}*/}
+        {/*  formRenderer={renderer}*/}
+        {/*  formTypes={[["TestSchema", "Test"]]}*/}
+        {/*  loadForm={async () => ({ controls: [], schemaName: "TestSchema" })}*/}
+        {/*  saveForm={async (form) => console.log(form)}*/}
+        {/*/>*/}
+      </View>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
         <ThemedText>

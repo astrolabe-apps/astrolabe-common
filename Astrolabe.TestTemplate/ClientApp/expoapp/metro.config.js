@@ -33,12 +33,7 @@ const config = makeMetroConfig({
         // If we have an error, we pass it on to the next resolver in the chain,
         // which should be one of expos.
         // https://github.com/expo/expo/blob/9c025ce7c10b23546ca889f3905f4a46d65608a4/packages/%40expo/cli/src/start/server/metro/withMetroResolvers.ts#L47
-        try {
-          return context.resolveRequest(context, moduleName, platform);
-        } catch (e) {
-          console.error(context, moduleName, platform);
-          throw e;
-        }
+        return context.resolveRequest(context, moduleName, platform);
       }
     },
   },

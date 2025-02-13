@@ -69,7 +69,7 @@ export interface BasicFormEditorProps<A extends string> {
   loadForm: (
     formType: A,
   ) => Promise<{ controls: ControlDefinition[]; schemaName: string }>;
-  selectedForm: Control<A>;
+  selectedForm?: Control<A>;
   formTypes: [A, string][];
   saveForm: (controls: ControlDefinition[]) => Promise<any>;
   validation?: (
@@ -93,7 +93,7 @@ export interface BasicFormEditorProps<A extends string> {
 
 export function BasicFormEditor<A extends string>({
   formRenderer,
-  selectedForm,
+  selectedForm: sf,
   loadForm,
   createEditorRenderer = (e) =>
     createFormRenderer(e, createDefaultRenderers(defaultTailwindTheme)),
@@ -113,6 +113,7 @@ export function BasicFormEditor<A extends string>({
   handleIcon,
   extraPreviewControls,
 }: BasicFormEditorProps<A>): ReactElement {
+  const selectedForm = useControl<A>(() => formTypes[0][0], { use: sf });
   const extensions = useMemo(
     () => [...(_extensions ?? []), ValueForFieldExtension],
     [_extensions],

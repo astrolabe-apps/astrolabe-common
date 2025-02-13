@@ -1,0 +1,4 @@
+.rush/
+*.log
+.babelrc
+src/
