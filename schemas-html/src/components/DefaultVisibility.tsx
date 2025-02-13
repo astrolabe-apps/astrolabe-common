@@ -1,11 +1,11 @@
-import React, { useEffect } from "react";
-import clsx from "clsx";
 import {
   createVisibilityRenderer,
   VisibilityRendererProps,
 } from "@react-typed-forms/schemas";
 import { FormRenderer } from "@react-typed-forms/schemas/lib";
 import { jsx } from "react/jsx-runtime";
+// noinspection ES6UnusedImports
+import React, { createElement as h, Fragment, useEffect } from "react";
 
 export function createDefaultVisibilityRenderer() {
   const h = jsx;

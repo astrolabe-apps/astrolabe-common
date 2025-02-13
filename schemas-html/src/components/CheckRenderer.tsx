@@ -4,7 +4,8 @@ import {
   RenderArrayElements,
   useComputed,
 } from "@react-typed-forms/core";
-import React, { ReactNode } from "react";
+// noinspection ES6UnusedImports
+import React, { ReactNode, createElement as h } from "react";
 import {
   CheckEntryClasses,
   createDataRenderer,

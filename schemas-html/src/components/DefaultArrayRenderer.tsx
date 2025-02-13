@@ -1,5 +1,6 @@
 import clsx from "clsx";
-import React, { Fragment, ReactNode } from "react";
+// noinspection ES6UnusedImports
+import React, { createElement as h, Fragment, ReactNode } from "react";
 import { RenderElements, useTrackedComponent } from "@react-typed-forms/core";
 import {
   ActionRendererProps,

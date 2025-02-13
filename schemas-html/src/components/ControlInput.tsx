@@ -6,7 +6,6 @@ import {
   useControlEffect,
 } from "@react-typed-forms/core";
 import { FieldType, FormRenderer } from "@react-typed-forms/schemas";
-
 export function ControlInput({
   control,
   convert,
@@ -24,6 +23,7 @@ export function ControlInput({
     () => control.value,
     (v) => (textValue.value = toText(v)),
   );
+  // noinspection JSUnusedLocalSymbols
   const h = renderer.h;
   return (
     <input

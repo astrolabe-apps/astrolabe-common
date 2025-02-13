@@ -11,6 +11,8 @@ import {
 import { defaultRnTailwindTheme } from "@react-typed-forms/schemas-rn";
 import { createDefaultRenderers } from "@react-typed-forms/schemas-html";
 import { TestSchema } from "@/form";
+import React from "react";
+import { BasicFormEditor } from "@astroapps/schemas-editor";
 
 const renderer = createFormRenderer(
   [],
@@ -40,14 +42,14 @@ export default function HomeScreen() {
         <Text className="text-red-500 font-bold">Welcome!</Text>
         <HelloWave />
       </ThemedView>
-      <View className="bg-red-500">
-        {/*<BasicFormEditor*/}
-        {/*  schemas={schemas}*/}
-        {/*  formRenderer={renderer}*/}
-        {/*  formTypes={[["TestSchema", "Test"]]}*/}
-        {/*  loadForm={async () => ({ controls: [], schemaName: "TestSchema" })}*/}
-        {/*  saveForm={async (form) => console.log(form)}*/}
-        {/*/>*/}
+      <View className="min-h-screen">
+        <BasicFormEditor
+          schemas={schemas}
+          formRenderer={renderer}
+          formTypes={[["TestSchema", "Test"]]}
+          loadForm={async () => ({ controls: [], schemaName: "TestSchema" })}
+          saveForm={async (form) => console.log(form)}
+        />
       </View>
       <ThemedView style={styles.stepContainer}>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>

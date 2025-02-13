@@ -15,7 +15,8 @@ import {
   stringField,
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
-import React, { useMemo } from "react";
+// noinspection ES6UnusedImports
+import React, { createElement as h, useMemo, Fragment } from "react";
 
 export interface ValueForFieldRenderOptions extends RenderOptions {
   type: "ValueForField";

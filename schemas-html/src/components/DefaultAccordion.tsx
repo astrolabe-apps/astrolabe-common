@@ -1,4 +1,10 @@
-import React, { CSSProperties, Fragment, ReactElement } from "react";
+// noinspection ES6UnusedImports
+import React, {
+  CSSProperties,
+  Fragment,
+  ReactElement,
+  createElement as h,
+} from "react";
 import { Control, useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
 import { DefaultAccordionRendererOptions } from "../createDefaultRenderers";

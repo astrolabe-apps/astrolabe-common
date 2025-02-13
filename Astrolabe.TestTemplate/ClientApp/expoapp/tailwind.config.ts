@@ -4,8 +4,8 @@ export default {
   // NOTE: Update this to include the paths to all of your component files.
   content: [
     "./app/**/*.{js,jsx,ts,tsx}",
-    // "./node_modules/@react-typed-forms/schemas-html/lib/index.js",
-    // "./node_modules/@astroapps/schemas-editor/lib/index.js",
+    "./node_modules/@react-typed-forms/schemas-html/lib/index.js",
+    "./node_modules/@astroapps/schemas-editor/lib/index.js",
   ],
   presets: [require("nativewind/preset")],
   theme: {

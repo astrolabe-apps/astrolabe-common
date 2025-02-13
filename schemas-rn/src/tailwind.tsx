@@ -4,6 +4,7 @@ import {
 } from "@react-typed-forms/schemas-html";
 import { createElement, ElementType, ReactElement } from "react";
 import { Pressable, Text, View, TextInput } from "react-native";
+// noinspection ES6UnusedImports
 import { createElement as h } from "react";
 
 export const defaultRnTailwindTheme = {
@@ -27,6 +28,7 @@ function renderHtml(
       const onPress = props.onClick;
       return <Pressable {...props} onPress={onPress} children={children} />;
     case "label":
+    case "span":
       return <Text {...props} children={children} />;
     case "div":
       return <View {...props} children={children} />;
@@ -42,6 +44,3 @@ function renderHtml(
   }
   throw new Error(`Unknown tag: ${tag}`);
 }
-
-// dummy usage
-h;

@@ -1,4 +1,5 @@
-import React, { useRef } from "react";
+// noinspection ES6UnusedImports
+import React, { useRef, createElement as h } from "react";
 import { useControlEffect } from "@react-typed-forms/core";
 import {
   createDataRenderer,

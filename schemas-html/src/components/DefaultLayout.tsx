@@ -1,11 +1,12 @@
-import React, { ReactNode } from "react";
 import {
   createLayoutRenderer,
   RenderedLayout,
   rendererClass,
   renderLayoutParts,
 } from "@react-typed-forms/schemas";
-import { FormRenderer } from "@react-typed-forms/schemas/lib";
+import { FormRenderer } from "@react-typed-forms/schemas";
+// noinspection ES6UnusedImports
+import React, { createElement as h, Fragment, ReactNode } from "react";
 
 export interface DefaultLayoutRendererOptions {
   className?: string;
@@ -18,7 +19,6 @@ export function createDefaultLayoutRenderer(
 ) {
   return createLayoutRenderer((props, renderers) => {
     const layout = renderLayoutParts(props, renderers);
-    const h = React.createElement;
     return {
       children: layout.wrapLayout(
         <DefaultLayout layout={layout} {...options} renderer={renderers} />,
@@ -45,8 +45,6 @@ export function DefaultLayout({
 }) {
   const ec = errorControl;
   const errorText = ec && ec.touched ? ec.error : undefined;
-  const h = React.createElement;
-  const Fragment = React.Fragment;
   return (
     <>
       {label}

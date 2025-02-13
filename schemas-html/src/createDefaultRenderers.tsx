@@ -7,8 +7,9 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
+// noinspection ES6UnusedImports
 import React, {
-  createElement,
+  createElement as h,
   ElementType,
   Fragment,
   Key,
@@ -243,6 +244,7 @@ export function createDefaultDataRenderer(
               control={props.control}
               className={props.className}
               style={props.style}
+              renderer={renderers}
               emptyText={
                 isDisplayOnlyRenderer(renderOptions) && renderOptions.emptyText
                   ? renderOptions.emptyText
@@ -464,7 +466,7 @@ export function createDefaultRenderers(
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
     renderText: options.renderText ?? ((x) => x),
-    h: options.h ?? createElement,
+    h: options.h ?? h,
   };
 }
 
