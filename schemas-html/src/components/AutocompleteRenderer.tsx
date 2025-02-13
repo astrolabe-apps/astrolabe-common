@@ -1,4 +1,5 @@
-﻿import React from "react";
+﻿// noinspection ES6UnusedImports
+import React, { createElement as h } from "react";
 import {
   Control,
   controlValues,

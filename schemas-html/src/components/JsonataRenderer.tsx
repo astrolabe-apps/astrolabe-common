@@ -1,5 +1,6 @@
 import { Control, useComputed } from "@react-typed-forms/core";
-import React from "react";
+// noinspection ES6UnusedImports
+import React, { createElement as h } from "react";
 import {
   coerceToString,
   ControlDataContext,

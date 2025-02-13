@@ -1,4 +1,6 @@
 import React, {
+  createElement,
+  ElementType,
   FC,
   Fragment,
   Key,
@@ -172,6 +174,9 @@ export interface FormRenderer {
    * @returns A React node.
    */
   renderLabelText: (props: ReactNode) => ReactNode;
+  renderText: (props: ReactNode) => ReactNode;
+
+  h: (type: any, props: any, ...children: any[]) => ReactElement;
 }
 
 export interface AdornmentProps {

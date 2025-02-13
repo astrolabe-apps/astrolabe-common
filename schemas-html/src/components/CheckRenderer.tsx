@@ -1,16 +1,21 @@
 import {
   Control,
-  Fcheckbox,
+  formControlProps,
   RenderArrayElements,
   useComputed,
+  useControlEffect,
 } from "@react-typed-forms/core";
-import React, { ReactNode } from "react";
+// noinspection ES6UnusedImports
+import React, { ReactNode, createElement as h } from "react";
 import {
   CheckEntryClasses,
+  ControlLayoutProps,
   createDataRenderer,
+  DataRendererProps,
   DataRenderType,
   FieldOption,
   fieldOptionAdornment,
+  FormRenderer,
   rendererClass,
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
@@ -26,7 +31,7 @@ export interface CheckRendererOptions {
 }
 export function createRadioRenderer(options: CheckRendererOptions = {}) {
   return createDataRenderer(
-    (p) => (
+    (p, renderer) => (
       <CheckButtons
         classes={options}
         controlClasses={p.renderOptions as CheckEntryClasses}
@@ -37,6 +42,7 @@ export function createRadioRenderer(options: CheckRendererOptions = {}) {
         control={p.control}
         type="radio"
         entryAdornment={fieldOptionAdornment(p)}
+        renderer={renderer}
       />
     ),
     {
@@ -47,7 +53,7 @@ export function createRadioRenderer(options: CheckRendererOptions = {}) {
 
 export function createCheckListRenderer(options: CheckRendererOptions = {}) {
   return createDataRenderer(
-    (p) => (
+    (p, renderer) => (
       <CheckButtons
         classes={options}
         controlClasses={p.renderOptions as CheckEntryClasses}
@@ -63,6 +69,7 @@ export function createCheckListRenderer(options: CheckRendererOptions = {}) {
         control={p.control}
         type="checkbox"
         entryAdornment={fieldOptionAdornment(p)}
+        renderer={renderer}
       />
     ),
     {
@@ -98,7 +105,9 @@ export function CheckButtons({
   entryAdornment,
   classes,
   controlClasses = {},
-}: CheckButtonsProps) {
+  renderer,
+}: CheckButtonsProps & { renderer: FormRenderer }) {
+  const h = renderer.h;
   const { disabled } = control;
   const name = "r" + control.uniqueId;
   return (
@@ -169,17 +178,71 @@ export function createCheckboxRenderer(options: CheckRendererOptions = {}) {
       ...p,
       label: undefined,
       children: (
-        <div className={rendererClass(props.className, options.entryClass)}>
-          <Fcheckbox
-            id={props.id}
-            control={props.control.as()}
-            style={props.style}
-            className={options.checkClass}
-          />
-          {p.label && renderer.renderLabel(p.label, undefined, undefined)}
-        </div>
+        <CheckBox p={p} renderer={renderer} options={options} props={props} />
       ),
     }),
     { renderType: DataRenderType.Checkbox },
+  );
+}
+
+function CheckBox({
+  p,
+  props,
+  renderer,
+  options,
+}: {
+  p: ControlLayoutProps;
+  props: DataRendererProps;
+  renderer: FormRenderer;
+  options: CheckRendererOptions;
+}) {
+  const h = renderer.h;
+  return (
+    <div className={rendererClass(props.className, options.entryClass)}>
+      <Fcheckbox
+        id={props.id}
+        control={props.control.as()}
+        style={props.style}
+        className={options.checkClass}
+        renderer={renderer}
+      />
+      {p.label && renderer.renderLabel(p.label, undefined, undefined)}
+    </div>
+  );
+}
+
+export type FcheckboxProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  control: Control<boolean | undefined | null>;
+  type?: "checkbox" | "radio";
+  notValue?: boolean;
+};
+
+export function Fcheckbox({
+  control,
+  type = "checkbox",
+  notValue = false,
+  renderer,
+  ...others
+}: FcheckboxProps & { renderer: FormRenderer }) {
+  const h = renderer.h;
+  // Update the HTML5 custom validity whenever the error message is changed/cleared
+  // useControlEffect(
+  //   () => control.error,
+  //   (s) => (control.element as HTMLInputElement)?.setCustomValidity(s ?? ""),
+  // );
+  const { value, onChange, errorText, ...theseProps } =
+    formControlProps(control);
+  return (
+    <input
+      {...theseProps}
+      checked={!!value !== notValue}
+      ref={(r) => {
+        control.element = r;
+        // if (r) r.setCustomValidity(control.current.error ?? "");
+      }}
+      onChange={(e) => (control.value = e.target.checked !== notValue)}
+      type={type}
+      {...others}
+    />
   );
 }

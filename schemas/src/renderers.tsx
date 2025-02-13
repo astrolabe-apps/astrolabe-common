@@ -1,4 +1,4 @@
-import { ReactElement, ReactNode } from "react";
+import { ElementType, Key, ReactElement, ReactNode } from "react";
 import {
   ActionRendererProps,
   AdornmentProps,
@@ -19,7 +19,8 @@ import {
   ControlAdornment,
   ControlAdornmentType,
   IconAdornment,
-  OptionalAdornment, RenderOptions,
+  OptionalAdornment,
+  RenderOptions,
   SetFieldAdornment,
 } from "./controlDefinition";
 
@@ -33,6 +34,8 @@ export interface DefaultRenderers {
   adornment: AdornmentRendererRegistration;
   renderLayout: LayoutRendererRegistration;
   visibility: VisibilityRendererRegistration;
+  renderText: (props: ReactNode) => ReactNode;
+  h: (type: any, props: any, ...children: any[]) => ReactElement;
 }
 
 export interface LayoutRendererRegistration {
@@ -104,7 +107,7 @@ export interface AdornmentRendererRegistration {
 
 export interface VisibilityRendererRegistration {
   type: "visibility";
-  render: (props: VisibilityRendererProps) => ReactNode;
+  render: (props: VisibilityRendererProps, renderer: FormRenderer) => ReactNode;
 }
 
 export type RendererRegistration =

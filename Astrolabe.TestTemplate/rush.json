@@ -473,6 +473,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@react-typed-forms/schemas-rn",
+      "projectFolder": "../schemas-rn",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@react-typed-forms/schemas-mui",
       "projectFolder": "../schemas-mui",
       "shouldPublish": true
@@ -531,6 +536,10 @@
       "packageName": "@astroapps/controls",
       "projectFolder": "../astrolabe-controls",
       "shouldPublish": true
+    },
+    {
+      "packageName": "expoapp",
+      "projectFolder": "ClientApp/expoapp"
     }
     //    {
 //      "packageName": "native",

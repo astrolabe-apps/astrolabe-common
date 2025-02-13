@@ -1,10 +1,12 @@
-import React, { ReactNode } from "react";
 import {
   createLayoutRenderer,
   RenderedLayout,
   rendererClass,
   renderLayoutParts,
 } from "@react-typed-forms/schemas";
+import { FormRenderer } from "@react-typed-forms/schemas";
+// noinspection ES6UnusedImports
+import React, { createElement as h, Fragment, ReactNode } from "react";
 
 export interface DefaultLayoutRendererOptions {
   className?: string;
@@ -19,7 +21,7 @@ export function createDefaultLayoutRenderer(
     const layout = renderLayoutParts(props, renderers);
     return {
       children: layout.wrapLayout(
-        <DefaultLayout layout={layout} {...options} />,
+        <DefaultLayout layout={layout} {...options} renderer={renderers} />,
       ),
       className: rendererClass(layout.className, options.className),
       style: layout.style,
@@ -33,10 +35,17 @@ export function createDefaultLayoutRenderer(
 
 export function DefaultLayout({
   errorClass,
-  renderError = (e) => e && <div className={errorClass}>{e}</div>,
+  renderer: { h, renderText },
+  renderError = (e) =>
+    e && (
+      <div>
+        <span className={errorClass}>{renderText(e)}</span>
+      </div>
+    ),
   layout: { controlEnd, controlStart, label, children, errorControl },
 }: DefaultLayoutRendererOptions & {
   layout: RenderedLayout;
+  renderer: FormRenderer;
 }) {
   const ec = errorControl;
   const errorText = ec && ec.touched ? ec.error : undefined;

@@ -5,15 +5,16 @@ import {
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
-import {FieldType} from "@react-typed-forms/schemas";
-
+import { FieldType, FormRenderer } from "@react-typed-forms/schemas";
 export function ControlInput({
   control,
   convert,
+  renderer,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & {
   control: Control<any>;
   convert: InputConversion;
+  renderer: FormRenderer;
 }) {
   const { errorText, value, onChange, ...inputProps } =
     formControlProps(control);
@@ -22,6 +23,8 @@ export function ControlInput({
     () => control.value,
     (v) => (textValue.value = toText(v)),
   );
+  // noinspection JSUnusedLocalSymbols
+  const h = renderer.h;
   return (
     <input
       {...inputProps}

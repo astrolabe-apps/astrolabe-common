@@ -1,4 +1,5 @@
-import React from "react";
+// noinspection ES6UnusedImports
+import React, { createElement as h } from "react";
 import clsx from "clsx";
 import {
   coerceToString,
@@ -6,6 +7,7 @@ import {
   DisplayDataType,
   DisplayRendererProps,
   DisplayRendererRegistration,
+  FormRenderer,
   getOverrideClass,
   HtmlDisplay,
   IconDisplay,
@@ -22,7 +24,9 @@ export function createDefaultDisplayRenderer(
   options: DefaultDisplayRendererOptions = {},
 ): DisplayRendererRegistration {
   return {
-    render: (props) => <DefaultDisplay {...options} {...props} />,
+    render: (props, renderer) => (
+      <DefaultDisplay {...options} {...props} renderer={renderer} />
+    ),
     type: "display",
   };
 }
@@ -32,8 +36,11 @@ export function DefaultDisplay({
   display,
   className,
   style,
+  renderer,
   ...options
-}: DefaultDisplayRendererOptions & DisplayRendererProps) {
+}: DefaultDisplayRendererOptions &
+  DisplayRendererProps & { renderer: FormRenderer }) {
+  const h = renderer.h;
   switch (data.type) {
     case DisplayDataType.Icon:
       return (

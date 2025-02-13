@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
 import {
   ActionRendererProps,
   AdornmentProps,
@@ -11,6 +11,7 @@ import {
   GroupRendererProps,
   LabelRendererProps,
   LabelType,
+  VisibilityRendererProps,
 } from "./controlRender";
 import { hasOptions } from "./util";
 import {
@@ -55,9 +56,15 @@ export function createFormRenderer(
     renderArray,
     renderAdornment,
     renderLayout,
-    renderVisibility: visibilityRenderer.render,
+    renderVisibility,
     renderLabelText,
+    renderText: defaultRenderers.renderText,
+    h: defaultRenderers.h,
   };
+
+  function renderVisibility(props: VisibilityRendererProps) {
+    return visibilityRenderer.render(props, formRenderers);
+  }
 
   function renderLabelText(label: ReactNode) {
     return renderLabel({ label, type: LabelType.Text }, undefined, undefined);
