@@ -55,16 +55,6 @@ export default function HomeScreen() {
         renderer={renderer}
         parentDataNode={makeSchemaDataNode(schemaNode, data)}
       />
-
-      {/*<View className="min-h-screen">*/}
-      {/*  <BasicFormEditor*/}
-      {/*    schemas={schemas}*/}
-      {/*    formRenderer={renderer}*/}
-      {/*    formTypes={[["TestSchema", "Test"]]}*/}
-      {/*    loadForm={async () => ({ controls: [], schemaName: "TestSchema" })}*/}
-      {/*    saveForm={async (form) => console.log(form)}*/}
-      {/*  />*/}
-      {/*</View>*/}
     </ParallaxScrollView>
   );
 }
