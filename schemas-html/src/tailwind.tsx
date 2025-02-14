@@ -38,6 +38,7 @@ export const defaultTailwindTheme = {
     errorClass: "text-sm text-red-500",
   },
   data: {
+    inputClass: "form-control",
     displayOnlyClass: "flex flex-row items-center gap-2",
     checkOptions: {
       className: "flex items-center gap-4",

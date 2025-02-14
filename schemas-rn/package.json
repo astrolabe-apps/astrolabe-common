@@ -32,7 +32,8 @@
   ],
   "dependencies": {
     "clsx": "^1 || ^2",
-    "@react-typed-forms/schemas-html": "workspace:*"
+    "@react-typed-forms/schemas-html": "workspace:*",
+    "@rn-primitives/checkbox": "^1.1.0"
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.1.1",
