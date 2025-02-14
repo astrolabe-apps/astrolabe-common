@@ -31,7 +31,9 @@ import {
 } from "@astroapps/datagrid";
 import {
   Control,
+  getElementIndex,
   groupedChanges,
+  RenderControl,
   useTrackedComponent,
 } from "@react-typed-forms/core";
 import React, { Fragment, ReactNode } from "react";
@@ -79,6 +81,7 @@ interface DataGridColumnExtension {
   dataContext: ControlDataContext;
   definition: ControlDefinition;
   evalHidden?: EvalExpressionHook<boolean>;
+  evalRowSpan?: EvalExpressionHook<number>;
 }
 
 const DataGridFields = buildSchema<DataGridOptions>({
@@ -185,6 +188,10 @@ export function createDataGridRenderer(
                 colOptions?.visible,
                 (x) => !!x,
               ) as EvalExpressionHook<boolean>,
+              evalRowSpan: useEvalExpression(
+                colOptions?.rowSpan,
+                (x) => x,
+              ) as EvalExpressionHook<number>,
             },
             render: (_: Control<any>, rowIndex: number) =>
               renderChild(i, cn, {
@@ -230,17 +237,32 @@ function DynamicGridVisibility(props: DataGridRendererProps) {
     props.columns.map((x) => x.data?.evalHidden),
     (x) => x?.deps,
   );
+  console.log(depString);
 
   const Render = useTrackedComponent<DataGridRendererProps>(
     (props: DataGridRendererProps) => {
       const newColumns = props.columns.map((x) => {
         const data = x.data;
-        if (data && data.evalHidden) {
-          const visible = data.evalHidden.runHook(
+        if (data && (data.evalHidden || data.evalRowSpan)) {
+          const visible = data.evalHidden?.runHook(
             data.dataContext,
             data.evalHidden.state,
           );
-          if (visible) return { ...x, hidden: visible.value === false };
+          const ers = data.evalRowSpan;
+          const getRowSpan = ers
+            ? (t: Control<any>) => {
+                const index = getElementIndex(t);
+                console.log(index, data.dataContext);
+                return (
+                  ers.runHook({ ...data.dataContext }, ers.state)?.value ?? 1
+                );
+              }
+            : undefined;
+          return {
+            ...x,
+            hidden: visible && visible.value === false,
+            getRowSpan,
+          };
         }
         return x;
       });
@@ -373,7 +395,11 @@ function DataGridControlRenderer({
         cellClass=""
         wrapBodyRow={(rowIndex, render) => {
           const c = control.elements![rowIndex];
-          return <Fragment key={c.uniqueId}>{render(c, rowIndex)}</Fragment>;
+          return (
+            <RenderControl key={c.uniqueId}>
+              {() => render(c, rowIndex)}
+            </RenderControl>
+          );
         }}
         renderHeaderContent={renderHeaderContent}
         renderExtraRows={(r) =>

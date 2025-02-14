@@ -29,6 +29,7 @@ export type ColumnOptions = Pick<
   rowIndex?: boolean;
   layoutClass?: string;
   visible?: EntityExpression;
+  rowSpan?: EntityExpression;
   enabledSort?: boolean;
   enabledFilter?: boolean;
 };
@@ -84,6 +85,10 @@ export const ColumnOptionsFields = buildSchema<ColumnOptions>({
     schemaRef: "EntityExpression",
     tags: [makeParamTag(SchemaTags.ControlRef, "Expression")],
   }),
+  rowSpan: compoundField("Row Span", [], {
+    schemaRef: "EntityExpression",
+    tags: [makeParamTag(SchemaTags.ControlRef, "Expression")],
+  }),
 });
 
 export const DataGridAdornmentDefinition: CustomRenderOptions = {
@@ -102,7 +107,7 @@ export function collectColumnClasses(c: ControlDefinition) {
   return (
     c.adornments?.flatMap((x) =>
       isColumnAdornment(x)
-        ? [x.cellClass, x.headerCellClass, x.bodyCellClass]
+        ? [x.cellClass, x.headerCellClass, x.bodyCellClass, x.layoutClass]
         : [],
     ) ?? []
   );
