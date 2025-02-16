@@ -1,6 +1,6 @@
 import { Control } from "@react-typed-forms/core";
 import React, { useRef } from "react";
-import { ReactQuillProps } from "react-quill";
+import ReactQuill from "react-quill-new";
 import { createDataRenderer, DataRenderType } from "@react-typed-forms/schemas";
 
 interface QuillOptions {
@@ -35,13 +35,13 @@ export const DefaultQuillModules = {
 };
 
 export function createQuillEditor(
-  ReactQuill: React.ComponentType<ReactQuillProps>,
+  ReactQuill: React.ComponentType<ReactQuill.ReactQuillProps>,
   options?: QuillOptions,
 ) {
   return createDataRenderer(
     ({ control, readonly }) => (
       <HtmlEditor
-        state={control}
+        state={control.as()}
         ReactQuill={ReactQuill}
         readonly={readonly}
         options={options}
@@ -61,7 +61,7 @@ export function HtmlEditor({
   className?: string;
   readonly?: boolean;
   state: Control<string | null | undefined>;
-  ReactQuill: React.ComponentType<ReactQuillProps>;
+  ReactQuill: React.ComponentType<ReactQuill.ReactQuillProps>;
   options?: QuillOptions;
 }) {
   const { modules, theme } = {
