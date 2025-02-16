@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/ui-tree",
-	"version": "3.0.1",
+	"version": "3.0.2",
 	"type": "module",
 	"main": "lib/index.cjs",
 	"module": "lib/index.js",
@@ -30,7 +30,7 @@
 		"immutability-helper": "^3.1.1"
 	},
 	"peerDependencies": {
-		"react": "^18.2.0",
+		"react": "^18.2.0 || ^19",
 		"@dnd-kit/core": "^6.0.8",
 		"@dnd-kit/utilities": "^3.2.1",
 		"@dnd-kit/sortable": "^7.0.2",
@@ -38,7 +38,7 @@
 		"@astroapps/client": "^2.0.0"
 	},
 	"devDependencies": {
-		"react": "^18.2.0",
+		"react": "^18.2.0 || ^19",
 		"@dnd-kit/core": "^6.0.8",
 		"@dnd-kit/utilities": "^3.2.1",
 		"@dnd-kit/sortable": "^7.0.2",

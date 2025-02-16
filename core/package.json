@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/core",
-  "version": "4.2.0",
+  "version": "4.2.1",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -37,7 +37,7 @@
     "forms"
   ],
   "peerDependencies": {
-    "react": "^18"
+    "react": "^18 || ^19"
   },
   "dependencies": {
     "@astroapps/controls": "^1.1.0"
@@ -48,7 +48,7 @@
     "markdown-magic": "^2.6.1",
     "microbundle": "^0.15.1",
     "prettier": "^3.0.3",
-    "react": "^18.2.0",
+    "react": "^18.2.0 || ^19",
     "rimraf": "^3.0.2",
     "typescript": "^5.2.2",
     "ts-jest": "^29.2.5",

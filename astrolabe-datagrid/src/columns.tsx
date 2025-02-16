@@ -53,7 +53,7 @@ export interface ColumnDef<T, D = unknown> extends ColumnRender<T, D> {
   getter?: (row: T) => Sortable;
   filterValue?: (row: T) => [string, string];
   children?: ColumnDef<T, D>[];
-  getRowSpan?: (row: T) => number | [number, boolean];
+  getRowSpan?: (row: T, rowIndex: number) => number | [number, boolean];
   headerRowSpans?: number[];
 }
 
@@ -125,7 +125,7 @@ export function renderBodyCells<T>(
 ): ReactElement[] | ReactElement {
   const { row, rowKey, rowIndex, totalRows, makeClassName, gridRowOffset } =
     rowProps;
-  const customSpan = column.getRowSpan?.(row);
+  const customSpan = column.getRowSpan?.(row, rowIndex);
   const [rowSpan, lastRow] = Array.isArray(customSpan)
     ? customSpan
     : ((span: number) => [span, rowIndex + span >= totalRows])(customSpan ?? 1);
@@ -326,7 +326,7 @@ export function mapColumn<T, T2, D>(
       ((row, rowIndex, c) => col.render(map(row), rowIndex, c)),
     getRowSpan:
       override?.getRowSpan ??
-      (col.getRowSpan ? (r) => col.getRowSpan!(map(r)) : undefined),
+      (col.getRowSpan ? (r, ri) => col.getRowSpan!(map(r), ri) : undefined),
   };
 }
 

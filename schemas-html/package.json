@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas-html",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -40,12 +40,12 @@
   "peerDependencies": {
     "@react-typed-forms/core": "^4.1.1",
     "@react-typed-forms/schemas": "^14.4.0",
-    "react": "^18.2.0"
+    "react": "^18.2.0 || ^19"
   },
   "devDependencies": {
     "@react-typed-forms/core": "^4.1.1",
     "@react-typed-forms/schemas": "^14.4.0",
-    "react": "^18.2.0",
+    "react": "^18.2.0 || ^19",
     "@react-typed-forms/transform": "^0.2.0",
     "@types/uuid": "^10.0.0",
     "@types/react": "^18.2.28",

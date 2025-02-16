@@ -75,6 +75,9 @@ interface DataGridClasses {
   removeColumnClass?: string;
   addContainerClass?: string;
   noEntriesClass?: string;
+  headerCellClass?: string;
+  cellClass?: string;
+  bodyCellClass?: string;
 }
 
 interface DataGridColumnExtension {
@@ -113,6 +116,9 @@ export const defaultDataGridClasses: DataGridClasses = {
   addContainerClass: "flex justify-center mt-2",
   removeColumnClass: "flex items-center h-full pl-1 gap-2",
   noEntriesClass: "border-t text-center p-3",
+  headerCellClass: "font-bold",
+  cellClass: "",
+  bodyCellClass: "border-t py-1 flex items-center",
 };
 export const DataGridRenderer = createDataGridRenderer(
   undefined,
@@ -157,7 +163,7 @@ export function createDataGridRenderer(
             renderOptions: x.renderOptions,
             layoutClass: x.layoutClass,
           };
-          const headerOptions = getColumnHeaderFromOptions(x, def);
+          const headerOptions = getColumnHeaderFromOptions(x, def, gridClasses);
           const colNode = nodeForControl(def, formNode.tree, "col" + i);
           return {
             ...headerOptions,
@@ -175,7 +181,11 @@ export function createDataGridRenderer(
         formNode.getChildNodes().map((cn, i) => {
           const d = cn.definition;
           const colOptions = d.adornments?.find(isColumnAdornment);
-          const headerOptions = getColumnHeaderFromOptions(colOptions, d);
+          const headerOptions = getColumnHeaderFromOptions(
+            colOptions,
+            d,
+            gridClasses,
+          );
 
           return {
             ...headerOptions,
@@ -188,9 +198,8 @@ export function createDataGridRenderer(
                 colOptions?.visible,
                 (x) => !!x,
               ) as EvalExpressionHook<boolean>,
-              evalRowSpan: useEvalExpression(
-                colOptions?.rowSpan,
-                (x) => x,
+              evalRowSpan: useEvalExpression(colOptions?.rowSpan, (x) =>
+                typeof x === "number" ? x : 1,
               ) as EvalExpressionHook<number>,
             },
             render: (_: Control<any>, rowIndex: number) =>
@@ -201,6 +210,7 @@ export function createDataGridRenderer(
           };
         });
       const allColumns = constantColumns.concat(columns);
+
       const searchField = dataGridOptions.searchField;
       return (
         <DynamicGridVisibility
@@ -234,10 +244,9 @@ export function createDataGridRenderer(
 
 function DynamicGridVisibility(props: DataGridRendererProps) {
   const depString = makeHookDepString(
-    props.columns.map((x) => x.data?.evalHidden),
+    props.columns.flatMap((x) => [x.data?.evalHidden, x.data?.evalRowSpan]),
     (x) => x?.deps,
   );
-  console.log(depString);
 
   const Render = useTrackedComponent<DataGridRendererProps>(
     (props: DataGridRendererProps) => {
@@ -250,12 +259,14 @@ function DynamicGridVisibility(props: DataGridRendererProps) {
           );
           const ers = data.evalRowSpan;
           const getRowSpan = ers
-            ? (t: Control<any>) => {
-                const index = getElementIndex(t);
-                console.log(index, data.dataContext);
-                return (
-                  ers.runHook({ ...data.dataContext }, ers.state)?.value ?? 1
-                );
+            ? (t: Control<any>, index: number) => {
+                const elementContext =
+                  data.dataContext.dataNode!.getChildElement(index);
+                const evalValue = ers.runHook(
+                  { ...data.dataContext, parentNode: elementContext },
+                  ers.state,
+                )?.value;
+                return evalValue ?? 1;
               }
             : undefined;
           return {
@@ -393,6 +404,8 @@ function DataGridControlRenderer({
         getBodyRow={(i) => control.elements![i]}
         defaultColumnTemplate="1fr"
         cellClass=""
+        headerCellClass=""
+        bodyCellClass=""
         wrapBodyRow={(rowIndex, render) => {
           const c = control.elements![rowIndex];
           return (

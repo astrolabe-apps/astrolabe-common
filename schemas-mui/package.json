@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas-mui",
-  "version": "9.0.2",
+  "version": "9.0.3",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -37,12 +37,12 @@
     "@react-typed-forms/core": "^4.1.1",
     "@react-typed-forms/mui": "^4.0.0",
     "@react-typed-forms/schemas": "^14.0.3",
-    "react": "^18.2.0",
+    "react": "^18.2.0 || ^19",
     "@mui/icons-material": "^5",
     "@mui/material": "^5"
   },
   "devDependencies": {
-    "react": "^18.2.0",
+    "react": "^18.2.0 || ^19",
     "@react-typed-forms/core": "^4.1.1",
     "@react-typed-forms/mui": "workspace:^4.0.0",
     "@react-typed-forms/schemas": "^14.1.3",

@@ -51,6 +51,7 @@ import {
   CarEdit,
   CodeGenClient,
   SearchStateClient,
+  ControlDefinition as CD,
 } from "../client";
 import controlsJson from "../ControlDefinition.json";
 import { useMemo, useState } from "react";
@@ -293,7 +294,7 @@ export default function Editor() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div id="dialog_container" ref={setContainer} />
-      <BasicFormEditor<string>
+      <BasicFormEditor
         formRenderer={StdFormRenderer}
         schemas={schemaLookup}
         // handleIcon={<div>WOAH</div>}
@@ -366,7 +367,7 @@ export default function Editor() {
 
   async function genPdf(c: FormNode, data: Control<any>) {
     const file = await carClient.generatePdf({
-      controls: c.definition.children!,
+      controls: c.definition.children! as CD[],
       schemaName: selectedForm.value,
       data: data.value,
     });

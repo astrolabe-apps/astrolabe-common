@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-datepicker",
-  "version": "6.1.0",
+  "version": "6.1.1",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -26,7 +26,7 @@
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "peerDependencies": {
-    "react": "^18.2.0",
+    "react": "^18.2.0 || ^19",
     "@react-typed-forms/core": "^4.0.0",
     "@react-typed-forms/schemas": "^14.3.0",
     "@astroapps/aria-datepicker": "^1.3.0"
@@ -36,7 +36,7 @@
     "@internationalized/date": "^3.6.0"
   },
   "devDependencies": {
-    "react": "^18.2.0",
+    "react": "^18.2.0 || ^19",
     "@react-typed-forms/core": "^4.0.0",
     "@react-typed-forms/schemas": "^14.3.0",
     "@astroapps/aria-datepicker": "^1.3.0",

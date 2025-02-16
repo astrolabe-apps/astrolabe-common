@@ -5,15 +5,15 @@ import {
   ControlAdornment,
   ControlDefinition,
   CustomRenderOptions,
-  DataControlDefinition,
   EntityExpression,
   isDataControl,
   makeParamTag,
+  rendererClass,
   RenderOptions,
   SchemaTags,
   stringField,
 } from "@react-typed-forms/schemas";
-import { ColumnHeader } from "@astroapps/datagrid";
+import { ColumnHeader, DataGridClasses } from "@astroapps/datagrid";
 
 export type ColumnOptions = Pick<
   ColumnHeader,
@@ -37,8 +37,14 @@ export type ColumnOptions = Pick<
 export function getColumnHeaderFromOptions(
   columnOptions: ColumnOptions | undefined,
   definition: ControlDefinition,
+  gridClasses: DataGridClasses,
 ): Partial<ColumnHeader> {
-  if (!columnOptions) return {};
+  if (!columnOptions)
+    return {
+      cellClass: gridClasses.cellClass,
+      headerCellClass: gridClasses.headerCellClass,
+      bodyCellClass: gridClasses.bodyCellClass,
+    };
   const {
     cellClass,
     headerCellClass,
@@ -51,10 +57,13 @@ export function getColumnHeaderFromOptions(
     enabledFilter,
   } = columnOptions;
   return {
-    cellClass,
-    headerCellClass,
+    cellClass: rendererClass(cellClass, gridClasses.cellClass),
+    bodyCellClass: rendererClass(bodyCellClass, gridClasses.bodyCellClass),
+    headerCellClass: rendererClass(
+      headerCellClass,
+      gridClasses.headerCellClass,
+    ),
     columnTemplate,
-    bodyCellClass,
     title,
     filterField: enabledFilter ? customField(filterField) : undefined,
     sortField: enabledSort ? customField(sortField) : undefined,
