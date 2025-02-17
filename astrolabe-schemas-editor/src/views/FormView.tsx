@@ -27,8 +27,9 @@ export function FormView(props: { formId: string; context: ViewContext }) {
   useControlEffect(
     () => [control.fields.root.dirty, control.fields.name.value] as const,
     ([unsaved, name]) => {
-      if (unsaved) console.log(control.fields.root);
-      context.updateTabTitle("form:" + formId, unsaved ? name + " *" : name!);
+      if (name) {
+        context.updateTabTitle("form:" + formId, unsaved ? name + " *" : name);
+      }
     },
     true,
   );

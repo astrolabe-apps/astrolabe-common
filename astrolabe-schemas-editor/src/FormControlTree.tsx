@@ -111,23 +111,7 @@ export function FormControlTree({
         ref={treeApi}
         width={width}
         height={height}
-        onSelect={(n) => {
-          const f = n[0];
-          selected.value = n[0]?.id;
-          if (f) {
-            selectedControl.value = {
-              form: f.data.form,
-              schema: f.data.schema,
-            };
-            const schemaPath = fieldPathForDefinition(f.data.form.definition);
-            if (schemaPath) {
-              selectedField.value = schemaForFieldPath(
-                schemaPath,
-                f.data.schema,
-              );
-            }
-          }
-        }}
+        onSelect={onSelect}
         data={treeNodes}
         selection={selected.value}
         children={ControlNodeRenderer}
@@ -158,6 +142,26 @@ export function FormControlTree({
       />
     </div>
   );
+
+  function onSelect(n: NodeApi<ControlNode>[]) {
+    groupedChanges(() => {
+      const f = n[0];
+      selected.value = n[0]?.id;
+      if (f) {
+        selectedControl.value = {
+          form: f.data.form,
+          schema: f.data.schema,
+        };
+        const schemaPath = fieldPathForDefinition(f.data.form.definition);
+        if (schemaPath) {
+          selectedField.value = schemaForFieldPath(schemaPath, f.data.schema);
+        }
+      } else {
+        selectedControl.value = undefined;
+        selectedField.value = undefined;
+      }
+    });
+  }
 
   function makeChildren(
     x: FormNode,

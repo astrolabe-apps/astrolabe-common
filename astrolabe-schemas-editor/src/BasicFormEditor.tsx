@@ -32,7 +32,13 @@ import {
   rootSchemaNode,
   SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
-import React, { ReactElement, ReactNode, useMemo, useRef } from "react";
+import React, {
+  ReactElement,
+  ReactNode,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   createTailwindcss,
   TailwindConfig,
@@ -79,7 +85,6 @@ export interface BasicFormEditorProps<A extends string> {
     | ((c: FormNode, data: Control<any>) => ReactNode);
 }
 
-const model = Model.fromJson(defaultLayout);
 export function BasicFormEditor<A extends string = string>({
   formRenderer,
   selectedForm: sf,
@@ -111,6 +116,8 @@ export function BasicFormEditor<A extends string = string>({
     () => applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions ?? []),
     [extensions],
   );
+  const [model] = useState(() => Model.fromJson(defaultLayout));
+
   const editorFormRenderer = useMemo(() => createEditorRenderer([]), []);
   const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});

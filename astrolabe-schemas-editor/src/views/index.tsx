@@ -51,6 +51,7 @@ export function getViewAndParams(tabId: string): [string, string?] {
 export interface EditableForm {
   selectedControl?: SelectedControlNode;
   selectedField?: SchemaNode;
+  selectedControlId?: string;
   root: ControlDefinition;
   renderer: FormRenderer;
   schemaId: string;
