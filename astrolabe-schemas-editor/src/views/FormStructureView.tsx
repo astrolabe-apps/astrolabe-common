@@ -1,16 +1,20 @@
 import { getEditorFormTree, ViewContext } from "./index";
 import { FormControlTree } from "../FormControlTree";
-import React from "react";
+import React, { useEffect } from "react";
 import { TreeApi } from "react-arborist";
 import { ControlNode } from "../types";
 import { createFormTreeWithRoot } from "@react-typed-forms/schemas";
 import { EditorFormNode } from "../EditorFormNode";
-import { controlNotNull } from "@react-typed-forms/core";
+import { controlNotNull, useControl } from "@react-typed-forms/core";
+import { defaultControlDefinitionForm } from "../schemaSchemas";
 
 export function FormStructureView({ context }: { context: ViewContext }) {
   const controlTreeApi = React.useRef<TreeApi<ControlNode> | null>(null);
   const { schemaLookup, currentForm, button } = context;
   const cf = controlNotNull(context.getCurrentForm());
+  const selectedTreeNode = useControl(
+    () => cf?.fields.selectedControl.value?.form.id,
+  );
   if (!cf) return <div>Select a form</div>;
   const schemaId = cf.fields.schemaId.value;
   const rootSchema = schemaId ? schemaLookup.getSchema(schemaId) : undefined;
@@ -20,12 +24,14 @@ export function FormStructureView({ context }: { context: ViewContext }) {
     <div className="flex flex-col h-full">
       <div className="flex gap-2">
         {button(() => controlTreeApi.current?.closeAll(), "Collapse")}
+        {button(addRootControl, "Add Control")}
       </div>
 
       <FormControlTree
         rootNode={tree.rootNode}
         rootSchema={rootSchema}
-        selected={cf.fields.selectedControl}
+        selectedControl={cf.fields.selectedControl}
+        selected={selectedTreeNode}
         selectedField={cf.fields.selectedField}
         onDeleted={() => {}}
         treeApi={controlTreeApi}
@@ -33,4 +39,13 @@ export function FormStructureView({ context }: { context: ViewContext }) {
       />
     </div>
   );
+
+  function addRootControl() {
+    const newControl = (tree.rootNode as EditorFormNode).addChild({
+      ...defaultControlDefinitionForm,
+      title: "New",
+    });
+    const newId = newControl.uniqueId.toString();
+    selectedTreeNode.value = newId;
+  }
 }

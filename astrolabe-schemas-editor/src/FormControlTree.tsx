@@ -38,7 +38,8 @@ export interface FormControlTreeProps {
   className?: string;
   rootNode: FormNode;
   rootSchema: SchemaNode;
-  selected: Control<SelectedControlNode | undefined>;
+  selectedControl: Control<SelectedControlNode | undefined>;
+  selected: Control<string | undefined>;
   selectedField: Control<SchemaNode | undefined>;
   onDeleted: (n: NodeApi<ControlNode>) => void;
   treeApi?: MutableRefObject<TreeApi<ControlNode> | null>;
@@ -47,6 +48,7 @@ export interface FormControlTreeProps {
 export function FormControlTree({
   rootNode,
   selected,
+  selectedControl,
   rootSchema,
   selectedField,
   onDeleted,
@@ -62,6 +64,7 @@ export function FormControlTree({
     schema: rootSchema,
   }));
 
+  console.log({ selected: selected.value, treeNodes, sId: selected.uniqueId });
   function getEditableChildren(
     x?: FormNode,
   ): Control<ControlDefinition[] | null | undefined> | undefined {
@@ -110,9 +113,14 @@ export function FormControlTree({
         width={width}
         height={height}
         onSelect={(n) => {
+          console.log(n);
           const f = n[0];
+          selected.value = n[0]?.id;
           if (f) {
-            selected.value = { form: f.data.form, schema: f.data.schema };
+            selectedControl.value = {
+              form: f.data.form,
+              schema: f.data.schema,
+            };
             const schemaPath = fieldPathForDefinition(f.data.form.definition);
             if (schemaPath) {
               selectedField.value = schemaForFieldPath(
@@ -123,7 +131,7 @@ export function FormControlTree({
           }
         }}
         data={treeNodes}
-        selection={selected.value?.form.id}
+        selection={selected.value}
         children={ControlNodeRenderer}
         onCreate={(props) => {
           if (props.parentNode) {

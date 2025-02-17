@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactElement } from "react";
 import { CurrentSchemaView } from "./CurrentSchemaView";
 import { getViewAndParams, ViewContext } from "./index";
 import { FormStructureView } from "./FormStructureView";
@@ -6,9 +6,30 @@ import { ControlPropertiesView } from "./ControlPropertiesView";
 import { FormView } from "./FormView";
 import { FormListView } from "./FormListView";
 import { HelpView } from "./HelpView";
-import { TabData } from "rc-dock/es";
 
-export function createView(viewId: string, context: ViewContext): TabData {
+export function getTabTitle(viewType: string, viewParams?: string): string {
+  switch (viewType) {
+    case "help":
+      return "Help";
+    case "formList":
+      return "Forms";
+    case "currentSchema":
+      return "Current Schema";
+    case "form":
+      return "Loading " + viewParams;
+    case "formStructure":
+      return "Control Structure";
+    case "controlProperties":
+      return "Control Properties";
+    default:
+      return "Unknown";
+  }
+}
+
+export function createView(
+  viewId: string,
+  context: ViewContext,
+): { title: string; content: ReactElement; closable: boolean } {
   const [viewType, viewParams] = getViewAndParams(viewId);
   return { title: title(), content: element(), closable: closable() };
 

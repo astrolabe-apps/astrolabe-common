@@ -1,6 +1,6 @@
 "use client";
 
-import "rc-dock/dist/rc-dock.css";
+import "flexlayout-react/style/gray.css";
 import { saveAs } from "file-saver";
 import {
   BasicFormEditor,

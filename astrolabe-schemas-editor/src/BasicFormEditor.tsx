@@ -41,17 +41,17 @@ import {
   TailwindConfig,
 } from "@mhsdesign/jit-browser-tailwindcss";
 import defaultEditorControls from "./ControlDefinition.json";
-import {
-  DockLayout,
-  LayoutBase,
-  PanelBase,
-  PanelData,
-  TabBase,
-  TabData,
-} from "rc-dock/es";
 import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
-import { createView } from "./views/createView";
+import { createView, getTabTitle } from "./views/createView";
 import { AnyBase, find } from "./dockHelper";
+import {
+  Layout,
+  Model,
+  TabNode,
+  Actions,
+  DockLocation,
+} from "flexlayout-react";
+import { defaultLayout } from "./defaultLayout";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
@@ -113,7 +113,7 @@ export function BasicFormEditor<A extends string = string>({
     [extensions],
   );
   const editorFormRenderer = useMemo(() => createEditorRenderer([]), []);
-  const dockRef = useRef<DockLayout | null>(null);
+  const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
   const controlGroup: GroupedControlsDefinition = useMemo(() => {
@@ -229,90 +229,96 @@ export function BasicFormEditor<A extends string = string>({
     saveForm: doSaveForm,
     checkbox,
   };
-  const layout = useControl<LayoutBase>(
-    () =>
-      ({
-        dockbox: {
-          mode: "horizontal",
-          children: [
-            {
-              id: "project",
-              tabs: [{ id: "formList" }],
-              size: 1,
-            },
-            {
-              id: "documents",
-              group: "documents",
-              size: 5,
-              tabs: [],
-            },
-            {
-              mode: "vertical",
-              size: 4,
-              children: [
-                {
-                  mode: "horizontal",
-                  children: [
-                    {
-                      tabs: [{ id: "formStructure" }],
-                    },
-                    { tabs: [{ id: "currentSchema" }] },
-                  ],
-                },
-                {
-                  tabs: [{ id: "controlProperties" }],
-                },
-              ],
-            },
-          ],
-        },
-      }) satisfies LayoutBase,
-  );
+  // const layout = useControl<LayoutBase>(
+  //   () =>
+  //     ({
+  //       dockbox: {
+  //         mode: "horizontal",
+  //         children: [
+  //           {
+  //             id: "project",
+  //             tabs: [{ id: "formList" }],
+  //             size: 1,
+  //           },
+  //           {
+  //             id: "documents",
+  //             group: "documents",
+  //             size: 5,
+  //             tabs: [],
+  //           },
+  //           {
+  //             mode: "vertical",
+  //             size: 4,
+  //             children: [
+  //               {
+  //                 mode: "horizontal",
+  //                 children: [
+  //                   {
+  //                     tabs: [{ id: "formStructure" }],
+  //                   },
+  //                   { tabs: [{ id: "currentSchema" }] },
+  //                 ],
+  //               },
+  //               {
+  //                 tabs: [{ id: "controlProperties" }],
+  //               },
+  //             ],
+  //           },
+  //         ],
+  //       },
+  //     }) satisfies LayoutBase,
+  // );
+
+  const model = useMemo(() => Model.fromJson(defaultLayout), [defaultLayout]);
 
   return (
-    <DockLayout
+    <Layout
       ref={dockRef}
-      layout={layout.value}
-      loadTab={loadTab}
-      groups={{ documents: {} }}
-      afterPanelLoaded={(savedPanel, loadedPanel) => {
-        if (loadedPanel.id === "documents") {
-          loadedPanel.panelLock = {};
-        }
-      }}
-      saveTab={({ id, title }) => ({ id, title })}
-      onLayoutChange={(newLayout, currentTabId, direction) => {
-        layout.value = newLayout;
-        const docPanel = find(newLayout, "documents") as PanelData;
-        if (docPanel.activeId) {
-          const [viewType, viewParams] = getViewAndParams(docPanel.activeId);
-          if (viewType === "form" && viewParams) {
-            selectedForm.value = viewParams as A;
-          }
-        } else selectedForm.value = undefined;
-      }}
-      style={{
-        position: "absolute",
-        left: 10,
-        top: 10,
-        right: 10,
-        bottom: 10,
-      }}
+      model={model}
+      factory={renderTab}
+      realtimeResize
+      // layout={layout.value}
+      // loadTab={loadTab}
+      // groups={{ documents: {} }}
+      // afterPanelLoaded={(savedPanel, loadedPanel) => {
+      //   if (loadedPanel.id === "documents") {
+      //     loadedPanel.panelLock = {};
+      //   }
+      // }}
+      // saveTab={({ id, title }) => ({ id, title })}
+      // onLayoutChange={(newLayout, currentTabId, direction) => {
+      //   layout.value = newLayout;
+      //   const docPanel = find(newLayout, "documents") as PanelData;
+      //   if (docPanel.activeId) {
+      //     const [viewType, viewParams] = getViewAndParams(docPanel.activeId);
+      //     if (viewType === "form" && viewParams) {
+      //       selectedForm.value = viewParams as A;
+      //     }
+      //   } else selectedForm.value = undefined;
+      // }}
+      // style={{
+      //   position: "absolute",
+      //   left: 10,
+      //   top: 10,
+      //   right: 10,
+      //   bottom: 10,
+      // }}
     />
   );
 
-  function findLayoutControl<V extends AnyBase>(
-    id: string,
-  ): Control<V> | undefined {
-    const layoutTracked = trackedValue(layout);
-    return unsafeRestoreControl(find(layoutTracked, id) as V)!;
+  function renderTab(node: TabNode) {
+    return createView(node.getId(), viewContext).content;
   }
 
+  // function findLayoutControl<V extends AnyBase>(
+  //   id: string,
+  // ): Control<V> | undefined {
+  //   const layoutTracked = trackedValue(layout);
+  //   return unsafeRestoreControl(find(layoutTracked, id) as V)!;
+  // }
+
   function updateTabTitle(tabId: string, title: string) {
-    const tab = findLayoutControl<TabData>(tabId);
-    if (tab) {
-      tab.fields.title.value = title;
-    }
+    model.doAction(Actions.updateNodeAttributes(tabId, { name: title }));
   }
 
   function getForm(formId: string) {
@@ -321,32 +327,41 @@ export function BasicFormEditor<A extends string = string>({
     return form;
   }
 
-  function getTabInPanel(
-    panelId: string,
-    tabId: string,
-  ): [Control<PanelBase>, tab: Control<TabBase> | undefined] {
-    const panelBaseControl = findLayoutControl<PanelBase>(panelId)!;
-    const tabsControl = panelBaseControl.fields.tabs;
-    return [
-      panelBaseControl,
-      tabsControl.elements.find((x) => x.fields.id.value === tabId),
-    ];
-  }
+  // function getTabInPanel(
+  //   panelId: string,
+  //   tabId: string,
+  // ): [Control<PanelBase>, tab: Control<TabBase> | undefined] {
+  //   const panelBaseControl = findLayoutControl<PanelBase>(panelId)!;
+  //   const tabsControl = panelBaseControl.fields.tabs;
+  //   return [
+  //     panelBaseControl,
+  //     tabsControl.elements.find((x) => x.fields.id.value === tabId),
+  //   ];
+  // }
 
   function openForm(formId: string) {
     const tabId = "form:" + formId;
-    const [docs, tab] = getTabInPanel("documents", tabId);
-    groupedChanges(() => {
-      if (!tab) {
-        addElement(docs.fields.tabs, { id: tabId });
-      }
-      docs.fields.activeId.value = tabId;
-    });
+    model.doAction(
+      Actions.addNode(
+        { type: "tab", id: tabId, name: getTabTitle("form", formId) },
+        "documents",
+        DockLocation.CENTER,
+        0,
+      ),
+    );
+    // const tabId = "form:" + formId;
+    // const [docs, tab] = getTabInPanel("documents", tabId);
+    // groupedChanges(() => {
+    //   if (!tab) {
+    //     addElement(docs.fields.tabs, { id: tabId });
+    //   }
+    //   docs.fields.activeId.value = tabId;
+    // });
   }
 
-  function loadTab(savedTab: TabBase): TabData {
-    return { ...createView(savedTab.id!, viewContext), ...savedTab };
-  }
+  // function loadTab(savedTab: TabBase): TabData {
+  //   return { ...createView(savedTab.id!, viewContext), ...savedTab };
+  // }
 
   async function loadFormNode(
     formId: string,

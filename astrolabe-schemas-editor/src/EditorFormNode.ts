@@ -13,8 +13,8 @@ export class EditorFormNode implements FormNode {
     private control: Control<ControlDefinition>,
   ) {}
 
-  addChild(c: ControlDefinition) {
-    addElement(this.control.fields.children, c);
+  addChild(c: ControlDefinition): Control<ControlDefinition> {
+    return addElement(this.control.fields.children, c);
   }
   getChildNodes(dontFollowRef?: boolean): FormNode[] {
     return this.control.fields.children.elements.map(
