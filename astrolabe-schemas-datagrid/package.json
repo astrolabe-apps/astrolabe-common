@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "react": "^18.2.0",
-    "@radix-ui/react-popover": "^1.0.7",
+    "@radix-ui/react-popover": "^1.1.6",
     "@astroapps/datagrid": "^1.1.0",
     "@astroapps/searchstate": "^2.0.0",
     "@react-typed-forms/core": "^4.0.0",

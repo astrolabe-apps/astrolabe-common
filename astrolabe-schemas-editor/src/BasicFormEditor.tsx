@@ -1,11 +1,8 @@
 import {
-  addElement,
   Control,
   ensureMetaValue,
   Fcheckbox,
-  groupedChanges,
   trackedValue,
-  unsafeRestoreControl,
   useComputed,
   useControl,
   useControlEffect,
@@ -43,13 +40,14 @@ import {
 import defaultEditorControls from "./ControlDefinition.json";
 import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
 import { createView, getTabTitle } from "./views/createView";
-import { AnyBase, find } from "./dockHelper";
 import {
+  Actions,
+  DockLocation,
+  IJsonTabNode,
   Layout,
   Model,
   TabNode,
-  Actions,
-  DockLocation,
+  TabSetNode,
 } from "flexlayout-react";
 import { defaultLayout } from "./defaultLayout";
 
@@ -81,6 +79,7 @@ export interface BasicFormEditorProps<A extends string> {
     | ((c: FormNode, data: Control<any>) => ReactNode);
 }
 
+const model = Model.fromJson(defaultLayout);
 export function BasicFormEditor<A extends string = string>({
   formRenderer,
   selectedForm: sf,
@@ -205,7 +204,9 @@ export function BasicFormEditor<A extends string = string>({
     );
     c.fields.root.markAsClean();
   }
-
+  const formList = formTypes.map((e) =>
+    Array.isArray(e) ? { id: e[0], name: e[1] } : e,
+  );
   const viewContext: ViewContext = {
     validation,
     previewOptions,
@@ -221,55 +222,12 @@ export function BasicFormEditor<A extends string = string>({
     editorControls: controlGroup,
     createEditorRenderer,
     editorFields: rootSchemaNode(ControlDefinitionSchema),
-    formList: formTypes.map((e) =>
-      Array.isArray(e) ? { id: e[0], name: e[1] } : e,
-    ),
+    formList,
     openForm,
     updateTabTitle,
     saveForm: doSaveForm,
     checkbox,
   };
-  // const layout = useControl<LayoutBase>(
-  //   () =>
-  //     ({
-  //       dockbox: {
-  //         mode: "horizontal",
-  //         children: [
-  //           {
-  //             id: "project",
-  //             tabs: [{ id: "formList" }],
-  //             size: 1,
-  //           },
-  //           {
-  //             id: "documents",
-  //             group: "documents",
-  //             size: 5,
-  //             tabs: [],
-  //           },
-  //           {
-  //             mode: "vertical",
-  //             size: 4,
-  //             children: [
-  //               {
-  //                 mode: "horizontal",
-  //                 children: [
-  //                   {
-  //                     tabs: [{ id: "formStructure" }],
-  //                   },
-  //                   { tabs: [{ id: "currentSchema" }] },
-  //                 ],
-  //               },
-  //               {
-  //                 tabs: [{ id: "controlProperties" }],
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //     }) satisfies LayoutBase,
-  // );
-
-  const model = useMemo(() => Model.fromJson(defaultLayout), [defaultLayout]);
 
   return (
     <Layout
@@ -277,45 +235,20 @@ export function BasicFormEditor<A extends string = string>({
       model={model}
       factory={renderTab}
       realtimeResize
-      // layout={layout.value}
-      // loadTab={loadTab}
-      // groups={{ documents: {} }}
-      // afterPanelLoaded={(savedPanel, loadedPanel) => {
-      //   if (loadedPanel.id === "documents") {
-      //     loadedPanel.panelLock = {};
-      //   }
-      // }}
-      // saveTab={({ id, title }) => ({ id, title })}
-      // onLayoutChange={(newLayout, currentTabId, direction) => {
-      //   layout.value = newLayout;
-      //   const docPanel = find(newLayout, "documents") as PanelData;
-      //   if (docPanel.activeId) {
-      //     const [viewType, viewParams] = getViewAndParams(docPanel.activeId);
-      //     if (viewType === "form" && viewParams) {
-      //       selectedForm.value = viewParams as A;
-      //     }
-      //   } else selectedForm.value = undefined;
-      // }}
-      // style={{
-      //   position: "absolute",
-      //   left: 10,
-      //   top: 10,
-      //   right: 10,
-      //   bottom: 10,
-      // }}
+      onModelChange={(m, a) => {
+        const docNode = model.getNodeById("documents") as TabSetNode;
+        const formNode = docNode.getSelectedNode() as TabNode | undefined;
+        if (formNode) {
+          const [viewId, param] = getViewAndParams(formNode.getId());
+          selectedForm.value = param as A;
+        } else selectedForm.value = undefined;
+      }}
     />
   );
 
   function renderTab(node: TabNode) {
     return createView(node.getId(), viewContext).content;
   }
-
-  // function findLayoutControl<V extends AnyBase>(
-  //   id: string,
-  // ): Control<V> | undefined {
-  //   const layoutTracked = trackedValue(layout);
-  //   return unsafeRestoreControl(find(layoutTracked, id) as V)!;
-  // }
 
   function updateTabTitle(tabId: string, title: string) {
     model.doAction(Actions.updateNodeAttributes(tabId, { name: title }));
@@ -327,46 +260,33 @@ export function BasicFormEditor<A extends string = string>({
     return form;
   }
 
-  // function getTabInPanel(
-  //   panelId: string,
-  //   tabId: string,
-  // ): [Control<PanelBase>, tab: Control<TabBase> | undefined] {
-  //   const panelBaseControl = findLayoutControl<PanelBase>(panelId)!;
-  //   const tabsControl = panelBaseControl.fields.tabs;
-  //   return [
-  //     panelBaseControl,
-  //     tabsControl.elements.find((x) => x.fields.id.value === tabId),
-  //   ];
-  // }
-
   function openForm(formId: string) {
     const tabId = "form:" + formId;
-    model.doAction(
-      Actions.addNode(
-        { type: "tab", id: tabId, name: getTabTitle("form", formId) },
-        "documents",
-        DockLocation.CENTER,
-        0,
-      ),
-    );
-    // const tabId = "form:" + formId;
-    // const [docs, tab] = getTabInPanel("documents", tabId);
-    // groupedChanges(() => {
-    //   if (!tab) {
-    //     addElement(docs.fields.tabs, { id: tabId });
-    //   }
-    //   docs.fields.activeId.value = tabId;
-    // });
+    const existingTab = model.getNodeById(tabId);
+    if (existingTab) {
+      model.doAction(Actions.selectTab(tabId));
+    } else {
+      model.doAction(
+        Actions.addNode(
+          {
+            type: "tab",
+            id: tabId,
+            name: getTabTitle("form", formId),
+            enableClose: true,
+          } satisfies IJsonTabNode,
+          "documents",
+          DockLocation.CENTER,
+          0,
+        ),
+      );
+    }
   }
-
-  // function loadTab(savedTab: TabBase): TabData {
-  //   return { ...createView(savedTab.id!, viewContext), ...savedTab };
-  // }
 
   async function loadFormNode(
     formId: string,
     control: Control<EditableForm | undefined>,
   ) {
+    const name = formList.find((x) => x.id === formId)?.name ?? formId;
     const res = await loadForm(formId as A);
     control.setInitialValue({
       root: {
@@ -382,6 +302,7 @@ export function BasicFormEditor<A extends string = string>({
       hideFields: false,
       renderer: res.renderer ?? formRenderer,
       formId,
+      name,
     });
   }
 }

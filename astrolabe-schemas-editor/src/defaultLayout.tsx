@@ -1,7 +1,9 @@
 import { IJsonModel } from "flexlayout-react";
 
 export const defaultLayout: IJsonModel = {
-  global: {},
+  global: {
+    tabEnableClose: false,
+  },
 
   layout: {
     type: "row",
@@ -23,6 +25,7 @@ export const defaultLayout: IJsonModel = {
         weight: 5,
         id: "documents",
         enableDeleteWhenEmpty: false,
+
         children: [],
       },
       {
@@ -51,33 +54,3 @@ export const defaultLayout: IJsonModel = {
     ],
   },
 };
-
-//           {
-//             id: "project",
-//             tabs: [{ id: "formList" }],
-//             size: 1,
-//           },
-//           {
-//             id: "documents",
-//             group: "documents",
-//             size: 5,
-//             tabs: [],
-//           },
-//           {
-//             mode: "vertical",
-//             size: 4,
-//             children: [
-//               {
-//                 mode: "horizontal",
-//                 children: [
-//                   {
-//                     tabs: [{ id: "formStructure" }],
-//                   },
-//                   { tabs: [{ id: "currentSchema" }] },
-//                 ],
-//               },
-//               {
-//                 tabs: [{ id: "controlProperties" }],
-//               },
-//             ],
-//           },

@@ -64,7 +64,6 @@ export function FormControlTree({
     schema: rootSchema,
   }));
 
-  console.log({ selected: selected.value, treeNodes, sId: selected.uniqueId });
   function getEditableChildren(
     x?: FormNode,
   ): Control<ControlDefinition[] | null | undefined> | undefined {
@@ -113,7 +112,6 @@ export function FormControlTree({
         width={width}
         height={height}
         onSelect={(n) => {
-          console.log(n);
           const f = n[0];
           selected.value = n[0]?.id;
           if (f) {

@@ -25,13 +25,10 @@ export function FormView(props: { formId: string; context: ViewContext }) {
     data: {},
   });
   useControlEffect(
-    () => control.fields.root.dirty,
-    (unsaved) => {
+    () => [control.fields.root.dirty, control.fields.name.value] as const,
+    ([unsaved, name]) => {
       if (unsaved) console.log(control.fields.root);
-      context.updateTabTitle(
-        "form:" + formId,
-        unsaved ? formId + " *" : formId,
-      );
+      context.updateTabTitle("form:" + formId, unsaved ? name + " *" : name!);
     },
     true,
   );

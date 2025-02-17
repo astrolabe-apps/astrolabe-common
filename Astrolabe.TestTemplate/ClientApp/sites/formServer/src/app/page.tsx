@@ -1,6 +1,6 @@
 "use client";
 
-import "flexlayout-react/style/gray.css";
+import "flexlayout-react/style/light.css";
 import { saveAs } from "file-saver";
 import {
   BasicFormEditor,
@@ -42,7 +42,7 @@ import {
   UserMatchExpression,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
-import { useQueryControl } from "@astroapps/client";
+import { OptStringParam, useQueryControl } from "@astroapps/client";
 import { convertStringParam, useSyncParam } from "@astroapps/client";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
@@ -276,15 +276,7 @@ export default function Editor() {
     ensureSelectableValues(["Student", "Teacher"], (x) => x),
   );
   const [container, setContainer] = useState<HTMLElement | null>(null);
-  const selectedForm = useSyncParam(
-    qc,
-    "form",
-    convertStringParam(
-      (x) => x,
-      (x) => x,
-      "EditorControls",
-    ),
-  );
+  const selectedForm = useSyncParam(qc, "form", OptStringParam);
   const StdFormRenderer = useMemo(
     () => createStdFormRenderer(container),
     [container],
@@ -335,7 +327,7 @@ export default function Editor() {
           } else {
             if (selectedForm.value !== "Test") {
               await new SearchStateClient().editControlDefinition(
-                selectedForm.value,
+                selectedForm.value!,
                 { controls, config: null },
               );
             }
@@ -368,7 +360,7 @@ export default function Editor() {
   async function genPdf(c: FormNode, data: Control<any>) {
     const file = await carClient.generatePdf({
       controls: c.definition.children! as CD[],
-      schemaName: selectedForm.value,
+      schemaName: selectedForm.value!,
       data: data.value,
     });
     saveAs(file.data, file.fileName);

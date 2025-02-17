@@ -6,7 +6,7 @@ export function ControlPropertiesView({ context }: { context: ViewContext }) {
   const { editorControls, editorFields, createEditorRenderer, getCurrentForm } =
     context;
   const sc = getCurrentForm()?.fields.selectedControl.value;
-  if (!sc) return <div>Select a control</div>;
+  if (!sc) return <div className="my-8 text-center">No control selected</div>;
   return (
     <div className="h-full w-full overflow-auto">
       <FormControlEditor
