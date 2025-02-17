@@ -53,16 +53,18 @@ import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
 import { createView } from "./views/createView";
 import { AnyBase, find } from "./dockHelper";
 
-export interface BasicFormEditorProps {
+export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
   createEditorRenderer?: (renderers: RendererRegistration[]) => FormRenderer;
   schemas: SchemaTreeLookup;
-  loadForm: (
-    formId: string,
-  ) => Promise<{ controls: ControlDefinition[]; schemaName: string, renderer?: FormRenderer }>;
-  selectedForm?: Control<string | undefined>;
+  loadForm: (formId: A) => Promise<{
+    controls: ControlDefinition[];
+    schemaName: string;
+    renderer?: FormRenderer;
+  }>;
+  selectedForm?: Control<A | undefined>;
   formTypes: [string, string][] | FormInfo[];
-  saveForm: (controls: ControlDefinition[]) => Promise<any>;
+  saveForm: (controls: ControlDefinition[], formId: A) => Promise<any>;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   extensions?: ControlDefinitionExtension[];
   editorControls?: ControlDefinition[];
@@ -79,7 +81,7 @@ export interface BasicFormEditorProps {
     | ((c: FormNode, data: Control<any>) => ReactNode);
 }
 
-export function BasicFormEditor({
+export function BasicFormEditor<A extends string = string>({
   formRenderer,
   selectedForm: sf,
   loadForm,
@@ -100,8 +102,8 @@ export function BasicFormEditor({
   controlsClass,
   handleIcon,
   extraPreviewControls,
-}: BasicFormEditorProps): ReactElement {
-  const selectedForm = useControl<string|undefined>(undefined, { use: sf });
+}: BasicFormEditorProps<A>): ReactElement {
+  const selectedForm = useControl<A | undefined>(undefined, { use: sf });
   const extensions = useMemo(
     () => [...(_extensions ?? []), ValueForFieldExtension],
     [_extensions],
@@ -199,6 +201,7 @@ export function BasicFormEditor({
       c.fields.root.value.children?.map((c) =>
         cleanDataForSchema(c, ControlDefinitionSchema, true),
       ) ?? [],
+      c.fields.formId.value as A,
     );
     c.fields.root.markAsClean();
   }
@@ -207,7 +210,7 @@ export function BasicFormEditor({
     validation,
     previewOptions,
     button,
-    currentForm: selectedForm,
+    currentForm: selectedForm.as(),
     schemaLookup: schemas,
     getForm,
     extraPreviewControls,
@@ -284,7 +287,7 @@ export function BasicFormEditor({
         if (docPanel.activeId) {
           const [viewType, viewParams] = getViewAndParams(docPanel.activeId);
           if (viewType === "form" && viewParams) {
-            selectedForm.value = viewParams;
+            selectedForm.value = viewParams as A;
           }
         } else selectedForm.value = undefined;
       }}
@@ -349,17 +352,21 @@ export function BasicFormEditor({
     formId: string,
     control: Control<EditableForm | undefined>,
   ) {
-    const res = await loadForm(formId);
+    const res = await loadForm(formId as A);
     control.setInitialValue({
-      root: { 
-        children: res.controls, type: ControlDefinitionType.Group, 
-        groupOptions: { 
-          type: GroupRenderType.Standard, childLayoutClass: rootControlClass, hideTitle: true
-        } 
+      root: {
+        children: res.controls,
+        type: ControlDefinitionType.Group,
+        groupOptions: {
+          type: GroupRenderType.Standard,
+          childLayoutClass: rootControlClass,
+          hideTitle: true,
+        },
       } as ControlDefinition,
       schemaId: res.schemaName,
       hideFields: false,
       renderer: res.renderer ?? formRenderer,
+      formId,
     });
   }
 }

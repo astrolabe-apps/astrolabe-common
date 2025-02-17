@@ -55,6 +55,7 @@ export interface EditableForm {
   renderer: FormRenderer;
   schemaId: string;
   hideFields: boolean;
+  formId: string;
 }
 
 export function getEditorFormTree(cf: Control<EditableForm>) {
