@@ -33,19 +33,20 @@ export function createFormRenderer(
   customRenderers: RendererRegistration[] = [],
   defaultRenderers: DefaultRenderers,
 ): FormRenderer {
-  const dataRegistrations = customRenderers.filter(isDataRegistration);
-  const groupRegistrations = customRenderers.filter(isGroupRegistration);
-  const adornmentRegistrations = customRenderers.filter(
-    isAdornmentRegistration,
-  );
-  const displayRegistrations = customRenderers.filter(isDisplayRegistration);
-  const labelRenderers = customRenderers.filter(isLabelRegistration);
-  const arrayRenderers = customRenderers.filter(isArrayRegistration);
-  const actionRenderers = customRenderers.filter(isActionRegistration);
-  const layoutRenderers = customRenderers.filter(isLayoutRegistration);
+  const allRenderers = [
+    ...customRenderers,
+    ...(defaultRenderers.extraRenderers ?? []),
+  ];
+  const dataRegistrations = allRenderers.filter(isDataRegistration);
+  const groupRegistrations = allRenderers.filter(isGroupRegistration);
+  const adornmentRegistrations = allRenderers.filter(isAdornmentRegistration);
+  const displayRegistrations = allRenderers.filter(isDisplayRegistration);
+  const labelRenderers = allRenderers.filter(isLabelRegistration);
+  const arrayRenderers = allRenderers.filter(isArrayRegistration);
+  const actionRenderers = allRenderers.filter(isActionRegistration);
+  const layoutRenderers = allRenderers.filter(isLayoutRegistration);
   const visibilityRenderer =
-    customRenderers.find(isVisibilityRegistration) ??
-    defaultRenderers.visibility;
+    allRenderers.find(isVisibilityRegistration) ?? defaultRenderers.visibility;
 
   const formRenderers: FormRenderer = {
     renderAction,

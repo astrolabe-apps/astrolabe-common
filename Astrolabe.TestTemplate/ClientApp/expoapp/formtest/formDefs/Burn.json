@@ -4,6 +4,11 @@
       "type": "Data",
       "title": "Burn Activity",
       "children": [
+//        {
+//          "type": "Action",
+//          "title": "Register a burn",
+//          "actionId": "applyBurn"
+//        },
         {
           "type": "Data",
           "title": "Start Date",

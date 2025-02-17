@@ -70,6 +70,7 @@ import {
   LabelRendererRegistration,
   LabelType,
   rendererClass,
+  RendererRegistration,
   schemaDataForFieldRef,
   SetFieldAdornment,
   useDynamicHooks,
@@ -101,6 +102,7 @@ export interface DefaultRendererOptions {
   label?: DefaultLabelRendererOptions;
   adornment?: DefaultAdornmentRendererOptions;
   layout?: DefaultLayoutRendererOptions;
+  extraRenderers?: RendererRegistration[];
   renderText?: (props: ReactNode) => ReactNode;
   h?: FormRenderer["h"];
 }
@@ -465,6 +467,7 @@ export function createDefaultRenderers(
     adornment: createDefaultAdornmentRenderer(options.adornment),
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
+    extraRenderers: options.extraRenderers ?? [],
     renderText: options.renderText ?? ((x) => x),
     h: options.h ?? h,
   };

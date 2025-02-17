@@ -34,6 +34,7 @@ export interface DefaultRenderers {
   adornment: AdornmentRendererRegistration;
   renderLayout: LayoutRendererRegistration;
   visibility: VisibilityRendererRegistration;
+  extraRenderers: RendererRegistration[];
   renderText: (props: ReactNode) => ReactNode;
   h: (type: any, props: any, ...children: any[]) => ReactElement;
 }

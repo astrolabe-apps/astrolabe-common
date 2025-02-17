@@ -7,6 +7,11 @@ import { Pressable, Text, View, TextInput } from "react-native";
 // noinspection ES6UnusedImports
 import { createElement as h } from "react";
 import { RNCheckbox } from "./components/RNCheckbox";
+import { RNTextInput } from "./components/RNTextInput";
+import { RNText } from "./components/RNText";
+import { RNRadioGroupItem } from "./components/RNRadioGroup";
+import { RNDateTime } from "./components/RNDateTime";
+import { RNButton } from "./components/RNButton";
 
 export const defaultRnTailwindTheme = {
   ...defaultTailwindTheme,
@@ -26,22 +31,24 @@ function renderHtml(
   switch (tag) {
     case "button":
       const onPress = props.onClick;
-      return <Pressable {...props} onPress={onPress} children={children} />;
+      return <RNButton {...props} onPress={onPress} children={children} />;
     case "label":
     case "span":
-      return <Text {...props} children={children} />;
+      return <RNText {...props} children={children} />;
     case "div":
       return <View {...props} children={children} />;
     case "input":
       console.log(props);
       const { type, onChange, checked, value, ...rest } = props;
       switch (type) {
+        case "datetime-local":
+          return <RNText>Date Time input</RNText>;
         case "time":
-          return <Text>Time input</Text>;
+          return <RNText>Time input</RNText>;
         case "date":
-          return <Text>Date input</Text>;
+          return <RNText>Time input</RNText>;
         case "radio":
-          return <Text>Radio Button</Text>;
+          return <RNText>Radio button</RNText>;
         case "checkbox":
           return (
             <RNCheckbox
@@ -52,7 +59,7 @@ function renderHtml(
           );
         default:
           return (
-            <TextInput
+            <RNTextInput
               {...rest}
               value={typeof value == "number" ? value.toString() : value}
               onChangeText={(t) => onChange({ target: { value: t } })}

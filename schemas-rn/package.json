@@ -33,7 +33,12 @@
   "dependencies": {
     "clsx": "^1 || ^2",
     "@react-typed-forms/schemas-html": "workspace:*",
-    "@rn-primitives/checkbox": "^1.1.0"
+    "tailwind-merge": "^1.14.0",
+    "class-variance-authority": "^0.7.1",
+    "@rn-primitives/checkbox": "^1.1.0",
+    "@rn-primitives/slot": "^1.1.0",
+    "@rn-primitives/types": "^1.1.0",
+    "@rn-primitives/radio-group": "^1.1.0"
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.1.1",

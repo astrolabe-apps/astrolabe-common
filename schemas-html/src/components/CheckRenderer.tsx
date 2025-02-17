@@ -1,9 +1,9 @@
 import {
   Control,
+  FcheckboxProps,
   formControlProps,
   RenderArrayElements,
   useComputed,
-  useControlEffect,
 } from "@react-typed-forms/core";
 // noinspection ES6UnusedImports
 import React, { ReactNode, createElement as h } from "react";
@@ -210,12 +210,6 @@ function CheckBox({
     </div>
   );
 }
-
-export type FcheckboxProps = React.InputHTMLAttributes<HTMLInputElement> & {
-  control: Control<boolean | undefined | null>;
-  type?: "checkbox" | "radio";
-  notValue?: boolean;
-};
 
 export function Fcheckbox({
   control,
