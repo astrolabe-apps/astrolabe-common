@@ -125,7 +125,7 @@ export function CheckButtons({
                 classes.notSelectedClass,
               );
           return (
-            <div
+            <button
               className={clsx(
                 rendererClass(
                   controlClasses?.entryWrapperClass,
@@ -153,7 +153,7 @@ export function CheckButtons({
                 </label>
               </div>
               {entryAdornment?.(o, i, checked)}
-            </div>
+            </button>
           );
         }}
       </RenderArrayElements>

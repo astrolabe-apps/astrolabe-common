@@ -58,7 +58,11 @@ export function DefaultDisplay({
           style={style}
           className={rendererClass(className, options.textClassName)}
         >
-          {display ? coerceToString(display.value) : (data as TextDisplay).text}
+          <span>
+            {display
+              ? coerceToString(display.value)
+              : (data as TextDisplay).text}
+          </span>
         </div>
       );
     case DisplayDataType.Html:

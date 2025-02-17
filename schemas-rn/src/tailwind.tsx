@@ -1,17 +1,16 @@
+// noinspection ES6UnusedImports
+import { createElement as h } from "react";
+
 import {
   DefaultRendererOptions,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
 import { createElement, ElementType, ReactElement } from "react";
-import { Pressable, Text, View, TextInput } from "react-native";
-// noinspection ES6UnusedImports
-import { createElement as h } from "react";
+import { Pressable, Text, View } from "react-native";
 import { RNCheckbox } from "./components/RNCheckbox";
 import { RNTextInput } from "./components/RNTextInput";
 import { RNText } from "./components/RNText";
-import { RNRadioGroupItem } from "./components/RNRadioGroup";
-import { RNDateTime } from "./components/RNDateTime";
-import { RNButton } from "./components/RNButton";
+import { RNRadioItem } from "./components/RNRadioItem";
 
 export const defaultRnTailwindTheme = {
   ...defaultTailwindTheme,
@@ -31,11 +30,13 @@ function renderHtml(
   switch (tag) {
     case "button":
       const onPress = props.onClick;
-      return <RNButton {...props} onPress={onPress} children={children} />;
+      return <Pressable {...props} onPress={onPress} children={children} />;
     case "label":
     case "span":
+    case "h1":
       return <RNText {...props} children={children} />;
     case "div":
+      // console.log("div", props, children);
       return <View {...props} children={children} />;
     case "input":
       console.log(props);
@@ -48,7 +49,13 @@ function renderHtml(
         case "date":
           return <RNText>Time input</RNText>;
         case "radio":
-          return <RNText>Radio button</RNText>;
+          return (
+            <RNRadioItem
+              {...rest}
+              checked={checked}
+              onChange={() => onChange({ target: {} })}
+            />
+          );
         case "checkbox":
           return (
             <RNCheckbox

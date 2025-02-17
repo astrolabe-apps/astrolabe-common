@@ -1,5 +1,4 @@
-﻿import DateTimePicker from "@react-native-community/datetimepicker";
-import { RNText } from "./RNText";
+﻿import { RNText } from "./RNText";
 import { useState } from "react";
 import { RNButton } from "./RNButton";
 import { SafeAreaView } from "react-native";
@@ -35,15 +34,15 @@ export function RNDateTime({}: RNDateTimeProps) {
       <RNButton onPress={showDatepicker} />
       <RNButton onPress={showTimepicker} />
       <RNText>selected: {date.toLocaleString()}</RNText>
-      {show && (
-        <DateTimePicker
-          testID="dateTimePicker"
-          value={date}
-          mode={"date"}
-          is24Hour={true}
-          onChange={onChange}
-        />
-      )}
+      {/*{show && (*/}
+      {/*  <DateTimePicker*/}
+      {/*    testID="dateTimePicker"*/}
+      {/*    value={date}*/}
+      {/*    mode={"date"}*/}
+      {/*    is24Hour={true}*/}
+      {/*    onChange={onChange}*/}
+      {/*  />*/}
+      {/*)}*/}
     </SafeAreaView>
   );
 }
