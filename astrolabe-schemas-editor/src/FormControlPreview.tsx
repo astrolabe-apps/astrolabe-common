@@ -61,7 +61,7 @@ export interface FormControlPreviewProps {
 }
 
 export interface FormControlPreviewContext {
-  selected: Control<SelectedControlNode | undefined>;
+  selected: Control<string | undefined>;
   readonly?: boolean;
   VisibilityIcon: ReactNode;
   hideFields: Control<boolean>;
@@ -95,12 +95,9 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const displayOnly = dOnly || isControlDisplayOnly(definition);
 
   const defControl = unsafeRestoreControl(definition);
+  const defControlId = defControl?.uniqueId.toString();
   const isSelected = useComputed(() => {
-    const selDef = selected.value?.form.definition;
-    const defControlId = defControl?.uniqueId;
-    const selControlId = selDef
-      ? unsafeRestoreControl(selDef)?.uniqueId
-      : undefined;
+    const selControlId = selected.value;
     return selControlId !== undefined && defControlId == selControlId;
   }).value;
   const scrollRef = useScrollIntoView(isSelected);
@@ -189,20 +186,23 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
     designMode: true,
   });
-  const asSelection = { form: node, schema: parentNode };
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,
     "onClick" | "onClickCapture" | "onMouseDownCapture"
   > = isGroupControl(definition) ||
   (isDataControl(definition) && (definition.children?.length ?? 0) > 0)
     ? {
-        onClick: (e) => (selected.value = asSelection),
+        onClick: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          selected.value = defControlId;
+        },
       }
     : {
         onClickCapture: (e) => {
           e.preventDefault();
           e.stopPropagation();
-          selected.value = asSelection;
+          selected.value = defControlId;
         },
         onMouseDownCapture: (e) => {
           e.stopPropagation();

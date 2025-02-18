@@ -123,7 +123,7 @@ function RenderFormDesign({
             parentNode={rootSchema}
             dropIndex={0}
             context={{
-              selected: c.fields.selectedControl,
+              selected: c.fields.selectedControlId,
               VisibilityIcon: <i className="fa fa-eye" />,
               renderer: formRenderer,
               hideFields: c.fields.hideFields,
