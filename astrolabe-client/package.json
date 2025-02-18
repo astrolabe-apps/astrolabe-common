@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/client",
-  "version": "2.1.1",
+  "version": "2.2.0",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
