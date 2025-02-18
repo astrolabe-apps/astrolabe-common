@@ -38,7 +38,10 @@
     "@rn-primitives/checkbox": "^1.1.0",
     "@rn-primitives/slot": "^1.1.0",
     "@rn-primitives/types": "^1.1.0",
-    "@rn-primitives/radio-group": "^1.1.0"
+    "@rn-primitives/radio-group": "^1.1.0",
+    "@react-native-community/datetimepicker": "8.2.0",
+    "react-native-modal-datetime-picker": "^18.0.0",
+    "@internationalized/date": "^3.6.0"
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.1.1",

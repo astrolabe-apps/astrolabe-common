@@ -32,7 +32,7 @@ export function DefaultDisplayOnly({
   const h = renderer.h;
   return (
     <div style={style} className={className}>
-      {text}
+      <span>{text}</span>
     </div>
   );
 }

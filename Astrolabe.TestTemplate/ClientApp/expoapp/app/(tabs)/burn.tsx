@@ -38,7 +38,7 @@ const controls = FormDefinitions.Burn.controls;
 const schemaNode = schemas.getSchema(FormDefinitions.Burn.schemaName)!;
 
 export default function TabThreeScreen() {
-  const data = useControl({});
+  const data = useControl(testFormData);
   useControlEffect(
     () => data.value,
     (v) => console.log(v),
@@ -80,3 +80,25 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 });
+
+const testFormData = {
+  registration: {
+    startTime: "10:13:00",
+    endDate: "2025-02-18",
+    endTime: "10:14:00",
+    isYourFireLargerThan1MeterCubed: true,
+    fireUnitSize: "CubicMetres",
+    area: 2,
+    purpose: "Purpose",
+    materialsBeingBurnt: "Grass",
+    fuelArrangement: "Piles",
+    otherDetails: "Details",
+    isYourPropertyLargerThan2000MetersSquared: false,
+    nameOfBrigadeInAttendance: "Support",
+    acknowledgement: true,
+  },
+  contact: {
+    linkedServices: [],
+  },
+  isYourFireLargerThan1MeterCubed: true,
+};

@@ -6,16 +6,19 @@ import {
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
 import { createElement, ElementType, ReactElement } from "react";
-import { Pressable, Text, View } from "react-native";
+import { Platform, Pressable, Text, View } from "react-native";
 import { RNCheckbox } from "./components/RNCheckbox";
 import { RNTextInput } from "./components/RNTextInput";
 import { RNText } from "./components/RNText";
 import { RNRadioItem } from "./components/RNRadioItem";
+import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
 
 export const defaultRnTailwindTheme = {
   ...defaultTailwindTheme,
   h: renderHtml,
   renderText: (p) => <Text>{p}</Text>,
+  extraRenderers: (options) =>
+    Platform.OS !== "web" ? [createRNDateTimePickerRenderer(options.data)] : [],
 } satisfies DefaultRendererOptions;
 
 function renderHtml(
@@ -39,15 +42,9 @@ function renderHtml(
       // console.log("div", props, children);
       return <View {...props} children={children} />;
     case "input":
-      console.log(props);
+      // console.log(props);
       const { type, onChange, checked, value, ...rest } = props;
       switch (type) {
-        case "datetime-local":
-          return <RNText>Date Time input</RNText>;
-        case "time":
-          return <RNText>Time input</RNText>;
-        case "date":
-          return <RNText>Time input</RNText>;
         case "radio":
           return (
             <RNRadioItem

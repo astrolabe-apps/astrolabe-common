@@ -102,7 +102,7 @@ export interface DefaultRendererOptions {
   label?: DefaultLabelRendererOptions;
   adornment?: DefaultAdornmentRendererOptions;
   layout?: DefaultLayoutRendererOptions;
-  extraRenderers?: RendererRegistration[];
+  extraRenderers?: (options: DefaultRendererOptions) => RendererRegistration[];
   renderText?: (props: ReactNode) => ReactNode;
   h?: FormRenderer["h"];
 }
@@ -467,7 +467,7 @@ export function createDefaultRenderers(
     adornment: createDefaultAdornmentRenderer(options.adornment),
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
-    extraRenderers: options.extraRenderers ?? [],
+    extraRenderers: options.extraRenderers?.(options) ?? [],
     renderText: options.renderText ?? ((x) => x),
     h: options.h ?? h,
   };
