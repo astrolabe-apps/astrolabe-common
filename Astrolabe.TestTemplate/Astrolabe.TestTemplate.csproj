@@ -62,9 +62,5 @@
       <_ContentIncludedByDefault Remove="ClientApp\nativeapp\starter-base\tsconfig.json" />
       <_ContentIncludedByDefault Remove="ClientApp\nativeapp\turbo.json" />
     </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="ClientApp\sites\formServer\src\forms\" />
-    </ItemGroup>
     
 </Project>

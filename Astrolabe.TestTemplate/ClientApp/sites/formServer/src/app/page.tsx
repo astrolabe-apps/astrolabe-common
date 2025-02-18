@@ -21,7 +21,6 @@ import {
   buildSchema,
   compoundField,
   ControlDataContext,
-  ControlDefinition,
   createSchemaLookup,
   dataControl,
   dateField,
@@ -42,18 +41,23 @@ import {
   UserMatchExpression,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
-import { OptStringParam, useQueryControl } from "@astroapps/client";
-import { convertStringParam, useSyncParam } from "@astroapps/client";
+import {
+  OptStringParam,
+  useApiClient,
+  useQueryControl,
+  useSyncParam,
+} from "@astroapps/client";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DndProvider } from "react-dnd";
 import {
   CarClient,
   CarEdit,
   CodeGenClient,
-  SearchStateClient,
   ControlDefinition as CD,
+  SearchStateClient,
 } from "../client";
 import controlsJson from "../ControlDefinition.json";
+import testSchemaControls from "../forms/TestSchema.json";
 import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
 import { FormDefinitions } from "../forms";
@@ -61,7 +65,6 @@ import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
-import { useApiClient } from "@astroapps/client";
 
 const Extensions = [
   DataGridExtension,
@@ -91,6 +94,7 @@ interface TestSchema {
   dateTime: string;
   time: string;
   array: number[];
+  bool: boolean;
   stuff: DisabledStuff[];
   number: number;
   nested: NestedSchema;
@@ -101,6 +105,7 @@ const TestSchema = buildSchema<TestSchema>({
   dateTime: dateTimeField("Date Time"),
   time: timeField("Time", { tags: [SchemaTags.ControlGroup + "Nested"] }),
   array: intField("Numbers", { collection: true }),
+  bool: boolField("Bool"),
   stuff: compoundField(
     "Stuff",
     buildSchema<DisabledStuff>({
@@ -299,6 +304,8 @@ export default function Editor() {
                 schemaName: "ControlDefinitionSchema",
                 controls: controlsJson,
               };
+            case "TestSchema":
+              return { schemaName: c, controls: testSchemaControls.controls };
             case "TabSchema":
               return { schemaName: c, controls: [TabControls] };
             default:

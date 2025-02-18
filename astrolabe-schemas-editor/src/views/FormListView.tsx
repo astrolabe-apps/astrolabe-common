@@ -14,19 +14,21 @@ interface FormListNode {
 export function FormListView({ context }: { context: ViewContext }) {
   const { ref, width, height } = useResizeObserver();
   return (
-    <div ref={ref}>
-      <Tree<FormListNode>
-        width={width}
-        height={height}
-        data={folders(context.formList)}
-        onSelect={(n) => {
-          if (n[0]?.data.info) {
-            context.currentForm.value = n[0].data.info.id;
-          }
-        }}
-        selection={context.currentForm.value}
-        children={FormTreeNode}
-      />
+    <div className="flex flex-col h-full">
+      <div ref={ref} className="grow overflow-auto">
+        <Tree<FormListNode>
+          width={width}
+          height={height}
+          data={folders(context.formList)}
+          onSelect={(n) => {
+            if (n[0]?.data.info) {
+              context.currentForm.value = n[0].data.info.id;
+            }
+          }}
+          selection={context.currentForm.value}
+          children={FormTreeNode}
+        />
+      </div>
     </div>
   );
 }
@@ -40,7 +42,7 @@ function folders(forms: FormInfo[]): FormListNode[] {
     let folderNode = folderMap.get(folder);
     if (!folderNode) {
       folderNode = {
-        id: "_folder_"+folder,
+        id: "_folder_" + folder,
         name: folder,
         children: [],
       };

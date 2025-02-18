@@ -15,13 +15,16 @@ import {
   fieldPathForDefinition,
   getExternalEditData,
   getLengthRestrictions,
+  isDataControl,
   makeHookDepString,
   mergeObjects,
   nodeForControl,
+  optionalHook,
   RenderOptions,
   schemaDataForFieldRef,
   schemaForFieldPath,
   stringField,
+  toDepString,
 } from "@react-typed-forms/schemas";
 import {
   ColumnDef,
@@ -31,8 +34,10 @@ import {
 } from "@astroapps/datagrid";
 import {
   Control,
-  getElementIndex,
+  ensureMetaValue,
+  getMetaValue,
   groupedChanges,
+  newControl,
   RenderControl,
   useTrackedComponent,
 } from "@react-typed-forms/core";
@@ -49,6 +54,7 @@ import {
   setFilterValue,
 } from "@astroapps/searchstate";
 import { SortableHeader } from "./SortableHeader";
+import { useGroupedRows } from "./util";
 
 interface DataGridOptions
   extends Pick<
@@ -67,6 +73,7 @@ interface DataGridOptions
   noEntriesText?: string;
   searchField?: string;
   displayOnly?: boolean;
+  groupByField?: string;
 }
 
 interface DataGridClasses {
@@ -99,6 +106,7 @@ const DataGridFields = buildSchema<DataGridOptions>({
   noRemove: boolField("No remove"),
   noReorder: boolField("No reorder"),
   searchField: stringField("Search state field"),
+  groupByField: stringField("Group by field"),
   displayOnly: boolField("Display only"),
   editExternal: boolField("Edit external"),
 });
@@ -198,8 +206,10 @@ export function createDataGridRenderer(
                 colOptions?.visible,
                 (x) => !!x,
               ) as EvalExpressionHook<boolean>,
-              evalRowSpan: useEvalExpression(colOptions?.rowSpan, (x) =>
-                typeof x === "number" ? x : 1,
+              evalRowSpan: optionalHook(
+                colOptions?.rowSpan,
+                useEvalExpression,
+                (x) => (typeof x === "number" ? x : 1),
               ) as EvalExpressionHook<number>,
             },
             render: (_: Control<any>, rowIndex: number) =>
@@ -243,13 +253,24 @@ export function createDataGridRenderer(
 }
 
 function DynamicGridVisibility(props: DataGridRendererProps) {
-  const depString = makeHookDepString(
-    props.columns.flatMap((x) => [x.data?.evalHidden, x.data?.evalRowSpan]),
-    (x) => x?.deps,
-  );
+  const depString =
+    makeHookDepString(
+      props.columns.flatMap((x) => [x.data?.evalHidden, x.data?.evalRowSpan]),
+      (x) => x?.deps,
+    ) + toDepString(props.renderOptions.groupByField);
 
   const Render = useTrackedComponent<DataGridRendererProps>(
     (props: DataGridRendererProps) => {
+      const { groupByField } = props.renderOptions;
+      if (groupByField) {
+        useGroupedRows(
+          props.control,
+          (t) => t.fields[groupByField as any].value,
+          (n, c) =>
+            (ensureMetaValue(c, "groupByRowSpan", () => newControl(n)).value =
+              n),
+        );
+      }
       const newColumns = props.columns.map((x) => {
         const data = x.data;
         if (data && (data.evalHidden || data.evalRowSpan)) {
@@ -257,18 +278,33 @@ function DynamicGridVisibility(props: DataGridRendererProps) {
             data.dataContext,
             data.evalHidden.state,
           );
-          const ers = data.evalRowSpan;
-          const getRowSpan = ers
-            ? (t: Control<any>, index: number) => {
-                const elementContext =
-                  data.dataContext.dataNode!.getChildElement(index);
-                const evalValue = ers.runHook(
-                  { ...data.dataContext, parentNode: elementContext },
-                  ers.state,
-                )?.value;
-                return evalValue ?? 1;
-              }
-            : undefined;
+
+          const rowSpanExpr = data.evalRowSpan;
+
+          const isGroupByColumn =
+            groupByField &&
+            isDataControl(data.definition) &&
+            groupByField === data.definition.field;
+
+          const getRowSpan =
+            rowSpanExpr || isGroupByColumn
+              ? (t: Control<any>, index: number) => {
+                  if (rowSpanExpr) {
+                    const elementContext =
+                      data.dataContext.dataNode!.getChildElement(index);
+                    const evalValue = rowSpanExpr.runHook(
+                      { ...data.dataContext, parentNode: elementContext },
+                      rowSpanExpr.state,
+                    )?.value;
+                    return evalValue ?? 1;
+                  } else {
+                    return (
+                      getMetaValue<Control<number>>(t, "groupByRowSpan")
+                        ?.value ?? 1
+                    );
+                  }
+                }
+              : undefined;
           return {
             ...x,
             hidden: visible && visible.value === false,
