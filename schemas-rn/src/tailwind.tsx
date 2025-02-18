@@ -12,13 +12,24 @@ import { RNTextInput } from "./components/RNTextInput";
 import { RNText } from "./components/RNText";
 import { RNRadioItem } from "./components/RNRadioItem";
 import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
+import { createRNHelpTextRenderer } from "./components/RNHelpTextRenderer";
+import { RendererRegistration } from "@react-typed-forms/schemas";
 
 export const defaultRnTailwindTheme = {
   ...defaultTailwindTheme,
   h: renderHtml,
   renderText: (p) => <Text>{p}</Text>,
-  extraRenderers: (options) =>
-    Platform.OS !== "web" ? [createRNDateTimePickerRenderer(options.data)] : [],
+  extraRenderers: (options): RendererRegistration[] => {
+    const renderers: RendererRegistration[] = [
+      createRNHelpTextRenderer(options.adornment),
+    ];
+
+    if (Platform.OS !== "web") {
+      renderers.push(createRNDateTimePickerRenderer(options.data));
+    }
+
+    return renderers;
+  },
 } satisfies DefaultRendererOptions;
 
 function renderHtml(
@@ -39,10 +50,8 @@ function renderHtml(
     case "h1":
       return <RNText {...props} children={children} />;
     case "div":
-      // console.log("div", props, children);
       return <View {...props} children={children} />;
     case "input":
-      // console.log(props);
       const { type, onChange, checked, value, ...rest } = props;
       switch (type) {
         case "radio":

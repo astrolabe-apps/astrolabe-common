@@ -52,7 +52,8 @@
     "@react-typed-forms/schemas": "workspace:*",
     "@react-typed-forms/schemas-html": "workspace:*",
     "@react-typed-forms/schemas-rn": "workspace:*",
-    "@astroapps/schemas-editor": "workspace:*"
+    "@astroapps/schemas-editor": "workspace:*",
+    "@rn-primitives/portal": "^1.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
