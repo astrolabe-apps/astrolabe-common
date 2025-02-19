@@ -20,6 +20,6 @@ const RNTextInput = React.forwardRef<
   );
 });
 
-RNTextInput.displayName = "Input";
+RNTextInput.displayName = "RNInput";
 
 export { RNTextInput };

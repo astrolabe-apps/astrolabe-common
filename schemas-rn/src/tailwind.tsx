@@ -52,9 +52,11 @@ function renderHtml(
     case "h1":
       return <RNText {...props} children={children} />;
     case "div":
-      const { dangerouslySetInnerHTML } = props;
-      return dangerouslySetInnerHTML ? (
-        <RNHtmlRenderer {...props} html={dangerouslySetInnerHTML.__html} />
+      return props?.dangerouslySetInnerHTML ? (
+        <RNHtmlRenderer
+          {...props}
+          html={props?.dangerouslySetInnerHTML.__html}
+        />
       ) : (
         <View {...props} children={children} />
       );

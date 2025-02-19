@@ -1,6 +1,6 @@
 ﻿import RenderHtml, { HTMLSource } from "react-native-render-html";
 import React from "react";
-import { View } from "react-native";
+import { Dimensions, View } from "react-native";
 
 export type RNHtmlRendererProps = {
   className?: string;
@@ -14,7 +14,10 @@ export function RNHtmlRenderer({ className, html }: RNHtmlRendererProps) {
 
   return (
     <View className={className}>
-      <RenderHtml source={source} />
+      <RenderHtml
+        contentWidth={Dimensions.get("window").width}
+        source={source}
+      />
     </View>
   );
 }
