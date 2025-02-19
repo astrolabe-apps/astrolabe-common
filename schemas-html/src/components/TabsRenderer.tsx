@@ -37,7 +37,7 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
 }
 
 export function TabsGroupRenderer({
-  formNode,
+  childNodes,
   className,
   options,
   renderChild,
@@ -58,9 +58,9 @@ export function TabsGroupRenderer({
   } = options;
   const currentTab = tabIndex.value;
   return designMode ? (
-    <>{formNode.getChildNodes().map((x, i) => renderTabs([x], i))}</>
+    <>{childNodes.map((x, i) => renderTabs([x], i))}</>
   ) : (
-    renderTabs(formNode.getChildNodes(), 0)
+    renderTabs(childNodes, 0)
   );
 
   function renderTabs(tabs: FormNode[], key: number) {

@@ -63,6 +63,7 @@ export interface EditableForm {
 export function getEditorFormTree(cf: Control<EditableForm>) {
   return createFormTreeWithRoot(
     (t) => new EditorFormNode("", t, undefined, cf.fields.root),
-    () => [],
+    () => undefined,
+    () => {},
   );
 }

@@ -29,7 +29,7 @@ import {
   lookupDataNode,
   makeHookDepString,
   mergeObjects,
-  nodeForControl,
+  createFormNode,
   SchemaDataNode,
 } from "@react-typed-forms/schemas";
 
@@ -72,7 +72,7 @@ export function DataArrayRenderer({
     style,
     useChildVisibility,
     dataContext,
-    formNode,
+    formTree,
   } = dataProps;
   const { addText, noAdd, noRemove, noReorder, removeText, editExternal } =
     mergeObjects(
@@ -87,7 +87,7 @@ export function DataArrayRenderer({
     : undefined;
 
   const renderAsElement = !isCompoundField(field);
-  const childDefinition: FormNode = nodeForControl(
+  const childDefinition: FormNode = createFormNode(
     !renderAsElement
       ? ({
           type: ControlDefinitionType.Group,
@@ -101,7 +101,7 @@ export function DataArrayRenderer({
           renderOptions: childOptions ?? { type: DataRenderType.Standard },
           hideTitle: true,
         } as DataControlDefinition),
-    formNode.tree,
+    formTree,
   );
 
   const visibilities = (definition.children ?? []).map(

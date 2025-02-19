@@ -29,22 +29,20 @@ export const DataGridGroupRenderer = createGroupRenderer(
     renderChild,
     definition,
     renderOptions,
-    formNode,
+    childNodes,
     useChildVisibility,
     dataContext,
   }) => {
     const allVisibilities = Object.fromEntries(
-      formNode
-        .getChildNodes()
-        .flatMap((cd, i) => [
-          [i.toString(), useChildVisibility(cd.definition)],
-          ...(cd
-            .getChildNodes()
-            .map(
-              (cd2, l2) =>
-                [i + "_" + l2, useChildVisibility(cd2.definition)] as const,
-            ) ?? []),
-        ]),
+      childNodes.flatMap((cd, i) => [
+        [i.toString(), useChildVisibility(cd.definition)],
+        ...(cd
+          .getChildNodes()
+          .map(
+            (cd2, l2) =>
+              [i + "_" + l2, useChildVisibility(cd2.definition)] as const,
+          ) ?? []),
+      ]),
     );
 
     return (
@@ -53,7 +51,7 @@ export const DataGridGroupRenderer = createGroupRenderer(
         definition={definition}
         visibleChildren={allVisibilities}
         dataContext={dataContext}
-        formNode={formNode}
+        childNodes={childNodes}
       />
     );
   },
@@ -66,22 +64,22 @@ function DataGridGroup({
 }: {
   visibleChildren: Record<string, EvalExpressionHook<boolean>>;
   definition: ControlDefinition;
-  formNode: FormNode;
+  childNodes: FormNode[];
   dataContext: ControlDataContext;
   renderChild: ChildRenderer;
 }) {
   const visibilityHooks = useDynamicHooks(visibleChildren);
   const Render = useTrackedComponent<{
     definition: ControlDefinition;
-    formNode: FormNode;
+    childNodes: FormNode[];
     dataContext: ControlDataContext;
     renderChild: ChildRenderer;
   }>(
-    ({ renderChild, definition, formNode, dataContext }) => {
+    ({ renderChild, definition, childNodes, dataContext }) => {
       const visibilities = visibilityHooks(dataContext);
       const visibleRows = useMemo(
         () =>
-          formNode.getChildNodes().map((_, i) => {
+          childNodes.map((_, i) => {
             let rowCount = 0;
             const visibleRows: number[] = [];
             let hasKey = false;
@@ -95,7 +93,7 @@ function DataGridGroup({
             } while (hasKey);
             return visibleRows;
           }),
-        [formNode, visibilities],
+        [childNodes.length, visibilities],
       );
       const maxRows = visibleRows.reduce((m, x) => Math.max(x.length, m), 0);
 
@@ -108,23 +106,21 @@ function DataGridGroup({
           };
         }) ?? [];
 
-      const columns: ColumnDefInit<undefined>[] = formNode
-        .getChildNodes()
-        .map((cn, i) => {
-          const d = cn.definition;
-          const colOptions = d.adornments?.find(isColumnAdornment);
-          return {
-            ...colOptions,
-            id: "c" + i,
-            title: d.title ?? "Column " + i,
-            render: (_, rowIndex: number) => {
-              const childIndex = visibleRows[i][rowIndex];
-              return childIndex == null
-                ? ""
-                : renderChild(i, cn.getChildNodes()[childIndex]);
-            },
-          };
-        });
+      const columns: ColumnDefInit<undefined>[] = childNodes.map((cn, i) => {
+        const d = cn.definition;
+        const colOptions = d.adornments?.find(isColumnAdornment);
+        return {
+          ...colOptions,
+          id: "c" + i,
+          title: d.title ?? "Column " + i,
+          render: (_, rowIndex: number) => {
+            const childIndex = visibleRows[i][rowIndex];
+            return childIndex == null
+              ? ""
+              : renderChild(i, cn.getChildNodes()[childIndex]);
+          },
+        };
+      });
       const allColumns = constantColumns.concat(columns);
       return (
         <DataGrid

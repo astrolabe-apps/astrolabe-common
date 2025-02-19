@@ -16,7 +16,7 @@ export class EditorFormNode implements FormNode {
   addChild(c: ControlDefinition): Control<ControlDefinition> {
     return addElement(this.control.fields.children, c);
   }
-  getChildNodes(dontFollowRef?: boolean): FormNode[] {
+  get children(): FormNode[] {
     return this.control.fields.children.elements.map(
       (x) => new EditorFormNode(x.uniqueId.toString(), this.tree, this, x),
     );

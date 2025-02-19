@@ -35,6 +35,7 @@ import {
   DynamicPropertyType,
   FormContextData,
   FormNode,
+  FormTree,
   GroupRenderOptions,
   isActionControl,
   isDataControl,
@@ -341,7 +342,8 @@ export type ChildVisibilityFunc = (
   dontOverride?: boolean,
 ) => EvalExpressionHook<boolean>;
 export interface ParentRendererProps {
-  formNode: FormNode;
+  childNodes: FormNode[];
+  formTree: FormTree;
   renderChild: ChildRenderer;
   className?: string;
   style?: React.CSSProperties;
@@ -394,7 +396,8 @@ export interface FormContextOptions {
 }
 
 export interface DataControlProps {
-  formNode: FormNode;
+  formTree: FormTree;
+  childNodes: FormNode[];
   definition: DataControlDefinition;
   dataContext: ControlDataContext;
   control: Control<any>;
@@ -643,9 +646,14 @@ export function useControlRendererComponent(
             formOptions: myOptions,
           }),
         ) ?? [];
+      const effectiveParent = definition.childRefId
+        ? formNode.tree.getById(definition.childRefId)
+        : formNode;
+
       const labelAndChildren = renderControlLayout({
-        formNode,
-        definition: c,
+        definition,
+        formTree: formNode.tree,
+        childNodes: effectiveParent?.children ?? [],
         renderer,
         renderChild: (k, child, options) => {
           const overrideClasses = getGroupClassOverrides(c);
@@ -828,7 +836,8 @@ export type ChildRenderer = (
 
 export interface RenderControlProps {
   definition: ControlDefinition;
-  formNode: FormNode;
+  formTree: FormTree;
+  childNodes: FormNode[];
   renderer: FormRenderer;
   renderChild: ChildRenderer;
   createDataProps: CreateDataProps;
@@ -872,7 +881,8 @@ export function renderControlLayout(
     useEvalExpression,
     labelClass,
     styleClass,
-    formNode,
+    childNodes,
+    formTree,
   } = props;
 
   if (isDataControl(c)) {
@@ -890,7 +900,8 @@ export function renderControlLayout(
 
     return {
       processLayout: renderer.renderGroup({
-        formNode,
+        childNodes,
+        formTree,
         definition: c,
         renderChild,
         useEvalExpression,
@@ -1243,7 +1254,7 @@ export function applyArrayLengthRestrictions(
 
 export function fieldOptionAdornment(p: DataRendererProps) {
   return (o: FieldOption, i: number, selected: boolean) => (
-    <RenderArrayElements array={p.formNode.getChildNodes()}>
+    <RenderArrayElements array={p.childNodes}>
       {(cd, i) =>
         p.renderChild(i, cd, {
           parentDataNode: p.dataContext.parentNode,

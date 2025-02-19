@@ -145,7 +145,8 @@ export function createDataGridRenderer(
         definition,
         renderChild,
         renderOptions,
-        formNode,
+        childNodes,
+        formTree,
         field,
         className,
         readonly,
@@ -172,7 +173,7 @@ export function createDataGridRenderer(
             layoutClass: x.layoutClass,
           };
           const headerOptions = getColumnHeaderFromOptions(x, def, gridClasses);
-          const colNode = nodeForControl(def, formNode.tree, "col" + i);
+          const colNode = nodeForControl(def, formTree, "col" + i);
           return {
             ...headerOptions,
             id: "cc" + i,
@@ -186,7 +187,7 @@ export function createDataGridRenderer(
           };
         }) ?? [];
       const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
-        formNode.getChildNodes().map((cn, i) => {
+        childNodes.map((cn, i) => {
           const d = cn.definition;
           const colOptions = d.adornments?.find(isColumnAdornment);
           const headerOptions = getColumnHeaderFromOptions(
