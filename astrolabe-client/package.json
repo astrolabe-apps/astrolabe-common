@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/client",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"type": "module",
 	"main": "index.js",
 	"types": "index.d.ts",
@@ -24,7 +24,8 @@
 		"react-dnd": "^16.0.1"
 	},
 	"scripts": {
-		"prepack": "npm run build",
+		"prepack": "npm run clean && npm run build",
+		"clean": "rimraf *.tsbuildinfo node_modules/.cache app/ hooks/ lib/ service/ util/ *.js *.js.map",
 		"build": "tsc && babel src --out-dir . --extensions \".ts,.tsx\" --source-maps true",
 		"watch": "tsc -w & babel src --watch --out-dir . --extensions \".ts,.tsx\" --source-maps true"
 	},
