@@ -42,7 +42,8 @@
     "@react-native-community/datetimepicker": "8.2.0",
     "react-native-modal-datetime-picker": "^18.0.0",
     "@internationalized/date": "^3.6.0",
-    "@rn-primitives/tooltip": "^1.1.0"
+    "@rn-primitives/tooltip": "^1.1.0",
+    "@expo/vector-icons": "^14.0.2"
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.1.1",

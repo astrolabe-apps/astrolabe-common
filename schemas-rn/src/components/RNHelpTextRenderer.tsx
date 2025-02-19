@@ -1,4 +1,4 @@
-﻿import { DefaultAdornmentRendererOptions } from "@react-typed-forms/schemas-html";
+﻿import { DefaultHelpTextRendererOptions } from "@react-typed-forms/schemas-html";
 import {
   AdornmentPlacement,
   appendMarkupAt,
@@ -6,7 +6,6 @@ import {
   ControlAdornmentType,
   createAdornmentRenderer,
   HelpTextAdornment,
-  RenderedLayout,
 } from "@react-typed-forms/schemas";
 
 import * as TooltipPrimitive from "@rn-primitives/tooltip";
@@ -16,14 +15,23 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { cn } from "../utils";
 import { RNText, TextClassContext } from "./RNText";
 import { RNButton } from "./RNButton";
+import { FontAwesomeIcon } from "./FontAwesomeIcon";
 
 export interface ExtendedHelpText {
   helpLabel: string;
 }
 
 export function createRNHelpTextRenderer(
-  options: DefaultAdornmentRendererOptions = {},
+  options: DefaultHelpTextRendererOptions = {},
 ) {
+  const {
+    triggerContainerClass,
+    triggerLabelClass,
+    contentContainerClass,
+    contentTextClass,
+    iconName,
+    iconClass,
+  } = options;
   return createAdornmentRenderer(
     (p, renderers) => ({
       apply: appendMarkupAt(
@@ -31,8 +39,15 @@ export function createRNHelpTextRenderer(
           AdornmentPlacement.LabelEnd,
         <Tooltip delayDuration={150}>
           <TooltipTrigger asChild>
-            <RNButton variant={"outline"} size={"sm"} className={"self-start"}>
-              <RNText>
+            <RNButton
+              variant={"ghost"}
+              size={"sm"}
+              className={triggerContainerClass}
+            >
+              {iconName && (
+                <FontAwesomeIcon name={iconName} className={iconClass} />
+              )}
+              <RNText className={triggerLabelClass}>
                 {renderers.renderLabelText(
                   (p.adornment as ExtendedHelpText & ControlAdornment)
                     .helpLabel,
@@ -40,8 +55,8 @@ export function createRNHelpTextRenderer(
               </RNText>
             </RNButton>
           </TooltipTrigger>
-          <TooltipContent>
-            <RNText>
+          <TooltipContent className={contentContainerClass}>
+            <RNText className={contentTextClass}>
               {renderers.renderLabelText(
                 (p.adornment as HelpTextAdornment).helpText,
               )}

@@ -1,7 +1,7 @@
 ﻿import * as CheckboxPrimitive from "@rn-primitives/checkbox";
 import * as React from "react";
-import { Text } from "react-native";
 import { cn } from "../utils";
+import { FontAwesomeIcon } from "./FontAwesomeIcon";
 
 const RNCheckbox = React.forwardRef<
   CheckboxPrimitive.RootRef,
@@ -20,7 +20,7 @@ const RNCheckbox = React.forwardRef<
       <CheckboxPrimitive.Indicator
         className={cn("items-center justify-center h-full w-full")}
       >
-        <Text className={"text-primary"}>✔</Text>
+        <FontAwesomeIcon name={"check"} className={"text-primary-500"} />
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );

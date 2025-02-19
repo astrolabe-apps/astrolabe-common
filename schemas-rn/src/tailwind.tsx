@@ -21,7 +21,7 @@ export const defaultRnTailwindTheme = {
   renderText: (p) => <Text>{p}</Text>,
   extraRenderers: (options): RendererRegistration[] => {
     const renderers: RendererRegistration[] = [
-      createRNHelpTextRenderer(options.adornment),
+      createRNHelpTextRenderer(options.adornment?.helpText),
     ];
 
     if (Platform.OS !== "web") {

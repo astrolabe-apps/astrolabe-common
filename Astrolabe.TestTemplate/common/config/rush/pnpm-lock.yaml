@@ -837,6 +837,7 @@ importers:
   ../../../schemas-rn:
     specifiers:
       '@babel/core': ^7.25.2
+      '@expo/vector-icons': ^14.0.2
       '@internationalized/date': ^3.6.0
       '@react-native-community/datetimepicker': 8.2.0
       '@react-typed-forms/core': workspace:*
@@ -870,6 +871,7 @@ importers:
       tailwindcss: ^3.4.17
       typescript: ^5.6.3
     dependencies:
+      '@expo/vector-icons': 14.0.4
       '@internationalized/date': 3.6.0
       '@react-native-community/datetimepicker': 8.2.0_rut2qurybwc74jc2rw5t62iapy
       '@react-typed-forms/schemas-html': link:../schemas-html

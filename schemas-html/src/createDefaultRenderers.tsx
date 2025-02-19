@@ -321,8 +321,18 @@ export interface DefaultAccordionRendererOptions {
   useCss?: boolean;
 }
 
+export interface DefaultHelpTextRendererOptions {
+  triggerContainerClass?: string;
+  triggerLabelClass?: string;
+  contentContainerClass?: string;
+  contentTextClass?: string;
+  iconName?: string;
+  iconClass?: string;
+}
+
 export interface DefaultAdornmentRendererOptions {
   accordion?: DefaultAccordionRendererOptions;
+  helpText?: DefaultHelpTextRendererOptions;
   optional?: DefaultOptionalAdornmentOptions;
 }
 
