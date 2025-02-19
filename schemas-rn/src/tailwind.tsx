@@ -14,6 +14,7 @@ import { RNRadioItem } from "./components/RNRadioItem";
 import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
 import { createRNHelpTextRenderer } from "./components/RNHelpTextRenderer";
 import { RendererRegistration } from "@react-typed-forms/schemas";
+import { RNHtmlRenderer } from "./components/RNHtmlRenderer";
 
 export const defaultRnTailwindTheme = {
   ...defaultTailwindTheme,
@@ -41,6 +42,7 @@ function renderHtml(
     return createElement.apply(null, arguments as any);
   }
   const children = props?.children ?? childs;
+
   switch (tag) {
     case "button":
       const onPress = props.onClick;
@@ -50,7 +52,12 @@ function renderHtml(
     case "h1":
       return <RNText {...props} children={children} />;
     case "div":
-      return <View {...props} children={children} />;
+      const { dangerouslySetInnerHTML } = props;
+      return dangerouslySetInnerHTML ? (
+        <RNHtmlRenderer {...props} html={dangerouslySetInnerHTML.__html} />
+      ) : (
+        <View {...props} children={children} />
+      );
     case "input":
       const { type, onChange, checked, value, ...rest } = props;
       switch (type) {
