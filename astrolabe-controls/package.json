@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/controls",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -45,7 +45,7 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs",
+    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress",
     "watch": "microbundle -w -f modern,cjs --no-compress",
     "test": "jest --coverage",
     "run": "tsx test/play.ts",

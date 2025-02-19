@@ -1,4 +1,4 @@
 .rush/
 *.log
 .babelrc
-src/
+test/
