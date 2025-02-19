@@ -1,4 +1,4 @@
 
 {
-  "plugins": ["module:@react-typed-forms/transform"]
+  "plugins": ["module:@react-typed-forms/transform", "react-native-reanimated/plugin"]
 }

@@ -4,6 +4,9 @@ const { makeMetroConfig } = require("@rnx-kit/metro-config");
 const { getDefaultConfig } = require("expo/metro-config");
 const { withNativeWind } = require("nativewind/metro");
 const MetroSymlinksResolver = require("@rnx-kit/metro-resolver-symlinks");
+const {
+  wrapWithReanimatedMetroConfig,
+} = require("react-native-reanimated/metro-config");
 
 const projectDir = __dirname;
 const workspaceRoot = path.resolve(projectDir, "../../..");
@@ -44,4 +47,6 @@ const config = makeMetroConfig({
     }),
   ],
 });
-module.exports = withNativeWind(config, { input: "./global.css" });
+module.exports = wrapWithReanimatedMetroConfig(
+  withNativeWind(config, { input: "./global.css" }),
+);
