@@ -12,7 +12,6 @@ import {
   GroupedControlsDefinition,
   GroupRenderType,
   makeSchemaDataNode,
-  createFormNode,
   rendererClass,
   validationVisitor,
   visitFormDataInContext,
@@ -54,7 +53,7 @@ function ArrayElementRenderer({
   formRenderer: FormRenderer;
   renderOptions: ArrayElementRenderOptions;
 }) {
-  const { control, formTree, renderChild, designMode, definition } = dataProps;
+  const { control, formNode, renderChild, designMode } = dataProps;
   const extData = getExternalEditData(control);
   const overlayState = useOverlayTriggerState({
     isOpen: true,
@@ -68,13 +67,13 @@ function ArrayElementRenderer({
       dataProps.dataNode.schema,
       extData.fields.data,
     );
-    const elementGroup: FormNode = createFormNode(
+    const elementGroup: FormNode = formNode.tree.createTempNode(
+      formNode.id + "group",
       {
         type: ControlDefinitionType.Group,
-        children: definition.children,
         groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
       } as GroupedControlsDefinition,
-      formTree,
+      formNode.getChildNodes(),
     );
     const editContent = (
       <div className={rendererClass(dataProps.className, options.className)}>

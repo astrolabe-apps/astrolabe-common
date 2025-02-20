@@ -57,7 +57,7 @@ export function FormControlTree({
 }: FormControlTreeProps) {
   const { ref, width, height } = useResizeObserver();
 
-  const treeNodes = rootNode.children.map((x) => ({
+  const treeNodes = rootNode.getChildNodes().map((x) => ({
     id: x.id,
     children: makeChildren(x, rootSchema),
     form: x,
@@ -167,7 +167,7 @@ export function FormControlTree({
     x: FormNode,
     parentSchema: SchemaNode,
   ): ControlNode[] | null {
-    const c = x.children;
+    const c = x.getChildNodes();
     const childPath = fieldPathForDefinition(x.definition);
     const schema = childPath
       ? schemaForFieldPath(childPath, parentSchema)

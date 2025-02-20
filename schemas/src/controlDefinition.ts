@@ -551,46 +551,96 @@ export interface FormNode {
   definition: ControlDefinition;
   tree: FormTree;
   parent?: FormNode;
-  children: FormNode[];
+  getChildNodes(): FormNode[];
+}
+
+class FormNodeImpl implements FormNode {
+  public children: FormNode[] = [];
+  constructor(
+    public id: string,
+    public definition: ControlDefinition,
+    public tree: FormTree,
+    public parent?: FormNode,
+  ) {}
+
+  getChildNodes() {
+    return this.children;
+  }
 }
 
 export interface FormTreeLookup {
   getForm(formId: string): FormTree | undefined;
 }
-export interface FormTree extends FormTreeLookup {
-  rootNode: FormNode;
-  getById(id: string): FormNode | undefined;
-  registerNode(id: string, node: FormNode): void;
-  uniqueId(): string;
+export abstract class FormTree implements FormTreeLookup {
+  abstract rootNode: FormNode;
+  abstract getById(id: string): FormNode | undefined;
+  abstract addNode(parent: FormNode, control: ControlDefinition): FormNode;
+
+  abstract getForm(formId: string): FormTree | undefined;
+  createTempNode(
+    id: string,
+    definition: ControlDefinition,
+    children?: FormNode[],
+    parent?: FormNode,
+  ): FormNode {
+    const tempNode = {
+      id,
+      definition,
+      tree: this,
+      parent,
+      getChildNodes: () =>
+        children ?? this.createChildNodes(tempNode, definition.children),
+    } as FormNode;
+    return tempNode;
+  }
+
+  createChildNodes(
+    parent: FormNode,
+    definitions: ControlDefinition[] | undefined | null,
+  ): FormNode[] {
+    return (
+      definitions?.map((x, i) =>
+        this.createTempNode(parent.id + "_" + i, x, undefined, parent),
+      ) ?? []
+    );
+  }
 }
 
-export function createFormNode(
-  definition: ControlDefinition,
-  tree: FormTree,
-  parent?: FormNode,
-  register?: boolean,
-): FormNode {
-  const id = definition.id ? definition.id : tree.uniqueId();
-  const formNode: FormNode = {
-    id,
-    definition,
-    tree,
-    parent,
-    children: [],
-  };
-  if (definition.children)
-    formNode.children = definition.children.map((x, i) =>
-      createFormNode(x, tree, formNode, register),
-    );
-  if (register && definition.id) {
-    tree.registerNode(id, formNode);
+class FormTreeImpl extends FormTree {
+  controlMap: Record<string, FormNode> = {};
+  rootNode: FormNode;
+  idCount = 1;
+
+  constructor(private forms: FormTreeLookup) {
+    super();
+    this.rootNode = new FormNodeImpl("", { type: "Group" }, this);
   }
-  return formNode;
+
+  getById(id: string): FormNode | undefined {
+    return this.controlMap[id];
+  }
+
+  register(node: FormNode) {
+    if (node.definition.id) {
+      this.controlMap[node.definition.id] = node;
+    }
+    node.getChildNodes().forEach((x) => this.register(x));
+  }
+  addNode(parent: FormNode, control: ControlDefinition): FormNode {
+    const node = new FormNodeImpl("c" + this.idCount++, control, this, parent);
+    control.children?.forEach((x) => this.addNode(node, x));
+    parent.getChildNodes().push(node);
+    this.register(node);
+    return node;
+  }
+
+  getForm(formId: string): FormTree | undefined {
+    return this.forms.getForm(formId);
+  }
 }
 
 export function legacyFormNode(definition: ControlDefinition) {
-  return createFormLookup({ $legacy: [definition] }).getForm("$legacy")!
-    .rootNode.children[0];
+  return createFormTree([definition]).rootNode.getChildNodes()[0];
 }
 
 function getControlIds(
@@ -602,47 +652,13 @@ function getControlIds(
     : [[definition.id, definition], ...childEntries];
 }
 
-export function createFormTreeWithRoot(
-  createRootNode: (tree: FormTree) => FormNode,
-  getById: (id: string) => FormNode | undefined,
-  registerNode: (id: string, node: FormNode) => void,
-  getForm: FormTreeLookup = { getForm: () => undefined },
-): FormTree {
-  let idCount = 1;
-  const tree = {
-    ...getForm,
-    getById,
-    rootNode: undefined! as FormNode,
-    registerNode,
-    uniqueId(): string {
-      return "f" + idCount++;
-    },
-  } satisfies FormTree;
-  tree.rootNode = createRootNode(tree);
-  return tree;
-}
-
 export function createFormTree(
   controls: ControlDefinition[],
   getForm: FormTreeLookup = { getForm: () => undefined },
 ): FormTree {
-  const controlMap: Record<string, FormNode> = {};
-  return createFormTreeWithRoot(
-    (tree) =>
-      createFormNode(
-        { children: controls, type: ControlDefinitionType.Group },
-        tree,
-        undefined,
-        true,
-      ),
-    (id: string) => {
-      return controlMap[id];
-    },
-    (id: string, node: FormNode) => {
-      controlMap[id] = node;
-    },
-    getForm,
-  );
+  const tree = new FormTreeImpl(getForm);
+  controls.forEach((x) => tree.addNode(tree.rootNode, x));
+  return tree;
 }
 
 export function createFormLookup<A extends Record<string, ControlDefinition[]>>(
@@ -783,7 +799,7 @@ export function visitFormData<A>(
     return undefined;
   }
   if (dataNode.control.isNull) return undefined;
-  const children = node.children;
+  const children = node.getChildNodes();
   const l = children.length;
   for (let i = 0; i < l; i++) {
     const elemResult = visitFormDataInContext(dataNode, children[i], cb);

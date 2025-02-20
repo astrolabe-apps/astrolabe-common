@@ -16,7 +16,7 @@ export class EditorFormNode implements FormNode {
   addChild(c: ControlDefinition): Control<ControlDefinition> {
     return addElement(this.control.fields.children, c);
   }
-  get children(): FormNode[] {
+  getChildNodes(dontFollowRef?: boolean): FormNode[] {
     return this.control.fields.children.elements.map(
       (x) => new EditorFormNode(x.uniqueId.toString(), this.tree, this, x),
     );
@@ -24,5 +24,22 @@ export class EditorFormNode implements FormNode {
 
   get definition(): ControlDefinition {
     return trackedValue(this.control);
+  }
+}
+
+export class EditorFormTree extends FormTree {
+  rootNode: FormNode;
+  getById(id: string): FormNode | undefined {
+    throw new Error("Method not implemented.");
+  }
+  addNode(parent: FormNode, control: ControlDefinition): FormNode {
+    throw new Error("Method not implemented.");
+  }
+  getForm(formId: string): FormTree | undefined {
+    throw new Error("Method not implemented.");
+  }
+  constructor(public root: Control<ControlDefinition>) {
+    super();
+    this.rootNode = new EditorFormNode("", this, undefined, root);
   }
 }

@@ -5,10 +5,18 @@ import {
   useComputed,
   useControl,
 } from "@react-typed-forms/core";
-import React, { HTMLAttributes, ReactNode, useMemo } from "react";
+import React, {
+  createContext,
+  HTMLAttributes,
+  ReactNode,
+  useContext,
+  useMemo,
+} from "react";
+import { useDroppable } from "@dnd-kit/core";
 import {
   ControlDataContext,
   ControlDefinition,
+  DataControlDefinition,
   defaultDataProps,
   defaultSchemaInterface,
   defaultValueForField,
@@ -24,7 +32,6 @@ import {
   isGroupControl,
   makeHook,
   makeSchemaDataNode,
-  nodeForControl,
   renderControlLayout,
   rendererClass,
   schemaForFieldPath,
@@ -33,6 +40,8 @@ import {
   textDisplayControl,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
+import { ControlDragState, controlDropData, DragData, DropData } from "./util";
+import { SelectedControlNode } from "./types";
 
 export interface FormControlPreviewProps {
   node: FormNode;
@@ -136,21 +145,20 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     ) ?? [];
 
   const groupClasses = getGroupClassOverrides(definition);
-
-  const childNodes = definition.childRefId
-    ? [
-        nodeForControl(
-          textDisplayControl("Reference:" + definition.childRefId),
-          node.tree,
-        ),
-      ]
-    : node.children;
+  const tree = node.tree;
   const layout = renderControlLayout({
     definition,
-    formTree: node.tree,
     renderer,
     elementIndex,
-    childNodes,
+    formNode: node.definition.childRefId
+      ? tree.createTempNode(
+          node.id + "ref",
+          definition,
+          tree.createChildNodes(node, [
+            textDisplayControl("Reference:" + node.definition.childRefId),
+          ]),
+        )
+      : node,
     renderChild: (k, child, c) => {
       return (
         <FormControlPreview

@@ -18,7 +18,6 @@ import {
   isDataControl,
   makeHookDepString,
   mergeObjects,
-  nodeForControl,
   optionalHook,
   RenderOptions,
   schemaDataForFieldRef,
@@ -145,8 +144,7 @@ export function createDataGridRenderer(
         definition,
         renderChild,
         renderOptions,
-        childNodes,
-        formTree,
+        formNode,
         field,
         className,
         readonly,
@@ -173,7 +171,11 @@ export function createDataGridRenderer(
             layoutClass: x.layoutClass,
           };
           const headerOptions = getColumnHeaderFromOptions(x, def, gridClasses);
-          const colNode = nodeForControl(def, formTree, "col" + i);
+          const colNode = formNode.tree.createTempNode(
+            formNode.id + "_" + i,
+            def,
+            [],
+          );
           return {
             ...headerOptions,
             id: "cc" + i,
@@ -187,7 +189,7 @@ export function createDataGridRenderer(
           };
         }) ?? [];
       const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
-        childNodes.map((cn, i) => {
+        formNode.getChildNodes().map((cn, i) => {
           const d = cn.definition;
           const colOptions = d.adornments?.find(isColumnAdornment);
           const headerOptions = getColumnHeaderFromOptions(

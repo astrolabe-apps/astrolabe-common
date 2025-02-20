@@ -35,7 +35,6 @@ import {
   DynamicPropertyType,
   FormContextData,
   FormNode,
-  FormTree,
   GroupRenderOptions,
   isActionControl,
   isDataControl,
@@ -342,8 +341,7 @@ export type ChildVisibilityFunc = (
   dontOverride?: boolean,
 ) => EvalExpressionHook<boolean>;
 export interface ParentRendererProps {
-  childNodes: FormNode[];
-  formTree: FormTree;
+  formNode: FormNode;
   renderChild: ChildRenderer;
   className?: string;
   style?: React.CSSProperties;
@@ -396,8 +394,7 @@ export interface FormContextOptions {
 }
 
 export interface DataControlProps {
-  formTree: FormTree;
-  childNodes: FormNode[];
+  formNode: FormNode;
   definition: DataControlDefinition;
   dataContext: ControlDataContext;
   control: Control<any>;
@@ -517,6 +514,7 @@ export function useControlRendererComponent(
     formNode,
   });
 
+  if (formNode == null) debugger;
   const Component = useCallback(() => {
     const stopTracking = useComponentTracking();
 
@@ -646,14 +644,9 @@ export function useControlRendererComponent(
             formOptions: myOptions,
           }),
         ) ?? [];
-      const effectiveParent = definition.childRefId
-        ? formNode.tree.getById(definition.childRefId)
-        : formNode;
-
       const labelAndChildren = renderControlLayout({
-        definition,
-        formTree: formNode.tree,
-        childNodes: effectiveParent?.children ?? [],
+        formNode,
+        definition: c,
         renderer,
         renderChild: (k, child, options) => {
           const overrideClasses = getGroupClassOverrides(c);
@@ -836,8 +829,7 @@ export type ChildRenderer = (
 
 export interface RenderControlProps {
   definition: ControlDefinition;
-  formTree: FormTree;
-  childNodes: FormNode[];
+  formNode: FormNode;
   renderer: FormRenderer;
   renderChild: ChildRenderer;
   createDataProps: CreateDataProps;
@@ -881,8 +873,7 @@ export function renderControlLayout(
     useEvalExpression,
     labelClass,
     styleClass,
-    childNodes,
-    formTree,
+    formNode,
   } = props;
 
   if (isDataControl(c)) {
@@ -900,8 +891,7 @@ export function renderControlLayout(
 
     return {
       processLayout: renderer.renderGroup({
-        childNodes,
-        formTree,
+        formNode,
         definition: c,
         renderChild,
         useEvalExpression,
@@ -1254,7 +1244,7 @@ export function applyArrayLengthRestrictions(
 
 export function fieldOptionAdornment(p: DataRendererProps) {
   return (o: FieldOption, i: number, selected: boolean) => (
-    <RenderArrayElements array={p.childNodes}>
+    <RenderArrayElements array={p.formNode.getChildNodes()}>
       {(cd, i) =>
         p.renderChild(i, cd, {
           parentDataNode: p.dataContext.parentNode,
