@@ -63,6 +63,7 @@ interface DataGridOptions
   noEntriesText?: string;
   searchField?: string;
   displayOnly?: boolean;
+  disableClear?: boolean;
 }
 
 interface DataGridClasses {
@@ -71,6 +72,8 @@ interface DataGridClasses {
   removeColumnClass?: string;
   addContainerClass?: string;
   noEntriesClass?: string;
+  clearFilterClass?: string;
+  clearFilterText?: string;
 }
 
 interface DataGridColumnExtension {
@@ -90,6 +93,7 @@ const DataGridFields = buildSchema<DataGridOptions>({
   noReorder: boolField("No reorder"),
   searchField: stringField("Search state field"),
   displayOnly: boolField("Display only"),
+  disableClear: boolField("Disable clear filter"),
 });
 export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
@@ -104,6 +108,8 @@ export const defaultDataGridClasses: DataGridClasses = {
   addContainerClass: "flex justify-center mt-2",
   removeColumnClass: "flex items-center h-full pl-1",
   noEntriesClass: "border-t text-center p-3",
+  clearFilterClass: "underline font-bold",
+  clearFilterText: "Clear",
 };
 export const DataGridRenderer = createDataGridRenderer(
   undefined,
@@ -311,6 +317,13 @@ function DataGridControlRenderer({
               isChecked={(v) =>
                 filters.value?.[filterField]?.includes(v) ?? false
               }
+              clear={
+                !renderOptions.disableClear
+                  ? () => (filters.value = {})
+                  : undefined
+              }
+              clearClass={classes.clearFilterClass ?? ""}
+              clearText={classes.clearFilterText ?? "Clear"}
               setOption={(v, ch) =>
                 groupedChanges(() => {
                   filters.setValue(setFilterValue(filterField, v, ch));

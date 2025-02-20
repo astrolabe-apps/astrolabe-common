@@ -18,6 +18,9 @@ export function FilterPopover({
   isChecked,
   popoverClass,
   isAnyChecked,
+  clear,
+  clearText,
+  clearClass,
 }: {
   popoverClass?: string;
   dataNode: SchemaDataNode;
@@ -26,6 +29,9 @@ export function FilterPopover({
   isAnyChecked: () => boolean;
   isChecked: (v: any) => boolean;
   setOption: (v: any, checked: boolean) => void;
+  clear?: () => void;
+  clearText: string;
+  clearClass: string;
 }) {
   const baseId = useId();
   return (
@@ -44,6 +50,11 @@ export function FilterPopover({
     const options = schemaInterface.getFilterOptions(dataNode, valueNode);
     return (
       <div>
+        {clear && (
+          <button onClick={clear} className={clearClass}>
+            {clearText}
+          </button>
+        )}
         <RenderArrayElements
           array={options}
           children={(n, i) => {
