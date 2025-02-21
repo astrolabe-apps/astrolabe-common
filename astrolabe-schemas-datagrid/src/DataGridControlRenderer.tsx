@@ -74,6 +74,7 @@ interface DataGridOptions
   searchField?: string;
   displayOnly?: boolean;
   groupByField?: string;
+  disableClear?: boolean;
 }
 
 interface DataGridClasses {
@@ -85,6 +86,8 @@ interface DataGridClasses {
   headerCellClass?: string;
   cellClass?: string;
   bodyCellClass?: string;
+  clearFilterClass?: string;
+  clearFilterText?: string;
 }
 
 interface DataGridColumnExtension {
@@ -109,6 +112,7 @@ const DataGridFields = buildSchema<DataGridOptions>({
   groupByField: stringField("Group by field"),
   displayOnly: boolField("Display only"),
   editExternal: boolField("Edit external"),
+  disableClear: boolField("Disable clear filter"),
 });
 export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
@@ -127,6 +131,8 @@ export const defaultDataGridClasses: DataGridClasses = {
   headerCellClass: "font-bold",
   cellClass: "",
   bodyCellClass: "border-t py-1 flex items-center",
+  clearFilterClass: "underline font-bold",
+  clearFilterText: "Clear",
 };
 export const DataGridRenderer = createDataGridRenderer(
   undefined,
@@ -393,6 +399,13 @@ function DataGridControlRenderer({
               isChecked={(v) =>
                 filters.value?.[filterField]?.includes(v) ?? false
               }
+              clear={
+                !renderOptions.disableClear
+                  ? () => (filters.value = {})
+                  : undefined
+              }
+              clearClass={classes.clearFilterClass ?? ""}
+              clearText={classes.clearFilterText ?? "Clear"}
               setOption={(v, ch) =>
                 groupedChanges(() => {
                   filters.setValue(setFilterValue(filterField, v, ch));
