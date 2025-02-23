@@ -3,10 +3,12 @@ import {
   ControlDataVisitor,
   ControlDefinition,
   ControlDefinitionType,
+  createFormTree,
   DataControlDefinition,
   DataRenderType,
   DisplayOnlyRenderOptions,
   fieldPathForDefinition,
+  FormNode,
   GroupRenderOptions,
   isAutoCompleteClasses,
   isCheckEntryClasses,
@@ -342,6 +344,28 @@ export function addMissingControls(
   return addMissingControlsForSchema(rootSchemaNode(fields), controls);
 }
 
+function registerSchemaEntries(formNode: FormNode, parentSchema: SchemaNode) {
+  const formToSchema: Record<string, SchemaNode> = {};
+  const schemaToForm: Record<string, FormNode[]> = {};
+  function recurse(node: FormNode, parentSchema: SchemaNode) {
+    const c = node.definition;
+    const controlPath = fieldPathForDefinition(c);
+    let dataSchema = controlPath
+      ? schemaForFieldPath(controlPath, parentSchema)
+      : undefined;
+    if (isGroupControl(c) && dataSchema == null) dataSchema = parentSchema;
+    if (dataSchema) {
+      formToSchema[node.id] = dataSchema;
+      const formNodes = schemaToForm[dataSchema.id] ?? [];
+      formNodes.push(node);
+      schemaToForm[dataSchema.id] = formNodes;
+    }
+    node.getChildNodes().forEach((x) => recurse(x, dataSchema ?? parentSchema));
+  }
+  recurse(formNode, parentSchema);
+  return { formToSchema, schemaToForm };
+}
+
 interface ControlAndSchema {
   control: ControlDefinition;
   children: ControlAndSchema[];
@@ -358,6 +382,9 @@ export function addMissingControlsForSchema(
   schema: SchemaNode,
   controls: ControlDefinition[],
 ) {
+  const tree = createFormTree(controls);
+  console.log(registerSchemaEntries(tree.rootNode, schema));
+  // TODO - use new maps to add missing controls
   const controlMap: { [k: string]: ControlAndSchema } = {};
   const schemaControlMap: { [k: string]: ControlAndSchema[] } = {};
   const rootControls = controls.map((c) => toControlAndSchema(c, schema));
@@ -375,6 +402,7 @@ export function addMissingControlsForSchema(
 
   function addMissing(schemaNode: SchemaNode) {
     if (fieldHasTag(schemaNode.field, SchemaTags.NoControl)) return;
+    let skipChildren = false;
     const existingControls = schemaControlMap[schemaNode.id];
     if (!existingControls) {
       const eligibleParents = getEligibleParents(schemaNode);
@@ -396,6 +424,7 @@ export function addMissingControlsForSchema(
       }
       if (parentGroup) {
         const newControl = defaultControlForField(schemaNode.field, true);
+        skipChildren = !!newControl.childRefId;
         newControl.field = relativePath(parentGroup.schema!, schemaNode);
         parentGroup.children.push(
           toControlAndSchema(newControl, parentGroup.schema!, parentGroup),
@@ -403,7 +432,7 @@ export function addMissingControlsForSchema(
       } else
         console.warn("Could not find a parent group for: " + schemaNode.id);
     }
-    schemaNode.getChildNodes(true).forEach(addMissing);
+    if (!skipChildren) schemaNode.getChildNodes(true).forEach(addMissing);
   }
 
   function getEligibleParents(schemaNode: SchemaNode) {

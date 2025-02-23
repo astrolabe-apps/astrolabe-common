@@ -644,8 +644,18 @@ export function useControlRendererComponent(
             formOptions: myOptions,
           }),
         ) ?? [];
+      const otherChildNodes =
+        definition.childRefId &&
+        formNode.tree.getById(definition.childRefId)?.getChildNodes();
+
       const labelAndChildren = renderControlLayout({
-        formNode,
+        formNode: otherChildNodes
+          ? formNode.tree.createTempNode(
+              formNode.id,
+              definition,
+              otherChildNodes,
+            )
+          : formNode,
         definition: c,
         renderer,
         renderChild: (k, child, options) => {

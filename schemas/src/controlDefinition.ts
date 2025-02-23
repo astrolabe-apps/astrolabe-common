@@ -621,13 +621,16 @@ class FormTreeImpl extends FormTree {
   }
 
   register(node: FormNode) {
-    if (node.definition.id) {
-      this.controlMap[node.definition.id] = node;
-    }
+    this.controlMap[node.id] = node;
     node.getChildNodes().forEach((x) => this.register(x));
   }
   addNode(parent: FormNode, control: ControlDefinition): FormNode {
-    const node = new FormNodeImpl("c" + this.idCount++, control, this, parent);
+    const node = new FormNodeImpl(
+      control.id ? control.id : "c" + this.idCount++,
+      control,
+      this,
+      parent,
+    );
     control.children?.forEach((x) => this.addNode(node, x));
     parent.getChildNodes().push(node);
     this.register(node);
