@@ -20,7 +20,9 @@ export function DefaultAccordion({
   contentStyle,
   contentClassName,
   designMode,
+  iconOpenName,
   iconOpenClass,
+  iconClosedName,
   iconClosedClass,
   className,
   renderTitle = (t) => t,
@@ -38,6 +40,7 @@ export function DefaultAccordion({
   renderers: FormRenderer;
   dataContext: ControlDataContext;
 } & DefaultAccordionRendererOptions) {
+  const h = renderers.h;
   const dataControl = (dataContext.dataNode ?? dataContext.parentNode).control;
   const open = useControl(!!accordion.defaultExpanded);
   if (dataControl && !dataControl.meta.accordionState) {
@@ -52,7 +55,10 @@ export function DefaultAccordion({
   ) : (
     <button className={className} onClick={() => open.setValue((x) => !x)}>
       <label className={titleClass}>{title}</label>
-      <i className={clsx(isOpen ? iconOpenClass : iconClosedClass)} />
+      <i
+        title={isOpen ? iconOpenName : iconClosedName}
+        className={clsx(isOpen ? iconOpenClass : iconClosedClass)}
+      />
     </button>
   );
 

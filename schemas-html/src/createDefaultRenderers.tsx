@@ -311,7 +311,9 @@ export interface DefaultAccordionRendererOptions {
   className?: string;
   titleClass?: string;
   togglerClass?: string;
+  iconOpenName?: string;
   iconOpenClass?: string;
+  iconClosedName?: string;
   iconClosedClass?: string;
   renderTitle?: (
     title: string | undefined,

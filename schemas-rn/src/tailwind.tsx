@@ -15,6 +15,7 @@ import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRen
 import { createRNHelpTextRenderer } from "./components/RNHelpTextRenderer";
 import { RendererRegistration } from "@react-typed-forms/schemas";
 import { RNHtmlRenderer } from "./components/RNHtmlRenderer";
+import { FontAwesomeIcon } from "./components/FontAwesomeIcon";
 
 export const defaultRnTailwindTheme = {
   ...defaultTailwindTheme,
@@ -44,6 +45,8 @@ function renderHtml(
   const children = props?.children ?? childs;
 
   switch (tag) {
+    case "i":
+      return <FontAwesomeIcon name={props.title} className={props.className} />;
     case "button":
       const onPress = props.onClick;
       return <Pressable {...props} onPress={onPress} children={children} />;

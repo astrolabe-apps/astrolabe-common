@@ -1,0 +1,569 @@
+{
+  "controls": [
+    {
+      "type": "Group",
+      "title": "Before you start",
+      "children": [
+        {
+          "type": "Display",
+          "title": "Information",
+          "displayData": {
+            "type": "Html",
+            "html": "<p>Some important information:</p><p class=\"ql-align-justify\">The process to receive a fire permit takes approximately <strong><u>24-72</u></strong> hours to complete from application to granting of the fire permit.</p>"
+          }
+        },
+        {
+          "type": "Display",
+          "title": "InformationFireSize",
+          "displayData": {
+            "type": "Html",
+            "html": "<p>Some materials are prohibited from burning. The <a href=\"https://epa.tas.gov.au/environment/air/backyard-burning\" rel=\"noopener noreferrer\" target=\"_blank\">EPA </a>will advise you of the materials you can and cannot burn.</p>"
+          },
+          "adornments": [
+            {
+              "type": "Accordion",
+              "title": "Materials to be burnt (click to expand)",
+              "defaultExpanded": false
+            }
+          ]
+        },
+        {
+          "type": "Display",
+          "title": "InformationPropertySize",
+          "adornments": [
+            {
+              "type": "Accordion",
+              "title": "Property size (click to expand)",
+              "defaultExpanded": false
+            }
+          ],
+          "displayData": {
+            "type": "Html",
+            "html": "<p>The TFS discourages backyard burning for any purpose on land with an area of less than 2,000m<sup>2</sup>; UNLESS it is done in accordance with an approved fire permit, environment protection notice (EPN) or council by-law; AND all practicable means are taken to prevent or minimize air pollution (i.e. by having regard to weather conditions, proximity of neighbours and by only burning dry vegetation).</p>"
+          }
+        },
+        {
+          "type": "Display",
+          "title": "Council by-laws",
+          "adornments": [
+            {
+              "type": "Accordion",
+              "title": "Council By-laws (click to expand)",
+              "defaultExpanded": false
+            }
+          ],
+          "displayData": {
+            "type": "Html",
+            "html": "<p>Break O'Day, Brighton, Glamorgan/Spring Bay,&nbsp;Kingborough, Sorell and Tasman councils have by-laws in place to manage backyard burning. If your intended burn lies within one of these municipalities, refer to the relevant council website to ensure you are compliant with the by-law.&nbsp;</p>"
+          }
+        },
+        {
+          "type": "Display",
+          "title": "Campfire Information",
+          "adornments": [
+            {
+              "type": "Accordion",
+              "title": "Campfires (click to expand)",
+              "defaultExpanded": false
+            }
+          ],
+          "displayData": {
+            "type": "Html",
+            "html": "<p>Campfires must not be lit on peat or marram grass or within 3 metres of any stump, log or standing tree.</p><p>During a fire permit period, all flammable material must not be within 3 metres of the fire, and agricultural produce, stacked timber and slashed or cut vegetation must not be within 6 metres of the fire.</p><p>Please check the <a href=\"https://parks.tas.gov.au/explore-our-parks/know-before-you-go/campfires-and-fire-restrictions\" rel=\"noopener noreferrer\" target=\"_blank\">PWS Campfire Page</a> to see if any Seasonal Campfire Bans are in place. or if campfires are permitted in National Parks, Reserves or on Crown land you intend to visit</p>"
+          }
+        },
+        {
+          "type": "Display",
+          "title": "Smoke Management",
+          "adornments": [
+            {
+              "type": "Accordion",
+              "title": "Smoke Management (click to expand)"
+            }
+          ],
+          "displayData": {
+            "type": "Html",
+            "html": "<p>Smoke emissions are an unavoidable by-product of fuel reduction burning and can pose a health hazard to susceptible individuals, reduce visibility on roads and can impact agricultural products and community events.&nbsp;</p><p>Consideration should be given to weather conditions, wind direction, proximity of neighbours, burn duration and vegetation dryness prior to conducting any burn, and steps taken to minimize any negative impact on the community.&nbsp;&nbsp;</p><p>Remember:&nbsp;</p><ul><li>Fuel moisture levels – should be lower to reduce smoke production&nbsp;</li><li>Forecast wind direction - should be favourable to carry smoke away from vulnerable areas&nbsp;</li><li>Surface temperature inversion – avoid to prevent smoke becoming trapped close to the ground&nbsp;&nbsp;</li></ul>"
+          }
+        },
+        {
+          "type": "Display",
+          "title": "End information",
+          "displayData": {
+            "type": "Html",
+            "html": "<p>For more information visit <a href=\"https://www.fire.tas.gov.au\" rel=\"noopener noreferrer\" target=\"_blank\">www.fire.tas.gov.au</a></p>"
+          }
+        }
+      ],
+      "groupOptions": {
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Group",
+      "title": "Contact Information",
+      "children": [
+        {
+          "type": "Display",
+          "title": "Personal Information Update ",
+          "displayData": {
+            "type": "Html",
+            "html": "<p>To update your personal details please visit <a href=\"/myaccount/myprofile/\" rel=\"noopener noreferrer\" target=\"_blank\">My Profile</a></p>"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Given Name(s)",
+          "field": "details/contact/firstName",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "disabled": true
+        },
+        {
+          "type": "Data",
+          "title": "Family Name",
+          "field": "details/contact/lastName",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "disabled": true
+        },
+        {
+          "type": "Data",
+          "title": "Contact Number",
+          "field": "details/contact/mobilePhone",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "disabled": true
+        },
+        {
+          "type": "Data",
+          "title": "Alternative Contact Number",
+          "field": "details/contact/alternativeNumber",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "disabled": true
+        },
+        {
+          "type": "Data",
+          "title": "Email Address",
+          "field": "details/contact/emailAddress",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "disabled": true
+        }
+      ],
+      "groupOptions": {
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Group",
+      "title": "Burn Location",
+      "children": [
+        {
+          "type": "Display",
+          "title": "Information",
+          "displayData": {
+            "type": "Html",
+            "html": "<p>Click on the map to select your burn location, or type the address into the 'search address' field.</p><p>The location or general area of your burn may be displayed on the TasAlert website/app and emergency services incident management systems.</p>"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Local government area",
+          "field": "location",
+          "required": true,
+          "renderOptions": {
+            "type": "Map"
+          },
+          "hideTitle": true
+        },
+        {
+          "type": "Data",
+          "title": "Nearest Road or Landmark",
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "FieldValue",
+                "field": "containsAddress",
+                "value": false
+              }
+            }
+          ],
+          "field": "details/registration/nearestRoadOrLandmark",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "adornments": [
+            {
+              "type": "HelpText",
+              "helpText": "Due to the location of the burn you are required to enter the nearest road or landmark",
+              "helpLabel": "Help"
+            }
+          ],
+          "hideTitle": false
+        },
+        {
+          "type": "Data",
+          "title": "I confirm that  I am the owner of, or have sought appropriate permissions from the owner of this property on which to conduct my burning activity.",
+          "renderOptions": {
+            "type": "Checkbox"
+          },
+          "field": "allowedToBurn",
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "Data",
+                "field": "location"
+              }
+            }
+          ],
+          "validators": [
+            {
+              "type": "Jsonata",
+              "expression": "allowedToBurn = true ? '' : 'Please acknowledge that you have the appropiate permissions  to undertake your burning activity'"
+            }
+          ]
+        }
+      ],
+      "groupOptions": {
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Group",
+      "title": "Burn Date",
+      "children": [
+        {
+          "type": "Data",
+          "title": "Fire Restriction Area: ",
+          "field": "location",
+          "renderOptions": {
+            "type": "DisplayOnly"
+          },
+          "readonly": true
+        },
+        {
+          "type": "Data",
+          "title": "Intended Burn Date",
+          "field": "details/registration/startDate",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "validators": [
+            {
+              "type": "Date",
+              "comparison": "NotBefore",
+              "daysFromCurrent": 0
+            }
+          ]
+        },
+        {
+          "type": "Data",
+          "title": "Is your fire larger than 1m<sup>3</sup>?",
+          "field": "details/registration/isYourFireLargerThan1MeterCubed",
+          "renderOptions": {
+            "type": "Radio"
+          },
+          "adornments": [
+            {
+              "type": "HelpText",
+              "helpText": "Material equivalent to 1m High x 1m Wide x 1m Deep",
+              "helpLabel": "Help"
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "title": "Burn Registration",
+          "groupOptions": {
+            "type": "Standard",
+            "hideTitle": true
+          },
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "Jsonata",
+                "expression": "$exists(details.registration.isYourFireLargerThan1MeterCubed) and $exists(burnRegistrationEnabled) and burnRegistrationEnabled=true and (locationStatus.state = 'no_restriction' or (details.registration.isYourFireLargerThan1MeterCubed=false and locationStatus.state = 'permits_required') or ((locationStatus.state = 'permits_required' or locationStatus.state='tfb') and insidePermitPeriod=false))"
+              }
+            }
+          ],
+          "children": [
+            {
+              "type": "Group",
+              "title": "Burn Registration from permit",
+              "dynamic": [
+                {
+                  "type": "Visible",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "initialType='Permit' and $toMillis(details.registration.startDate,\"[Y0001]-[M01]-[D01]\")<=$millis()+259200000"
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "type": "Display",
+                  "title": "Burn Registration Information- No Restriction",
+                  "displayData": {
+                    "type": "Text",
+                    "text": "There are currently no fire restrictions for your area.  A fire permit is not required. Register your burn using the button below"
+                  },
+                  "dynamic": [
+                    {
+                      "type": "Visible",
+                      "expr": {
+                        "type": "Jsonata",
+                        "expression": "locationStatus.state = 'no_restriction' or insidePermitPeriod=false"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "Display",
+                  "title": "Burn Registration Information- Less than 1 metre",
+                  "dynamic": [
+                    {
+                      "type": "Visible",
+                      "expr": {
+                        "type": "Jsonata",
+                        "expression": "details.registration.isYourFireLargerThan1MeterCubed=false and (locationStatus.state = 'permits_required') and insidePermitPeriod=true"
+                      }
+                    }
+                  ],
+                  "displayData": {
+                    "type": "Html",
+                    "html": "<p>Whilst there is a declared Fire Permit Period in your area, fires less than 1m<sup>3</sup> do not require a fire permit to burn.</p><p>Register your burn using the button below.</p>"
+                  }
+                },
+                {
+                  "type": "Action",
+                  "title": "Register a burn",
+                  "actionId": "applyBurn"
+                }
+              ],
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              }
+            },
+            {
+              "type": "Group",
+              "title": "Burn Registration from burn registration",
+              "dynamic": [
+                {
+                  "type": "Visible",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "initialType='BurnRegistration' and $toMillis(details.registration.startDate,\"[Y0001]-[M01]-[D01]\")<=$millis()+259200000"
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "type": "Action",
+                  "title": "Continue",
+                  "actionId": "applyBurn"
+                }
+              ],
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              }
+            },
+            {
+              "type": "Group",
+              "title": "Burn Registration in the future",
+              "dynamic": [
+                {
+                  "type": "Visible",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "$toMillis(details.registration.startDate,\"[Y0001]-[M01]-[D01]\")>=$millis()+259200000"
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "type": "Display",
+                  "title": "Information",
+                  "displayData": {
+                    "type": "Text",
+                    "text": "You cannot register a burn more than 3 days in advance."
+                  }
+                }
+              ],
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "title": "Burn Registration not enabled",
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "Jsonata",
+                "expression": "burnRegistrationEnabled=false and (locationStatus.state = 'no_restriction' or (details.registration.isYourFireLargerThan1MeterCubed=false and locationStatus.state = 'permits_required'))"
+              }
+            }
+          ],
+          "children": [
+            {
+              "type": "Display",
+              "title": "Information",
+              "displayData": {
+                "type": "Html",
+                "html": "<p>There are currently no fire restrictions for your area.&nbsp;A fire permit is not required.&nbsp;</p><p>Please call <a href=\"tel:1800000699\" rel=\"noopener noreferrer\" target=\"_blank\">1800 000 699</a> to register your burn with Tasmania&nbsp;Fire Service.</p>"
+              }
+            }
+          ],
+          "groupOptions": {
+            "type": "Standard",
+            "hideTitle": true
+          }
+        },
+        {
+          "type": "Group",
+          "title": "Total Fire Ban",
+          "groupOptions": {
+            "type": "Standard"
+          },
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "Jsonata",
+                "expression": "locationStatus.state = 'tfb' and insidePermitPeriod"
+              }
+            }
+          ],
+          "children": [
+            {
+              "type": "Display",
+              "title": "Information",
+              "displayData": {
+                "type": "Html",
+                "html": "<p>A Total Fire Ban has been declared for the location and date you have specified.</p><p>All fire permits are suspended and no new fire permits will be granted for the duration of the ban.</p><p>No fires may be lit in the open air on any land for any purpose, unless otherwise specified within the declaration.</p><p>For more information visit<a href=\"https://www.fire.tas.gov.au/total-fire-bans-fire-permits-burn-registrations/\" rel=\"noopener noreferrer\" target=\"_blank\"> www.fire.tas.gov.au</a> or call <a href=\"tel:1800 000 699\" rel=\"noopener noreferrer\" target=\"_blank\">1800 000 699</a>.</p>"
+              },
+              "styleClass": "bg-red-300 p-3"
+            },
+            {
+              "type": "Action",
+              "title": "Return to home",
+              "actionId": "home"
+            }
+          ],
+          "styleClass": "",
+          "layoutClass": ""
+        },
+        {
+          "type": "Group",
+          "title": "Fire permit",
+          "groupOptions": {
+            "type": "Standard",
+            "hideTitle": true
+          },
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "Jsonata",
+                "expression": "locationStatus.state = 'permits_required' and insidePermitPeriod and details.registration.isYourFireLargerThan1MeterCubed=true"
+              }
+            }
+          ],
+          "children": [
+            {
+              "type": "Group",
+              "title": "Permit from burn registration",
+              "children": [
+                {
+                  "type": "Display",
+                  "title": "Information",
+                  "displayData": {
+                    "type": "Html",
+                    "html": "<p>As there is a declared Fire Permit Period in your area and your fire is greater than 1m<sup>3</sup> in size you will need to obtain a fire permit before burning.</p><p>Apply for a fire permit using the button below.</p>"
+                  }
+                },
+                {
+                  "type": "Action",
+                  "title": "Apply for a fire permit",
+                  "actionId": "applyPermit"
+                }
+              ],
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              },
+              "dynamic": [
+                {
+                  "type": "Visible",
+                  "expr": {
+                    "type": "FieldValue",
+                    "field": "initialType",
+                    "value": "BurnRegistration"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "title": "Permit from permit",
+              "dynamic": [
+                {
+                  "type": "Visible",
+                  "expr": {
+                    "type": "FieldValue",
+                    "field": "initialType",
+                    "value": "Permit"
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "type": "Action",
+                  "title": "Continue",
+                  "actionId": "applyPermit"
+                }
+              ],
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              }
+            }
+          ]
+        }
+      ],
+      "groupOptions": {
+        "type": "Standard",
+        "hideTitle": false
+      },
+      "dynamic": [
+        {
+          "type": "Visible",
+          "expr": {
+            "type": "FieldValue",
+            "field": "allowedToBurn",
+            "value": true
+          }
+        }
+      ]
+    }
+  ],
+  "config": null
+}

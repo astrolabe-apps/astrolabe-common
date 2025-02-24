@@ -1,7 +1,4 @@
-import { StyleSheet } from "react-native";
-import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { IconSymbol } from "@/components/ui/IconSymbol";
-import {
+﻿import {
   createSchemaLookup,
   makeSchemaDataNode,
   NewControlRenderer,
@@ -14,21 +11,24 @@ import {
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
-import React from "react";
+import ParallaxScrollView from "@/components/ParallaxScrollView";
+import { IconSymbol } from "@/components/ui/IconSymbol";
 import { renderer } from "@/components/FormRenderer";
+import React from "react";
+import { StyleSheet } from "react-native";
 
 const schemas = createSchemaLookup(SchemaMap) as SchemaTreeLookup;
-
 type FormType = keyof typeof FormDefinitions;
-const controls = FormDefinitions.Burn.controls;
-const schemaNode = schemas.getSchema(FormDefinitions.Burn.schemaName)!;
+const controls = FormDefinitions.FireInitial.controls;
+const schemaNode = schemas.getSchema(FormDefinitions.FireInitial.schemaName)!;
 
-export default function TabThreeScreen() {
-  const data = useControl(testFormData);
+export default function TabFourScreen() {
+  const data = useControl({});
   useControlEffect(
     () => data.value,
     (v) => console.log(v),
   );
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: "#D0D0D0", dark: "#353636" }}
@@ -66,25 +66,3 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 });
-
-const testFormData = {
-  registration: {
-    startTime: "10:13:00",
-    endDate: "2025-02-18",
-    endTime: "10:14:00",
-    isYourFireLargerThan1MeterCubed: true,
-    fireUnitSize: "CubicMetres",
-    area: 2,
-    purpose: "Purpose",
-    materialsBeingBurnt: "Grass",
-    fuelArrangement: "Piles",
-    otherDetails: "Details",
-    isYourPropertyLargerThan2000MetersSquared: false,
-    nameOfBrigadeInAttendance: "Support",
-    acknowledgement: true,
-  },
-  contact: {
-    linkedServices: [],
-  },
-  isYourFireLargerThan1MeterCubed: true,
-};
