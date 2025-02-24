@@ -64,11 +64,12 @@ function renderHtml(
         <View {...props} children={children} />
       );
     case "input":
-      const { type, onChange, checked, value, ...rest } = props;
+      const { id, type, onChange, checked, value, ...rest } = props;
       switch (type) {
         case "radio":
           return (
             <RNRadioItem
+              key={id}
               {...rest}
               checked={checked}
               onChange={() => onChange({ target: {} })}
@@ -77,6 +78,7 @@ function renderHtml(
         case "checkbox":
           return (
             <RNCheckbox
+              key={id}
               {...rest}
               checked={checked}
               onCheckedChange={(e) => onChange({ target: { checked: e } })}
@@ -85,6 +87,7 @@ function renderHtml(
         default:
           return (
             <RNTextInput
+              key={id}
               {...rest}
               value={typeof value == "number" ? value.toString() : value}
               onChangeText={(t) => onChange({ target: { value: t } })}

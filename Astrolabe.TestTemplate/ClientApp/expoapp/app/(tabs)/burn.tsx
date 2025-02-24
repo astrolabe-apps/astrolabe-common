@@ -69,6 +69,7 @@ const styles = StyleSheet.create({
 
 const testFormData = {
   registration: {
+    startDate: "2025-02-18",
     startTime: "10:13:00",
     endDate: "2025-02-18",
     endTime: "10:14:00",

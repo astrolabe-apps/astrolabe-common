@@ -1,7 +1,6 @@
 ﻿import DateTimePickerModal, {
   DateTimePickerProps,
 } from "react-native-modal-datetime-picker";
-
 import { Pressable, View } from "react-native";
 import { RNTextInput } from "./RNTextInput";
 import { Control, useControl } from "@react-typed-forms/core";
@@ -47,6 +46,7 @@ export function createRNDateTimePickerRenderer(
 
       return (
         <RNDateTimePicker
+          {...p}
           control={p.control.as()}
           mode={mode}
           className={options.inputClass}
@@ -97,10 +97,14 @@ function RNDateTimePicker({
 
   return (
     <View>
-      <Pressable onPress={() => !disabled && (isVisible.value = true)}>
+      <Pressable
+        className={"pointer-events-auto"}
+        onPress={() => !disabled && (isVisible.value = true)}
+      >
         <RNTextInput
           className={className}
-          readOnly={true}
+          disabled={disabled}
+          readOnly
           value={formattedDate ?? ""}
         />
       </Pressable>
@@ -178,7 +182,7 @@ function RNDateTimePicker({
       options = {};
     }
 
-    return new DateFormatter("en-AU", options).format(innerPickerValue);
+    return new DateFormatter(locale, options).format(innerPickerValue);
   }
 
   function hidePicker() {

@@ -71,7 +71,7 @@
           "children": [
             {
               "type": "Data",
-              "title": "Is your fire larger than 1m<sup>3</sup>?",
+              "title": "Is your fire larger than 1m³?",
               "field": "isYourFireLargerThan1MeterCubed",
               "renderOptions": {
                 "type": "DisplayOnly"
@@ -431,7 +431,7 @@
           "children": [
             {
               "type": "Data",
-              "title": "Is your property larger than 2000m<sup>2</sup>?",
+              "title": "Is your property larger than 2000m²?",
               "field": "isYourPropertyLargerThan2000MetersSquared",
               "required": true,
               "renderOptions": {
@@ -457,7 +457,7 @@
                   "title": "New",
                   "displayData": {
                     "type": "Text",
-                    "text": "Burning on properties less that 2000m2 in size is governed by EPA regulations and Local Government by-laws."
+                    "text": "Burning on properties less that 2000m² in size is governed by EPA regulations and Local Government by-laws."
                   }
                 }
               ],
