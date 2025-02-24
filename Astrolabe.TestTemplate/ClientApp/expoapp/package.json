@@ -9,7 +9,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint", 
+    "lint": "expo lint",
     "build": "tsc"
   },
   "jest": {
@@ -54,7 +54,9 @@
     "@react-typed-forms/schemas-html": "workspace:*",
     "@react-typed-forms/schemas-rn": "workspace:*",
     "@astroapps/schemas-editor": "workspace:*",
-    "@rn-primitives/portal": "^1.1.0"
+    "@rn-primitives/portal": "^1.1.0",
+    "expo-dev-client": "^5.0.12",
+    "@react-native-community/datetimepicker": "8.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
