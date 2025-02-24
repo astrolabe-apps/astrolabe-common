@@ -15,13 +15,16 @@ import {
   fieldPathForDefinition,
   getExternalEditData,
   getLengthRestrictions,
+  GroupRenderType,
   isDataControl,
   makeHookDepString,
+  makeParamTag,
   mergeObjects,
   optionalHook,
   RenderOptions,
   schemaDataForFieldRef,
   schemaForFieldPath,
+  SchemaTags,
   stringField,
   toDepString,
 } from "@react-typed-forms/schemas";
@@ -96,6 +99,10 @@ interface DataGridColumnExtension {
   evalRowSpan?: EvalExpressionHook<number>;
 }
 
+const dataGridGroupOptions = {
+  tags: [makeParamTag(SchemaTags.ControlGroup, "DataGridOptions")],
+};
+
 const DataGridFields = buildSchema<DataGridOptions>({
   addText: stringField("Add button text"),
   removeText: stringField("Remove button text"),
@@ -103,21 +110,31 @@ const DataGridFields = buildSchema<DataGridOptions>({
   addActionId: stringField("Add action id"),
   removeActionId: stringField("Remove action id"),
   editActionId: stringField("Edit action id"),
-  noEntriesText: stringField("No entries text"),
   noAdd: boolField("No Add"),
   noRemove: boolField("No remove"),
   noReorder: boolField("No reorder"),
-  searchField: stringField("Search state field"),
-  groupByField: stringField("Group by field"),
-  displayOnly: boolField("Display only"),
-  editExternal: boolField("Edit external"),
-  disableClear: boolField("Disable clear filter"),
+  noEntriesText: stringField("No entries text", dataGridGroupOptions),
+  searchField: stringField("Search state field", dataGridGroupOptions),
+  groupByField: stringField("Group by field", dataGridGroupOptions),
+  displayOnly: boolField("Display only", dataGridGroupOptions),
+  editExternal: boolField("Edit external", dataGridGroupOptions),
+  disableClear: boolField("Disable clear filter", dataGridGroupOptions),
 });
 export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
   value: "DataGrid",
   fields: DataGridFields,
   applies: (sf) => !!sf.field.collection,
+  groups: [
+    {
+      parent: "RenderOptions",
+      group: {
+        type: ControlDefinitionType.Group,
+        children: [],
+        id: "DataGridOptions",
+      },
+    },
+  ],
 };
 
 export const defaultDataGridClasses: DataGridClasses = {

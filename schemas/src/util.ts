@@ -9,6 +9,7 @@ import {
   DisplayOnlyRenderOptions,
   fieldPathForDefinition,
   FormNode,
+  FormTree,
   GroupRenderOptions,
   isAutoCompleteClasses,
   isCheckEntryClasses,
@@ -335,13 +336,15 @@ export function findNonDataGroups(
  * Adds missing controls to the provided control definitions based on the schema fields.
  * @param fields - The schema fields to use for adding missing controls.
  * @param controls - The control definitions to add missing controls to.
+ * @param warning - An optional function to call with warning messages.
  * @returns The control definitions with missing controls added.
  */
 export function addMissingControls(
   fields: SchemaField[],
   controls: ControlDefinition[],
+  warning?: (msg: string) => void,
 ) {
-  return addMissingControlsForSchema(rootSchemaNode(fields), controls);
+  return addMissingControlsForSchema(rootSchemaNode(fields), controls, warning);
 }
 
 function registerSchemaEntries(formNode: FormNode, parentSchema: SchemaNode) {
@@ -366,43 +369,48 @@ function registerSchemaEntries(formNode: FormNode, parentSchema: SchemaNode) {
   return { formToSchema, schemaToForm };
 }
 
-interface ControlAndSchema {
-  control: ControlDefinition;
-  children: ControlAndSchema[];
-  schema?: SchemaNode;
-  parent?: ControlAndSchema;
-}
 /**
  * Adds missing controls to the provided control definitions based on the schema fields.
  * @param schema - The root schema node to use for adding missing controls.
  * @param controls - The control definitions to add missing controls to.
+ * @param warning - An optional function to call with warning messages.
  * @returns The control definitions with missing controls added.
  */
 export function addMissingControlsForSchema(
   schema: SchemaNode,
   controls: ControlDefinition[],
+  warning?: (msg: string) => void,
 ) {
   const tree = createFormTree(controls);
+  addMissingControlsToForm(schema, tree, warning);
+  return toDefinition(tree.rootNode).children ?? [];
+
+  function toDefinition(c: FormNode): ControlDefinition {
+    const children = c.getChildNodes().length
+      ? c.getChildNodes().map(toDefinition)
+      : null;
+    return { ...c.definition, children };
+  }
+}
+
+/**
+ * Adds missing controls to the provided form tree based on the schema fields.
+ * @param schema - The root schema node to use for adding missing controls.
+ * @param tree - The form tree to add missing controls to.
+ * @param warning - An optional function to call with warning messages.
+ */
+export function addMissingControlsToForm(
+  schema: SchemaNode,
+  tree: FormTree,
+  warning?: (msg: string) => void,
+): void {
   const { formToSchema, schemaToForm } = registerSchemaEntries(
     tree.rootNode,
     schema,
   );
-  // TODO - use new maps to add missing controls
-  // const controlMap: { [k: string]: ControlAndSchema } = {};
-  // const schemaControlMap: { [k: string]: ControlAndSchema[] } = {};
-  // const rootControls = controls.map((c) => toControlAndSchema(c, schema));
-  // const rootSchema = { schema, children: rootControls } as ControlAndSchema;
-  // addSchemaMapEntry("", rootSchema);
-  // rootControls.forEach(addReferences);
-  const fields = schema.getChildNodes();
-  fields.forEach(addMissing);
-  return controls;
-  // return rootControls.map(toDefinition);
 
-  function toDefinition(c: ControlAndSchema): ControlDefinition {
-    const children = c.children.length ? c.children.map(toDefinition) : null;
-    return { ...c.control, children };
-  }
+  schema.getChildNodes().forEach(addMissing);
+  return;
 
   function addMissing(schemaNode: SchemaNode) {
     if (fieldHasTag(schemaNode.field, SchemaTags.NoControl)) return;
@@ -416,12 +424,12 @@ export function addMissingControlsForSchema(
       );
       let parentGroup = desiredGroup ? tree.getById(desiredGroup) : undefined;
       if (!parentGroup && desiredGroup)
-        console.warn("No group '" + desiredGroup + "' for " + schemaNode.id);
+        warning?.("No group '" + desiredGroup + "' for " + schemaNode.id);
       if (
         parentGroup &&
         eligibleParents.indexOf(formToSchema[parentGroup.id]!.id) < 0
       ) {
-        console.warn(
+        warning?.(
           `Target group '${desiredGroup}' is not an eligible parent for '${schemaNode.id}'`,
         );
         parentGroup = undefined;
@@ -434,10 +442,8 @@ export function addMissingControlsForSchema(
         skipChildren = !!newControl.childRefId;
         const parentSchemaNode = formToSchema[parentGroup.id];
         newControl.field = relativePath(parentSchemaNode, schemaNode);
-        console.log("Adding", parentGroup, newControl);
         tree.addNode(parentGroup, newControl);
-      } else
-        console.warn("Could not find a parent group for: " + schemaNode.id);
+      } else warning?.("Could not find a parent group for: " + schemaNode.id);
     }
     if (!skipChildren) schemaNode.getChildNodes(true).forEach(addMissing);
   }
@@ -460,52 +466,6 @@ export function addMissingControlsForSchema(
       }
     }
   }
-
-  // function addReferences(c: ControlAndSchema) {
-  //   c.children.forEach(addReferences);
-  //   if (c.control.childRefId) {
-  //     const ref = controlMap[c.control.childRefId];
-  //     if (ref) {
-  //       ref.children.forEach((x) =>
-  //         toControlAndSchema(x.control, c.schema!, c, true),
-  //       );
-  //       return;
-  //     }
-  //     console.warn("Missing reference", c.control.childRefId);
-  //   }
-  // }
-  //
-  // function addSchemaMapEntry(schemaId: string, entry: ControlAndSchema) {
-  //   if (!schemaControlMap[schemaId]) schemaControlMap[schemaId] = [];
-  //   schemaControlMap[schemaId].push(entry);
-  // }
-  // function toControlAndSchema(
-  //   c: ControlDefinition,
-  //   parentSchema: SchemaNode,
-  //   parentNode?: ControlAndSchema,
-  //   dontRegister?: boolean,
-  // ): ControlAndSchema {
-  //   const controlPath = fieldPathForDefinition(c);
-  //   let dataSchema = controlPath
-  //     ? schemaForFieldPath(controlPath, parentSchema)
-  //     : undefined;
-  //   if (isGroupControl(c) && dataSchema == null) dataSchema = parentSchema;
-  //   const entry: ControlAndSchema = {
-  //     schema: dataSchema,
-  //     control: c,
-  //     children: [],
-  //     parent: parentNode,
-  //   };
-  //   entry.children =
-  //     c.children?.map((x) =>
-  //       toControlAndSchema(x, dataSchema ?? parentSchema, entry, dontRegister),
-  //     ) ?? [];
-  //   if (!dontRegister && c.id) controlMap[c.id] = entry;
-  //   if (dataSchema) {
-  //     addSchemaMapEntry(dataSchema.id, entry);
-  //   }
-  //   return entry;
-  // }
 }
 
 /**

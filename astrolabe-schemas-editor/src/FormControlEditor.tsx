@@ -8,6 +8,7 @@ import {
   fieldPathForDefinition,
   FieldType,
   FormRenderer,
+  FormTree,
   GroupedControlsDefinition,
   makeSchemaDataNode,
   RendererRegistration,
@@ -40,7 +41,7 @@ export function FormControlEditor({
   extensions,
 }: {
   controlNode: SelectedControlNode;
-  editorControls: GroupedControlsDefinition;
+  editorControls: FormTree;
   editorFields: SchemaNode;
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
   extensions?: ControlDefinitionExtension[];
@@ -80,7 +81,7 @@ export function FormControlEditor({
     unsafeRestoreControl(controlNode.form.definition)!,
   );
   const RenderEditor = useControlRendererComponent(
-    editorControls,
+    editorControls.rootNode,
     renderer,
     {
       schemaInterface,

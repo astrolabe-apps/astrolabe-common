@@ -117,7 +117,7 @@ export interface SchemaFieldGenOptions {
   maxDepth?: number;
   notNullable?: boolean;
 }
-function randomSchemaField(
+export function randomSchemaField(
   options: SchemaFieldGenOptions = {},
 ): Arbitrary<SchemaField> {
   const {

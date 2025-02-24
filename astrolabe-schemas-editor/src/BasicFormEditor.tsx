@@ -15,6 +15,7 @@ import {
 import { ControlDefinitionSchemaMap } from "./schemaSchemas";
 import {
   addMissingControls,
+  addMissingControlsToForm,
   applyExtensionsToSchema,
   cleanDataForSchema,
   ControlDefinition,
@@ -22,8 +23,11 @@ import {
   ControlDefinitionType,
   ControlRenderOptions,
   createFormRenderer,
+  createFormTree,
+  EditorGroup,
   FormNode,
   FormRenderer,
+  FormTree,
   getAllReferencedClasses,
   GroupedControlsDefinition,
   GroupRenderType,
@@ -122,16 +126,24 @@ export function BasicFormEditor<A extends string = string>({
   const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
-  const controlGroup: GroupedControlsDefinition = useMemo(() => {
-    return {
-      children: addMissingControls(
-        ControlDefinitionSchema,
-        editorControls ?? defaultEditorControls,
+  const editorTree: FormTree = useMemo(() => {
+    const tree = createFormTree(editorControls ?? defaultEditorControls);
+    const extraGroups: EditorGroup[] = extensions.flatMap((x) =>
+      Object.values(x).flatMap((ro) =>
+        Array.isArray(ro)
+          ? ro.flatMap((r) => r.groups ?? [])
+          : (ro.groups ?? []),
       ),
-      type: ControlDefinitionType.Group,
-      groupOptions: { type: GroupRenderType.Standard },
-    };
-  }, [editorControls, defaultEditorControls]);
+    );
+    extraGroups.forEach((g) => {
+      const parent = tree.getById(g.parent);
+      if (parent) {
+        tree.addNode(parent, g.group);
+      }
+    });
+    addMissingControlsToForm(rootSchemaNode(ControlDefinitionSchema), tree);
+    return tree;
+  }, [editorControls, controlDefinitionSchemaMap, defaultEditorControls]);
 
   const genStyles = useMemo(
     () =>
@@ -226,7 +238,7 @@ export function BasicFormEditor<A extends string = string>({
     getCurrentForm: () =>
       selectedForm.value ? getForm(selectedForm.value) : undefined,
     extensions,
-    editorControls: controlGroup,
+    editorControls: editorTree,
     createEditorRenderer,
     editorFields: rootSchemaNode(ControlDefinitionSchema),
     formList,

@@ -3,7 +3,7 @@ import {
   ControlDefinitionExtension,
   ControlRenderOptions,
   FormNode,
-  FormRenderer,
+  FormRenderer, FormTree,
   GroupedControlsDefinition,
   RendererRegistration,
   SchemaNode,
@@ -20,7 +20,7 @@ export interface ViewContext {
   currentForm: Control<string | undefined>;
   getForm: (formId: string) => Control<EditableForm | undefined>;
   getCurrentForm: () => Control<EditableForm | undefined> | undefined;
-  editorControls: GroupedControlsDefinition;
+  editorControls: FormTree;
   editorFields: SchemaNode;
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
   extensions?: ControlDefinitionExtension[];
