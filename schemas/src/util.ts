@@ -383,17 +383,21 @@ export function addMissingControlsForSchema(
   controls: ControlDefinition[],
 ) {
   const tree = createFormTree(controls);
-  console.log(registerSchemaEntries(tree.rootNode, schema));
+  const { formToSchema, schemaToForm } = registerSchemaEntries(
+    tree.rootNode,
+    schema,
+  );
   // TODO - use new maps to add missing controls
-  const controlMap: { [k: string]: ControlAndSchema } = {};
-  const schemaControlMap: { [k: string]: ControlAndSchema[] } = {};
-  const rootControls = controls.map((c) => toControlAndSchema(c, schema));
-  const rootSchema = { schema, children: rootControls } as ControlAndSchema;
-  addSchemaMapEntry("", rootSchema);
-  rootControls.forEach(addReferences);
+  // const controlMap: { [k: string]: ControlAndSchema } = {};
+  // const schemaControlMap: { [k: string]: ControlAndSchema[] } = {};
+  // const rootControls = controls.map((c) => toControlAndSchema(c, schema));
+  // const rootSchema = { schema, children: rootControls } as ControlAndSchema;
+  // addSchemaMapEntry("", rootSchema);
+  // rootControls.forEach(addReferences);
   const fields = schema.getChildNodes();
   fields.forEach(addMissing);
-  return rootControls.map(toDefinition);
+  return controls;
+  // return rootControls.map(toDefinition);
 
   function toDefinition(c: ControlAndSchema): ControlDefinition {
     const children = c.children.length ? c.children.map(toDefinition) : null;
@@ -403,32 +407,35 @@ export function addMissingControlsForSchema(
   function addMissing(schemaNode: SchemaNode) {
     if (fieldHasTag(schemaNode.field, SchemaTags.NoControl)) return;
     let skipChildren = false;
-    const existingControls = schemaControlMap[schemaNode.id];
+    const existingControls = schemaToForm[schemaNode.id];
     if (!existingControls) {
       const eligibleParents = getEligibleParents(schemaNode);
       const desiredGroup = getTagParam(
         schemaNode.field,
         SchemaTags.ControlGroup,
       );
-      let parentGroup = desiredGroup ? controlMap[desiredGroup] : undefined;
+      let parentGroup = desiredGroup ? tree.getById(desiredGroup) : undefined;
       if (!parentGroup && desiredGroup)
         console.warn("No group '" + desiredGroup + "' for " + schemaNode.id);
-      if (parentGroup && eligibleParents.indexOf(parentGroup.schema!.id) < 0) {
+      if (
+        parentGroup &&
+        eligibleParents.indexOf(formToSchema[parentGroup.id]!.id) < 0
+      ) {
         console.warn(
           `Target group '${desiredGroup}' is not an eligible parent for '${schemaNode.id}'`,
         );
         parentGroup = undefined;
       }
       if (!parentGroup && eligibleParents.length) {
-        parentGroup = schemaControlMap[eligibleParents[0]]?.[0];
+        parentGroup = schemaToForm[eligibleParents[0]]?.[0];
       }
       if (parentGroup) {
         const newControl = defaultControlForField(schemaNode.field, true);
         skipChildren = !!newControl.childRefId;
-        newControl.field = relativePath(parentGroup.schema!, schemaNode);
-        parentGroup.children.push(
-          toControlAndSchema(newControl, parentGroup.schema!, parentGroup),
-        );
+        const parentSchemaNode = formToSchema[parentGroup.id];
+        newControl.field = relativePath(parentSchemaNode, schemaNode);
+        console.log("Adding", parentGroup, newControl);
+        tree.addNode(parentGroup, newControl);
       } else
         console.warn("Could not find a parent group for: " + schemaNode.id);
     }
@@ -454,51 +461,51 @@ export function addMissingControlsForSchema(
     }
   }
 
-  function addReferences(c: ControlAndSchema) {
-    c.children.forEach(addReferences);
-    if (c.control.childRefId) {
-      const ref = controlMap[c.control.childRefId];
-      if (ref) {
-        ref.children.forEach((x) =>
-          toControlAndSchema(x.control, c.schema!, c, true),
-        );
-        return;
-      }
-      console.warn("Missing reference", c.control.childRefId);
-    }
-  }
-
-  function addSchemaMapEntry(schemaId: string, entry: ControlAndSchema) {
-    if (!schemaControlMap[schemaId]) schemaControlMap[schemaId] = [];
-    schemaControlMap[schemaId].push(entry);
-  }
-  function toControlAndSchema(
-    c: ControlDefinition,
-    parentSchema: SchemaNode,
-    parentNode?: ControlAndSchema,
-    dontRegister?: boolean,
-  ): ControlAndSchema {
-    const controlPath = fieldPathForDefinition(c);
-    let dataSchema = controlPath
-      ? schemaForFieldPath(controlPath, parentSchema)
-      : undefined;
-    if (isGroupControl(c) && dataSchema == null) dataSchema = parentSchema;
-    const entry: ControlAndSchema = {
-      schema: dataSchema,
-      control: c,
-      children: [],
-      parent: parentNode,
-    };
-    entry.children =
-      c.children?.map((x) =>
-        toControlAndSchema(x, dataSchema ?? parentSchema, entry, dontRegister),
-      ) ?? [];
-    if (!dontRegister && c.id) controlMap[c.id] = entry;
-    if (dataSchema) {
-      addSchemaMapEntry(dataSchema.id, entry);
-    }
-    return entry;
-  }
+  // function addReferences(c: ControlAndSchema) {
+  //   c.children.forEach(addReferences);
+  //   if (c.control.childRefId) {
+  //     const ref = controlMap[c.control.childRefId];
+  //     if (ref) {
+  //       ref.children.forEach((x) =>
+  //         toControlAndSchema(x.control, c.schema!, c, true),
+  //       );
+  //       return;
+  //     }
+  //     console.warn("Missing reference", c.control.childRefId);
+  //   }
+  // }
+  //
+  // function addSchemaMapEntry(schemaId: string, entry: ControlAndSchema) {
+  //   if (!schemaControlMap[schemaId]) schemaControlMap[schemaId] = [];
+  //   schemaControlMap[schemaId].push(entry);
+  // }
+  // function toControlAndSchema(
+  //   c: ControlDefinition,
+  //   parentSchema: SchemaNode,
+  //   parentNode?: ControlAndSchema,
+  //   dontRegister?: boolean,
+  // ): ControlAndSchema {
+  //   const controlPath = fieldPathForDefinition(c);
+  //   let dataSchema = controlPath
+  //     ? schemaForFieldPath(controlPath, parentSchema)
+  //     : undefined;
+  //   if (isGroupControl(c) && dataSchema == null) dataSchema = parentSchema;
+  //   const entry: ControlAndSchema = {
+  //     schema: dataSchema,
+  //     control: c,
+  //     children: [],
+  //     parent: parentNode,
+  //   };
+  //   entry.children =
+  //     c.children?.map((x) =>
+  //       toControlAndSchema(x, dataSchema ?? parentSchema, entry, dontRegister),
+  //     ) ?? [];
+  //   if (!dontRegister && c.id) controlMap[c.id] = entry;
+  //   if (dataSchema) {
+  //     addSchemaMapEntry(dataSchema.id, entry);
+  //   }
+  //   return entry;
+  // }
 }
 
 /**
