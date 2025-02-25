@@ -28,6 +28,8 @@ public static class FilterFunctionHandler
                 )
                 {
                     var firstFilter = nextEnv.EvaluateWith(leftValue, null, right);
+                    if (firstFilter.Value.IsNull())
+                        return firstFilter.Env.WithError("Object filter can't be null").WithNull();
                     return firstFilter.Env.EvaluateWith(
                         leftValue,
                         null,
