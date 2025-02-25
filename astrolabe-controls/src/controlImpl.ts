@@ -445,6 +445,7 @@ class ControlPropertiesImpl<V> implements ControlProperties<V> {
   }
 }
 
+const objConst = {}.constructor;
 export function deepEquals(
   a: any,
   b: any,
@@ -456,12 +457,12 @@ export function deepEquals(
   if (b == null) return false;
   if (typeof a == "object" && typeof b == "object") {
     if (a.constructor !== b.constructor) return false;
-    if (a instanceof ControlImpl) return false;
     let length, i, keys;
     if (Array.isArray(a)) {
       if (a.length != b.length) return false;
       return a.every((x, i) => childEquals()(x, b[i]));
     }
+    if (a.constructor !== objConst) return false;
     keys = Object.keys(a);
     length = keys.length;
     if (length !== Object.keys(b).length) return false;
