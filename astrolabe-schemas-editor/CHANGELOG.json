@@ -1,0 +1,31 @@
+{
+  "name": "@astroapps/schemas-editor",
+  "entries": [
+    {
+      "version": "16.0.0",
+      "tag": "@astroapps/schemas-editor_v16.0.0",
+      "date": "Tue, 25 Feb 2025 09:07:22 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "Support editor extension UI"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^14.4.0` to `^15.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas-html\" from `^2.4.0` to `^3.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^14.4.0` to `^15.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas-html\" from `^2.4.0` to `^3.0.0`"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@astroapps/quill-editor",
+  "entries": [
+    {
+      "version": "11.0.1",
+      "tag": "@astroapps/quill-editor_v11.0.1",
+      "date": "Tue, 25 Feb 2025 09:07:22 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" to `15.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^14.0.3` to `^15.0.0`"
+          }
+        ]
+      }
+    }
+  ]
+}
