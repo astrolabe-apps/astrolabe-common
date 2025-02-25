@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/core",
-  "version": "4.2.1",
+  "version": "4.2.2",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -40,7 +40,7 @@
     "react": "^18 || ^19"
   },
   "dependencies": {
-    "@astroapps/controls": "^1.1.0"
+    "@astroapps/controls": "^1.1.2"
   },
   "devDependencies": {
     "@react-typed-forms/transform": "^0.2.0",
