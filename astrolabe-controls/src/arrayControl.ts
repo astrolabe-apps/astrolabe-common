@@ -125,6 +125,7 @@ export function updateElements<V>(
     });
     arrayLogic._elems = newElems as unknown as InternalControl[];
     c._flags &= ~ControlFlags.ChildInvalid;
+    c.validityChanged(false);
     c.setValueImpl(newElems.map((x) => x.current.value));
     c._subscriptions?.applyChange(ControlChange.Structure);
   });

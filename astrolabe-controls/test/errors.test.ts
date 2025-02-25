@@ -74,17 +74,22 @@ describe("errors", () => {
       fc.property(
         fc.array(fc.string({ minLength: 1 }), { minLength: 1 }),
         (strings) => {
-          const parent = newControl(strings, {
-            elems: { validator: notEmpty("Not blank") },
+          const parent = newControl([strings, strings], {
+            elems: { elems: { validator: notEmpty("Not blank") } },
           });
           const changes: ControlChange[] = [];
           parent.subscribe((a, c) => changes.push(c), ControlChange.Valid);
           expect(parent.valid).toStrictEqual(true);
-          parent.elements[0].value = "";
+          const brokenParent = parent.elements[0];
+          const brokenChild = brokenParent.elements[0];
+          brokenChild.value = "";
+          expect(brokenChild.valid).toStrictEqual(false);
           expect(parent.valid).toStrictEqual(false);
+          removeElement(brokenParent, brokenChild);
+          expect(parent.valid).toStrictEqual(true);
           updateElements(parent, () => []);
           expect(parent.valid).toStrictEqual(true);
-          parent.value = ["a", ""];
+          parent.value = [["a"], [""]];
           expect(parent.valid).toStrictEqual(false);
           removeElement(parent, 1);
           expect(parent.valid).toStrictEqual(true);
