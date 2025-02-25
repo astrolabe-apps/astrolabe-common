@@ -2,6 +2,18 @@
   "name": "@astroapps/schemas-editor",
   "entries": [
     {
+      "version": "16.0.1",
+      "tag": "@astroapps/schemas-editor_v16.0.1",
+      "date": "Tue, 25 Feb 2025 10:32:35 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix control tree node types to allow dropping onto nodes with no children"
+          }
+        ]
+      }
+    },
+    {
       "version": "16.0.0",
       "tag": "@astroapps/schemas-editor_v16.0.0",
       "date": "Tue, 25 Feb 2025 09:07:22 GMT",
