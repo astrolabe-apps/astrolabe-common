@@ -424,7 +424,9 @@ export function addMissingControlsToForm(
         schemaNode.field,
         SchemaTags.ControlGroup,
       );
-      let parentGroup = desiredGroup ? tree.getById(desiredGroup) : undefined;
+      let parentGroup = desiredGroup
+        ? tree.getByRefId(desiredGroup)
+        : undefined;
       if (!parentGroup && desiredGroup)
         warning?.("No group '" + desiredGroup + "' for " + schemaNode.id);
       if (
@@ -444,7 +446,7 @@ export function addMissingControlsToForm(
         skipChildren = !!newControl.childRefId;
         const parentSchemaNode = formToSchema[parentGroup.id];
         newControl.field = relativePath(parentSchemaNode, schemaNode);
-        const newNode = tree.addNode(parentGroup, newControl);
+        const newNode = tree.addChild(parentGroup, newControl);
         register(newNode, parentSchemaNode);
       } else warning?.("Could not find a parent group for: " + schemaNode.id);
     } else {

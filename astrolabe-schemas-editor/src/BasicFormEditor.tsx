@@ -136,9 +136,9 @@ export function BasicFormEditor<A extends string = string>({
       ),
     );
     extraGroups.forEach((g) => {
-      const parent = tree.getById(g.parent);
+      const parent = tree.getByRefId(g.parent);
       if (parent) {
-        tree.addNode(parent, g.group);
+        tree.addChild(parent, g.group);
       } else {
         console.warn("Could not find parent group: ", g.parent);
       }

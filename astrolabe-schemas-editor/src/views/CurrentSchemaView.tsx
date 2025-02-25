@@ -26,7 +26,7 @@ export function CurrentSchemaView({ context }: { context: ViewContext }) {
         onAdd={(c) => {
           const v = selectedControl.fields.form.value ?? tree.rootNode;
           if (v instanceof EditorFormNode) {
-            const newNode = v.tree.addNode(v, defaultControlForField(c.field));
+            const newNode = v.tree.addChild(v, defaultControlForField(c.field));
             selectedControlId.value = newNode.id;
           }
         }}

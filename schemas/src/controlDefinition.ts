@@ -573,8 +573,8 @@ export interface FormTreeLookup {
 }
 export abstract class FormTree implements FormTreeLookup {
   abstract rootNode: FormNode;
-  abstract getById(id: string): FormNode | undefined;
-  abstract addNode(parent: FormNode, control: ControlDefinition): FormNode;
+  abstract getByRefId(id: string): FormNode | undefined;
+  abstract addChild(parent: FormNode, control: ControlDefinition): FormNode;
 
   abstract getForm(formId: string): FormTree | undefined;
   createTempNode(
@@ -616,7 +616,7 @@ class FormTreeImpl extends FormTree {
     this.rootNode = new FormNodeImpl("", { type: "Group" }, this);
   }
 
-  getById(id: string): FormNode | undefined {
+  getByRefId(id: string): FormNode | undefined {
     return this.controlMap[id];
   }
 
@@ -624,14 +624,14 @@ class FormTreeImpl extends FormTree {
     this.controlMap[node.id] = node;
     node.getChildNodes().forEach((x) => this.register(x));
   }
-  addNode(parent: FormNode, control: ControlDefinition): FormNode {
+  addChild(parent: FormNode, control: ControlDefinition): FormNode {
     const node = new FormNodeImpl(
       control.id ? control.id : "c" + this.idCount++,
       control,
       this,
       parent,
     );
-    control.children?.forEach((x) => this.addNode(node, x));
+    control.children?.forEach((x) => this.addChild(node, x));
     parent.getChildNodes().push(node);
     this.register(node);
     return node;
@@ -660,7 +660,7 @@ export function createFormTree(
   getForm: FormTreeLookup = { getForm: () => undefined },
 ): FormTree {
   const tree = new FormTreeImpl(getForm);
-  controls.forEach((x) => tree.addNode(tree.rootNode, x));
+  controls.forEach((x) => tree.addChild(tree.rootNode, x));
   return tree;
 }
 

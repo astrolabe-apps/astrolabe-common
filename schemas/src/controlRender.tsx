@@ -646,7 +646,7 @@ export function useControlRendererComponent(
         ) ?? [];
       const otherChildNodes =
         definition.childRefId &&
-        formNode.tree.getById(definition.childRefId)?.getChildNodes();
+        formNode.tree.getByRefId(definition.childRefId)?.getChildNodes();
 
       const labelAndChildren = renderControlLayout({
         formNode: otherChildNodes

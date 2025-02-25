@@ -34,11 +34,11 @@ export class EditorFormNode implements FormNode {
 export class EditorFormTree extends FormTree {
   rootNode: EditorFormNode;
 
-  getById(id: string): FormNode | undefined {
+  getByRefId(id: string): FormNode | undefined {
     throw new Error("Method not implemented.");
   }
 
-  addNode(parent: FormNode, control: ControlDefinition): FormNode {
+  addChild(parent: FormNode, control: ControlDefinition): FormNode {
     return (parent as EditorFormNode).addChild(control);
   }
   getForm(formId: string): FormTree | undefined {

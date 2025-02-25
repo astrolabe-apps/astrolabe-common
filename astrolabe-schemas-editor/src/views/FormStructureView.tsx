@@ -46,7 +46,7 @@ export function FormStructureView({ context }: { context: ViewContext }) {
   }
 
   function addRootControl() {
-    const newControl = tree.addNode(tree.rootNode, {
+    const newControl = tree.addChild(tree.rootNode, {
       ...defaultControlDefinitionForm,
       title: "New",
     });
