@@ -1,15 +1,16 @@
-import { EditableForm, getEditorFormTree, ViewContext } from "./index";
+import { EditableForm, ViewContext } from "./index";
 import {
   Control,
-  Fcheckbox,
-  RenderControl,
   RenderOptional,
   unsafeRestoreControl,
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
 import { FormControlPreview } from "../FormControlPreview";
-import { addMissingControlsForSchema } from "@react-typed-forms/schemas";
+import {
+  addMissingControlsForSchema,
+  addMissingControlsToForm,
+} from "@react-typed-forms/schemas";
 import React from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
 import { toControlDefinitionForm } from "../schemaSchemas";
@@ -25,7 +26,11 @@ export function FormView(props: { formId: string; context: ViewContext }) {
     data: {},
   });
   useControlEffect(
-    () => [control.fields.root.dirty, control.fields.name.value] as const,
+    () =>
+      [
+        control.fields.formTree.value?.root.dirty,
+        control.fields.name.value,
+      ] as const,
     ([unsaved, name]) => {
       if (name) {
         context.updateTabTitle("form:" + formId, unsaved ? name + " *" : name);
@@ -60,7 +65,7 @@ function RenderFormDesign({
     button,
     checkbox,
   } = context;
-  const rootNode = getEditorFormTree(c).rootNode;
+  const rootNode = c.fields.formTree.value.rootNode;
   const rootSchema = context.schemaLookup.getSchema(c.fields.schemaId.value)!;
   const formRenderer = c.fields.renderer.value;
   return (
@@ -81,13 +86,7 @@ function RenderFormDesign({
 
   function addMissing() {
     if (rootSchema) {
-      const existingChildren = unsafeRestoreControl(
-        rootNode.definition.children,
-      )!;
-      existingChildren.value = addMissingControlsForSchema(
-        rootSchema,
-        existingChildren.value ?? [],
-      ).map(toControlDefinitionForm);
+      addMissingControlsToForm(rootSchema, c.fields.formTree.value);
     }
   }
 

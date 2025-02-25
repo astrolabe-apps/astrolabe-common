@@ -3,7 +3,8 @@ import {
   ControlDefinitionExtension,
   ControlRenderOptions,
   FormNode,
-  FormRenderer, FormTree,
+  FormRenderer,
+  FormTree,
   GroupedControlsDefinition,
   RendererRegistration,
   SchemaNode,
@@ -51,14 +52,10 @@ export interface EditableForm {
   selectedControl?: SelectedControlNode;
   selectedField?: SchemaNode;
   selectedControlId?: string;
-  root: ControlDefinition;
+  formTree: EditorFormTree;
   renderer: FormRenderer;
   schemaId: string;
   hideFields: boolean;
   formId: string;
   name: string;
-}
-
-export function getEditorFormTree(cf: Control<EditableForm>) {
-  return new EditorFormTree(cf.fields.root);
 }

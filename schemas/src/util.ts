@@ -350,7 +350,7 @@ export function addMissingControls(
 function registerSchemaEntries(formNode: FormNode, parentSchema: SchemaNode) {
   const formToSchema: Record<string, SchemaNode> = {};
   const schemaToForm: Record<string, FormNode[]> = {};
-  function recurse(node: FormNode, parentSchema: SchemaNode) {
+  function register(node: FormNode, parentSchema: SchemaNode) {
     const c = node.definition;
     const controlPath = fieldPathForDefinition(c);
     let dataSchema = controlPath
@@ -363,10 +363,12 @@ function registerSchemaEntries(formNode: FormNode, parentSchema: SchemaNode) {
       formNodes.push(node);
       schemaToForm[dataSchema.id] = formNodes;
     }
-    node.getChildNodes().forEach((x) => recurse(x, dataSchema ?? parentSchema));
+    node
+      .getChildNodes()
+      .forEach((x) => register(x, dataSchema ?? parentSchema));
   }
-  recurse(formNode, parentSchema);
-  return { formToSchema, schemaToForm };
+  register(formNode, parentSchema);
+  return { formToSchema, schemaToForm, register };
 }
 
 /**
@@ -404,7 +406,7 @@ export function addMissingControlsToForm(
   tree: FormTree,
   warning?: (msg: string) => void,
 ): void {
-  const { formToSchema, schemaToForm } = registerSchemaEntries(
+  const { formToSchema, schemaToForm, register } = registerSchemaEntries(
     tree.rootNode,
     schema,
   );
@@ -442,8 +444,11 @@ export function addMissingControlsToForm(
         skipChildren = !!newControl.childRefId;
         const parentSchemaNode = formToSchema[parentGroup.id];
         newControl.field = relativePath(parentSchemaNode, schemaNode);
-        tree.addNode(parentGroup, newControl);
+        const newNode = tree.addNode(parentGroup, newControl);
+        register(newNode, parentSchemaNode);
       } else warning?.("Could not find a parent group for: " + schemaNode.id);
+    } else {
+      skipChildren = existingControls.some((x) => x.definition.childRefId);
     }
     if (!skipChildren) schemaNode.getChildNodes(true).forEach(addMissing);
   }

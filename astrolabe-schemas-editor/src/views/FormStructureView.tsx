@@ -1,4 +1,4 @@
-import { getEditorFormTree, ViewContext } from "./index";
+import { ViewContext } from "./index";
 import { FormControlTree } from "../FormControlTree";
 import React from "react";
 import { NodeApi, TreeApi } from "react-arborist";
@@ -18,7 +18,7 @@ export function FormStructureView({ context }: { context: ViewContext }) {
   const rootSchema = schemaId ? schemaLookup.getSchema(schemaId) : undefined;
   if (!rootSchema)
     return <InactiveView>Missing schema: {schemaId}</InactiveView>;
-  const tree = getEditorFormTree(cf);
+  const tree = cf.fields.formTree.value;
   return (
     <div className="flex flex-col h-full">
       <div className="flex gap-2 p-4">
@@ -46,11 +46,10 @@ export function FormStructureView({ context }: { context: ViewContext }) {
   }
 
   function addRootControl() {
-    const newControl = (tree.rootNode as EditorFormNode).addChild({
+    const newControl = tree.addNode(tree.rootNode, {
       ...defaultControlDefinitionForm,
       title: "New",
     });
-    const newId = newControl.uniqueId.toString();
-    selectedTreeNode.value = newId;
+    selectedTreeNode.value = newControl.id;
   }
 }

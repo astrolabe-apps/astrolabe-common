@@ -2,6 +2,7 @@ import {
   Control,
   ensureMetaValue,
   Fcheckbox,
+  newControl,
   trackedValue,
   useComputed,
   useControl,
@@ -14,7 +15,6 @@ import {
 } from "@react-typed-forms/schemas-html";
 import { ControlDefinitionSchemaMap } from "./schemaSchemas";
 import {
-  addMissingControls,
   addMissingControlsToForm,
   applyExtensionsToSchema,
   cleanDataForSchema,
@@ -29,7 +29,6 @@ import {
   FormRenderer,
   FormTree,
   getAllReferencedClasses,
-  GroupedControlsDefinition,
   GroupRenderType,
   LabelType,
   RendererRegistration,
@@ -60,6 +59,7 @@ import {
   TabSetNode,
 } from "flexlayout-react";
 import { defaultLayout } from "./defaultLayout";
+import { EditorFormTree } from "./EditorFormNode";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
@@ -139,9 +139,15 @@ export function BasicFormEditor<A extends string = string>({
       const parent = tree.getById(g.parent);
       if (parent) {
         tree.addNode(parent, g.group);
+      } else {
+        console.warn("Could not find parent group: ", g.parent);
       }
     });
-    addMissingControlsToForm(rootSchemaNode(ControlDefinitionSchema), tree);
+    addMissingControlsToForm(
+      rootSchemaNode(ControlDefinitionSchema),
+      tree,
+      (m) => console.warn(m),
+    );
     return tree;
   }, [editorControls, controlDefinitionSchemaMap, defaultEditorControls]);
 
@@ -158,9 +164,11 @@ export function BasicFormEditor<A extends string = string>({
   );
 
   const allClasses = useComputed(() => {
-    const cv = trackedValue(loadedForms);
-    return Object.values(cv)
-      .flatMap((x) => x?.root.children ?? [])
+    return Object.values(loadedForms.fields)
+      .flatMap((x) => {
+        const rn = x.value?.formTree.root;
+        return rn ? [trackedValue(rn)] : [];
+      })
       .flatMap((x) => getAllReferencedClasses(x, collectClasses))
       .join(" ");
   });
@@ -216,12 +224,12 @@ export function BasicFormEditor<A extends string = string>({
   );
   async function doSaveForm(c: Control<EditableForm>) {
     await saveForm(
-      c.fields.root.value.children?.map((c) =>
+      c.fields.formTree.value.root.value.children?.map((c) =>
         cleanDataForSchema(c, ControlDefinitionSchema, true),
       ) ?? [],
       c.fields.formId.value as A,
     );
-    c.fields.root.markAsClean();
+    c.fields.formTree.value.root.markAsClean();
   }
   const formList = formTypes.map((e) =>
     Array.isArray(e) ? { id: e[0], name: e[1] } : e,
@@ -307,8 +315,8 @@ export function BasicFormEditor<A extends string = string>({
   ) {
     const name = formList.find((x) => x.id === formId)?.name ?? formId;
     const res = await loadForm(formId as A);
-    control.setInitialValue({
-      root: {
+    const formTree = new EditorFormTree(
+      newControl({
         children: res.controls,
         type: ControlDefinitionType.Group,
         groupOptions: {
@@ -316,7 +324,10 @@ export function BasicFormEditor<A extends string = string>({
           childLayoutClass: rootControlClass,
           hideTitle: true,
         },
-      } as ControlDefinition,
+      } as ControlDefinition),
+    );
+    control.setInitialValue({
+      formTree,
       schemaId: res.schemaName,
       hideFields: false,
       renderer: res.renderer ?? formRenderer,

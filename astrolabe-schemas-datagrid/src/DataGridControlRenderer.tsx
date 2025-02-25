@@ -4,6 +4,7 @@ import {
   ArrayRenderOptions,
   boolField,
   buildSchema,
+  compoundField,
   ControlDataContext,
   ControlDefinition,
   ControlDefinitionType,
@@ -113,12 +114,12 @@ const DataGridFields = buildSchema<DataGridOptions>({
   noAdd: boolField("No Add"),
   noRemove: boolField("No remove"),
   noReorder: boolField("No reorder"),
+  editExternal: boolField("Edit external"),
+  displayOnly: boolField("Display only", dataGridGroupOptions),
+  disableClear: boolField("Disable clear filter", dataGridGroupOptions),
   noEntriesText: stringField("No entries text", dataGridGroupOptions),
   searchField: stringField("Search state field", dataGridGroupOptions),
   groupByField: stringField("Group by field", dataGridGroupOptions),
-  displayOnly: boolField("Display only", dataGridGroupOptions),
-  editExternal: boolField("Edit external", dataGridGroupOptions),
-  disableClear: boolField("Disable clear filter", dataGridGroupOptions),
 });
 export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
