@@ -123,17 +123,21 @@ public class ExprParser
             };
         }
 
+        public override EvalExpr VisitUnaryOp(AstroExprParser.UnaryOpContext context)
+        {
+            var expr = context.expr();
+            return context.NOT() != null
+                ? new CallExpr("!", [Visit(expr)])
+                : context.PLUS() != null
+                    ? Visit(expr)
+                    : context.MINUS() != null
+                        ? new CallExpr("-", [new ValueExpr(0), Visit(expr)])
+                        : base.VisitUnaryOp(context);
+        }
+
         public override EvalExpr VisitPrimaryExpr(AstroExprParser.PrimaryExprContext context)
         {
-            return context.LPAR() != null
-                ? Visit(context.expr())
-                : context.PLUS() != null
-                    ? Visit(context.expr())
-                    : context.MINUS() != null
-                        ? new CallExpr("-", [new ValueExpr(0), Visit(context.expr())])
-                        : context.NOT() != null
-                            ? new CallExpr("!", [Visit(context.expr())])
-                            : base.VisitPrimaryExpr(context);
+            return context.LPAR() != null ? Visit(context.expr()) : base.VisitPrimaryExpr(context);
         }
 
         public override EvalExpr VisitFunctionCall(AstroExprParser.FunctionCallContext context)
