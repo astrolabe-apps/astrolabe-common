@@ -16,14 +16,34 @@ import { createRNHelpTextRenderer } from "./components/RNHelpTextRenderer";
 import { RendererRegistration } from "@react-typed-forms/schemas";
 import { RNHtmlRenderer } from "./components/RNHtmlRenderer";
 import { FontAwesomeIcon } from "./components/FontAwesomeIcon";
+import { createRNSelectRenderer } from "./components/RNSelectRenderer";
+import { cn } from "./utils";
 
 export const defaultRnTailwindTheme = {
   ...defaultTailwindTheme,
+  array: {
+    ...defaultTailwindTheme.array,
+    removableClass: "flex flex-col gap-y-2",
+    childClass: "bg-surface-100 border p-[10px]",
+  },
+  action: {
+    className:
+      "bg-primary-500 rounded-lg p-3 web:hover:opacity-90 active:opacity-90 text-white",
+  },
   h: renderHtml,
-  renderText: (p) => <Text>{p}</Text>,
+  renderText: (p, className) => (
+    <Text
+      className={cn(
+        ...(className?.split(" ").filter((x) => x.startsWith("text-")) ?? []),
+      )}
+    >
+      {p}
+    </Text>
+  ),
   extraRenderers: (options): RendererRegistration[] => {
     const renderers: RendererRegistration[] = [
       createRNHelpTextRenderer(options.adornment?.helpText),
+      createRNSelectRenderer(options.data?.selectOptions),
     ];
 
     if (Platform.OS !== "web") {

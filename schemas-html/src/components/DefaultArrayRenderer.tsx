@@ -194,11 +194,12 @@ export function createDefaultArrayRenderer(
   options?: DefaultArrayRendererOptions,
 ): ArrayRendererRegistration {
   return {
-    render: (props, { renderAction }) => (
+    render: (props, { renderAction, h }) => (
       <DefaultArrayRenderer
         {...props}
         {...options}
         renderAction={renderAction}
+        h={h}
       />
     ),
     type: "array",
@@ -209,6 +210,7 @@ export interface DefaultArrayRendererProps
   extends DefaultArrayRendererOptions,
     ArrayRendererProps {
   renderAction: (props: ActionRendererProps) => ReactNode;
+  h?: (type: any, props: any, ...children: any[]) => React.ReactElement;
 }
 
 export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
@@ -224,6 +226,7 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     renderAction,
     style,
     editAction,
+    h,
   } = props;
   const { addAction, removeAction } = applyArrayLengthRestrictions(props);
   return (

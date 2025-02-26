@@ -172,7 +172,7 @@ export interface FormRenderer {
    * @returns A React node.
    */
   renderLabelText: (props: ReactNode) => ReactNode;
-  renderText: (props: ReactNode) => ReactNode;
+  renderText: (props: ReactNode, className?: string) => ReactNode;
 
   h: (type: any, props: any, ...children: any[]) => ReactElement;
 }

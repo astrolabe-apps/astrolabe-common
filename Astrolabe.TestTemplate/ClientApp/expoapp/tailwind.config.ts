@@ -25,7 +25,8 @@ export default {
           "800": "#1b4a38",
           "900": "#173d2f",
           "950": "#0c221b",
-          DEFAULT: "#267151",
+          DEFAULT: "rgb(var(--primary))",
+          foreground: "rgb(var(--primary-foreground))",
         },
         secondary: {
           50: "#E8EFF7",
@@ -39,7 +40,8 @@ export default {
           800: "#162B41",
           900: "#0A141F",
           950: "#050A0F",
-          DEFAULT: "#3669A1",
+          DEFAULT: "rgb(var(--secondary))",
+          foreground: "rgb(var(--secondary-foreground))",
         },
         surface: colors.gray,
         primaryText: colors.white,
@@ -54,6 +56,26 @@ export default {
         error: {
           DEFAULT: colors.red["500"],
           light: colors.red["100"],
+        },
+        destructive: {
+          DEFAULT: "rgb(var(--destructive))",
+          foreground: "rgb(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "rgb(var(--muted))",
+          foreground: "rgb(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "rgb(var(--accent))",
+          foreground: "rgb(var(--accent-foreground))",
+        },
+        popover: {
+          DEFAULT: "rgb(var(--popover))",
+          foreground: "rgb(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "rgb(var(--card))",
+          foreground: "rgb(var(--card-foreground))",
         },
       },
     },

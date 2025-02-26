@@ -103,7 +103,7 @@ export interface DefaultRendererOptions {
   adornment?: DefaultAdornmentRendererOptions;
   layout?: DefaultLayoutRendererOptions;
   extraRenderers?: (options: DefaultRendererOptions) => RendererRegistration[];
-  renderText?: (props: ReactNode) => ReactNode;
+  renderText?: (props: ReactNode, className?: string) => ReactNode;
   h?: FormRenderer["h"];
 }
 
@@ -135,15 +135,16 @@ export function createButtonActionRenderer(
       renderer,
     ) => {
       const h = renderer.h;
+      const classNames = rendererClass(className, options.className);
       return (
         <button
-          className={rendererClass(className, options.className)}
+          className={classNames}
           disabled={disabled}
           style={style}
           onClick={onClick}
         >
           {options.renderContent?.(actionText, actionId, actionData) ??
-            renderer.renderText(actionText)}
+            renderer.renderText(actionText, classNames)}
         </button>
       );
     },

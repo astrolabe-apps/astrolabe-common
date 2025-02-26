@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+    :root {
+        --background: 255 255 255;
+        --foreground: 9 9 9;
+        --card: 255 255 255;
+        --card-foreground: 9 9 9;
+        --popover: 255 255 255;
+        --popover-foreground: 9 9 9;
+        --primary: 38 113 81;
+        --primary-foreground: 250 250 250;
+        --secondary: 54 105 161;
+        --secondary-foreground: 250 250 250;
+        --muted: 245 245 245;
+        --muted-foreground: 118 118 118;
+        --accent: 245 245 245;
+        --accent-foreground: 24 24 27;
+        --destructive: 255 51 51;
+        --destructive-foreground: 250 250 250;
+    }
+}
+
 @layer utilities {
     .form-control {
         @apply border bg-white disabled:bg-neutral-50 border-neutral-400

@@ -47,7 +47,7 @@ export const renderer = createFormRenderer(
     adornment: {
       accordion: {
         className: "flex flex-row items-center gap-2 my-2 p-0",
-        titleClass: "cursor-pointer font-bold",
+        titleClass: "cursor-pointer font-bold text-black",
         iconOpenName: "chevron-up",
         iconClosedName: "chevron-down",
       },

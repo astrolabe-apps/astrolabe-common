@@ -23,6 +23,6 @@ const RNText = React.forwardRef<TextRef, SlottableTextProps>(
     );
   },
 );
-RNText.displayName = "Text";
+RNText.displayName = "RNText";
 
 export { RNText, TextClassContext };
