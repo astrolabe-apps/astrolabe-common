@@ -3,8 +3,10 @@ import fc from "fast-check";
 import {
   cleanupControl,
   collectChanges,
+  Control,
   ControlChange,
   deepEquals,
+  getControlPath,
   newControl,
   SubscriptionTracker,
   updateComputedValue,
@@ -184,6 +186,32 @@ describe("general", () => {
               tracker.subscriptions.map((x) => [x[0].uniqueId, x[2]]),
             ),
           ).toStrictEqual(expectedChanges);
+        },
+      ),
+    );
+  });
+
+  it("check that arbitrary child path can be returned by getControlPath", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.oneof(fc.string(), fc.integer({ min: 0, max: 2 }))),
+        (path) => {
+          const actualPath = ["first", ...path];
+          let base = newControl({}) as Control<any>;
+          let index = 0;
+          while (index < actualPath.length && base) {
+            const childId = actualPath[index];
+            const c = base.current;
+            if (typeof childId === "string") {
+              base = c.fields[childId];
+            } else {
+              c.value = Array.from({ length: childId + 1 });
+              base = c.elements[childId];
+            }
+            index++;
+          }
+          const controlPath = getControlPath(base);
+          expect(controlPath).toEqual(actualPath);
         },
       ),
     );

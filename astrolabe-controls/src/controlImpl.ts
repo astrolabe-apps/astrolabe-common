@@ -681,3 +681,19 @@ export function controlNotNull<V>(
 ): Control<V> | undefined {
   return !c || c.isNull ? undefined : (c as Control<V>);
 }
+
+export function getControlPath(
+  c: Control<any>,
+  untilParent?: Control<any>,
+): (string | number)[] {
+  const path: (string | number)[] = [];
+  let current = c as InternalControl;
+  while (current) {
+    if (current === untilParent) break;
+    const parent = current.parents?.[0];
+    if (!parent) break;
+    path.push(parent.key!);
+    current = parent.control;
+  }
+  return path.reverse();
+}

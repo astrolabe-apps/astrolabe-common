@@ -22,7 +22,6 @@
   "dependencies": {
   },
   "peerDependencies": {
-    "@astroapps/controls": "^1.0.0",
     "@react-typed-forms/core": "^4.0.0",
     "react": "^18.2.0 || ^19",
     "react-dnd": "^16.0.1"
@@ -33,7 +32,6 @@
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "devDependencies": {
-    "@astroapps/controls": "workspace:*",
     "@react-typed-forms/core": "workspace:*",
     "react": "^18.2.0 || ^19",
     "react-dnd": "^16.0.1",
