@@ -39,6 +39,13 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMain([NotNull] AstroExprParser.MainContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>UnaryOp</c>
+	/// labeled alternative in <see cref="AstroExprParser.expr"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitUnaryOp([NotNull] AstroExprParser.UnaryOpContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>Primary</c>
 	/// labeled alternative in <see cref="AstroExprParser.expr"/>.
 	/// </summary>

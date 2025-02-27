@@ -29,7 +29,6 @@ import {
   lookupDataNode,
   makeHookDepString,
   mergeObjects,
-  nodeForControl,
   SchemaDataNode,
 } from "@react-typed-forms/schemas";
 
@@ -87,21 +86,20 @@ export function DataArrayRenderer({
     : undefined;
 
   const renderAsElement = !isCompoundField(field);
-  const childDefinition: FormNode = nodeForControl(
+  const childDefinition: FormNode = formNode.tree.createTempNode(
+    formNode.id + "child",
     !renderAsElement
       ? ({
           type: ControlDefinitionType.Group,
-          children: definition.children,
           groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
         } as GroupedControlsDefinition)
       : ({
           type: ControlDefinitionType.Data,
           field: definition.field,
-          children: definition.children,
           renderOptions: childOptions ?? { type: DataRenderType.Standard },
           hideTitle: true,
         } as DataControlDefinition),
-    formNode.tree,
+    formNode.getChildNodes(),
   );
 
   const visibilities = (definition.children ?? []).map(

@@ -2,9 +2,9 @@ import {
   ControlDefinition,
   ControlDefinitionExtension,
   ControlRenderOptions,
-  createFormTreeWithRoot,
   FormNode,
   FormRenderer,
+  FormTree,
   GroupedControlsDefinition,
   RendererRegistration,
   SchemaNode,
@@ -13,7 +13,7 @@ import {
 import { Control } from "@react-typed-forms/core";
 import { SelectedControlNode } from "../types";
 import { ReactNode } from "react";
-import { EditorFormNode } from "../EditorFormNode";
+import { EditorFormTree } from "../EditorFormNode";
 
 export interface ViewContext {
   schemaLookup: SchemaTreeLookup;
@@ -21,11 +21,10 @@ export interface ViewContext {
   currentForm: Control<string | undefined>;
   getForm: (formId: string) => Control<EditableForm | undefined>;
   getCurrentForm: () => Control<EditableForm | undefined> | undefined;
-  editorControls: GroupedControlsDefinition;
+  editorControls: FormTree;
   editorFields: SchemaNode;
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
   extensions?: ControlDefinitionExtension[];
-  formRenderer: FormRenderer;
   button: (onClick: () => void, action: string, actionId?: string) => ReactNode;
   checkbox: (control: Control<boolean>, label: string) => ReactNode;
   previewOptions?: ControlRenderOptions;
@@ -52,14 +51,11 @@ export function getViewAndParams(tabId: string): [string, string?] {
 export interface EditableForm {
   selectedControl?: SelectedControlNode;
   selectedField?: SchemaNode;
-  root: ControlDefinition;
+  selectedControlId?: string;
+  formTree: EditorFormTree;
+  renderer: FormRenderer;
   schemaId: string;
   hideFields: boolean;
-}
-
-export function getEditorFormTree(cf: Control<EditableForm>) {
-  return createFormTreeWithRoot(
-    (t) => new EditorFormNode("", t, undefined, cf.fields.root),
-    () => [],
-  );
+  formId: string;
+  name: string;
 }

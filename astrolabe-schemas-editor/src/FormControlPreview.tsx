@@ -18,7 +18,6 @@ import {
   ControlDefinition,
   DataControlDefinition,
   defaultDataProps,
-  defaultGetChildNodes,
   defaultSchemaInterface,
   defaultValueForField,
   DynamicPropertyType,
@@ -39,7 +38,6 @@ import {
   SchemaInterface,
   SchemaNode,
   textDisplayControl,
-  wrapFormNode,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 import { ControlDragState, controlDropData, DragData, DropData } from "./util";
@@ -61,7 +59,7 @@ export interface FormControlPreviewProps {
 }
 
 export interface FormControlPreviewContext {
-  selected: Control<SelectedControlNode | undefined>;
+  selected: Control<string | undefined>;
   readonly?: boolean;
   VisibilityIcon: ReactNode;
   hideFields: Control<boolean>;
@@ -95,12 +93,9 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const displayOnly = dOnly || isControlDisplayOnly(definition);
 
   const defControl = unsafeRestoreControl(definition);
+  const defControlId = defControl?.uniqueId.toString();
   const isSelected = useComputed(() => {
-    const selDef = selected.value?.form.definition;
-    const defControlId = defControl?.uniqueId;
-    const selControlId = selDef
-      ? unsafeRestoreControl(selDef)?.uniqueId
-      : undefined;
+    const selControlId = selected.value;
     return selControlId !== undefined && defControlId == selControlId;
   }).value;
   const scrollRef = useScrollIntoView(isSelected);
@@ -150,14 +145,16 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     ) ?? [];
 
   const groupClasses = getGroupClassOverrides(definition);
-
+  const tree = node.tree;
   const layout = renderControlLayout({
     definition,
     renderer,
     elementIndex,
     formNode: node.definition.childRefId
-      ? wrapFormNode(node, () =>
-          defaultGetChildNodes(node, [
+      ? tree.createTempNode(
+          node.id + "ref",
+          definition,
+          tree.createChildNodes(node, [
             textDisplayControl("Reference:" + node.definition.childRefId),
           ]),
         )
@@ -189,20 +186,23 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
     designMode: true,
   });
-  const asSelection = { form: node, schema: parentNode };
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,
     "onClick" | "onClickCapture" | "onMouseDownCapture"
   > = isGroupControl(definition) ||
   (isDataControl(definition) && (definition.children?.length ?? 0) > 0)
     ? {
-        onClick: (e) => (selected.value = asSelection),
+        onClick: (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          selected.value = defControlId;
+        },
       }
     : {
         onClickCapture: (e) => {
           e.preventDefault();
           e.stopPropagation();
-          selected.value = asSelection;
+          selected.value = defControlId;
         },
         onMouseDownCapture: (e) => {
           e.stopPropagation();

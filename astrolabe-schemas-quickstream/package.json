@@ -31,7 +31,7 @@
   ],
   "peerDependencies": {
     "@react-typed-forms/core": "^4.0.0",
-    "@react-typed-forms/schemas": "^14.0.3",
+    "@react-typed-forms/schemas": "^15.0.0",
     "react": "^18"
   },
   "devDependencies": {

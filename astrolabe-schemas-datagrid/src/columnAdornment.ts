@@ -5,15 +5,15 @@ import {
   ControlAdornment,
   ControlDefinition,
   CustomRenderOptions,
-  DataControlDefinition,
   EntityExpression,
   isDataControl,
   makeParamTag,
+  rendererClass,
   RenderOptions,
   SchemaTags,
   stringField,
 } from "@react-typed-forms/schemas";
-import { ColumnHeader } from "@astroapps/datagrid";
+import { ColumnHeader, DataGridClasses } from "@astroapps/datagrid";
 
 export type ColumnOptions = Pick<
   ColumnHeader,
@@ -29,6 +29,7 @@ export type ColumnOptions = Pick<
   rowIndex?: boolean;
   layoutClass?: string;
   visible?: EntityExpression;
+  rowSpan?: EntityExpression;
   enabledSort?: boolean;
   enabledFilter?: boolean;
 };
@@ -36,8 +37,14 @@ export type ColumnOptions = Pick<
 export function getColumnHeaderFromOptions(
   columnOptions: ColumnOptions | undefined,
   definition: ControlDefinition,
+  gridClasses: DataGridClasses,
 ): Partial<ColumnHeader> {
-  if (!columnOptions) return {};
+  if (!columnOptions)
+    return {
+      cellClass: gridClasses.cellClass,
+      headerCellClass: gridClasses.headerCellClass,
+      bodyCellClass: gridClasses.bodyCellClass,
+    };
   const {
     cellClass,
     headerCellClass,
@@ -50,10 +57,13 @@ export function getColumnHeaderFromOptions(
     enabledFilter,
   } = columnOptions;
   return {
-    cellClass,
-    headerCellClass,
+    cellClass: rendererClass(cellClass, gridClasses.cellClass),
+    bodyCellClass: rendererClass(bodyCellClass, gridClasses.bodyCellClass),
+    headerCellClass: rendererClass(
+      headerCellClass,
+      gridClasses.headerCellClass,
+    ),
     columnTemplate,
-    bodyCellClass,
     title,
     filterField: enabledFilter ? customField(filterField) : undefined,
     sortField: enabledSort ? customField(sortField) : undefined,
@@ -84,6 +94,10 @@ export const ColumnOptionsFields = buildSchema<ColumnOptions>({
     schemaRef: "EntityExpression",
     tags: [makeParamTag(SchemaTags.ControlRef, "Expression")],
   }),
+  rowSpan: compoundField("Row Span", [], {
+    schemaRef: "EntityExpression",
+    tags: [makeParamTag(SchemaTags.ControlRef, "Expression")],
+  }),
 });
 
 export const DataGridAdornmentDefinition: CustomRenderOptions = {
@@ -102,7 +116,7 @@ export function collectColumnClasses(c: ControlDefinition) {
   return (
     c.adornments?.flatMap((x) =>
       isColumnAdornment(x)
-        ? [x.cellClass, x.headerCellClass, x.bodyCellClass]
+        ? [x.cellClass, x.headerCellClass, x.bodyCellClass, x.layoutClass]
         : [],
     ) ?? []
   );

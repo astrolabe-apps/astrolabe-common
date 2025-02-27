@@ -9,6 +9,7 @@ export {
   cleanupControl,
   collectChanges,
   controlNotNull,
+  getControlPath,
 } from "./controlImpl";
 export { SubscriptionTracker } from "./subscriptions";
 export {

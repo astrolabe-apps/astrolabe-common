@@ -22,7 +22,7 @@ export function getParentAndChild(
   while (i < child.length) {
     const p = child[i];
     if (typeof p === "number") current = current.as<JsonValue[]>().elements[p];
-    else current = current.fields[p].as();
+    else current = current.as<Record<string, any>>().fields[p].as();
     i++;
   }
   return [parent, current];

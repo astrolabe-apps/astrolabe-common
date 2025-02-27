@@ -174,5 +174,37 @@ export function validateAndRunResult<A = void>(
   handleError?: (e: any) => boolean,
   dontDisable?: boolean,
 ): Promise<boolean> {
-  return validateAndRun(control, action, handleError).then((x) => x[0]);
+  return validateAndRun(control, action, handleError, dontDisable).then(
+    (x) => x[0],
+  );
+}
+
+export function validateAndRunMessages<A = void>(
+  control: Control<any>,
+  action: () => Promise<A>,
+  codes: Record<number, string> | undefined,
+  genericError: string,
+  dontDisable?: boolean,
+): Promise<boolean> {
+  return validateAndRun(
+    control,
+    action,
+    makeStatusCodeHandler(control, codes, genericError),
+    dontDisable,
+  ).then((x) => x[0]);
+}
+
+export function makeStatusCodeHandler(
+  control: Control<any>,
+  codes: Record<number, string> | undefined,
+  genericError: string,
+): (e: any) => boolean {
+  return (e) => {
+    if (isApiResponse(e)) {
+      if (e.status == 400) return false;
+      control.error = codes?.[e.status] ?? genericError;
+      return true;
+    }
+    return false;
+  };
 }

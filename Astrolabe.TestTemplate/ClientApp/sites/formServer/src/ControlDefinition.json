@@ -432,6 +432,22 @@
                 "renderOptions": {
                   "type": "FieldSelection"
                 }
+              },
+              {
+                "type": "Data",
+                "title": "Show Inline",
+                "field": "showInline",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Force Standard",
+                "field": "forceStandard",
+                "renderOptions": {
+                  "type": "Standard"
+                }
               }
             ],
             "hideTitle": true,
@@ -881,6 +897,22 @@
                   "type": "Standard"
                 },
                 "defaultValue": {}
+              },
+              {
+                "type": "Data",
+                "title": "Allow Null",
+                "field": "allowNull",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Edit Selectable",
+                "field": "editSelectable",
+                "renderOptions": {
+                  "type": "Standard"
+                }
               }
             ]
           },

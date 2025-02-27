@@ -9,6 +9,7 @@ import {
   FieldType,
   getSchemaFieldList,
   isCompoundField,
+  isCompoundNode,
   schemaDataForFieldRef,
   SchemaField,
   schemaForFieldRef,
@@ -102,5 +103,19 @@ export function schemaNodeIcon(t: string) {
       return "fa-y";
     default:
       return "fa-question";
+  }
+}
+
+export function canAddChildren(x: ControlDefinition, dataNode?: SchemaNode) {
+  switch (x.type) {
+    case ControlDefinitionType.Group:
+      return true;
+    case ControlDefinitionType.Action:
+    case ControlDefinitionType.Display:
+      return false;
+    case ControlDefinitionType.Data:
+      return !dataNode || isCompoundNode(dataNode);
+    default:
+      return true;
   }
 }

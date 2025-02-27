@@ -445,6 +445,7 @@ class ControlPropertiesImpl<V> implements ControlProperties<V> {
   }
 }
 
+const objConst = {}.constructor;
 export function deepEquals(
   a: any,
   b: any,
@@ -461,6 +462,7 @@ export function deepEquals(
       if (a.length != b.length) return false;
       return a.every((x, i) => childEquals()(x, b[i]));
     }
+    if (a.constructor !== objConst) return false;
     keys = Object.keys(a);
     length = keys.length;
     if (length !== Object.keys(b).length) return false;
@@ -678,4 +680,20 @@ export function controlNotNull<V>(
   c: Control<V | null | undefined> | undefined | null,
 ): Control<V> | undefined {
   return !c || c.isNull ? undefined : (c as Control<V>);
+}
+
+export function getControlPath(
+  c: Control<any>,
+  untilParent?: Control<any>,
+): (string | number)[] {
+  const path: (string | number)[] = [];
+  let current = c as InternalControl;
+  while (current) {
+    if (current === untilParent) break;
+    const parent = current.parents?.[0];
+    if (!parent) break;
+    path.push(parent.key!);
+    current = parent.control;
+  }
+  return path.reverse();
 }

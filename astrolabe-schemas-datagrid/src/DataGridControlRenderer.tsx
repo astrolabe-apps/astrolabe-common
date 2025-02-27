@@ -15,13 +15,17 @@ import {
   fieldPathForDefinition,
   getExternalEditData,
   getLengthRestrictions,
+  isDataControl,
   makeHookDepString,
+  makeParamTag,
   mergeObjects,
-  nodeForControl,
+  optionalHook,
   RenderOptions,
   schemaDataForFieldRef,
   schemaForFieldPath,
+  SchemaTags,
   stringField,
+  toDepString,
 } from "@react-typed-forms/schemas";
 import {
   ColumnDef,
@@ -31,7 +35,11 @@ import {
 } from "@astroapps/datagrid";
 import {
   Control,
+  ensureMetaValue,
+  getMetaValue,
   groupedChanges,
+  newControl,
+  RenderControl,
   useTrackedComponent,
 } from "@react-typed-forms/core";
 import React, { Fragment, ReactNode } from "react";
@@ -47,6 +55,7 @@ import {
   setFilterValue,
 } from "@astroapps/searchstate";
 import { SortableHeader } from "./SortableHeader";
+import { useGroupedRows } from "./util";
 
 interface DataGridOptions
   extends Pick<
@@ -65,6 +74,8 @@ interface DataGridOptions
   noEntriesText?: string;
   searchField?: string;
   displayOnly?: boolean;
+  groupByField?: string;
+  disableClear?: boolean;
 }
 
 interface DataGridClasses {
@@ -73,13 +84,23 @@ interface DataGridClasses {
   removeColumnClass?: string;
   addContainerClass?: string;
   noEntriesClass?: string;
+  headerCellClass?: string;
+  cellClass?: string;
+  bodyCellClass?: string;
+  clearFilterClass?: string;
+  clearFilterText?: string;
 }
 
 interface DataGridColumnExtension {
   dataContext: ControlDataContext;
   definition: ControlDefinition;
   evalHidden?: EvalExpressionHook<boolean>;
+  evalRowSpan?: EvalExpressionHook<number>;
 }
+
+const dataGridGroupOptions = {
+  tags: [makeParamTag(SchemaTags.ControlGroup, "DataGridOptions")],
+};
 
 const DataGridFields = buildSchema<DataGridOptions>({
   addText: stringField("Add button text"),
@@ -88,19 +109,31 @@ const DataGridFields = buildSchema<DataGridOptions>({
   addActionId: stringField("Add action id"),
   removeActionId: stringField("Remove action id"),
   editActionId: stringField("Edit action id"),
-  noEntriesText: stringField("No entries text"),
   noAdd: boolField("No Add"),
   noRemove: boolField("No remove"),
   noReorder: boolField("No reorder"),
-  searchField: stringField("Search state field"),
-  displayOnly: boolField("Display only"),
   editExternal: boolField("Edit external"),
+  displayOnly: boolField("Display only", dataGridGroupOptions),
+  disableClear: boolField("Disable clear filter", dataGridGroupOptions),
+  noEntriesText: stringField("No entries text", dataGridGroupOptions),
+  searchField: stringField("Search state field", dataGridGroupOptions),
+  groupByField: stringField("Group by field", dataGridGroupOptions),
 });
 export const DataGridDefinition: CustomRenderOptions = {
   name: "Data Grid",
   value: "DataGrid",
   fields: DataGridFields,
   applies: (sf) => !!sf.field.collection,
+  groups: [
+    {
+      parent: "RenderOptions",
+      group: {
+        type: ControlDefinitionType.Group,
+        children: [],
+        id: "DataGridOptions",
+      },
+    },
+  ],
 };
 
 export const defaultDataGridClasses: DataGridClasses = {
@@ -110,6 +143,11 @@ export const defaultDataGridClasses: DataGridClasses = {
   addContainerClass: "flex justify-center mt-2",
   removeColumnClass: "flex items-center h-full pl-1 gap-2",
   noEntriesClass: "border-t text-center p-3",
+  headerCellClass: "font-bold",
+  cellClass: "",
+  bodyCellClass: "border-t py-1 flex items-center",
+  clearFilterClass: "underline font-bold",
+  clearFilterText: "Clear",
 };
 export const DataGridRenderer = createDataGridRenderer(
   undefined,
@@ -154,8 +192,12 @@ export function createDataGridRenderer(
             renderOptions: x.renderOptions,
             layoutClass: x.layoutClass,
           };
-          const headerOptions = getColumnHeaderFromOptions(x, def);
-          const colNode = nodeForControl(def, formNode.tree, "col" + i);
+          const headerOptions = getColumnHeaderFromOptions(x, def, gridClasses);
+          const colNode = formNode.tree.createTempNode(
+            formNode.id + "_" + i,
+            def,
+            [],
+          );
           return {
             ...headerOptions,
             id: "cc" + i,
@@ -172,7 +214,11 @@ export function createDataGridRenderer(
         formNode.getChildNodes().map((cn, i) => {
           const d = cn.definition;
           const colOptions = d.adornments?.find(isColumnAdornment);
-          const headerOptions = getColumnHeaderFromOptions(colOptions, d);
+          const headerOptions = getColumnHeaderFromOptions(
+            colOptions,
+            d,
+            gridClasses,
+          );
 
           return {
             ...headerOptions,
@@ -185,6 +231,11 @@ export function createDataGridRenderer(
                 colOptions?.visible,
                 (x) => !!x,
               ) as EvalExpressionHook<boolean>,
+              evalRowSpan: optionalHook(
+                colOptions?.rowSpan,
+                useEvalExpression,
+                (x) => (typeof x === "number" ? x : 1),
+              ) as EvalExpressionHook<number>,
             },
             render: (_: Control<any>, rowIndex: number) =>
               renderChild(i, cn, {
@@ -194,6 +245,7 @@ export function createDataGridRenderer(
           };
         });
       const allColumns = constantColumns.concat(columns);
+
       const searchField = dataGridOptions.searchField;
       return (
         <DynamicGridVisibility
@@ -226,21 +278,63 @@ export function createDataGridRenderer(
 }
 
 function DynamicGridVisibility(props: DataGridRendererProps) {
-  const depString = makeHookDepString(
-    props.columns.map((x) => x.data?.evalHidden),
-    (x) => x?.deps,
-  );
+  const depString =
+    makeHookDepString(
+      props.columns.flatMap((x) => [x.data?.evalHidden, x.data?.evalRowSpan]),
+      (x) => x?.deps,
+    ) + toDepString(props.renderOptions.groupByField);
 
   const Render = useTrackedComponent<DataGridRendererProps>(
     (props: DataGridRendererProps) => {
+      const { groupByField } = props.renderOptions;
+      if (groupByField) {
+        useGroupedRows(
+          props.control,
+          (t) => t.fields[groupByField as any].value,
+          (n, c) =>
+            (ensureMetaValue(c, "groupByRowSpan", () => newControl(n)).value =
+              n),
+        );
+      }
       const newColumns = props.columns.map((x) => {
         const data = x.data;
-        if (data && data.evalHidden) {
-          const visible = data.evalHidden.runHook(
+        if (data && (data.evalHidden || data.evalRowSpan)) {
+          const visible = data.evalHidden?.runHook(
             data.dataContext,
             data.evalHidden.state,
           );
-          if (visible) return { ...x, hidden: visible.value === false };
+
+          const rowSpanExpr = data.evalRowSpan;
+
+          const isGroupByColumn =
+            groupByField &&
+            isDataControl(data.definition) &&
+            groupByField === data.definition.field;
+
+          const getRowSpan =
+            rowSpanExpr || isGroupByColumn
+              ? (t: Control<any>, index: number) => {
+                  if (rowSpanExpr) {
+                    const elementContext =
+                      data.dataContext.dataNode!.getChildElement(index);
+                    const evalValue = rowSpanExpr.runHook(
+                      { ...data.dataContext, parentNode: elementContext },
+                      rowSpanExpr.state,
+                    )?.value;
+                    return evalValue ?? 1;
+                  } else {
+                    return (
+                      getMetaValue<Control<number>>(t, "groupByRowSpan")
+                        ?.value ?? 1
+                    );
+                  }
+                }
+              : undefined;
+          return {
+            ...x,
+            hidden: visible && visible.value === false,
+            getRowSpan,
+          };
         }
         return x;
       });
@@ -324,6 +418,13 @@ function DataGridControlRenderer({
               isChecked={(v) =>
                 filters.value?.[filterField]?.includes(v) ?? false
               }
+              clear={
+                !renderOptions.disableClear
+                  ? () => (filters.value = {})
+                  : undefined
+              }
+              clearClass={classes.clearFilterClass ?? ""}
+              clearText={classes.clearFilterText ?? "Clear"}
               setOption={(v, ch) =>
                 groupedChanges(() => {
                   filters.setValue(setFilterValue(filterField, v, ch));
@@ -371,9 +472,15 @@ function DataGridControlRenderer({
         getBodyRow={(i) => control.elements![i]}
         defaultColumnTemplate="1fr"
         cellClass=""
+        headerCellClass=""
+        bodyCellClass=""
         wrapBodyRow={(rowIndex, render) => {
           const c = control.elements![rowIndex];
-          return <Fragment key={c.uniqueId}>{render(c, rowIndex)}</Fragment>;
+          return (
+            <RenderControl key={c.uniqueId}>
+              {() => render(c, rowIndex)}
+            </RenderControl>
+          );
         }}
         renderHeaderContent={renderHeaderContent}
         renderExtraRows={(r) =>

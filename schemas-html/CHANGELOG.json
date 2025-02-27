@@ -1,0 +1,25 @@
+{
+  "name": "@react-typed-forms/schemas-html",
+  "entries": [
+    {
+      "version": "3.0.0",
+      "tag": "@react-typed-forms/schemas-html_v3.0.0",
+      "date": "Tue, 25 Feb 2025 09:07:22 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "Updates for new schema version"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^14.4.0` to `^15.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^14.4.0` to `^15.0.0`"
+          }
+        ]
+      }
+    }
+  ]
+}

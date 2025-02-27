@@ -53,10 +53,14 @@
       <_ContentIncludedByDefault Remove="ClientApp\sites\native\package-lock.json" />
       <_ContentIncludedByDefault Remove="ClientApp\sites\native\package.json" />
       <_ContentIncludedByDefault Remove="ClientApp\sites\native\tsconfig.json" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <Folder Include="ClientApp\sites\formServer\src\forms\" />
+      <_ContentIncludedByDefault Remove="ClientApp\nativeapp\package.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\nativeapp\schemas-native\package.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\nativeapp\schemas-native\tsconfig.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\nativeapp\starter-base\app.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\nativeapp\starter-base\form\FireInitial.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\nativeapp\starter-base\package.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\nativeapp\starter-base\tsconfig.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\nativeapp\turbo.json" />
     </ItemGroup>
     
 </Project>

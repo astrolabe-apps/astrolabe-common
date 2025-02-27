@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/client",
-  "version": "2.1.0",
+  "version": "2.2.1",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
@@ -25,9 +25,8 @@
     "tslib": "^2.6.2"
   },
   "peerDependencies": {
-    "@astroapps/controls": "^1.0.0",
     "@react-typed-forms/core": "^4.0.0",
-    "react": "^18.2.0"
+    "react": "^18.2.0 || ^19"
   },
   "scripts": {
     "prepack": "npm run build",
@@ -35,9 +34,8 @@
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "devDependencies": {
-    "@astroapps/controls": "workspace:*",
     "@react-typed-forms/core": "workspace:*",
-    "react": "^18.2.0",
+    "react": "^18.2.0 || ^19",
     "@react-typed-forms/transform": "^0.2.0",
     "@babel/core": "^7.23.7",
     "@babel/cli": "^7.23.4",

@@ -12,7 +12,6 @@ import {
   GroupedControlsDefinition,
   GroupRenderType,
   makeSchemaDataNode,
-  nodeForControl,
   rendererClass,
   validationVisitor,
   visitFormDataInContext,
@@ -68,13 +67,13 @@ function ArrayElementRenderer({
       dataProps.dataNode.schema,
       extData.fields.data,
     );
-    const elementGroup: FormNode = nodeForControl(
+    const elementGroup: FormNode = formNode.tree.createTempNode(
+      formNode.id + "group",
       {
         type: ControlDefinitionType.Group,
-        children: formNode.definition.children,
         groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
       } as GroupedControlsDefinition,
-      formNode.tree,
+      formNode.getChildNodes(),
     );
     const editContent = (
       <div className={rendererClass(dataProps.className, options.className)}>

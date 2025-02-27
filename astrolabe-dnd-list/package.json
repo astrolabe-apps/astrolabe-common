@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/dnd-list",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
@@ -22,9 +22,8 @@
   "dependencies": {
   },
   "peerDependencies": {
-    "@astroapps/controls": "^1.0.0",
     "@react-typed-forms/core": "^4.0.0",
-    "react": "^18.2.0",
+    "react": "^18.2.0 || ^19",
     "react-dnd": "^16.0.1"
   },
   "scripts": {
@@ -33,9 +32,8 @@
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "devDependencies": {
-    "@astroapps/controls": "workspace:*",
     "@react-typed-forms/core": "workspace:*",
-    "react": "^18.2.0",
+    "react": "^18.2.0 || ^19",
     "react-dnd": "^16.0.1",
     "@react-typed-forms/transform": "^0.2.0",
     "microbundle": "^0.15.1",

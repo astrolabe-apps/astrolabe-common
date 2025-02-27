@@ -7,22 +7,45 @@ import {
 
 export class EditorFormNode implements FormNode {
   constructor(
-    public id: string,
-    public tree: FormTree,
+    public tree: EditorFormTree,
     public parent: FormNode | undefined,
     private control: Control<ControlDefinition>,
   ) {}
 
-  addChild(c: ControlDefinition) {
-    addElement(this.control.fields.children, c);
+  addChild(control: ControlDefinition): FormNode {
+    const defControl = addElement(this.control.fields.children, control);
+    return new EditorFormNode(this.tree, this, defControl);
   }
-  getChildNodes(dontFollowRef?: boolean): FormNode[] {
+
+  get id(): string {
+    return this.control.uniqueId.toString();
+  }
+  getChildNodes(): FormNode[] {
     return this.control.fields.children.elements.map(
-      (x) => new EditorFormNode(x.uniqueId.toString(), this.tree, this, x),
+      (x) => new EditorFormNode(this.tree, this, x),
     );
   }
 
   get definition(): ControlDefinition {
     return trackedValue(this.control);
+  }
+}
+
+export class EditorFormTree extends FormTree {
+  rootNode: EditorFormNode;
+
+  getByRefId(id: string): FormNode | undefined {
+    throw new Error("Method not implemented.");
+  }
+
+  addChild(parent: FormNode, control: ControlDefinition): FormNode {
+    return (parent as EditorFormNode).addChild(control);
+  }
+  getForm(formId: string): FormTree | undefined {
+    throw new Error("Method not implemented.");
+  }
+  constructor(public root: Control<ControlDefinition>) {
+    super();
+    this.rootNode = new EditorFormNode(this, undefined, root);
   }
 }

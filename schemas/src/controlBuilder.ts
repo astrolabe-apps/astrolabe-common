@@ -227,7 +227,7 @@ export function useControlDefinitionForSchema(
 
 export interface EditorGroup {
   parent: string;
-  group: GroupedControlsDefinition;
+  group: ControlDefinition;
 }
 
 export interface CustomRenderOptions {

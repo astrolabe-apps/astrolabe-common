@@ -1,15 +1,16 @@
-import { EditableForm, getEditorFormTree, ViewContext } from "./index";
+import { EditableForm, ViewContext } from "./index";
 import {
   Control,
-  Fcheckbox,
-  RenderControl,
   RenderOptional,
   unsafeRestoreControl,
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
 import { FormControlPreview } from "../FormControlPreview";
-import { addMissingControlsForSchema } from "@react-typed-forms/schemas";
+import {
+  addMissingControlsForSchema,
+  addMissingControlsToForm,
+} from "@react-typed-forms/schemas";
 import React from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
 import { toControlDefinitionForm } from "../schemaSchemas";
@@ -25,13 +26,15 @@ export function FormView(props: { formId: string; context: ViewContext }) {
     data: {},
   });
   useControlEffect(
-    () => control.fields.root.dirty,
-    (unsaved) => {
-      if (unsaved) console.log(control.fields.root);
-      context.updateTabTitle(
-        "form:" + formId,
-        unsaved ? formId + " *" : formId,
-      );
+    () =>
+      [
+        control.fields.formTree.value?.root.dirty,
+        control.fields.name.value,
+      ] as const,
+    ([unsaved, name]) => {
+      if (name) {
+        context.updateTabTitle("form:" + formId, unsaved ? name + " *" : name);
+      }
     },
     true,
   );
@@ -56,16 +59,15 @@ function RenderFormDesign({
 }) {
   const {
     createEditorRenderer,
-    formRenderer,
     previewOptions,
     validation,
     extraPreviewControls,
     button,
     checkbox,
   } = context;
-  const rootNode = getEditorFormTree(c).rootNode;
+  const rootNode = c.fields.formTree.value.rootNode;
   const rootSchema = context.schemaLookup.getSchema(c.fields.schemaId.value)!;
-
+  const formRenderer = c.fields.renderer.value;
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-2">
@@ -84,13 +86,7 @@ function RenderFormDesign({
 
   function addMissing() {
     if (rootSchema) {
-      const existingChildren = unsafeRestoreControl(
-        rootNode.definition.children,
-      )!;
-      existingChildren.value = addMissingControlsForSchema(
-        rootSchema,
-        existingChildren.value ?? [],
-      ).map(toControlDefinitionForm);
+      addMissingControlsToForm(rootSchema, c.fields.formTree.value);
     }
   }
 
@@ -126,7 +122,7 @@ function RenderFormDesign({
             parentNode={rootSchema}
             dropIndex={0}
             context={{
-              selected: c.fields.selectedControl,
+              selected: c.fields.selectedControlId,
               VisibilityIcon: <i className="fa fa-eye" />,
               renderer: formRenderer,
               hideFields: c.fields.hideFields,

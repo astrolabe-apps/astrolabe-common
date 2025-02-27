@@ -1,0 +1,22 @@
+{
+  "controls": [
+    {
+      "type": "Group",
+      "title": "Bool",
+      "groupOptions": {
+        "type": "Standard"
+      },
+      "children": [
+        {
+          "type": "Data",
+          "title": "Bool",
+          "field": "bool",
+          "renderOptions": {
+            "type": "Radio"
+          }
+        }
+      ]
+    }
+  ],
+  "config": null
+}

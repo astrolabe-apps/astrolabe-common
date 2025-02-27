@@ -1,11 +1,9 @@
 import {
-  addElement,
   Control,
   ensureMetaValue,
   Fcheckbox,
-  groupedChanges,
+  newControl,
   trackedValue,
-  unsafeRestoreControl,
   useComputed,
   useControl,
   useControlEffect,
@@ -17,7 +15,7 @@ import {
 } from "@react-typed-forms/schemas-html";
 import { ControlDefinitionSchemaMap } from "./schemaSchemas";
 import {
-  addMissingControls,
+  addMissingControlsToForm,
   applyExtensionsToSchema,
   cleanDataForSchema,
   ControlDefinition,
@@ -25,44 +23,56 @@ import {
   ControlDefinitionType,
   ControlRenderOptions,
   createFormRenderer,
+  createFormTree,
+  EditorGroup,
   FormNode,
   FormRenderer,
+  FormTree,
   getAllReferencedClasses,
-  GroupedControlsDefinition,
   GroupRenderType,
   LabelType,
   RendererRegistration,
   rootSchemaNode,
   SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
-import React, { ReactElement, ReactNode, useMemo, useRef } from "react";
+import React, {
+  ReactElement,
+  ReactNode,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   createTailwindcss,
   TailwindConfig,
 } from "@mhsdesign/jit-browser-tailwindcss";
 import defaultEditorControls from "./ControlDefinition.json";
-import {
-  DockLayout,
-  LayoutBase,
-  PanelBase,
-  PanelData,
-  TabBase,
-  TabData,
-} from "rc-dock/es";
 import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
-import { createView } from "./views/createView";
-import { AnyBase, find } from "./dockHelper";
+import { createView, getTabTitle } from "./views/createView";
+import {
+  Actions,
+  DockLocation,
+  IJsonTabNode,
+  Layout,
+  Model,
+  TabNode,
+  TabSetNode,
+} from "flexlayout-react";
+import { defaultLayout } from "./defaultLayout";
+import { EditorFormTree } from "./EditorFormNode";
 
-export interface BasicFormEditorProps {
+export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
   createEditorRenderer?: (renderers: RendererRegistration[]) => FormRenderer;
   schemas: SchemaTreeLookup;
-  loadForm: (
-    formId: string,
-  ) => Promise<{ controls: ControlDefinition[]; schemaName: string }>;
-  selectedForm?: Control<string | undefined>;
+  loadForm: (formId: A) => Promise<{
+    controls: ControlDefinition[];
+    schemaName: string;
+    renderer?: FormRenderer;
+  }>;
+  selectedForm?: Control<A | undefined>;
   formTypes: [string, string][] | FormInfo[];
-  saveForm: (controls: ControlDefinition[]) => Promise<any>;
+  saveForm: (controls: ControlDefinition[], formId: A) => Promise<any>;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   extensions?: ControlDefinitionExtension[];
   editorControls?: ControlDefinition[];
@@ -79,7 +89,7 @@ export interface BasicFormEditorProps {
     | ((c: FormNode, data: Control<any>) => ReactNode);
 }
 
-export function BasicFormEditor<A extends string>({
+export function BasicFormEditor<A extends string = string>({
   formRenderer,
   selectedForm: sf,
   loadForm,
@@ -100,8 +110,8 @@ export function BasicFormEditor<A extends string>({
   controlsClass,
   handleIcon,
   extraPreviewControls,
-}: BasicFormEditorProps): ReactElement {
-  const selectedForm = useControl<string|undefined>(undefined, { use: sf });
+}: BasicFormEditorProps<A>): ReactElement {
+  const selectedForm = useControl<A | undefined>(undefined, { use: sf });
   const extensions = useMemo(
     () => [...(_extensions ?? []), ValueForFieldExtension],
     [_extensions],
@@ -110,20 +120,36 @@ export function BasicFormEditor<A extends string>({
     () => applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions ?? []),
     [extensions],
   );
+  const [model] = useState(() => Model.fromJson(defaultLayout));
+
   const editorFormRenderer = useMemo(() => createEditorRenderer([]), []);
-  const dockRef = useRef<DockLayout | null>(null);
+  const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
-  const controlGroup: GroupedControlsDefinition = useMemo(() => {
-    return {
-      children: addMissingControls(
-        ControlDefinitionSchema,
-        editorControls ?? defaultEditorControls,
+  const editorTree: FormTree = useMemo(() => {
+    const tree = createFormTree(editorControls ?? defaultEditorControls);
+    const extraGroups: EditorGroup[] = extensions.flatMap((x) =>
+      Object.values(x).flatMap((ro) =>
+        Array.isArray(ro)
+          ? ro.flatMap((r) => r.groups ?? [])
+          : (ro.groups ?? []),
       ),
-      type: ControlDefinitionType.Group,
-      groupOptions: { type: GroupRenderType.Standard },
-    };
-  }, [editorControls, defaultEditorControls]);
+    );
+    extraGroups.forEach((g) => {
+      const parent = tree.getByRefId(g.parent);
+      if (parent) {
+        tree.addChild(parent, g.group);
+      } else {
+        console.warn("Could not find parent group: ", g.parent);
+      }
+    });
+    addMissingControlsToForm(
+      rootSchemaNode(ControlDefinitionSchema),
+      tree,
+      (m) => console.warn(m),
+    );
+    return tree;
+  }, [editorControls, controlDefinitionSchemaMap, defaultEditorControls]);
 
   const genStyles = useMemo(
     () =>
@@ -138,9 +164,11 @@ export function BasicFormEditor<A extends string>({
   );
 
   const allClasses = useComputed(() => {
-    const cv = trackedValue(loadedForms);
-    return Object.values(cv)
-      .flatMap((x) => x?.root.children ?? [])
+    return Object.values(loadedForms.fields)
+      .flatMap((x) => {
+        const rn = x.value?.formTree.root;
+        return rn ? [trackedValue(rn)] : [];
+      })
       .flatMap((x) => getAllReferencedClasses(x, collectClasses))
       .join(" ");
   });
@@ -196,19 +224,21 @@ export function BasicFormEditor<A extends string>({
   );
   async function doSaveForm(c: Control<EditableForm>) {
     await saveForm(
-      c.fields.root.value.children?.map((c) =>
+      c.fields.formTree.value.root.value.children?.map((c) =>
         cleanDataForSchema(c, ControlDefinitionSchema, true),
       ) ?? [],
+      c.fields.formId.value as A,
     );
-    c.fields.root.markAsClean();
+    c.fields.formTree.value.root.markAsClean();
   }
-
+  const formList = formTypes.map((e) =>
+    Array.isArray(e) ? { id: e[0], name: e[1] } : e,
+  );
   const viewContext: ViewContext = {
-    formRenderer,
     validation,
     previewOptions,
     button,
-    currentForm: selectedForm,
+    currentForm: selectedForm.as(),
     schemaLookup: schemas,
     getForm,
     extraPreviewControls,
@@ -216,101 +246,39 @@ export function BasicFormEditor<A extends string>({
     getCurrentForm: () =>
       selectedForm.value ? getForm(selectedForm.value) : undefined,
     extensions,
-    editorControls: controlGroup,
+    editorControls: editorTree,
     createEditorRenderer,
     editorFields: rootSchemaNode(ControlDefinitionSchema),
-    formList: formTypes.map((e) =>
-      Array.isArray(e) ? { id: e[0], name: e[1] } : e,
-    ),
+    formList,
     openForm,
     updateTabTitle,
     saveForm: doSaveForm,
     checkbox,
   };
-  const layout = useControl<LayoutBase>(
-    () =>
-      ({
-        dockbox: {
-          mode: "horizontal",
-          children: [
-            {
-              id: "project",
-              tabs: [{ id: "formList" }],
-              size: 1,
-            },
-            {
-              id: "documents",
-              group: "documents",
-              size: 5,
-              tabs: [],
-            },
-            {
-              mode: "vertical",
-              size: 4,
-              children: [
-                {
-                  mode: "horizontal",
-                  children: [
-                    {
-                      tabs: [{ id: "formStructure" }],
-                    },
-                    { tabs: [{ id: "currentSchema" }] },
-                  ],
-                },
-                {
-                  tabs: [{ id: "controlProperties" }],
-                },
-              ],
-            },
-          ],
-        },
-      }) satisfies LayoutBase,
-  );
 
   return (
-    <DockLayout
+    <Layout
       ref={dockRef}
-      layout={layout.value}
-      loadTab={loadTab}
-      groups={{ documents: {} }}
-      afterPanelLoaded={(savedPanel, loadedPanel) => {
-        if (loadedPanel.id === "documents") {
-          loadedPanel.panelLock = {};
-        }
-      }}
-      saveTab={({ id, title }) => ({ id, title })}
-      onLayoutChange={(newLayout, currentTabId, direction) => {
-        layout.value = newLayout;
-        const docPanel = find(newLayout, "documents") as PanelData;
-        if (docPanel.activeId) {
-          const [viewType, viewParams] = getViewAndParams(docPanel.activeId);
-          if (viewType === "form" && viewParams) {
-            selectedForm.value = viewParams;
-          }
+      model={model}
+      factory={renderTab}
+      realtimeResize
+      onModelChange={(m, a) => {
+        const docNode = model.getNodeById("documents") as TabSetNode;
+        const formNode = docNode.getSelectedNode() as TabNode | undefined;
+        if (formNode) {
+          const [viewId, param] = getViewAndParams(formNode.getId());
+          selectedForm.value = param as A;
         } else selectedForm.value = undefined;
-      }}
-      style={{
-        position: "absolute",
-        left: 10,
-        top: 10,
-        right: 10,
-        bottom: 10,
       }}
     />
   );
 
-  function findLayoutControl<V extends AnyBase>(
-    id: string,
-  ): Control<V> | undefined {
-    const layoutTracked = trackedValue(layout);
-    return unsafeRestoreControl(find(layoutTracked, id) as V)!;
+  function renderTab(node: TabNode) {
+    return createView(node.getId(), viewContext).content;
   }
 
   function updateTabTitle(tabId: string, title: string) {
-    const tab = findLayoutControl<TabData>(tabId);
-    if (tab) {
-      tab.fields.title.value = title;
-    }
+    model.doAction(Actions.updateNodeAttributes(tabId, { name: title }));
   }
 
   function getForm(formId: string) {
@@ -319,47 +287,52 @@ export function BasicFormEditor<A extends string>({
     return form;
   }
 
-  function getTabInPanel(
-    panelId: string,
-    tabId: string,
-  ): [Control<PanelBase>, tab: Control<TabBase> | undefined] {
-    const panelBaseControl = findLayoutControl<PanelBase>(panelId)!;
-    const tabsControl = panelBaseControl.fields.tabs;
-    return [
-      panelBaseControl,
-      tabsControl.elements.find((x) => x.fields.id.value === tabId),
-    ];
-  }
-
   function openForm(formId: string) {
     const tabId = "form:" + formId;
-    const [docs, tab] = getTabInPanel("documents", tabId);
-    groupedChanges(() => {
-      if (!tab) {
-        addElement(docs.fields.tabs, { id: tabId });
-      }
-      docs.fields.activeId.value = tabId;
-    });
-  }
-
-  function loadTab(savedTab: TabBase): TabData {
-    return { ...createView(savedTab.id!, viewContext), ...savedTab };
+    const existingTab = model.getNodeById(tabId);
+    if (existingTab) {
+      model.doAction(Actions.selectTab(tabId));
+    } else {
+      model.doAction(
+        Actions.addNode(
+          {
+            type: "tab",
+            id: tabId,
+            name: getTabTitle("form", formId),
+            enableClose: true,
+          } satisfies IJsonTabNode,
+          "documents",
+          DockLocation.CENTER,
+          0,
+        ),
+      );
+    }
   }
 
   async function loadFormNode(
     formId: string,
     control: Control<EditableForm | undefined>,
   ) {
+    const name = formList.find((x) => x.id === formId)?.name ?? formId;
     const res = await loadForm(formId as A);
+    const formTree = new EditorFormTree(
+      newControl({
+        children: res.controls,
+        type: ControlDefinitionType.Group,
+        groupOptions: {
+          type: GroupRenderType.Standard,
+          childLayoutClass: rootControlClass,
+          hideTitle: true,
+        },
+      } as ControlDefinition),
+    );
     control.setInitialValue({
-      root: { 
-        children: res.controls, type: ControlDefinitionType.Group, 
-        groupOptions: { 
-          type: GroupRenderType.Standard, childLayoutClass: rootControlClass, hideTitle: true
-        } 
-      } as ControlDefinition,
+      formTree,
       schemaId: res.schemaName,
       hideFields: false,
+      renderer: res.renderer ?? formRenderer,
+      formId,
+      name,
     });
   }
 }

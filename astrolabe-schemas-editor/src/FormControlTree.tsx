@@ -27,18 +27,21 @@ import {
   fieldPathForDefinition,
   FormNode,
   getSchemaNodePath,
+  isCompoundNode,
   isDataControl,
   schemaForFieldPath,
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import { ControlNode, SelectedControlNode } from "./types";
 import { StdTreeNode } from "./StdTreeNode";
+import { canAddChildren } from "./util";
 
 export interface FormControlTreeProps {
   className?: string;
   rootNode: FormNode;
   rootSchema: SchemaNode;
-  selected: Control<SelectedControlNode | undefined>;
+  selectedControl: Control<SelectedControlNode | undefined>;
+  selected: Control<string | undefined>;
   selectedField: Control<SchemaNode | undefined>;
   onDeleted: (n: NodeApi<ControlNode>) => void;
   treeApi?: MutableRefObject<TreeApi<ControlNode> | null>;
@@ -47,6 +50,7 @@ export interface FormControlTreeProps {
 export function FormControlTree({
   rootNode,
   selected,
+  selectedControl,
   rootSchema,
   selectedField,
   onDeleted,
@@ -55,12 +59,9 @@ export function FormControlTree({
 }: FormControlTreeProps) {
   const { ref, width, height } = useResizeObserver();
 
-  const treeNodes = rootNode.getChildNodes(true).map((x) => ({
-    id: x.id,
-    children: makeChildren(x, rootSchema),
-    form: x,
-    schema: rootSchema,
-  }));
+  const treeNodes = rootNode
+    .getChildNodes()
+    .map((x) => toControlNode(x, rootSchema));
 
   function getEditableChildren(
     x?: FormNode,
@@ -109,21 +110,9 @@ export function FormControlTree({
         ref={treeApi}
         width={width}
         height={height}
-        onSelect={(n) => {
-          const f = n[0];
-          if (f) {
-            selected.value = { form: f.data.form, schema: f.data.schema };
-            const schemaPath = fieldPathForDefinition(f.data.form.definition);
-            if (schemaPath) {
-              selectedField.value = schemaForFieldPath(
-                schemaPath,
-                f.data.schema,
-              );
-            }
-          }
-        }}
+        onSelect={onSelect}
         data={treeNodes}
-        selection={selected.value?.form.id}
+        selection={selected.value}
         children={ControlNodeRenderer}
         onCreate={(props) => {
           if (props.parentNode) {
@@ -153,31 +142,49 @@ export function FormControlTree({
     </div>
   );
 
-  function makeChildren(
-    x: FormNode,
+  function onSelect(n: NodeApi<ControlNode>[]) {
+    groupedChanges(() => {
+      const f = n[0];
+      selected.value = n[0]?.id;
+      if (f) {
+        selectedControl.value = {
+          form: f.data.form,
+          schema: f.data.schema,
+        };
+        const schemaPath = fieldPathForDefinition(f.data.form.definition);
+        if (schemaPath) {
+          selectedField.value = schemaForFieldPath(schemaPath, f.data.schema);
+        }
+      } else {
+        selectedControl.value = undefined;
+        selectedField.value = undefined;
+      }
+    });
+  }
+
+  function toControlNode(
+    form: FormNode,
     parentSchema: SchemaNode,
-  ): ControlNode[] | null {
-    const c = x.getChildNodes(true);
-    const childPath = fieldPathForDefinition(x.definition);
-    const schema = childPath
+  ): ControlNode {
+    const def = form.definition;
+    const childPath = fieldPathForDefinition(def);
+    const dataSchema = childPath
       ? schemaForFieldPath(childPath, parentSchema)
-      : parentSchema;
-    return c && c.length > 0
-      ? c.map((d) => ({
-          id: d.id,
-          form: d,
-          schema,
-          children: makeChildren(d, schema),
-        }))
-      : null;
+      : undefined;
+    const c = form.getChildNodes();
+    const children =
+      c.length == 0 && !canAddChildren(def, dataSchema)
+        ? null
+        : c.map((x) => toControlNode(x, dataSchema ?? parentSchema));
+    return { id: form.id, form, dataSchema, schema: parentSchema, children };
   }
 }
 
 function ControlNodeRenderer(props: NodeRendererProps<ControlNode>) {
   const { node } = props;
-  const canAdd = true;
   const canDelete = true;
   const control = node.data.form.definition;
+  const canAdd = canAddChildren(control, node.data.dataSchema);
   return (
     <StdTreeNode {...props}>
       <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(control.type))} />

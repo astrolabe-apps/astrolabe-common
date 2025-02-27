@@ -55,6 +55,16 @@ export type UseEvalExpressionHook = (
   coerce: (v: any) => any,
 ) => DynamicHookGenerator<Control<any> | undefined, ControlDataContext>;
 
+export function optionalHook(
+  expr: EntityExpression | undefined | null,
+  useHook: UseEvalExpressionHook,
+  coerce: (v: any) => any,
+):
+  | DynamicHookGenerator<Control<any> | undefined, ControlDataContext>
+  | undefined {
+  return expr && expr.type ? useHook(expr, coerce) : undefined;
+}
+
 export function useEvalVisibilityHook(
   useEvalExpressionHook: UseEvalExpressionHook,
   definition: ControlDefinition,

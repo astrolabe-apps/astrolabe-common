@@ -514,6 +514,7 @@ export function useControlRendererComponent(
     formNode,
   });
 
+  if (formNode == null) debugger;
   const Component = useCallback(() => {
     const stopTracking = useComponentTracking();
 
@@ -643,8 +644,18 @@ export function useControlRendererComponent(
             formOptions: myOptions,
           }),
         ) ?? [];
+      const otherChildNodes =
+        definition.childRefId &&
+        formNode.tree.getByRefId(definition.childRefId)?.getChildNodes();
+
       const labelAndChildren = renderControlLayout({
-        formNode,
+        formNode: otherChildNodes
+          ? formNode.tree.createTempNode(
+              formNode.id,
+              definition,
+              otherChildNodes,
+            )
+          : formNode,
         definition: c,
         renderer,
         renderChild: (k, child, options) => {

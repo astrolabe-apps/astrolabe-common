@@ -1,18 +1,21 @@
 import { ViewContext } from "./index";
 import React from "react";
 import { FormSchemaTree } from "../FormSchemaTree";
-import { controlNotNull, unsafeRestoreControl } from "@react-typed-forms/core";
+import { controlNotNull } from "@react-typed-forms/core";
 import { EditorFormNode } from "../EditorFormNode";
 import { defaultControlForField } from "@react-typed-forms/schemas";
+import { InactiveView } from "./InactiveView";
 
 export function CurrentSchemaView({ context }: { context: ViewContext }) {
-  const { schemaLookup, currentForm } = context;
+  const { schemaLookup } = context;
   const cf = controlNotNull(context.getCurrentForm());
-  if (!cf) return <div>No form selected</div>;
+  if (!cf) return <InactiveView>No form selected</InactiveView>;
   const {
     selectedControl,
     selectedField,
     schemaId: { value: schemaId },
+    selectedControlId,
+    formTree: { value: tree },
   } = cf.fields;
   const rootSchema = schemaLookup.getSchema(schemaId);
   if (!rootSchema) return <div>Missing schema: {schemaId}</div>;
@@ -21,9 +24,10 @@ export function CurrentSchemaView({ context }: { context: ViewContext }) {
       <FormSchemaTree
         rootSchema={rootSchema}
         onAdd={(c) => {
-          const v = selectedControl.fields.form.value;
+          const v = selectedControl.fields.form.value ?? tree.rootNode;
           if (v instanceof EditorFormNode) {
-            v.addChild(defaultControlForField(c.field));
+            const newNode = v.tree.addChild(v, defaultControlForField(c.field));
+            selectedControlId.value = newNode.id;
           }
         }}
         selectedControl={selectedControl}
