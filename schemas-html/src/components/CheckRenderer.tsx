@@ -110,7 +110,7 @@ export function CheckButtons({
   const { disabled } = control;
   const name = "r" + control.uniqueId;
   return (
-    <div className={className} id={id}>
+    <Div className={className} id={id}>
       <RenderArrayElements array={options?.filter((x) => x.value != null)}>
         {(o, i) => {
           const checked = useComputed(() => isChecked(control, o)).value;
@@ -156,7 +156,7 @@ export function CheckButtons({
           );
         }}
       </RenderArrayElements>
-    </div>
+    </Div>
   );
 }
 

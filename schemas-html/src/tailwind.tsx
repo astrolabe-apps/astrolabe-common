@@ -4,7 +4,7 @@ import { DefaultRendererOptions } from "./createDefaultRenderers";
 export const defaultTailwindTheme = {
   label: {
     groupLabelClass: "font-bold",
-    requiredElement: (h) => <span className="text-red-500"> *</span>,
+    requiredElement: ({ Span }) => <Span className="text-red-500"> *</Span>,
   },
   array: {
     removableClass: "grid grid-cols-[1fr_auto] items-center gap-x-2",
