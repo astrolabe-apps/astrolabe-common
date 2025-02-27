@@ -7,15 +7,7 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-// noinspection ES6UnusedImports
-import React, {
-  createElement as h,
-  ElementType,
-  Fragment,
-  Key,
-  ReactElement,
-  ReactNode,
-} from "react";
+import React, { ReactElement, ReactNode } from "react";
 import clsx from "clsx";
 import {
   createSelectRenderer,
@@ -60,6 +52,7 @@ import {
   FieldType,
   FormRenderer,
   hasOptions,
+  HtmlComponents,
   isAccordionAdornment,
   isDataGroupRenderer,
   isDisplayOnlyRenderer,
@@ -104,7 +97,7 @@ export interface DefaultRendererOptions {
   layout?: DefaultLayoutRendererOptions;
   extraRenderers?: (options: DefaultRendererOptions) => RendererRegistration[];
   renderText?: (props: ReactNode, className?: string) => ReactNode;
-  h?: FormRenderer["h"];
+  html?: FormRenderer["html"];
 }
 
 export interface DefaultActionRendererOptions {
@@ -134,10 +127,10 @@ export function createButtonActionRenderer(
       }: ActionRendererProps,
       renderer,
     ) => {
-      const h = renderer.h;
+      const { Button } = renderer.html;
       const classNames = rendererClass(className, options.className);
       return (
-        <button
+        <Button
           className={classNames}
           disabled={disabled}
           style={style}
@@ -145,7 +138,7 @@ export function createButtonActionRenderer(
         >
           {options.renderContent?.(actionText, actionId, actionData) ??
             renderer.renderText(actionText, classNames)}
-        </button>
+        </Button>
       );
     },
   );
@@ -177,7 +170,6 @@ export interface DefaultDataRendererOptions {
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
 ): DataRendererRegistration {
-  const h = React.createElement;
   const jsonataRenderer = createJsonataRenderer(options.jsonataClass);
   const nullToggler = createNullToggleRenderer();
   const multilineRenderer = createMultilineFieldRenderer(
@@ -424,7 +416,7 @@ interface DefaultLabelRendererOptions {
   className?: string;
   groupLabelClass?: string;
   controlLabelClass?: string;
-  requiredElement?: (h: FormRenderer["h"]) => ReactNode;
+  requiredElement?: (h: FormRenderer["html"]) => ReactNode;
   labelContainer?: (children: ReactElement) => ReactElement;
 }
 
@@ -437,14 +429,14 @@ export function createDefaultLabelRenderer(
   };
   return {
     render: (props, labelStart, labelEnd, renderers) => {
-      const h = renderers.h;
+      const { Label } = renderers.html;
       const requiredElement =
-        options?.requiredElement ?? ((h) => <span> *</span>);
+        options?.requiredElement ?? (({ Span }) => <Span> *</Span>);
       if (props.type == LabelType.Text)
         return renderers.renderText(props.label);
       return labelContainer(
         <>
-          <label
+          <Label
             htmlFor={props.forId}
             className={rendererClass(
               props.className,
@@ -457,8 +449,8 @@ export function createDefaultLabelRenderer(
           >
             {labelStart}
             {renderers.renderLabelText(props.label)}
-            {props.required && requiredElement(h)}
-          </label>
+            {props.required && requiredElement(renderers.html)}
+          </Label>
           {labelEnd}
         </>,
       );
@@ -466,6 +458,17 @@ export function createDefaultLabelRenderer(
     type: "label",
   };
 }
+
+export const StandardHtmlComponents: HtmlComponents = {
+  Button: "button",
+  Label: "label",
+  I: "i",
+  Span: "span",
+  Div: "div",
+  H1: "h1",
+  B: "b",
+  Input: "input",
+};
 
 export function createDefaultRenderers(
   options: DefaultRendererOptions = {},
@@ -482,7 +485,7 @@ export function createDefaultRenderers(
     visibility: createDefaultVisibilityRenderer(),
     extraRenderers: options.extraRenderers?.(options) ?? [],
     renderText: options.renderText ?? ((x) => x),
-    h: options.h ?? h,
+    html: options.html ?? StandardHtmlComponents,
   };
 }
 

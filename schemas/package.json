@@ -61,8 +61,8 @@
   "gitHead": "698e16cd3ab31b7dd0528fc76536f4d3205ce8c6",
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsxImportSource=react",
+    "watch": "microbundle -w -f modern,cjs --no-compress --jsxImportSource=react",
     "test": "jest --coverage",
     "play": "tsx test/play.ts",
     "update-readme": "md-magic --path README.md",

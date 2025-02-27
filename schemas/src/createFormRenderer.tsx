@@ -60,7 +60,7 @@ export function createFormRenderer(
     renderVisibility,
     renderLabelText,
     renderText: defaultRenderers.renderText,
-    h: defaultRenderers.h,
+    html: defaultRenderers.html,
   };
 
   function renderVisibility(props: VisibilityRendererProps) {

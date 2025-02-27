@@ -12,8 +12,7 @@ import {
   SelectChildRenderer,
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
-// noinspection ES6UnusedImports
-import React, { CSSProperties, createElement as h, Fragment } from "react";
+import React, { CSSProperties } from "react";
 import { useTrackedComponent } from "@react-typed-forms/core";
 import { createTabsRenderer, DefaultTabsRenderOptions } from "./TabsRenderer";
 
@@ -87,15 +86,14 @@ export function createDefaultGroupRenderer(
       : isFlexRenderer(renderOptions)
         ? flexStyles(renderOptions)
         : ({ className: standardClassName } as StyleProps);
-    // noinspection JSUnusedLocalSymbols
-    const h = renderer.h;
+    const { Div } = renderer.html;
     return (
-      <div
+      <Div
         className={rendererClass(props.className, clsx(className, gcn))}
         style={style}
       >
         {formNode.getChildNodes().map((c, i) => renderChild(i, c))}
-      </div>
+      </Div>
     );
   }
 

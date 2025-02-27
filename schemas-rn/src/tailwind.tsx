@@ -1,11 +1,13 @@
-// noinspection ES6UnusedImports
-import { createElement as h } from "react";
+import {
+  ButtonHTMLAttributes,
+  HTMLAttributes,
+  InputHTMLAttributes,
+} from "react";
 
 import {
   DefaultRendererOptions,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
-import { createElement, ElementType, ReactElement } from "react";
 import { Platform, Pressable, Text, View } from "react-native";
 import { RNCheckbox } from "./components/RNCheckbox";
 import { RNTextInput } from "./components/RNTextInput";
@@ -19,6 +21,17 @@ import { FontAwesomeIcon } from "./components/FontAwesomeIcon";
 import { createRNSelectRenderer } from "./components/RNSelectRenderer";
 import { cn } from "./utils";
 
+export const reactNativeHtml = {
+  I: RNIcon,
+  B: RNSpan,
+  Button: RNButton,
+  Label: RNSpan,
+  Span: RNSpan,
+  H1: RNSpan,
+  Div: RNDiv,
+  Input: RNInput,
+};
+
 export const defaultRnTailwindTheme = {
   ...defaultTailwindTheme,
   array: {
@@ -30,7 +43,7 @@ export const defaultRnTailwindTheme = {
     className:
       "bg-primary-500 rounded-lg p-3 web:hover:opacity-90 active:opacity-90 text-white",
   },
-  h: renderHtml,
+  html: reactNativeHtml,
   renderText: (p, className) => (
     <Text
       className={cn(
@@ -54,66 +67,53 @@ export const defaultRnTailwindTheme = {
   },
 } satisfies DefaultRendererOptions;
 
-function renderHtml(
-  tag: ElementType,
-  props: any,
-  ...childs: any[]
-): ReactElement {
-  if (typeof tag !== "string") {
-    return createElement.apply(null, arguments as any);
-  }
-  const children = props?.children ?? childs;
+function RNIcon(props: HTMLAttributes<HTMLElement>) {
+  return <FontAwesomeIcon name={props.title!} className={props.className} />;
+}
 
-  switch (tag) {
-    case "i":
-      return <FontAwesomeIcon name={props.title} className={props.className} />;
-    case "button":
-      const onPress = props.onClick;
-      return <Pressable {...props} onPress={onPress} children={children} />;
-    case "label":
-    case "span":
-    case "h1":
-      return <RNText {...props} children={children} />;
-    case "div":
-      return props?.dangerouslySetInnerHTML ? (
-        <RNHtmlRenderer
-          {...props}
-          html={props?.dangerouslySetInnerHTML.__html}
+function RNSpan(props: HTMLAttributes<HTMLElement>) {
+  return <Text {...(props as any)} />;
+}
+function RNButton(props: ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <Pressable {...(props as any)} onPress={props.onClick as any} />;
+}
+function RNDiv(props: HTMLAttributes<HTMLDivElement>) {
+  return props?.dangerouslySetInnerHTML ? (
+    <RNHtmlRenderer
+      {...props}
+      html={props?.dangerouslySetInnerHTML.__html as string}
+    />
+  ) : (
+    <View {...(props as any)} />
+  );
+}
+function RNInput(props: InputHTMLAttributes<HTMLInputElement>) {
+  const { id, type, onChange, checked, value, ...rest } = props;
+  switch (type) {
+    case "radio":
+      return (
+        <RNRadioItem
+          {...(rest as any)}
+          checked={!!checked}
+          onChange={() => onChange?.({ target: {} } as any)}
         />
-      ) : (
-        <View {...props} children={children} />
       );
-    case "input":
-      const { id, type, onChange, checked, value, ...rest } = props;
-      switch (type) {
-        case "radio":
-          return (
-            <RNRadioItem
-              key={id}
-              {...rest}
-              checked={checked}
-              onChange={() => onChange({ target: {} })}
-            />
-          );
-        case "checkbox":
-          return (
-            <RNCheckbox
-              key={id}
-              {...rest}
-              checked={checked}
-              onCheckedChange={(e) => onChange({ target: { checked: e } })}
-            />
-          );
-        default:
-          return (
-            <RNTextInput
-              key={id}
-              {...rest}
-              value={typeof value == "number" ? value.toString() : value}
-              onChangeText={(t) => onChange({ target: { value: t } })}
-            />
-          );
-      }
+    case "checkbox":
+      return (
+        <RNCheckbox
+          key={id}
+          {...(rest as any)}
+          checked={!!checked}
+          onCheckedChange={(e) => onChange?.({ target: { checked: e } } as any)}
+        />
+      );
+    default:
+      return (
+        <RNTextInput
+          {...(rest as any)}
+          value={typeof value == "number" ? value.toString() : value}
+          onChangeText={(t) => onChange?.({ target: { value: t } } as any)}
+        />
+      );
   }
-  throw new Error(`Unknown tag: ${tag}`);
 }

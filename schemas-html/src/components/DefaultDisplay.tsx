@@ -1,5 +1,4 @@
-// noinspection ES6UnusedImports
-import React, { createElement as h } from "react";
+import React from "react";
 import clsx from "clsx";
 import {
   coerceToString,
@@ -40,11 +39,11 @@ export function DefaultDisplay({
   ...options
 }: DefaultDisplayRendererOptions &
   DisplayRendererProps & { renderer: FormRenderer }) {
-  const h = renderer.h;
+  const { I, Div, Span, B, H1 } = renderer.html;
   switch (data.type) {
     case DisplayDataType.Icon:
       return (
-        <i
+        <I
           style={style}
           className={clsx(
             getOverrideClass(className),
@@ -54,20 +53,20 @@ export function DefaultDisplay({
       );
     case DisplayDataType.Text:
       return (
-        <div
+        <Div
           style={style}
           className={rendererClass(className, options.textClassName)}
         >
-          <span>
+          <Span>
             {display
               ? coerceToString(display.value)
               : (data as TextDisplay).text}
-          </span>
-        </div>
+          </Span>
+        </Div>
       );
     case DisplayDataType.Html:
       return (
-        <div
+        <Div
           style={style}
           className={rendererClass(className, options.htmlClassName)}
           dangerouslySetInnerHTML={{
@@ -79,11 +78,11 @@ export function DefaultDisplay({
       );
     case DisplayDataType.Custom:
       return (
-        <div>
-          <b>({(data as CustomDisplay).customId})</b>
-        </div>
+        <Div>
+          <B>({(data as CustomDisplay).customId})</B>
+        </Div>
       );
     default:
-      return <h1>Unknown display type: {data.type}</h1>;
+      return <H1>Unknown display type: {data.type}</H1>;
   }
 }

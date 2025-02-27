@@ -5,8 +5,7 @@ import {
   RenderArrayElements,
   useComputed,
 } from "@react-typed-forms/core";
-// noinspection ES6UnusedImports
-import React, { ReactNode, createElement as h } from "react";
+import React, { ReactNode } from "react";
 import {
   CheckEntryClasses,
   ControlLayoutProps,
@@ -107,7 +106,7 @@ export function CheckButtons({
   controlClasses = {},
   renderer,
 }: CheckButtonsProps & { renderer: FormRenderer }) {
-  const h = renderer.h;
+  const { Button, Input, Label, Div } = renderer.html;
   const { disabled } = control;
   const name = "r" + control.uniqueId;
   return (
@@ -125,7 +124,7 @@ export function CheckButtons({
                 classes.notSelectedClass,
               );
           return (
-            <button
+            <Button
               className={clsx(
                 rendererClass(
                   controlClasses?.entryWrapperClass,
@@ -135,8 +134,8 @@ export function CheckButtons({
               )}
               onClick={() => !readonly && setChecked(control, o, !checked)}
             >
-              <div className={classes.entryClass}>
-                <input
+              <Div className={classes.entryClass}>
+                <Input
                   id={name + "_" + i}
                   className={classes.checkClass}
                   type={type}
@@ -148,12 +147,12 @@ export function CheckButtons({
                     !readonly && setChecked(control, o, x.target.checked);
                   }}
                 />
-                <label className={classes.labelClass} htmlFor={name + "_" + i}>
+                <Label className={classes.labelClass} htmlFor={name + "_" + i}>
                   {o.name}
-                </label>
-              </div>
+                </Label>
+              </Div>
               {entryAdornment?.(o, i, checked)}
-            </button>
+            </Button>
           );
         }}
       </RenderArrayElements>
@@ -196,9 +195,9 @@ function CheckBox({
   renderer: FormRenderer;
   options: CheckRendererOptions;
 }) {
-  const h = renderer.h;
+  const { Div } = renderer.html;
   return (
-    <div className={rendererClass(props.className, options.entryClass)}>
+    <Div className={rendererClass(props.className, options.entryClass)}>
       <Fcheckbox
         id={props.id}
         control={props.control.as()}
@@ -207,7 +206,7 @@ function CheckBox({
         renderer={renderer}
       />
       {p.label && renderer.renderLabel(p.label, undefined, undefined)}
-    </div>
+    </Div>
   );
 }
 
@@ -218,11 +217,11 @@ export function Fcheckbox({
   renderer,
   ...others
 }: FcheckboxProps & { renderer: FormRenderer }) {
-  const h = renderer.h;
+  const { Input } = renderer.html;
   const { value, onChange, errorText, ...theseProps } =
     formControlProps(control);
   return (
-    <input
+    <Input
       {...theseProps}
       checked={!!value !== notValue}
       ref={(r) => (control.element = r)}

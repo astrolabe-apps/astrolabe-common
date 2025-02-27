@@ -1,6 +1,5 @@
 import clsx from "clsx";
-// noinspection ES6UnusedImports
-import React, { createElement as h, Fragment, ReactNode } from "react";
+import React, { Fragment, ReactNode } from "react";
 import { RenderElements, useTrackedComponent } from "@react-typed-forms/core";
 import {
   ActionRendererProps,
@@ -24,6 +23,7 @@ import {
   getLengthRestrictions,
   GroupedControlsDefinition,
   GroupRenderType,
+  HtmlComponents,
   isArrayRenderer,
   isCompoundField,
   lookupDataNode,
@@ -192,12 +192,12 @@ export function createDefaultArrayRenderer(
   options?: DefaultArrayRendererOptions,
 ): ArrayRendererRegistration {
   return {
-    render: (props, { renderAction, h }) => (
+    render: (props, { renderAction, html }) => (
       <DefaultArrayRenderer
         {...props}
         {...options}
         renderAction={renderAction}
-        h={h}
+        html={html}
       />
     ),
     type: "array",
@@ -208,7 +208,7 @@ export interface DefaultArrayRendererProps
   extends DefaultArrayRendererOptions,
     ArrayRendererProps {
   renderAction: (props: ActionRendererProps) => ReactNode;
-  h?: (type: any, props: any, ...children: any[]) => React.ReactElement;
+  html: HtmlComponents;
 }
 
 export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
@@ -224,35 +224,35 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     renderAction,
     style,
     editAction,
-    h,
+    html: { Div },
   } = props;
   const { addAction, removeAction } = applyArrayLengthRestrictions(props);
   return (
-    <div style={style}>
-      <div className={clsx(className, removeAction && removableClass)}>
+    <Div style={style}>
+      <Div className={clsx(className, removeAction && removableClass)}>
         <RenderElements control={arrayControl}>
           {(_, x) =>
             renderElement(x, (children) =>
               removeAction || editAction ? (
                 <>
-                  <div className={clsx(childClass, removableChildClass)}>
+                  <Div className={clsx(childClass, removableChildClass)}>
                     {children}
-                  </div>
-                  <div className={removeActionClass}>
+                  </Div>
+                  <Div className={removeActionClass}>
                     {editAction && renderAction(editAction(x))}
                     {removeAction && renderAction(removeAction(x))}
-                  </div>
+                  </Div>
                 </>
               ) : (
-                <div className={childClass}>{children}</div>
+                <Div className={childClass}>{children}</Div>
               ),
             )
           }
         </RenderElements>
-      </div>
+      </Div>
       {addAction && (
-        <div className={addActionClass}>{renderAction(addAction)}</div>
+        <Div className={addActionClass}>{renderAction(addAction)}</Div>
       )}
-    </div>
+    </Div>
   );
 }

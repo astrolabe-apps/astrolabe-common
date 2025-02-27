@@ -1,7 +1,12 @@
 import React, {
+  ButtonHTMLAttributes,
+  ElementType,
   FC,
   Fragment,
+  HTMLAttributes,
+  InputHTMLAttributes,
   Key,
+  LabelHTMLAttributes,
   ReactElement,
   ReactNode,
   useCallback,
@@ -89,6 +94,16 @@ import {
   SchemaInterface,
 } from "./schemaField";
 
+export interface HtmlComponents {
+  Div: ElementType<HTMLAttributes<HTMLDivElement>, "div">;
+  Span: ElementType<HTMLAttributes<HTMLSpanElement>>;
+  Button: ElementType<ButtonHTMLAttributes<HTMLButtonElement>>;
+  I: ElementType<HTMLAttributes<HTMLElement>>;
+  Label: ElementType<LabelHTMLAttributes<HTMLLabelElement>>;
+  B: ElementType<HTMLAttributes<HTMLElement>>;
+  H1: ElementType<HTMLAttributes<HTMLElement>>;
+  Input: ElementType<InputHTMLAttributes<HTMLInputElement>, "input">;
+}
 /**
  * Interface for rendering different types of form controls.
  */
@@ -174,7 +189,7 @@ export interface FormRenderer {
   renderLabelText: (props: ReactNode) => ReactNode;
   renderText: (props: ReactNode, className?: string) => ReactNode;
 
-  h: (type: any, props: any, ...children: any[]) => ReactElement;
+  html: HtmlComponents;
 }
 
 export interface AdornmentProps {

@@ -28,11 +28,10 @@ export function DefaultDisplayOnly({
     (schemaInterface.isEmptyValue(field, v)
       ? emptyText
       : schemaInterface.textValue(field, v)) ?? "";
-  // noinspection JSUnusedLocalSymbols
-  const h = renderer.h;
+  const { Div, Span } = renderer.html;
   return (
-    <div style={style} className={className}>
-      <span>{text}</span>
-    </div>
+    <Div style={style} className={className}>
+      <Span>{text}</Span>
+    </Div>
   );
 }

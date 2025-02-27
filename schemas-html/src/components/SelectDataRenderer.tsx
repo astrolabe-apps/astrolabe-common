@@ -1,6 +1,5 @@
 import { Control } from "@react-typed-forms/core";
-// noinspection ES6UnusedImports
-import React, { createElement as h, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   createDataRenderer,
   FieldOption,

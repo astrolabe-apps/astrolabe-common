@@ -9,6 +9,7 @@ import {
   DisplayRendererProps,
   FormRenderer,
   GroupRendererProps,
+  HtmlComponents,
   LabelRendererProps,
   LabelType,
   RenderedControl,
@@ -36,7 +37,7 @@ export interface DefaultRenderers {
   visibility: VisibilityRendererRegistration;
   extraRenderers: RendererRegistration[];
   renderText: (props: ReactNode) => ReactNode;
-  h: (type: any, props: any, ...children: any[]) => ReactElement;
+  html: HtmlComponents;
 }
 
 export interface LayoutRendererRegistration {

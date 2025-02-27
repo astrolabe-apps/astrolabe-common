@@ -1,10 +1,4 @@
-// noinspection ES6UnusedImports
-import React, {
-  CSSProperties,
-  Fragment,
-  ReactElement,
-  createElement as h,
-} from "react";
+import React, { CSSProperties, ReactElement } from "react";
 import { Control, useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
 import { DefaultAccordionRendererOptions } from "../createDefaultRenderers";
@@ -40,7 +34,7 @@ export function DefaultAccordion({
   renderers: FormRenderer;
   dataContext: ControlDataContext;
 } & DefaultAccordionRendererOptions) {
-  const h = renderers.h;
+  const { Button, I, Div, Label } = renderers.html;
   const dataControl = (dataContext.dataNode ?? dataContext.parentNode).control;
   const open = useControl(!!accordion.defaultExpanded);
   if (dataControl && !dataControl.meta.accordionState) {
@@ -53,22 +47,22 @@ export function DefaultAccordion({
   const toggler = renderToggler ? (
     renderToggler(open, title)
   ) : (
-    <button className={className} onClick={() => open.setValue((x) => !x)}>
-      <label className={titleClass}>{title}</label>
-      <i
+    <Button className={className} onClick={() => open.setValue((x) => !x)}>
+      <Label className={titleClass}>{title}</Label>
+      <I
         title={isOpen ? iconOpenName : iconClosedName}
         className={clsx(isOpen ? iconOpenClass : iconClosedClass)}
       />
-    </button>
+    </Button>
   );
 
   return (
     <>
       {toggler}
       {(useCss || isOpen || designMode) && (
-        <div style={fullContentStyle} className={contentClassName}>
+        <Div style={fullContentStyle} className={contentClassName}>
           {children}
-        </div>
+        </Div>
       )}
     </>
   );

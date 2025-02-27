@@ -1,12 +1,11 @@
 import {
   createLayoutRenderer,
+  FormRenderer,
   RenderedLayout,
   rendererClass,
   renderLayoutParts,
 } from "@react-typed-forms/schemas";
-import { FormRenderer } from "@react-typed-forms/schemas";
-// noinspection ES6UnusedImports
-import React, { createElement as h, Fragment, ReactNode } from "react";
+import React, { ReactNode } from "react";
 
 export interface DefaultLayoutRendererOptions {
   className?: string;
@@ -35,12 +34,15 @@ export function createDefaultLayoutRenderer(
 
 export function DefaultLayout({
   errorClass,
-  renderer: { h, renderText },
+  renderer: {
+    html: { Div, Span },
+    renderText,
+  },
   renderError = (e) =>
     e && (
-      <div>
-        <span className={errorClass}>{renderText(e)}</span>
-      </div>
+      <Div>
+        <Span className={errorClass}>{renderText(e)}</Span>
+      </Div>
     ),
   layout: { controlEnd, controlStart, label, children, errorControl },
 }: DefaultLayoutRendererOptions & {
