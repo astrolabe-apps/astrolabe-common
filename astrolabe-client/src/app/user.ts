@@ -119,6 +119,9 @@ export interface PasswordChangeProps {
   control: Control<ChangePasswordFormData>;
   changePassword: () => Promise<boolean>;
   confirmPrevious: boolean;
+  send?: () => Promise<boolean>;
+  mfaControl?: Control<MfaFormData>;
+  mfaAuthenticate?: () => Promise<boolean>;
 }
 
 export interface ChangeEmailFormData {
@@ -141,27 +144,58 @@ export function useChangePasswordPage(
     resetCode: string | null,
     change: ChangePasswordFormData,
   ) => Promise<any>,
+  send?: (login: MfaFormData) => Promise<any>,
+  runAuthenticate?: (login: MfaFormData) => Promise<string>,
   errors?: Record<number, string>,
 ): PasswordChangeProps {
   const control = useControl(emptyChangePasswordForm);
 
   const {
     queryParams: { resetCode: rcp },
-    errors: { statusCodes, generic },
+    errors: { statusCodes, generic, codeLimit, wrongCode },
   } = useAuthPageSetup();
+  
   const searchParams = useNavigationService();
   const resetCode = searchParams.get(rcp);
 
+  const mfaControl = useControl<MfaFormData|null>(resetCode != null ? {
+    token: resetCode,
+    code: "",
+    updateNumber: false,
+    number: null,
+  }: null);
+  
+  const authTokenControl = useControl<string|null>(null);
+  
   return {
     control,
     confirmPrevious: !resetCode,
+    send: resetCode ? () =>
+      validateAndRunMessages(
+        control,
+        async () => {
+          await send!(mfaControl.value!);
+        },
+        { 429: codeLimit, ...(errors ?? statusCodes) },
+        generic,
+      ) : undefined,
     changePassword: () =>
       validateAndRunMessages(
         control,
-        () => runChange(resetCode, control.value),
+        () => runChange(authTokenControl.value, control.value),
         statusCodes ?? errors,
         generic,
       ),
+    mfaControl: resetCode ? mfaControl as Control<MfaFormData> : undefined,
+    mfaAuthenticate: resetCode ? () =>
+      validateAndRunMessages(
+        control,
+        async () => {
+          authTokenControl.value = await runAuthenticate!(mfaControl.value!);
+        },
+        { 401: wrongCode, ...(errors ?? statusCodes) },
+        generic,
+      ) : undefined,
   };
 }
 
