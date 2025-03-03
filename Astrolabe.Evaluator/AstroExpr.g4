@@ -9,6 +9,7 @@ main
     
 expr
     : primaryExpr # Primary
+    | ('-'|'!'|'+') expr # UnaryOp
     | expr '[' expr ']' # BinOp
     | expr '.' expr # BinOp
     | expr ('*'|'/'|'%') expr # BinOp
@@ -18,7 +19,6 @@ expr
     | expr 'and' expr # BinOp
     | expr 'or' expr # BinOp
     | expr '??' expr # BinOp
-    | ('-'|'!'|'+') expr # UnaryOp
     | <assoc=right> expr '?' expr ':' expr # TernaryOp
     ; 
     

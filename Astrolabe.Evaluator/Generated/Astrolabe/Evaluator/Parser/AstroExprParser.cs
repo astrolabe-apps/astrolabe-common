@@ -280,7 +280,7 @@ public partial class AstroExprParser : Parser {
 				    Consume();
 				}
 				State = 28;
-				expr(2);
+				expr(11);
 				}
 				break;
 			default:
@@ -304,11 +304,11 @@ public partial class AstroExprParser : Parser {
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
 						State = 31;
-						if (!(Precpred(Context, 10))) throw new FailedPredicateException(this, "Precpred(Context, 10)");
+						if (!(Precpred(Context, 9))) throw new FailedPredicateException(this, "Precpred(Context, 9)");
 						State = 32;
 						Match(DOT);
 						State = 33;
-						expr(11);
+						expr(10);
 						}
 						break;
 					case 2:
@@ -316,7 +316,7 @@ public partial class AstroExprParser : Parser {
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
 						State = 34;
-						if (!(Precpred(Context, 9))) throw new FailedPredicateException(this, "Precpred(Context, 9)");
+						if (!(Precpred(Context, 8))) throw new FailedPredicateException(this, "Precpred(Context, 8)");
 						State = 35;
 						_la = TokenStream.LA(1);
 						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 1048582L) != 0)) ) {
@@ -327,7 +327,7 @@ public partial class AstroExprParser : Parser {
 						    Consume();
 						}
 						State = 36;
-						expr(10);
+						expr(9);
 						}
 						break;
 					case 3:
@@ -335,7 +335,7 @@ public partial class AstroExprParser : Parser {
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
 						State = 37;
-						if (!(Precpred(Context, 8))) throw new FailedPredicateException(this, "Precpred(Context, 8)");
+						if (!(Precpred(Context, 7))) throw new FailedPredicateException(this, "Precpred(Context, 7)");
 						State = 38;
 						_la = TokenStream.LA(1);
 						if ( !(_la==MINUS || _la==PLUS) ) {
@@ -346,7 +346,7 @@ public partial class AstroExprParser : Parser {
 						    Consume();
 						}
 						State = 39;
-						expr(9);
+						expr(8);
 						}
 						break;
 					case 4:
@@ -354,7 +354,7 @@ public partial class AstroExprParser : Parser {
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
 						State = 40;
-						if (!(Precpred(Context, 7))) throw new FailedPredicateException(this, "Precpred(Context, 7)");
+						if (!(Precpred(Context, 6))) throw new FailedPredicateException(this, "Precpred(Context, 6)");
 						State = 41;
 						_la = TokenStream.LA(1);
 						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 62914560L) != 0)) ) {
@@ -365,7 +365,7 @@ public partial class AstroExprParser : Parser {
 						    Consume();
 						}
 						State = 42;
-						expr(8);
+						expr(7);
 						}
 						break;
 					case 5:
@@ -373,7 +373,7 @@ public partial class AstroExprParser : Parser {
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
 						State = 43;
-						if (!(Precpred(Context, 6))) throw new FailedPredicateException(this, "Precpred(Context, 6)");
+						if (!(Precpred(Context, 5))) throw new FailedPredicateException(this, "Precpred(Context, 5)");
 						State = 44;
 						_la = TokenStream.LA(1);
 						if ( !(_la==EQ || _la==NE) ) {
@@ -384,7 +384,7 @@ public partial class AstroExprParser : Parser {
 						    Consume();
 						}
 						State = 45;
-						expr(7);
+						expr(6);
 						}
 						break;
 					case 6:
@@ -392,11 +392,11 @@ public partial class AstroExprParser : Parser {
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
 						State = 46;
-						if (!(Precpred(Context, 5))) throw new FailedPredicateException(this, "Precpred(Context, 5)");
+						if (!(Precpred(Context, 4))) throw new FailedPredicateException(this, "Precpred(Context, 4)");
 						State = 47;
 						Match(AND);
 						State = 48;
-						expr(6);
+						expr(5);
 						}
 						break;
 					case 7:
@@ -404,11 +404,11 @@ public partial class AstroExprParser : Parser {
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
 						State = 49;
-						if (!(Precpred(Context, 4))) throw new FailedPredicateException(this, "Precpred(Context, 4)");
+						if (!(Precpred(Context, 3))) throw new FailedPredicateException(this, "Precpred(Context, 3)");
 						State = 50;
 						Match(OR);
 						State = 51;
-						expr(5);
+						expr(4);
 						}
 						break;
 					case 8:
@@ -416,11 +416,11 @@ public partial class AstroExprParser : Parser {
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
 						State = 52;
-						if (!(Precpred(Context, 3))) throw new FailedPredicateException(this, "Precpred(Context, 3)");
+						if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
 						State = 53;
 						Match(T__2);
 						State = 54;
-						expr(4);
+						expr(3);
 						}
 						break;
 					case 9:
@@ -444,7 +444,7 @@ public partial class AstroExprParser : Parser {
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
 						State = 61;
-						if (!(Precpred(Context, 11))) throw new FailedPredicateException(this, "Precpred(Context, 11)");
+						if (!(Precpred(Context, 10))) throw new FailedPredicateException(this, "Precpred(Context, 10)");
 						State = 62;
 						Match(LBRAC);
 						State = 63;
@@ -1125,16 +1125,16 @@ public partial class AstroExprParser : Parser {
 	}
 	private bool expr_sempred(ExprContext _localctx, int predIndex) {
 		switch (predIndex) {
-		case 0: return Precpred(Context, 10);
-		case 1: return Precpred(Context, 9);
-		case 2: return Precpred(Context, 8);
-		case 3: return Precpred(Context, 7);
-		case 4: return Precpred(Context, 6);
-		case 5: return Precpred(Context, 5);
-		case 6: return Precpred(Context, 4);
-		case 7: return Precpred(Context, 3);
+		case 0: return Precpred(Context, 9);
+		case 1: return Precpred(Context, 8);
+		case 2: return Precpred(Context, 7);
+		case 3: return Precpred(Context, 6);
+		case 4: return Precpred(Context, 5);
+		case 5: return Precpred(Context, 4);
+		case 6: return Precpred(Context, 3);
+		case 7: return Precpred(Context, 2);
 		case 8: return Precpred(Context, 1);
-		case 9: return Precpred(Context, 11);
+		case 9: return Precpred(Context, 10);
 		}
 		return true;
 	}
@@ -1155,14 +1155,14 @@ public partial class AstroExprParser : Parser {
 		87,1,0,0,0,6,89,1,0,0,0,8,93,1,0,0,0,10,106,1,0,0,0,12,119,1,0,0,0,14,
 		133,1,0,0,0,16,137,1,0,0,0,18,149,1,0,0,0,20,153,1,0,0,0,22,23,3,2,1,0,
 		23,24,5,0,0,1,24,1,1,0,0,0,25,26,6,1,-1,0,26,30,3,4,2,0,27,28,7,0,0,0,
-		28,30,3,2,1,2,29,25,1,0,0,0,29,27,1,0,0,0,30,68,1,0,0,0,31,32,10,10,0,
-		0,32,33,5,19,0,0,33,67,3,2,1,11,34,35,10,9,0,0,35,36,7,1,0,0,36,67,3,2,
-		1,10,37,38,10,8,0,0,38,39,7,2,0,0,39,67,3,2,1,9,40,41,10,7,0,0,41,42,7,
-		3,0,0,42,67,3,2,1,8,43,44,10,6,0,0,44,45,7,4,0,0,45,67,3,2,1,7,46,47,10,
-		5,0,0,47,48,5,28,0,0,48,67,3,2,1,6,49,50,10,4,0,0,50,51,5,29,0,0,51,67,
-		3,2,1,5,52,53,10,3,0,0,53,54,5,3,0,0,54,67,3,2,1,4,55,56,10,1,0,0,56,57,
+		28,30,3,2,1,11,29,25,1,0,0,0,29,27,1,0,0,0,30,68,1,0,0,0,31,32,10,9,0,
+		0,32,33,5,19,0,0,33,67,3,2,1,10,34,35,10,8,0,0,35,36,7,1,0,0,36,67,3,2,
+		1,9,37,38,10,7,0,0,38,39,7,2,0,0,39,67,3,2,1,8,40,41,10,6,0,0,41,42,7,
+		3,0,0,42,67,3,2,1,7,43,44,10,5,0,0,44,45,7,4,0,0,45,67,3,2,1,6,46,47,10,
+		4,0,0,47,48,5,28,0,0,48,67,3,2,1,5,49,50,10,3,0,0,50,51,5,29,0,0,51,67,
+		3,2,1,4,52,53,10,2,0,0,53,54,5,3,0,0,54,67,3,2,1,3,55,56,10,1,0,0,56,57,
 		5,35,0,0,57,58,3,2,1,0,58,59,5,4,0,0,59,60,3,2,1,1,60,67,1,0,0,0,61,62,
-		10,11,0,0,62,63,5,15,0,0,63,64,3,2,1,0,64,65,5,16,0,0,65,67,1,0,0,0,66,
+		10,10,0,0,62,63,5,15,0,0,63,64,3,2,1,0,64,65,5,16,0,0,65,67,1,0,0,0,66,
 		31,1,0,0,0,66,34,1,0,0,0,66,37,1,0,0,0,66,40,1,0,0,0,66,43,1,0,0,0,66,
 		46,1,0,0,0,66,49,1,0,0,0,66,52,1,0,0,0,66,55,1,0,0,0,66,61,1,0,0,0,67,
 		70,1,0,0,0,68,66,1,0,0,0,68,69,1,0,0,0,69,3,1,0,0,0,70,68,1,0,0,0,71,88,
