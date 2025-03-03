@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/client",
-  "version": "2.2.1",
+	"version": "2.2.2",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
@@ -29,7 +29,8 @@
     "react": "^18.2.0 || ^19"
   },
   "scripts": {
-    "prepack": "npm run build",
+    "prepack": "npm run clean && npm run build",
+		"clean": "rimraf *.tsbuildinfo node_modules/.cache app/ hooks/ lib/ service/ util/ *.js *.js.map",
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
