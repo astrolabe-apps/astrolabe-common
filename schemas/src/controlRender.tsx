@@ -684,7 +684,6 @@ export function useControlRendererComponent(
             ...overrideClasses,
             ...renderOptions,
           };
-          console.log(allChildOptions, overrideClasses);
           return (
             <NewControlRenderer
               key={k}
