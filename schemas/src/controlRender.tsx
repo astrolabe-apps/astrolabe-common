@@ -633,11 +633,12 @@ export function useControlRendererComponent(
         hiddenControl: myOptionsControl.fields.hidden,
         dataContext,
       });
+      const { styleClass, labelClass, layoutClass, ...inheritableOptions } =
+        options;
       const childOptions: ControlRenderOptions = {
-        ...options,
+        ...inheritableOptions,
         ...myOptions,
         elementIndex: undefined,
-        formData,
       };
 
       useEffect(() => {
@@ -678,18 +679,19 @@ export function useControlRendererComponent(
           const { parentDataNode, ...renderOptions } = options ?? {};
           const dContext =
             parentDataNode ?? dataContext.dataNode ?? dataContext.parentNode;
-
+          const allChildOptions = {
+            ...childOptions,
+            ...overrideClasses,
+            ...renderOptions,
+          };
+          console.log(allChildOptions, overrideClasses);
           return (
             <NewControlRenderer
               key={k}
               definition={child}
               renderer={renderer}
               parentDataNode={dContext}
-              options={{
-                ...childOptions,
-                ...overrideClasses,
-                ...renderOptions,
-              }}
+              options={allChildOptions}
             />
           );
         },
