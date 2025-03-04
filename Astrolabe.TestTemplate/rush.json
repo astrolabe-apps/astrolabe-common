@@ -511,7 +511,7 @@
     {
       "packageName": "@astroapps/codemirror-evaluator",
       "projectFolder": "../astrolabe-codemirror-evaluator",
-      "shouldPublish": false
+      "shouldPublish": true
     },
     {
       "packageName": "@astroapps/schemas-datagrid",

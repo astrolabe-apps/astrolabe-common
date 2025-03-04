@@ -1,9 +1,10 @@
 {
   "name": "@astroapps/codemirror-evaluator",
   "version": "0.1.0",
-  "description": "EXAMPLE language support for CodeMirror",
+  "description": "CodeMirror plugin for the Astrolabe evaluator",
   "scripts": {
     "test": "mocha test/test.js",
+    "prepack": "npm run build",
     "build": "rollup -c"
   },
   "type": "module",
@@ -14,20 +15,35 @@
     "require": "./dist/index.cjs"
   },
   "types": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/doolse/react-typed-forms.git"
+  },
+  "author": "Jolse Maginnis",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/doolse/react-typed-forms/issues"
+  },
+  "homepage": "https://github.com/doolse/react-typed-forms#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "codemirror"
+  ],
   "sideEffects": false,
   "dependencies": {
     "@astroapps/evaluator": "workspace:*",
-    "@codemirror/language": "^6.0.0",
-    "@lezer/highlight": "^1.0.0",
-    "@lezer/lr": "^1.0.0"
+    "@codemirror/language": "^6.10.0",
+    "@lezer/highlight": "^1.2.1",
+    "@lezer/lr": "^1.4.2"
   },
   "devDependencies": {
-    "@lezer/generator": "^1.0.0",
+    "@lezer/generator": "^1.7.0",
     "mocha": "^9.0.1",
     "rollup": "^2.60.2",
     "rollup-plugin-dts": "^4.0.1",
     "rollup-plugin-ts": "^3.0.2",
     "typescript": "^5.6.2"
-  },
-  "license": "MIT"
+  }
 }
