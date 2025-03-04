@@ -47,7 +47,9 @@ ArgList { "(" commaSep<expression> ")" }
 
 ArrayExpression { "[" commaSep<expression> "]" }
 
-ObjectExpression { "{" (expression ":" expression)* "}" }
+FieldExpression { (expression ":" expression) }
+
+ObjectExpression { "{" commaSep<FieldExpression> "}" }
 
 commaSep<content> {
   (content ("," content)*)?

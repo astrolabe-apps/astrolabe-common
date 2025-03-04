@@ -12,8 +12,9 @@ export const
   Escape = 10,
   ArrayExpression = 11,
   ObjectExpression = 12,
-  UnaryExpression = 13,
-  BinaryExpression = 14,
-  Call = 16,
-  ParenthesizedExpression = 31,
-  ArgList = 34
+  FieldExpression = 13,
+  UnaryExpression = 14,
+  BinaryExpression = 15,
+  Call = 17,
+  ParenthesizedExpression = 32,
+  ArgList = 35
