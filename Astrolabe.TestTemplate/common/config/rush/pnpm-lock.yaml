@@ -181,24 +181,26 @@ importers:
 
   ../../../astrolabe-codemirror-evaluator:
     specifiers:
-      '@astroapps/evaluator': workspace:*
-      '@codemirror/language': ^6.0.0
-      '@lezer/generator': ^1.0.0
-      '@lezer/highlight': ^1.0.0
-      '@lezer/lr': ^1.0.0
+      '@astroapps/evaluator': ^2.13.0
+      '@codemirror/language': ^6.10.0
+      '@lezer/generator': ^1.7.0
+      '@lezer/highlight': ^1.2.1
+      '@lezer/lr': ^1.4.2
       mocha: ^9.0.1
-      rollup: ^2.60.2
+      prettier: ^3.0.3
+      rollup: ^2.79.2
       rollup-plugin-dts: ^4.0.1
       rollup-plugin-ts: ^3.0.2
       typescript: ^5.6.2
     dependencies:
-      '@astroapps/evaluator': link:../astrolabe-evaluator
+      '@astroapps/evaluator': 2.13.0
       '@codemirror/language': 6.10.3
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
     devDependencies:
       '@lezer/generator': 1.7.1
       mocha: 9.2.2
+      prettier: 3.4.2
       rollup: 2.79.2
       rollup-plugin-dts: 4.2.3_amhkgxs555cft3d44n3gnlr66e
       rollup-plugin-ts: 3.4.5_amhkgxs555cft3d44n3gnlr66e
@@ -842,6 +844,7 @@ importers:
       '@react-typed-forms/schemas-html': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@rn-primitives/checkbox': ^1.1.0
+      '@rn-primitives/dialog': ^1.1.0
       '@rn-primitives/radio-group': ^1.1.0
       '@rn-primitives/select': ^1.1.0
       '@rn-primitives/slot': ^1.1.0
@@ -876,6 +879,7 @@ importers:
       '@react-native-community/datetimepicker': 8.2.0_rut2qurybwc74jc2rw5t62iapy
       '@react-typed-forms/schemas-html': link:../schemas-html
       '@rn-primitives/checkbox': 1.1.0_qnnowrw5pbcrcvbiwg2r5zcxxq
+      '@rn-primitives/dialog': 1.1.0_qnnowrw5pbcrcvbiwg2r5zcxxq
       '@rn-primitives/radio-group': 1.1.0_qnnowrw5pbcrcvbiwg2r5zcxxq
       '@rn-primitives/select': 1.1.0_qnnowrw5pbcrcvbiwg2r5zcxxq
       '@rn-primitives/slot': 1.1.0_dozruiv5ch5nswbp6aaef7oxju
@@ -1236,6 +1240,13 @@ packages:
       tailwind-merge: 1.14.0
       tslib: 2.8.0
     dev: true
+
+  /@astroapps/evaluator/2.13.0:
+    resolution: {integrity: sha512-IFePif/bjPcVP7qQQxzdID6ea/C5uwAl2K9xN4s8zKHUlJwyNsqs88nriIy+Mhz0m4TNKuAyO4ZllmtbIsMdiw==}
+    dependencies:
+      '@lezer/common': 1.2.3
+      '@lezer/lr': 1.4.2
+    dev: false
 
   /@astroapps/searchstate/2.0.0:
     resolution: {integrity: sha512-NpsPtdy1VrpyjucfbLYOSRhTD53QiErYlFYBjmmLMAiiFrd8vTUyMs0WKOrGhLKyQkjIpL2qOzudf6VNJ7SE+g==}
@@ -5512,6 +5523,38 @@ packages:
       react-remove-scroll: 2.5.5_ryhct6r6jz2fex4xfo2quarxhi
     dev: false
 
+  /@radix-ui/react-dialog/1.1.6_vsw25juzkyj7spaf6wjn5upvjq:
+    resolution: {integrity: sha512-/IVhJV5AceX620DUJ4uYVMymzsipdKBzo3edo+omeskCKGm9FRHM0ebIdbPnlQVJqyuHbuBltQUOG2mOTq2IYw==}
+    peerDependencies:
+      '@types/react': '*'
+      '@types/react-dom': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+    dependencies:
+      '@radix-ui/primitive': 1.1.1
+      '@radix-ui/react-compose-refs': 1.1.1_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-context': 1.1.1_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-dismissable-layer': 1.1.5_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-focus-guards': 1.1.1_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-focus-scope': 1.1.2_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-id': 1.1.0_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-portal': 1.1.4_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-presence': 1.1.2_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-primitive': 2.0.2_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-slot': 1.1.2_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-use-controllable-state': 1.1.0_ryhct6r6jz2fex4xfo2quarxhi
+      '@types/react': 18.3.12
+      aria-hidden: 1.2.4
+      react: 18.3.1
+      react-dom: 18.3.1_react@18.3.1
+      react-remove-scroll: 2.6.3_ryhct6r6jz2fex4xfo2quarxhi
+    dev: false
+
   /@radix-ui/react-direction/1.0.1_ryhct6r6jz2fex4xfo2quarxhi:
     resolution: {integrity: sha512-RXcvnXgyvYvBEOhCBuddKecVkoMiI10Jcm5cTI7abJRAHYfFxeu+FBQs/DvdxSYucxR5mna0dNsL6QFlds5TMA==}
     peerDependencies:
@@ -8581,6 +8624,32 @@ packages:
         optional: true
     dependencies:
       '@radix-ui/react-checkbox': 1.1.4_vsw25juzkyj7spaf6wjn5upvjq
+      '@rn-primitives/hooks': 1.1.0_dozruiv5ch5nswbp6aaef7oxju
+      '@rn-primitives/slot': 1.1.0_dozruiv5ch5nswbp6aaef7oxju
+      '@rn-primitives/types': 1.1.0_dozruiv5ch5nswbp6aaef7oxju
+      react: 18.3.1
+      react-native: 0.76.7_7w5ri7fpqis7x3gdau2x4oddzq
+      react-native-web: 0.19.13_nnrd3gsncyragczmpvfhocinkq
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - react-dom
+    dev: false
+
+  /@rn-primitives/dialog/1.1.0_qnnowrw5pbcrcvbiwg2r5zcxxq:
+    resolution: {integrity: sha512-ZEq0eayERy9Nwys9GFAM2Q1UHu/JOBuSSCSLXUXtAn26SAdFfKn2KAWZwCxQXGW2Kph9GV9B/Vm6X5vCe8Ct2w==}
+    peerDependencies:
+      '@rn-primitives/portal': '*'
+      react: '*'
+      react-native: '*'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native:
+        optional: true
+      react-native-web:
+        optional: true
+    dependencies:
+      '@radix-ui/react-dialog': 1.1.6_vsw25juzkyj7spaf6wjn5upvjq
       '@rn-primitives/hooks': 1.1.0_dozruiv5ch5nswbp6aaef7oxju
       '@rn-primitives/slot': 1.1.0_dozruiv5ch5nswbp6aaef7oxju
       '@rn-primitives/types': 1.1.0_dozruiv5ch5nswbp6aaef7oxju

@@ -1,8 +1,6 @@
-import { Image, Platform, StyleSheet, Text, View } from "react-native";
-
+import { Image, StyleSheet, Text, View } from "react-native";
 import { HelloWave } from "@/components/HelloWave";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import {
   addMissingControlsForSchema,
@@ -12,12 +10,17 @@ import {
   makeSchemaDataNode,
   NewControlRenderer,
 } from "@react-typed-forms/schemas";
-import { defaultRnTailwindTheme } from "@react-typed-forms/schemas-rn";
+import {
+  defaultRnTailwindTheme,
+  RNButton,
+  RNDialog,
+  RNText,
+} from "@react-typed-forms/schemas-rn";
 import { createDefaultRenderers } from "@react-typed-forms/schemas-html";
 import { TestSchema } from "@/form";
 import React from "react";
-import { BasicFormEditor } from "@astroapps/schemas-editor";
 import { useControl, useControlEffect } from "@react-typed-forms/core";
+import { ScrollView } from "react-native-gesture-handler";
 
 const renderer = createFormRenderer(
   [],
@@ -32,6 +35,7 @@ const controlDef = groupedControl(addMissingControlsForSchema(schemaNode, []));
 
 export default function HomeScreen() {
   const data = useControl({});
+  const dialogOpen = useControl(false);
   useControlEffect(
     () => data.value,
     (v) => console.log(v),
@@ -55,6 +59,40 @@ export default function HomeScreen() {
         renderer={renderer}
         parentDataNode={makeSchemaDataNode(schemaNode, data)}
       />
+      <View className={"flex-1 py-6"}>
+        <RNDialog
+          open={dialogOpen}
+          title={"Dialog Title"}
+          trigger={
+            <RNButton>
+              <RNText>Open Dialog</RNText>
+            </RNButton>
+          }
+          containerClass={"max-h-[600px] w-[300px]"}
+          content={
+            <ScrollView nestedScrollEnabled={true}>
+              <View onStartShouldSetResponder={() => true}>
+                {[...Array(100).keys()].map((x) => (
+                  <Text key={x}>{`Item ${x}`}</Text>
+                ))}
+              </View>
+            </ScrollView>
+          }
+          footer={
+            <View className={"flex flex-row justify-end gap-2"}>
+              <RNButton onPress={() => (dialogOpen.value = false)}>
+                <RNText>Confirm</RNText>
+              </RNButton>
+              <RNButton
+                variant={"outline"}
+                onPress={() => (dialogOpen.value = false)}
+              >
+                <RNText>Cancel</RNText>
+              </RNButton>
+            </View>
+          }
+        />
+      </View>
     </ParallaxScrollView>
   );
 }

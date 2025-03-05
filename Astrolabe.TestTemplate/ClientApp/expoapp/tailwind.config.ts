@@ -77,6 +77,8 @@ export default {
           DEFAULT: "rgb(var(--card))",
           foreground: "rgb(var(--card-foreground))",
         },
+        background: "rgb(var(--background))",
+        foreground: "rgb(var(--foreground))",
       },
     },
   },
