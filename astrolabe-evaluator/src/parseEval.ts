@@ -1,5 +1,5 @@
 import { parser } from "./parser";
-import { SyntaxNode } from "@lezer/common";
+import { SyntaxNode, Tree } from "@lezer/common";
 import {
   arrayExpr,
   callExpr,
@@ -14,10 +14,17 @@ import {
 
 export function parseEval(input: string) {
   const parseTree = parser.parse(input);
+  return convertTree(parseTree, (node) => input.substring(node.from, node.to));
+}
+
+export function convertTree(
+  parseTree: Tree,
+  getNodeText: (n: SyntaxNode) => string,
+): EvalExpr {
   return visit(parseTree.topNode);
 
   function visit(node: SyntaxNode | null): EvalExpr {
-    if (node == null) throw "Couldn't find node";
+    if (node == null) return valueExpr(null);
     const nodeName = node.type.name;
     switch (nodeName) {
       case "ParenthesizedExpression":
@@ -66,15 +73,20 @@ export function parseEval(input: string) {
         const quoted = getNodeText(node);
         return valueExpr(quoted.substring(1, quoted.length - 1));
       case "Identifier":
-        return propertyExpr(input.substring(node.from, node.to));
+        return propertyExpr(getNodeText(node));
       case "ArrayExpression":
         return arrayExpr(node.getChildren("Expression").map(visit));
       case "ObjectExpression":
-        return callExpr("object", node.getChildren("Expression").map(visit));
+        return callExpr(
+          "object",
+          node
+            .getChildren("FieldExpression")
+            .flatMap((x) => x.getChildren("Expression").map(visit)),
+        );
       case "BinaryExpression":
         const callNode = node.getChild("Call")!;
         return callExpr(
-          input.substring(callNode.from, callNode.to),
+          getNodeText(callNode),
           node.getChildren("Expression").map(visit),
         );
       case "ConditionalExpression":
@@ -86,9 +98,5 @@ export function parseEval(input: string) {
     //   type: "path",
     //   path: segmentPath(input.substring(node.from, node.to)),
     // };
-  }
-
-  function getNodeText(node: SyntaxNode) {
-    return input.substring(node.from, node.to);
   }
 }

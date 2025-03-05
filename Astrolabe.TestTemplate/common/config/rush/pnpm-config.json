@@ -120,7 +120,9 @@
     "@react-typed-forms/schemas-html": "workspace:*",
     "@astroapps/aria-base": "workspace:*",
     "@astroapps/schemas-editor": "workspace:*",
-    "@astroapps/datagrid": "workspace:*"
+    "@astroapps/datagrid": "workspace:*",
+    "@astroapps/evaluator": "workspace:*",
+    "@astroapps/codemirror-evaluator": "workspace:*"
   },
 
   /**

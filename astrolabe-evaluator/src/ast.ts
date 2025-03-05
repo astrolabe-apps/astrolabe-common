@@ -107,10 +107,9 @@ export interface LambdaExpr {
   expr: EvalExpr;
 }
 
-export type FunctionValue = (
-  env: EvalEnv,
-  args: CallExpr,
-) => EnvValue<ValueExpr>;
+export interface FunctionValue {
+  eval: (env: EvalEnv, args: CallExpr) => EnvValue<ValueExpr>;
+}
 
 export function concatPath(path1: Path, path2: Path): Path {
   if (path2.segment == null) return path1;
@@ -158,7 +157,7 @@ export function callExpr(name: string, args: EvalExpr[]): CallExpr {
 export function functionValue(
   evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<ValueExpr>,
 ): ValueExpr {
-  return valueExpr(evaluate);
+  return valueExpr({ eval: evaluate });
 }
 
 export function mapExpr(left: EvalExpr, right: EvalExpr) {

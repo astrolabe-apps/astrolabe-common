@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "strict": true,
-    "target": "es6",
+    "target": "es2017",
     "module": "es2020",
     "newLine": "lf",
     "declaration": true,
