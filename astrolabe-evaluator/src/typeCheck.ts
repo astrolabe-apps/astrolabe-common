@@ -2,6 +2,7 @@ import { EvalEnvState, EvalExpr, ValueExpr } from "./ast";
 
 interface PrimitiveType {
   type: "number" | "string" | "boolean" | "null" | "any";
+  constant?: unknown;
 }
 
 interface ArrayType {
@@ -25,8 +26,9 @@ export type EnvType = PrimitiveType | ArrayType | ObjectType | FunctionType;
 
 export function primitiveType(
   type: "number" | "string" | "boolean" | "null" | "any",
+  constant?: unknown,
 ): PrimitiveType {
-  return { type };
+  return { type, constant };
 }
 
 export function arrayType(
@@ -139,15 +141,33 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EnvType> {
 }
 
 export function valueType(value: ValueExpr): EnvType {
-  const av = value.value;
-  const vt = typeof av;
+  if (Array.isArray(value.value)) {
+    return arrayType(value.value.map(valueType));
+  }
+  if (value.function) {
+    return functionType(arrayType([]), primitiveType("any"));
+  }
+  return nativeType(value.value);
+}
+
+export function nativeType(value: unknown): EnvType {
+  if (Array.isArray(value)) {
+    return arrayType(value.map(nativeType));
+  }
+  const vt = typeof value;
   switch (vt) {
     case "string":
     case "number":
     case "boolean":
-      return primitiveType(vt);
+      return primitiveType(vt, value);
     case "object":
-      return value.value == null ? primitiveType("null") : primitiveType("any");
+      return value == null
+        ? primitiveType("null")
+        : objectType(
+            Object.fromEntries(
+              Object.entries(value).map((x) => [x[0], nativeType(x[1])]),
+            ),
+          );
     default:
       return primitiveType("any");
   }

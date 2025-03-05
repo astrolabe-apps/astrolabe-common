@@ -1,5 +1,3 @@
-import { printPath } from "./printExpr";
-
 export interface EmptyPath {
   segment: null;
 }
@@ -83,15 +81,15 @@ export interface CallExpr {
 
 export interface ValueExpr {
   type: "value";
-  value:
+  value?:
     | string
     | number
     | boolean
     | Record<string, unknown>
     | ValueExpr[]
     | null
-    | FunctionValue
     | undefined;
+  function?: FunctionValue;
   path?: Path;
   deps?: Path[];
 }
@@ -157,7 +155,7 @@ export function callExpr(name: string, args: EvalExpr[]): CallExpr {
 export function functionValue(
   evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<ValueExpr>,
 ): ValueExpr {
-  return valueExpr({ eval: evaluate });
+  return { type: "value", function: { eval: evaluate } };
 }
 
 export function mapExpr(left: EvalExpr, right: EvalExpr) {

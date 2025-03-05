@@ -8,6 +8,7 @@ import {
   EnvValue,
   EvalEnvState,
   EvalExpr,
+  nativeType,
   objectType,
   parseEval,
   primitiveType,
@@ -118,10 +119,7 @@ export default function EvalPage() {
           Evaluator(),
           autocompletion({
             override: [
-              evalCompletions(
-                basicEnv(undefined).state,
-                objectType({ field: primitiveType("string") }),
-              ),
+              evalCompletions(basicEnv(undefined).state, nativeType(sample)),
             ],
           }),
           updateListenerExtension,

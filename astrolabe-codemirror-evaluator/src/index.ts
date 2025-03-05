@@ -78,11 +78,12 @@ export function evalCompletions(
       ? Object.keys(dataType.fields).map((label) => ({
           label,
           type: "text",
+          boost: 1
         }))
       : [];
-    const varCompletions = Object.keys(vars)
+    const varCompletions = word.text.startsWith("$") ? Object.keys(vars)
       .filter((x) => x.match(isLetter))
-      .map((label) => ({ label: "$" + label, type: "variable" }));
+      .map((label) => ({ label: "$" + label, type: "variable" })) : [];
 
     return {
       from: word.from,
