@@ -389,6 +389,7 @@ export interface TextDisplay extends DisplayData {
 export interface IconDisplay extends DisplayData {
   type: DisplayDataType.Icon;
   iconClass: string;
+  iconName?: string | null;
 }
 
 export interface HtmlDisplay extends DisplayData {

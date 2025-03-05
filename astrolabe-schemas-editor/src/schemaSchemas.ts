@@ -1119,6 +1119,7 @@ export function toRenderOptionsForm(v: RenderOptions): RenderOptionsForm {
 export interface DisplayDataForm {
   type: string;
   iconClass: string;
+  iconName: string | null;
   text: string;
   customId: string;
   html: string;
@@ -1156,6 +1157,11 @@ export const DisplayDataSchema = buildSchema<DisplayDataForm>({
     notNullable: true,
     required: true,
     displayName: "Icon Class",
+  }),
+  iconName: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Icon"],
+    displayName: "Icon Name",
   }),
   text: makeScalarField({
     type: FieldType.String,

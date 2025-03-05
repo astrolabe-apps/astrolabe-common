@@ -272,7 +272,8 @@ public abstract record DisplayData([property: SchemaOptions(typeof(DisplayDataTy
 
 public record SimpleDisplayData(string Type) : DisplayData(Type);
 
-public record IconDisplay(string IconClass) : DisplayData(DisplayDataType.Icon.ToString());
+public record IconDisplay(string IconClass, string? IconName)
+    : DisplayData(DisplayDataType.Icon.ToString());
 
 public record TextDisplay(string Text) : DisplayData(DisplayDataType.Text.ToString());
 
