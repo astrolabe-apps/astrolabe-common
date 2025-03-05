@@ -32,12 +32,12 @@ export const reactNativeHtml = {
   Input: RNInput,
 };
 
-export const defaultRnTailwindTheme = {
+export const defaultRnTailwindTheme: DefaultRendererOptions = {
   ...defaultTailwindTheme,
   array: {
     ...defaultTailwindTheme.array,
     removableClass: "flex flex-col gap-y-2",
-    childClass: "bg-surface-100 border p-[10px]",
+    // childClass: "bg-surface-100 border p-[10px]",
   },
   action: {
     className:
@@ -47,7 +47,16 @@ export const defaultRnTailwindTheme = {
   renderText: (p, className) => (
     <Text
       className={cn(
-        ...(className?.split(" ").filter((x) => x.startsWith("text-")) ?? []),
+        ...(className
+          ?.split(" ")
+          .filter(
+            (x) =>
+              x.startsWith("text-") ||
+              x.startsWith("native:text-") ||
+              x.startsWith("font-") ||
+              x.startsWith("native:font-") ||
+              x == "underline",
+          ) ?? []),
       )}
     >
       {p}

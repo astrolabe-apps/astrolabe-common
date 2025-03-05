@@ -45,6 +45,7 @@ export function DefaultDisplay({
       return (
         <I
           style={style}
+          title={(data as IconDisplay).iconName ?? undefined}
           className={clsx(
             getOverrideClass(className),
             display ? display.value : (data as IconDisplay).iconClass,
@@ -57,11 +58,12 @@ export function DefaultDisplay({
           style={style}
           className={rendererClass(className, options.textClassName)}
         >
-          <Span>
-            {display
+          {renderer.renderText(
+            display
               ? coerceToString(display.value)
-              : (data as TextDisplay).text}
-          </Span>
+              : (data as TextDisplay).text,
+            rendererClass(className, options.textClassName),
+          )}
         </Div>
       );
     case DisplayDataType.Html:

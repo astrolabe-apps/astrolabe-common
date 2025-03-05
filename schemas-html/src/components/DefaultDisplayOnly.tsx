@@ -31,7 +31,7 @@ export function DefaultDisplayOnly({
   const { Div, Span } = renderer.html;
   return (
     <Div style={style} className={className}>
-      <Span>{text}</Span>
+      {renderer.renderText(text, className)}
     </Div>
   );
 }
