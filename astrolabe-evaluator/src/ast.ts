@@ -11,6 +11,7 @@ export interface ArrayType {
 
 export interface ObjectType {
   type: "object";
+  id?: string;
   fields: Record<string, EnvType>;
 }
 
@@ -46,6 +47,28 @@ export function isArrayType(type: EnvType): type is ArrayType {
 
 export function objectType(fields: Record<string, EnvType>): ObjectType {
   return { type: "object", fields };
+}
+
+export function namedObjectType(
+  name: string,
+  fields: () => Record<string, EnvType>,
+): ObjectType {
+  return new NamedObjectType(name, fields);
+}
+
+class NamedObjectType implements ObjectType {
+  constructor(
+    public name: string,
+    public _fields: () => Record<string, EnvType>,
+  ) {}
+
+  get type(): "object" {
+    return "object";
+  }
+
+  get fields() {
+    return this._fields();
+  }
 }
 
 export function isObjectType(type: EnvType): type is ObjectType {

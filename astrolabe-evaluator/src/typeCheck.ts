@@ -6,7 +6,6 @@ import {
   checkValue,
   CheckValue,
   EnvType,
-  EvalEnvState,
   EvalExpr,
   functionType,
   isFunctionType,
@@ -15,22 +14,6 @@ import {
   primitiveType,
   ValueExpr,
 } from "./ast";
-
-export function typeCheckState(
-  envState: EvalEnvState,
-  dataType: EnvType,
-  expr: EvalExpr,
-): CheckValue<EnvType> {
-  return typeCheck(
-    {
-      vars: Object.fromEntries(
-        Object.entries(envState.vars).map((x) => [x[0], valueType(x[1])]),
-      ),
-      dataType,
-    },
-    expr,
-  );
-}
 
 export function checkAll<A, B>(
   env: CheckEnv,
@@ -59,13 +42,12 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EnvType> {
       return { env, value: env.vars[expr.variable] || "any" };
     case "let":
       return typeCheck(
-        expr.variables.reduce(
-          (env, [name, value]) => ({
+        expr.variables.reduce((env, [name, value]) => {
+          return {
             ...env,
             vars: { ...env.vars, [name]: typeCheck(env, value).value },
-          }),
-          env,
-        ),
+          };
+        }, env),
         expr.expr,
       );
     case "array":
@@ -86,12 +68,7 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EnvType> {
     case "property":
       return doProperty(env, expr.property);
     case "lambda":
-      return checkValue(
-        env,
-        functionType(arrayType([]), (env) =>
-          checkValue(env, primitiveType("any")),
-        ),
-      );
+      return typeCheck(env, expr.expr);
   }
   function doProperty(env: CheckEnv, property: string): CheckValue<EnvType> {
     const type = env.dataType;

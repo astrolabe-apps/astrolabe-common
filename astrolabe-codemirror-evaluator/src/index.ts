@@ -1,14 +1,9 @@
 import {
-  AnyType,
-  convertTree,
-  EnvType,
-  EvalEnvState,
-  isArrayType,
+  CheckEnv,
   isObjectType,
-  ObjectType,
   parseEval,
   parser,
-  typeCheckState,
+  typeCheck,
 } from "@astroapps/evaluator";
 import {
   delimitedIndent,
@@ -65,8 +60,7 @@ const syntaxLinter = linter((view) => {
 const isLetter = /^[a-zA-Z]/;
 
 export function evalCompletions(
-  envState: EvalEnvState,
-  rootDataType: EnvType,
+  getCheckEnv: () => CheckEnv,
 ): (context: CompletionContext) => CompletionResult | null {
   return (context) => {
     let word = context.matchBefore(/\$?\w*/);
@@ -74,7 +68,7 @@ export function evalCompletions(
     const outAst = parseEval(context.state.sliceDoc(0, word.from));
     const {
       env: { vars, dataType },
-    } = typeCheckState(envState, rootDataType, outAst);
+    } = typeCheck(getCheckEnv(), outAst);
 
     const dataCompletions = isObjectType(dataType)
       ? Object.keys(dataType.fields).map((label) => ({

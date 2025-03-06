@@ -1,6 +1,7 @@
 import {
   AnyType,
   CallExpr,
+  CheckEnv,
   checkValue,
   emptyEnvState,
   envEffect,
@@ -27,7 +28,7 @@ import {
 } from "./evaluate";
 import { allElems, valuesToString } from "./values";
 import { printExpr } from "./printExpr";
-import { getElementType, typeCheck } from "./typeCheck";
+import { getElementType, typeCheck, valueType } from "./typeCheck";
 
 function stringFunction(after: (s: string) => string) {
   return functionValue((e, { args }) =>
@@ -298,7 +299,7 @@ const condFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   );
 });
 
-const defaultFunctions = {
+export const defaultFunctions = {
   "?": condFunction,
   "!": evalFunction((a) => !a[0]),
   and: binFunction((a, b) => a && b),
@@ -374,7 +375,10 @@ const defaultFunctions = {
   ".": flatmapFunction,
   map: mapFunction,
   "[": filterFunction,
-  this: functionValue((e) => [e, e.current]),
+  this: functionValue(
+    (e) => [e, e.current],
+    (e, _) => checkValue(e, e.dataType),
+  ),
 };
 
 export function addDefaults(evalEnv: EvalEnv) {
@@ -384,3 +388,10 @@ export function addDefaults(evalEnv: EvalEnv) {
 export function basicEnv(root: unknown): EvalEnv {
   return addDefaults(new BasicEvalEnv(emptyEnvState(root)));
 }
+
+export const defaultCheckEnv: CheckEnv = {
+  vars: Object.fromEntries(
+    Object.entries(defaultFunctions).map((x) => [x[0], valueType(x[1])]),
+  ),
+  dataType: AnyType,
+};
