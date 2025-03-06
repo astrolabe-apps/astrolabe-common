@@ -20,6 +20,7 @@ export function parseEval(input: string) {
 export function convertTree(
   parseTree: Tree,
   getNodeText: (n: SyntaxNode) => string,
+  untilPosition?: number,
 ): EvalExpr {
   return visit(parseTree.topNode);
 
@@ -62,10 +63,9 @@ export function convertTree(
         throw new Error("Unknown unary: " + getNodeText(node));
       case "CallExpression":
         const func = visit(node.getChild("Expression"));
-        const args = node
-          .getChild("ArgList")!
-          .getChildren("Expression")
-          .map(visit);
+        const args = getChildren("Expression", node.getChild("ArgList")!).map(
+          visit,
+        );
         return callExpr((func as VarExpr).variable, args);
       case "Number":
         return valueExpr(parseFloat(getNodeText(node)));
@@ -87,16 +87,18 @@ export function convertTree(
         const callNode = node.getChild("Call")!;
         return callExpr(
           getNodeText(callNode),
-          node.getChildren("Expression").map(visit),
+          getChildren("Expression").map(visit),
         );
       case "ConditionalExpression":
         return callExpr("?", node.getChildren("Expression").map(visit));
       default:
         throw "Don't know what to do with:" + nodeName;
     }
-    // return {
-    //   type: "path",
-    //   path: segmentPath(input.substring(node.from, node.to)),
-    // };
+
+    function getChildren(nodeType: string, otherNode?: SyntaxNode) {
+      const children = (otherNode ?? node)!.getChildren(nodeType);
+      if (untilPosition) return children.filter((x) => x.from < untilPosition);
+      return children;
+    }
   }
 }

@@ -1,67 +1,20 @@
-import { EvalEnvState, EvalExpr, ValueExpr } from "./ast";
-
-interface PrimitiveType {
-  type: "number" | "string" | "boolean" | "null" | "any";
-  constant?: unknown;
-}
-
-interface ArrayType {
-  type: "array";
-  positional: EnvType[];
-  restType?: EnvType;
-}
-
-interface ObjectType {
-  type: "object";
-  fields: Record<string, EnvType>;
-}
-
-interface FunctionType {
-  type: "function";
-  args: ArrayType;
-  returnType: EnvType;
-}
-
-export type EnvType = PrimitiveType | ArrayType | ObjectType | FunctionType;
-
-export function primitiveType(
-  type: "number" | "string" | "boolean" | "null" | "any",
-  constant?: unknown,
-): PrimitiveType {
-  return { type, constant };
-}
-
-export function arrayType(
-  positional: EnvType[],
-  restType?: EnvType,
-): ArrayType {
-  return { type: "array", positional, restType };
-}
-
-export function objectType(fields: Record<string, EnvType>): ObjectType {
-  return { type: "object", fields };
-}
-
-export function isObjectType(type: EnvType): type is ObjectType {
-  return type.type === "object";
-}
-
-export function functionType(
-  args: ArrayType,
-  returnType: EnvType,
-): FunctionType {
-  return { type: "function", args, returnType };
-}
-
-interface CheckEnv {
-  vars: Record<string, EnvType>;
-  dataType: EnvType;
-}
-
-interface CheckValue<A> {
-  env: CheckEnv;
-  value: A;
-}
+import {
+  AnyType,
+  ArrayType,
+  arrayType,
+  CheckEnv,
+  checkValue,
+  CheckValue,
+  EnvType,
+  EvalEnvState,
+  EvalExpr,
+  functionType,
+  isFunctionType,
+  NeverType,
+  objectType,
+  primitiveType,
+  ValueExpr,
+} from "./ast";
 
 export function typeCheckState(
   envState: EvalEnvState,
@@ -121,22 +74,31 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EnvType> {
         (x) => arrayType(x, undefined),
       );
     case "call":
-      return { env, value: primitiveType("any") };
+      const funcType = env.vars[expr.function];
+      if (!funcType || !isFunctionType(funcType))
+        return checkValue(env, primitiveType("any"));
+      return funcType.returnType(env, expr);
     case "value":
       return {
         env,
         value: valueType(expr),
       };
     case "property":
-      return {
-        env,
-        value: primitiveType("any"),
-      };
+      return doProperty(env, expr.property);
     case "lambda":
-      return {
+      return checkValue(
         env,
-        value: functionType(arrayType([]), primitiveType("any")),
-      };
+        functionType(arrayType([]), (env) =>
+          checkValue(env, primitiveType("any")),
+        ),
+      );
+  }
+  function doProperty(env: CheckEnv, property: string): CheckValue<EnvType> {
+    const type = env.dataType;
+    if (type.type === "object") {
+      return checkValue(env, type.fields[property] || primitiveType("any"));
+    }
+    return checkValue(env, primitiveType("any"));
   }
 }
 
@@ -145,7 +107,7 @@ export function valueType(value: ValueExpr): EnvType {
     return arrayType(value.value.map(valueType));
   }
   if (value.function) {
-    return functionType(arrayType([]), primitiveType("any"));
+    return functionType(arrayType([]), value.function.getType);
   }
   return nativeType(value.value);
 }
@@ -171,4 +133,32 @@ export function nativeType(value: unknown): EnvType {
     default:
       return primitiveType("any");
   }
+}
+
+export function unionType(t1: EnvType, t2: EnvType): EnvType {
+  if (t1.type === "never") return t2;
+  if (t2.type === "never") return t1;
+  if (t1.type === "object" && t2.type === "object") {
+    const outFields = { ...t1.fields };
+    for (const [key, value] of Object.entries(t2.fields)) {
+      outFields[key] = outFields[key]
+        ? unionType(outFields[key], value)
+        : value;
+    }
+    return { type: "object", fields: outFields };
+  }
+  if (t1.type === "array" && t2.type === "array") {
+    return arrayType([], unionType(getElementType(t1), getElementType(t2)));
+  }
+  if (t1.type === t2.type) return t1;
+  return AnyType;
+}
+export function getElementType(type: ArrayType): EnvType {
+  // union all positional types
+  const elemType = type.positional.reduce(
+    (acc, t) => unionType(acc, t),
+    NeverType,
+  );
+  if (type.restType) return unionType(elemType, type.restType);
+  return elemType;
 }

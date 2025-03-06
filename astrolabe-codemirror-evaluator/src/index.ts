@@ -1,8 +1,12 @@
 import {
+  AnyType,
   convertTree,
   EnvType,
   EvalEnvState,
+  isArrayType,
   isObjectType,
+  ObjectType,
+  parseEval,
   parser,
   typeCheckState,
 } from "@astroapps/evaluator";
@@ -67,39 +71,29 @@ export function evalCompletions(
   return (context) => {
     let word = context.matchBefore(/\$?\w*/);
     if (!word || (word.from == word.to && !context.explicit)) return null;
-    const outAst = convertTree(syntaxTree(context.state), (n) =>
-      context.state.sliceDoc(n.from, n.to),
-    );
-
+    const outAst = parseEval(context.state.sliceDoc(0, word.from));
     const {
       env: { vars, dataType },
     } = typeCheckState(envState, rootDataType, outAst);
+
     const dataCompletions = isObjectType(dataType)
       ? Object.keys(dataType.fields).map((label) => ({
           label,
           type: "text",
-          boost: 1
+          boost: 1,
         }))
       : [];
-    const varCompletions = word.text.startsWith("$") ? Object.keys(vars)
-      .filter((x) => x.match(isLetter))
-      .map((label) => ({ label: "$" + label, type: "variable" })) : [];
+    const varCompletions = word.text.startsWith("$")
+      ? Object.keys(vars)
+          .filter((x) => x.match(isLetter))
+          .map((label) => ({ label: "$" + label, type: "variable" }))
+      : [];
 
     return {
       from: word.from,
       options: [...dataCompletions, ...varCompletions],
     };
   };
-  // let word = context.matchBefore(/\w*/);
-  //
-  // return {
-  //   from: word.from,
-  //   options: [
-  //     { label: "match", type: "keyword" },
-  //     { label: "hello", type: "variable", info: "(World)" },
-  //     { label: "magic", type: "text", apply: "⠁⭒*.✩.*⭒⠁", detail: "macro" },
-  //   ],
-  // };
 }
 
 export function Evaluator() {

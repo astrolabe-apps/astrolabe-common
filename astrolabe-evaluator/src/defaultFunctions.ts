@@ -1,11 +1,14 @@
 import {
+  AnyType,
   CallExpr,
+  checkValue,
   emptyEnvState,
   envEffect,
   EnvValue,
   EvalEnv,
   EvalExpr,
   functionValue,
+  isArrayType,
   mapAllEnv,
   mapEnv,
   NullExpr,
@@ -24,6 +27,7 @@ import {
 } from "./evaluate";
 import { allElems, valuesToString } from "./values";
 import { printExpr } from "./printExpr";
+import { getElementType, typeCheck } from "./typeCheck";
 
 function stringFunction(after: (s: string) => string) {
   return functionValue((e, { args }) =>
@@ -137,6 +141,7 @@ export const whichFunction: ValueExpr = functionValue((e, call) => {
 
 const mapFunction = binEvalFunction("map", (left, right, env) => {
   const [leftEnv, leftVal] = env.evaluate(left);
+  if (!right) return [leftEnv.withError("No map expression"), NullExpr];
   const { value } = leftVal;
   if (Array.isArray(value)) {
     return mapEnv(
@@ -152,28 +157,42 @@ const mapFunction = binEvalFunction("map", (left, right, env) => {
   ];
 });
 
-const flatmapFunction = functionValue((env: EvalEnv, call: CallExpr) => {
-  const [left, right] = call.args;
-  const [leftEnv, leftVal] = env.evaluate(left);
-  const { value } = leftVal;
-  if (Array.isArray(value)) {
-    return mapEnv(
-      mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
-        evaluateWith(e, elem, i, right),
-      ),
-      (vals) => ({ ...leftVal, value: vals.flatMap(allElems) }),
-    );
-  }
-  if (typeof value === "object") {
-    if (value == null) return [leftEnv, NullExpr];
-    return evaluateWith(leftEnv, leftVal, null, right);
-  } else {
-    return [
-      leftEnv.withError("Can't map value: " + printExpr(leftVal)),
-      NullExpr,
-    ];
-  }
-});
+const flatmapFunction = functionValue(
+  (env: EvalEnv, call: CallExpr) => {
+    const [left, right] = call.args;
+    const [leftEnv, leftVal] = env.evaluate(left);
+    if (!right) return [leftEnv.withError("No map expression"), NullExpr];
+    const { value } = leftVal;
+    if (Array.isArray(value)) {
+      return mapEnv(
+        mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
+          evaluateWith(e, elem, i, right),
+        ),
+        (vals) => ({ ...leftVal, value: vals.flatMap(allElems) }),
+      );
+    }
+    if (typeof value === "object") {
+      if (value == null) return [leftEnv, NullExpr];
+      return evaluateWith(leftEnv, leftVal, null, right);
+    } else {
+      return [
+        leftEnv.withError("Can't map value: " + printExpr(leftVal)),
+        NullExpr,
+      ];
+    }
+  },
+  (env, call) => {
+    const [left, right] = call.args;
+    const context = typeCheck(env, left);
+    let contextType = context.value;
+    if (isArrayType(contextType)) {
+      contextType = getElementType(contextType);
+    }
+    const newContext = { ...context.env, dataType: contextType };
+    if (!right) return checkValue(newContext, AnyType);
+    return typeCheck(newContext, right);
+  },
+);
 
 function firstFunction(
   name: string,
@@ -211,52 +230,66 @@ function firstFunction(
   });
 }
 
-const filterFunction = functionValue((env: EvalEnv, call: CallExpr) => {
-  const [left, right] = call.args;
-  const [leftEnv, leftVal] = env.evaluate(left);
-  const { value } = leftVal;
-  if (Array.isArray(value)) {
-    const empty = value.length === 0;
-    const [firstEnv, { value: firstFilter }] = evaluateWith(
-      leftEnv,
-      empty ? NullExpr : value[0],
-      empty ? null : 0,
-      right,
-    );
-    if (typeof firstFilter === "number") {
-      return [firstEnv, value[firstFilter] ?? NullExpr];
+const filterFunction = functionValue(
+  (env: EvalEnv, call: CallExpr) => {
+    const [left, right] = call.args;
+    const [leftEnv, leftVal] = env.evaluate(left);
+    const { value } = leftVal;
+    if (!right) return [leftEnv.withError("No filter expression"), NullExpr];
+    if (Array.isArray(value)) {
+      const empty = value.length === 0;
+      const [firstEnv, { value: firstFilter }] = evaluateWith(
+        leftEnv,
+        empty ? NullExpr : value[0],
+        empty ? null : 0,
+        right,
+      );
+      if (typeof firstFilter === "number") {
+        return [firstEnv, value[firstFilter] ?? NullExpr];
+      }
+      const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
+      const outEnv = value.reduce(
+        (e, x: ValueExpr, ind) =>
+          ind === 0
+            ? e
+            : envEffect(evaluateWith(e, x, ind, right), ({ value }) => {
+                if (value === true) accArray.push(x);
+              }),
+        firstEnv,
+      );
+      return [outEnv, valueExpr(accArray)];
     }
-    const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
-    const outEnv = value.reduce(
-      (e, x: ValueExpr, ind) =>
-        ind === 0
-          ? e
-          : envEffect(evaluateWith(e, x, ind, right), ({ value }) => {
-              if (value === true) accArray.push(x);
-            }),
-      firstEnv,
-    );
-    return [outEnv, valueExpr(accArray)];
-  }
-  if (leftVal == null) {
-    return [leftEnv, NullExpr];
-  }
-  if (typeof leftVal === "object") {
-    const [firstEnv, { value: firstFilter }] = evaluateWith(
-      leftEnv,
-      leftVal,
-      null,
-      right,
-    );
-    if (typeof firstFilter === "string")
-      return evaluateWith(firstEnv, leftVal, null, propertyExpr(firstFilter));
-    return [firstEnv, valueExpr(null)];
-  }
-  return [
-    leftEnv.withError("Can't filter value: " + printExpr(leftVal)),
-    NullExpr,
-  ];
-});
+    if (leftVal == null) {
+      return [leftEnv, NullExpr];
+    }
+    if (typeof leftVal === "object") {
+      const [firstEnv, { value: firstFilter }] = evaluateWith(
+        leftEnv,
+        leftVal,
+        null,
+        right,
+      );
+      if (typeof firstFilter === "string")
+        return evaluateWith(firstEnv, leftVal, null, propertyExpr(firstFilter));
+      return [firstEnv, valueExpr(null)];
+    }
+    return [
+      leftEnv.withError("Can't filter value: " + printExpr(leftVal)),
+      NullExpr,
+    ];
+  },
+  (env, call) => {
+    const [left, right] = call.args;
+    const context = typeCheck(env, left);
+    let contextType = context.value;
+    if (isArrayType(contextType)) {
+      contextType = getElementType(contextType);
+    }
+    const newContext = { ...context.env, dataType: contextType };
+    if (!right) return checkValue(newContext, AnyType);
+    return typeCheck(newContext, right);
+  },
+);
 
 const condFunction = functionValue((env: EvalEnv, call: CallExpr) => {
   return mapEnv(
