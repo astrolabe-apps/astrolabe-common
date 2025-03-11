@@ -5,7 +5,7 @@ import {
   CheckEnv,
   checkValue,
   CheckValue,
-  EnvType,
+  EvalType,
   EvalExpr,
   functionType,
   isFunctionType,
@@ -35,7 +35,7 @@ export function mapCheck<A, B>(
 ): CheckValue<B> {
   return { env: checkValue.env, value: f(checkValue.value) };
 }
-export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EnvType> {
+export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EvalType> {
   if (!expr) debugger;
   switch (expr.type) {
     case "var":
@@ -43,9 +43,11 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EnvType> {
     case "let":
       return typeCheck(
         expr.variables.reduce((env, [name, value]) => {
+          const { env: newEnv, value: v } = typeCheck(env, value);
+          if (name === "VehicleLimits") debugger;
           return {
-            ...env,
-            vars: { ...env.vars, [name]: typeCheck(env, value).value },
+            ...newEnv,
+            vars: { ...newEnv.vars, [name]: v },
           };
         }, env),
         expr.expr,
@@ -70,7 +72,7 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EnvType> {
     case "lambda":
       return typeCheck(env, expr.expr);
   }
-  function doProperty(env: CheckEnv, property: string): CheckValue<EnvType> {
+  function doProperty(env: CheckEnv, property: string): CheckValue<EvalType> {
     const type = env.dataType;
     if (type.type === "object") {
       return checkValue(env, type.fields[property] || primitiveType("any"));
@@ -79,7 +81,7 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EnvType> {
   }
 }
 
-export function valueType(value: ValueExpr): EnvType {
+export function valueType(value: ValueExpr): EvalType {
   if (Array.isArray(value.value)) {
     return arrayType(value.value.map(valueType));
   }
@@ -89,7 +91,7 @@ export function valueType(value: ValueExpr): EnvType {
   return nativeType(value.value);
 }
 
-export function nativeType(value: unknown): EnvType {
+export function nativeType(value: unknown): EvalType {
   if (Array.isArray(value)) {
     return arrayType(value.map(nativeType));
   }
@@ -112,7 +114,7 @@ export function nativeType(value: unknown): EnvType {
   }
 }
 
-export function unionType(t1: EnvType, t2: EnvType): EnvType {
+export function unionType(t1: EvalType, t2: EvalType): EvalType {
   if (t1.type === "never") return t2;
   if (t2.type === "never") return t1;
   if (t1.type === "object" && t2.type === "object") {
@@ -130,7 +132,7 @@ export function unionType(t1: EnvType, t2: EnvType): EnvType {
   if (t1.type === t2.type) return t1;
   return AnyType;
 }
-export function getElementType(type: ArrayType): EnvType {
+export function getElementType(type: ArrayType): EvalType {
   // union all positional types
   const elemType = type.positional.reduce(
     (acc, t) => unionType(acc, t),

@@ -5,23 +5,23 @@ export interface PrimitiveType {
 
 export interface ArrayType {
   type: "array";
-  positional: EnvType[];
-  restType?: EnvType;
+  positional: EvalType[];
+  restType?: EvalType;
 }
 
 export interface ObjectType {
   type: "object";
   id?: string;
-  fields: Record<string, EnvType>;
+  fields: Record<string, EvalType>;
 }
 
 export interface FunctionType {
   type: "function";
   args: ArrayType;
-  returnType: (env: CheckEnv, args: CallExpr) => CheckValue<EnvType>;
+  returnType: (env: CheckEnv, args: CallExpr) => CheckValue<EvalType>;
 }
 
-export type EnvType = PrimitiveType | ArrayType | ObjectType | FunctionType;
+export type EvalType = PrimitiveType | ArrayType | ObjectType | FunctionType;
 
 export function primitiveType(
   type: "number" | "string" | "boolean" | "null" | "any" | "never",
@@ -30,28 +30,35 @@ export function primitiveType(
   return { type, constant };
 }
 
+export function getPrimitiveConstant(type: EvalType): unknown {
+  if ("constant" in type) {
+    return type.constant;
+  }
+  return undefined;
+}
+
 export const AnyType = primitiveType("any");
 export const NeverType = primitiveType("never");
 export const NullType = primitiveType("null");
 
 export function arrayType(
-  positional: EnvType[],
-  restType?: EnvType,
+  positional: EvalType[],
+  restType?: EvalType,
 ): ArrayType {
   return { type: "array", positional, restType };
 }
 
-export function isArrayType(type: EnvType): type is ArrayType {
+export function isArrayType(type: EvalType): type is ArrayType {
   return type.type === "array";
 }
 
-export function objectType(fields: Record<string, EnvType>): ObjectType {
+export function objectType(fields: Record<string, EvalType>): ObjectType {
   return { type: "object", fields };
 }
 
 export function namedObjectType(
   name: string,
-  fields: () => Record<string, EnvType>,
+  fields: () => Record<string, EvalType>,
 ): ObjectType {
   return new NamedObjectType(name, fields);
 }
@@ -59,7 +66,7 @@ export function namedObjectType(
 class NamedObjectType implements ObjectType {
   constructor(
     public name: string,
-    public _fields: () => Record<string, EnvType>,
+    public _fields: () => Record<string, EvalType>,
   ) {}
 
   get type(): "object" {
@@ -71,24 +78,24 @@ class NamedObjectType implements ObjectType {
   }
 }
 
-export function isObjectType(type: EnvType): type is ObjectType {
+export function isObjectType(type: EvalType): type is ObjectType {
   return type.type === "object";
 }
 
 export function functionType(
   args: ArrayType,
-  returnType: (env: CheckEnv, args: CallExpr) => CheckValue<EnvType>,
+  returnType: (env: CheckEnv, args: CallExpr) => CheckValue<EvalType>,
 ): FunctionType {
   return { type: "function", args, returnType };
 }
 
-export function isFunctionType(type: EnvType): type is FunctionType {
+export function isFunctionType(type: EvalType): type is FunctionType {
   return type.type === "function";
 }
 
 export interface CheckEnv {
-  vars: Record<string, EnvType>;
-  dataType: EnvType;
+  vars: Record<string, EvalType>;
+  dataType: EvalType;
 }
 
 export interface CheckValue<A> {
@@ -96,6 +103,13 @@ export interface CheckValue<A> {
   value: A;
 }
 
+export function addCheckVar(
+  env: CheckEnv,
+  name: string,
+  evalType: EvalType,
+): CheckEnv {
+  return { ...env, vars: { ...env.vars, [name]: evalType } };
+}
 export function checkValue<A>(env: CheckEnv, value: A) {
   return { env, value };
 }
@@ -209,7 +223,7 @@ export interface LambdaExpr {
 
 export interface FunctionValue {
   eval: (env: EvalEnv, args: CallExpr) => EnvValue<ValueExpr>;
-  getType: (env: CheckEnv, args: CallExpr) => CheckValue<EnvType>;
+  getType: (env: CheckEnv, args: CallExpr) => CheckValue<EvalType>;
 }
 
 export function concatPath(path1: Path, path2: Path): Path {
@@ -257,7 +271,7 @@ export function callExpr(name: string, args: EvalExpr[]): CallExpr {
 
 export function functionValue(
   evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<ValueExpr>,
-  getType?: (e: CheckEnv, call: CallExpr) => CheckValue<EnvType>,
+  getType?: (e: CheckEnv, call: CallExpr) => CheckValue<EvalType>,
 ): ValueExpr {
   return {
     type: "value",
@@ -265,7 +279,7 @@ export function functionValue(
   };
 }
 
-function defaultGetType(env: CheckEnv, call: CallExpr): CheckValue<EnvType> {
+function defaultGetType(env: CheckEnv, call: CallExpr): CheckValue<EvalType> {
   return { env, value: AnyType };
 }
 

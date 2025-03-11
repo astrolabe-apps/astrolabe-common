@@ -8,11 +8,14 @@ import {
   EnvValue,
   EvalEnv,
   EvalExpr,
+  EvalType,
   functionValue,
+  getPrimitiveConstant,
   isArrayType,
   mapAllEnv,
   mapEnv,
   NullExpr,
+  objectType,
   propertyExpr,
   toNative,
   valueExpr,
@@ -28,7 +31,13 @@ import {
 } from "./evaluate";
 import { allElems, valuesToString } from "./values";
 import { printExpr } from "./printExpr";
-import { getElementType, typeCheck, valueType } from "./typeCheck";
+import {
+  checkAll,
+  getElementType,
+  mapCheck,
+  typeCheck,
+  valueType,
+} from "./typeCheck";
 
 function stringFunction(after: (s: string) => string) {
   return functionValue((e, { args }) =>
@@ -41,16 +50,34 @@ const flatFunction = functionValue((e, call) => {
   return mapEnv(allArgs, (x) => valueExpr(x.flatMap(allElems)));
 });
 
-export const objectFunction = functionValue((e, call) => {
-  return mapEnv(evaluateAll(e, call.args), (args) => {
-    const outObj: Record<string, unknown> = {};
-    let i = 0;
-    while (i < args.length - 1) {
-      outObj[toNative(args[i++]) as string] = toNative(args[i++]);
-    }
-    return valueExprWithDeps(outObj, args);
-  });
-});
+export const objectFunction = functionValue(
+  (e, call) => {
+    return mapEnv(evaluateAll(e, call.args), (args) => {
+      const outObj: Record<string, unknown> = {};
+      let i = 0;
+      while (i < args.length - 1) {
+        outObj[toNative(args[i++]) as string] = toNative(args[i++]);
+      }
+      return valueExprWithDeps(outObj, args);
+    });
+  },
+  (e, call) => {
+    const allChecked = checkAll(e, call.args, (e, x) => typeCheck(e, x));
+    return mapCheck(allChecked, (argTypes) => {
+      const outObj: Record<string, EvalType> = {};
+      let i = 0;
+      while (i < argTypes.length - 1) {
+        const fieldName = getPrimitiveConstant(argTypes[i++]);
+        if (typeof fieldName === "string") {
+          outObj[fieldName] = argTypes[i];
+        }
+        i++;
+      }
+      console.log("outObj", outObj);
+      return objectType(outObj);
+    });
+  },
+);
 
 export function binFunction(
   func: (a: any, b: any, e: EvalEnv) => unknown,
