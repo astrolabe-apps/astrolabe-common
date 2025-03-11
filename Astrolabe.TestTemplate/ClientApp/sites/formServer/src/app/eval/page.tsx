@@ -3,6 +3,7 @@ import {
   addDefaults,
   basicEnv,
   BasicEvalEnv,
+  defaultCheckEnv,
   defaultEvaluate,
   emptyEnvState,
   EnvValue,
@@ -119,7 +120,10 @@ export default function EvalPage() {
           Evaluator(),
           autocompletion({
             override: [
-              evalCompletions(basicEnv(undefined).state, nativeType(sample)),
+              evalCompletions(() => ({
+                ...defaultCheckEnv,
+                dataType: nativeType(sample),
+              })),
             ],
           }),
           updateListenerExtension,
