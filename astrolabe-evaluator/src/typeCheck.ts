@@ -13,6 +13,8 @@ import {
   objectType,
   primitiveType,
   ValueExpr,
+  CallExpr,
+  getPrimitiveConstant,
 } from "./ast";
 
 export function checkAll<A, B>(
@@ -35,6 +37,16 @@ export function mapCheck<A, B>(
 ): CheckValue<B> {
   return { env: checkValue.env, value: f(checkValue.value) };
 }
+
+export function mapCallArgs<A>(
+  call: CallExpr,
+  env: CheckEnv,
+  toA: (args: EvalType[]) => A,
+): CheckValue<A> {
+  const allChecked = checkAll(env, call.args, (e, x) => typeCheck(e, x));
+  return mapCheck(allChecked, toA);
+}
+
 export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EvalType> {
   if (!expr) debugger;
   switch (expr.type) {
@@ -44,7 +56,6 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EvalType> {
       return typeCheck(
         expr.variables.reduce((env, [name, value]) => {
           const { env: newEnv, value: v } = typeCheck(env, value);
-          if (name === "VehicleLimits") debugger;
           return {
             ...newEnv,
             vars: { ...newEnv.vars, [name]: v },
@@ -129,7 +140,13 @@ export function unionType(t1: EvalType, t2: EvalType): EvalType {
   if (t1.type === "array" && t2.type === "array") {
     return arrayType([], unionType(getElementType(t1), getElementType(t2)));
   }
-  if (t1.type === t2.type) return t1;
+  if (t1.type === t2.type) {
+    if ("constant" in t1) {
+      if (t1.constant === getPrimitiveConstant(t2)) return t1;
+      return { ...t1, constant: undefined };
+    }
+    return t1;
+  }
   return AnyType;
 }
 export function getElementType(type: ArrayType): EvalType {

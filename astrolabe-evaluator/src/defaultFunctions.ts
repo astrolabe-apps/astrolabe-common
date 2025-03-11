@@ -1,5 +1,6 @@
 import {
   AnyType,
+  arrayType,
   CallExpr,
   CheckEnv,
   checkValue,
@@ -34,8 +35,10 @@ import { printExpr } from "./printExpr";
 import {
   checkAll,
   getElementType,
+  mapCallArgs,
   mapCheck,
   typeCheck,
+  unionType,
   valueType,
 } from "./typeCheck";
 
@@ -73,7 +76,6 @@ export const objectFunction = functionValue(
         }
         i++;
       }
-      console.log("outObj", outObj);
       return objectType(outObj);
     });
   },
@@ -147,25 +149,33 @@ function aggFunction<A>(
   return arrayFunc((v) => valueExprWithDeps(performOp(v), v));
 }
 
-export const whichFunction: ValueExpr = functionValue((e, call) => {
-  const [c, ...args] = call.args;
-  let [env, cond] = e.evaluate(c);
-  let i = 0;
-  while (i < args.length - 1) {
-    const compare = args[i++];
-    const value = args[i++];
-    const [nextEnv, compValue] = env.evaluate(compare);
-    env = nextEnv;
-    const cv = compValue.value;
-    const cva = Array.isArray(cv) ? cv.map((x) => x.value) : [cv];
-    if (cva.find((x) => nextEnv.state.compare(x, cond.value) === 0)) {
-      return mapEnv(nextEnv.evaluate(value), (v) =>
-        valueExprWithDeps(v.value, [cond, compValue]),
-      );
+export const whichFunction: ValueExpr = functionValue(
+  (e, call) => {
+    const [c, ...args] = call.args;
+    let [env, cond] = e.evaluate(c);
+    let i = 0;
+    while (i < args.length - 1) {
+      const compare = args[i++];
+      const value = args[i++];
+      const [nextEnv, compValue] = env.evaluate(compare);
+      env = nextEnv;
+      const cv = compValue.value;
+      const cva = Array.isArray(cv) ? cv.map((x) => x.value) : [cv];
+      if (cva.find((x) => nextEnv.state.compare(x, cond.value) === 0)) {
+        return mapEnv(nextEnv.evaluate(value), (v) =>
+          valueExprWithDeps(v.value, [cond, compValue]),
+        );
+      }
     }
-  }
-  return [env, valueExprWithDeps(null, [cond])];
-});
+    return [env, valueExprWithDeps(null, [cond])];
+  },
+  (e, call) => {
+    return mapCallArgs(call, e, (argTypes) => {
+      const resultTypes = argTypes.filter((_, i) => i > 0 && i % 2 === 0);
+      return getElementType(arrayType(resultTypes));
+    });
+  },
+);
 
 const mapFunction = binEvalFunction("map", (left, right, env) => {
   const [leftEnv, leftVal] = env.evaluate(left);
@@ -319,12 +329,19 @@ const filterFunction = functionValue(
   },
 );
 
-const condFunction = functionValue((env: EvalEnv, call: CallExpr) => {
-  return mapEnv(
-    mapAllEnv(env, call.args, doEvaluate),
-    ([{ value: c }, e1, e2]) => (c === true ? e1 : c === false ? e2 : NullExpr),
-  );
-});
+const condFunction = functionValue(
+  (env: EvalEnv, call: CallExpr) => {
+    return mapEnv(
+      mapAllEnv(env, call.args, doEvaluate),
+      ([{ value: c }, e1, e2]) =>
+        c === true ? e1 : c === false ? e2 : NullExpr,
+    );
+  },
+  (e, call) =>
+    mapCallArgs(call, e, (args) =>
+      args.length == 3 ? unionType(args[1], args[2]) : AnyType,
+    ),
+);
 
 export const defaultFunctions = {
   "?": condFunction,
