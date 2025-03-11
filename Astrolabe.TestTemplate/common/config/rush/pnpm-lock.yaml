@@ -9,6 +9,8 @@ overrides:
   '@astroapps/aria-base': workspace:*
   '@astroapps/schemas-editor': workspace:*
   '@astroapps/datagrid': workspace:*
+  '@astroapps/evaluator': workspace:*
+  '@astroapps/codemirror-evaluator': workspace:*
 
 patchedDependencies:
   '@mhsdesign/jit-browser-tailwindcss@0.4.2':
@@ -181,8 +183,12 @@ importers:
 
   ../../../astrolabe-codemirror-evaluator:
     specifiers:
-      '@astroapps/evaluator': ^2.13.0
+      '@astroapps/evaluator': workspace:*
+      '@codemirror/autocomplete': ^6.18.6
       '@codemirror/language': ^6.10.0
+      '@codemirror/lint': ^6.8.4
+      '@codemirror/state': ^6.5.2
+      '@codemirror/view': ^6.36.4
       '@lezer/generator': ^1.7.0
       '@lezer/highlight': ^1.2.1
       '@lezer/lr': ^1.4.2
@@ -193,8 +199,12 @@ importers:
       rollup-plugin-ts: ^3.0.2
       typescript: ^5.6.2
     dependencies:
-      '@astroapps/evaluator': 2.13.0
+      '@astroapps/evaluator': link:../astrolabe-evaluator
+      '@codemirror/autocomplete': 6.18.6
       '@codemirror/language': 6.10.3
+      '@codemirror/lint': 6.8.4
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.4
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
     devDependencies:
@@ -1036,6 +1046,7 @@ importers:
       '@astroapps/searchstate': workspace:*
       '@astroapps/swc-controls-plugin': 1.1.0-next15
       '@astrolabe/ui': workspace:*
+      '@codemirror/autocomplete': ^6.18.6
       '@lezer/common': ^1.0.0
       '@mhsdesign/jit-browser-tailwindcss': ^0.4.2
       '@react-typed-forms/core': workspace:*
@@ -1076,12 +1087,13 @@ importers:
       '@astroapps/schemas-quickstream': link:../../../../astrolabe-schemas-quickstream
       '@astroapps/searchstate': link:../../../../astrolabe-searchstate
       '@astrolabe/ui': link:../../../../astrolabe-ui
+      '@codemirror/autocomplete': 6.18.6
       '@lezer/common': 1.2.3
       '@mhsdesign/jit-browser-tailwindcss': 0.4.2_ozxlbmy37ax35fhqexzdkqxfce
       '@react-typed-forms/core': link:../../../../core
       '@react-typed-forms/schemas': link:../../../../schemas
       '@react-typed-forms/schemas-html': link:../../../../schemas-html
-      codemirror: 6.0.1_@lezer+common@1.2.3
+      codemirror: 6.0.1
       file-saver: 2.0.5
       flexlayout-react: 0.8.2_upmzqgzhjrquwzo2dphtigtdgi
       next: 15.1.7_upmzqgzhjrquwzo2dphtigtdgi
@@ -1162,7 +1174,7 @@ importers:
       '@react-typed-forms/schemas': link:../../../../schemas
       '@react-typed-forms/schemas-html': link:../../../../schemas-html
       clsx: 2.1.1
-      codemirror: 6.0.1_@lezer+common@1.2.3
+      codemirror: 6.0.1
       date-fns: 3.6.0
       react: 18.3.1
       react-dnd: 16.0.1_dhjhfklksilq7vybfge4vfljc4
@@ -1240,13 +1252,6 @@ packages:
       tailwind-merge: 1.14.0
       tslib: 2.8.0
     dev: true
-
-  /@astroapps/evaluator/2.13.0:
-    resolution: {integrity: sha512-IFePif/bjPcVP7qQQxzdID6ea/C5uwAl2K9xN4s8zKHUlJwyNsqs88nriIy+Mhz0m4TNKuAyO4ZllmtbIsMdiw==}
-    dependencies:
-      '@lezer/common': 1.2.3
-      '@lezer/lr': 1.4.2
-    dev: false
 
   /@astroapps/searchstate/2.0.0:
     resolution: {integrity: sha512-NpsPtdy1VrpyjucfbLYOSRhTD53QiErYlFYBjmmLMAiiFrd8vTUyMs0WKOrGhLKyQkjIpL2qOzudf6VNJ7SE+g==}
@@ -2730,14 +2735,12 @@ packages:
     resolution: {integrity: sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==}
     dev: true
 
-  /@codemirror/autocomplete/6.18.1_@lezer+common@1.2.3:
-    resolution: {integrity: sha512-iWHdj/B1ethnHRTwZj+C1obmmuCzquH29EbcKr0qIjA9NfDeBDJ7vs+WOHsFeLeflE4o+dHfYndJloMKHUkWUA==}
-    peerDependencies:
-      '@lezer/common': ^1.0.0
+  /@codemirror/autocomplete/6.18.6:
+    resolution: {integrity: sha512-PHHBXFomUs5DF+9tCOM/UoW6XQ4R44lLNNhRaW9PKPTU0D7lIjRg3ElxaJnTwsl/oHiR93WSXDBrekhoUGCPtg==}
     dependencies:
       '@codemirror/language': 6.10.3
-      '@codemirror/state': 6.4.1
-      '@codemirror/view': 6.34.1
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.4
       '@lezer/common': 1.2.3
     dev: false
 
@@ -2745,46 +2748,48 @@ packages:
     resolution: {integrity: sha512-llTrboQYw5H4THfhN4U3qCnSZ1SOJ60ohhz+SzU0ADGtwlc533DtklQP0vSFaQuCPDn3BPpOd1GbbnUtwNjsrw==}
     dependencies:
       '@codemirror/language': 6.10.3
-      '@codemirror/state': 6.4.1
-      '@codemirror/view': 6.34.1
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.4
       '@lezer/common': 1.2.3
     dev: false
 
   /@codemirror/language/6.10.3:
     resolution: {integrity: sha512-kDqEU5sCP55Oabl6E7m5N+vZRoc0iWqgDVhEKifcHzPzjqCegcO4amfrYVL9PmPZpl4G0yjkpTpUO/Ui8CzO8A==}
     dependencies:
-      '@codemirror/state': 6.4.1
-      '@codemirror/view': 6.34.1
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.4
       '@lezer/common': 1.2.3
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
       style-mod: 4.1.2
     dev: false
 
-  /@codemirror/lint/6.8.2:
-    resolution: {integrity: sha512-PDFG5DjHxSEjOXk9TQYYVjZDqlZTFaDBfhQixHnQOEVDDNHUbEh/hstAjcQJaA6FQdZTD1hquXTK0rVBLADR1g==}
+  /@codemirror/lint/6.8.4:
+    resolution: {integrity: sha512-u4q7PnZlJUojeRe8FJa/njJcMctISGgPQ4PnWsd9268R4ZTtU+tfFYmwkBvgcrK2+QQ8tYFVALVb5fVJykKc5A==}
     dependencies:
-      '@codemirror/state': 6.4.1
-      '@codemirror/view': 6.34.1
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.4
       crelt: 1.0.6
     dev: false
 
   /@codemirror/search/6.5.6:
     resolution: {integrity: sha512-rpMgcsh7o0GuCDUXKPvww+muLA1pDJaFrpq/CCHtpQJYz8xopu4D1hPcKRoDD0YlF8gZaqTNIRa4VRBWyhyy7Q==}
     dependencies:
-      '@codemirror/state': 6.4.1
-      '@codemirror/view': 6.34.1
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.4
       crelt: 1.0.6
     dev: false
 
-  /@codemirror/state/6.4.1:
-    resolution: {integrity: sha512-QkEyUiLhsJoZkbumGZlswmAhA7CBU02Wrz7zvH4SrcifbsqwlXShVXg65f3v/ts57W3dqyamEriMhij1Z3Zz4A==}
+  /@codemirror/state/6.5.2:
+    resolution: {integrity: sha512-FVqsPqtPWKVVL3dPSxy8wEF/ymIEuVzF1PK3VbUgrxXpJUSHQWWZz4JMToquRxnkw+36LTamCZG2iua2Ptq0fA==}
+    dependencies:
+      '@marijn/find-cluster-break': 1.0.2
     dev: false
 
-  /@codemirror/view/6.34.1:
-    resolution: {integrity: sha512-t1zK/l9UiRqwUNPm+pdIT0qzJlzuVckbTEMVNFhfWkGiBQClstzg+78vedCvLSX0xJEZ6lwZbPpnljL7L6iwMQ==}
+  /@codemirror/view/6.36.4:
+    resolution: {integrity: sha512-ZQ0V5ovw/miKEXTvjgzRyjnrk9TwriUB1k4R5p7uNnHR9Hus+D1SXHGdJshijEzPFjU25xea/7nhIeSqYFKdbA==}
     dependencies:
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.5.2
       style-mod: 4.1.2
       w3c-keyname: 2.2.8
     dev: false
@@ -4573,6 +4578,10 @@ packages:
     resolution: {integrity: sha512-pu0K1jCIdnQ12aWNaAVU5bzi7Bd1w54J3ECgANPmYLtQKP0HBj2cE/5coBD66MT10xbtIuUr7tg0Shbsvk0mDA==}
     dependencies:
       '@lezer/common': 1.2.3
+
+  /@marijn/find-cluster-break/1.0.2:
+    resolution: {integrity: sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g==}
+    dev: false
 
   /@mdn/browser-compat-data/5.6.10:
     resolution: {integrity: sha512-plMgRN6pGGaHxvH5Y5DJcWR3C8tC/HHN18saHAWu395XfNRtFMrKPiDeRGQWIHjTXFbQVLra2nFG5GKyezXy+Q==}
@@ -12701,18 +12710,16 @@ packages:
     engines: {iojs: '>= 1.0.0', node: '>= 0.12.0'}
     dev: true
 
-  /codemirror/6.0.1_@lezer+common@1.2.3:
+  /codemirror/6.0.1:
     resolution: {integrity: sha512-J8j+nZ+CdWmIeFIGXEFbFPtpiYacFMDR8GlHK3IyHQJMCaVRfGx9NT+Hxivv1ckLWPvNdZqndbr/7lVhrf/Svg==}
     dependencies:
-      '@codemirror/autocomplete': 6.18.1_@lezer+common@1.2.3
+      '@codemirror/autocomplete': 6.18.6
       '@codemirror/commands': 6.7.1
       '@codemirror/language': 6.10.3
-      '@codemirror/lint': 6.8.2
+      '@codemirror/lint': 6.8.4
       '@codemirror/search': 6.5.6
-      '@codemirror/state': 6.4.1
-      '@codemirror/view': 6.34.1
-    transitivePeerDependencies:
-      - '@lezer/common'
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.4
     dev: false
 
   /collect-v8-coverage/1.0.2:

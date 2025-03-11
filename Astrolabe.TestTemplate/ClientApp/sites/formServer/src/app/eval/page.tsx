@@ -1,13 +1,17 @@
 "use client";
 import {
   addDefaults,
+  basicEnv,
   BasicEvalEnv,
   defaultEvaluate,
   emptyEnvState,
   EnvValue,
   EvalEnvState,
   EvalExpr,
+  nativeType,
+  objectType,
   parseEval,
+  primitiveType,
   printPath,
   ValueExpr,
 } from "@astroapps/evaluator";
@@ -23,6 +27,8 @@ import { useApiClient } from "@astroapps/client";
 import { EvalClient, EvalResult, ValueWithDeps } from "../../client";
 import { basicSetup, EditorView } from "codemirror";
 import { Evaluator } from "@astroapps/codemirror-evaluator";
+import { autocompletion } from "@codemirror/autocomplete";
+import { evalCompletions } from "@astroapps/codemirror-evaluator";
 
 export default function EvalPage() {
   const client = useApiClient(EvalClient);
@@ -108,7 +114,16 @@ export default function EvalPage() {
 
       editor.value = new EditorView({
         doc: input.value,
-        extensions: [basicSetup, Evaluator(), updateListenerExtension],
+        extensions: [
+          basicSetup,
+          Evaluator(),
+          autocompletion({
+            override: [
+              evalCompletions(basicEnv(undefined).state, nativeType(sample)),
+            ],
+          }),
+          updateListenerExtension,
+        ],
         parent: elem,
       });
     } else {
