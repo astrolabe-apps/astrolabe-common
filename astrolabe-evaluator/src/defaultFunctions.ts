@@ -1,9 +1,11 @@
 import {
   AnyType,
   arrayType,
+  BooleanType,
   CallExpr,
   CheckEnv,
   checkValue,
+  constGetType,
   emptyEnvState,
   envEffect,
   EnvValue,
@@ -12,12 +14,15 @@ import {
   EvalType,
   functionValue,
   getPrimitiveConstant,
+  GetReturnType,
   isArrayType,
   mapAllEnv,
   mapEnv,
   NullExpr,
+  NumberType,
   objectType,
   propertyExpr,
+  StringType,
   toNative,
   valueExpr,
   ValueExpr,
@@ -43,15 +48,20 @@ import {
 } from "./typeCheck";
 
 function stringFunction(after: (s: string) => string) {
-  return functionValue((e, { args }) =>
-    mapEnv(evaluateAll(e, args), (x) => valuesToString(x, after)),
+  return functionValue(
+    (e, { args }) =>
+      mapEnv(evaluateAll(e, args), (x) => valuesToString(x, after)),
+    constGetType(StringType),
   );
 }
 
-const flatFunction = functionValue((e, call) => {
-  const allArgs = mapAllEnv(e, call.args, doEvaluate);
-  return mapEnv(allArgs, (x) => valueExpr(x.flatMap(allElems)));
-});
+const flatFunction = functionValue(
+  (e, call) => {
+    const allArgs = mapAllEnv(e, call.args, doEvaluate);
+    return mapEnv(allArgs, (x) => valueExpr(x.flatMap(allElems)));
+  },
+  constGetType(arrayType([])),
+);
 
 export const objectFunction = functionValue(
   (e, call) => {
@@ -83,9 +93,10 @@ export const objectFunction = functionValue(
 
 export function binFunction(
   func: (a: any, b: any, e: EvalEnv) => unknown,
+  returnType: GetReturnType,
   name?: string,
 ): ValueExpr {
-  return binEvalFunction(name ?? "_", (aE, bE, env) => {
+  return binEvalFunction(name ?? "_", returnType, (aE, bE, env) => {
     const [nextEnv, [a, b]] = evaluateAll(env, [aE, bE]);
     if (a.value == null || b.value == null)
       return [nextEnv, valueExprWithDeps(null, [a, b])];
@@ -98,6 +109,7 @@ export function binFunction(
 
 export function binEvalFunction(
   name: string,
+  returnType: GetReturnType,
   func: (a: EvalExpr, b: EvalExpr, e: EvalEnv) => EnvValue<ValueExpr>,
 ): ValueExpr {
   return functionValue((env, call) => {
@@ -105,35 +117,49 @@ export function binEvalFunction(
       return [env.withError(`$${name} expects 2 arguments`), NullExpr];
     const [a, b] = call.args;
     return func(a, b, env);
-  });
+  }, returnType);
 }
 
 export function compareFunction(toBool: (a: number) => boolean): ValueExpr {
-  return binFunction((a, b, e) => toBool(e.compare(a, b)));
+  return binFunction(
+    (a, b, e) => toBool(e.compare(a, b)),
+    constGetType(BooleanType),
+  );
 }
 
-export function evalFunction(run: (args: unknown[]) => unknown): ValueExpr {
-  return evalFunctionExpr((a) =>
-    valueExprWithDeps(run(a.map((x) => x.value)), a),
+export function evalFunction(
+  run: (args: unknown[]) => unknown,
+  returnType: GetReturnType,
+): ValueExpr {
+  return evalFunctionExpr(
+    (a) => valueExprWithDeps(run(a.map((x) => x.value)), a),
+    returnType,
   );
 }
 
 export function evalFunctionExpr(
   run: (args: ValueExpr[]) => ValueExpr,
+  returnType: GetReturnType,
 ): ValueExpr {
-  return functionValue((e, call) => mapEnv(evaluateAll(e, call.args), run));
+  return functionValue(
+    (e, call) => mapEnv(evaluateAll(e, call.args), run),
+    returnType,
+  );
 }
 
 function arrayFunc(
   toValue: (values: ValueExpr[], arrayValue?: ValueExpr) => ValueExpr,
 ) {
-  return functionValue((e, call) => {
-    let [ne, v] = mapAllEnv(e, call.args, doEvaluate);
-    if (v.length == 1 && Array.isArray(v[0].value)) {
-      return [ne, toValue(v[0].value as ValueExpr[], v[0])];
-    }
-    return [ne, toValue(v)];
-  });
+  return functionValue(
+    (e, call) => {
+      let [ne, v] = mapAllEnv(e, call.args, doEvaluate);
+      if (v.length == 1 && Array.isArray(v[0].value)) {
+        return [ne, toValue(v[0].value as ValueExpr[], v[0])];
+      }
+      return [ne, toValue(v)];
+    },
+    constGetType(arrayType([])),
+  );
 }
 
 function aggFunction<A>(
@@ -177,23 +203,27 @@ export const whichFunction: ValueExpr = functionValue(
   },
 );
 
-const mapFunction = binEvalFunction("map", (left, right, env) => {
-  const [leftEnv, leftVal] = env.evaluate(left);
-  if (!right) return [leftEnv.withError("No map expression"), NullExpr];
-  const { value } = leftVal;
-  if (Array.isArray(value)) {
-    return mapEnv(
-      mapAllEnv(leftEnv, value, (e, elem) =>
-        evaluateWithValue(e, elem, elem, right),
-      ),
-      (vals) => ({ ...leftVal, value: vals }),
-    );
-  }
-  return [
-    leftEnv.withError("Can't map value: " + printExpr(leftVal)),
-    NullExpr,
-  ];
-});
+const mapFunction = binEvalFunction(
+  "map",
+  constGetType(AnyType),
+  (left, right, env) => {
+    const [leftEnv, leftVal] = env.evaluate(left);
+    if (!right) return [leftEnv.withError("No map expression"), NullExpr];
+    const { value } = leftVal;
+    if (Array.isArray(value)) {
+      return mapEnv(
+        mapAllEnv(leftEnv, value, (e, elem) =>
+          evaluateWithValue(e, elem, elem, right),
+        ),
+        (vals) => ({ ...leftVal, value: vals }),
+      );
+    }
+    return [
+      leftEnv.withError("Can't map value: " + printExpr(leftVal)),
+      NullExpr,
+    ];
+  },
+);
 
 const flatmapFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
@@ -242,30 +272,38 @@ function firstFunction(
   ) => ValueExpr | undefined,
   finished: ValueExpr = NullExpr,
 ): ValueExpr {
-  return functionValue((env, call) => {
-    const [left, right] = call.args;
-    const [leftEnv, leftVal] = env.evaluate(left);
-    const { value } = leftVal;
-    if (value == null) {
-      return [leftEnv, NullExpr];
-    }
-    if (Array.isArray(value)) {
-      let curEnv = leftEnv;
-      for (let i = 0; i < value.length; i++) {
-        const [nextEnv, v] = evaluateWith(curEnv, value[i], i, right);
-        curEnv = nextEnv;
-        const res = callback(i, value, v, curEnv);
-        if (res) {
-          return [curEnv, res];
-        }
+  return functionValue(
+    (env, call) => {
+      const [left, right] = call.args;
+      const [leftEnv, leftVal] = env.evaluate(left);
+      const { value } = leftVal;
+      if (value == null) {
+        return [leftEnv, NullExpr];
       }
-      return [curEnv, finished];
-    }
-    return [
-      leftEnv.withError(`$${name} only works on arrays: ${printExpr(leftVal)}`),
-      NullExpr,
-    ];
-  });
+      if (Array.isArray(value)) {
+        let curEnv = leftEnv;
+        for (let i = 0; i < value.length; i++) {
+          const [nextEnv, v] = evaluateWith(curEnv, value[i], i, right);
+          curEnv = nextEnv;
+          const res = callback(i, value, v, curEnv);
+          if (res) {
+            return [curEnv, res];
+          }
+        }
+        return [curEnv, finished];
+      }
+      return [
+        leftEnv.withError(
+          `$${name} only works on arrays: ${printExpr(leftVal)}`,
+        ),
+        NullExpr,
+      ];
+    },
+    (e, call) =>
+      mapCallArgs(call, e, (args) =>
+        isArrayType(args[0]) ? getElementType(args[0]) : AnyType,
+      ),
+  );
 }
 
 const filterFunction = functionValue(
@@ -345,22 +383,26 @@ const condFunction = functionValue(
 
 export const defaultFunctions = {
   "?": condFunction,
-  "!": evalFunction((a) => !a[0]),
-  and: binFunction((a, b) => a && b),
-  or: binFunction((a, b) => a || b),
-  "+": binFunction((a, b) => a + b),
-  "-": binFunction((a, b) => a - b),
-  "*": binFunction((a, b) => a * b),
-  "/": binFunction((a, b) => a / b),
-  "%": binFunction((a, b) => a % b),
+  "!": evalFunction((a) => !a[0], constGetType(BooleanType)),
+  and: binFunction((a, b) => a && b, constGetType(BooleanType)),
+  or: binFunction((a, b) => a || b, constGetType(BooleanType)),
+  "+": binFunction((a, b) => a + b, constGetType(NumberType)),
+  "-": binFunction((a, b) => a - b, constGetType(NumberType)),
+  "*": binFunction((a, b) => a * b, constGetType(NumberType)),
+  "/": binFunction((a, b) => a / b, constGetType(NumberType)),
+  "%": binFunction((a, b) => a % b, constGetType(NumberType)),
   ">": compareFunction((x) => x > 0),
   "<": compareFunction((x) => x < 0),
   "<=": compareFunction((x) => x <= 0),
   ">=": compareFunction((x) => x >= 0),
   "=": compareFunction((x) => x === 0),
   "!=": compareFunction((x) => x !== 0),
-  "??": evalFunctionExpr((x) =>
-    x.length == 2 ? (x[0].value == null ? x[1] : x[0]) : NullExpr,
+  "??": evalFunctionExpr(
+    (x) => (x.length == 2 ? (x[0].value == null ? x[1] : x[0]) : NullExpr),
+    (e, call) =>
+      mapCallArgs(call, e, (args) =>
+        args.length == 2 ? unionType(args[0], args[1]) : AnyType,
+      ),
   ),
   array: flatFunction,
   string: stringFunction((x) => x),
@@ -404,17 +446,28 @@ export const defaultFunctions = {
     (v) => v[0]?.value as number,
     (a, b) => Math.max(a, b as number),
   ),
-  notEmpty: evalFunction(([a]) => !(a === "" || a == null)),
+  notEmpty: evalFunction(
+    ([a]) => !(a === "" || a == null),
+    constGetType(BooleanType),
+  ),
   which: whichFunction,
   object: objectFunction,
-  elem: evalFunction((args) => {
-    const elem = (args[0] as ValueExpr[])?.[args[1] as number];
-    return elem == null ? null : elem.value;
-  }),
-  fixed: evalFunction(([num, digits]) =>
-    typeof num === "number" && typeof digits === "number"
-      ? num.toFixed(digits)
-      : null,
+  elem: evalFunction(
+    (args) => {
+      const elem = (args[0] as ValueExpr[])?.[args[1] as number];
+      return elem == null ? null : elem.value;
+    },
+    (e, call) =>
+      mapCallArgs(call, e, (args) =>
+        isArrayType(args[0]) ? getElementType(args[0]) : AnyType,
+      ),
+  ),
+  fixed: evalFunction(
+    ([num, digits]) =>
+      typeof num === "number" && typeof digits === "number"
+        ? num.toFixed(digits)
+        : null,
+    constGetType(StringType),
   ),
   ".": flatmapFunction,
   map: mapFunction,

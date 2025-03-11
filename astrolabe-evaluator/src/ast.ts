@@ -15,10 +15,15 @@ export interface ObjectType {
   fields: Record<string, EvalType>;
 }
 
+export type GetReturnType = (
+  e: CheckEnv,
+  call: CallExpr,
+) => CheckValue<EvalType>;
+
 export interface FunctionType {
   type: "function";
   args: ArrayType;
-  returnType: (env: CheckEnv, args: CallExpr) => CheckValue<EvalType>;
+  returnType: GetReturnType;
 }
 
 export type EvalType = PrimitiveType | ArrayType | ObjectType | FunctionType;
@@ -37,6 +42,10 @@ export function getPrimitiveConstant(type: EvalType): unknown {
   return undefined;
 }
 
+export const NumberType = primitiveType("number");
+
+export const BooleanType = primitiveType("boolean");
+export const StringType = primitiveType("string");
 export const AnyType = primitiveType("any");
 export const NeverType = primitiveType("never");
 export const NullType = primitiveType("null");
@@ -271,19 +280,22 @@ export function callExpr(name: string, args: EvalExpr[]): CallExpr {
 
 export function functionValue(
   evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<ValueExpr>,
-  getType?: (e: CheckEnv, call: CallExpr) => CheckValue<EvalType>,
+  getType: (e: CheckEnv, call: CallExpr) => CheckValue<EvalType>,
 ): ValueExpr {
   return {
     type: "value",
-    function: { eval: evaluate, getType: getType ?? defaultGetType },
+    function: { eval: evaluate, getType },
   };
 }
 
-function defaultGetType(env: CheckEnv, call: CallExpr): CheckValue<EvalType> {
-  return { env, value: AnyType };
+export function constGetType(
+  type: EvalType,
+): (env: CheckEnv, call: CallExpr) => CheckValue<EvalType> {
+  return (env) => checkValue(env, type);
 }
+const defaultGetType = constGetType(AnyType);
 
-export function mapExpr(left: EvalExpr, right: EvalExpr) {
+export function flatmapExpr(left: EvalExpr, right: EvalExpr) {
   return callExpr(".", [left, right]);
 }
 

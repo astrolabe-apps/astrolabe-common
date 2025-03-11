@@ -1,5 +1,6 @@
 import {
   CheckEnv,
+  isFunctionType,
   isObjectType,
   parseEval,
   parser,
@@ -71,16 +72,21 @@ export function evalCompletions(
     } = typeCheck(getCheckEnv(), outAst);
 
     const dataCompletions = isObjectType(dataType)
-      ? Object.keys(dataType.fields).map((label) => ({
+      ? Object.entries(dataType.fields).map(([label, t]) => ({
           label,
           type: "text",
+          detail: "(" + t.type + ")",
           boost: 1,
         }))
       : [];
     const varCompletions = word.text.startsWith("$")
-      ? Object.keys(vars)
-          .filter((x) => x.match(isLetter))
-          .map((label) => ({ label: "$" + label, type: "variable" }))
+      ? Object.entries(vars)
+          .filter((x) => x[0].match(isLetter))
+          .map(([label, t]) => ({
+            label: "$" + label,
+            type: isFunctionType(t) ? "function" : "variable",
+            detail: "(" + t.type + ")",
+          }))
       : [];
 
     return {
