@@ -122,6 +122,23 @@ export interface HtmlDivProperties {
   nativeRef?: (e: HTMLElement | null) => void;
 }
 
+export interface HtmlInputProperties {
+  id?: string;
+  className?: string;
+  textClass?: string;
+  name?: string;
+  type?: string;
+  checked?: boolean;
+  style?: React.CSSProperties;
+  readOnly?: boolean;
+  placeholder?: string;
+  value?: string | number;
+  onBlur?: () => void;
+  disabled?: boolean;
+  ref?: (e: HTMLElement | null) => void;
+  onChangeValue?: (value: string) => void;
+  onChangeChecked?: (checked: boolean) => void;
+}
 export interface HtmlComponents {
   Div: ComponentType<HtmlDivProperties>;
   Span: ElementType<HTMLAttributes<HTMLSpanElement>>;
@@ -130,7 +147,7 @@ export interface HtmlComponents {
   Label: ComponentType<HtmlLabelProperties>;
   B: ElementType<HTMLAttributes<HTMLElement>>;
   H1: ElementType<HTMLAttributes<HTMLElement>>;
-  Input: ElementType<InputHTMLAttributes<HTMLInputElement>, "input">;
+  Input: ComponentType<HtmlInputProperties>;
 }
 /**
  * Interface for rendering different types of form controls.
@@ -461,6 +478,7 @@ export interface DataControlProps {
   schemaInterface?: SchemaInterface;
   designMode?: boolean;
   styleClass?: string;
+  textClass?: string;
   layoutClass?: string;
 }
 
@@ -842,11 +860,13 @@ export function defaultDataProps({
   allowedOptions,
   schemaInterface = defaultSchemaInterface,
   styleClass,
+  textClass: tc,
   ...props
 }: DataControlProps): DataRendererProps {
   const dataNode = props.dataContext.dataNode!;
   const field = dataNode.schema.field;
   const className = rendererClass(styleClass, definition.styleClass);
+  const textClass = rendererClass(tc, definition.textClass);
   const displayOnly = !!formOptions.displayOnly;
   const required = !!definition.required && !displayOnly;
   const fieldOptions = schemaInterface.getDataOptions(dataNode);
@@ -877,6 +897,7 @@ export function defaultDataProps({
     required,
     hidden: !!formOptions.hidden,
     className,
+    textClass,
     style,
     ...props,
   };
@@ -1032,7 +1053,6 @@ export function renderControlLayout(
         control: Control<any>;
       },
     );
-
     const label = !c.hideTitle
       ? controlTitle(
           labelText?.value ?? c.title,

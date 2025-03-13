@@ -15,6 +15,7 @@ import {
   FieldOption,
   fieldOptionAdornment,
   FormRenderer,
+  HtmlInputProperties,
   rendererClass,
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
@@ -143,8 +144,8 @@ export function CheckButtons({
                   readOnly={readonly}
                   disabled={disabled}
                   checked={checked}
-                  onChange={(x) => {
-                    !readonly && setChecked(control, o, x.target.checked);
+                  onChangeChecked={(x) => {
+                    !readonly && setChecked(control, o, x);
                   }}
                 />
                 <Label className={classes.labelClass} htmlFor={name + "_" + i}>
@@ -216,7 +217,11 @@ export function Fcheckbox({
   notValue = false,
   renderer,
   ...others
-}: FcheckboxProps & { renderer: FormRenderer }) {
+}: HtmlInputProperties & {
+  control: Control<boolean | null | undefined>;
+  renderer: FormRenderer;
+  notValue?: boolean;
+}) {
   const { Input } = renderer.html;
   const { value, onChange, errorText, ...theseProps } =
     formControlProps(control);
@@ -225,9 +230,9 @@ export function Fcheckbox({
       {...theseProps}
       checked={!!value !== notValue}
       ref={(r) => (control.element = r)}
-      onChange={(e) => {
+      onChangeChecked={(e) => {
         control.touched = true;
-        control.value = e.target.checked !== notValue;
+        control.value = e !== notValue;
       }}
       type={type}
       {...others}

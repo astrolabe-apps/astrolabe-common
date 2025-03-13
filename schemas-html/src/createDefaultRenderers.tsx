@@ -56,6 +56,7 @@ import {
   HtmlComponents,
   HtmlDivProperties,
   HtmlIconProperties,
+  HtmlInputProperties,
   HtmlLabelProperties,
   IconLibrary,
   IconReference,
@@ -177,6 +178,7 @@ export const DefaultBoolOptions: FieldOption[] = [
 
 export interface DefaultDataRendererOptions {
   inputClass?: string;
+  inputTextClass?: string;
   displayOnlyClass?: string;
   selectOptions?: SelectRendererOptions;
   checkboxOptions?: CheckRendererOptions;
@@ -216,6 +218,7 @@ export function createDefaultDataRenderer(
   );
   const {
     inputClass,
+    inputTextClass,
     booleanOptions,
     optionRenderer,
     displayOnlyClass,
@@ -315,6 +318,7 @@ export function createDefaultDataRenderer(
     return (
       <ControlInput
         className={rendererClass(props.className, inputClass)}
+        textClass={rendererClass(props.textClass, inputTextClass)}
         style={props.style}
         id={props.id}
         readOnly={props.readonly}
@@ -507,13 +511,34 @@ export const StandardHtmlComponents: HtmlComponents = {
   Label: DefaultHtmlLabelRenderer,
   I: DefaultHtmlIconRenderer,
   Span: "span",
-  Div: DefaultDivRenderer,
+  Div: DefaultHtmlDivRenderer,
   H1: "h1",
   B: "b",
-  Input: "input",
+  Input: DefaultHtmlInputRenderer,
 };
 
-export function DefaultDivRenderer({
+export function DefaultHtmlInputRenderer({
+  textClass,
+  className,
+  onChangeValue,
+  onChangeChecked,
+  ...props
+}: HtmlInputProperties) {
+  return (
+    <input
+      {...props}
+      className={clsx(className, textClass)}
+      onChange={
+        onChangeValue
+          ? (e) => onChangeValue(e.target.value)
+          : onChangeChecked
+            ? (e) => onChangeChecked(e.target.checked)
+            : undefined
+      }
+    />
+  );
+}
+export function DefaultHtmlDivRenderer({
   text,
   html,
   children,

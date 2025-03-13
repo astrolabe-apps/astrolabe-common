@@ -7,16 +7,23 @@ import {
 } from "@react-typed-forms/core";
 import { FieldType, FormRenderer } from "@react-typed-forms/schemas";
 
+export interface ControlInputProps {
+  className?: string;
+  textClass?: string;
+  style?: React.CSSProperties;
+  id?: string;
+  readOnly?: boolean;
+  placeholder?: string;
+  control: Control<any>;
+  convert: InputConversion;
+  renderer: FormRenderer;
+}
 export function ControlInput({
   control,
   convert,
   renderer,
   ...props
-}: React.InputHTMLAttributes<HTMLInputElement> & {
-  control: Control<any>;
-  convert: InputConversion;
-  renderer: FormRenderer;
-}) {
+}: ControlInputProps) {
   const { errorText, value, onChange, ...inputProps } =
     formControlProps(control);
   const textValue = useControl(() => toText(value));
@@ -30,9 +37,9 @@ export function ControlInput({
       {...inputProps}
       type={convert[0]}
       value={textValue.value}
-      onChange={(e) => {
-        textValue.value = e.target.value;
-        const converted = convert[1](e.target.value);
+      onChangeValue={(e) => {
+        textValue.value = e;
+        const converted = convert[1](e);
         if (converted !== undefined) control.value = converted;
       }}
       {...props}
