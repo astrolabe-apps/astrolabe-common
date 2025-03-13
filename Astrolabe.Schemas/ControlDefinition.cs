@@ -446,8 +446,7 @@ public record IconReference(
 [JsonString]
 public enum IconLibrary
 {
-    FontAwesome5,
-    FontAwesome6,
+    FontAwesome,
     Material,
     CssClass
 }

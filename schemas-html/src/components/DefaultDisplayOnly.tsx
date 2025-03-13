@@ -14,11 +14,13 @@ export function DefaultDisplayOnly({
   field,
   style,
   renderer,
+  textClass,
 }: {
   control: Control<any>;
   field: SchemaField;
   schemaInterface: SchemaInterface;
   className?: string;
+  textClass?: string;
   style?: React.CSSProperties;
   renderer: FormRenderer;
   emptyText?: string | null;
@@ -28,10 +30,13 @@ export function DefaultDisplayOnly({
     (schemaInterface.isEmptyValue(field, v)
       ? emptyText
       : schemaInterface.textValue(field, v)) ?? "";
-  const { Div, Span } = renderer.html;
+  const { Div } = renderer.html;
   return (
-    <Div style={style} className={className}>
-      {renderer.renderText(text, className)}
-    </Div>
+    <Div
+      style={style}
+      className={className}
+      textClass={textClass}
+      text={text}
+    />
   );
 }

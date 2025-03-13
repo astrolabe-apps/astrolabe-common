@@ -99,9 +99,8 @@ export enum ControlAdornmentType {
   Optional = "Optional",
 }
 
-enum IconLibrary {
-  FontAwesome5 = "FontAwesome5",
-  FontAwesome6 = "FontAwesome6",
+export enum IconLibrary {
+  FontAwesome = "FontAwesome",
   Material = "Material",
   CssClass = "CssClass",
 }
@@ -842,4 +841,8 @@ export function visitFormDataInContext<A>(
 ): A | undefined {
   const dataNode = lookupDataNode(node.definition, parentContext);
   return visitFormData(node, dataNode ?? parentContext, cb, !dataNode);
+}
+
+export function fontAwesomeIcon(icon: string) {
+  return { library: IconLibrary.FontAwesome, name: icon };
 }

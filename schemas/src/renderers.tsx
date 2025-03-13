@@ -36,7 +36,6 @@ export interface DefaultRenderers {
   renderLayout: LayoutRendererRegistration;
   visibility: VisibilityRendererRegistration;
   extraRenderers: RendererRegistration[];
-  renderText: (props: ReactNode) => ReactNode;
   html: HtmlComponents;
 }
 

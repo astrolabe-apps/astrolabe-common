@@ -1,5 +1,6 @@
 import React, {
   ButtonHTMLAttributes,
+  ComponentType,
   ElementType,
   FC,
   Fragment,
@@ -25,6 +26,7 @@ import {
   useControlEffect,
 } from "@react-typed-forms/core";
 import {
+  ActionStyle,
   AdornmentPlacement,
   ArrayActionOptions,
   ControlActionHandler,
@@ -41,6 +43,7 @@ import {
   FormContextData,
   FormNode,
   GroupRenderOptions,
+  IconReference,
   isActionControl,
   isDataControl,
   isDisplayControl,
@@ -94,12 +97,37 @@ import {
   SchemaInterface,
 } from "./schemaField";
 
+export interface HtmlIconProperties {
+  className?: string;
+  style?: React.CSSProperties;
+  iconLibrary?: string;
+  iconName?: string;
+}
+
+export interface HtmlLabelProperties {
+  htmlFor?: string;
+  className?: string;
+  textClass?: string;
+  children?: ReactNode;
+}
+
+export interface HtmlDivProperties {
+  id?: string;
+  className?: string;
+  textClass?: string;
+  style?: React.CSSProperties;
+  children?: ReactNode;
+  text?: string;
+  html?: string;
+  nativeRef?: (e: HTMLElement | null) => void;
+}
+
 export interface HtmlComponents {
-  Div: ElementType<HTMLAttributes<HTMLDivElement>, "div">;
+  Div: ComponentType<HtmlDivProperties>;
   Span: ElementType<HTMLAttributes<HTMLSpanElement>>;
   Button: ElementType<ButtonHTMLAttributes<HTMLButtonElement>>;
-  I: ElementType<HTMLAttributes<HTMLElement>>;
-  Label: ElementType<LabelHTMLAttributes<HTMLLabelElement>>;
+  I: ComponentType<HtmlIconProperties>;
+  Label: ComponentType<HtmlLabelProperties>;
   B: ElementType<HTMLAttributes<HTMLElement>>;
   H1: ElementType<HTMLAttributes<HTMLElement>>;
   Input: ElementType<InputHTMLAttributes<HTMLInputElement>, "input">;
@@ -187,7 +215,6 @@ export interface FormRenderer {
    * @returns A React node.
    */
   renderLabelText: (props: ReactNode) => ReactNode;
-  renderText: (props: ReactNode, className?: string) => ReactNode;
 
   html: HtmlComponents;
 }
@@ -318,6 +345,11 @@ export interface LabelRendererProps {
    * The CSS class name for the label.
    */
   className?: string;
+
+  /**
+   * The CSS class name for the label text.
+   */
+  textClass?: string;
 }
 
 /**
@@ -344,6 +376,8 @@ export interface DisplayRendererProps {
    */
   className?: string;
 
+  textClass?: string;
+
   /**
    * The CSS styles for the display renderer.
    */
@@ -359,6 +393,7 @@ export interface ParentRendererProps {
   formNode: FormNode;
   renderChild: ChildRenderer;
   className?: string;
+  textClass?: string;
   style?: React.CSSProperties;
   dataContext: ControlDataContext;
   useChildVisibility: ChildVisibilityFunc;
@@ -390,8 +425,11 @@ export interface ActionRendererProps {
   actionId: string;
   actionText: string;
   actionData?: any;
+  actionStyle?: ActionStyle;
+  icon?: IconReference;
   onClick: () => void;
   className?: string | null;
+  textClass?: string | null;
   style?: React.CSSProperties;
   disabled?: boolean;
 }
@@ -633,8 +671,14 @@ export function useControlRendererComponent(
         hiddenControl: myOptionsControl.fields.hidden,
         dataContext,
       });
-      const { styleClass, labelClass, layoutClass, ...inheritableOptions } =
-        options;
+      const {
+        styleClass,
+        labelClass,
+        layoutClass,
+        labelTextClass,
+        textClass,
+        ...inheritableOptions
+      } = options;
       const childOptions: ControlRenderOptions = {
         ...inheritableOptions,
         ...myOptions,
@@ -709,6 +753,7 @@ export function useControlRendererComponent(
         actionOnClick: options.actionOnClick,
         styleClass: options.styleClass,
         labelClass: options.labelClass,
+        textClass: options.textClass,
         useEvalExpression: useExpr,
         useChildVisibility: (childDef, parentNode, dontOverride) => {
           return useEvalVisibilityHook(
@@ -878,7 +923,9 @@ export interface RenderControlProps {
     displayProps: DisplayRendererProps,
   ) => ReactNode;
   labelClass?: string;
+  labelTextClass?: string;
   styleClass?: string;
+  textClass?: string;
 }
 export function renderControlLayout(
   props: RenderControlProps,
@@ -898,7 +945,9 @@ export function renderControlLayout(
     customDisplay,
     useEvalExpression,
     labelClass,
+    labelTextClass,
     styleClass,
+    textClass,
     formNode,
   } = props;
 
@@ -931,6 +980,7 @@ export function renderControlLayout(
       label: {
         label: labelText?.value ?? c.title,
         className: rendererClass(labelClass, c.labelClass),
+        textClass: rendererClass(labelTextClass, c.labelTextClass),
         type: LabelType.Group,
         hide: c.groupOptions?.hideTitle,
       },
@@ -943,6 +993,8 @@ export function renderControlLayout(
         actionText: labelText?.value ?? c.title ?? c.actionId,
         actionId: c.actionId,
         actionData,
+        actionStyle: c.actionStyle ?? ActionStyle.Button,
+        textClass: rendererClass(textClass, c.textClass),
         onClick:
           props.actionOnClick?.(c.actionId, actionData, dataContext) ??
           (() => {}),
@@ -956,6 +1008,7 @@ export function renderControlLayout(
     const displayProps = {
       data,
       className: rendererClass(styleClass, c.styleClass),
+      textClass: rendererClass(textClass, c.textClass),
       style,
       display: displayControl,
       dataContext,
@@ -996,6 +1049,7 @@ export function renderControlLayout(
         required: c.required && !props.formOptions.displayOnly,
         hide: c.hideTitle,
         className: rendererClass(labelClass, c.labelClass),
+        textClass: rendererClass(labelTextClass, c.labelTextClass),
       },
       errorControl: control,
     };

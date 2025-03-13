@@ -3,6 +3,7 @@ import {
   ensureMetaValue,
   Fcheckbox,
   newControl,
+  RenderControl,
   trackedValue,
   useComputed,
   useControl,
@@ -15,6 +16,7 @@ import {
 } from "@react-typed-forms/schemas-html";
 import { ControlDefinitionSchemaMap } from "./schemaSchemas";
 import {
+  ActionStyle,
   addMissingControlsToForm,
   applyExtensionsToSchema,
   cleanDataForSchema,
@@ -60,6 +62,7 @@ import {
 } from "flexlayout-react";
 import { defaultLayout } from "./defaultLayout";
 import { EditorFormTree } from "./EditorFormNode";
+import { setIncluded } from "@astroapps/client";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
@@ -125,6 +128,7 @@ export function BasicFormEditor<A extends string = string>({
   const editorFormRenderer = useMemo(() => createEditorRenderer([]), []);
   const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
+  const loadedFormNames = useControl<string[]>([]);
   const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
   const editorTree: FormTree = useMemo(() => {
     const tree = createFormTree(editorControls ?? defaultEditorControls);
@@ -164,9 +168,10 @@ export function BasicFormEditor<A extends string = string>({
   );
 
   const allClasses = useComputed(() => {
-    return Object.values(loadedForms.fields)
+    return loadedFormNames.value
       .flatMap((x) => {
-        const rn = x.value?.formTree.root;
+        const lf = loadedForms.fields[x];
+        const rn = lf.fields.formTree.fields.root.value;
         return rn ? [trackedValue(rn)] : [];
       })
       .flatMap((x) => getAllReferencedClasses(x, collectClasses))
@@ -183,7 +188,6 @@ export function BasicFormEditor<A extends string = string>({
   async function runTailwind(classes: string) {
     {
       const html = `<div class="${classes}"></div>`;
-
       styles.value = await genStyles.generateStylesFromContent(
         `@tailwind utilities;`,
         [html],
@@ -257,20 +261,23 @@ export function BasicFormEditor<A extends string = string>({
   };
 
   return (
-    <Layout
-      ref={dockRef}
-      model={model}
-      factory={renderTab}
-      realtimeResize
-      onModelChange={(m, a) => {
-        const docNode = model.getNodeById("documents") as TabSetNode;
-        const formNode = docNode.getSelectedNode() as TabNode | undefined;
-        if (formNode) {
-          const [viewId, param] = getViewAndParams(formNode.getId());
-          selectedForm.value = param as A;
-        } else selectedForm.value = undefined;
-      }}
-    />
+    <>
+      <RenderControl render={() => <style>{styles.value}</style>} />
+      <Layout
+        ref={dockRef}
+        model={model}
+        factory={renderTab}
+        realtimeResize
+        onModelChange={(m, a) => {
+          const docNode = model.getNodeById("documents") as TabSetNode;
+          const formNode = docNode.getSelectedNode() as TabNode | undefined;
+          if (formNode) {
+            const [viewId, param] = getViewAndParams(formNode.getId());
+            selectedForm.value = param as A;
+          } else selectedForm.value = undefined;
+        }}
+      />
+    </>
   );
 
   function renderTab(node: TabNode) {
@@ -283,7 +290,10 @@ export function BasicFormEditor<A extends string = string>({
 
   function getForm(formId: string) {
     const form = loadedForms.fields[formId];
-    ensureMetaValue(form, "loader", () => loadFormNode(formId, form));
+    ensureMetaValue(form, "loader", async () => {
+      await loadFormNode(formId, form);
+      loadedFormNames.setValue((x) => setIncluded(x, formId, true));
+    });
     return form;
   }
 

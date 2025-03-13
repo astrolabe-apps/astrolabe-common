@@ -27,7 +27,12 @@ export function DefaultVisibility({
   }, [v?.visible]);
   const { Div } = renderer.html;
   return v?.visible ? (
-    <Div className={className} style={style} ref={divRef} children={children} />
+    <Div
+      className={className}
+      style={style}
+      nativeRef={divRef}
+      children={children}
+    />
   ) : (
     <></>
   );

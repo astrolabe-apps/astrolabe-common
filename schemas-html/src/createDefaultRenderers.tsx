@@ -38,6 +38,7 @@ import { createJsonataRenderer } from "./components/JsonataRenderer";
 import {
   ActionRendererProps,
   ActionRendererRegistration,
+  ActionStyle,
   AdornmentPlacement,
   AdornmentRendererRegistration,
   appendMarkupAt,
@@ -53,6 +54,11 @@ import {
   FormRenderer,
   hasOptions,
   HtmlComponents,
+  HtmlDivProperties,
+  HtmlIconProperties,
+  HtmlLabelProperties,
+  IconLibrary,
+  IconReference,
   isAccordionAdornment,
   isDataGroupRenderer,
   isDisplayOnlyRenderer,
@@ -96,12 +102,14 @@ export interface DefaultRendererOptions {
   adornment?: DefaultAdornmentRendererOptions;
   layout?: DefaultLayoutRendererOptions;
   extraRenderers?: (options: DefaultRendererOptions) => RendererRegistration[];
-  renderText?: (props: ReactNode, className?: string) => ReactNode;
   html?: FormRenderer["html"];
 }
 
 export interface DefaultActionRendererOptions {
   className?: string;
+  linkClassName?: string;
+  textClass?: string;
+  linkTextClass?: string;
   renderContent?: (
     actionText: string,
     actionId: string,
@@ -124,11 +132,18 @@ export function createButtonActionRenderer(
         actionId,
         actionData,
         disabled,
+        textClass,
+        actionStyle,
+        icon,
       }: ActionRendererProps,
       renderer,
     ) => {
-      const { Button } = renderer.html;
-      const classNames = rendererClass(className, options.className);
+      const { Button, Span, I } = renderer.html;
+      const isLink = actionStyle == ActionStyle.Link;
+      const classNames = rendererClass(
+        className,
+        isLink ? options.linkClassName : options.className,
+      );
       return (
         <Button
           className={classNames}
@@ -136,8 +151,19 @@ export function createButtonActionRenderer(
           style={style}
           onClick={onClick}
         >
-          {options.renderContent?.(actionText, actionId, actionData) ??
-            renderer.renderText(actionText, classNames)}
+          {options.renderContent?.(actionText, actionId, actionData) ?? (
+            <>
+              <Span
+                className={rendererClass(
+                  textClass,
+                  isLink ? options.linkTextClass : options.textClass,
+                )}
+              >
+                {actionText}
+              </Span>
+              {icon && <I iconName={icon.name} iconLibrary={icon.library} />}
+            </>
+          )}
         </Button>
       );
     },
@@ -238,6 +264,7 @@ export function createDefaultDataRenderer(
               schemaInterface={props.dataContext.schemaInterface}
               control={props.control}
               className={props.className}
+              textClass={props.textClass}
               style={props.style}
               renderer={renderers}
               emptyText={
@@ -304,10 +331,8 @@ export interface DefaultAccordionRendererOptions {
   className?: string;
   titleClass?: string;
   togglerClass?: string;
-  iconOpenName?: string;
-  iconOpenClass?: string;
-  iconClosedName?: string;
-  iconClosedClass?: string;
+  iconOpen?: IconReference;
+  iconClosed?: IconReference;
   renderTitle?: (
     title: string | undefined,
     current: Control<boolean>,
@@ -414,8 +439,11 @@ export function createDefaultAdornmentRenderer(
 
 interface DefaultLabelRendererOptions {
   className?: string;
+  textClass?: string;
   groupLabelClass?: string;
+  groupLabelTextClass?: string;
   controlLabelClass?: string;
+  controlLabelTextClass?: string;
   requiredElement?: (h: FormRenderer["html"]) => ReactNode;
   labelContainer?: (children: ReactElement) => ReactElement;
 }
@@ -423,17 +451,24 @@ interface DefaultLabelRendererOptions {
 export function createDefaultLabelRenderer(
   options?: DefaultLabelRendererOptions,
 ): LabelRendererRegistration {
-  const { className, groupLabelClass, controlLabelClass, labelContainer } = {
+  const {
+    className,
+    controlLabelTextClass,
+    groupLabelTextClass,
+    groupLabelClass,
+    controlLabelClass,
+    textClass,
+    labelContainer,
+  } = {
     labelContainer: (c: ReactElement) => c,
     ...options,
   };
   return {
     render: (props, labelStart, labelEnd, renderers) => {
-      const { Label } = renderers.html;
+      const { Label, Span } = renderers.html;
       const requiredElement =
         options?.requiredElement ?? (({ Span }) => <Span> *</Span>);
-      if (props.type == LabelType.Text)
-        return renderers.renderText(props.label);
+      if (props.type == LabelType.Text) return <Span>{props.label}</Span>;
       return labelContainer(
         <>
           <Label
@@ -444,6 +479,14 @@ export function createDefaultLabelRenderer(
                 className,
                 props.type === LabelType.Group && groupLabelClass,
                 props.type === LabelType.Control && controlLabelClass,
+              ),
+            )}
+            textClass={rendererClass(
+              props.textClass,
+              clsx(
+                textClass,
+                props.type === LabelType.Group && groupLabelTextClass,
+                props.type === LabelType.Control && controlLabelTextClass,
               ),
             )}
           >
@@ -461,14 +504,59 @@ export function createDefaultLabelRenderer(
 
 export const StandardHtmlComponents: HtmlComponents = {
   Button: "button",
-  Label: "label",
-  I: "i",
+  Label: DefaultHtmlLabelRenderer,
+  I: DefaultHtmlIconRenderer,
   Span: "span",
-  Div: "div",
+  Div: DefaultDivRenderer,
   H1: "h1",
   B: "b",
   Input: "input",
 };
+
+export function DefaultDivRenderer({
+  text,
+  html,
+  children,
+  className,
+  textClass,
+  nativeRef,
+  ...props
+}: HtmlDivProperties) {
+  return (
+    <div
+      {...props}
+      ref={nativeRef}
+      className={clsx(className, textClass)}
+      children={text ?? children}
+      dangerouslySetInnerHTML={html ? { __html: html } : undefined}
+    />
+  );
+}
+export function DefaultHtmlLabelRenderer({
+  textClass,
+  className,
+  ...props
+}: HtmlLabelProperties) {
+  return <label {...props} className={clsx(className, textClass)} />;
+}
+export function DefaultHtmlIconRenderer({
+  iconName,
+  iconLibrary,
+  className,
+  style,
+}: HtmlIconProperties) {
+  return <i className={clsx(className, toIconClass())} style={style} />;
+
+  function toIconClass() {
+    if (!iconName) return undefined;
+    switch (iconLibrary) {
+      case IconLibrary.FontAwesome:
+        return "fa fa-" + iconName;
+      default:
+        return iconName;
+    }
+  }
+}
 
 export function createDefaultRenderers(
   options: DefaultRendererOptions = {},
@@ -484,7 +572,6 @@ export function createDefaultRenderers(
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
     extraRenderers: options.extraRenderers?.(options) ?? [],
-    renderText: options.renderText ?? ((x) => x),
     html: options.html ?? StandardHtmlComponents,
   };
 }

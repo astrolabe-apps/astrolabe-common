@@ -1,5 +1,6 @@
 import React from "react";
 import { DefaultRendererOptions } from "./createDefaultRenderers";
+import { fontAwesomeIcon } from "@react-typed-forms/schemas";
 
 export const defaultTailwindTheme = {
   label: {
@@ -64,8 +65,8 @@ export const defaultTailwindTheme = {
     accordion: {
       className: "flex items-center gap-2 my-2",
       titleClass: "cursor-pointer",
-      iconOpenClass: "fa fa-chevron-up",
-      iconClosedClass: "fa fa-chevron-down",
+      iconOpen: fontAwesomeIcon("chevron-up"),
+      iconClosed: fontAwesomeIcon("chevron-down"),
     },
     optional: {
       checkClass: "m-2",

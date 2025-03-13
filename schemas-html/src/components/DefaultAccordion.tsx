@@ -14,10 +14,8 @@ export function DefaultAccordion({
   contentStyle,
   contentClassName,
   designMode,
-  iconOpenName,
-  iconOpenClass,
-  iconClosedName,
-  iconClosedClass,
+  iconOpen,
+  iconClosed,
   className,
   renderTitle = (t) => t,
   renderToggler,
@@ -44,15 +42,15 @@ export function DefaultAccordion({
   const fullContentStyle =
     isOpen || designMode ? contentStyle : { ...contentStyle, display: "none" };
   const title = renderers.renderLabelText(renderTitle(accordion.title, open));
+  const currentIcon = isOpen ? iconOpen : iconClosed;
   const toggler = renderToggler ? (
     renderToggler(open, title)
   ) : (
     <Button className={className} onClick={() => open.setValue((x) => !x)}>
       <Label className={titleClass}>{title}</Label>
-      <I
-        title={isOpen ? iconOpenName : iconClosedName}
-        className={clsx(isOpen ? iconOpenClass : iconClosedClass)}
-      />
+      {currentIcon && (
+        <I iconLibrary={currentIcon.library} iconName={currentIcon.name} />
+      )}
     </Button>
   );
 

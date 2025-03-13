@@ -203,7 +203,12 @@ export function createAction(
   actionText?: string,
   options?: Partial<ActionRendererProps>,
 ): ActionRendererProps {
-  return { actionId, onClick, actionText: actionText ?? actionId, ...options };
+  return {
+    actionId,
+    onClick,
+    actionText: actionText ?? actionId,
+    ...options,
+  };
 }
 
 export const emptyGroupDefinition: GroupedControlsDefinition = {

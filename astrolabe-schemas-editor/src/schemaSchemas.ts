@@ -503,12 +503,8 @@ export const IconReferenceSchema = buildSchema<IconReferenceForm>({
     displayName: "Library",
     options: [
       {
-        name: "FontAwesome5",
-        value: "FontAwesome5",
-      },
-      {
-        name: "FontAwesome6",
-        value: "FontAwesome6",
+        name: "FontAwesome",
+        value: "FontAwesome",
       },
       {
         name: "Material",

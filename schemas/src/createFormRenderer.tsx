@@ -59,7 +59,6 @@ export function createFormRenderer(
     renderLayout,
     renderVisibility,
     renderLabelText,
-    renderText: defaultRenderers.renderText,
     html: defaultRenderers.html,
   };
 

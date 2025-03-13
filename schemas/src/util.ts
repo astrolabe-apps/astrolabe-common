@@ -52,6 +52,8 @@ export interface ControlClasses {
   styleClass?: string;
   layoutClass?: string;
   labelClass?: string;
+  textClass?: string;
+  labelTextClass?: string;
 }
 
 /**
@@ -612,6 +614,8 @@ export function getAllReferencedClasses(
       c.styleClass,
       c.layoutClass,
       c.labelClass,
+      c.textClass,
+      c.labelTextClass,
       ...Object.values(go),
       ...(collectExtra?.(c) ?? []),
       entryWrapperClass,

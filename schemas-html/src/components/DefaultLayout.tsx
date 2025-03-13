@@ -36,12 +36,11 @@ export function DefaultLayout({
   errorClass,
   renderer: {
     html: { Div, Span },
-    renderText,
   },
   renderError = (e) =>
     e && (
       <Div>
-        <Span className={errorClass}>{renderText(e)}</Span>
+        <Span className={errorClass}>{e}</Span>
       </Div>
     ),
   layout: { controlEnd, controlStart, label, children, errorControl },

@@ -16,6 +16,7 @@ import {
 
 export interface DefaultDisplayRendererOptions {
   textClassName?: string;
+  textTextClass?: string;
   htmlClassName?: string;
 }
 
@@ -24,32 +25,39 @@ export function createDefaultDisplayRenderer(
 ): DisplayRendererRegistration {
   return {
     render: (props, renderer) => (
-      <DefaultDisplay {...options} {...props} renderer={renderer} />
+      <DefaultDisplay
+        options={options}
+        displayProps={props}
+        renderer={renderer}
+      />
     ),
     type: "display",
   };
 }
 
 export function DefaultDisplay({
-  data,
-  display,
-  className,
-  style,
   renderer,
-  ...options
-}: DefaultDisplayRendererOptions &
-  DisplayRendererProps & { renderer: FormRenderer }) {
-  const { I, Div, Span, B, H1 } = renderer.html;
+  options,
+  displayProps,
+}: {
+  displayProps: DisplayRendererProps;
+  options: DefaultDisplayRendererOptions;
+  renderer: FormRenderer;
+}) {
+  const { data, display, className, textClass, style } = displayProps;
+  const { I, Div, B, H1 } = renderer.html;
   switch (data.type) {
     case DisplayDataType.Icon:
+      const iconDisplay = data as IconDisplay;
       return (
         <I
           style={style}
-          title={(data as IconDisplay).iconName ?? undefined}
           className={clsx(
             getOverrideClass(className),
-            display ? display.value : (data as IconDisplay).iconClass,
+            display ? display.value : iconDisplay.iconClass,
           )}
+          iconName={display ? display.value : iconDisplay.icon?.name}
+          iconLibrary={iconDisplay.icon?.library}
         />
       );
     case DisplayDataType.Text:
@@ -57,25 +65,20 @@ export function DefaultDisplay({
         <Div
           style={style}
           className={rendererClass(className, options.textClassName)}
-        >
-          {renderer.renderText(
-            display
-              ? coerceToString(display.value)
-              : (data as TextDisplay).text,
-            rendererClass(className, options.textClassName),
-          )}
-        </Div>
+          textClass={rendererClass(textClass, options.textTextClass)}
+          text={
+            display ? coerceToString(display.value) : (data as TextDisplay).text
+          }
+        />
       );
     case DisplayDataType.Html:
       return (
         <Div
           style={style}
           className={rendererClass(className, options.htmlClassName)}
-          dangerouslySetInnerHTML={{
-            __html: display
-              ? coerceToString(display.value)
-              : (data as HtmlDisplay).html,
-          }}
+          html={
+            display ? coerceToString(display.value) : (data as HtmlDisplay).html
+          }
         />
       );
     case DisplayDataType.Custom:
