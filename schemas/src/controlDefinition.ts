@@ -45,8 +45,10 @@ export interface ControlDefinition {
   childRefId?: string | null;
   title?: string | null;
   styleClass?: string | null;
+  textClass?: string | null;
   layoutClass?: string | null;
   labelClass?: string | null;
+  labelTextClass?: string | null;
   dynamic?: DynamicProperty[] | null;
   adornments?: ControlAdornment[] | null;
   children?: ControlDefinition[] | null;
@@ -97,9 +99,22 @@ export enum ControlAdornmentType {
   Optional = "Optional",
 }
 
+enum IconLibrary {
+  FontAwesome5 = "FontAwesome5",
+  FontAwesome6 = "FontAwesome6",
+  Material = "Material",
+  CssClass = "CssClass",
+}
+
+export interface IconReference {
+  library: string;
+  name: string;
+}
+
 export interface IconAdornment extends ControlAdornment {
   type: ControlAdornmentType.Icon;
   iconClass: string;
+  icon?: IconReference;
   placement?: AdornmentPlacement | null;
 }
 
@@ -389,7 +404,7 @@ export interface TextDisplay extends DisplayData {
 export interface IconDisplay extends DisplayData {
   type: DisplayDataType.Icon;
   iconClass: string;
-  iconName?: string | null;
+  icon?: IconReference | null;
 }
 
 export interface HtmlDisplay extends DisplayData {
@@ -406,7 +421,15 @@ export interface ActionControlDefinition extends ControlDefinition {
   type: ControlDefinitionType.Action;
   actionId: string;
   actionData?: string | null;
+  icon?: IconReference | null;
+  actionStyle?: ActionStyle | null;
 }
+
+export enum ActionStyle {
+  Button = "Button",
+  Link = "Link",
+}
+
 export interface ControlVisitor<A> {
   data(d: DataControlDefinition): A;
   group(d: GroupedControlsDefinition): A;

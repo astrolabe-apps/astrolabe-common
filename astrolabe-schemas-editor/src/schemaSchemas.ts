@@ -11,6 +11,7 @@ import {
   SchemaField,
   EntityExpression,
   DynamicProperty,
+  IconReference,
   AdornmentPlacement,
   ControlAdornment,
   GroupRenderOptions,
@@ -18,6 +19,7 @@ import {
   SyncTextType,
   RenderOptions,
   DisplayData,
+  ActionStyle,
   ControlDefinition,
 } from "@react-typed-forms/schemas";
 
@@ -488,12 +490,58 @@ export function toDynamicPropertyForm(v: DynamicProperty): DynamicPropertyForm {
   return applyDefaultValues(v, DynamicPropertySchema);
 }
 
+export interface IconReferenceForm {
+  library: string;
+  name: string;
+}
+
+export const IconReferenceSchema = buildSchema<IconReferenceForm>({
+  library: makeScalarField({
+    type: FieldType.String,
+    notNullable: true,
+    required: true,
+    displayName: "Library",
+    options: [
+      {
+        name: "FontAwesome5",
+        value: "FontAwesome5",
+      },
+      {
+        name: "FontAwesome6",
+        value: "FontAwesome6",
+      },
+      {
+        name: "Material",
+        value: "Material",
+      },
+      {
+        name: "CssClass",
+        value: "CssClass",
+      },
+    ],
+  }),
+  name: makeScalarField({
+    type: FieldType.String,
+    notNullable: true,
+    required: true,
+    displayName: "Name",
+  }),
+});
+
+export const defaultIconReferenceForm: IconReferenceForm =
+  defaultValueForFields(IconReferenceSchema);
+
+export function toIconReferenceForm(v: IconReference): IconReferenceForm {
+  return applyDefaultValues(v, IconReferenceSchema);
+}
+
 export interface ControlAdornmentForm {
   type: string;
   placement: AdornmentPlacement | null;
   allowNull: boolean | null;
   editSelectable: boolean | null;
   iconClass: string;
+  icon: IconReferenceForm | null;
   tooltip: string;
   title: string;
   defaultExpanded: boolean | null;
@@ -576,6 +624,12 @@ export const ControlAdornmentSchema = buildSchema<ControlAdornmentForm>({
     notNullable: true,
     required: true,
     displayName: "Icon Class",
+  }),
+  icon: makeCompoundField({
+    children: IconReferenceSchema,
+    schemaRef: "IconReference",
+    onlyForTypes: ["Icon"],
+    displayName: "Icon",
   }),
   tooltip: makeScalarField({
     type: FieldType.String,
@@ -1119,7 +1173,7 @@ export function toRenderOptionsForm(v: RenderOptions): RenderOptionsForm {
 export interface DisplayDataForm {
   type: string;
   iconClass: string;
-  iconName: string | null;
+  icon: IconReferenceForm | null;
   text: string;
   customId: string;
   html: string;
@@ -1158,10 +1212,11 @@ export const DisplayDataSchema = buildSchema<DisplayDataForm>({
     required: true,
     displayName: "Icon Class",
   }),
-  iconName: makeScalarField({
-    type: FieldType.String,
+  icon: makeCompoundField({
+    children: IconReferenceSchema,
+    schemaRef: "IconReference",
     onlyForTypes: ["Icon"],
-    displayName: "Icon Name",
+    displayName: "Icon",
   }),
   text: makeScalarField({
     type: FieldType.String,
@@ -1202,8 +1257,10 @@ export interface ControlDefinitionForm {
   dynamic: DynamicPropertyForm[] | null;
   adornments: ControlAdornmentForm[] | null;
   styleClass: string | null;
+  textClass: string | null;
   layoutClass: string | null;
   labelClass: string | null;
+  labelTextClass: string | null;
   children: ControlDefinitionForm[] | null;
   field: string;
   hideTitle: boolean | null;
@@ -1219,6 +1276,8 @@ export interface ControlDefinitionForm {
   displayData: DisplayDataForm;
   actionId: string;
   actionData: string | null;
+  icon: IconReferenceForm | null;
+  actionStyle: ActionStyle | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -1275,6 +1334,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     type: FieldType.String,
     displayName: "Style Class",
   }),
+  textClass: makeScalarField({
+    type: FieldType.String,
+    displayName: "Text Class",
+  }),
   layoutClass: makeScalarField({
     type: FieldType.String,
     displayName: "Layout Class",
@@ -1282,6 +1345,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   labelClass: makeScalarField({
     type: FieldType.String,
     displayName: "Label Class",
+  }),
+  labelTextClass: makeScalarField({
+    type: FieldType.String,
+    displayName: "Label Text Class",
   }),
   children: makeCompoundField({
     treeChildren: true,
@@ -1374,6 +1441,27 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     onlyForTypes: ["Action"],
     displayName: "Action Data",
   }),
+  icon: makeCompoundField({
+    children: IconReferenceSchema,
+    schemaRef: "IconReference",
+    onlyForTypes: ["Action"],
+    displayName: "Icon",
+  }),
+  actionStyle: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Action"],
+    displayName: "Action Style",
+    options: [
+      {
+        name: "Button",
+        value: "Button",
+      },
+      {
+        name: "Link",
+        value: "Link",
+      },
+    ],
+  }),
 });
 
 export const defaultControlDefinitionForm: ControlDefinitionForm =
@@ -1391,6 +1479,7 @@ export const ControlDefinitionSchemaMap = {
   SchemaField: SchemaFieldSchema,
   EntityExpression: EntityExpressionSchema,
   DynamicProperty: DynamicPropertySchema,
+  IconReference: IconReferenceSchema,
   ControlAdornment: ControlAdornmentSchema,
   GroupRenderOptions: GroupRenderOptionsSchema,
   IconMapping: IconMappingSchema,

@@ -691,11 +691,15 @@ export interface AccordionAdornment extends ControlAdornment {
 export interface ControlDefinition {
     type: string;
     title: string | null;
+    id: string | null;
+    childRefId: string | null;
     dynamic: DynamicProperty[] | null;
     adornments: ControlAdornment[] | null;
     styleClass: string | null;
+    textClass: string | null;
     layoutClass: string | null;
     labelClass: string | null;
+    labelTextClass: string | null;
     children: ControlDefinition[] | null;
 
     [key: string]: any;
@@ -704,8 +708,15 @@ export interface ControlDefinition {
 export interface ActionControlDefinition extends ControlDefinition {
     actionId: string;
     actionData: string | null;
+    icon: IconReference | null;
+    actionStyle: ActionStyle | null;
 
     [key: string]: any;
+}
+
+export enum ActionStyle {
+    Button = "Button",
+    Link = "Link",
 }
 
 export enum AdornmentPlacement {
@@ -721,15 +732,34 @@ export interface RenderOptions {
     [key: string]: any;
 }
 
+export interface ArrayElementRenderOptions extends RenderOptions {
+    showInline: boolean | null;
+
+    [key: string]: any;
+}
+
 export interface ArrayRenderOptions extends RenderOptions {
     addText: string | null;
     removeText: string | null;
     addActionId: string | null;
     removeActionId: string | null;
+    editText: string | null;
+    editActionId: string | null;
     noAdd: boolean | null;
     noRemove: boolean | null;
     noReorder: boolean | null;
     childOptions: RenderOptions | null;
+    editExternal: boolean | null;
+
+    [key: string]: any;
+}
+
+export interface AutocompleteRenderOptions extends RenderOptions {
+    listContainerClass: string | null;
+    listEntryClass: string | null;
+    chipContainerClass: string | null;
+    chipCloseButtonClass: string | null;
+    placeholder: string | null;
 
     [key: string]: any;
 }
@@ -830,6 +860,7 @@ export enum DateComparison {
 export interface DateTimeRenderOptions extends RenderOptions {
     format: string | null;
     forceMidnight: boolean | null;
+    forceStandard: boolean | null;
 
     [key: string]: any;
 }
@@ -926,6 +957,7 @@ export interface HtmlEditorRenderOptions extends RenderOptions {
 
 export interface IconAdornment extends ControlAdornment {
     iconClass: string;
+    icon: IconReference | null;
     placement: AdornmentPlacement | null;
 
     [key: string]: any;
@@ -933,6 +965,7 @@ export interface IconAdornment extends ControlAdornment {
 
 export interface IconDisplay extends DisplayData {
     iconClass: string;
+    icon: IconReference | null;
 
     [key: string]: any;
 }
@@ -946,6 +979,11 @@ export interface IconListRenderOptions extends RenderOptions {
 export interface IconMapping {
     value: string;
     materialIcon: string | null;
+}
+
+export interface IconReference {
+    library: string;
+    name: string;
 }
 
 export enum ItemStatus {
@@ -980,6 +1018,14 @@ export interface LengthValidator extends SchemaValidator {
 
 export interface NotEmptyExpression extends EntityExpression {
     field: string;
+
+    [key: string]: any;
+}
+
+export interface OptionalAdornment extends ControlAdornment {
+    placement: AdornmentPlacement | null;
+    allowNull: boolean | null;
+    editSelectable: boolean | null;
 
     [key: string]: any;
 }
@@ -1052,6 +1098,10 @@ export interface SynchronisedRenderOptions extends RenderOptions {
     syncType: SyncTextType;
 
     [key: string]: any;
+}
+
+export interface TabsRenderOptions extends GroupRenderOptions {
+    contentClass: string | null;
 }
 
 export interface TextDisplay extends DisplayData {

@@ -105,7 +105,9 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             "SchemaValidator",
             "JsonataValidator",
             "DateComparison",
-            "DateValidator"
+            "DateValidator",
+            "IconReference",
+            "ActionStyle"
         };
 
     private static readonly HashSet<string> EditorLibImports =

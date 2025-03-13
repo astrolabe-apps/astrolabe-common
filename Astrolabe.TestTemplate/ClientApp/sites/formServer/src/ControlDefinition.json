@@ -576,6 +576,34 @@
               "type": "Standard"
             },
             "hideTitle": true
+          },
+          {
+            "type": "Data",
+            "title": "Icon",
+            "id": "IconReference",
+            "children": [
+              {
+                "type": "Data",
+                "title": "Icon Library",
+                "field": "library",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Name",
+                "field": "name",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              }
+            ],
+            "field": "icon",
+            "renderOptions": {
+              "type": "Standard"
+            },
+            "defaultValue": {}
           }
         ],
         "groupOptions": {
@@ -597,8 +625,24 @@
           },
           {
             "type": "Data",
+            "title": "Text Class",
+            "field": "textClass",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
             "title": "Label Class",
             "field": "labelClass",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Label Text Class",
+            "field": "labelTextClass",
             "renderOptions": {
               "type": "Standard"
             }
@@ -913,8 +957,21 @@
                 "renderOptions": {
                   "type": "Standard"
                 }
+              },
+              {
+                "type": "Data",
+                "title": "Icon",
+                "childRefId": "IconReference",
+                "field": "icon",
+                "renderOptions": {
+                  "type": "Standard"
+                },
+                "defaultValue": {}
               }
-            ]
+            ],
+            "renderOptions": {
+              "type": "Standard"
+            }
           },
           {
             "type": "Data",

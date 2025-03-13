@@ -34,9 +34,13 @@ public abstract record ControlDefinition(
 
     public string? StyleClass { get; set; }
 
+    public string? TextClass { get; set; }
+
     public string? LayoutClass { get; set; }
 
     public string? LabelClass { get; set; }
+
+    public string? LabelTextClass { get; set; }
 
     [SchemaTag(SchemaTags.NoControl)]
     public IEnumerable<ControlDefinition>? Children { get; set; }
@@ -82,8 +86,19 @@ public record GroupedControlsDefinition()
 public record DisplayControlDefinition(DisplayData DisplayData)
     : ControlDefinition(ControlDefinitionType.Display.ToString());
 
-public record ActionControlDefinition(string ActionId, string? ActionData)
-    : ControlDefinition(ControlDefinitionType.Action.ToString());
+public record ActionControlDefinition(
+    string ActionId,
+    string? ActionData,
+    IconReference? Icon,
+    ActionStyle? ActionStyle
+) : ControlDefinition(ControlDefinitionType.Action.ToString());
+
+[JsonString]
+public enum ActionStyle
+{
+    Button,
+    Link,
+}
 
 [JsonString]
 public enum DataRenderType
@@ -272,7 +287,7 @@ public abstract record DisplayData([property: SchemaOptions(typeof(DisplayDataTy
 
 public record SimpleDisplayData(string Type) : DisplayData(Type);
 
-public record IconDisplay(string IconClass, string? IconName)
+public record IconDisplay(string IconClass, IconReference? Icon)
     : DisplayData(DisplayDataType.Icon.ToString());
 
 public record TextDisplay(string Text) : DisplayData(DisplayDataType.Text.ToString());
@@ -405,7 +420,7 @@ public record OptionalAdornment(
     bool? EditSelectable
 ) : ControlAdornment(ControlAdornmentType.Optional.ToString());
 
-public record IconAdornment(string IconClass, AdornmentPlacement? Placement)
+public record IconAdornment(string IconClass, IconReference? Icon, AdornmentPlacement? Placement)
     : ControlAdornment(ControlAdornmentType.Icon.ToString());
 
 public record TooltipAdornment(string Tooltip)
@@ -422,3 +437,17 @@ public record SetFieldAdornment(
     [property: SchemaTag(SchemaTags.SchemaField)] string Field,
     [property: SchemaTag(SchemaTags.ControlGroup + "Expression")] EntityExpression Expression
 ) : ControlAdornment(ControlAdornmentType.SetField.ToString());
+
+public record IconReference(
+    [property: SchemaOptions(typeof(IconLibrary))] string Library,
+    string Name
+);
+
+[JsonString]
+public enum IconLibrary
+{
+    FontAwesome5,
+    FontAwesome6,
+    Material,
+    CssClass
+}
