@@ -7,7 +7,12 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, { ReactElement, ReactNode } from "react";
+import React, {
+  ForwardedRef,
+  forwardRef,
+  ReactElement,
+  ReactNode,
+} from "react";
 import clsx from "clsx";
 import {
   createSelectRenderer,
@@ -522,10 +527,12 @@ export function DefaultHtmlInputRenderer({
   className,
   onChangeValue,
   onChangeChecked,
+  inputRef,
   ...props
 }: HtmlInputProperties) {
   return (
     <input
+      ref={inputRef}
       {...props}
       className={clsx(className, textClass)}
       onChange={

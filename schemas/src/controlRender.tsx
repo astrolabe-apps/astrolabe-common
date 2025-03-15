@@ -135,7 +135,7 @@ export interface HtmlInputProperties {
   value?: string | number;
   onBlur?: () => void;
   disabled?: boolean;
-  ref?: (e: HTMLElement | null) => void;
+  inputRef?: (e: HTMLElement | null) => void;
   onChangeValue?: (value: string) => void;
   onChangeChecked?: (checked: boolean) => void;
 }

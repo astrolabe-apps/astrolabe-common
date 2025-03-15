@@ -789,6 +789,18 @@ export function mergeObjects<A extends Record<string, any> | undefined>(
   return result;
 }
 
+export function deepMerge<A>(value: A, fallback: A): A {
+  if (value == null) return fallback;
+  if (typeof value !== "object") return value;
+  // concat arrays
+  if (Array.isArray(value)) {
+    return (value as any[]).concat(fallback as any) as A;
+  }
+  return mergeObjects(value as A, fallback as any, (_, v1, fv) =>
+    deepMerge(v1, fv),
+  ) as A;
+}
+
 /**
  * Coerces a value to a string.
  * @param {unknown} v - The value to coerce.

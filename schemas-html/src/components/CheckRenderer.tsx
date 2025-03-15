@@ -229,7 +229,7 @@ export function Fcheckbox({
     <Input
       {...theseProps}
       checked={!!value !== notValue}
-      ref={(r) => (control.element = r)}
+      inputRef={(r) => (control.element = r)}
       onChangeChecked={(e) => {
         control.touched = true;
         control.value = e !== notValue;

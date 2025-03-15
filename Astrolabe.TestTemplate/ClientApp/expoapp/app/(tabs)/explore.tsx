@@ -1,10 +1,5 @@
-import { StyleSheet, Image, Platform, View } from "react-native";
-
-import { Collapsible } from "@/components/Collapsible";
-import { ExternalLink } from "@/components/ExternalLink";
+import { StyleSheet, View } from "react-native";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
-import { ThemedText } from "@/components/ThemedText";
-import { ThemedView } from "@/components/ThemedView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
 import { BasicFormEditor } from "@astroapps/schemas-editor";
 import {
@@ -15,9 +10,11 @@ import { createDefaultRenderers } from "@react-typed-forms/schemas-html";
 import { defaultRnTailwindTheme } from "@react-typed-forms/schemas-rn";
 import { SchemaMap } from "@/formtest/schemas";
 import { FormDefinitions } from "@/formtest/formDefs";
+import "flexlayout-react/style/light.css";
+import { renderer } from "@/components/FormRenderer";
 
 const schemas = createSchemaLookup(SchemaMap);
-const renderer = createFormRenderer(
+const editorRenderer = createFormRenderer(
   [],
   createDefaultRenderers({
     ...defaultRnTailwindTheme,
@@ -41,7 +38,7 @@ export default function TabTwoScreen() {
       <View className="min-h-screen">
         <BasicFormEditor<FormType>
           schemas={schemas}
-          formRenderer={renderer}
+          formRenderer={editorRenderer}
           formTypes={Object.entries(FormDefinitions).map((x) => [
             x[0] as FormType,
             x[1].name,
@@ -49,6 +46,7 @@ export default function TabTwoScreen() {
           loadForm={async (v) => ({
             controls: FormDefinitions[v].controls,
             schemaName: FormDefinitions[v].schemaName,
+            renderer: editorRenderer,
           })}
           saveForm={async (form) => console.log(form)}
         />

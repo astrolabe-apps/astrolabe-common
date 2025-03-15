@@ -1,4 +1,7 @@
-﻿import { createFormRenderer } from "@react-typed-forms/schemas";
+﻿import {
+  createFormRenderer,
+  fontAwesomeIcon,
+} from "@react-typed-forms/schemas";
 import { createDefaultRenderers } from "@react-typed-forms/schemas-html";
 import { defaultRnTailwindTheme } from "@react-typed-forms/schemas-rn";
 import { View } from "react-native";
@@ -48,8 +51,8 @@ export const renderer = createFormRenderer(
       accordion: {
         className: "flex flex-row items-center gap-2 my-2 p-0",
         titleClass: "cursor-pointer font-bold text-black",
-        iconOpenName: "chevron-up",
-        iconClosedName: "chevron-down",
+        iconOpen: fontAwesomeIcon("chevron-up"),
+        iconClosed: fontAwesomeIcon("chevron-down"),
       },
       helpText: {
         triggerContainerClass:
