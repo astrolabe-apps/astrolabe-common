@@ -47,38 +47,37 @@ export const reactNativeHtml: HtmlComponents = {
   Input: RNInput,
 };
 
-export const defaultRnTailwindTheme: DefaultRendererOptions =
-  deepMerge<DefaultRendererOptions>(
-    {
-      array: {
-        removableClass: "flex flex-col gap-y-2",
+export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
+  {
+    array: {
+      removableClass: "flex flex-col gap-y-2",
+    },
+    action: {
+      className:
+        "bg-primary-500 rounded-lg p-3 web:hover:opacity-90 active:opacity-90",
+      textClass: "text-white",
+    },
+    adornment: {
+      accordion: {
+        className: "flex flex-row items-center gap-2 my-2 p-0",
       },
-      action: {
-        className:
-          "bg-primary-500 rounded-lg p-3 web:hover:opacity-90 active:opacity-90",
-        textClass: "text-white",
-      },
-      adornment: {
-        accordion: {
-          className: "flex flex-row items-center gap-2 my-2 p-0",
-        },
-      },
-      html: reactNativeHtml,
-      extraRenderers: (options): RendererRegistration[] => {
-        const renderers: RendererRegistration[] = [
-          createRNHelpTextRenderer(options.adornment?.helpText),
-          createRNSelectRenderer(options.data?.selectOptions),
-        ];
+    },
+    html: reactNativeHtml,
+    extraRenderers: (options): RendererRegistration[] => {
+      const renderers: RendererRegistration[] = [
+        createRNHelpTextRenderer(options.adornment?.helpText),
+        createRNSelectRenderer(options.data?.selectOptions),
+      ];
 
-        if (Platform.OS !== "web") {
-          renderers.push(createRNDateTimePickerRenderer(options.data));
-        }
+      if (Platform.OS !== "web") {
+        renderers.push(createRNDateTimePickerRenderer(options.data));
+      }
 
-        return renderers;
-      },
-    } satisfies DefaultRendererOptions,
-    defaultTailwindTheme as DefaultRendererOptions,
-  );
+      return renderers;
+    },
+  },
+  defaultTailwindTheme,
+);
 
 function RNIcon({ iconName, className, iconLibrary }: HtmlIconProperties) {
   return iconName ? (
