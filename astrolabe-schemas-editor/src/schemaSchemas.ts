@@ -20,9 +20,9 @@ import {
   RenderOptions,
   DisplayData,
   ActionStyle,
+  IconPlacement,
   ControlDefinition,
 } from "@react-typed-forms/schemas";
-import { IconPlacement } from "../client";
 
 export interface FieldOptionForm {
   name: string;
