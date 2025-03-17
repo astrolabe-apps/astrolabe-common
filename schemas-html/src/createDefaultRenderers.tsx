@@ -559,10 +559,12 @@ export function DefaultHtmlDivRenderer({
   className,
   textClass,
   nativeRef,
+  inline,
   ...props
 }: HtmlDivProperties) {
+  const Tag = inline ? "span" : "div";
   return (
-    <div
+    <Tag
       {...props}
       ref={nativeRef}
       className={clsx(className, textClass)}
