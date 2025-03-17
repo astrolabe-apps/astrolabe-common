@@ -806,9 +806,6 @@ export function useControlRendererComponent(
       const renderedControl = renderer.renderLayout(
         options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,
       );
-      if (labelAndChildren.inline) {
-        console.log(labelAndChildren, renderedControl);
-      }
       return renderer.renderVisibility({ visibility, ...renderedControl });
     } finally {
       stopTracking();
