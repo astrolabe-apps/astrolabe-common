@@ -18,6 +18,7 @@ export function DefaultVisibility({
   style,
   divRef,
   renderer,
+  inline,
 }: VisibilityRendererProps & { renderer: FormRenderer }) {
   const v = visibility.value;
   useEffect(() => {
@@ -26,6 +27,7 @@ export function DefaultVisibility({
     }
   }, [v?.visible]);
   const { Div } = renderer.html;
+  if (inline) return v?.visible ? children : undefined;
   return v?.visible ? (
     <Div
       className={className}

@@ -15,6 +15,7 @@ export function DefaultDisplayOnly({
   style,
   renderer,
   textClass,
+  inline,
 }: {
   control: Control<any>;
   field: SchemaField;
@@ -22,6 +23,7 @@ export function DefaultDisplayOnly({
   className?: string;
   textClass?: string;
   style?: React.CSSProperties;
+  inline: boolean;
   renderer: FormRenderer;
   emptyText?: string | null;
 }) {
@@ -37,6 +39,7 @@ export function DefaultDisplayOnly({
       className={className}
       textClass={textClass}
       text={text}
+      inline={inline}
     />
   );
 }

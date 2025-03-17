@@ -64,6 +64,7 @@ import {
   HtmlInputProperties,
   HtmlLabelProperties,
   IconLibrary,
+  IconPlacement,
   IconReference,
   isAccordionAdornment,
   isDataGroupRenderer,
@@ -141,6 +142,7 @@ export function createButtonActionRenderer(
         textClass,
         actionStyle,
         icon,
+        iconPlacement = IconPlacement.BeforeText,
       }: ActionRendererProps,
       renderer,
     ) => {
@@ -149,6 +151,9 @@ export function createButtonActionRenderer(
       const classNames = rendererClass(
         className,
         isLink ? options.linkClassName : options.className,
+      );
+      const iconElement = icon && (
+        <I iconName={icon.name} iconLibrary={icon.library} />
       );
       return (
         <Button
@@ -159,6 +164,7 @@ export function createButtonActionRenderer(
         >
           {options.renderContent?.(actionText, actionId, actionData) ?? (
             <>
+              {iconPlacement == IconPlacement.BeforeText && iconElement}
               <Span
                 className={rendererClass(
                   textClass,
@@ -167,7 +173,7 @@ export function createButtonActionRenderer(
               >
                 {actionText}
               </Span>
-              {icon && <I iconName={icon.name} iconLibrary={icon.library} />}
+              {iconPlacement == IconPlacement.AfterText && iconElement}
             </>
           )}
         </Button>
@@ -274,6 +280,7 @@ export function createDefaultDataRenderer(
               className={props.className}
               textClass={props.textClass}
               style={props.style}
+              inline={props.inline}
               renderer={renderers}
               emptyText={
                 isDisplayOnlyRenderer(renderOptions) && renderOptions.emptyText

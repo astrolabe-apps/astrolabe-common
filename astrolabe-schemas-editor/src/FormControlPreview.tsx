@@ -56,6 +56,7 @@ export interface FormControlPreviewProps {
   labelClass?: string;
   displayOnly?: boolean;
   context: FormControlPreviewContext;
+  inline?: boolean;
 }
 
 export interface FormControlPreviewContext {
@@ -87,6 +88,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     layoutClass,
     displayOnly: dOnly,
     context,
+    inline,
   } = props;
   const definition = node.definition;
   const { selected, renderer, hideFields } = context;
@@ -112,7 +114,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const sampleData = useMemo(
     () =>
       displayOptions
-        ? (displayOptions.sampleText ?? "Sample Data")
+        ? displayOptions.sampleText ?? "Sample Data"
         : field &&
           (elementIndex == null
             ? field.collection
@@ -133,7 +135,11 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     parentNode: parentDataNode,
     formData: {},
   } satisfies ControlDataContext;
-  const formOptions = { readonly: dataDefinition?.readonly, displayOnly };
+  const formOptions = {
+    readonly: dataDefinition?.readonly,
+    displayOnly,
+    inline,
+  };
   const adornments =
     definition.adornments?.map((x) =>
       renderer.renderAdornment({
@@ -213,11 +219,16 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     style,
     children: child,
     className,
+    inline: showInline,
   } = renderer.renderLayout({
     ...layout,
     adornments,
     className: rendererClass(layoutClass, definition.layoutClass),
   });
+
+  if (showInline) {
+    return child;
+  }
   return (
     <div
       style={{

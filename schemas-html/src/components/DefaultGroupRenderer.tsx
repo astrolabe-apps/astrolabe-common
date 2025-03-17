@@ -4,6 +4,7 @@ import {
   GridRenderer,
   GroupRendererProps,
   GroupRendererRegistration,
+  GroupRenderType,
   isFlexRenderer,
   isGridRenderer,
   isSelectChildRenderer,
@@ -87,12 +88,19 @@ export function createDefaultGroupRenderer(
         ? flexStyles(renderOptions)
         : ({ className: standardClassName } as StyleProps);
     const { Div } = renderer.html;
+    const inline = renderOptions.type == GroupRenderType.Inline;
+    const children = formNode.getChildNodes().map((c, i) =>
+      renderChild(i, c, {
+        inline,
+      }),
+    );
     return (
       <Div
         className={rendererClass(props.className, clsx(className, gcn))}
         style={style}
+        inline={inline}
       >
-        {formNode.getChildNodes().map((c, i) => renderChild(i, c))}
+        {children}
       </Div>
     );
   }

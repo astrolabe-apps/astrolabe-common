@@ -54,7 +54,7 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
     },
     action: {
       className:
-        "bg-primary-500 rounded-lg p-3 web:hover:opacity-90 active:opacity-90",
+        "flex flex-row gap-2 bg-primary-500 rounded-lg p-3 web:hover:opacity-90 active:opacity-90",
       textClass: "text-white",
     },
     adornment: {
@@ -98,10 +98,18 @@ function RNDiv({
   textClass,
   text,
   style,
+  inline,
   ...props
 }: HtmlDivProperties) {
   if (html != null) {
     return <RNHtmlRenderer {...props} html={html} />;
+  }
+  if (inline) {
+    return (
+      <Text style={style as StyleProp<ViewStyle>} className={textClass}>
+        {text ?? children}
+      </Text>
+    );
   }
   if (text != null) {
     return (

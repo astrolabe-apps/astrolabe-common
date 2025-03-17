@@ -43,6 +43,7 @@ import {
   FormContextData,
   FormNode,
   GroupRenderOptions,
+  IconPlacement,
   IconReference,
   isActionControl,
   isDataControl,
@@ -120,6 +121,7 @@ export interface HtmlDivProperties {
   text?: string;
   html?: string;
   nativeRef?: (e: HTMLElement | null) => void;
+  inline?: boolean;
 }
 
 export interface HtmlInputProperties {
@@ -285,6 +287,7 @@ export interface RenderedLayout {
   className?: string;
   style?: React.CSSProperties;
   wrapLayout: (layout: ReactElement) => ReactElement;
+  inline?: boolean;
 }
 
 export interface RenderedControl {
@@ -292,6 +295,7 @@ export interface RenderedControl {
   className?: string;
   style?: React.CSSProperties;
   divRef?: (cb: HTMLElement | null) => void;
+  inline?: boolean;
 }
 
 export interface VisibilityRendererProps extends RenderedControl {
@@ -306,6 +310,7 @@ export interface ControlLayoutProps {
   processLayout?: (props: ControlLayoutProps) => ControlLayoutProps;
   className?: string | null;
   style?: React.CSSProperties;
+  inline?: boolean;
 }
 
 /**
@@ -399,6 +404,7 @@ export interface DisplayRendererProps {
    * The CSS styles for the display renderer.
    */
   style?: React.CSSProperties;
+  inline?: boolean;
 }
 
 export type ChildVisibilityFunc = (
@@ -436,6 +442,7 @@ export interface DataRendererProps extends ParentRendererProps {
   hidden: boolean;
   dataNode: SchemaDataNode;
   displayOnly: boolean;
+  inline: boolean;
 }
 
 export interface ActionRendererProps {
@@ -443,12 +450,14 @@ export interface ActionRendererProps {
   actionText: string;
   actionData?: any;
   actionStyle?: ActionStyle;
-  icon?: IconReference;
+  icon?: IconReference | null;
+  iconPlacement?: IconPlacement;
   onClick: () => void;
   className?: string | null;
   textClass?: string | null;
   style?: React.CSSProperties;
   disabled?: boolean;
+  inline?: boolean;
 }
 
 export interface ControlRenderProps {
@@ -461,6 +470,7 @@ export interface FormContextOptions {
   hidden?: boolean | null;
   disabled?: boolean | null;
   displayOnly?: boolean;
+  inline?: boolean;
 }
 
 export interface DataControlProps {
@@ -682,6 +692,7 @@ export function useControlRendererComponent(
         readonly: options.readonly || readonlyControl.value,
         disabled: options.disabled || disabledControl.value,
         displayOnly: options.displayOnly || isControlDisplayOnly(c),
+        inline: options.inline,
       }));
       const myOptions = trackedValue(myOptionsControl);
       useValidation({
@@ -795,6 +806,9 @@ export function useControlRendererComponent(
       const renderedControl = renderer.renderLayout(
         options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,
       );
+      if (labelAndChildren.inline) {
+        console.log(labelAndChildren, renderedControl);
+      }
       return renderer.renderVisibility({ visibility, ...renderedControl });
     } finally {
       stopTracking();
@@ -878,16 +892,17 @@ export function defaultDataProps({
     control,
     field,
     id: "c" + control.uniqueId,
+    inline: !!formOptions.inline,
     options:
       allowed.length > 0
         ? allowed
             .map((x) =>
               typeof x === "object"
                 ? x
-                : (fieldOptions?.find((y) => y.value == x) ?? {
+                : fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  }),
+                  },
             )
             .filter((x) => x != null)
         : fieldOptions,
@@ -907,6 +922,7 @@ export interface ChildRendererOptions {
   elementIndex?: number;
   parentDataNode?: SchemaDataNode;
   formData?: FormContextData;
+  inline?: boolean;
   displayOnly?: boolean;
   styleClass?: string;
   layoutClass?: string;
@@ -970,8 +986,8 @@ export function renderControlLayout(
     styleClass,
     textClass,
     formNode,
+    formOptions,
   } = props;
-
   if (isDataControl(c)) {
     return renderData(c);
   }
@@ -986,6 +1002,7 @@ export function renderControlLayout(
     }
 
     return {
+      inline: formOptions.inline,
       processLayout: renderer.renderGroup({
         formNode,
         definition: c,
@@ -1010,12 +1027,14 @@ export function renderControlLayout(
   if (isActionControl(c)) {
     const actionData = props.actionDataControl?.value ?? c.actionData;
     return {
+      inline: formOptions.inline,
       children: renderer.renderAction({
         actionText: labelText?.value ?? c.title ?? c.actionId,
         actionId: c.actionId,
         actionData,
         actionStyle: c.actionStyle ?? ActionStyle.Button,
         textClass: rendererClass(textClass, c.textClass),
+        icon: c.icon,
         onClick:
           props.actionOnClick?.(c.actionId, actionData, dataContext) ??
           (() => {}),
@@ -1033,13 +1052,16 @@ export function renderControlLayout(
       style,
       display: displayControl,
       dataContext,
+      inline: formOptions.inline,
     };
     if (data.type === DisplayDataType.Custom && customDisplay) {
       return {
+        inline: formOptions.inline,
         children: customDisplay((data as CustomDisplay).customId, displayProps),
       };
     }
     return {
+      inline: formOptions.inline,
       children: renderer.renderDisplay(displayProps),
     };
   }
@@ -1060,6 +1082,7 @@ export function renderControlLayout(
         )
       : undefined;
     return {
+      inline: formOptions.inline,
       processLayout: renderer.renderData(rendererProps),
       label: {
         type:
@@ -1084,6 +1107,7 @@ type MarkupKeys = keyof Omit<
   | "wrapLayout"
   | "readonly"
   | "disabled"
+  | "inline"
 >;
 export function appendMarkup(
   k: MarkupKeys,
@@ -1145,13 +1169,21 @@ export function renderLayoutParts(
   props: ControlLayoutProps,
   renderer: FormRenderer,
 ): RenderedLayout {
-  const { className, children, style, errorControl, label, adornments } =
-    props.processLayout?.(props) ?? props;
+  const {
+    className,
+    children,
+    style,
+    errorControl,
+    label,
+    adornments,
+    inline,
+  } = props.processLayout?.(props) ?? props;
   const layout: RenderedLayout = {
     children,
     errorControl,
     style,
     className: className!,
+    inline,
     wrapLayout: (x) => x,
   };
   (adornments ?? [])

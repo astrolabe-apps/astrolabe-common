@@ -22,6 +22,7 @@ export function createDefaultLayoutRenderer(
       children: layout.wrapLayout(
         <DefaultLayout layout={layout} {...options} renderer={renderers} />,
       ),
+      inline: props.inline,
       className: rendererClass(layout.className, options.className),
       style: layout.style,
       divRef: (e) =>

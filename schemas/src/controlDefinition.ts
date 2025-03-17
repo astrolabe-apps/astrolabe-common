@@ -348,6 +348,7 @@ export enum GroupRenderType {
   Tabs = "Tabs",
   GroupElement = "GroupElement",
   SelectChild = "SelectChild",
+  Inline = "Inline",
 }
 
 export interface StandardGroupRenderer extends GroupRenderOptions {
@@ -422,11 +423,17 @@ export interface ActionControlDefinition extends ControlDefinition {
   actionData?: string | null;
   icon?: IconReference | null;
   actionStyle?: ActionStyle | null;
+  iconPlacement?: IconPlacement | null;
 }
 
 export enum ActionStyle {
   Button = "Button",
   Link = "Link",
+}
+
+export enum IconPlacement {
+  BeforeText = "BeforeText",
+  AfterText = "AfterText",
 }
 
 export interface ControlVisitor<A> {

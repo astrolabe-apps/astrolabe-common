@@ -45,7 +45,7 @@ export function DefaultDisplay({
   renderer: FormRenderer;
 }) {
   const { data, display, className, textClass, style } = displayProps;
-  const { I, Div, B, H1 } = renderer.html;
+  const { I, Div, B, H1, Span } = renderer.html;
   switch (data.type) {
     case DisplayDataType.Icon:
       const iconDisplay = data as IconDisplay;
@@ -61,14 +61,16 @@ export function DefaultDisplay({
         />
       );
     case DisplayDataType.Text:
+      const text = display
+        ? coerceToString(display.value)
+        : (data as TextDisplay).text;
       return (
         <Div
           style={style}
           className={rendererClass(className, options.textClassName)}
           textClass={rendererClass(textClass, options.textTextClass)}
-          text={
-            display ? coerceToString(display.value) : (data as TextDisplay).text
-          }
+          text={text}
+          inline={displayProps.inline}
         />
       );
     case DisplayDataType.Html:
@@ -76,6 +78,7 @@ export function DefaultDisplay({
         <Div
           style={style}
           className={rendererClass(className, options.htmlClassName)}
+          inline={displayProps.inline}
           html={
             display ? coerceToString(display.value) : (data as HtmlDisplay).html
           }
