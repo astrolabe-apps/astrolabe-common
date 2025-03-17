@@ -22,6 +22,7 @@ import {
   ActionStyle,
   ControlDefinition,
 } from "@react-typed-forms/schemas";
+import { IconPlacement } from "../client";
 
 export interface FieldOptionForm {
   name: string;
@@ -1278,6 +1279,7 @@ export interface ControlDefinitionForm {
   actionData: string | null;
   icon: IconReferenceForm | null;
   actionStyle: ActionStyle | null;
+  iconPlacement: IconPlacement | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -1459,6 +1461,21 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
       {
         name: "Link",
         value: "Link",
+      },
+    ],
+  }),
+  iconPlacement: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Action"],
+    displayName: "Icon Placement",
+    options: [
+      {
+        name: "BeforeText",
+        value: "BeforeText",
+      },
+      {
+        name: "AfterText",
+        value: "AfterText",
       },
     ],
   }),

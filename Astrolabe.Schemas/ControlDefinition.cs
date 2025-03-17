@@ -90,7 +90,8 @@ public record ActionControlDefinition(
     string ActionId,
     string? ActionData,
     IconReference? Icon,
-    ActionStyle? ActionStyle
+    ActionStyle? ActionStyle,
+    IconPlacement? IconPlacement
 ) : ControlDefinition(ControlDefinitionType.Action.ToString());
 
 [JsonString]
@@ -98,6 +99,13 @@ public enum ActionStyle
 {
     Button,
     Link,
+}
+
+[JsonString]
+public enum IconPlacement
+{
+    BeforeText,
+    AfterText,
 }
 
 [JsonString]
