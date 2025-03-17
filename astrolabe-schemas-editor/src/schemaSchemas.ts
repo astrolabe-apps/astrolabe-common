@@ -733,6 +733,10 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
         name: "SelectChild",
         value: "SelectChild",
       },
+      {
+        name: "Inline",
+        value: "Inline",
+      },
     ],
   }),
   hideTitle: makeScalarField({
