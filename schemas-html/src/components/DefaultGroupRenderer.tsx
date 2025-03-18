@@ -104,6 +104,7 @@ export function createDefaultGroupRenderer(
         className={rendererClass(props.className, clsx(className, gcn))}
         textClass={props.textClass}
         style={style}
+        inline={inline}
       >
         {children}
       </Div>
