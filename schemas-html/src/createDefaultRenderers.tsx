@@ -599,7 +599,9 @@ export function DefaultHtmlIconRenderer({
   className,
   style,
 }: HtmlIconProperties) {
-  return <i className={clsx(className, toIconClass())} style={style} />;
+  return iconName ? (
+    <i className={clsx(className, toIconClass())} style={style} />
+  ) : undefined;
 
   function toIconClass() {
     if (!iconName) return undefined;
