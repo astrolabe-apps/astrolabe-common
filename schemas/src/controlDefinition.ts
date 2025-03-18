@@ -467,6 +467,12 @@ export function isGridRenderer(
   return options.type === GroupRenderType.Grid;
 }
 
+export function isInlineRenderer(
+  options: GroupRenderOptions,
+): options is GridRenderer {
+  return options.type === GroupRenderType.Inline;
+}
+
 export function isSelectChildRenderer(
   options: GroupRenderOptions,
 ): options is SelectChildRenderer {

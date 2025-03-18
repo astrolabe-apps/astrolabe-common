@@ -17,6 +17,7 @@ export const defaultTailwindTheme = {
     standardClassName: "flex flex-col gap-4",
     gridClassName: "gap-x-2 gap-y-4",
     flexClassName: "gap-2",
+    inlineClass: "",
     tabs: {
       className: "",
       tabListClass:
@@ -33,6 +34,8 @@ export const defaultTailwindTheme = {
   },
   action: {
     className: "bg-primary-500 rounded-lg p-3 text-white",
+    iconBeforeClass: "px-2",
+    iconAfterClass: "px-2",
   },
   layout: {
     className: "flex flex-col",

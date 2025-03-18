@@ -7,6 +7,7 @@ import {
   GroupRenderType,
   isFlexRenderer,
   isGridRenderer,
+  isInlineRenderer,
   isSelectChildRenderer,
   isTabsRenderer,
   rendererClass,
@@ -30,6 +31,7 @@ export interface DefaultGroupRendererOptions {
   defaultGridColumns?: number;
   flexClassName?: string;
   defaultFlexGap?: string;
+  inlineClass?: string;
   tabs?: DefaultTabsRenderOptions;
 }
 
@@ -44,6 +46,7 @@ export function createDefaultGroupRenderer(
     gridClassName,
     standardClassName,
     flexClassName,
+    inlineClass,
     defaultFlexGap,
   } = options ?? {};
 
@@ -86,7 +89,9 @@ export function createDefaultGroupRenderer(
       ? gridStyles(renderOptions)
       : isFlexRenderer(renderOptions)
         ? flexStyles(renderOptions)
-        : ({ className: standardClassName } as StyleProps);
+        : isInlineRenderer(renderOptions)
+          ? ({ className: inlineClass } as StyleProps)
+          : ({ className: standardClassName } as StyleProps);
     const { Div } = renderer.html;
     const inline = renderOptions.type == GroupRenderType.Inline;
     const children = formNode.getChildNodes().map((c, i) =>
@@ -97,8 +102,8 @@ export function createDefaultGroupRenderer(
     return (
       <Div
         className={rendererClass(props.className, clsx(className, gcn))}
+        textClass={props.textClass}
         style={style}
-        inline={inline}
       >
         {children}
       </Div>

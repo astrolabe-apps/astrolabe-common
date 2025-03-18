@@ -1,12 +1,4 @@
-import {
-  ButtonHTMLAttributes,
-  ComponentType,
-  CSSProperties,
-  ForwardedRef,
-  forwardRef,
-  HTMLAttributes,
-  InputHTMLAttributes,
-} from "react";
+import { ButtonHTMLAttributes, HTMLAttributes } from "react";
 
 import {
   DefaultRendererOptions,
@@ -15,24 +7,21 @@ import {
 import { Platform, Pressable, Text, View } from "react-native";
 import { RNCheckbox } from "./components/RNCheckbox";
 import { RNTextInput } from "./components/RNTextInput";
-import { RNText } from "./components/RNText";
 import { RNRadioItem } from "./components/RNRadioItem";
 import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
 import { createRNHelpTextRenderer } from "./components/RNHelpTextRenderer";
 import {
   deepMerge,
-  fontAwesomeIcon,
+  HtmlButtonProperties,
   HtmlComponents,
   HtmlDivProperties,
   HtmlIconProperties,
   HtmlInputProperties,
-  mergeObjects,
   RendererRegistration,
 } from "@react-typed-forms/schemas";
 import { RNHtmlRenderer } from "./components/RNHtmlRenderer";
 import { FontAwesomeIcon } from "./components/FontAwesomeIcon";
 import { createRNSelectRenderer } from "./components/RNSelectRenderer";
-import { cn } from "./utils";
 import { StyleProp } from "react-native/Libraries/StyleSheet/StyleSheet";
 import { ViewStyle } from "react-native/Libraries/StyleSheet/StyleSheetTypes";
 
@@ -88,8 +77,27 @@ function RNIcon({ iconName, className, iconLibrary }: HtmlIconProperties) {
 function RNSpan(props: HTMLAttributes<HTMLElement>) {
   return <Text {...(props as any)} />;
 }
-function RNButton(props: ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <Pressable {...(props as any)} onPress={props.onClick as any} />;
+function RNButton({
+  inline,
+  textClass,
+  children,
+  ...props
+}: HtmlButtonProperties) {
+  if (inline) {
+    return (
+      <Text
+        {...(props as any)}
+        className={textClass}
+        onPress={props.onClick as any}
+        children={children}
+      />
+    );
+  }
+  return (
+    <Pressable {...(props as any)} onPress={props.onClick as any}>
+      <Text className={textClass}>{children}</Text>
+    </Pressable>
+  );
 }
 function RNDiv({
   className,

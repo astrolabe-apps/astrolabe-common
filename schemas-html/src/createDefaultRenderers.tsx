@@ -7,12 +7,7 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, {
-  ForwardedRef,
-  forwardRef,
-  ReactElement,
-  ReactNode,
-} from "react";
+import React, { ReactElement, ReactNode } from "react";
 import clsx from "clsx";
 import {
   createSelectRenderer,
@@ -58,6 +53,7 @@ import {
   FieldType,
   FormRenderer,
   hasOptions,
+  HtmlButtonProperties,
   HtmlComponents,
   HtmlDivProperties,
   HtmlIconProperties,
@@ -117,6 +113,8 @@ export interface DefaultActionRendererOptions {
   linkClassName?: string;
   textClass?: string;
   linkTextClass?: string;
+  iconBeforeClass?: string;
+  iconAfterClass?: string;
   renderContent?: (
     actionText: string,
     actionId: string,
@@ -143,36 +141,43 @@ export function createButtonActionRenderer(
         actionStyle,
         icon,
         iconPlacement = IconPlacement.BeforeText,
+        inline,
       }: ActionRendererProps,
       renderer,
     ) => {
-      const { Button, Span, I } = renderer.html;
+      const { Button, I } = renderer.html;
       const isLink = actionStyle == ActionStyle.Link;
       const classNames = rendererClass(
         className,
         isLink ? options.linkClassName : options.className,
       );
       const iconElement = icon && (
-        <I iconName={icon.name} iconLibrary={icon.library} />
+        <I
+          iconName={icon.name}
+          iconLibrary={icon.library}
+          className={
+            iconPlacement == IconPlacement.BeforeText
+              ? options.iconBeforeClass
+              : options.iconAfterClass
+          }
+        />
       );
       return (
         <Button
           className={classNames}
+          textClass={rendererClass(
+            textClass,
+            isLink ? options.linkTextClass : options.textClass,
+          )}
           disabled={disabled}
           style={style}
           onClick={onClick}
+          inline={inline}
         >
           {options.renderContent?.(actionText, actionId, actionData) ?? (
             <>
               {iconPlacement == IconPlacement.BeforeText && iconElement}
-              <Span
-                className={rendererClass(
-                  textClass,
-                  isLink ? options.linkTextClass : options.textClass,
-                )}
-              >
-                {actionText}
-              </Span>
+              {actionText}
               {iconPlacement == IconPlacement.AfterText && iconElement}
             </>
           )}
@@ -519,7 +524,7 @@ export function createDefaultLabelRenderer(
 }
 
 export const StandardHtmlComponents: HtmlComponents = {
-  Button: "button",
+  Button: DefaultHtmlButtonRenderer,
   Label: DefaultHtmlLabelRenderer,
   I: DefaultHtmlIconRenderer,
   Span: "span",
@@ -529,6 +534,14 @@ export const StandardHtmlComponents: HtmlComponents = {
   Input: DefaultHtmlInputRenderer,
 };
 
+export function DefaultHtmlButtonRenderer({
+  inline,
+  textClass,
+  className,
+  ...props
+}: HtmlButtonProperties) {
+  return <button className={clsx(className, textClass)} {...props} />;
+}
 export function DefaultHtmlInputRenderer({
   textClass,
   className,

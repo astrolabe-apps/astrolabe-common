@@ -141,10 +141,20 @@ export interface HtmlInputProperties {
   onChangeValue?: (value: string) => void;
   onChangeChecked?: (checked: boolean) => void;
 }
+
+export interface HtmlButtonProperties {
+  className?: string;
+  textClass?: string;
+  disabled?: boolean;
+  style?: React.CSSProperties;
+  onClick?: () => void;
+  inline?: boolean;
+  children?: ReactNode;
+}
 export interface HtmlComponents {
   Div: ComponentType<HtmlDivProperties>;
   Span: ElementType<HTMLAttributes<HTMLSpanElement>>;
-  Button: ElementType<ButtonHTMLAttributes<HTMLButtonElement>>;
+  Button: ComponentType<HtmlButtonProperties>;
   I: ComponentType<HtmlIconProperties>;
   Label: ComponentType<HtmlLabelProperties>;
   B: ElementType<HTMLAttributes<HTMLElement>>;
@@ -1008,6 +1018,7 @@ export function renderControlLayout(
         dataContext,
         renderOptions: c.groupOptions ?? { type: "Standard" },
         className: rendererClass(styleClass, c.styleClass),
+        textClass: rendererClass(textClass, c.textClass),
         useChildVisibility,
         style,
         designMode,
@@ -1032,6 +1043,7 @@ export function renderControlLayout(
         actionStyle: c.actionStyle ?? ActionStyle.Button,
         textClass: rendererClass(textClass, c.textClass),
         icon: c.icon,
+        inline: formOptions.inline,
         onClick:
           props.actionOnClick?.(c.actionId, actionData, dataContext) ??
           (() => {}),
