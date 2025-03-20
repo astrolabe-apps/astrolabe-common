@@ -5,7 +5,7 @@ import {
   rendererClass,
   renderLayoutParts,
 } from "@react-typed-forms/schemas";
-import React, { ReactNode } from "react";
+import React, { ReactNode, Fragment } from "react";
 
 export interface DefaultLayoutRendererOptions {
   className?: string;

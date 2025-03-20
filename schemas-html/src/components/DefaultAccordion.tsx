@@ -1,4 +1,4 @@
-import React, { CSSProperties, ReactElement } from "react";
+import React, { CSSProperties, ReactElement, Fragment } from "react";
 import { Control, useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
 import { DefaultAccordionRendererOptions } from "../createDefaultRenderers";

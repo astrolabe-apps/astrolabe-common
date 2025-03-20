@@ -6,7 +6,7 @@ import {
   rendererClass,
   TabsRenderOptions,
 } from "@react-typed-forms/schemas";
-import React from "react";
+import React, { Fragment } from "react";
 import { useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
 

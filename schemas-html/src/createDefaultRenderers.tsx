@@ -7,7 +7,7 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, { ReactElement, ReactNode } from "react";
+import React, { ReactElement, ReactNode, Fragment } from "react";
 import clsx from "clsx";
 import {
   createSelectRenderer,
