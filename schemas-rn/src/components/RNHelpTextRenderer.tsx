@@ -15,7 +15,7 @@ import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { cn } from "../utils";
 import { RNText, TextClassContext } from "./RNText";
 import { RNButton } from "./RNButton";
-import { FontAwesomeIcon } from "./FontAwesomeIcon";
+import { Icon } from "./Icon";
 
 export interface ExtendedHelpText {
   helpLabel: string;
@@ -44,9 +44,7 @@ export function createRNHelpTextRenderer(
               size={"sm"}
               className={triggerContainerClass}
             >
-              {iconName && (
-                <FontAwesomeIcon name={iconName} className={iconClass} />
-              )}
+              {iconName && <Icon name={iconName} className={iconClass} />}
               <RNText className={triggerLabelClass}>
                 {renderers.renderLabelText(
                   (p.adornment as ExtendedHelpText & ControlAdornment)

@@ -1,5 +1,4 @@
-import { ButtonHTMLAttributes, HTMLAttributes } from "react";
-
+import { HTMLAttributes } from "react";
 import {
   DefaultRendererOptions,
   defaultTailwindTheme,
@@ -17,13 +16,14 @@ import {
   HtmlDivProperties,
   HtmlIconProperties,
   HtmlInputProperties,
+  IconLibrary,
   RendererRegistration,
 } from "@react-typed-forms/schemas";
 import { RNHtmlRenderer } from "./components/RNHtmlRenderer";
-import { FontAwesomeIcon } from "./components/FontAwesomeIcon";
 import { createRNSelectRenderer } from "./components/RNSelectRenderer";
 import { StyleProp } from "react-native/Libraries/StyleSheet/StyleSheet";
 import { ViewStyle } from "react-native/Libraries/StyleSheet/StyleSheetTypes";
+import { Icon } from "./components/Icon";
 
 export const reactNativeHtml: HtmlComponents = {
   I: RNIcon,
@@ -70,7 +70,11 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
 
 function RNIcon({ iconName, className, iconLibrary }: HtmlIconProperties) {
   return iconName ? (
-    <FontAwesomeIcon name={iconName} className={className} />
+    <Icon
+      name={iconName}
+      className={className}
+      iconLibrary={iconLibrary as IconLibrary}
+    />
   ) : undefined;
 }
 

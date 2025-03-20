@@ -15,9 +15,9 @@ import {
   rendererClass,
 } from "@react-typed-forms/schemas";
 import { useMemo } from "react";
-import { FontAwesomeIcon } from "./FontAwesomeIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollView } from "react-native-gesture-handler";
+import { Icon } from "./Icon";
 
 export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
   return createDataRenderer(
@@ -138,7 +138,7 @@ const SelectTrigger = React.forwardRef<
     {...props}
   >
     <Pressable>{children}</Pressable>
-    <FontAwesomeIcon
+    <Icon
       name={"chevron-down"}
       className={"!text-[16px] text-foreground opacity-50"}
     />
@@ -219,7 +219,7 @@ const SelectItem = React.forwardRef<
   >
     <View className="absolute left-2 native:left-3.5 flex h-3.5 native:pt-px w-3.5 items-center justify-center">
       <SelectPrimitive.ItemIndicator>
-        <FontAwesomeIcon
+        <Icon
           name={"check"}
           className={"text-[12px] text-popover-foreground"}
         />
