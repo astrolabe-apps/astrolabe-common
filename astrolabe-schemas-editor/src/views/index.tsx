@@ -23,6 +23,7 @@ export interface ViewContext {
   getCurrentForm: () => Control<EditableForm | undefined> | undefined;
   editorControls: FormTree;
   editorFields: SchemaNode;
+  schemaEditorFields: SchemaNode;
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
   extensions?: ControlDefinitionExtension[];
   button: (onClick: () => void, action: string, actionId?: string) => ReactNode;

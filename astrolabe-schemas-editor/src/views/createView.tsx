@@ -6,6 +6,7 @@ import { ControlPropertiesView } from "./ControlPropertiesView";
 import { FormView } from "./FormView";
 import { FormListView } from "./FormListView";
 import { HelpView } from "./HelpView";
+import { SchemaPropertiesView } from "./SchemaPropertiesView";
 
 export function getTabTitle(viewType: string, viewParams?: string): string {
   switch (viewType) {
@@ -75,6 +76,8 @@ export function createView(
         return <FormView formId={viewParams!} context={context} />;
       case "controlProperties":
         return <ControlPropertiesView context={context} />;
+      case "schemaProperties":
+        return <SchemaPropertiesView context={context} />;
       default:
         return <div>Unknown view type: {viewType}</div>;
     }
