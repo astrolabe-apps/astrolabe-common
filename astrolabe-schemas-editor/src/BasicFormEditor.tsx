@@ -249,6 +249,7 @@ export function BasicFormEditor<A extends string = string>({
     editorControls: editorTree,
     createEditorRenderer,
     editorFields: rootSchemaNode(ControlDefinitionSchema),
+    schemaEditorFields: rootSchemaNode(controlDefinitionSchemaMap.SchemaField),
     formList,
     openForm,
     updateTabTitle,
