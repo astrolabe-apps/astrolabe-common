@@ -2,18 +2,13 @@ import { EditableForm, ViewContext } from "./index";
 import {
   Control,
   RenderOptional,
-  unsafeRestoreControl,
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
 import { FormControlPreview } from "../FormControlPreview";
-import {
-  addMissingControlsForSchema,
-  addMissingControlsToForm,
-} from "@react-typed-forms/schemas";
+import { addMissingControlsToForm } from "@react-typed-forms/schemas";
 import React from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
-import { toControlDefinitionForm } from "../schemaSchemas";
 import clsx from "clsx";
 
 export function FormView(props: { formId: string; context: ViewContext }) {
@@ -66,7 +61,7 @@ function RenderFormDesign({
     checkbox,
   } = context;
   const rootNode = c.fields.formTree.value.rootNode;
-  const rootSchema = context.schemaLookup.getSchema(c.fields.schemaId.value)!;
+  const rootSchema = c.fields.schema.value;
   const formRenderer = c.fields.renderer.value;
   return (
     <div className="flex flex-col h-full">

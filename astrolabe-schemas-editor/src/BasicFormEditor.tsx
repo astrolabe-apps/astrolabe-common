@@ -14,18 +14,19 @@ import {
   defaultTailwindTheme,
   ValueForFieldExtension,
 } from "@react-typed-forms/schemas-html";
-import { ControlDefinitionSchemaMap } from "./schemaSchemas";
+import { ControlDefinitionSchemaMap, toSchemaFieldForm } from "./schemaSchemas";
 import {
-  ActionStyle,
   addMissingControlsToForm,
   applyExtensionsToSchema,
   cleanDataForSchema,
+  compoundField,
   ControlDefinition,
   ControlDefinitionExtension,
   ControlDefinitionType,
   ControlRenderOptions,
   createFormRenderer,
   createFormTree,
+  createSchemaLookup,
   EditorGroup,
   FormNode,
   FormRenderer,
@@ -34,7 +35,8 @@ import {
   GroupRenderType,
   LabelType,
   RendererRegistration,
-  rootSchemaNode,
+  SchemaField,
+  SchemaNode,
   SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
 import React, {
@@ -49,6 +51,7 @@ import {
   TailwindConfig,
 } from "@mhsdesign/jit-browser-tailwindcss";
 import defaultEditorControls from "./ControlDefinition.json";
+import defaultSchemaEditorControls from "./SchemaField.json";
 import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
 import { createView, getTabTitle } from "./views/createView";
 import {
@@ -63,15 +66,18 @@ import {
 import { defaultLayout } from "./defaultLayout";
 import { EditorFormTree } from "./EditorFormNode";
 import { setIncluded } from "@astroapps/client";
+import { EditorSchemaTree } from "./EditorSchemaNode";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
   createEditorRenderer?: (renderers: RendererRegistration[]) => FormRenderer;
-  schemas: SchemaTreeLookup;
   loadForm: (formId: A) => Promise<{
     controls: ControlDefinition[];
     schemaName: string;
     renderer?: FormRenderer;
+  }>;
+  loadSchema: (schemaId: string) => Promise<{
+    fields: SchemaField[];
   }>;
   selectedForm?: Control<A | undefined>;
   formTypes: [string, string][] | FormInfo[];
@@ -79,6 +85,7 @@ export interface BasicFormEditorProps<A extends string> {
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   extensions?: ControlDefinitionExtension[];
   editorControls?: ControlDefinition[];
+  schemaEditorControls?: ControlDefinition[];
   previewOptions?: ControlRenderOptions;
   tailwindConfig?: TailwindConfig;
   collectClasses?: (c: ControlDefinition) => (string | undefined | null)[];
@@ -96,6 +103,7 @@ export function BasicFormEditor<A extends string = string>({
   formRenderer,
   selectedForm: sf,
   loadForm,
+  loadSchema,
   createEditorRenderer = (e) =>
     createFormRenderer(e, createDefaultRenderers(defaultTailwindTheme)),
   formTypes,
@@ -103,13 +111,13 @@ export function BasicFormEditor<A extends string = string>({
   saveForm,
   extensions: _extensions,
   editorControls,
+  schemaEditorControls,
   previewOptions,
   tailwindConfig,
   editorPanelClass,
   editorClass,
   rootControlClass,
   collectClasses,
-  schemas,
   controlsClass,
   handleIcon,
   extraPreviewControls,
@@ -119,17 +127,32 @@ export function BasicFormEditor<A extends string = string>({
     () => [...(_extensions ?? []), ValueForFieldExtension],
     [_extensions],
   );
-  const controlDefinitionSchemaMap = useMemo(
-    () => applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions ?? []),
+  const controlSchemas = useMemo(
+    () =>
+      createSchemaLookup(
+        applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions ?? []),
+      ),
     [extensions],
   );
+  const SchemaFieldRoot = controlSchemas.getSchema("SchemaField");
+  const ControlDefinitionRoot = controlSchemas.getSchema("ControlDefinition");
   const [model] = useState(() => Model.fromJson(defaultLayout));
 
   const editorFormRenderer = useMemo(() => createEditorRenderer([]), []);
   const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
+  const loadedSchemas = useControl<
+    Record<string, EditorSchemaTree | undefined>
+  >({});
   const loadedFormNames = useControl<string[]>([]);
-  const ControlDefinitionSchema = controlDefinitionSchemaMap.ControlDefinition;
+  const schemaEditorTree: FormTree = useMemo(() => {
+    const tree = createFormTree(
+      schemaEditorControls ?? defaultSchemaEditorControls,
+    );
+    addMissingControlsToForm(SchemaFieldRoot, tree, (m) => console.warn(m));
+    return tree;
+  }, [schemaEditorControls, controlSchemas, defaultSchemaEditorControls]);
+
   const editorTree: FormTree = useMemo(() => {
     const tree = createFormTree(editorControls ?? defaultEditorControls);
     const extraGroups: EditorGroup[] = extensions.flatMap((x) =>
@@ -147,13 +170,11 @@ export function BasicFormEditor<A extends string = string>({
         console.warn("Could not find parent group: ", g.parent);
       }
     });
-    addMissingControlsToForm(
-      rootSchemaNode(ControlDefinitionSchema),
-      tree,
-      (m) => console.warn(m),
+    addMissingControlsToForm(ControlDefinitionRoot, tree, (m) =>
+      console.warn(m),
     );
     return tree;
-  }, [editorControls, controlDefinitionSchemaMap, defaultEditorControls]);
+  }, [editorControls, controlSchemas, defaultEditorControls]);
 
   const genStyles = useMemo(
     () =>
@@ -229,7 +250,7 @@ export function BasicFormEditor<A extends string = string>({
   async function doSaveForm(c: Control<EditableForm>) {
     await saveForm(
       c.fields.formTree.value.root.value.children?.map((c) =>
-        cleanDataForSchema(c, ControlDefinitionSchema, true),
+        cleanDataForSchema(c, ControlDefinitionRoot, true),
       ) ?? [],
       c.fields.formId.value as A,
     );
@@ -243,7 +264,6 @@ export function BasicFormEditor<A extends string = string>({
     previewOptions,
     button,
     currentForm: selectedForm.as(),
-    schemaLookup: schemas,
     getForm,
     extraPreviewControls,
     editorPanelClass,
@@ -251,9 +271,10 @@ export function BasicFormEditor<A extends string = string>({
       selectedForm.value ? getForm(selectedForm.value) : undefined,
     extensions,
     editorControls: editorTree,
+    schemaEditorControls: schemaEditorTree,
     createEditorRenderer,
-    editorFields: rootSchemaNode(ControlDefinitionSchema),
-    schemaEditorFields: rootSchemaNode(controlDefinitionSchemaMap.SchemaField),
+    editorFields: ControlDefinitionRoot,
+    schemaEditorFields: SchemaFieldRoot,
     formList,
     openForm,
     updateTabTitle,
@@ -298,6 +319,25 @@ export function BasicFormEditor<A extends string = string>({
     return form;
   }
 
+  function getSchema(schemaId: string): EditorSchemaTree {
+    const schemaControl = loadedSchemas.fields[schemaId];
+    if (schemaControl.isNull) {
+      const tree = new EditorSchemaTree(
+        getSchema,
+        newControl(toSchemaFieldForm(compoundField("", [])(""))),
+      );
+      schemaControl.value = tree;
+      doLoadSchema(tree);
+    }
+    return schemaControl.value!;
+
+    async function doLoadSchema(tree: EditorSchemaTree) {
+      const { fields } = await loadSchema(schemaId);
+      tree.rootNode.control.fields.children.value =
+        fields.map(toSchemaFieldForm);
+    }
+  }
+
   function openForm(formId: string) {
     const tabId = "form:" + formId;
     const existingTab = model.getNodeById(tabId);
@@ -337,9 +377,10 @@ export function BasicFormEditor<A extends string = string>({
         },
       } as ControlDefinition),
     );
+    const tree = getSchema(res.schemaName);
     control.setInitialValue({
       formTree,
-      schemaId: res.schemaName,
+      schema: tree.rootNode,
       hideFields: false,
       renderer: res.renderer ?? formRenderer,
       formId,

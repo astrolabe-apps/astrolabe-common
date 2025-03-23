@@ -16,12 +16,12 @@ import { ReactNode } from "react";
 import { EditorFormTree } from "../EditorFormNode";
 
 export interface ViewContext {
-  schemaLookup: SchemaTreeLookup;
   formList: FormInfo[];
   currentForm: Control<string | undefined>;
   getForm: (formId: string) => Control<EditableForm | undefined>;
   getCurrentForm: () => Control<EditableForm | undefined> | undefined;
   editorControls: FormTree;
+  schemaEditorControls: FormTree;
   editorFields: SchemaNode;
   schemaEditorFields: SchemaNode;
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
@@ -55,7 +55,7 @@ export interface EditableForm {
   selectedControlId?: string;
   formTree: EditorFormTree;
   renderer: FormRenderer;
-  schemaId: string;
+  schema: SchemaNode;
   hideFields: boolean;
   formId: string;
   name: string;

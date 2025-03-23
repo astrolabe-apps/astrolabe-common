@@ -7,18 +7,15 @@ import { defaultControlForField } from "@react-typed-forms/schemas";
 import { InactiveView } from "./InactiveView";
 
 export function CurrentSchemaView({ context }: { context: ViewContext }) {
-  const { schemaLookup } = context;
   const cf = controlNotNull(context.getCurrentForm());
   if (!cf) return <InactiveView>No form selected</InactiveView>;
   const {
     selectedControl,
     selectedField,
-    schemaId: { value: schemaId },
+    schema: { value: rootSchema },
     selectedControlId,
     formTree: { value: tree },
   } = cf.fields;
-  const rootSchema = schemaLookup.getSchema(schemaId);
-  if (!rootSchema) return <div>Missing schema: {schemaId}</div>;
   return (
     <div className="flex flex-col h-full">
       <FormSchemaTree

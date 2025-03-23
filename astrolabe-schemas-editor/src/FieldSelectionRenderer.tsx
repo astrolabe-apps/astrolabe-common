@@ -198,7 +198,7 @@ function NodeSchemaTree({
   );
 
   function makeChildNodes(n: SchemaNode): NodeCtx[] {
-    return n.getChildNodes(true).map((x) => ({
+    return n.getChildNodes().map((x) => ({
       schema: x,
       id: getNodeId(x),
     }));

@@ -1,16 +1,10 @@
 import useResizeObserver from "use-resize-observer";
 import { NodeRendererProps, Tree } from "react-arborist";
-import { addElement, Control, trackedValue } from "@react-typed-forms/core";
-import {
-  ControlDefinitionForm,
-  toControlDefinitionForm,
-} from "./schemaSchemas";
+import { Control } from "@react-typed-forms/core";
 import React from "react";
 import clsx from "clsx";
 import {
-  defaultControlForField,
   fieldPathForDefinition,
-  FieldType,
   getSchemaNodePath,
   isCompoundNode,
   schemaForFieldPath,
@@ -60,7 +54,7 @@ export function FormSchemaTree({
   );
 
   function makeChildNodes(n: SchemaNode): SchemaNodeCtx[] {
-    return n.getChildNodes(true).map((x) => ({
+    return n.getChildNodes().map((x) => ({
       schema: x,
       selectedControl,
       id: getNodeId(x),

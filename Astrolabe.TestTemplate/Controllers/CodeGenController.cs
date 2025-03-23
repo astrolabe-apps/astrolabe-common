@@ -40,4 +40,21 @@ public class CodeGenController : ControllerBase
             JsonSerializer.Serialize(formData, new JsonSerializerOptions { WriteIndented = true })
         );
     }
+    
+    [HttpPut("SchemaField")]
+    public async Task EditSchemaFieldDefinition(
+        JsonElement formData,
+        [FromServices] IWebHostEnvironment environment
+    )
+    {
+        var path = Path.Join(
+            environment.ContentRootPath,
+            $"ClientApp/sites/formServer/src/SchemaField.json"
+        );
+        await System.IO.File.WriteAllTextAsync(
+            path,
+            JsonSerializer.Serialize(formData, new JsonSerializerOptions { WriteIndented = true })
+        );
+    }
+
 }

@@ -5,7 +5,9 @@ import { saveAs } from "file-saver";
 import {
   BasicFormEditor,
   ControlDefinitionSchema,
+  ControlDefinitionSchemaMap,
   FieldSelectionExtension,
+  SchemaFieldSchema,
 } from "@astroapps/schemas-editor";
 import {
   Control,
@@ -34,6 +36,7 @@ import {
   GroupRenderType,
   intField,
   makeEvalExpressionHook,
+  SchemaField,
   SchemaTags,
   stringField,
   stringOptionsField,
@@ -57,6 +60,7 @@ import {
   SearchStateClient,
 } from "../client";
 import controlsJson from "../ControlDefinition.json";
+import schemaFieldJson from "../SchemaField.json";
 import testSchemaControls from "../forms/TestSchema.json";
 import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
@@ -262,15 +266,17 @@ const TabControls = groupedControl(
   { groupOptions: { type: GroupRenderType.Tabs } },
 );
 
-const schemaLookup = createSchemaLookup({
+const schemaLookup: Record<string, SchemaField[]> = {
   TestSchema,
   GridSchema,
   RequestSchema,
   ResultSchema,
-  ControlDefinitionSchema,
   TabSchema,
   ...SchemaMap,
-});
+  ...ControlDefinitionSchemaMap,
+  ControlDefinitionSchema,
+  SchemaFieldSchema,
+};
 
 export default function Editor() {
   const carClient = useApiClient(CarClient);
@@ -293,7 +299,7 @@ export default function Editor() {
       <div id="dialog_container" ref={setContainer} />
       <BasicFormEditor
         formRenderer={StdFormRenderer}
-        schemas={schemaLookup}
+        loadSchema={async (c) => ({ fields: schemaLookup[c] })}
         // handleIcon={<div>WOAH</div>}
         loadForm={async (c) => {
           if (c in FormDefinitions)
@@ -303,6 +309,11 @@ export default function Editor() {
               return {
                 schemaName: "ControlDefinitionSchema",
                 controls: controlsJson,
+              };
+            case "SchemaField":
+              return {
+                schemaName: "SchemaFieldSchema",
+                controls: schemaFieldJson,
               };
             case "TestSchema":
               return { schemaName: c, controls: testSchemaControls.controls };
@@ -315,6 +326,7 @@ export default function Editor() {
         selectedForm={selectedForm}
         formTypes={[
           ["EditorControls", "EditorControls"],
+          ["SchemaField", "SchemaField"],
           ["CarInfo", "Pdf test"],
           ["TestSchema", "Test"],
           ["GridSchema", "Grid"],
@@ -331,6 +343,8 @@ export default function Editor() {
         saveForm={async (controls) => {
           if (selectedForm.value === "EditorControls") {
             await new CodeGenClient().editControlDefinition(controls);
+          } else if (selectedForm.value === "SchemaField") {
+            await new CodeGenClient().editSchemaFieldDefinition(controls);
           } else {
             if (selectedForm.value !== "Test") {
               await new SearchStateClient().editControlDefinition(
@@ -347,6 +361,7 @@ export default function Editor() {
         }}
         extensions={Extensions}
         editorControls={controlsJson}
+        schemaEditorControls={schemaFieldJson}
         extraPreviewControls={(c, data) => (
           <div>
             <RenderElements control={rolesSelectable}>

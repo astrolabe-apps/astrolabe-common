@@ -16,6 +16,7 @@ import {
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import React, { Fragment, useMemo } from "react";
+import { emptySchemaLookup } from "@react-typed-forms/schemas";
 
 export interface ValueForFieldRenderOptions extends RenderOptions {
   type: "ValueForField";
@@ -74,16 +75,19 @@ function ValueForField({
     setFields(e, { default: control }),
   );
   const [controls, rootSchema] = useMemo(() => {
-    const rootSchema = rootSchemaNode([
-      {
-        ...schema.field,
-        field: "default",
-        required: false,
-        notNullable: false,
-        onlyForTypes: null,
-        defaultValue: undefined,
-      },
-    ]);
+    const rootSchema = rootSchemaNode(
+      [
+        {
+          ...schema.field,
+          field: "default",
+          required: false,
+          notNullable: false,
+          onlyForTypes: null,
+          defaultValue: undefined,
+        },
+      ],
+      emptySchemaLookup,
+    );
     return [addMissingControlsForSchema(rootSchema, []), rootSchema];
   }, [schema]);
   const Render = useControlRendererComponent(

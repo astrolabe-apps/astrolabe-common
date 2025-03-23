@@ -22,6 +22,7 @@ import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
 import {
   CompoundField,
+  emptySchemaLookup,
   FieldOption,
   findField,
   getTagParam,
@@ -35,6 +36,7 @@ import {
   schemaForFieldPath,
   SchemaNode,
   SchemaTags,
+  resolveSchemaParent,
 } from "./schemaField";
 import {
   Control,
@@ -346,7 +348,11 @@ export function addMissingControls(
   controls: ControlDefinition[],
   warning?: (msg: string) => void,
 ) {
-  return addMissingControlsForSchema(rootSchemaNode(fields), controls, warning);
+  return addMissingControlsForSchema(
+    rootSchemaNode(fields, emptySchemaLookup),
+    controls,
+    warning,
+  );
 }
 
 function registerSchemaEntries(formNode: FormNode, parentSchema: SchemaNode) {
@@ -454,7 +460,7 @@ export function addMissingControlsToForm(
     } else {
       skipChildren = existingControls.some((x) => x.definition.childRefId);
     }
-    if (!skipChildren) schemaNode.getChildNodes(true).forEach(addMissing);
+    if (!skipChildren) schemaNode.getChildNodes().forEach(addMissing);
   }
 
   function getEligibleParents(schemaNode: SchemaNode) {
@@ -463,7 +469,7 @@ export function addMissingControlsToForm(
     while (parent) {
       eligibleParents.push(parent.id);
       if (parent.field.collection) break;
-      if (!parent.parent) parent.getChildNodes(true).forEach(addCompound);
+      if (!parent.parent) parent.getChildNodes().forEach(addCompound);
       parent = parent.parent;
     }
     return eligibleParents;
@@ -471,7 +477,7 @@ export function addMissingControlsToForm(
     function addCompound(node: SchemaNode) {
       if (isCompoundNode(node) && !node.field.collection) {
         eligibleParents.push(node.id);
-        node.getChildNodes(true).forEach(addCompound);
+        node.getChildNodes().forEach(addCompound);
       }
     }
   }
@@ -524,26 +530,30 @@ export function getDisplayOnlyOptions(
 /**
  * Cleans data for a schema based on the provided schema fields.
  * @param v - The data to clean.
- * @param fields - The schema fields to use for cleaning the data.
+ * @param schemaNode
  * @param removeIfDefault - Flag indicating if default values should be removed.
  * @returns The cleaned data.
  */
 export function cleanDataForSchema(
   v: { [k: string]: any } | undefined,
-  fields: SchemaField[],
+  schemaNode: SchemaNode,
   removeIfDefault?: boolean,
 ): any {
   if (!v) return v;
-  const typeField = fields.find((x) => x.isTypeField);
+  const parent = resolveSchemaParent(schemaNode);
+  if (!parent) return v;
+  const fields = parent.getChildNodes(schemaNode);
+  const typeField = fields.find((x) => x.field.isTypeField)?.field;
   const typeValue = typeField ? v[typeField.field] : undefined;
   const cleanableFields = !removeIfDefault
     ? fields.filter(
-        (x) => isCompoundField(x) || (x.onlyForTypes?.length ?? 0) > 0,
+        (x) => isCompoundNode(x) || (x.field.onlyForTypes?.length ?? 0) > 0,
       )
     : fields;
   if (!cleanableFields.length) return v;
   const out = { ...v };
-  cleanableFields.forEach((x) => {
+  cleanableFields.forEach((childNode) => {
+    const x = childNode.field;
     const childValue = v[x.field];
     if (
       x.onlyForTypes?.includes(typeValue) === false ||
@@ -553,17 +563,16 @@ export function cleanDataForSchema(
       return;
     }
     if (isCompoundField(x)) {
-      const childFields = x.treeChildren ? fields : x.children;
       if (x.collection) {
         if (Array.isArray(childValue)) {
           out[x.field] = childValue.map((cv) =>
-            cleanDataForSchema(cv, childFields, removeIfDefault),
+            cleanDataForSchema(cv, childNode, removeIfDefault),
           );
         }
       } else {
         out[x.field] = cleanDataForSchema(
           childValue,
-          childFields,
+          childNode,
           removeIfDefault,
         );
       }

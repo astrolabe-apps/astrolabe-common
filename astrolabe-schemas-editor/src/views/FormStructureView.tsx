@@ -3,21 +3,17 @@ import { FormControlTree } from "../FormControlTree";
 import React from "react";
 import { NodeApi, TreeApi } from "react-arborist";
 import { ControlNode } from "../types";
-import { EditorFormNode } from "../EditorFormNode";
 import { controlNotNull } from "@react-typed-forms/core";
 import { defaultControlDefinitionForm } from "../schemaSchemas";
 import { InactiveView } from "./InactiveView";
 
 export function FormStructureView({ context }: { context: ViewContext }) {
   const controlTreeApi = React.useRef<TreeApi<ControlNode> | null>(null);
-  const { schemaLookup, currentForm, button } = context;
+  const { currentForm, button } = context;
   const cf = controlNotNull(context.getCurrentForm());
   if (!cf) return <InactiveView>No form selected</InactiveView>;
-  const schemaId = cf.fields.schemaId.value;
   const selectedTreeNode = cf.fields.selectedControlId;
-  const rootSchema = schemaId ? schemaLookup.getSchema(schemaId) : undefined;
-  if (!rootSchema)
-    return <InactiveView>Missing schema: {schemaId}</InactiveView>;
+  const rootSchema = cf.fields.schema.value;
   const tree = cf.fields.formTree.value;
   return (
     <div className="flex flex-col h-full">
