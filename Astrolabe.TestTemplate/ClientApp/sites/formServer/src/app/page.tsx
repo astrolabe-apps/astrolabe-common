@@ -7,6 +7,7 @@ import {
   ControlDefinitionSchema,
   ControlDefinitionSchemaMap,
   FieldSelectionExtension,
+  readOnlySchemas,
   SchemaFieldSchema,
 } from "@astroapps/schemas-editor";
 import {
@@ -266,7 +267,7 @@ const TabControls = groupedControl(
   { groupOptions: { type: GroupRenderType.Tabs } },
 );
 
-const schemaLookup: Record<string, SchemaField[]> = {
+const schemaLookup = {
   TestSchema,
   GridSchema,
   RequestSchema,
@@ -299,7 +300,7 @@ export default function Editor() {
       <div id="dialog_container" ref={setContainer} />
       <BasicFormEditor
         formRenderer={StdFormRenderer}
-        loadSchema={async (c) => ({ fields: schemaLookup[c] })}
+        loadSchema={readOnlySchemas(schemaLookup)}
         // handleIcon={<div>WOAH</div>}
         loadForm={async (c) => {
           if (c in FormDefinitions)

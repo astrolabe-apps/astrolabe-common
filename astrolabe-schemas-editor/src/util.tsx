@@ -13,6 +13,7 @@ import {
   schemaDataForFieldRef,
   SchemaField,
   schemaForFieldRef,
+  SchemaMap,
   SchemaNode,
   useUpdatedRef,
 } from "@react-typed-forms/schemas";
@@ -22,6 +23,7 @@ import {
   SchemaFieldForm,
 } from "./schemaSchemas";
 import { ReactElement, useCallback } from "react";
+import { SchemaLoader } from "./types";
 
 export type ControlForm = Control<ControlDefinitionForm>;
 
@@ -118,4 +120,11 @@ export function canAddChildren(x: ControlDefinition, dataNode?: SchemaNode) {
     default:
       return true;
   }
+}
+
+export function readOnlySchemas(schemas: SchemaMap): SchemaLoader {
+  return async (schemaId: string) => {
+    const fields = schemas[schemaId];
+    return { fields };
+  };
 }

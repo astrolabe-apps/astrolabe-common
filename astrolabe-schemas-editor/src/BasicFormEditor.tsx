@@ -67,18 +67,13 @@ import { defaultLayout } from "./defaultLayout";
 import { EditorFormTree } from "./EditorFormNode";
 import { setIncluded } from "@astroapps/client";
 import { EditorSchemaTree } from "./EditorSchemaNode";
+import { FormLoader, SchemaLoader } from "./types";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
   createEditorRenderer?: (renderers: RendererRegistration[]) => FormRenderer;
-  loadForm: (formId: A) => Promise<{
-    controls: ControlDefinition[];
-    schemaName: string;
-    renderer?: FormRenderer;
-  }>;
-  loadSchema: (schemaId: string) => Promise<{
-    fields: SchemaField[];
-  }>;
+  loadForm: FormLoader<A>;
+  loadSchema: SchemaLoader;
   selectedForm?: Control<A | undefined>;
   formTypes: [string, string][] | FormInfo[];
   saveForm: (controls: ControlDefinition[], formId: A) => Promise<any>;
