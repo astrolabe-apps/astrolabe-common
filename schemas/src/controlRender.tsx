@@ -732,7 +732,6 @@ export function useControlRendererComponent(
         )
           control.disabled = myOptions.disabled;
       }, [control, myOptions.disabled]);
-      if (parentControl.isNull) return <></>;
 
       const adornments =
         definition.adornments?.map((x) =>
@@ -906,10 +905,10 @@ export function defaultDataProps({
             .map((x) =>
               typeof x === "object"
                 ? x
-                : fieldOptions?.find((y) => y.value == x) ?? {
+                : (fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  },
+                  }),
             )
             .filter((x) => x != null)
         : fieldOptions,

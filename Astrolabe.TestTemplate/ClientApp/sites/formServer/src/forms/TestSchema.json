@@ -1,21 +1,45 @@
 {
   "controls": [
     {
-      "type": "Group",
+      "type": "Data",
       "title": "Bool",
-      "groupOptions": {
-        "type": "Standard"
-      },
       "children": [
         {
           "type": "Data",
-          "title": "Bool",
-          "field": "bool",
+          "title": "Data",
+          "field": "data",
           "renderOptions": {
-            "type": "Radio"
+            "type": "Standard"
           }
         }
-      ]
+      ],
+      "renderOptions": {
+        "type": "Standard"
+      },
+      "field": "nested",
+      "adornments": [
+        {
+          "type": "Optional",
+          "allowNull": true
+        }
+      ],
+      "fieldDef": null
+    },
+    {
+      "type": "Data",
+      "title": "Date",
+      "field": "date",
+      "renderOptions": {
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Data",
+      "title": "Date Time",
+      "field": "dateTime",
+      "renderOptions": {
+        "type": "Standard"
+      }
     }
   ],
   "config": null

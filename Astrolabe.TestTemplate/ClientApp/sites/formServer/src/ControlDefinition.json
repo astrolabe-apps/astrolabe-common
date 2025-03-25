@@ -1138,13 +1138,10 @@
               "type": "Standard"
             },
             "hideTitle": false,
-            "dynamic": [
+            "adornments": [
               {
-                "type": "Visible",
-                "expr": {
-                  "type": "NotEmpty",
-                  "field": "."
-                }
+                "type": "Optional",
+                "allowNull": true
               }
             ]
           }

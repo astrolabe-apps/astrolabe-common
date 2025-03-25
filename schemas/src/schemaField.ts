@@ -359,12 +359,9 @@ export function makeSchemaDataNode(
 
   function getChild(childNode: SchemaNode): SchemaDataNode {
     const objControl = control as Control<Record<string, unknown>>;
-    if (objControl && objControl.current.isNull) {
-      objControl.value = {};
-    }
     return makeSchemaDataNode(
       childNode,
-      objControl?.fields[childNode.field.field],
+      objControl.fields[childNode.field.field],
       dataNode,
     );
   }
