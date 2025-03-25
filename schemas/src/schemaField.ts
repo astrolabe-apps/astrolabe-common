@@ -276,10 +276,12 @@ function missingField(field: string): SchemaField {
 export function resolveSchemaParent(node: SchemaNode): SchemaNode | undefined {
   const field = node.field;
   if (!isCompoundField(field)) return undefined;
-  return field.treeChildren
-    ? node.parent
-    : field.schemaRef
-      ? node.getSchema(field.schemaRef)
+  return field.schemaRef
+    ? node.getSchema(field.schemaRef)
+    : field.treeChildren
+      ? node.parent
+        ? resolveSchemaParent(node.parent)
+        : undefined
       : node;
 }
 

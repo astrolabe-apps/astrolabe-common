@@ -68,6 +68,8 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     public bool? Disabled { get; set; }
 
     public bool? DontClearHidden { get; set; }
+    
+    public SchemaField? FieldDef { get; set; }
 
     public IEnumerable<SchemaValidator>? Validators { get; set; }
 }

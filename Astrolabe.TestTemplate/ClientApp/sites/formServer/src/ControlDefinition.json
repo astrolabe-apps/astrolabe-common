@@ -136,7 +136,7 @@
             "children": [
               {
                 "type": "Data",
-                "title": "Type",
+                "title": "Display",
                 "field": "type",
                 "required": true,
                 "renderOptions": {
@@ -1128,6 +1128,20 @@
             "renderOptions": {
               "type": "Standard"
             }
+          },
+          {
+            "type": "Data",
+            "title": "Field",
+            "field": "fieldDef",
+            "renderOptions": {
+              "type": "Standard"
+            },
+            "adornments": [
+              {
+                "type": "Optional",
+                "allowNull": true
+              }
+            ]
           }
         ],
         "groupOptions": {

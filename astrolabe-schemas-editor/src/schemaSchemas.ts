@@ -1273,6 +1273,7 @@ export interface ControlDefinitionForm {
   readonly: boolean | null;
   disabled: boolean | null;
   dontClearHidden: boolean | null;
+  fieldDef: SchemaFieldForm | null;
   validators: SchemaValidatorForm[] | null;
   compoundField: string | null;
   groupOptions: GroupRenderOptionsForm | null;
@@ -1406,6 +1407,12 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     type: FieldType.Bool,
     onlyForTypes: ["Data"],
     displayName: "Dont Clear Hidden",
+  }),
+  fieldDef: makeCompoundField({
+    children: SchemaFieldSchema,
+    schemaRef: "SchemaField",
+    onlyForTypes: ["Data"],
+    displayName: "Field Def",
   }),
   validators: makeCompoundField({
     children: SchemaValidatorSchema,
