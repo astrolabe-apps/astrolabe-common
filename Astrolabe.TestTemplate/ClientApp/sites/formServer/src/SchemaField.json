@@ -80,7 +80,11 @@
                 "required": true,
                 "renderOptions": {
                   "type": "Standard"
-                }
+                },
+                "groupOptions": {},
+                "readonly": false,
+                "disabled": false,
+                "hideTitle": true
               },
               {
                 "type": "Data",
@@ -88,8 +92,13 @@
                 "field": "value",
                 "required": true,
                 "renderOptions": {
-                  "type": "ValueForField"
-                }
+                  "type": "ValueForField",
+                  "noOptions": true
+                },
+                "groupOptions": {},
+                "readonly": false,
+                "disabled": false,
+                "hideTitle": true
               },
               {
                 "type": "Data",
@@ -97,7 +106,12 @@
                 "field": "description",
                 "renderOptions": {
                   "type": "Standard"
-                }
+                },
+                "groupOptions": {},
+                "required": false,
+                "readonly": false,
+                "disabled": false,
+                "hideTitle": true
               },
               {
                 "type": "Data",
@@ -105,7 +119,12 @@
                 "field": "disabled",
                 "renderOptions": {
                   "type": "Standard"
-                }
+                },
+                "groupOptions": {},
+                "required": false,
+                "readonly": false,
+                "disabled": false,
+                "hideTitle": true
               },
               {
                 "type": "Data",
@@ -113,12 +132,21 @@
                 "field": "group",
                 "renderOptions": {
                   "type": "Standard"
-                }
+                },
+                "groupOptions": {},
+                "required": false,
+                "readonly": false,
+                "disabled": false,
+                "hideTitle": true
               }
             ],
             "renderOptions": {
               "type": "DataGrid"
-            }
+            },
+            "groupOptions": {},
+            "required": false,
+            "readonly": false,
+            "disabled": false
           }
         ],
         "groupOptions": {

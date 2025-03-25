@@ -1,12 +1,12 @@
 import { Control, setFields, useControl } from "@react-typed-forms/core";
 import {
-  addMissingControlsForSchema,
   boolField,
   buildSchema,
   ControlDefinitionExtension,
   createDataRenderer,
+  defaultControlForField,
+  emptySchemaLookup,
   FormRenderer,
-  groupedControl,
   makeSchemaDataNode,
   RenderOptions,
   rootSchemaNode,
@@ -17,7 +17,6 @@ import {
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import React, { Fragment, useMemo } from "react";
-import { emptySchemaLookup } from "@react-typed-forms/schemas";
 
 export interface ValueForFieldRenderOptions extends RenderOptions {
   type: "ValueForField";
@@ -86,24 +85,25 @@ function ValueForField({
     setFields(e, { default: control }),
   );
   const [controls, rootSchema] = useMemo(() => {
-    const rootSchema = rootSchemaNode(
-      [
-        {
-          ...schema.field,
-          options: noOptions ? undefined : schema.field.options,
-          field: "default",
-          required: false,
-          notNullable: false,
-          onlyForTypes: null,
-          defaultValue: undefined,
-        },
-      ],
-      emptySchemaLookup,
-    );
-    return [addMissingControlsForSchema(rootSchema, []), rootSchema];
+    const adjustedField = {
+      ...schema.field,
+      options: noOptions ? undefined : schema.field.options,
+      field: "default",
+      required: false,
+      notNullable: false,
+      onlyForTypes: null,
+      defaultValue: undefined,
+    };
+    const control = {
+      ...defaultControlForField(adjustedField),
+      hideTitle: true,
+    };
+    const rootSchema = rootSchemaNode([control], emptySchemaLookup);
+    return [control, rootSchema];
   }, [schema]);
+
   const Render = useControlRendererComponent(
-    groupedControl(controls),
+    controls,
     renderer,
     { disabled: control.disabled },
     makeSchemaDataNode(rootSchema, value),
