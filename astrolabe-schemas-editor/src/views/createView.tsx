@@ -6,6 +6,7 @@ import { ControlPropertiesView } from "./ControlPropertiesView";
 import { FormView } from "./FormView";
 import { FormListView } from "./FormListView";
 import { HelpView } from "./HelpView";
+import { SnippetsView } from "./SnippetsView";
 
 export function getTabTitle(viewType: string, viewParams?: string): string {
   switch (viewType) {
@@ -21,6 +22,8 @@ export function getTabTitle(viewType: string, viewParams?: string): string {
       return "Control Structure";
     case "controlProperties":
       return "Control Properties";
+    case "snippets":
+      return "Snippets";
     default:
       return "Unknown";
   }
@@ -56,6 +59,8 @@ export function createView(
         return "Control Structure";
       case "controlProperties":
         return "Control Properties";
+      case "snippets":
+        return "Snippets";
       default:
         return "Unknown";
     }
@@ -75,6 +80,8 @@ export function createView(
         return <FormView formId={viewParams!} context={context} />;
       case "controlProperties":
         return <ControlPropertiesView context={context} />;
+      case "snippets":
+        return <SnippetsView context={context} />;
       default:
         return <div>Unknown view type: {viewType}</div>;
     }

@@ -47,7 +47,13 @@ import {
   TailwindConfig,
 } from "@mhsdesign/jit-browser-tailwindcss";
 import defaultEditorControls from "./ControlDefinition.json";
-import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
+import {
+  EditableForm,
+  FormInfo,
+  getViewAndParams,
+  Snippet,
+  ViewContext,
+} from "./views";
 import { createView, getTabTitle } from "./views/createView";
 import {
   Actions,
@@ -87,6 +93,7 @@ export interface BasicFormEditorProps<A extends string> {
   extraPreviewControls?:
     | ReactNode
     | ((c: FormNode, data: Control<any>) => ReactNode);
+  snippets?: Snippet[];
 }
 
 export function BasicFormEditor<A extends string = string>({
@@ -110,6 +117,7 @@ export function BasicFormEditor<A extends string = string>({
   controlsClass,
   handleIcon,
   extraPreviewControls,
+  snippets,
 }: BasicFormEditorProps<A>): ReactElement {
   const selectedForm = useControl<A | undefined>(undefined, { use: sf });
   const extensions = useMemo(
@@ -254,6 +262,7 @@ export function BasicFormEditor<A extends string = string>({
     updateTabTitle,
     saveForm: doSaveForm,
     checkbox,
+    snippets,
   };
 
   return (
