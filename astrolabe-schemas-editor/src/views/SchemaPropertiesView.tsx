@@ -10,6 +10,7 @@ import React, { useMemo } from "react";
 import { unsafeRestoreControl, useControl } from "@react-typed-forms/core";
 import { createDataGridRenderer } from "@astroapps/schemas-datagrid";
 import { InactiveView } from "./InactiveView";
+import { createValueForFieldRenderer } from "@react-typed-forms/schemas-html";
 
 export function SchemaPropertiesView({ context }: { context: ViewContext }) {
   const { getCurrentForm } = context;
@@ -29,7 +30,11 @@ function SchemaFieldEditor({
 }) {
   const { createEditorRenderer } = context;
   const editorRenderer = useMemo(
-    () => createEditorRenderer([createDataGridRenderer()]),
+    () =>
+      createEditorRenderer([
+        createValueForFieldRenderer({ schema }),
+        createDataGridRenderer(),
+      ]),
     [],
   );
   const dataNode = makeSchemaDataNode(

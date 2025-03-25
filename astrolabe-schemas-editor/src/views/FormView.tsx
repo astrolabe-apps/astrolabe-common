@@ -1,15 +1,21 @@
 import { EditableForm, ViewContext } from "./index";
 import {
   Control,
+  RenderControl,
   RenderOptional,
   useControl,
   useControlEffect,
+  useDebounced,
 } from "@react-typed-forms/core";
 import { FormControlPreview } from "../FormControlPreview";
-import { addMissingControlsToForm } from "@react-typed-forms/schemas";
+import {
+  addMissingControlsToForm,
+  ControlDefinition,
+} from "@react-typed-forms/schemas";
 import React from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
 import clsx from "clsx";
+import { JsonEditor } from "../JsonEditor";
 
 export function FormView(props: { formId: string; context: ViewContext }) {
   const { formId, context } = props;
@@ -109,7 +115,13 @@ function RenderFormDesign({
         <div className="flex gap-4 px-4 mb-2">
           {checkbox(c.fields.hideFields, "Hide Field Names")}
           {button(addMissing, "Add Missing Controls")}
+          {checkbox(c.fields.showJson, "Show JSON")}
         </div>
+        {c.fields.showJson.value && (
+          <FormJsonView
+            root={c.fields.formTree.fields.rootNode.value.control.fields.children.as()}
+          />
+        )}
         <div className={clsx("grow overflow-auto", context.editorPanelClass)}>
           <FormControlPreview
             keyPrefix="HAI"
@@ -126,5 +138,23 @@ function RenderFormDesign({
         </div>
       </>
     );
+  }
+}
+
+function FormJsonView({ root }: { root: Control<ControlDefinition[]> }) {
+  const jsonControl = useControl(() =>
+    JSON.stringify(root.current.value, null, 2),
+  );
+  useControlEffect(
+    () => root.value,
+    (x) => (jsonControl.value = JSON.stringify(x, null, 2)),
+  );
+  useControlEffect(() => jsonControl.value, useDebounced(updateControls, 300));
+  return <JsonEditor className="h-64 m-4 border" control={jsonControl} />;
+
+  function updateControls(json: string) {
+    try {
+      root.value = JSON.parse(json);
+    } catch (e) {}
   }
 }

@@ -109,7 +109,7 @@ export function BasicFormEditor<A extends string = string>({
   schemaEditorControls,
   previewOptions,
   tailwindConfig,
-  editorPanelClass,
+  editorPanelClass = "p-4",
   editorClass,
   rootControlClass,
   collectClasses,
@@ -219,7 +219,10 @@ export function BasicFormEditor<A extends string = string>({
     });
   }
 
-  function checkbox(control: Control<boolean>, text: string) {
+  function checkbox(
+    control: Control<boolean | null | undefined>,
+    text: string,
+  ) {
     const cId = "c" + control.uniqueId;
     return (
       <div className="flex gap-2 items-center">

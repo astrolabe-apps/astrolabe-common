@@ -1,1 +1,292 @@
-[]
+[
+  {
+    "type": "Group",
+    "title": "Tabs",
+    "children": [
+      {
+        "type": "Group",
+        "title": "Details",
+        "children": [
+          {
+            "type": "Data",
+            "title": "Type",
+            "field": "type",
+            "required": true,
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Field",
+            "field": "field",
+            "required": true,
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Group",
+            "title": "Flags",
+            "children": [
+              {
+                "type": "Data",
+                "title": "Required",
+                "field": "required",
+                "renderOptions": {
+                  "type": "Checkbox"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Not Nullable",
+                "field": "notNullable",
+                "renderOptions": {
+                  "type": "Checkbox"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Collection",
+                "field": "collection",
+                "renderOptions": {
+                  "type": "Checkbox"
+                }
+              }
+            ],
+            "groupOptions": {
+              "type": "Flex",
+              "hideTitle": true,
+              "gap": ""
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Display Name",
+            "field": "displayName",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Options",
+            "field": "options",
+            "children": [
+              {
+                "type": "Data",
+                "title": "Name",
+                "field": "name",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Value",
+                "field": "value",
+                "required": true,
+                "renderOptions": {
+                  "type": "ValueForField",
+                  "field": "../field"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Description",
+                "field": "description",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Disabled",
+                "field": "disabled",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Group",
+                "field": "group",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              }
+            ],
+            "renderOptions": {
+              "type": "DataGrid"
+            }
+          }
+        ],
+        "groupOptions": {
+          "type": "Standard",
+          "hideTitle": true
+        }
+      },
+      {
+        "type": "Group",
+        "title": "Advanced",
+        "children": [
+          {
+            "type": "Data",
+            "title": "Default Value",
+            "field": "defaultValue",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Parent Field",
+            "field": "parentField",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Is Type Field",
+            "field": "isTypeField",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Schema Ref",
+            "field": "schemaRef",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Singular Name",
+            "field": "singularName",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Tags",
+            "field": "tags",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Only For Types",
+            "field": "onlyForTypes",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Searchable",
+            "field": "searchable",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Required Text",
+            "field": "requiredText",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Entity Ref Type",
+            "field": "entityRefType",
+            "required": true,
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Validators",
+            "field": "validators",
+            "children": [
+              {
+                "type": "Data",
+                "title": "Type",
+                "field": "type",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Expression",
+                "field": "expression",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Comparison",
+                "field": "comparison",
+                "required": true,
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Fixed Date",
+                "field": "fixedDate",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Days From Current",
+                "field": "daysFromCurrent",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Min",
+                "field": "min",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Max",
+                "field": "max",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              }
+            ]
+          }
+        ],
+        "groupOptions": {
+          "type": "Standard"
+        }
+      }
+    ],
+    "groupOptions": {
+      "type": "Tabs",
+      "contentClass": "p-4"
+    }
+  }
+]

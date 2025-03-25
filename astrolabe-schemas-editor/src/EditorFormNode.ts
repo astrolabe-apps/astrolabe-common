@@ -9,7 +9,7 @@ export class EditorFormNode implements FormNode {
   constructor(
     public tree: EditorFormTree,
     public parent: FormNode | undefined,
-    private control: Control<ControlDefinition>,
+    public control: Control<ControlDefinition>,
   ) {}
 
   addChild(control: ControlDefinition): FormNode {

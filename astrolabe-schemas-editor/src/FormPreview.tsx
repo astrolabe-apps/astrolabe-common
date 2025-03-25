@@ -1,13 +1,11 @@
 import {
   Control,
-  RenderArrayElements,
   RenderControl,
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
 import {
   addMissingControls,
-  ControlDefinition,
   ControlDefinitionType,
   ControlRenderOptions,
   FormNode,
@@ -20,7 +18,7 @@ import {
 } from "@react-typed-forms/schemas";
 import React, { ReactNode, useMemo } from "react";
 import { ViewContext } from "./views";
-import clsx from "clsx";
+import { JsonEditor } from "./JsonEditor";
 
 export interface PreviewData {
   showing: boolean;
@@ -124,16 +122,7 @@ export function FormPreview({
           {sj && (
             <div>
               <div className="text-xl">JSON</div>
-              <RenderControl>
-                {() => (
-                  <textarea
-                    className="w-full"
-                    rows={10}
-                    onChange={(e) => (jsonControl.value = e.target.value)}
-                    value={jsonControl.value}
-                  />
-                )}
-              </RenderControl>
+              <JsonEditor className="h-96" control={jsonControl} />
               {formRenderer.renderAction({
                 actionText: "Apply JSON",
                 onClick: () => {
