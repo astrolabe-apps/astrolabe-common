@@ -4,6 +4,7 @@ import {
   buildSchema,
   ControlDefinitionExtension,
   createDataRenderer,
+  DataControlDefinition,
   defaultControlForField,
   emptySchemaLookup,
   FormRenderer,
@@ -11,6 +12,7 @@ import {
   RenderOptions,
   rootSchemaNode,
   schemaDataForFieldRef,
+  SchemaField,
   schemaForFieldRef,
   SchemaNode,
   stringField,
@@ -85,7 +87,7 @@ function ValueForField({
     setFields(e, { default: control }),
   );
   const [controls, rootSchema] = useMemo(() => {
-    const adjustedField = {
+    const adjustedField: SchemaField = {
       ...schema.field,
       options: noOptions ? undefined : schema.field.options,
       field: "default",
@@ -94,11 +96,11 @@ function ValueForField({
       onlyForTypes: null,
       defaultValue: undefined,
     };
-    const control = {
+    const control: DataControlDefinition = {
       ...defaultControlForField(adjustedField),
       hideTitle: true,
     };
-    const rootSchema = rootSchemaNode([control], emptySchemaLookup);
+    const rootSchema = rootSchemaNode([adjustedField], emptySchemaLookup);
     return [control, rootSchema];
   }, [schema]);
 
