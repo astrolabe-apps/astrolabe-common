@@ -24,7 +24,7 @@ export function ControlInput({
   renderer,
   ...props
 }: ControlInputProps) {
-  const { errorText, value, onChange, ...inputProps } =
+  const { errorText, value, onChange, ref, ...inputProps } =
     formControlProps(control);
   const textValue = useControl(() => toText(value));
   useControlEffect(
@@ -35,6 +35,7 @@ export function ControlInput({
   return (
     <Input
       {...inputProps}
+      inputRef={ref}
       type={convert[0]}
       value={textValue.value}
       onChangeValue={(e) => {

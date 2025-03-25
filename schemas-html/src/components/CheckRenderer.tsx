@@ -223,7 +223,7 @@ export function Fcheckbox({
   notValue?: boolean;
 }) {
   const { Input } = renderer.html;
-  const { value, onChange, errorText, ...theseProps } =
+  const { value, onChange, errorText, ref, ...theseProps } =
     formControlProps(control);
   return (
     <Input
