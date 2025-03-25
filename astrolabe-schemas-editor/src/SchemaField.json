@@ -89,7 +89,7 @@
                 "required": true,
                 "renderOptions": {
                   "type": "ValueForField",
-                  "field": "../field"
+                  "noOptions": true
                 }
               },
               {

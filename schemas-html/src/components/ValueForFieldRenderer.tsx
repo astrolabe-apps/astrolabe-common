@@ -1,6 +1,7 @@
 import { Control, setFields, useControl } from "@react-typed-forms/core";
 import {
   addMissingControlsForSchema,
+  boolField,
   buildSchema,
   ControlDefinitionExtension,
   createDataRenderer,
@@ -21,6 +22,7 @@ import { emptySchemaLookup } from "@react-typed-forms/schemas";
 export interface ValueForFieldRenderOptions extends RenderOptions {
   type: "ValueForField";
   fieldRef?: string | null;
+  noOptions?: boolean;
 }
 
 const RenderType = "ValueForField";
@@ -31,6 +33,7 @@ export const ValueForFieldExtension: ControlDefinitionExtension = {
     name: "Value For Field",
     fields: buildSchema<Omit<ValueForFieldRenderOptions, "type">>({
       fieldRef: stringField("Field Reference"),
+      noOptions: boolField("No Options"),
     }),
   },
 };
@@ -42,16 +45,22 @@ export interface ValueForFieldOptions {
 export function createValueForFieldRenderer(options: ValueForFieldOptions) {
   return createDataRenderer(
     (o, renderer) => {
-      const { fieldRef } = o.renderOptions as ValueForFieldRenderOptions;
+      const { fieldRef, noOptions } =
+        o.renderOptions as ValueForFieldRenderOptions;
       const actualFieldRef = fieldRef
         ? (schemaDataForFieldRef(fieldRef, o.dataContext.parentNode)?.control
             ?.value as string)
-        : undefined;
+        : ".";
       const node = actualFieldRef
         ? schemaForFieldRef(actualFieldRef, options.schema)
         : undefined;
       return node ? (
-        <ValueForField renderer={renderer} schema={node} control={o.control} />
+        <ValueForField
+          renderer={renderer}
+          schema={node}
+          control={o.control}
+          noOptions={noOptions}
+        />
       ) : (
         <>{actualFieldRef ? "No schema node for " + actualFieldRef : ""}</>
       );
@@ -66,10 +75,12 @@ function ValueForField({
   schema,
   renderer,
   control,
+  noOptions,
 }: {
   schema: SchemaNode;
   renderer: FormRenderer;
   control: Control<any>;
+  noOptions?: boolean;
 }) {
   const value = useControl({ default: undefined }, undefined, (e) =>
     setFields(e, { default: control }),
@@ -79,6 +90,7 @@ function ValueForField({
       [
         {
           ...schema.field,
+          options: noOptions ? undefined : schema.field.options,
           field: "default",
           required: false,
           notNullable: false,
