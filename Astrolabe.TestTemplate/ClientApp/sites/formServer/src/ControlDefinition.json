@@ -13,7 +13,8 @@
             "field": "title",
             "renderOptions": {
               "type": "Standard"
-            }
+            },
+            "fieldDef": {}
           },
           {
             "type": "Data",
@@ -1136,10 +1137,14 @@
             "renderOptions": {
               "type": "Standard"
             },
-            "adornments": [
+            "hideTitle": false,
+            "dynamic": [
               {
-                "type": "Optional",
-                "allowNull": true
+                "type": "Visible",
+                "expr": {
+                  "type": "NotEmpty",
+                  "field": "."
+                }
               }
             ]
           }
