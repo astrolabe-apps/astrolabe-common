@@ -246,6 +246,7 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
   system: makeScalarField({
     type: FieldType.Bool,
     displayName: "System",
+    tags: ["_NoControl"],
   }),
   tags: makeScalarField({
     type: FieldType.String,
@@ -319,6 +320,7 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
     onlyForTypes: ["Compound"],
     notNullable: true,
     displayName: "Children",
+    tags: ["_NoControl"],
   }),
   treeChildren: makeScalarField({
     type: FieldType.Bool,

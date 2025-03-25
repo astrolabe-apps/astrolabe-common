@@ -13,6 +13,7 @@ public abstract record SchemaField(
 {
     public string? DisplayName { get; set; }
 
+    [property: SchemaTag(SchemaTags.NoControl)]
     public bool? System { get; set; }
 
     public IEnumerable<string>? Tags { get; set; }
@@ -55,6 +56,7 @@ public record EntityRefField(string Field, string EntityRefType, string? ParentF
 
 public record CompoundField(
     string Field,
+    [property: SchemaTag(SchemaTags.NoControl)]
     IEnumerable<SchemaField> Children,
     bool? TreeChildren,
     string? SchemaRef = null

@@ -14,7 +14,10 @@
             "required": true,
             "renderOptions": {
               "type": "Standard"
-            }
+            },
+            "groupOptions": {},
+            "readonly": false,
+            "disabled": false
           },
           {
             "type": "Data",
@@ -238,6 +241,19 @@
             "renderOptions": {
               "type": "Standard"
             }
+          },
+          {
+            "type": "Data",
+            "title": "Recursive?",
+            "field": "treeChildren",
+            "required": false,
+            "renderOptions": {
+              "type": "Standard"
+            },
+            "readonly": false,
+            "disabled": false,
+            "groupOptions": {},
+            "displayData": {}
           },
           {
             "type": "Data",
