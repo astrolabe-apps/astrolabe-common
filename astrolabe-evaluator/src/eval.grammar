@@ -14,18 +14,19 @@
 
 @top EvalProgram { expression }
 
-expression[@isGroup=Expression] { 
+expression[@isGroup=Expression] {
     Reference |
-    Identifier | 
+    Identifier |
     Lambda |
     @specialize[@name=ConstantLiteral]<Identifier, "true" | "false" | "null"> |
     LetExpression |
-    Number | 
-    String | 
+    Number |
+    TemplateString |
+    String |
     ArrayExpression |
     ObjectExpression |
-    UnaryExpression | 
-    BinaryExpression | 
+    UnaryExpression |
+    BinaryExpression |
     ParenthesizedExpression |
     ConditionalExpression {
         expression !ternary "?" expression ":" expression
@@ -37,7 +38,7 @@ expression[@isGroup=Expression] {
 
 VariableAssignment { Reference ":=" expression }
 
-LetExpression { @specialize<Identifier, "let"> commaSep<VariableAssignment> @specialize<Identifier, "in"> expression } 
+LetExpression { @specialize<Identifier, "let"> commaSep<VariableAssignment> @specialize<Identifier, "in"> expression }
 
 Lambda { Reference "=>" expression }
 
@@ -70,7 +71,19 @@ BinaryExpression {
   expression !default call<"??"> expression
 }
 
+@skip {} {
+  TemplateString[isolate] {
+    "`" (templateContent | Interpolation)* "`"
+  }
+}
+
+Interpolation { "{" expression "}" }
+
+
+
+
 @skip { space }
+
 
 @skip {} {
   String {
@@ -81,9 +94,9 @@ BinaryExpression {
 
 
 call<expr> { Call { expr } }
-  
-@tokens {
 
+@tokens {
+  templateContent { ![`{]+ }
   hex { @digit | $[a-fA-F] }
 
   Number {
@@ -96,7 +109,6 @@ call<expr> { Call { expr } }
   }
 
   @precedence { Number "." }
-
   Escape {
     "\\" ("x" hex hex | "u" ("{" hex+ "}" | hex hex hex hex) | ![xu])
   }
@@ -110,7 +122,6 @@ call<expr> { Call { expr } }
 
   space { @whitespace+ }
 
-  
   stringContentSingle { ![\\\n']+ }
 
   stringContentDouble { ![\\\n"]+ }
