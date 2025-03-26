@@ -60,16 +60,6 @@ export default function EvalPage() {
 					const exprTree = parseEval(v);
 					const emptyState = emptyEnvState(dv);
 					const env = addDefaults(new TrackDataEnv(emptyState));
-
-					// Now test template string parsing
-					const templateStr = "`Hello {gradeabilityA}`";
-					// const templateStr = "`Hello {20}`";
-					// const templateStr = "gradeabilityA + 'hello' + gradeabilityA";
-					console.log("Parsing template:", templateStr);
-					const templateExpr = parseEval(templateStr);
-					console.log("Template parse result:", templateExpr);
-					const [outEnv, value] = env.evaluate(templateExpr);
-					console.log(toValueDeps(value));
 					try {
 						const [outEnv, value] = env.evaluate(exprTree);
 						setEvalResult({

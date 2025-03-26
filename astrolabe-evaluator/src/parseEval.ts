@@ -27,7 +27,6 @@ export function convertTree(
 	function visit(node: SyntaxNode | null): EvalExpr {
 		if (node == null) return valueExpr(null);
 		const nodeName = node.type.name;
-		console.log(node);
 		switch (nodeName) {
 			case "ParenthesizedExpression":
 			case "EvalProgram":
@@ -73,17 +72,11 @@ export function convertTree(
 				return valueExpr(parseFloat(getNodeText(node)));
 			case "String":
 				const quoted = getNodeText(node);
-				console.log(
-					"string",
-					valueExpr(quoted.substring(1, quoted.length - 1)),
-				);
 				return valueExpr(quoted.substring(1, quoted.length - 1));
 			case "TemplateString":
-				console.log("template string", node);
 				const parts = [];
 				let child = node.firstChild;
 				while (child) {
-					console.log("CHILD NODE", child.type.name, getNodeText(child));
 					if (child.type.name === "templateContent") {
 						// Plain text content
 						parts.push(valueExpr(getNodeText(child)));
