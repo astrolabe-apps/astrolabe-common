@@ -72,6 +72,26 @@ export function convertTree(
       case "String":
         const quoted = getNodeText(node);
         return valueExpr(quoted.substring(1, quoted.length - 1));
+      case "TemplateString":
+        const parts = [];
+        let child = node.firstChild;
+        while (child) {
+          if (child.type.name === "templateContent") {
+            // Plain text content
+            parts.push(valueExpr(getNodeText(child)));
+          } else if (child.type.name === "Interpolation") {
+            // Expression inside curly braces
+            parts.push(visit(child.getChild("Expression")));
+          }
+          child = child.nextSibling;
+        }
+
+        // If there's only one part, return it directly
+        if (parts.length === 1) return parts[0];
+
+        // Otherwise, concatenate all parts using string conversion
+        return callExpr("concat", parts);
+
       case "Identifier":
         return propertyExpr(getNodeText(node));
       case "ArrayExpression":

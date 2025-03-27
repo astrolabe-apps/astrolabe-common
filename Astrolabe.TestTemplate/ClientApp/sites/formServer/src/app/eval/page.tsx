@@ -1,7 +1,6 @@
 "use client";
 import {
   addDefaults,
-  basicEnv,
   BasicEvalEnv,
   defaultCheckEnv,
   defaultEvaluate,
@@ -10,9 +9,7 @@ import {
   EvalEnvState,
   EvalExpr,
   nativeType,
-  objectType,
   parseEval,
-  primitiveType,
   printPath,
   ValueExpr,
 } from "@astroapps/evaluator";
