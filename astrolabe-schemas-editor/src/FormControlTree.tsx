@@ -193,7 +193,7 @@ function ControlNodeRenderer(props: NodeRendererProps<ControlNode>) {
         {isDataControl(control) ? (
           <span>
             {" "}
-            <i>({control.field})</i>
+            <i>({control.fieldDef?.field ?? control.field})</i>
           </span>
         ) : (
           ""

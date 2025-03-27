@@ -11,6 +11,28 @@
           "renderOptions": {
             "type": "Standard"
           }
+        },
+        {
+          "type": "Data",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "fieldDef": {
+            "type": "Compound",
+            "field": "wow"
+          },
+          "title": "Custom field",
+          "children": [
+            {
+              "type": "Data",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "fieldDef": {
+                "field": "yeap"
+              }
+            }
+          ]
         }
       ],
       "renderOptions": {

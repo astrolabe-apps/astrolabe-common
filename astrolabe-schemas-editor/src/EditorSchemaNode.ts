@@ -1,28 +1,57 @@
-import { addElement, Control, trackedValue } from "@react-typed-forms/core";
-import { SchemaField, SchemaNode } from "@react-typed-forms/schemas";
+import {
+  Control,
+  trackedValue,
+  unsafeRestoreControl,
+} from "@react-typed-forms/core";
+import {
+  createSchemaNode,
+  missingField,
+  SchemaField,
+  SchemaNode,
+} from "@react-typed-forms/schemas";
 import { SchemaFieldForm } from "./schemaSchemas";
 
-export class EditorSchemaNode implements SchemaNode {
+export class EditorSchemaNode extends SchemaNode {
   constructor(
-    public tree: EditorSchemaTree,
-    public parent: SchemaNode | undefined,
+    public lookup: EditorSchemaTree,
+    parent: SchemaNode | undefined,
     public control: Control<SchemaFieldForm>,
-  ) {}
+  ) {
+    const thisId = control.current.fields.field.value;
+    super(parent ? parent.id + "/" + thisId : thisId, lookup, parent);
+  }
 
-  getChildNodes(withParent?: SchemaNode): SchemaNode[] {
-    const parent = withParent ?? this;
+  getChildFields(): string[] {
     return this.control.fields.children.elements.map(
-      (x) => new EditorSchemaNode(this.tree, parent, x),
+      (x) => x.fields.field.value,
+    );
+  }
+  getChildField(field: string): SchemaField {
+    const fieldControl = this.control.fields.children.elements.find(
+      (x) => x.fields.field.value === field,
+    );
+    return fieldControl ? trackedValue(fieldControl) : missingField(field);
+  }
+
+  createChildNode(field: SchemaField): SchemaNode {
+    const c = unsafeRestoreControl(field);
+    if (c) {
+      return new EditorSchemaNode(this.lookup, this, c.as());
+    }
+    return createSchemaNode(field, this.lookup, this);
+  }
+
+  getChildNodes(): SchemaNode[] {
+    const parent = this;
+    return this.control.fields.children.elements.map(
+      (x) => new EditorSchemaNode(this.lookup, parent, x),
     );
   }
 
   getSchema(schemaId: string): SchemaNode | undefined {
-    return this.tree.getSchema(schemaId);
+    return this.lookup.getSchema(schemaId);
   }
 
-  get id(): string {
-    return this.control.uniqueId.toString();
-  }
   get field(): SchemaField {
     return trackedValue(this.control);
   }

@@ -1,4 +1,9 @@
-import { Control, setFields, useControl } from "@react-typed-forms/core";
+import {
+  Control,
+  setFields,
+  trackedValue,
+  useControl,
+} from "@react-typed-forms/core";
 import {
   boolField,
   buildSchema,
@@ -24,6 +29,7 @@ export interface ValueForFieldRenderOptions extends RenderOptions {
   type: "ValueForField";
   fieldRef?: string | null;
   noOptions?: boolean;
+  refIsDirect?: boolean;
 }
 
 const RenderType = "ValueForField";
@@ -35,6 +41,7 @@ export const ValueForFieldExtension: ControlDefinitionExtension = {
     fields: buildSchema<Omit<ValueForFieldRenderOptions, "type">>({
       fieldRef: stringField("Field Reference"),
       noOptions: boolField("No Options"),
+      refIsDirect: boolField("Reference is direct"),
     }),
   },
 };
@@ -46,19 +53,31 @@ export interface ValueForFieldOptions {
 export function createValueForFieldRenderer(options: ValueForFieldOptions) {
   return createDataRenderer(
     (o, renderer) => {
-      const { fieldRef, noOptions } =
+      const { fieldRef, noOptions, refIsDirect } =
         o.renderOptions as ValueForFieldRenderOptions;
       const actualFieldRef = fieldRef
-        ? (schemaDataForFieldRef(fieldRef, o.dataContext.parentNode)?.control
-            ?.value as string)
+        ? refIsDirect
+          ? fieldRef
+          : (schemaDataForFieldRef(fieldRef, o.dataContext.parentNode)?.control
+              ?.value as string)
         : ".";
-      const node = actualFieldRef
-        ? schemaForFieldRef(actualFieldRef, options.schema)
-        : undefined;
-      return node ? (
+      let schemaField: SchemaField | undefined;
+      if (refIsDirect) {
+        const dataNode = schemaDataForFieldRef(
+          actualFieldRef,
+          o.dataContext.parentNode,
+        );
+        console.log(actualFieldRef, dataNode);
+        schemaField = trackedValue(dataNode.control.as<SchemaField>());
+      } else {
+        schemaField = actualFieldRef
+          ? schemaForFieldRef(actualFieldRef, options.schema).field
+          : undefined;
+      }
+      return schemaField ? (
         <ValueForField
           renderer={renderer}
-          schema={node}
+          schemaField={schemaField}
           control={o.control}
           noOptions={noOptions}
         />
@@ -73,12 +92,12 @@ export function createValueForFieldRenderer(options: ValueForFieldOptions) {
 }
 
 function ValueForField({
-  schema,
+  schemaField,
   renderer,
   control,
   noOptions,
 }: {
-  schema: SchemaNode;
+  schemaField: SchemaField;
   renderer: FormRenderer;
   control: Control<any>;
   noOptions?: boolean;
@@ -88,8 +107,8 @@ function ValueForField({
   );
   const [controls, rootSchema] = useMemo(() => {
     const adjustedField: SchemaField = {
-      ...schema.field,
-      options: noOptions ? undefined : schema.field.options,
+      ...schemaField,
+      options: noOptions ? undefined : schemaField.options,
       field: "default",
       required: false,
       notNullable: false,
@@ -102,7 +121,7 @@ function ValueForField({
     };
     const rootSchema = rootSchemaNode([adjustedField], emptySchemaLookup);
     return [control, rootSchema];
-  }, [schema]);
+  }, [schemaField]);
 
   const Render = useControlRendererComponent(
     controls,

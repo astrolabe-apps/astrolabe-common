@@ -237,11 +237,62 @@ export interface SchemaTreeLookup {
   getSchema(schemaId: string): SchemaNode | undefined;
 }
 
-export interface SchemaNode extends SchemaTreeLookup {
-  id: string;
-  field: SchemaField;
-  getChildNodes(withParent?: SchemaNode): SchemaNode[];
-  parent?: SchemaNode;
+export abstract class SchemaNode implements SchemaTreeLookup {
+  protected constructor(
+    public id: string,
+    public lookup: SchemaTreeLookup,
+    public parent?: SchemaNode,
+  ) {}
+
+  getSchema(schemaId: string): SchemaNode | undefined {
+    return this.lookup.getSchema(schemaId);
+  }
+
+  abstract field: SchemaField;
+
+  getChildNodes(): SchemaNode[] {
+    const node = this;
+    return node
+      .getChildFields()
+      .map((x) => node.createChildNode(node.getChildField(x)));
+  }
+
+  abstract getChildFields(): string[];
+
+  abstract getChildField(field: string): SchemaField;
+
+  abstract createChildNode(field: SchemaField): SchemaNode;
+}
+
+export class SchemaNodeImpl extends SchemaNode {
+  constructor(
+    id: string,
+    public field: SchemaField,
+    lookup: SchemaTreeLookup,
+    parent?: SchemaNode,
+  ) {
+    super(id, lookup, parent);
+    if (field == null)
+      throw new Error("SchemaNodeImpl: field cannot be null or undefined");
+  }
+
+  getChildFields() {
+    return (
+      (isCompoundField(this.field)
+        ? this.field.children?.map((x) => x.field)
+        : undefined) ?? []
+    );
+  }
+
+  getChildField(fieldName: string): SchemaField {
+    const children = isCompoundField(this.field) ? this.field.children : null;
+    return (
+      children?.find((x) => x.field === fieldName) ?? missingField(fieldName)
+    );
+  }
+  createChildNode(field: SchemaField): SchemaNode {
+    return createSchemaNode(field, this.lookup, this);
+  }
 }
 
 export interface SchemaDataNode {
@@ -269,7 +320,7 @@ export function isCompoundField(sf: SchemaField): sf is CompoundField {
   return sf.type === FieldType.Compound;
 }
 
-function missingField(field: string): SchemaField {
+export function missingField(field: string): SchemaField {
   return { field: "__missing", type: FieldType.Any, displayName: field };
 }
 
@@ -293,29 +344,27 @@ export function resolveSchemaNode(
   if (fieldSegment == "..") return node.parent;
   const parentNode = resolveSchemaParent(node);
   return parentNode
-    ?.getChildNodes(node)
-    .find((x) => x.field.field == fieldSegment);
+    ? node.createChildNode(parentNode.getChildField(fieldSegment))
+    : undefined;
 }
 
-function nodeForSchema(
+export function getChildrenForNode(node: SchemaNode): SchemaNode[] {
+  return node
+    .getChildFields()
+    .map((x) => node.createChildNode(node.getChildField(x)));
+}
+
+export function createSchemaNode(
   field: SchemaField,
   lookup: SchemaTreeLookup,
   parent: SchemaNode | undefined,
 ): SchemaNode {
-  const node = {
-    id: parent ? parent.id + "/" + field.field : field.field,
+  return new SchemaNodeImpl(
+    parent ? parent.id + "/" + field.field : field.field,
     field,
-    getSchema: lookup.getSchema,
+    lookup,
     parent,
-    getChildNodes,
-  };
-  return node;
-
-  function getChildNodes(withParent?: SchemaNode): SchemaNode[] {
-    return isCompoundField(field)
-      ? field.children.map((x) => nodeForSchema(x, lookup, withParent ?? node))
-      : [];
-  }
+  );
 }
 
 export function createSchemaLookup<A extends Record<string, SchemaField[]>>(
@@ -401,7 +450,7 @@ export function traverseSchemaPath<A>(
     const nextField = fieldPath[i];
     let childNode = resolveSchemaNode(schema, nextField);
     if (!childNode) {
-      childNode = nodeForSchema(missingField(nextField), schema, schema);
+      childNode = createSchemaNode(missingField(nextField), schema, schema);
     }
     acc = next(acc, childNode);
     schema = childNode;
@@ -433,7 +482,11 @@ export function schemaDataForFieldPath(
     let nextNode =
       nextField === ".." ? dataNode.parent : lookupField(nextField);
     nextNode ??= makeSchemaDataNode(
-      nodeForSchema(missingField(nextField), dataNode.schema, dataNode.schema),
+      createSchemaNode(
+        missingField(nextField),
+        dataNode.schema,
+        dataNode.schema,
+      ),
       newControl(undefined),
     );
     dataNode = nextNode;
@@ -459,7 +512,7 @@ export function schemaForFieldPath(
     const nextField = fieldPath[i];
     let childNode = resolveSchemaNode(schema, nextField);
     if (!childNode) {
-      childNode = nodeForSchema(missingField(nextField), schema, schema);
+      childNode = createSchemaNode(missingField(nextField), schema, schema);
     }
     schema = childNode;
     i++;
@@ -476,7 +529,7 @@ export function rootSchemaNode(
   fields: SchemaField[],
   lookup: SchemaTreeLookup,
 ): SchemaNode {
-  return nodeForSchema(
+  return createSchemaNode(
     {
       type: FieldType.Compound,
       field: "",

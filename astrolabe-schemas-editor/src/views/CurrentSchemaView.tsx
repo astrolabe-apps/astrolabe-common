@@ -3,7 +3,10 @@ import React from "react";
 import { FormSchemaTree } from "../FormSchemaTree";
 import { controlNotNull } from "@react-typed-forms/core";
 import { EditorFormNode } from "../EditorFormNode";
-import { defaultControlForField } from "@react-typed-forms/schemas";
+import {
+  defaultControlForField,
+  mergeSchemaDefinition,
+} from "@react-typed-forms/schemas";
 import { InactiveView } from "./InactiveView";
 
 export function CurrentSchemaView({ context }: { context: ViewContext }) {
@@ -19,7 +22,7 @@ export function CurrentSchemaView({ context }: { context: ViewContext }) {
   return (
     <div className="flex flex-col h-full">
       <FormSchemaTree
-        rootSchema={rootSchema}
+        rootSchema={mergeSchemaDefinition(rootSchema, tree.rootNode)}
         onAdd={(c) => {
           const v = selectedControl.fields.form.value ?? tree.rootNode;
           if (v instanceof EditorFormNode) {

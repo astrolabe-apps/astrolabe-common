@@ -150,7 +150,7 @@ export function defaultValueForField(
   const isRequired = !!(required || sf.required);
   if (isCompoundField(sf)) {
     if (isRequired) {
-      const childValue = defaultValueForFields(sf.children);
+      const childValue = defaultValueForFields(sf.children ?? []);
       return sf.collection ? [childValue] : childValue;
     }
     return sf.notNullable ? (sf.collection ? [] : {}) : undefined;
@@ -168,7 +168,7 @@ export function defaultValueForField(
  */
 export function elementValueForField(sf: SchemaField): any {
   if (isCompoundField(sf)) {
-    return defaultValueForFields(sf.children);
+    return defaultValueForFields(sf.children ?? []);
   }
   return sf.defaultValue;
 }
@@ -542,18 +542,17 @@ export function cleanDataForSchema(
   if (!v) return v;
   const parent = resolveSchemaParent(schemaNode);
   if (!parent) return v;
-  const fields = parent.getChildNodes(schemaNode);
-  const typeField = fields.find((x) => x.field.isTypeField)?.field;
-  const typeValue = typeField ? v[typeField.field] : undefined;
+  const fields = parent.getChildFields().map((x) => parent.getChildField(x));
+  const typeField = fields.find((x) => x.isTypeField)?.field;
+  const typeValue = typeField ? v[typeField] : undefined;
   const cleanableFields = !removeIfDefault
     ? fields.filter(
-        (x) => isCompoundNode(x) || (x.field.onlyForTypes?.length ?? 0) > 0,
+        (x) => isCompoundField(x) || (x.onlyForTypes?.length ?? 0) > 0,
       )
     : fields;
   if (!cleanableFields.length) return v;
   const out = { ...v };
-  cleanableFields.forEach((childNode) => {
-    const x = childNode.field;
+  cleanableFields.forEach((x) => {
     const childValue = v[x.field];
     if (
       x.onlyForTypes?.includes(typeValue) === false ||
@@ -566,13 +565,17 @@ export function cleanDataForSchema(
       if (x.collection) {
         if (Array.isArray(childValue)) {
           out[x.field] = childValue.map((cv) =>
-            cleanDataForSchema(cv, childNode, removeIfDefault),
+            cleanDataForSchema(
+              cv,
+              schemaNode.createChildNode(x),
+              removeIfDefault,
+            ),
           );
         }
       } else {
         out[x.field] = cleanDataForSchema(
           childValue,
-          childNode,
+          schemaNode.createChildNode(x),
           removeIfDefault,
         );
       }

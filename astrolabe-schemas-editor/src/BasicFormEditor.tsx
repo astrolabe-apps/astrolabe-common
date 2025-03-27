@@ -36,8 +36,6 @@ import {
   LabelType,
   RendererRegistration,
   SchemaField,
-  SchemaNode,
-  SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
 import React, {
   ReactElement,

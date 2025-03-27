@@ -1,9 +1,13 @@
 import { SchemaValidator } from "./schemaValidator";
 import {
+  createSchemaNode,
   FieldOption,
+  getChildrenForNode,
+  resolveSchemaNode,
   schemaDataForFieldPath,
   SchemaDataNode,
   SchemaField,
+  schemaForFieldPath,
   SchemaInterface,
   SchemaNode,
 } from "./schemaField";
@@ -159,6 +163,7 @@ export interface DataControlDefinition extends ControlDefinition {
   validators?: SchemaValidator[] | null;
   hideTitle?: boolean | null;
   dontClearHidden?: boolean | null;
+  fieldDef?: SchemaField | null;
 }
 
 export interface RenderOptions {
@@ -733,6 +738,9 @@ export function lookupDataNode(
   c: ControlDefinition,
   parentNode: SchemaDataNode,
 ) {
+  if (isDataControl(c) && c.fieldDef?.field) {
+    return parentNode.getChild(parentNode.schema.createChildNode(c.fieldDef));
+  }
   const fieldNamePath = fieldPathForDefinition(c);
   return fieldNamePath
     ? schemaDataForFieldPath(fieldNamePath, parentNode)
@@ -858,4 +866,75 @@ export function visitFormDataInContext<A>(
 
 export function fontAwesomeIcon(icon: string) {
   return { library: IconLibrary.FontAwesome, name: icon };
+}
+
+export function mergeSchemaDefinition(
+  schema: SchemaNode,
+  root: FormNode,
+): SchemaNode {
+  function findExtraFields(target: SchemaNode): SchemaField[] {
+    const fields: SchemaField[] = [];
+    extraFieldsForParent(schema, target, root, fields);
+    return fields;
+  }
+  return new MergedSchemaNode(schema, findExtraFields(schema), findExtraFields);
+}
+
+class MergedSchemaNode extends SchemaNode {
+  constructor(
+    private schema: SchemaNode,
+    private extraFields: SchemaField[],
+    private findExtraFields: (context: SchemaNode) => SchemaField[],
+    public parent?: SchemaNode,
+  ) {
+    super(schema.id, schema.lookup);
+  }
+
+  get field() {
+    return this.schema.field;
+  }
+
+  getChildFields(): string[] {
+    return [
+      ...this.schema.getChildFields(),
+      ...this.extraFields.map((x) => x.field),
+    ];
+  }
+  getChildField(field: string): SchemaField {
+    const child = this.extraFields.find((x) => x.field === field);
+    return child ?? this.schema.getChildField(field);
+  }
+  createChildNode(field: SchemaField): SchemaNode {
+    const child = createSchemaNode(field, this.lookup, this);
+    const extras = this.findExtraFields(
+      createSchemaNode(field, this.lookup, this),
+    );
+    return new MergedSchemaNode(child, extras, this.findExtraFields, this);
+  }
+}
+
+export function extraFieldsForParent(
+  parentContext: SchemaNode,
+  target: SchemaNode,
+  formNode: FormNode,
+  fields: SchemaField[],
+) {
+  const def = formNode.definition;
+  let nextContext = parentContext;
+  const dc = isDataControl(def) ? def : undefined;
+  if (dc?.fieldDef?.field) {
+    if (parentContext.id == target.id) {
+      fields.push(dc.fieldDef);
+      return;
+    }
+    nextContext = parentContext.createChildNode(dc.fieldDef);
+  } else {
+    const childPath = fieldPathForDefinition(def);
+    if (childPath) {
+      nextContext = schemaForFieldPath(childPath, parentContext);
+    }
+  }
+  formNode.getChildNodes().forEach((child) => {
+    extraFieldsForParent(nextContext, target, child, fields);
+  });
 }
