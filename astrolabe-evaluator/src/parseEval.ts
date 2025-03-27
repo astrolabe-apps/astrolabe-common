@@ -14,7 +14,6 @@ import {
 
 export function parseEval(input: string) {
   const parseTree = parser.parse(input);
-
   return convertTree(parseTree, (node) => input.substring(node.from, node.to));
 }
 

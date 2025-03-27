@@ -82,11 +82,10 @@ export default function EvalPage() {
       <div>
         <Fcheckbox control={serverMode} /> Server Mode
       </div>
-
-      <div className="grid grid-cols-2 gap-4 grow">
-        <div className="text-wrap" ref={editorRef} />
+      <div className="flex grow">
+        <div className="w-80 grow" ref={editorRef} />
         <textarea
-          className=""
+          className="grow"
           value={dataText.value}
           onChange={(e) => (dataText.value = e.target.value)}
         />
