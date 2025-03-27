@@ -561,7 +561,7 @@ export function isCompoundNode(node: SchemaNode) {
  */
 export function relativePath(parent: SchemaNode, child: SchemaNode): string {
   // return the path from child to parent
-  if (parent.id === child.id) return "";
+  if (parent.id === child.id) return ".";
 
   const parentPath = getSchemaNodePath(parent);
   const childPath = getSchemaNodePath(child);

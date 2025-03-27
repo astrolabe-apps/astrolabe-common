@@ -1,26 +1,35 @@
 ﻿import {
   ControlDefinitionExtension,
   createDataRenderer,
+  createSchemaNode,
   getSchemaNodePath,
   isCompoundNode,
+  missingField,
   relativePath,
   RenderOptions,
+  resolveSchemaNode,
   schemaForFieldRef,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import React, { useRef } from "react";
-import { Control, RenderOptional, useControl } from "@react-typed-forms/core";
+import React, {
+  useRef,
+  useState,
+  MouseEvent,
+  useCallback,
+  Fragment,
+} from "react";
 import {
-  Button,
-  createOverlayState,
-  ModalDialog,
-  Popover,
-} from "@astroapps/aria-base";
-
-import { NodeRendererProps, Tree } from "react-arborist";
+  Control,
+  groupedChanges,
+  RenderOptional,
+  useControl,
+  useControlEffect,
+} from "@react-typed-forms/core";
+import { createOverlayState, Popover } from "@astroapps/aria-base";
 import clsx from "clsx";
-import useResizeObserver from "use-resize-observer";
 import { schemaNodeIcon } from "./util";
+import { EditorSchemaNode } from "./EditorSchemaNode";
+import { cn } from "@astroapps/client";
 
 const RenderType = "FieldSelection";
 
@@ -73,6 +82,25 @@ export function FieldSelection({
   const term = useControl("");
   const selNode = schemaForFieldRef(control.value, schema);
   const triggerRef = useRef<HTMLDivElement | null>(null);
+
+  const selectorSchemaNode = useControl<EditorSchemaNode>(
+    schema as EditorSchemaNode,
+  );
+
+  useControlEffect(
+    () => open.value,
+    (v) => {
+      if (!v) return;
+
+      const parentSchema = getParentSchema(
+        control.value?.split("/") ?? [],
+        schema,
+      );
+
+      selectorSchemaNode.value = parentSchema as EditorSchemaNode;
+    },
+  );
+
   return (
     <>
       <div
@@ -110,10 +138,14 @@ export function FieldSelection({
               onChange={(e) => (term.value = e.target.value)}
               placeholder={"Search node(s)"}
             />
-            <NodeSchemaTree
+            <SchemaHierarchyBreadcrumb
+              selectorSchemaNode={selectorSchemaNode}
+            />
+            <SchemaNodeList
+              selectorSchemaNode={selectorSchemaNode}
               schemaNode={schema}
               selectedField={control}
-              term={term}
+              searchTerm={term}
             />
           </div>
         </Popover>
@@ -145,117 +177,200 @@ export function FieldSelection({
   // );
 }
 
-function NodeSchemaTree({
+function SchemaNodeList({
+  selectorSchemaNode,
   schemaNode,
   selectedField,
-  term,
+  searchTerm,
 }: {
+  selectorSchemaNode: Control<EditorSchemaNode>;
   schemaNode: SchemaNode;
   selectedField: Control<string | undefined>;
-  term: Control<string>;
+  searchTerm: Control<string>;
 }) {
-  const { ref, width, height } = useResizeObserver();
-  const allNodes = makeChildNodes(schemaNode);
+  const allNodes = makeChildNodes(selectorSchemaNode.value);
 
-  return (
-    <div className={"grow"} ref={ref}>
-      <Tree<NodeCtx>
-        width={width}
-        height={height}
-        data={allNodes}
-        children={(n) =>
-          NodeRenderer({
-            ...n,
-            schemaNode: schemaNode,
-            selection: selectedField.value,
-          })
-        }
-        onSelect={(n) => {
-          if (n.length === 0) return;
-          const currentSchema = n.at(0)?.data.schema;
-          if (currentSchema) {
-            selectedField.value = relativePath(schemaNode, currentSchema);
-          }
-        }}
-        childrenAccessor={(x) => {
-          return isCompoundNode(x.schema) && !x.schema.field.collection
-            ? makeChildNodes(x.schema)
-            : null;
-        }}
-        selection={selectedField.value}
-        searchTerm={term.value}
-        searchMatch={(node, term) =>
-          node.data.schema.field.field
-            ?.toLowerCase()
-            .includes(term.toLowerCase()) ?? false
-        }
-        disableDrag
-        disableDrop
-        disableEdit
-        disableMultiSelection
-      />
-    </div>
+  const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const onNodeClick = useCallback(
+    (e: MouseEvent, n: NodeCtx) => {
+      const onSingleClick = (e: MouseEvent, n: NodeCtx): void => {
+        const selectedSchema = n.schema;
+        selectedField.value = relativePath(schemaNode, selectedSchema);
+      };
+
+      const onDoubleClick = (e: MouseEvent, n: NodeCtx): void => {
+        const hasChildrenNodes =
+          isCompoundNode(n.schema) && !n.schema.field.collection;
+
+        if (!hasChildrenNodes) return;
+
+        selectorSchemaNode.value = n.schema as EditorSchemaNode;
+      };
+
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+        setClickTimeout(null);
+        onDoubleClick(e, n);
+      } else {
+        const timeout = setTimeout(() => {
+          onSingleClick(e, n);
+          setClickTimeout(null);
+        }, 250);
+        setClickTimeout(timeout);
+      }
+    },
+    [clickTimeout],
   );
 
-  function makeChildNodes(n: SchemaNode): NodeCtx[] {
-    return n.getChildNodes().map((x) => ({
-      schema: x,
-      id: getNodeId(x),
-    }));
-  }
+  return (
+    <div className={"flex flex-col gap-1"}>
+      {allNodes.map((n) => {
+        const show =
+          n.schema.field.displayName
+            ?.toLowerCase()
+            .includes(searchTerm.value.toLowerCase()) ||
+          n.schema.field.field
+            .toLowerCase()
+            .includes(searchTerm.value.toLowerCase());
+
+        return (
+          show && (
+            <SchemaNodeRenderer
+              key={n.id}
+              nodeSchema={n.schema}
+              schemaNode={schemaNode}
+              selection={selectedField.value}
+              onClick={(e) => onNodeClick(e, n)}
+            />
+          )
+        );
+      })}
+    </div>
+  );
 }
 
-function getNodeId(node: SchemaNode): string {
-  return getSchemaNodePath(node).join("/");
-}
-
-function NodeRenderer({
-  node,
-  style,
+function SchemaNodeRenderer({
+  nodeSchema,
   schemaNode,
+  onClick,
   selection,
-}: NodeRendererProps<NodeCtx> & {
+}: {
+  nodeSchema: SchemaNode;
   schemaNode: SchemaNode;
+  onClick: (e: MouseEvent) => void;
   selection?: string;
 }) {
-  const nodeSchema = node.data.schema;
   const isSelected = selection === relativePath(schemaNode, nodeSchema);
+  const hasChildrenNodes =
+    isCompoundNode(nodeSchema) && !nodeSchema.field.collection;
 
   return (
     <div
-      style={style}
       className={clsx(
-        "flex flex-row gap-1 items-center rounded hover:bg-primary-100 hover:cursor-pointer text-nowrap",
+        "flex flex-row gap-2 items-center rounded hover:bg-primary-100 hover:cursor-pointer text-nowrap px-4 select-none",
         isSelected && "bg-primary-200 hover:bg-primary-200",
       )}
+      onClick={onClick}
     >
-      <span
-        className="w-4 mr-2 shrink-0"
-        onClick={(e) => {
-          e.stopPropagation();
-          node.isInternal && node.toggle();
-        }}
-      >
-        {node.isInternal && (
-          <i
-            className={clsx(
-              "w-4 fa-solid",
-              node.isOpen ? "fa-chevron-down" : "fa-chevron-right",
-            )}
-          />
+      <i
+        className={clsx(
+          "fa-solid w-4 h-4",
+          schemaNodeIcon(nodeSchema.field.type),
         )}
+      />
+      <span>
+        {nodeSchema.field.displayName} ({nodeSchema.field.field})
       </span>
-      <div>
-        <i
-          className={clsx(
-            "fa-solid w-4 h-4 mr-2",
-            schemaNodeIcon(nodeSchema.field.type),
-          )}
-        />
-        <span>
-          {node.data.schema.field.displayName} ({node.data.schema.field.field})
-        </span>
-      </div>
+      {hasChildrenNodes && (
+        <i className={clsx("w-4 h-4 fa-solid fa-angle-right")} />
+      )}
     </div>
   );
+}
+
+function makeChildNodes(n: SchemaNode): NodeCtx[] {
+  function getNodeId(node: SchemaNode): string {
+    return getSchemaNodePath(node).join("/");
+  }
+
+  return n.getChildNodes().map((x) => ({
+    schema: x,
+    id: getNodeId(x),
+  }));
+}
+
+function SchemaHierarchyBreadcrumb({
+  selectorSchemaNode,
+}: {
+  selectorSchemaNode: Control<EditorSchemaNode>;
+}) {
+  const schemaHierarchy = getSchemaNodePath(selectorSchemaNode.value);
+
+  function onBreadcrumbClick(upLevels: number) {
+    groupedChanges(() => {
+      for (let i = 0; i < upLevels; i++) {
+        const parent = selectorSchemaNode.fields.parent.value;
+        if (parent) {
+          selectorSchemaNode.value = parent as EditorSchemaNode;
+        }
+      }
+    });
+  }
+
+  return (
+    <div className={"flex flex-row gap-2 flex-wrap px-2 py-1"}>
+      {schemaHierarchy.map((x, i, xs) => {
+        const isCurrentNode = i == xs.length - 1;
+        return (
+          <Fragment key={x}>
+            <Breadcrumb
+              field={x}
+              onClick={() => onBreadcrumbClick(xs.length - 1 - i)}
+              className={cn(
+                isCurrentNode
+                  ? "text-primary-500 underline font-bold"
+                  : "cursor-pointer hover:underline",
+              )}
+            />
+            {!isCurrentNode && <div>/</div>}
+          </Fragment>
+        );
+      })}
+    </div>
+  );
+}
+
+function Breadcrumb({
+  field,
+  onClick,
+  className,
+}: {
+  field: string;
+  onClick: () => void;
+  className?: string;
+}) {
+  return (
+    <span onClick={onClick} className={className}>
+      {field == "" ? "_" : field}
+    </span>
+  );
+}
+
+function getParentSchema(fieldPath: string[], schema: SchemaNode) {
+  let i = 0;
+  while (i < fieldPath.length - 1) {
+    const previousField = fieldPath[i];
+    let parentNode = resolveSchemaNode(schema, previousField);
+    if (!parentNode) {
+      parentNode = createSchemaNode(
+        missingField(previousField),
+        schema,
+        schema,
+      );
+    }
+    schema = parentNode;
+    i++;
+  }
+  return schema;
 }
