@@ -40,6 +40,7 @@ export interface ViewContext {
   updateTabTitle: (tabId: string, title: string) => void;
   editorPanelClass?: string;
   saveForm(c: Control<EditableForm>): void;
+  snippets?: Snippet[];
 }
 
 export interface FormInfo {
@@ -63,4 +64,11 @@ export interface EditableForm {
   showJson?: boolean;
   formId: string;
   name: string;
+}
+
+export interface Snippet {
+  id: string;
+  name: string;
+  group?: string | null;
+  definition: ControlDefinition;
 }

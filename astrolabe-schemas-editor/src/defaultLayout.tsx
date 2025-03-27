@@ -10,13 +10,16 @@ export const defaultLayout: IJsonModel = {
     weight: 100,
     children: [
       {
-        type: "tabset",
+        type: "row",
         weight: 1,
         children: [
           {
-            type: "tab",
-            name: "Form List",
-            id: "formList",
+            type: "tabset",
+            children: [{ name: "Form List", id: "formList" }],
+          },
+          {
+            type: "tabset",
+            children: [{ name: "Snippets", id: "snippets" }],
           },
         ],
       },

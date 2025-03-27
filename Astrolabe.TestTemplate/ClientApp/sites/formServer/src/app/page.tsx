@@ -70,6 +70,7 @@ import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
+import { Snippet } from "../../../../../../astrolabe-schemas-editor/src/views";
 
 const Extensions = [
   DataGridExtension,
@@ -376,6 +377,7 @@ export default function Editor() {
             <Button onClick={() => genPdf(c, data)}>PDF</Button>
           </div>
         )}
+        snippets={testSnippet}
       />
     </DndProvider>
   );
@@ -408,3 +410,61 @@ export default function Editor() {
     }
   }
 }
+
+const testSnippet = [
+  {
+    id: "container",
+    name: "Container",
+    definition: {
+      type: "Group",
+      title: "Container",
+      styleClass: "flex flex-col border border-black p-4",
+      children: [
+        {
+          type: "Display",
+          title: "Title",
+          displayData: {
+            type: "Text",
+            text: "Title",
+          },
+        },
+        {
+          type: "Display",
+          title: "Content",
+          displayData: {
+            type: "Text",
+            text: "Content",
+          },
+        },
+      ],
+      groupOptions: {
+        type: "Standard",
+      },
+    },
+  },
+  {
+    id: "badge",
+    name: "Badge",
+    group: "Badges",
+    definition: {
+      type: "Group",
+      title: "Badge",
+      styleClass: "bg-primary-500 w-fit px-2 py-1",
+      children: [
+        {
+          type: "Display",
+          title: "Title",
+          styleClass: "text-white",
+          displayData: {
+            type: "Text",
+            text: "Badge Title",
+          },
+        },
+      ],
+      groupOptions: {
+        type: "Standard",
+        hideTitle: true,
+      },
+    },
+  },
+] as unknown as Snippet[];

@@ -89,10 +89,10 @@ export function useMakeValidationHook(
   );
 }
 
-function useDefaultValidator(
+const useDefaultValidator = (
   validator: SchemaValidator,
   ctx: ValidationContext,
-) {
+) => {
   switch (validator.type) {
     case ValidatorType.Length:
       useLengthValidator(validator as LengthValidator, ctx);
@@ -104,7 +104,7 @@ function useDefaultValidator(
       useDateValidator(validator as DateValidator, ctx);
       break;
   }
-}
+};
 
 export function useJsonataValidator(
   validator: JsonataValidator,
