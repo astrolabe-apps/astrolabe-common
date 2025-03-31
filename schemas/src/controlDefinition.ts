@@ -398,6 +398,7 @@ export interface DisplayData {
 export enum DisplayDataType {
   Text = "Text",
   Html = "Html",
+  Signature = "Signature",
   Icon = "Icon",
   Custom = "Custom",
 }
@@ -415,6 +416,11 @@ export interface IconDisplay extends DisplayData {
 export interface HtmlDisplay extends DisplayData {
   type: DisplayDataType.Html;
   html: string;
+}
+
+export interface SignatureDisplay extends DisplayData {
+  type: DisplayDataType.Signature;
+  signature: [string, string][];
 }
 
 export interface CustomDisplay extends DisplayData {

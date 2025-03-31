@@ -12,6 +12,7 @@ export * from "./components/NullToggle";
 export * from "./components/DefaultArrayRenderer";
 export * from "./components/AutocompleteRenderer";
 export * from "./components/ValueForFieldRenderer";
+export * from './components/SignatureRenderer'
 export * from "./adornments/optionalAdornment";
 export * from "./createDefaultRenderers";
 export * from "./tailwind";

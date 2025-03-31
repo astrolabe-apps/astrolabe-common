@@ -19,6 +19,7 @@ import {
   JsonataRenderOptions,
   RadioButtonRenderOptions,
   RenderOptions,
+  SignatureDisplay,
   TextDisplay,
   TextfieldRenderOptions,
 } from "./controlDefinition";
@@ -125,6 +126,20 @@ export function htmlDisplayControl(
   return {
     type: ControlDefinitionType.Display,
     displayData: { type: DisplayDataType.Html, html } as HtmlDisplay,
+    ...options,
+  };
+}
+
+export function signatureDisplayControl(
+  signature: [string, string][],
+  options?: Partial<DisplayControlDefinition>,
+): DisplayControlDefinition {
+  return {
+    type: ControlDefinitionType.Display,
+    displayData: {
+      type: DisplayDataType.Signature,
+      signature,
+    } as SignatureDisplay,
     ...options,
   };
 }
