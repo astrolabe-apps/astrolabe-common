@@ -45,6 +45,7 @@ enum NumberChoice {
 }
 
 interface AllControls {
+  signature: string[];
   text: string;
   double: number;
   int: number;
@@ -60,6 +61,9 @@ interface AllControls {
 
 export default function Page() {
   const Schema = buildSchema<AllControls>({
+    signature: stringField("Signature", {
+      collection: true,
+    }),
     text: stringField("Text"),
     double: doubleField("Double"),
     int: intField("Int"),
@@ -99,6 +103,11 @@ export default function Page() {
   );
 
   const allGroup = groupedControl([
+    dataControl("signature", "Signature", {
+      renderOptions: {
+        type: DataRenderType.Signature,
+      },
+    }),
     dataControl("text"),
     dataControl("int"),
     dataControl("double"),
@@ -158,10 +167,16 @@ export default function Page() {
     int: 1,
     double: 2.5,
     stringArray: [],
+    signature: [],
   });
   return (
     <div className="container">
-      {/* <SignatureRenderer /> */}
+      {/* <SignatureRenderer
+        onDrawEnd={(e) => {
+          console.log("Signature drawn", e);
+          control.fields.signature.value = e.paths;
+        }}
+      /> */}
       <ControlRenderer
         control={control}
         definition={allGroup}

@@ -20,6 +20,7 @@ import {
   RadioButtonRenderOptions,
   RenderOptions,
   SignatureDisplay,
+  SignatureRenderOptions,
   TextDisplay,
   TextfieldRenderOptions,
 } from "./controlDefinition";
@@ -108,6 +109,10 @@ export const jsonataOptions = renderOptionsFor<JsonataRenderOptions>(
   DataRenderType.Jsonata,
 );
 
+export const signatureOptions = renderOptionsFor<SignatureRenderOptions>(
+  DataRenderType.Signature,
+);
+
 export function textDisplayControl(
   text: string,
   options?: Partial<DisplayControlDefinition>,
@@ -130,19 +135,19 @@ export function htmlDisplayControl(
   };
 }
 
-export function signatureDisplayControl(
-  signature: [string, string][],
-  options?: Partial<DisplayControlDefinition>,
-): DisplayControlDefinition {
-  return {
-    type: ControlDefinitionType.Display,
-    displayData: {
-      type: DisplayDataType.Signature,
-      signature,
-    } as SignatureDisplay,
-    ...options,
-  };
-}
+// export function signatureDisplayControl(
+//   signature: string[],
+//   options?: Partial<DisplayControlDefinition>,
+// ): DisplayControlDefinition {
+//   return {
+//     type: ControlDefinitionType.Display,
+//     displayData: {
+//       type: DisplayDataType.Signature,
+//       signature,
+//     } as SignatureDisplay,
+//     ...options,
+//   };
+// }
 
 export function dynamicDefaultValue(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.DefaultValue, expr };
