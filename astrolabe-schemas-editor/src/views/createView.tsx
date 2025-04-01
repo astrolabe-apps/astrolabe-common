@@ -6,7 +6,6 @@ import { ControlPropertiesView } from "./ControlPropertiesView";
 import { FormView } from "./FormView";
 import { FormListView } from "./FormListView";
 import { HelpView } from "./HelpView";
-import { SchemaPropertiesView } from "./SchemaPropertiesView";
 import { SnippetsView } from "./SnippetsView";
 
 export function getTabTitle(viewType: string, viewParams?: string): string {
@@ -83,8 +82,6 @@ export function createView(
         return <ControlPropertiesView context={context} />;
       case "snippets":
         return <SnippetsView context={context} />;
-      case "schemaProperties":
-        return <SchemaPropertiesView context={context} />;
       default:
         return <div>Unknown view type: {viewType}</div>;
     }

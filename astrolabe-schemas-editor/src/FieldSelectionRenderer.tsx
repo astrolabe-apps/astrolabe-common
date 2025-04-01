@@ -83,9 +83,7 @@ export function FieldSelection({
   const selNode = schemaForFieldRef(control.value, schema);
   const triggerRef = useRef<HTMLDivElement | null>(null);
 
-  const selectorSchemaNode = useControl<EditorSchemaNode>(
-    schema as EditorSchemaNode,
-  );
+  const selectorSchemaNode = useControl<SchemaNode>(schema);
 
   useControlEffect(
     () => open.value,
@@ -97,7 +95,7 @@ export function FieldSelection({
         schema,
       );
 
-      selectorSchemaNode.value = parentSchema as EditorSchemaNode;
+      selectorSchemaNode.value = parentSchema;
     },
   );
 
@@ -183,7 +181,7 @@ function SchemaNodeList({
   selectedField,
   searchTerm,
 }: {
-  selectorSchemaNode: Control<EditorSchemaNode>;
+  selectorSchemaNode: Control<SchemaNode>;
   schemaNode: SchemaNode;
   selectedField: Control<string | undefined>;
   searchTerm: Control<string>;
@@ -303,7 +301,7 @@ function makeChildNodes(n: SchemaNode): NodeCtx[] {
 function SchemaHierarchyBreadcrumb({
   selectorSchemaNode,
 }: {
-  selectorSchemaNode: Control<EditorSchemaNode>;
+  selectorSchemaNode: Control<SchemaNode>;
 }) {
   const schemaHierarchy = getSchemaNodePath(selectorSchemaNode.value);
 
@@ -312,7 +310,7 @@ function SchemaHierarchyBreadcrumb({
       for (let i = 0; i < upLevels; i++) {
         const parent = selectorSchemaNode.fields.parent.value;
         if (parent) {
-          selectorSchemaNode.value = parent as EditorSchemaNode;
+          selectorSchemaNode.value = parent;
         }
       }
     });

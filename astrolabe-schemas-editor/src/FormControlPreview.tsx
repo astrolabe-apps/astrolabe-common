@@ -106,11 +106,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const path = fieldPathForDefinition(definition);
 
   const dataDefinition = isDataControl(definition) ? definition : undefined;
-  const childNode = dataDefinition?.fieldDef
-    ? parentNode.createChildNode(dataDefinition.fieldDef)
-    : path && elementIndex == null
-      ? schemaForFieldPath(path, parentNode)
-      : null;
+  const childNode =
+    path && elementIndex == null ? schemaForFieldPath(path, parentNode) : null;
 
   const isRequired = !!dataDefinition?.required;
   const displayOptions = getDisplayOnlyOptions(definition);
