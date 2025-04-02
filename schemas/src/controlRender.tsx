@@ -483,27 +483,10 @@ export interface FormContextOptions {
   inline?: boolean;
 }
 
-export interface DataControlProps {
-  formNode: FormNode;
-  definition: DataControlDefinition;
-  dataContext: ControlDataContext;
-  control: Control<any>;
-  formOptions: FormContextOptions;
-  style?: React.CSSProperties | undefined;
-  renderChild: ChildRenderer;
-  elementIndex?: number;
-  allowedOptions?: Control<any[] | undefined>;
-  useChildVisibility: ChildVisibilityFunc;
-  useEvalExpression: UseEvalExpressionHook;
-  schemaInterface?: SchemaInterface;
-  designMode?: boolean;
-  styleClass?: string;
-  textClass?: string;
-  layoutClass?: string;
-}
-
 export type CreateDataProps = (
-  controlProps: DataControlProps,
+  controlProps: RenderLayoutProps,
+  definition: DataControlDefinition,
+  control: Control<any>,
 ) => DataRendererProps;
 
 export interface ControlRenderOptions
@@ -742,19 +725,9 @@ export function useControlRendererComponent(
             formOptions: myOptions,
           }),
         ) ?? [];
-      const otherChildNodes =
-        definition.childRefId &&
-        formNode.tree.getByRefId(definition.childRefId)?.getChildNodes();
 
       const labelAndChildren = renderControlLayout({
-        formNode: otherChildNodes
-          ? formNode.tree.createTempNode(
-              formNode.id,
-              definition,
-              otherChildNodes,
-            )
-          : formNode,
-        definition: c,
+        formNode,
         renderer,
         renderChild: (k, child, options) => {
           const overrideClasses = getGroupClassOverrides(c);
@@ -872,17 +845,19 @@ export function NewControlRenderer({
   return <Render />;
 }
 
-export function defaultDataProps({
-  definition,
-  control,
-  formOptions,
-  style,
-  allowedOptions,
-  schemaInterface = defaultSchemaInterface,
-  styleClass,
-  textClass: tc,
-  ...props
-}: DataControlProps): DataRendererProps {
+export function defaultDataProps(
+  {
+    formOptions,
+    style,
+    allowedOptions,
+    schemaInterface = defaultSchemaInterface,
+    styleClass,
+    textClass: tc,
+    ...props
+  }: RenderLayoutProps,
+  definition: DataControlDefinition,
+  control: Control<any>,
+): DataRendererProps {
   const dataNode = props.dataContext.dataNode!;
   const field = dataNode.schema.field;
   const className = rendererClass(styleClass, definition.styleClass);
@@ -941,8 +916,7 @@ export type ChildRenderer = (
   options?: ChildRendererOptions,
 ) => ReactNode;
 
-export interface RenderControlProps {
-  definition: ControlDefinition;
+export interface RenderLayoutProps {
   formNode: FormNode;
   renderer: FormRenderer;
   renderChild: ChildRenderer;
@@ -971,10 +945,9 @@ export interface RenderControlProps {
   textClass?: string;
 }
 export function renderControlLayout(
-  props: RenderControlProps,
+  props: RenderLayoutProps,
 ): ControlLayoutProps {
   const {
-    definition: c,
     renderer,
     renderChild,
     control,
@@ -994,6 +967,7 @@ export function renderControlLayout(
     formNode,
     formOptions,
   } = props;
+  const c = formNode.definition;
   if (isDataControl(c)) {
     return renderData(c);
   }
@@ -1077,12 +1051,7 @@ export function renderControlLayout(
 
   function renderData(c: DataControlDefinition): ControlLayoutProps {
     if (!control) return { children: "No control for: " + c.field };
-    const rendererProps = dataProps(
-      props as RenderControlProps & {
-        definition: DataControlDefinition;
-        control: Control<any>;
-      },
-    );
+    const rendererProps = dataProps(props, c, control);
     const label = !c.hideTitle
       ? controlTitle(
           labelText?.value ?? c.title,

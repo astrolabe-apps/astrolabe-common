@@ -5,18 +5,10 @@ import {
   useComputed,
   useControl,
 } from "@react-typed-forms/core";
-import React, {
-  createContext,
-  HTMLAttributes,
-  ReactNode,
-  useContext,
-  useMemo,
-} from "react";
-import { useDroppable } from "@dnd-kit/core";
+import React, { HTMLAttributes, ReactNode, useMemo } from "react";
 import {
   ControlDataContext,
   ControlDefinition,
-  DataControlDefinition,
   defaultDataProps,
   defaultSchemaInterface,
   defaultValueForField,
@@ -40,8 +32,6 @@ import {
   textDisplayControl,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
-import { ControlDragState, controlDropData, DragData, DropData } from "./util";
-import { SelectedControlNode } from "./types";
 
 export interface FormControlPreviewProps {
   node: FormNode;
@@ -94,11 +84,9 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const { selected, renderer, hideFields } = context;
   const displayOnly = dOnly || isControlDisplayOnly(definition);
 
-  const defControl = unsafeRestoreControl(definition);
-  const defControlId = defControl?.uniqueId.toString();
   const isSelected = useComputed(() => {
     const selControlId = selected.value;
-    return selControlId !== undefined && defControlId == selControlId;
+    return selControlId !== undefined && node.id == selControlId;
   }).value;
   const scrollRef = useScrollIntoView(isSelected);
   const groupControl = useControl({});
@@ -152,20 +140,16 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     ) ?? [];
 
   const groupClasses = getGroupClassOverrides(definition);
-  const tree = node.tree;
+  const renderedNode = node.definition.childRefId
+    ? node.createChildNode(
+        "ref",
+        textDisplayControl("Reference:" + node.definition.childRefId),
+      )
+    : node;
   const layout = renderControlLayout({
-    definition,
     renderer,
     elementIndex,
-    formNode: node.definition.childRefId
-      ? tree.createTempNode(
-          node.id + "ref",
-          definition,
-          tree.createChildNodes(node, [
-            textDisplayControl("Reference:" + node.definition.childRefId),
-          ]),
-        )
-      : node,
+    formNode: renderedNode,
     renderChild: (k, child, c) => {
       return (
         <FormControlPreview
@@ -202,14 +186,14 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         onClick: (e) => {
           e.preventDefault();
           e.stopPropagation();
-          selected.value = defControlId;
+          selected.value = node.id;
         },
       }
     : {
         onClickCapture: (e) => {
           e.preventDefault();
           e.stopPropagation();
-          selected.value = defControlId;
+          selected.value = node.id;
         },
         onMouseDownCapture: (e) => {
           e.stopPropagation();

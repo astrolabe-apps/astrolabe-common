@@ -193,11 +193,7 @@ export function createDataGridRenderer(
             layoutClass: x.layoutClass,
           };
           const headerOptions = getColumnHeaderFromOptions(x, def, gridClasses);
-          const colNode = formNode.tree.createTempNode(
-            formNode.id + "_" + i,
-            def,
-            [],
-          );
+          const colNode = formNode.createChildNode(i.toString(), def);
           return {
             ...headerOptions,
             id: "cc" + i,

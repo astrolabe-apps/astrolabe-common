@@ -73,6 +73,7 @@ export function DataArrayRenderer({
     dataContext,
     formNode,
   } = dataProps;
+
   const { addText, noAdd, noRemove, noReorder, removeText, editExternal } =
     mergeObjects(
       isArrayRenderer(renderOptions)
@@ -86,21 +87,20 @@ export function DataArrayRenderer({
     : undefined;
 
   const renderAsElement = !isCompoundField(field);
-  const childDefinition: FormNode = formNode.tree.createTempNode(
-    formNode.id + "child",
-    !renderAsElement
-      ? ({
-          type: ControlDefinitionType.Group,
-          groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
-        } as GroupedControlsDefinition)
-      : ({
-          type: ControlDefinitionType.Data,
-          field: definition.field,
-          renderOptions: childOptions ?? { type: DataRenderType.Standard },
-          hideTitle: true,
-        } as DataControlDefinition),
-    formNode.getChildNodes(),
-  );
+  const childDef = !renderAsElement
+    ? ({
+        type: ControlDefinitionType.Group,
+        groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
+        children: formNode.getResolvedChildren(),
+      } as GroupedControlsDefinition)
+    : ({
+        type: ControlDefinitionType.Data,
+        field: definition.field,
+        renderOptions: childOptions ?? { type: DataRenderType.Standard },
+        hideTitle: true,
+      } as DataControlDefinition);
+
+  const childNode: FormNode = formNode.createChildNode("child", childDef);
 
   const visibilities = (definition.children ?? []).map(
     (x) => [useChildVisibility(x, undefined, true), x] as const,
@@ -139,7 +139,7 @@ export function DataArrayRenderer({
   function renderChildElement(i: number, elementNode: SchemaDataNode) {
     return renderChild(
       control.elements?.[i].uniqueId ?? i,
-      childDefinition,
+      childNode,
       renderAsElement
         ? {
             elementIndex: i,

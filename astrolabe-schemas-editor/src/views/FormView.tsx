@@ -1,7 +1,6 @@
 import { EditableForm, ViewContext } from "./index";
 import {
   Control,
-  RenderControl,
   RenderOptional,
   useControl,
   useControlEffect,
@@ -9,7 +8,7 @@ import {
 } from "@react-typed-forms/core";
 import { FormControlPreview } from "../FormControlPreview";
 import {
-  addMissingControlsToForm,
+  addMissingControlsForSchema,
   ControlDefinition,
 } from "@react-typed-forms/schemas";
 import React from "react";
@@ -29,7 +28,7 @@ export function FormView(props: { formId: string; context: ViewContext }) {
   useControlEffect(
     () =>
       [
-        control.fields.formTree.value?.root.dirty,
+        control.fields.formTree.value?.control.dirty,
         control.fields.name.value,
       ] as const,
     ([unsaved, name]) => {
@@ -66,7 +65,8 @@ function RenderFormDesign({
     button,
     checkbox,
   } = context;
-  const rootNode = c.fields.formTree.value.rootNode;
+  const tree = c.fields.formTree.value;
+  const rootNode = tree.rootNode;
   const rootSchema = c.fields.schema.value;
   const formRenderer = c.fields.renderer.value;
   return (
@@ -87,7 +87,8 @@ function RenderFormDesign({
 
   function addMissing() {
     if (rootSchema) {
-      addMissingControlsToForm(rootSchema, c.fields.formTree.value);
+      const rootDefs = tree.getRootDefinitions();
+      rootDefs.value = addMissingControlsForSchema(rootSchema, rootDefs.value);
     }
   }
 
@@ -118,9 +119,7 @@ function RenderFormDesign({
           {checkbox(c.fields.showJson, "Show JSON")}
         </div>
         {c.fields.showJson.value && (
-          <FormJsonView
-            root={c.fields.formTree.fields.rootNode.value.control.fields.children.as()}
-          />
+          <FormJsonView root={c.fields.formTree.value.getRootDefinitions()} />
         )}
         <div className={clsx("grow overflow-auto", context.editorPanelClass)}>
           <FormControlPreview

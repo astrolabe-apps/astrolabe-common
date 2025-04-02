@@ -5,15 +5,13 @@ import {
   FormNode,
   FormRenderer,
   FormTree,
-  GroupedControlsDefinition,
   RendererRegistration,
   SchemaNode,
-  SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
 import { SelectedControlNode } from "../types";
 import { ReactNode } from "react";
-import { EditorFormTree } from "../EditorFormNode";
+import { EditorFormTree } from "../EditorFormTree";
 
 export interface ViewContext {
   formList: FormInfo[];

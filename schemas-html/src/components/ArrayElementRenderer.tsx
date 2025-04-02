@@ -66,14 +66,11 @@ function ArrayElementRenderer({
       dataProps.dataNode.schema,
       extData.fields.data,
     );
-    const elementGroup: FormNode = formNode.tree.createTempNode(
-      formNode.id + "group",
-      {
-        type: ControlDefinitionType.Group,
-        groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
-      } as GroupedControlsDefinition,
-      formNode.getChildNodes(),
-    );
+    const elementGroup: FormNode = formNode.createChildNode("group", {
+      type: ControlDefinitionType.Group,
+      groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
+      children: formNode.getResolvedChildren(),
+    } as GroupedControlsDefinition);
     const editContent = (
       <div className={rendererClass(dataProps.className, options.className)}>
         {renderChild("", elementGroup, {

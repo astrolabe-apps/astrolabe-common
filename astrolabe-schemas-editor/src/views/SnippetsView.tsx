@@ -2,13 +2,13 @@
 import React from "react";
 import { Control, controlNotNull } from "@react-typed-forms/core";
 import { InactiveView } from "./InactiveView";
-import { EditorFormNode, EditorFormTree } from "../EditorFormNode";
 import { ControlDefinition } from "@react-typed-forms/schemas";
 import useResizeObserver from "use-resize-observer";
 import { NodeRendererProps, Tree } from "react-arborist";
 import { StdTreeNode } from "../StdTreeNode";
 import clsx from "clsx";
 import { SelectedControlNode } from "../types";
+import { EditorFormTree } from "../EditorFormTree";
 
 interface SnippetTreeNode {
   id: string;
@@ -70,10 +70,8 @@ function SnippetsTree({
     if (!d) return;
 
     const v = selectedControl.fields.form.value ?? tree.rootNode;
-    if (v instanceof EditorFormNode) {
-      const newNode = v.tree.addChild(v, d);
-      selectedControlId.value = newNode.id;
-    }
+    const newNode = tree.addNode(v, d);
+    selectedControlId.value = newNode.id;
   }
 }
 

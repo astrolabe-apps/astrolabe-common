@@ -28,7 +28,6 @@ import {
 import { createOverlayState, Popover } from "@astroapps/aria-base";
 import clsx from "clsx";
 import { schemaNodeIcon } from "./util";
-import { EditorSchemaNode } from "./EditorSchemaNode";
 import { cn } from "@astroapps/client";
 
 const RenderType = "FieldSelection";
@@ -203,7 +202,7 @@ function SchemaNodeList({
 
         if (!hasChildrenNodes) return;
 
-        selectorSchemaNode.value = n.schema as EditorSchemaNode;
+        selectorSchemaNode.value = n.schema;
       };
 
       if (clickTimeout) {
