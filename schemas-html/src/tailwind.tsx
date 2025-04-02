@@ -63,6 +63,19 @@ export const defaultTailwindTheme = {
       chipCloseButtonClass:
         "fa-solid fa-xmark p-1 bg-surface-300 rounded-full min-w-[24px] flex justify-center text-surface-50 hover:bg-surface-400 hover:text-surface-100 hover:cursor-pointer",
     },
+    signatureOptions: {
+      className: "flex flex-col gap-2",
+      canvasClass: "h-20 border-2 border-surface-300 rounded-lg",
+      buttonClass:
+        "bg-primary-500 text-white rounded-lg p-2 hover:bg-primary-600",
+      clearButtonClass: fontAwesomeIcon("chevron-up"),
+      // "aspect-square bg-danger-500 text-white rounded-lg p-2 hover:bg-danger-600",
+      segmentClass: "fill-black",
+      segmentPathClass: "fill-black",
+      currentSegmentClass: "fill-blue-500",
+      guideClass:
+        "border-surface-300 border-dotted w-full px-4 absolute bottom-8",
+    },
   },
   adornment: {
     accordion: {

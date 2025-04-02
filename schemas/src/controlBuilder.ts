@@ -19,7 +19,6 @@ import {
   JsonataRenderOptions,
   RadioButtonRenderOptions,
   RenderOptions,
-  SignatureDisplay,
   SignatureRenderOptions,
   TextDisplay,
   TextfieldRenderOptions,
@@ -134,20 +133,6 @@ export function htmlDisplayControl(
     ...options,
   };
 }
-
-// export function signatureDisplayControl(
-//   signature: string[],
-//   options?: Partial<DisplayControlDefinition>,
-// ): DisplayControlDefinition {
-//   return {
-//     type: ControlDefinitionType.Display,
-//     displayData: {
-//       type: DisplayDataType.Signature,
-//       signature,
-//     } as SignatureDisplay,
-//     ...options,
-//   };
-// }
 
 export function dynamicDefaultValue(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.DefaultValue, expr };
