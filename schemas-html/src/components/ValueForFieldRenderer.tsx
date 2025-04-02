@@ -67,7 +67,6 @@ export function createValueForFieldRenderer(options: ValueForFieldOptions) {
           actualFieldRef,
           o.dataContext.parentNode,
         );
-        console.log(actualFieldRef, dataNode);
         schemaField = trackedValue(dataNode.control.as<SchemaField>());
       } else {
         schemaField = actualFieldRef

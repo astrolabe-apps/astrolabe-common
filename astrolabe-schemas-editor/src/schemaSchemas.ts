@@ -699,6 +699,7 @@ export interface GroupRenderOptionsForm {
   direction: string | null;
   gap: string | null;
   columns: number | null;
+  rowClass: string | null;
   value: any;
   childIndexExpression: EntityExpressionForm;
 }
@@ -781,6 +782,11 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     type: FieldType.Int,
     onlyForTypes: ["Grid"],
     displayName: "Columns",
+  }),
+  rowClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Grid"],
+    displayName: "Row Class",
   }),
   value: makeScalarField({
     type: FieldType.Any,

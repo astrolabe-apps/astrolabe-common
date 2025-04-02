@@ -15,7 +15,10 @@ export const defaultTailwindTheme = {
   },
   group: {
     standardClassName: "flex flex-col gap-4",
-    gridClassName: "gap-x-2 gap-y-4",
+    grid: {
+      className: "flex flex-col gap-4",
+      rowClass: "flex flex-row gap-4 justify-between *:flex-1",
+    },
     flexClassName: "gap-2",
     inlineClass: "",
     tabs: {

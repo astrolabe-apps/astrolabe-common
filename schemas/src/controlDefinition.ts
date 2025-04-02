@@ -373,6 +373,7 @@ export interface GroupElementRenderer extends GroupRenderOptions {
 export interface GridRenderer extends GroupRenderOptions {
   type: GroupRenderType.Grid;
   columns?: number | null;
+  rowClass?: string | null;
 }
 
 export interface TabsRenderOptions extends GroupRenderOptions {
@@ -741,6 +742,15 @@ export function lookupDataNode(
   return fieldNamePath
     ? schemaDataForFieldPath(fieldNamePath, parentNode)
     : undefined;
+}
+
+export function lookupChildDataContext(
+  dataContext: ControlDataContext,
+  c: ControlDefinition,
+): ControlDataContext {
+  const parentNode = dataContext.dataNode ?? dataContext.parentNode;
+  const dataNode = lookupDataNode(c, parentNode);
+  return { ...dataContext, parentNode, dataNode };
 }
 
 export function traverseParents<A, B extends { parent?: B | undefined }>(

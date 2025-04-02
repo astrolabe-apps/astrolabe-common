@@ -370,7 +370,7 @@ public record TabsRenderOptions(string? ContentClass)
 public record FlexRenderer(string? Direction, string? Gap)
     : GroupRenderOptions(GroupRenderType.Flex.ToString());
 
-public record GridRenderer(int? Columns) : GroupRenderOptions(GroupRenderType.Grid.ToString());
+public record GridRenderer(int? Columns, string? RowClass) : GroupRenderOptions(GroupRenderType.Grid.ToString());
 
 public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)] object Value)
     : GroupRenderOptions(GroupRenderType.GroupElement.ToString());

@@ -17,6 +17,7 @@ import clsx from "clsx";
 import React, { CSSProperties } from "react";
 import { useTrackedComponent } from "@react-typed-forms/core";
 import { createTabsRenderer, DefaultTabsRenderOptions } from "./TabsRenderer";
+import { createGridRenderer, DefaultGridRenderOptions } from "./GridRenderer";
 
 interface StyleProps {
   className?: string;
@@ -26,9 +27,7 @@ interface StyleProps {
 export interface DefaultGroupRendererOptions {
   className?: string;
   standardClassName?: string;
-  gridStyles?: (columns: GridRenderer) => StyleProps;
-  gridClassName?: string;
-  defaultGridColumns?: number;
+  grid?: DefaultGridRenderOptions;
   flexClassName?: string;
   defaultFlexGap?: string;
   inlineClass?: string;
@@ -38,29 +37,15 @@ export interface DefaultGroupRendererOptions {
 export function createDefaultGroupRenderer(
   options?: DefaultGroupRendererOptions,
 ): GroupRendererRegistration {
+  const gridRenderer = createGridRenderer(options?.grid);
   const tabsRenderer = createTabsRenderer(options?.tabs);
   const {
     className,
-    gridStyles = defaultGridStyles,
-    defaultGridColumns = 2,
-    gridClassName,
     standardClassName,
     flexClassName,
     inlineClass,
     defaultFlexGap,
   } = options ?? {};
-
-  function defaultGridStyles({
-    columns = defaultGridColumns,
-  }: GridRenderer): StyleProps {
-    return {
-      className: gridClassName,
-      style: {
-        display: "grid",
-        gridTemplateColumns: `repeat(${columns}, 1fr)`,
-      },
-    };
-  }
 
   function flexStyles(options: FlexRenderer): StyleProps {
     return {
@@ -79,19 +64,19 @@ export function createDefaultGroupRenderer(
     const { renderChild, renderOptions, formNode } = props;
     if (isTabsRenderer(renderOptions))
       return tabsRenderer.render(props, renderer);
+    if (isGridRenderer(renderOptions))
+      return gridRenderer.render(props, renderer);
     if (isSelectChildRenderer(renderOptions) && !props.designMode) {
       return (
         <SelectChildGroupRenderer {...props} renderOptions={renderOptions} />
       );
     }
 
-    const { style, className: gcn } = isGridRenderer(renderOptions)
-      ? gridStyles(renderOptions)
-      : isFlexRenderer(renderOptions)
-        ? flexStyles(renderOptions)
-        : isInlineRenderer(renderOptions)
-          ? ({ className: inlineClass } as StyleProps)
-          : ({ className: standardClassName } as StyleProps);
+    const { style, className: gcn } = isFlexRenderer(renderOptions)
+      ? flexStyles(renderOptions)
+      : isInlineRenderer(renderOptions)
+        ? ({ className: inlineClass } as StyleProps)
+        : ({ className: standardClassName } as StyleProps);
     const { Div } = renderer.html;
     const inline = renderOptions.type == GroupRenderType.Inline;
     const children = formNode.getChildNodes().map((c, i) =>
