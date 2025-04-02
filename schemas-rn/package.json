@@ -44,9 +44,7 @@
     "@react-native-community/datetimepicker": "8.2.0",
     "react-native-modal-datetime-picker": "^18.0.0",
     "@internationalized/date": "^3.6.0",
-    "@rn-primitives/tooltip": "^1.1.0",
     "@expo/vector-icons": "^14.0.2",
-    "react-native-render-html": "^6.3.4",
     "react-native-gesture-handler": "~2.20.2"
   },
   "peerDependencies": {
@@ -61,7 +59,8 @@
     "react-native-reanimated": ">=3.6.2",
     "react-native-safe-area-context": "4.12.0",
     "tailwindcss": "~3",
-    "react-native-svg": "^15.11.2"
+    "react-native-svg": "^15.11.2",
+    "react-native-render-html": "^6.3.4"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
@@ -85,7 +84,8 @@
     "nswag": "^13.18.2",
     "prettier": "^3.0.3",
     "rimraf": "^3.0.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "react-native-render-html": "^6.3.4"
   },
   "gitHead": "698e16cd3ab31b7dd0528fc76536f4d3205ce8c6",
   "scripts": {
