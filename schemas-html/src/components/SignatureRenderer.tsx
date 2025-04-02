@@ -1,46 +1,48 @@
 import { normalizeProps, useMachine } from "@zag-js/react";
 import * as signaturePad from "@zag-js/signature-pad";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 
 import React from "react";
 import {
   createDataRenderer,
   DataRenderType,
   IconReference,
-  LabelType,
-  rendererClass,
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
 
 export interface SignatureRendererOptions {
-  className?: string;
   canvasClass?: string;
-  buttonClass?: string;
-  clearButtonClass?: IconReference | string;
+  clearButton?: IconReference;
+  clearButtonClass?: string;
   currentSegmentClass?: string;
   segmentClass?: string;
   segmentPathClass?: string;
   guideClass?: string;
 }
 
+/** Built on top of ZagJS' Signature component
+ * Binds the control to the path content, and the imageURL to a hidden input with the control's `uniqueId` for inclusion in forms.
+ * @see https://zagjs.com/components/react/signature-pad
+ */
 export function createSignatureRenderer(
   options: Omit<signaturePad.Props, "id"> & SignatureRendererOptions,
 ) {
   return createDataRenderer(
     (props, renderer) => {
       const { control, className } = props;
+      const { Button, I, Div } = renderer.html;
       const [imageURL, setImageURL] = useState<string>("");
       const {
         canvasClass,
-        buttonClass,
+        clearButton,
         clearButtonClass,
         currentSegmentClass,
         guideClass,
         segmentClass,
         segmentPathClass,
+        ...otherOptions
       } = options;
       const service = useMachine(signaturePad.machine, {
-        // ...props,
         ids: {
           hiddenInput: `c${control.uniqueId}`,
         },
@@ -51,15 +53,16 @@ export function createSignatureRenderer(
         onDrawEnd(details) {
           control.value = details.paths;
           details.getDataUrl("image/png").then((url) => {
-            // set the image URL in local state
             setImageURL(url);
           });
         },
+        ...otherOptions,
       });
       const api = signaturePad.connect(service, normalizeProps);
+
       return (
-        <div className={className} {...api.getRootProps()}>
-          <div className={clsx(canvasClass)} {...api.getControlProps()}>
+        <Div className={className} {...api.getRootProps()}>
+          <Div className={clsx(canvasClass)} {...api.getControlProps()}>
             <svg className={clsx(segmentClass)} {...api.getSegmentProps()}>
               {api.paths.map((path, i) => (
                 <path
@@ -76,17 +79,22 @@ export function createSignatureRenderer(
               )}
             </svg>
 
-            <button
+            <Button
               className={clsx(clearButtonClass)}
-              type="button"
               {...api.getClearTriggerProps()}
+              onClick={() => api.getClearTriggerProps().onClick?.(null as any)}
             >
-              X
-            </button>
+              {clearButton && (
+                <I
+                  iconLibrary={clearButton.library}
+                  iconName={clearButton.name}
+                />
+              )}
+            </Button>
             <input {...api.getHiddenInputProps({ value: imageURL })} />
-            <div className={clsx(guideClass)} {...api.getGuideProps()} />
-          </div>
-        </div>
+            <Div className={clsx(guideClass)} {...api.getGuideProps()} />
+          </Div>
+        </Div>
       );
     },
     { renderType: DataRenderType.Signature },

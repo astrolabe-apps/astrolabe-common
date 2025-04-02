@@ -65,16 +65,14 @@ export const defaultTailwindTheme = {
     },
     signatureOptions: {
       className: "flex flex-col gap-2",
-      canvasClass: "h-20 border-2 border-surface-300 rounded-lg",
-      buttonClass:
-        "bg-primary-500 text-white rounded-lg p-2 hover:bg-primary-600",
-      clearButtonClass: fontAwesomeIcon("chevron-up"),
+      canvasClass: "h-20 border border-surface-300 rounded-lg px-2",
+      clearButton: fontAwesomeIcon("rotate-left"),
       // "aspect-square bg-danger-500 text-white rounded-lg p-2 hover:bg-danger-600",
-      segmentClass: "fill-black",
+      segmentClass: "fill-black z-20",
       segmentPathClass: "fill-black",
       currentSegmentClass: "fill-blue-500",
       guideClass:
-        "border-surface-300 border-dotted w-full px-4 absolute bottom-8",
+        "border-b border-surface-500 border-dashed h-[1px] px-4 absolute inset-x-4 bottom-[12%] z-10",
     },
   },
   adornment: {
