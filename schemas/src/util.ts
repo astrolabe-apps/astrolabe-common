@@ -16,6 +16,7 @@ import {
   isDataControl,
   isDataGroupRenderer,
   isDisplayOnlyRenderer,
+  isGridRenderer,
   isGroupControl,
 } from "./controlDefinition";
 import { MutableRefObject, useRef } from "react";
@@ -610,6 +611,9 @@ export function getAllReferencedClasses(
     isDataControl(c) && isCheckEntryClasses(c.renderOptions)
       ? c.renderOptions
       : {};
+  const groupOptions = isGroupControl(c) ? c.groupOptions : undefined;
+  const gridClasses =
+    groupOptions && isGridRenderer(groupOptions) ? [groupOptions.rowClass] : [];
 
   const {
     listContainerClass,
@@ -628,6 +632,7 @@ export function getAllReferencedClasses(
       c.labelClass,
       c.textClass,
       c.labelTextClass,
+      ...gridClasses,
       ...Object.values(go),
       ...(collectExtra?.(c) ?? []),
       entryWrapperClass,
