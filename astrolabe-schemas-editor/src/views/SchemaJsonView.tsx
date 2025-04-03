@@ -11,12 +11,10 @@ import { JsonEditor } from "../JsonEditor";
 
 export function SchemaJsonView({ context }: { context: ViewContext }) {
   const cf = controlNotNull(context.getCurrentForm());
-  const ctrl = useControl<SchemaField[]>([]);
   if (!cf) return <InactiveView>No form selected</InactiveView>;
   const {
     schema: { value: rootSchema },
   } = cf.fields;
-  ctrl.value = rootSchema.getUnresolvedFields();
   return (
     <div className="flex flex-col h-full">
       <SchemaJson root={rootSchema} />
