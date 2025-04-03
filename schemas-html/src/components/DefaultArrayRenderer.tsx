@@ -13,7 +13,6 @@ import {
   ControlDefinitionType,
   createArrayActions,
   createDataRenderer,
-  DataControlDefinition,
   DataRendererProps,
   DataRendererRegistration,
   DataRenderType,
@@ -21,7 +20,6 @@ import {
   FormNode,
   FormRenderer,
   getLengthRestrictions,
-  GroupedControlsDefinition,
   GroupRenderType,
   HtmlComponents,
   isArrayRenderer,
@@ -82,24 +80,20 @@ export function DataArrayRenderer({
       defaultActions as ArrayRenderOptions,
     );
 
-  const childOptions = isArrayRenderer(renderOptions)
-    ? renderOptions.childOptions
-    : undefined;
-
+  const childDefs = formNode.getResolvedChildren();
   const renderAsElement = !isCompoundField(field);
-  const childDef = !renderAsElement
-    ? ({
-        type: ControlDefinitionType.Group,
-        groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
-        children: formNode.getResolvedChildren(),
-      } as GroupedControlsDefinition)
-    : ({
-        type: ControlDefinitionType.Data,
-        field: definition.field,
-        renderOptions: childOptions ?? { type: DataRenderType.Standard },
-        hideTitle: true,
-      } as DataControlDefinition);
-
+  const defaultChildDef = {
+    type: ControlDefinitionType.Data,
+    field: ".",
+    renderOptions: { type: DataRenderType.Standard },
+    hideTitle: true,
+  };
+  const childDef = {
+    type: ControlDefinitionType.Group,
+    groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
+    children:
+      renderAsElement && childDefs.length == 0 ? [defaultChildDef] : childDefs,
+  };
   const childNode: FormNode = formNode.createChildNode("child", childDef);
 
   const visibilities = (definition.children ?? []).map(
@@ -137,15 +131,9 @@ export function DataArrayRenderer({
   return renderers.renderArray(arrayProps);
 
   function renderChildElement(i: number, elementNode: SchemaDataNode) {
-    return renderChild(
-      control.elements?.[i].uniqueId ?? i,
-      childNode,
-      renderAsElement
-        ? {
-            elementIndex: i,
-          }
-        : { parentDataNode: elementNode },
-    );
+    return renderChild(elementNode.control.uniqueId, childNode, {
+      parentDataNode: elementNode,
+    });
   }
 }
 

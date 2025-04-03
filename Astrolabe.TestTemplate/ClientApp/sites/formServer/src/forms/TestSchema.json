@@ -44,19 +44,29 @@
           "renderOptions": {
             "type": "Standard"
           }
-        },
-        {
-          "type": "Data",
-          "field": "array",
-          "renderOptions": {
-            "type": "Standard"
-          }
         }
       ],
       "groupOptions": {
-        "type": "Grid",
-        "columns": 2
+        "type": "Grid"
       }
+    },
+    {
+      "type": "Data",
+      "field": "array",
+      "renderOptions": {
+        "type": "Array"
+      },
+      "children": [
+        {
+          "type": "Data",
+          "title": "Cool",
+          "field": ".",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "defaultValue": null
+        }
+      ]
     }
   ],
   "config": null

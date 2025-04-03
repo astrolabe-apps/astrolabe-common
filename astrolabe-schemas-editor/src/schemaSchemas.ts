@@ -852,7 +852,6 @@ export interface RenderOptionsForm {
   noAdd: boolean | null;
   noRemove: boolean | null;
   noReorder: boolean | null;
-  childOptions: RenderOptionsForm | null;
   editExternal: boolean | null;
   showInline: boolean | null;
   entryWrapperClass: string | null;
@@ -1016,12 +1015,6 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     type: FieldType.Bool,
     onlyForTypes: ["Array"],
     displayName: "No Reorder",
-  }),
-  childOptions: makeCompoundField({
-    treeChildren: true,
-    onlyForTypes: ["Array"],
-    displayName: "Child Options",
-    tags: ["_ControlRef:RenderOptions"],
   }),
   editExternal: makeScalarField({
     type: FieldType.Bool,

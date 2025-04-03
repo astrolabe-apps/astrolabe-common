@@ -443,7 +443,6 @@ export interface DataRendererProps extends ParentRendererProps {
   renderOptions: RenderOptions;
   definition: DataControlDefinition;
   field: SchemaField;
-  elementIndex?: number;
   id: string;
   control: Control<any>;
   readonly: boolean;
@@ -509,7 +508,6 @@ export interface ControlRenderOptions
   ) => ControlLayoutProps;
   clearHidden?: boolean;
   schemaInterface?: SchemaInterface;
-  elementIndex?: number;
   formData?: FormContextData;
 }
 
@@ -544,16 +542,10 @@ export function useControlRendererComponent(
       ? [controlOrFormNode.definition, controlOrFormNode]
       : [controlOrFormNode, legacyFormNode(controlOrFormNode)];
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
-  const elementIndex = options.elementIndex;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const useExpr = options.useEvalExpressionHook ?? defaultUseEvalExpressionHook;
 
-  let dataNode: SchemaDataNode | undefined;
-  if (elementIndex != null) {
-    dataNode = parentDataNode.getChildElement(elementIndex);
-  } else {
-    dataNode = lookupDataNode(definition, parentDataNode);
-  }
+  let dataNode = lookupDataNode(definition, parentDataNode);
   const useValidation = useMakeValidationHook(
     definition,
     options.useValidationHook,
@@ -582,7 +574,6 @@ export function useControlRendererComponent(
   const r = useUpdatedRef({
     options,
     definition,
-    elementIndex,
     parentDataNode,
     dataNode,
     formNode,
@@ -596,7 +587,6 @@ export function useControlRendererComponent(
       const {
         definition: c,
         options,
-        elementIndex,
         parentDataNode: pdn,
         dataNode: dn,
         formNode,
@@ -704,7 +694,6 @@ export function useControlRendererComponent(
       const childOptions: ControlRenderOptions = {
         ...inheritableOptions,
         ...myOptions,
-        elementIndex: undefined,
       };
 
       useEffect(() => {
@@ -753,7 +742,6 @@ export function useControlRendererComponent(
         formOptions: myOptions,
         dataContext,
         control: displayControl ?? control,
-        elementIndex,
         schemaInterface,
         labelText,
         displayControl,
@@ -900,7 +888,6 @@ export function defaultDataProps(
 }
 
 export interface ChildRendererOptions {
-  elementIndex?: number;
   parentDataNode?: SchemaDataNode;
   formData?: FormContextData;
   inline?: boolean;
@@ -925,7 +912,6 @@ export interface RenderLayoutProps {
   dataContext: ControlDataContext;
   control?: Control<any>;
   labelText?: Control<string | null | undefined>;
-  elementIndex?: number;
   displayControl?: Control<string | undefined>;
   style?: React.CSSProperties;
   allowedOptions?: Control<any[] | undefined>;

@@ -403,16 +403,6 @@
                       "type": "Flex",
                       "hideTitle": true
                     }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Child Options",
-                    "field": "childOptions",
-                    "renderOptions": {
-                      "type": "Standard"
-                    },
-                    "id": "",
-                    "childRefId": "RenderOptions"
                   }
                 ],
                 "groupOptions": {
@@ -459,7 +449,10 @@
             "childRefId": "",
             "defaultValue": {
               "type": "Standard"
-            }
+            },
+            "required": false,
+            "readonly": false,
+            "disabled": false
           },
           {
             "type": "Data",

@@ -206,7 +206,6 @@ public record ArrayRenderOptions(
     bool? NoAdd,
     bool? NoRemove,
     bool? NoReorder,
-    [property: SchemaTag(SchemaTags.ControlRef + "RenderOptions")] RenderOptions? ChildOptions,
     bool? EditExternal
 ) : RenderOptions(DataRenderType.Array.ToString());
 

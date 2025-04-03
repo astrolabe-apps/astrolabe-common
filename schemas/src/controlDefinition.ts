@@ -276,7 +276,6 @@ export interface ArrayRenderOptions extends RenderOptions {
   noAdd?: boolean | null;
   noRemove?: boolean | null;
   noReorder?: boolean | null;
-  childOptions?: RenderOptions | null;
   editExternal?: boolean | null;
 }
 
