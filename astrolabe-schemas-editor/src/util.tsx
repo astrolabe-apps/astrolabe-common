@@ -116,7 +116,7 @@ export function canAddChildren(x: ControlDefinition, dataNode?: SchemaNode) {
     case ControlDefinitionType.Display:
       return false;
     case ControlDefinitionType.Data:
-      return !dataNode || isCompoundNode(dataNode);
+      return !dataNode || isCompoundNode(dataNode) || dataNode.field.collection;
     default:
       return true;
   }

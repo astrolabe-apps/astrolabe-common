@@ -290,14 +290,32 @@ export class SchemaNode {
   }
 }
 
-export interface SchemaDataNode {
-  id: string;
-  schema: SchemaNode;
-  elementIndex?: number;
-  control: Control<any>;
-  parent?: SchemaDataNode;
-  getChild(schemaNode: SchemaNode): SchemaDataNode;
-  getChildElement(index: number): SchemaDataNode;
+export abstract class SchemaDataTree {
+  abstract rootNode: SchemaDataNode;
+  abstract getChild(parent: SchemaDataNode, child: SchemaNode): SchemaDataNode;
+  abstract getChildElement(
+    parent: SchemaDataNode,
+    elementIndex: number,
+  ): SchemaDataNode;
+}
+
+export class SchemaDataNode {
+  constructor(
+    public id: string,
+    public schema: SchemaNode,
+    public elementIndex: number | undefined,
+    public control: Control<any>,
+    public tree: SchemaDataTree,
+    public parent?: SchemaDataNode,
+  ) {}
+
+  getChild(childNode: SchemaNode): SchemaDataNode {
+    return this.tree.getChild(this, childNode);
+  }
+
+  getChildElement(elementIndex: number): SchemaDataNode {
+    return this.tree.getChildElement(this, elementIndex);
+  }
 }
 
 export function findField(
@@ -360,43 +378,52 @@ export function createSchemaLookup<A extends Record<string, SchemaField[]>>(
   }
 }
 
+export class SchemaDataTreeImpl extends SchemaDataTree {
+  rootNode: SchemaDataNode;
+
+  constructor(rootSchema: SchemaNode, rootControl: Control<any>) {
+    super();
+    this.rootNode = new SchemaDataNode(
+      "",
+      rootSchema,
+      undefined,
+      rootControl,
+      this,
+    );
+  }
+
+  getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
+    const objControl = parent.control as Control<Record<string, unknown>>;
+    return new SchemaDataNode(
+      parent.id + "/" + childNode.field.field,
+      childNode,
+      undefined,
+      objControl.fields[childNode.field.field],
+      this,
+      parent,
+    );
+  }
+  getChildElement(
+    parent: SchemaDataNode,
+    elementIndex: number,
+  ): SchemaDataNode {
+    const elemControl = parent.control as Control<unknown[]>;
+    return new SchemaDataNode(
+      parent.id + "/" + elementIndex,
+      parent.schema,
+      elementIndex,
+      elemControl.elements[elementIndex],
+      this,
+      parent,
+    );
+  }
+}
+
 export function makeSchemaDataNode(
   schema: SchemaNode,
   control: Control<unknown>,
-  parent?: SchemaDataNode,
-  elementIndex?: number,
 ): SchemaDataNode {
-  const indexId = typeof elementIndex === "number" ? "/" + elementIndex : "";
-  const dataNode = {
-    id:
-      (parent ? parent.id + "/" + schema.field.field : schema.field.field) +
-      indexId,
-    schema,
-    control,
-    parent,
-    elementIndex,
-    getChild,
-    getChildElement,
-  };
-  return dataNode;
-
-  function getChild(childNode: SchemaNode): SchemaDataNode {
-    const objControl = control as Control<Record<string, unknown>>;
-    return makeSchemaDataNode(
-      childNode,
-      objControl.fields[childNode.field.field],
-      dataNode,
-    );
-  }
-
-  function getChildElement(elementIndex: number): SchemaDataNode {
-    return makeSchemaDataNode(
-      schema,
-      (control as Control<unknown[]>)?.elements?.[elementIndex],
-      dataNode,
-      elementIndex,
-    );
-  }
+  return new SchemaDataTreeImpl(schema, control).rootNode;
 }
 
 export function schemaDataForFieldRef(
@@ -454,7 +481,11 @@ export function schemaDataForFieldPath(
   while (i < fieldPath.length) {
     const nextField = fieldPath[i];
     let nextNode =
-      nextField === ".." ? dataNode.parent : lookupField(nextField);
+      nextField === ".."
+        ? dataNode.parent
+        : nextField === "."
+          ? dataNode
+          : lookupField(nextField);
     nextNode ??= makeSchemaDataNode(
       createSchemaNode(
         missingField(nextField),

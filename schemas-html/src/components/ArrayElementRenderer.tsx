@@ -75,7 +75,6 @@ function ArrayElementRenderer({
       <div className={rendererClass(dataProps.className, options.className)}>
         {renderChild("", elementGroup, {
           parentDataNode,
-          elementIndex: 0,
         })}
         <div className={options.actionsClass}>
           <RenderElements control={extData.fields.actions}>

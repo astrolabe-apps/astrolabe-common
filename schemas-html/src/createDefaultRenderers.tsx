@@ -257,7 +257,7 @@ export function createDefaultDataRenderer(
     let renderType = renderOptions.type;
     if (
       field.collection &&
-      props.elementIndex == null &&
+      props.dataNode.elementIndex == null &&
       (renderType == DataRenderType.Standard ||
         renderType == DataRenderType.Array ||
         renderType == DataRenderType.ArrayElement)

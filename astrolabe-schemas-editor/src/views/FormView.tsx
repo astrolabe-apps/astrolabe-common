@@ -1,6 +1,7 @@
 import { EditableForm, ViewContext } from "./index";
 import {
   Control,
+  newControl,
   RenderOptional,
   useControl,
   useControlEffect,
@@ -10,6 +11,9 @@ import { FormControlPreview } from "../FormControlPreview";
 import {
   addMissingControlsForSchema,
   ControlDefinition,
+  SchemaDataNode,
+  SchemaDataTree,
+  SchemaNode,
 } from "@react-typed-forms/schemas";
 import React from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
@@ -125,7 +129,7 @@ function RenderFormDesign({
           <FormControlPreview
             keyPrefix="HAI"
             node={rootNode}
-            parentNode={rootSchema}
+            parentDataNode={new EditorDataTree(rootSchema).rootNode}
             dropIndex={0}
             context={{
               selected: c.fields.selectedControlId,
@@ -136,6 +140,45 @@ function RenderFormDesign({
           />
         </div>
       </>
+    );
+  }
+}
+
+class EditorDataTree extends SchemaDataTree {
+  rootNode: SchemaDataNode;
+  undefinedControl = newControl(undefined);
+
+  getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
+    return new SchemaDataNode(
+      parent.id + "/" + childNode.field.field,
+      childNode,
+      undefined,
+      this.undefinedControl,
+      this,
+      parent,
+    );
+  }
+  getChildElement(
+    parent: SchemaDataNode,
+    elementIndex: number,
+  ): SchemaDataNode {
+    return new SchemaDataNode(
+      parent.id + "/" + elementIndex,
+      parent.schema,
+      elementIndex,
+      this.undefinedControl,
+      this,
+      parent,
+    );
+  }
+  constructor(rootSchema: SchemaNode) {
+    super();
+    this.rootNode = new SchemaDataNode(
+      "",
+      rootSchema,
+      undefined,
+      newControl({}),
+      this,
     );
   }
 }
