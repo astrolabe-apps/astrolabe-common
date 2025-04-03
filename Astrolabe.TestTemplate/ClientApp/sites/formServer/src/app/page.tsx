@@ -9,6 +9,7 @@ import {
   FieldSelectionExtension,
   readOnlySchemas,
   SchemaFieldSchema,
+  Snippet,
 } from "@astroapps/schemas-editor";
 import {
   Control,
@@ -63,6 +64,7 @@ import {
 import controlsJson from "../ControlDefinition.json";
 import schemaFieldJson from "../SchemaField.json";
 import testSchemaControls from "../forms/TestSchema.json";
+import allControls from "../forms/AllControls.json";
 import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
 import { FormDefinitions } from "../forms";
@@ -70,7 +72,7 @@ import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
-import { Snippet } from "../../../../../../astrolabe-schemas-editor/src/views";
+import { AllControlsSchema } from "../AllControlsSchema";
 
 const Extensions = [
   DataGridExtension,
@@ -278,6 +280,7 @@ const schemaLookup = {
   ...ControlDefinitionSchemaMap,
   ControlDefinitionSchema,
   SchemaFieldSchema,
+  AllControlsSchema,
 };
 
 export default function Editor() {
@@ -321,12 +324,18 @@ export default function Editor() {
               return { schemaName: c, controls: testSchemaControls.controls };
             case "TabSchema":
               return { schemaName: c, controls: [TabControls] };
+            case "AllControls":
+              return {
+                schemaName: "AllControlsSchema",
+                controls: allControls.controls,
+              };
             default:
               return { schemaName: c, controls: [] };
           }
         }}
         selectedForm={selectedForm}
         formTypes={[
+          ["AllControls", "All Controls"],
           ["EditorControls", "EditorControls"],
           ["SchemaField", "SchemaField"],
           ["CarInfo", "Pdf test"],
@@ -342,18 +351,16 @@ export default function Editor() {
           data.clearErrors();
           data.validate();
         }}
-        saveForm={async (controls) => {
-          if (selectedForm.value === "EditorControls") {
+        saveForm={async (controls, formId) => {
+          if (formId === "EditorControls") {
             await new CodeGenClient().editControlDefinition(controls);
-          } else if (selectedForm.value === "SchemaField") {
+          } else if (formId === "SchemaField") {
             await new CodeGenClient().editSchemaFieldDefinition(controls);
           } else {
-            if (selectedForm.value !== "Test") {
-              await new SearchStateClient().editControlDefinition(
-                selectedForm.value!,
-                { controls, config: null },
-              );
-            }
+            await new SearchStateClient().editControlDefinition(formId, {
+              controls,
+              config: null,
+            });
           }
         }}
         previewOptions={{

@@ -9,7 +9,7 @@ import {
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
-import { SelectedControlNode } from "../types";
+import { SelectedControlNode, Snippet } from "../types";
 import { ReactNode } from "react";
 import { EditorFormTree } from "../EditorFormTree";
 
@@ -62,11 +62,4 @@ export interface EditableForm {
   showJson?: boolean;
   formId: string;
   name: string;
-}
-
-export interface Snippet {
-  id: string;
-  name: string;
-  group?: string | null;
-  definition: ControlDefinition;
 }

@@ -27,3 +27,10 @@ export type FormLoader<A> = (formId: A) => Promise<{
   schemaName: string;
   renderer?: FormRenderer;
 }>;
+
+export interface Snippet {
+  id: string;
+  name: string;
+  group?: string | null;
+  definition: ControlDefinition;
+}

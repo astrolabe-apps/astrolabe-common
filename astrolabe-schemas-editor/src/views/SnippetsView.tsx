@@ -1,4 +1,4 @@
-﻿import { Snippet, ViewContext } from "./index";
+﻿import { ViewContext } from "./index";
 import React from "react";
 import { Control, controlNotNull } from "@react-typed-forms/core";
 import { InactiveView } from "./InactiveView";
@@ -7,7 +7,7 @@ import useResizeObserver from "use-resize-observer";
 import { NodeRendererProps, Tree } from "react-arborist";
 import { StdTreeNode } from "../StdTreeNode";
 import clsx from "clsx";
-import { SelectedControlNode } from "../types";
+import { SelectedControlNode, Snippet } from "../types";
 import { EditorFormTree } from "../EditorFormTree";
 
 interface SnippetTreeNode {

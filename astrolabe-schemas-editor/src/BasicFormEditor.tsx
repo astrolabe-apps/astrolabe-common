@@ -54,13 +54,7 @@ import {
 } from "@mhsdesign/jit-browser-tailwindcss";
 import defaultEditorControls from "./ControlDefinition.json";
 import defaultSchemaEditorControls from "./SchemaField.json";
-import {
-  EditableForm,
-  FormInfo,
-  getViewAndParams,
-  Snippet,
-  ViewContext,
-} from "./views";
+import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
 import { createView, getTabTitle } from "./views/createView";
 import {
   Actions,
@@ -73,7 +67,7 @@ import {
 } from "flexlayout-react";
 import { defaultLayout } from "./defaultLayout";
 import { setIncluded } from "@astroapps/client";
-import { FormLoader, SchemaLoader } from "./types";
+import { FormLoader, SchemaLoader, Snippet } from "./types";
 import { EditorFormTree } from "./EditorFormTree";
 
 export interface BasicFormEditorProps<A extends string> {

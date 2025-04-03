@@ -4,4 +4,5 @@ export * from "./BasicFormEditor";
 export * from "./FormControlEditor";
 export * from "./FormPreview";
 export * from "./FieldSelectionRenderer";
-export type {FormInfo} from "./views"
+export * from "./types";
+export type { FormInfo } from "./views";
