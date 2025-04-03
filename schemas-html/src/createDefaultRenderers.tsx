@@ -94,6 +94,10 @@ import {
   ArrayElementRendererOptions,
   createArrayElementRenderer,
 } from "./components/ArrayElementRenderer";
+import {
+  createSignatureRenderer,
+  SignatureRendererOptions,
+} from "./components/SignatureRenderer";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -104,6 +108,7 @@ export interface DefaultRendererOptions {
   label?: DefaultLabelRendererOptions;
   adornment?: DefaultAdornmentRendererOptions;
   layout?: DefaultLayoutRendererOptions;
+  signature?: SignatureRendererOptions;
   extraRenderers?: (options: DefaultRendererOptions) => RendererRegistration[];
   html?: FormRenderer["html"];
 }
@@ -203,6 +208,7 @@ export interface DefaultDataRendererOptions {
   checkListOptions?: CheckRendererOptions;
   autocompleteOptions?: AutocompleteRendererOptions;
   arrayElementOptions?: ArrayElementRendererOptions;
+  signatureOptions?: SignatureRendererOptions;
   booleanOptions?: FieldOption[];
   optionRenderer?: DataRendererRegistration;
   multilineClass?: string;
@@ -219,6 +225,7 @@ export function createDefaultDataRenderer(
   const multilineRenderer = createMultilineFieldRenderer(
     options.multilineClass,
   );
+  const signatureRenderer = createSignatureRenderer(options.signatureOptions);
   const checkboxRenderer = createCheckboxRenderer(
     options.checkOptions ?? options.checkboxOptions,
   );
@@ -318,6 +325,8 @@ export function createDefaultDataRenderer(
         return jsonataRenderer.render(props, renderers);
       case DataRenderType.Autocomplete:
         return autocompleteRenderer.render(props, renderers);
+      case DataRenderType.Signature:
+        return signatureRenderer.render(props, renderers);
     }
     if (fieldType == FieldType.Any) {
       return (
