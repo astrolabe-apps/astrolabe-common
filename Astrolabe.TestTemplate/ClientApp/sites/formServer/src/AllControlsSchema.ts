@@ -60,9 +60,6 @@ interface ControlsData {
     zipCode: string;
     country: string;
   };
-
-  // Entity references
-  entityRef: string;
 }
 
 export const AllControlsSchema = buildSchema<ControlsData>({
@@ -156,11 +153,4 @@ export const AllControlsSchema = buildSchema<ControlsData>({
     stringField("Zip Code")("zipCode"),
     stringField("Country")("country"),
   ]),
-
-  // Entity reference field
-  entityRef: stringField("Entity Reference", {
-    type: FieldType.EntityRef,
-    entityType: "someEntityType",
-  }),
-  scalar: makeScalarField,
 });
