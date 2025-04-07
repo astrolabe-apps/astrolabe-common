@@ -60,6 +60,7 @@ export function useMsalSecurityService(
   };
   const currentUser = useControl<UserState>({ busy: true, loggedIn: false });
   useEffect(() => {
+    console.log(inProgress);
     if (inProgress === "none") checkInitial();
   }, [inProgress]);
   return {
@@ -112,6 +113,7 @@ export function useMsalSecurityService(
       currentUser.fields.afterLoginHref.value = afterLogin;
     }
     const account = msal.getActiveAccount();
+    console.log({ account, accounts });
     if (!account) {
       if (accounts.length > 0) {
         msal.setActiveAccount(accounts[0]);
