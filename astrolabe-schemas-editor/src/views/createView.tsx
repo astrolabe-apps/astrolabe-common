@@ -7,6 +7,7 @@ import { FormView } from "./FormView";
 import { FormListView } from "./FormListView";
 import { HelpView } from "./HelpView";
 import { SnippetsView } from "./SnippetsView";
+import { SchemaJsonView } from "./SchemaJsonView";
 
 export function getTabTitle(viewType: string, viewParams?: string): string {
   switch (viewType) {
@@ -61,6 +62,8 @@ export function createView(
         return "Control Properties";
       case "snippets":
         return "Snippets";
+      case "currentSchemaJson":
+        return "Schema JSON";
       default:
         return "Unknown";
     }
@@ -76,6 +79,8 @@ export function createView(
         return <FormStructureView context={context} />;
       case "currentSchema":
         return <CurrentSchemaView context={context} />;
+      case "currentSchemaJson":
+        return <SchemaJsonView context={context} />;
       case "form":
         return <FormView formId={viewParams!} context={context} />;
       case "controlProperties":

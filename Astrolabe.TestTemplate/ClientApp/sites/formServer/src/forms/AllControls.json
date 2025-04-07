@@ -1,6 +1,533 @@
 {
   "controls": [
-    
+    {
+      "title": "Basic Group Section",
+      "required": false,
+      "readonly": false,
+      "disabled": false,
+      "displayData": {},
+      "type": "Group",
+      "renderOptions": {
+        "type": "Standard"
+      },
+      "children": [
+        {
+          "type": "Data",
+          "title": "Basic Text Data Field",
+          "children": null,
+          "field": "string",
+          "required": false,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "readonly": false,
+          "disabled": false,
+          "displayData": {}
+        },
+        {
+          "type": "Display",
+          "title": "Basic Text Display",
+          "required": false,
+          "readonly": false,
+          "disabled": false,
+          "displayData": {
+            "type": "Text",
+            "text": "This is a text display"
+          },
+          "children": null
+        },
+        {
+          "type": "Display",
+          "title": "Text Display as HTML",
+          "required": false,
+          "readonly": false,
+          "disabled": false,
+          "displayData": {
+            "type": "Html",
+            "html": "<b>This is bold text</b>"
+          }
+        },
+        {
+          "type": "Action",
+          "title": "Basic Action - Button",
+          "required": false,
+          "defaultValue": null,
+          "readonly": false,
+          "disabled": false,
+          "displayData": {},
+          "actionId": "action-id",
+          "icon": {
+            "library": "FontAwesome",
+            "name": "exclamation-circle"
+          },
+          "actionStyle": "Button",
+          "iconPlacement": "BeforeText",
+          "children": null,
+          "actionData": ""
+        },
+        {
+          "type": "Data",
+          "title": "Basic Data Field hidden title",
+          "field": "string",
+          "required": false,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "readonly": false,
+          "disabled": false,
+          "children": null,
+          "hideTitle": true
+        },
+        {
+          "type": "Data",
+          "title": "String Field With Tooltip",
+          "field": "string",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null,
+          "required": false,
+          "readonly": false,
+          "disabled": false,
+          "adornments": [
+            {
+              "type": "Tooltip",
+              "tooltip": "This is tooltip content",
+              "expression": {}
+            }
+          ]
+        },
+        {
+          "type": "Data",
+          "title": "Integer Field",
+          "field": "integer",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null
+        },
+        {
+          "type": "Data",
+          "title": "Decimal Field with accordion ",
+          "field": "decimal",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null,
+          "required": false,
+          "readonly": false,
+          "disabled": false,
+          "adornments": [
+            {
+              "type": "Accordion",
+              "icon": {},
+              "title": "Accordion Title",
+              "defaultExpanded": true,
+              "expression": {}
+            }
+          ]
+        },
+        {
+          "type": "Data",
+          "title": "Boolean field",
+          "field": "boolean",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null,
+          "required": false,
+          "readonly": false,
+          "disabled": false
+        },
+        {
+          "type": "Display",
+          "title": "Hide on boolean true",
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "FieldValue",
+                "field": "boolean",
+                "value": true
+              }
+            }
+          ],
+          "required": false,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "defaultValue": null,
+          "readonly": false,
+          "disabled": false,
+          "displayData": {
+            "type": "Text",
+            "iconClass": "fill-blue-500",
+            "icon": {
+              "library": "Material",
+              "name": "exclamation-circle"
+            },
+            "text": "This is text only visible if the boolean is true"
+          },
+          "icon": {}
+        },
+        {
+          "type": "Data",
+          "title": "Date Field",
+          "field": "date",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null
+        },
+        {
+          "type": "Data",
+          "title": "Time Field",
+          "field": "time",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null,
+          "required": false,
+          "readonly": false,
+          "disabled": false
+        },
+        {
+          "type": "Data",
+          "title": "Date and Time Field",
+          "field": "dateTime",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null
+        },
+        {
+          "type": "Data",
+          "title": "String with Validation",
+          "field": "stringWithValidation",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null
+        },
+        {
+          "type": "Data",
+          "title": "Number with Validation",
+          "field": "numberWithValidation",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null
+        },
+        {
+          "type": "Data",
+          "title": "Select Option",
+          "field": "selectString",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null,
+          "required": false,
+          "readonly": false,
+          "disabled": false
+        },
+        {
+          "type": "Data",
+          "title": "Select Radio Buttons",
+          "field": "selectString",
+          "required": false,
+          "renderOptions": {
+            "type": "Radio"
+          },
+          "readonly": false,
+          "disabled": false,
+          "displayData": {}
+        },
+        {
+          "type": "Data",
+          "title": "HTML Content",
+          "field": "htmlEditor",
+          "renderOptions": {
+            "type": "HtmlEditor"
+          },
+          "children": null,
+          "required": false,
+          "readonly": false,
+          "disabled": false
+        },
+        {
+          "type": "Data",
+          "title": "Grouped Field",
+          "field": "groupedField",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null
+        },
+        {
+          "type": "Data",
+          "title": "ID Field",
+          "field": "fieldWithId",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null,
+          "required": false,
+          "readonly": false,
+          "disabled": false,
+          "id": "this-is-an-id"
+        },
+        {
+          "type": "Data",
+          "title": "Content Type",
+          "field": "contentType",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null,
+          "required": false,
+          "readonly": false,
+          "disabled": false
+        },
+        {
+          "type": "Display",
+          "title": "Text Content with CSS styling classes",
+          "field": "textContent",
+          "renderOptions": {
+            "type": "DisplayOnly",
+            "iconMappings": []
+          },
+          "children": [],
+          "required": false,
+          "readonly": false,
+          "disabled": false,
+          "textClass": "border-blue-500 border",
+          "labelClass": "text-blue-500",
+          "layoutClass": "border-red-500 border p-2",
+          "styleClass": "border-purple-500 border border-dashed",
+          "displayData": {
+            "type": "Text",
+            "text": "No title"
+          },
+          "groupOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "String Array Item",
+          "field": "stringArray",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null
+        },
+        {
+          "type": "Data",
+          "title": "Object Array",
+          "field": "objectArray",
+          "children": [
+            {
+              "type": "Data",
+              "title": "Name",
+              "field": "name",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "children": null
+            },
+            {
+              "type": "Data",
+              "title": "Value",
+              "field": "value",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "children": null
+            }
+          ]
+        },
+        {
+          "type": "Data",
+          "title": "Group Object (Address)",
+          "field": "address",
+          "children": [
+            {
+              "type": "Data",
+              "title": "Street (required)",
+              "field": "street",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "children": null,
+              "required": true,
+              "readonly": false,
+              "disabled": false
+            },
+            {
+              "type": "Data",
+              "title": "City",
+              "field": "city",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "children": null,
+              "required": false,
+              "readonly": false,
+              "disabled": false
+            },
+            {
+              "type": "Data",
+              "title": "Zip Code (Jsonata validation)",
+              "field": "zipCode",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "children": null,
+              "required": false,
+              "readonly": false,
+              "disabled": false,
+              "validators": [
+                {
+                  "type": "Jsonata",
+                  "expression": "$match($, /^[0-9]{4}$/)"
+                }
+              ]
+            },
+            {
+              "type": "Data",
+              "title": "Country (defaults to Australia if empty)",
+              "field": "country",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "children": null,
+              "required": false,
+              "readonly": false,
+              "disabled": false,
+              "defaultValue": "Australia"
+            }
+          ],
+          "required": false,
+          "readonly": false,
+          "disabled": false,
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Entity Reference",
+          "field": "entityRef",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "children": null,
+          "required": false,
+          "readonly": false,
+          "disabled": false
+        },
+        {
+          "type": "Group",
+          "title": "Group of things not working yet",
+          "children": [
+            {
+              "type": "Data",
+              "field": "textContent",
+              "required": false,
+              "renderOptions": {
+                "type": "Synchronised",
+                "fieldToSync": "string",
+                "syncType": "Snake"
+              },
+              "readonly": false,
+              "disabled": false,
+              "displayData": {
+                "type": "Text"
+              },
+              "title": "Synchronised Field (syncing \"string\")"
+            },
+            {
+              "title": "Icon List",
+              "required": false,
+              "readonly": false,
+              "disabled": false,
+              "displayData": {},
+              "type": "Data",
+              "renderOptions": {
+                "type": "IconList",
+                "iconMappings": [
+                  {
+                    "value": "search",
+                    "materialIcon": "search"
+                  },
+                  {
+                    "value": "home",
+                    "materialIcon": "home"
+                  }
+                ]
+              },
+              "field": "string"
+            },
+            {
+              "type": "Group",
+              "title": "Group Element (Image)",
+              "field": "imageContent",
+              "children": [
+                {
+                  "type": "Data",
+                  "title": "Alt Text",
+                  "field": "alt",
+                  "renderOptions": {
+                    "type": "Standard"
+                  },
+                  "children": null,
+                  "required": false,
+                  "readonly": false,
+                  "disabled": false
+                },
+                {
+                  "type": "Data",
+                  "title": "Image URL",
+                  "field": "url",
+                  "renderOptions": {
+                    "type": "Standard"
+                  },
+                  "children": null,
+                  "required": false,
+                  "readonly": false,
+                  "disabled": false,
+                  "groupOptions": {
+                    "type": "Standard"
+                  },
+                  "hideTitle": false
+                }
+              ],
+              "required": false,
+              "readonly": false,
+              "disabled": false,
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "groupOptions": {
+                "type": "GroupElement"
+              }
+            }
+          ],
+          "required": false,
+          "readonly": false,
+          "disabled": false,
+          "groupOptions": {
+            "type": "Standard"
+          },
+          "displayData": {}
+        }
+      ],
+      "groupOptions": {
+        "type": "Standard"
+      }
+    }
   ],
   "config": null
 }
