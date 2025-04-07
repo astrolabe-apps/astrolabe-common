@@ -938,6 +938,31 @@ importers:
       tailwindcss: 3.4.17
       typescript: 5.7.2
 
+  ../../../schemas-signature:
+    specifiers:
+      '@react-typed-forms/core': workspace:*
+      '@react-typed-forms/schemas': workspace:*
+      '@react-typed-forms/transform': ^0.2.0
+      '@types/react': ^18.2.37
+      clsx: ^2
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      react: ^18.2.0 || ^19
+      rimraf: ^5.0.7
+      typescript: ^5.6.2
+    dependencies:
+      clsx: 2.1.1
+    devDependencies:
+      '@react-typed-forms/core': link:../core
+      '@react-typed-forms/schemas': link:../schemas
+      '@react-typed-forms/transform': 0.2.0
+      '@types/react': 18.3.12
+      microbundle: 0.15.1
+      prettier: 3.4.2
+      react: 18.3.1
+      rimraf: 5.0.10
+      typescript: 5.7.2
+
   ../../ClientApp/expoapp:
     specifiers:
       '@astroapps/schemas-editor': workspace:*
@@ -1061,6 +1086,7 @@ importers:
       '@astroapps/schemas-datepicker': workspace:*
       '@astroapps/schemas-editor': workspace:*
       '@astroapps/schemas-quickstream': workspace:*
+      '@astroapps/schemas-signature': workspace:*
       '@astroapps/searchstate': workspace:*
       '@astroapps/swc-controls-plugin': 1.1.0-next15
       '@astrolabe/ui': workspace:*
@@ -1103,6 +1129,7 @@ importers:
       '@astroapps/schemas-datepicker': link:../../../../schemas-datepicker
       '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
       '@astroapps/schemas-quickstream': link:../../../../astrolabe-schemas-quickstream
+      '@astroapps/schemas-signature': link:../../../../schemas-signature
       '@astroapps/searchstate': link:../../../../astrolabe-searchstate
       '@astrolabe/ui': link:../../../../astrolabe-ui
       '@codemirror/autocomplete': 6.18.6
