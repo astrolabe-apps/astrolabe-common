@@ -28,12 +28,12 @@
   "peerDependencies": {
     "react": "^18.2.0 || ^19",
     "@react-typed-forms/core": "^4.0.0",
-    "@react-typed-forms/schemas": "^15.0.0",
-    "@zag-js/react": "1.6.1",
-    "@zag-js/signature-pad": "1.6.1"
+    "@react-typed-forms/schemas": "^15.0.0"
   },
   "dependencies": {
-    "clsx": "^2"
+    "clsx": "^2",
+    "@zag-js/react": "1.6.1",
+    "@zag-js/signature-pad": "1.6.1"
   },
   "devDependencies": {
     "react": "^18.2.0 || ^19",
