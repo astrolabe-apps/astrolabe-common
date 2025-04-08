@@ -16,6 +16,7 @@ import { EditorSchemaTree } from "../EditorSchemaTree";
 
 export interface ViewContext {
   formList: FormInfo[];
+  listHeader?: ReactNode;
   currentForm: Control<string | undefined>;
   getForm: (formId: string) => Control<EditableForm | undefined>;
   getCurrentForm: () => Control<EditableForm | undefined> | undefined;

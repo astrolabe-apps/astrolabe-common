@@ -69,6 +69,7 @@ export interface BasicFormEditorProps<A extends string> {
   loadSchema: SchemaLoader;
   selectedForm?: Control<A | undefined>;
   formTypes: [string, string][] | FormInfo[];
+  listHeader?: ReactNode;
   saveForm: (controls: ControlDefinition[], formId: A) => Promise<any>;
   saveSchema?: (controls: SchemaField[], schemaId: string) => Promise<any>;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
@@ -97,6 +98,7 @@ export function BasicFormEditor<A extends string = string>({
   createEditorRenderer = (e) =>
     createFormRenderer(e, createDefaultRenderers(defaultTailwindTheme)),
   formTypes,
+  listHeader,
   validation,
   saveForm,
   saveSchema,
@@ -280,6 +282,7 @@ export function BasicFormEditor<A extends string = string>({
     button,
     currentForm: selectedForm.as(),
     getForm,
+    listHeader,
     extraPreviewControls,
     editorPanelClass,
     getCurrentForm: () =>

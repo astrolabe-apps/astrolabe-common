@@ -3,11 +3,11 @@
 	"version": "0.2.0",
 	"private": true,
 	"peerDependencies": {
-		"react": "^18.2.0",
+		"react": "^18 || ^19",
 		"@react-typed-forms/core": "^4.0.0",
 		"@react-typed-forms/schemas": "^15.0.0",
 		"@astroapps/client": "^2.0.0",
-		"@astroapps/datagrid": "workspace:^1.0.6"
+		"@astroapps/datagrid": "^1.0.8"
 	},
 	"dependencies": {
 		"@mui/base": "5.0.0-beta.23",
@@ -34,11 +34,11 @@
 		"build": "tsc"
 	},
 	"devDependencies": {
-		"react": "^18.2.0",
-		"@react-typed-forms/core": "workspace:*",
-		"@react-typed-forms/schemas": "workspace:*",
-		"@astroapps/client": "workspace:*",
-		"@astroapps/datagrid": "workspace:^1.0.6",
+		"react": "^18.2.0 || ^19",
+		"@react-typed-forms/core": "^4.0.0",
+		"@react-typed-forms/schemas": "^15.0.0",
+		"@astroapps/client": "^2.0.0",
+		"@astroapps/datagrid": "^1.0.8",
 		"typescript": "^5.6.2",
 		"@types/react": "^18.2.33",
 		"@types/shallowequal": "^1.1.2",
