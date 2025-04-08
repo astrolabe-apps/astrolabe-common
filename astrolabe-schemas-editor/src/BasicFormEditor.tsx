@@ -2,10 +2,7 @@ import {
   Control,
   ensureMetaValue,
   Fcheckbox,
-  newControl,
   RenderControl,
-  trackedValue,
-  unsafeRestoreControl,
   useComputed,
   useControl,
   useControlEffect,
@@ -15,23 +12,17 @@ import {
   defaultTailwindTheme,
   ValueForFieldExtension,
 } from "@react-typed-forms/schemas-html";
-import {
-  ControlDefinitionSchemaMap,
-  SchemaFieldForm,
-  toSchemaFieldForm,
-} from "./schemaSchemas";
+import { ControlDefinitionSchemaMap } from "./schemaSchemas";
 import {
   addMissingControlsForSchema,
   applyExtensionsToSchema,
   cleanDataForSchema,
-  compoundField,
   ControlDefinition,
   ControlDefinitionExtension,
   ControlRenderOptions,
   createFormRenderer,
   createFormTree,
   createSchemaLookup,
-  createSchemaNode,
   EditorGroup,
   FormNode,
   FormRenderer,
@@ -39,7 +30,7 @@ import {
   getAllReferencedClasses,
   LabelType,
   RendererRegistration,
-  SchemaNode,
+  SchemaField,
 } from "@react-typed-forms/schemas";
 import React, {
   ReactElement,
@@ -69,6 +60,7 @@ import { defaultLayout } from "./defaultLayout";
 import { setIncluded } from "@astroapps/client";
 import { FormLoader, SchemaLoader, Snippet } from "./types";
 import { EditorFormTree } from "./EditorFormTree";
+import { EditorSchemaTree } from "./EditorSchemaTree";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
@@ -78,6 +70,7 @@ export interface BasicFormEditorProps<A extends string> {
   selectedForm?: Control<A | undefined>;
   formTypes: [string, string][] | FormInfo[];
   saveForm: (controls: ControlDefinition[], formId: A) => Promise<any>;
+  saveSchema?: (controls: SchemaField[], schemaId: string) => Promise<any>;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   extensions?: ControlDefinitionExtension[];
   editorControls?: ControlDefinition[];
@@ -106,6 +99,7 @@ export function BasicFormEditor<A extends string = string>({
   formTypes,
   validation,
   saveForm,
+  saveSchema,
   extensions: _extensions,
   editorControls,
   schemaEditorControls,
@@ -132,19 +126,21 @@ export function BasicFormEditor<A extends string = string>({
       ),
     [extensions],
   );
-  const SchemaFieldRoot = controlSchemas.getSchema("SchemaField");
-  const ControlDefinitionRoot = controlSchemas.getSchema("ControlDefinition");
+  const SchemaFieldTree = controlSchemas.getSchema("SchemaField");
+  const ControlDefinitionTree = controlSchemas.getSchema("ControlDefinition");
   const [model] = useState(() => Model.fromJson(defaultLayout));
 
   const editorFormRenderer = useMemo(() => createEditorRenderer([]), []);
   const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
-  const loadedSchemas = useControl<Record<string, SchemaNode | undefined>>({});
+  const loadedSchemas = useControl<
+    Record<string, EditorSchemaTree | undefined>
+  >({});
   const loadedFormNames = useControl<string[]>([]);
   const schemaEditorTree: FormTree = useMemo(() => {
     return createFormTree(
       addMissingControlsForSchema(
-        SchemaFieldRoot,
+        SchemaFieldTree,
         schemaEditorControls ?? defaultSchemaEditorControls,
         (m) => console.warn(m),
       ),
@@ -169,7 +165,7 @@ export function BasicFormEditor<A extends string = string>({
       }
     });
     const allNodes = addMissingControlsForSchema(
-      ControlDefinitionRoot,
+      ControlDefinitionTree,
       tree.getRootDefinitions().value,
       (m) => console.warn(m),
     );
@@ -250,15 +246,31 @@ export function BasicFormEditor<A extends string = string>({
     },
     true,
   );
+
+  async function doSaveSchema(c: Control<EditableForm>) {
+    if (saveSchema) {
+      const schemaTree = c.fields.schema.value;
+      await saveSchema(
+        schemaTree
+          .getRootFields()
+          .value.map((c) => cleanDataForSchema(c, SchemaFieldTree, true)) ?? [],
+        schemaTree.schemaId,
+      );
+
+      c.fields.formTree.markAsClean();
+    }
+  }
+
   async function doSaveForm(c: Control<EditableForm>) {
     await saveForm(
       c.fields.formTree.value.rootNode.definition.children!.map((c) =>
-        cleanDataForSchema(c, ControlDefinitionRoot, true),
+        cleanDataForSchema(c, ControlDefinitionTree, true),
       ) ?? [],
       c.fields.formId.value as A,
     );
     c.fields.formTree.markAsClean();
   }
+
   const formList = formTypes.map((e) =>
     Array.isArray(e) ? { id: e[0], name: e[1] } : e,
   );
@@ -276,12 +288,13 @@ export function BasicFormEditor<A extends string = string>({
     editorControls: editorTree,
     schemaEditorControls: schemaEditorTree,
     createEditorRenderer,
-    editorFields: ControlDefinitionRoot,
-    schemaEditorFields: SchemaFieldRoot,
+    editorFields: ControlDefinitionTree,
+    schemaEditorFields: SchemaFieldTree,
     formList,
     openForm,
     updateTabTitle,
     saveForm: doSaveForm,
+    saveSchema: saveSchema ? doSaveSchema : undefined,
     checkbox,
     snippets,
   };
@@ -323,23 +336,19 @@ export function BasicFormEditor<A extends string = string>({
     return form;
   }
 
-  function getSchema(schemaId: string): SchemaNode {
+  function getSchema(schemaId: string): EditorSchemaTree {
     const schemaControl = loadedSchemas.fields[schemaId];
     if (schemaControl.isNull) {
-      const rootField = trackedValue(
-        newControl(toSchemaFieldForm(compoundField("", [])(""))),
-      );
-      const tree = createSchemaNode(rootField, { getSchema }, undefined);
+      const tree = new EditorSchemaTree([], schemaId, getSchema);
       schemaControl.value = tree;
       doLoadSchema(tree);
     }
     return schemaControl.value!;
 
-    async function doLoadSchema(tree: SchemaNode) {
+    async function doLoadSchema(tree: EditorSchemaTree) {
       const { fields } = await loadSchema(schemaId);
-      (
-        unsafeRestoreControl(tree.field) as Control<SchemaFieldForm>
-      ).fields.children.value = fields.map(toSchemaFieldForm);
+      const rootControlFields = tree.getRootFields();
+      rootControlFields.setInitialValue(fields);
     }
   }
 

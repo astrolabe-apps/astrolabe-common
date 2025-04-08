@@ -1,5 +1,4 @@
 import {
-  ControlDefinition,
   ControlDefinitionExtension,
   ControlRenderOptions,
   FormNode,
@@ -7,11 +6,13 @@ import {
   FormTree,
   RendererRegistration,
   SchemaNode,
+  SchemaTree,
 } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
 import { SelectedControlNode, Snippet } from "../types";
 import { ReactNode } from "react";
 import { EditorFormTree } from "../EditorFormTree";
+import { EditorSchemaTree } from "../EditorSchemaTree";
 
 export interface ViewContext {
   formList: FormInfo[];
@@ -38,6 +39,7 @@ export interface ViewContext {
   updateTabTitle: (tabId: string, title: string) => void;
   editorPanelClass?: string;
   saveForm(c: Control<EditableForm>): void;
+  saveSchema?(c: Control<EditableForm>): void;
   snippets?: Snippet[];
 }
 
@@ -57,7 +59,7 @@ export interface EditableForm {
   selectedControlId?: string;
   formTree: EditorFormTree;
   renderer: FormRenderer;
-  schema: SchemaNode;
+  schema: EditorSchemaTree;
   hideFields: boolean;
   showJson?: boolean;
   formId: string;

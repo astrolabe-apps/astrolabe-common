@@ -17,7 +17,7 @@ export function SchemaJsonView({ context }: { context: ViewContext }) {
   } = cf.fields;
   return (
     <div className="flex flex-col h-full">
-      <SchemaJson root={rootSchema} />
+      <SchemaJson root={rootSchema.rootNode} />
     </div>
   );
 }

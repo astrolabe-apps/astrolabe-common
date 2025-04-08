@@ -92,7 +92,10 @@ function RenderFormDesign({
   function addMissing() {
     if (rootSchema) {
       const rootDefs = tree.getRootDefinitions();
-      rootDefs.value = addMissingControlsForSchema(rootSchema, rootDefs.value);
+      rootDefs.value = addMissingControlsForSchema(
+        rootSchema.rootNode,
+        rootDefs.value,
+      );
     }
   }
 
@@ -101,7 +104,7 @@ function RenderFormDesign({
       return (
         <FormPreview
           viewContext={context}
-          rootSchema={rootSchema}
+          rootSchema={rootSchema.rootNode}
           controls={rootNode}
           previewData={preview}
           formRenderer={formRenderer}
@@ -129,7 +132,7 @@ function RenderFormDesign({
           <FormControlPreview
             keyPrefix="HAI"
             node={rootNode}
-            parentDataNode={new EditorDataTree(rootSchema).rootNode}
+            parentDataNode={new EditorDataTree(rootSchema.rootNode).rootNode}
             dropIndex={0}
             context={{
               selected: c.fields.selectedControlId,

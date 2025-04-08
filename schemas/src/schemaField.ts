@@ -235,33 +235,80 @@ export interface SchemaInterface {
 
 export interface SchemaTreeLookup {
   getSchema(schemaId: string): SchemaNode | undefined;
+  getSchemaTree(schemaId: string): SchemaTree | undefined;
+}
+
+export abstract class SchemaTree {
+  abstract rootNode: SchemaNode;
+  abstract getSchemaTree(schemaId: string): SchemaTree | undefined;
+
+  createChildNode(parent: SchemaNode, field: SchemaField): SchemaNode {
+    return new SchemaNode(parent.id + "/" + field.field, field, this, parent);
+  }
+  getSchema(schemaId: string): SchemaNode | undefined {
+    return this.getSchemaTree(schemaId)?.rootNode;
+  }
+}
+
+class SchemaTreeImpl extends SchemaTree {
+  rootNode: SchemaNode;
+  getSchemaTree(schemaId: string): SchemaTree | undefined {
+    return this.lookup?.getSchemaTree(schemaId);
+  }
+  constructor(
+    rootFields: SchemaField[],
+    private lookup?: SchemaTreeLookup,
+  ) {
+    super();
+    this.rootNode = new SchemaNode(
+      "",
+      {
+        type: FieldType.Compound,
+        field: "",
+        children: rootFields,
+      } as CompoundField,
+      this,
+    );
+  }
+}
+
+export function createSchemaTree(
+  rootFields: SchemaField[],
+  lookup?: SchemaTreeLookup,
+): SchemaTree {
+  return new SchemaTreeImpl(rootFields, lookup);
 }
 
 export class SchemaNode {
   public constructor(
     public id: string,
     public field: SchemaField,
-    public lookup: SchemaTreeLookup,
+    public tree: SchemaTree,
     public parent?: SchemaNode,
   ) {}
 
   getSchema(schemaId: string): SchemaNode | undefined {
-    return this.lookup.getSchema(schemaId);
+    return this.tree.getSchema(schemaId);
   }
 
   getUnresolvedFields(): SchemaField[] {
     return isCompoundField(this.field) ? this.field.children : [];
   }
 
-  getResolvedFields(): SchemaField[] {
+  getResolvedParent(): SchemaNode | undefined {
     const f = this.field;
-    if (!isCompoundField(f)) return [];
+    if (!isCompoundField(f)) return undefined;
     const parentNode = f.schemaRef
-      ? this.lookup.getSchema(f.schemaRef)
+      ? this.tree.getSchema(f.schemaRef)
       : f.treeChildren
         ? this.parent
         : undefined;
-    return (parentNode ?? this).getUnresolvedFields();
+    return parentNode ?? this;
+  }
+
+  getResolvedFields(): SchemaField[] {
+    const resolvedParent = this.getResolvedParent();
+    return resolvedParent?.getUnresolvedFields() ?? [];
   }
 
   getChildNodes(): SchemaNode[] {
@@ -277,12 +324,7 @@ export class SchemaNode {
   }
 
   createChildNode(field: SchemaField): SchemaNode {
-    return new SchemaNode(
-      this.id + "/" + field.field,
-      field,
-      this.lookup,
-      this,
-    );
+    return this.tree.createChildNode(this, field);
   }
 
   getChildNode(field: string): SchemaNode {
@@ -348,7 +390,7 @@ export function resolveSchemaNode(
 
 export function createSchemaNode(
   field: SchemaField,
-  lookup: SchemaTreeLookup,
+  lookup: SchemaTree,
   parent: SchemaNode | undefined,
 ): SchemaNode {
   return new SchemaNode(
@@ -363,16 +405,21 @@ export function createSchemaLookup<A extends Record<string, SchemaField[]>>(
   schemaMap: A,
 ): {
   getSchema(schemaId: keyof A): SchemaNode;
+  getSchemaTree(schemaId: keyof A): SchemaTree;
 } {
   const lookup = {
+    getSchemaTree,
     getSchema,
   };
   return lookup;
 
   function getSchema(schemaId: keyof A): SchemaNode {
+    return getSchemaTree(schemaId)!.rootNode;
+  }
+  function getSchemaTree(schemaId: keyof A): SchemaTree {
     const fields = schemaMap[schemaId];
     if (fields) {
-      return rootSchemaNode(fields, lookup);
+      return new SchemaTreeImpl(fields, lookup);
     }
     return undefined!;
   }
@@ -451,7 +498,11 @@ export function traverseSchemaPath<A>(
     const nextField = fieldPath[i];
     let childNode = resolveSchemaNode(schema, nextField);
     if (!childNode) {
-      childNode = createSchemaNode(missingField(nextField), schema, schema);
+      childNode = createSchemaNode(
+        missingField(nextField),
+        schema.tree,
+        schema,
+      );
     }
     acc = next(acc, childNode);
     schema = childNode;
@@ -489,7 +540,7 @@ export function schemaDataForFieldPath(
     nextNode ??= makeSchemaDataNode(
       createSchemaNode(
         missingField(nextField),
-        dataNode.schema,
+        dataNode.schema.tree,
         dataNode.schema,
       ),
       newControl(undefined),
@@ -517,32 +568,16 @@ export function schemaForFieldPath(
     const nextField = fieldPath[i];
     let childNode = resolveSchemaNode(schema, nextField);
     if (!childNode) {
-      childNode = createSchemaNode(missingField(nextField), schema, schema);
+      childNode = createSchemaNode(
+        missingField(nextField),
+        schema.tree,
+        schema,
+      );
     }
     schema = childNode;
     i++;
   }
   return schema;
-}
-
-export const emptySchemaLookup: SchemaTreeLookup = {
-  getSchema(schemaId: string): SchemaNode | undefined {
-    return undefined;
-  },
-};
-export function rootSchemaNode(
-  fields: SchemaField[],
-  lookup: SchemaTreeLookup,
-): SchemaNode {
-  return createSchemaNode(
-    {
-      type: FieldType.Compound,
-      field: "",
-      children: fields,
-    } as CompoundField,
-    lookup,
-    undefined,
-  );
 }
 
 export function getSchemaNodePath(node: SchemaNode) {
@@ -555,6 +590,9 @@ export function getSchemaNodePath(node: SchemaNode) {
   return paths.reverse();
 }
 
+export function getSchemaNodePathString(node: SchemaNode) {
+  return getSchemaNodePath(node).join("/");
+}
 export function isCompoundNode(node: SchemaNode) {
   return isCompoundField(node.field);
 }
@@ -570,7 +608,18 @@ export function relativePath(parent: SchemaNode, child: SchemaNode): string {
 
   const parentPath = getSchemaNodePath(parent);
   const childPath = getSchemaNodePath(child);
+  return relativeSegmentPath(parentPath, childPath);
+}
 
+/**
+ * Returns the relative path from a parent node to a child node.
+ * @param parentPath
+ * @param childPath
+ */
+export function relativeSegmentPath(
+  parentPath: string[],
+  childPath: string[],
+): string {
   let i = 0;
   while (
     i < parentPath.length &&

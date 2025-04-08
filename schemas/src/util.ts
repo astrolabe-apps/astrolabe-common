@@ -23,7 +23,7 @@ import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
 import {
   CompoundField,
-  emptySchemaLookup,
+  createSchemaTree,
   FieldOption,
   findField,
   getTagParam,
@@ -31,7 +31,6 @@ import {
   isCompoundNode,
   isScalarField,
   relativePath,
-  rootSchemaNode,
   SchemaDataNode,
   SchemaField,
   schemaForFieldPath,
@@ -349,7 +348,7 @@ export function addMissingControls(
   warning?: (msg: string) => void,
 ) {
   return addMissingControlsForSchema(
-    rootSchemaNode(fields, emptySchemaLookup),
+    createSchemaTree(fields).rootNode,
     controls,
     warning,
   );

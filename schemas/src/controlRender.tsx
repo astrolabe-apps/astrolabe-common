@@ -1,13 +1,10 @@
 import React, {
-  ButtonHTMLAttributes,
   ComponentType,
   ElementType,
   FC,
   Fragment,
   HTMLAttributes,
-  InputHTMLAttributes,
   Key,
-  LabelHTMLAttributes,
   ReactElement,
   ReactNode,
   useCallback,
@@ -90,7 +87,7 @@ import {
   ValidatorType,
 } from "./schemaValidator";
 import {
-  createSchemaLookup,
+  createSchemaTree,
   FieldOption,
   makeSchemaDataNode,
   SchemaDataNode,
@@ -801,7 +798,7 @@ export function ControlRenderer({
   parentPath?: JsonPath[];
 }) {
   const schemaDataNode = makeSchemaDataNode(
-    createSchemaLookup({ "": fields }).getSchema("")!,
+    createSchemaTree(fields).rootNode,
     control,
   );
   const Render = useControlRendererComponent(

@@ -1,8 +1,9 @@
 ﻿import {
   ControlDefinitionExtension,
   createDataRenderer,
-  createSchemaNode,
+  FieldType,
   getSchemaNodePath,
+  isCompoundField,
   isCompoundNode,
   missingField,
   relativePath,
@@ -12,11 +13,11 @@
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import React, {
-  useRef,
-  useState,
+  Fragment,
   MouseEvent,
   useCallback,
-  Fragment,
+  useRef,
+  useState,
 } from "react";
 import {
   Control,
@@ -29,6 +30,9 @@ import { createOverlayState, Popover } from "@astroapps/aria-base";
 import clsx from "clsx";
 import { schemaNodeIcon } from "./util";
 import { cn } from "@astroapps/client";
+import { ViewContext } from "./views";
+import { SchemaFieldEditor } from "./views/SchemaFieldEditor";
+import { EditorSchemaTree } from "./EditorSchemaTree";
 
 const RenderType = "FieldSelection";
 
@@ -45,22 +49,19 @@ export const FieldSelectionExtension: ControlDefinitionExtension = {
 
 export interface FieldSelectionOptions {
   schema: SchemaNode;
+  viewContext: ViewContext;
 }
-
-interface NodeCtx {
-  schema: SchemaNode;
-  id: string;
-}
-
 export function createFieldSelectionRenderer({
   schema,
+  viewContext,
 }: FieldSelectionOptions) {
   return createDataRenderer(
     (props) => {
       return (
         <FieldSelection
-          schema={schema}
+          parentNode={schema}
           control={props.control as Control<string | undefined>}
+          viewContext={viewContext}
         />
       );
     },
@@ -71,32 +72,39 @@ export function createFieldSelectionRenderer({
 }
 
 export function FieldSelection({
-  schema,
+  parentNode,
   control,
+  viewContext,
 }: {
-  schema: SchemaNode;
+  parentNode: SchemaNode;
   control: Control<string | undefined>;
+  viewContext: ViewContext;
 }) {
+  const editingNode = useControl<SchemaNode>();
   const open = useControl(false);
   const term = useControl("");
-  const selNode = schemaForFieldRef(control.value, schema);
+  const selNode = schemaForFieldRef(control.value, parentNode);
   const triggerRef = useRef<HTMLDivElement | null>(null);
 
-  const selectorSchemaNode = useControl<SchemaNode>(schema);
+  const selectorSchemaNode = useControl<SchemaNode>(parentNode);
 
   useControlEffect(
     () => open.value,
     (v) => {
-      if (!v) return;
+      if (!v) {
+        editingNode.value = undefined;
+        return;
+      }
 
       const parentSchema = getParentSchema(
         control.value?.split("/") ?? [],
-        schema,
+        parentNode,
       );
 
       selectorSchemaNode.value = parentSchema;
     },
   );
+  const canEdit = !!viewContext.saveSchema;
 
   return (
     <>
@@ -129,80 +137,101 @@ export function FieldSelection({
               "flex flex-col gap-2 min-w-[500px] border border-black p-2"
             }
           >
-            <input
-              className={"w-full"}
-              value={term.value}
-              onChange={(e) => (term.value = e.target.value)}
-              placeholder={"Search node(s)"}
-            />
-            <SchemaHierarchyBreadcrumb
-              selectorSchemaNode={selectorSchemaNode}
-            />
-            <SchemaNodeList
-              selectorSchemaNode={selectorSchemaNode}
-              schemaNode={schema}
-              selectedField={control}
-              searchTerm={term}
-            />
+            {editingNode.value ? (
+              <>
+                <div>
+                  {viewContext.button(
+                    () => (editingNode.value = undefined),
+                    "Finish",
+                  )}
+                </div>
+                <SchemaFieldEditor
+                  context={viewContext}
+                  schema={editingNode.value}
+                />
+              </>
+            ) : (
+              <>
+                <div>{viewContext.button(addChild, "New child")}</div>
+                <input
+                  className={"w-full"}
+                  value={term.value}
+                  onChange={(e) => (term.value = e.target.value)}
+                  placeholder={"Search node(s)"}
+                />
+                <SchemaHierarchyBreadcrumb
+                  selectorSchemaNode={selectorSchemaNode}
+                />
+
+                <SchemaNodeList
+                  selectorSchemaNode={selectorSchemaNode}
+                  parentNode={parentNode}
+                  selectedField={control}
+                  searchTerm={term}
+                  onEdit={canEdit ? (n) => (editingNode.value = n) : undefined}
+                  onDelete={
+                    canEdit
+                      ? (n) => {
+                          (n.tree as EditorSchemaTree).deleteNode(n);
+                        }
+                      : undefined
+                  }
+                />
+              </>
+            )}
           </div>
         </Popover>
       )}
     </>
   );
-  // return (
-  //   <ModalDialog
-  //     isOpen={open.value}
-  //     onOpenChange={(v: boolean) => (open.value = v)}
-  //     title={"Field Selection"}
-  //     trigger={
-  //
-  //     }
-  //     footer={
-  //       <div className={"w-full flex justify-end"}>
-  //         <Button
-  //           className={
-  //             "bg-primary-500 hover:bg-primary-600 px-4 py-2 rounded text-white"
-  //           }
-  //           onPress={() => (open.value = false)}
-  //         >
-  //           Close
-  //         </Button>
-  //       </div>
-  //     }
-  //   >
-  //   </ModalDialog>
-  // );
+
+  function addChild() {
+    const selected = selectorSchemaNode.value;
+    const tree = selected.tree as EditorSchemaTree;
+    const result = tree.addNode(selected, {
+      field: "",
+      type: FieldType.String,
+    });
+    groupedChanges(() => {
+      editingNode.value = result;
+    });
+  }
 }
 
 function SchemaNodeList({
   selectorSchemaNode,
-  schemaNode,
+  parentNode,
   selectedField,
   searchTerm,
+  onEdit,
+  onDelete,
 }: {
   selectorSchemaNode: Control<SchemaNode>;
-  schemaNode: SchemaNode;
+  parentNode: SchemaNode;
   selectedField: Control<string | undefined>;
   searchTerm: Control<string>;
+  onEdit?: (n: SchemaNode) => void;
+  onDelete?: (n: SchemaNode) => void;
 }) {
-  const allNodes = makeChildNodes(selectorSchemaNode.value);
+  const allNodes = makeChildNodes(parentNode, selectorSchemaNode.value);
 
   const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const onNodeClick = useCallback(
-    (e: MouseEvent, n: NodeCtx) => {
-      const onSingleClick = (e: MouseEvent, n: NodeCtx): void => {
-        const selectedSchema = n.schema;
-        selectedField.value = relativePath(schemaNode, selectedSchema);
+    (e: MouseEvent, n: SchemaNode) => {
+      const onSingleClick = (
+        e: MouseEvent,
+        selectedSchema: SchemaNode,
+      ): void => {
+        selectedField.value = relativePath(parentNode, selectedSchema);
       };
 
-      const onDoubleClick = (e: MouseEvent, n: NodeCtx): void => {
-        const hasChildrenNodes =
-          isCompoundNode(n.schema) && !n.schema.field.collection;
+      const onDoubleClick = (e: MouseEvent, n: SchemaNode): void => {
+        const hasChildrenNodes = isCompoundNode(n) && !n.field.collection;
 
         if (!hasChildrenNodes) return;
 
-        selectorSchemaNode.value = n.schema;
+        selectorSchemaNode.value = n;
       };
 
       if (clickTimeout) {
@@ -222,46 +251,61 @@ function SchemaNodeList({
 
   return (
     <div className={"flex flex-col gap-1"}>
-      {allNodes.map((n) => {
-        const show =
-          n.schema.field.displayName
-            ?.toLowerCase()
-            .includes(searchTerm.value.toLowerCase()) ||
-          n.schema.field.field
-            .toLowerCase()
-            .includes(searchTerm.value.toLowerCase());
-
-        return (
-          show && (
-            <SchemaNodeRenderer
-              key={n.id}
-              nodeSchema={n.schema}
-              schemaNode={schemaNode}
-              selection={selectedField.value}
-              onClick={(e) => onNodeClick(e, n)}
-            />
-          )
-        );
-      })}
+      {allNodes.map((n) => (
+        <SchemaNodeRenderer
+          key={n.id}
+          nodeSchema={n}
+          searchTerm={searchTerm}
+          parentNode={parentNode}
+          selection={selectedField.value}
+          onClick={(e) => onNodeClick(e, n)}
+          onEdit={
+            onEdit
+              ? (e) => {
+                  e.stopPropagation();
+                  onEdit(n);
+                }
+              : undefined
+          }
+          onDelete={
+            onDelete
+              ? (e) => {
+                  e.stopPropagation();
+                  onDelete(n);
+                }
+              : undefined
+          }
+        />
+      ))}
     </div>
   );
 }
 
 function SchemaNodeRenderer({
   nodeSchema,
-  schemaNode,
+  parentNode,
   onClick,
+  onEdit,
   selection,
+  searchTerm,
+  onDelete,
 }: {
+  searchTerm: Control<string>;
   nodeSchema: SchemaNode;
-  schemaNode: SchemaNode;
+  parentNode: SchemaNode;
   onClick: (e: MouseEvent) => void;
+  onEdit?: (e: MouseEvent) => void;
+  onDelete?: (e: MouseEvent) => void;
   selection?: string;
 }) {
-  const isSelected = selection === relativePath(schemaNode, nodeSchema);
+  const isSelected = selection === relativePath(parentNode, nodeSchema);
+  const field = nodeSchema.field;
   const hasChildrenNodes =
-    isCompoundNode(nodeSchema) && !nodeSchema.field.collection;
-
+    field.field != "." && isCompoundField(field) && !field.collection;
+  const show =
+    field.displayName?.toLowerCase().includes(searchTerm.value.toLowerCase()) ||
+    field.field.toLowerCase().includes(searchTerm.value.toLowerCase());
+  if (!show) return null;
   return (
     <div
       className={clsx(
@@ -279,6 +323,9 @@ function SchemaNodeRenderer({
       <span>
         {nodeSchema.field.displayName} ({nodeSchema.field.field})
       </span>
+      {onEdit && <button onClick={onEdit}>Edit</button>}
+      {onDelete && <button onClick={onDelete}>Delete</button>}
+
       {hasChildrenNodes && (
         <i className={clsx("w-4 h-4 fa-solid fa-angle-right")} />
       )}
@@ -286,15 +333,17 @@ function SchemaNodeRenderer({
   );
 }
 
-function makeChildNodes(n: SchemaNode): NodeCtx[] {
-  function getNodeId(node: SchemaNode): string {
-    return getSchemaNodePath(node).join("/");
+function makeChildNodes(parent: SchemaNode, n: SchemaNode): SchemaNode[] {
+  let allNodes = n.getChildNodes();
+  if (parent.id == n.id && parent.field.field.length > 0) {
+    const selfNode = n.createChildNode({
+      field: ".",
+      displayName: "[" + parent.field.displayName + "]",
+      type: parent.field.type,
+    });
+    allNodes = [selfNode, ...allNodes];
   }
-
-  return n.getChildNodes().map((x) => ({
-    schema: x,
-    id: getNodeId(x),
-  }));
+  return allNodes;
 }
 
 function SchemaHierarchyBreadcrumb({
@@ -360,11 +409,7 @@ function getParentSchema(fieldPath: string[], schema: SchemaNode) {
     const previousField = fieldPath[i];
     let parentNode = resolveSchemaNode(schema, previousField);
     if (!parentNode) {
-      parentNode = createSchemaNode(
-        missingField(previousField),
-        schema,
-        schema,
-      );
+      parentNode = schema.createChildNode(missingField(previousField));
     }
     schema = parentNode;
     i++;

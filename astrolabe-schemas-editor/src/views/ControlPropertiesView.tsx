@@ -11,6 +11,7 @@ export function ControlPropertiesView({ context }: { context: ViewContext }) {
   return (
     <div className="h-full w-full overflow-auto">
       <FormControlEditor
+        viewContext={context}
         key={unsafeRestoreControl(sc.form.definition)?.uniqueId}
         controlNode={sc}
         editorControls={editorControls}
