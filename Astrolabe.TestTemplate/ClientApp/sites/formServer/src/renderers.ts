@@ -10,6 +10,7 @@ import {
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
 import { createQuickstreamCC } from "@astroapps/schemas-quickstream";
+import { createSignatureRenderer } from "../../../../../schemas-signature/src";
 
 export function createStdFormRenderer(container: HTMLElement | null) {
   return createFormRenderer(
@@ -24,6 +25,7 @@ export function createStdFormRenderer(container: HTMLElement | null) {
         addText: "Add",
         removeText: "Delete",
       }),
+      createSignatureRenderer({}),
       DataGridGroupRenderer,
       createDatePickerRenderer(undefined, {
         portalContainer: container ? container : undefined,

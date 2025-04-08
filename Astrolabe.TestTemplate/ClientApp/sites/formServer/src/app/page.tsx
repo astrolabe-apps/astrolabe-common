@@ -26,6 +26,7 @@ import {
   ControlDataContext,
   createSchemaLookup,
   dataControl,
+  DataRenderType,
   dateField,
   dateTimeField,
   defaultEvalHooks,
@@ -65,6 +66,7 @@ import schemaFieldJson from "../SchemaField.json";
 import testSchemaControls from "../forms/TestSchema.json";
 import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
+import { SignatureExtension } from "../../../../../../schemas-signature/src/extensions";
 import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
@@ -77,6 +79,7 @@ const Extensions = [
   QuickstreamExtension,
   PagerExtension,
   FieldSelectionExtension,
+  SignatureExtension,
 ];
 
 interface TabSchema {
@@ -268,12 +271,20 @@ const TabControls = groupedControl(
   { groupOptions: { type: GroupRenderType.Tabs } },
 );
 
+const SignatureSchema = buildSchema({
+  signature: stringField("Signature", {
+    collection: true,
+    type: DataRenderType.Signature,
+  }),
+});
+
 const schemaLookup = {
   TestSchema,
   GridSchema,
   RequestSchema,
   ResultSchema,
   TabSchema,
+  SignatureSchema,
   ...SchemaMap,
   ...ControlDefinitionSchemaMap,
   ControlDefinitionSchema,
@@ -332,6 +343,7 @@ export default function Editor() {
           ["CarInfo", "Pdf test"],
           ["TestSchema", "Test"],
           ["GridSchema", "Grid"],
+          ["SignatureSchema", "Signature"],
           ["TabSchema", "Tabs"],
           ...Object.values(FormDefinitions).map(
             (x) => [x.value, x.name] as [string, string],

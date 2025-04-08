@@ -9,9 +9,10 @@ import {
   DataRenderType,
   fontAwesomeIcon,
   IconReference,
-  RenderOptions,
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
+
+export { SignatureExtension } from "./extensions";
 
 export interface SignatureRendererOptions {
   canvasClass?: string;
@@ -104,22 +105,7 @@ export function createSignatureRenderer(
   );
 }
 
-export function isSignatureRenderer(
-  options: RenderOptions,
-): options is SignatureRenderOptions {
-  return options.type === DataRenderType.Signature;
-}
-
-export const SignatureDefinition: CustomRenderOptions = {
-  name: "Signature",
-  value: "Signature",
-  fields: SignatureFields,
-  applies: (sf) => !!sf.field.collection,
-  groups: [],
-};
-
 export const defaultSignatureClasses = {
-  className: "flex flex-col gap-2",
   canvasClass: "h-20 border border-surface-300 rounded-lg px-2",
   clearButton: fontAwesomeIcon("rotate-left"),
   // "aspect-square bg-danger-500 text-white rounded-lg p-2 hover:bg-danger-600",
@@ -128,4 +114,20 @@ export const defaultSignatureClasses = {
   currentSegmentClass: "fill-blue-500",
   guideClass:
     "border-b border-surface-500 border-dashed h-[1px] px-4 absolute inset-x-4 bottom-[12%] z-10",
+} satisfies SignatureRendererOptions;
+
+export const SignatureDefinition: CustomRenderOptions = {
+  name: "Signature",
+  value: "Signature",
+  applies: (sf) => true,
+  groups: [
+    {
+      parent: "RenderOptions",
+      group: {
+        type: "Group",
+        children: [],
+        id: "SignatureOptions",
+      },
+    },
+  ],
 };
