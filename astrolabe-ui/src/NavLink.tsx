@@ -103,6 +103,7 @@ export type NavLinkSpec = string | { list: string; order: number };
 export interface NavLinkRouteData {
   navLink?: NavLinkSpec | NavLinkSpec[];
   icon?: ReactNode;
+  noLayout?: boolean;
 }
 
 export function createNavLinks(
