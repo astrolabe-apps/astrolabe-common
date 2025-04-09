@@ -1,15 +1,10 @@
 import {
   ControlActionHandler,
-  ControlDataVisitor,
   ControlDefinition,
   ControlDefinitionType,
-  createFormTree,
   DataControlDefinition,
   DataRenderType,
   DisplayOnlyRenderOptions,
-  fieldPathForDefinition,
-  FormNode,
-  FormTree,
   GroupRenderOptions,
   isAutoCompleteClasses,
   isCheckEntryClasses,
@@ -23,18 +18,12 @@ import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
 import {
   CompoundField,
-  createSchemaTree,
   FieldOption,
   findField,
   getTagParam,
   isCompoundField,
-  isCompoundNode,
   isScalarField,
-  relativePath,
-  SchemaDataNode,
   SchemaField,
-  schemaForFieldPath,
-  SchemaNode,
   SchemaTags,
 } from "./schemaField";
 import {
@@ -45,6 +34,21 @@ import {
   newControl,
 } from "@react-typed-forms/core";
 import { ActionRendererProps } from "./controlRender";
+import {
+  ControlDataVisitor,
+  createFormTree,
+  fieldPathForDefinition,
+  FormNode,
+  FormTree,
+} from "./formNode";
+import { SchemaDataNode } from "./schemaDataNode";
+import {
+  createSchemaTree,
+  isCompoundNode,
+  relativePath,
+  schemaForFieldPath,
+  SchemaNode,
+} from "./schemaNode";
 
 /**
  * Interface representing the classes for a control.

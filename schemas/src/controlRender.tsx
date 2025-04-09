@@ -38,7 +38,6 @@ import {
   DisplayDataType,
   DynamicPropertyType,
   FormContextData,
-  FormNode,
   GroupRenderOptions,
   IconPlacement,
   IconReference,
@@ -46,8 +45,6 @@ import {
   isDataControl,
   isDisplayControl,
   isGroupControl,
-  legacyFormNode,
-  lookupDataNode,
   RenderOptions,
 } from "./controlDefinition";
 import {
@@ -86,14 +83,11 @@ import {
   SchemaValidator,
   ValidatorType,
 } from "./schemaValidator";
-import {
-  createSchemaTree,
-  FieldOption,
-  makeSchemaDataNode,
-  SchemaDataNode,
-  SchemaField,
-  SchemaInterface,
-} from "./schemaField";
+import { FieldOption, SchemaField } from "./schemaField";
+import { FormNode, legacyFormNode, lookupDataNode } from "./formNode";
+import { SchemaInterface } from "./schemaInterface";
+import { makeSchemaDataNode, SchemaDataNode } from "./schemaDataNode";
+import { createSchemaTree } from "./schemaNode";
 
 export interface HtmlIconProperties {
   className?: string;

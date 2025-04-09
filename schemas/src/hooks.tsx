@@ -32,11 +32,6 @@ import jsonata from "jsonata";
 import { v4 as uuidv4 } from "uuid";
 import { DynamicHookGenerator, HookDep, toDepString } from "./dynamicHooks";
 import {
-  schemaDataForFieldRef,
-  SchemaDataNode,
-  SchemaInterface,
-} from "./schemaField";
-import {
   DataExpression,
   DataMatchExpression,
   EntityExpression,
@@ -44,6 +39,8 @@ import {
   JsonataExpression,
   NotEmptyExpression,
 } from "./entityExpression";
+import { SchemaInterface } from "./schemaInterface";
+import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
 
 export type EvalExpressionHook<A = any> = DynamicHookGenerator<
   Control<A | undefined>,
