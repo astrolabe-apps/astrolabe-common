@@ -1336,13 +1336,14 @@ export function applyArrayLengthRestrictions(
 
 export function fieldOptionAdornment(p: DataRendererProps) {
   return (o: FieldOption, i: number, selected: boolean) => (
-    <RenderArrayElements array={p.formNode.getChildNodes()}>
-      {(cd, i) =>
+    <RenderArrayElements
+      array={p.formNode.getChildNodes()}
+      children={(cd, i) =>
         p.renderChild(i, cd, {
           parentDataNode: p.dataContext.parentNode,
           formData: { option: o, optionSelected: selected },
         })
       }
-    </RenderArrayElements>
+    />
   );
 }
