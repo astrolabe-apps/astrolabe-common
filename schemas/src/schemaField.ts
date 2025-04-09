@@ -466,7 +466,12 @@ export class SchemaDataTreeImpl extends SchemaDataTree {
   }
 }
 
-export function makeSchemaDataNode(
+/**
+ * @deprecated Use createSchemaDataNode instead.
+ */
+export const makeSchemaDataNode = createSchemaDataNode;
+
+export function createSchemaDataNode(
   schema: SchemaNode,
   control: Control<unknown>,
 ): SchemaDataNode {
