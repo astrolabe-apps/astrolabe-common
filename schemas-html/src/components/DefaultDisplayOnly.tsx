@@ -2,23 +2,22 @@ import { Control } from "@react-typed-forms/core";
 import React from "react";
 import {
   FormRenderer,
+  SchemaDataNode,
   SchemaField,
   SchemaInterface,
 } from "@react-typed-forms/schemas";
 
 export function DefaultDisplayOnly({
-  control,
+  dataNode,
   className,
   emptyText,
   schemaInterface,
-  field,
   style,
   renderer,
   textClass,
   inline,
 }: {
-  control: Control<any>;
-  field: SchemaField;
+  dataNode: SchemaDataNode;
   schemaInterface: SchemaInterface;
   className?: string;
   textClass?: string;
@@ -27,11 +26,10 @@ export function DefaultDisplayOnly({
   renderer: FormRenderer;
   emptyText?: string | null;
 }) {
-  const v = control.value;
   const text =
-    (schemaInterface.isEmptyValue(field, v)
+    (schemaInterface.isEmptyValue(dataNode.schema.field, dataNode.control.value)
       ? emptyText
-      : schemaInterface.textValue(field, v)) ?? "";
+      : schemaInterface.textValueForData(dataNode)) ?? "";
   const { Div } = renderer.html;
   return (
     <Div

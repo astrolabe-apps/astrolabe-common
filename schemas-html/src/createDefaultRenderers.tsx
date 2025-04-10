@@ -279,9 +279,8 @@ export function createDefaultDataRenderer(
           className: "@ " + rendererClass(p.className, displayOnlyClass),
           children: (
             <DefaultDisplayOnly
-              field={props.field}
+              dataNode={props.dataNode}
               schemaInterface={props.dataContext.schemaInterface}
-              control={props.control}
               className={props.className}
               textClass={props.textClass}
               style={props.style}

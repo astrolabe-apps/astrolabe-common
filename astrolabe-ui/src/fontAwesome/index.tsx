@@ -7,7 +7,7 @@ export function mkIcon(
   return ({ className, ...props }) => (
     <i
       className={clsx(className, "fa", iconString)}
-      aria-hidden="true"
+      aria-hidden
       {...props}
     />
   );

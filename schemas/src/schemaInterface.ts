@@ -25,13 +25,21 @@ export interface SchemaInterface {
    * @param field The schema field.
    * @param value The value to convert.
    * @param element Indicates if the value is an element, optional.
+   * @param options The field options, optional.
    * @returns The text representation of the value.
    */
   textValue(
     field: SchemaField,
     value: any,
     element?: boolean,
+    options?: FieldOption[],
   ): string | undefined;
+
+  /**
+   * Gets the text representation of a field's value for a data node.
+   * @param dataNode
+   */
+  textValueForData(dataNode: SchemaDataNode): string | undefined;
 
   /**
    * Gets the length of a control's value.
