@@ -72,13 +72,19 @@ BinaryExpression {
 }
 
 @skip {} {
-  TemplateString[isolate] {
-    "`" (templateContent | Interpolation)* "`"
+  TemplateString {
+    "`" (templateEscape | templateContent | Interpolation)* templateEnd
   }
 }
 
-Interpolation { "{" expression "}" }
+Interpolation { InterpolationStart expression "}" }
 
+@local tokens {
+  InterpolationStart { "{" }
+  templateEnd { "`" }
+  templateEscape { "\\" _ }
+  @else templateContent
+}
 
 
 
@@ -96,7 +102,6 @@ Interpolation { "{" expression "}" }
 call<expr> { Call { expr } }
 
 @tokens {
-  templateContent { ![`{]+ }
   hex { @digit | $[a-fA-F] }
 
   Number {

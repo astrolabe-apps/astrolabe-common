@@ -381,11 +381,6 @@ const condFunction = functionValue(
     ),
 );
 
-const concatFunction = evalFunctionExpr(
-  (args) => valuesToString(args, (x) => x),
-  constGetType(StringType),
-);
-
 export const defaultFunctions = {
   "?": condFunction,
   "!": evalFunction((a) => !a[0], constGetType(BooleanType)),
@@ -481,7 +476,6 @@ export const defaultFunctions = {
     (e) => [e, e.current],
     (e, _) => checkValue(e, e.dataType),
   ),
-  concat: concatFunction,
 };
 
 export function addDefaults(evalEnv: EvalEnv) {
