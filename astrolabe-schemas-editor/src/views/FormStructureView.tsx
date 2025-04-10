@@ -28,7 +28,7 @@ export function FormStructureView({ context }: { context: ViewContext }) {
 
       <FormControlTree
         tree={tree}
-        rootSchema={rootSchema}
+        rootSchema={rootSchema.rootNode}
         selectedControl={cf.fields.selectedControl}
         selected={selectedTreeNode}
         selectedField={cf.fields.selectedField}

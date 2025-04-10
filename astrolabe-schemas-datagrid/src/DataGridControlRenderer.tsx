@@ -20,6 +20,7 @@ import {
   makeParamTag,
   mergeObjects,
   optionalHook,
+  rendererClass,
   RenderOptions,
   schemaDataForFieldRef,
   schemaForFieldPath,
@@ -79,6 +80,7 @@ interface DataGridOptions
 }
 
 interface DataGridClasses {
+  className?: string;
   popoverClass?: string;
   titleContainerClass?: string;
   removeColumnClass?: string;
@@ -463,7 +465,7 @@ function DataGridControlRenderer({
   return (
     <>
       <DataGrid
-        className={className}
+        className={rendererClass(className, classes.className)}
         columns={allColumns}
         bodyRows={rowCount}
         getBodyRow={(i) => control.elements![i]}

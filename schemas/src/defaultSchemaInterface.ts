@@ -3,12 +3,12 @@ import {
   EqualityFunc,
   FieldOption,
   FieldType,
-  SchemaDataNode,
   SchemaField,
-  SchemaInterface,
-  SchemaNode,
   ValidationMessageType,
 } from "./schemaField";
+import { SchemaInterface } from "./schemaInterface";
+import { SchemaDataNode } from "./schemaDataNode";
+import { SchemaNode } from "./schemaNode";
 
 export class DefaultSchemaInterface implements SchemaInterface {
   constructor(

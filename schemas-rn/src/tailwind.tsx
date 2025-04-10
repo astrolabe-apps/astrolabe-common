@@ -8,7 +8,6 @@ import { RNCheckbox } from "./components/RNCheckbox";
 import { RNTextInput } from "./components/RNTextInput";
 import { RNRadioItem } from "./components/RNRadioItem";
 import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
-import { createRNHelpTextRenderer } from "./components/RNHelpTextRenderer";
 import {
   deepMerge,
   HtmlButtonProperties,
@@ -38,6 +37,11 @@ export const reactNativeHtml: HtmlComponents = {
 
 export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
   {
+    label: {
+      labelContainer: (c) => (
+        <View className="flex flex-row gap-4 items-center" children={c} />
+      ),
+    },
     array: {
       removableClass: "flex flex-col gap-y-2",
     },
@@ -50,11 +54,17 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
       accordion: {
         className: "flex flex-row items-center gap-2 my-2 p-0",
       },
+      helpText: {
+        iconName: "info-circle",
+        iconClass: "text-[12px]",
+        triggerContainerClass: "flex flex-row gap-2 items-baseline",
+        triggerLabelClass: "text-sm font-bold",
+        contentTextClass: "text-white font-semibold text-sm",
+      },
     },
     html: reactNativeHtml,
     extraRenderers: (options): RendererRegistration[] => {
       const renderers: RendererRegistration[] = [
-        createRNHelpTextRenderer(options.adornment?.helpText),
         createRNSelectRenderer(options.data?.selectOptions),
       ];
 

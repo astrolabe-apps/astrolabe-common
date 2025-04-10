@@ -33,7 +33,7 @@ import {
   LengthValidator,
   ValidatorType,
 } from "./schemaValidator";
-import { SchemaField, SchemaMap, SchemaNode } from "./schemaField";
+import { SchemaField, SchemaMap } from "./schemaField";
 import {
   DataExpression,
   DataMatchExpression,
@@ -41,6 +41,7 @@ import {
   ExpressionType,
   JsonataExpression,
 } from "./entityExpression";
+import { SchemaNode } from "./schemaNode";
 
 export function dataControl(
   field: string,

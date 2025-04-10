@@ -1,13 +1,10 @@
 import React, {
-  ButtonHTMLAttributes,
   ComponentType,
   ElementType,
   FC,
   Fragment,
   HTMLAttributes,
-  InputHTMLAttributes,
   Key,
-  LabelHTMLAttributes,
   ReactElement,
   ReactNode,
   useCallback,
@@ -41,7 +38,6 @@ import {
   DisplayDataType,
   DynamicPropertyType,
   FormContextData,
-  FormNode,
   GroupRenderOptions,
   IconPlacement,
   IconReference,
@@ -49,8 +45,6 @@ import {
   isDataControl,
   isDisplayControl,
   isGroupControl,
-  legacyFormNode,
-  lookupDataNode,
   RenderOptions,
 } from "./controlDefinition";
 import {
@@ -89,14 +83,11 @@ import {
   SchemaValidator,
   ValidatorType,
 } from "./schemaValidator";
-import {
-  createSchemaLookup,
-  FieldOption,
-  makeSchemaDataNode,
-  SchemaDataNode,
-  SchemaField,
-  SchemaInterface,
-} from "./schemaField";
+import { FieldOption, SchemaField } from "./schemaField";
+import { FormNode, legacyFormNode, lookupDataNode } from "./formNode";
+import { SchemaInterface } from "./schemaInterface";
+import { makeSchemaDataNode, SchemaDataNode } from "./schemaDataNode";
+import { createSchemaTree } from "./schemaNode";
 
 export interface HtmlIconProperties {
   className?: string;
@@ -801,7 +792,7 @@ export function ControlRenderer({
   parentPath?: JsonPath[];
 }) {
   const schemaDataNode = makeSchemaDataNode(
-    createSchemaLookup({ "": fields }).getSchema("")!,
+    createSchemaTree(fields).rootNode,
     control,
   );
   const Render = useControlRendererComponent(
@@ -1339,13 +1330,14 @@ export function applyArrayLengthRestrictions(
 
 export function fieldOptionAdornment(p: DataRendererProps) {
   return (o: FieldOption, i: number, selected: boolean) => (
-    <RenderArrayElements array={p.formNode.getChildNodes()}>
-      {(cd, i) =>
+    <RenderArrayElements
+      array={p.formNode.getChildNodes()}
+      children={(cd, i) =>
         p.renderChild(i, cd, {
           parentDataNode: p.dataContext.parentNode,
           formData: { option: o, optionSelected: selected },
         })
       }
-    </RenderArrayElements>
+    />
   );
 }

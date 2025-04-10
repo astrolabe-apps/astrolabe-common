@@ -329,7 +329,8 @@
     ],
     "groupOptions": {
       "type": "Tabs",
-      "contentClass": "p-4"
+      "contentClass": "p-4",
+      "hideTitle": true
     }
   }
 ]

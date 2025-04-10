@@ -1,15 +1,10 @@
 import {
   ControlActionHandler,
-  ControlDataVisitor,
   ControlDefinition,
   ControlDefinitionType,
-  createFormTree,
   DataControlDefinition,
   DataRenderType,
   DisplayOnlyRenderOptions,
-  fieldPathForDefinition,
-  FormNode,
-  FormTree,
   GroupRenderOptions,
   isAutoCompleteClasses,
   isCheckEntryClasses,
@@ -23,19 +18,12 @@ import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
 import {
   CompoundField,
-  emptySchemaLookup,
   FieldOption,
   findField,
   getTagParam,
   isCompoundField,
-  isCompoundNode,
   isScalarField,
-  relativePath,
-  rootSchemaNode,
-  SchemaDataNode,
   SchemaField,
-  schemaForFieldPath,
-  SchemaNode,
   SchemaTags,
 } from "./schemaField";
 import {
@@ -46,6 +34,21 @@ import {
   newControl,
 } from "@react-typed-forms/core";
 import { ActionRendererProps } from "./controlRender";
+import {
+  ControlDataVisitor,
+  createFormTree,
+  fieldPathForDefinition,
+  FormNode,
+  FormTree,
+} from "./formNode";
+import { SchemaDataNode } from "./schemaDataNode";
+import {
+  createSchemaTree,
+  isCompoundNode,
+  relativePath,
+  schemaForFieldPath,
+  SchemaNode,
+} from "./schemaNode";
 
 /**
  * Interface representing the classes for a control.
@@ -349,7 +352,7 @@ export function addMissingControls(
   warning?: (msg: string) => void,
 ) {
   return addMissingControlsForSchema(
-    rootSchemaNode(fields, emptySchemaLookup),
+    createSchemaTree(fields).rootNode,
     controls,
     warning,
   );

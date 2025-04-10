@@ -2,7 +2,6 @@ export * from "./tailwind";
 export * from "./components/RNButton";
 export * from "./components/RNCheckbox";
 export * from "./components/RNDateTimePickerRenderer";
-export * from "./components/RNHelpTextRenderer";
 export * from "./components/RNHtmlRenderer";
 export * from "./components/RNRadioItem";
 export * from "./components/RNSelectRenderer";

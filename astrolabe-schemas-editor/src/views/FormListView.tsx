@@ -15,6 +15,7 @@ export function FormListView({ context }: { context: ViewContext }) {
   const { ref, width, height } = useResizeObserver();
   return (
     <div className="flex flex-col h-full">
+      {context.listHeader}
       <div ref={ref} className="grow overflow-auto">
         <Tree<FormListNode>
           width={width}

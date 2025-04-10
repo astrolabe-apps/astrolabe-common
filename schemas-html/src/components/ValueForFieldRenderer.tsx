@@ -11,11 +11,9 @@ import {
   createDataRenderer,
   DataControlDefinition,
   defaultControlForField,
-  emptySchemaLookup,
   FormRenderer,
   makeSchemaDataNode,
   RenderOptions,
-  rootSchemaNode,
   schemaDataForFieldRef,
   SchemaField,
   schemaForFieldRef,
@@ -24,6 +22,7 @@ import {
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import React, { Fragment, useMemo } from "react";
+import { createSchemaTree } from "@react-typed-forms/schemas";
 
 export interface ValueForFieldRenderOptions extends RenderOptions {
   type: "ValueForField";
@@ -118,7 +117,7 @@ function ValueForField({
       ...defaultControlForField(adjustedField),
       hideTitle: true,
     };
-    const rootSchema = rootSchemaNode([adjustedField], emptySchemaLookup);
+    const rootSchema = createSchemaTree([adjustedField]).rootNode;
     return [control, rootSchema];
   }, [schemaField]);
 
