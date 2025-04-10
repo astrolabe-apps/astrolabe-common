@@ -699,6 +699,7 @@ export interface GroupRenderOptionsForm {
   direction: string | null;
   gap: string | null;
   columns: number | null;
+  rowClass: string | null;
   value: any;
   childIndexExpression: EntityExpressionForm;
 }
@@ -782,6 +783,11 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     onlyForTypes: ["Grid"],
     displayName: "Columns",
   }),
+  rowClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Grid"],
+    displayName: "Row Class",
+  }),
   value: makeScalarField({
     type: FieldType.Any,
     onlyForTypes: ["GroupElement"],
@@ -846,7 +852,6 @@ export interface RenderOptionsForm {
   noAdd: boolean | null;
   noRemove: boolean | null;
   noReorder: boolean | null;
-  childOptions: RenderOptionsForm | null;
   editExternal: boolean | null;
   showInline: boolean | null;
   entryWrapperClass: string | null;
@@ -1010,12 +1015,6 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     type: FieldType.Bool,
     onlyForTypes: ["Array"],
     displayName: "No Reorder",
-  }),
-  childOptions: makeCompoundField({
-    treeChildren: true,
-    onlyForTypes: ["Array"],
-    displayName: "Child Options",
-    tags: ["_ControlRef:RenderOptions"],
   }),
   editExternal: makeScalarField({
     type: FieldType.Bool,
@@ -1273,7 +1272,6 @@ export interface ControlDefinitionForm {
   readonly: boolean | null;
   disabled: boolean | null;
   dontClearHidden: boolean | null;
-  fieldDef: SchemaFieldForm | null;
   validators: SchemaValidatorForm[] | null;
   compoundField: string | null;
   groupOptions: GroupRenderOptionsForm | null;
@@ -1407,12 +1405,6 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     type: FieldType.Bool,
     onlyForTypes: ["Data"],
     displayName: "Dont Clear Hidden",
-  }),
-  fieldDef: makeCompoundField({
-    children: SchemaFieldSchema,
-    schemaRef: "SchemaField",
-    onlyForTypes: ["Data"],
-    displayName: "Field Def",
   }),
   validators: makeCompoundField({
     children: SchemaValidatorSchema,

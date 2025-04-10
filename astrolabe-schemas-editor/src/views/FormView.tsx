@@ -1,7 +1,7 @@
 import { EditableForm, ViewContext } from "./index";
 import {
   Control,
-  RenderControl,
+  newControl,
   RenderOptional,
   useControl,
   useControlEffect,
@@ -9,8 +9,11 @@ import {
 } from "@react-typed-forms/core";
 import { FormControlPreview } from "../FormControlPreview";
 import {
-  addMissingControlsToForm,
+  addMissingControlsForSchema,
   ControlDefinition,
+  SchemaDataNode,
+  SchemaDataTree,
+  SchemaNode,
 } from "@react-typed-forms/schemas";
 import React from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
@@ -29,7 +32,7 @@ export function FormView(props: { formId: string; context: ViewContext }) {
   useControlEffect(
     () =>
       [
-        control.fields.formTree.value?.root.dirty,
+        control.fields.formTree.value?.control.dirty,
         control.fields.name.value,
       ] as const,
     ([unsaved, name]) => {
@@ -66,7 +69,8 @@ function RenderFormDesign({
     button,
     checkbox,
   } = context;
-  const rootNode = c.fields.formTree.value.rootNode;
+  const tree = c.fields.formTree.value;
+  const rootNode = tree.rootNode;
   const rootSchema = c.fields.schema.value;
   const formRenderer = c.fields.renderer.value;
   return (
@@ -87,7 +91,8 @@ function RenderFormDesign({
 
   function addMissing() {
     if (rootSchema) {
-      addMissingControlsToForm(rootSchema, c.fields.formTree.value);
+      const rootDefs = tree.getRootDefinitions();
+      rootDefs.value = addMissingControlsForSchema(rootSchema, rootDefs.value);
     }
   }
 
@@ -118,15 +123,13 @@ function RenderFormDesign({
           {checkbox(c.fields.showJson, "Show JSON")}
         </div>
         {c.fields.showJson.value && (
-          <FormJsonView
-            root={c.fields.formTree.fields.rootNode.value.control.fields.children.as()}
-          />
+          <FormJsonView root={c.fields.formTree.value.getRootDefinitions()} />
         )}
         <div className={clsx("grow overflow-auto", context.editorPanelClass)}>
           <FormControlPreview
             keyPrefix="HAI"
             node={rootNode}
-            parentNode={rootSchema}
+            parentDataNode={new EditorDataTree(rootSchema).rootNode}
             dropIndex={0}
             context={{
               selected: c.fields.selectedControlId,
@@ -137,6 +140,45 @@ function RenderFormDesign({
           />
         </div>
       </>
+    );
+  }
+}
+
+class EditorDataTree extends SchemaDataTree {
+  rootNode: SchemaDataNode;
+  undefinedControl = newControl(undefined);
+
+  getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
+    return new SchemaDataNode(
+      parent.id + "/" + childNode.field.field,
+      childNode,
+      undefined,
+      this.undefinedControl,
+      this,
+      parent,
+    );
+  }
+  getChildElement(
+    parent: SchemaDataNode,
+    elementIndex: number,
+  ): SchemaDataNode {
+    return new SchemaDataNode(
+      parent.id + "/" + elementIndex,
+      parent.schema,
+      elementIndex,
+      this.undefinedControl,
+      this,
+      parent,
+    );
+  }
+  constructor(rootSchema: SchemaNode) {
+    super();
+    this.rootNode = new SchemaDataNode(
+      "",
+      rootSchema,
+      undefined,
+      newControl({}),
+      this,
     );
   }
 }

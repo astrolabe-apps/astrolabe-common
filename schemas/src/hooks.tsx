@@ -333,7 +333,10 @@ export function matchesType(context: SchemaDataNode): boolean {
   const typeNode = parent.schema
     .getChildNodes()
     .find((x) => x.field.isTypeField);
-  if (typeNode == null) return true;
+  if (typeNode == null) {
+    console.warn("No type field found for", parent.schema);
+    return false;
+  }
   const typeField = parent.getChild(typeNode).control as Control<string>;
   return typeField && types.includes(typeField.value);
 }

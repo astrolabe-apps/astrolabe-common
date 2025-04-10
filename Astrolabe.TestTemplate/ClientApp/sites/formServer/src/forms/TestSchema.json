@@ -1,67 +1,72 @@
 {
   "controls": [
     {
-      "type": "Data",
-      "title": "Bool",
+      "type": "Group",
+      "title": "New",
       "children": [
         {
           "type": "Data",
-          "title": "Data",
-          "field": "data",
+          "title": "Bool",
+          "children": [
+            {
+              "type": "Data",
+              "title": "Data",
+              "field": "data",
+              "renderOptions": {
+                "type": "Standard"
+              }
+            }
+          ],
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "field": "nested",
+          "adornments": [
+            {
+              "type": "Optional",
+              "allowNull": true
+            }
+          ],
+          "fieldDef": null
+        },
+        {
+          "type": "Data",
+          "title": "Date",
+          "field": "date",
           "renderOptions": {
             "type": "Standard"
           }
         },
         {
           "type": "Data",
+          "title": "Date Time",
+          "field": "dateTime",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        }
+      ],
+      "groupOptions": {
+        "type": "Grid"
+      }
+    },
+    {
+      "type": "Data",
+      "field": "array",
+      "renderOptions": {
+        "type": "Array"
+      },
+      "children": [
+        {
+          "type": "Data",
+          "title": "Cool",
+          "field": ".",
           "renderOptions": {
             "type": "Standard"
           },
-          "fieldDef": {
-            "type": "Compound",
-            "field": "wow"
-          },
-          "title": "Custom field",
-          "children": [
-            {
-              "type": "Data",
-              "renderOptions": {
-                "type": "Standard"
-              },
-              "fieldDef": {
-                "field": "yeap"
-              }
-            }
-          ]
+          "defaultValue": null
         }
-      ],
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "field": "nested",
-      "adornments": [
-        {
-          "type": "Optional",
-          "allowNull": true
-        }
-      ],
-      "fieldDef": null
-    },
-    {
-      "type": "Data",
-      "title": "Date",
-      "field": "date",
-      "renderOptions": {
-        "type": "Standard"
-      }
-    },
-    {
-      "type": "Data",
-      "title": "Date Time",
-      "field": "dateTime",
-      "renderOptions": {
-        "type": "Standard"
-      }
+      ]
     }
   ],
   "config": null

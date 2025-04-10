@@ -3,7 +3,11 @@ import { FormControlTree } from "../FormControlTree";
 import React from "react";
 import { NodeApi, TreeApi } from "react-arborist";
 import { ControlNode } from "../types";
-import { controlNotNull } from "@react-typed-forms/core";
+import {
+  addElement,
+  controlNotNull,
+  newControl,
+} from "@react-typed-forms/core";
 import { defaultControlDefinitionForm } from "../schemaSchemas";
 import { InactiveView } from "./InactiveView";
 
@@ -23,7 +27,7 @@ export function FormStructureView({ context }: { context: ViewContext }) {
       </div>
 
       <FormControlTree
-        rootNode={tree.rootNode}
+        tree={tree}
         rootSchema={rootSchema}
         selectedControl={cf.fields.selectedControl}
         selected={selectedTreeNode}
@@ -42,10 +46,10 @@ export function FormStructureView({ context }: { context: ViewContext }) {
   }
 
   function addRootControl() {
-    const newControl = tree.addChild(tree.rootNode, {
+    const newNode = tree.addNode(tree.rootNode, {
       ...defaultControlDefinitionForm,
       title: "New",
     });
-    selectedTreeNode.value = newControl.id;
+    selectedTreeNode.value = newNode.id;
   }
 }

@@ -5,12 +5,11 @@ import {
   GroupRenderType,
   rendererClass,
   TabsRenderOptions,
-  useDynamicHooks,
 } from "@react-typed-forms/schemas";
 import React, { Fragment } from "react";
-import { useControl, useTrackedComponent } from "@react-typed-forms/core";
+import { useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
-import { EvalExpressionHook } from "@react-typed-forms/schemas";
+import { VisibleChildrenRenderer } from "./VisibleChildrenRenderer";
 
 export interface DefaultTabsRenderOptions {
   className?: string;
@@ -25,17 +24,17 @@ export interface DefaultTabsRenderOptions {
 export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
   return createGroupRenderer(
     (p, renderer) => {
-      const visibleChildren = Object.fromEntries(
-        p.formNode
-          .getChildNodes()
-          .map((cd, i) => [i.toString(), p.useChildVisibility(cd.definition)]),
-      );
       return (
-        <TabsGroupRenderer
-          {...p}
-          visibleChildren={visibleChildren}
-          tabOptions={p.renderOptions as TabsRenderOptions}
-          options={options}
+        <VisibleChildrenRenderer
+          render={renderAllTabs}
+          dataContext={p.dataContext}
+          parentFormNode={p.formNode}
+          useChildVisibility={p.useChildVisibility}
+          props={{
+            groupProps: p,
+            tabOptions: p.renderOptions as TabsRenderOptions,
+            options: options,
+          }}
         />
       );
     },
@@ -43,31 +42,19 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
       renderType: GroupRenderType.Tabs,
     },
   );
-}
 
-interface TabsGroupRendererProps extends GroupRendererProps {
-  options: DefaultTabsRenderOptions;
-  visibleChildren: Record<string, EvalExpressionHook<boolean>>;
-  tabOptions: TabsRenderOptions;
-}
-
-export function TabsGroupRenderer(props: TabsGroupRendererProps) {
-  const visibilityHooks = useDynamicHooks(props.visibleChildren);
-
-  const Render = useTrackedComponent(mainRender, [visibilityHooks]);
-
-  return <Render {...props} />;
-
-  function mainRender({
-    formNode,
-    className,
-    options,
-    renderChild,
-    designMode,
-    tabOptions,
-    dataContext,
-  }: TabsGroupRendererProps) {
-    const visibilities = visibilityHooks(dataContext);
+  function renderAllTabs(
+    {
+      options,
+      groupProps: { designMode, formNode, className, renderChild },
+      tabOptions,
+    }: {
+      options: DefaultTabsRenderOptions;
+      groupProps: GroupRendererProps;
+      tabOptions: TabsRenderOptions;
+    },
+    isVisible: (i: number) => boolean,
+  ) {
     const tabIndex = useControl(0);
     const {
       tabClass,
@@ -82,7 +69,7 @@ export function TabsGroupRenderer(props: TabsGroupRendererProps) {
       <>{formNode.getChildNodes().map((x, i) => renderTabs([x], i))}</>
     ) : (
       renderTabs(
-        formNode.getChildNodes().filter((x, i) => !!visibilities[i].value),
+        formNode.getChildNodes().filter((x, i) => isVisible(i)),
         0,
       )
     );

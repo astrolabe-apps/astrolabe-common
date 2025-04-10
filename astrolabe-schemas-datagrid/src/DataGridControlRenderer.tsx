@@ -172,6 +172,7 @@ export function createDataGridRenderer(
         readonly,
         required,
         useEvalExpression,
+        dataNode,
       } = pareProps;
       const gridClasses =
         mergeObjects(defaultDataGridClasses, classes) ?? defaultDataGridClasses;
@@ -187,17 +188,13 @@ export function createDataGridRenderer(
         definition.adornments?.filter(isColumnAdornment).map((x, i) => {
           const def: DataControlDefinition = {
             type: ControlDefinitionType.Data,
-            field: definition.field,
+            field: ".",
             hideTitle: true,
             renderOptions: x.renderOptions,
             layoutClass: x.layoutClass,
           };
           const headerOptions = getColumnHeaderFromOptions(x, def, gridClasses);
-          const colNode = formNode.tree.createTempNode(
-            formNode.id + "_" + i,
-            def,
-            [],
-          );
+          const colNode = formNode.createChildNode(i.toString(), def);
           return {
             ...headerOptions,
             id: "cc" + i,
@@ -205,7 +202,7 @@ export function createDataGridRenderer(
               x.rowIndex
                 ? ri + 1
                 : renderChild("c" + i + "_" + ri, colNode, {
-                    elementIndex: ri,
+                    parentDataNode: dataNode.getChildElement(ri),
                     displayOnly: dataGridOptions.displayOnly,
                   }),
           };

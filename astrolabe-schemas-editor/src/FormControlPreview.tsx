@@ -5,18 +5,11 @@ import {
   useComputed,
   useControl,
 } from "@react-typed-forms/core";
-import React, {
-  createContext,
-  HTMLAttributes,
-  ReactNode,
-  useContext,
-  useMemo,
-} from "react";
-import { useDroppable } from "@dnd-kit/core";
+import React, { HTMLAttributes, ReactNode, useMemo } from "react";
 import {
   ControlDataContext,
   ControlDefinition,
-  DataControlDefinition,
+  createSchemaNode,
   defaultDataProps,
   defaultSchemaInterface,
   defaultValueForField,
@@ -30,25 +23,27 @@ import {
   isControlDisplayOnly,
   isDataControl,
   isGroupControl,
+  lookupDataNode,
   makeHook,
   makeSchemaDataNode,
+  missingField,
   renderControlLayout,
   rendererClass,
+  resolveSchemaNode,
+  schemaDataForFieldPath,
+  SchemaDataNode,
   schemaForFieldPath,
   SchemaInterface,
   SchemaNode,
   textDisplayControl,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
-import { ControlDragState, controlDropData, DragData, DropData } from "./util";
-import { SelectedControlNode } from "./types";
 
 export interface FormControlPreviewProps {
   node: FormNode;
   dropIndex: number;
   noDrop?: boolean;
-  parentNode: SchemaNode;
-  elementIndex?: number;
+  parentDataNode: SchemaDataNode;
   schemaInterface?: SchemaInterface;
   keyPrefix?: string;
   styleClass?: string;
@@ -77,8 +72,7 @@ const defaultLayoutChange = "position";
 export function FormControlPreview(props: FormControlPreviewProps) {
   const {
     node,
-    elementIndex,
-    parentNode,
+    parentDataNode,
     dropIndex,
     noDrop,
     keyPrefix,
@@ -90,28 +84,23 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     context,
     inline,
   } = props;
+
   const definition = node.definition;
   const { selected, renderer, hideFields } = context;
   const displayOnly = dOnly || isControlDisplayOnly(definition);
 
-  const defControl = unsafeRestoreControl(definition);
-  const defControlId = defControl?.uniqueId.toString();
   const isSelected = useComputed(() => {
     const selControlId = selected.value;
-    return selControlId !== undefined && defControlId == selControlId;
+    return selControlId !== undefined && node.id == selControlId;
   }).value;
   const scrollRef = useScrollIntoView(isSelected);
-  const groupControl = useControl({});
-
-  const path = fieldPathForDefinition(definition);
-
   const dataDefinition = isDataControl(definition) ? definition : undefined;
-  const childNode = dataDefinition?.fieldDef
-    ? parentNode.createChildNode(dataDefinition.fieldDef)
-    : path && elementIndex == null
-      ? schemaForFieldPath(path, parentNode)
-      : null;
 
+  const fieldNamePath = fieldPathForDefinition(definition);
+  const dataNode = fieldNamePath
+    ? schemaDataForFieldPath(fieldNamePath, parentDataNode)
+    : undefined;
+  const childNode = dataNode?.schema;
   const isRequired = !!dataDefinition?.required;
   const displayOptions = getDisplayOnlyOptions(definition);
   const field = childNode?.field;
@@ -120,22 +109,20 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       displayOptions
         ? (displayOptions.sampleText ?? "Sample Data")
         : field &&
-          (elementIndex == null
+          (dataNode?.elementIndex == null
             ? field.collection
               ? [undefined]
               : defaultValueForField(field, isRequired)
             : elementValueForField(field)),
-    [displayOptions?.sampleText, field, isRequired, elementIndex],
+    [displayOptions?.sampleText, field, isRequired],
   );
   const control = useMemo(() => newControl(sampleData), [sampleData]);
-
-  const parentDataNode = makeSchemaDataNode(parentNode, groupControl);
-  const dataNode = childNode
-    ? makeSchemaDataNode(childNode, control, parentDataNode, elementIndex)
-    : undefined;
+  if (dataNode) {
+    dataNode.control = control;
+  }
   const dataContext = {
     schemaInterface,
-    dataNode: dataNode ?? parentDataNode,
+    dataNode,
     parentNode: parentDataNode,
     formData: {},
   } satisfies ControlDataContext;
@@ -155,21 +142,17 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     ) ?? [];
 
   const groupClasses = getGroupClassOverrides(definition);
-  const tree = node.tree;
+  const renderedNode = node.definition.childRefId
+    ? node.createChildNode(
+        "ref",
+        textDisplayControl("Reference:" + node.definition.childRefId),
+      )
+    : node;
   const layout = renderControlLayout({
-    definition,
     renderer,
-    elementIndex,
-    formNode: node.definition.childRefId
-      ? tree.createTempNode(
-          node.id + "ref",
-          definition,
-          tree.createChildNodes(node, [
-            textDisplayControl("Reference:" + node.definition.childRefId),
-          ]),
-        )
-      : node,
+    formNode: renderedNode,
     renderChild: (k, child, c) => {
+      const pd = c?.parentDataNode ?? dataNode ?? parentDataNode;
       return (
         <FormControlPreview
           key={unsafeRestoreControl(child.definition)?.uniqueId ?? k}
@@ -177,7 +160,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           dropIndex={0}
           {...groupClasses}
           {...c}
-          parentNode={c?.parentDataNode?.schema ?? childNode ?? parentNode}
+          parentDataNode={pd}
           keyPrefix={keyPrefix}
           schemaInterface={schemaInterface}
           displayOnly={c?.displayOnly || displayOnly}
@@ -190,7 +173,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     createDataProps: defaultDataProps,
     formOptions,
     dataContext,
-    control,
+    control: dataNode?.control,
     schemaInterface,
     useEvalExpression: () => makeHook(() => undefined, undefined),
     useChildVisibility: () => makeHook(() => useControl(true), undefined),
@@ -205,14 +188,14 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         onClick: (e) => {
           e.preventDefault();
           e.stopPropagation();
-          selected.value = defControlId;
+          selected.value = node.id;
         },
       }
     : {
         onClickCapture: (e) => {
           e.preventDefault();
           e.stopPropagation();
-          selected.value = defControlId;
+          selected.value = node.id;
         },
         onMouseDownCapture: (e) => {
           e.stopPropagation();
@@ -250,7 +233,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         <EditorDetails
           context={context}
           control={definition}
-          arrayElement={elementIndex != null}
+          arrayElement={dataNode?.elementIndex != null}
           schemaVisibility={!!field?.onlyForTypes?.length}
         />
       )}
@@ -259,6 +242,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     </div>
   );
 }
+
 function EditorDetails({
   control,
   schemaVisibility,

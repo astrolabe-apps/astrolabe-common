@@ -237,9 +237,10 @@ export interface SchemaTreeLookup {
   getSchema(schemaId: string): SchemaNode | undefined;
 }
 
-export abstract class SchemaNode implements SchemaTreeLookup {
-  protected constructor(
+export class SchemaNode {
+  public constructor(
     public id: string,
+    public field: SchemaField,
     public lookup: SchemaTreeLookup,
     public parent?: SchemaNode,
   ) {}
@@ -248,61 +249,73 @@ export abstract class SchemaNode implements SchemaTreeLookup {
     return this.lookup.getSchema(schemaId);
   }
 
-  abstract field: SchemaField;
+  getUnresolvedFields(): SchemaField[] {
+    return isCompoundField(this.field) ? this.field.children : [];
+  }
+
+  getResolvedFields(): SchemaField[] {
+    const f = this.field;
+    if (!isCompoundField(f)) return [];
+    const parentNode = f.schemaRef
+      ? this.lookup.getSchema(f.schemaRef)
+      : f.treeChildren
+        ? this.parent
+        : undefined;
+    return (parentNode ?? this).getUnresolvedFields();
+  }
 
   getChildNodes(): SchemaNode[] {
     const node = this;
-    return node
-      .getChildFields()
-      .map((x) => node.createChildNode(node.getChildField(x)));
+    return node.getResolvedFields().map((x) => node.createChildNode(x));
   }
 
-  abstract getChildFields(): string[];
-
-  abstract getChildField(field: string): SchemaField;
-
-  abstract createChildNode(field: SchemaField): SchemaNode;
-}
-
-export class SchemaNodeImpl extends SchemaNode {
-  constructor(
-    id: string,
-    public field: SchemaField,
-    lookup: SchemaTreeLookup,
-    parent?: SchemaNode,
-  ) {
-    super(id, lookup, parent);
-    if (field == null)
-      throw new Error("SchemaNodeImpl: field cannot be null or undefined");
-  }
-
-  getChildFields() {
+  getChildField(field: string): SchemaField {
     return (
-      (isCompoundField(this.field)
-        ? this.field.children?.map((x) => x.field)
-        : undefined) ?? []
+      this.getResolvedFields().find((x) => x.field === field) ??
+      missingField(field)
     );
   }
 
-  getChildField(fieldName: string): SchemaField {
-    const children = isCompoundField(this.field) ? this.field.children : null;
-    return (
-      children?.find((x) => x.field === fieldName) ?? missingField(fieldName)
-    );
-  }
   createChildNode(field: SchemaField): SchemaNode {
-    return createSchemaNode(field, this.lookup, this);
+    return new SchemaNode(
+      this.id + "/" + field.field,
+      field,
+      this.lookup,
+      this,
+    );
+  }
+
+  getChildNode(field: string): SchemaNode {
+    return this.createChildNode(this.getChildField(field));
   }
 }
 
-export interface SchemaDataNode {
-  id: string;
-  schema: SchemaNode;
-  elementIndex?: number;
-  control: Control<any>;
-  parent?: SchemaDataNode;
-  getChild(schemaNode: SchemaNode): SchemaDataNode;
-  getChildElement(index: number): SchemaDataNode;
+export abstract class SchemaDataTree {
+  abstract rootNode: SchemaDataNode;
+  abstract getChild(parent: SchemaDataNode, child: SchemaNode): SchemaDataNode;
+  abstract getChildElement(
+    parent: SchemaDataNode,
+    elementIndex: number,
+  ): SchemaDataNode;
+}
+
+export class SchemaDataNode {
+  constructor(
+    public id: string,
+    public schema: SchemaNode,
+    public elementIndex: number | undefined,
+    public control: Control<any>,
+    public tree: SchemaDataTree,
+    public parent?: SchemaDataNode,
+  ) {}
+
+  getChild(childNode: SchemaNode): SchemaDataNode {
+    return this.tree.getChild(this, childNode);
+  }
+
+  getChildElement(elementIndex: number): SchemaDataNode {
+    return this.tree.getChildElement(this, elementIndex);
+  }
 }
 
 export function findField(
@@ -324,34 +337,13 @@ export function missingField(field: string): SchemaField {
   return { field: "__missing", type: FieldType.Any, displayName: field };
 }
 
-export function resolveSchemaParent(node: SchemaNode): SchemaNode | undefined {
-  const field = node.field;
-  if (!isCompoundField(field)) return undefined;
-  return field.schemaRef
-    ? node.getSchema(field.schemaRef)
-    : field.treeChildren
-      ? node.parent
-        ? resolveSchemaParent(node.parent)
-        : undefined
-      : node;
-}
-
 export function resolveSchemaNode(
   node: SchemaNode,
   fieldSegment: string,
 ): SchemaNode | undefined {
   if (fieldSegment == ".") return node;
   if (fieldSegment == "..") return node.parent;
-  const parentNode = resolveSchemaParent(node);
-  return parentNode
-    ? node.createChildNode(parentNode.getChildField(fieldSegment))
-    : undefined;
-}
-
-export function getChildrenForNode(node: SchemaNode): SchemaNode[] {
-  return node
-    .getChildFields()
-    .map((x) => node.createChildNode(node.getChildField(x)));
+  return node.getChildNode(fieldSegment);
 }
 
 export function createSchemaNode(
@@ -359,7 +351,7 @@ export function createSchemaNode(
   lookup: SchemaTreeLookup,
   parent: SchemaNode | undefined,
 ): SchemaNode {
-  return new SchemaNodeImpl(
+  return new SchemaNode(
     parent ? parent.id + "/" + field.field : field.field,
     field,
     lookup,
@@ -386,43 +378,52 @@ export function createSchemaLookup<A extends Record<string, SchemaField[]>>(
   }
 }
 
+export class SchemaDataTreeImpl extends SchemaDataTree {
+  rootNode: SchemaDataNode;
+
+  constructor(rootSchema: SchemaNode, rootControl: Control<any>) {
+    super();
+    this.rootNode = new SchemaDataNode(
+      "",
+      rootSchema,
+      undefined,
+      rootControl,
+      this,
+    );
+  }
+
+  getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
+    const objControl = parent.control as Control<Record<string, unknown>>;
+    return new SchemaDataNode(
+      parent.id + "/" + childNode.field.field,
+      childNode,
+      undefined,
+      objControl.fields[childNode.field.field],
+      this,
+      parent,
+    );
+  }
+  getChildElement(
+    parent: SchemaDataNode,
+    elementIndex: number,
+  ): SchemaDataNode {
+    const elemControl = parent.control as Control<unknown[]>;
+    return new SchemaDataNode(
+      parent.id + "/" + elementIndex,
+      parent.schema,
+      elementIndex,
+      elemControl.elements[elementIndex],
+      this,
+      parent,
+    );
+  }
+}
+
 export function makeSchemaDataNode(
   schema: SchemaNode,
   control: Control<unknown>,
-  parent?: SchemaDataNode,
-  elementIndex?: number,
 ): SchemaDataNode {
-  const indexId = typeof elementIndex === "number" ? "/" + elementIndex : "";
-  const dataNode = {
-    id:
-      (parent ? parent.id + "/" + schema.field.field : schema.field.field) +
-      indexId,
-    schema,
-    control,
-    parent,
-    elementIndex,
-    getChild,
-    getChildElement,
-  };
-  return dataNode;
-
-  function getChild(childNode: SchemaNode): SchemaDataNode {
-    const objControl = control as Control<Record<string, unknown>>;
-    return makeSchemaDataNode(
-      childNode,
-      objControl.fields[childNode.field.field],
-      dataNode,
-    );
-  }
-
-  function getChildElement(elementIndex: number): SchemaDataNode {
-    return makeSchemaDataNode(
-      schema,
-      (control as Control<unknown[]>)?.elements?.[elementIndex],
-      dataNode,
-      elementIndex,
-    );
-  }
+  return new SchemaDataTreeImpl(schema, control).rootNode;
 }
 
 export function schemaDataForFieldRef(
@@ -480,7 +481,11 @@ export function schemaDataForFieldPath(
   while (i < fieldPath.length) {
     const nextField = fieldPath[i];
     let nextNode =
-      nextField === ".." ? dataNode.parent : lookupField(nextField);
+      nextField === ".."
+        ? dataNode.parent
+        : nextField === "."
+          ? dataNode
+          : lookupField(nextField);
     nextNode ??= makeSchemaDataNode(
       createSchemaNode(
         missingField(nextField),

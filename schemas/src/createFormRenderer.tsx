@@ -124,7 +124,7 @@ export function createFormRenderer(
       if (noMatch === true) return false;
       const matchCollection =
         (x.collection ?? false) ===
-        (props.elementIndex == null && (field.collection ?? false));
+        (props.dataNode.elementIndex == null && (field.collection ?? false));
       const isSchemaAllowed =
         !!x.schemaType && renderType == DataRenderType.Standard
           ? isOneOf(x.schemaType, field.type)

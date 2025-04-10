@@ -5,6 +5,7 @@ import {
   newControl,
   RenderControl,
   trackedValue,
+  unsafeRestoreControl,
   useComputed,
   useControl,
   useControlEffect,
@@ -14,28 +15,31 @@ import {
   defaultTailwindTheme,
   ValueForFieldExtension,
 } from "@react-typed-forms/schemas-html";
-import { ControlDefinitionSchemaMap, toSchemaFieldForm } from "./schemaSchemas";
 import {
-  addMissingControlsToForm,
+  ControlDefinitionSchemaMap,
+  SchemaFieldForm,
+  toSchemaFieldForm,
+} from "./schemaSchemas";
+import {
+  addMissingControlsForSchema,
   applyExtensionsToSchema,
   cleanDataForSchema,
   compoundField,
   ControlDefinition,
   ControlDefinitionExtension,
-  ControlDefinitionType,
   ControlRenderOptions,
   createFormRenderer,
   createFormTree,
   createSchemaLookup,
+  createSchemaNode,
   EditorGroup,
   FormNode,
   FormRenderer,
   FormTree,
   getAllReferencedClasses,
-  GroupRenderType,
   LabelType,
   RendererRegistration,
-  SchemaField,
+  SchemaNode,
 } from "@react-typed-forms/schemas";
 import React, {
   ReactElement,
@@ -50,13 +54,7 @@ import {
 } from "@mhsdesign/jit-browser-tailwindcss";
 import defaultEditorControls from "./ControlDefinition.json";
 import defaultSchemaEditorControls from "./SchemaField.json";
-import {
-  EditableForm,
-  FormInfo,
-  getViewAndParams,
-  Snippet,
-  ViewContext,
-} from "./views";
+import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
 import { createView, getTabTitle } from "./views/createView";
 import {
   Actions,
@@ -68,10 +66,9 @@ import {
   TabSetNode,
 } from "flexlayout-react";
 import { defaultLayout } from "./defaultLayout";
-import { EditorFormTree } from "./EditorFormNode";
 import { setIncluded } from "@astroapps/client";
-import { EditorSchemaTree } from "./EditorSchemaNode";
-import { FormLoader, SchemaLoader } from "./types";
+import { FormLoader, SchemaLoader, Snippet } from "./types";
+import { EditorFormTree } from "./EditorFormTree";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
@@ -142,20 +139,20 @@ export function BasicFormEditor<A extends string = string>({
   const editorFormRenderer = useMemo(() => createEditorRenderer([]), []);
   const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
-  const loadedSchemas = useControl<
-    Record<string, EditorSchemaTree | undefined>
-  >({});
+  const loadedSchemas = useControl<Record<string, SchemaNode | undefined>>({});
   const loadedFormNames = useControl<string[]>([]);
   const schemaEditorTree: FormTree = useMemo(() => {
-    const tree = createFormTree(
-      schemaEditorControls ?? defaultSchemaEditorControls,
+    return createFormTree(
+      addMissingControlsForSchema(
+        SchemaFieldRoot,
+        schemaEditorControls ?? defaultSchemaEditorControls,
+        (m) => console.warn(m),
+      ),
     );
-    addMissingControlsToForm(SchemaFieldRoot, tree, (m) => console.warn(m));
-    return tree;
   }, [schemaEditorControls, controlSchemas, defaultSchemaEditorControls]);
 
   const editorTree: FormTree = useMemo(() => {
-    const tree = createFormTree(editorControls ?? defaultEditorControls);
+    const tree = new EditorFormTree(editorControls ?? defaultEditorControls);
     const extraGroups: EditorGroup[] = extensions.flatMap((x) =>
       Object.values(x).flatMap((ro) =>
         Array.isArray(ro)
@@ -164,17 +161,19 @@ export function BasicFormEditor<A extends string = string>({
       ),
     );
     extraGroups.forEach((g) => {
-      const parent = tree.getByRefId(g.parent);
+      const parent = tree.getNodeByRefId(g.parent);
       if (parent) {
-        tree.addChild(parent, g.group);
+        tree.addNode(parent, g.group);
       } else {
         console.warn("Could not find parent group: ", g.parent);
       }
     });
-    addMissingControlsToForm(ControlDefinitionRoot, tree, (m) =>
-      console.warn(m),
+    const allNodes = addMissingControlsForSchema(
+      ControlDefinitionRoot,
+      tree.getRootDefinitions().value,
+      (m) => console.warn(m),
     );
-    return tree;
+    return createFormTree(allNodes);
   }, [editorControls, controlSchemas, defaultEditorControls]);
 
   const genStyles = useMemo(
@@ -193,19 +192,19 @@ export function BasicFormEditor<A extends string = string>({
     return loadedFormNames.value
       .flatMap((x) => {
         const lf = loadedForms.fields[x];
-        const rn = lf.fields.formTree.fields.root.value;
-        return rn ? [trackedValue(rn)] : [];
+        const rn = lf.fields.formTree.value?.rootNode.definition;
+        return rn ? [rn] : [];
       })
       .flatMap((x) => getAllReferencedClasses(x, collectClasses))
       .join(" ");
   });
-  const styles = useControl("");
 
   useControlEffect(
     () => allClasses.value,
     (cv) => runTailwind(cv),
     true,
   );
+  const styles = useControl("");
 
   async function runTailwind(classes: string) {
     {
@@ -253,12 +252,12 @@ export function BasicFormEditor<A extends string = string>({
   );
   async function doSaveForm(c: Control<EditableForm>) {
     await saveForm(
-      c.fields.formTree.value.root.value.children?.map((c) =>
+      c.fields.formTree.value.rootNode.definition.children!.map((c) =>
         cleanDataForSchema(c, ControlDefinitionRoot, true),
       ) ?? [],
       c.fields.formId.value as A,
     );
-    c.fields.formTree.value.root.markAsClean();
+    c.fields.formTree.markAsClean();
   }
   const formList = formTypes.map((e) =>
     Array.isArray(e) ? { id: e[0], name: e[1] } : e,
@@ -324,22 +323,23 @@ export function BasicFormEditor<A extends string = string>({
     return form;
   }
 
-  function getSchema(schemaId: string): EditorSchemaTree {
+  function getSchema(schemaId: string): SchemaNode {
     const schemaControl = loadedSchemas.fields[schemaId];
     if (schemaControl.isNull) {
-      const tree = new EditorSchemaTree(
-        getSchema,
+      const rootField = trackedValue(
         newControl(toSchemaFieldForm(compoundField("", [])(""))),
       );
+      const tree = createSchemaNode(rootField, { getSchema }, undefined);
       schemaControl.value = tree;
       doLoadSchema(tree);
     }
     return schemaControl.value!;
 
-    async function doLoadSchema(tree: EditorSchemaTree) {
+    async function doLoadSchema(tree: SchemaNode) {
       const { fields } = await loadSchema(schemaId);
-      tree.rootNode.control.fields.children.value =
-        fields.map(toSchemaFieldForm);
+      (
+        unsafeRestoreControl(tree.field) as Control<SchemaFieldForm>
+      ).fields.children.value = fields.map(toSchemaFieldForm);
     }
   }
 
@@ -371,21 +371,10 @@ export function BasicFormEditor<A extends string = string>({
   ) {
     const name = formList.find((x) => x.id === formId)?.name ?? formId;
     const res = await loadForm(formId as A);
-    const formTree = new EditorFormTree(
-      newControl({
-        children: res.controls,
-        type: ControlDefinitionType.Group,
-        groupOptions: {
-          type: GroupRenderType.Standard,
-          childLayoutClass: rootControlClass,
-          hideTitle: true,
-        },
-      } as ControlDefinition),
-    );
     const tree = getSchema(res.schemaName);
     control.setInitialValue({
-      formTree,
-      schema: tree.rootNode,
+      formTree: new EditorFormTree(res.controls),
+      schema: tree,
       hideFields: false,
       renderer: res.renderer ?? formRenderer,
       formId,

@@ -37,7 +37,7 @@ export function useNextNavigationService<T = {}>(
   }, [paramString]);
 
   useDefaultSyncRoute(queryControl, (query) =>
-    router.replace(pathname + "?" + query),
+    router.replace(pathname + "?" + query, { scroll: false }),
   );
   const route =
     (routes && getMatchingRoute(routes, pathSegments)) ??

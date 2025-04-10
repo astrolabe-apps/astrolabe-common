@@ -11,14 +11,10 @@ import {
   Control,
   groupedChanges,
   removeElement,
-  trackedValue,
   unsafeRestoreControl,
   updateElements,
 } from "@react-typed-forms/core";
-import {
-  ControlDefinitionForm,
-  defaultControlDefinitionForm,
-} from "./schemaSchemas";
+import { defaultControlDefinitionForm } from "./schemaSchemas";
 import React, { MutableRefObject } from "react";
 import clsx from "clsx";
 import {
@@ -26,8 +22,6 @@ import {
   ControlDefinitionType,
   fieldPathForDefinition,
   FormNode,
-  getSchemaNodePath,
-  isCompoundNode,
   isDataControl,
   schemaForFieldPath,
   SchemaNode,
@@ -35,10 +29,11 @@ import {
 import { ControlNode, SelectedControlNode } from "./types";
 import { StdTreeNode } from "./StdTreeNode";
 import { canAddChildren } from "./util";
+import { EditorFormTree } from "./EditorFormTree";
 
 export interface FormControlTreeProps {
   className?: string;
-  rootNode: FormNode;
+  tree: EditorFormTree;
   rootSchema: SchemaNode;
   selectedControl: Control<SelectedControlNode | undefined>;
   selected: Control<string | undefined>;
@@ -48,7 +43,7 @@ export interface FormControlTreeProps {
 }
 
 export function FormControlTree({
-  rootNode,
+  tree,
   selected,
   selectedControl,
   rootSchema,
@@ -58,16 +53,10 @@ export function FormControlTree({
   treeApi,
 }: FormControlTreeProps) {
   const { ref, width, height } = useResizeObserver();
-
-  const treeNodes = rootNode
-    .getChildNodes()
+  const rootNodes = tree.getEditableChildren(tree.rootNode);
+  const treeNodes = tree.rootNode
+    .getUnresolvedChildNodes()
     .map((x) => toControlNode(x, rootSchema));
-
-  function getEditableChildren(
-    x?: FormNode,
-  ): Control<ControlDefinition[] | null | undefined> | undefined {
-    return x && unsafeRestoreControl(x.definition)!.fields.children;
-  }
 
   function getDefinitionControl(
     x: NodeApi<ControlNode>,
@@ -79,13 +68,14 @@ export function FormControlTree({
     groupedChanges(() => {
       const parentChildren =
         props.parentId === null
-          ? getEditableChildren(rootNode)
-          : getEditableChildren(props.parentNode?.data?.form);
+          ? rootNodes
+          : tree.getEditableChildren(props.parentNode?.data?.form);
       if (parentChildren) {
         props.dragNodes.forEach((x) => {
-          const parentControl = getEditableChildren(
-            x.level === 0 ? rootNode : x.parent!.data.form,
-          );
+          const parentControl =
+            x.level === 0
+              ? rootNodes
+              : tree.getEditableChildren(x.parent!.data.form);
           if (parentControl) {
             updateElements(parentControl, (e) =>
               e.filter((c) => c !== getDefinitionControl(x)),
@@ -116,7 +106,7 @@ export function FormControlTree({
         children={ControlNodeRenderer}
         onCreate={(props) => {
           if (props.parentNode) {
-            const childElements = getEditableChildren(
+            const childElements = tree.getEditableChildren(
               props.parentNode.data.form,
             );
             if (childElements) {
@@ -129,9 +119,10 @@ export function FormControlTree({
         onMove={doMove}
         onDelete={(props) => {
           props.nodes.forEach((x) => {
-            const parentElements = getEditableChildren(
-              x.level == 0 ? rootNode : x.parent!.data?.form,
-            );
+            const parentElements =
+              x.level == 0
+                ? rootNodes
+                : tree.getEditableChildren(x.parent!.data?.form);
             if (parentElements) {
               removeElement(parentElements, getDefinitionControl(x));
               onDeleted(x);
@@ -171,7 +162,7 @@ export function FormControlTree({
     const dataSchema = childPath
       ? schemaForFieldPath(childPath, parentSchema)
       : undefined;
-    const c = form.getChildNodes();
+    const c = form.getUnresolvedChildNodes();
     const children =
       c.length == 0 && !canAddChildren(def, dataSchema)
         ? null
@@ -193,7 +184,7 @@ function ControlNodeRenderer(props: NodeRendererProps<ControlNode>) {
         {isDataControl(control) ? (
           <span>
             {" "}
-            <i>({control.fieldDef?.field ?? control.field})</i>
+            <i>({control.field})</i>
           </span>
         ) : (
           ""

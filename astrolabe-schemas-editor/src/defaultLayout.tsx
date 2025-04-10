@@ -50,10 +50,7 @@ export const defaultLayout: IJsonModel = {
           },
           {
             type: "tabset",
-            children: [
-              { id: "controlProperties", name: "Control Properties" },
-              { id: "schemaProperties", name: "Schema Properties" },
-            ],
+            children: [{ id: "controlProperties", name: "Control Properties" }],
           },
         ],
       },
