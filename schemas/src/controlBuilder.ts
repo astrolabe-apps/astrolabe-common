@@ -19,7 +19,6 @@ import {
   JsonataRenderOptions,
   RadioButtonRenderOptions,
   RenderOptions,
-  SignatureRenderOptions,
   TextDisplay,
   TextfieldRenderOptions,
 } from "./controlDefinition";
@@ -107,10 +106,6 @@ export const displayOnlyOptions = renderOptionsFor<DisplayOnlyRenderOptions>(
 
 export const jsonataOptions = renderOptionsFor<JsonataRenderOptions>(
   DataRenderType.Jsonata,
-);
-
-export const signatureOptions = renderOptionsFor<SignatureRenderOptions>(
-  DataRenderType.Signature,
 );
 
 export function textDisplayControl(

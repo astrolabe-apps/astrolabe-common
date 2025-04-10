@@ -388,6 +388,7 @@ importers:
       '@astroapps/client': ^2.0.2
       '@astroapps/datagrid': workspace:*
       '@astroapps/schemas-datagrid': ^6.0.0
+      '@astroapps/searchstate': ^2.0.0
       '@babel/cli': ^7.23.4
       '@babel/core': ^7.23.7
       '@babel/preset-env': ^7.23.8
@@ -396,12 +397,13 @@ importers:
       '@codemirror/lang-json': ^6.0.1
       '@dnd-kit/core': ^6.0.5
       '@mhsdesign/jit-browser-tailwindcss': ^0.4.2
+      '@radix-ui/react-popover': ^1.0.7
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/schemas-html': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@types/node': ^20.12.13
-      '@types/react': ^18.2.31
+      '@types/react': ^18.2.28
       clsx: ^2
       codemirror: ^6.0.1
       flexlayout-react: ^0.8.2
@@ -412,7 +414,7 @@ importers:
       react: ^18.2.0 || ^19
       react-arborist: ^3.4.3
       react-dnd: 16.0.1
-      react-dom: ^18.2.0
+      react-dom: ^18.2.0 || ^19
       react-hook-inview: ^4.5.1
       rimraf: ^5.0.5
       typescript: ^5.6.2
@@ -420,7 +422,7 @@ importers:
     dependencies:
       '@astroapps/aria-base': link:../aria-base
       '@astroapps/datagrid': link:../astrolabe-datagrid
-      '@astroapps/schemas-datagrid': 6.0.0_ikslp2x3dpuw5q7ivvhcfkayvm
+      '@astroapps/schemas-datagrid': 6.0.0_w36f22sxrf2phezs7wjbtcvsay
       '@codemirror/lang-json': 6.0.1
       '@mhsdesign/jit-browser-tailwindcss': 0.4.2_ozxlbmy37ax35fhqexzdkqxfce
       clsx: 2.1.1
@@ -432,12 +434,14 @@ importers:
       use-resize-observer: 9.1.0_nnrd3gsncyragczmpvfhocinkq
     devDependencies:
       '@astroapps/client': 2.0.2_l4uaxjyug2d7jrumg2o74fnwmq
+      '@astroapps/searchstate': 2.0.0
       '@babel/cli': 7.25.9_@babel+core@7.26.0
       '@babel/core': 7.26.0
       '@babel/preset-env': 7.26.0_@babel+core@7.26.0
       '@babel/preset-react': 7.25.9_@babel+core@7.26.0
       '@babel/preset-typescript': 7.26.0_@babel+core@7.26.0
       '@dnd-kit/core': 6.1.0_nnrd3gsncyragczmpvfhocinkq
+      '@radix-ui/react-popover': 1.1.6_vsw25juzkyj7spaf6wjn5upvjq
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/schemas': link:../schemas
       '@react-typed-forms/schemas-html': link:../schemas-html
@@ -554,7 +558,7 @@ importers:
 
   ../../../astrolabe-ui:
     specifiers:
-      '@astroapps/client': workspace:*
+      '@astroapps/client': ^2.0.0
       '@astroapps/datagrid': workspace:*
       '@mui/base': 5.0.0-beta.23
       '@radix-ui/react-accordion': 1.1.2
@@ -576,10 +580,10 @@ importers:
       prettier: ^3.0.3
       prop-types: ^15.8.1
       querystring: 0.2.1
-      react: ^18.2.0
+      react: ^18.2.0 || ^19
       react-dnd: 16.0.1
       react-dnd-html5-backend: 16.0.1
-      react-dom: ^18.2.0
+      react-dom: ^18 || ^19
       shallowequal: ^1.1.0
       tailwind-merge: 1.14.0
       typescript: ^5.6.2
@@ -600,11 +604,10 @@ importers:
       querystring: 0.2.1
       react-dnd: 16.0.1_dhjhfklksilq7vybfge4vfljc4
       react-dnd-html5-backend: 16.0.1
-      react-dom: 18.3.1_react@18.3.1
       shallowequal: 1.1.0
       tailwind-merge: 1.14.0
     devDependencies:
-      '@astroapps/client': link:../astrolabe-client
+      '@astroapps/client': 2.0.2_l4uaxjyug2d7jrumg2o74fnwmq
       '@astroapps/datagrid': link:../astrolabe-datagrid
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/schemas': link:../schemas
@@ -613,6 +616,7 @@ importers:
       '@types/shallowequal': 1.1.5
       prettier: 3.3.3
       react: 18.3.1
+      react-dom: 18.3.1_react@18.3.1
       typescript: 5.6.3
 
   ../../../astrolabe-ui-tree:
@@ -796,11 +800,12 @@ importers:
       nswag: ^13.18.2
       prettier: ^3.0.3
       react: ^18.2.0 || ^19
+      react-dom: ^18.2.0 || ^19
       rimraf: ^3.0.2
       typescript: ^5.6.3
     dependencies:
       '@astroapps/aria-base': link:../aria-base
-      '@mui/base': 5.0.0-beta.68_ryhct6r6jz2fex4xfo2quarxhi
+      '@mui/base': 5.0.0-beta.68_vsw25juzkyj7spaf6wjn5upvjq
       '@react-stately/overlays': 3.6.13_react@18.3.1
       clsx: 2.1.1
       jsonata: 2.0.5
@@ -815,6 +820,7 @@ importers:
       nswag: 13.20.0
       prettier: 3.3.3
       react: 18.3.1
+      react-dom: 18.3.1_react@18.3.1
       rimraf: 3.0.2
       typescript: 5.6.3
 
@@ -1296,7 +1302,7 @@ packages:
       tslib: 2.8.0
     dev: true
 
-  /@astroapps/schemas-datagrid/6.0.0_ikslp2x3dpuw5q7ivvhcfkayvm:
+  /@astroapps/schemas-datagrid/6.0.0_w36f22sxrf2phezs7wjbtcvsay:
     resolution: {integrity: sha512-IlyT42XgjgPymNiAaIq7X3+ZBvI/pGvqJvhdkd3ktIkKAyT4p094NhMaIUizqrjpbDj1QVxE1m7jiKeXrdInNA==}
     peerDependencies:
       '@astroapps/datagrid': ^1.2.0
@@ -1307,6 +1313,8 @@ packages:
       react: ^18.2.0 || ^19
     dependencies:
       '@astroapps/datagrid': link:../../../astrolabe-datagrid
+      '@astroapps/searchstate': 2.0.0
+      '@radix-ui/react-popover': 1.1.6_vsw25juzkyj7spaf6wjn5upvjq
       '@react-typed-forms/core': link:../../../core
       '@react-typed-forms/schemas': link:../../../schemas
       clsx: 2.1.1
@@ -1315,7 +1323,6 @@ packages:
 
   /@astroapps/searchstate/2.0.0:
     resolution: {integrity: sha512-NpsPtdy1VrpyjucfbLYOSRhTD53QiErYlFYBjmmLMAiiFrd8vTUyMs0WKOrGhLKyQkjIpL2qOzudf6VNJ7SE+g==}
-    dev: true
 
   /@astroapps/swc-controls-plugin/1.1.0-next15:
     resolution: {integrity: sha512-dVirMI7rJMf20X+vMWtZXnWOUU68AJM0ckYe4Li2tAoPsauUgCudvS8qRX7Y7EPJw7wI6GkSx3YBSeRva//Uaw==}
@@ -4097,6 +4104,7 @@ packages:
     dependencies:
       '@floating-ui/dom': 1.6.11
       react: 18.3.1
+    dev: true
 
   /@floating-ui/utils/0.2.8:
     resolution: {integrity: sha512-kym7SodPp8/wloecOpcmSnWJsK7M0E5Wg8UcFA+uO4B9s5d0ywXOEro/8HM9x0rW+TljRzul/14UYz3TleT3ig==}
@@ -4737,7 +4745,7 @@ packages:
       react-dom: 18.3.1_react@18.3.1
     dev: false
 
-  /@mui/base/5.0.0-beta.68_ryhct6r6jz2fex4xfo2quarxhi:
+  /@mui/base/5.0.0-beta.68_vsw25juzkyj7spaf6wjn5upvjq:
     resolution: {integrity: sha512-F1JMNeLS9Qhjj3wN86JUQYBtJoXyQvknxlzwNl6eS0ZABo1MiohMONj3/WQzYPSXIKC2bS/ZbyBzdHhi2GnEpA==}
     engines: {node: '>=14.0.0'}
     deprecated: This package has been replaced by @base-ui-components/react
@@ -4750,7 +4758,7 @@ packages:
         optional: true
     dependencies:
       '@babel/runtime': 7.26.0
-      '@floating-ui/react-dom': 2.1.2_react@18.3.1
+      '@floating-ui/react-dom': 2.1.2_nnrd3gsncyragczmpvfhocinkq
       '@mui/types': 7.2.21_@types+react@18.3.12
       '@mui/utils': 6.3.1_ryhct6r6jz2fex4xfo2quarxhi
       '@popperjs/core': 2.11.8
@@ -4758,6 +4766,7 @@ packages:
       clsx: 2.1.1
       prop-types: 15.8.1
       react: 18.3.1
+      react-dom: 18.3.1_react@18.3.1
     dev: false
 
   /@mui/core-downloads-tracker/5.16.7:
@@ -5366,7 +5375,6 @@ packages:
       '@types/react': 18.3.12
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
-    dev: false
 
   /@radix-ui/react-checkbox/1.1.4_vsw25juzkyj7spaf6wjn5upvjq:
     resolution: {integrity: sha512-wP0CPAHq+P5I4INKe3hJrIa1WoNqqrejzW+zoU0rOvo1b9gDEJJFl2rYfO1PYJUQCc2H1WZxIJmyv9BS8i5fLw==}
@@ -5780,7 +5788,6 @@ packages:
       '@types/react': 18.3.12
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
-    dev: false
 
   /@radix-ui/react-focus-guards/1.0.1_ryhct6r6jz2fex4xfo2quarxhi:
     resolution: {integrity: sha512-Rect2dWbQ8waGzhMavsIbmSVCgYxkXLxxR3ZvCX79JOglzdEy4JXMb98lq4hPxUbLr77nP0UOGf4rcMU+s1pUA==}
@@ -5891,7 +5898,6 @@ packages:
       '@types/react': 18.3.12
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
-    dev: false
 
   /@radix-ui/react-id/1.0.1_ryhct6r6jz2fex4xfo2quarxhi:
     resolution: {integrity: sha512-tI7sT/kqYp8p96yGWY1OAnLHrqDgzHefRBKQ2YAkBS5ja7QLcZ9Z/uY7bEjPUatf8RomoXM8/1sMj1IJaE5UzQ==}
@@ -5985,6 +5991,38 @@ packages:
       react: 18.3.1
       react-remove-scroll: 2.6.3_ryhct6r6jz2fex4xfo2quarxhi
     dev: true
+
+  /@radix-ui/react-popover/1.1.6_vsw25juzkyj7spaf6wjn5upvjq:
+    resolution: {integrity: sha512-NQouW0x4/GnkFJ/pRqsIS3rM/k97VzKnVb2jB7Gq7VEGPy5g7uNV1ykySFt7eWSp3i2uSGFwaJcvIRJBAHmmFg==}
+    peerDependencies:
+      '@types/react': '*'
+      '@types/react-dom': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+    dependencies:
+      '@radix-ui/primitive': 1.1.1
+      '@radix-ui/react-compose-refs': 1.1.1_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-context': 1.1.1_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-dismissable-layer': 1.1.5_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-focus-guards': 1.1.1_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-focus-scope': 1.1.2_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-id': 1.1.0_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-popper': 1.2.2_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-portal': 1.1.4_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-presence': 1.1.2_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-primitive': 2.0.2_vsw25juzkyj7spaf6wjn5upvjq
+      '@radix-ui/react-slot': 1.1.2_ryhct6r6jz2fex4xfo2quarxhi
+      '@radix-ui/react-use-controllable-state': 1.1.0_ryhct6r6jz2fex4xfo2quarxhi
+      '@types/react': 18.3.12
+      aria-hidden: 1.2.4
+      react: 18.3.1
+      react-dom: 18.3.1_react@18.3.1
+      react-remove-scroll: 2.6.3_ryhct6r6jz2fex4xfo2quarxhi
 
   /@radix-ui/react-popper/1.1.2_mn6whcxlx7so2an4c3a4lp7zmq:
     resolution: {integrity: sha512-1CnGGfFi/bbqtJZZ0P/NQY20xdG3E0LALJaLUEoKwPLwl6PPPfbeiCqMVQnhoFRAxjJj4RpBRJzDmUgsex2tSg==}
@@ -6098,7 +6136,6 @@ packages:
       '@types/react': 18.3.12
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
-    dev: false
 
   /@radix-ui/react-portal/1.0.3_mn6whcxlx7so2an4c3a4lp7zmq:
     resolution: {integrity: sha512-xLYZeHrWoPmA5mEKEfZZevoVRK/Q43GfzRXkWV6qawIWWK8t6ifIiLQdd7rmQ4Vk1bmI21XhqF9BN3jWf+phpA==}
@@ -6178,7 +6215,6 @@ packages:
       '@types/react': 18.3.12
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
-    dev: false
 
   /@radix-ui/react-presence/1.0.1_vsw25juzkyj7spaf6wjn5upvjq:
     resolution: {integrity: sha512-UXLW4UAbIY5ZjcvzjfRFo5gxva8QirC9hF7wRE4U5gz+TP0DbRk+//qyuAQ1McDxBt1xNMBTaciFGvEmJvAZCg==}
@@ -6238,7 +6274,6 @@ packages:
       '@types/react': 18.3.12
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
-    dev: false
 
   /@radix-ui/react-primitive/1.0.3_mn6whcxlx7so2an4c3a4lp7zmq:
     resolution: {integrity: sha512-yi58uVyoAcK/Nq1inRY56ZSjKypBNKTa/1mcL8qdl6oJeEaDbOldlzrGn7P6Q3Id5d+SYNGc5AJgc4vGhjs5+g==}
@@ -6336,7 +6371,6 @@ packages:
       '@types/react': 18.3.12
       react: 18.3.1
       react-dom: 18.3.1_react@18.3.1
-    dev: false
 
   /@radix-ui/react-progress/1.0.3_vsw25juzkyj7spaf6wjn5upvjq:
     resolution: {integrity: sha512-5G6Om/tYSxjSeEdrb1VfKkfZfn/1IlPWd731h2RfPuSbIfNUgfqAwbKfJCg/PP6nuUCTrYzalwHSpSinoWoCag==}

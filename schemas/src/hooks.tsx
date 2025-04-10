@@ -373,7 +373,7 @@ export function useJsonataExpression(
     }
   }, [fullExpr]);
   const control = useControl();
-  const listenerRef = useRef<() => void>(undefined);
+  const listenerRef = useRef<() => void>();
   const updateRef = useRef(0);
   const [ref] = useRefState(
     () =>

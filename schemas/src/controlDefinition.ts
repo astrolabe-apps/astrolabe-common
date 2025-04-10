@@ -172,7 +172,6 @@ export enum DataRenderType {
   Synchronised = "Synchronised",
   IconSelector = "IconSelector",
   DateTime = "DateTime",
-  Signature = "Signature",
   Checkbox = "Checkbox",
   Dropdown = "Dropdown",
   DisplayOnly = "DisplayOnly",
@@ -259,10 +258,6 @@ export interface JsonataRenderOptions extends RenderOptions {
 export interface JsonataRenderOptions extends RenderOptions {
   type: DataRenderType.Jsonata;
   expression: string;
-}
-
-export interface SignatureRenderOptions extends RenderOptions {
-  type: DataRenderType.Signature;
 }
 
 export interface ArrayRenderOptions extends RenderOptions {
@@ -414,11 +409,6 @@ export interface HtmlDisplay extends DisplayData {
   html: string;
 }
 
-export interface SignatureDisplay extends DisplayData {
-  type: DisplayDataType.Signature;
-  signature: string[];
-}
-
 export interface CustomDisplay extends DisplayData {
   type: DisplayDataType.Custom;
   customId: string;
@@ -531,12 +521,6 @@ export function isAutoCompleteClasses(
     default:
       return false;
   }
-}
-
-export function isSignatureRenderer(
-  options: RenderOptions,
-): options is SignatureRenderOptions {
-  return options.type === DataRenderType.Signature;
 }
 
 export function isDataGroupRenderer(

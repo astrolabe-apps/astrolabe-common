@@ -68,12 +68,12 @@ import testSchemaControls from "../forms/TestSchema.json";
 import allControls from "../forms/AllControls.json";
 import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
-import { SignatureExtension } from "../../../../../../schemas-signature/src/extensions";
+import { SignatureExtension } from "../../../../../../schemas-signature/src/";
 import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
-import { Button } from "@astrolabe/ui/Button";
+import { Button } from "../../../../../../astrolabe-ui/src/Button";
 import { AllControlsSchema } from "../AllControlsSchema";
 
 const Extensions = [
@@ -276,7 +276,7 @@ const TabControls = groupedControl(
 const SignatureSchema = buildSchema({
   signature: stringField("Signature", {
     collection: true,
-    type: DataRenderType.Signature,
+    type: "Signature",
   }),
 });
 
