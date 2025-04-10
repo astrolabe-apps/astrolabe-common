@@ -113,7 +113,9 @@
    * PNPM documentation: https://pnpm.io/package_json#pnpmoverrides
    */
   "globalOverrides": {
+    "caniuse-lite": "1.0.30001712",
     "react-dnd": "16.0.1",
+    "@astroapps/client": "workspace:*",
     "@astroapps/controls": "workspace:*",
     "@react-typed-forms/core": "workspace:*",
     "@react-typed-forms/schemas": "workspace:*",

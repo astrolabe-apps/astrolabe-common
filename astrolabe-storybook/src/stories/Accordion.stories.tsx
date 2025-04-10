@@ -80,7 +80,7 @@ export const Single: Story = {
         collapsible
         className=""
         itemClass="text-surface-950"
-        children={[...accordionChildren, ...accordionChildren]}
+        contentChildren={[...accordionChildren, ...accordionChildren]}
       />
     );
   },
@@ -91,10 +91,9 @@ export const Multiple: Story = {
     return (
       <Accordion
         type="multiple"
-        collapsible
         className=""
         itemClass="text-surface-950"
-        children={[...accordionChildren, ...accordionChildren]}
+        contentChildren={[...accordionChildren, ...accordionChildren]}
       />
     );
   },
