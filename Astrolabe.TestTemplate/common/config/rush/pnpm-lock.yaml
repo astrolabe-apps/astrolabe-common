@@ -503,6 +503,7 @@ importers:
       '@storybook/addon-onboarding': ^1.0.11
       '@storybook/blocks': ^7.6.10
       '@storybook/nextjs': ^7.6.10
+      '@storybook/preview-api': ^7.6.10
       '@storybook/react': ^7.6.10
       '@storybook/test': ^7.6.10
       '@types/node': ^20
@@ -537,6 +538,7 @@ importers:
       '@storybook/addon-onboarding': 1.0.11_nnrd3gsncyragczmpvfhocinkq
       '@storybook/blocks': 7.6.20_mn6whcxlx7so2an4c3a4lp7zmq
       '@storybook/nextjs': 7.6.20_vljoeihns5jg3k3nt5za53fbmu
+      '@storybook/preview-api': 7.6.20
       '@storybook/react': 7.6.20_iel7h3mnracc2ejwmcownmctfq
       '@storybook/test': 7.6.20
       '@types/node': 20.17.2
