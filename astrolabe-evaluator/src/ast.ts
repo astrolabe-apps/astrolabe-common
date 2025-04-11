@@ -253,6 +253,9 @@ export function valueExpr(value: any, path?: Path): ValueExpr {
   return { type: "value", value, path };
 }
 
+export function isStringExpr(expr: EvalExpr): expr is ValueExpr {
+  return expr.type === "value" && typeof expr.value === "string";
+}
 export function valueExprWithDeps(value: any, deps: ValueExpr[]): ValueExpr {
   return {
     type: "value",

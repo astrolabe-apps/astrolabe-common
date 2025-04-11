@@ -1,7 +1,11 @@
 // $antlr-format alignTrailingComments true, columnLimit 150, minEmptyLines 1, maxEmptyLinesToKeep 1, reflowComments false, useTab false
 // $antlr-format allowShortRulesOnASingleLine false, allowShortBlocksOnASingleLine true, alignSemicolons hanging, alignColons hanging
 
-grammar AstroExpr;
+parser grammar AstroExprParser;
+
+options {
+    tokenVocab = AstroExprLexer;
+}
 
 main
     : expr EOF
@@ -30,7 +34,8 @@ primaryExpr
     | variableReference
     | '(' expr ')'
     | letExpr
-    | Literal
+    | StringLiteral
+    | templateStringLiteral
     | Number
     | 'false'
     | 'true'
@@ -43,7 +48,7 @@ objectField
     ;
 
 objectLiteral
-    : '{' objectField? (',' objectField)* '}'
+    : '{' objectField? (',' objectField)* RBRACE
     ;
     
 arrayLiteral
@@ -70,127 +75,14 @@ variableReference
     : '$' Identifier
     ;
 
-Number
-    : Digits ('.' Digits?)?
-    | '.' Digits
+templateStringLiteral
+    : BackTick templateStringAtom* BackTick
     ;
 
-fragment Digits
-    : ('0' ..'9')+
-    ;
-
-LPAR
-    : '('
-    ;
-
-RPAR
-    : ')'
-    ;
-
-LBRAC
-    : '['
-    ;
-
-RBRAC
-    : ']'
-    ;
-
-MINUS
-    : '-'
-    ;
-
-PLUS
-    : '+'
-    ;
-
-DOT
-    : '.'
-    ;
-
-MUL
-    : '*'
+templateStringAtom
+    : TemplateStringAtom
+    | TemplateStringStartExpression expr TemplateCloseBrace
     ;
 
 
-COMMA
-    : ','
-    ;
-
-
-LESS
-    : '<'
-    ;
-
-MORE_
-    : '>'
-    ;
-
-LE
-    : '<='
-    ;
-
-GE
-    : '>='
-    ;
-
-
-APOS
-    : '\''
-    ;
-
-QUOT
-    : '"'
-    ;
-
-AND
-    : 'and'
-    ;
-
-OR
-    : 'or'
-    ;
-EQ
-    : '='
-    ;
-NE
-    : '!='
-    ;
-    
-False
-    : 'false'
-    ;
-
-True
-    : 'true'
-    ;
-    
-Null
-    : 'null'
-    ;
-
-COND
-    : '?'
-    ;
-NOT 
-    : '!'
-    ;
-    
-Literal
-    : '"' ~'"'* '"'
-    | '\'' ~'\''* '\''
-    ;
-
-Whitespace
-    : (' ' | '\t' | '\n' | '\r')+ -> skip
-    ;
-
-fragment Letter
-    : [a-zA-Z_]
-    ;
-fragment LetterOrDigit 
-    : Letter | [0-9];
-    
-Identifier
-    : Letter LetterOrDigit*
-    ;
 

@@ -1,4 +1,5 @@
 using System.Data;
+using System.Text;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using Astrolabe.Evaluator.Parser;
@@ -47,7 +48,7 @@ public class ExprParser
         }
     }
 
-    public class AstroExprVisitor : AstroExprBaseVisitor<EvalExpr>
+    public class AstroExprVisitor : AstroExprParserBaseVisitor<EvalExpr>
     {
         public override EvalExpr VisitMain(AstroExprParser.MainContext context)
         {
@@ -108,6 +109,41 @@ public class ExprParser
             return new CallExpr("object", objectArgs.ToList());
         }
 
+        public override EvalExpr VisitTemplateStringLiteral(AstroExprParser.TemplateStringLiteralContext context)
+        {
+            var atoms = context.templateStringAtom();
+            var currentString = new StringBuilder();
+            var args = new List<EvalExpr>();
+            foreach (var atom in atoms)
+            {
+                var expr = atom.expr();
+                if (expr != null)
+                {
+                    FinishString();
+                    args.Add(Visit(expr));
+                }
+                else
+                {
+                    currentString.Append(atom.GetText());
+                }
+            }
+            FinishString();
+            return args.Count switch
+            {
+                0 => new ValueExpr(""),
+                1 when args[0].IsString() => args[0],
+                _ => new CallExpr("string", args)
+            };
+
+            void FinishString()
+            {
+                if (currentString.Length <= 0) return;
+                args.Add(StringValue(currentString.ToString()));
+                currentString.Clear();
+            }
+
+        }
+
         public override EvalExpr VisitTerminal(ITerminalNode node)
         {
             return node.Symbol.Type switch
@@ -117,8 +153,8 @@ public class ExprParser
                 AstroExprParser.False => ValueExpr.False,
                 AstroExprParser.True => ValueExpr.True,
                 AstroExprParser.Null => ValueExpr.Null,
-                AstroExprParser.Literal when node.GetText() is var text
-                    => new ValueExpr(text.Substring(1, text.Length - 2)),
+                AstroExprParser.StringLiteral when node.GetText() is var text
+                    => StringValue(text.Substring(1, text.Length - 2)),
                 _ => throw new NotImplementedException()
             };
         }
@@ -146,5 +182,10 @@ public class ExprParser
             var args = context.expr().Select(Visit).ToList();
             return new CallExpr(variableString, args);
         }
+    }
+
+    public static ValueExpr StringValue(string escaped)
+    {
+        return new ValueExpr(StringUnescape.UnescapeJsString(escaped));
     }
 }

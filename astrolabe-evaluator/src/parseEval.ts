@@ -4,6 +4,7 @@ import {
   arrayExpr,
   callExpr,
   EvalExpr,
+  isStringExpr,
   lambdaExpr,
   letExpr,
   propertyExpr,
@@ -100,7 +101,7 @@ export function convertTree(
         if (parts.length === 0) return valueExpr("");
 
         // If there's only one part, return it directly
-        if (parts.length === 1) return parts[0];
+        if (parts.length === 1 && isStringExpr(parts[0])) return parts[0];
 
         // Otherwise, concatenate all parts using string conversion
         return callExpr("string", parts);
