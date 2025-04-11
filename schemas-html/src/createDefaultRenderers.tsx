@@ -430,9 +430,15 @@ export function createDefaultAdornmentRenderer(
             }
           }
           if (isIconAdornment(adornment)) {
+            const { I } = renderers.html;
+            const { icon, placement, iconClass } = adornment;
             return appendMarkupAt(
-              adornment.placement ?? AdornmentPlacement.ControlStart,
-              <i className={adornment.iconClass} />,
+              placement ?? AdornmentPlacement.ControlStart,
+              <I
+                className={iconClass}
+                iconName={icon?.name}
+                iconLibrary={icon?.library}
+              />,
             )(rl);
           }
           if (isAccordionAdornment(adornment)) {
