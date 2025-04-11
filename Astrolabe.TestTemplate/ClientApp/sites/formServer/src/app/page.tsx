@@ -73,7 +73,7 @@ import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
-import { Button } from "@astrolabe/ui/astrolabe-ui/Button";
+import { Button } from "@astrolabe/ui/Button";
 import { AllControlsSchema } from "../AllControlsSchema";
 
 const Extensions = [

@@ -389,7 +389,6 @@ export interface DisplayData {
 export enum DisplayDataType {
   Text = "Text",
   Html = "Html",
-  Signature = "Signature",
   Icon = "Icon",
   Custom = "Custom",
 }

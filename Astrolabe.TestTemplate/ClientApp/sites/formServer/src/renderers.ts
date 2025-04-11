@@ -10,7 +10,7 @@ import {
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
 import { createQuickstreamCC } from "@astroapps/schemas-quickstream";
-import { createSignatureRenderer } from "../../../../../schemas-signature/src";
+import { createSignatureRenderer } from "@astroapps/schemas-signature";
 
 export function createStdFormRenderer(container: HTMLElement | null) {
   return createFormRenderer(
