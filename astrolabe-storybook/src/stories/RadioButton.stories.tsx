@@ -2,7 +2,7 @@
 import { Meta, StoryObj } from "@storybook/react";
 import { useControl, useControlEffect } from "@react-typed-forms/core";
 
-const meta: Meta<typeof RadioButton> = {
+const meta: Meta<typeof RadioButton<number>> = {
   component: RadioButton,
   parameters: {
     layout: "centered",
@@ -23,18 +23,17 @@ const meta: Meta<typeof RadioButton> = {
 };
 
 export default meta;
-type Story = StoryObj<typeof RadioButton>;
+type Story = StoryObj<typeof RadioButton<number>>;
 
 export const Primary: Story = {
   render: (args) => {
     return (
       <div className="flex justify-center gap-2">
-        <RadioButton
-          control={args.control as any}
-          value={0}
+        <RadioButton<number>
+          control={args.control}
+          radioValue={0}
           disabled={false}
           className=""
-          isNumber
         />
         <span className="text-primary-900">Radio Button</span>
       </div>
@@ -53,9 +52,8 @@ export const RadioButtonGroup: Story = {
         {Array.from({ length: 4 }).map((r, i) => (
           <label className="flex gap-2 justify-center">
             <RadioButton
-              control={args.control as any}
-              value={i}
-              isNumber
+              control={args.control}
+              radioValue={i}
               disabled={i === 2}
               key={i}
             />

@@ -79,13 +79,23 @@ export class DefaultSchemaInterface implements SchemaInterface {
     return this.textValue(field, value)?.toLowerCase() ?? "";
   }
 
+  textValueForData(dataNode: SchemaDataNode): string | undefined {
+    const options = this.getDataOptions(dataNode);
+    return this.textValue(
+      dataNode.schema.field,
+      dataNode.control.value,
+      dataNode.elementIndex != null,
+      options,
+    );
+  }
   textValue(
     field: SchemaField,
     value: any,
     element?: boolean | undefined,
+    options?: FieldOption[] | null,
   ): string | undefined {
-    const options = this.getOptions(field);
-    const option = options?.find((x) => x.value === value);
+    const actualOptions = options ?? this.getOptions(field);
+    const option = actualOptions?.find((x) => x.value === value);
     if (option) return option.name;
     switch (field.type) {
       case FieldType.Date:

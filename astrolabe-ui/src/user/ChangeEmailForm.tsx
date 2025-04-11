@@ -6,60 +6,60 @@ import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 
 export function ChangeEmailForm({
-  className,
-  control,
-  changeEmail,
+	className,
+	control,
+	changeEmail,
 }: {
-  className?: string;
-  control: Control<ChangeEmailFormData>;
-  changeEmail: () => Promise<boolean>;
+	className?: string;
+	control: Control<ChangeEmailFormData>;
+	changeEmail: () => Promise<boolean>;
 }) {
-  const {
-    fields: { password, newEmail },
-    disabled,
-  } = control;
-  const verifyEmail = useControl(false);
-  return (
-    <UserFormContainer className={className}>
-      {verifyEmail.value ? (
-        <>
-          <h2>Check email to continue</h2>
-          <p className="font-light text-gray-500 dark:text-gray-400">
-            You will receive an email with a verification link.
-          </p>
-        </>
-      ) : (
-        <>
-          <h2>Change your email</h2>
-          <form
-            className="space-y-4 md:space-y-6"
-            onSubmit={(e) => {
-              e.preventDefault();
-              doChange();
-            }}
-          >
-            <Textfield
-              control={password}
-              label="Confirm Password"
-              type="password"
-              autoComplete="current-password"
-            />
-            <Textfield
-              control={newEmail}
-              label="New Email Address"
-              autoComplete="email"
-            />
-            {disabled && <CircularProgress />}
-            <Button className="w-full" type="submit" disabled={disabled}>
-              Change email
-            </Button>
-          </form>
-        </>
-      )}
-    </UserFormContainer>
-  );
+	const {
+		fields: { password, newEmail },
+		disabled,
+	} = control;
+	const verifyEmail = useControl(false);
+	return (
+		<UserFormContainer className={className}>
+			{verifyEmail.value ? (
+				<>
+					<h2>Check email to continue</h2>
+					<p className="font-light text-gray-500 dark:text-gray-400">
+						You will receive an email with a verification link.
+					</p>
+				</>
+			) : (
+				<>
+					<h2>Change your email</h2>
+					<form
+						className="space-y-4 md:space-y-6"
+						onSubmit={(e) => {
+							e.preventDefault();
+							doChange();
+						}}
+					>
+						<Textfield
+							control={password}
+							label="Confirm Password"
+							type="password"
+							autoComplete="current-password"
+						/>
+						<Textfield
+							control={newEmail}
+							label="New Email Address"
+							autoComplete="email"
+						/>
+						{disabled && <CircularProgress />}
+						<Button className="w-full" type="submit" disabled={disabled}>
+							Change email
+						</Button>
+					</form>
+				</>
+			)}
+		</UserFormContainer>
+	);
 
-  async function doChange() {
-    verifyEmail.value = await changeEmail();
-  }
+	async function doChange() {
+		verifyEmail.value = await changeEmail();
+	}
 }

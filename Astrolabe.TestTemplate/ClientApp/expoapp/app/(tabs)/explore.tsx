@@ -1,10 +1,11 @@
 import { StyleSheet, View } from "react-native";
 import ParallaxScrollView from "@/components/ParallaxScrollView";
 import { IconSymbol } from "@/components/ui/IconSymbol";
-import { BasicFormEditor } from "@astroapps/schemas-editor";
+import { BasicFormEditor, readOnlySchemas } from "@astroapps/schemas-editor";
 import {
   createFormRenderer,
   createSchemaLookup,
+  SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
 import { createDefaultRenderers } from "@react-typed-forms/schemas-html";
 import { defaultRnTailwindTheme } from "@react-typed-forms/schemas-rn";
@@ -13,7 +14,6 @@ import { FormDefinitions } from "@/formtest/formDefs";
 import "flexlayout-react/style/light.css";
 import { renderer } from "@/components/FormRenderer";
 
-const schemas = createSchemaLookup(SchemaMap);
 const editorRenderer = createFormRenderer(
   [],
   createDefaultRenderers({
@@ -37,7 +37,7 @@ export default function TabTwoScreen() {
     >
       <View className="min-h-screen">
         <BasicFormEditor<FormType>
-          schemas={schemas}
+          loadSchema={readOnlySchemas(SchemaMap)}
           formRenderer={editorRenderer}
           formTypes={Object.entries(FormDefinitions).map((x) => [
             x[0] as FormType,

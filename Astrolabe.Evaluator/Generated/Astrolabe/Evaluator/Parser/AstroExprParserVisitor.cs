@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.2
+// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExprParser.g4 by ANTLR 4.13.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -31,7 +31,7 @@ using IToken = Antlr4.Runtime.IToken;
 /// <typeparam name="Result">The return type of the visit operation.</typeparam>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.13.2")]
 [System.CLSCompliant(false)]
-public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
+public interface IAstroExprParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.main"/>.
 	/// </summary>
@@ -120,5 +120,17 @@ public interface IAstroExprVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitVariableReference([NotNull] AstroExprParser.VariableReferenceContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.templateStringLiteral"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTemplateStringLiteral([NotNull] AstroExprParser.TemplateStringLiteralContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.templateStringAtom"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitTemplateStringAtom([NotNull] AstroExprParser.TemplateStringAtomContext context);
 }
 } // namespace Astrolabe.Evaluator.Parser

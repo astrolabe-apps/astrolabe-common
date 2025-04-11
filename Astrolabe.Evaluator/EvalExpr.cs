@@ -317,6 +317,11 @@ public static class ValueExtensions
         return expr is ValueExpr { Value: null };
     }
 
+    public static bool IsString(this EvalExpr expr)
+    {
+        return expr is ValueExpr { Value: string };
+    }
+
     public static ValueExpr AsValue(this EvalExpr expr)
     {
         return (ValueExpr)expr;

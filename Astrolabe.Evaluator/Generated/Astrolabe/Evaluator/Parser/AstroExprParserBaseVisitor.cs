@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.2
+// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExprParser.g4 by ANTLR 4.13.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -26,7 +26,7 @@ using IToken = Antlr4.Runtime.IToken;
 using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 
 /// <summary>
-/// This class provides an empty implementation of <see cref="IAstroExprVisitor{Result}"/>,
+/// This class provides an empty implementation of <see cref="IAstroExprParserVisitor{Result}"/>,
 /// which can be extended to create a visitor which only needs to handle a subset
 /// of the available methods.
 /// </summary>
@@ -34,7 +34,7 @@ using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.13.2")]
 [System.Diagnostics.DebuggerNonUserCode]
 [System.CLSCompliant(false)]
-public partial class AstroExprBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IAstroExprVisitor<Result> {
+public partial class AstroExprParserBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, IAstroExprParserVisitor<Result> {
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="AstroExprParser.main"/>.
 	/// <para>
@@ -179,5 +179,25 @@ public partial class AstroExprBaseVisitor<Result> : AbstractParseTreeVisitor<Res
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitVariableReference([NotNull] AstroExprParser.VariableReferenceContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.templateStringLiteral"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitTemplateStringLiteral([NotNull] AstroExprParser.TemplateStringLiteralContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="AstroExprParser.templateStringAtom"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitTemplateStringAtom([NotNull] AstroExprParser.TemplateStringAtomContext context) { return VisitChildren(context); }
 }
 } // namespace Astrolabe.Evaluator.Parser

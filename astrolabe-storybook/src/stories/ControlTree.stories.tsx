@@ -1,12 +1,12 @@
-﻿import { ControlTree } from "@astroapps/ui-tree/ControlTree";
-import { Meta, StoryObj } from "@storybook/react";
-import {
+﻿import {
+  ControlTree,
+  DefaultTreeItem,
   treeNode,
   TreeNodeStructure,
   useTreeStateControl,
 } from "@astroapps/ui-tree";
+import { Meta, StoryObj } from "@storybook/react";
 import { ControlSetup, useControl } from "@react-typed-forms/core";
-import { DefaultTreeItem } from "@astroapps/ui-tree/DefaultTreeItem";
 
 const meta: Meta<typeof ControlTree> = {
   component: ControlTree,

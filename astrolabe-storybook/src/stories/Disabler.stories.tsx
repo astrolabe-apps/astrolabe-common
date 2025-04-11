@@ -35,7 +35,9 @@ export const Primary: Story = {
       <Disabler
         control={args.control}
         label={args.label}
-        render={(p) => <Numberfield {...p} label={args.label} />}
+        render={(p) => (
+          <Numberfield {...p} control={p.control.as()} label={args.label} />
+        )}
       />
     );
   },

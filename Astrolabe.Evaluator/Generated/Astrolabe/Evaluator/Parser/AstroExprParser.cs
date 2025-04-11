@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExpr.g4 by ANTLR 4.13.2
+// Generated from /home/doolse/astrolabe/astrolabe-common/Astrolabe.Evaluator/AstroExprParser.g4 by ANTLR 4.13.2
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -37,32 +37,36 @@ public partial class AstroExprParser : Parser {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
-		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, T__8=9, 
-		T__9=10, T__10=11, Number=12, LPAR=13, RPAR=14, LBRAC=15, RBRAC=16, MINUS=17, 
-		PLUS=18, DOT=19, MUL=20, COMMA=21, LESS=22, MORE_=23, LE=24, GE=25, APOS=26, 
-		QUOT=27, AND=28, OR=29, EQ=30, NE=31, False=32, True=33, Null=34, COND=35, 
-		NOT=36, Literal=37, Whitespace=38, Identifier=39;
+		Number=1, LBRACE=2, TemplateCloseBrace=3, RBRACE=4, DOLLAR=5, LAMBDA=6, 
+		LPAR=7, RPAR=8, LBRAC=9, RBRAC=10, MINUS=11, PLUS=12, DOT=13, DIV=14, 
+		MOD=15, MUL=16, COMMA=17, LESS=18, MORE_=19, LE=20, GE=21, APOS=22, QUOT=23, 
+		AND=24, OR=25, EQ=26, NE=27, False=28, True=29, Null=30, COND=31, IFNULL=32, 
+		ASSIGN=33, LET=34, IN=35, ELSE=36, NOT=37, COLON=38, Whitespace=39, Identifier=40, 
+		StringLiteral=41, BackTick=42, TemplateStringStartExpression=43, TemplateStringAtom=44;
 	public const int
 		RULE_main = 0, RULE_expr = 1, RULE_primaryExpr = 2, RULE_objectField = 3, 
 		RULE_objectLiteral = 4, RULE_arrayLiteral = 5, RULE_functionCall = 6, 
-		RULE_variableAssign = 7, RULE_letExpr = 8, RULE_lambdaExpr = 9, RULE_variableReference = 10;
+		RULE_variableAssign = 7, RULE_letExpr = 8, RULE_lambdaExpr = 9, RULE_variableReference = 10, 
+		RULE_templateStringLiteral = 11, RULE_templateStringAtom = 12;
 	public static readonly string[] ruleNames = {
 		"main", "expr", "primaryExpr", "objectField", "objectLiteral", "arrayLiteral", 
-		"functionCall", "variableAssign", "letExpr", "lambdaExpr", "variableReference"
+		"functionCall", "variableAssign", "letExpr", "lambdaExpr", "variableReference", 
+		"templateStringLiteral", "templateStringAtom"
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, "'/'", "'%'", "'??'", "':'", "'{'", "'}'", "':='", "'let'", "'in'", 
-		"'=>'", "'$'", null, "'('", "')'", "'['", "']'", "'-'", "'+'", "'.'", 
-		"'*'", "','", "'<'", "'>'", "'<='", "'>='", "'''", "'\"'", "'and'", "'or'", 
-		"'='", "'!='", "'false'", "'true'", "'null'", "'?'", "'!'"
+		null, null, "'{'", null, "'}'", "'$'", "'=>'", "'('", "')'", "'['", "']'", 
+		"'-'", "'+'", "'.'", "'/'", "'%'", "'*'", "','", "'<'", "'>'", "'<='", 
+		"'>='", "'''", "'\"'", "'and'", "'or'", "'='", "'!='", "'false'", "'true'", 
+		"'null'", "'?'", "'??'", "':='", "'let'", "'in'", "'else'", "'!'", "':'"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, null, null, null, null, null, null, null, null, null, null, null, 
-		"Number", "LPAR", "RPAR", "LBRAC", "RBRAC", "MINUS", "PLUS", "DOT", "MUL", 
-		"COMMA", "LESS", "MORE_", "LE", "GE", "APOS", "QUOT", "AND", "OR", "EQ", 
-		"NE", "False", "True", "Null", "COND", "NOT", "Literal", "Whitespace", 
-		"Identifier"
+		null, "Number", "LBRACE", "TemplateCloseBrace", "RBRACE", "DOLLAR", "LAMBDA", 
+		"LPAR", "RPAR", "LBRAC", "RBRAC", "MINUS", "PLUS", "DOT", "DIV", "MOD", 
+		"MUL", "COMMA", "LESS", "MORE_", "LE", "GE", "APOS", "QUOT", "AND", "OR", 
+		"EQ", "NE", "False", "True", "Null", "COND", "IFNULL", "ASSIGN", "LET", 
+		"IN", "ELSE", "NOT", "COLON", "Whitespace", "Identifier", "StringLiteral", 
+		"BackTick", "TemplateStringStartExpression", "TemplateStringAtom"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -75,7 +79,7 @@ public partial class AstroExprParser : Parser {
 		}
 	}
 
-	public override string GrammarFileName { get { return "AstroExpr.g4"; } }
+	public override string GrammarFileName { get { return "AstroExprParser.g4"; } }
 
 	public override string[] RuleNames { get { return ruleNames; } }
 
@@ -107,8 +111,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_main; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterMain(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitMain(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitMain(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -121,9 +135,9 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 22;
+			State = 26;
 			expr(0);
-			State = 23;
+			State = 27;
 			Match(Eof);
 			}
 		}
@@ -159,8 +173,18 @@ public partial class AstroExprParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PLUS() { return GetToken(AstroExprParser.PLUS, 0); }
 		public UnaryOpContext(ExprContext context) { CopyFrom(context); }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterUnaryOp(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitUnaryOp(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitUnaryOp(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -171,8 +195,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public PrimaryContext(ExprContext context) { CopyFrom(context); }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterPrimary(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitPrimary(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitPrimary(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -186,6 +220,8 @@ public partial class AstroExprParser : Parser {
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode DOT() { return GetToken(AstroExprParser.DOT, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MUL() { return GetToken(AstroExprParser.MUL, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode DIV() { return GetToken(AstroExprParser.DIV, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MOD() { return GetToken(AstroExprParser.MOD, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode PLUS() { return GetToken(AstroExprParser.PLUS, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode MINUS() { return GetToken(AstroExprParser.MINUS, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LESS() { return GetToken(AstroExprParser.LESS, 0); }
@@ -196,12 +232,23 @@ public partial class AstroExprParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode NE() { return GetToken(AstroExprParser.NE, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode AND() { return GetToken(AstroExprParser.AND, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode OR() { return GetToken(AstroExprParser.OR, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IFNULL() { return GetToken(AstroExprParser.IFNULL, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LBRAC() { return GetToken(AstroExprParser.LBRAC, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RBRAC() { return GetToken(AstroExprParser.RBRAC, 0); }
 		public BinOpContext(ExprContext context) { CopyFrom(context); }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterBinOp(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitBinOp(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitBinOp(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -214,10 +261,21 @@ public partial class AstroExprParser : Parser {
 			return GetRuleContext<ExprContext>(i);
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode COND() { return GetToken(AstroExprParser.COND, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode COLON() { return GetToken(AstroExprParser.COLON, 0); }
 		public TernaryOpContext(ExprContext context) { CopyFrom(context); }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterTernaryOp(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitTernaryOp(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitTernaryOp(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -240,26 +298,27 @@ public partial class AstroExprParser : Parser {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 29;
+			State = 33;
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
-			case T__4:
-			case T__7:
-			case T__10:
 			case Number:
+			case LBRACE:
+			case DOLLAR:
 			case LPAR:
 			case LBRAC:
 			case False:
 			case True:
 			case Null:
-			case Literal:
+			case LET:
 			case Identifier:
+			case StringLiteral:
+			case BackTick:
 				{
 				_localctx = new PrimaryContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
 
-				State = 26;
+				State = 30;
 				primaryExpr();
 				}
 				break;
@@ -270,16 +329,16 @@ public partial class AstroExprParser : Parser {
 				_localctx = new UnaryOpContext(_localctx);
 				Context = _localctx;
 				_prevctx = _localctx;
-				State = 27;
+				State = 31;
 				_la = TokenStream.LA(1);
-				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 68719869952L) != 0)) ) {
+				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 137438959616L) != 0)) ) {
 				ErrorHandler.RecoverInline(this);
 				}
 				else {
 					ErrorHandler.ReportMatch(this);
 				    Consume();
 				}
-				State = 28;
+				State = 32;
 				expr(11);
 				}
 				break;
@@ -287,7 +346,7 @@ public partial class AstroExprParser : Parser {
 				throw new NoViableAltException(this);
 			}
 			Context.Stop = TokenStream.LT(-1);
-			State = 68;
+			State = 72;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,2,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
@@ -296,18 +355,18 @@ public partial class AstroExprParser : Parser {
 						TriggerExitRuleEvent();
 					_prevctx = _localctx;
 					{
-					State = 66;
+					State = 70;
 					ErrorHandler.Sync(this);
 					switch ( Interpreter.AdaptivePredict(TokenStream,1,Context) ) {
 					case 1:
 						{
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 31;
+						State = 35;
 						if (!(Precpred(Context, 9))) throw new FailedPredicateException(this, "Precpred(Context, 9)");
-						State = 32;
+						State = 36;
 						Match(DOT);
-						State = 33;
+						State = 37;
 						expr(10);
 						}
 						break;
@@ -315,18 +374,18 @@ public partial class AstroExprParser : Parser {
 						{
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 34;
+						State = 38;
 						if (!(Precpred(Context, 8))) throw new FailedPredicateException(this, "Precpred(Context, 8)");
-						State = 35;
+						State = 39;
 						_la = TokenStream.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 1048582L) != 0)) ) {
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 114688L) != 0)) ) {
 						ErrorHandler.RecoverInline(this);
 						}
 						else {
 							ErrorHandler.ReportMatch(this);
 						    Consume();
 						}
-						State = 36;
+						State = 40;
 						expr(9);
 						}
 						break;
@@ -334,9 +393,9 @@ public partial class AstroExprParser : Parser {
 						{
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 37;
+						State = 41;
 						if (!(Precpred(Context, 7))) throw new FailedPredicateException(this, "Precpred(Context, 7)");
-						State = 38;
+						State = 42;
 						_la = TokenStream.LA(1);
 						if ( !(_la==MINUS || _la==PLUS) ) {
 						ErrorHandler.RecoverInline(this);
@@ -345,7 +404,7 @@ public partial class AstroExprParser : Parser {
 							ErrorHandler.ReportMatch(this);
 						    Consume();
 						}
-						State = 39;
+						State = 43;
 						expr(8);
 						}
 						break;
@@ -353,18 +412,18 @@ public partial class AstroExprParser : Parser {
 						{
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 40;
+						State = 44;
 						if (!(Precpred(Context, 6))) throw new FailedPredicateException(this, "Precpred(Context, 6)");
-						State = 41;
+						State = 45;
 						_la = TokenStream.LA(1);
-						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 62914560L) != 0)) ) {
+						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & 3932160L) != 0)) ) {
 						ErrorHandler.RecoverInline(this);
 						}
 						else {
 							ErrorHandler.ReportMatch(this);
 						    Consume();
 						}
-						State = 42;
+						State = 46;
 						expr(7);
 						}
 						break;
@@ -372,9 +431,9 @@ public partial class AstroExprParser : Parser {
 						{
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 43;
+						State = 47;
 						if (!(Precpred(Context, 5))) throw new FailedPredicateException(this, "Precpred(Context, 5)");
-						State = 44;
+						State = 48;
 						_la = TokenStream.LA(1);
 						if ( !(_la==EQ || _la==NE) ) {
 						ErrorHandler.RecoverInline(this);
@@ -383,7 +442,7 @@ public partial class AstroExprParser : Parser {
 							ErrorHandler.ReportMatch(this);
 						    Consume();
 						}
-						State = 45;
+						State = 49;
 						expr(6);
 						}
 						break;
@@ -391,11 +450,11 @@ public partial class AstroExprParser : Parser {
 						{
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 46;
+						State = 50;
 						if (!(Precpred(Context, 4))) throw new FailedPredicateException(this, "Precpred(Context, 4)");
-						State = 47;
+						State = 51;
 						Match(AND);
-						State = 48;
+						State = 52;
 						expr(5);
 						}
 						break;
@@ -403,11 +462,11 @@ public partial class AstroExprParser : Parser {
 						{
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 49;
+						State = 53;
 						if (!(Precpred(Context, 3))) throw new FailedPredicateException(this, "Precpred(Context, 3)");
-						State = 50;
+						State = 54;
 						Match(OR);
-						State = 51;
+						State = 55;
 						expr(4);
 						}
 						break;
@@ -415,11 +474,11 @@ public partial class AstroExprParser : Parser {
 						{
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 52;
+						State = 56;
 						if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
-						State = 53;
-						Match(T__2);
-						State = 54;
+						State = 57;
+						Match(IFNULL);
+						State = 58;
 						expr(3);
 						}
 						break;
@@ -427,15 +486,15 @@ public partial class AstroExprParser : Parser {
 						{
 						_localctx = new TernaryOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 55;
-						if (!(Precpred(Context, 1))) throw new FailedPredicateException(this, "Precpred(Context, 1)");
-						State = 56;
-						Match(COND);
-						State = 57;
-						expr(0);
-						State = 58;
-						Match(T__3);
 						State = 59;
+						if (!(Precpred(Context, 1))) throw new FailedPredicateException(this, "Precpred(Context, 1)");
+						State = 60;
+						Match(COND);
+						State = 61;
+						expr(0);
+						State = 62;
+						Match(COLON);
+						State = 63;
 						expr(1);
 						}
 						break;
@@ -443,20 +502,20 @@ public partial class AstroExprParser : Parser {
 						{
 						_localctx = new BinOpContext(new ExprContext(_parentctx, _parentState));
 						PushNewRecursionContext(_localctx, _startState, RULE_expr);
-						State = 61;
+						State = 65;
 						if (!(Precpred(Context, 10))) throw new FailedPredicateException(this, "Precpred(Context, 10)");
-						State = 62;
+						State = 66;
 						Match(LBRAC);
-						State = 63;
+						State = 67;
 						expr(0);
-						State = 64;
+						State = 68;
 						Match(RBRAC);
 						}
 						break;
 					}
 					} 
 				}
-				State = 70;
+				State = 74;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,2,Context);
 			}
@@ -497,7 +556,10 @@ public partial class AstroExprParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public LetExprContext letExpr() {
 			return GetRuleContext<LetExprContext>(0);
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Literal() { return GetToken(AstroExprParser.Literal, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode StringLiteral() { return GetToken(AstroExprParser.StringLiteral, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public TemplateStringLiteralContext templateStringLiteral() {
+			return GetRuleContext<TemplateStringLiteralContext>(0);
+		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Number() { return GetToken(AstroExprParser.Number, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode False() { return GetToken(AstroExprParser.False, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode True() { return GetToken(AstroExprParser.True, 0); }
@@ -509,8 +571,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_primaryExpr; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterPrimaryExpr(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitPrimaryExpr(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitPrimaryExpr(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -521,101 +593,108 @@ public partial class AstroExprParser : Parser {
 		PrimaryExprContext _localctx = new PrimaryExprContext(Context, State);
 		EnterRule(_localctx, 4, RULE_primaryExpr);
 		try {
-			State = 87;
+			State = 92;
 			ErrorHandler.Sync(this);
 			switch ( Interpreter.AdaptivePredict(TokenStream,3,Context) ) {
 			case 1:
 				EnterOuterAlt(_localctx, 1);
 				{
-				State = 71;
+				State = 75;
 				functionCall();
 				}
 				break;
 			case 2:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 72;
+				State = 76;
 				arrayLiteral();
 				}
 				break;
 			case 3:
 				EnterOuterAlt(_localctx, 3);
 				{
-				State = 73;
+				State = 77;
 				objectLiteral();
 				}
 				break;
 			case 4:
 				EnterOuterAlt(_localctx, 4);
 				{
-				State = 74;
+				State = 78;
 				lambdaExpr();
 				}
 				break;
 			case 5:
 				EnterOuterAlt(_localctx, 5);
 				{
-				State = 75;
+				State = 79;
 				variableReference();
 				}
 				break;
 			case 6:
 				EnterOuterAlt(_localctx, 6);
 				{
-				State = 76;
+				State = 80;
 				Match(LPAR);
-				State = 77;
+				State = 81;
 				expr(0);
-				State = 78;
+				State = 82;
 				Match(RPAR);
 				}
 				break;
 			case 7:
 				EnterOuterAlt(_localctx, 7);
 				{
-				State = 80;
+				State = 84;
 				letExpr();
 				}
 				break;
 			case 8:
 				EnterOuterAlt(_localctx, 8);
 				{
-				State = 81;
-				Match(Literal);
+				State = 85;
+				Match(StringLiteral);
 				}
 				break;
 			case 9:
 				EnterOuterAlt(_localctx, 9);
 				{
-				State = 82;
-				Match(Number);
+				State = 86;
+				templateStringLiteral();
 				}
 				break;
 			case 10:
 				EnterOuterAlt(_localctx, 10);
 				{
-				State = 83;
-				Match(False);
+				State = 87;
+				Match(Number);
 				}
 				break;
 			case 11:
 				EnterOuterAlt(_localctx, 11);
 				{
-				State = 84;
-				Match(True);
+				State = 88;
+				Match(False);
 				}
 				break;
 			case 12:
 				EnterOuterAlt(_localctx, 12);
 				{
-				State = 85;
-				Match(Null);
+				State = 89;
+				Match(True);
 				}
 				break;
 			case 13:
 				EnterOuterAlt(_localctx, 13);
 				{
-				State = 86;
+				State = 90;
+				Match(Null);
+				}
+				break;
+			case 14:
+				EnterOuterAlt(_localctx, 14);
+				{
+				State = 91;
 				Match(Identifier);
 				}
 				break;
@@ -639,14 +718,25 @@ public partial class AstroExprParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public ExprContext expr(int i) {
 			return GetRuleContext<ExprContext>(i);
 		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode COLON() { return GetToken(AstroExprParser.COLON, 0); }
 		public ObjectFieldContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
 		public override int RuleIndex { get { return RULE_objectField; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterObjectField(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitObjectField(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitObjectField(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -659,11 +749,11 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 89;
+			State = 94;
 			expr(0);
-			State = 90;
-			Match(T__3);
-			State = 91;
+			State = 95;
+			Match(COLON);
+			State = 96;
 			expr(0);
 			}
 		}
@@ -679,6 +769,8 @@ public partial class AstroExprParser : Parser {
 	}
 
 	public partial class ObjectLiteralContext : ParserRuleContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LBRACE() { return GetToken(AstroExprParser.LBRACE, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode RBRACE() { return GetToken(AstroExprParser.RBRACE, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ObjectFieldContext[] objectField() {
 			return GetRuleContexts<ObjectFieldContext>();
 		}
@@ -695,8 +787,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_objectLiteral; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterObjectLiteral(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitObjectLiteral(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitObjectLiteral(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -710,36 +812,36 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 93;
-			Match(T__4);
-			State = 95;
+			State = 98;
+			Match(LBRACE);
+			State = 100;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 785979455776L) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 7853079272102L) != 0)) {
 				{
-				State = 94;
+				State = 99;
 				objectField();
 				}
 			}
 
-			State = 101;
+			State = 106;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			while (_la==COMMA) {
 				{
 				{
-				State = 97;
+				State = 102;
 				Match(COMMA);
-				State = 98;
+				State = 103;
 				objectField();
 				}
 				}
-				State = 103;
+				State = 108;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
-			State = 104;
-			Match(T__5);
+			State = 109;
+			Match(RBRACE);
 			}
 		}
 		catch (RecognitionException re) {
@@ -772,8 +874,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_arrayLiteral; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterArrayLiteral(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitArrayLiteral(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitArrayLiteral(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -787,35 +899,35 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 106;
+			State = 111;
 			Match(LBRAC);
-			State = 115;
+			State = 120;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 785979455776L) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 7853079272102L) != 0)) {
 				{
-				State = 107;
-				expr(0);
 				State = 112;
+				expr(0);
+				State = 117;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 				while (_la==COMMA) {
 					{
 					{
-					State = 108;
+					State = 113;
 					Match(COMMA);
-					State = 109;
+					State = 114;
 					expr(0);
 					}
 					}
-					State = 114;
+					State = 119;
 					ErrorHandler.Sync(this);
 					_la = TokenStream.LA(1);
 				}
 				}
 			}
 
-			State = 117;
+			State = 122;
 			Match(RBRAC);
 			}
 		}
@@ -852,8 +964,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_functionCall; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterFunctionCall(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitFunctionCall(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitFunctionCall(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -867,37 +989,37 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 119;
+			State = 124;
 			variableReference();
-			State = 120;
+			State = 125;
 			Match(LPAR);
-			State = 129;
+			State = 134;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 785979455776L) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & 7853079272102L) != 0)) {
 				{
-				State = 121;
-				expr(0);
 				State = 126;
+				expr(0);
+				State = 131;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 				while (_la==COMMA) {
 					{
 					{
-					State = 122;
+					State = 127;
 					Match(COMMA);
-					State = 123;
+					State = 128;
 					expr(0);
 					}
 					}
-					State = 128;
+					State = 133;
 					ErrorHandler.Sync(this);
 					_la = TokenStream.LA(1);
 				}
 				}
 			}
 
-			State = 131;
+			State = 136;
 			Match(RPAR);
 			}
 		}
@@ -916,6 +1038,7 @@ public partial class AstroExprParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public VariableReferenceContext variableReference() {
 			return GetRuleContext<VariableReferenceContext>(0);
 		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode ASSIGN() { return GetToken(AstroExprParser.ASSIGN, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ExprContext expr() {
 			return GetRuleContext<ExprContext>(0);
 		}
@@ -925,8 +1048,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_variableAssign; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterVariableAssign(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitVariableAssign(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitVariableAssign(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -939,11 +1072,11 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 133;
+			State = 138;
 			variableReference();
-			State = 134;
-			Match(T__6);
-			State = 135;
+			State = 139;
+			Match(ASSIGN);
+			State = 140;
 			expr(0);
 			}
 		}
@@ -959,6 +1092,8 @@ public partial class AstroExprParser : Parser {
 	}
 
 	public partial class LetExprContext : ParserRuleContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LET() { return GetToken(AstroExprParser.LET, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IN() { return GetToken(AstroExprParser.IN, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ExprContext expr() {
 			return GetRuleContext<ExprContext>(0);
 		}
@@ -978,8 +1113,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_letExpr; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterLetExpr(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitLetExpr(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitLetExpr(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -993,31 +1138,31 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 137;
-			Match(T__7);
+			State = 142;
+			Match(LET);
 			{
-			State = 138;
-			variableAssign();
 			State = 143;
+			variableAssign();
+			State = 148;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
 			while (_la==COMMA) {
 				{
 				{
-				State = 139;
+				State = 144;
 				Match(COMMA);
-				State = 140;
+				State = 145;
 				variableAssign();
 				}
 				}
-				State = 145;
+				State = 150;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
 			}
 			}
-			State = 146;
-			Match(T__8);
-			State = 147;
+			State = 151;
+			Match(IN);
+			State = 152;
 			expr(0);
 			}
 		}
@@ -1036,6 +1181,7 @@ public partial class AstroExprParser : Parser {
 		[System.Diagnostics.DebuggerNonUserCode] public VariableReferenceContext variableReference() {
 			return GetRuleContext<VariableReferenceContext>(0);
 		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode LAMBDA() { return GetToken(AstroExprParser.LAMBDA, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ExprContext expr() {
 			return GetRuleContext<ExprContext>(0);
 		}
@@ -1045,8 +1191,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_lambdaExpr; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterLambdaExpr(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitLambdaExpr(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitLambdaExpr(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -1059,11 +1215,11 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 149;
+			State = 154;
 			variableReference();
-			State = 150;
-			Match(T__9);
-			State = 151;
+			State = 155;
+			Match(LAMBDA);
+			State = 156;
 			expr(0);
 			}
 		}
@@ -1079,6 +1235,7 @@ public partial class AstroExprParser : Parser {
 	}
 
 	public partial class VariableReferenceContext : ParserRuleContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode DOLLAR() { return GetToken(AstroExprParser.DOLLAR, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Identifier() { return GetToken(AstroExprParser.Identifier, 0); }
 		public VariableReferenceContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -1086,8 +1243,18 @@ public partial class AstroExprParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_variableReference; } }
 		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterVariableReference(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitVariableReference(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IAstroExprVisitor<TResult> typedVisitor = visitor as IAstroExprVisitor<TResult>;
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitVariableReference(this);
 			else return visitor.VisitChildren(this);
 		}
@@ -1100,10 +1267,154 @@ public partial class AstroExprParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 153;
-			Match(T__10);
-			State = 154;
+			State = 158;
+			Match(DOLLAR);
+			State = 159;
 			Match(Identifier);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class TemplateStringLiteralContext : ParserRuleContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] BackTick() { return GetTokens(AstroExprParser.BackTick); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode BackTick(int i) {
+			return GetToken(AstroExprParser.BackTick, i);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public TemplateStringAtomContext[] templateStringAtom() {
+			return GetRuleContexts<TemplateStringAtomContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public TemplateStringAtomContext templateStringAtom(int i) {
+			return GetRuleContext<TemplateStringAtomContext>(i);
+		}
+		public TemplateStringLiteralContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_templateStringLiteral; } }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterTemplateStringLiteral(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitTemplateStringLiteral(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitTemplateStringLiteral(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public TemplateStringLiteralContext templateStringLiteral() {
+		TemplateStringLiteralContext _localctx = new TemplateStringLiteralContext(Context, State);
+		EnterRule(_localctx, 22, RULE_templateStringLiteral);
+		int _la;
+		try {
+			EnterOuterAlt(_localctx, 1);
+			{
+			State = 161;
+			Match(BackTick);
+			State = 165;
+			ErrorHandler.Sync(this);
+			_la = TokenStream.LA(1);
+			while (_la==TemplateStringStartExpression || _la==TemplateStringAtom) {
+				{
+				{
+				State = 162;
+				templateStringAtom();
+				}
+				}
+				State = 167;
+				ErrorHandler.Sync(this);
+				_la = TokenStream.LA(1);
+			}
+			State = 168;
+			Match(BackTick);
+			}
+		}
+		catch (RecognitionException re) {
+			_localctx.exception = re;
+			ErrorHandler.ReportError(this, re);
+			ErrorHandler.Recover(this, re);
+		}
+		finally {
+			ExitRule();
+		}
+		return _localctx;
+	}
+
+	public partial class TemplateStringAtomContext : ParserRuleContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode TemplateStringAtom() { return GetToken(AstroExprParser.TemplateStringAtom, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode TemplateStringStartExpression() { return GetToken(AstroExprParser.TemplateStringStartExpression, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ExprContext expr() {
+			return GetRuleContext<ExprContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode TemplateCloseBrace() { return GetToken(AstroExprParser.TemplateCloseBrace, 0); }
+		public TemplateStringAtomContext(ParserRuleContext parent, int invokingState)
+			: base(parent, invokingState)
+		{
+		}
+		public override int RuleIndex { get { return RULE_templateStringAtom; } }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void EnterRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.EnterTemplateStringAtom(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override void ExitRule(IParseTreeListener listener) {
+			IAstroExprParserListener typedListener = listener as IAstroExprParserListener;
+			if (typedListener != null) typedListener.ExitTemplateStringAtom(this);
+		}
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IAstroExprParserVisitor<TResult> typedVisitor = visitor as IAstroExprParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitTemplateStringAtom(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
+
+	[RuleVersion(0)]
+	public TemplateStringAtomContext templateStringAtom() {
+		TemplateStringAtomContext _localctx = new TemplateStringAtomContext(Context, State);
+		EnterRule(_localctx, 24, RULE_templateStringAtom);
+		try {
+			State = 175;
+			ErrorHandler.Sync(this);
+			switch (TokenStream.LA(1)) {
+			case TemplateStringAtom:
+				EnterOuterAlt(_localctx, 1);
+				{
+				State = 170;
+				Match(TemplateStringAtom);
+				}
+				break;
+			case TemplateStringStartExpression:
+				EnterOuterAlt(_localctx, 2);
+				{
+				State = 171;
+				Match(TemplateStringStartExpression);
+				State = 172;
+				expr(0);
+				State = 173;
+				Match(TemplateCloseBrace);
+				}
+				break;
+			default:
+				throw new NoViableAltException(this);
 			}
 		}
 		catch (RecognitionException re) {
@@ -1140,56 +1451,63 @@ public partial class AstroExprParser : Parser {
 	}
 
 	private static int[] _serializedATN = {
-		4,1,39,157,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,
-		7,7,2,8,7,8,2,9,7,9,2,10,7,10,1,0,1,0,1,0,1,1,1,1,1,1,1,1,3,1,30,8,1,1,
+		4,1,44,178,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,7,
+		7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,1,0,1,0,1,0,1,1,1,1,
+		1,1,1,1,3,1,34,8,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
 		1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
-		1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,5,
-		1,67,8,1,10,1,12,1,70,9,1,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,
-		1,2,1,2,1,2,1,2,1,2,3,2,88,8,2,1,3,1,3,1,3,1,3,1,4,1,4,3,4,96,8,4,1,4,
-		1,4,5,4,100,8,4,10,4,12,4,103,9,4,1,4,1,4,1,5,1,5,1,5,1,5,5,5,111,8,5,
-		10,5,12,5,114,9,5,3,5,116,8,5,1,5,1,5,1,6,1,6,1,6,1,6,1,6,5,6,125,8,6,
-		10,6,12,6,128,9,6,3,6,130,8,6,1,6,1,6,1,7,1,7,1,7,1,7,1,8,1,8,1,8,1,8,
-		5,8,142,8,8,10,8,12,8,145,9,8,1,8,1,8,1,8,1,9,1,9,1,9,1,9,1,10,1,10,1,
-		10,1,10,0,1,2,11,0,2,4,6,8,10,12,14,16,18,20,0,5,2,0,17,18,36,36,2,0,1,
-		2,20,20,1,0,17,18,1,0,22,25,1,0,30,31,175,0,22,1,0,0,0,2,29,1,0,0,0,4,
-		87,1,0,0,0,6,89,1,0,0,0,8,93,1,0,0,0,10,106,1,0,0,0,12,119,1,0,0,0,14,
-		133,1,0,0,0,16,137,1,0,0,0,18,149,1,0,0,0,20,153,1,0,0,0,22,23,3,2,1,0,
-		23,24,5,0,0,1,24,1,1,0,0,0,25,26,6,1,-1,0,26,30,3,4,2,0,27,28,7,0,0,0,
-		28,30,3,2,1,11,29,25,1,0,0,0,29,27,1,0,0,0,30,68,1,0,0,0,31,32,10,9,0,
-		0,32,33,5,19,0,0,33,67,3,2,1,10,34,35,10,8,0,0,35,36,7,1,0,0,36,67,3,2,
-		1,9,37,38,10,7,0,0,38,39,7,2,0,0,39,67,3,2,1,8,40,41,10,6,0,0,41,42,7,
-		3,0,0,42,67,3,2,1,7,43,44,10,5,0,0,44,45,7,4,0,0,45,67,3,2,1,6,46,47,10,
-		4,0,0,47,48,5,28,0,0,48,67,3,2,1,5,49,50,10,3,0,0,50,51,5,29,0,0,51,67,
-		3,2,1,4,52,53,10,2,0,0,53,54,5,3,0,0,54,67,3,2,1,3,55,56,10,1,0,0,56,57,
-		5,35,0,0,57,58,3,2,1,0,58,59,5,4,0,0,59,60,3,2,1,1,60,67,1,0,0,0,61,62,
-		10,10,0,0,62,63,5,15,0,0,63,64,3,2,1,0,64,65,5,16,0,0,65,67,1,0,0,0,66,
-		31,1,0,0,0,66,34,1,0,0,0,66,37,1,0,0,0,66,40,1,0,0,0,66,43,1,0,0,0,66,
-		46,1,0,0,0,66,49,1,0,0,0,66,52,1,0,0,0,66,55,1,0,0,0,66,61,1,0,0,0,67,
-		70,1,0,0,0,68,66,1,0,0,0,68,69,1,0,0,0,69,3,1,0,0,0,70,68,1,0,0,0,71,88,
-		3,12,6,0,72,88,3,10,5,0,73,88,3,8,4,0,74,88,3,18,9,0,75,88,3,20,10,0,76,
-		77,5,13,0,0,77,78,3,2,1,0,78,79,5,14,0,0,79,88,1,0,0,0,80,88,3,16,8,0,
-		81,88,5,37,0,0,82,88,5,12,0,0,83,88,5,32,0,0,84,88,5,33,0,0,85,88,5,34,
-		0,0,86,88,5,39,0,0,87,71,1,0,0,0,87,72,1,0,0,0,87,73,1,0,0,0,87,74,1,0,
-		0,0,87,75,1,0,0,0,87,76,1,0,0,0,87,80,1,0,0,0,87,81,1,0,0,0,87,82,1,0,
-		0,0,87,83,1,0,0,0,87,84,1,0,0,0,87,85,1,0,0,0,87,86,1,0,0,0,88,5,1,0,0,
-		0,89,90,3,2,1,0,90,91,5,4,0,0,91,92,3,2,1,0,92,7,1,0,0,0,93,95,5,5,0,0,
-		94,96,3,6,3,0,95,94,1,0,0,0,95,96,1,0,0,0,96,101,1,0,0,0,97,98,5,21,0,
-		0,98,100,3,6,3,0,99,97,1,0,0,0,100,103,1,0,0,0,101,99,1,0,0,0,101,102,
-		1,0,0,0,102,104,1,0,0,0,103,101,1,0,0,0,104,105,5,6,0,0,105,9,1,0,0,0,
-		106,115,5,15,0,0,107,112,3,2,1,0,108,109,5,21,0,0,109,111,3,2,1,0,110,
-		108,1,0,0,0,111,114,1,0,0,0,112,110,1,0,0,0,112,113,1,0,0,0,113,116,1,
-		0,0,0,114,112,1,0,0,0,115,107,1,0,0,0,115,116,1,0,0,0,116,117,1,0,0,0,
-		117,118,5,16,0,0,118,11,1,0,0,0,119,120,3,20,10,0,120,129,5,13,0,0,121,
-		126,3,2,1,0,122,123,5,21,0,0,123,125,3,2,1,0,124,122,1,0,0,0,125,128,1,
-		0,0,0,126,124,1,0,0,0,126,127,1,0,0,0,127,130,1,0,0,0,128,126,1,0,0,0,
-		129,121,1,0,0,0,129,130,1,0,0,0,130,131,1,0,0,0,131,132,5,14,0,0,132,13,
-		1,0,0,0,133,134,3,20,10,0,134,135,5,7,0,0,135,136,3,2,1,0,136,15,1,0,0,
-		0,137,138,5,8,0,0,138,143,3,14,7,0,139,140,5,21,0,0,140,142,3,14,7,0,141,
-		139,1,0,0,0,142,145,1,0,0,0,143,141,1,0,0,0,143,144,1,0,0,0,144,146,1,
-		0,0,0,145,143,1,0,0,0,146,147,5,9,0,0,147,148,3,2,1,0,148,17,1,0,0,0,149,
-		150,3,20,10,0,150,151,5,10,0,0,151,152,3,2,1,0,152,19,1,0,0,0,153,154,
-		5,11,0,0,154,155,5,39,0,0,155,21,1,0,0,0,11,29,66,68,87,95,101,112,115,
-		126,129,143
+		1,1,1,1,1,1,1,1,1,5,1,71,8,1,10,1,12,1,74,9,1,1,2,1,2,1,2,1,2,1,2,1,2,
+		1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,2,93,8,2,1,3,1,3,1,3,1,3,
+		1,4,1,4,3,4,101,8,4,1,4,1,4,5,4,105,8,4,10,4,12,4,108,9,4,1,4,1,4,1,5,
+		1,5,1,5,1,5,5,5,116,8,5,10,5,12,5,119,9,5,3,5,121,8,5,1,5,1,5,1,6,1,6,
+		1,6,1,6,1,6,5,6,130,8,6,10,6,12,6,133,9,6,3,6,135,8,6,1,6,1,6,1,7,1,7,
+		1,7,1,7,1,8,1,8,1,8,1,8,5,8,147,8,8,10,8,12,8,150,9,8,1,8,1,8,1,8,1,9,
+		1,9,1,9,1,9,1,10,1,10,1,10,1,11,1,11,5,11,164,8,11,10,11,12,11,167,9,11,
+		1,11,1,11,1,12,1,12,1,12,1,12,1,12,3,12,176,8,12,1,12,0,1,2,13,0,2,4,6,
+		8,10,12,14,16,18,20,22,24,0,5,2,0,11,12,37,37,1,0,14,16,1,0,11,12,1,0,
+		18,21,1,0,26,27,197,0,26,1,0,0,0,2,33,1,0,0,0,4,92,1,0,0,0,6,94,1,0,0,
+		0,8,98,1,0,0,0,10,111,1,0,0,0,12,124,1,0,0,0,14,138,1,0,0,0,16,142,1,0,
+		0,0,18,154,1,0,0,0,20,158,1,0,0,0,22,161,1,0,0,0,24,175,1,0,0,0,26,27,
+		3,2,1,0,27,28,5,0,0,1,28,1,1,0,0,0,29,30,6,1,-1,0,30,34,3,4,2,0,31,32,
+		7,0,0,0,32,34,3,2,1,11,33,29,1,0,0,0,33,31,1,0,0,0,34,72,1,0,0,0,35,36,
+		10,9,0,0,36,37,5,13,0,0,37,71,3,2,1,10,38,39,10,8,0,0,39,40,7,1,0,0,40,
+		71,3,2,1,9,41,42,10,7,0,0,42,43,7,2,0,0,43,71,3,2,1,8,44,45,10,6,0,0,45,
+		46,7,3,0,0,46,71,3,2,1,7,47,48,10,5,0,0,48,49,7,4,0,0,49,71,3,2,1,6,50,
+		51,10,4,0,0,51,52,5,24,0,0,52,71,3,2,1,5,53,54,10,3,0,0,54,55,5,25,0,0,
+		55,71,3,2,1,4,56,57,10,2,0,0,57,58,5,32,0,0,58,71,3,2,1,3,59,60,10,1,0,
+		0,60,61,5,31,0,0,61,62,3,2,1,0,62,63,5,38,0,0,63,64,3,2,1,1,64,71,1,0,
+		0,0,65,66,10,10,0,0,66,67,5,9,0,0,67,68,3,2,1,0,68,69,5,10,0,0,69,71,1,
+		0,0,0,70,35,1,0,0,0,70,38,1,0,0,0,70,41,1,0,0,0,70,44,1,0,0,0,70,47,1,
+		0,0,0,70,50,1,0,0,0,70,53,1,0,0,0,70,56,1,0,0,0,70,59,1,0,0,0,70,65,1,
+		0,0,0,71,74,1,0,0,0,72,70,1,0,0,0,72,73,1,0,0,0,73,3,1,0,0,0,74,72,1,0,
+		0,0,75,93,3,12,6,0,76,93,3,10,5,0,77,93,3,8,4,0,78,93,3,18,9,0,79,93,3,
+		20,10,0,80,81,5,7,0,0,81,82,3,2,1,0,82,83,5,8,0,0,83,93,1,0,0,0,84,93,
+		3,16,8,0,85,93,5,41,0,0,86,93,3,22,11,0,87,93,5,1,0,0,88,93,5,28,0,0,89,
+		93,5,29,0,0,90,93,5,30,0,0,91,93,5,40,0,0,92,75,1,0,0,0,92,76,1,0,0,0,
+		92,77,1,0,0,0,92,78,1,0,0,0,92,79,1,0,0,0,92,80,1,0,0,0,92,84,1,0,0,0,
+		92,85,1,0,0,0,92,86,1,0,0,0,92,87,1,0,0,0,92,88,1,0,0,0,92,89,1,0,0,0,
+		92,90,1,0,0,0,92,91,1,0,0,0,93,5,1,0,0,0,94,95,3,2,1,0,95,96,5,38,0,0,
+		96,97,3,2,1,0,97,7,1,0,0,0,98,100,5,2,0,0,99,101,3,6,3,0,100,99,1,0,0,
+		0,100,101,1,0,0,0,101,106,1,0,0,0,102,103,5,17,0,0,103,105,3,6,3,0,104,
+		102,1,0,0,0,105,108,1,0,0,0,106,104,1,0,0,0,106,107,1,0,0,0,107,109,1,
+		0,0,0,108,106,1,0,0,0,109,110,5,4,0,0,110,9,1,0,0,0,111,120,5,9,0,0,112,
+		117,3,2,1,0,113,114,5,17,0,0,114,116,3,2,1,0,115,113,1,0,0,0,116,119,1,
+		0,0,0,117,115,1,0,0,0,117,118,1,0,0,0,118,121,1,0,0,0,119,117,1,0,0,0,
+		120,112,1,0,0,0,120,121,1,0,0,0,121,122,1,0,0,0,122,123,5,10,0,0,123,11,
+		1,0,0,0,124,125,3,20,10,0,125,134,5,7,0,0,126,131,3,2,1,0,127,128,5,17,
+		0,0,128,130,3,2,1,0,129,127,1,0,0,0,130,133,1,0,0,0,131,129,1,0,0,0,131,
+		132,1,0,0,0,132,135,1,0,0,0,133,131,1,0,0,0,134,126,1,0,0,0,134,135,1,
+		0,0,0,135,136,1,0,0,0,136,137,5,8,0,0,137,13,1,0,0,0,138,139,3,20,10,0,
+		139,140,5,33,0,0,140,141,3,2,1,0,141,15,1,0,0,0,142,143,5,34,0,0,143,148,
+		3,14,7,0,144,145,5,17,0,0,145,147,3,14,7,0,146,144,1,0,0,0,147,150,1,0,
+		0,0,148,146,1,0,0,0,148,149,1,0,0,0,149,151,1,0,0,0,150,148,1,0,0,0,151,
+		152,5,35,0,0,152,153,3,2,1,0,153,17,1,0,0,0,154,155,3,20,10,0,155,156,
+		5,6,0,0,156,157,3,2,1,0,157,19,1,0,0,0,158,159,5,5,0,0,159,160,5,40,0,
+		0,160,21,1,0,0,0,161,165,5,42,0,0,162,164,3,24,12,0,163,162,1,0,0,0,164,
+		167,1,0,0,0,165,163,1,0,0,0,165,166,1,0,0,0,166,168,1,0,0,0,167,165,1,
+		0,0,0,168,169,5,42,0,0,169,23,1,0,0,0,170,176,5,44,0,0,171,172,5,43,0,
+		0,172,173,3,2,1,0,173,174,5,3,0,0,174,176,1,0,0,0,175,170,1,0,0,0,175,
+		171,1,0,0,0,176,25,1,0,0,0,13,33,70,72,92,100,106,117,120,131,134,148,
+		165,175
 	};
 
 	public static readonly ATN _ATN =

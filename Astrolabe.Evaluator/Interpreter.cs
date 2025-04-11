@@ -69,7 +69,7 @@ public static class Interpreter
             CallExpr ce
                 => environment.WithError("No function $" + ce.Function + " declared").WithNull(),
             PropertyExpr { Property: var dp } => environment.Evaluate(environment.GetProperty(dp)),
-            _ => throw new ArgumentOutOfRangeException(expr.ToString())
+            _ => throw new ArgumentOutOfRangeException(expr?.ToString())
         };
     }
 }

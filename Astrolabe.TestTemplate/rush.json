@@ -458,10 +458,10 @@
       "packageName": "formserver",
       "projectFolder": "ClientApp/sites/formServer"
     },
-    {
-      "packageName": "common-tests",
-      "projectFolder": "ClientApp/sites/test"
-    },
+//    {
+//      "packageName": "common-tests",
+//      "projectFolder": "ClientApp/sites/test"
+//    },
     {
       "packageName": "@react-typed-forms/schemas",
       "projectFolder": "../schemas",
@@ -542,10 +542,10 @@
       "projectFolder": "../astrolabe-controls",
       "shouldPublish": true
     },
-    {
-      "packageName": "expoapp",
-      "projectFolder": "ClientApp/expoapp"
-    }
+//    {
+//      "packageName": "expoapp",
+//      "projectFolder": "ClientApp/expoapp"
+//    }
     //    {
 //      "packageName": "native",
 //      "projectFolder": "ClientApp/sites/native"
