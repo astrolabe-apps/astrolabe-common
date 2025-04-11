@@ -1,0 +1,16 @@
+{
+  "plugins": [
+    "module:@react-typed-forms/transform"
+  ],
+  "presets": [
+    "@babel/preset-typescript",
+    [
+      "@babel/preset-react",
+      {
+        "runtime": "automatic",
+        "useSpread": true,
+        "useBuiltIns": true
+      }
+    ]
+  ]
+}

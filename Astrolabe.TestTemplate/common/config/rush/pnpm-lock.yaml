@@ -942,6 +942,35 @@ importers:
       tailwindcss: 3.4.17
       typescript: 5.7.2
 
+  ../../../schemas-signature:
+    specifiers:
+      '@react-typed-forms/core': workspace:*
+      '@react-typed-forms/schemas': workspace:*
+      '@react-typed-forms/transform': ^0.2.0
+      '@types/react': ^18.2.37
+      '@zag-js/react': 1.6.1
+      '@zag-js/signature-pad': 1.6.1
+      clsx: ^2
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      react: ^18.2.0 || ^19
+      rimraf: ^5.0.7
+      typescript: ^5.6.2
+    dependencies:
+      '@zag-js/react': 1.6.1_react@18.3.1
+      '@zag-js/signature-pad': 1.6.1
+      clsx: 2.1.1
+    devDependencies:
+      '@react-typed-forms/core': link:../core
+      '@react-typed-forms/schemas': link:../schemas
+      '@react-typed-forms/transform': 0.2.0
+      '@types/react': 18.3.12
+      microbundle: 0.15.1
+      prettier: 3.4.2
+      react: 18.3.1
+      rimraf: 5.0.10
+      typescript: 5.7.2
+
   ../../ClientApp/sites/formServer:
     specifiers:
       '@astroapps/aria-base': workspace:*
@@ -956,6 +985,7 @@ importers:
       '@astroapps/schemas-datepicker': workspace:*
       '@astroapps/schemas-editor': workspace:*
       '@astroapps/schemas-quickstream': workspace:*
+      '@astroapps/schemas-signature': workspace:*
       '@astroapps/searchstate': workspace:*
       '@astroapps/swc-controls-plugin': 1.1.0-next15
       '@astrolabe/ui': workspace:*
@@ -998,6 +1028,7 @@ importers:
       '@astroapps/schemas-datepicker': link:../../../../schemas-datepicker
       '@astroapps/schemas-editor': link:../../../../astrolabe-schemas-editor
       '@astroapps/schemas-quickstream': link:../../../../astrolabe-schemas-quickstream
+      '@astroapps/schemas-signature': link:../../../../schemas-signature
       '@astroapps/searchstate': link:../../../../astrolabe-searchstate
       '@astrolabe/ui': link:../../../../astrolabe-ui
       '@codemirror/autocomplete': 6.18.6
@@ -9740,6 +9771,63 @@ packages:
       tslib: 1.14.1
     dev: true
 
+  /@zag-js/anatomy/1.6.1:
+    resolution: {integrity: sha512-wfQ6L7+rhUSNOqxz2leoF0bO2PBkTTiL2Utc7jcnoP3XmgmZSiVazw2EpWkrn0Ke6Id1S+FmQyvD81OXnGmTfQ==}
+    dev: false
+
+  /@zag-js/core/1.6.1:
+    resolution: {integrity: sha512-qyu+iPPYrs5fdfacZq9IAgy09u+tK14HALvQu9q5cfY7/ykkdRhxneSeH7uVQWm9MI35iIchQLJ53jGGJxI9gA==}
+    dependencies:
+      '@zag-js/dom-query': 1.6.1
+      '@zag-js/utils': 1.6.1
+    dev: false
+
+  /@zag-js/dom-query/1.6.1:
+    resolution: {integrity: sha512-sMM828xS/KGLsua8mcJUnIS4YV7vq6d+G3T+lM55gzjIcLHdO0U+1Gm+w7Lit04Xu1Bo6ATaauBy2LDQ17/hFQ==}
+    dependencies:
+      '@zag-js/types': 1.6.1
+    dev: false
+
+  /@zag-js/react/1.6.1_react@18.3.1:
+    resolution: {integrity: sha512-QyTD8tgd+SO4FcRQJnQO5LWprL7NqLLGH8wM9qUm1du3pjOQ9390RMV0yPajE78+aRq4Rqc+3Pgue1rZjpr9+w==}
+    peerDependencies:
+      react: '>=18.0.0'
+      react-dom: '>=18.0.0'
+    dependencies:
+      '@zag-js/core': 1.6.1
+      '@zag-js/store': 1.6.1
+      '@zag-js/types': 1.6.1
+      '@zag-js/utils': 1.6.1
+      react: 18.3.1
+    dev: false
+
+  /@zag-js/signature-pad/1.6.1:
+    resolution: {integrity: sha512-Ef+vB188lYeW9mPBRqKwC1ljZPxCa8b+raY5pfkLnEijC4awT25Bjc3MLFHSKN0KPwf4Bynk+2VN9bOKpr3b5A==}
+    dependencies:
+      '@zag-js/anatomy': 1.6.1
+      '@zag-js/core': 1.6.1
+      '@zag-js/dom-query': 1.6.1
+      '@zag-js/types': 1.6.1
+      '@zag-js/utils': 1.6.1
+      perfect-freehand: 1.2.2
+    dev: false
+
+  /@zag-js/store/1.6.1:
+    resolution: {integrity: sha512-ajctTZzOUmJzk3XfVdhJ+bZdiMhytOa0XC8FW2wXT4i1hw6y1v98Np2WxGU7YBansreW8od1VTE1kkzAQZJpVA==}
+    dependencies:
+      proxy-compare: 3.0.1
+    dev: false
+
+  /@zag-js/types/1.6.1:
+    resolution: {integrity: sha512-e6E45m0AbETaf9KBM3ULbAoE5jpnxHeBP5LTya/fthWu5JD+fn2Weg6jESmzsowKy6NIUpvvI+0LTC9mHxYcAw==}
+    dependencies:
+      csstype: 3.1.3
+    dev: false
+
+  /@zag-js/utils/1.6.1:
+    resolution: {integrity: sha512-UGQey8JEd8eZCh0yKqdhZ96MB+zgpsOAKOkpXNY3KhnzT1qIv+sEEpU2oaIXCBFgB7ZqH35mW/QRxXjcFewzuQ==}
+    dev: false
+
   /abort-controller/3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
     engines: {node: '>=6.5'}
@@ -17003,6 +17091,10 @@ packages:
     resolution: {integrity: sha512-F3asv42UuXchdzt+xXqfW1OGlVBe+mxa2mqI0pg5yAHZPvFmY3Y6drSf/GQ1A86WgWEN9Kzh/WrgKa6iGcHXLg==}
     dev: true
 
+  /perfect-freehand/1.2.2:
+    resolution: {integrity: sha512-eh31l019WICQ03pkF3FSzHxB8n07ItqIQ++G5UV8JX0zVOXzgTGCqnRR0jJ2h9U8/2uW4W4mtGJELt9kEV0CFQ==}
+    dev: false
+
   /picocolors/1.1.1:
     resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
@@ -17682,6 +17774,10 @@ packages:
       forwarded: 0.2.0
       ipaddr.js: 1.9.1
     dev: true
+
+  /proxy-compare/3.0.1:
+    resolution: {integrity: sha512-V9plBAt3qjMlS1+nC8771KNf6oJ12gExvaxnNzN/9yVRLdTv/lc+oJlnSzrdYDAvBfTStPCoiaCOTmTs0adv7Q==}
+    dev: false
 
   /proxy-from-env/1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
