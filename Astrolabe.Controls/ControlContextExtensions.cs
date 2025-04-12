@@ -61,12 +61,12 @@ public static class ControlContextExtensions
     public static bool IsNull(this ControlContext ctx, IControl control)
     {
         ctx.Tracker?.Invoke(control, ControlChange.Structure);
-        return control.IsNull;
+        return control.Value == null;
     }
 
     public static void SetValue(this IControlTransactions ctx, IControl control, object? value)
     {
-        
+        ((IControlImpl)control).SetValueImpl(ctx, value, null);
     }
 
     public static void SetValueAndInitial(this IControlTransactions ctx, IControl control, object? value,
@@ -81,10 +81,10 @@ public static class ControlContextExtensions
 
     public static void SetInitialValue(this IControlTransactions ctx, IControl control, object? value)
     {
-        
+        ((IControlImpl)control).SetInitialValueImpl(ctx, value);
     }
 
-    public static void MarkAsClean(this IControlTransactions ctx, IControl control)
+    public static void MarkAsClean<T>(this IControlTransactions ctx, IControl control)
     {
         ctx.SetInitialValue(control, control.Value);
     }
@@ -98,15 +98,15 @@ public static class ControlContextExtensions
             else
                 c.Flags &= ~ControlFlags.Touched;
             if (!notChildren)
-                c.Logic.WithChildren(c, child => ctx.SetTouched(child, touched));
+                c.WithChildren(child => ctx.SetTouched(child, touched));
         });
     }
 
-    private static void Transaction(this IControlTransactions ctx, IControl control, Action<ControlImpl> action)
+    private static void Transaction(this IControlTransactions ctx, IControl control, Action<IControlImpl> action)
     {
         ctx.InTransaction(control, () =>
         {
-            action((ControlImpl)control);
+            action((IControlImpl)control);
             return true;
         });
     }
@@ -120,7 +120,7 @@ public static class ControlContextExtensions
                 c.Flags &= ~ControlFlags.Disabled;
                 
             if (!notChildren)
-                c.Logic.WithChildren(c, child => ctx.SetDisabled(child, disabled));
+                c.WithChildren(child => ctx.SetDisabled(child, disabled));
         });
     }
 
@@ -190,7 +190,7 @@ public static class ControlContextExtensions
     {
         ctx.Transaction(control, (c) =>
         {
-            c.Logic.WithChildren(c, ctx.ClearErrors);
+            c.WithChildren(ctx.ClearErrors);
             ctx.SetErrors(c, null);
         });
     }

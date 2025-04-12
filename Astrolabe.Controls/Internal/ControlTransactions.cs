@@ -1,12 +1,12 @@
 namespace Astrolabe.Controls.Internal;
 
-public class ControlTransactions : IControlTransactions
+internal class ControlTransactions : IControlTransactions
 {
     private int _transactionCount;
-    private readonly HashSet<ControlImpl> _runListenerList = [];
+    private readonly HashSet<IControlImpl> _runListenerList = [];
     private readonly List<Action> _afterChangesCallbacks = [];
     
-    private void FinishTransaction(ControlImpl c)
+    private void FinishTransaction(IControlImpl c)
     {
         _transactionCount--;
 
@@ -74,7 +74,7 @@ public class ControlTransactions : IControlTransactions
         }
         finally
         {
-            FinishTransaction((ControlImpl) control);
+            FinishTransaction((IControlImpl) control);
         }
     }
 
@@ -104,7 +104,7 @@ public class ControlTransactions : IControlTransactions
         }
         finally
         {
-            FinishTransaction((ControlImpl) c);
+            FinishTransaction((IControlImpl) c);
         }
     }
 

@@ -4,19 +4,53 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
+internal interface IControlImpl : IControl
+{
+    object? ValueImpl { get; set; }
+
+    object? InitialValueImpl { get; set; }
+
+    Dictionary<string, string>? ErrorMap { get; set; }
+    public ControlFlags Flags { get; set; }
+    
+    public Subscriptions? Subscriptions { get; }
+
+    void ValidityChanged(IControlTransactions ctx, bool hasErrors);
+
+    void RunListeners();
+
+    void ChildValueChange(IControlTransactions ctx, IControlImpl control, object prop, object? value);
+    
+    void WithChildren(Action<IControlImpl> action);
+
+    void SetValueImpl(IControlTransactions ctx, object? value, IControlImpl? from = null);
+
+    void SetInitialValueImpl(IControlTransactions ctx, object? value);
+    
+    internal static readonly IReadOnlyDictionary<string, string> EmptyErrors = new Dictionary<string, string>();
+
+}
+
 /// <summary>
 /// Implementation of the IInternalControl interface.
 /// </summary>
-internal class ControlImpl(object? value, object? initialValue, ControlFlags flags, ControlLogic logic) : IControl
+internal class ControlImpl(object? value, object? initialValue, ControlFlags flags, ControlLogic logic) : IControlImpl
 
 {
-    private static readonly IReadOnlyDictionary<string, string> EmptyErrors = new Dictionary<string, string>();
     public Dictionary<string, string>? ErrorMap { get; set; }
-    
-    public object? Value { get; set; } = value;
-    public object? InitialValue { get; set; } = initialValue;
+
+    public object? ValueImpl { get; set; } = value;
+
+    public object? InitialValueImpl { get; set; } = initialValue;
+
+    public object? Value
+    {
+        get => Logic.EnsureValue(this, ValueImpl);
+    }
+
+    public object? InitialValue => InitialValueImpl;
     public ControlFlags Flags { get; set; } = flags;
-    public ControlLogic Logic { get; private set; } = logic;
+    public ControlLogic Logic { get; set; } = logic;
     public Subscriptions? Subscriptions { get; private set; }
     public IList<ParentLink>? Parents { get; set; }
     
@@ -24,7 +58,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
 
     public string? Error => ErrorMap?.Values.FirstOrDefault();
 
-    public IReadOnlyDictionary<string, string> Errors => ErrorMap ?? EmptyErrors;
+    public IReadOnlyDictionary<string, string> Errors => ErrorMap ?? IControlImpl.EmptyErrors;
 
     public bool Valid => IsValid();
 
@@ -36,11 +70,11 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
 
     public bool IsNull => Value == null;
 
-    public IControl this[string propertyName] => GetField(propertyName);
+    public IControl this[string propertyName] => Logic.GetField(this, propertyName);
 
     public IReadOnlyList<IControl> Elements => Logic.GetElements(this).Cast<IControl>().ToList();
 
-    public void UpdateParentLink(ControlImpl parent, object? key, bool initial = false)
+    public void UpdateParentLink(IControlImpl parent, object? key, bool initial = false)
     {
         if (key == null)
         {
@@ -94,17 +128,12 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
 
     public bool Validate()
     {
-        Logic.WithChildren(this, c => c.Validate());
+        Logic.WithChildren(c => c.Validate());
         Subscriptions?.RunMatchingListeners(this, ControlChange.Validate);
         return Valid;
     }
 
-    public ControlImpl GetField(string propertyName)
-    {
-        return Logic.GetField(this, propertyName);
-    }
-
-    public void SetValueImpl(IControlTransactions ctx, object? value, ControlImpl? from = null)
+    public void SetValueImpl(IControlTransactions ctx, object? value, IControlImpl? from = null)
     {
         if (Logic.IsEqual(Value, value))
             return;
@@ -115,7 +144,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
                 ? ControlChange.Structure
                 : ControlChange.None;
 
-            Value = value;
+            ValueImpl = value;
 
             if ((Flags & ControlFlags.DontClearError) == 0)
                 ctx.SetErrors(this,null);
@@ -127,7 +156,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
                 foreach (var link in Parents)
                 {
                     if (link.Control != from)
-                        link.Control.Logic.ChildValueChange(ctx, this, link.Key, Value);
+                        link.Control.ChildValueChange(ctx, this, link.Key, Value);
                 }
             }
             Subscriptions?.ApplyChange(ControlChange.Value | structureFlag);
@@ -141,7 +170,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
 
         ctx.InTransaction(this, () =>
         {
-            InitialValue = value;
+            InitialValueImpl = value;
             Logic.InitialValueChanged(ctx, this);
             Subscriptions?.ApplyChange(ControlChange.InitialValue);
             return true;
@@ -199,6 +228,16 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
             var currentChanges = GetChangeState(Subscriptions.Mask);
             Subscriptions.RunListeners(this, currentChanges);
         }
+    }
+
+    public void ChildValueChange(IControlTransactions ctx, IControlImpl control, object prop, object? value)
+    {
+        Logic.ChildValueChange(ctx, control, prop, value);
+    }
+
+    public void WithChildren(Action<IControlImpl> action)
+    {
+        Logic.WithChildren(action);
     }
 
     public bool IsEqual(object? v1, object? v2)

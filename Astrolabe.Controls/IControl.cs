@@ -45,9 +45,6 @@ public interface ISubscription
     ChangeListenerFunc Listener { get; }
 }
 
-/// <summary>
-/// Main interface for form controls that manage values and validation.
-/// </summary>
 public interface IControl
 {
     /// <summary>
@@ -89,6 +86,17 @@ public interface IControl
     /// Gets or sets whether the control has been touched by user interaction.
     /// </summary>
     bool Touched { get; }
+    
+    /// <summary>
+    /// Gets a dictionary for storing arbitrary metadata.
+    /// </summary>
+    IDictionary<string, object> Meta { get; }
+
+    /// <summary>
+    /// Validates the control and its children.
+    /// </summary>
+    /// <returns>True if the control is valid; otherwise, false.</returns>
+    bool Validate();
 
     /// <summary>
     /// Gets a child field.
@@ -99,11 +107,6 @@ public interface IControl
     /// Gets a list of child controls for array elements.
     /// </summary>
     IReadOnlyList<IControl> Elements { get; }
-
-    /// <summary>
-    /// Gets whether the control's value is null.
-    /// </summary>
-    bool IsNull { get; }
     
     /// <summary>
     /// Subscribes to changes in the control.
@@ -127,15 +130,4 @@ public interface IControl
     /// <returns>True if the values are equal; otherwise, false.</returns>
     bool IsEqual(object? v1, object? v2);
 
-    
-    /// <summary>
-    /// Gets a dictionary for storing arbitrary metadata.
-    /// </summary>
-    IDictionary<string, object> Meta { get; }
-
-    /// <summary>
-    /// Validates the control and its children.
-    /// </summary>
-    /// <returns>True if the control is valid; otherwise, false.</returns>
-    bool Validate();
 }
