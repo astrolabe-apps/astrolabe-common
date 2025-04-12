@@ -53,12 +53,12 @@ public interface IControl
     /// <summary>
     /// Gets or sets the value of the control.
     /// </summary>
-    object? Value { get; set; }
+    object? Value { get; }
 
     /// <summary>
     /// Gets or sets the initial value of the control.
     /// </summary>
-    object? InitialValue { get; set; }
+    object? InitialValue { get; }
 
     /// <summary>
     /// Gets the first error message associated with the control.
@@ -83,12 +83,12 @@ public interface IControl
     /// <summary>
     /// Gets or sets whether the control is disabled.
     /// </summary>
-    bool Disabled { get; set; }
+    bool Disabled { get; }
 
     /// <summary>
     /// Gets or sets whether the control has been touched by user interaction.
     /// </summary>
-    bool Touched { get; set; }
+    bool Touched { get; }
 
     /// <summary>
     /// Gets a child field.
@@ -127,61 +127,6 @@ public interface IControl
     /// <returns>True if the values are equal; otherwise, false.</returns>
     bool IsEqual(object? v1, object? v2);
 
-    /// <summary>
-    /// Sets an error for the control with the specified key.
-    /// </summary>
-    /// <param name="key">The error key.</param>
-    /// <param name="error">The error message, or null to clear the error.</param>
-    void SetError(string key, string? error);
-
-    /// <summary>
-    /// Sets multiple errors for the control.
-    /// </summary>
-    /// <param name="errors">A dictionary of errors, or null to clear all errors.</param>
-    void SetErrors(Dictionary<string, string?>? errors);
-
-    /// <summary>
-    /// Modifies the control's value.
-    /// </summary>
-    /// <param name="updateFunc">A function that produces a new value based on the current value.</param>
-    void SetValue(Func<object?, object?> updateFunc);
-
-    /// <summary>
-    /// Sets both the value and initial value of the control.
-    /// </summary>
-    /// <param name="value">The new value.</param>
-    /// <param name="initialValue">The new initial value.</param>
-    void SetValueAndInitial(object? value, object? initialValue);
-
-    /// <summary>
-    /// Sets the initial value of the control.
-    /// </summary>
-    /// <param name="value">The new initial value.</param>
-    void SetInitialValue(object? value);
-
-    /// <summary>
-    /// Sets the touched state of the control.
-    /// </summary>
-    /// <param name="touched">The new touched state.</param>
-    /// <param name="notChildren">If true, doesn't propagate to child controls.</param>
-    void SetTouched(bool touched, bool notChildren = false);
-
-    /// <summary>
-    /// Sets the disabled state of the control.
-    /// </summary>
-    /// <param name="disabled">The new disabled state.</param>
-    /// <param name="notChildren">If true, doesn't propagate to child controls.</param>
-    void SetDisabled(bool disabled, bool notChildren = false);
-
-    /// <summary>
-    /// Marks the control as clean by setting the initial value to the current value.
-    /// </summary>
-    void MarkAsClean();
-
-    /// <summary>
-    /// Clears all errors from the control and its children.
-    /// </summary>
-    void ClearErrors();
     
     /// <summary>
     /// Gets a dictionary for storing arbitrary metadata.

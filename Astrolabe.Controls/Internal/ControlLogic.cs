@@ -3,76 +3,6 @@ using System.Collections.Generic;
 
 namespace Astrolabe.Controls.Internal;
 
-/// <summary>
-/// Represents the internal control interface which extends IControl with implementation-specific methods and properties.
-/// </summary>
-internal interface IInternalControl : IControl
-{
-    /// <summary>
-    /// Gets or sets the flags for this control.
-    /// </summary>
-    ControlFlags Flags { get; set; }
-    
-    /// <summary>
-    /// Gets the subscriptions manager for this control.
-    /// </summary>
-    Subscriptions? Subscriptions { get; }
-    
-    /// <summary>
-    /// Gets the control logic for this control.
-    /// </summary>
-    ControlLogic Logic { get; }
-    
-    /// <summary>
-    /// Gets the list of parent links.
-    /// </summary>
-    IList<ParentLink>? Parents { get; }
-    
-    /// <summary>
-    /// Determines if the control is valid.
-    /// </summary>
-    /// <returns>True if the control is valid; otherwise, false.</returns>
-    bool IsValid();
-    
-    /// <summary>
-    /// Gets a field by property name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property to get.</param>
-    /// <returns>The internal control for the field.</returns>
-    IInternalControl GetField(string propertyName);
-    
-    /// <summary>
-    /// Sets the value of the control without triggering validation.
-    /// </summary>
-    /// <param name="value">The new value.</param>
-    /// <param name="from">The parent control that triggered this change, if any.</param>
-    void SetValueImpl(object? value, IInternalControl? from = null);
-    
-    /// <summary>
-    /// Sets the initial value of the control.
-    /// </summary>
-    /// <param name="value">The new initial value.</param>
-    void SetInitialValueImpl(object? value);
-    
-    /// <summary>
-    /// Runs all subscribed listeners for current state.
-    /// </summary>
-    void RunListeners();
-    
-    /// <summary>
-    /// Notifies parent controls that the validity of this control has changed.
-    /// </summary>
-    /// <param name="hasErrors">Whether this control now has errors.</param>
-    void ValidityChanged(bool hasErrors);
-    
-    /// <summary>
-    /// Updates or creates a link to a parent control.
-    /// </summary>
-    /// <param name="parent">The parent control.</param>
-    /// <param name="key">The key or index in the parent.</param>
-    /// <param name="initial">If true, also sets the original key.</param>
-    void UpdateParentLink(IInternalControl parent, object? key, bool initial = false);
-}
 
 /// <summary>
 /// Flags representing the state of a control.
@@ -95,7 +25,7 @@ internal class ParentLink
     /// <summary>
     /// The parent control.
     /// </summary>
-    public IInternalControl Control { get; set; }
+    public ControlImpl Control { get; set; }
     
     /// <summary>
     /// The key or index in the parent.
@@ -107,7 +37,7 @@ internal class ParentLink
     /// </summary>
     public object? OrigKey { get; set; }
 
-    public ParentLink(IInternalControl control, object key, object? origKey = null)
+    public ParentLink(ControlImpl control, object key, object? origKey = null)
     {
         Control = control;
         Key = key;
@@ -121,11 +51,6 @@ internal class ParentLink
 internal abstract class ControlLogic
 {
     /// <summary>
-    /// The control this logic is attached to.
-    /// </summary>
-    public IInternalControl Control { get; protected set; } = null!;
-
-    /// <summary>
     /// Function to determine if two values are equal.
     /// </summary>
     public Func<object?, object?, bool> IsEqual { get; }
@@ -135,64 +60,58 @@ internal abstract class ControlLogic
         IsEqual = isEqual;
     }
 
-    /// <summary>
-    /// Attaches this logic to a control.
-    /// </summary>
-    /// <param name="control">The control to attach to.</param>
-    /// <returns>This logic instance.</returns>
-    public virtual ControlLogic Attach(IInternalControl control)
-    {
-        Control = control;
-        return this;
-    }
 
     /// <summary>
     /// Executes an action on each child control.
     /// </summary>
+    /// <param name="control"></param>
     /// <param name="action">The action to execute.</param>
-    public abstract void WithChildren(Action<IInternalControl> action);
+    public abstract void WithChildren(ControlImpl control, Action<ControlImpl> action);
 
     /// <summary>
     /// Gets a child field by name.
     /// </summary>
+    /// <param name="control"></param>
     /// <param name="propertyName">The name of the field.</param>
     /// <returns>The internal control for the field.</returns>
-    public abstract IInternalControl GetField(string propertyName);
+    public abstract ControlImpl GetField(ControlImpl control, string propertyName);
 
     /// <summary>
     /// Ensures that this control is in object mode.
     /// </summary>
     /// <returns>A control logic for object mode.</returns>
-    public abstract ControlLogic EnsureObject();
+    public abstract ControlLogic EnsureObject(ControlImpl control);
 
     /// <summary>
     /// Ensures that this control is in array mode.
     /// </summary>
     /// <returns>A control logic for array mode.</returns>
-    public abstract ControlLogic EnsureArray();
+    public abstract ControlLogic EnsureArray(ControlImpl control);
 
     /// <summary>
     /// Gets the elements of this control as an array.
     /// </summary>
     /// <returns>An array of internal controls.</returns>
-    public abstract IReadOnlyList<IInternalControl> GetElements();
+    public abstract IReadOnlyList<ControlImpl> GetElements(ControlImpl control);
 
     /// <summary>
     /// Called when the initial value of the control has changed.
     /// </summary>
-    public virtual void InitialValueChanged() { }
+    public virtual void InitialValueChanged(IControlTransactions ctx, ControlImpl control) { }
 
     /// <summary>
     /// Called when the value of the control has changed.
     /// </summary>
-    public virtual void ValueChanged() { }
+    public virtual void ValueChanged(IControlTransactions ctx, ControlImpl control) { }
 
     /// <summary>
     /// Called when a child control's value has changed.
     /// </summary>
+    /// <param name="ctx"></param>
+    /// <param name="control"></param>
     /// <param name="prop">The property or index that changed.</param>
     /// <param name="value">The new value.</param>
-    public virtual void ChildValueChange(object prop, object? value)
+    public virtual void ChildValueChange(IControlTransactions ctx, ControlImpl control, object prop, object? value)
     {
         throw new InvalidOperationException("Should never get here");
     }
@@ -214,7 +133,6 @@ internal class Subscriptions
 {
     private List<SubscriptionList> _lists = new();
     public ControlChange Mask { get; private set; } = ControlChange.None;
-    public bool OnListenerList { get; set; } = false;
 
     /// <summary>
     /// Subscribes to changes in a control.

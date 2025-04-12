@@ -7,34 +7,39 @@ namespace Astrolabe.Controls.Internal;
 /// <summary>
 /// Logic implementation for controls that manage object values.
 /// </summary>
-internal class ObjectLogic(
-    Func<object?, object?, bool> isEqual,
-    Func<string, object?, object?, ControlFlags, IInternalControl> makeChild)
-    : ControlLogic(isEqual)
+internal class ObjectLogic : ControlLogic
 {
-    private Dictionary<string, IInternalControl> _fields = new();
+    private Dictionary<string, ControlImpl> _fields = new();
+    private readonly Func<string, object?, object?, ControlFlags, ControlImpl> _makeChild;
 
-    public override ControlLogic EnsureObject()
+    public ObjectLogic(
+        Func<object?, object?, bool> isEqual,
+        Func<string, object?, object?, ControlFlags, ControlImpl> makeChild)
+        : base(isEqual)
+    {
+        _makeChild = makeChild;
+    }
+
+    public override ControlLogic EnsureObject(ControlImpl control)
     {
         return this;
     }
 
-    public override IInternalControl GetField(string propertyName)
+    public override ControlImpl GetField(ControlImpl control, string propertyName)
     {
         if (_fields.TryGetValue(propertyName, out var field))
         {
             return field;
         }
 
-        var parentControl = Control;
-        var value = GetPropertyValue(parentControl.Value, propertyName);
-        var initialValue = GetPropertyValue(parentControl.InitialValue, propertyName);
+        var value = GetPropertyValue(control.Value, propertyName);
+        var initialValue = GetPropertyValue(control.InitialValue, propertyName);
         
-        var childFlags = parentControl.Flags & (ControlFlags.Disabled | ControlFlags.Touched);
-        var child = makeChild(propertyName, value, initialValue, childFlags);
+        var childFlags = control.Flags & (ControlFlags.Disabled | ControlFlags.Touched);
+        var child = _makeChild(propertyName, value, initialValue, childFlags);
         
-        child.UpdateParentLink(parentControl, propertyName);
-        return (_fields[propertyName] = child);
+        child.UpdateParentLink(control, propertyName);
+        return _fields[propertyName] = child;
     }
 
     private static object? GetPropertyValue(object? obj, string propertyName)
@@ -49,17 +54,17 @@ internal class ObjectLogic(
         return property?.GetValue(obj);
     }
 
-    public override ControlLogic EnsureArray()
+    public override ControlLogic EnsureArray(ControlImpl control)
     {
         throw new InvalidOperationException("This is an object control, not an array control.");
     }
 
-    public override IReadOnlyList<IInternalControl> GetElements()
+    public override IReadOnlyList<ControlImpl> GetElements(ControlImpl control)
     {
         throw new InvalidOperationException("This is an object control, not an array control.");
     }
 
-    public override void WithChildren(Action<IInternalControl> action)
+    public override void WithChildren(ControlImpl control, Action<ControlImpl> action)
     {
         foreach (var field in _fields.Values)
         {
@@ -88,63 +93,40 @@ internal class ObjectLogic(
         return result;
     }
 
-    public override void ChildValueChange(object prop, object? value)
+    public override void ChildValueChange(IControlTransactions ctx, ControlImpl control, object prop, object? value)
     {
         if (prop is not string propertyName)
             throw new ArgumentException("Property must be a string for object controls", nameof(prop));
             
-        var copied = Copy(Control.Value) as IDictionary<string, object?>;
+        var copied = Copy(control.Value) as IDictionary<string, object?>;
         copied![propertyName] = value;
-        Control.SetValueImpl(copied);
+        control.SetValueImpl(ctx, copied);
     }
 
-    public override void ValueChanged()
+    public override void ValueChanged(IControlTransactions ctx, ControlImpl control)
     {
-        var value = Control.Value as IDictionary<string, object?>;
+        var value = control.Value as IDictionary<string, object?>;
         
         foreach (var (key, field) in _fields)
         {
             var fieldValue = value != null && value.TryGetValue(key, out var val) ? val : null;
-            field.SetValueImpl(fieldValue, Control);
+            field.SetValueImpl(ctx, fieldValue, control);
         }
     }
 
-    public override void InitialValueChanged()
+    public override void InitialValueChanged(IControlTransactions ctx, ControlImpl control)
     {
-        var initialValue = Control.InitialValue as IDictionary<string, object?>;
+        var initialValue = control.InitialValue as IDictionary<string, object?>;
         
         foreach (var (key, field) in _fields)
         {
             var fieldValue = initialValue != null && initialValue.TryGetValue(key, out var val) ? val : null;
-            field.SetInitialValueImpl(fieldValue);
+            field.SetInitialValueImpl(ctx, fieldValue);
         }
     }
 
     public override bool ChildrenValid()
     {
         return _fields.Values.All(field => field.IsValid());
-    }
-
-    public void SetFields(Dictionary<string, IInternalControl> fields)
-    {
-        WithChildren(child => child.UpdateParentLink(Control, null));
-        
-        foreach (var (key, field) in fields)
-        {
-            field.UpdateParentLink(Control, key);
-        }
-        
-        _fields = new Dictionary<string, IInternalControl>(fields);
-        
-        var value = Copy(Control.Value) as IDictionary<string, object?>;
-        var initialValue = Copy(Control.InitialValue) as IDictionary<string, object?>;
-        
-        foreach (var (key, field) in fields)
-        {
-            value![key] = field.Value;
-            initialValue![key] = field.InitialValue;
-        }
-        
-        Control.SetValueAndInitial(value, initialValue);
     }
 }
