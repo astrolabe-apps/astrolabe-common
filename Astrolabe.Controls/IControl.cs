@@ -51,11 +51,6 @@ public interface ISubscription
 public interface IControl
 {
     /// <summary>
-    /// Gets a unique identifier for this control.
-    /// </summary>
-    int UniqueId { get; }
-
-    /// <summary>
     /// Gets or sets the value of the control.
     /// </summary>
     object? Value { get; set; }
