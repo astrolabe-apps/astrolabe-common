@@ -44,6 +44,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Patch", "Astrolab
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Schemas.ExportCsv", "Astrolabe.Schemas.ExportCsv\Astrolabe.Schemas.ExportCsv.csproj", "{157332EA-6CF8-4633-98C7-96D69C8FA55C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Controls", "Astrolabe.Controls\Astrolabe.Controls.csproj", "{A8135275-E301-4327-8E92-ABBBF0D99577}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -138,5 +140,9 @@ Global
 		{157332EA-6CF8-4633-98C7-96D69C8FA55C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{157332EA-6CF8-4633-98C7-96D69C8FA55C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{157332EA-6CF8-4633-98C7-96D69C8FA55C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8135275-E301-4327-8E92-ABBBF0D99577}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8135275-E301-4327-8E92-ABBBF0D99577}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8135275-E301-4327-8E92-ABBBF0D99577}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8135275-E301-4327-8E92-ABBBF0D99577}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
