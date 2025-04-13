@@ -26,6 +26,7 @@ internal class FieldsLogic(ControlFields fields) : ControlLogic
         var iv = fields.GetChildValue(control.InitialValueImpl, propertyName);
         var v = fields.GetChildValue(control.ValueImpl, propertyName);
         var newField = fields.InitChild(v, iv, propertyName);
+        newField.UpdateParentLink(control, propertyName);
         _fields[propertyName] = newField;
         return newField;
     }
@@ -73,7 +74,7 @@ internal class FieldsLogic(ControlFields fields) : ControlLogic
 
 internal record ControlFields(
     Func<object?, string, object?> GetChildValue,
-    Func<object?, object?, string, IControl> InitChild,
+    Func<object?, object?, string, IControlImpl> InitChild,
     Func<object?, Dictionary<string, IControl>, object?> NewValue)
 {
     public static ControlFields DictionaryFields = new(

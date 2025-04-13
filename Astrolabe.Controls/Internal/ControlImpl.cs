@@ -28,6 +28,8 @@ internal interface IControlImpl : IControl
     void SetValueImpl(IControlTransactions ctx, object? value, IControlImpl? from = null);
 
     void SetInitialValueImpl(IControlTransactions ctx, object? value);
+
+    void UpdateParentLink(IControlImpl parent, object? key, bool initial = false);
     
     internal static readonly IReadOnlyDictionary<string, string> EmptyErrors = new Dictionary<string, string>();
 
@@ -69,7 +71,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
     
     public IControl this[string propertyName] => Logic.GetField(this, propertyName);
 
-    public IReadOnlyList<IControl> Elements => Logic.GetElements(this).Cast<IControl>().ToList();
+    public IReadOnlyList<IControl> Elements => Logic.GetElements(this);
 
     public void UpdateParentLink(IControlImpl parent, object? key, bool initial = false)
     {
