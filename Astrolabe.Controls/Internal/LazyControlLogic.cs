@@ -7,27 +7,19 @@ internal class LazyControlLogic : ControlLogic
         return Equals(v1, v2);
     }
 
-    public void WithChildren(Action<IControlImpl> action)
+    public T? VisitChildren<T>(Func<IControlImpl, T?> visitFn)
     {
-        throw new NotImplementedException();
+        return default;
     }
 
     public IControl GetField(IControlImpl control, string propertyName)
     {
-        throw new NotImplementedException();
+        var fields = new FieldsLogic(ControlFields.DictionaryFields);
+        control.Logic = fields;
+        return fields.GetField(control, propertyName);
     }
 
     public IReadOnlyList<IControl> GetElements(IControlImpl control)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void InitialValueChanged(IControlTransactions ctx, IControlImpl control)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void ValueChanged(IControlTransactions ctx, IControlImpl control)
     {
         throw new NotImplementedException();
     }
@@ -37,13 +29,18 @@ internal class LazyControlLogic : ControlLogic
         throw new NotImplementedException();
     }
 
-    public bool ChildrenValid()
+    public object? GetValue(IControlImpl control)
     {
-        throw new NotImplementedException();
+        return control.ValueImpl;
     }
 
-    public object? EnsureValue(IControlImpl control, object? value)
+    public void SetValue(IControlTransactions ctx, IControlImpl control, object? value)
     {
-        throw new NotImplementedException();
+        control.ValueImpl = value;
+    }
+
+    public void SetInitialValue(IControlTransactions ctx, IControlImpl control, object? value)
+    {
+        control.InitialValueImpl = value;
     }
 }

@@ -4,6 +4,20 @@ namespace Astrolabe.Controls;
 
 public static class ControlContextExtensions
 {
+    internal static IControlImpl GetControlImpl(this IControl control)
+    {
+        return (IControlImpl)control;
+    }
+
+    internal static void WithChildren(this ControlLogic logic, Action<IControlImpl> action)
+    {
+        logic.VisitChildren(c =>
+        {
+            action(c);
+            return (bool?) null;
+        });
+    }
+    
     public static object? GetValue(this ControlContext ctx, IControl control)
     {
         ctx.Tracker?.Invoke(control, ControlChange.Value);

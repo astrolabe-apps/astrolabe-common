@@ -12,6 +12,8 @@ internal interface IControlImpl : IControl
 
     Dictionary<string, string>? ErrorMap { get; set; }
     public ControlFlags Flags { get; set; }
+
+    public ControlLogic Logic { get; set; }
     
     public Subscriptions? Subscriptions { get; }
 
@@ -43,10 +45,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
 
     public object? InitialValueImpl { get; set; } = initialValue;
 
-    public object? Value
-    {
-        get => Logic.EnsureValue(this, ValueImpl);
-    }
+    public object? Value => Logic.GetValue(this);
 
     public object? InitialValue => InitialValueImpl;
     public ControlFlags Flags { get; set; } = flags;
@@ -67,9 +66,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
     public bool Disabled => (Flags & ControlFlags.Disabled) != 0;
 
     public bool Touched => (Flags & ControlFlags.Touched) != 0;
-
-    public bool IsNull => Value == null;
-
+    
     public IControl this[string propertyName] => Logic.GetField(this, propertyName);
 
     public IReadOnlyList<IControl> Elements => Logic.GetElements(this).Cast<IControl>().ToList();
@@ -143,13 +140,11 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
             var structureFlag = (value == null || Value == null)
                 ? ControlChange.Structure
                 : ControlChange.None;
-
-            ValueImpl = value;
-
+            
             if ((Flags & ControlFlags.DontClearError) == 0)
                 ctx.SetErrors(this,null);
 
-            Logic.ValueChanged(ctx, this);
+            Logic.SetValue(ctx, this, value);
         
             if (Parents != null)
             {
@@ -170,27 +165,26 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
 
         ctx.InTransaction(this, () =>
         {
-            InitialValueImpl = value;
-            Logic.InitialValueChanged(ctx, this);
+            Logic.SetInitialValue(ctx, this, value);
             Subscriptions?.ApplyChange(ControlChange.InitialValue);
             return true;
         });
     }
 
 
-    public bool IsValid()
+    private bool IsValid()
     {
         if (ErrorMap != null || (Flags & ControlFlags.ChildInvalid) != 0)
             return false;
-            
-        bool allChildrenValid = Logic.ChildrenValid();
+
+        var allChildrenValid = Logic.VisitChildren(c => c.Valid ? (bool?) null : false) ?? true;
         if (!allChildrenValid)
             Flags |= ControlFlags.ChildInvalid;
             
         return allChildrenValid;
     }
 
-    public ControlChange GetChangeState(ControlChange mask)
+    private ControlChange GetChangeState(ControlChange mask)
     {
         var changeFlags = ControlChange.None;
         

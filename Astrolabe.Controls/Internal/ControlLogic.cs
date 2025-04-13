@@ -49,20 +49,19 @@ internal interface ControlLogic
 {
     bool IsEqual(object? v1, object? v2);
     
-    void WithChildren(Action<IControlImpl> action);
+    T? VisitChildren<T>(Func<IControlImpl, T?> visitFn);
 
     IControl GetField(IControlImpl control, string propertyName);
     
     IReadOnlyList<IControl> GetElements(IControlImpl control);
-
-    void InitialValueChanged(IControlTransactions ctx, IControlImpl control);
-
-    void ValueChanged(IControlTransactions ctx, IControlImpl control);
-
+    
     void ChildValueChange(IControlTransactions ctx, IControlImpl control, object prop, object? value);
 
-    bool ChildrenValid();
+    public object? GetValue(IControlImpl control);
+    
+    public void SetValue(IControlTransactions ctx, IControlImpl control, object? value);
+    
+    public void SetInitialValue(IControlTransactions ctx, IControlImpl control, object? value);
 
-    public object? EnsureValue(IControlImpl control, object? value);
 }
 
