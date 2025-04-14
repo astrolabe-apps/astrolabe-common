@@ -790,7 +790,7 @@ importers:
   ../../../schemas-html:
     specifiers:
       '@astroapps/aria-base': workspace:*
-      '@mui/base': ^5.0.0-beta.68
+      '@mui/base': ^5.0.0-beta.70
       '@react-stately/overlays': ^3.6.13
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/schemas': workspace:*
@@ -809,7 +809,7 @@ importers:
       typescript: ^5.6.3
     dependencies:
       '@astroapps/aria-base': link:../aria-base
-      '@mui/base': 5.0.0-beta.68_vsw25juzkyj7spaf6wjn5upvjq
+      '@mui/base': 5.0.0-beta.70_vsw25juzkyj7spaf6wjn5upvjq
       '@react-stately/overlays': 3.6.13_react@18.3.1
       clsx: 2.1.1
       jsonata: 2.0.5
@@ -3874,6 +3874,30 @@ packages:
       react-dom: 18.3.1_react@18.3.1
     dev: false
 
+  /@mui/base/5.0.0-beta.70_vsw25juzkyj7spaf6wjn5upvjq:
+    resolution: {integrity: sha512-Tb/BIhJzb0pa5zv/wu7OdokY9ZKEDqcu1BDFnohyvGCoHuSXbEr90rPq1qeNW3XvTBIbNWHEF7gqge+xpUo6tQ==}
+    engines: {node: '>=14.0.0'}
+    deprecated: This package has been replaced by @base-ui-components/react
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+    dependencies:
+      '@babel/runtime': 7.26.0
+      '@floating-ui/react-dom': 2.1.2_nnrd3gsncyragczmpvfhocinkq
+      '@mui/types': 7.2.24_@types+react@18.3.12
+      '@mui/utils': 6.4.9_ryhct6r6jz2fex4xfo2quarxhi
+      '@popperjs/core': 2.11.8
+      '@types/react': 18.3.12
+      clsx: 2.1.1
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-dom: 18.3.1_react@18.3.1
+    dev: false
+
   /@mui/core-downloads-tracker/5.16.7:
     resolution: {integrity: sha512-RtsCt4Geed2/v74sbihWzzRs+HsIQCfclHeORh5Ynu2fS4icIKozcSubwuG7vtzq2uW3fOR1zITSP84TNt2GoQ==}
     dev: true
@@ -4037,6 +4061,17 @@ packages:
     dependencies:
       '@types/react': 18.3.12
 
+  /@mui/types/7.2.24_@types+react@18.3.12:
+    resolution: {integrity: sha512-3c8tRt/CbWZ+pEg7QpSwbdxOk36EfmhbKf6AGZsD1EcLDLTSZoxxJ86FVtcjxvjuhdyBiWKSTGZFaXCnidO2kw==}
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+    dependencies:
+      '@types/react': 18.3.12
+    dev: false
+
   /@mui/utils/5.16.6_ryhct6r6jz2fex4xfo2quarxhi:
     resolution: {integrity: sha512-tWiQqlhxAt3KENNiSRL+DIn9H5xNVK6Jjf70x3PnfQPz1MPBdh7yyIcAyVBT9xiw7hP3SomRhPR7hzBMBCjqEA==}
     engines: {node: '>=12.0.0'}
@@ -4069,6 +4104,26 @@ packages:
     dependencies:
       '@babel/runtime': 7.26.0
       '@mui/types': 7.2.21_@types+react@18.3.12
+      '@types/prop-types': 15.7.14
+      '@types/react': 18.3.12
+      clsx: 2.1.1
+      prop-types: 15.8.1
+      react: 18.3.1
+      react-is: 19.0.0
+    dev: false
+
+  /@mui/utils/6.4.9_ryhct6r6jz2fex4xfo2quarxhi:
+    resolution: {integrity: sha512-Y12Q9hbK9g+ZY0T3Rxrx9m2m10gaphDuUMgWxyV5kNJevVxXYCLclYUCC9vXaIk1/NdNDTcW2Yfr2OGvNFNmHg==}
+    engines: {node: '>=14.0.0'}
+    peerDependencies:
+      '@types/react': ^17.0.0 || ^18.0.0 || ^19.0.0
+      react: ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+    dependencies:
+      '@babel/runtime': 7.26.0
+      '@mui/types': 7.2.24_@types+react@18.3.12
       '@types/prop-types': 15.7.14
       '@types/react': 18.3.12
       clsx: 2.1.1
