@@ -176,9 +176,7 @@ export function createSignatureRenderer(
     ),
     {
       renderType: "Signature",
-      type: "data",
       collection: true,
-      match: (p, renderOptions) => isSignatureRenderer(renderOptions),
     },
   );
 }
