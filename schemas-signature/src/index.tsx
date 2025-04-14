@@ -95,7 +95,7 @@ function SignatureRenderer({
     segment = dso.classes.segment,
     segmentPath = dso.classes.segmentPath,
     disabledSegmentPath = dso.classes.disabledSegmentPath,
-  } = classes;
+  } = classes ?? {};
 
   const service = useMachine(signaturePad.machine, {
     ids: {
