@@ -110,6 +110,7 @@ function SingleAutocomplete({
   } = useAutocomplete({
     freeSolo: true,
     multiple: false,
+    readOnly,
     value: selectedOptionControl.value,
     inputValue: inputControl.value,
     getOptionLabel: (v) => (typeof v === "string" ? v : v.name),
@@ -129,7 +130,6 @@ function SingleAutocomplete({
     },
     ...props,
   });
-
   return (
     <div id={id} className={"relative"} {...getRootProps()}>
       <div
@@ -145,6 +145,7 @@ function SingleAutocomplete({
           {...getInputProps()}
           placeholder={controlClasses?.placeholder ?? ""}
           className={inputClass}
+          readOnly={readOnly}
         />
 
         <button
@@ -237,6 +238,7 @@ function MultipleAutocomplete({
     value: selectedOptionsControl.value ?? [],
     inputValue: inputControl.value,
     freeSolo: true,
+    readOnly,
     multiple: true,
     getOptionLabel: (v) => (typeof v === "string" ? v : v.name),
     filterOptions: (o, s) =>
@@ -272,12 +274,16 @@ function MultipleAutocomplete({
               text={typeof v === "string" ? v : v.name}
               chipContainerClass={chipContainerClass}
               chipCloseButtonClass={chipCloseButtonClass}
-              onDeleteClick={() => {
-                const c = selectedOptionsControl.elements.find(
-                  (x) => x.value == v,
-                );
-                if (c) removeElement(selectedOptionsControl, c);
-              }}
+              onDeleteClick={
+                readOnly || disabled
+                  ? undefined
+                  : () => {
+                      const c = selectedOptionsControl.elements.find(
+                        (x) => x.value == v,
+                      );
+                      if (c) removeElement(selectedOptionsControl, c);
+                    }
+              }
             />
           ))}
           <input
@@ -285,6 +291,7 @@ function MultipleAutocomplete({
             {...getInputProps()}
             placeholder={controlClasses?.placeholder ?? ""}
             className={clsx(inputClass)}
+            readOnly={readOnly}
           />
         </div>
 
