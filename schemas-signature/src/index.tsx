@@ -1,6 +1,6 @@
 import { normalizeProps, useMachine } from "@zag-js/react";
 import * as signaturePad from "@zag-js/signature-pad";
-import { useId, useState } from "react";
+import { useId } from "react";
 
 import React from "react";
 import {
@@ -12,7 +12,6 @@ import {
   DataRendererProps,
   fontAwesomeIcon,
   FormRenderer,
-  HtmlInputProperties,
   IconReference,
   RenderOptions,
   stringField,
@@ -20,22 +19,39 @@ import {
 import clsx from "clsx";
 
 export interface SignatureRendererOptions {
-  containerClass?: string;
-  canvasClass?: string;
   clearButton?: IconReference;
-  clearButtonClass?: string;
-  /** The path currently being drawn */
-  currentSegmentClass?: string;
-  /** The parent SVG element */
-  segmentClass?: string;
-  /** The paths already drawn */
-  segmentPathClass?: string;
-  /** If the `control` is `disabled`, applies this instead of `segmentPathClass` */
-  disabledSegmentPathClass?: string;
-  /** A line element that is used to help keep signatures straight */
-  guideClass?: string;
+  onClear?: () => void;
+  classes: Partial<{
+    container: string;
+    canvas: string;
+    clearButton: string;
+    /** The path currently being drawn */
+    currentSegment: string;
+    /** The parent SVG element */
+    segment: string;
+    /** The paths already drawn */
+    segmentPath: string;
+    /** If the `control` is `disabled`, applies this instead of `segmentPathClass` */
+    disabledSegmentPath: string;
+    /** A line element that is used to help keep signatures straight */
+    guide: string;
+  }>;
 }
 
+export const defaultSignatureOptions = {
+  clearButton: fontAwesomeIcon("rotate-left"),
+  classes: {
+    container: "min-h-[100px] border border-surface-300 rounded-lg px-2",
+    canvas: "w-full h-full min-h-[100px] relative",
+    segment: "fill-black z-20",
+    segmentPath: "fill-black",
+    disabledSegmentPath: "fill-surface-800",
+    currentSegment: "fill-blue-500 z-30",
+    clearButton: "",
+    guide:
+      "border-b border-surface-500 border-dashed h-[1px] px-4 absolute inset-x-4 bottom-[12%] z-10",
+  },
+} satisfies SignatureRendererOptions;
 interface SignatureFieldOptions {
   /** Hides the guide line used for signatures */
   noGuideLine?: boolean;
@@ -68,19 +84,18 @@ function SignatureRenderer({
   const { control, readonly, required, designMode, renderOptions } = props;
 
   const { Button, I, Div } = renderer.html;
-
+  const dso = defaultSignatureOptions;
+  const { clearButton = dso.clearButton, classes, ...otherOptions } = options;
   const {
-    containerClass = defaultSignatureClasses.containerClass,
-    canvasClass = defaultSignatureClasses.canvasClass,
-    clearButton = defaultSignatureClasses.clearButton,
-    clearButtonClass,
-    currentSegmentClass = defaultSignatureClasses.currentSegmentClass,
-    guideClass = defaultSignatureClasses.guideClass,
-    segmentClass = defaultSignatureClasses.segmentClass,
-    segmentPathClass = defaultSignatureClasses.segmentPathClass,
-    disabledSegmentPathClass = defaultSignatureClasses.disabledSegmentPathClass,
-    ...otherOptions
-  } = options;
+    container = dso.classes.container,
+    canvas = dso.classes.canvas,
+    clearButton: clearButtonClass = dso.classes.clearButton,
+    currentSegment = dso.classes.currentSegment,
+    guide = dso.classes.guide,
+    segment = dso.classes.segment,
+    segmentPath = dso.classes.segmentPath,
+    disabledSegmentPath = dso.classes.disabledSegmentPath,
+  } = classes;
 
   const service = useMachine(signaturePad.machine, {
     ids: {
@@ -102,16 +117,14 @@ function SignatureRenderer({
 
   const api = signaturePad.connect(service, normalizeProps);
   return (
-    <Div className={clsx(containerClass)} {...api.getRootProps()}>
+    <Div className={clsx(container)} {...api.getRootProps()}>
       {!designMode && (
-        <Div className={clsx(canvasClass)} {...api.getControlProps()}>
-          <svg className={clsx(segmentClass)} {...api.getSegmentProps()}>
+        <Div className={clsx(canvas)} {...api.getControlProps()}>
+          <svg className={clsx(segment)} {...api.getSegmentProps()}>
             {api.paths.map((path, i) => (
               <path
                 className={clsx(
-                  control.disabled
-                    ? disabledSegmentPathClass
-                    : segmentPathClass,
+                  control.disabled ? disabledSegmentPath : segmentPath,
                 )}
                 key={i}
                 {...api.getSegmentPathProps({ path })}
@@ -119,7 +132,7 @@ function SignatureRenderer({
             ))}
             {api.currentPath && (
               <path
-                className={clsx(currentSegmentClass)}
+                className={clsx(currentSegment)}
                 {...api.getSegmentPathProps({ path: api.currentPath })}
               />
             )}
@@ -129,6 +142,9 @@ function SignatureRenderer({
             {...api.getClearTriggerProps()}
             onClick={() => {
               api.getClearTriggerProps().onClick?.(null as any);
+              if (options?.onClear) {
+                options.onClear();
+              }
             }}
           >
             {clearButton && (
@@ -139,7 +155,7 @@ function SignatureRenderer({
             )}
           </Button>
           {!renderOptions.noGuideLine && (
-            <Div className={clsx(guideClass)} {...api.getGuideProps()} />
+            <Div className={clsx(guide)} {...api.getGuideProps()} />
           )}
         </Div>
       )}
@@ -176,18 +192,6 @@ export function isSignatureRenderer(
 ): options is SignatureRenderOptions {
   return options.type === "Signature";
 }
-
-export const defaultSignatureClasses = {
-  containerClass: "min-h-[100px] border border-surface-300 rounded-lg px-2",
-  canvasClass: "w-full h-full min-h-[100px] relative",
-  clearButton: fontAwesomeIcon("rotate-left"),
-  segmentClass: "fill-black z-20",
-  segmentPathClass: "fill-black",
-  disabledSegmentPathClass: "fill-surface-800",
-  currentSegmentClass: "fill-blue-500 z-30",
-  guideClass:
-    "border-b border-surface-500 border-dashed h-[1px] px-4 absolute inset-x-4 bottom-[12%] z-10",
-} satisfies SignatureRendererOptions;
 
 export const signatureFields = buildSchema<SignatureFieldOptions>({
   noGuideLine: boolField("Hide guide line", {
