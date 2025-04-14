@@ -7,7 +7,7 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { parse, stringify } from "querystring";
-import { AnchorHTMLAttributes, FC, useEffect } from "react";
+import { AnchorHTMLAttributes, FC, useEffect, useRef } from "react";
 import { getMatchingRoute, RouteData } from "@astroapps/client";
 import { useControl } from "@react-typed-forms/core";
 import { useDefaultSyncRoute } from "@astroapps/client";
@@ -25,6 +25,7 @@ export function useNextNavigationService<T = {}>(
       >)
     : useSearchParams()!;
   const paramString = searchParams.toString();
+  const queryRef = useRef<string | null>(null);
   const query = parse(paramString);
   const queryControl = useControl({ query, isReady: false });
   const pathname = usePathname()!;
@@ -33,12 +34,14 @@ export function useNextNavigationService<T = {}>(
     : [];
 
   useEffect(() => {
-    queryControl.value = { query, isReady: true };
+    if (queryRef.current !== paramString)
+      queryControl.value = { query, isReady: true };
   }, [paramString]);
 
-  useDefaultSyncRoute(queryControl, (query) =>
-    router.replace(pathname + "?" + query, { scroll: false }),
-  );
+  useDefaultSyncRoute(queryControl, (query) => {
+    queryRef.current = query;
+    router.replace(pathname + "?" + query, { scroll: false });
+  });
   const route =
     (routes && getMatchingRoute(routes, pathSegments)) ??
     defaultRoute ??
