@@ -79,7 +79,7 @@ export class SchemaNode {
     const parentNode = f.schemaRef
       ? this.tree.getSchema(f.schemaRef)
       : f.treeChildren
-        ? this.parent
+        ? this.parent?.getResolvedParent()
         : undefined;
     return parentNode ?? this;
   }

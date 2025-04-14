@@ -265,9 +265,10 @@ export function BasicFormEditor<A extends string = string>({
 
   async function doSaveForm(c: Control<EditableForm>) {
     await saveForm(
-      c.fields.formTree.value.rootNode.definition.children!.map((c) =>
-        cleanDataForSchema(c, ControlDefinitionTree, true),
-      ) ?? [],
+      c.fields.formTree.value
+        .getRootDefinitions()
+        .value.map((c) => cleanDataForSchema(c, ControlDefinitionTree, true)) ??
+        [],
       c.fields.formId.value as A,
     );
     c.fields.formTree.markAsClean();

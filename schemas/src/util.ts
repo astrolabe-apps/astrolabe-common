@@ -571,20 +571,17 @@ export function cleanDataForSchema(
       return;
     }
     if (isCompoundField(x)) {
+      const childNode = schemaNode.createChildNode(x);
       if (x.collection) {
         if (Array.isArray(childValue)) {
           out[x.field] = childValue.map((cv) =>
-            cleanDataForSchema(
-              cv,
-              schemaNode.createChildNode(x),
-              removeIfDefault,
-            ),
+            cleanDataForSchema(cv, childNode, removeIfDefault),
           );
         }
       } else {
         out[x.field] = cleanDataForSchema(
           childValue,
-          schemaNode.createChildNode(x),
+          childNode,
           removeIfDefault,
         );
       }
