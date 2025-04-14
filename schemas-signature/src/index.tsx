@@ -67,8 +67,7 @@ function SignatureRenderer({
 }: SignatureRendererProps) {
   const { control, readonly, required, designMode, renderOptions } = props;
 
-  const { Button, I, Div, Input } = renderer.html;
-  const [imageURL, setImageURL] = useState<string>("");
+  const { Button, I, Div } = renderer.html;
 
   const {
     containerClass = defaultSignatureClasses.containerClass,
@@ -96,9 +95,6 @@ function SignatureRenderer({
     required: required,
     onDrawEnd(details) {
       control.value = details.paths;
-      details.getDataUrl("image/png").then((url) => {
-        setImageURL(url);
-      });
       options?.onDrawEnd?.(details);
     },
     ...otherOptions,
@@ -142,12 +138,6 @@ function SignatureRenderer({
               />
             )}
           </Button>
-          {/* the `getHiddenInputProps` can return a string[] which doesn't fit the schema, hence the coersion */}
-          <Input
-            {...(api.getHiddenInputProps({
-              value: imageURL,
-            }) as HtmlInputProperties)}
-          />
           {!renderOptions.noGuideLine && (
             <Div className={clsx(guideClass)} {...api.getGuideProps()} />
           )}
