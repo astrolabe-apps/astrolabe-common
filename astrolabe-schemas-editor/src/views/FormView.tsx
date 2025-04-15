@@ -11,11 +11,14 @@ import { FormControlPreview } from "../FormControlPreview";
 import {
   addMissingControlsForSchema,
   ControlDefinition,
+  createSchemaDataNode,
+  groupedControl,
+  NewControlRenderer,
   SchemaDataNode,
   SchemaDataTree,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import React from "react";
+import React, { useMemo } from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
 import clsx from "clsx";
 import { JsonEditor } from "../JsonEditor";
@@ -32,7 +35,8 @@ export function FormView(props: { formId: string; context: ViewContext }) {
   useControlEffect(
     () =>
       [
-        control.fields.formTree.value?.control.dirty,
+        control.fields.formTree.value?.control.dirty ||
+          control.fields.config.dirty,
         control.fields.name.value,
       ] as const,
     ([unsaved, name]) => {
@@ -69,10 +73,20 @@ function RenderFormDesign({
     button,
     checkbox,
   } = context;
-  const tree = c.fields.formTree.value;
+  const {
+    formTree: { value: tree },
+    schema: { value: rootSchema },
+    renderer: { value: formRenderer },
+    configSchema: { value: configSchema },
+    config,
+  } = c.fields;
   const rootNode = tree.rootNode;
-  const rootSchema = c.fields.schema.value;
-  const formRenderer = c.fields.renderer.value;
+  const configDefinition = useMemo(() => {
+    const controls = configSchema
+      ? addMissingControlsForSchema(configSchema, [])
+      : [];
+    return groupedControl(controls);
+  }, [configSchema]);
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-2">
@@ -124,9 +138,19 @@ function RenderFormDesign({
           {checkbox(c.fields.hideFields, "Hide Field Names")}
           {button(addMissing, "Add Missing Controls")}
           {checkbox(c.fields.showJson, "Show JSON")}
+          {configSchema && checkbox(c.fields.showConfig, "Show Config")}
         </div>
         {c.fields.showJson.value && (
           <FormJsonView root={c.fields.formTree.value.getRootDefinitions()} />
+        )}
+        {c.fields.showConfig.value && configSchema && (
+          <div className="p-4">
+            <NewControlRenderer
+              definition={configDefinition}
+              renderer={context.editorFormRenderer}
+              parentDataNode={createSchemaDataNode(configSchema, config)}
+            />
+          </div>
         )}
         <div className={clsx("grow overflow-auto", context.editorPanelClass)}>
           <FormControlPreview

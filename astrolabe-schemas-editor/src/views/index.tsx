@@ -41,6 +41,7 @@ export interface ViewContext {
   editorPanelClass?: string;
   saveForm(c: Control<EditableForm>): void;
   saveSchema?(c: Control<EditableForm>): void;
+  editorFormRenderer: FormRenderer;
   snippets?: Snippet[];
 }
 
@@ -63,6 +64,9 @@ export interface EditableForm {
   schema: EditorSchemaTree;
   hideFields: boolean;
   showJson?: boolean;
+  showConfig?: boolean;
   formId: string;
   name: string;
+  config?: any;
+  configSchema?: SchemaNode;
 }

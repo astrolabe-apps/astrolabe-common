@@ -23,6 +23,7 @@ import {
   createFormRenderer,
   createFormTree,
   createSchemaLookup,
+  createSchemaTree,
   EditorGroup,
   FormNode,
   FormRenderer,
@@ -70,7 +71,11 @@ export interface BasicFormEditorProps<A extends string> {
   selectedForm?: Control<A | undefined>;
   formTypes: [string, string][] | FormInfo[];
   listHeader?: ReactNode;
-  saveForm: (controls: ControlDefinition[], formId: A) => Promise<any>;
+  saveForm: (
+    controls: ControlDefinition[],
+    formId: A,
+    config: any,
+  ) => Promise<any>;
   saveSchema?: (controls: SchemaField[], schemaId: string) => Promise<any>;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   extensions?: ControlDefinitionExtension[];
@@ -270,8 +275,10 @@ export function BasicFormEditor<A extends string = string>({
         .value.map((c) => cleanDataForSchema(c, ControlDefinitionTree, true)) ??
         [],
       c.fields.formId.value as A,
+      c.fields.config.value,
     );
     c.fields.formTree.markAsClean();
+    c.fields.config.markAsClean();
   }
 
   const formList = formTypes.map((e) =>
@@ -294,6 +301,7 @@ export function BasicFormEditor<A extends string = string>({
     createEditorRenderer,
     editorFields: ControlDefinitionTree,
     schemaEditorFields: SchemaFieldTree,
+    editorFormRenderer,
     formList,
     openForm,
     updateTabTitle,
@@ -392,6 +400,10 @@ export function BasicFormEditor<A extends string = string>({
       renderer: res.renderer ?? formRenderer,
       formId,
       name,
+      config: res.config,
+      configSchema: res.configSchema
+        ? createSchemaTree(res.configSchema).rootNode
+        : undefined,
     });
   }
 }
