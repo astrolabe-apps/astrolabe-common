@@ -33,10 +33,8 @@ export function useNextNavigationService<T = {}>(
     ? pathname.split("/").filter((x) => x.length)
     : [];
 
-  useEffect(() => {
-    if (queryRef.current !== paramString)
-      queryControl.value = { query, isReady: true };
-  }, [paramString]);
+  if (queryRef.current !== paramString)
+    queryControl.value = { query, isReady: true };
 
   useDefaultSyncRoute(queryControl, (query) => {
     queryRef.current = query;
