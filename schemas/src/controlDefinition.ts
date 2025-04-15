@@ -468,6 +468,12 @@ export function isGridRenderer(
   return options.type === GroupRenderType.Grid;
 }
 
+export function isWizardRenderer(
+  options: GroupRenderOptions,
+): options is WizardRenderOptions {
+  return options.type === GroupRenderType.Wizard;
+}
+
 export function isInlineRenderer(
   options: GroupRenderOptions,
 ): options is GridRenderer {

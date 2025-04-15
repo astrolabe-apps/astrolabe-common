@@ -150,7 +150,7 @@ export function FieldSelection({
               </>
             ) : (
               <>
-                <div>{button(addChild, "New child")}</div>
+                {canEdit && <div>{button(addChild, "New field")}</div>}
                 <input
                   className={"w-full"}
                   value={term.value}

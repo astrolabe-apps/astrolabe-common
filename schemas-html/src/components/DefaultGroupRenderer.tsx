@@ -1,7 +1,6 @@
 import {
   FlexRenderer,
   FormRenderer,
-  GridRenderer,
   GroupRendererProps,
   GroupRendererRegistration,
   GroupRenderType,
@@ -10,6 +9,7 @@ import {
   isInlineRenderer,
   isSelectChildRenderer,
   isTabsRenderer,
+  isWizardRenderer,
   rendererClass,
   SelectChildRenderer,
 } from "@react-typed-forms/schemas";
@@ -18,6 +18,10 @@ import React, { CSSProperties } from "react";
 import { useTrackedComponent } from "@react-typed-forms/core";
 import { createTabsRenderer, DefaultTabsRenderOptions } from "./TabsRenderer";
 import { createGridRenderer, DefaultGridRenderOptions } from "./GridRenderer";
+import {
+  createWizardRenderer,
+  DefaultWizardRenderOptions,
+} from "./DefaultWizardRenderer";
 
 interface StyleProps {
   className?: string;
@@ -32,6 +36,7 @@ export interface DefaultGroupRendererOptions {
   defaultFlexGap?: string;
   inlineClass?: string;
   tabs?: DefaultTabsRenderOptions;
+  wizard?: DefaultWizardRenderOptions;
 }
 
 export function createDefaultGroupRenderer(
@@ -39,6 +44,7 @@ export function createDefaultGroupRenderer(
 ): GroupRendererRegistration {
   const gridRenderer = createGridRenderer(options?.grid);
   const tabsRenderer = createTabsRenderer(options?.tabs);
+  const wizardRenderer = createWizardRenderer(options?.wizard);
   const {
     className,
     standardClassName,
@@ -66,6 +72,8 @@ export function createDefaultGroupRenderer(
       return tabsRenderer.render(props, renderer);
     if (isGridRenderer(renderOptions))
       return gridRenderer.render(props, renderer);
+    if (isWizardRenderer(renderOptions))
+      return wizardRenderer.render(props, renderer);
     if (isSelectChildRenderer(renderOptions) && !props.designMode) {
       return (
         <SelectChildGroupRenderer {...props} renderOptions={renderOptions} />
