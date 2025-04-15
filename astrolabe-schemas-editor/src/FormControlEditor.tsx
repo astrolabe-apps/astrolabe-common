@@ -28,6 +28,7 @@ import { createValueForFieldRenderer } from "@react-typed-forms/schemas-html";
 import { createFieldSelectionRenderer } from "./FieldSelectionRenderer";
 import { createDataGridRenderer } from "@astroapps/schemas-datagrid";
 import { ViewContext } from "./views";
+import { SchemaFieldEditor } from "./views/SchemaFieldEditor";
 
 type ExtensionTypeFilterMap = { [key: string]: (n: SchemaNode) => boolean };
 
@@ -77,7 +78,7 @@ export function FormControlEditor({
         createValueForFieldRenderer({ schema: controlNode.schema }),
         createFieldSelectionRenderer({
           schema: controlNode.schema,
-          viewContext,
+          edit: (n) => <SchemaFieldEditor schema={n} context={viewContext} />,
         }),
         createDataGridRenderer(),
       ]),

@@ -1,7 +1,9 @@
 ﻿import {
   ControlDefinitionExtension,
+  createAction,
   createDataRenderer,
   FieldType,
+  FormRenderer,
   getSchemaNodePath,
   isCompoundField,
   isCompoundNode,
@@ -15,6 +17,7 @@
 import React, {
   Fragment,
   MouseEvent,
+  ReactNode,
   useCallback,
   useRef,
   useState,
@@ -49,19 +52,20 @@ export const FieldSelectionExtension: ControlDefinitionExtension = {
 
 export interface FieldSelectionOptions {
   schema: SchemaNode;
-  viewContext: ViewContext;
+  edit?: (node: SchemaNode) => ReactNode;
 }
 export function createFieldSelectionRenderer({
   schema,
-  viewContext,
+  edit,
 }: FieldSelectionOptions) {
   return createDataRenderer(
-    (props) => {
+    (props, formRenderer) => {
       return (
         <FieldSelection
           parentNode={schema}
           control={props.control as Control<string | undefined>}
-          viewContext={viewContext}
+          edit={edit}
+          formRenderer={formRenderer}
         />
       );
     },
@@ -74,11 +78,13 @@ export function createFieldSelectionRenderer({
 export function FieldSelection({
   parentNode,
   control,
-  viewContext,
+  edit,
+  formRenderer,
 }: {
   parentNode: SchemaNode;
   control: Control<string | undefined>;
-  viewContext: ViewContext;
+  edit?: (n: SchemaNode) => ReactNode;
+  formRenderer: FormRenderer;
 }) {
   const editingNode = useControl<SchemaNode>();
   const open = useControl(false);
@@ -87,7 +93,7 @@ export function FieldSelection({
   const triggerRef = useRef<HTMLDivElement | null>(null);
 
   const selectorSchemaNode = useControl<SchemaNode>(parentNode);
-
+  const canEdit = !!edit;
   useControlEffect(
     () => open.value,
     (v) => {
@@ -104,8 +110,6 @@ export function FieldSelection({
       selectorSchemaNode.value = parentSchema;
     },
   );
-  const canEdit = !!viewContext.saveSchema;
-
   return (
     <>
       <div
@@ -137,22 +141,16 @@ export function FieldSelection({
               "flex flex-col gap-2 min-w-[500px] border border-black p-2"
             }
           >
-            {editingNode.value ? (
+            {edit && editingNode.value ? (
               <>
                 <div>
-                  {viewContext.button(
-                    () => (editingNode.value = undefined),
-                    "Finish",
-                  )}
+                  {button(() => (editingNode.value = undefined), "Finish")}
                 </div>
-                <SchemaFieldEditor
-                  context={viewContext}
-                  schema={editingNode.value}
-                />
+                {edit(editingNode.value)}
               </>
             ) : (
               <>
-                <div>{viewContext.button(addChild, "New child")}</div>
+                <div>{button(addChild, "New child")}</div>
                 <input
                   className={"w-full"}
                   value={term.value}
@@ -185,6 +183,11 @@ export function FieldSelection({
     </>
   );
 
+  function button(onClick: () => void, actionText: string) {
+    return formRenderer.renderAction(
+      createAction(actionText, onClick, actionText),
+    );
+  }
   function addChild() {
     const selected = selectorSchemaNode.value;
     const tree = selected.tree as EditorSchemaTree;

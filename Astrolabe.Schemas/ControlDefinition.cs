@@ -333,7 +333,8 @@ public enum GroupRenderType
     Tabs,
     GroupElement,
     SelectChild,
-    Inline
+    Inline,
+    Wizard
 }
 
 [JsonBaseType("type", typeof(SimpleGroupRenderOptions))]
@@ -344,6 +345,7 @@ public enum GroupRenderType
 [JsonSubType("Tabs", typeof(TabsRenderOptions))]
 [JsonSubType("SelectChild", typeof(SelectChildRenderer))]
 [JsonSubType("Inline", typeof(SimpleGroupRenderOptions))]
+[JsonSubType("Wizard", typeof(SimpleGroupRenderOptions))]
 public abstract record GroupRenderOptions(
     [property: SchemaOptions(typeof(GroupRenderType))]
     [property: DefaultValue("Standard")]

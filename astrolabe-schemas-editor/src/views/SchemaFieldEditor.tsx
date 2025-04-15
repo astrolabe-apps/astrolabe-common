@@ -10,11 +10,11 @@ import React, { useMemo } from "react";
 import { ViewContext } from "./index";
 
 export function SchemaFieldEditor({
-  context,
   schema,
+  context,
 }: {
-  context: ViewContext;
   schema: SchemaNode;
+  context: ViewContext;
 }) {
   const { createEditorRenderer } = context;
   const editorRenderer = useMemo(

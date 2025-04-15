@@ -344,6 +344,7 @@ export enum GroupRenderType {
   GroupElement = "GroupElement",
   SelectChild = "SelectChild",
   Inline = "Inline",
+  Wizard = "Wizard",
 }
 
 export interface StandardGroupRenderer extends GroupRenderOptions {
@@ -370,6 +371,10 @@ export interface GridRenderer extends GroupRenderOptions {
 export interface TabsRenderOptions extends GroupRenderOptions {
   type: GroupRenderType.Tabs;
   contentClass?: string;
+}
+
+export interface WizardRenderOptions extends GroupRenderOptions {
+  type: GroupRenderType.Wizard;
 }
 
 export interface SelectChildRenderer extends GroupRenderOptions {
