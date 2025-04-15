@@ -12,6 +12,7 @@ import {
 } from "@react-typed-forms/schemas";
 import { VisibleChildrenRenderer } from "./VisibleChildrenRenderer";
 import { useControl } from "@react-typed-forms/core";
+import { Fragment } from "react";
 
 export interface DefaultWizardRenderOptions {
   classes?: {
@@ -99,7 +100,7 @@ function renderWizard(
       {props.renderChild(0, children[currentPage])}
     </Div>
   ) : (
-    <></>
+    <Fragment />
   );
 
   return (
