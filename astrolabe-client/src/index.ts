@@ -1,6 +1,6 @@
 export * from "./hooks/useDefaultSyncRoute";
 export * from "./hooks/useApiClient";
-export * from "./hooks/queryParamSync";
+export * from "./hooks/useSyncParam";
 export * from "./hooks/useIsOffscreen";
 export * from "./hooks/useIntersectionObserver";
 export * from "./hooks/useQueryControl";

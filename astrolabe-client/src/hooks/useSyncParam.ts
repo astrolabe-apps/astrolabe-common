@@ -78,7 +78,7 @@ export const StringParam: ConvertParam<string, string> = {
 };
 
 export const OptStringParam: ConvertParam<
-  string | undefined,
+  string | undefined | null,
   string | undefined
 > = {
   compare(existing: string | undefined, newOne: string | undefined): boolean {
@@ -90,8 +90,8 @@ export const OptStringParam: ConvertParam<
   normalise(q: string | string[] | undefined): string | undefined {
     return Array.isArray(q) ? q[0] : q;
   },
-  toParam(a: string | undefined): string | undefined {
-    return a;
+  toParam(a: string | undefined | null): string | undefined {
+    return a == null ? undefined : a;
   },
 };
 

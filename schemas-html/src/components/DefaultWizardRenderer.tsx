@@ -10,6 +10,8 @@ import {
   IconPlacement,
   IconReference,
   rendererClass,
+  validationVisitor,
+  visitFormDataInContext,
 } from "@react-typed-forms/schemas";
 import { VisibleChildrenRenderer } from "./VisibleChildrenRenderer";
 import { useControl } from "@react-typed-forms/core";
@@ -28,8 +30,10 @@ export interface DefaultWizardRenderOptions {
     navContainerClass?: string;
     contentClass?: string;
   };
-  icons?: {
+  actions?: {
+    nextText?: string;
     nextIcon?: IconReference;
+    prevText?: string;
     prevIcon?: IconReference;
   };
   renderNavigation?: (props: CustomNavigationProps) => ReactNode;
@@ -41,8 +45,10 @@ const defaultOptions = {
     contentClass: "min-h-96 overflow-auto",
     navContainerClass: "flex justify-between gap-4 my-2",
   },
-  icons: {
+  actions: {
+    nextText: "Next",
     nextIcon: fontAwesomeIcon("chevron-right"),
+    prevText: "Prev",
     prevIcon: fontAwesomeIcon("chevron-left"),
   },
   renderNavigation: defaultNavigationRender,
@@ -93,12 +99,12 @@ function renderWizard(
   isChildVisible: (i: number) => boolean,
 ) {
   const mergedOptions = deepMerge(
-    defaultOptions,
     (props.defaultOptions ?? {}) as typeof defaultOptions,
+    defaultOptions,
   );
   const {
     classes: { className, contentClass, navContainerClass },
-    icons: { nextIcon, prevIcon },
+    actions: { nextText, nextIcon, prevText, prevIcon },
     renderNavigation,
   } = mergedOptions;
   const {
@@ -108,12 +114,12 @@ function renderWizard(
   const allVisible = children.map((_, i) => isChildVisible(i));
   const page = useControl(0);
   const currentPage = page.value;
-  const next = createAction("nav", () => nav(1), "Next", {
+  const next = createAction("nav", () => nav(1), nextText, {
     disabled: nextVisibleInDirection(1) == null,
     icon: nextIcon,
     iconPlacement: IconPlacement.AfterText,
   });
-  const prev = createAction("nav", () => nav(-1), "Previous", {
+  const prev = createAction("nav", () => nav(-1), prevText, {
     disabled: nextVisibleInDirection(-1) == null,
     icon: prevIcon,
   });
@@ -127,7 +133,7 @@ function renderWizard(
     <Div>{children.map((child, i) => props.renderChild(i, child))}</Div>
   ) : currentPage < children.length ? (
     <Div className={contentClass}>
-      {props.renderChild(0, children[currentPage])}
+      {props.renderChild(currentPage, children[currentPage])}
     </Div>
   ) : (
     <Fragment />
@@ -141,6 +147,9 @@ function renderWizard(
   );
 
   function nav(dir: number) {
+    if (!validatePage()) {
+      return;
+    }
     const next = nextVisibleInDirection(dir);
     if (next != null) {
       page.value = next;
@@ -156,5 +165,18 @@ function renderWizard(
       next += dir;
     }
     return null;
+  }
+
+  function validatePage() {
+    const pageNode = children[currentPage];
+    let hasErrors = false;
+    visitFormDataInContext(
+      props.dataContext.parentNode,
+      pageNode,
+      validationVisitor(() => {
+        hasErrors = true;
+      }),
+    );
+    return !hasErrors;
   }
 }
