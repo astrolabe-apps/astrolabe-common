@@ -1,4 +1,5 @@
 import {
+  ActionRendererProps,
   createAction,
   createGroupRenderer,
   deepMerge,
@@ -12,7 +13,14 @@ import {
 } from "@react-typed-forms/schemas";
 import { VisibleChildrenRenderer } from "./VisibleChildrenRenderer";
 import { useControl } from "@react-typed-forms/core";
-import { Fragment } from "react";
+import { Fragment, ReactNode } from "react";
+
+export interface CustomNavigationProps {
+  className?: string;
+  next: ActionRendererProps;
+  prev: ActionRendererProps;
+  formRenderer: FormRenderer;
+}
 
 export interface DefaultWizardRenderOptions {
   classes?: {
@@ -24,6 +32,7 @@ export interface DefaultWizardRenderOptions {
     nextIcon?: IconReference;
     prevIcon?: IconReference;
   };
+  renderNavigation?: (props: CustomNavigationProps) => ReactNode;
 }
 
 const defaultOptions = {
@@ -36,7 +45,28 @@ const defaultOptions = {
     nextIcon: fontAwesomeIcon("chevron-right"),
     prevIcon: fontAwesomeIcon("chevron-left"),
   },
+  renderNavigation: defaultNavigationRender,
 } satisfies DefaultWizardRenderOptions;
+
+function defaultNavigationRender({
+  formRenderer,
+  prev,
+  next,
+  className,
+}: CustomNavigationProps) {
+  {
+    const {
+      html: { Div },
+      renderAction,
+    } = formRenderer;
+    return (
+      <Div className={className}>
+        {renderAction(prev)}
+        {renderAction(next)}
+      </Div>
+    );
+  }
+}
 
 export function createWizardRenderer(options?: DefaultWizardRenderOptions) {
   return createGroupRenderer(
@@ -69,10 +99,10 @@ function renderWizard(
   const {
     classes: { className, contentClass, navContainerClass },
     icons: { nextIcon, prevIcon },
+    renderNavigation,
   } = mergedOptions;
   const {
     html: { Div },
-    renderAction,
   } = props.formRenderer;
   const children = props.formNode.getChildNodes();
   const allVisible = children.map((_, i) => isChildVisible(i));
@@ -87,12 +117,12 @@ function renderWizard(
     disabled: nextVisibleInDirection(-1) == null,
     icon: prevIcon,
   });
-  const navElement = (
-    <Div className={navContainerClass}>
-      {renderAction(next)}
-      {renderAction(prev)}
-    </Div>
-  );
+  const navElement = renderNavigation({
+    formRenderer: props.formRenderer,
+    prev,
+    next,
+    className: navContainerClass,
+  });
   const content = props.designMode ? (
     <Div>{children.map((child, i) => props.renderChild(i, child))}</Div>
   ) : currentPage < children.length ? (

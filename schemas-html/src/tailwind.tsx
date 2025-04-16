@@ -49,7 +49,7 @@ export const defaultTailwindTheme = {
     displayOnlyClass: "flex flex-row items-center gap-2",
     checkOptions: {
       className: "flex items-center gap-4",
-      entryClass: "flex gap-1 items-center",
+      entryClass: "flex items-center gap-1",
     },
     selectOptions: { emptyText: "<select>" },
     arrayElementOptions: { actionsClass: "my-2 flex gap-2" },
