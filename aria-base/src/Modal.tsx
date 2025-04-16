@@ -62,6 +62,8 @@ export function Modal({
     ref,
   );
 
+  console.log(modalProps, underlayProps);
+
   const { underlayClass, containerClass } = {
     ...DefaultModalDialogClasses,
     ...props,

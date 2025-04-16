@@ -334,7 +334,8 @@ public enum GroupRenderType
     GroupElement,
     SelectChild,
     Inline,
-    Wizard
+    Wizard,
+    Dialog
 }
 
 [JsonBaseType("type", typeof(SimpleGroupRenderOptions))]
@@ -346,6 +347,7 @@ public enum GroupRenderType
 [JsonSubType("SelectChild", typeof(SelectChildRenderer))]
 [JsonSubType("Inline", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("Wizard", typeof(SimpleGroupRenderOptions))]
+[JsonSubType("Dialog", typeof(DialogRenderOptions))]
 public abstract record GroupRenderOptions(
     [property: SchemaOptions(typeof(GroupRenderType))]
     [property: DefaultValue("Standard")]
@@ -367,6 +369,16 @@ public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
 
 public record TabsRenderOptions(string? ContentClass)
     : GroupRenderOptions(GroupRenderType.Tabs.ToString());
+
+public record DialogRenderOptions(string? Title, ActionOptions? Trigger, IEnumerable<ActionOptions?> Actions) : GroupRenderOptions(GroupRenderType.Dialog.ToString());
+
+public record ActionOptions(
+    string? ActionId,
+    string? ActionData,
+    string? ActionText,
+    IconReference? Icon,
+    ActionStyle? ActionStyle,
+    IconPlacement? IconPlacement);
 
 public record FlexRenderer(string? Direction, string? Gap)
     : GroupRenderOptions(GroupRenderType.Flex.ToString());

@@ -336,6 +336,14 @@ export interface GroupRenderOptions {
   displayOnly?: boolean | null;
 }
 
+export interface ActionOptions {
+  actionId: string;
+  actionText?: string | null;
+  actionData?: string | null;
+  icon?: IconReference | null;
+  actionStyle?: ActionStyle | null;
+  iconPlacement?: IconPlacement | null;
+}
 export enum GroupRenderType {
   Standard = "Standard",
   Grid = "Grid",
@@ -345,6 +353,14 @@ export enum GroupRenderType {
   SelectChild = "SelectChild",
   Inline = "Inline",
   Wizard = "Wizard",
+  Dialog = "Dialog",
+}
+
+export interface DialogRenderOptions extends GroupRenderOptions {
+  type: GroupRenderType.Dialog;
+  title?: string | null;
+  trigger?: ActionOptions | null;
+  actions?: ActionOptions[] | null;
 }
 
 export interface StandardGroupRenderer extends GroupRenderOptions {
@@ -472,6 +488,12 @@ export function isWizardRenderer(
   options: GroupRenderOptions,
 ): options is WizardRenderOptions {
   return options.type === GroupRenderType.Wizard;
+}
+
+export function isDialogRenderer(
+  options: GroupRenderOptions,
+): options is DialogRenderOptions {
+  return options.type === GroupRenderType.Dialog;
 }
 
 export function isInlineRenderer(

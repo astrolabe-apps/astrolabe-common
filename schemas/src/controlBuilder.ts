@@ -201,7 +201,7 @@ export function actionControl(
 export function createAction(
   actionId: string,
   onClick: () => void,
-  actionText?: string,
+  actionText?: string | null,
   options?: Partial<ActionRendererProps>,
 ): ActionRendererProps {
   return {

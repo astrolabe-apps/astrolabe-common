@@ -77,23 +77,26 @@ export const StringParam: ConvertParam<string, string> = {
   },
 };
 
-export const OptStringParam: ConvertParam<
-  string | undefined | null,
-  string | undefined
-> = {
-  compare(existing: string | undefined, newOne: string | undefined): boolean {
-    return existing === newOne;
-  },
-  fromParam(p: string | undefined): string | undefined {
-    return p;
-  },
-  normalise(q: string | string[] | undefined): string | undefined {
-    return Array.isArray(q) ? q[0] : q;
-  },
-  toParam(a: string | undefined | null): string | undefined {
-    return a == null ? undefined : a;
-  },
-};
+export const OptStringParam = makeOptStringParam<string | undefined>();
+
+export function makeOptStringParam<
+  A extends string | undefined | null,
+>(): ConvertParam<A, string | undefined> {
+  return {
+    compare(existing: string | undefined, newOne: string | undefined): boolean {
+      return existing === newOne;
+    },
+    fromParam(p: string | undefined): A {
+      return p as A;
+    },
+    normalise(q: string | string[] | undefined): string | undefined {
+      return Array.isArray(q) ? q[0] : q;
+    },
+    toParam(a: A): string | undefined {
+      return a == null ? undefined : a;
+    },
+  };
+}
 
 export const StringsParam: ConvertParam<string[], string[]> = {
   compare(existing: string[], newOne: string[]): boolean {

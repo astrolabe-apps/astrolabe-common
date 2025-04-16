@@ -4,6 +4,7 @@ import {
   GroupRendererProps,
   GroupRendererRegistration,
   GroupRenderType,
+  isDialogRenderer,
   isFlexRenderer,
   isGridRenderer,
   isInlineRenderer,
@@ -22,6 +23,10 @@ import {
   createWizardRenderer,
   DefaultWizardRenderOptions,
 } from "./DefaultWizardRenderer";
+import {
+  createDialogRenderer,
+  DefaultDialogRenderOptions,
+} from "./DefaultDialogRenderer";
 
 interface StyleProps {
   className?: string;
@@ -37,6 +42,7 @@ export interface DefaultGroupRendererOptions {
   inlineClass?: string;
   tabs?: DefaultTabsRenderOptions;
   wizard?: DefaultWizardRenderOptions;
+  dialog?: DefaultDialogRenderOptions;
 }
 
 export function createDefaultGroupRenderer(
@@ -45,6 +51,7 @@ export function createDefaultGroupRenderer(
   const gridRenderer = createGridRenderer(options?.grid);
   const tabsRenderer = createTabsRenderer(options?.tabs);
   const wizardRenderer = createWizardRenderer(options?.wizard);
+  const dialogRenderer = createDialogRenderer(options?.wizard);
   const {
     className,
     standardClassName,
@@ -74,6 +81,8 @@ export function createDefaultGroupRenderer(
       return gridRenderer.render(props, renderer);
     if (isWizardRenderer(renderOptions))
       return wizardRenderer.render(props, renderer);
+    if (isDialogRenderer(renderOptions))
+      return dialogRenderer.render(props, renderer);
     if (isSelectChildRenderer(renderOptions) && !props.designMode) {
       return (
         <SelectChildGroupRenderer {...props} renderOptions={renderOptions} />

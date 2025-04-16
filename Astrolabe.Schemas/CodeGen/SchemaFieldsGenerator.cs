@@ -108,7 +108,8 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             "DateValidator",
             "IconReference",
             "ActionStyle",
-            "IconPlacement"
+            "IconPlacement",
+            "ActionOptions"
         };
 
     private static readonly HashSet<string> EditorLibImports =

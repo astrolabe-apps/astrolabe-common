@@ -72,6 +72,36 @@
             }
           ],
           "title": "Number array"
+        },
+        {
+          "type": "Group",
+          "title": "Dialog",
+          "groupOptions": {
+            "type": "Dialog",
+            "triggerAction": {
+              "actionId": "Render"
+            },
+            "title": "Title of dialog",
+            "actions": [
+              {
+                "actionId": "save",
+                "actionText": "OK"
+              },
+              {
+                "actionId": "cancel",
+                "actionText": "Cancel"
+              }
+            ]
+          },
+          "children": [
+            {
+              "type": "Display",
+              "displayData": {
+                "type": "Html",
+                "html": "\u003Cb\u003EWOW\u003C/b\u003E"
+              }
+            }
+          ]
         }
       ],
       "groupOptions": {

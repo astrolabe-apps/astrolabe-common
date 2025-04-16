@@ -48,6 +48,7 @@ import {
   withScalarOptions,
 } from "@react-typed-forms/schemas";
 import {
+  makeOptStringParam,
   OptStringParam,
   useApiClient,
   useQueryControl,
@@ -303,7 +304,7 @@ export default function Editor() {
     ensureSelectableValues(["Student", "Teacher"], (x) => x),
   );
   const [container, setContainer] = useState<HTMLElement | null>(null);
-  const selectedForm = useSyncParam(qc, "form", OptStringParam);
+  const selectedForm = useSyncParam(qc, "form", makeOptStringParam());
   const StdFormRenderer = useMemo(
     () => createStdFormRenderer(container),
     [container],

@@ -423,6 +423,7 @@ export interface ParentRendererProps {
   useChildVisibility: ChildVisibilityFunc;
   useEvalExpression: UseEvalExpressionHook;
   designMode?: boolean;
+  actionOnClick?: ControlActionHandler;
 }
 
 export interface GroupRendererProps extends ParentRendererProps {
@@ -449,9 +450,9 @@ export interface ActionRendererProps {
   actionId: string;
   actionText: string;
   actionData?: any;
-  actionStyle?: ActionStyle;
+  actionStyle?: ActionStyle | null;
   icon?: IconReference | null;
-  iconPlacement?: IconPlacement;
+  iconPlacement?: IconPlacement | null;
   onClick: () => void;
   className?: string | null;
   textClass?: string | null;
@@ -943,6 +944,7 @@ export function renderControlLayout(
     textClass,
     formNode,
     formOptions,
+    actionOnClick,
   } = props;
   const c = formNode.definition;
   if (isDataControl(c)) {
@@ -972,6 +974,7 @@ export function renderControlLayout(
         useChildVisibility,
         style,
         designMode,
+        actionOnClick,
       }),
       label: {
         label: labelText?.value ?? c.title,
