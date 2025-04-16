@@ -51,7 +51,7 @@ export function createDefaultGroupRenderer(
   const gridRenderer = createGridRenderer(options?.grid);
   const tabsRenderer = createTabsRenderer(options?.tabs);
   const wizardRenderer = createWizardRenderer(options?.wizard);
-  const dialogRenderer = createDialogRenderer(options?.wizard);
+  const dialogRenderer = createDialogRenderer(options?.dialog);
   const {
     className,
     standardClassName,
