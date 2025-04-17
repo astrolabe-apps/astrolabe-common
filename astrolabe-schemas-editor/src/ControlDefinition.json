@@ -449,10 +449,7 @@
             "childRefId": "",
             "defaultValue": {
               "type": "Standard"
-            },
-            "required": false,
-            "readonly": false,
-            "disabled": false
+            }
           },
           {
             "type": "Data",
@@ -771,6 +768,14 @@
             },
             "id": "RenderOptionsStyles",
             "defaultValue": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Placement",
+            "field": "placement",
+            "renderOptions": {
               "type": "Standard"
             }
           }
