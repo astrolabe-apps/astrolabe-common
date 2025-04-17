@@ -41,6 +41,8 @@ public abstract record ControlDefinition(
     public string? LabelClass { get; set; }
 
     public string? LabelTextClass { get; set; }
+    
+    public string? Placement { get; set; }
 
     [SchemaTag(SchemaTags.NoControl)]
     public IEnumerable<ControlDefinition>? Children { get; set; }
@@ -98,6 +100,7 @@ public record ActionControlDefinition(
 public enum ActionStyle
 {
     Button,
+    Secondary,
     Link,
 }
 
@@ -370,15 +373,7 @@ public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
 public record TabsRenderOptions(string? ContentClass)
     : GroupRenderOptions(GroupRenderType.Tabs.ToString());
 
-public record DialogRenderOptions(string? Title, ActionOptions? Trigger, IEnumerable<ActionOptions?> Actions) : GroupRenderOptions(GroupRenderType.Dialog.ToString());
-
-public record ActionOptions(
-    string? ActionId,
-    string? ActionData,
-    string? ActionText,
-    IconReference? Icon,
-    ActionStyle? ActionStyle,
-    IconPlacement? IconPlacement);
+public record DialogRenderOptions(string? Title) : GroupRenderOptions(GroupRenderType.Dialog.ToString());
 
 public record FlexRenderer(string? Direction, string? Gap)
     : GroupRenderOptions(GroupRenderType.Flex.ToString());

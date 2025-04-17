@@ -109,7 +109,9 @@ export interface DefaultRendererOptions {
 }
 
 export interface DefaultActionRendererOptions {
-  className?: string;
+  buttonClass?: string;
+  primaryClass?: string;
+  secondaryClass?: string;
   linkClassName?: string;
   textClass?: string;
   linkTextClass?: string;
@@ -149,7 +151,14 @@ export function createButtonActionRenderer(
       const isLink = actionStyle == ActionStyle.Link;
       const classNames = rendererClass(
         className,
-        isLink ? options.linkClassName : options.className,
+        isLink
+          ? options.linkClassName
+          : rendererClass(
+              options.buttonClass,
+              actionStyle == ActionStyle.Secondary
+                ? options.secondaryClass
+                : options.primaryClass,
+            ),
       );
       const iconElement = icon && (
         <I
@@ -642,7 +651,7 @@ export function createClassStyledRenderers() {
     layout: { className: "control" },
     group: { className: "group" },
     array: { className: "control-array" },
-    action: { className: "action" },
+    action: { buttonClass: "action" },
     data: { inputClass: "data" },
     display: { htmlClassName: "html", textClassName: "text" },
   });

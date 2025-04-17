@@ -48,6 +48,7 @@ import {
   RenderOptions,
 } from "./controlDefinition";
 import {
+  actionHandlers,
   applyLengthRestrictions,
   ControlClasses,
   elementValueForField,
@@ -86,7 +87,11 @@ import {
 import { FieldOption, SchemaField } from "./schemaField";
 import { FormNode, legacyFormNode, lookupDataNode } from "./formNode";
 import { SchemaInterface } from "./schemaInterface";
-import { makeSchemaDataNode, SchemaDataNode } from "./schemaDataNode";
+import {
+  createSchemaDataNode,
+  makeSchemaDataNode,
+  SchemaDataNode,
+} from "./schemaDataNode";
 import { createSchemaTree } from "./schemaNode";
 
 export interface HtmlIconProperties {
@@ -711,14 +716,20 @@ export function useControlRendererComponent(
         formNode,
         renderer,
         renderChild: (k, child, options) => {
+          console.log(k, child, options);
           const overrideClasses = getGroupClassOverrides(c);
-          const { parentDataNode, ...renderOptions } = options ?? {};
+          const { parentDataNode, actionOnClick, ...renderOptions } =
+            options ?? {};
           const dContext =
             parentDataNode ?? dataContext.dataNode ?? dataContext.parentNode;
           const allChildOptions = {
             ...childOptions,
             ...overrideClasses,
             ...renderOptions,
+            actionOnClick: actionHandlers(
+              actionOnClick,
+              childOptions.actionOnClick,
+            ),
           };
           return (
             <NewControlRenderer
@@ -792,7 +803,7 @@ export function ControlRenderer({
   control: Control<any>;
   parentPath?: JsonPath[];
 }) {
-  const schemaDataNode = makeSchemaDataNode(
+  const schemaDataNode = createSchemaDataNode(
     createSchemaTree(fields).rootNode,
     control,
   );
@@ -887,6 +898,7 @@ export interface ChildRendererOptions {
   styleClass?: string;
   layoutClass?: string;
   labelClass?: string;
+  actionOnClick?: ControlActionHandler;
 }
 
 export type ChildRenderer = (

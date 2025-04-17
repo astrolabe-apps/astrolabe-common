@@ -473,6 +473,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/schemas-fileupload",
+      "projectFolder": "../schemas-fileupload",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@react-typed-forms/schemas-html",
       "projectFolder": "../schemas-html",
       "shouldPublish": true

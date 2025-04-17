@@ -106,7 +106,7 @@ export function schemaDataForFieldPath(
         : nextField === "."
           ? dataNode
           : lookupField(nextField);
-    nextNode ??= makeSchemaDataNode(
+    nextNode ??= createSchemaDataNode(
       createSchemaNode(
         missingField(nextField),
         dataNode.schema.tree,

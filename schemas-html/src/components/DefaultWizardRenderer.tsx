@@ -129,12 +129,12 @@ function renderWizard(
   const page = useControl(0);
   const currentPage = page.value;
   const next = createAction("nav", () => nav(1, nextValidate), nextText, {
-    disabled: nextVisibleInDirection(1) == null,
+    disabled: !props.designMode && nextVisibleInDirection(1) == null,
     icon: nextIcon,
     iconPlacement: IconPlacement.AfterText,
   });
   const prev = createAction("nav", () => nav(-1, prevValidate), prevText, {
-    disabled: nextVisibleInDirection(-1) == null,
+    disabled: !props.designMode && nextVisibleInDirection(-1) == null,
     icon: prevIcon,
   });
   const navElement = renderNavigation({

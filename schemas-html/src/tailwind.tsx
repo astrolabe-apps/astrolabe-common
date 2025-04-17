@@ -36,7 +36,10 @@ export const defaultTailwindTheme = {
     },
   },
   action: {
-    className: "bg-primary-500 rounded-lg p-3 text-white",
+    buttonClass:
+      "rounded-lg p-3 text-white disabled:opacity-75 disabled:cursor-not-allowed",
+    primaryClass: "bg-primary-500",
+    secondaryClass: "bg-secondary-500",
     iconBeforeClass: "px-2",
     iconAfterClass: "px-2",
   },

@@ -95,11 +95,12 @@
           },
           "children": [
             {
-              "type": "Display",
-              "displayData": {
-                "type": "Html",
-                "html": "\u003Cb\u003EWOW\u003C/b\u003E"
-              }
+              "type": "Action",
+              "icon": {},
+              "actionId": "cancel",
+              "actionData": "",
+              "title": "Cancel",
+              "actionStyle": "Secondary"
             }
           ]
         }

@@ -884,10 +884,12 @@ export function isControlDisplayOnly(def: ControlDefinition): boolean {
  */
 export function actionHandlers(
   ...handlers: (ControlActionHandler | undefined)[]
-): ControlActionHandler {
+): ControlActionHandler | undefined {
+  const nonNullHandlers = handlers.filter((x) => x != null);
+  if (nonNullHandlers.length === 0) return undefined;
   return (actionId, actionData, ctx) => {
-    for (let i = 0; i < handlers.length; i++) {
-      const res = handlers[i]?.(actionId, actionData, ctx);
+    for (let i = 0; i < nonNullHandlers.length; i++) {
+      const res = nonNullHandlers[i](actionId, actionData, ctx);
       if (res) return res;
     }
     return undefined;

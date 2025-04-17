@@ -45,6 +45,7 @@ export interface ControlDefinition {
   layoutClass?: string | null;
   labelClass?: string | null;
   labelTextClass?: string | null;
+  placement?: string | null;
   dynamic?: DynamicProperty[] | null;
   adornments?: ControlAdornment[] | null;
   children?: ControlDefinition[] | null;
@@ -359,8 +360,6 @@ export enum GroupRenderType {
 export interface DialogRenderOptions extends GroupRenderOptions {
   type: GroupRenderType.Dialog;
   title?: string | null;
-  trigger?: ActionOptions | null;
-  actions?: ActionOptions[] | null;
 }
 
 export interface StandardGroupRenderer extends GroupRenderOptions {
@@ -445,6 +444,7 @@ export interface ActionControlDefinition extends ControlDefinition {
 
 export enum ActionStyle {
   Button = "Button",
+  Secondary = "Secondary",
   Link = "Link",
 }
 

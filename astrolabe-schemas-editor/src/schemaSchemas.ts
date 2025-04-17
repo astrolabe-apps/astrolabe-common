@@ -14,14 +14,13 @@ import {
   IconReference,
   AdornmentPlacement,
   ControlAdornment,
-  ActionStyle,
-  IconPlacement,
-  ActionOptions,
   GroupRenderOptions,
   IconMapping,
   SyncTextType,
   RenderOptions,
   DisplayData,
+  ActionStyle,
+  IconPlacement,
   ControlDefinition,
 } from "@react-typed-forms/schemas";
 
@@ -689,70 +688,6 @@ export function toControlAdornmentForm(
   return applyDefaultValues(v, ControlAdornmentSchema);
 }
 
-export interface ActionOptionsForm {
-  actionId: string | null;
-  actionData: string | null;
-  actionText: string | null;
-  icon: IconReferenceForm | null;
-  actionStyle: ActionStyle | null;
-  iconPlacement: IconPlacement | null;
-}
-
-export const ActionOptionsSchema = buildSchema<ActionOptionsForm>({
-  actionId: makeScalarField({
-    type: FieldType.String,
-    displayName: "Action Id",
-  }),
-  actionData: makeScalarField({
-    type: FieldType.String,
-    displayName: "Action Data",
-  }),
-  actionText: makeScalarField({
-    type: FieldType.String,
-    displayName: "Action Text",
-  }),
-  icon: makeCompoundField({
-    children: IconReferenceSchema,
-    schemaRef: "IconReference",
-    displayName: "Icon",
-  }),
-  actionStyle: makeScalarField({
-    type: FieldType.String,
-    displayName: "Action Style",
-    options: [
-      {
-        name: "Button",
-        value: "Button",
-      },
-      {
-        name: "Link",
-        value: "Link",
-      },
-    ],
-  }),
-  iconPlacement: makeScalarField({
-    type: FieldType.String,
-    displayName: "Icon Placement",
-    options: [
-      {
-        name: "BeforeText",
-        value: "BeforeText",
-      },
-      {
-        name: "AfterText",
-        value: "AfterText",
-      },
-    ],
-  }),
-});
-
-export const defaultActionOptionsForm: ActionOptionsForm =
-  defaultValueForFields(ActionOptionsSchema);
-
-export function toActionOptionsForm(v: ActionOptions): ActionOptionsForm {
-  return applyDefaultValues(v, ActionOptionsSchema);
-}
-
 export interface GroupRenderOptionsForm {
   type: string;
   hideTitle: boolean | null;
@@ -762,8 +697,6 @@ export interface GroupRenderOptionsForm {
   displayOnly: boolean | null;
   contentClass: string | null;
   title: string | null;
-  trigger: ActionOptionsForm | null;
-  actions: (ActionOptionsForm | null)[];
   direction: string | null;
   gap: string | null;
   columns: number | null;
@@ -848,20 +781,6 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["Dialog"],
     displayName: "Title",
-  }),
-  trigger: makeCompoundField({
-    children: ActionOptionsSchema,
-    schemaRef: "ActionOptions",
-    onlyForTypes: ["Dialog"],
-    displayName: "Trigger",
-  }),
-  actions: makeCompoundField({
-    children: ActionOptionsSchema,
-    schemaRef: "ActionOptions",
-    collection: true,
-    onlyForTypes: ["Dialog"],
-    notNullable: true,
-    displayName: "Actions",
   }),
   direction: makeScalarField({
     type: FieldType.String,
@@ -1358,6 +1277,7 @@ export interface ControlDefinitionForm {
   layoutClass: string | null;
   labelClass: string | null;
   labelTextClass: string | null;
+  placement: string | null;
   children: ControlDefinitionForm[] | null;
   field: string;
   hideTitle: boolean | null;
@@ -1447,6 +1367,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   labelTextClass: makeScalarField({
     type: FieldType.String,
     displayName: "Label Text Class",
+  }),
+  placement: makeScalarField({
+    type: FieldType.String,
+    displayName: "Placement",
   }),
   children: makeCompoundField({
     treeChildren: true,
@@ -1555,6 +1479,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
         value: "Button",
       },
       {
+        name: "Secondary",
+        value: "Secondary",
+      },
+      {
         name: "Link",
         value: "Link",
       },
@@ -1594,7 +1522,6 @@ export const ControlDefinitionSchemaMap = {
   DynamicProperty: DynamicPropertySchema,
   IconReference: IconReferenceSchema,
   ControlAdornment: ControlAdornmentSchema,
-  ActionOptions: ActionOptionsSchema,
   GroupRenderOptions: GroupRenderOptionsSchema,
   IconMapping: IconMappingSchema,
   RenderOptions: RenderOptionsSchema,

@@ -1,6 +1,5 @@
 import {
-  ActionOptions,
-  createAction,
+  ControlActionHandler,
   createGroupRenderer,
   deepMerge,
   DialogRenderOptions,
@@ -10,43 +9,28 @@ import {
   rendererClass,
 } from "@react-typed-forms/schemas";
 import { createOverlayState, Dialog, Modal } from "@astroapps/aria-base";
-import { useControl, useControlEffect } from "@react-typed-forms/core";
+import { useControl } from "@react-typed-forms/core";
 import { Fragment } from "react";
 
 export interface DefaultDialogRenderOptions {
   classes?: {
     className?: string;
-    navContainerClass?: string;
     titleClass?: string;
-  };
-  actions?: {
-    trigger?: ActionOptions;
   };
 }
 
 export const defaultDialogOptions = {
   classes: {
     className: "",
-    navContainerClass: "flex gap-2 justify-items",
     titleClass: "text-2xl font-bold",
-  },
-  actions: {
-    trigger: {
-      actionId: "open",
-      actionText: "Open",
-      actionStyle: null,
-      icon: null,
-      iconPlacement: null,
-    },
   },
 } satisfies DefaultDialogRenderOptions;
 
 export function createDialogRenderer(options?: DefaultDialogRenderOptions) {
   return createGroupRenderer(
-    (props, renderer) => (
+    (props) => (
       <DefaultDialogRenderer
         props={props}
-        renderer={renderer}
         options={options}
         renderOptions={props.renderOptions as DialogRenderOptions}
       />
@@ -59,37 +43,40 @@ export function createDialogRenderer(options?: DefaultDialogRenderOptions) {
 
 export function DefaultDialogRenderer({
   props,
-  renderer,
   renderOptions,
   options,
 }: {
   props: GroupRendererProps;
-  renderer: FormRenderer;
   options?: DefaultDialogRenderOptions;
   renderOptions: DialogRenderOptions;
 }) {
   const {
-    classes: { titleClass, className, navContainerClass },
-    actions: { trigger },
+    classes: { titleClass, className },
   } = deepMerge(options as typeof defaultDialogOptions, defaultDialogOptions);
-  const {
-    renderAction,
-    html: { Div },
-  } = renderer;
   const open = useControl(false);
   const overlayState = createOverlayState(open);
+
+  const actionOnClick: ControlActionHandler = (action) => {
+    switch (action) {
+      case "closeDialog":
+        return () => overlayState.close();
+      case "openDialog":
+        return () => overlayState.open();
+    }
+  };
+
   const dialogContent = (
     <Dialog
       title={renderOptions.title}
       titleClass={titleClass}
       className={rendererClass(props.className, className)}
     >
-      {props.formNode.getChildNodes().map((x, i) => props.renderChild(i, x))}
-      <Div className={navContainerClass}>
-        {renderOptions.actions?.map((o, i) => (
-          <Fragment key={i}>{doRenderAction(o)}</Fragment>
-        ))}
-      </Div>
+      {props.formNode
+        .getChildNodes()
+        .filter(
+          (x) => !x.definition.placement || x.definition.placement === "dialog",
+        )
+        .map((x, i) => props.renderChild(i, x, { actionOnClick }))}
     </Dialog>
   );
 
@@ -102,24 +89,10 @@ export function DefaultDialogRenderer({
               {dialogContent}
             </Modal>
           )}
-      {doRenderAction(trigger, () => overlayState.open())}
+      {props.formNode
+        .getChildNodes()
+        .filter((x) => x.definition.placement === "trigger")
+        .map((x, i) => props.renderChild(i, x, { actionOnClick }))}
     </>
   );
-
-  function doRenderAction(
-    { actionText, actionId, ...action }: ActionOptions,
-    onClick?: () => void,
-  ) {
-    const realOnClick =
-      onClick ??
-      props.actionOnClick?.(actionId, action.actionData, props.dataContext);
-    return renderAction(
-      createAction(
-        actionId,
-        props.designMode || !realOnClick ? () => {} : realOnClick,
-        actionText,
-        { ...action },
-      ),
-    );
-  }
 }

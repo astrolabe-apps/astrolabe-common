@@ -54,12 +54,17 @@ export function FormSchemaTree({
   );
 
   function makeChildNodes(n: SchemaNode): SchemaNodeCtx[] {
-    return n.getChildNodes().map((x) => ({
-      schema: x,
-      selectedControl,
-      id: getNodeId(x),
-      onAdd,
-    }));
+    const parent = n.getResolvedParent(true);
+    const childNodes =
+      parent?.getUnresolvedFields().map((x) => n.createChildNode(x)) ?? [];
+    return childNodes.map((x) => {
+      return {
+        schema: x,
+        selectedControl,
+        id: getNodeId(x),
+        onAdd,
+      };
+    });
   }
 }
 

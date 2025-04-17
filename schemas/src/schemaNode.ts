@@ -73,12 +73,12 @@ export class SchemaNode {
     return isCompoundField(this.field) ? this.field.children : [];
   }
 
-  getResolvedParent(): SchemaNode | undefined {
+  getResolvedParent(noRecurse?: boolean): SchemaNode | undefined {
     const f = this.field;
     if (!isCompoundField(f)) return undefined;
     const parentNode = f.schemaRef
       ? this.tree.getSchema(f.schemaRef)
-      : f.treeChildren
+      : !noRecurse && f.treeChildren
         ? this.parent?.getResolvedParent()
         : undefined;
     return parentNode ?? this;
@@ -91,7 +91,9 @@ export class SchemaNode {
 
   getChildNodes(): SchemaNode[] {
     const node = this;
-    return node.getResolvedFields().map((x) => node.createChildNode(x));
+    return node
+      .getResolvedFields()
+      .map((x) => node.createChildNode(x));
   }
 
   getChildField(field: string): SchemaField {

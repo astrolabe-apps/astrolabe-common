@@ -304,7 +304,7 @@ export default function Editor() {
     ensureSelectableValues(["Student", "Teacher"], (x) => x),
   );
   const [container, setContainer] = useState<HTMLElement | null>(null);
-  const selectedForm = useSyncParam(qc, "form", makeOptStringParam());
+  const selectedForm = useSyncParam(qc, "form", OptStringParam);
   const StdFormRenderer = useMemo(
     () => createStdFormRenderer(container),
     [container],
