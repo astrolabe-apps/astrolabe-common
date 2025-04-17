@@ -73,6 +73,7 @@ function FormUploader({
           uploadFile={doUpload}
           title="Select a file..."
           readonly={readonly}
+          className={classes.uploadClass}
         />
       }
       children={(c) => (

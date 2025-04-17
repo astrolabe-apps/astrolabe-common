@@ -36,8 +36,10 @@ export interface DefaultWizardRenderOptions {
   actions?: {
     nextText?: string;
     nextIcon?: IconReference;
+    nextValidate?: boolean;
     prevText?: string;
     prevIcon?: IconReference;
+    prevValidate?: boolean;
   };
   renderNavigation?: (props: CustomNavigationProps) => ReactNode;
 }
@@ -51,8 +53,10 @@ const defaultOptions = {
   actions: {
     nextText: "Next",
     nextIcon: fontAwesomeIcon("chevron-right"),
+    nextValidate: true,
     prevText: "Prev",
     prevIcon: fontAwesomeIcon("chevron-left"),
+    prevValidate: false,
   },
   renderNavigation: defaultNavigationRender,
 } satisfies DefaultWizardRenderOptions;
@@ -107,7 +111,14 @@ function renderWizard(
   );
   const {
     classes: { className, contentClass, navContainerClass },
-    actions: { nextText, nextIcon, prevText, prevIcon },
+    actions: {
+      nextText,
+      nextIcon,
+      prevText,
+      prevIcon,
+      nextValidate,
+      prevValidate,
+    },
     renderNavigation,
   } = mergedOptions;
   const {
@@ -117,12 +128,12 @@ function renderWizard(
   const allVisible = children.map((_, i) => isChildVisible(i));
   const page = useControl(0);
   const currentPage = page.value;
-  const next = createAction("nav", () => nav(1), nextText, {
+  const next = createAction("nav", () => nav(1, nextValidate), nextText, {
     disabled: nextVisibleInDirection(1) == null,
     icon: nextIcon,
     iconPlacement: IconPlacement.AfterText,
   });
-  const prev = createAction("nav", () => nav(-1), prevText, {
+  const prev = createAction("nav", () => nav(-1, prevValidate), prevText, {
     disabled: nextVisibleInDirection(-1) == null,
     icon: prevIcon,
   });
@@ -162,8 +173,8 @@ function renderWizard(
     return count;
   }
 
-  function nav(dir: number) {
-    if (!validatePage()) {
+  function nav(dir: number, validate: boolean) {
+    if (validate && !validatePage()) {
       return;
     }
     const next = nextVisibleInDirection(dir);
