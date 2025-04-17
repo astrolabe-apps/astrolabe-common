@@ -1,5 +1,7 @@
 import {
+  ActionStyle,
   ControlActionHandler,
+  createAction,
   createGroupRenderer,
   deepMerge,
   DialogRenderOptions,
@@ -28,10 +30,11 @@ export const defaultDialogOptions = {
 
 export function createDialogRenderer(options?: DefaultDialogRenderOptions) {
   return createGroupRenderer(
-    (props) => (
+    (props, renderer) => (
       <DefaultDialogRenderer
         props={props}
         options={options}
+        renderer={renderer}
         renderOptions={props.renderOptions as DialogRenderOptions}
       />
     ),
@@ -45,10 +48,12 @@ export function DefaultDialogRenderer({
   props,
   renderOptions,
   options,
+  renderer,
 }: {
   props: GroupRendererProps;
   options?: DefaultDialogRenderOptions;
   renderOptions: DialogRenderOptions;
+  renderer: FormRenderer;
 }) {
   const {
     classes: { titleClass, className },
@@ -65,6 +70,9 @@ export function DefaultDialogRenderer({
     }
   };
 
+  const triggerChildren = props.formNode
+    .getChildNodes()
+    .filter((x) => x.definition.placement === "trigger");
   const dialogContent = (
     <Dialog
       title={renderOptions.title}
@@ -82,17 +90,34 @@ export function DefaultDialogRenderer({
 
   return (
     <>
+      {triggerChildren.map((x, i) =>
+        props.renderChild(i, x, { actionOnClick }),
+      )}
       {props.designMode
-        ? dialogContent
+        ? designContent()
         : open.value && (
             <Modal state={overlayState} isDismissable>
               {dialogContent}
             </Modal>
           )}
-      {props.formNode
-        .getChildNodes()
-        .filter((x) => x.definition.placement === "trigger")
-        .map((x, i) => props.renderChild(i, x, { actionOnClick }))}
     </>
   );
+
+  function designContent() {
+    return (
+      <>
+        <div onClickCapture={() => overlayState.toggle()}>
+          {renderer.renderAction(
+            createAction(
+              "Toggle Dialog",
+              () => {},
+              open.value ? "Hide Content" : "Show Content",
+              { actionStyle: ActionStyle.Link },
+            ),
+          )}
+        </div>
+        {open.value && dialogContent}
+      </>
+    );
+  }
 }

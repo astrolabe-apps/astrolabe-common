@@ -146,6 +146,7 @@ export interface HtmlButtonProperties {
   onClick?: () => void;
   inline?: boolean;
   children?: ReactNode;
+  title?: string;
 }
 export interface HtmlComponents {
   Div: ComponentType<HtmlDivProperties>;
@@ -717,7 +718,6 @@ export function useControlRendererComponent(
         formNode,
         renderer,
         renderChild: (k, child, options) => {
-          console.log(k, child, options);
           const overrideClasses = getGroupClassOverrides(c);
           const { parentDataNode, actionOnClick, ...renderOptions } =
             options ?? {};

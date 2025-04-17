@@ -38,7 +38,10 @@ export function createRadioRenderer(options: CheckRendererOptions = {}) {
         {...p}
         className={rendererClass(p.className, options.className)}
         isChecked={(control, o) => control.value == o.value}
-        setChecked={(c, o) => (c.value = o.value)}
+        setChecked={(c, o) => {
+          c.setTouched(true);
+          c.value = o.value;
+        }}
         control={p.control}
         type="radio"
         entryAdornment={fieldOptionAdornment(p)}
@@ -64,6 +67,7 @@ export function createCheckListRenderer(options: CheckRendererOptions = {}) {
           return Array.isArray(v) ? v.includes(o.value) : false;
         }}
         setChecked={(c, o, checked) => {
+          c.setTouched(true);
           c.setValue((x) => setIncluded(x ?? [], o.value, checked));
         }}
         control={p.control}

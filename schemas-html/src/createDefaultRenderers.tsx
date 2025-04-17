@@ -7,7 +7,7 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, { ReactElement, ReactNode, Fragment } from "react";
+import React, { Fragment, ReactElement, ReactNode } from "react";
 import clsx from "clsx";
 import {
   createSelectRenderer,
@@ -36,15 +36,11 @@ import { createNullToggleRenderer } from "./components/NullToggle";
 import { createMultilineFieldRenderer } from "./components/MultilineTextfield";
 import { createJsonataRenderer } from "./components/JsonataRenderer";
 import {
-  ActionRendererProps,
-  ActionRendererRegistration,
-  ActionStyle,
   AdornmentPlacement,
   AdornmentRendererRegistration,
   appendMarkupAt,
   ArrayActionOptions,
   ControlDataContext,
-  createActionRenderer,
   createDataRenderer,
   DataRendererRegistration,
   DataRenderType,
@@ -60,7 +56,6 @@ import {
   HtmlInputProperties,
   HtmlLabelProperties,
   IconLibrary,
-  IconPlacement,
   IconReference,
   isAccordionAdornment,
   isDataGroupRenderer,
@@ -94,6 +89,10 @@ import {
   ArrayElementRendererOptions,
   createArrayElementRenderer,
 } from "./components/ArrayElementRenderer";
+import {
+  createButtonActionRenderer,
+  DefaultActionRendererOptions,
+} from "./createButtonActionRenderer";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -106,96 +105,6 @@ export interface DefaultRendererOptions {
   layout?: DefaultLayoutRendererOptions;
   extraRenderers?: (options: DefaultRendererOptions) => RendererRegistration[];
   html?: FormRenderer["html"];
-}
-
-export interface DefaultActionRendererOptions {
-  buttonClass?: string;
-  primaryClass?: string;
-  secondaryClass?: string;
-  linkClassName?: string;
-  textClass?: string;
-  linkTextClass?: string;
-  iconBeforeClass?: string;
-  iconAfterClass?: string;
-  renderContent?: (
-    actionText: string,
-    actionId: string,
-    actionData: any,
-  ) => ReactNode;
-}
-
-export function createButtonActionRenderer(
-  actionId: string | string[] | undefined,
-  options: DefaultActionRendererOptions = {},
-): ActionRendererRegistration {
-  return createActionRenderer(
-    actionId,
-    (
-      {
-        key,
-        onClick,
-        actionText,
-        className,
-        style,
-        actionId,
-        actionData,
-        disabled,
-        textClass,
-        actionStyle,
-        icon,
-        iconPlacement = IconPlacement.BeforeText,
-        inline,
-      }: ActionRendererProps,
-      renderer,
-    ) => {
-      const { Button, I } = renderer.html;
-      const isLink = actionStyle == ActionStyle.Link;
-      const classNames = rendererClass(
-        className,
-        isLink
-          ? options.linkClassName
-          : rendererClass(
-              options.buttonClass,
-              actionStyle == ActionStyle.Secondary
-                ? options.secondaryClass
-                : options.primaryClass,
-            ),
-      );
-      const iconElement = icon && (
-        <I
-          iconName={icon.name}
-          iconLibrary={icon.library}
-          className={
-            iconPlacement == IconPlacement.BeforeText
-              ? options.iconBeforeClass
-              : options.iconAfterClass
-          }
-        />
-      );
-      return (
-        <Button
-          key={key}
-          className={classNames}
-          textClass={rendererClass(
-            textClass,
-            isLink ? options.linkTextClass : options.textClass,
-          )}
-          disabled={disabled}
-          style={style}
-          onClick={onClick}
-          inline={inline}
-        >
-          {options.renderContent?.(actionText, actionId, actionData) ?? (
-            <>
-              {iconPlacement == IconPlacement.BeforeText && iconElement}
-              {actionText}
-              {iconPlacement == IconPlacement.AfterText && iconElement}
-            </>
-          )}
-        </Button>
-      );
-    },
-  );
 }
 
 export const DefaultBoolOptions: FieldOption[] = [

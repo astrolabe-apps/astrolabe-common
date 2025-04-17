@@ -451,6 +451,7 @@ export enum ActionStyle {
 export enum IconPlacement {
   BeforeText = "BeforeText",
   AfterText = "AfterText",
+  ReplaceText = "ReplaceText",
 }
 
 export interface ControlVisitor<A> {

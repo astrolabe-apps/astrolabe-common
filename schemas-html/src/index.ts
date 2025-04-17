@@ -16,3 +16,4 @@ export * from "./components/DefaultWizardRenderer";
 export * from "./adornments/optionalAdornment";
 export * from "./createDefaultRenderers";
 export * from "./tailwind";
+export * from "./createButtonActionRenderer";
