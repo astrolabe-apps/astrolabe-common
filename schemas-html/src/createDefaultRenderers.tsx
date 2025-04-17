@@ -132,6 +132,7 @@ export function createButtonActionRenderer(
     actionId,
     (
       {
+        key,
         onClick,
         actionText,
         className,
@@ -173,6 +174,7 @@ export function createButtonActionRenderer(
       );
       return (
         <Button
+          key={key}
           className={classNames}
           textClass={rendererClass(
             textClass,

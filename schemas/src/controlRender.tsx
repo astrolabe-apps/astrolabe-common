@@ -452,6 +452,7 @@ export interface DataRendererProps extends ParentRendererProps {
 }
 
 export interface ActionRendererProps {
+  key?: Key;
   actionId: string;
   actionText: string;
   actionData?: any;
