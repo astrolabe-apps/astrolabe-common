@@ -1,0 +1,20 @@
+{
+  "name": "@astroapps/schemas-datepicker",
+  "entries": [
+    {
+      "version": "6.1.2",
+      "tag": "@astroapps/schemas-datepicker_v6.1.2",
+      "date": "Tue, 25 Feb 2025 09:07:22 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^14.3.0` to `^15.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^14.3.0` to `^15.0.0`"
+          }
+        ]
+      }
+    }
+  ]
+}

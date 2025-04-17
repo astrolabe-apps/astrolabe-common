@@ -19,9 +19,12 @@ import { Fragment, ReactNode } from "react";
 
 export interface CustomNavigationProps {
   className?: string;
+  page: number;
+  totalPages: number;
   next: ActionRendererProps;
   prev: ActionRendererProps;
   formRenderer: FormRenderer;
+  validatePage: () => Promise<boolean>;
 }
 
 export interface DefaultWizardRenderOptions {
@@ -125,9 +128,12 @@ function renderWizard(
   });
   const navElement = renderNavigation({
     formRenderer: props.formRenderer,
+    page: countVisibleUntil(currentPage),
+    totalPages: countVisibleUntil(children.length),
     prev,
     next,
     className: navContainerClass,
+    validatePage: async () => validatePage(),
   });
   const content = props.designMode ? (
     <Div>{children.map((child, i) => props.renderChild(i, child))}</Div>
@@ -145,6 +151,16 @@ function renderWizard(
       {navElement}
     </Div>
   );
+
+  function countVisibleUntil(untilPage: number) {
+    let count = 0;
+    for (let i = 0; i < untilPage && i < allVisible.length; i++) {
+      if (allVisible[i]) {
+        count++;
+      }
+    }
+    return count;
+  }
 
   function nav(dir: number) {
     if (!validatePage()) {
