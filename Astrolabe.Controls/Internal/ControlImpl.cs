@@ -14,15 +14,13 @@ internal interface IControlImpl : IControl
     public ControlFlags Flags { get; set; }
 
     public ControlLogic Logic { get; set; }
-    
+
     public Subscriptions? Subscriptions { get; }
 
     void ValidityChanged(IControlTransactions ctx, bool hasErrors);
 
     void RunListeners();
 
-    void ChildValueChange(IControlTransactions ctx, IControlImpl control, object prop, object? value);
-    
     void WithChildren(Action<IControlImpl> action);
 
     void SetValueImpl(IControlTransactions ctx, object? value, IControlImpl? from = null);
@@ -30,16 +28,26 @@ internal interface IControlImpl : IControl
     void SetInitialValueImpl(IControlTransactions ctx, object? value);
 
     void UpdateParentLink(IControlImpl parent, object? key, bool initial = false);
-    
-    internal static readonly IReadOnlyDictionary<string, string> EmptyErrors = new Dictionary<string, string>();
 
+    internal static readonly IReadOnlyDictionary<string, string> EmptyErrors =
+        new Dictionary<string, string>();
+
+    internal void DoValueChange(
+        IControlTransactions ctx,
+        ControlChange structureFlag,
+        IControlImpl? from = null
+    );
 }
 
 /// <summary>
 /// Implementation of the IInternalControl interface.
 /// </summary>
-internal class ControlImpl(object? value, object? initialValue, ControlFlags flags, ControlLogic logic) : IControlImpl
-
+internal class ControlImpl(
+    object? value,
+    object? initialValue,
+    ControlFlags flags,
+    ControlLogic logic
+) : IControlImpl
 {
     public Dictionary<string, string>? ErrorMap { get; set; }
 
@@ -54,7 +62,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
     public ControlLogic Logic { get; set; } = logic;
     public Subscriptions? Subscriptions { get; private set; }
     public IList<ParentLink>? Parents { get; set; }
-    
+
     public IDictionary<string, object> Meta { get; } = new Dictionary<string, object>();
 
     public string? Error => ErrorMap?.Values.FirstOrDefault();
@@ -68,7 +76,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
     public bool Disabled => (Flags & ControlFlags.Disabled) != 0;
 
     public bool Touched => (Flags & ControlFlags.Touched) != 0;
-    
+
     public IControl this[string propertyName] => Logic.GetField(this, propertyName);
 
     public IReadOnlyList<IControl> Elements => Logic.GetElements(this);
@@ -98,7 +106,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
                 Parents.Add(newEntry);
         }
     }
-    
+
     public void ValidityChanged(IControlTransactions ctx, bool hasErrors)
     {
         if (Parents != null)
@@ -107,19 +115,22 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
             {
                 var parentControl = link.Control;
                 var alreadyInvalid = (parentControl.Flags & ControlFlags.ChildInvalid) != 0;
-                
+
                 if (!(hasErrors && alreadyInvalid))
                 {
-                    ctx.InTransaction(parentControl, () =>
-                    {
-                        if (hasErrors)
-                            parentControl.Flags |= ControlFlags.ChildInvalid;
-                        else
-                            parentControl.Flags &= ~ControlFlags.ChildInvalid;
-                        return true;
-                    });
+                    ctx.InTransaction(
+                        parentControl,
+                        () =>
+                        {
+                            if (hasErrors)
+                                parentControl.Flags |= ControlFlags.ChildInvalid;
+                            else
+                                parentControl.Flags &= ~ControlFlags.ChildInvalid;
+                            return true;
+                        }
+                    );
                 }
-                
+
                 parentControl.ValidityChanged(ctx, hasErrors);
             }
         }
@@ -134,30 +145,41 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
 
     public void SetValueImpl(IControlTransactions ctx, object? value, IControlImpl? from = null)
     {
-        if (Logic.IsEqual(Value, value))
+        if (Logic.IsEqual(Value, value) && (Flags & ControlFlags.Undefined) == 0)
             return;
 
-        ctx.InTransaction(this, () =>
-        {
-            var structureFlag = (value == null || Value == null)
-                ? ControlChange.Structure
-                : ControlChange.None;
-            
-            if ((Flags & ControlFlags.DontClearError) == 0)
-                ctx.SetErrors(this,null);
-
-            Logic.SetValue(ctx, this, value);
-        
-            if (Parents != null)
+        ctx.InTransaction(
+            this,
+            () =>
             {
-                foreach (var link in Parents)
-                {
-                    if (link.Control != from)
-                        link.Control.ChildValueChange(ctx, this, link.Key, Value);
-                }
+                var structureFlag =
+                    (value == null || Value == null) ? ControlChange.Structure : ControlChange.None;
+                Flags &= ~ControlFlags.Undefined;
+                Logic.SetValue(ctx, this, value);
+
+                DoValueChange(ctx, structureFlag, from);
             }
-            Subscriptions?.ApplyChange(ControlChange.Value | structureFlag);
-        });
+        );
+    }
+
+    public void DoValueChange(
+        IControlTransactions ctx,
+        ControlChange structureFlag,
+        IControlImpl? from = null
+    )
+    {
+        if ((Flags & ControlFlags.DontClearError) == 0)
+            ctx.SetErrors(this, null);
+
+        if (Parents != null)
+        {
+            foreach (var link in Parents)
+            {
+                if (link.Control != from)
+                    link.Control.Logic.ChildValueChange(ctx, link.Control, link.Key, Value);
+            }
+        }
+        Subscriptions?.ApplyChange(ControlChange.Value | structureFlag);
     }
 
     public void SetInitialValueImpl(IControlTransactions ctx, object? value)
@@ -165,43 +187,45 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
         if (Logic.IsEqual(InitialValue, value))
             return;
 
-        ctx.InTransaction(this, () =>
-        {
-            Logic.SetInitialValue(ctx, this, value);
-            Subscriptions?.ApplyChange(ControlChange.InitialValue);
-            return true;
-        });
+        ctx.InTransaction(
+            this,
+            () =>
+            {
+                Logic.SetInitialValue(ctx, this, value);
+                Subscriptions?.ApplyChange(ControlChange.InitialValue);
+                return true;
+            }
+        );
     }
-
 
     private bool IsValid()
     {
         if (ErrorMap != null || (Flags & ControlFlags.ChildInvalid) != 0)
             return false;
 
-        var allChildrenValid = Logic.VisitChildren(c => c.Valid ? (bool?) null : false) ?? true;
+        var allChildrenValid = Logic.VisitChildren(c => c.Valid ? (bool?)null : false) ?? true;
         if (!allChildrenValid)
             Flags |= ControlFlags.ChildInvalid;
-            
+
         return allChildrenValid;
     }
 
     private ControlChange GetChangeState(ControlChange mask)
     {
         var changeFlags = ControlChange.None;
-        
+
         if ((mask & ControlChange.Dirty) != 0 && Dirty)
             changeFlags |= ControlChange.Dirty;
-            
+
         if ((mask & ControlChange.Valid) != 0 && Valid)
             changeFlags |= ControlChange.Valid;
-            
+
         if ((mask & ControlChange.Disabled) != 0 && Disabled)
             changeFlags |= ControlChange.Disabled;
-            
+
         if ((mask & ControlChange.Touched) != 0 && Touched)
             changeFlags |= ControlChange.Touched;
-            
+
         return changeFlags;
     }
 
@@ -216,7 +240,7 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
     {
         Subscriptions?.Unsubscribe(subscription);
     }
-    
+
     public void RunListeners()
     {
         if (Subscriptions != null)
@@ -226,7 +250,12 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
         }
     }
 
-    public void ChildValueChange(IControlTransactions ctx, IControlImpl control, object prop, object? value)
+    public void ChildValueChange(
+        IControlTransactions ctx,
+        IControlImpl control,
+        object prop,
+        object? value
+    )
     {
         Logic.ChildValueChange(ctx, control, prop, value);
     }
@@ -240,5 +269,4 @@ internal class ControlImpl(object? value, object? initialValue, ControlFlags fla
     {
         return Logic.IsEqual(v1, v2);
     }
-    
 }

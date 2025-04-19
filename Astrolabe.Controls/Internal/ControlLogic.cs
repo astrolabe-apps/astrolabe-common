@@ -1,6 +1,5 @@
 namespace Astrolabe.Controls.Internal;
 
-
 /// <summary>
 /// Flags representing the state of a control.
 /// </summary>
@@ -11,7 +10,8 @@ internal enum ControlFlags
     Touched = 1,
     Disabled = 2,
     ChildInvalid = 4,
-    DontClearError = 8
+    DontClearError = 8,
+    Undefined = 16
 }
 
 /// <summary>
@@ -23,12 +23,12 @@ internal class ParentLink
     /// The parent control.
     /// </summary>
     public IControlImpl Control { get; set; }
-    
+
     /// <summary>
     /// The key or index in the parent.
     /// </summary>
     public object Key { get; set; }
-    
+
     /// <summary>
     /// The original key or index in the parent, if different.
     /// </summary>
@@ -48,20 +48,23 @@ internal class ParentLink
 internal interface ControlLogic
 {
     bool IsEqual(object? v1, object? v2);
-    
+
     T? VisitChildren<T>(Func<IControlImpl, T?> visitFn);
 
     IControl GetField(IControlImpl control, string propertyName);
-    
+
     IReadOnlyList<IControl> GetElements(IControlImpl control);
-    
-    void ChildValueChange(IControlTransactions ctx, IControlImpl control, object prop, object? value);
+
+    void ChildValueChange(
+        IControlTransactions ctx,
+        IControlImpl control,
+        object prop,
+        object? value
+    );
 
     public object? GetValue(IControlImpl control);
-    
+
     public void SetValue(IControlTransactions ctx, IControlImpl control, object? value);
-    
+
     public void SetInitialValue(IControlTransactions ctx, IControlImpl control, object? value);
-
 }
-
