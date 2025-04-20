@@ -13,15 +13,17 @@ import {
   removeElement,
   unsafeRestoreControl,
   updateElements,
+  useControl,
 } from "@react-typed-forms/core";
 import { defaultControlDefinitionForm } from "./schemaSchemas";
-import React, { MutableRefObject } from "react";
+import React, { Key, MutableRefObject, useEffect } from "react";
 import clsx from "clsx";
 import {
   ControlDefinition,
   ControlDefinitionType,
   fieldPathForDefinition,
   FormNode,
+  groupedControl,
   isDataControl,
   schemaForFieldPath,
   SchemaNode,
@@ -30,6 +32,10 @@ import { ControlNode, SelectedControlNode } from "./types";
 import { StdTreeNode } from "./StdTreeNode";
 import { canAddChildren } from "./util";
 import { EditorFormTree } from "./EditorFormTree";
+import { Menu } from "react-aria-components";
+import { paste } from "./controlActions";
+import { MenuItem } from "./MenuItem";
+import { isControlOnClipboard } from "./clipboard";
 
 export interface FormControlTreeProps {
   className?: string;
@@ -172,12 +178,18 @@ export function FormControlTree({
 }
 
 function ControlNodeRenderer(props: NodeRendererProps<ControlNode>) {
-  const { node } = props;
+  const { node, tree } = props;
   const canDelete = true;
-  const control = node.data.form.definition;
+  const formNode = node.data.form;
+  const control = formNode.definition;
   const canAdd = canAddChildren(control, node.data.dataSchema);
   return (
-    <StdTreeNode {...props}>
+    <StdTreeNode
+      {...props}
+      menu={(onClose) => (
+        <ControlMenu onClose={onClose} tree={tree} formNode={formNode} />
+      )}
+    >
       <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(control.type))} />
       <span className="truncate">
         {control.title}
@@ -223,6 +235,69 @@ function ControlNodeRenderer(props: NodeRendererProps<ControlNode>) {
         return "fa-layer-group";
       default:
         return "fa-question";
+    }
+  }
+}
+
+function ControlMenu({
+  formNode,
+  tree,
+  onClose,
+}: {
+  onClose: () => void;
+  tree: TreeApi<ControlNode>;
+  formNode: FormNode;
+}) {
+  const showPaste = useControl(false);
+  useEffect(() => {
+    checkClipboard();
+  }, []);
+
+  return (
+    <Menu
+      onClose={onClose}
+      className="p-1 outline outline-0 max-h-[inherit] overflow-auto [clip-path:inset(0_0_0_0_round_.75rem)]"
+      onAction={doAction}
+    >
+      <MenuItem id="wrapGroup">Wrap with group</MenuItem>
+      {showPaste.value && (
+        <>
+          <MenuItem id="paste">Paste as child</MenuItem>
+          <MenuItem id="pasteBefore">Paste before</MenuItem>
+          <MenuItem id="pasteAfter">Paste after</MenuItem>
+        </>
+      )}
+    </Menu>
+  );
+
+  async function checkClipboard() {
+    showPaste.value = await isControlOnClipboard();
+  }
+
+  function doAction(id: Key) {
+    const editorTree = formNode.tree as EditorFormTree;
+    groupedChanges(() => {
+      switch (id) {
+        case "paste":
+          paste(editorTree, formNode);
+          break;
+        case "pasteBefore":
+          paste(editorTree, formNode.parent!, formNode, false);
+          break;
+        case "pasteAfter":
+          paste(editorTree, formNode.parent!, formNode, true);
+          break;
+        case "wrapGroup":
+          wrapGroupAction();
+          break;
+      }
+    });
+
+    function wrapGroupAction() {
+      const def = editorTree.getEditableDefinition(formNode);
+      if (def) {
+        def.setValue((x) => groupedControl([def.value]));
+      }
     }
   }
 }

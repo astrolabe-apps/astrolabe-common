@@ -1,4 +1,3 @@
-import { EditableForm, ViewContext } from "./index";
 import React from "react";
 import { FormSchemaTree } from "../FormSchemaTree";
 import {
@@ -8,6 +7,7 @@ import {
 } from "@react-typed-forms/core";
 import { defaultControlForField } from "@react-typed-forms/schemas";
 import { InactiveView } from "./InactiveView";
+import { EditableForm, ViewContext } from "../types";
 
 export function CurrentSchemaView({ context }: { context: ViewContext }) {
   const cf = controlNotNull(context.getCurrentForm());

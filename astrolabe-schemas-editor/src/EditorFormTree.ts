@@ -52,6 +52,12 @@ export class EditorFormTree extends FormTree {
     return x && unsafeRestoreControl(x.definition)!.fields.children;
   }
 
+  getEditableDefinition(
+    node: FormNode,
+  ): Control<ControlDefinition> | undefined {
+    return unsafeRestoreControl(node.definition);
+  }
+
   getRootDefinitions(): Control<ControlDefinition[]> {
     return this.getEditableChildren(this.rootNode)!.as();
   }

@@ -1,6 +1,7 @@
 import React, { ReactElement, useMemo } from "react";
 import {
   ControlDefinitionExtension,
+  createSchemaDataNode,
   CustomRenderOptions,
   DataRenderType,
   DefaultSchemaInterface,
@@ -10,14 +11,13 @@ import {
   FormRenderer,
   FormTree,
   GroupedControlsDefinition,
-  makeSchemaDataNode,
   RendererRegistration,
   SchemaDataNode,
   schemaForFieldPath,
   SchemaNode,
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
-import { SelectedControlNode } from "./types";
+import { SelectedControlNode, ViewContext } from "./types";
 import { ControlDefinitionForm } from "./schemaSchemas";
 import {
   Control,
@@ -27,7 +27,6 @@ import {
 import { createValueForFieldRenderer } from "@react-typed-forms/schemas-html";
 import { createFieldSelectionRenderer } from "./FieldSelectionRenderer";
 import { createDataGridRenderer } from "@astroapps/schemas-datagrid";
-import { ViewContext } from "./views";
 import { SchemaFieldEditor } from "./views/SchemaFieldEditor";
 
 type ExtensionTypeFilterMap = { [key: string]: (n: SchemaNode) => boolean };
@@ -85,7 +84,7 @@ export function FormControlEditor({
     [controlNode.schema.id],
   );
 
-  const editorNode = makeSchemaDataNode(
+  const editorNode = createSchemaDataNode(
     editorFields,
     unsafeRestoreControl(controlNode.form.definition)!,
   );

@@ -1,17 +1,15 @@
-import { ViewContext } from "./index";
 import { InactiveView } from "./InactiveView";
-import { SchemaField, SchemaNode } from "@react-typed-forms/schemas";
+import { SchemaField } from "@react-typed-forms/schemas";
 import React from "react";
 import {
   Control,
   controlNotNull,
-  useComputed,
   useControl,
   useControlEffect,
   useDebounced,
 } from "@react-typed-forms/core";
 import { JsonEditor } from "../JsonEditor";
-import { EditorSchemaTree } from "../EditorSchemaTree";
+import { ViewContext } from "../types";
 
 export function SchemaJsonView({ context }: { context: ViewContext }) {
   const cf = controlNotNull(context.getCurrentForm());

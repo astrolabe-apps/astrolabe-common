@@ -8,17 +8,17 @@ import {
   addMissingControls,
   ControlDefinitionType,
   ControlRenderOptions,
+  createSchemaDataNode,
   FormNode,
   FormRenderer,
   GroupedControlsDefinition,
-  makeSchemaDataNode,
   NewControlRenderer,
   RendererRegistration,
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import React, { ReactNode, useMemo } from "react";
-import { ViewContext } from "./views";
 import { JsonEditor } from "./JsonEditor";
+import { ViewContext } from "./types";
 
 export interface PreviewData {
   showing: boolean;
@@ -73,7 +73,7 @@ export function FormPreview({
     () => data.value,
     (v) => (jsonControl.value = JSON.stringify(v, null, 2)),
   );
-  const rootDataNode = makeSchemaDataNode(rootSchema, data);
+  const rootDataNode = createSchemaDataNode(rootSchema, data);
   return (
     <>
       <div className="px-4 flex gap-4">

@@ -5,4 +5,3 @@ export * from "./FormControlEditor";
 export * from "./FormPreview";
 export * from "./FieldSelectionRenderer";
 export * from "./types";
-export type { FormInfo } from "./views";

@@ -41,11 +41,12 @@
     "react-arborist": "^3.4.3",
     "use-resize-observer": "~9.1.0",
     "react-hook-inview": "^4.5.1",
-    "@astroapps/aria-base": "^1.3.0",
     "@astroapps/schemas-datagrid": "^6.0.0",
     "@astroapps/datagrid": "^1.2.0",
     "codemirror": "^6.0.1",
-    "@codemirror/lang-json": "^6.0.1"
+    "@codemirror/lang-json": "^6.0.1",
+    "react-aria-components": "^1.8.0",
+    "tailwind-variants": "^1.0.0"
   },
   "devDependencies": {
     "@react-typed-forms/core": "^4.0.0",

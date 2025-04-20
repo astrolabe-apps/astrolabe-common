@@ -1,13 +1,13 @@
 import { unsafeRestoreControl } from "@react-typed-forms/core";
 import {
-  makeSchemaDataNode,
+  createSchemaDataNode,
   SchemaNode,
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import { createDataGridRenderer } from "@astroapps/schemas-datagrid";
 import { createValueForFieldRenderer } from "@react-typed-forms/schemas-html";
 import React, { useMemo } from "react";
-import { ViewContext } from "./index";
+import { ViewContext } from "../types";
 
 export function SchemaFieldEditor({
   schema,
@@ -25,7 +25,7 @@ export function SchemaFieldEditor({
       ]),
     [],
   );
-  const dataNode = makeSchemaDataNode(
+  const dataNode = createSchemaDataNode(
     context.schemaEditorFields,
     unsafeRestoreControl(schema.field)!,
   );

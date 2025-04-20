@@ -8,6 +8,7 @@ import {
   useControlEffect,
 } from "@react-typed-forms/core";
 import {
+  createButtonActionRenderer,
   createDefaultRenderers,
   defaultTailwindTheme,
   ValueForFieldExtension,
@@ -25,10 +26,12 @@ import {
   createSchemaLookup,
   createSchemaTree,
   EditorGroup,
+  fontAwesomeIcon,
   FormNode,
   FormRenderer,
   FormTree,
   getAllReferencedClasses,
+  IconPlacement,
   LabelType,
   RendererRegistration,
   SchemaField,
@@ -46,7 +49,7 @@ import {
 } from "@mhsdesign/jit-browser-tailwindcss";
 import defaultEditorControls from "./ControlDefinition.json";
 import defaultSchemaEditorControls from "./SchemaField.json";
-import { EditableForm, FormInfo, getViewAndParams, ViewContext } from "./views";
+import { getViewAndParams } from "./views";
 import { createView, getTabTitle } from "./views/createView";
 import {
   Actions,
@@ -59,7 +62,14 @@ import {
 } from "flexlayout-react";
 import { defaultLayout } from "./defaultLayout";
 import { setIncluded } from "@astroapps/client";
-import { FormLoader, SchemaLoader, Snippet } from "./types";
+import {
+  EditableForm,
+  FormInfo,
+  FormLoader,
+  SchemaLoader,
+  Snippet,
+  ViewContext,
+} from "./types";
 import { EditorFormTree } from "./EditorFormTree";
 import { EditorSchemaTree } from "./EditorSchemaTree";
 
@@ -137,7 +147,17 @@ export function BasicFormEditor<A extends string = string>({
   const ControlDefinitionTree = controlSchemas.getSchema("ControlDefinition");
   const [model] = useState(() => Model.fromJson(defaultLayout));
 
-  const editorFormRenderer = useMemo(() => createEditorRenderer([]), []);
+  const editorFormRenderer = useMemo(
+    () =>
+      createEditorRenderer([
+        formButtonRenderer("collapse", "minimize"),
+        formButtonRenderer("add", "plus"),
+        formButtonRenderer("cut", "cut"),
+        formButtonRenderer("copy", "copy"),
+        formButtonRenderer("paste", "paste"),
+      ]),
+    [],
+  );
   const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
   const loadedSchemas = useControl<
@@ -404,6 +424,17 @@ export function BasicFormEditor<A extends string = string>({
       configSchema: res.configSchema
         ? createSchemaTree(res.configSchema).rootNode
         : undefined,
+    });
+  }
+
+  function formButtonRenderer(
+    actionId: string,
+    icon: string,
+  ): RendererRegistration {
+    return createButtonActionRenderer(actionId, {
+      ...defaultTailwindTheme.action,
+      iconPlacement: IconPlacement.ReplaceText,
+      icon: fontAwesomeIcon(icon),
     });
   }
 }

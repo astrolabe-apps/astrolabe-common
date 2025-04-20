@@ -1,4 +1,3 @@
-import { EditableForm, ViewContext } from "./index";
 import {
   Control,
   newControl,
@@ -22,6 +21,7 @@ import React, { useMemo } from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
 import clsx from "clsx";
 import { JsonEditor } from "../JsonEditor";
+import { EditableForm, ViewContext } from "../types";
 
 export function FormView(props: { formId: string; context: ViewContext }) {
   const { formId, context } = props;

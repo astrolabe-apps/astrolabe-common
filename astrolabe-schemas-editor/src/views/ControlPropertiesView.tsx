@@ -1,8 +1,9 @@
-import { ViewContext } from "./index";
 import { FormControlEditor } from "../FormControlEditor";
 import React from "react";
 import { unsafeRestoreControl } from "@react-typed-forms/core";
 import { InactiveView } from "./InactiveView";
+import { ViewContext } from "../types";
+
 export function ControlPropertiesView({ context }: { context: ViewContext }) {
   const { editorControls, editorFields, createEditorRenderer, getCurrentForm } =
     context;

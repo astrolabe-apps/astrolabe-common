@@ -1,6 +1,6 @@
 import React, { ReactElement } from "react";
 import { CurrentSchemaView } from "./CurrentSchemaView";
-import { getViewAndParams, ViewContext } from "./index";
+import { getViewAndParams } from "./index";
 import { FormStructureView } from "./FormStructureView";
 import { ControlPropertiesView } from "./ControlPropertiesView";
 import { FormView } from "./FormView";
@@ -8,6 +8,7 @@ import { FormListView } from "./FormListView";
 import { HelpView } from "./HelpView";
 import { SnippetsView } from "./SnippetsView";
 import { SchemaJsonView } from "./SchemaJsonView";
+import { ViewContext } from "../types";
 
 export function getTabTitle(viewType: string, viewParams?: string): string {
   switch (viewType) {

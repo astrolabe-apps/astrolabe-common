@@ -1,9 +1,9 @@
-import { FormInfo, ViewContext } from "./index";
 import useResizeObserver from "use-resize-observer";
 import { NodeRendererProps, Tree } from "react-arborist";
 import React from "react";
 import { StdTreeNode } from "../StdTreeNode";
 import clsx from "clsx";
+import { FormInfo, ViewContext } from "../types";
 
 interface FormListNode {
   id: string;

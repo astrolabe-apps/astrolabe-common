@@ -29,13 +29,11 @@ import {
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
-import { createOverlayState, Popover } from "@astroapps/aria-base";
 import clsx from "clsx";
 import { schemaNodeIcon } from "./util";
 import { cn } from "@astroapps/client";
-import { ViewContext } from "./views";
-import { SchemaFieldEditor } from "./views/SchemaFieldEditor";
 import { EditorSchemaTree } from "./EditorSchemaTree";
+import { Popover } from "react-aria-components";
 
 const RenderType = "FieldSelection";
 
@@ -132,9 +130,11 @@ export function FieldSelection({
       </div>
       {open.value && (
         <Popover
-          state={createOverlayState(open)}
+          isOpen
+          onOpenChange={(x) => (open.value = x)}
           triggerRef={triggerRef}
           placement="top left"
+          className="bg-white"
         >
           <div
             className={
