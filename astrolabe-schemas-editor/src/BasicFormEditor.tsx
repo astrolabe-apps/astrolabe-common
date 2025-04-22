@@ -49,8 +49,7 @@ import {
 } from "@mhsdesign/jit-browser-tailwindcss";
 import defaultEditorControls from "./ControlDefinition.json";
 import defaultSchemaEditorControls from "./SchemaField.json";
-import { getViewAndParams } from "./views";
-import { createView, getTabTitle } from "./views/createView";
+import { createView, getTabTitle, getViewAndParams } from "./views";
 import {
   Actions,
   DockLocation,

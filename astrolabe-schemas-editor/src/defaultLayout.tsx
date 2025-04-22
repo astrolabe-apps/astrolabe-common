@@ -43,10 +43,21 @@ export const defaultLayout: IJsonModel = {
                 children: [{ id: "formStructure", name: "Form Structure" }],
               },
               {
-                type: "tabset",
+                type: "row",
                 children: [
-                  { id: "currentSchema", name: "Current Schema" },
-                  { id: "currentSchemaJson", name: "Schema JSON" },
+                  {
+                    type: "tabset",
+                    children: [
+                      { id: "currentSchema", name: "Current Schema" },
+                      { id: "currentSchemaJson", name: "Schema JSON" },
+                    ],
+                  },
+                  {
+                    type: "tabset",
+                    children: [
+                      { id: "fieldProperties", name: "Field properties" },
+                    ],
+                  },
                 ],
               },
             ],

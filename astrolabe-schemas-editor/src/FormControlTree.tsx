@@ -32,10 +32,12 @@ import { ControlNode, SelectedControlNode } from "./types";
 import { StdTreeNode } from "./StdTreeNode";
 import { canAddChildren } from "./util";
 import { EditorFormTree } from "./EditorFormTree";
-import { Menu } from "react-aria-components";
+import { Menu } from "./components/Menu";
 import { paste } from "./controlActions";
-import { MenuItem } from "./MenuItem";
+import { MenuItem } from "./components/MenuItem";
 import { isControlOnClipboard } from "./clipboard";
+import { Button, MenuTrigger } from "react-aria-components";
+import { Popover } from "./components/Popover";
 
 export interface FormControlTreeProps {
   className?: string;
@@ -184,12 +186,7 @@ function ControlNodeRenderer(props: NodeRendererProps<ControlNode>) {
   const control = formNode.definition;
   const canAdd = canAddChildren(control, node.data.dataSchema);
   return (
-    <StdTreeNode
-      {...props}
-      menu={(onClose) => (
-        <ControlMenu onClose={onClose} tree={tree} formNode={formNode} />
-      )}
-    >
+    <StdTreeNode {...props}>
       <i className={clsx("fa-solid w-4 h-4 mr-2", nodeIcon(control.type))} />
       <span className="truncate">
         {control.title}
@@ -220,6 +217,14 @@ function ControlNodeRenderer(props: NodeRendererProps<ControlNode>) {
           }}
         />
       )}
+      <MenuTrigger>
+        <Button>
+          <i className="pl-2 fa fa-ellipsis-vertical text-xs" />
+        </Button>
+        <Popover>
+          <ControlMenu node={node} tree={tree} />
+        </Popover>
+      </MenuTrigger>
     </StdTreeNode>
   );
 
@@ -240,25 +245,20 @@ function ControlNodeRenderer(props: NodeRendererProps<ControlNode>) {
 }
 
 function ControlMenu({
-  formNode,
   tree,
-  onClose,
+  node,
 }: {
-  onClose: () => void;
   tree: TreeApi<ControlNode>;
-  formNode: FormNode;
+  node: NodeApi<ControlNode>;
 }) {
+  const formNode = node.data.form;
   const showPaste = useControl(false);
   useEffect(() => {
     checkClipboard();
   }, []);
 
   return (
-    <Menu
-      onClose={onClose}
-      className="p-1 outline outline-0 max-h-[inherit] overflow-auto [clip-path:inset(0_0_0_0_round_.75rem)]"
-      onAction={doAction}
-    >
+    <Menu onAction={doAction}>
       <MenuItem id="wrapGroup">Wrap with group</MenuItem>
       {showPaste.value && (
         <>

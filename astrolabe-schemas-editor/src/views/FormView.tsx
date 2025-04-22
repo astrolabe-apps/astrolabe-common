@@ -101,6 +101,7 @@ function RenderFormDesign({
 
   function save() {
     context.saveForm(c);
+    context.saveSchema?.(c);
   }
 
   function addMissing() {

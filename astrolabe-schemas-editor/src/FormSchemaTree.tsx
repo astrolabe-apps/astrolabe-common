@@ -1,10 +1,11 @@
 import useResizeObserver from "use-resize-observer";
-import { NodeRendererProps, Tree } from "react-arborist";
-import { Control } from "@react-typed-forms/core";
-import React from "react";
+import { NodeApi, NodeRendererProps, Tree } from "react-arborist";
+import { addElement, Control } from "@react-typed-forms/core";
+import React, { Key } from "react";
 import clsx from "clsx";
 import {
   fieldPathForDefinition,
+  FieldType,
   getSchemaNodePath,
   isCompoundNode,
   schemaForFieldPath,
@@ -13,9 +14,16 @@ import {
 import { SelectedControlNode } from "./types";
 import { schemaNodeIcon } from "./util";
 import { StdTreeNode } from "./StdTreeNode";
+import { Button, MenuTrigger } from "react-aria-components";
+import { Popover } from "./components/Popover";
+import { Menu } from "./components/Menu";
+import { MenuItem } from "./components/MenuItem";
+import { EditorSchemaTree } from "./EditorSchemaTree";
+import { defaultSchemaFieldForm } from "./schemaSchemas";
 
 interface SchemaNodeCtx {
   schema: SchemaNode;
+  selected: Control<SchemaNode | undefined>;
   selectedControl: Control<SelectedControlNode | undefined>;
   onAdd: (node: SchemaNode) => void;
   id: string;
@@ -45,9 +53,6 @@ export function FormSchemaTree({
         data={makeChildNodes(rootSchema)}
         onSelect={(n) => (selected.value = n[0]?.data.schema)}
         selection={selected.value ? getNodeId(selected.value) : undefined}
-        childrenAccessor={(x) =>
-          isCompoundNode(x.schema) ? makeChildNodes(x.schema) : null
-        }
         children={SchemaNodeRenderer}
       />
     </div>
@@ -63,23 +68,48 @@ export function FormSchemaTree({
         selectedControl,
         id: getNodeId(x),
         onAdd,
+        selected,
+        children: isCompoundNode(x) ? makeChildNodes(x) : null,
       };
     });
   }
 }
 
 function getNodeId(node: SchemaNode): string {
-  return getSchemaNodePath(node).join("/");
+  return node.id;
 }
 
 function SchemaNodeRenderer(props: NodeRendererProps<SchemaNodeCtx>) {
   const { node } = props;
   const {
     schema: { field },
-    selectedControl,
   } = node.data;
+  return (
+    <StdTreeNode {...props}>
+      <i
+        className={clsx("fa-solid w-4 h-4 mr-2", schemaNodeIcon(field.type))}
+      />
+      <span className="truncate">
+        {field.field}
+        {field.collection ? " []" : ""}
+      </span>
+      <MenuTrigger>
+        <Button>
+          <i className="pl-2 fa fa-ellipsis-vertical text-xs" />
+        </Button>
+        <Popover>
+          <FieldMenu node={node} />
+        </Popover>
+      </MenuTrigger>
+    </StdTreeNode>
+  );
+}
+
+function FieldMenu({ node }: { node: NodeApi<SchemaNodeCtx> }) {
+  const { selectedControl, schema } = node.data;
+  const tree = schema.tree as EditorSchemaTree;
   const sel = selectedControl.value;
-  let parentSelected = false;
+  let parentSelected;
   if (sel) {
     const schemaPath = fieldPathForDefinition(sel.form.definition);
     let schema = sel.schema;
@@ -90,24 +120,36 @@ function SchemaNodeRenderer(props: NodeRendererProps<SchemaNodeCtx>) {
   } else {
     parentSelected = getNodeId(node.data.schema.parent!) == "";
   }
+
   return (
-    <StdTreeNode {...props}>
-      <i
-        className={clsx("fa-solid w-4 h-4 mr-2", schemaNodeIcon(field.type))}
-      />
-      <span className="truncate">
-        {field.field}
-        {field.collection ? " []" : ""}
-      </span>
-      {parentSelected && (
-        <i
-          className="ml-2 fa-solid fa-plus w-4 h-4"
-          onClick={(e) => {
-            e.stopPropagation();
-            node.data.onAdd(node.data.schema);
-          }}
-        />
+    <Menu onAction={doAction}>
+      {parentSelected && <MenuItem id="addControl">Add to form</MenuItem>}
+      {isCompoundNode(schema) && (
+        <MenuItem id="addChild">Add child field</MenuItem>
       )}
-    </StdTreeNode>
+      <MenuItem id="delete">Delete</MenuItem>
+    </Menu>
   );
+
+  function doAction(action: Key) {
+    switch (action) {
+      case "addControl":
+        node.data.onAdd(schema);
+        break;
+      case "delete":
+        tree.deleteNode(schema);
+        break;
+      case "addChild":
+        const children = tree.getEditableChildren(schema);
+        if (children) {
+          const newNode = tree.addNode(schema, {
+            ...defaultSchemaFieldForm,
+            type: FieldType.String,
+            field: "new",
+          });
+          node.data.selected.value = newNode;
+        }
+        break;
+    }
+  }
 }
