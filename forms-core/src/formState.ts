@@ -3,6 +3,7 @@ import { schemaDataForFieldPath, SchemaDataNode } from "./schemaDataNode";
 import {
   AnyControlDefinition,
   ControlDefinition,
+  DynamicPropertyType,
   isDataControl,
 } from "./controlDefinition";
 import { SchemaInterface } from "./schemaInterface";
@@ -13,6 +14,7 @@ import {
   newControl,
   updateComputedValue,
 } from "@astroapps/controls";
+import { evalExpression } from "./evalExpression";
 
 export interface ControlState {
   definition: ControlDefinition;
@@ -45,20 +47,16 @@ export interface FormState {
   ): ControlState;
 }
 
-export type ControlOverride<K extends keyof AnyControlDefinition> = [
-  K,
-  Control<AnyControlDefinition[K]>,
-];
-
-export type ControlOverrides = {
-  [K in keyof AnyControlDefinition]: Control<AnyControlDefinition[K]>;
+export type ControlLogics = {
+  [K in keyof AnyControlDefinition]?: ControlLogic<AnyControlDefinition[K]>;
 };
 
-export type ControlLogic = (
+export type ControlLogic<T> = (
+  control: Control<T>,
   context: Control<FormContextOptions>,
   parent: SchemaDataNode,
   formNode: FormNode,
-) => ControlOverride<any> | undefined;
+) => void;
 
 export function createFormState(): FormState {
   const controlStates = newControl<Record<string, FormContextOptions>>({});
@@ -71,15 +69,13 @@ export function createFormState(): FormState {
       const controlImpl = controlStates.fields[parent.id + "$" + formNode.id];
       controlImpl.value = context;
       return ensureMetaValue(controlImpl, "impl", () => {
-        const handlers = newControl({}) as Control<ControlOverrides>;
-        updateComputedValue(handlers, () => {
-          const out: Record<string, Control<any>> = {};
-          logics.forEach((x) => {
-            const result = x(controlImpl, parent, formNode);
-            if (result) out[result[0]] = result[1];
-          });
-          return out as ControlOverrides;
-        });
+        const handlers: Record<string, Control<any>> = {};
+        for (const k in logics) {
+          const l = logics[k as keyof ControlLogics]! as ControlLogic<any>;
+          const nk = newControl<any>(undefined);
+          l(nk, controlImpl, parent, formNode);
+          handlers[k] = nk;
+        }
         return {
           definition: new Proxy(formNode.definition, {
             get(
@@ -87,7 +83,7 @@ export function createFormState(): FormState {
               p: string | symbol,
               receiver: any,
             ): any {
-              const override = handlers.value[p as keyof AnyControlDefinition];
+              const override = handlers[p as string];
               if (override) return override.value;
               return target[p as keyof ControlDefinition];
             },
@@ -98,16 +94,25 @@ export function createFormState(): FormState {
   };
 }
 
-const testLogic: ControlLogic = (context, parent, formNode) => {
-  const hidden = newControl(false);
-  updateComputedValue(hidden, () => {
-    const dataNode = lookupDataNode(formNode.definition, parent);
-    return !!dataNode && !validDataNode(dataNode);
-  });
-  return ["hidden", hidden];
+const hiddenLogic: ControlLogic<boolean | null | undefined> = (
+  hidden,
+  context,
+  parent,
+  formNode,
+) => {
+  const dynamic = formNode.definition.dynamic?.find(
+    (x) => x.type === DynamicPropertyType.Visible,
+  );
+  if (dynamic) {
+    evalExpression(hidden, dynamic.expr, notBoolean, parent, formNode, context);
+  } else
+    updateComputedValue(hidden, () => {
+      const dataNode = lookupDataNode(formNode.definition, parent);
+      return !!dataNode && !validDataNode(dataNode);
+    });
 };
 
-const logics: ControlLogic[] = [testLogic];
+const logics: ControlLogics = { hidden: hiddenLogic };
 
 export function validDataNode(context: SchemaDataNode): boolean {
   const parent = context.parent;
@@ -130,4 +135,12 @@ export function validDataNode(context: SchemaDataNode): boolean {
     });
     return c;
   }).value;
+}
+
+function toBoolean(u: unknown) {
+  return !!u;
+}
+
+function notBoolean(u: unknown) {
+  return !u;
 }
