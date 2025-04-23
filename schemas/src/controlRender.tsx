@@ -20,7 +20,6 @@ import {
   useComponentTracking,
   useComputed,
   useControl,
-  useControlEffect,
 } from "@react-typed-forms/core";
 import {
   ActionStyle,
@@ -28,16 +27,21 @@ import {
   ArrayActionOptions,
   ControlActionHandler,
   ControlAdornment,
-  ControlAdornmentType,
   ControlDataContext,
   ControlDefinition,
+  createFormState,
+  createSchemaDataNode,
+  createSchemaTree,
   CustomDisplay,
   DataControlDefinition,
-  DataRenderType,
+  defaultSchemaInterface,
   DisplayData,
   DisplayDataType,
-  DynamicPropertyType,
+  FieldOption,
   FormContextData,
+  FormContextOptions,
+  FormNode,
+  FormState,
   GroupRenderOptions,
   IconPlacement,
   IconReference,
@@ -45,8 +49,16 @@ import {
   isDataControl,
   isDisplayControl,
   isGroupControl,
+  legacyFormNode,
+  LengthValidator,
+  lookupDataNode,
   RenderOptions,
-} from "./controlDefinition";
+  SchemaDataNode,
+  SchemaField,
+  SchemaInterface,
+  SchemaValidator,
+  ValidatorType,
+} from "@astroapps/forms-core";
 import {
   actionHandlers,
   applyLengthRestrictions,
@@ -65,34 +77,10 @@ import { createAction, dataControl } from "./controlBuilder";
 import {
   defaultUseEvalExpressionHook,
   EvalExpressionHook,
-  useEvalActionHook,
-  useEvalAllowedOptionsHook,
-  useEvalDefaultValueHook,
-  useEvalDisabledHook,
-  useEvalDisplayHook,
   UseEvalExpressionHook,
-  useEvalLabelText,
-  useEvalReadonlyHook,
-  useEvalStyleHook,
   useEvalVisibilityHook,
 } from "./hooks";
 import { useMakeValidationHook, ValidationContext } from "./validators";
-import { useDynamicHooks } from "./dynamicHooks";
-import { defaultSchemaInterface } from "./defaultSchemaInterface";
-import {
-  LengthValidator,
-  SchemaValidator,
-  ValidatorType,
-} from "./schemaValidator";
-import { FieldOption, SchemaField } from "./schemaField";
-import { FormNode, legacyFormNode, lookupDataNode } from "./formNode";
-import { SchemaInterface } from "./schemaInterface";
-import {
-  createSchemaDataNode,
-  makeSchemaDataNode,
-  SchemaDataNode,
-} from "./schemaDataNode";
-import { createSchemaTree } from "./schemaNode";
 
 export interface HtmlIconProperties {
   className?: string;
@@ -473,14 +461,6 @@ export interface ControlRenderProps {
   parentPath?: JsonPath[];
 }
 
-export interface FormContextOptions {
-  readonly?: boolean | null;
-  hidden?: boolean | null;
-  disabled?: boolean | null;
-  displayOnly?: boolean;
-  inline?: boolean;
-}
-
 export type CreateDataProps = (
   controlProps: RenderLayoutProps,
   definition: DataControlDefinition,
@@ -490,6 +470,7 @@ export type CreateDataProps = (
 export interface ControlRenderOptions
   extends FormContextOptions,
     ControlClasses {
+  formState?: FormState;
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
   actionOnClick?: ControlActionHandler;
   customDisplay?: (
@@ -505,9 +486,6 @@ export interface ControlRenderOptions
     context: ControlDataContext,
     layout: ControlLayoutProps,
   ) => ControlLayoutProps;
-  clearHidden?: boolean;
-  schemaInterface?: SchemaInterface;
-  formData?: FormContextData;
 }
 
 export function useControlRenderer(
@@ -536,10 +514,12 @@ export function useControlRendererComponent(
   options: ControlRenderOptions = {},
   parentDataNode: SchemaDataNode,
 ): FC<{}> {
+  const formState = options.formState ?? createFormState();
   const [definition, formNode] =
     "definition" in controlOrFormNode
       ? [controlOrFormNode.definition, controlOrFormNode]
       : [controlOrFormNode, legacyFormNode(controlOrFormNode)];
+  const state = formState.getControlState(parentDataNode, formNode, options);
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const useExpr = options.useEvalExpressionHook ?? defaultUseEvalExpressionHook;
@@ -549,46 +529,25 @@ export function useControlRendererComponent(
     definition,
     options.useValidationHook,
   );
-  const dynamicHooks = useDynamicHooks({
-    defaultValueControl: useEvalDefaultValueHook(useExpr, definition),
-    visibleControl: useEvalVisibilityHook(useExpr, definition),
-    readonlyControl: useEvalReadonlyHook(useExpr, definition),
-    disabledControl: useEvalDisabledHook(useExpr, definition),
-    allowedOptions: useEvalAllowedOptionsHook(useExpr, definition),
-    labelText: useEvalLabelText(useExpr, definition),
-    actionData: useEvalActionHook(useExpr, definition),
-    customStyle: useEvalStyleHook(
-      useExpr,
-      DynamicPropertyType.Style,
-      definition,
-    ),
-    layoutStyle: useEvalStyleHook(
-      useExpr,
-      DynamicPropertyType.LayoutStyle,
-      definition,
-    ),
-    displayControl: useEvalDisplayHook(useExpr, definition),
-  });
 
   const r = useUpdatedRef({
     options,
-    definition,
     parentDataNode,
     dataNode,
     formNode,
+    state,
   });
 
-  if (formNode == null) debugger;
   const Component = useCallback(() => {
     const stopTracking = useComponentTracking();
 
     try {
       const {
-        definition: c,
         options,
         parentDataNode: pdn,
         dataNode: dn,
         formNode,
+        state,
       } = r.current;
       const formData = options.formData ?? {};
       const dataContext: ControlDataContext = {
@@ -597,20 +556,8 @@ export function useControlRendererComponent(
         parentNode: pdn,
         formData,
       };
-      const {
-        readonlyControl,
-        disabledControl,
-        visibleControl,
-        displayControl,
-        layoutStyle,
-        labelText,
-        customStyle,
-        allowedOptions,
-        defaultValueControl,
-        actionData,
-      } = dynamicHooks(dataContext);
-
-      const visible = visibleControl.current.value;
+      const c = state.definition;
+      const visible = !c.hidden;
       const visibility = useControl<Visibility | undefined>(() =>
         visible != null
           ? {
@@ -619,60 +566,62 @@ export function useControlRendererComponent(
             }
           : undefined,
       );
-      useControlEffect(
-        () => visibleControl.value,
-        (visible) => {
-          if (visible != null)
-            visibility.setValue((ex) => ({
-              visible,
-              showing: ex ? ex.showing : visible,
-            }));
-        },
-      );
+      visibility.fields.visible.value = visible;
+      // const ro = !!(isDataControl(c) && c.readonly)
+
+      // TODO
+      // useControlEffect(
+      //   () => visibleControl.value,
+      //   (visible) => {
+      //     if (visible != null)
+      //       visibility.setValue((ex) => ({
+      //         visible,
+      //         showing: ex ? ex.showing : visible,
+      //       }));
+      //   },
+      // );
 
       const parentControl = parentDataNode.control!;
       const control = dataNode?.control;
-      useControlEffect(
-        () => [
-          visibility.value,
-          defaultValueControl.value,
-          control?.isNull,
-          isDataControl(definition) && definition.dontClearHidden,
-          definition.adornments?.some(
-            (x) => x.type === ControlAdornmentType.Optional,
-          ) ||
-            (isDataControl(definition) &&
-              definition.renderOptions?.type == DataRenderType.NullToggle),
-          parentControl.isNull,
-          options.hidden,
-          readonlyControl.value,
-        ],
-        ([vc, dv, _, dontClear, dontDefault, parentNull, hidden, ro]) => {
-          if (!ro) {
-            if (control) {
-              if (vc && vc.visible === vc.showing) {
-                if (hidden || !vc.visible) {
-                  control.setValue((x) =>
-                    options.clearHidden && !dontClear
-                      ? undefined
-                      : x == null && dontClear && !dontDefault
-                        ? dv
-                        : x,
-                  );
-                } else if (!dontDefault)
-                  control.setValue((x) => (x != null ? x : dv));
-              }
-            } else if (parentNull) {
-              parentControl.setValue((x) => x ?? {});
-            }
-          }
-        },
-        true,
-      );
+      // useControlEffect(
+      //   () => [
+      //     visibility.value,
+      //     control?.isNull,
+      //     isDataControl(definition) && definition.dontClearHidden,
+      //     definition.adornments?.some(
+      //       (x) => x.type === ControlAdornmentType.Optional,
+      //     ) ||
+      //       (isDataControl(definition) &&
+      //         definition.renderOptions?.type == DataRenderType.NullToggle),
+      //     parentControl.isNull,
+      //     options.hidden,
+      //   ],
+      //   ([vc, _, dontClear, dontDefault, parentNull, hidden]) => {
+      //     if (!ro) {
+      //       if (control) {
+      //         if (vc && vc.visible === vc.showing) {
+      //           if (hidden || !vc.visible) {
+      //             control.setValue((x) =>
+      //               options.clearHidden && !dontClear
+      //                 ? undefined
+      //                 : x == null && dontClear && !dontDefault
+      //                   ? dv
+      //                   : x,
+      //             );
+      //           } else if (!dontDefault)
+      //             control.setValue((x) => (x != null ? x : dv));
+      //         }
+      //       } else if (parentNull) {
+      //         parentControl.setValue((x) => x ?? {});
+      //       }
+      //     }
+      //   },
+      //   true,
+      // );
       const myOptionsControl = useComputed<FormContextOptions>(() => ({
         hidden: options.hidden || !visibility.fields?.showing.value,
-        readonly: options.readonly || readonlyControl.value,
-        disabled: options.disabled || disabledControl.value,
+        readonly: options.readonly,
+        disabled: options.disabled,
         displayOnly: options.displayOnly || isControlDisplayOnly(c),
         inline: options.inline,
       }));
@@ -745,14 +694,9 @@ export function useControlRendererComponent(
         createDataProps: dataProps,
         formOptions: myOptions,
         dataContext,
-        control: displayControl ?? control,
+        control: control,
         schemaInterface,
-        labelText,
-        displayControl,
-        style: customStyle.value,
-        allowedOptions,
         customDisplay: options.customDisplay,
-        actionDataControl: actionData,
         actionOnClick: options.actionOnClick,
         styleClass: options.styleClass,
         labelClass: options.labelClass,
@@ -775,7 +719,6 @@ export function useControlRendererComponent(
         ...labelAndChildren,
         adornments,
         className: rendererClass(options.layoutClass, c.layoutClass),
-        style: layoutStyle.value,
       };
       const renderedControl = renderer.renderLayout(
         options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,
@@ -784,7 +727,7 @@ export function useControlRendererComponent(
     } finally {
       stopTracking();
     }
-  }, [r, dataProps, useValidation, renderer, schemaInterface, dynamicHooks]);
+  }, [r, dataProps, useValidation, renderer, schemaInterface]);
   (Component as any).displayName = "RenderControl";
   return Component;
 }
@@ -841,7 +784,6 @@ export function defaultDataProps(
   {
     formOptions,
     style,
-    allowedOptions,
     schemaInterface = defaultSchemaInterface,
     styleClass,
     textClass: tc,
@@ -857,7 +799,7 @@ export function defaultDataProps(
   const displayOnly = !!formOptions.displayOnly;
   const required = !!definition.required && !displayOnly;
   const fieldOptions = schemaInterface.getDataOptions(dataNode);
-  const _allowed = allowedOptions?.value ?? [];
+  const _allowed: any[] = [];
   const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
   return {
     dataNode,
@@ -916,11 +858,7 @@ export interface RenderLayoutProps {
   formOptions: FormContextOptions;
   dataContext: ControlDataContext;
   control?: Control<any>;
-  labelText?: Control<string | null | undefined>;
-  displayControl?: Control<string | undefined>;
   style?: React.CSSProperties;
-  allowedOptions?: Control<any[] | undefined>;
-  actionDataControl?: Control<any | undefined | null>;
   useChildVisibility: ChildVisibilityFunc;
   useEvalExpression: UseEvalExpressionHook;
   actionOnClick?: ControlActionHandler;
@@ -944,9 +882,7 @@ export function renderControlLayout(
     control,
     dataContext,
     createDataProps: dataProps,
-    displayControl,
     style,
-    labelText,
     useChildVisibility,
     designMode,
     customDisplay,
@@ -990,7 +926,7 @@ export function renderControlLayout(
         actionOnClick,
       }),
       label: {
-        label: labelText?.value ?? c.title,
+        label: c.title,
         className: rendererClass(labelClass, c.labelClass),
         textClass: rendererClass(labelTextClass, c.labelTextClass),
         type: LabelType.Group,
@@ -999,11 +935,11 @@ export function renderControlLayout(
     };
   }
   if (isActionControl(c)) {
-    const actionData = props.actionDataControl?.value ?? c.actionData;
+    const actionData = c.actionData;
     return {
       inline: formOptions.inline,
       children: renderer.renderAction({
-        actionText: labelText?.value ?? c.title ?? c.actionId,
+        actionText: c.title ?? c.actionId,
         actionId: c.actionId,
         actionData,
         actionStyle: c.actionStyle ?? ActionStyle.Button,
@@ -1025,7 +961,6 @@ export function renderControlLayout(
       className: rendererClass(styleClass, c.styleClass),
       textClass: rendererClass(textClass, c.textClass),
       style,
-      display: displayControl,
       dataContext,
       inline: formOptions.inline,
     };
@@ -1046,10 +981,7 @@ export function renderControlLayout(
     if (!control) return { children: "No control for: " + c.field };
     const rendererProps = dataProps(props, c, control);
     const label = !c.hideTitle
-      ? controlTitle(
-          labelText?.value ?? c.title,
-          props.dataContext.dataNode!.schema.field,
-        )
+      ? controlTitle(c.title, props.dataContext.dataNode!.schema.field)
       : undefined;
     return {
       inline: formOptions.inline,

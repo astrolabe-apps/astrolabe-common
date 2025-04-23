@@ -3,6 +3,7 @@ lockfileVersion: 5.4
 overrides:
   caniuse-lite: 1.0.30001712
   react-dnd: 16.0.1
+  '@astroapps/forms-core': workspace:*
   '@astroapps/client': workspace:*
   '@astroapps/controls': workspace:*
   '@react-typed-forms/core': workspace:*
@@ -691,6 +692,47 @@ importers:
       tsx: 4.19.2
       typescript: 5.7.2
 
+  ../../../forms-core:
+    specifiers:
+      '@astroapps/controls': workspace:*
+      '@jest/globals': ^29.7.0
+      '@types/react': ^18.2.28
+      '@types/uuid': ^10.0.0
+      clsx: ^1 || ^2
+      fast-check: ^3.22.0
+      jest: ^29.7.0
+      jsonata: ^2.0.4
+      markdown-magic: ^2.6.1
+      microbundle: ^0.15.1
+      nswag: ^13.18.2
+      prettier: ^3.0.3
+      rimraf: ^3.0.2
+      ts-jest: ^29.2.5
+      tsx: ^4.19.1
+      typedoc: ^0.27.2
+      typescript: ^5.6.2
+      uuid: ^10.0.0
+    dependencies:
+      clsx: 2.1.1
+      jsonata: 2.0.5
+      uuid: 10.0.0
+    devDependencies:
+      '@astroapps/controls': link:../astrolabe-controls
+      '@jest/globals': 29.7.0
+      '@types/react': 18.3.12
+      '@types/uuid': 10.0.0
+      fast-check: 3.22.0
+      jest: 29.7.0
+      markdown-magic: 2.6.1
+      microbundle: 0.15.1
+      nswag: 13.20.0
+      prettier: 3.4.2
+      rimraf: 3.0.2
+      ts-jest: 29.2.5_7tzdje3fj44vzmbciw44xp3pru
+      tsx: 4.19.2
+      typedoc: 0.27.2_typescript@5.7.2
+      typescript: 5.7.2
+
   ../../../mui:
     specifiers:
       '@mui/material': ^5.14.13
@@ -717,6 +759,7 @@ importers:
 
   ../../../schemas:
     specifiers:
+      '@astroapps/forms-core': workspace:*
       '@jest/globals': ^29.7.0
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/transform': ^0.2.0
@@ -738,6 +781,7 @@ importers:
       typescript: ^5.6.2
       uuid: ^10.0.0
     dependencies:
+      '@astroapps/forms-core': link:../forms-core
       clsx: 2.1.1
       jsonata: 2.0.5
       uuid: 10.0.0
@@ -22341,6 +22385,21 @@ packages:
       markdown-it: 14.1.0
       minimatch: 9.0.5
       typescript: 5.6.3
+      yaml: 2.6.1
+    dev: true
+
+  /typedoc/0.27.2_typescript@5.7.2:
+    resolution: {integrity: sha512-C2ima5TZJHU3ecnRIz50lKd1BsYck5LhYQIy7MRPmjuSEJreUEAt+uAVcZgY7wZsSORzEI7xW8miZIdxv/cbmw==}
+    engines: {node: '>= 18'}
+    hasBin: true
+    peerDependencies:
+      typescript: 5.0.x || 5.1.x || 5.2.x || 5.3.x || 5.4.x || 5.5.x || 5.6.x || 5.7.x
+    dependencies:
+      '@gerrit0/mini-shiki': 1.24.1
+      lunr: 2.3.9
+      markdown-it: 14.1.0
+      minimatch: 9.0.5
+      typescript: 5.7.2
       yaml: 2.6.1
     dev: true
 

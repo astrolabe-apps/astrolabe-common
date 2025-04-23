@@ -463,6 +463,11 @@
 //      "projectFolder": "ClientApp/sites/test"
 //    },
     {
+      "packageName": "@astroapps/forms-core",
+      "projectFolder": "../forms-core",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@react-typed-forms/schemas",
       "projectFolder": "../schemas",
       "shouldPublish": true

@@ -342,7 +342,9 @@ export function createDefaultAdornmentRenderer(
               useControlEffect(
                 () => [value?.value, otherField?.value == null],
                 ([v]) => {
-                  otherField?.setValue((x) => (always || x == null ? v : x));
+                  otherField?.setValue((x: any) =>
+                    always || x == null ? v : x,
+                  );
                 },
                 true,
               );

@@ -4,14 +4,7 @@ import { EntityExpression } from "./entityExpression";
 import { SchemaInterface } from "./schemaInterface";
 import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaNode } from "./schemaNode";
-
-/**
- * Interface representing the form context data.
- */
-export interface FormContextData {
-  option?: FieldOption;
-  optionSelected?: boolean;
-}
+import { FormContextData } from "./formState";
 
 /**
  * Interface representing the control data context.
@@ -40,6 +33,7 @@ export interface ControlDefinition {
   id?: string | null;
   childRefId?: string | null;
   title?: string | null;
+  hidden?: boolean | null;
   styleClass?: string | null;
   textClass?: string | null;
   layoutClass?: string | null;

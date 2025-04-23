@@ -23,7 +23,7 @@ import {
   OptionalAdornment,
   RenderOptions,
   SetFieldAdornment,
-} from "./controlDefinition";
+} from "@astroapps/forms-core";
 
 export interface DefaultRenderers {
   data: DataRendererRegistration;

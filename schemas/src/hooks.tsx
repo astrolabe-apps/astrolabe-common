@@ -1,11 +1,20 @@
 import {
-  ControlDefinition,
-  DynamicPropertyType,
   ControlDataContext,
-  getRootDataNode,
+  ControlDefinition,
+  DataExpression,
+  DataMatchExpression,
+  DynamicPropertyType,
+  EntityExpression,
+  ExpressionType,
   getJsonPath,
+  getRootDataNode,
   isDataControl,
-} from "./controlDefinition";
+  JsonataExpression,
+  NotEmptyExpression,
+  schemaDataForFieldRef,
+  SchemaDataNode,
+  SchemaInterface,
+} from "@astroapps/forms-core";
 import React, { useEffect, useMemo, useRef } from "react";
 import {
   addAfterChangesCallback,
@@ -31,16 +40,6 @@ import {
 import jsonata from "jsonata";
 import { v4 as uuidv4 } from "uuid";
 import { DynamicHookGenerator, HookDep, toDepString } from "./dynamicHooks";
-import {
-  DataExpression,
-  DataMatchExpression,
-  EntityExpression,
-  ExpressionType,
-  JsonataExpression,
-  NotEmptyExpression,
-} from "./entityExpression";
-import { SchemaInterface } from "./schemaInterface";
-import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
 
 export type EvalExpressionHook<A = any> = DynamicHookGenerator<
   Control<A | undefined>,
@@ -79,8 +78,7 @@ export function useEvalVisibilityHook(
         const dataNode = overrideDataNode ?? ctx.dataNode;
         return (
           !dataNode ||
-          (matchesType(dataNode) &&
-            !hideDisplayOnly(dataNode, ctx.schemaInterface, definition))
+          (true && !hideDisplayOnly(dataNode, ctx.schemaInterface, definition))
         );
       }),
     { definition, overrideDataNode },
@@ -321,21 +319,6 @@ export function useEvalDynamicHook<V>(
     expression?.expr,
     coerce,
   ) as DynamicHookGenerator<Control<V> | undefined, ControlDataContext>;
-}
-
-export function matchesType(context: SchemaDataNode): boolean {
-  const types = context.schema.field.onlyForTypes;
-  if (types == null || types.length === 0) return true;
-  const parent = context.parent!;
-  const typeNode = parent.schema
-    .getChildNodes()
-    .find((x) => x.field.isTypeField);
-  if (typeNode == null) {
-    console.warn("No type field found for", parent.schema);
-    return false;
-  }
-  const typeField = parent.getChild(typeNode).control as Control<string>;
-  return typeField && types.includes(typeField.value);
 }
 
 export function hideDisplayOnly(

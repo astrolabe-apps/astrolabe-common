@@ -37,9 +37,9 @@ export class EditorSchemaTree extends SchemaTree {
   createChildNode(parent: SchemaNode, field: SchemaField): SchemaNode {
     const fieldControl = unsafeRestoreControl(field);
     return new SchemaNode(
-      fieldControl
-        ? fieldControl.uniqueId.toString()
-        : parent.id + "/" + field.field,
+      parent.id +
+        "/" +
+        (fieldControl ? fieldControl.uniqueId.toString() : field.field),
       field,
       this,
       parent,

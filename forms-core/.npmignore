@@ -1,0 +1,5 @@
+.rush/
+*.log
+.babelrc
+coverage/
+test/

@@ -27,7 +27,7 @@ import {
   RendererRegistration,
   VisibilityRendererRegistration,
 } from "./renderers";
-import { DataRenderType } from "./controlDefinition";
+import { DataRenderType } from "@astroapps/forms-core";
 
 export function createFormRenderer(
   customRenderers: RendererRegistration[] = [],

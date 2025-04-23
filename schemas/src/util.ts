@@ -1,31 +1,37 @@
 import {
+  CompoundField,
   ControlActionHandler,
+  ControlDataVisitor,
   ControlDefinition,
   ControlDefinitionType,
+  createSchemaTree,
   DataControlDefinition,
   DataRenderType,
   DisplayOnlyRenderOptions,
+  FieldOption,
+  fieldPathForDefinition,
+  findField,
+  getTagParam,
   GroupRenderOptions,
   isAutoCompleteClasses,
   isCheckEntryClasses,
+  isCompoundField,
+  isCompoundNode,
   isDataControl,
   isDataGroupRenderer,
   isDisplayOnlyRenderer,
   isGridRenderer,
   isGroupControl,
-} from "./controlDefinition";
+  isScalarField,
+  relativePath,
+  SchemaDataNode,
+  SchemaField,
+  schemaForFieldPath,
+  SchemaNode,
+  SchemaTags,
+} from "@astroapps/forms-core";
 import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
-import {
-  CompoundField,
-  FieldOption,
-  findField,
-  getTagParam,
-  isCompoundField,
-  isScalarField,
-  SchemaField,
-  SchemaTags,
-} from "./schemaField";
 import {
   Control,
   ControlChange,
@@ -34,21 +40,6 @@ import {
   newControl,
 } from "@react-typed-forms/core";
 import { ActionRendererProps } from "./controlRender";
-import {
-  ControlDataVisitor,
-  createFormTree,
-  fieldPathForDefinition,
-  FormNode,
-  FormTree,
-} from "./formNode";
-import { SchemaDataNode } from "./schemaDataNode";
-import {
-  createSchemaTree,
-  isCompoundNode,
-  relativePath,
-  schemaForFieldPath,
-  SchemaNode,
-} from "./schemaNode";
 
 /**
  * Interface representing the classes for a control.

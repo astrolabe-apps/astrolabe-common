@@ -1,4 +1,4 @@
-import { Control, newControl } from "@react-typed-forms/core";
+import { Control, newControl } from "@astroapps/controls";
 import { missingField } from "./schemaField";
 import { createSchemaNode, resolveSchemaNode, SchemaNode } from "./schemaNode";
 

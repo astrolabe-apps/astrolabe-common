@@ -1,4 +1,3 @@
-import { Control, ControlSetup } from "@react-typed-forms/core";
 import {
   EqualityFunc,
   FieldOption,
@@ -9,6 +8,7 @@ import {
 import { SchemaInterface } from "./schemaInterface";
 import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaNode } from "./schemaNode";
+import { Control, ControlSetup } from "@astroapps/controls";
 
 export class DefaultSchemaInterface implements SchemaInterface {
   constructor(
