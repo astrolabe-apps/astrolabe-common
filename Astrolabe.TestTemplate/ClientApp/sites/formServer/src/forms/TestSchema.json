@@ -1,113 +1,13 @@
 {
   "controls": [
     {
-      "type": "Group",
-      "title": "Wizard",
-      "children": [
-        {
-          "type": "Group",
-          "title": "Grid",
-          "children": [
-            {
-              "type": "Data",
-              "title": "Bool",
-              "children": [
-                {
-                  "type": "Data",
-                  "title": "Data",
-                  "field": "data",
-                  "renderOptions": {
-                    "type": "Standard"
-                  }
-                }
-              ],
-              "renderOptions": {
-                "type": "Standard"
-              },
-              "field": "nested",
-              "adornments": [
-                {
-                  "type": "Optional",
-                  "allowNull": true
-                }
-              ],
-              "fieldDef": null
-            },
-            {
-              "type": "Data",
-              "title": "Date",
-              "field": "date",
-              "renderOptions": {
-                "type": "Standard"
-              }
-            },
-            {
-              "type": "Data",
-              "title": "Date Time",
-              "field": "dateTime",
-              "renderOptions": {
-                "type": "Standard"
-              }
-            }
-          ],
-          "groupOptions": {
-            "type": "Grid"
-          }
-        },
-        {
-          "type": "Data",
-          "field": "array",
-          "renderOptions": {
-            "type": "Array"
-          },
-          "children": [
-            {
-              "type": "Data",
-              "title": "Cool",
-              "field": ".",
-              "renderOptions": {
-                "type": "Standard"
-              },
-              "defaultValue": null
-            }
-          ],
-          "title": "Number array"
-        },
-        {
-          "type": "Group",
-          "title": "Dialog",
-          "groupOptions": {
-            "type": "Dialog",
-            "triggerAction": {
-              "actionId": "Render"
-            },
-            "title": "Title of dialog",
-            "actions": [
-              {
-                "actionId": "save",
-                "actionText": "OK"
-              },
-              {
-                "actionId": "cancel",
-                "actionText": "Cancel"
-              }
-            ]
-          },
-          "children": [
-            {
-              "type": "Action",
-              "icon": {},
-              "actionId": "cancel",
-              "actionData": "",
-              "title": "Cancel",
-              "actionStyle": "Secondary"
-            }
-          ]
-        }
-      ],
-      "groupOptions": {
-        "type": "Wizard"
-      }
+      "type": "Data",
+      "title": "Date",
+      "field": "date",
+      "renderOptions": {
+        "type": "Standard"
+      },
+      "readonly": true
     }
   ],
   "config": null

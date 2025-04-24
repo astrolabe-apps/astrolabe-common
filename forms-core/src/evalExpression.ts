@@ -1,4 +1,5 @@
 import {
+  DataExpression,
   DataMatchExpression,
   EntityExpression,
   ExpressionType,
@@ -8,26 +9,43 @@ import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
 import { FormNode } from "./formNode";
 import { FormContextOptions } from "./formState";
 
-export function evalExpression<T>(
-  result: Control<T>,
-  expr: EntityExpression,
-  coerce: (k: unknown) => T,
-  parent: SchemaDataNode,
-  formNode: FormNode,
-  context: Control<FormContextOptions>,
-) {
-  switch (expr.type) {
-    case ExpressionType.DataMatch:
-      const fvExpr = expr as DataMatchExpression;
-      updateComputedValue(result, () => {
-        const otherField = schemaDataForFieldRef(fvExpr.field, parent);
-        const fv = otherField?.control.value;
-        return coerce(
-          Array.isArray(fv) ? fv.includes(fvExpr.value) : fv === fvExpr.value,
-        );
-      });
-      break;
-    default:
-      console.log(expr);
-  }
+export interface ExpressionEvalContext {
+  coerce: (k: unknown) => unknown;
+  dataNode: SchemaDataNode;
+  formContext: Control<FormContextOptions>;
 }
+
+export type ExpressionEval<T extends EntityExpression> = (
+  expr: T,
+  result: Control<any>,
+  context: ExpressionEvalContext,
+) => void;
+
+const dataEval: ExpressionEval<DataExpression> = (
+  fvExpr,
+  result,
+  { dataNode: node, coerce },
+) => {
+  updateComputedValue(result, () => {
+    const otherField = schemaDataForFieldRef(fvExpr.field, node);
+    return coerce(otherField.control?.value);
+  });
+};
+const dataMatchEval: ExpressionEval<DataMatchExpression> = (
+  matchExpr,
+  result,
+  { dataNode, coerce },
+) => {
+  updateComputedValue(result, () => {
+    const otherField = schemaDataForFieldRef(matchExpr.field, dataNode);
+    const fv = otherField?.control.value;
+    return coerce(
+      Array.isArray(fv) ? fv.includes(matchExpr.value) : fv === matchExpr.value,
+    );
+  });
+};
+
+export const defaultEvaluators: Record<string, ExpressionEval<any>> = {
+  [ExpressionType.DataMatch]: dataMatchEval,
+  [ExpressionType.Data]: dataEval,
+};

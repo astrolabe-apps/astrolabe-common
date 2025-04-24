@@ -46,6 +46,8 @@ import {
   IconPlacement,
   IconReference,
   isActionControl,
+  isControlDisabled,
+  isControlReadonly,
   isDataControl,
   isDisplayControl,
   isGroupControl,
@@ -620,8 +622,8 @@ export function useControlRendererComponent(
       // );
       const myOptionsControl = useComputed<FormContextOptions>(() => ({
         hidden: options.hidden || !visibility.fields?.showing.value,
-        readonly: options.readonly,
-        disabled: options.disabled,
+        readonly: options.readonly || isControlReadonly(c),
+        disabled: options.disabled || isControlDisabled(c),
         displayOnly: options.displayOnly || isControlDisplayOnly(c),
         inline: options.inline,
       }));

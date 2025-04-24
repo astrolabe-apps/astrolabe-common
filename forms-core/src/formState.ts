@@ -1,9 +1,11 @@
-import { fieldPathForDefinition, FormNode, lookupDataNode } from "./formNode";
-import { schemaDataForFieldPath, SchemaDataNode } from "./schemaDataNode";
+import { FormNode, lookupDataNode } from "./formNode";
+import { SchemaDataNode } from "./schemaDataNode";
 import {
   AnyControlDefinition,
   ControlDefinition,
   DynamicPropertyType,
+  isControlDisabled,
+  isControlReadonly,
   isDataControl,
 } from "./controlDefinition";
 import { SchemaInterface } from "./schemaInterface";
@@ -14,7 +16,8 @@ import {
   newControl,
   updateComputedValue,
 } from "@astroapps/controls";
-import { evalExpression } from "./evalExpression";
+import { defaultEvaluators, ExpressionEval } from "./evalExpression";
+import { EntityExpression } from "./entityExpression";
 
 export interface ControlState {
   definition: ControlDefinition;
@@ -47,19 +50,21 @@ export interface FormState {
   ): ControlState;
 }
 
-export type ControlLogics = {
-  [K in keyof AnyControlDefinition]?: ControlLogic<AnyControlDefinition[K]>;
-};
+export type ControlLogics = Record<string, ControlLogic<any>>;
 
 export type ControlLogic<T> = (
-  control: Control<T>,
+  control: Control<any>,
   context: Control<FormContextOptions>,
   parent: SchemaDataNode,
   formNode: FormNode,
+  evalExpr: (expr: EntityExpression, coerce: (v: unknown) => T) => void,
 ) => void;
 
-export function createFormState(): FormState {
+export function createFormState(
+  evaluators: Record<string, ExpressionEval<any>> = defaultEvaluators,
+): FormState {
   const controlStates = newControl<Record<string, FormContextOptions>>({});
+
   return {
     getControlState(
       parent: SchemaDataNode,
@@ -73,7 +78,16 @@ export function createFormState(): FormState {
         for (const k in logics) {
           const l = logics[k as keyof ControlLogics]! as ControlLogic<any>;
           const nk = newControl<any>(undefined);
-          l(nk, controlImpl, parent, formNode);
+          const evalExpr: (
+            expr: EntityExpression,
+            coerce: (t: unknown) => any,
+          ) => void = (e, coerce) => {
+            const x = evaluators[e.type];
+            if (x) {
+              x(e, nk, { coerce, dataNode: parent, formContext: controlImpl });
+            }
+          };
+          l(nk, controlImpl, parent, formNode, evalExpr);
           handlers[k] = nk;
         }
         return {
@@ -94,25 +108,79 @@ export function createFormState(): FormState {
   };
 }
 
+function firstExpr(
+  formNode: FormNode,
+  property: DynamicPropertyType,
+): EntityExpression | undefined {
+  const dynamic = formNode.definition.dynamic?.find(
+    (x) => x.type === property && x.expr.type,
+  );
+  return dynamic?.expr;
+}
+
 const hiddenLogic: ControlLogic<boolean | null | undefined> = (
   hidden,
   context,
   parent,
   formNode,
+  evalExpr,
 ) => {
-  const dynamic = formNode.definition.dynamic?.find(
-    (x) => x.type === DynamicPropertyType.Visible,
-  );
+  const dynamic = firstExpr(formNode, DynamicPropertyType.Visible);
   if (dynamic) {
-    evalExpression(hidden, dynamic.expr, notBoolean, parent, formNode, context);
+    evalExpr(dynamic, (r) => context.fields.hidden.value || !r);
   } else
     updateComputedValue(hidden, () => {
+      if (context.fields.hidden.value) {
+        return true;
+      }
       const dataNode = lookupDataNode(formNode.definition, parent);
       return !!dataNode && !validDataNode(dataNode);
     });
 };
 
-const logics: ControlLogics = { hidden: hiddenLogic };
+const readonlyLogic: ControlLogic<boolean | null | undefined> = (
+  control,
+  context,
+  parent,
+  formNode,
+  evalExpr,
+) => {
+  const def = formNode.definition;
+  const dynamic = firstExpr(formNode, DynamicPropertyType.Readonly);
+  if (dynamic) {
+    evalExpr(dynamic, (r) => context.fields.readonly.value || !!r);
+  } else {
+    updateComputedValue(
+      control,
+      () => context.fields.readonly.value || isControlReadonly(def),
+    );
+  }
+};
+
+const disabledLogic: ControlLogic<boolean | null | undefined> = (
+  control,
+  context,
+  parent,
+  formNode,
+  evalExpr,
+) => {
+  const def = formNode.definition;
+  const dynamic = firstExpr(formNode, DynamicPropertyType.Disabled);
+  if (dynamic) {
+    evalExpr(dynamic, (r) => context.fields.disabled.value || !!r);
+  } else {
+    updateComputedValue(
+      control,
+      () => context.fields.disabled.value || isControlDisabled(def),
+    );
+  }
+};
+
+const logics: ControlLogics = {
+  hidden: hiddenLogic,
+  readonly: readonlyLogic,
+  disabled: disabledLogic,
+};
 
 export function validDataNode(context: SchemaDataNode): boolean {
   const parent = context.parent;

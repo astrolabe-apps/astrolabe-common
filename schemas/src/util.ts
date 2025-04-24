@@ -497,24 +497,6 @@ export function useUpdatedRef<A>(a: A): MutableRefObject<A> {
 }
 
 /**
- * Checks if a control definition is readonly.
- * @param c - The control definition to check.
- * @returns True if the control definition is readonly, false otherwise.
- */
-export function isControlReadonly(c: ControlDefinition): boolean {
-  return isDataControl(c) && !!c.readonly;
-}
-
-/**
- * Checks if a control definition is disabled.
- * @param c - The control definition to check.
- * @returns True if the control definition is disabled, false otherwise.
- */
-export function isControlDisabled(c: ControlDefinition): boolean {
-  return isDataControl(c) && !!c.disabled;
-}
-
-/**
  * Returns the display-only render options for a control definition.
  * @param d - The control definition to get the display-only render options for.
  * @returns The display-only render options, or undefined if not applicable.

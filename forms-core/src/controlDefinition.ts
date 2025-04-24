@@ -647,3 +647,21 @@ export function getSchemaFieldList(schema: SchemaNode): SchemaField[] {
 export function fontAwesomeIcon(icon: string) {
   return { library: IconLibrary.FontAwesome, name: icon };
 }
+
+/**
+ * Checks if a control definition is readonly.
+ * @param c - The control definition to check.
+ * @returns True if the control definition is readonly, false otherwise.
+ */
+export function isControlReadonly(c: ControlDefinition): boolean {
+  return isDataControl(c) && !!c.readonly;
+}
+
+/**
+ * Checks if a control definition is disabled.
+ * @param c - The control definition to check.
+ * @returns True if the control definition is disabled, false otherwise.
+ */
+export function isControlDisabled(c: ControlDefinition): boolean {
+  return isDataControl(c) && !!c.disabled;
+}
