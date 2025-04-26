@@ -11,6 +11,8 @@ export {
   controlNotNull,
   getControlPath,
   addDependent,
+  withChildren,
+  createCleanupScope,
 } from "./controlImpl";
 export { SubscriptionTracker } from "./subscriptions";
 export {
@@ -27,7 +29,12 @@ export {
   removeElement,
   getElementIndex,
 } from "./arrayControl";
-export { updateComputedValue, ensureMetaValue, getMetaValue } from "./computed";
+export {
+  updateComputedValue,
+  ensureMetaValue,
+  getMetaValue,
+  clearMetaValue,
+} from "./computed";
 export { createEffect, type Effect } from "./effect";
 export { setFields } from "./objectControl";
 export { ControlChange } from "./types";

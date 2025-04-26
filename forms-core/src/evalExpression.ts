@@ -8,25 +8,22 @@ import {
 } from "./entityExpression";
 import {
   addAfterChangesCallback,
-  addCleanup,
   ChangeListenerFunc,
   collectChange,
   collectChanges,
   Control,
   ControlChange,
-  createEffect,
   ensureMetaValue,
-  newControl,
   SubscriptionTracker,
   updateComputedValue,
 } from "@astroapps/controls";
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
-import { FormNode } from "./formNode";
 import { FormContextOptions } from "./formState";
 import { SchemaInterface } from "./schemaInterface";
-import { useEffect, useMemo, useRef } from "react";
 import jsonata from "jsonata";
 import { getJsonPath, getRootDataNode } from "./controlDefinition";
+import { v4 as uuidv4 } from "uuid";
+import { jsonPathString, newScopedControl } from "./util";
 
 export interface ExpressionEvalContext {
   coerce: (k: unknown) => unknown;
@@ -78,20 +75,24 @@ const notEmptyEval: ExpressionEval<NotEmptyExpression> = (
   });
 };
 
-const jsonataEval: ExpressionEval<JsonataExpression> = (expr, result, ctx) => {
-  console.log("Running on:", result.uniqueId);
-  const parsedJsonata = ensureMetaValue(result, "parsedJsonata", () => {
-    return newComputedControl(() => {
-      try {
-        return jsonata(expr.expression ? expr.expression : "null");
-      } catch (e) {
-        console.error(e);
-        return jsonata("null");
-      }
-    });
-  });
+export const jsonataEval: ExpressionEval<JsonataExpression> = (
+  expr,
+  result,
+  ctx,
+) => {
+  const path = getJsonPath(ctx.dataNode);
+  const pathString = jsonPathString(path, (x) => `#$i[${x}]`);
   const rootData = getRootDataNode(ctx.dataNode).control;
-  // getRootDataNode(ctx.dataNode).control, getJsonPath(ctx.parentNode);
+  const parsedJsonata = newScopedControl(result, () => {
+    const jExpr = expr.expression;
+    const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
+    try {
+      return jsonata(fullExpr ? fullExpr : "null");
+    } catch (e) {
+      console.error(e);
+      return jsonata("null");
+    }
+  });
 
   let doEval = true;
   let evalPromise: Promise<any>;
@@ -101,77 +102,31 @@ const jsonataEval: ExpressionEval<JsonataExpression> = (expr, result, ctx) => {
       addAfterChangesCallback(() => evalPromise!.then(runJsonata));
     }
   });
-  addCleanup(result, () => tracker.cleanup());
-  async function runJsonata() {
+  result.addCleanup(() => {
     doEval = false;
-    console.log("Running", expr.expression);
-    const evalResult = await parsedJsonata.value.evaluate(
-      trackedValue(ctx.dataNode.control, tracker.collectUsage),
-    );
-    tracker.update();
-    result.value = ctx.coerce(evalResult);
-    console.log(tracker, result.value);
+    tracker.cleanup();
+  });
+  async function runJsonata() {
+    if (doEval) {
+      doEval = false;
+      tracker.collectUsage(parsedJsonata, ControlChange.Value);
+      try {
+        const evalResult = await parsedJsonata.current.value.evaluate(
+          trackedValue(rootData, tracker.collectUsage),
+        );
+        collectChanges(tracker.collectUsage, () => {
+          result.value = ctx.coerce(evalResult);
+        });
+      } finally {
+        tracker.update();
+      }
+    }
   }
   evalPromise = runJsonata();
-  // export function useJsonataExpression(
-  //   jExpr: string,
-  //   data: Control<any>,
-  //   path: JsonPath[],
-  //   bindings?: Control<Record<string, any>>,
-  //   coerce: (v: any) => any = (x) => x,
-  // ): Control<any> {
-  //   const pathString = jsonPathString(path, (x) => `#$i[${x}]`);
-  //   const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
-  //   const compiledExpr = useMemo(() => {
-  //     try {
-  //       return jsonata(jExpr ? fullExpr : "null");
-  //     } catch (e) {
-  //       console.error(e);
-  //       return jsonata("null");
-  //     }
-  //   }, [fullExpr]);
-  //   const control = useControl();
-  //   const listenerRef = useRef<(() => void) | undefined>(undefined);
-  //   const updateRef = useRef(0);
-  //   const [ref] = useRefState(
-  //     () =>
-  //       new SubscriptionTracker(() => {
-  //         const l = listenerRef.current;
-  //         if (l) {
-  //           listenerRef.current = undefined;
-  //           addAfterChangesCallback(() => {
-  //             listenerRef.current = l;
-  //             l();
-  //           });
-  //         }
-  //       }),
-  //   );
-  //   useEffect(() => {
-  //     listenerRef.current = apply;
-  //     apply();
-  //     async function apply() {
-  //       const tracker = ref.current;
-  //       try {
-  //         updateRef.current++;
-  //         control.value = coerce(
-  //           await compiledExpr.evaluate(
-  //             trackedValue(data, tracker.collectUsage),
-  //             collectChanges(tracker.collectUsage, () => bindings?.value),
-  //           ),
-  //         );
-  //       } finally {
-  //         if (!--updateRef.current) tracker.update();
-  //       }
-  //     }
-  //   }, [compiledExpr]);
-  //   useEffect(() => {
-  //     return () => {
-  //       listenerRef.current = undefined;
-  //       ref.current.cleanup();
-  //     };
-  //   }, []);
-  //   return control;
-  // }
+};
+
+export const uuidEval: ExpressionEval<EntityExpression> = (_, result, ctx) => {
+  updateComputedValue(result, () => ctx.coerce(uuidv4()));
 };
 
 export const defaultEvaluators: Record<string, ExpressionEval<any>> = {
@@ -179,14 +134,8 @@ export const defaultEvaluators: Record<string, ExpressionEval<any>> = {
   [ExpressionType.Data]: dataEval,
   [ExpressionType.NotEmpty]: notEmptyEval,
   [ExpressionType.Jsonata]: jsonataEval,
+  [ExpressionType.UUID]: uuidEval,
 };
-
-function newComputedControl<T>(compute: () => T): Control<T> {
-  const c = newControl<any>(undefined);
-  updateComputedValue(c, compute);
-  return c.as();
-}
-
 export function trackedValue<A>(
   c: Control<A>,
   tracker?: ChangeListenerFunc<any>,

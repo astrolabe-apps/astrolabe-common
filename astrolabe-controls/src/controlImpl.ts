@@ -1,6 +1,8 @@
 import { Subscriptions } from "./subscriptions";
 import {
   ChangeListenerFunc,
+  CleanupScope,
+  CleanupScopeImpl,
   Control,
   ControlChange,
   ControlElements,
@@ -51,11 +53,20 @@ export class ControlImpl<V> implements InternalControl<V> {
     public _errors?: { [k: string]: string },
     public _subscriptions?: Subscriptions,
     public parents?: ParentLink[],
+    public _cleanup?: CleanupScopeImpl,
   ) {
     this.uniqueId = ++uniqueIdCounter;
     _logic.attach(this);
   }
 
+  addCleanup(cleanup: () => void) {
+    this._cleanup ??= createCleanupScope();
+    this._cleanup.addCleanup(cleanup);
+  }
+
+  cleanup() {
+    this._cleanup?.cleanup();
+  }
   lookupControl(path: (string | number)[]): Control<any> | undefined {
     let base = this as Control<any> | undefined;
     let index = 0;
@@ -659,21 +670,35 @@ export function collectChanges<A>(
   }
 }
 
+export function createCleanupScope(): CleanupScopeImpl {
+  let cleanups: (() => void)[] = [];
+  return {
+    cleanup() {
+      cleanups.forEach((x) => x());
+      cleanups = [];
+    },
+    addCleanup(cleanup: () => void) {
+      cleanups.push(cleanup);
+    },
+  };
+}
+
+/**
+ * @deprecated Use Control.addCleanup()
+ */
 export function addCleanup(c: Control<any>, cleanup: () => void) {
-  const internalMeta = ensureInternalMeta(c);
-  // add cleanup to existing meta, calling previous if exists
-  const prevCleanup = internalMeta.cleanups ?? [];
-  prevCleanup.push(cleanup);
-  internalMeta.cleanups = prevCleanup;
+  c.addCleanup(cleanup);
 }
 
-export function addDependent(parent: Control<any>, child: Control<any>) {
-  addCleanup(parent, () => cleanupControl(child));
+export function addDependent(parent: CleanupScope, child: Control<any>) {
+  parent.addCleanup(() => cleanupControl(child));
 }
 
+/**
+ * @deprecated Use Control.cleanup()
+ */
 export function cleanupControl(c: Control<any>) {
-  const internalMeta = getInternalMeta(c);
-  internalMeta?.cleanups?.forEach((x) => x());
+  c.cleanup();
 }
 
 export function controlNotNull<V>(
@@ -696,4 +721,11 @@ export function getControlPath(
     current = parent.control;
   }
   return path.reverse();
+}
+
+export function withChildren(
+  parent: Control<any>,
+  f: (c: Control<any>) => void,
+) {
+  return (parent as InternalControl)._logic.withChildren(f);
 }

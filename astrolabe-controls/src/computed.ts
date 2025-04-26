@@ -16,9 +16,9 @@ export function updateComputedValue<V>(
   const meta = ensureInternalMeta(c);
   if (meta.compute?.calculate === compute) return;
   if (!meta.compute) {
-    const effect = createEffect(compute, (v) => c.setValueImpl(v));
+    const effect = createEffect(compute, (v) => c.setValueImpl(v), c);
     meta.compute = effect;
-    addCleanup(c, () => {
+    c.addCleanup(() => {
       effect.cleanup();
       meta.compute = undefined;
     });
@@ -44,4 +44,11 @@ export function getMetaValue<V>(
 ): V | undefined {
   const meta = getInternalMeta(control);
   return meta?.values?.[key] as V;
+}
+
+export function clearMetaValue(control: Control<any>, key: string) {
+  const meta = getInternalMeta(control);
+  if (meta?.values?.[key]) {
+    meta.values[key] = undefined;
+  }
 }

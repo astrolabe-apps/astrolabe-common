@@ -12,6 +12,8 @@ import {
   isControlReadonly,
   isDataControl,
   JsonataExpression,
+  JsonPath,
+  jsonPathString,
   NotEmptyExpression,
   schemaDataForFieldRef,
   SchemaDataNode,
@@ -34,8 +36,6 @@ import {
   defaultValueForField,
   elementValueForField,
   getDisplayOnlyOptions,
-  JsonPath,
-  jsonPathString,
 } from "./util";
 import jsonata from "jsonata";
 import { v4 as uuidv4 } from "uuid";

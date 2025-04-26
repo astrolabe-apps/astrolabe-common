@@ -1,6 +1,7 @@
 import { collectChanges } from "./controlImpl";
 import { addAfterChangesCallback } from "./transactions";
 import { SubscriptionTracker } from "./subscriptions";
+import { CleanupScope } from "./types";
 
 export class Effect<V> extends SubscriptionTracker {
   changedDetected = false;
@@ -34,6 +35,9 @@ export class Effect<V> extends SubscriptionTracker {
 export function createEffect<V>(
   calculate: () => V,
   run: (v: V) => void,
+  cleanupScope?: CleanupScope,
 ): Effect<V> {
-  return new Effect<V>(calculate, run);
+  const effect = new Effect<V>(calculate, run);
+  cleanupScope?.addCleanup(() => effect.cleanup());
+  return effect;
 }

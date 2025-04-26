@@ -16,6 +16,75 @@
             "expression": "wow"
           }
         }
+      ],
+      "validators": [
+        {
+          "type": "Date",
+          "comparison": "NotBefore"
+        }
+      ]
+    },
+    {
+      "type": "Data",
+      "title": "Stuff",
+      "field": "stuff",
+      "children": [
+        {
+          "type": "Data",
+          "title": "Type",
+          "field": "type",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Disable",
+          "field": "disable",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Pure Text",
+          "field": "text",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "defaultValue": null,
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "Jsonata",
+                "expression": "disable"
+              }
+            }
+          ],
+          "validators": [
+            {
+              "type": "Length",
+              "min": 3
+            }
+          ]
+        },
+        {
+          "type": "Data",
+          "title": "String",
+          "field": "options",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "String",
+          "field": "singleOption",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        }
       ]
     }
   ],

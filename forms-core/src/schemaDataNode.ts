@@ -1,4 +1,9 @@
-import { Control, newControl } from "@astroapps/controls";
+import {
+  Control,
+  ensureMetaValue,
+  newControl,
+  updateComputedValue,
+} from "@astroapps/controls";
 import { missingField } from "./schemaField";
 import { createSchemaNode, resolveSchemaNode, SchemaNode } from "./schemaNode";
 
@@ -126,4 +131,29 @@ export function schemaDataForFieldPath(
     }
     return undefined;
   }
+}
+
+export function validDataNode(context: SchemaDataNode): boolean {
+  const parent = context.parent;
+  if (!parent) return true;
+  if (parent.schema.field.collection && parent.elementIndex == null)
+    return validDataNode(parent);
+  return ensureMetaValue(context.control, "validForSchema", () => {
+    const c = newControl(true);
+    updateComputedValue(c, () => {
+      if (!validDataNode(parent)) return false;
+      const types = context.schema.field.onlyForTypes;
+      if (types == null || types.length === 0) return true;
+      const typeNode = parent.schema
+        .getChildNodes()
+        .find((x) => x.field.isTypeField);
+      if (typeNode == null) {
+        console.warn("No type field found for", parent.schema);
+        return false;
+      }
+      const typeField = parent.getChild(typeNode).control as Control<string>;
+      return typeField && types.includes(typeField.value);
+    });
+    return c;
+  }).value;
 }

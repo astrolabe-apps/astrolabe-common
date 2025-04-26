@@ -53,6 +53,7 @@ import {
   isDataControl,
   isDisplayControl,
   isGroupControl,
+  JsonPath,
   legacyFormNode,
   LengthValidator,
   lookupDataNode,
@@ -73,7 +74,6 @@ import {
   getExternalEditData,
   getGroupClassOverrides,
   isControlDisplayOnly,
-  JsonPath,
   rendererClass,
   useUpdatedRef,
 } from "./util";
@@ -539,10 +539,10 @@ export function useControlRendererComponent(
   const useExpr = options.useEvalExpressionHook ?? defaultUseEvalExpressionHook;
 
   let dataNode = lookupDataNode(definition, parentDataNode);
-  const useValidation = useMakeValidationHook(
-    definition,
-    options.useValidationHook,
-  );
+  // const useValidation = useMakeValidationHook(
+  //   definition,
+  //   options.useValidationHook,
+  // );
 
   const r = useUpdatedRef({
     options,
@@ -556,6 +556,10 @@ export function useControlRendererComponent(
     const toCleanup = formStateRef.current;
     return () => toCleanup?.cleanup();
   }, [formStateRef.current]);
+
+  useEffect(() => {
+    return () => formState.cleanupControl(parentDataNode, formNode);
+  }, [state]);
 
   const Component = useCallback(() => {
     const stopTracking = useComponentTracking();
@@ -645,11 +649,11 @@ export function useControlRendererComponent(
         inline: options.inline,
       }));
       const myOptions = trackedValue(myOptionsControl);
-      useValidation({
-        control: control ?? newControl(null),
-        hiddenControl: myOptionsControl.fields.hidden,
-        dataContext,
-      });
+      // useValidation({
+      //   control: control ?? newControl(null),
+      //   hiddenControl: myOptionsControl.fields.hidden,
+      //   dataContext,
+      // });
       const {
         styleClass,
         labelClass,
@@ -700,6 +704,7 @@ export function useControlRendererComponent(
               actionOnClick,
               childOptions.actionOnClick,
             ),
+            formState,
           };
           return (
             <NewControlRenderer
@@ -747,7 +752,7 @@ export function useControlRendererComponent(
     } finally {
       stopTracking();
     }
-  }, [r, dataProps, useValidation, renderer, schemaInterface]);
+  }, [r, dataProps, renderer, schemaInterface]);
   (Component as any).displayName = "RenderControl";
   return Component;
 }

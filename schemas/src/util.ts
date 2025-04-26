@@ -53,11 +53,6 @@ export interface ControlClasses {
 }
 
 /**
- * Type representing a JSON path, which can be a string or a number.
- */
-export type JsonPath = string | number;
-
-/**
  * Applies default values to the given record based on the provided schema fields.
  * @param v - The record to apply default values to.
  * @param fields - The schema fields to use for applying default values.
@@ -626,28 +621,6 @@ export function getAllReferencedClasses(
   if (!tc) return [];
   if (childClasses) return [tc, ...childClasses];
   return [tc];
-}
-
-/**
- * Converts a JSON path array to a string.
- * @param jsonPath - The JSON path array to convert.
- * @param customIndex - Optional function to customize the index format.
- * @returns The JSON path string.
- */
-export function jsonPathString(
-  jsonPath: JsonPath[],
-  customIndex?: (n: number) => string,
-) {
-  let out = "";
-  jsonPath.forEach((v, i) => {
-    if (typeof v === "number") {
-      out += customIndex?.(v) ?? "[" + v + "]";
-    } else {
-      if (i > 0) out += ".";
-      out += v;
-    }
-  });
-  return out;
 }
 
 /**

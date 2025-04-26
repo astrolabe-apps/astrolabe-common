@@ -1,25 +1,30 @@
 import { FormNode, lookupDataNode } from "./formNode";
-import { SchemaDataNode } from "./schemaDataNode";
+import { SchemaDataNode, validDataNode } from "./schemaDataNode";
 import {
-  AnyControlDefinition,
   ControlDefinition,
   DynamicPropertyType,
+  getJsonPath,
   isControlDisabled,
   isControlReadonly,
-  isDataControl,
 } from "./controlDefinition";
 import { SchemaInterface } from "./schemaInterface";
 import { FieldOption } from "./schemaField";
 import {
+  addDependent,
   cleanupControl,
+  clearMetaValue,
   Control,
+  createEffect,
   ensureMetaValue,
+  getControlPath,
   newControl,
   updateComputedValue,
+  withChildren,
 } from "@astroapps/controls";
 import { defaultEvaluators, ExpressionEval } from "./evalExpression";
 import { EntityExpression } from "./entityExpression";
-import { addDependent } from "@astroapps/controls";
+import { jsonPathString, newScopedControl } from "./util";
+import { createValidators, setupValidation } from "./validators";
 
 export interface ControlState {
   definition: ControlDefinition;
@@ -50,6 +55,7 @@ export interface FormState {
     context: FormContextOptions,
   ): ControlState;
   cleanup(): void;
+  cleanupControl(parent: SchemaDataNode, formNode: FormNode): void;
 }
 
 export type ControlLogics = Record<string, ControlLogic<any>>;
@@ -66,22 +72,33 @@ export function createFormState(
   schemaInterface: SchemaInterface,
   evaluators: Record<string, ExpressionEval<any>> = defaultEvaluators,
 ): FormState {
+  console.log("createFormState");
   const controlStates = newControl<Record<string, FormContextOptions>>({});
+  withChildren(controlStates, (x) => x.cleanup());
   return {
-    cleanup: () => cleanupControl(controlStates),
+    cleanup: () => controlStates.cleanup(),
+    cleanupControl(parent: SchemaDataNode, formNode: FormNode) {
+      const stateId = parent.id + "$" + formNode.id;
+      const c = controlStates.fields[stateId];
+      c.cleanup();
+      clearMetaValue(c, "impl");
+    },
     getControlState(
       parent: SchemaDataNode,
       formNode: FormNode,
       context: FormContextOptions,
     ): ControlState {
-      const controlImpl = controlStates.fields[parent.id + "$" + formNode.id];
+      const stateId = parent.id + "$" + formNode.id;
+      const controlImpl = controlStates.fields[stateId];
       controlImpl.value = context;
       return ensureMetaValue(controlImpl, "impl", () => {
-        addDependent(controlStates, controlImpl);
+        const dataNode = newScopedControl(controlImpl, () =>
+          lookupDataNode(formNode.definition, parent),
+        );
         const handlers: Record<string, Control<any>> = {};
         for (const k in logics) {
           const nk = newControl<any>(undefined);
-          addDependent(controlStates, nk);
+          addDependent(controlImpl, nk);
           const evalExpr: (
             expr: EntityExpression,
             coerce: (t: unknown) => any,
@@ -99,19 +116,26 @@ export function createFormState(
           logics[k](nk, controlImpl, parent, formNode, evalExpr);
           handlers[k] = nk;
         }
-        return {
-          definition: new Proxy(formNode.definition, {
-            get(
-              target: ControlDefinition,
-              p: string | symbol,
-              receiver: any,
-            ): any {
-              const override = handlers[p as string];
-              if (override) return override.value;
-              return target[p as keyof ControlDefinition];
-            },
-          }),
-        };
+        const definition: ControlDefinition = new Proxy(formNode.definition, {
+          get(
+            target: ControlDefinition,
+            p: string | symbol,
+            receiver: any,
+          ): any {
+            const override = handlers[p as string];
+            if (override) return override.value;
+            return target[p as keyof ControlDefinition];
+          },
+        });
+        setupValidation(
+          controlImpl,
+          definition,
+          dataNode,
+          schemaInterface,
+          parent,
+          formNode,
+        );
+        return { definition };
       });
     },
   };
@@ -208,26 +232,3 @@ const logics: ControlLogics = {
   disabled: disabledLogic,
   title: titleLogic,
 };
-
-export function validDataNode(context: SchemaDataNode): boolean {
-  const parent = context.parent;
-  if (!parent) return true;
-  return ensureMetaValue(context.control, "validForSchema", () => {
-    const c = newControl(true);
-    updateComputedValue(c, () => {
-      if (!validDataNode(parent)) return false;
-      const types = context.schema.field.onlyForTypes;
-      if (types == null || types.length === 0) return true;
-      const typeNode = parent.schema
-        .getChildNodes()
-        .find((x) => x.field.isTypeField);
-      if (typeNode == null) {
-        console.warn("No type field found for", parent.schema);
-        return false;
-      }
-      const typeField = parent.getChild(typeNode).control as Control<string>;
-      return typeField && types.includes(typeField.value);
-    });
-    return c;
-  }).value;
-}

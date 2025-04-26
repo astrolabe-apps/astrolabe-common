@@ -70,7 +70,15 @@ export interface ControlProperties<V> {
   readonly isNull: boolean;
 }
 
-export interface Control<V> extends ControlProperties<V> {
+export interface CleanupScope {
+  addCleanup(cleanup: () => void): void;
+}
+
+export interface CleanupScopeImpl extends CleanupScope {
+  cleanup(): void;
+}
+
+export interface Control<V> extends ControlProperties<V>, CleanupScopeImpl {
   uniqueId: number;
   subscribe(listener: ChangeListenerFunc<V>, mask: ControlChange): Subscription;
   unsubscribe(subscription: Subscription): void;
