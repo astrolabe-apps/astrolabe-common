@@ -22,7 +22,7 @@ export type TrackedSubscription = [
 ];
 
 export interface InternalMeta {
-  cleanup?: () => void;
+  cleanups?: (() => void)[];
   compute?: Effect<any>;
   values?: { [k: string]: unknown };
 }

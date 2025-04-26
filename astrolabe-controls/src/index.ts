@@ -10,6 +10,7 @@ export {
   collectChanges,
   controlNotNull,
   getControlPath,
+  addDependent,
 } from "./controlImpl";
 export { SubscriptionTracker } from "./subscriptions";
 export {

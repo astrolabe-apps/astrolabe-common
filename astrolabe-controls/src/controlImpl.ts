@@ -662,18 +662,18 @@ export function collectChanges<A>(
 export function addCleanup(c: Control<any>, cleanup: () => void) {
   const internalMeta = ensureInternalMeta(c);
   // add cleanup to existing meta, calling previous if exists
-  const prevCleanup = internalMeta.cleanup;
-  internalMeta.cleanup = prevCleanup
-    ? () => {
-        prevCleanup();
-        cleanup();
-      }
-    : cleanup;
+  const prevCleanup = internalMeta.cleanups ?? [];
+  prevCleanup.push(cleanup);
+  internalMeta.cleanups = prevCleanup;
+}
+
+export function addDependent(parent: Control<any>, child: Control<any>) {
+  addCleanup(parent, () => cleanupControl(child));
 }
 
 export function cleanupControl(c: Control<any>) {
   const internalMeta = getInternalMeta(c);
-  internalMeta?.cleanup?.();
+  internalMeta?.cleanups?.forEach((x) => x());
 }
 
 export function controlNotNull<V>(

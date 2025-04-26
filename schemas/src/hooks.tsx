@@ -8,6 +8,8 @@ import {
   ExpressionType,
   getJsonPath,
   getRootDataNode,
+  isControlDisabled,
+  isControlReadonly,
   isDataControl,
   JsonataExpression,
   NotEmptyExpression,
@@ -32,8 +34,6 @@ import {
   defaultValueForField,
   elementValueForField,
   getDisplayOnlyOptions,
-  isControlDisabled,
-  isControlReadonly,
   JsonPath,
   jsonPathString,
 } from "./util";

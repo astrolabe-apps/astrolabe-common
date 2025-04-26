@@ -11,6 +11,7 @@ import {
 import { SchemaInterface } from "./schemaInterface";
 import { FieldOption } from "./schemaField";
 import {
+  cleanupControl,
   Control,
   ensureMetaValue,
   newControl,
@@ -18,6 +19,7 @@ import {
 } from "@astroapps/controls";
 import { defaultEvaluators, ExpressionEval } from "./evalExpression";
 import { EntityExpression } from "./entityExpression";
+import { addDependent } from "@astroapps/controls";
 
 export interface ControlState {
   definition: ControlDefinition;
@@ -30,7 +32,6 @@ export interface FormContextOptions {
   displayOnly?: boolean;
   inline?: boolean;
   clearHidden?: boolean;
-  schemaInterface?: SchemaInterface;
   formData?: FormContextData;
 }
 
@@ -48,6 +49,7 @@ export interface FormState {
     formNode: FormNode,
     context: FormContextOptions,
   ): ControlState;
+  cleanup(): void;
 }
 
 export type ControlLogics = Record<string, ControlLogic<any>>;
@@ -61,11 +63,12 @@ export type ControlLogic<T> = (
 ) => void;
 
 export function createFormState(
+  schemaInterface: SchemaInterface,
   evaluators: Record<string, ExpressionEval<any>> = defaultEvaluators,
 ): FormState {
   const controlStates = newControl<Record<string, FormContextOptions>>({});
-
   return {
+    cleanup: () => cleanupControl(controlStates),
     getControlState(
       parent: SchemaDataNode,
       formNode: FormNode,
@@ -74,20 +77,26 @@ export function createFormState(
       const controlImpl = controlStates.fields[parent.id + "$" + formNode.id];
       controlImpl.value = context;
       return ensureMetaValue(controlImpl, "impl", () => {
+        addDependent(controlStates, controlImpl);
         const handlers: Record<string, Control<any>> = {};
         for (const k in logics) {
-          const l = logics[k as keyof ControlLogics]! as ControlLogic<any>;
           const nk = newControl<any>(undefined);
+          addDependent(controlStates, nk);
           const evalExpr: (
             expr: EntityExpression,
             coerce: (t: unknown) => any,
           ) => void = (e, coerce) => {
             const x = evaluators[e.type];
             if (x) {
-              x(e, nk, { coerce, dataNode: parent, formContext: controlImpl });
+              x(e, nk, {
+                coerce,
+                dataNode: parent,
+                formContext: controlImpl,
+                schemaInterface,
+              });
             }
           };
-          l(nk, controlImpl, parent, formNode, evalExpr);
+          logics[k](nk, controlImpl, parent, formNode, evalExpr);
           handlers[k] = nk;
         }
         return {
@@ -112,10 +121,9 @@ function firstExpr(
   formNode: FormNode,
   property: DynamicPropertyType,
 ): EntityExpression | undefined {
-  const dynamic = formNode.definition.dynamic?.find(
+  return formNode.definition.dynamic?.find(
     (x) => x.type === property && x.expr.type,
-  );
-  return dynamic?.expr;
+  )?.expr;
 }
 
 const hiddenLogic: ControlLogic<boolean | null | undefined> = (
@@ -176,10 +184,29 @@ const disabledLogic: ControlLogic<boolean | null | undefined> = (
   }
 };
 
+const titleLogic: ControlLogic<string> = (
+  control,
+  context,
+  parent,
+  formNode,
+  evalExpr,
+) => {
+  const def = formNode.definition;
+  const dynamic = firstExpr(formNode, DynamicPropertyType.Label);
+  if (dynamic) {
+    evalExpr(dynamic, (r) =>
+      typeof r === "string" ? r : (r?.toString() ?? ""),
+    );
+  } else {
+    updateComputedValue(control, () => def.title);
+  }
+};
+
 const logics: ControlLogics = {
   hidden: hiddenLogic,
   readonly: readonlyLogic,
   disabled: disabledLogic,
+  title: titleLogic,
 };
 
 export function validDataNode(context: SchemaDataNode): boolean {
@@ -203,12 +230,4 @@ export function validDataNode(context: SchemaDataNode): boolean {
     });
     return c;
   }).value;
-}
-
-function toBoolean(u: unknown) {
-  return !!u;
-}
-
-function notBoolean(u: unknown) {
-  return !u;
 }

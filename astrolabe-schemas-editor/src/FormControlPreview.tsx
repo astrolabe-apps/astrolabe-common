@@ -150,6 +150,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     : node;
   const layout = renderControlLayout({
     renderer,
+    state: { definition: renderedNode.definition },
     formNode: renderedNode,
     renderChild: (k, child, c) => {
       const pd = c?.parentDataNode ?? dataNode ?? parentDataNode;

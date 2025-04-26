@@ -9,6 +9,7 @@ import React, {
   ReactNode,
   useCallback,
   useEffect,
+  useRef,
 } from "react";
 import {
   addElement,
@@ -29,6 +30,7 @@ import {
   ControlAdornment,
   ControlDataContext,
   ControlDefinition,
+  ControlState,
   createFormState,
   createSchemaDataNode,
   createSchemaTree,
@@ -411,6 +413,7 @@ export type ChildVisibilityFunc = (
 ) => EvalExpressionHook<boolean>;
 export interface ParentRendererProps {
   formNode: FormNode;
+  state: ControlState;
   renderChild: ChildRenderer;
   className?: string;
   textClass?: string;
@@ -469,9 +472,7 @@ export type CreateDataProps = (
   control: Control<any>,
 ) => DataRendererProps;
 
-export interface ControlRenderOptions
-  extends FormContextOptions,
-    ControlClasses {
+export interface ControlRenderOptions extends ControlClasses {
   formState?: FormState;
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
   actionOnClick?: ControlActionHandler;
@@ -488,6 +489,14 @@ export interface ControlRenderOptions
     context: ControlDataContext,
     layout: ControlLayoutProps,
   ) => ControlLayoutProps;
+  readonly?: boolean | null;
+  hidden?: boolean | null;
+  disabled?: boolean | null;
+  displayOnly?: boolean;
+  inline?: boolean;
+  clearHidden?: boolean;
+  schemaInterface?: SchemaInterface;
+  formData?: FormContextData;
 }
 
 export function useControlRenderer(
@@ -516,14 +525,17 @@ export function useControlRendererComponent(
   options: ControlRenderOptions = {},
   parentDataNode: SchemaDataNode,
 ): FC<{}> {
-  const formState = options.formState ?? createFormState();
+  const formStateRef = useRef<FormState | undefined>();
+  const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
+  const formState =
+    options.formState ??
+    (formStateRef.current = createFormState(schemaInterface));
   const [definition, formNode] =
     "definition" in controlOrFormNode
       ? [controlOrFormNode.definition, controlOrFormNode]
       : [controlOrFormNode, legacyFormNode(controlOrFormNode)];
   const state = formState.getControlState(parentDataNode, formNode, options);
   const dataProps = options.useDataHook?.(definition) ?? defaultDataProps;
-  const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const useExpr = options.useEvalExpressionHook ?? defaultUseEvalExpressionHook;
 
   let dataNode = lookupDataNode(definition, parentDataNode);
@@ -539,6 +551,11 @@ export function useControlRendererComponent(
     formNode,
     state,
   });
+
+  useEffect(() => {
+    const toCleanup = formStateRef.current;
+    return () => toCleanup?.cleanup();
+  }, [formStateRef.current]);
 
   const Component = useCallback(() => {
     const stopTracking = useComponentTracking();
@@ -668,6 +685,7 @@ export function useControlRendererComponent(
       const labelAndChildren = renderControlLayout({
         formNode,
         renderer,
+        state,
         renderChild: (k, child, options) => {
           const overrideClasses = getGroupClassOverrides(c);
           const { parentDataNode, actionOnClick, ...renderOptions } =
@@ -855,6 +873,7 @@ export type ChildRenderer = (
 export interface RenderLayoutProps {
   formNode: FormNode;
   renderer: FormRenderer;
+  state: ControlState;
   renderChild: ChildRenderer;
   createDataProps: CreateDataProps;
   formOptions: FormContextOptions;
@@ -896,8 +915,9 @@ export function renderControlLayout(
     formNode,
     formOptions,
     actionOnClick,
+    state,
   } = props;
-  const c = formNode.definition;
+  const c = state.definition;
   if (isDataControl(c)) {
     return renderData(c);
   }
@@ -915,6 +935,7 @@ export function renderControlLayout(
       inline: formOptions.inline,
       processLayout: renderer.renderGroup({
         formNode,
+        state,
         definition: c,
         renderChild,
         useEvalExpression,

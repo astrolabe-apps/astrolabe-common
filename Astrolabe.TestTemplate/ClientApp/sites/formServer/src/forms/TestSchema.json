@@ -7,7 +7,16 @@
       "renderOptions": {
         "type": "Standard"
       },
-      "readonly": true
+      "defaultValue": null,
+      "dynamic": [
+        {
+          "type": "Label",
+          "expr": {
+            "type": "Jsonata",
+            "expression": "wow"
+          }
+        }
+      ]
     }
   ],
   "config": null
