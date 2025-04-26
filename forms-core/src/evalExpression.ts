@@ -7,14 +7,13 @@ import {
   NotEmptyExpression,
 } from "./entityExpression";
 import {
-  addAfterChangesCallback,
+  AsyncEffect,
   ChangeListenerFunc,
   collectChange,
   collectChanges,
   Control,
   ControlChange,
-  ensureMetaValue,
-  SubscriptionTracker,
+  createAsyncEffect,
   updateComputedValue,
 } from "@astroapps/controls";
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
@@ -83,46 +82,28 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
   const path = getJsonPath(ctx.dataNode);
   const pathString = jsonPathString(path, (x) => `#$i[${x}]`);
   const rootData = getRootDataNode(ctx.dataNode).control;
+
   const parsedJsonata = newScopedControl(result, () => {
     const jExpr = expr.expression;
     const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
     try {
-      return jsonata(fullExpr ? fullExpr : "null");
+      return { expr: jsonata(fullExpr ? fullExpr : "null"), fullExpr };
     } catch (e) {
       console.error(e);
-      return jsonata("null");
+      return { expr: jsonata("null"), fullExpr };
     }
   });
 
-  let doEval = true;
-  let evalPromise: Promise<any>;
-  const tracker = new SubscriptionTracker(() => {
-    if (!doEval) {
-      doEval = true;
-      addAfterChangesCallback(() => evalPromise!.then(runJsonata));
-    }
-  });
-  result.addCleanup(() => {
-    doEval = false;
-    tracker.cleanup();
-  });
-  async function runJsonata() {
-    if (doEval) {
-      doEval = false;
-      tracker.collectUsage(parsedJsonata, ControlChange.Value);
-      try {
-        const evalResult = await parsedJsonata.current.value.evaluate(
-          trackedValue(rootData, tracker.collectUsage),
-        );
-        collectChanges(tracker.collectUsage, () => {
-          result.value = ctx.coerce(evalResult);
-        });
-      } finally {
-        tracker.update();
-      }
-    }
+  async function runJsonata(effect: AsyncEffect<any>, signal: AbortSignal) {
+    const evalResult = await parsedJsonata.fields.expr.value.evaluate(
+      trackedValue(rootData, effect.collectUsage),
+    );
+    collectChanges(effect.collectUsage, () => {
+      result.value = ctx.coerce(evalResult);
+    });
   }
-  evalPromise = runJsonata();
+
+  createAsyncEffect(runJsonata, result);
 };
 
 export const uuidEval: ExpressionEval<EntityExpression> = (_, result, ctx) => {

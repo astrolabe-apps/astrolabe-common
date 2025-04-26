@@ -35,7 +35,12 @@ export {
   getMetaValue,
   clearMetaValue,
 } from "./computed";
-export { createEffect, type Effect } from "./effect";
+export {
+  createEffect,
+  type Effect,
+  type AsyncEffect,
+  createAsyncEffect,
+} from "./effect";
 export { setFields } from "./objectControl";
 export { ControlChange } from "./types";
 export type * from "./types";

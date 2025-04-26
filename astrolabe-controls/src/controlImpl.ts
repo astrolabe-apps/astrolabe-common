@@ -16,8 +16,6 @@ import {
 import {
   ControlFlags,
   ControlLogic,
-  ensureInternalMeta,
-  getInternalMeta,
   InternalControl,
   ParentLink,
   ResolvedControlSetup,

@@ -214,9 +214,7 @@ export function setupValidation(
         );
       }
     },
-    (c) => {
-      console.log("Validators changed", c);
-    },
+    (c) => {},
     controlImpl,
   );
 }

@@ -41,3 +41,61 @@ export function createEffect<V>(
   cleanupScope?.addCleanup(() => effect.cleanup());
   return effect;
 }
+
+export class AsyncEffect<V> extends SubscriptionTracker {
+  currentPromise: Promise<V>;
+  abortController?: AbortController;
+  changedDetected = false;
+  destroyed = false;
+
+  async runProcess() {
+    this.abortController?.abort();
+    const aborter = new AbortController();
+    this.abortController = aborter;
+    try {
+      return await collectChanges(this.collectUsage, () =>
+        this.process(this, aborter.signal),
+      );
+    } finally {
+      if (!this.destroyed) {
+        this.update();
+      }
+    }
+  }
+
+  cleanup() {
+    this.destroyed = true;
+    this.abortController?.abort();
+    super.cleanup();
+  }
+
+  constructor(
+    public process: (effect: AsyncEffect<V>, signal: AbortSignal) => Promise<V>,
+  ) {
+    super((control, change) => {
+      if (this.changedDetected) {
+        return;
+      }
+      this.changedDetected = true;
+      addAfterChangesCallback(async () => {
+        this.changedDetected = false;
+        try {
+          await this.currentPromise;
+        } catch (e) {}
+        if (!this.destroyed) {
+          this.currentPromise = this.runProcess();
+        }
+      });
+    });
+    this.currentPromise = this.runProcess();
+  }
+}
+
+export function createAsyncEffect<V>(
+  process: (effect: AsyncEffect<V>, signal: AbortSignal) => Promise<V>,
+  cleanupScope?: CleanupScope,
+): AsyncEffect<V> {
+  const effect = new AsyncEffect<V>(process);
+  cleanupScope?.addCleanup(() => effect.cleanup());
+  return effect;
+}
