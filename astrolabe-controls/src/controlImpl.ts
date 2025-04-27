@@ -64,6 +64,9 @@ export class ControlImpl<V> implements InternalControl<V> {
 
   cleanup() {
     this._cleanup?.cleanup();
+    this._logic.withChildren((c) =>
+      c.parents?.length == 1 ? c.cleanup() : undefined,
+    );
   }
   lookupControl(path: (string | number)[]): Control<any> | undefined {
     let base = this as Control<any> | undefined;

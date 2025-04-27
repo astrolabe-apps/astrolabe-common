@@ -1,6 +1,5 @@
 import {
   CompoundField,
-  ControlActionHandler,
   ControlDataVisitor,
   ControlDefinition,
   ControlDefinitionType,
@@ -11,6 +10,7 @@ import {
   FieldOption,
   fieldPathForDefinition,
   findField,
+  getGroupRendererOptions,
   getTagParam,
   GroupRenderOptions,
   isAutoCompleteClasses,
@@ -39,7 +39,7 @@ import {
   getElementIndex,
   newControl,
 } from "@react-typed-forms/core";
-import { ActionRendererProps } from "./controlRender";
+import { ActionRendererProps, ControlActionHandler } from "./types";
 
 /**
  * Interface representing the classes for a control.
@@ -783,21 +783,6 @@ export function coerceToString(v: unknown) {
 }
 
 /**
- * Returns the group renderer options for a control definition.
- * @param {ControlDefinition} def - The control definition to get the group renderer options for.
- * @returns {GroupRenderOptions | undefined} - The group renderer options, or undefined if not applicable.
- */
-export function getGroupRendererOptions(
-  def: ControlDefinition,
-): GroupRenderOptions | undefined {
-  return isGroupControl(def)
-    ? def.groupOptions
-    : isDataControl(def) && isDataGroupRenderer(def.renderOptions)
-      ? def.renderOptions.groupOptions
-      : undefined;
-}
-
-/**
  * Returns the group class overrides for a control definition.
  * @param {ControlDefinition} def - The control definition to get the group class overrides for.
  * @returns {ControlClasses} - The group class overrides.
@@ -812,15 +797,6 @@ export function getGroupClassOverrides(def: ControlDefinition): ControlClasses {
   if (childStyleClass) out.styleClass = childStyleClass;
   if (childLabelClass) out.labelClass = childLabelClass;
   return out;
-}
-
-/**
- * Checks if a control definition is display-only.
- * @param {ControlDefinition} def - The control definition to check.
- * @returns {boolean} - True if the control definition is display-only, false otherwise.
- */
-export function isControlDisplayOnly(def: ControlDefinition): boolean {
-  return Boolean(getGroupRendererOptions(def)?.displayOnly);
 }
 
 /**

@@ -34,10 +34,10 @@ import {
   TextfieldRenderOptions,
   ValidatorType,
 } from "@astroapps/forms-core";
-import { ActionRendererProps } from "./controlRender";
 import { useMemo } from "react";
 import { addMissingControls } from "./util";
 import { mergeFields, resolveSchemas } from "@astroapps/forms-core";
+import { ActionRendererProps } from "./types";
 
 export function dataControl(
   field: string,

@@ -7,3 +7,5 @@ export * from "./validators";
 export * from "./hooks";
 export * from "./createFormRenderer";
 export * from "./dynamicHooks";
+export * from "./RenderForm";
+export * from "./types";

@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 import {
-  ActionRendererProps,
   AdornmentProps,
   AdornmentRenderer,
   ArrayRendererProps,
@@ -28,6 +27,7 @@ import {
   VisibilityRendererRegistration,
 } from "./renderers";
 import { DataRenderType } from "@astroapps/forms-core";
+import { ActionRendererProps } from "./types";
 
 export function createFormRenderer(
   customRenderers: RendererRegistration[] = [],

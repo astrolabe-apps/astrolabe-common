@@ -26,9 +26,7 @@ import {
   ActionStyle,
   AdornmentPlacement,
   ArrayActionOptions,
-  ControlActionHandler,
   ControlAdornment,
-  ControlDataContext,
   ControlDefinition,
   ControlState,
   createFormState,
@@ -49,6 +47,7 @@ import {
   IconReference,
   isActionControl,
   isControlDisabled,
+  isControlDisplayOnly,
   isControlReadonly,
   isDataControl,
   isDisplayControl,
@@ -73,7 +72,6 @@ import {
   fieldDisplayName,
   getExternalEditData,
   getGroupClassOverrides,
-  isControlDisplayOnly,
   rendererClass,
   useUpdatedRef,
 } from "./util";
@@ -85,6 +83,11 @@ import {
   useEvalVisibilityHook,
 } from "./hooks";
 import { useMakeValidationHook, ValidationContext } from "./validators";
+import {
+  ActionRendererProps,
+  ControlActionHandler,
+  ControlDataContext,
+} from "./types";
 
 export interface HtmlIconProperties {
   className?: string;
@@ -443,22 +446,6 @@ export interface DataRendererProps extends ParentRendererProps {
   dataNode: SchemaDataNode;
   displayOnly: boolean;
   inline: boolean;
-}
-
-export interface ActionRendererProps {
-  key?: Key;
-  actionId: string;
-  actionText: string;
-  actionData?: any;
-  actionStyle?: ActionStyle | null;
-  icon?: IconReference | null;
-  iconPlacement?: IconPlacement | null;
-  onClick: () => void;
-  className?: string | null;
-  textClass?: string | null;
-  style?: React.CSSProperties;
-  disabled?: boolean;
-  inline?: boolean;
 }
 
 export interface ControlRenderProps {
@@ -1312,4 +1299,13 @@ export function fieldOptionAdornment(p: DataRendererProps) {
       }
     />
   );
+}
+
+export function lookupChildDataContext(
+  dataContext: ControlDataContext,
+  c: ControlDefinition,
+): ControlDataContext {
+  const parentNode = dataContext.dataNode ?? dataContext.parentNode;
+  const dataNode = lookupDataNode(c, parentNode);
+  return { ...dataContext, parentNode, dataNode };
 }

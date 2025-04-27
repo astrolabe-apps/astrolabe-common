@@ -7,16 +7,6 @@ import { SchemaNode } from "./schemaNode";
 import { FormContextData } from "./formState";
 
 /**
- * Interface representing the control data context.
- */
-export interface ControlDataContext {
-  schemaInterface: SchemaInterface;
-  dataNode: SchemaDataNode | undefined;
-  parentNode: SchemaDataNode;
-  formData: FormContextData;
-}
-
-/**
  * Represents any control definition.
  */
 export type AnyControlDefinition =
@@ -586,12 +576,6 @@ export function isDisplayControl(
   return c.type === ControlDefinitionType.Display;
 }
 
-export type ControlActionHandler = (
-  actionId: string,
-  actionData: any,
-  ctx: ControlDataContext,
-) => (() => void) | undefined;
-
 export function isCheckEntryClasses(
   options?: RenderOptions | null,
 ): options is CheckEntryClasses & RenderOptions {
@@ -664,4 +648,28 @@ export function isControlReadonly(c: ControlDefinition): boolean {
  */
 export function isControlDisabled(c: ControlDefinition): boolean {
   return isDataControl(c) && !!c.disabled;
+}
+
+/**
+ * Returns the group renderer options for a control definition.
+ * @param {ControlDefinition} def - The control definition to get the group renderer options for.
+ * @returns {GroupRenderOptions | undefined} - The group renderer options, or undefined if not applicable.
+ */
+export function getGroupRendererOptions(
+  def: ControlDefinition,
+): GroupRenderOptions | undefined {
+  return isGroupControl(def)
+    ? def.groupOptions
+    : isDataControl(def) && isDataGroupRenderer(def.renderOptions)
+      ? def.renderOptions.groupOptions
+      : undefined;
+}
+
+/**
+ * Checks if a control definition is display-only.
+ * @param {ControlDefinition} def - The control definition to check.
+ * @returns {boolean} - True if the control definition is display-only, false otherwise.
+ */
+export function isControlDisplayOnly(def: ControlDefinition): boolean {
+  return Boolean(getGroupRendererOptions(def)?.displayOnly);
 }

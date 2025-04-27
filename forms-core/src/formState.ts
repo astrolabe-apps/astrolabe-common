@@ -2,12 +2,15 @@ import { FormNode, lookupDataNode } from "./formNode";
 import { SchemaDataNode, validDataNode } from "./schemaDataNode";
 import {
   ActionControlDefinition,
+  ControlAdornmentType,
   ControlDefinition,
   DataControlDefinition,
+  DataRenderType,
   DisplayData,
   DynamicPropertyType,
   isActionControl,
   isControlDisabled,
+  isControlDisplayOnly,
   isControlReadonly,
   isDataControl,
   isDisplayControl,
@@ -20,20 +23,36 @@ import {
   Control,
   createSyncEffect,
   ensureMetaValue,
+  getControlPath,
   newControl,
+  trackedValue,
+  unsafeRestoreControl,
   updateComputedValue,
   withChildren,
 } from "@astroapps/controls";
 import { defaultEvaluators, ExpressionEval } from "./evalExpression";
 import { EntityExpression } from "./entityExpression";
-import { createScoped, createScopedComputed } from "./util";
+import { createScoped, createScopedComputed, jsonPathString } from "./util";
 import { setupValidation } from "./validators";
 
 export interface ControlState {
   definition: ControlDefinition;
+  context: FormContext;
+  schemaInterface: SchemaInterface;
+  dataNode?: SchemaDataNode | undefined;
   style?: Control<object | undefined>;
   layoutStyle?: Control<object | undefined>;
   allowedOptions?: Control<any[] | undefined>;
+}
+
+export interface FormContext {
+  readonly: boolean;
+  hidden: boolean;
+  disabled: boolean;
+  displayOnly: boolean;
+  inline: boolean;
+  clearHidden: boolean;
+  formData: FormContextData;
 }
 
 export interface FormContextOptions {
@@ -77,19 +96,23 @@ export type ControlLogic<T> = (
   ) => boolean,
 ) => void;
 
+const formStates: FormState[] = [];
 export function createFormState(
   schemaInterface: SchemaInterface,
   evaluators: Record<string, ExpressionEval<any>> = defaultEvaluators,
 ): FormState {
   console.log("createFormState");
   const controlStates = newControl<Record<string, FormContextOptions>>({});
-  withChildren(controlStates, (x) => x.cleanup());
   return {
-    cleanup: () => controlStates.cleanup(),
+    cleanup: () => {
+      console.log("Cleanup form state");
+      controlStates.cleanup();
+    },
     cleanupControl(parent: SchemaDataNode, formNode: FormNode) {
       const stateId = parent.id + "$" + formNode.id;
       const c = controlStates.fields[stateId];
       c.cleanup();
+      // console.log("Unmount" + stateId);
       clearMetaValue(c, "impl");
     },
     getControlState(
@@ -100,7 +123,12 @@ export function createFormState(
       const stateId = parent.id + "$" + formNode.id;
       const controlImpl = controlStates.fields[stateId];
       controlImpl.value = context;
-      return createScopedMetaValue(controlImpl, "impl", (scope) => {
+      return createScopedMetaValue(formNode, controlImpl, "impl", (scope) => {
+        // console.log(
+        //   "Creating impl for TEST2",
+        //   stateId,
+        //   isDataControl(formNode.definition) ? formNode.definition.field : "_",
+        // );
         const dataNode = createScopedComputed(scope, () =>
           lookupDataNode(formNode.definition, parent),
         );
@@ -158,6 +186,26 @@ export function createFormState(
         const style = createScoped(scope, undefined);
         const layoutStyle = createScoped(scope, undefined);
         const allowedOptions = createScoped(scope, undefined);
+        const myContext = createScopedComputed<FormContext>(scope, () => {
+          const {
+            disabled,
+            readonly,
+            hidden,
+            displayOnly,
+            inline,
+            clearHidden,
+            formData,
+          } = controlImpl.fields;
+          return {
+            hidden: hidden.value || !!definition.hidden,
+            readonly: readonly.value || isControlReadonly(definition),
+            disabled: disabled.value || isControlDisabled(definition),
+            displayOnly: displayOnly.value || isControlDisplayOnly(definition),
+            inline: !!inline.value,
+            formData: formData.value ?? {},
+            clearHidden: !!clearHidden.value,
+          };
+        });
 
         createSyncEffect(() => {
           const dn = dataNode.value;
@@ -206,7 +254,11 @@ export function createFormState(
               }
             } else if (
               dn.value === undefined &&
-              definition.defaultValue != null
+              definition.defaultValue != null &&
+              !definition.adornments?.some(
+                (x) => x.type === ControlAdornmentType.Optional,
+              ) &&
+              definition.renderOptions?.type != DataRenderType.NullToggle
             ) {
               console.log(
                 "Setting to default",
@@ -217,7 +269,15 @@ export function createFormState(
             }
           }
         }, scope);
-        return { definition, style, layoutStyle, allowedOptions };
+        return new ControlStateImpl(
+          definition,
+          myContext,
+          schemaInterface,
+          dataNode,
+          style,
+          layoutStyle,
+          allowedOptions,
+        );
 
         function setupDisplay(): () => any {
           const display = createScoped(scope, Never);
@@ -271,11 +331,8 @@ const hiddenLogic: ControlLogic<boolean | null | undefined> = (
   evalExpr,
 ) => {
   const dynamic = firstExpr(formNode, DynamicPropertyType.Visible);
-  if (!evalExpr(dynamic, (r) => context.fields.hidden.value || !r))
+  if (!evalExpr(dynamic, (r) => !r))
     updateComputedValue(hidden, () => {
-      if (context.fields.hidden.value) {
-        return true;
-      }
       const dataNode = lookupDataNode(formNode.definition, parent);
       return !!dataNode && !validDataNode(dataNode);
     });
@@ -290,11 +347,8 @@ const readonlyLogic: ControlLogic<boolean | null | undefined> = (
 ) => {
   const def = formNode.definition;
   const dynamic = firstExpr(formNode, DynamicPropertyType.Readonly);
-  if (!evalExpr(dynamic, (r) => context.fields.readonly.value || !!r))
-    updateComputedValue(
-      control,
-      () => context.fields.readonly.value || isControlReadonly(def),
-    );
+  if (!evalExpr(dynamic, (r) => !!r))
+    updateComputedValue(control, () => isControlReadonly(def));
 };
 
 const disabledLogic: ControlLogic<boolean | null | undefined> = (
@@ -306,11 +360,8 @@ const disabledLogic: ControlLogic<boolean | null | undefined> = (
 ) => {
   const def = formNode.definition;
   const dynamic = firstExpr(formNode, DynamicPropertyType.Disabled);
-  if (!evalExpr(dynamic, (r) => context.fields.disabled.value || !!r))
-    updateComputedValue(
-      control,
-      () => context.fields.disabled.value || isControlDisabled(def),
-    );
+  if (!evalExpr(dynamic, (r) => !!r))
+    updateComputedValue(control, () => isControlDisabled(def));
 };
 
 const titleLogic: ControlLogic<string> = (
@@ -376,16 +427,45 @@ function coerceString(v: unknown): string {
 class Never {}
 
 function createScopedMetaValue<A>(
+  formNode: FormNode,
   c: Control<any>,
   key: string,
   init: (scope: CleanupScope) => A,
 ): A {
   return ensureMetaValue(c, key, () => {
     const holder = createScoped<A | undefined>(c, undefined);
-    createSyncEffect(() => {
+    const effect = createSyncEffect(() => {
       holder.cleanup();
       holder.value = init(holder);
     }, c);
+    // effect.run = () => {
+    //   console.log(
+    //     effect.subscriptions.map(
+    //       (x) =>
+    //         `${x[1]?.mask} ${jsonPathString(getControlPath(x[0], unsafeRestoreControl(formNode.definition)))}`,
+    //     ),
+    //   );
+    // };
     return holder;
   }).value!;
+}
+
+class ControlStateImpl implements ControlState {
+  constructor(
+    public definition: ControlDefinition,
+    private _context: Control<FormContext>,
+    public schemaInterface: SchemaInterface,
+    public _dataNode: Control<SchemaDataNode | undefined>,
+    public style?: Control<object | undefined>,
+    public layoutStyle?: Control<object | undefined>,
+    public allowedOptions?: Control<any[] | undefined>,
+  ) {}
+
+  get context() {
+    return this._context.value;
+  }
+
+  get dataNode() {
+    return this._dataNode.value;
+  }
 }

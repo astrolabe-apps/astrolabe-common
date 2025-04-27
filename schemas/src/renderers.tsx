@@ -1,6 +1,5 @@
 import { ReactElement, ReactNode } from "react";
 import {
-  ActionRendererProps,
   AdornmentProps,
   AdornmentRenderer,
   ArrayRendererProps,
@@ -24,6 +23,7 @@ import {
   RenderOptions,
   SetFieldAdornment,
 } from "@astroapps/forms-core";
+import { ActionRendererProps } from "./types";
 
 export interface DefaultRenderers {
   data: DataRendererRegistration;

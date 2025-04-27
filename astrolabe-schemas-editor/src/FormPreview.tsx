@@ -14,6 +14,7 @@ import {
   GroupedControlsDefinition,
   NewControlRenderer,
   RendererRegistration,
+  RenderForm,
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import React, { ReactNode, useMemo } from "react";
@@ -92,12 +93,18 @@ export function FormPreview({
       <div className="grow overflow-auto">
         <RenderControl render={renderRaw} />
         <div className={editorPanelClass}>
-          <NewControlRenderer
-            definition={controls}
-            parentDataNode={rootDataNode}
+          <RenderForm
+            form={controls}
+            data={rootDataNode}
             renderer={formRenderer}
             options={previewOptions}
           />
+          {/*<NewControlRenderer*/}
+          {/*  definition={controls}*/}
+          {/*  parentDataNode={rootDataNode}*/}
+          {/*  renderer={formRenderer}*/}
+          {/*  options={previewOptions}*/}
+          {/*/>*/}
         </div>
       </div>
     </>

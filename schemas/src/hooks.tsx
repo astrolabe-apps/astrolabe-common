@@ -1,5 +1,4 @@
 import {
-  ControlDataContext,
   ControlDefinition,
   DataExpression,
   DataMatchExpression,
@@ -40,6 +39,7 @@ import {
 import jsonata from "jsonata";
 import { v4 as uuidv4 } from "uuid";
 import { DynamicHookGenerator, HookDep, toDepString } from "./dynamicHooks";
+import { ControlDataContext } from "./types";
 
 export type EvalExpressionHook<A = any> = DynamicHookGenerator<
   Control<A | undefined>,

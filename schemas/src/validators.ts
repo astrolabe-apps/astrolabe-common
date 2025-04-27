@@ -1,5 +1,4 @@
 import {
-  ControlDataContext,
   ControlDefinition,
   DataControlDefinition,
   DateComparison,
@@ -24,6 +23,7 @@ import { useCallback } from "react";
 import { useUpdatedRef } from "./util";
 import { useJsonataExpression } from "./hooks";
 import { makeHookDepString } from "./dynamicHooks";
+import { ControlDataContext } from "./types";
 
 interface ValidationHookContext {
   hiddenControl: Control<boolean | null | undefined>;

@@ -1,5 +1,4 @@
 import {
-  ControlDataContext,
   ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
@@ -164,15 +163,6 @@ export function lookupDataNode(
   return fieldNamePath
     ? schemaDataForFieldPath(fieldNamePath, parentNode)
     : undefined;
-}
-
-export function lookupChildDataContext(
-  dataContext: ControlDataContext,
-  c: ControlDefinition,
-): ControlDataContext {
-  const parentNode = dataContext.dataNode ?? dataContext.parentNode;
-  const dataNode = lookupDataNode(c, parentNode);
-  return { ...dataContext, parentNode, dataNode };
 }
 
 /**
