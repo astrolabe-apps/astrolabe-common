@@ -1,37 +1,32 @@
 import { FormNode, lookupDataNode } from "./formNode";
 import { SchemaDataNode, validDataNode } from "./schemaDataNode";
 import {
-  AnyControlDefinition,
+  ActionControlDefinition,
   ControlDefinition,
   DataControlDefinition,
-  DisplayControlDefinition,
   DisplayData,
   DynamicPropertyType,
-  HtmlDisplay,
+  isActionControl,
   isControlDisabled,
   isControlReadonly,
+  isDataControl,
   isDisplayControl,
-  TextDisplay,
 } from "./controlDefinition";
 import { SchemaInterface } from "./schemaInterface";
 import { FieldOption } from "./schemaField";
 import {
   CleanupScope,
   clearMetaValue,
-  collectChanges,
   Control,
   createSyncEffect,
   ensureMetaValue,
-  getControlPath,
   newControl,
-  SubscriptionTracker,
-  unsafeRestoreControl,
   updateComputedValue,
   withChildren,
 } from "@astroapps/controls";
 import { defaultEvaluators, ExpressionEval } from "./evalExpression";
 import { EntityExpression } from "./entityExpression";
-import { createScoped, createScopedComputed, jsonPathString } from "./util";
+import { createScoped, createScopedComputed } from "./util";
 import { setupValidation } from "./validators";
 
 export interface ControlState {
@@ -163,6 +158,7 @@ export function createFormState(
         const style = createScoped(scope, undefined);
         const layoutStyle = createScoped(scope, undefined);
         const allowedOptions = createScoped(scope, undefined);
+
         createSyncEffect(() => {
           const dn = dataNode.value;
           if (dn) {
@@ -196,6 +192,31 @@ export function createFormState(
           parent,
           formNode,
         );
+
+        createSyncEffect(() => {
+          const dn = dataNode.value?.control;
+          if (dn && isDataControl(definition)) {
+            if (definition.hidden) {
+              if (
+                controlImpl.fields.clearHidden.value &&
+                !definition.dontClearHidden
+              ) {
+                console.log("Clearing hidden");
+                dn.value = undefined;
+              }
+            } else if (
+              dn.value === undefined &&
+              definition.defaultValue != null
+            ) {
+              console.log(
+                "Setting to default",
+                definition.defaultValue,
+                definition.field,
+              );
+              dn.value = definition.defaultValue;
+            }
+          }
+        }, scope);
         return { definition, style, layoutStyle, allowedOptions };
 
         function setupDisplay(): () => any {
@@ -305,11 +326,43 @@ const titleLogic: ControlLogic<string> = (
     updateComputedValue(control, () => def.title);
 };
 
-const logics: ControlLogics<DataControlDefinition> = {
+const defaultValueLogic: ControlLogic<any> = (
+  control,
+  context,
+  parent,
+  formNode,
+  evalExpr,
+) => {
+  const def = formNode.definition;
+  const dynamic = firstExpr(formNode, DynamicPropertyType.DefaultValue);
+  if (!evalExpr(dynamic, (x) => x))
+    updateComputedValue(control, () =>
+      isDataControl(def) ? def.defaultValue : undefined,
+    );
+};
+
+const actionDataLogic: ControlLogic<any> = (
+  control,
+  context,
+  parent,
+  formNode,
+  evalExpr,
+) => {
+  const def = formNode.definition;
+  const dynamic = firstExpr(formNode, DynamicPropertyType.ActionData);
+  if (!evalExpr(dynamic, (x) => x))
+    updateComputedValue(control, () =>
+      isActionControl(def) ? def.actionData : undefined,
+    );
+};
+
+const logics: ControlLogics<DataControlDefinition | ActionControlDefinition> = {
   hidden: hiddenLogic,
   readonly: readonlyLogic,
   disabled: disabledLogic,
   title: titleLogic,
+  defaultValue: defaultValueLogic,
+  actionData: actionDataLogic,
 };
 
 function coerceStyle(v: unknown): any {

@@ -7,7 +7,7 @@
       "renderOptions": {
         "type": "Standard"
       },
-      "defaultValue": null,
+      "defaultValue": "2024-10-10",
       "dynamic": [
         {
           "type": "Label",
@@ -122,7 +122,16 @@
       "displayData": {
         "type": "Html",
         "html": "\u003Cb\u003EBOLD\u003C/b\u003E"
-      }
+      },
+      "dynamic": [
+        {
+          "type": "ActionData",
+          "expr": {
+            "type": "Jsonata",
+            "expression": "\u0022\u003Cb\u003Easad\u003Ci\u003Easd\u003C/i\u003E\u003C/b\u003E\u0022"
+          }
+        }
+      ]
     }
   ],
   "config": null
