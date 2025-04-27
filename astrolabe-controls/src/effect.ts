@@ -42,6 +42,15 @@ export function createEffect<V>(
   return effect;
 }
 
+export function createSyncEffect<V>(
+  process: () => V,
+  cleanupScope: CleanupScope,
+): Effect<V> {
+  const effect = new Effect<V>(process, () => {});
+  cleanupScope.addCleanup(() => effect.cleanup());
+  return effect;
+}
+
 export class AsyncEffect<V> extends SubscriptionTracker {
   currentPromise: Promise<V>;
   abortController?: AbortController;
@@ -93,9 +102,9 @@ export class AsyncEffect<V> extends SubscriptionTracker {
 
 export function createAsyncEffect<V>(
   process: (effect: AsyncEffect<V>, signal: AbortSignal) => Promise<V>,
-  cleanupScope?: CleanupScope,
+  cleanupScope: CleanupScope,
 ): AsyncEffect<V> {
   const effect = new AsyncEffect<V>(process);
-  cleanupScope?.addCleanup(() => effect.cleanup());
+  cleanupScope.addCleanup(() => effect.cleanup());
   return effect;
 }

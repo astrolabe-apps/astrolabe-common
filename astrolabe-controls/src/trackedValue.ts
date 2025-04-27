@@ -1,9 +1,5 @@
-import {
-  ChangeListenerFunc,
-  collectChange,
-  Control,
-  ControlChange,
-} from "@astroapps/controls";
+import { ChangeListenerFunc, Control, ControlChange } from "./types";
+import { collectChange } from "./controlImpl";
 
 const restoreControlSymbol = Symbol("restoreControl");
 
@@ -44,5 +40,5 @@ export function trackedValue<A>(
 }
 
 export function unsafeRestoreControl<A>(v: A): Control<A> | undefined {
-  return (v as any)[restoreControlSymbol];
+  return v != null ? (v as any)[restoreControlSymbol] : undefined;
 }

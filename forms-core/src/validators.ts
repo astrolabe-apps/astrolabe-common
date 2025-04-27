@@ -22,7 +22,7 @@ import { FormContextOptions } from "./formState";
 import { FormNode } from "./formNode";
 import { jsonataEval } from "./evalExpression";
 import { ExpressionType } from "./entityExpression";
-import { newScopedControl } from "./util";
+import { createScopedComputed } from "./util";
 
 export interface ValidationEvalContext {
   addSync(validate: (value: unknown) => string | undefined | null): void;
@@ -43,13 +43,13 @@ export const jsonataValidator: ValidatorEval<JsonataValidator> = (
   validation,
   context,
 ) => {
-  const error = newScopedControl(context, () => undefined);
+  const error = createScopedComputed(context, () => undefined);
   jsonataEval(
     { type: ExpressionType.Jsonata, expression: validation.expression },
-    error,
     {
+      scope: error,
       dataNode: context.parentData,
-      coerce: (v) => {
+      returnResult: (v) => {
         trackControlChange(context.data.control, ControlChange.Validate);
         console.log("Setting jsonata error", v);
         context.data.control.setError("jsonata", v?.toString());
@@ -170,7 +170,7 @@ export function setupValidation(
   parent: SchemaDataNode,
   formNode: FormNode,
 ) {
-  const validationEnabled = newScopedControl(
+  const validationEnabled = createScopedComputed(
     controlImpl,
     () => !definition.hidden,
   );

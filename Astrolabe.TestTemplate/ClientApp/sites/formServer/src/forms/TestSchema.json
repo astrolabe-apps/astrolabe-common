@@ -15,12 +15,13 @@
             "type": "Jsonata",
             "expression": "wow"
           }
-        }
-      ],
-      "validators": [
+        },
         {
-          "type": "Date",
-          "comparison": "NotBefore"
+          "type": "LayoutStyle",
+          "expr": {
+            "type": "Jsonata",
+            "expression": "{\u0022backgroundColor\u0022: \u0022red\u0022}"
+          }
         }
       ]
     },
@@ -75,7 +76,8 @@
           "field": "options",
           "renderOptions": {
             "type": "Standard"
-          }
+          },
+          "defaultValue": null
         },
         {
           "type": "Data",
@@ -83,9 +85,44 @@
           "field": "singleOption",
           "renderOptions": {
             "type": "Standard"
+          },
+          "defaultValue": null,
+          "dynamic": [
+            {
+              "type": "AllowedOptions",
+              "expr": {
+                "type": "Jsonata",
+                "expression": "1"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Display",
+      "title": "Text",
+      "displayData": {
+        "type": "Text",
+        "text": "Text"
+      },
+      "dynamic": [
+        {
+          "type": "Display",
+          "expr": {
+            "type": "Jsonata",
+            "expression": "\u0022This is my display\u0022"
           }
         }
       ]
+    },
+    {
+      "type": "Display",
+      "title": "New",
+      "displayData": {
+        "type": "Html",
+        "html": "\u003Cb\u003EBOLD\u003C/b\u003E"
+      }
     }
   ],
   "config": null

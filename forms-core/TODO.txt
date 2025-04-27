@@ -1,6 +1,3 @@
 * Support formData in jsonata
 * default value
-* allowed options
-* display
-* style and layoutStyle
-* temporary 
+* clean hidden

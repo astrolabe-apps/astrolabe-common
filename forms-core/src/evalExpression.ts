@@ -9,12 +9,13 @@ import {
 import {
   AsyncEffect,
   ChangeListenerFunc,
+  CleanupScope,
   collectChange,
   collectChanges,
   Control,
   ControlChange,
   createAsyncEffect,
-  updateComputedValue,
+  createSyncEffect,
 } from "@astroapps/controls";
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
 import { FormContextOptions } from "./formState";
@@ -22,10 +23,11 @@ import { SchemaInterface } from "./schemaInterface";
 import jsonata from "jsonata";
 import { getJsonPath, getRootDataNode } from "./controlDefinition";
 import { v4 as uuidv4 } from "uuid";
-import { jsonPathString, newScopedControl } from "./util";
+import { createScopedComputed, jsonPathString } from "./util";
 
 export interface ExpressionEvalContext {
-  coerce: (k: unknown) => unknown;
+  scope: CleanupScope;
+  returnResult: (k: unknown) => void;
   dataNode: SchemaDataNode;
   formContext: Control<FormContextOptions>;
   schemaInterface: SchemaInterface;
@@ -33,57 +35,52 @@ export interface ExpressionEvalContext {
 
 export type ExpressionEval<T extends EntityExpression> = (
   expr: T,
-  result: Control<any>,
   context: ExpressionEvalContext,
 ) => void;
 
 const dataEval: ExpressionEval<DataExpression> = (
   fvExpr,
-  result,
-  { dataNode: node, coerce },
+  { dataNode: node, returnResult, scope },
 ) => {
-  updateComputedValue(result, () => {
+  createSyncEffect(() => {
     const otherField = schemaDataForFieldRef(fvExpr.field, node);
-    return coerce(otherField.control?.value);
-  });
+    returnResult(otherField.control?.value);
+  }, scope);
 };
 const dataMatchEval: ExpressionEval<DataMatchExpression> = (
   matchExpr,
-  result,
-  { dataNode, coerce },
+  { dataNode, returnResult, scope },
 ) => {
-  updateComputedValue(result, () => {
+  createSyncEffect(() => {
     const otherField = schemaDataForFieldRef(matchExpr.field, dataNode);
     const fv = otherField?.control.value;
-    return coerce(
+    returnResult(
       Array.isArray(fv) ? fv.includes(matchExpr.value) : fv === matchExpr.value,
     );
-  });
+  }, scope);
 };
 
 const notEmptyEval: ExpressionEval<NotEmptyExpression> = (
   expr,
-  result,
-  { coerce, dataNode, formContext, schemaInterface },
+  { returnResult, dataNode, scope, schemaInterface },
 ) => {
-  updateComputedValue(result, () => {
+  createSyncEffect(() => {
     const otherField = schemaDataForFieldRef(expr.field, dataNode);
     const fv = otherField.control?.value;
     const field = otherField.schema.field;
-    return coerce(field && !schemaInterface.isEmptyValue(field, fv));
-  });
+    returnResult(field && !schemaInterface.isEmptyValue(field, fv));
+  }, scope);
 };
 
 export const jsonataEval: ExpressionEval<JsonataExpression> = (
   expr,
-  result,
-  ctx,
+  { scope, returnResult, dataNode },
 ) => {
-  const path = getJsonPath(ctx.dataNode);
+  const path = getJsonPath(dataNode);
   const pathString = jsonPathString(path, (x) => `#$i[${x}]`);
-  const rootData = getRootDataNode(ctx.dataNode).control;
+  const rootData = getRootDataNode(dataNode).control;
 
-  const parsedJsonata = newScopedControl(result, () => {
+  const parsedJsonata = createScopedComputed(scope, () => {
     const jExpr = expr.expression;
     const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
     try {
@@ -98,16 +95,14 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
     const evalResult = await parsedJsonata.fields.expr.value.evaluate(
       trackedValue(rootData, effect.collectUsage),
     );
-    collectChanges(effect.collectUsage, () => {
-      result.value = ctx.coerce(evalResult);
-    });
+    collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 
-  createAsyncEffect(runJsonata, result);
+  createAsyncEffect(runJsonata, scope);
 };
 
-export const uuidEval: ExpressionEval<EntityExpression> = (_, result, ctx) => {
-  updateComputedValue(result, () => ctx.coerce(uuidv4()));
+export const uuidEval: ExpressionEval<EntityExpression> = (_, ctx) => {
+  ctx.returnResult(uuidv4());
 };
 
 export const defaultEvaluators: Record<string, ExpressionEval<any>> = {
@@ -117,6 +112,7 @@ export const defaultEvaluators: Record<string, ExpressionEval<any>> = {
   [ExpressionType.Jsonata]: jsonataEval,
   [ExpressionType.UUID]: uuidEval,
 };
+
 export function trackedValue<A>(
   c: Control<A>,
   tracker?: ChangeListenerFunc<any>,

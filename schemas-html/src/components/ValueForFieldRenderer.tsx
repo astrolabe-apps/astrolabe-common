@@ -106,6 +106,7 @@ function ValueForField({
   const [controls, rootSchema] = useMemo(() => {
     const adjustedField: SchemaField = {
       ...schemaField,
+      collection: noOptions ? false : schemaField.collection,
       options: noOptions ? undefined : schemaField.options,
       field: "default",
       required: false,

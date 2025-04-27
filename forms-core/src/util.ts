@@ -33,7 +33,7 @@ export function jsonPathString(
   return out;
 }
 
-export function newScopedControl<T>(
+export function createScopedComputed<T>(
   parent: CleanupScope,
   compute: () => T,
 ): Control<T> {
@@ -41,4 +41,10 @@ export function newScopedControl<T>(
   updateComputedValue(c, compute);
   addDependent(parent, c);
   return c.as();
+}
+
+export function createScoped<T>(parent: CleanupScope, value: T): Control<T> {
+  const c = newControl<T>(value);
+  addDependent(parent, c);
+  return c;
 }

@@ -559,7 +559,7 @@ export function useControlRendererComponent(
 
   useEffect(() => {
     return () => formState.cleanupControl(parentDataNode, formNode);
-  }, [state]);
+  }, []);
 
   const Component = useCallback(() => {
     const stopTracking = useComponentTracking();
@@ -667,15 +667,6 @@ export function useControlRendererComponent(
         ...myOptions,
       };
 
-      useEffect(() => {
-        if (
-          control &&
-          typeof myOptions.disabled === "boolean" &&
-          control.disabled != myOptions.disabled
-        )
-          control.disabled = myOptions.disabled;
-      }, [control, myOptions.disabled]);
-
       const adornments =
         definition.adornments?.map((x) =>
           renderer.renderAdornment({
@@ -721,6 +712,8 @@ export function useControlRendererComponent(
         dataContext,
         control: control,
         schemaInterface,
+        style: state.style?.value,
+        allowedOptions: state.allowedOptions?.value,
         customDisplay: options.customDisplay,
         actionOnClick: options.actionOnClick,
         styleClass: options.styleClass,
@@ -744,6 +737,7 @@ export function useControlRendererComponent(
         ...labelAndChildren,
         adornments,
         className: rendererClass(options.layoutClass, c.layoutClass),
+        style: state.layoutStyle?.value,
       };
       const renderedControl = renderer.renderLayout(
         options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,
@@ -809,6 +803,7 @@ export function defaultDataProps(
   {
     formOptions,
     style,
+    allowedOptions,
     schemaInterface = defaultSchemaInterface,
     styleClass,
     textClass: tc,
@@ -824,7 +819,7 @@ export function defaultDataProps(
   const displayOnly = !!formOptions.displayOnly;
   const required = !!definition.required && !displayOnly;
   const fieldOptions = schemaInterface.getDataOptions(dataNode);
-  const _allowed: any[] = [];
+  const _allowed = allowedOptions ?? [];
   const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
   return {
     dataNode,
@@ -885,6 +880,7 @@ export interface RenderLayoutProps {
   dataContext: ControlDataContext;
   control?: Control<any>;
   style?: React.CSSProperties;
+  allowedOptions?: any[];
   useChildVisibility: ChildVisibilityFunc;
   useEvalExpression: UseEvalExpressionHook;
   actionOnClick?: ControlActionHandler;
