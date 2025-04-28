@@ -1,4 +1,4 @@
 * Support formData in jsonata
 * nuances with default value
-* remove redundant stuff from schemas
 * hide display only - hidden logic
+* 

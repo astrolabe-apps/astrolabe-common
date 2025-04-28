@@ -46,7 +46,7 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
       removableClass: "flex flex-col gap-y-2",
     },
     action: {
-      className:
+      buttonClass:
         "flex flex-row gap-2 bg-primary-500 rounded-lg p-3 web:hover:opacity-90 active:opacity-90",
       textClass: "text-white",
     },

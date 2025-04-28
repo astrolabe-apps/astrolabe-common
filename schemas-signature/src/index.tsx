@@ -21,7 +21,7 @@ import clsx from "clsx";
 export interface SignatureRendererOptions {
   clearButton?: IconReference;
   onClear?: () => void;
-  classes: Partial<{
+  classes?: Partial<{
     container: string;
     canvas: string;
     clearButton: string;
