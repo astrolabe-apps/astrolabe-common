@@ -29,7 +29,7 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
           render={renderAllTabs}
           dataContext={p.dataContext}
           parentFormNode={p.formNode}
-          useChildVisibility={p.useChildVisibility}
+          parent={p}
           props={{
             groupProps: p,
             tabOptions: p.renderOptions as TabsRenderOptions,

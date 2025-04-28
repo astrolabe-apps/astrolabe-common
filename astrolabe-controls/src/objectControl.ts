@@ -110,12 +110,11 @@ export function setFields<V, OTHER extends { [p: string]: unknown }>(
   return control as any;
 }
 
-export function getExistingField<K extends keyof V, V>(
+export function getCurrentFields<V extends Record<string, any>>(
   control: Control<V>,
-  key: K,
-): Control<V[K]> | undefined {
+): { [K in keyof V]?: Control<V[K]> } {
   const oc = (
     control as InternalControl<V>
   )._logic.ensureObject() as ObjectLogic;
-  return oc._fields[key as string] as any;
+  return oc._fields as any;
 }

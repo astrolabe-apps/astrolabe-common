@@ -1,24 +1,43 @@
 import {
   ControlLayoutProps,
   ControlRenderOptions,
+  ControlRenderProps,
   defaultDataProps,
   FormRenderer,
   renderControlLayout,
   Visibility,
 } from "./controlRender";
-import React, { useEffect, useRef } from "react";
+import React, {
+  FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
+  ControlDefinition,
+  ControlState,
   createFormState,
+  createSchemaDataNode,
+  createSchemaTree,
   defaultSchemaInterface,
   FormNode,
   FormState,
   isDataControl,
+  JsonPath,
+  legacyFormNode,
   SchemaDataNode,
+  SchemaField,
 } from "@astroapps/forms-core";
 import { ControlDataContext } from "./types";
-import { actionHandlers, getGroupClassOverrides, rendererClass } from "./util";
-import { useControl } from "@react-typed-forms/core";
-import { makeHook } from "./dynamicHooks";
+import {
+  actionHandlers,
+  getGroupClassOverrides,
+  rendererClass,
+  useUpdatedRef,
+} from "./util";
+import { Control, useControl } from "@react-typed-forms/core";
 
 export interface RenderFormProps {
   data: SchemaDataNode;
@@ -33,21 +52,17 @@ export function RenderForm({
   renderer,
   options = {},
 }: RenderFormProps) {
-  const formStateRef = useRef<FormState | undefined>();
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
-  const formState =
-    options.formState ??
-    (formStateRef.current = createFormState(schemaInterface));
+  const [formState, setFormState] = useState(
+    () => options?.formState ?? createFormState(schemaInterface),
+  );
   const state = formState.getControlState(data, form, options);
 
   useEffect(() => {
-    const toCleanup = formStateRef.current;
-    return () => toCleanup?.cleanup();
-  }, [formStateRef.current]);
-
-  useEffect(() => {
-    return () => formState.cleanupControl(data, form);
-  }, []);
+    if (!options?.formState) {
+      return () => formState.cleanup();
+    }
+  }, [formState, options?.formState]);
 
   const definition = state.definition;
 
@@ -99,8 +114,7 @@ export function RenderForm({
     renderChild: (k, child, options) => {
       const overrideClasses = getGroupClassOverrides(definition);
       const { parentDataNode, actionOnClick, ...renderOptions } = options ?? {};
-      const dContext =
-        parentDataNode ?? dataContext.dataNode ?? dataContext.parentNode;
+      const dContext = parentDataNode ?? dataContext.dataNode ?? data;
       const allChildOptions = {
         ...childOptions,
         ...overrideClasses,
@@ -133,18 +147,23 @@ export function RenderForm({
     styleClass: options.styleClass,
     labelClass: options.labelClass,
     textClass: options.textClass,
-    useEvalExpression: () => makeHook(() => undefined, undefined),
-    useChildVisibility: () => makeHook(() => useControl(true), undefined),
-    // useChildVisibility: (childDef, parentNode, dontOverride) => {
-    //   throw "useChildVisibility"
-    // return useEvalVisibilityHook(
-    //   useExpr,
-    //   childDef,
-    //   !dontOverride
-    //     ? lookupDataNode(childDef, parentNode ?? dataNode ?? parentDataNode)
-    //     : undefined,
-    // );
-    // },
+    getChildState(child: FormNode, parent?: SchemaDataNode): ControlState {
+      return formState.getControlState(
+        parent ?? state.dataNode ?? data,
+        child,
+        childOptions,
+      );
+    },
+    runExpression: (scope, expr, returnResult) => {
+      if (expr?.type) {
+        formState.evalExpression(expr, {
+          scope,
+          dataNode: data,
+          schemaInterface,
+          returnResult,
+        });
+      }
+    },
   });
   const layoutProps: ControlLayoutProps = {
     ...labelAndChildren,
@@ -156,4 +175,119 @@ export function RenderForm({
     options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,
   );
   return renderer.renderVisibility({ visibility, ...renderedControl });
+}
+
+/**
+ * @deprecated Use RenderForm instead.
+ */
+export function useControlRendererComponent(
+  controlOrFormNode: ControlDefinition | FormNode,
+  renderer: FormRenderer,
+  options: ControlRenderOptions = {},
+  parentDataNode: SchemaDataNode,
+): FC<{}> {
+  const [definition, formNode] =
+    "definition" in controlOrFormNode
+      ? [controlOrFormNode.definition, controlOrFormNode]
+      : [controlOrFormNode, legacyFormNode(controlOrFormNode)];
+
+  const r = useUpdatedRef({
+    options,
+    renderer,
+    parentDataNode,
+    formNode,
+  });
+
+  return useMemo(
+    () => () => {
+      const { options, parentDataNode, formNode, renderer } = r.current;
+      return (
+        <RenderForm
+          data={parentDataNode}
+          form={formNode}
+          renderer={renderer}
+          options={options}
+        />
+      );
+    },
+    [r],
+  );
+}
+
+/**
+ * @deprecated Use RenderForm instead.
+ */
+export function ControlRenderer({
+  definition,
+  fields,
+  renderer,
+  options,
+  control,
+  parentPath,
+}: {
+  definition: ControlDefinition;
+  fields: SchemaField[];
+  renderer: FormRenderer;
+  options?: ControlRenderOptions;
+  control: Control<any>;
+  parentPath?: JsonPath[];
+}) {
+  const schemaDataNode = createSchemaDataNode(
+    createSchemaTree(fields).rootNode,
+    control,
+  );
+  const Render = useControlRendererComponent(
+    definition,
+    renderer,
+    options,
+    schemaDataNode,
+  );
+  return <Render />;
+}
+
+/**
+ * @deprecated Use RenderForm instead.
+ */
+export function NewControlRenderer({
+  definition,
+  renderer,
+  options,
+  parentDataNode,
+}: {
+  definition: ControlDefinition | FormNode;
+  renderer: FormRenderer;
+  options?: ControlRenderOptions;
+  parentDataNode: SchemaDataNode;
+}) {
+  const Render = useControlRendererComponent(
+    definition,
+    renderer,
+    options,
+    parentDataNode,
+  );
+  return <Render />;
+}
+
+/**
+ * @deprecated Use RenderForm instead.
+ */
+export function useControlRenderer(
+  definition: ControlDefinition,
+  fields: SchemaField[],
+  renderer: FormRenderer,
+  options: ControlRenderOptions = {},
+): FC<ControlRenderProps> {
+  const r = useUpdatedRef({ definition, fields, renderer, options });
+  return useCallback(
+    ({ control, parentPath }) => {
+      return (
+        <ControlRenderer
+          {...r.current}
+          control={control}
+          parentPath={parentPath}
+        />
+      );
+    },
+    [r],
+  );
 }

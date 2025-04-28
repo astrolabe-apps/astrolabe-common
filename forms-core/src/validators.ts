@@ -55,7 +55,7 @@ export const jsonataValidator: ValidatorEval<JsonataValidator> = (
         context.data.control.setError("jsonata", v?.toString());
       },
       schemaInterface: context.schemaInterface,
-      formContext: context.formContext,
+      formContext: context.formContext.fields.formData.value,
     },
   );
 };

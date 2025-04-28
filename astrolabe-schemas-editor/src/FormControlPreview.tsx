@@ -3,13 +3,11 @@ import {
   newControl,
   unsafeRestoreControl,
   useComputed,
-  useControl,
 } from "@react-typed-forms/core";
 import React, { HTMLAttributes, ReactNode, useMemo } from "react";
 import {
   ControlDataContext,
   ControlDefinition,
-  createSchemaNode,
   defaultDataProps,
   defaultSchemaInterface,
   defaultValueForField,
@@ -23,18 +21,11 @@ import {
   isControlDisplayOnly,
   isDataControl,
   isGroupControl,
-  lookupDataNode,
-  makeHook,
-  makeSchemaDataNode,
-  missingField,
   renderControlLayout,
   rendererClass,
-  resolveSchemaNode,
   schemaDataForFieldPath,
   SchemaDataNode,
-  schemaForFieldPath,
   SchemaInterface,
-  SchemaNode,
   textDisplayControl,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
@@ -161,6 +152,13 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       dataNode,
     },
     formNode: renderedNode,
+    getChildState: (child, data) => {
+      return {
+        definition: child.definition,
+        schemaInterface,
+        ...formOptions,
+      };
+    },
     renderChild: (k, child, c) => {
       const pd = c?.parentDataNode ?? dataNode ?? parentDataNode;
       return (
@@ -185,8 +183,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     dataContext,
     control: dataNode?.control,
     schemaInterface,
-    useEvalExpression: () => makeHook(() => undefined, undefined),
-    useChildVisibility: () => makeHook(() => useControl(true), undefined),
+    runExpression: () => {},
     designMode: true,
   });
   const mouseCapture: Pick<

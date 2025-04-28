@@ -31,73 +31,94 @@
       "field": "stuff",
       "children": [
         {
-          "type": "Data",
-          "title": "Type",
-          "field": "type",
-          "renderOptions": {
-            "type": "Standard"
-          }
-        },
-        {
-          "type": "Data",
-          "title": "Disable",
-          "field": "disable",
-          "renderOptions": {
-            "type": "Standard"
-          }
-        },
-        {
-          "type": "Data",
-          "title": "Pure Text",
-          "field": "text",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "defaultValue": null,
+          "type": "Group",
+          "title": "",
           "dynamic": [
             {
               "type": "Visible",
               "expr": {
                 "type": "Jsonata",
-                "expression": "disable"
+                "expression": "$exists(type)"
               }
             }
           ],
-          "validators": [
+          "children": [
             {
-              "type": "Length",
-              "min": 3
-            }
-          ]
-        },
-        {
-          "type": "Data",
-          "title": "String",
-          "field": "options",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "defaultValue": null
-        },
-        {
-          "type": "Data",
-          "title": "String",
-          "field": "singleOption",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "defaultValue": null,
-          "dynamic": [
-            {
-              "type": "AllowedOptions",
-              "expr": {
-                "type": "Jsonata",
-                "expression": "1"
+              "type": "Data",
+              "title": "Type",
+              "field": "type",
+              "renderOptions": {
+                "type": "Standard"
               }
+            },
+            {
+              "type": "Data",
+              "title": "Disable",
+              "field": "disable",
+              "renderOptions": {
+                "type": "Standard"
+              }
+            },
+            {
+              "type": "Data",
+              "title": "Pure Text",
+              "field": "text",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "defaultValue": null,
+              "dynamic": [
+                {
+                  "type": "Visible",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "disable"
+                  }
+                }
+              ],
+              "validators": [
+                {
+                  "type": "Length",
+                  "min": 3
+                }
+              ]
+            },
+            {
+              "type": "Data",
+              "title": "String",
+              "field": "options",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "defaultValue": null
+            },
+            {
+              "type": "Data",
+              "title": "String",
+              "field": "singleOption",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "defaultValue": null,
+              "dynamic": [
+                {
+                  "type": "AllowedOptions",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "1"
+                  }
+                }
+              ]
             }
-          ]
+          ],
+          "groupOptions": {
+            "hideTitle": true
+          }
         }
-      ]
+      ],
+      "renderOptions": {
+        "type": "Standard"
+      }
     },
     {
       "type": "Display",
@@ -145,6 +166,64 @@
         }
       ],
       "icon": {}
+    },
+    {
+      "type": "Group",
+      "title": "New",
+      "children": [
+        {
+          "type": "Display",
+          "title": "dwadawd",
+          "displayData": {
+            "type": "Text",
+            "text": "1"
+          }
+        },
+        {
+          "type": "Display",
+          "title": "2",
+          "displayData": {
+            "type": "Text",
+            "text": "2"
+          },
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "Jsonata",
+                "expression": "false"
+              }
+            }
+          ]
+        },
+        {
+          "type": "Display",
+          "title": "3",
+          "displayData": {
+            "type": "Text",
+            "text": "3"
+          }
+        },
+        {
+          "type": "Action",
+          "title": "4",
+          "icon": {}
+        },
+        {
+          "type": "Action",
+          "title": "5",
+          "icon": {}
+        },
+        {
+          "type": "Action",
+          "title": "6",
+          "icon": {}
+        }
+      ],
+      "groupOptions": {
+        "type": "Grid",
+        "columns": 3
+      }
     }
   ],
   "config": null

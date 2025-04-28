@@ -48,6 +48,6 @@ export {
   unsafeRestoreControl,
   unwrapTrackedControl,
 } from "./trackedValue";
-export { setFields, getExistingField } from "./objectControl";
+export { setFields, getCurrentFields } from "./objectControl";
 export { ControlChange } from "./types";
 export type * from "./types";

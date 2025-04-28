@@ -7,9 +7,11 @@ import {
   DataControlDefinition,
   DataRenderType,
   DisplayOnlyRenderOptions,
+  EntityExpression,
   FieldOption,
   fieldPathForDefinition,
   findField,
+  FormContextData,
   getGroupRendererOptions,
   getTagParam,
   GroupRenderOptions,
@@ -35,11 +37,18 @@ import clsx from "clsx";
 import {
   Control,
   ControlChange,
+  createScopedEffect,
   ensureMetaValue,
   getElementIndex,
   newControl,
+  useControl,
 } from "@react-typed-forms/core";
-import { ActionRendererProps, ControlActionHandler } from "./types";
+import {
+  ActionRendererProps,
+  ControlActionHandler,
+  RunExpression,
+} from "./types";
+import { Expression } from "jsonata";
 
 /**
  * Interface representing the classes for a control.
@@ -1001,4 +1010,25 @@ export function validationVisitor(
     }
     return undefined;
   };
+}
+
+export function useExpression<T>(
+  defaultValue: T,
+  runExpression: RunExpression,
+  expression: EntityExpression | null | undefined,
+  coerce: (x: any) => T,
+  bindings?: FormContextData,
+): Control<T> {
+  const value = useControl<T>(defaultValue);
+  createScopedEffect((scope) => {
+    if (expression?.type)
+      runExpression(
+        scope,
+        expression,
+        (x) => (value.value = coerce(x)),
+        bindings,
+      );
+    else value.value = defaultValue;
+  }, value);
+  return value;
 }

@@ -16,8 +16,9 @@ import {
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
 import {
   Control,
+  createScopedEffect,
+  useControl,
   useControlEffect,
-  useTrackedComponent,
 } from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
 import {
@@ -68,9 +69,10 @@ import {
   LabelType,
   rendererClass,
   RendererRegistration,
+  RunExpression,
   schemaDataForFieldRef,
   SetFieldAdornment,
-  useDynamicHooks,
+  useExpression,
   wrapLayout,
 } from "@react-typed-forms/schemas";
 import {
@@ -306,50 +308,18 @@ export function createDefaultAdornmentRenderer(
       if (isOptionalAdornment(props.adornment)) {
         return optional.render(props, renderers);
       }
-      const { adornment, designMode, dataContext, useExpr } = props;
+      const { adornment, designMode, dataContext, runExpression } = props;
       return {
         apply: (rl) => {
-          if (isSetFieldAdornment(adornment) && useExpr) {
-            const hook = useExpr(adornment.expression, (x) => x);
-            const dynamicHooks = useDynamicHooks({ value: hook });
-            const SetFieldWrapper = useTrackedComponent(setFieldWrapper, [
-              dynamicHooks,
-            ]);
+          if (isSetFieldAdornment(adornment) && runExpression) {
             return wrapLayout((x) => (
               <SetFieldWrapper
                 children={x}
                 parentContext={dataContext}
                 adornment={adornment}
+                runExpression={runExpression}
               />
             ))(rl);
-
-            function setFieldWrapper({
-              children,
-              adornment,
-              parentContext,
-            }: {
-              children: ReactNode;
-              adornment: SetFieldAdornment;
-              parentContext: ControlDataContext;
-            }) {
-              const { value } = dynamicHooks(parentContext);
-              const fieldNode = schemaDataForFieldRef(
-                adornment.field,
-                parentContext.parentNode,
-              );
-              const otherField = fieldNode.control;
-              const always = !adornment.defaultOnly;
-              useControlEffect(
-                () => [value?.value, otherField?.value == null],
-                ([v]) => {
-                  otherField?.setValue((x: any) =>
-                    always || x == null ? v : x,
-                  );
-                },
-                true,
-              );
-              return children;
-            }
           }
           if (isIconAdornment(adornment)) {
             const { I } = renderers.html;
@@ -394,6 +364,40 @@ interface DefaultLabelRendererOptions {
   controlLabelTextClass?: string;
   requiredElement?: (h: FormRenderer["html"]) => ReactNode;
   labelContainer?: (children: ReactElement) => ReactElement;
+}
+
+function SetFieldWrapper({
+  children,
+  adornment,
+  parentContext,
+  runExpression,
+}: {
+  children: ReactNode;
+  adornment: SetFieldAdornment;
+  parentContext: ControlDataContext;
+  runExpression: RunExpression;
+}) {
+  const fieldNode = schemaDataForFieldRef(
+    adornment.field,
+    parentContext.parentNode,
+  );
+  const otherField = fieldNode.control;
+  const always = !adornment.defaultOnly;
+  const value = useExpression<any>(
+    undefined,
+    runExpression,
+    adornment.expression,
+    (x) => x,
+  );
+
+  useControlEffect(
+    () => [value?.value, otherField?.value == null],
+    ([v]) => {
+      otherField?.setValue((x: any) => (always || x == null ? v : x));
+    },
+    true,
+  );
+  return children;
 }
 
 export function createDefaultLabelRenderer(

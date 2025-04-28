@@ -1,16 +1,19 @@
-import { Control, useComputed } from "@react-typed-forms/core";
+import { Control, trackedValue, useComputed } from "@react-typed-forms/core";
 import React from "react";
 import {
   coerceToString,
   ControlDataContext,
   createDataRenderer,
   DataRenderType,
+  ExpressionType,
+  FormContextData,
   getJsonPath,
-  getRootDataNode,
+  JsonataExpression,
   JsonataRenderOptions,
   rendererClass,
+  RunExpression,
   SchemaDataNode,
-  useJsonataExpression,
+  useExpression,
 } from "@react-typed-forms/schemas";
 
 export function createJsonataRenderer(className?: string) {
@@ -23,6 +26,7 @@ export function createJsonataRenderer(className?: string) {
         dataContext={p.dataContext}
         control={p.control}
         readonly={p.readonly}
+        runExpression={p.runExpression}
       />
     ),
     { renderType: DataRenderType.Jsonata },
@@ -36,6 +40,7 @@ export function JsonataRenderer({
   className,
   dataContext,
   dataNode,
+  runExpression,
 }: {
   control: Control<any>;
   renderOptions: JsonataRenderOptions;
@@ -43,21 +48,28 @@ export function JsonataRenderer({
   dataContext: ControlDataContext;
   dataNode: SchemaDataNode;
   readonly: boolean;
+  runExpression: RunExpression;
 }) {
   const sdn = dataNode.elementIndex != null ? dataNode : dataContext.parentNode;
-  const bindings = useComputed(() => ({
-    value: control.value,
-    readonly,
-    disabled: control.disabled,
-    formData: dataContext.formData,
-    dataPath: getJsonPath(dataNode),
-  }));
-  const rendered = useJsonataExpression(
-    renderOptions.expression,
-    getRootDataNode(sdn).control!,
-    getJsonPath(sdn),
-    bindings,
+  const bindings = useComputed(
+    () =>
+      ({
+        value: control.value,
+        readonly,
+        disabled: control.disabled,
+        formData: dataContext.formData,
+        dataPath: getJsonPath(dataNode),
+      }) as FormContextData,
+  );
+  const rendered = useExpression(
+    "",
+    runExpression,
+    {
+      type: ExpressionType.Jsonata,
+      expression: renderOptions.expression,
+    } as JsonataExpression,
     coerceToString,
+    trackedValue(bindings),
   );
   return (
     <div

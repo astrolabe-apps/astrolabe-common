@@ -21,7 +21,7 @@ export function createGridRenderer(options?: DefaultGridRenderOptions) {
       <VisibleChildrenRenderer
         props={{ ...props, formRenderer, defaultOptions: options }}
         render={renderGrid}
-        useChildVisibility={props.useChildVisibility}
+        parent={props}
         dataContext={props.dataContext}
         parentFormNode={props.formNode}
       />

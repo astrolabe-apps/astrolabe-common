@@ -1,5 +1,6 @@
 import {
   ActionStyle,
+  EntityExpression,
   FormContextData,
   IconPlacement,
   IconReference,
@@ -7,6 +8,7 @@ import {
   SchemaInterface,
 } from "@astroapps/forms-core";
 import React, { Key } from "react";
+import { CleanupScope, Control } from "@react-typed-forms/core";
 
 /**
  * Interface representing the control data context.
@@ -39,3 +41,10 @@ export interface ActionRendererProps {
   disabled?: boolean;
   inline?: boolean;
 }
+
+export type RunExpression = (
+  scope: CleanupScope,
+  expression: EntityExpression,
+  returnResult: (v: unknown) => void,
+  bindings?: FormContextData,
+) => void;

@@ -53,11 +53,12 @@ export class SchemaDataTreeImpl extends SchemaDataTree {
 
   getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
     const objControl = parent.control as Control<Record<string, unknown>>;
+    const child = objControl.fields[childNode.field.field];
     return new SchemaDataNode(
-      parent.id + "/" + childNode.field.field,
+      child.uniqueId.toString(),
       childNode,
       undefined,
-      objControl.fields[childNode.field.field],
+      child,
       this,
       parent,
     );
@@ -68,11 +69,12 @@ export class SchemaDataTreeImpl extends SchemaDataTree {
     elementIndex: number,
   ): SchemaDataNode {
     const elemControl = parent.control as Control<unknown[]>;
+    const elemChild = elemControl.elements[elementIndex];
     return new SchemaDataNode(
-      parent.id + "/" + elementIndex,
+      elemChild.uniqueId.toString(),
       parent.schema,
       elementIndex,
-      elemControl.elements[elementIndex],
+      elemChild,
       this,
       parent,
     );

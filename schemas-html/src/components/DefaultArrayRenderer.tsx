@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import React, { Fragment, ReactNode } from "react";
-import { RenderElements, useTrackedComponent } from "@react-typed-forms/core";
+import { RenderElements } from "@react-typed-forms/core";
 import {
   ActionRendererProps,
   applyArrayLengthRestrictions,
@@ -9,14 +9,12 @@ import {
   ArrayRendererRegistration,
   ArrayRenderOptions,
   ControlDataContext,
-  ControlDefinition,
   ControlDefinitionType,
   createArrayActions,
   createDataRenderer,
   DataRendererProps,
   DataRendererRegistration,
   DataRenderType,
-  EvalExpressionHook,
   FormNode,
   FormRenderer,
   getLengthRestrictions,
@@ -24,8 +22,6 @@ import {
   HtmlComponents,
   isArrayRenderer,
   isCompoundField,
-  lookupDataNode,
-  makeHookDepString,
   mergeObjects,
   SchemaDataNode,
 } from "@react-typed-forms/schemas";
@@ -47,6 +43,9 @@ export function createDefaultArrayDataRenderer(
   );
 }
 
+/**
+ * @trackControls
+ */
 export function DataArrayRenderer({
   dataProps,
   renderers,
@@ -67,9 +66,9 @@ export function DataArrayRenderer({
     definition,
     className,
     style,
-    useChildVisibility,
     dataContext,
     formNode,
+    getChildState,
   } = dataProps;
 
   const { addText, noAdd, noRemove, noReorder, removeText, editExternal } =
@@ -95,12 +94,7 @@ export function DataArrayRenderer({
       renderAsElement && childDefs.length == 0 ? [defaultChildDef] : childDefs,
   };
   const childNode: FormNode = formNode.createChildNode("child", childDef);
-
-  const visibilities = (definition.children ?? []).map(
-    (x) => [useChildVisibility(x, undefined, true), x] as const,
-  );
-  const deps = makeHookDepString(visibilities, (x) => x[0].deps);
-  const Entry = useTrackedComponent(RenderEntry, [deps]);
+  const childNodes = childNode.getChildNodes();
 
   const arrayProps = {
     ...createArrayActions(control.as(), field, {
@@ -115,12 +109,14 @@ export function DataArrayRenderer({
     }),
     required,
     renderElement: (i, wrap) => (
-      <Entry
+      <RenderEntry
         index={i}
         renderChildElement={renderChildElement}
         dataContext={dataContext}
-        visibilities={visibilities}
         wrap={wrap}
+        isChildHidden={(dataNode) =>
+          childNodes.every((x) => getChildState(x, dataNode).hidden)
+        }
       />
     ),
     className: className ? className : undefined,
@@ -137,33 +133,24 @@ export function DataArrayRenderer({
   }
 }
 
+/**
+ * @trackControls
+ */
 function RenderEntry({
   index: i,
   renderChildElement,
-  visibilities,
   wrap,
+  isChildHidden,
   dataContext,
 }: {
   index: number;
   renderChildElement: (i: number, element: SchemaDataNode) => ReactNode;
-  visibilities: (readonly [EvalExpressionHook<boolean>, ControlDefinition])[];
   dataContext: ControlDataContext;
   wrap: (n: ReactNode) => ReactNode;
+  isChildHidden: (dataNode: SchemaDataNode) => boolean;
 }) {
   const elementNode = dataContext.dataNode!.getChildElement(i);
-  const childVis = visibilities.map(
-    ([hook, def]) =>
-      hook.runHook(
-        {
-          ...dataContext,
-          parentNode: elementNode,
-          dataNode: lookupDataNode(def, elementNode),
-        },
-        hook.state,
-      ).value,
-  );
-  const anyVisible = childVis.length == 0 || childVis.some((x) => x === true);
-  if (!anyVisible) return undefined;
+  if (isChildHidden(elementNode)) return undefined;
   return wrap(renderChildElement(i, elementNode));
 }
 

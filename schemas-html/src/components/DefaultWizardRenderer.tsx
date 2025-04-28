@@ -87,7 +87,7 @@ export function createWizardRenderer(options?: DefaultWizardRenderOptions) {
       <VisibleChildrenRenderer
         props={{ ...props, formRenderer, defaultOptions: options }}
         render={renderWizard}
-        useChildVisibility={props.useChildVisibility}
+        parent={props}
         dataContext={props.dataContext}
         parentFormNode={props.formNode}
       />

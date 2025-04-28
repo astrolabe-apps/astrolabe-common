@@ -8,18 +8,14 @@ import {
 } from "./entityExpression";
 import {
   AsyncEffect,
-  ChangeListenerFunc,
   CleanupScope,
-  collectChange,
   collectChanges,
-  Control,
-  ControlChange,
   createAsyncEffect,
   createSyncEffect,
   trackedValue,
 } from "@astroapps/controls";
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
-import { FormContextOptions } from "./formState";
+import { FormContextData } from "./formState";
 import { SchemaInterface } from "./schemaInterface";
 import jsonata from "jsonata";
 import { getJsonPath, getRootDataNode } from "./controlDefinition";
@@ -30,7 +26,7 @@ export interface ExpressionEvalContext {
   scope: CleanupScope;
   returnResult: (k: unknown) => void;
   dataNode: SchemaDataNode;
-  formContext: Control<FormContextOptions>;
+  formContext?: FormContextData;
   schemaInterface: SchemaInterface;
 }
 
@@ -96,6 +92,7 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
     const evalResult = await parsedJsonata.fields.expr.value.evaluate(
       trackedValue(rootData, effect.collectUsage),
     );
+    // console.log(parsedJsonata.fields.fullExpr.value, evalResult);
     collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 

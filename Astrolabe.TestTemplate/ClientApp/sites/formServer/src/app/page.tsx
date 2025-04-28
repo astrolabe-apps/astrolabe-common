@@ -16,7 +16,6 @@ import {
   ensureSelectableValues,
   Fcheckbox,
   RenderElements,
-  useComputed,
   useControl,
   useSelectableArray,
 } from "@react-typed-forms/core";
@@ -24,31 +23,22 @@ import {
   boolField,
   buildSchema,
   compoundField,
-  ControlDataContext,
-  createSchemaLookup,
   dataControl,
-  DataRenderType,
   dateField,
   dateTimeField,
-  defaultEvalHooks,
   doubleField,
-  EntityExpression,
-  ExpressionType,
   FormNode,
   groupedControl,
   GroupRenderType,
   intField,
-  makeEvalExpressionHook,
   SchemaField,
   SchemaTags,
   stringField,
   stringOptionsField,
   timeField,
-  UserMatchExpression,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
 import {
-  makeOptStringParam,
   OptStringParam,
   useApiClient,
   useQueryControl,
@@ -309,7 +299,7 @@ export default function Editor() {
     () => createStdFormRenderer(container),
     [container],
   );
-  const evalHook = useMemo(() => makeEvalExpressionHook(evalExpr), [roles]);
+  // const evalHook = useMemo(() => makeEvalExpressionHook(evalExpr), [roles]);
   if (!qc.fields.isReady.value) return <></>;
   return (
     <DndProvider backend={HTML5Backend}>
@@ -379,7 +369,7 @@ export default function Editor() {
         previewOptions={{
           actionOnClick: (aid, data) => () => console.log("Clicked", aid, data),
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
-          useEvalExpressionHook: evalHook,
+          // useEvalExpressionHook: evalHook,
         }}
         extensions={Extensions}
         editorControls={controlsJson}
@@ -413,22 +403,22 @@ export default function Editor() {
   function fromFormJson(c: keyof typeof FormDefinitions) {
     return FormDefinitions[c];
   }
-  function evalExpr(
-    expr: EntityExpression,
-    context: ControlDataContext,
-    coerce: (v: any) => any,
-  ) {
-    switch (expr.type) {
-      case ExpressionType.UserMatch:
-        return useComputed(() => {
-          return coerce(
-            roles.value.includes((expr as UserMatchExpression).userMatch),
-          );
-        });
-      default:
-        return defaultEvalHooks(expr, context, coerce);
-    }
-  }
+  // function evalExpr(
+  //   expr: EntityExpression,
+  //   context: ControlDataContext,
+  //   coerce: (v: any) => any,
+  // ) {
+  //   switch (expr.type) {
+  //     case ExpressionType.UserMatch:
+  //       return useComputed(() => {
+  //         return coerce(
+  //           roles.value.includes((expr as UserMatchExpression).userMatch),
+  //         );
+  //       });
+  //     default:
+  //       return defaultEvalHooks(expr, context, coerce);
+  //   }
+  // }
 }
 
 const testSnippet = [

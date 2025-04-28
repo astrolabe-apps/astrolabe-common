@@ -13,10 +13,10 @@ import {
   isWizardRenderer,
   rendererClass,
   SelectChildRenderer,
+  useExpression,
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
 import React, { CSSProperties } from "react";
-import { useTrackedComponent } from "@react-typed-forms/core";
 import { createTabsRenderer, DefaultTabsRenderOptions } from "./TabsRenderer";
 import { createGridRenderer, DefaultGridRenderOptions } from "./GridRenderer";
 import {
@@ -118,30 +118,26 @@ export function createDefaultGroupRenderer(
 
 type SelectChildProps = Pick<
   GroupRendererProps,
-  "useEvalExpression" | "dataContext" | "formNode" | "renderChild"
+  "runExpression" | "dataContext" | "formNode" | "renderChild"
 > & {
   renderOptions: SelectChildRenderer;
 };
 function SelectChildGroupRenderer(props: SelectChildProps) {
-  const { useEvalExpression, renderOptions } = props;
-  const dynHook = useEvalExpression(renderOptions?.childIndexExpression, (x) =>
-    x == "string" ? parseInt(x) : x,
+  const { runExpression, renderOptions } = props;
+  const ctrl = useExpression(
+    undefined,
+    runExpression,
+    renderOptions?.childIndexExpression,
+    (x) => (typeof x == "string" ? parseInt(x) : x),
   );
-  const Render = useTrackedComponent(
-    (p: SelectChildProps) => {
-      const ctrl = dynHook.runHook(p.dataContext, dynHook.state);
-      const childIndex = ctrl?.value;
-      const childDefinitions = p.formNode.getChildNodes();
-      return (
-        <div>
-          {typeof childIndex === "number" &&
-            childIndex < childDefinitions.length &&
-            childIndex >= 0 &&
-            p.renderChild(childIndex, childDefinitions[childIndex])}
-        </div>
-      );
-    },
-    [dynHook.deps],
+  const childIndex = ctrl?.value;
+  const childDefinitions = props.formNode.getChildNodes();
+  return (
+    <div>
+      {typeof childIndex === "number" &&
+        childIndex < childDefinitions.length &&
+        childIndex >= 0 &&
+        props.renderChild(childIndex, childDefinitions[childIndex])}
+    </div>
   );
-  return <Render {...props} />;
 }

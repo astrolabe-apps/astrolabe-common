@@ -1,18 +1,14 @@
 import { FormNode, lookupDataNode } from "./formNode";
 import { SchemaDataNode, validDataNode } from "./schemaDataNode";
 import {
-  ActionControlDefinition,
   AnyControlDefinition,
   ControlAdornmentType,
   ControlDefinition,
-  DataControlDefinition,
   DataRenderType,
-  DisplayData,
   DynamicPropertyType,
   HtmlDisplay,
   isActionControl,
   isControlDisabled,
-  isControlDisplayOnly,
   isControlReadonly,
   isDataControl,
   isDisplayControl,
@@ -26,28 +22,29 @@ import {
   CleanupScope,
   clearMetaValue,
   Control,
-  createEffect,
+  createScopedEffect,
   createSyncEffect,
   ensureMetaValue,
   getControlPath,
-  getExistingField,
+  getCurrentFields,
   newControl,
-  trackedValue,
   unsafeRestoreControl,
-  unwrapTrackedControl,
   updateComputedValue,
-  withChildren,
 } from "@astroapps/controls";
-import { defaultEvaluators, ExpressionEval } from "./evalExpression";
+import {
+  defaultEvaluators,
+  ExpressionEval,
+  ExpressionEvalContext,
+} from "./evalExpression";
 import { EntityExpression } from "./entityExpression";
-import { createScoped, createScopedComputed, jsonPathString } from "./util";
+import { createScoped, jsonPathString } from "./util";
 import { setupValidation } from "./validators";
-import { createScopedEffect } from "@astroapps/controls";
 
 export interface ControlState {
   definition: ControlDefinition;
   schemaInterface: SchemaInterface;
   dataNode?: SchemaDataNode | undefined;
+  stateId?: string;
   style?: object;
   layoutStyle?: object;
   allowedOptions?: any[];
@@ -86,6 +83,7 @@ export interface FormState {
   ): ControlState;
   cleanup(): void;
   cleanupControl(parent: SchemaDataNode, formNode: FormNode): void;
+  evalExpression(expr: EntityExpression, context: ExpressionEvalContext): void;
 }
 
 const formStates: FormState[] = [];
@@ -95,7 +93,16 @@ export function createFormState(
 ): FormState {
   console.log("createFormState");
   const controlStates = newControl<Record<string, FormContextOptions>>({});
+  function evalExpression(
+    e: EntityExpression,
+    context: ExpressionEvalContext,
+  ): void {
+    const x = evaluators[e.type];
+    x?.(e, context);
+  }
+
   return {
+    evalExpression,
     cleanup: () => {
       console.log("Cleanup form state");
       controlStates.cleanup();
@@ -104,7 +111,7 @@ export function createFormState(
       const stateId = parent.id + "$" + formNode.id;
       const c = controlStates.fields[stateId];
       c.cleanup();
-      // console.log("Unmount" + stateId);
+      console.log("Unmount" + stateId);
       clearMetaValue(c, "impl");
     },
     getControlState(
@@ -125,19 +132,16 @@ export function createFormState(
       ): boolean {
         nk.value = init;
         if (e?.type) {
-          const x = evaluators[e.type];
-          if (x) {
-            x(e, {
-              returnResult: (r) => {
-                nk.value = coerce(r);
-              },
-              scope,
-              dataNode: parent,
-              formContext: controlImpl,
-              schemaInterface,
-            });
-            return true;
-          }
+          evalExpression(e, {
+            returnResult: (r) => {
+              nk.value = coerce(r);
+            },
+            scope,
+            dataNode: parent,
+            formContext: controlImpl.fields.formData.value ?? {},
+            schemaInterface,
+          });
+          return true;
         }
         return false;
       }
@@ -278,6 +282,7 @@ export function createFormState(
           formData: {},
           displayOnly: false,
           inline: false,
+          stateId,
         });
 
         const {
@@ -334,6 +339,20 @@ export function createFormState(
             definition.hidden ||
             (dataNode.value && !validDataNode(dataNode.value)),
         );
+
+        // export function hideDisplayOnly(
+        //   context: SchemaDataNode,
+        //   schemaInterface: SchemaInterface,
+        //   definition: ControlDefinition,
+        // ) {
+        //   const displayOptions = getDisplayOnlyOptions(definition);
+        //   return (
+        //     displayOptions &&
+        //     !displayOptions.emptyText &&
+        //     schemaInterface.isEmptyValue(context.schema.field, context.control?.value)
+        //   );
+        // }
+
         updateComputedValue(
           readonly,
           () => !!cf.readonly.value || isControlReadonly(definition),
@@ -383,6 +402,19 @@ export function createFormState(
               //   definition.defaultValue,
               //   definition.field,
               // );
+              // const [required, dcv] = isDataControl(definition)
+              //   ? [definition.required, definition.defaultValue]
+              //   : [false, undefined];
+              // const field = ctx.dataNode?.schema.field;
+              // return (
+              //   dcv ??
+              //   (field
+              //     ? ctx.dataNode!.elementIndex != null
+              //       ? elementValueForField(field)
+              //       : defaultValueForField(field, required)
+              //     : undefined)
+              // );
+
               dn.value = definition.defaultValue;
             }
           }
@@ -434,17 +466,34 @@ function createScopedMetaValue<A>(
   }).value!;
 }
 
-function createOverrideProxy<A extends object, B extends Record<string, any>>(
-  proxyFor: A,
-  handlers: Control<B>,
-): A {
+export function createOverrideProxy<
+  A extends object,
+  B extends Record<string, any>,
+>(proxyFor: A, handlers: Control<B>): A {
+  const overrides = getCurrentFields(handlers);
+  const allOwn = [
+    ...new Set([...Reflect.ownKeys(proxyFor), ...Reflect.ownKeys(overrides)]),
+  ];
   return new Proxy(proxyFor, {
     get(target: A, p: string | symbol, receiver: any): any {
-      const override = getExistingField(handlers, p as string);
-      if (override) {
-        return override.value;
+      if (Object.hasOwn(overrides, p)) {
+        return overrides[p as keyof B]!.value;
       }
-      return target[p as keyof A];
+      return Reflect.get(target, p, receiver);
+    },
+    ownKeys(target: A): ArrayLike<string | symbol> {
+      return allOwn;
+    },
+    has(target: A, p: string | symbol): boolean {
+      return Reflect.has(proxyFor, p) || Reflect.has(overrides, p);
+    },
+    getOwnPropertyDescriptor(target, k) {
+      if (Object.hasOwn(overrides, k))
+        return {
+          enumerable: true,
+          configurable: true,
+        };
+      return Reflect.getOwnPropertyDescriptor(target, k);
     },
   });
 }
