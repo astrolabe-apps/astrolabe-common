@@ -692,7 +692,7 @@ export function addCleanup(c: Control<any>, cleanup: () => void) {
 }
 
 export function addDependent(parent: CleanupScope, child: Control<any>) {
-  parent.addCleanup(() => cleanupControl(child));
+  parent.addCleanup(() => child.cleanup());
 }
 
 /**

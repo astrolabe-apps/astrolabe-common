@@ -1,4 +1,4 @@
-import { collectChanges } from "./controlImpl";
+import { collectChanges, createCleanupScope } from "./controlImpl";
 import { addAfterChangesCallback } from "./transactions";
 import { SubscriptionTracker } from "./subscriptions";
 import { CleanupScope } from "./types";
@@ -48,6 +48,25 @@ export function createSyncEffect<V>(
 ): Effect<V> {
   const effect = new Effect<V>(process, () => {});
   cleanupScope.addCleanup(() => effect.cleanup());
+  return effect;
+}
+
+export function createScopedEffect<V>(
+  process: (scope: CleanupScope) => V,
+  parentScope: CleanupScope,
+): Effect<V> {
+  const cleanup = createCleanupScope();
+  const effect = new Effect<V>(
+    () => {
+      cleanup.cleanup();
+      return process(cleanup);
+    },
+    () => {},
+  );
+  parentScope.addCleanup(() => {
+    effect.cleanup();
+    cleanup.cleanup();
+  });
   return effect;
 }
 

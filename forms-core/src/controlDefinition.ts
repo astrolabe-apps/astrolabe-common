@@ -1,10 +1,8 @@
 import { SchemaValidator } from "./schemaValidator";
-import { FieldOption, SchemaField } from "./schemaField";
+import { SchemaField } from "./schemaField";
 import { EntityExpression } from "./entityExpression";
-import { SchemaInterface } from "./schemaInterface";
 import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaNode } from "./schemaNode";
-import { FormContextData } from "./formState";
 
 /**
  * Represents any control definition.
@@ -574,6 +572,14 @@ export function isDisplayControl(
   c: ControlDefinition,
 ): c is DisplayControlDefinition {
   return c.type === ControlDefinitionType.Display;
+}
+
+export function isTextDisplay(d: DisplayData): d is TextDisplay {
+  return d.type === DisplayDataType.Text;
+}
+
+export function isHtmlDisplay(d: DisplayData): d is HtmlDisplay {
+  return d.type === DisplayDataType.Html;
 }
 
 export function isCheckEntryClasses(

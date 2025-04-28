@@ -41,8 +41,13 @@ export {
   type AsyncEffect,
   createAsyncEffect,
   createSyncEffect,
+  createScopedEffect,
 } from "./effect";
-export { trackedValue, unsafeRestoreControl } from "./trackedValue";
-export { setFields } from "./objectControl";
+export {
+  trackedValue,
+  unsafeRestoreControl,
+  unwrapTrackedControl,
+} from "./trackedValue";
+export { setFields, getExistingField } from "./objectControl";
 export { ControlChange } from "./types";
 export type * from "./types";

@@ -42,3 +42,8 @@ export function trackedValue<A>(
 export function unsafeRestoreControl<A>(v: A): Control<A> | undefined {
   return v != null ? (v as any)[restoreControlSymbol] : undefined;
 }
+
+export function unwrapTrackedControl<A>(a: A): A {
+  const c = unsafeRestoreControl(a);
+  return c?.current.value ?? a;
+}

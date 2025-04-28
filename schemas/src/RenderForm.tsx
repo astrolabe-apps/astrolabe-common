@@ -51,7 +51,8 @@ export function RenderForm({
 
   const definition = state.definition;
 
-  const visible = !state.context.hidden;
+  const visible = !state.hidden;
+
   const visibility = useControl<Visibility | undefined>(() =>
     visible != null
       ? {
@@ -66,7 +67,7 @@ export function RenderForm({
     schemaInterface: state.schemaInterface,
     dataNode: state.dataNode,
     parentNode: data,
-    formData: options?.formData ?? {},
+    formData: state.formData,
   };
 
   const adornments =
@@ -74,7 +75,7 @@ export function RenderForm({
       renderer.renderAdornment({
         adornment: x,
         dataContext,
-        formOptions: state.context,
+        formOptions: state,
       }),
     ) ?? [];
 
@@ -88,7 +89,7 @@ export function RenderForm({
   } = options;
   const childOptions: ControlRenderOptions = {
     ...inheritableOptions,
-    ...state.context,
+    ...state,
   };
 
   const labelAndChildren = renderControlLayout({
@@ -121,12 +122,12 @@ export function RenderForm({
       );
     },
     createDataProps: defaultDataProps,
-    formOptions: state.context,
+    formOptions: state,
     dataContext,
     control: dataContext.dataNode?.control,
     schemaInterface,
-    style: state.style?.value,
-    allowedOptions: state.allowedOptions?.value,
+    style: state.style,
+    allowedOptions: state.allowedOptions,
     customDisplay: options.customDisplay,
     actionOnClick: options.actionOnClick,
     styleClass: options.styleClass,
@@ -149,7 +150,7 @@ export function RenderForm({
     ...labelAndChildren,
     adornments,
     className: rendererClass(options.layoutClass, definition.layoutClass),
-    style: state.layoutStyle?.value,
+    style: state.layoutStyle,
   };
   const renderedControl = renderer.renderLayout(
     options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,

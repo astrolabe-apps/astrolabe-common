@@ -1,9 +1,9 @@
 import {
   addDependent,
   CleanupScope,
-  Control,
+  Control, ControlSetup,
   newControl,
-  updateComputedValue,
+  updateComputedValue
 } from "@astroapps/controls";
 
 /**
@@ -43,8 +43,8 @@ export function createScopedComputed<T>(
   return c.as();
 }
 
-export function createScoped<T>(parent: CleanupScope, value: T): Control<T> {
-  const c = newControl<T>(value);
+export function createScoped<T>(parent: CleanupScope, value: T, setup?: ControlSetup<T>): Control<T> {
+  const c = newControl<T>(value, setup);
   addDependent(parent, c);
   return c;
 }

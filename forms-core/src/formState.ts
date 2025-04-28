@@ -2,18 +2,23 @@ import { FormNode, lookupDataNode } from "./formNode";
 import { SchemaDataNode, validDataNode } from "./schemaDataNode";
 import {
   ActionControlDefinition,
+  AnyControlDefinition,
   ControlAdornmentType,
   ControlDefinition,
   DataControlDefinition,
   DataRenderType,
   DisplayData,
   DynamicPropertyType,
+  HtmlDisplay,
   isActionControl,
   isControlDisabled,
   isControlDisplayOnly,
   isControlReadonly,
   isDataControl,
   isDisplayControl,
+  isHtmlDisplay,
+  isTextDisplay,
+  TextDisplay,
 } from "./controlDefinition";
 import { SchemaInterface } from "./schemaInterface";
 import { FieldOption } from "./schemaField";
@@ -21,12 +26,15 @@ import {
   CleanupScope,
   clearMetaValue,
   Control,
+  createEffect,
   createSyncEffect,
   ensureMetaValue,
   getControlPath,
+  getExistingField,
   newControl,
   trackedValue,
   unsafeRestoreControl,
+  unwrapTrackedControl,
   updateComputedValue,
   withChildren,
 } from "@astroapps/controls";
@@ -34,18 +42,15 @@ import { defaultEvaluators, ExpressionEval } from "./evalExpression";
 import { EntityExpression } from "./entityExpression";
 import { createScoped, createScopedComputed, jsonPathString } from "./util";
 import { setupValidation } from "./validators";
+import { createScopedEffect } from "@astroapps/controls";
 
 export interface ControlState {
   definition: ControlDefinition;
-  context: FormContext;
   schemaInterface: SchemaInterface;
   dataNode?: SchemaDataNode | undefined;
-  style?: Control<object | undefined>;
-  layoutStyle?: Control<object | undefined>;
-  allowedOptions?: Control<any[] | undefined>;
-}
-
-export interface FormContext {
+  style?: object;
+  layoutStyle?: object;
+  allowedOptions?: any[];
   readonly: boolean;
   hidden: boolean;
   disabled: boolean;
@@ -83,19 +88,6 @@ export interface FormState {
   cleanupControl(parent: SchemaDataNode, formNode: FormNode): void;
 }
 
-export type ControlLogics<A> = { [K in keyof A]?: ControlLogic<any> };
-
-export type ControlLogic<T> = (
-  control: Control<any>,
-  context: Control<FormContextOptions>,
-  parent: SchemaDataNode,
-  formNode: FormNode,
-  evalExpr: (
-    expr: EntityExpression | undefined,
-    coerce: (v: unknown) => T,
-  ) => boolean,
-) => void;
-
 const formStates: FormState[] = [];
 export function createFormState(
   schemaInterface: SchemaInterface,
@@ -123,114 +115,240 @@ export function createFormState(
       const stateId = parent.id + "$" + formNode.id;
       const controlImpl = controlStates.fields[stateId];
       controlImpl.value = context;
+
+      function evalExpr<A>(
+        scope: CleanupScope,
+        init: A,
+        nk: Control<A>,
+        e: EntityExpression | undefined,
+        coerce: (t: unknown) => any,
+      ): boolean {
+        nk.value = init;
+        if (e?.type) {
+          const x = evaluators[e.type];
+          if (x) {
+            x(e, {
+              returnResult: (r) => {
+                nk.value = coerce(r);
+              },
+              scope,
+              dataNode: parent,
+              formContext: controlImpl,
+              schemaInterface,
+            });
+            return true;
+          }
+        }
+        return false;
+      }
+
       return createScopedMetaValue(formNode, controlImpl, "impl", (scope) => {
-        // console.log(
-        //   "Creating impl for TEST2",
-        //   stateId,
-        //   isDataControl(formNode.definition) ? formNode.definition.field : "_",
-        // );
-        const dataNode = createScopedComputed(scope, () =>
-          lookupDataNode(formNode.definition, parent),
+        const cf = controlImpl.fields;
+        const definitionOverrides = createScoped<Record<string, any>>(
+          controlImpl,
+          {},
         );
-        function evalExpr(
-          nk: Control<any>,
-          e: EntityExpression | undefined,
-          coerce: (t: unknown) => any,
-        ): boolean {
-          if (e?.type) {
-            const x = evaluators[e.type];
-            if (x) {
-              x(e, {
-                returnResult: (r) => {
-                  nk.value = coerce(r);
-                },
-                scope: nk,
-                dataNode: parent,
-                formContext: controlImpl,
-                schemaInterface,
-              });
-              return true;
-            }
-          }
-          return false;
-        }
+        const displayControl = createScoped<string | undefined>(
+          controlImpl,
+          undefined,
+        );
 
-        const displayHandler = setupDisplay();
+        const displayOverrides = createScoped<Record<string, any>>(
+          controlImpl,
+          {},
+        );
+        const def = formNode.definition;
+        const definition = createOverrideProxy(def, definitionOverrides);
+        const of = definitionOverrides.fields as Record<
+          KeysOfUnion<AnyControlDefinition>,
+          Control<any>
+        >;
 
-        function createProxy<A extends object>(
-          proxyFor: A,
-          logics: ControlLogics<any>,
-        ): [A, Record<string, () => any>] {
-          const handlers: Record<string, () => any> = {};
+        const df = displayOverrides.fields as Record<
+          KeysOfUnion<TextDisplay | HtmlDisplay>,
+          Control<any>
+        >;
 
-          for (const k in logics) {
-            const nk = createScoped<any>(scope, undefined);
-            logics[k]!(nk, controlImpl, parent, formNode, (e, c) =>
-              evalExpr(nk, e, c),
-            );
-            handlers[k] = () => nk.value;
-          }
+        createScopedEffect((c) => {
+          const textDisplay =
+            isDisplayControl(def) && isTextDisplay(def.displayData)
+              ? def.displayData
+              : undefined;
+          evalExpr(
+            c,
+            textDisplay?.text,
+            df.text,
+            textDisplay && firstExpr(formNode, DynamicPropertyType.Display),
+            coerceString,
+          );
+        }, displayOverrides);
 
-          const proxy: A = new Proxy(proxyFor, {
-            get(target: A, p: string | symbol, receiver: any): any {
-              const override = handlers[p as string];
-              if (override) return override();
-              return target[p as keyof A];
-            },
-          });
-          return [proxy, handlers];
-        }
+        createScopedEffect((c) => {
+          const htmlDisplay =
+            isDisplayControl(def) && isHtmlDisplay(def.displayData)
+              ? def.displayData
+              : undefined;
+          evalExpr(
+            c,
+            htmlDisplay?.html,
+            df.html,
+            htmlDisplay && firstExpr(formNode, DynamicPropertyType.Display),
+            coerceString,
+          );
+        }, displayOverrides);
 
-        const [definition, handlers] = createProxy(formNode.definition, logics);
-        handlers["displayData"] = displayHandler;
-        const style = createScoped(scope, undefined);
-        const layoutStyle = createScoped(scope, undefined);
-        const allowedOptions = createScoped(scope, undefined);
-        const myContext = createScopedComputed<FormContext>(scope, () => {
-          const {
-            disabled,
-            readonly,
-            hidden,
-            displayOnly,
-            inline,
-            clearHidden,
-            formData,
-          } = controlImpl.fields;
-          return {
-            hidden: hidden.value || !!definition.hidden,
-            readonly: readonly.value || isControlReadonly(definition),
-            disabled: disabled.value || isControlDisabled(definition),
-            displayOnly: displayOnly.value || isControlDisplayOnly(definition),
-            inline: !!inline.value,
-            formData: formData.value ?? {},
-            clearHidden: !!clearHidden.value,
-          };
+        updateComputedValue(of.displayData, () =>
+          isDisplayControl(def)
+            ? createOverrideProxy(def.displayData, displayOverrides)
+            : undefined,
+        );
+
+        createScopedEffect((c) => {
+          evalExpr(
+            c,
+            def.hidden,
+            of.hidden,
+            firstExpr(formNode, DynamicPropertyType.Visible),
+            (r) => !r,
+          );
+        }, definitionOverrides);
+
+        createScopedEffect((c) => {
+          evalExpr(
+            c,
+            isControlReadonly(def),
+            of.readonly,
+            firstExpr(formNode, DynamicPropertyType.Readonly),
+            (r) => !!r,
+          );
+        }, definitionOverrides);
+
+        createScopedEffect((c) => {
+          evalExpr(
+            c,
+            isControlDisabled(def),
+            of.disabled,
+            firstExpr(formNode, DynamicPropertyType.Disabled),
+            (r) => !!r,
+          );
+        }, definitionOverrides);
+
+        createScopedEffect((c) => {
+          evalExpr(
+            c,
+            isDataControl(def) ? def.defaultValue : undefined,
+            of.defaultValue,
+            isDataControl(def)
+              ? firstExpr(formNode, DynamicPropertyType.DefaultValue)
+              : undefined,
+            (r) => r,
+          );
+        }, definitionOverrides);
+
+        createScopedEffect((c) => {
+          evalExpr(
+            c,
+            isActionControl(def) ? def.actionData : undefined,
+            of.actionData,
+            isActionControl(def)
+              ? firstExpr(formNode, DynamicPropertyType.ActionData)
+              : undefined,
+            (r) => r,
+          );
+        }, definitionOverrides);
+
+        createScopedEffect((c) => {
+          evalExpr(
+            c,
+            def.title,
+            of.title,
+            firstExpr(formNode, DynamicPropertyType.Label),
+            coerceString,
+          );
+        }, definitionOverrides);
+
+        const control = createScoped<ControlState>(controlImpl, {
+          definition,
+          dataNode: undefined,
+          schemaInterface,
+          disabled: false,
+          readonly: false,
+          clearHidden: false,
+          hidden: false,
+          formData: {},
+          displayOnly: false,
+          inline: false,
         });
+
+        const {
+          dataNode,
+          hidden,
+          readonly,
+          style,
+          layoutStyle,
+          allowedOptions,
+          disabled,
+        } = control.fields;
+
+        createScopedEffect(
+          (c) =>
+            evalExpr(
+              c,
+              undefined,
+              style,
+              firstExpr(formNode, DynamicPropertyType.Style),
+              coerceStyle,
+            ),
+          scope,
+        );
+
+        createScopedEffect(
+          (c) =>
+            evalExpr(
+              c,
+              undefined,
+              layoutStyle,
+              firstExpr(formNode, DynamicPropertyType.LayoutStyle),
+              coerceStyle,
+            ),
+          scope,
+        );
+
+        createScopedEffect(
+          (c) =>
+            evalExpr(
+              c,
+              undefined,
+              allowedOptions,
+              firstExpr(formNode, DynamicPropertyType.AllowedOptions),
+              (x) => x,
+            ),
+          scope,
+        );
+
+        updateComputedValue(dataNode, () => lookupDataNode(definition, parent));
+        updateComputedValue(
+          hidden,
+          () =>
+            !!cf.hidden.value ||
+            definition.hidden ||
+            (dataNode.value && !validDataNode(dataNode.value)),
+        );
+        updateComputedValue(
+          readonly,
+          () => !!cf.readonly.value || isControlReadonly(definition),
+        );
+        updateComputedValue(
+          disabled,
+          () => !!cf.disabled.value || isControlDisabled(definition),
+        );
 
         createSyncEffect(() => {
           const dn = dataNode.value;
           if (dn) {
-            dn.control.disabled = !!handlers.disabled();
+            dn.control.disabled = disabled.value;
           }
         }, scope);
-
-        evalExpr(
-          style,
-          firstExpr(formNode, DynamicPropertyType.Style),
-          coerceStyle,
-        );
-
-        evalExpr(
-          layoutStyle,
-          firstExpr(formNode, DynamicPropertyType.LayoutStyle),
-          coerceStyle,
-        );
-
-        evalExpr(
-          allowedOptions,
-          firstExpr(formNode, DynamicPropertyType.AllowedOptions),
-          (x) => x,
-        );
 
         setupValidation(
           controlImpl,
@@ -249,7 +367,7 @@ export function createFormState(
                 controlImpl.fields.clearHidden.value &&
                 !definition.dontClearHidden
               ) {
-                console.log("Clearing hidden");
+                // console.log("Clearing hidden");
                 dn.value = undefined;
               }
             } else if (
@@ -260,55 +378,16 @@ export function createFormState(
               ) &&
               definition.renderOptions?.type != DataRenderType.NullToggle
             ) {
-              console.log(
-                "Setting to default",
-                definition.defaultValue,
-                definition.field,
-              );
+              // console.log(
+              //   "Setting to default",
+              //   definition.defaultValue,
+              //   definition.field,
+              // );
               dn.value = definition.defaultValue;
             }
           }
         }, scope);
-        return new ControlStateImpl(
-          definition,
-          myContext,
-          schemaInterface,
-          dataNode,
-          style,
-          layoutStyle,
-          allowedOptions,
-        );
-
-        function setupDisplay(): () => any {
-          const display = createScoped(scope, Never);
-          evalExpr(
-            display,
-            firstExpr(formNode, DynamicPropertyType.Display),
-            coerceString,
-          );
-          const displayProxy = createScopedComputed(scope, () => {
-            const displayData = isDisplayControl(formNode.definition)
-              ? formNode.definition.displayData
-              : undefined;
-
-            return displayData
-              ? new Proxy(displayData, {
-                  get(
-                    target: DisplayData,
-                    p: string | symbol,
-                    receiver: any,
-                  ): any {
-                    if (p === "html" || p === "text") {
-                      const v = display.value;
-                      if (v !== Never) return v;
-                    }
-                    return target[p as keyof DisplayData];
-                  },
-                })
-              : undefined;
-          });
-          return () => displayProxy.value;
-        }
+        return createOverrideProxy(control.current.value, control);
       });
     },
   };
@@ -323,99 +402,6 @@ function firstExpr(
   )?.expr;
 }
 
-const hiddenLogic: ControlLogic<boolean | null | undefined> = (
-  hidden,
-  context,
-  parent,
-  formNode,
-  evalExpr,
-) => {
-  const dynamic = firstExpr(formNode, DynamicPropertyType.Visible);
-  if (!evalExpr(dynamic, (r) => !r))
-    updateComputedValue(hidden, () => {
-      const dataNode = lookupDataNode(formNode.definition, parent);
-      return !!dataNode && !validDataNode(dataNode);
-    });
-};
-
-const readonlyLogic: ControlLogic<boolean | null | undefined> = (
-  control,
-  context,
-  parent,
-  formNode,
-  evalExpr,
-) => {
-  const def = formNode.definition;
-  const dynamic = firstExpr(formNode, DynamicPropertyType.Readonly);
-  if (!evalExpr(dynamic, (r) => !!r))
-    updateComputedValue(control, () => isControlReadonly(def));
-};
-
-const disabledLogic: ControlLogic<boolean | null | undefined> = (
-  control,
-  context,
-  parent,
-  formNode,
-  evalExpr,
-) => {
-  const def = formNode.definition;
-  const dynamic = firstExpr(formNode, DynamicPropertyType.Disabled);
-  if (!evalExpr(dynamic, (r) => !!r))
-    updateComputedValue(control, () => isControlDisabled(def));
-};
-
-const titleLogic: ControlLogic<string> = (
-  control,
-  context,
-  parent,
-  formNode,
-  evalExpr,
-) => {
-  const def = formNode.definition;
-  const dynamic = firstExpr(formNode, DynamicPropertyType.Label);
-  if (!evalExpr(dynamic, coerceString))
-    updateComputedValue(control, () => def.title);
-};
-
-const defaultValueLogic: ControlLogic<any> = (
-  control,
-  context,
-  parent,
-  formNode,
-  evalExpr,
-) => {
-  const def = formNode.definition;
-  const dynamic = firstExpr(formNode, DynamicPropertyType.DefaultValue);
-  if (!evalExpr(dynamic, (x) => x))
-    updateComputedValue(control, () =>
-      isDataControl(def) ? def.defaultValue : undefined,
-    );
-};
-
-const actionDataLogic: ControlLogic<any> = (
-  control,
-  context,
-  parent,
-  formNode,
-  evalExpr,
-) => {
-  const def = formNode.definition;
-  const dynamic = firstExpr(formNode, DynamicPropertyType.ActionData);
-  if (!evalExpr(dynamic, (x) => x))
-    updateComputedValue(control, () =>
-      isActionControl(def) ? def.actionData : undefined,
-    );
-};
-
-const logics: ControlLogics<DataControlDefinition | ActionControlDefinition> = {
-  hidden: hiddenLogic,
-  readonly: readonlyLogic,
-  disabled: disabledLogic,
-  title: titleLogic,
-  defaultValue: defaultValueLogic,
-  actionData: actionDataLogic,
-};
-
 function coerceStyle(v: unknown): any {
   return typeof v === "object" ? v : undefined;
 }
@@ -424,8 +410,6 @@ function coerceString(v: unknown): string {
   return typeof v === "string" ? v : (v?.toString() ?? "");
 }
 
-class Never {}
-
 function createScopedMetaValue<A>(
   formNode: FormNode,
   c: Control<any>,
@@ -433,39 +417,36 @@ function createScopedMetaValue<A>(
   init: (scope: CleanupScope) => A,
 ): A {
   return ensureMetaValue(c, key, () => {
-    const holder = createScoped<A | undefined>(c, undefined);
-    const effect = createSyncEffect(() => {
-      holder.cleanup();
-      holder.value = init(holder);
-    }, c);
-    // effect.run = () => {
-    //   console.log(
-    //     effect.subscriptions.map(
-    //       (x) =>
-    //         `${x[1]?.mask} ${jsonPathString(getControlPath(x[0], unsafeRestoreControl(formNode.definition)))}`,
-    //     ),
-    //   );
-    // };
+    const holder = createScoped<A | undefined>(c, undefined, {
+      equals: (a, b) => a === b,
+    });
+    const effect = createScopedEffect((c) => (holder.value = init(c)), holder);
+    effect.run = () => {
+      console.log(
+        "ControlState being recreated:",
+        effect.subscriptions.map(
+          (x) =>
+            `${x[1]?.mask} ${jsonPathString(getControlPath(x[0], unsafeRestoreControl(formNode.definition)))}`,
+        ),
+      );
+    };
     return holder;
   }).value!;
 }
 
-class ControlStateImpl implements ControlState {
-  constructor(
-    public definition: ControlDefinition,
-    private _context: Control<FormContext>,
-    public schemaInterface: SchemaInterface,
-    public _dataNode: Control<SchemaDataNode | undefined>,
-    public style?: Control<object | undefined>,
-    public layoutStyle?: Control<object | undefined>,
-    public allowedOptions?: Control<any[] | undefined>,
-  ) {}
-
-  get context() {
-    return this._context.value;
-  }
-
-  get dataNode() {
-    return this._dataNode.value;
-  }
+function createOverrideProxy<A extends object, B extends Record<string, any>>(
+  proxyFor: A,
+  handlers: Control<B>,
+): A {
+  return new Proxy(proxyFor, {
+    get(target: A, p: string | symbol, receiver: any): any {
+      const override = getExistingField(handlers, p as string);
+      if (override) {
+        return override.value;
+      }
+      return target[p as keyof A];
+    },
+  });
 }
+
+type KeysOfUnion<T> = T extends T ? keyof T : never;

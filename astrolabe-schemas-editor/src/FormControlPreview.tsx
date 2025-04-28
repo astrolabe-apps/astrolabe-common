@@ -127,9 +127,13 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     formData: {},
   } satisfies ControlDataContext;
   const formOptions = {
-    readonly: dataDefinition?.readonly,
+    disabled: false,
+    hidden: false,
+    clearHidden: false,
+    formData: {},
+    readonly: !!dataDefinition?.readonly,
     displayOnly,
-    inline,
+    inline: !!inline,
   };
   const adornments =
     definition.adornments?.map((x) =>
@@ -153,8 +157,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     state: {
       definition: renderedNode.definition,
       schemaInterface,
-      context: formOptions,
-      dataNode
+      ...formOptions,
+      dataNode,
     },
     formNode: renderedNode,
     renderChild: (k, child, c) => {

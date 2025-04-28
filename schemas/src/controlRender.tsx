@@ -567,7 +567,7 @@ export function useControlRendererComponent(
         formData,
       };
       const c = state.definition;
-      const visible = !c.hidden;
+      const visible = !state.hidden;
       const visibility = useControl<Visibility | undefined>(() =>
         visible != null
           ? {
@@ -699,8 +699,8 @@ export function useControlRendererComponent(
         dataContext,
         control: control,
         schemaInterface,
-        style: state.style?.value,
-        allowedOptions: state.allowedOptions?.value,
+        style: state.style,
+        allowedOptions: state.allowedOptions,
         customDisplay: options.customDisplay,
         actionOnClick: options.actionOnClick,
         styleClass: options.styleClass,
@@ -724,7 +724,7 @@ export function useControlRendererComponent(
         ...labelAndChildren,
         adornments,
         className: rendererClass(options.layoutClass, c.layoutClass),
-        style: state.layoutStyle?.value,
+        style: state.layoutStyle,
       };
       const renderedControl = renderer.renderLayout(
         options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,

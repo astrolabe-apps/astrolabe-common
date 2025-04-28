@@ -125,13 +125,26 @@
       },
       "dynamic": [
         {
-          "type": "ActionData",
+          "type": "Display",
           "expr": {
             "type": "Jsonata",
             "expression": "\u0022\u003Cb\u003Easad\u003Ci\u003Easd\u003C/i\u003E\u003C/b\u003E\u0022"
           }
         }
       ]
+    },
+    {
+      "type": "Action",
+      "title": "Test",
+      "dynamic": [
+        {
+          "type": "ActionData",
+          "expr": {
+            "type": "UUID"
+          }
+        }
+      ],
+      "icon": {}
     }
   ],
   "config": null
