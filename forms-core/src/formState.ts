@@ -81,18 +81,23 @@ export interface FormState {
     formNode: FormNode,
     context: FormContextOptions,
   ): ControlState;
+
   cleanup(): void;
+
   cleanupControl(parent: SchemaDataNode, formNode: FormNode): void;
+
   evalExpression(expr: EntityExpression, context: ExpressionEvalContext): void;
 }
 
 const formStates: FormState[] = [];
+
 export function createFormState(
   schemaInterface: SchemaInterface,
   evaluators: Record<string, ExpressionEval<any>> = defaultEvaluators,
 ): FormState {
   console.log("createFormState");
   const controlStates = newControl<Record<string, FormContextOptions>>({});
+
   function evalExpression(
     e: EntityExpression,
     context: ExpressionEvalContext,
@@ -439,7 +444,7 @@ function coerceStyle(v: unknown): any {
 }
 
 function coerceString(v: unknown): string {
-  return typeof v === "string" ? v : (v?.toString() ?? "");
+  return typeof v === "string" ? v : v?.toString() ?? "";
 }
 
 function createScopedMetaValue<A>(
@@ -471,9 +476,10 @@ export function createOverrideProxy<
   B extends Record<string, any>,
 >(proxyFor: A, handlers: Control<B>): A {
   const overrides = getCurrentFields(handlers);
-  const allOwn = [
-    ...new Set([...Reflect.ownKeys(proxyFor), ...Reflect.ownKeys(overrides)]),
-  ];
+  const allOwn = Reflect.ownKeys(proxyFor);
+  Reflect.ownKeys(overrides).forEach((k) => {
+    if (!allOwn.includes(k)) allOwn.push(k);
+  });
   return new Proxy(proxyFor, {
     get(target: A, p: string | symbol, receiver: any): any {
       if (Object.hasOwn(overrides, p)) {
