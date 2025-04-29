@@ -17,7 +17,7 @@ import {
   SchemaDataTree,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import React, { useMemo } from "react";
+import React, { useMemo, Fragment } from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
 import clsx from "clsx";
 import { JsonEditor } from "../JsonEditor";

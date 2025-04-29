@@ -4,7 +4,7 @@ import {
   MenuItemProps,
 } from "react-aria-components";
 import { tv } from "tailwind-variants";
-import React from "react";
+import React, { Fragment } from "react";
 
 export const dropdownItemStyles = tv({
   base: "group flex items-center gap-4 cursor-default select-none py-2 pl-3 pr-1 rounded-lg outline outline-0 text-sm forced-color-adjust-none",

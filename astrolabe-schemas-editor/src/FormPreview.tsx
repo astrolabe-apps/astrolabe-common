@@ -17,7 +17,7 @@ import {
   RenderForm,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import React, { ReactNode, useMemo } from "react";
+import React, { ReactNode, useMemo, Fragment } from "react";
 import { JsonEditor } from "./JsonEditor";
 import { ViewContext } from "./types";
 
