@@ -31,19 +31,6 @@ export function RenderControl(props: RenderControlProps) {
 }
 
 /**
- * @deprecated Use formControlProps() directly
- */
-export function RenderForm<V, E extends HTMLElement = HTMLElement>({
-  control,
-  children,
-}: {
-  control: Control<V>;
-  children: (fcp: FormControlProps<V, E>) => ReactNode;
-}) {
-  return <>{children(formControlProps<V, E>(control))}</>;
-}
-
-/**
  * Optionally render based on whether the control contains a null or undefined.
  * Useful for rendering loading spinners.
  * @param control The control
@@ -64,7 +51,7 @@ export function RenderOptional<V>({
     <>
       {control && !control.isNull
         ? children(control as Control<V>)
-        : (notDefined ?? ndc)}
+        : notDefined ?? ndc}
     </>
   );
 }
@@ -92,7 +79,7 @@ export function renderOptionally<A extends Record<string, Control<any>>>(
         out[x[0]] = v;
       } else ready = false;
     });
-    return ready ? render(out as ValuesOfControls<A>) : (elseRender ?? <></>);
+    return ready ? render(out as ValuesOfControls<A>) : elseRender ?? <></>;
   };
 }
 
