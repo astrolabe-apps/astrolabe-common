@@ -17,7 +17,7 @@ export interface ControlDataContext {
   schemaInterface: SchemaInterface;
   dataNode: SchemaDataNode | undefined;
   parentNode: SchemaDataNode;
-  formData: FormContextData;
+  variables: Record<string, any>;
 }
 
 export type ControlActionHandler = (

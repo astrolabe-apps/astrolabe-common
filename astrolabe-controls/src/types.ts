@@ -78,6 +78,10 @@ export interface CleanupScopeImpl extends CleanupScope {
   cleanup(): void;
 }
 
+export interface Value<V> {
+  value: V;
+}
+
 export interface Control<V> extends ControlProperties<V>, CleanupScopeImpl {
   uniqueId: number;
   subscribe(listener: ChangeListenerFunc<V>, mask: ControlChange): Subscription;

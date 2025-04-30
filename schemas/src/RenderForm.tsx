@@ -82,7 +82,7 @@ export function RenderForm({
     schemaInterface: state.schemaInterface,
     dataNode: state.dataNode,
     parentNode: data,
-    formData: state.formData,
+    variables: state.variables,
   };
 
   const adornments =
@@ -102,9 +102,14 @@ export function RenderForm({
     textClass,
     ...inheritableOptions
   } = options;
+  const { readonly, hidden, disabled, displayOnly, variables } = state;
   const childOptions: ControlRenderOptions = {
     ...inheritableOptions,
-    ...state,
+    readonly,
+    disabled,
+    displayOnly,
+    variables,
+    formState,
   };
 
   const labelAndChildren = renderControlLayout({
@@ -113,17 +118,18 @@ export function RenderForm({
     state,
     renderChild: (k, child, options) => {
       const overrideClasses = getGroupClassOverrides(definition);
-      const { parentDataNode, actionOnClick, ...renderOptions } = options ?? {};
+      const { parentDataNode, actionOnClick, variables, ...renderOptions } =
+        options ?? {};
       const dContext = parentDataNode ?? dataContext.dataNode ?? data;
       const allChildOptions = {
         ...childOptions,
         ...overrideClasses,
         ...renderOptions,
+        variables: { ...childOptions.variables, ...variables },
         actionOnClick: actionHandlers(
           actionOnClick,
           childOptions.actionOnClick,
         ),
-        formState,
       };
       return (
         <RenderForm

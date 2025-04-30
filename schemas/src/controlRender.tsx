@@ -434,7 +434,6 @@ export interface ControlRenderOptions extends ControlClasses {
     customId: string,
     displayProps: DisplayRendererProps,
   ) => ReactNode;
-  runExpression?: RunExpression;
   adjustLayout?: (
     context: ControlDataContext,
     layout: ControlLayoutProps,
@@ -445,8 +444,9 @@ export interface ControlRenderOptions extends ControlClasses {
   displayOnly?: boolean;
   inline?: boolean;
   clearHidden?: boolean;
+  stateKey?: string;
   schemaInterface?: SchemaInterface;
-  formData?: FormContextData;
+  variables?: Record<string, any>;
 }
 
 export function defaultDataProps(
@@ -484,10 +484,10 @@ export function defaultDataProps(
             .map((x) =>
               typeof x === "object"
                 ? x
-                : (fieldOptions?.find((y) => y.value == x) ?? {
+                : fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  }),
+                  },
             )
             .filter((x) => x != null)
         : fieldOptions,
@@ -505,13 +505,14 @@ export function defaultDataProps(
 
 export interface ChildRendererOptions {
   parentDataNode?: SchemaDataNode;
-  formData?: FormContextData;
   inline?: boolean;
   displayOnly?: boolean;
   styleClass?: string;
   layoutClass?: string;
   labelClass?: string;
   actionOnClick?: ControlActionHandler;
+  stateKey?: string;
+  variables?: Record<string, any>;
 }
 
 export type ChildRenderer = (
@@ -952,13 +953,14 @@ export function applyArrayLengthRestrictions(
 }
 
 export function fieldOptionAdornment(p: DataRendererProps) {
-  return (o: FieldOption, i: number, selected: boolean) => (
+  return (o: FieldOption, fieldIndex: number, selected: boolean) => (
     <RenderArrayElements
       array={p.formNode.getChildNodes()}
       children={(cd, i) =>
         p.renderChild(i, cd, {
           parentDataNode: p.dataContext.parentNode,
-          formData: { option: o, optionSelected: selected },
+          stateKey: fieldIndex.toString(),
+          variables: { formData: { option: o, optionSelected: selected } },
         })
       }
     />

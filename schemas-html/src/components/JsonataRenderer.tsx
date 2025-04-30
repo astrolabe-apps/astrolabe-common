@@ -1,4 +1,9 @@
-import { Control, trackedValue, useComputed } from "@react-typed-forms/core";
+import {
+  Control,
+  delayedValue,
+  trackedValue,
+  useComputed,
+} from "@react-typed-forms/core";
 import React from "react";
 import {
   coerceToString,
@@ -51,16 +56,13 @@ export function JsonataRenderer({
   runExpression: RunExpression;
 }) {
   const sdn = dataNode.elementIndex != null ? dataNode : dataContext.parentNode;
-  const bindings = useComputed(
-    () =>
-      ({
-        value: control.value,
-        readonly,
-        disabled: control.disabled,
-        formData: dataContext.formData,
-        dataPath: getJsonPath(dataNode),
-      }) as FormContextData,
-  );
+  const bindings = useComputed<Record<string, any>>(() => ({
+    ...dataContext.variables,
+    value: control.value,
+    readonly,
+    disabled: control.disabled,
+    dataPath: getJsonPath(dataNode),
+  }));
   const rendered = useExpression(
     "",
     runExpression,
@@ -69,7 +71,7 @@ export function JsonataRenderer({
       expression: renderOptions.expression,
     } as JsonataExpression,
     coerceToString,
-    trackedValue(bindings),
+    bindings,
   );
   return (
     <div

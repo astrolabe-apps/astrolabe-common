@@ -6,6 +6,8 @@ import {
 } from "@astroapps/controls";
 import { missingField } from "./schemaField";
 import { createSchemaNode, resolveSchemaNode, SchemaNode } from "./schemaNode";
+import { SchemaInterface } from "./schemaInterface";
+import { ControlDefinition, getDisplayOnlyOptions } from "./controlDefinition";
 
 export abstract class SchemaDataTree {
   abstract rootNode: SchemaDataNode;
@@ -158,4 +160,17 @@ export function validDataNode(context: SchemaDataNode): boolean {
     });
     return c;
   }).value;
+}
+
+export function hideDisplayOnly(
+  context: SchemaDataNode,
+  schemaInterface: SchemaInterface,
+  definition: ControlDefinition,
+) {
+  const displayOptions = getDisplayOnlyOptions(definition);
+  return (
+    displayOptions &&
+    !displayOptions.emptyText &&
+    schemaInterface.isEmptyValue(context.schema.field, context.control?.value)
+  );
 }

@@ -13,6 +13,7 @@ export {
   addDependent,
   withChildren,
   createCleanupScope,
+  delayedValue,
 } from "./controlImpl";
 export { SubscriptionTracker } from "./subscriptions";
 export {

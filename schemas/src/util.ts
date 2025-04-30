@@ -501,21 +501,6 @@ export function useUpdatedRef<A>(a: A): MutableRefObject<A> {
 }
 
 /**
- * Returns the display-only render options for a control definition.
- * @param d - The control definition to get the display-only render options for.
- * @returns The display-only render options, or undefined if not applicable.
- */
-export function getDisplayOnlyOptions(
-  d: ControlDefinition,
-): DisplayOnlyRenderOptions | undefined {
-  return isDataControl(d) &&
-    d.renderOptions &&
-    isDisplayOnlyRenderer(d.renderOptions)
-    ? d.renderOptions
-    : undefined;
-}
-
-/**
  * Cleans data for a schema based on the provided schema fields.
  * @param v - The data to clean.
  * @param schemaNode
@@ -1017,7 +1002,7 @@ export function useExpression<T>(
   runExpression: RunExpression,
   expression: EntityExpression | null | undefined,
   coerce: (x: any) => T,
-  bindings?: FormContextData,
+  bindings?: Record<string, any>,
 ): Control<T> {
   const value = useControl<T>(defaultValue);
   createScopedEffect((scope) => {

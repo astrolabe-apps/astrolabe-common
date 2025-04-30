@@ -1,5 +1,9 @@
 import { FormNode, lookupDataNode } from "./formNode";
-import { SchemaDataNode, validDataNode } from "./schemaDataNode";
+import {
+  hideDisplayOnly,
+  SchemaDataNode,
+  validDataNode,
+} from "./schemaDataNode";
 import {
   AnyControlDefinition,
   ControlAdornmentType,
@@ -28,6 +32,7 @@ import {
   getControlPath,
   getCurrentFields,
   newControl,
+  trackedValue,
   unsafeRestoreControl,
   updateComputedValue,
 } from "@astroapps/controls";
@@ -54,7 +59,7 @@ export interface ControlState {
   displayOnly: boolean;
   inline: boolean;
   clearHidden: boolean;
-  formData: FormContextData;
+  variables: Record<string, any>;
 }
 
 export interface FormContextOptions {
@@ -64,7 +69,8 @@ export interface FormContextOptions {
   displayOnly?: boolean;
   inline?: boolean;
   clearHidden?: boolean;
-  formData?: FormContextData;
+  stateKey?: string;
+  variables?: Record<string, any>;
 }
 
 /**
@@ -83,8 +89,6 @@ export interface FormState {
   ): ControlState;
 
   cleanup(): void;
-
-  cleanupControl(parent: SchemaDataNode, formNode: FormNode): void;
 
   evalExpression(expr: EntityExpression, context: ExpressionEvalContext): void;
 }
@@ -112,22 +116,14 @@ export function createFormState(
       console.log("Cleanup form state");
       controlStates.cleanup();
     },
-    cleanupControl(parent: SchemaDataNode, formNode: FormNode) {
-      const stateId = parent.id + "$" + formNode.id;
-      const c = controlStates.fields[stateId];
-      c.cleanup();
-      console.log("Unmount" + stateId);
-      clearMetaValue(c, "impl");
-    },
     getControlState(
       parent: SchemaDataNode,
       formNode: FormNode,
       context: FormContextOptions,
     ): ControlState {
-      const stateId = parent.id + "$" + formNode.id;
+      const stateId = parent.id + "$" + formNode.id + (context.stateKey ?? "");
       const controlImpl = controlStates.fields[stateId];
       controlImpl.value = context;
-
       function evalExpr<A>(
         scope: CleanupScope,
         init: A,
@@ -143,7 +139,7 @@ export function createFormState(
             },
             scope,
             dataNode: parent,
-            formContext: controlImpl.fields.formData.value ?? {},
+            variables: controlImpl.fields.variables,
             schemaInterface,
           });
           return true;
@@ -284,7 +280,7 @@ export function createFormState(
           readonly: false,
           clearHidden: false,
           hidden: false,
-          formData: {},
+          variables: controlImpl.fields.variables.current.value ?? {},
           displayOnly: false,
           inline: false,
           stateId,
@@ -298,6 +294,7 @@ export function createFormState(
           layoutStyle,
           allowedOptions,
           disabled,
+          variables,
         } = control.fields;
 
         createScopedEffect(
@@ -342,21 +339,10 @@ export function createFormState(
           () =>
             !!cf.hidden.value ||
             definition.hidden ||
-            (dataNode.value && !validDataNode(dataNode.value)),
+            (dataNode.value &&
+              (!validDataNode(dataNode.value) ||
+                hideDisplayOnly(dataNode.value, schemaInterface, definition))),
         );
-
-        // export function hideDisplayOnly(
-        //   context: SchemaDataNode,
-        //   schemaInterface: SchemaInterface,
-        //   definition: ControlDefinition,
-        // ) {
-        //   const displayOptions = getDisplayOnlyOptions(definition);
-        //   return (
-        //     displayOptions &&
-        //     !displayOptions.emptyText &&
-        //     schemaInterface.isEmptyValue(context.schema.field, context.control?.value)
-        //   );
-        // }
 
         updateComputedValue(
           readonly,
@@ -366,6 +352,10 @@ export function createFormState(
           disabled,
           () => !!cf.disabled.value || isControlDisabled(definition),
         );
+
+        updateComputedValue(variables, () => {
+          return controlImpl.fields.variables.value ?? {};
+        });
 
         createSyncEffect(() => {
           const dn = dataNode.value;

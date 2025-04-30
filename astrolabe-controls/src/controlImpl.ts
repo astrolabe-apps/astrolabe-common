@@ -12,6 +12,7 @@ import {
   ControlValue,
   DelayedSetup,
   Subscription,
+  Value,
 } from "./types";
 import {
   ControlFlags,
@@ -729,4 +730,14 @@ export function withChildren(
   f: (c: Control<any>) => void,
 ) {
   return (parent as InternalControl)._logic.withChildren(f);
+}
+
+export function delayedValue<V>(v: () => V): Value<V> {
+  return new DelayedValue(v);
+}
+class DelayedValue<V> implements Value<V> {
+  constructor(private _value: () => V) {}
+  get value() {
+    return this._value();
+  }
 }

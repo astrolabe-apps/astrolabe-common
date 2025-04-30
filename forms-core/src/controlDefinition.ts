@@ -679,3 +679,18 @@ export function getGroupRendererOptions(
 export function isControlDisplayOnly(def: ControlDefinition): boolean {
   return Boolean(getGroupRendererOptions(def)?.displayOnly);
 }
+
+/**
+ * Returns the display-only render options for a control definition.
+ * @param d - The control definition to get the display-only render options for.
+ * @returns The display-only render options, or undefined if not applicable.
+ */
+export function getDisplayOnlyOptions(
+  d: ControlDefinition,
+): DisplayOnlyRenderOptions | undefined {
+  return isDataControl(d) &&
+    d.renderOptions &&
+    isDisplayOnlyRenderer(d.renderOptions)
+    ? d.renderOptions
+    : undefined;
+}

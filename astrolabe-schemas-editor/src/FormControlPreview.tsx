@@ -98,7 +98,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const sampleData = useMemo(
     () =>
       displayOptions
-        ? (displayOptions.sampleText ?? "Sample Data")
+        ? displayOptions.sampleText ?? "Sample Data"
         : field &&
           (dataNode?.elementIndex == null
             ? field.collection
@@ -111,17 +111,18 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   if (dataNode) {
     dataNode.control = control;
   }
-  const dataContext = {
+  const dataContext: ControlDataContext = {
     schemaInterface,
     dataNode,
     parentNode: parentDataNode,
-    formData: {},
-  } satisfies ControlDataContext;
+    variables: {},
+  };
+
   const formOptions = {
     disabled: false,
     hidden: false,
     clearHidden: false,
-    formData: {},
+    variables: {},
     readonly: !!dataDefinition?.readonly,
     displayOnly,
     inline: !!inline,

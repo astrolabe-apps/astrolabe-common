@@ -13,6 +13,7 @@ import {
   createAsyncEffect,
   createSyncEffect,
   trackedValue,
+  Value,
 } from "@astroapps/controls";
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
 import { FormContextData } from "./formState";
@@ -26,8 +27,8 @@ export interface ExpressionEvalContext {
   scope: CleanupScope;
   returnResult: (k: unknown) => void;
   dataNode: SchemaDataNode;
-  formContext?: FormContextData;
   schemaInterface: SchemaInterface;
+  variables?: Value<Record<string, any> | undefined>;
 }
 
 export type ExpressionEval<T extends EntityExpression> = (
@@ -71,7 +72,7 @@ const notEmptyEval: ExpressionEval<NotEmptyExpression> = (
 
 export const jsonataEval: ExpressionEval<JsonataExpression> = (
   expr,
-  { scope, returnResult, dataNode },
+  { scope, returnResult, dataNode, variables },
 ) => {
   const path = getJsonPath(dataNode);
   const pathString = jsonPathString(path, (x) => `#$i[${x}]`);
@@ -89,10 +90,15 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
   });
 
   async function runJsonata(effect: AsyncEffect<any>, signal: AbortSignal) {
+    const bindings = collectChanges(
+      effect.collectUsage,
+      () => variables?.value,
+    );
     const evalResult = await parsedJsonata.fields.expr.value.evaluate(
       trackedValue(rootData, effect.collectUsage),
+      bindings,
     );
-    // console.log(parsedJsonata.fields.fullExpr.value, evalResult);
+    // console.log(parsedJsonata.fields.fullExpr.value, evalResult, bindings);
     collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 
