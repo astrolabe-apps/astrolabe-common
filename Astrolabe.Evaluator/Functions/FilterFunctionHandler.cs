@@ -27,13 +27,13 @@ public static class FilterFunctionHandler
                     EvalExpr right
                 )
                 {
-                    var firstFilter = nextEnv.EvaluateWith(leftValue, null, right);
-                    if (firstFilter.Value.IsNull())
-                        return firstFilter.Env.WithError("Object filter can't be null").WithNull();
-                    return firstFilter.Env.EvaluateWith(
+                    var (env, firstFilterValue) = nextEnv.EvaluateWith(leftValue, null, right);
+                    if (!firstFilterValue.IsString())
+                        return env.WithError("Object filter must be string").WithNull();
+                    return env.EvaluateWith(
                         leftValue,
                         null,
-                        new PropertyExpr(firstFilter.Value.AsString())
+                        new PropertyExpr(firstFilterValue.AsString())
                     );
                 }
 
