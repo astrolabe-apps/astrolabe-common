@@ -14,7 +14,7 @@ import {
   visitFormDataInContext,
 } from "@react-typed-forms/schemas";
 import { VisibleChildrenRenderer } from "./VisibleChildrenRenderer";
-import { useControl } from "@react-typed-forms/core";
+import { useComputed, useControl } from "@react-typed-forms/core";
 import { Fragment, ReactNode } from "react";
 
 export interface CustomNavigationProps {
@@ -128,11 +128,15 @@ function renderWizard(
   const allVisible = children.map((_, i) => isChildVisible(i));
   const page = useControl(0);
   const currentPage = page.value;
+  const isValid = useComputed(() => isPageValid());
+
   const next = createAction("nav", () => nav(1, nextValidate), nextText, {
-    disabled: !props.designMode && nextVisibleInDirection(1) == null,
+    hidden: !props.designMode && nextVisibleInDirection(1) == null,
+    disabled: !isValid.value,
     icon: nextIcon,
     iconPlacement: IconPlacement.AfterText,
   });
+
   const prev = createAction("nav", () => nav(-1, prevValidate), prevText, {
     disabled: !props.designMode && nextVisibleInDirection(-1) == null,
     icon: prevIcon,
@@ -142,7 +146,7 @@ function renderWizard(
     page: countVisibleUntil(currentPage),
     totalPages: countVisibleUntil(children.length),
     prev,
-    next,
+    next: next,
     className: navContainerClass,
     validatePage: async () => validatePage(),
   });
@@ -204,6 +208,15 @@ function renderWizard(
         hasErrors = true;
       }),
     );
+    return !hasErrors;
+  }
+
+  function isPageValid() {
+    const pageNode = children[currentPage];
+    let hasErrors = false;
+    visitFormDataInContext(props.dataContext.parentNode, pageNode, (c) => {
+      if (!c.control.valid) hasErrors = true;
+    });
     return !hasErrors;
   }
 }
