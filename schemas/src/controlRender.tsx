@@ -484,10 +484,10 @@ export function defaultDataProps(
             .map((x) =>
               typeof x === "object"
                 ? x
-                : fieldOptions?.find((y) => y.value == x) ?? {
+                : (fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  },
+                  }),
             )
             .filter((x) => x != null)
         : fieldOptions,

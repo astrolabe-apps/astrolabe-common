@@ -39,6 +39,7 @@ export interface ActionRendererProps {
   textClass?: string | null;
   style?: React.CSSProperties;
   disabled?: boolean;
+  hidden?: boolean;
   inline?: boolean;
 }
 
