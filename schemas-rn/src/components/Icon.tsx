@@ -1,5 +1,5 @@
 ﻿import { cssInterop } from "nativewind";
-import { FontAwesome5 } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 import { IconLibrary } from "@react-typed-forms/schemas";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 
@@ -9,7 +9,7 @@ export type RNIconProps = {
   iconLibrary?: IconLibrary;
 };
 
-cssInterop(FontAwesome5, {
+cssInterop(FontAwesome, {
   className: {
     target: "style",
     nativeStyleToProp: {},
@@ -32,6 +32,6 @@ export function Icon({
     case IconLibrary.Material:
       return <MaterialIcons name={name as any} className={className} />;
     default:
-      return <FontAwesome5 name={name} className={className} />;
+      return <FontAwesome name={name as any} className={className} />;
   }
 }
