@@ -114,6 +114,8 @@ export interface HtmlButtonProperties {
   inline?: boolean;
   children?: ReactNode;
   title?: string;
+  notWrapInText?: boolean;
+  androidRippleColor?: string;
 }
 export interface HtmlComponents {
   Div: ComponentType<HtmlDivProperties>;

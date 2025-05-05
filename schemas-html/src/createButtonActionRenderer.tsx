@@ -25,6 +25,8 @@ export interface DefaultActionRendererOptions {
   ) => ReactNode;
   icon?: IconReference;
   iconPlacement?: IconPlacement;
+  notWrapInText?: boolean;
+  androidRippleColor?: string;
 }
 
 export function createButtonActionRenderer(
@@ -53,7 +55,7 @@ export function createButtonActionRenderer(
         options.iconPlacement ??
         IconPlacement.BeforeText;
 
-      const { Button, I } = renderer.html;
+      const { Button, I, Span } = renderer.html;
       const isLink = actionStyle == ActionStyle.Link;
       const classNames = rendererClass(
         className,
@@ -77,14 +79,21 @@ export function createButtonActionRenderer(
           }
         />
       );
+
+      const textClassNames = rendererClass(
+        textClass,
+        isLink ? options.linkTextClass : options.textClass,
+      );
+
+      const textElement = actionText && (
+        <Span className={textClassNames}>{actionText}</Span>
+      );
+
       return (
         <Button
           key={key}
           className={classNames}
-          textClass={rendererClass(
-            textClass,
-            isLink ? options.linkTextClass : options.textClass,
-          )}
+          textClass={textClassNames}
           disabled={disabled}
           style={style}
           onClick={onClick}
@@ -92,11 +101,13 @@ export function createButtonActionRenderer(
           title={
             iconPlacement == IconPlacement.ReplaceText ? actionText : undefined
           }
+          notWrapInText={options.notWrapInText}
+          androidRippleColor={options.androidRippleColor}
         >
           {options.renderContent?.(actionText, actionId, actionData) ?? (
             <>
               {iconPlacement == IconPlacement.BeforeText && iconElement}
-              {iconPlacement != IconPlacement.ReplaceText && actionText}
+              {iconPlacement != IconPlacement.ReplaceText && textElement}
               {iconPlacement != IconPlacement.BeforeText && iconElement}
             </>
           )}
