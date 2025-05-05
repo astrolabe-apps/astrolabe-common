@@ -484,10 +484,10 @@ export function defaultDataProps(
             .map((x) =>
               typeof x === "object"
                 ? x
-                : (fieldOptions?.find((y) => y.value == x) ?? {
+                : fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  }),
+                  },
             )
             .filter((x) => x != null)
         : fieldOptions,
@@ -620,6 +620,7 @@ export function renderControlLayout(
         actionData,
         actionStyle: c.actionStyle ?? ActionStyle.Button,
         textClass: rendererClass(textClass, c.textClass),
+        iconPlacement: c.iconPlacement,
         icon: c.icon,
         inline: formOptions.inline,
         onClick:
