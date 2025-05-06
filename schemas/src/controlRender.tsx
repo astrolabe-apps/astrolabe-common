@@ -512,6 +512,7 @@ export interface ChildRendererOptions {
   styleClass?: string;
   layoutClass?: string;
   labelClass?: string;
+  labelTextClass?: string;
   actionOnClick?: ControlActionHandler;
   stateKey?: string;
   variables?: Record<string, any>;

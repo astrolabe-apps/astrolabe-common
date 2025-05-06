@@ -28,7 +28,7 @@ export const reactNativeHtml: HtmlComponents = {
   I: RNIcon,
   B: RNSpan,
   Button: RNButton,
-  Label: RNSpan,
+  Label: RNLabel,
   Span: RNSpan,
   H1: RNSpan,
   Div: RNDiv,
@@ -121,6 +121,28 @@ function RNButton({
     </Pressable>
   );
 }
+
+function RNLabel({
+  className,
+  html,
+  children,
+  textClass,
+  text,
+  style,
+  inline,
+  ...props
+}: HtmlDivProperties) {
+  return (
+    <View
+      className={className}
+      style={style as StyleProp<ViewStyle>}
+      {...props}
+    >
+      <Text className={textClass}>{children}</Text>
+    </View>
+  );
+}
+
 function RNDiv({
   className,
   html,

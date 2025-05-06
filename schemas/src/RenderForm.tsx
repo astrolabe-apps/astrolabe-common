@@ -150,9 +150,10 @@ export function RenderForm({
     allowedOptions: state.allowedOptions,
     customDisplay: options.customDisplay,
     actionOnClick: options.actionOnClick,
-    styleClass: options.styleClass,
-    labelClass: options.labelClass,
-    textClass: options.textClass,
+    styleClass: styleClass,
+    labelClass: labelClass,
+    labelTextClass: labelTextClass,
+    textClass: textClass,
     getChildState(child: FormNode, parent?: SchemaDataNode): ControlState {
       return formState.getControlState(
         parent ?? state.dataNode ?? data,
