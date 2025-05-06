@@ -459,6 +459,8 @@ export function defaultDataProps(
     schemaInterface = defaultSchemaInterface,
     styleClass,
     textClass: tc,
+    displayOnly,
+    inline,
     ...props
   }: RenderLayoutProps,
   definition: DataControlDefinition,
@@ -468,7 +470,6 @@ export function defaultDataProps(
   const field = dataNode.schema.field;
   const className = rendererClass(styleClass, definition.styleClass);
   const textClass = rendererClass(tc, definition.textClass);
-  const displayOnly = !!formOptions.displayOnly;
   const required = !!definition.required && !displayOnly;
   const fieldOptions = schemaInterface.getDataOptions(dataNode);
   const _allowed = allowedOptions ?? [];
@@ -479,7 +480,7 @@ export function defaultDataProps(
     control,
     field,
     id: "c" + control.uniqueId,
-    inline: !!formOptions.inline,
+    inline: !!inline,
     options:
       allowed.length > 0
         ? allowed
@@ -494,7 +495,7 @@ export function defaultDataProps(
             .filter((x) => x != null)
         : fieldOptions,
     readonly: !!formOptions.readonly,
-    displayOnly,
+    displayOnly: !!displayOnly,
     renderOptions: definition.renderOptions ?? { type: "Standard" },
     required,
     hidden: !!formOptions.hidden,
@@ -549,6 +550,8 @@ export interface RenderLayoutProps {
   labelTextClass?: string;
   styleClass?: string;
   textClass?: string;
+  inline?: boolean;
+  displayOnly?: boolean;
 }
 export function renderControlLayout(
   props: RenderLayoutProps,
@@ -572,6 +575,8 @@ export function renderControlLayout(
     actionOnClick,
     state,
     getChildState,
+    inline,
+    displayOnly,
   } = props;
   const c = state.definition;
   if (isDataControl(c)) {
@@ -588,7 +593,7 @@ export function renderControlLayout(
     }
 
     return {
-      inline: formOptions.inline,
+      inline,
       processLayout: renderer.renderGroup({
         formNode,
         state,
@@ -616,7 +621,7 @@ export function renderControlLayout(
   if (isActionControl(c)) {
     const actionData = c.actionData;
     return {
-      inline: formOptions.inline,
+      inline,
       children: renderer.renderAction({
         actionText: c.title ?? c.actionId,
         actionId: c.actionId,
@@ -625,7 +630,7 @@ export function renderControlLayout(
         textClass: rendererClass(textClass, c.textClass),
         iconPlacement: c.iconPlacement,
         icon: c.icon,
-        inline: formOptions.inline,
+        inline,
         onClick:
           props.actionOnClick?.(c.actionId, actionData, dataContext) ??
           (() => {}),
@@ -642,16 +647,16 @@ export function renderControlLayout(
       textClass: rendererClass(textClass, c.textClass),
       style,
       dataContext,
-      inline: formOptions.inline,
+      inline,
     };
     if (data.type === DisplayDataType.Custom && customDisplay) {
       return {
-        inline: formOptions.inline,
+        inline,
         children: customDisplay((data as CustomDisplay).customId, displayProps),
       };
     }
     return {
-      inline: formOptions.inline,
+      inline,
       children: renderer.renderDisplay(displayProps),
     };
   }
@@ -664,14 +669,14 @@ export function renderControlLayout(
       ? controlTitle(c.title, props.dataContext.dataNode!.schema.field)
       : undefined;
     return {
-      inline: formOptions.inline,
+      inline,
       processLayout: renderer.renderData(rendererProps),
       label: {
         type:
           (c.children?.length ?? 0) > 0 ? LabelType.Group : LabelType.Control,
         label,
         forId: rendererProps.id,
-        required: c.required && !props.formOptions.displayOnly,
+        required: c.required && !displayOnly,
         hide: c.hideTitle,
         className: rendererClass(labelClass, c.labelClass),
         textClass: rendererClass(labelTextClass, c.labelTextClass),

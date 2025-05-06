@@ -124,8 +124,6 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     clearHidden: false,
     variables: {},
     readonly: !!dataDefinition?.readonly,
-    displayOnly,
-    inline: !!inline,
   };
   const adornments =
     definition.adornments?.map((x) =>
@@ -181,6 +179,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     styleClass,
     createDataProps: defaultDataProps,
     formOptions,
+    inline,
+    displayOnly,
     dataContext,
     control: dataNode?.control,
     schemaInterface,

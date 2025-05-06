@@ -14,12 +14,7 @@ import {
   SelectRendererOptions,
 } from "./components/SelectDataRenderer";
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
-import {
-  Control,
-  createScopedEffect,
-  useControl,
-  useControlEffect,
-} from "@react-typed-forms/core";
+import { Control, useControlEffect } from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
 import {
   createDefaultArrayDataRenderer,
@@ -469,6 +464,7 @@ export function DefaultHtmlButtonRenderer({
   inline,
   textClass,
   className,
+  notWrapInText,
   ...props
 }: HtmlButtonProperties) {
   return <button className={clsx(className, textClass)} {...props} />;

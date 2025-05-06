@@ -56,8 +56,6 @@ export interface ControlState {
   readonly: boolean;
   hidden: boolean;
   disabled: boolean;
-  displayOnly: boolean;
-  inline: boolean;
   clearHidden: boolean;
   variables: Record<string, any>;
 }
@@ -66,8 +64,6 @@ export interface FormContextOptions {
   readonly?: boolean | null;
   hidden?: boolean | null;
   disabled?: boolean | null;
-  displayOnly?: boolean;
-  inline?: boolean;
   clearHidden?: boolean;
   stateKey?: string;
   variables?: Record<string, any>;
@@ -281,8 +277,6 @@ export function createFormState(
           clearHidden: false,
           hidden: false,
           variables: controlImpl.fields.variables.current.value ?? {},
-          displayOnly: false,
-          inline: false,
           stateId,
         });
 

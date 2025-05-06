@@ -102,12 +102,11 @@ export function RenderForm({
     textClass,
     ...inheritableOptions
   } = options;
-  const { readonly, hidden, disabled, displayOnly, variables } = state;
+  const { readonly, hidden, disabled, variables } = state;
   const childOptions: ControlRenderOptions = {
     ...inheritableOptions,
     readonly,
     disabled,
-    displayOnly,
     variables,
     formState,
   };
@@ -141,6 +140,8 @@ export function RenderForm({
         />
       );
     },
+    inline: options?.inline,
+    displayOnly: options?.displayOnly,
     createDataProps: defaultDataProps,
     formOptions: state,
     dataContext,
