@@ -98,11 +98,16 @@ function RNDateTimePicker({
     hidePicker();
   };
 
+  // Fix IOS propagating
+  function onPress() {
+    !disabled && (isVisible.value = true);
+  }
+
   return (
     <View>
       <Pressable
         className={"pointer-events-auto flex flex-row"}
-        onPress={() => !disabled && (isVisible.value = true)}
+        onPress={onPress}
       >
         <RNTextInput
           className={cn(className, "flex-1")}
@@ -110,6 +115,7 @@ function RNDateTimePicker({
           readOnly
           value={formattedDate ?? ""}
           placeholder={"dd/mm/yyyy"}
+          onPress={onPress}
         />
         <View
           className={
