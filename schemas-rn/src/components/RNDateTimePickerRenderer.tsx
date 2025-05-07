@@ -1,7 +1,7 @@
 ﻿import DateTimePickerModal, {
   DateTimePickerProps,
 } from "react-native-modal-datetime-picker";
-import { Pressable, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import { RNTextInput } from "./RNTextInput";
 import { Control, useControl } from "@react-typed-forms/core";
 import {
@@ -22,6 +22,8 @@ import {
   toCalendarDateTime,
   toTime,
 } from "@internationalized/date";
+import { cn } from "../utils";
+import { FontAwesome5 } from "@expo/vector-icons";
 
 export type RNDateTimeProps = Pick<
   DateTimePickerProps,
@@ -30,6 +32,7 @@ export type RNDateTimeProps = Pick<
   control: Control<string | null>;
   readonly?: boolean;
   className?: string;
+  placeholder?: string;
 };
 
 export function createRNDateTimePickerRenderer(
@@ -98,15 +101,23 @@ function RNDateTimePicker({
   return (
     <View>
       <Pressable
-        className={"pointer-events-auto"}
+        className={"pointer-events-auto flex flex-row"}
         onPress={() => !disabled && (isVisible.value = true)}
       >
         <RNTextInput
-          className={className}
+          className={cn(className, "flex-1")}
           disabled={disabled}
           readOnly
           value={formattedDate ?? ""}
+          placeholder={"dd/mm/yyyy"}
         />
+        <View
+          className={
+            "flex flex-row bg-[#F5F5F5] size-[54px] items-center justify-center border border-[#E7E7E8]"
+          }
+        >
+          <FontAwesome5 name={"calendar-alt"} size={20} color={"#343534"} />
+        </View>
       </Pressable>
 
       <DateTimePickerModal

@@ -2,6 +2,8 @@ import {
   ControlDefinition,
   ControlDefinitionType,
   DataControlDefinition,
+  GroupedControlsDefinition,
+  GroupRenderType,
   isDataControl,
   isGroupControl,
 } from "./controlDefinition";
@@ -123,7 +125,11 @@ export function createFormTree(
   return new FormTreeImpl(getForm, {
     type: ControlDefinitionType.Group,
     children: controls,
-  });
+    groupOptions: {
+      type: GroupRenderType.Standard,
+      hideTitle: true,
+    },
+  } as GroupedControlsDefinition);
 }
 
 export function createFormLookup<A extends Record<string, ControlDefinition[]>>(
