@@ -11,10 +11,12 @@ import {
 
 export interface DefaultActionRendererOptions {
   buttonClass?: string;
-  primaryClass?: string;
-  secondaryClass?: string;
-  linkClassName?: string;
   textClass?: string;
+  primaryClass?: string;
+  primaryTextClass?: string;
+  secondaryClass?: string;
+  secondaryTextClass?: string;
+  linkClassName?: string;
   linkTextClass?: string;
   iconBeforeClass?: string;
   iconAfterClass?: string;
@@ -82,7 +84,14 @@ export function createButtonActionRenderer(
 
       const textClassNames = rendererClass(
         textClass,
-        isLink ? options.linkTextClass : options.textClass,
+        isLink
+          ? options.linkTextClass
+          : rendererClass(
+              options.textClass,
+              actionStyle == ActionStyle.Secondary
+                ? options.secondaryTextClass
+                : options.primaryTextClass,
+            ),
       );
 
       const textElement = actionText && (
