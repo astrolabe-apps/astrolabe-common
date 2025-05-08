@@ -37,6 +37,11 @@ export const reactNativeHtml: HtmlComponents = {
 
 export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
   {
+    data: {
+      checkOptions: {
+        entryClass: "flex flex-row items-center gap-[8px]",
+      },
+    },
     label: {
       labelContainer: (c) => (
         <View className="flex flex-row gap-4 items-center" children={c} />

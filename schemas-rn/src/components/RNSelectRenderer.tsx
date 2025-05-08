@@ -10,6 +10,7 @@ import {
 } from "@react-typed-forms/schemas-html";
 import {
   createDataRenderer,
+  DataRenderType,
   FieldOption,
   FieldType,
   rendererClass,
@@ -18,6 +19,7 @@ import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollView } from "react-native-gesture-handler";
 import { Icon } from "./Icon";
+import { useComputed } from "@react-typed-forms/core";
 
 export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
   return createDataRenderer(
@@ -36,7 +38,11 @@ export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
         />
       );
     },
-    { options: true, schemaType: FieldType.String },
+    {
+      options: true,
+      schemaType: [FieldType.String, FieldType.Int],
+      renderType: DataRenderType.Dropdown,
+    },
   );
 }
 
@@ -71,6 +77,19 @@ function RNSelectRenderer({
     [options],
   );
 
+  const selectedOption = useComputed(() => {
+    return options
+      .filter((x) => x.value === value)
+      .map(
+        (x) =>
+          ({
+            value: convert(x.value).toString(),
+            label: x.name,
+          }) satisfies Option,
+      )
+      .at(0);
+  });
+
   return (
     <Select
       {...props}
@@ -84,6 +103,7 @@ function RNSelectRenderer({
         if (!o) return;
         state.value = optionStringMap[o.value];
       }}
+      value={selectedOption.value}
     >
       <SelectTrigger className={"bg-white"}>
         <SelectValue placeholder={required ? requiredText : emptyText} />
