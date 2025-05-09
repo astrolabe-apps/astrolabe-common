@@ -1,7 +1,6 @@
 import {
   Control,
   formControlProps,
-  RenderForm,
   useControlEffect,
 } from "@react-typed-forms/core";
 import { InputHTMLAttributes, useState } from "react";

@@ -1,4 +1,4 @@
-import { Control, RenderForm } from "@react-typed-forms/core";
+import { Control, formControlProps } from "@react-typed-forms/core";
 import { FormControl as FC, FormHelperText, FormLabel } from "@mui/material";
 import React, { ReactNode } from "react";
 
@@ -6,7 +6,7 @@ export type CheckPropsFunc<A> = (value: A) => {
   checked: boolean;
   onChange: (
     event: React.ChangeEvent<HTMLInputElement>,
-    checked: boolean
+    checked: boolean,
   ) => void;
 };
 
@@ -37,22 +37,18 @@ export function FCheckList<A>({
         const current = isSelected(v);
         if (current !== c) {
           state.setValue((x) =>
-            current ? x.filter((a) => !comp(a, v)) : [...x, v]
+            current ? x.filter((a) => !comp(a, v)) : [...x, v],
           );
         }
       },
     };
   };
+  const { errorText } = formControlProps(state);
   return (
-    <RenderForm
-      control={state}
-      children={({ errorText }) => (
-        <FC error={Boolean(errorText)}>
-          <FormLabel>{label}</FormLabel>
-          {children(checkProps)}
-          <FormHelperText>{errorText ?? helperText}</FormHelperText>
-        </FC>
-      )}
-    />
+    <FC error={Boolean(errorText)}>
+      <FormLabel>{label}</FormLabel>
+      {children(checkProps)}
+      <FormHelperText>{errorText ?? helperText}</FormHelperText>
+    </FC>
   );
 }
