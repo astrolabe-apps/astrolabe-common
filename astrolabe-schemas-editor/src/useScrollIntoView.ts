@@ -1,13 +1,13 @@
-import { useEffect, useRef } from "react";
-import { useInViewEffect } from "react-hook-inview";
+import { useRef } from "react";
 import { useControl, useControlEffect } from "@react-typed-forms/core";
+import useObserver from "react-hook-inview/dist/useObserver.js";
 
 export function useScrollIntoView<E extends HTMLElement = HTMLDivElement>(
   shouldBeInView: boolean,
 ) {
   const inViewControl = useControl(true);
   const itemRef = useRef<HTMLElement | null>();
-  const setElement = useInViewEffect(
+  const setElement = useObserver(
     ([entry], observer) => (inViewControl.value = entry.isIntersecting),
   );
   useControlEffect(
