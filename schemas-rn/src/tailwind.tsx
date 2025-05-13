@@ -102,6 +102,7 @@ function RNButton({
   children,
   notWrapInText,
   androidRippleColor,
+  nonTextContent,
   ...props
 }: HtmlButtonProperties) {
   if (inline) {
@@ -122,7 +123,11 @@ function RNButton({
         color: androidRippleColor,
       }}
     >
-      {notWrapInText ? children : <Text className={textClass}>{children}</Text>}
+      {notWrapInText || nonTextContent ? (
+        children
+      ) : (
+        <Text className={textClass}>{children}</Text>
+      )}
     </Pressable>
   );
 }
