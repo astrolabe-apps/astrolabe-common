@@ -434,6 +434,7 @@ export enum ActionStyle {
   Button = "Button",
   Secondary = "Secondary",
   Link = "Link",
+  Group = "Group",
 }
 
 export enum IconPlacement {

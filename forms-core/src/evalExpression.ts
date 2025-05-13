@@ -66,7 +66,8 @@ const notEmptyEval: ExpressionEval<NotEmptyExpression> = (
     const otherField = schemaDataForFieldRef(expr.field, dataNode);
     const fv = otherField.control?.value;
     const field = otherField.schema.field;
-    returnResult(field && !schemaInterface.isEmptyValue(field, fv));
+    const empty = !!expr.empty;
+    returnResult(field && empty === schemaInterface.isEmptyValue(field, fv));
   }, scope);
 };
 

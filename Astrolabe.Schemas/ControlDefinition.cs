@@ -102,6 +102,7 @@ public enum ActionStyle
     Button,
     Secondary,
     Link,
+    Group
 }
 
 [JsonString]

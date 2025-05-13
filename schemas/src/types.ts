@@ -7,8 +7,8 @@ import {
   SchemaDataNode,
   SchemaInterface,
 } from "@astroapps/forms-core";
-import React, { Key } from "react";
-import { CleanupScope, Control } from "@react-typed-forms/core";
+import React, { Key, ReactNode } from "react";
+import { CleanupScope } from "@react-typed-forms/core";
 
 /**
  * Interface representing the control data context.
@@ -29,6 +29,7 @@ export type ControlActionHandler = (
 export interface ActionRendererProps {
   key?: Key;
   actionId: string;
+  actionContent?: ReactNode;
   actionText: string;
   actionData?: any;
   actionStyle?: ActionStyle | null;

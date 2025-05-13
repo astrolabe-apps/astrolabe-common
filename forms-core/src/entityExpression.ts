@@ -28,8 +28,9 @@ export interface DataMatchExpression extends EntityExpression {
 }
 
 export interface NotEmptyExpression extends EntityExpression {
-  type: ExpressionType.DataMatch;
+  type: ExpressionType.NotEmpty;
   field: string;
+  empty?: boolean | null;
 }
 
 export interface UserMatchExpression extends EntityExpression {

@@ -1,32 +1,59 @@
 {
   "controls": [
     {
-      "type": "Data",
+      "type": "Action",
       "title": "New",
       "children": [
         {
-          "type": "Data",
-          "field": "text",
-          "renderOptions": {
-            "type": "Standard"
+          "type": "Display",
+          "title": "Cool",
+          "displayData": {
+            "type": "Text",
+            "text": "Cool"
           }
         },
         {
           "type": "Data",
-          "field": "../../array",
-          "renderOptions": {
-            "type": "ElementSelected",
-            "elementExpression": {
+          "title": "New",
+          "children": [
+            {
               "type": "Data",
-              "field": "text"
+              "field": "text",
+              "renderOptions": {
+                "type": "Standard"
+              }
+            },
+            {
+              "type": "Data",
+              "field": "../../array",
+              "renderOptions": {
+                "type": "ElementSelected",
+                "elementExpression": {
+                  "type": "Data",
+                  "field": "text"
+                }
+              }
             }
-          }
+          ],
+          "field": "stuff",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "defaultValue": null,
+          "dynamic": [
+            {
+              "type": "Label",
+              "expr": {
+                "type": "NotEmpty",
+                "field": "time",
+                "empty": true
+              }
+            }
+          ]
         }
       ],
-      "field": "stuff",
-      "renderOptions": {
-        "type": "Standard"
-      }
+      "icon": {},
+      "actionStyle": "Group"
     }
   ],
   "config": null

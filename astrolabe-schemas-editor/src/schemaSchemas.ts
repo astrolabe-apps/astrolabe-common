@@ -346,6 +346,7 @@ export interface EntityExpressionForm {
   expression: string;
   field: string;
   value: any;
+  empty: boolean | null;
   userMatch: string;
 }
 
@@ -405,6 +406,11 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
     required: true,
     displayName: "Value",
     tags: ["_ValuesOf:field"],
+  }),
+  empty: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["NotEmpty"],
+    displayName: "Empty",
   }),
   userMatch: makeScalarField({
     type: FieldType.String,
@@ -1498,6 +1504,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
       {
         name: "Link",
         value: "Link",
+      },
+      {
+        name: "Group",
+        value: "Group",
       },
     ],
   }),

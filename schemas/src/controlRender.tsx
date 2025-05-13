@@ -19,6 +19,7 @@ import {
   ArrayActionOptions,
   ControlAdornment,
   ControlDefinition,
+  ControlDefinitionType,
   ControlState,
   CustomDisplay,
   DataControlDefinition,
@@ -26,11 +27,11 @@ import {
   DisplayData,
   DisplayDataType,
   FieldOption,
-  FormContextData,
   FormContextOptions,
   FormNode,
   FormState,
   GroupRenderOptions,
+  GroupRenderType,
   isActionControl,
   isDataControl,
   isDisplayControl,
@@ -116,6 +117,7 @@ export interface HtmlButtonProperties {
   title?: string;
   notWrapInText?: boolean;
   androidRippleColor?: string;
+  nonTextContent?: boolean;
 }
 export interface HtmlComponents {
   Div: ComponentType<HtmlDivProperties>;
@@ -487,10 +489,10 @@ export function defaultDataProps(
             .map((x) =>
               typeof x === "object"
                 ? x
-                : fieldOptions?.find((y) => y.value == x) ?? {
+                : (fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  },
+                  }),
             )
             .filter((x) => x != null)
         : fieldOptions,
@@ -620,13 +622,17 @@ export function renderControlLayout(
   }
   if (isActionControl(c)) {
     const actionData = c.actionData;
+    const actionStyle = c.actionStyle ?? ActionStyle.Button;
+    const actionContent =
+      actionStyle == ActionStyle.Group ? renderActionGroup() : undefined;
     return {
       inline,
       children: renderer.renderAction({
         actionText: c.title ?? c.actionId,
         actionId: c.actionId,
         actionData,
-        actionStyle: c.actionStyle ?? ActionStyle.Button,
+        actionContent,
+        actionStyle,
         textClass: rendererClass(textClass, c.textClass),
         iconPlacement: c.iconPlacement,
         icon: c.icon,
@@ -638,6 +644,17 @@ export function renderControlLayout(
         style,
       }),
     };
+
+    function renderActionGroup() {
+      const childDefs = formNode.getResolvedChildren();
+      const childDef = {
+        type: ControlDefinitionType.Group,
+        groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
+        children: childDefs,
+      };
+      const childNode: FormNode = formNode.createChildNode("child", childDef);
+      return renderChild("child", childNode, {});
+    }
   }
   if (isDisplayControl(c)) {
     const data = c.displayData ?? {};

@@ -471,9 +471,27 @@ export function DefaultHtmlButtonRenderer({
   textClass,
   className,
   notWrapInText,
+  androidRippleColor,
+  onClick,
+  nonTextContent,
   ...props
 }: HtmlButtonProperties) {
-  return <button className={clsx(className, textClass)} {...props} />;
+  const Comp = nonTextContent ? "div" : "button";
+  return (
+    <Comp
+      role={nonTextContent ? "button" : undefined}
+      onClick={
+        onClick
+          ? (e) => {
+              e.stopPropagation();
+              onClick();
+            }
+          : undefined
+      }
+      className={clsx(className, textClass)}
+      {...props}
+    />
+  );
 }
 export function DefaultHtmlInputRenderer({
   textClass,

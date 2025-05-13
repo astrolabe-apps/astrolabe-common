@@ -1,28 +1,19 @@
-import { Control, newControl } from "@react-typed-forms/core";
+import { Control } from "@react-typed-forms/core";
 import {
   ActionControlDefinition,
+  ActionStyle,
   ControlDefinition,
   ControlDefinitionType,
-  CreateDataProps,
-  defaultDataProps,
   FieldOption,
   FieldType,
-  getSchemaFieldList,
   isCompoundField,
   isCompoundNode,
-  schemaDataForFieldRef,
   SchemaField,
-  schemaForFieldRef,
   SchemaMap,
   SchemaNode,
-  useUpdatedRef,
 } from "@react-typed-forms/schemas";
-import {
-  ControlDefinitionForm,
-  defaultSchemaFieldForm,
-  SchemaFieldForm,
-} from "./schemaSchemas";
-import { ReactElement, useCallback } from "react";
+import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
+import { ReactElement } from "react";
 import { SchemaLoader } from "./types";
 
 export type ControlForm = Control<ControlDefinitionForm>;
@@ -113,6 +104,7 @@ export function canAddChildren(x: ControlDefinition, dataNode?: SchemaNode) {
     case ControlDefinitionType.Group:
       return true;
     case ControlDefinitionType.Action:
+      return (x as ActionControlDefinition).actionStyle === ActionStyle.Group;
     case ControlDefinitionType.Display:
       return false;
     case ControlDefinitionType.Data:

@@ -16,10 +16,11 @@ export interface DefaultActionRendererOptions {
   primaryTextClass?: string;
   secondaryClass?: string;
   secondaryTextClass?: string;
-  linkClassName?: string;
+  linkClass?: string;
   linkTextClass?: string;
   iconBeforeClass?: string;
   iconAfterClass?: string;
+  groupClass?: string;
   renderContent?: (
     actionText: string,
     actionId: string,
@@ -50,6 +51,7 @@ export function createButtonActionRenderer(
         textClass,
         actionStyle,
         inline,
+        actionContent,
       } = props;
       const icon = props.icon?.name ? props.icon : options.icon;
       const iconPlacement =
@@ -59,16 +61,19 @@ export function createButtonActionRenderer(
 
       const { Button, I, Span } = renderer.html;
       const isLink = actionStyle == ActionStyle.Link;
+      const isGroup = actionStyle == ActionStyle.Group;
       const classNames = rendererClass(
         className,
         isLink
-          ? options.linkClassName
-          : rendererClass(
-              options.buttonClass,
-              actionStyle == ActionStyle.Secondary
-                ? options.secondaryClass
-                : options.primaryClass,
-            ),
+          ? options.linkClass
+          : isGroup
+            ? options.groupClass
+            : rendererClass(
+                options.buttonClass,
+                actionStyle == ActionStyle.Secondary
+                  ? options.secondaryClass
+                  : options.primaryClass,
+              ),
       );
       const iconElement = icon && (
         <I
@@ -94,9 +99,9 @@ export function createButtonActionRenderer(
             ),
       );
 
-      const textElement = actionText && (
-        <Span className={textClassNames}>{actionText}</Span>
-      );
+      const textElement =
+        actionContent ??
+        (actionText && <Span className={textClassNames}>{actionText}</Span>);
 
       return (
         <Button
@@ -107,6 +112,7 @@ export function createButtonActionRenderer(
           style={style}
           onClick={onClick}
           inline={inline}
+          nonTextContent={isGroup}
           title={
             iconPlacement == IconPlacement.ReplaceText ? actionText : undefined
           }
