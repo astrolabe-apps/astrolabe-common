@@ -488,7 +488,7 @@ export function DefaultHtmlButtonRenderer({
             }
           : undefined
       }
-      className={clsx(className, textClass)}
+      className={nonTextContent ? className : clsx(className, textClass)}
       {...props}
     />
   );
