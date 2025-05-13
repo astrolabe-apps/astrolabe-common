@@ -103,6 +103,7 @@ function RNButton({
   notWrapInText,
   androidRippleColor,
   nonTextContent,
+  onClick,
   ...props
 }: HtmlButtonProperties) {
   if (inline) {
@@ -110,7 +111,7 @@ function RNButton({
       <Text
         {...(props as any)}
         className={textClass}
-        onPress={props.onClick as any}
+        onPress={onClick as any}
         children={children}
       />
     );
@@ -118,7 +119,9 @@ function RNButton({
   return (
     <Pressable
       {...(props as any)}
-      onPress={props.onClick as any}
+      onPress={() => {
+        onClick?.();
+      }}
       android_ripple={{
         color: androidRippleColor,
       }}
