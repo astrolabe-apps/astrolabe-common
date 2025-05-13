@@ -25,6 +25,7 @@ import {
   CheckRendererOptions,
   createCheckboxRenderer,
   createCheckListRenderer,
+  createElementSelectedRenderer,
   createRadioRenderer,
 } from "./components/CheckRenderer";
 import { DefaultAccordion } from "./components/DefaultAccordion";
@@ -131,13 +132,16 @@ export interface DefaultDataRendererOptions {
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
 ): DataRendererRegistration {
+  const elementSelectedRenderer = createElementSelectedRenderer(
+    options.checkboxOptions ?? options.checkOptions,
+  );
   const jsonataRenderer = createJsonataRenderer(options.jsonataClass);
   const nullToggler = createNullToggleRenderer();
   const multilineRenderer = createMultilineFieldRenderer(
     options.multilineClass,
   );
   const checkboxRenderer = createCheckboxRenderer(
-    options.checkOptions ?? options.checkboxOptions,
+    options.checkboxOptions ?? options.checkOptions,
   );
   const selectRenderer = createSelectRenderer(options.selectOptions);
   const radioRenderer = createRadioRenderer(
@@ -234,6 +238,8 @@ export function createDefaultDataRenderer(
         return jsonataRenderer.render(props, renderers);
       case DataRenderType.Autocomplete:
         return autocompleteRenderer.render(props, renderers);
+      case DataRenderType.ElementSelected:
+        return elementSelectedRenderer.render(props, renderers);
     }
     if (fieldType == FieldType.Any) {
       return (

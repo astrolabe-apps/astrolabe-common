@@ -164,6 +164,7 @@ export enum DataRenderType {
   Jsonata = "Jsonata",
   Array = "Array",
   ArrayElement = "ArrayElement",
+  ElementSelected = "ElementSelected",
 }
 
 export interface TextfieldRenderOptions extends RenderOptions {
@@ -260,6 +261,11 @@ export interface ArrayRenderOptions extends RenderOptions {
 export interface ArrayElementRenderOptions extends RenderOptions {
   type: DataRenderType.ArrayElement;
   showInline?: boolean | null;
+}
+
+export interface ElementSelectedRenderOptions extends RenderOptions {
+  type: DataRenderType.ElementSelected;
+  elementExpression: EntityExpression;
 }
 
 export type ArrayActionOptions = Pick<

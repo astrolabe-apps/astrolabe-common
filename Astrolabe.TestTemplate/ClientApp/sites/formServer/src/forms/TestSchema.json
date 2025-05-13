@@ -2,227 +2,30 @@
   "controls": [
     {
       "type": "Data",
-      "title": "Date",
-      "field": "date",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "defaultValue": "2024-10-10",
-      "dynamic": [
+      "title": "New",
+      "children": [
         {
-          "type": "Label",
-          "expr": {
-            "type": "Jsonata",
-            "expression": "wow"
+          "type": "Data",
+          "field": "text",
+          "renderOptions": {
+            "type": "Standard"
           }
         },
         {
-          "type": "LayoutStyle",
-          "expr": {
-            "type": "Jsonata",
-            "expression": "{\u0022backgroundColor\u0022: \u0022red\u0022}"
+          "type": "Data",
+          "field": "../../array",
+          "renderOptions": {
+            "type": "ElementSelected",
+            "elementExpression": {
+              "type": "Data",
+              "field": "text"
+            }
           }
         }
-      ]
-    },
-    {
-      "type": "Data",
-      "title": "Stuff",
+      ],
       "field": "stuff",
-      "children": [
-        {
-          "type": "Group",
-          "title": "",
-          "dynamic": [
-            {
-              "type": "Visible",
-              "expr": {
-                "type": "Jsonata",
-                "expression": "$exists(type)"
-              }
-            }
-          ],
-          "children": [
-            {
-              "type": "Data",
-              "title": "Type",
-              "field": "type",
-              "renderOptions": {
-                "type": "Standard"
-              }
-            },
-            {
-              "type": "Data",
-              "title": "Disable",
-              "field": "disable",
-              "renderOptions": {
-                "type": "Standard"
-              }
-            },
-            {
-              "type": "Data",
-              "title": "Pure Text",
-              "field": "text",
-              "renderOptions": {
-                "type": "Standard"
-              },
-              "defaultValue": null,
-              "dynamic": [
-                {
-                  "type": "Visible",
-                  "expr": {
-                    "type": "Jsonata",
-                    "expression": "disable"
-                  }
-                }
-              ],
-              "validators": [
-                {
-                  "type": "Length",
-                  "min": 3
-                }
-              ]
-            },
-            {
-              "type": "Data",
-              "title": "String",
-              "field": "options",
-              "renderOptions": {
-                "type": "Standard"
-              },
-              "defaultValue": null
-            },
-            {
-              "type": "Data",
-              "title": "String",
-              "field": "singleOption",
-              "renderOptions": {
-                "type": "Standard"
-              },
-              "defaultValue": null,
-              "dynamic": [
-                {
-                  "type": "AllowedOptions",
-                  "expr": {
-                    "type": "Jsonata",
-                    "expression": "1"
-                  }
-                }
-              ]
-            }
-          ],
-          "groupOptions": {
-            "hideTitle": true
-          }
-        }
-      ],
       "renderOptions": {
         "type": "Standard"
-      }
-    },
-    {
-      "type": "Display",
-      "title": "Text",
-      "displayData": {
-        "type": "Text",
-        "text": "Text"
-      },
-      "dynamic": [
-        {
-          "type": "Display",
-          "expr": {
-            "type": "Jsonata",
-            "expression": "\u0022This is my display\u0022"
-          }
-        }
-      ]
-    },
-    {
-      "type": "Display",
-      "title": "New",
-      "displayData": {
-        "type": "Html",
-        "html": "\u003Cb\u003EBOLD\u003C/b\u003E"
-      },
-      "dynamic": [
-        {
-          "type": "Display",
-          "expr": {
-            "type": "Jsonata",
-            "expression": "\u0022\u003Cb\u003Easad\u003Ci\u003Easd\u003C/i\u003E\u003C/b\u003E\u0022"
-          }
-        }
-      ]
-    },
-    {
-      "type": "Action",
-      "title": "Test",
-      "dynamic": [
-        {
-          "type": "ActionData",
-          "expr": {
-            "type": "UUID"
-          }
-        }
-      ],
-      "icon": {}
-    },
-    {
-      "type": "Group",
-      "title": "New",
-      "children": [
-        {
-          "type": "Display",
-          "title": "dwadawd",
-          "displayData": {
-            "type": "Text",
-            "text": "1"
-          }
-        },
-        {
-          "type": "Display",
-          "title": "2",
-          "displayData": {
-            "type": "Text",
-            "text": "2"
-          },
-          "dynamic": [
-            {
-              "type": "Visible",
-              "expr": {
-                "type": "Jsonata",
-                "expression": "false"
-              }
-            }
-          ]
-        },
-        {
-          "type": "Display",
-          "title": "3",
-          "displayData": {
-            "type": "Text",
-            "text": "3"
-          }
-        },
-        {
-          "type": "Action",
-          "title": "4",
-          "icon": {}
-        },
-        {
-          "type": "Action",
-          "title": "5",
-          "icon": {}
-        },
-        {
-          "type": "Action",
-          "title": "6",
-          "icon": {}
-        }
-      ],
-      "groupOptions": {
-        "type": "Grid",
-        "columns": 3
       }
     }
   ],

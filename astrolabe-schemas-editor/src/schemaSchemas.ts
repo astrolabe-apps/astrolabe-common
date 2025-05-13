@@ -889,6 +889,7 @@ export interface RenderOptionsForm {
   syncType: SyncTextType;
   iconMappings: IconMappingForm[];
   allowImages: boolean;
+  elementExpression: EntityExpressionForm;
 }
 
 export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
@@ -975,6 +976,10 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
       {
         name: "Array Element",
         value: "ArrayElement",
+      },
+      {
+        name: "Element Selected",
+        value: "ElementSelected",
       },
     ],
   }),
@@ -1176,6 +1181,14 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     notNullable: true,
     required: true,
     displayName: "Allow Images",
+  }),
+  elementExpression: makeCompoundField({
+    children: EntityExpressionSchema,
+    schemaRef: "EntityExpression",
+    onlyForTypes: ["ElementSelected"],
+    notNullable: true,
+    displayName: "Element Expression",
+    tags: ["_ControlRef:Expression"],
   }),
 });
 

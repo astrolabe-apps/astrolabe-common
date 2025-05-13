@@ -1,17 +1,19 @@
 import {
   Control,
-  FcheckboxProps,
   formControlProps,
   RenderArrayElements,
   useComputed,
+  useControl,
+  useControlEffect,
 } from "@react-typed-forms/core";
-import React, { ReactNode } from "react";
+import React, { ReactNode, useEffect } from "react";
 import {
   CheckEntryClasses,
   ControlLayoutProps,
   createDataRenderer,
   DataRendererProps,
   DataRenderType,
+  ElementSelectedRenderOptions,
   FieldOption,
   fieldOptionAdornment,
   FormRenderer,
@@ -186,6 +188,78 @@ export function createCheckboxRenderer(options: CheckRendererOptions = {}) {
       ),
     }),
     { renderType: DataRenderType.Checkbox },
+  );
+}
+
+export function createElementSelectedRenderer(
+  options: CheckRendererOptions = {},
+) {
+  return createDataRenderer(
+    (props, renderer) => (p) => ({
+      ...p,
+      label: undefined,
+      children: (
+        <CheckBoxSelected
+          p={p}
+          renderer={renderer}
+          options={options}
+          props={props}
+        />
+      ),
+    }),
+    {
+      renderType: DataRenderType.ElementSelected,
+    },
+  );
+}
+
+function CheckBoxSelected({
+  p,
+  props,
+  renderer,
+  options,
+}: {
+  p: ControlLayoutProps;
+  props: DataRendererProps;
+  renderer: FormRenderer;
+  options: CheckRendererOptions;
+}) {
+  const { Div } = renderer.html;
+  const elementValue = useControl();
+  useEffect(() => {
+    props.runExpression(
+      elementValue,
+      (props.renderOptions as ElementSelectedRenderOptions).elementExpression,
+      (v) => (elementValue.value = v as any),
+    );
+  });
+  const isSelected = useComputed(
+    () =>
+      props.control
+        .as<any[] | undefined>()
+        .value?.includes(elementValue.current.value) ?? false,
+  );
+  const selControl = useControl(() => isSelected.current.value);
+  selControl.value = isSelected.value;
+  useControlEffect(
+    () => selControl.value,
+    (v) => {
+      props.control
+        .as<any[] | undefined>()
+        .setValue((x) => setIncluded(x ?? [], elementValue.value, v));
+    },
+  );
+  return (
+    <Div className={rendererClass(props.className, options.entryClass)}>
+      <Fcheckbox
+        id={props.id}
+        control={selControl}
+        style={props.style}
+        className={options.checkClass}
+        renderer={renderer}
+      />
+      {p.label && renderer.renderLabel(p.label, undefined, undefined)}
+    </Div>
   );
 }
 
