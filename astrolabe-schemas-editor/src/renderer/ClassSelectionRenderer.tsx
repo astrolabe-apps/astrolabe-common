@@ -14,7 +14,11 @@ import clsx from "clsx";
 export function createClassSelectionRenderer(classes: [string, string][] = []) {
   return createDataRenderer(
     (p) => (
-      <ComboBox onInputChange={(x) => (p.control.value = x)} allowsCustomValue>
+      <ComboBox
+        onInputChange={(x) => (p.control.value = x)}
+        inputValue={p.control.value}
+        allowsCustomValue
+      >
         <div className="flex">
           <Input className="w-full" />
           <Button>▼</Button>
