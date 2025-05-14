@@ -151,7 +151,7 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex flex-row h-10 native:h-12 items-center text-sm justify-between rounded-md border border-input bg-background px-3 py-2 web:ring-offset-background text-muted-foreground web:focus:outline-none web:focus:ring-2 web:focus:ring-ring web:focus:ring-offset-2 [&>span]:line-clamp-1",
+      "flex flex-row h-10 native:h-12 items-center text-sm justify-between border border-[#E7E7E8] bg-background px-3 py-2 web:ring-offset-background text-muted-foreground web:focus:outline-none web:focus:ring-2 web:focus:ring-ring web:focus:ring-offset-2 [&>span]:line-clamp-1",
       props.disabled && "web:cursor-not-allowed opacity-50",
       className,
     )}
@@ -160,7 +160,7 @@ const SelectTrigger = React.forwardRef<
     <Pressable>{children}</Pressable>
     <Icon
       name={"chevron-down"}
-      className={"!text-[16px] text-foreground opacity-50"}
+      className={"!text-[12px] text-foreground text-accent"}
     />
   </SelectPrimitive.Trigger>
 ));
