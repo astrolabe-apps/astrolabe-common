@@ -460,7 +460,7 @@
                 "title": "Type",
                 "field": "type",
                 "renderOptions": {
-                  "type": "Radio"
+                  "type": "Dropdown"
                 }
               },
               {

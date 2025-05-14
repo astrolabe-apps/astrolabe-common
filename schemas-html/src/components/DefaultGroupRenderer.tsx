@@ -1,4 +1,5 @@
 import {
+  ControlLayoutProps,
   FlexRenderer,
   FormRenderer,
   GroupRendererProps,
@@ -16,7 +17,7 @@ import {
   useExpression,
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
-import React, { CSSProperties } from "react";
+import React, { CSSProperties, ReactElement } from "react";
 import { createTabsRenderer, DefaultTabsRenderOptions } from "./TabsRenderer";
 import { createGridRenderer, DefaultGridRenderOptions } from "./GridRenderer";
 import {
@@ -113,7 +114,27 @@ export function createDefaultGroupRenderer(
     );
   }
 
-  return { type: "group", render };
+  function renderLayout(
+    props: GroupRendererProps,
+    renderer: FormRenderer,
+  ): ReactElement | ((layout: ControlLayoutProps) => ControlLayoutProps) {
+    if (props.renderOptions.type === GroupRenderType.Contents) {
+      const { formNode, renderChild } = props;
+      const children = formNode
+        .getChildNodes()
+        .map((c, i) => renderChild(i, c));
+      return (layout) => {
+        return {
+          ...layout,
+          inline: true,
+          children,
+        };
+      };
+    }
+    return render(props, renderer);
+  }
+
+  return { type: "group", render: renderLayout };
 }
 
 type SelectChildProps = Pick<

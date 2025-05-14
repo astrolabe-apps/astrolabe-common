@@ -346,7 +346,8 @@ public enum GroupRenderType
     SelectChild,
     Inline,
     Wizard,
-    Dialog
+    Dialog,
+    Contents
 }
 
 [JsonBaseType("type", typeof(SimpleGroupRenderOptions))]
@@ -358,6 +359,7 @@ public enum GroupRenderType
 [JsonSubType("SelectChild", typeof(SelectChildRenderer))]
 [JsonSubType("Inline", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("Wizard", typeof(SimpleGroupRenderOptions))]
+[JsonSubType("Contents", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("Dialog", typeof(DialogRenderOptions))]
 public abstract record GroupRenderOptions(
     [property: SchemaOptions(typeof(GroupRenderType))]

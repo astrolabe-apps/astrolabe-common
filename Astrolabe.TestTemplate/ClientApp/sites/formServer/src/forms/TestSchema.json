@@ -54,6 +54,23 @@
       ],
       "icon": {},
       "actionStyle": "Group"
+    },
+    {
+      "type": "Group",
+      "title": "New",
+      "groupOptions": {
+        "type": "Contents"
+      },
+      "children": [
+        {
+          "type": "Display",
+          "title": "test",
+          "displayData": {
+            "type": "Text",
+            "text": "test"
+          }
+        }
+      ]
     }
   ],
   "config": null

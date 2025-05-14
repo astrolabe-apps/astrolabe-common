@@ -756,6 +756,10 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
         name: "Dialog",
         value: "Dialog",
       },
+      {
+        name: "Contents",
+        value: "Contents",
+      },
     ],
   }),
   hideTitle: makeScalarField({

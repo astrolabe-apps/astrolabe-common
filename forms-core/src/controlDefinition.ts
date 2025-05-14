@@ -343,6 +343,7 @@ export enum GroupRenderType {
   Inline = "Inline",
   Wizard = "Wizard",
   Dialog = "Dialog",
+  Contents = "Contents",
 }
 
 export interface DialogRenderOptions extends GroupRenderOptions {
