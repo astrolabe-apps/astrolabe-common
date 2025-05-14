@@ -20,7 +20,7 @@ export function createClassSelectionRenderer(classes: [string, string][] = []) {
         allowsCustomValue
       >
         <div className="flex">
-          <Input className="w-full" />
+          <Input className="w-full form-control" />
           <Button>▼</Button>
         </div>
         <Popover>
