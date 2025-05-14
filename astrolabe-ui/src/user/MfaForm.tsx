@@ -11,17 +11,19 @@ import { Button } from "../Button";
 import { Textfield } from "../Textfield";
 import React from "react";
 
+type MfaFormProps = {
+  className?: string;
+  control: Control<MfaFormData>;
+  authenticate: () => Promise<boolean>;
+  send: () => Promise<boolean>;
+};
+
 export function MfaForm({
   className,
   control,
   authenticate,
   send,
-}: {
-  className?: string;
-  control: Control<MfaFormData>;
-  authenticate: () => Promise<boolean>;
-  send: () => Promise<boolean>;
-}) {
+}: MfaFormProps) {
   const {
     fields: { code, token, updateNumber, number },
     error,

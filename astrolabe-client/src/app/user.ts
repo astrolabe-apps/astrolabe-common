@@ -14,8 +14,8 @@ export interface AuthPageSetup {
   hrefs: {
     login: string;
     signup: string;
+    forgotPassword: string;
     resetPassword: string;
-    changePassword: string;
     mfa: string;
   };
   errors: {
@@ -42,8 +42,8 @@ export const defaultUserAuthPageSetup: AuthPageSetup = {
   hrefs: {
     login: "/login",
     signup: "/signup",
+    forgotPassword: "/forgotPassword",
     resetPassword: "/resetPassword",
-    changePassword: "/changePassword",
     mfa: "/mfa",
   },
   errors: {
@@ -83,12 +83,22 @@ export const emptyLoginForm: LoginFormData = {
   rememberMe: false,
 };
 
-export interface ResetPasswordFormData {
+export interface ForgotPasswordFormData {
   email: string;
 }
 
-export const emptyResetPasswordForm = {
+export const emptyForgotPasswordForm = {
   email: "",
+};
+
+export interface ResetPasswordFormData {
+  password: string;
+  confirm: string;
+}
+
+export const emptyResetPasswordForm: ResetPasswordFormData = {
+  password: "",
+  confirm: "",
 };
 
 export interface SignupFormData {
@@ -118,10 +128,6 @@ export const emptyChangePasswordForm: ChangePasswordFormData = {
 export interface PasswordChangeProps {
   control: Control<ChangePasswordFormData>;
   changePassword: () => Promise<boolean>;
-  confirmPrevious: boolean;
-  send?: () => Promise<boolean>;
-  mfaControl?: Control<MfaFormData>;
-  mfaAuthenticate?: () => Promise<boolean>;
 }
 
 export interface ChangeEmailFormData {
@@ -140,12 +146,7 @@ export interface EmailChangeProps {
 }
 
 export function useChangePasswordPage(
-  runChange: (
-    resetCode: string | null,
-    change: ChangePasswordFormData,
-  ) => Promise<any>,
-  send?: (login: MfaFormData) => Promise<any>,
-  runAuthenticate?: (login: MfaFormData) => Promise<string>,
+  runChange: (change: ChangePasswordFormData) => Promise<any>,
   errors?: Record<number, string>,
 ): PasswordChangeProps {
   const control = useControl(emptyChangePasswordForm);
@@ -154,48 +155,16 @@ export function useChangePasswordPage(
     queryParams: { resetCode: rcp },
     errors: { statusCodes, generic, codeLimit, wrongCode },
   } = useAuthPageSetup();
-  
-  const searchParams = useNavigationService();
-  const resetCode = searchParams.get(rcp);
 
-  const mfaControl = useControl<MfaFormData|null>(resetCode != null ? {
-    token: resetCode,
-    code: "",
-    updateNumber: false,
-    number: null,
-  }: null);
-  
-  const authTokenControl = useControl<string|null>(null);
-  
   return {
     control,
-    confirmPrevious: !resetCode,
-    send: resetCode ? () =>
-      validateAndRunMessages(
-        control,
-        async () => {
-          await send!(mfaControl.value!);
-        },
-        { 429: codeLimit, ...(errors ?? statusCodes) },
-        generic,
-      ) : undefined,
     changePassword: () =>
       validateAndRunMessages(
         control,
-        () => runChange(authTokenControl.value, control.value),
+        () => runChange(control.value),
         statusCodes ?? errors,
         generic,
       ),
-    mfaControl: resetCode ? mfaControl as Control<MfaFormData> : undefined,
-    mfaAuthenticate: resetCode ? () =>
-      validateAndRunMessages(
-        control,
-        async () => {
-          authTokenControl.value = await runAuthenticate!(mfaControl.value!);
-        },
-        { 401: wrongCode, ...(errors ?? statusCodes) },
-        generic,
-      ) : undefined,
   };
 }
 
@@ -375,31 +344,103 @@ export function useChangeMfaNumberPage(
   };
 }
 
-export interface ResetPasswordProps {
-  control: Control<ResetPasswordFormData>;
-  resetPassword: () => Promise<boolean>;
+export interface ForgotPasswordProps {
+  control: Control<ForgotPasswordFormData>;
+  requestResetPassword: () => Promise<boolean>;
 }
 
-export function useResetPasswordPage(
-  runResetPassword: (email: string) => Promise<any>,
+export function useForgotPasswordPage(
+  runRequestResetPassword: (email: string) => Promise<any>,
   errors?: Record<number, string>,
-): ResetPasswordProps {
+): ForgotPasswordProps {
   const {
     errors: { emptyUsername, emptyEmail, generic, statusCodes },
   } = useAuthPageSetup();
-  const control = useControl<ResetPasswordFormData>(emptyResetPasswordForm, {
+  const control = useControl<ForgotPasswordFormData>(emptyForgotPasswordForm, {
     fields: { email: { validator: notEmpty(emptyEmail ?? emptyUsername) } },
   });
 
   return {
     control,
-    resetPassword: () =>
+    requestResetPassword: () =>
       validateAndRunMessages(
         control,
-        () => runResetPassword(control.fields.email.value),
+        () => runRequestResetPassword(control.fields.email.value),
         errors ?? statusCodes,
         generic,
       ),
+  };
+}
+
+export interface ResetPasswordProps {
+  control: Control<ResetPasswordFormData>;
+  resetPassword: () => Promise<boolean>;
+  send?: () => Promise<boolean>;
+  mfaControl?: Control<MfaFormData>;
+  mfaAuthenticate?: () => Promise<boolean>;
+}
+
+export function useResetPasswordPage(
+  runChange: (resetCode: string, change: ResetPasswordFormData) => Promise<any>,
+  send?: (login: MfaFormData) => Promise<any>,
+  runAuthenticate?: (login: MfaFormData) => Promise<string>,
+  errors?: Record<number, string>,
+): ResetPasswordProps {
+  const control = useControl(emptyResetPasswordForm);
+
+  const {
+    queryParams: { resetCode: rcp },
+    errors: { statusCodes, generic, codeLimit, wrongCode },
+  } = useAuthPageSetup();
+
+  const searchParams = useNavigationService();
+  const resetCode = searchParams.get(rcp);
+
+  const mfaControl = useControl<MfaFormData | null>(
+    resetCode != null
+      ? {
+          token: resetCode,
+          code: "",
+          updateNumber: false,
+          number: null,
+        }
+      : null,
+  );
+
+  const authTokenControl = useControl<string>("");
+
+  return {
+    control,
+    send: () =>
+      validateAndRunMessages(
+        control,
+        async () => {
+          await send!(mfaControl.value!);
+        },
+        { 429: codeLimit, ...(errors ?? statusCodes) },
+        generic,
+      ),
+    resetPassword: () =>
+      validateAndRunMessages(
+        control,
+        () => runChange(authTokenControl.value, control.value),
+        statusCodes ?? errors,
+        generic,
+      ),
+    mfaControl: resetCode ? (mfaControl as Control<MfaFormData>) : undefined,
+    mfaAuthenticate: resetCode
+      ? () =>
+          validateAndRunMessages(
+            control,
+            async () => {
+              authTokenControl.value = await runAuthenticate!(
+                mfaControl.value!,
+              );
+            },
+            { 401: wrongCode, ...(errors ?? statusCodes) },
+            generic,
+          )
+      : undefined,
   };
 }
 
@@ -508,10 +549,14 @@ export function useVerifyPage(
 export const defaultUserRoutes = {
   login: { label: "Login", allowGuests: true, forwardAuthenticated: true },
   logout: { label: "Logout", allowGuests: false },
-  changePassword: { label: "Change password", allowGuests: true },
+  changePassword: { label: "Change password", allowGuests: false },
   changeEmail: { label: "Change email", allowGuests: false },
   resetPassword: {
     label: "Reset password",
+    allowGuests: true,
+  },
+  forgotPassword: {
+    label: "Forgot password",
     allowGuests: true,
     forwardAuthenticated: true,
   },

@@ -3,8 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Astrolabe.LocalUsers;
 
-public abstract class AbstractLocalUserController<TNewUser, TUserId> : ControllerBase 
-    where TNewUser : ICreateNewUser 
+public abstract class AbstractLocalUserController<TNewUser, TUserId> : ControllerBase
+    where TNewUser : ICreateNewUser
 {
     private readonly ILocalUserService<TNewUser, TUserId> _localUserService;
 
@@ -12,7 +12,7 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         _localUserService = localUserService;
     }
-    
+
     [HttpPost("create")]
     public Task CreateAccount([FromBody] TNewUser newUser)
     {
@@ -24,7 +24,7 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         return _localUserService.VerifyAccount(code);
     }
-    
+
     [HttpPost("mfaVerify")]
     public Task<string> MfaVerifyAccount([FromBody] MfaAuthenticateRequest mfaVerifyAccountRequest)
     {
@@ -36,8 +36,7 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         return _localUserService.Authenticate(authenticateRequest);
     }
-    
-    
+
     [HttpPost("mfaCode/authenticate")]
     public async Task SendMfaCode([FromBody] MfaCodeRequest mfaCodeRequest)
     {
@@ -45,7 +44,9 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     }
 
     [HttpPost("mfaAuthenticate")]
-    public async Task<string> MfaAuthenticate([FromBody] MfaAuthenticateRequest mfaAuthenticateRequest)
+    public async Task<string> MfaAuthenticate(
+        [FromBody] MfaAuthenticateRequest mfaAuthenticateRequest
+    )
     {
         return await _localUserService.MfaAuthenticate(mfaAuthenticateRequest);
     }
@@ -61,33 +62,37 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
     {
         return _localUserService.ChangeEmail(email, GetUserId);
     }
-    
+
     [HttpPost("changeMfaNumber")]
     public Task ChangeMfaNumber(ChangeMfaNumber number)
     {
         return _localUserService.ChangeMfaNumber(number, GetUserId);
     }
-    
+
     [HttpPost("mfaChangeMfaNumber")]
     public Task MfaChangeMfaNumber(MfaChangeNumber change)
     {
         return _localUserService.MfaChangeMfaNumber(change, GetUserId);
     }
-    
+
     [Authorize]
-    [AllowAnonymous]
     [HttpPost("changePassword")]
-    public Task<string> ChangePassword([FromBody] ChangePassword change, [FromQuery] string? resetCode)
+    public Task<string> ChangePassword([FromBody] ChangePassword change)
     {
-        return _localUserService.ChangePassword(change, resetCode, GetUserId);
+        return _localUserService.ChangePassword(change, GetUserId);
     }
-    
+
+    [HttpPost("resetPassword")]
+    public Task ResetPassword([FromBody] ResetPassword reset, [FromQuery] string resetCode)
+    {
+        return _localUserService.ResetPassword(reset, resetCode);
+    }
+
     [HttpPost("mfaCode/number")]
     public async Task SendMfaCode(string number)
     {
-        await _localUserService.SendMfaCode(number,  GetUserId);
+        await _localUserService.SendMfaCode(number, GetUserId);
     }
-    
 
     protected abstract TUserId GetUserId();
 }

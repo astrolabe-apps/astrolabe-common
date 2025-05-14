@@ -6,17 +6,19 @@ import { LoginFormData, useAuthPageSetup } from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 
+type LoginFormProps = {
+  className?: string;
+  control: Control<LoginFormData>;
+  authenticate: () => Promise<boolean>;
+};
+
 export function LoginForm({
   className,
   control,
   authenticate,
-}: {
-  className?: string;
-  control: Control<LoginFormData>;
-  authenticate: () => Promise<boolean>;
-}) {
+}: LoginFormProps) {
   const {
-    hrefs: { signup, resetPassword },
+    hrefs: { signup, forgotPassword },
   } = useAuthPageSetup();
 
   const {
@@ -62,7 +64,7 @@ export function LoginForm({
             <Fcheckbox control={rememberMe} /> <label>Remember me</label>
           </div>
           <div>
-            <a href={resetPassword} className={linkStyle}>
+            <a href={forgotPassword} className={linkStyle}>
               Forgot your password?
             </a>
           </div>

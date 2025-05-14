@@ -221,7 +221,8 @@ The controller provides these standard endpoints:
 - `POST /changeEmail` - Change email address
 - `POST /changeMfaNumber` - Change MFA phone number
 - `POST /mfaChangeMfaNumber` - Change MFA number with verification
-- `POST /changePassword` - Change password (authenticated or with reset code)
+- `POST /changePassword` - Change password (authenticated)
+- `POST /resetPassword` - Reset password (with reset code)
 - `POST /mfaCode/number` - Send MFA code to a specific number
 
 ## License

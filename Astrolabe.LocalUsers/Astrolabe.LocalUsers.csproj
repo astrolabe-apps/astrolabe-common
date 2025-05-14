@@ -1,33 +1,29 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
-    <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
-        <OutputType>Library</OutputType>
-        <IsPackable>true</IsPackable>
-
-        <Version>3.0.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
-        <Description>Abstractions / base classes useful for implement local user management, 
-            account creation including email verification, password authentication, password reset.</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageTags>local user management</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        
-    </PropertyGroup>
-
-    <ItemGroup>
-      <PackageReference Include="FluentValidation" Version="11.8.0" />
-      <PackageReference Include="Astrolabe.Common" Version="1.1.0" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <None Update="README.md">
-        <Pack>true</Pack>
-        <PackagePath>/</PackagePath>
-      </None>
-    </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <IsPackable>true</IsPackable>
+    <Version>3.0.0</Version>
+    <Authors>doolse</Authors>
+    <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
+    <Description>Abstractions / base classes useful for implementing local user management,
+            account creation including email verification, password authentication, password reset.
+        </Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageTags>local user management</PackageTags>
+    <Copyright>Copyright ©2025 Astrolabe Enterprises</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.8.0" />
+    <PackageReference Include="Astrolabe.Common" Version="1.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="README.md">
+      <Pack>true</Pack>
+      <PackagePath>/</PackagePath>
+    </None>
+  </ItemGroup>
 </Project>

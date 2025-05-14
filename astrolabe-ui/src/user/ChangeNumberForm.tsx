@@ -1,14 +1,17 @@
-import {
-  Control,
-  useComputed,
-  useControl,
-  useControlEffect,
-} from "@react-typed-forms/core";
+import { Control, useControl, useControlEffect } from "@react-typed-forms/core";
 import { ChangeMfaNumberFormData, useAuthPageSetup } from "@astroapps/client";
 import { UserFormContainer } from "./UserFormContainer";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
 import React from "react";
+
+type ChangeNumberFormProps = {
+  className?: string;
+  control: Control<ChangeMfaNumberFormData>;
+  authenticate: () => Promise<boolean>;
+  send: () => Promise<boolean>;
+  runChange: () => Promise<boolean>;
+};
 
 export function ChangeNumberForm({
   className,
@@ -16,13 +19,7 @@ export function ChangeNumberForm({
   authenticate,
   send,
   runChange,
-}: {
-  className?: string;
-  control: Control<ChangeMfaNumberFormData>;
-  authenticate: () => Promise<boolean>;
-  send: () => Promise<boolean>;
-  runChange: () => Promise<boolean>;
-}) {
+}: ChangeNumberFormProps) {
   const {
     fields: { password, newNumber, code },
     error,
