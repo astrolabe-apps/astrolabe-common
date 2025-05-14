@@ -489,10 +489,10 @@ export function defaultDataProps(
             .map((x) =>
               typeof x === "object"
                 ? x
-                : (fieldOptions?.find((y) => y.value == x) ?? {
+                : fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  }),
+                  },
             )
             .filter((x) => x != null)
         : fieldOptions,
@@ -649,7 +649,7 @@ export function renderControlLayout(
       const childDefs = formNode.getResolvedChildren();
       const childDef = {
         type: ControlDefinitionType.Group,
-        groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
+        groupOptions: { type: GroupRenderType.Contents, hideTitle: true },
         children: childDefs,
       };
       const childNode: FormNode = formNode.createChildNode("child", childDef);
