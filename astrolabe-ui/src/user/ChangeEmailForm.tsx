@@ -5,15 +5,17 @@ import { ChangeEmailFormData } from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 
+type ChangeEmailFormProps = {
+  className?: string;
+  control: Control<ChangeEmailFormData>;
+  changeEmail: () => Promise<boolean>;
+};
+
 export function ChangeEmailForm({
   className,
   control,
   changeEmail,
-}: {
-  className?: string;
-  control: Control<ChangeEmailFormData>;
-  changeEmail: () => Promise<boolean>;
-}) {
+}: ChangeEmailFormProps) {
   const {
     fields: { password, newEmail },
     disabled,

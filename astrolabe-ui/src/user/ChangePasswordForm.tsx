@@ -5,22 +5,24 @@ import { ChangePasswordFormData } from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 
+type ChangePasswordFormProps = {
+  className?: string;
+  control: Control<ChangePasswordFormData>;
+  changePassword: () => Promise<boolean>;
+};
+
 export function ChangePasswordForm({
   className,
   control,
   changePassword,
-  confirmPrevious,
-}: {
-  className?: string;
-  confirmPrevious?: boolean;
-  control: Control<ChangePasswordFormData>;
-  changePassword: () => Promise<boolean>;
-}) {
+}: ChangePasswordFormProps) {
   const {
     fields: { password, confirm, oldPassword },
     disabled,
   } = control;
+
   const passwordChanged = useControl(false);
+
   return (
     <UserFormContainer className={className}>
       {passwordChanged.value ? (
@@ -40,35 +42,41 @@ export function ChangePasswordForm({
               doChange();
             }}
           >
-            {confirmPrevious && (
-              <Textfield
-                control={oldPassword}
-                label="Old Password"
-                type="password"
-                autoComplete="current-password"
-              />
-            )}
-            <Textfield
-              control={password}
-              label="New Password"
-              type="password"
-              autoComplete="new-password"
-            />
-            <Textfield
-              control={confirm}
-              label="Confirm Password"
-              type="password"
-              autoComplete="new-password"
-            />
-            {disabled && <CircularProgress />}
-            <Button className="w-full" type="submit" disabled={disabled}>
-              Change password
-            </Button>
+            <ChangePassword />
           </form>
         </>
       )}
     </UserFormContainer>
   );
+
+  function ChangePassword() {
+    return (
+      <>
+        <Textfield
+          control={oldPassword}
+          label="Old Password"
+          type="password"
+          autoComplete="current-password"
+        />
+        <Textfield
+          control={password}
+          label="New Password"
+          type="password"
+          autoComplete="new-password"
+        />
+        <Textfield
+          control={confirm}
+          label="Confirm Password"
+          type="password"
+          autoComplete="new-password"
+        />
+        {disabled && <CircularProgress />}
+        <Button className="w-full" type="submit" disabled={disabled}>
+          Change password
+        </Button>
+      </>
+    );
+  }
 
   async function doChange() {
     passwordChanged.value = await changePassword();

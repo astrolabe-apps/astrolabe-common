@@ -11,17 +11,19 @@ import { Textfield } from "../Textfield";
 import { Button } from "../Button";
 import React from "react";
 
+type VerifyFormProps = {
+  className?: string;
+  control: Control<VerifyFormData>;
+  authenticate: () => Promise<boolean>;
+  send: () => Promise<boolean>;
+};
+
 export function VerifyForm({
   className,
   control,
   authenticate,
   send,
-}: {
-  className?: string;
-  control: Control<VerifyFormData>;
-  authenticate: () => Promise<boolean>;
-  send: () => Promise<boolean>;
-}) {
+}: VerifyFormProps) {
   const {
     fields: { code, token, number, updateNumber },
     error,

@@ -6,17 +6,19 @@ import { CircularProgress } from "../CircularProgress";
 import { ReactNode } from "react";
 import { UserFormContainer } from "./UserFormContainer";
 
+type SignupFormProps = {
+  className?: string;
+  control: Control<SignupFormData>;
+  createAccount: () => Promise<boolean>;
+  children?: ReactNode;
+};
+
 export function SignupForm({
   className,
   control,
   createAccount,
   children,
-}: {
-  className?: string;
-  control: Control<SignupFormData>;
-  createAccount: () => Promise<boolean>;
-  children?: ReactNode;
-}) {
+}: SignupFormProps) {
   const {
     fields: { password, confirm, email },
     disabled,
