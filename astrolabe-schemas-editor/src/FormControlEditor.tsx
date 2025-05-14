@@ -25,9 +25,10 @@ import {
   unsafeRestoreControl,
 } from "@react-typed-forms/core";
 import { createValueForFieldRenderer } from "@react-typed-forms/schemas-html";
-import { createFieldSelectionRenderer } from "./FieldSelectionRenderer";
+import { createFieldSelectionRenderer } from "./renderer/FieldSelectionRenderer";
 import { createDataGridRenderer } from "@astroapps/schemas-datagrid";
 import { SchemaFieldEditor } from "./views/SchemaFieldEditor";
+import { createClassSelectionRenderer } from "./renderer/ClassSelectionRenderer";
 
 type ExtensionTypeFilterMap = { [key: string]: (n: SchemaNode) => boolean };
 

@@ -30,9 +30,9 @@ import {
   useControlEffect,
 } from "@react-typed-forms/core";
 import clsx from "clsx";
-import { schemaNodeIcon } from "./util";
+import { schemaNodeIcon } from "../util";
 import { cn } from "@astroapps/client";
-import { EditorSchemaTree } from "./EditorSchemaTree";
+import { EditorSchemaTree } from "../EditorSchemaTree";
 import { Popover } from "react-aria-components";
 
 const RenderType = "FieldSelection";
