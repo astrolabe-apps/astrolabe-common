@@ -8,3 +8,4 @@ export * from "./components/RNSelectRenderer";
 export * from "./components/RNText";
 export * from "./components/RNTextInput";
 export * from "./components/RNDialog";
+export * from "./components/Icon";
