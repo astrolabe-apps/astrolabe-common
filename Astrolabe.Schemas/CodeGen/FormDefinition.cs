@@ -96,7 +96,11 @@ public static class FormDefinition
                         ),
                         TsObjectField.NamedField(
                             "formFields",
-                            new TsPropertyExpr(jsonFile, new TsRawExpr("fields"))
+                            new TsAsExpr(
+                            new TsPropertyExpr(jsonFile, new TsRawExpr("fields")),
+                            new TsArrayType(
+                                SchemaFieldsGenerator.FormLibImport("SchemaField").TypeRef
+                            ))
                         ),
                     ]
                 )
