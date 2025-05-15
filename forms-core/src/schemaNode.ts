@@ -9,7 +9,7 @@ import {
 export interface SchemaTreeLookup {
   getSchema(schemaId: string): SchemaNode | undefined;
 
-  getSchemaTree(schemaId: string): SchemaTree | undefined;
+  getSchemaTree(schemaId: string, additional?: SchemaField[]): SchemaTree | undefined;
 }
 
 export abstract class SchemaTree {
@@ -91,9 +91,7 @@ export class SchemaNode {
 
   getChildNodes(): SchemaNode[] {
     const node = this;
-    return node
-      .getResolvedFields()
-      .map((x) => node.createChildNode(x));
+    return node.getResolvedFields().map((x) => node.createChildNode(x));
   }
 
   getChildField(field: string): SchemaField {
@@ -138,7 +136,7 @@ export function createSchemaLookup<A extends Record<string, SchemaField[]>>(
   schemaMap: A,
 ): {
   getSchema(schemaId: keyof A): SchemaNode;
-  getSchemaTree(schemaId: keyof A): SchemaTree;
+  getSchemaTree(schemaId: keyof A, additional?: SchemaField[]): SchemaTree;
 } {
   const lookup = {
     getSchemaTree,
@@ -150,10 +148,16 @@ export function createSchemaLookup<A extends Record<string, SchemaField[]>>(
     return getSchemaTree(schemaId)!.rootNode;
   }
 
-  function getSchemaTree(schemaId: keyof A): SchemaTree {
+  function getSchemaTree(
+    schemaId: keyof A,
+    additional?: SchemaField[],
+  ): SchemaTree {
     const fields = schemaMap[schemaId];
     if (fields) {
-      return new SchemaTreeImpl(fields, lookup);
+      return new SchemaTreeImpl(
+        additional ? [...fields, ...additional] : fields,
+        lookup,
+      );
     }
     return undefined!;
   }

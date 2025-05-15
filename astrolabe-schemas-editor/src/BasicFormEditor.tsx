@@ -3,6 +3,7 @@ import {
   ensureMetaValue,
   Fcheckbox,
   RenderControl,
+  trackedValue,
   useComputed,
   useControl,
   useControlEffect,
@@ -72,6 +73,7 @@ import {
 } from "./types";
 import { EditorFormTree } from "./EditorFormTree";
 import { EditorSchemaTree } from "./EditorSchemaTree";
+import { SchemaTree } from "@astroapps/forms-core";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
@@ -85,6 +87,7 @@ export interface BasicFormEditorProps<A extends string> {
     controls: ControlDefinition[],
     formId: A,
     config: any,
+    formFields: SchemaField[],
   ) => Promise<any>;
   saveSchema?: (controls: SchemaField[], schemaId: string) => Promise<any>;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
@@ -160,9 +163,9 @@ export function BasicFormEditor<A extends string = string>({
   );
   const dockRef = useRef<Layout | null>(null);
   const loadedForms = useControl<Record<string, EditableForm | undefined>>({});
-  const loadedSchemas = useControl<
-    Record<string, EditorSchemaTree | undefined>
-  >({});
+  const loadedSchemas = useControl<Record<string, SchemaField[] | undefined>>(
+    {},
+  );
   const loadedFormNames = useControl<string[]>([]);
   const schemaEditorTree: FormTree = useMemo(() => {
     return createFormTree(
@@ -178,9 +181,7 @@ export function BasicFormEditor<A extends string = string>({
     const tree = new EditorFormTree(editorControls ?? defaultEditorControls);
     const extraGroups: EditorGroup[] = extensions.flatMap((x) =>
       Object.values(x).flatMap((ro) =>
-        Array.isArray(ro)
-          ? ro.flatMap((r) => r.groups ?? [])
-          : (ro.groups ?? []),
+        Array.isArray(ro) ? ro.flatMap((r) => r.groups ?? []) : ro.groups ?? [],
       ),
     );
     extraGroups.forEach((g) => {
@@ -276,7 +277,7 @@ export function BasicFormEditor<A extends string = string>({
 
   async function doSaveSchema(c: Control<EditableForm>) {
     if (saveSchema) {
-      const schemaTree = c.fields.schema.value;
+      const schemaTree = getSchema(c.fields.schemaName.value);
       await saveSchema(
         schemaTree
           .getRootFields()
@@ -296,6 +297,7 @@ export function BasicFormEditor<A extends string = string>({
         [],
       c.fields.formId.value as A,
       c.fields.config.value,
+      c.fields.formSchema.value,
     );
     c.fields.formTree.markAsClean();
     c.fields.config.markAsClean();
@@ -329,6 +331,7 @@ export function BasicFormEditor<A extends string = string>({
     saveSchema: saveSchema ? doSaveSchema : undefined,
     checkbox,
     snippets,
+    getSchemaForForm,
   };
 
   return (
@@ -368,19 +371,33 @@ export function BasicFormEditor<A extends string = string>({
     return form;
   }
 
+  function getSchemaForForm(form: Control<EditableForm>) {
+    const schemaName = form.fields.schemaName.value;
+    const schemaFields = ensureSchema(form.fields.schemaName.value);
+    return new EditorSchemaTree(
+      schemaFields,
+      schemaName,
+      getSchema,
+      form.fields.formSchema,
+    );
+  }
+
   function getSchema(schemaId: string): EditorSchemaTree {
+    const fields = ensureSchema(schemaId);
+    return new EditorSchemaTree(fields, schemaId, getSchema);
+  }
+
+  function ensureSchema(schemaId: string): Control<SchemaField[]> {
     const schemaControl = loadedSchemas.fields[schemaId];
     if (schemaControl.isNull) {
-      const tree = new EditorSchemaTree([], schemaId, getSchema);
-      schemaControl.value = tree;
-      doLoadSchema(tree);
+      schemaControl.value = [];
+      doLoadSchema(schemaControl);
     }
-    return schemaControl.value!;
+    return schemaControl.as();
 
-    async function doLoadSchema(tree: EditorSchemaTree) {
+    async function doLoadSchema(tree: Control<SchemaField[] | undefined>) {
       const { fields } = await loadSchema(schemaId);
-      const rootControlFields = tree.getRootFields();
-      rootControlFields.setInitialValue(fields);
+      tree.setInitialValue(fields);
     }
   }
 
@@ -412,15 +429,15 @@ export function BasicFormEditor<A extends string = string>({
   ) {
     const name = formList.find((x) => x.id === formId)?.name ?? formId;
     const res = await loadForm(formId as A);
-    const tree = getSchema(res.schemaName);
     control.setInitialValue({
       formTree: new EditorFormTree(res.controls),
-      schema: tree,
+      schemaName: res.schemaName,
       hideFields: false,
       renderer: res.renderer ?? formRenderer,
       formId,
       name,
       config: res.config,
+      formSchema: res.formFields ?? [],
       configSchema: res.configSchema
         ? createSchemaTree(res.configSchema).rootNode
         : undefined,

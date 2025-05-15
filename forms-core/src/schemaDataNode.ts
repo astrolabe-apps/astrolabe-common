@@ -39,10 +39,14 @@ export class SchemaDataNode {
   }
 }
 
-export function getMetaFields(
-  control: Control<any>,
-): Control<Record<string, unknown>> {
-  return ensureMetaValue(control, "metaFields", () => newControl({}));
+export function getMetaFields<
+  T extends Record<string, any> = Record<string, unknown>,
+>(control: Control<any>): Control<T> {
+  return ensureMetaValue(
+    control,
+    "metaFields",
+    () => newControl({}) as Control<T>,
+  );
 }
 export class SchemaDataTreeImpl extends SchemaDataTree {
   rootNode: SchemaDataNode;

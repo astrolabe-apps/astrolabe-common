@@ -22,7 +22,7 @@ export function FormStructureView({ context }: { context: ViewContext }) {
   const cf = controlNotNull(context.getCurrentForm());
   if (!cf) return <InactiveView>No form selected</InactiveView>;
   const selectedTreeNode = cf.fields.selectedControlId;
-  const rootSchema = cf.fields.schema.value;
+  const rootSchema = context.getSchemaForForm(cf);
   const tree = cf.fields.formTree.value;
   return (
     <div className="flex flex-col h-full">
@@ -83,7 +83,7 @@ export function FormStructureView({ context }: { context: ViewContext }) {
       });
     return newChildren;
   }
-  
+
   function onDelete(node: NodeApi<ControlNode>) {
     if (node.id === selectedTreeNode.value) {
       selectedTreeNode.value = undefined;

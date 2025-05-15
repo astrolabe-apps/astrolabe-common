@@ -1,7 +1,7 @@
 import useResizeObserver from "use-resize-observer";
-import { NodeApi, NodeRendererProps, Tree } from "react-arborist";
+import { NodeApi, NodeRendererProps, Tree, TreeApi } from "react-arborist";
 import { addElement, Control } from "@react-typed-forms/core";
-import React, { Key } from "react";
+import React, { Key, MutableRefObject } from "react";
 import clsx from "clsx";
 import {
   fieldPathForDefinition,
@@ -11,7 +11,7 @@ import {
   schemaForFieldPath,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import { SelectedControlNode } from "./types";
+import { ControlNode, SelectedControlNode } from "./types";
 import { schemaNodeIcon } from "./util";
 import { StdTreeNode } from "./StdTreeNode";
 import { Button, MenuTrigger } from "react-aria-components";
@@ -21,7 +21,7 @@ import { MenuItem } from "./components/MenuItem";
 import { EditorSchemaTree } from "./EditorSchemaTree";
 import { defaultSchemaFieldForm } from "./schemaSchemas";
 
-interface SchemaNodeCtx {
+export interface SchemaNodeCtx {
   schema: SchemaNode;
   selected: Control<SchemaNode | undefined>;
   selectedControl: Control<SelectedControlNode | undefined>;
@@ -29,12 +29,13 @@ interface SchemaNodeCtx {
   id: string;
 }
 
-interface FormSchemaTreeProps {
+export interface FormSchemaTreeProps {
   className?: string;
   rootSchema: SchemaNode;
   onAdd: (node: SchemaNode) => void;
   selectedControl: Control<SelectedControlNode | undefined>;
   selected: Control<SchemaNode | undefined>;
+  treeApi?: MutableRefObject<TreeApi<SchemaNodeCtx> | null>;
 }
 
 export function FormSchemaTree({
@@ -43,6 +44,7 @@ export function FormSchemaTree({
   className,
   selectedControl,
   onAdd,
+  treeApi,
 }: FormSchemaTreeProps) {
   const { ref, width, height } = useResizeObserver();
   return (
@@ -50,6 +52,7 @@ export function FormSchemaTree({
       <Tree<SchemaNodeCtx>
         width={width}
         height={height}
+        ref={treeApi}
         data={makeChildNodes(rootSchema)}
         onSelect={(n) => (selected.value = n[0]?.data.schema)}
         selection={selected.value ? getNodeId(selected.value) : undefined}

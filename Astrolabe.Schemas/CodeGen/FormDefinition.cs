@@ -94,6 +94,10 @@ public static class FormDefinition
                             "config",
                             new TsPropertyExpr(jsonFile, new TsRawExpr("config"))
                         ),
+                        TsObjectField.NamedField(
+                            "formFields",
+                            new TsPropertyExpr(jsonFile, new TsRawExpr("fields"))
+                        ),
                     ]
                 )
             );

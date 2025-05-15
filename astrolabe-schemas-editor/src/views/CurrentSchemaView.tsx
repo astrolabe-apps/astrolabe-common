@@ -1,6 +1,7 @@
 import React from "react";
-import { FormSchemaTree } from "../FormSchemaTree";
+import { FormSchemaTree, SchemaNodeCtx } from "../FormSchemaTree";
 import {
+  addElement,
   Control,
   controlNotNull,
   useControlEffect,
@@ -8,6 +9,8 @@ import {
 import { defaultControlForField } from "@react-typed-forms/schemas";
 import { InactiveView } from "./InactiveView";
 import { EditableForm, ViewContext } from "../types";
+import { TreeApi } from "react-arborist";
+import { defaultSchemaFieldForm } from "../schemaSchemas";
 
 export function CurrentSchemaView({ context }: { context: ViewContext }) {
   const cf = controlNotNull(context.getCurrentForm());
@@ -23,14 +26,17 @@ function CurrentSchema({
   form: Control<EditableForm>;
   context: ViewContext;
 }) {
+  const { button } = context;
   const {
     selectedControl,
     selectedControlId,
     selectedField,
     formTree: { value: tree },
-    schema: { value: schemaTree },
   } = form.fields;
 
+  const treeApi = React.useRef<TreeApi<SchemaNodeCtx> | null>(null);
+
+  const schemaTree = context.getSchemaForForm(form);
   useControlEffect(
     () => schemaTree.getRootFields().dirty,
 
@@ -45,9 +51,13 @@ function CurrentSchema({
 
   return (
     <div className="flex flex-col h-full">
-      {context.saveSchema && (
-        <div className="p-4">{context.button(doSave, "Save Schema")}</div>
-      )}
+      <div className="flex gap-2 p-4">
+        {button(() => treeApi.current?.closeAll(), "Collapse", "collapse")}
+        {button(addRootField, "Add Form Field", "add")}
+        {context.saveSchema && (
+          <div className="p-4">{context.button(doSave, "Save Schema")}</div>
+        )}
+      </div>
       <FormSchemaTree
         rootSchema={schemaTree.rootNode}
         onAdd={(c) => {
@@ -55,12 +65,20 @@ function CurrentSchema({
           const newNode = tree.addNode(v, defaultControlForField(c.field));
           selectedControlId.value = newNode.id;
         }}
+        treeApi={treeApi}
         selectedControl={selectedControl}
         selected={selectedField}
         className="grow overflow-y-auto overflow-x-hidden"
       />
     </div>
   );
+
+  function addRootField() {
+    const rootList = schemaTree.getFormFields();
+    if (rootList) {
+      addElement(rootList, { ...defaultSchemaFieldForm });
+    }
+  }
 
   function doSave() {
     context.saveSchema?.(form);

@@ -76,11 +76,11 @@ function RenderFormDesign({
   } = context;
   const {
     formTree: { value: tree },
-    schema: { value: rootSchema },
     renderer: { value: formRenderer },
     configSchema: { value: configSchema },
     config,
   } = c.fields;
+  const schema = context.getSchemaForForm(c);
   const rootNode = tree.rootNode;
   const configDefinition = useMemo(() => {
     const controls = configSchema
@@ -106,10 +106,10 @@ function RenderFormDesign({
   }
 
   function addMissing() {
-    if (rootSchema) {
+    if (schema) {
       const rootDefs = tree.getRootDefinitions();
       rootDefs.value = addMissingControlsForSchema(
-        rootSchema.rootNode,
+        schema.rootNode,
         rootDefs.value,
       );
     }
@@ -120,7 +120,7 @@ function RenderFormDesign({
       return (
         <FormPreview
           viewContext={context}
-          rootSchema={rootSchema.rootNode}
+          rootSchema={schema.rootNode}
           controls={rootNode}
           previewData={preview}
           formRenderer={formRenderer}
@@ -158,7 +158,7 @@ function RenderFormDesign({
           <FormControlPreview
             keyPrefix="HAI"
             node={rootNode}
-            parentDataNode={new EditorDataTree(rootSchema.rootNode).rootNode}
+            parentDataNode={new EditorDataTree(schema.rootNode).rootNode}
             dropIndex={0}
             context={{
               selected: c.fields.selectedControlId,

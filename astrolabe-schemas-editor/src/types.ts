@@ -35,6 +35,7 @@ export type FormLoader<A> = (formId: A) => Promise<{
   renderer?: FormRenderer;
   config?: any;
   configSchema?: SchemaField[];
+  formFields?: SchemaField[];
 }>;
 
 export interface Snippet {
@@ -73,6 +74,7 @@ export interface ViewContext {
   saveSchema?(c: Control<EditableForm>): void;
   editorFormRenderer: FormRenderer;
   snippets?: Snippet[];
+  getSchemaForForm(form: Control<EditableForm>): EditorSchemaTree;
 }
 
 export interface FormInfo {
@@ -87,7 +89,8 @@ export interface EditableForm {
   selectedControlId?: string;
   formTree: EditorFormTree;
   renderer: FormRenderer;
-  schema: EditorSchemaTree;
+  schemaName: string;
+  formSchema: SchemaField[];
   hideFields: boolean;
   showJson?: boolean;
   showConfig?: boolean;

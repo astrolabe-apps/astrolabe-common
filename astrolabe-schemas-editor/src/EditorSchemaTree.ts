@@ -16,22 +16,28 @@ import {
 } from "@react-typed-forms/core";
 
 export class EditorSchemaTree extends SchemaTree {
-  control: Control<SchemaField>;
   getSchemaTree(schemaId: string): SchemaTree | undefined {
     return this.lookupSchema(schemaId);
   }
 
   constructor(
-    rootNodes: SchemaField[],
+    private rootNodes: Control<SchemaField[]>,
     public schemaId: string,
     private lookupSchema: (schemaId: string) => SchemaTree | undefined,
+    private formNodes?: Control<SchemaField[]>,
   ) {
     super();
-    this.control = newControl(compoundField("", rootNodes)(""));
   }
 
   get rootNode(): SchemaNode {
-    return new SchemaNode("", trackedValue(this.control), this);
+    const formFields = this.formNodes ? trackedValue(this.formNodes) : [];
+    return new SchemaNode(
+      "",
+      compoundField("", [...trackedValue(this.rootNodes), ...formFields])(
+        this.schemaId,
+      ),
+      this,
+    );
   }
 
   createChildNode(parent: SchemaNode, field: SchemaField): SchemaNode {
@@ -64,7 +70,11 @@ export class EditorSchemaTree extends SchemaTree {
   }
 
   getRootFields(): Control<SchemaField[]> {
-    return this.getEditableChildren(this.rootNode)!.as();
+    return this.rootNodes;
+  }
+
+  getFormFields(): Control<SchemaField[]> | undefined {
+    return this.formNodes;
   }
 
   addNode(parent: SchemaNode, child: SchemaField): SchemaNode {

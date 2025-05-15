@@ -14,9 +14,8 @@ import { ViewContext } from "../types";
 export function SchemaJsonView({ context }: { context: ViewContext }) {
   const cf = controlNotNull(context.getCurrentForm());
   if (!cf) return <InactiveView>No form selected</InactiveView>;
-  const {
-    schema: { value: rootSchema },
-  } = cf.fields;
+  const rootSchema = context.getSchemaForForm(cf);
+
   return (
     <div className="flex flex-col h-full">
       <SchemaJson root={rootSchema.getRootFields()} />
