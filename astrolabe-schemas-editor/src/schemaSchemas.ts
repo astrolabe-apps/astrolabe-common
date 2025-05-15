@@ -347,6 +347,7 @@ export interface EntityExpressionForm {
   field: string;
   value: any;
   empty: boolean | null;
+  metaField: string;
   userMatch: string;
 }
 
@@ -382,6 +383,10 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
         name: "UUID",
         value: "UUID",
       },
+      {
+        name: "Metadata",
+        value: "Metadata",
+      },
     ],
   }),
   expression: makeScalarField({
@@ -411,6 +416,13 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
     type: FieldType.Bool,
     onlyForTypes: ["NotEmpty"],
     displayName: "Empty",
+  }),
+  metaField: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Metadata"],
+    notNullable: true,
+    required: true,
+    displayName: "Meta Field",
   }),
   userMatch: makeScalarField({
     type: FieldType.String,

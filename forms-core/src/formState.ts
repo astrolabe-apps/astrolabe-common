@@ -95,7 +95,7 @@ export function createFormState(
   schemaInterface: SchemaInterface,
   evaluators: Record<string, ExpressionEval<any>> = defaultEvaluators,
 ): FormState {
-  console.log("createFormState");
+  // console.log("createFormState");
   const controlStates = newControl<Record<string, FormContextOptions>>({});
 
   function evalExpression(
@@ -109,7 +109,7 @@ export function createFormState(
   return {
     evalExpression,
     cleanup: () => {
-      console.log("Cleanup form state");
+      // console.log("Cleanup form state");
       controlStates.cleanup();
     },
     getControlState(
@@ -428,7 +428,7 @@ function coerceStyle(v: unknown): any {
 }
 
 function coerceString(v: unknown): string {
-  return typeof v === "string" ? v : v?.toString() ?? "";
+  return typeof v === "string" ? v : (v?.toString() ?? "");
 }
 
 function createScopedMetaValue<A>(

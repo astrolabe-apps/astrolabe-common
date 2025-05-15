@@ -25,7 +25,9 @@ export interface PreviewData {
   showing: boolean;
   showJson: boolean;
   showRawEditor: boolean;
+  showMetadata: boolean;
   data: any;
+  metadata: Record<string, any>;
 }
 
 export function FormPreview({
@@ -56,7 +58,11 @@ export function FormPreview({
     | ((c: FormNode, data: Control<any>) => ReactNode);
 }) {
   const rawRenderer = useMemo(() => createEditorRenderer([]), []);
-  const { data, showJson, showRawEditor } = previewData.fields;
+  const { data, metadata, showJson, showRawEditor, showMetadata } =
+    previewData.fields;
+  const metadataText = useControl(() =>
+    JSON.stringify(metadata.current.value, null, 2),
+  );
   const jsonControl = useControl(() =>
     JSON.stringify(data.current.value, null, 2),
   );
@@ -74,12 +80,25 @@ export function FormPreview({
     () => data.value,
     (v) => (jsonControl.value = JSON.stringify(v, null, 2)),
   );
+  useControlEffect(
+    () => metadata.value,
+    (v) => (metadataText.value = JSON.stringify(v, null, 2)),
+  );
   const rootDataNode = createSchemaDataNode(rootSchema, data);
+  const allMetadata = {
+    ...(previewOptions?.variables?.metadata || {}),
+    ...metadata.value,
+  };
+  const allVariables = {
+    ...(previewOptions?.variables || {}),
+    metadata: allMetadata,
+  };
   return (
     <>
       <div className="px-4 flex gap-4">
         {viewContext.checkbox(showRawEditor, "Show Raw Editor")}
         {viewContext.checkbox(showJson, "Show Json")}
+        {viewContext.checkbox(showMetadata, "Show Metadata")}
         {formRenderer.renderAction({
           onClick: runValidation,
           actionId: "validate",
@@ -97,7 +116,7 @@ export function FormPreview({
             form={controls}
             data={rootDataNode}
             renderer={formRenderer}
-            options={previewOptions}
+            options={{ ...previewOptions, variables: allVariables }}
           />
           {/*<NewControlRenderer*/}
           {/*  definition={controls}*/}
@@ -113,8 +132,9 @@ export function FormPreview({
   function renderRaw() {
     const sre = showRawEditor.value;
     const sj = showJson.value;
+    const sm = showMetadata.value;
     return (
-      (sre || sj) && (
+      (sre || sj || sm) && (
         <div className="grid grid-cols-2 gap-3 my-4 border p-4">
           {sre && (
             <div>
@@ -136,6 +156,19 @@ export function FormPreview({
                   data.value = JSON.parse(jsonControl.value);
                 },
                 actionId: "applyJson",
+              })}
+            </div>
+          )}
+          {sm && (
+            <div>
+              <div className="text-xl">Metadata</div>
+              <JsonEditor className="h-96" control={metadataText} />
+              {formRenderer.renderAction({
+                actionText: "Apply Metadata",
+                onClick: () => {
+                  metadata.value = JSON.parse(metadataText.value);
+                },
+                actionId: "applyMetadata",
               })}
             </div>
           )}

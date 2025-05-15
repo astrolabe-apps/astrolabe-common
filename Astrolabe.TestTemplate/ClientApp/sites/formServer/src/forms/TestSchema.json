@@ -68,7 +68,16 @@
           "displayData": {
             "type": "Text",
             "text": "test"
-          }
+          },
+          "dynamic": [
+            {
+              "type": "Display",
+              "expr": {
+                "type": "Metadata",
+                "metaField": "data"
+              }
+            }
+          ]
         }
       ]
     }
