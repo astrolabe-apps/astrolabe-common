@@ -21,9 +21,14 @@ import { ScrollView } from "react-native-gesture-handler";
 import { Icon } from "./Icon";
 import { useComputed } from "@react-typed-forms/core";
 
+export interface ExtendedDropdown {
+  portalHost?: string;
+}
+
 export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
   return createDataRenderer(
     (props, asArray) => {
+      const renderOptions = props.definition.renderOptions as ExtendedDropdown;
       return (
         <RNSelectRenderer
           className={rendererClass(props.className, options.className)}
@@ -35,6 +40,7 @@ export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
           emptyText={options.emptyText}
           requiredText={options.requiredText}
           convert={createSelectConversion(props.field.type)}
+          portalHost={renderOptions.portalHost}
         />
       );
     },
@@ -54,8 +60,9 @@ function RNSelectRenderer({
   required,
   emptyText = "N/A",
   requiredText = "Please select",
+  portalHost,
   ...props
-}: SelectDataRendererProps) {
+}: SelectDataRendererProps & ExtendedDropdown) {
   const insets = useSafeAreaInsets();
   const contentInsets = {
     top: insets.top,
@@ -108,7 +115,11 @@ function RNSelectRenderer({
       <SelectTrigger className={"bg-white"}>
         <SelectValue placeholder={required ? requiredText : emptyText} />
       </SelectTrigger>
-      <SelectContent insets={contentInsets} className={"bg-white w-[250px]"}>
+      <SelectContent
+        insets={contentInsets}
+        className={"bg-white w-[250px]"}
+        portalHost={Platform.select({ ios: portalHost })}
+      >
         <ScrollView className={"max-h-64"}>
           {optionGroups.map((x) => (
             <SelectGroup key={x}>
