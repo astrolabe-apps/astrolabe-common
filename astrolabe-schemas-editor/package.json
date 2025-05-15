@@ -41,6 +41,7 @@
     "react-arborist": "^3.4.3",
     "use-resize-observer": "~9.1.0",
     "react-hook-inview": "^4.5.1",
+    "@astroapps/forms-core": "workspace:*",
     "@astroapps/schemas-datagrid": "^6.0.0",
     "@astroapps/datagrid": "^1.2.0",
     "codemirror": "^6.0.1",

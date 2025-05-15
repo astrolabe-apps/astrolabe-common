@@ -4,7 +4,6 @@ import {
   EntityExpression,
   ExpressionType,
   JsonataExpression,
-  MetadataExpression,
   NotEmptyExpression,
 } from "./entityExpression";
 import {
@@ -17,7 +16,6 @@ import {
   Value,
 } from "@astroapps/controls";
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
-import { FormContextData } from "./formState";
 import { SchemaInterface } from "./schemaInterface";
 import jsonata from "jsonata";
 import { getJsonPath, getRootDataNode } from "./controlDefinition";
@@ -111,20 +109,10 @@ export const uuidEval: ExpressionEval<EntityExpression> = (_, ctx) => {
   ctx.returnResult(uuidv4());
 };
 
-export const metadataEval: ExpressionEval<MetadataExpression> = (
-  me,
-  { returnResult, scope, variables },
-) => {
-  createSyncEffect(() => {
-    returnResult(variables?.value?.metadata?.[me.metaField]);
-  }, scope);
-};
-
 export const defaultEvaluators: Record<string, ExpressionEval<any>> = {
   [ExpressionType.DataMatch]: dataMatchEval,
   [ExpressionType.Data]: dataEval,
   [ExpressionType.NotEmpty]: notEmptyEval,
   [ExpressionType.Jsonata]: jsonataEval,
   [ExpressionType.UUID]: uuidEval,
-  [ExpressionType.Metadata]: metadataEval,
 };

@@ -39,6 +39,11 @@ export class SchemaDataNode {
   }
 }
 
+export function getMetaFields(
+  control: Control<any>,
+): Control<Record<string, unknown>> {
+  return ensureMetaValue(control, "metaFields", () => newControl({}));
+}
 export class SchemaDataTreeImpl extends SchemaDataTree {
   rootNode: SchemaDataNode;
 
@@ -54,7 +59,10 @@ export class SchemaDataTreeImpl extends SchemaDataTree {
   }
 
   getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
-    const objControl = parent.control as Control<Record<string, unknown>>;
+    let objControl = parent.control as Control<Record<string, unknown>>;
+    if (childNode.field.meta) {
+      objControl = getMetaFields(objControl);
+    }
     const child = objControl.fields[childNode.field.field];
     return new SchemaDataNode(
       child.uniqueId.toString(),

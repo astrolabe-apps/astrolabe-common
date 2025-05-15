@@ -16,6 +16,8 @@ export interface SchemaField {
   tags?: string[] | null;
   /** Indicates if the field is a system field, optional. */
   system?: boolean | null;
+  /** Indicates if the field is a meta field, optional. */
+  meta?: boolean | null;
   /** Indicates if the field is a collection, optional. */
   collection?: boolean | null;
   /** Specifies the types for which the field is applicable, optional. */

@@ -9,7 +9,6 @@ export enum ExpressionType {
   UserMatch = "UserMatch",
   NotEmpty = "NotEmpty",
   UUID = "UUID",
-  Metadata = "Metadata",
 }
 
 export interface JsonataExpression extends EntityExpression {
@@ -20,11 +19,6 @@ export interface JsonataExpression extends EntityExpression {
 export interface DataExpression extends EntityExpression {
   type: ExpressionType.Data;
   field: string;
-}
-
-export interface MetadataExpression extends EntityExpression {
-  type: ExpressionType.Metadata;
-  metaField: string;
 }
 
 export interface DataMatchExpression extends EntityExpression {

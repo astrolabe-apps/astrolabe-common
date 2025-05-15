@@ -73,8 +73,9 @@
             {
               "type": "Display",
               "expr": {
-                "type": "Metadata",
-                "metaField": "data"
+                "type": "Data",
+                "metaField": "data",
+                "field": "metaField"
               }
             }
           ]

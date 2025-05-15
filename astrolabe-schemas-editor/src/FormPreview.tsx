@@ -20,6 +20,7 @@ import {
 import React, { ReactNode, useMemo, Fragment } from "react";
 import { JsonEditor } from "./JsonEditor";
 import { ViewContext } from "./types";
+import { getMetaFields } from "@astroapps/forms-core";
 
 export interface PreviewData {
   showing: boolean;
@@ -27,7 +28,6 @@ export interface PreviewData {
   showRawEditor: boolean;
   showMetadata: boolean;
   data: any;
-  metadata: Record<string, any>;
 }
 
 export function FormPreview({
@@ -58,8 +58,8 @@ export function FormPreview({
     | ((c: FormNode, data: Control<any>) => ReactNode);
 }) {
   const rawRenderer = useMemo(() => createEditorRenderer([]), []);
-  const { data, metadata, showJson, showRawEditor, showMetadata } =
-    previewData.fields;
+  const { data, showJson, showRawEditor, showMetadata } = previewData.fields;
+  const metadata = getMetaFields(data);
   const metadataText = useControl(() =>
     JSON.stringify(metadata.current.value, null, 2),
   );

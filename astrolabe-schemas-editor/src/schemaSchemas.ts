@@ -156,6 +156,7 @@ export interface SchemaFieldForm {
   field: string;
   displayName: string | null;
   system: boolean | null;
+  meta: boolean | null;
   tags: string[] | null;
   onlyForTypes: string[] | null;
   required: boolean | null;
@@ -247,6 +248,10 @@ export const SchemaFieldSchema = buildSchema<SchemaFieldForm>({
     type: FieldType.Bool,
     displayName: "System",
     tags: ["_NoControl"],
+  }),
+  meta: makeScalarField({
+    type: FieldType.Bool,
+    displayName: "Meta",
   }),
   tags: makeScalarField({
     type: FieldType.String,
@@ -347,7 +352,6 @@ export interface EntityExpressionForm {
   field: string;
   value: any;
   empty: boolean | null;
-  metaField: string;
   userMatch: string;
 }
 
@@ -383,10 +387,6 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
         name: "UUID",
         value: "UUID",
       },
-      {
-        name: "Metadata",
-        value: "Metadata",
-      },
     ],
   }),
   expression: makeScalarField({
@@ -416,13 +416,6 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
     type: FieldType.Bool,
     onlyForTypes: ["NotEmpty"],
     displayName: "Empty",
-  }),
-  metaField: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["Metadata"],
-    notNullable: true,
-    required: true,
-    displayName: "Meta Field",
   }),
   userMatch: makeScalarField({
     type: FieldType.String,

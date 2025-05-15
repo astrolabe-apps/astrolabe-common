@@ -102,7 +102,7 @@ interface TestSchema {
   nested: NestedSchema;
 }
 
-const TestSchema = buildSchema<TestSchema>({
+const TestSchema = buildSchema<TestSchema & { metaField: string }>({
   date: dateField("Date"),
   dateTime: dateTimeField("Date Time"),
   time: timeField("Time", { tags: [SchemaTags.ControlGroup + "Nested"] }),
@@ -224,6 +224,7 @@ const TestSchema = buildSchema<TestSchema>({
       data: stringField("Data", { tags: [SchemaTags.ControlGroup + "Root"] }),
     }),
   ),
+  metaField: stringField("Meta Field", { meta: true }),
 });
 
 interface SearchResult extends CarEdit {}

@@ -31,7 +31,6 @@ export function FormView(props: { formId: string; context: ViewContext }) {
     showJson: false,
     showRawEditor: false,
     data: {},
-    metadata: {},
     showMetadata: false,
   });
   useControlEffect(

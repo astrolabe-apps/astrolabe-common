@@ -16,6 +16,8 @@ public abstract record SchemaField(
     [property: SchemaTag(SchemaTags.NoControl)]
     public bool? System { get; set; }
 
+    public bool? Meta { get; set; }
+    
     public IEnumerable<string>? Tags { get; set; }
 
     public IEnumerable<string>? OnlyForTypes { get; set; }

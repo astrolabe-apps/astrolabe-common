@@ -20,8 +20,7 @@ public enum ExpressionType
     [Display(Name = "Not Empty")]
     NotEmpty,
 
-    UUID,
-    Metadata
+    UUID
 }
 
 [JsonBaseType("type", typeof(SimpleExpression))]
@@ -31,7 +30,6 @@ public enum ExpressionType
 [JsonSubType("Data", typeof(DataExpression))]
 [JsonSubType("NotEmpty", typeof(NotEmptyExpression))]
 [JsonSubType("UUID", typeof(SimpleExpression))]
-[JsonSubType(nameof(ExpressionType.Metadata), typeof(MetadataExpression))]
 public abstract record EntityExpression(
     [property: SchemaOptions(typeof(ExpressionType))] string Type
 )
@@ -55,9 +53,6 @@ public record NotEmptyExpression([property: SchemaTag(SchemaTags.SchemaField)] s
 
 public record DataExpression([property: SchemaTag(SchemaTags.SchemaField)] string Field)
     : EntityExpression(nameof(ExpressionType.Data));
-
-public record MetadataExpression(string MetaField)
-    : EntityExpression(nameof(ExpressionType.Metadata));
 
 public record UserMatchExpression(string UserMatch)
     : EntityExpression(nameof(ExpressionType.UserMatch));
