@@ -4,11 +4,19 @@ using System.Reflection;
 
 namespace Astrolabe.SearchState;
 
+public interface ApplyGetter<T>
+{
+    ApplyGetter<T> Apply<TKey>(Expression<Func<T, TKey>> sortKey);
+}
+
 public delegate IQueryable<T> QuerySorter<T>(IEnumerable<string>? sorts, IQueryable<T> query);
+
+public delegate ApplyGetter<T>? FieldGetter<T>(string field, ApplyGetter<T> apply);
 public delegate IQueryable<T> QueryFilterer<T>(
     IDictionary<string, IEnumerable<string>>? filters,
     IQueryable<T> query
 );
+
 public delegate Task<SearchResults<T2>> Searcher<in T, T2>(
     IQueryable<T> query,
     ISearchOptions searchOptions,
@@ -18,6 +26,29 @@ public delegate Task<SearchResults<T2>> Searcher<in T, T2>(
 public delegate IQueryable<T> FieldFilter<T>(IQueryable<T> query, List<string> filterValues);
 
 public record FilterableMember(MemberInfo Member, Func<string, object>? Convert);
+
+public class SortApplication<T>(IQueryable<T> query) : ApplyGetter<T>
+{
+    public IOrderedQueryable<T>? OrderedQueryable { get; private set; }
+    public bool Desc { get; set; }
+
+    public ApplyGetter<T> Apply<TKey>(Expression<Func<T, TKey>> sortKey)
+    {
+        if (OrderedQueryable != null)
+        {
+            OrderedQueryable = Desc
+                ? OrderedQueryable.ThenByDescending(sortKey)
+                : OrderedQueryable.ThenBy(sortKey);
+        }
+        else
+        {
+            OrderedQueryable = Desc
+                ? query.OrderByDescending(sortKey)
+                : query.OrderBy(sortKey);
+        }
+        return this;
+    }
+}
 
 public static class SearchHelper
 {
@@ -69,23 +100,20 @@ public static class SearchHelper
         };
     }
 
-    public static Func<string, Expression<Func<T, object>>?> CreatePropertyGetterLookup<T>()
+    public static FieldGetter<T> CreatePropertyGetterLookup<T>()
     {
         var lookup = CreatePropertyMemberLookup<T>();
         var t = typeof(T);
+        var applyMethod = typeof(ApplyGetter<>).MakeGenericType(t).GetMethod(nameof(ApplyGetter<object>.Apply));
         var param = Expression.Parameter(t);
-        return field =>
+        return (field, apply) =>
         {
             var member = lookup(field);
             if (member != null)
             {
-                return Expression.Lambda<Func<T, object>>(
-                    Expression.Convert(
-                        Expression.MakeMemberAccess(param, member.Member),
-                        typeof(object)
-                    ),
-                    param
-                );
+                var property = (PropertyInfo)member.Member;
+                var withType = applyMethod!.MakeGenericMethod(property.PropertyType);
+                withType.Invoke(apply, [Expression.Lambda(Expression.MakeMemberAccess(param, member.Member), param)]);
             }
             return null;
         };
@@ -114,6 +142,7 @@ public static class SearchHelper
             var origFilter = getFilterProperty;
             getFilterProperty = f => origFilter(f) ?? propFilterer(f);
         }
+
         return (filters, query) =>
         {
             if (filters == null)
@@ -128,12 +157,14 @@ public static class SearchHelper
                     continue;
                 query = ff(query, vals);
             }
+
             return query;
         };
     }
 
+
     public static QuerySorter<T> MakeSorter<T>(
-        Func<string, Expression<Func<T, object>>?> getSortField,
+        FieldGetter<T> getSortField,
         bool includeDefault = true
     )
     {
@@ -141,35 +172,24 @@ public static class SearchHelper
         {
             var defaultGetSort = CreatePropertyGetterLookup<T>();
             var origGetSort = getSortField;
-            getSortField = f => origGetSort(f) ?? defaultGetSort(f);
+            getSortField = (f,a) => origGetSort(f, a) ?? defaultGetSort(f, a);
         }
         return (sorts, query) =>
         {
             if (sorts == null)
                 return query;
-            IOrderedQueryable<T>? orderedQueryable = null;
-            foreach (var (desc, getter) in sorts.Select(x => (x[0] == 'd', getSortField(x[1..]))))
+            var sortApplier = new SortApplication<T>(query);
+            foreach (var (desc, field) in sorts.Select(x =>
+                         (x[0] == 'd', x[1..])))
             {
-                if (getter == null)
-                    continue;
-                if (orderedQueryable != null)
-                {
-                    orderedQueryable = desc
-                        ? orderedQueryable.ThenByDescending(getter)
-                        : orderedQueryable.ThenBy(getter);
-                }
-                else
-                {
-                    orderedQueryable = desc
-                        ? query.OrderByDescending(getter)
-                        : query.OrderBy(getter);
-                }
+                sortApplier.Desc = desc;
+                getSortField(field, sortApplier);
             }
 
-            return orderedQueryable ?? query;
+            return sortApplier.OrderedQueryable ?? query;
         };
     }
-
+    
     public static Searcher<T, T2> CreateSearcher<T, T2>(
         Func<IQueryable<T>, Task<List<T2>>> select,
         Func<IQueryable<T>, Task<int>> count,
@@ -190,6 +210,7 @@ public static class SearchHelper
             {
                 total = await count(filteredQuery);
             }
+
             var pageResults = await select(
                 sorter(options.Sort, filteredQuery).Skip(offset).Take(take)
             );

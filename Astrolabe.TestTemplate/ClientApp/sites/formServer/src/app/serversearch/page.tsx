@@ -39,7 +39,7 @@ export default function SearchPage() {
   const carClient = useApiClient(CarClient);
   const pageControl = useControl<CarSearchPageForm>({
     ...defaultCarSearchPageForm,
-    request: { ...defaultSearchOptions, length: 1 },
+    request: { ...defaultSearchOptions, length: 5 },
   });
   const { results, request, loading } = pageControl.fields;
   useEffect(() => {

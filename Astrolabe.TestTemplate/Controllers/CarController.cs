@@ -55,6 +55,7 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
         {
             await Workflow.ApplyChanges(carContext);
         }
+
         await dbContext.SaveChangesAsync();
     }
 
@@ -87,13 +88,22 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
             .ToListAsync();
     }
 
+    private static readonly FieldGetter<CarItem> ApplyCarSort = (field, sort) => field switch
+    {
+        "make" => sort.Apply(x => x.Make),
+        _ => null
+    };
+
+
     private static readonly Searcher<CarItem, CarInfo> Searcher = SearchHelper.CreateSearcher<
         CarItem,
         CarInfo
     >(
         q => q.Select(x => new CarInfo(x.Make, x.Model, x.Year, x.Status)).ToListAsync(),
-        q => q.CountAsync()
+        q => q.CountAsync(),
+        sorter: SearchHelper.MakeSorter(ApplyCarSort)
     );
+
 
     [HttpPost("search")]
     public async Task<SearchResults<CarInfo>> SearchCars(SearchOptions search)
