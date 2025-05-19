@@ -1,10 +1,17 @@
 ﻿import * as DialogPrimitive from "@rn-primitives/dialog";
 import * as React from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { cn } from "../utils";
 import { Control, useControl } from "@react-typed-forms/core";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { FontAwesome6 } from "@expo/vector-icons";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -101,14 +108,7 @@ const DialogTitle = React.forwardRef<
   DialogPrimitive.TitleRef,
   DialogPrimitive.TitleProps
 >(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title
-    ref={ref}
-    className={cn(
-      "text-lg native:text-xl text-foreground font-semibold leading-none tracking-tight",
-      className,
-    )}
-    {...props}
-  />
+  <DialogPrimitive.Title ref={ref} className={cn(className)} {...props} />
 ));
 DialogTitle.displayName = DialogPrimitive.Title.displayName;
 
@@ -121,6 +121,7 @@ export type RNDialogProps = {
   open?: Control<boolean>;
   onOpenChange?: (open: boolean) => void;
   closeOnOutsidePress?: boolean;
+  portalHost?: string;
 };
 
 export function RNDialog({
@@ -132,8 +133,10 @@ export function RNDialog({
   onOpenChange,
   closeOnOutsidePress = false,
   containerClass,
+  portalHost,
 }: RNDialogProps) {
   const dialogOpen = open ?? useControl(false);
+  const { width } = useWindowDimensions();
 
   return (
     <Dialog
@@ -149,19 +152,22 @@ export function RNDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
         closeOnOutsidePress={closeOnOutsidePress}
-        className={cn(
-          "sm:max-w-[425px] min-w-[200px] min-h-[200px]",
-          containerClass,
-        )}
+        className={cn("min-w-[200px] min-h-[200px]", containerClass)}
+        style={{ maxWidth: width - 16 }}
+        portalHost={Platform.select({ ios: portalHost })}
       >
-        <View className={"flex flex-row gap-2 justify-between items-start"}>
-          <DialogTitle asChild>{title}</DialogTitle>
+        <View
+          className={"flex flex-row gap-[10px] justify-between items-start"}
+        >
+          <DialogTitle asChild className={"flex-1 flex-shrink title2"}>
+            {title}
+          </DialogTitle>
           <DialogClose
             className={
               "web:group rounded-sm web:ring-offset-background web:transition-opacity web:hover:opacity-100 web:focus:outline-none web:focus:ring-2 web:focus:ring-ring web:focus:ring-offset-2 web:disabled:pointer-events-none"
             }
           >
-            <MaterialIcons name="close" size={24} color={"black"} />
+            <FontAwesome6 name="xmark-circle" size={24} color={"#267151"} />
           </DialogClose>
         </View>
         {content}
