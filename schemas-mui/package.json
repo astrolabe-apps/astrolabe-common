@@ -34,18 +34,18 @@
     "date-fns": "^2.29.3"
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^4.1.1",
+    "@react-typed-forms/core": "^4.4.0",
     "@react-typed-forms/mui": "^4.0.0",
-    "@react-typed-forms/schemas": "^15.0.0",
+    "@react-typed-forms/schemas": "^16.0.0",
     "react": "^18.2.0 || ^19",
     "@mui/icons-material": "^5",
     "@mui/material": "^5"
   },
   "devDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^4.1.1",
+    "@react-typed-forms/core": "^4.4.0",
     "@react-typed-forms/mui": "workspace:^4.0.0",
-    "@react-typed-forms/schemas": "^15.0.0",
+    "@react-typed-forms/schemas": "^16.0.0",
     "@mui/icons-material": "^5",
     "@mui/material": "^5.14.13",
     "@react-typed-forms/transform": "^0.2.0",

@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/core",
-  "version": "4.3.0",
+  "version": "4.4.0",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",

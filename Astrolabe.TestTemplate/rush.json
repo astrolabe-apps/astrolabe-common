@@ -465,7 +465,7 @@
     {
       "packageName": "@astroapps/forms-core",
       "projectFolder": "../forms-core",
-      "shouldPublish": false
+      "shouldPublish": true
     },
     {
       "packageName": "@react-typed-forms/schemas",
@@ -490,7 +490,7 @@
     {
       "packageName": "@react-typed-forms/schemas-rn",
       "projectFolder": "../schemas-rn",
-      "shouldPublish": false
+      "shouldPublish": true
     },
     {
       "packageName": "@react-typed-forms/schemas-mui",
