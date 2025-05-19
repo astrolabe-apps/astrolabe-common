@@ -11,16 +11,12 @@
     "require": "./lib/index.cjs",
     "default": "./lib/index.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/doolse/react-typed-forms.git"
-  },
-  "author": "Jolse Maginnis",
+  "author": "Astrolabe Enterprises",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/doolse/react-typed-forms/issues"
+    "url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
   },
-  "homepage": "https://github.com/doolse/react-typed-forms#readme",
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
   "publishConfig": {
     "access": "public"
   },

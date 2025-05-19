@@ -464,7 +464,7 @@
 //    },
     {
       "packageName": "@astroapps/forms-core",
-      "projectFolder": "../forms-core",
+      "projectFolder": "../forms/core",
       "shouldPublish": true
     },
     {

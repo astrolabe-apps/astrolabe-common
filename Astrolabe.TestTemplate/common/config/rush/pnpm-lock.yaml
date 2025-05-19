@@ -427,7 +427,7 @@ importers:
       use-resize-observer: ~9.1.0
     dependencies:
       '@astroapps/datagrid': link:../astrolabe-datagrid
-      '@astroapps/forms-core': link:../forms-core
+      '@astroapps/forms-core': link:../forms/core
       '@astroapps/schemas-datagrid': link:../astrolabe-schemas-datagrid
       '@codemirror/lang-json': 6.0.1
       '@mhsdesign/jit-browser-tailwindcss': 0.4.2_ozxlbmy37ax35fhqexzdkqxfce
@@ -695,7 +695,7 @@ importers:
       tsx: 4.19.2
       typescript: 5.7.2
 
-  ../../../forms-core:
+  ../../../forms/core:
     specifiers:
       '@astroapps/controls': workspace:*
       '@jest/globals': ^29.7.0
@@ -720,7 +720,7 @@ importers:
       jsonata: 2.0.5
       uuid: 10.0.0
     devDependencies:
-      '@astroapps/controls': link:../astrolabe-controls
+      '@astroapps/controls': link:../../astrolabe-controls
       '@jest/globals': 29.7.0
       '@types/react': 18.3.12
       '@types/uuid': 10.0.0
@@ -784,7 +784,7 @@ importers:
       typescript: ^5.6.2
       uuid: ^10.0.0
     dependencies:
-      '@astroapps/forms-core': link:../forms-core
+      '@astroapps/forms-core': link:../forms/core
       clsx: 2.1.1
       jsonata: 2.0.5
       uuid: 10.0.0
