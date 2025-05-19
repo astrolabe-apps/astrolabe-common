@@ -23,8 +23,7 @@
   "keywords": [
     "react",
     "typescript",
-    "forms",
-    "material-ui"
+    "forms"
   ],
   "dependencies": {
     "clsx": "^1 || ^2",
