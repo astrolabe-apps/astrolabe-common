@@ -473,6 +473,7 @@ export function useSignupPage<A extends SignupFormData = SignupFormData>(
 
 export interface VerifyFormData {
   token: string | null;
+  requiresMfa: boolean;
   code: string;
   updateNumber: boolean;
   number: string | null;
@@ -480,6 +481,7 @@ export interface VerifyFormData {
 
 const emptyVerifyFormData: VerifyFormData = {
   token: null,
+  requiresMfa: false,
   code: "",
   updateNumber: false,
   number: null,
@@ -492,7 +494,9 @@ interface VerifyProps {
 }
 
 export function useVerifyPage(
-  runVerify: (code: string) => Promise<any>,
+  runVerify: (
+    verificationCode: string,
+  ) => Promise<Partial<VerifyFormData> | undefined>,
   runAuthenticate: (data: VerifyFormData) => Promise<any>,
   send: (data: VerifyFormData) => Promise<any>,
   errors?: Record<number, string>,
@@ -532,7 +536,8 @@ export function useVerifyPage(
   async function doVerify() {
     if (verificationCode) {
       try {
-        control.fields.token.value = await runVerify(verificationCode);
+        const verifyResponse = await runVerify(verificationCode);
+        control.setValue((c) => ({ ...c, ...verifyResponse }));
       } catch (e) {
         makeStatusCodeHandler(
           control,
