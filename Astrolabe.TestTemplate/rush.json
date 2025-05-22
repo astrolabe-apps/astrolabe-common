@@ -451,8 +451,7 @@
     },
     {
       "packageName": "@astrolabe/storybook",
-      "projectFolder": "../astrolabe-storybook",
-      "decoupledLocalDependencies": ["@astroapps/ui-tree"]
+      "projectFolder": "../astrolabe-storybook"
     },
     {
       "packageName": "formserver",

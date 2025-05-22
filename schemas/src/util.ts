@@ -859,6 +859,9 @@ export function getNullToggler(c: Control<any>): Control<boolean> {
       c.value = currentNotNull ? lastDefined.current.value : null;
       c.disabled = !currentNotNull;
     }, ControlChange.Value);
+    c.subscribe(() => {
+      notNull.value = c.current.value != null;
+    }, ControlChange.Value);
     return notNull;
     function disableIfNotEditing() {
       notNull.disabled = isEditing.current.value === false;
@@ -916,6 +919,21 @@ export function getAllValues(control: Control<any>): Control<unknown[]> {
   );
 }
 
+export function clearMultiValues(dataNode: SchemaDataNode): void {
+  const c = dataNode.control;
+  const sf = dataNode.schema.field;
+  if (sf.collection) {
+    return;
+  } else if (isCompoundField(sf)) {
+    dataNode.schema.getChildNodes().forEach((c) => {
+      clearMultiValues(dataNode.getChild(c));
+    });
+  } else {
+    const allValues = getAllValues(c);
+    allValues.setValue((x) => [c.current.value]);
+  }
+}
+
 export function applyValues(dataNode: SchemaDataNode, value: unknown): void {
   const c = dataNode.control;
   const sf = dataNode.schema.field;
@@ -945,8 +963,10 @@ export function collectDifferences(
   values: unknown[],
 ): () => { editable: number; editing: number } {
   values.forEach((v, i) => {
-    if (i == 0) dataNode.control.setInitialValue(v);
-    else applyValues(dataNode, v);
+    if (i == 0) {
+      dataNode.control.setInitialValue(v);
+      clearMultiValues(dataNode);
+    } else applyValues(dataNode, v);
   });
   const allEdits: Control<boolean | undefined>[] = [];
   resetMultiValues(dataNode);

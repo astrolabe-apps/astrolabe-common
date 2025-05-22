@@ -22,6 +22,7 @@ export interface OptionalRenderProps {
   nullToggler: Control<boolean>;
   dataContext: ControlDataContext;
   options: DefaultOptionalAdornmentOptions;
+  dataControl: Control<any>;
 }
 export interface DefaultOptionalAdornmentOptions {
   className?: string;
@@ -61,27 +62,23 @@ export function createOptionalAdornment(
                 AdornmentPlacement.LabelStart,
               <Fcheckbox control={editing} className={options.checkClass} />,
             )(rl);
-          wrapMarkup("children", (children) =>
-            options.customRender ? (
-              options.customRender({
-                allValues: getAllValues(dataControl),
-                editing,
-                children,
-                adornment,
-                nullToggler,
-                dataContext,
-                options,
-              })
+          wrapMarkup("children", (children) => {
+            const props = {
+              allValues: getAllValues(dataControl),
+              editing,
+              children,
+              adornment,
+              nullToggler,
+              dataContext,
+              options,
+              dataControl,
+            };
+            return options.customRender ? (
+              options.customRender(props)
             ) : (
-              <OptionalEditRenderer
-                children={children}
-                options={options}
-                editing={editing.as()}
-                adornment={adornment}
-                dataControl={dataControl}
-              />
-            ),
-          )(rl);
+              <OptionalEditRenderer {...props} />
+            );
+          })(rl);
         },
         priority: 0,
         adornment,
@@ -96,16 +93,13 @@ export function OptionalEditRenderer({
   options,
   adornment,
   editing,
-  dataControl,
-}: {
-  options: DefaultOptionalAdornmentOptions;
-  children: ReactNode;
-  adornment: OptionalAdornment;
-  editing: Control<boolean | undefined>;
-  dataControl: Control<any>;
+  renderMultiValues,
+  allValues,
+  nullToggler,
+}: OptionalRenderProps & {
+  renderMultiValues?: (allValues: Control<unknown[]>) => ReactNode;
 }) {
-  const nullToggler = getNullToggler(dataControl);
-  const allValues = getAllValues(dataControl);
+  renderMultiValues ??= () => options.multiValuesText ?? "Differing values";
   const multipleValues = allValues.value.length > 1;
   const nullEdit = adornment.allowNull ? (
     <div className={options.nullWrapperClass}>
@@ -121,7 +115,7 @@ export function OptionalEditRenderer({
     <div className={options.className}>
       {multipleValues && editing.value === false ? (
         <div className={options.multiValuesClass}>
-          {options.multiValuesText ?? "Differing values"}
+          {renderMultiValues(allValues)}
         </div>
       ) : (
         <div className={options.childWrapperClass}>
