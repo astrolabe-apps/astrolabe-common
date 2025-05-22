@@ -35,7 +35,7 @@ public static class VirtualHostingExtensions
             ServeUnknownFileTypes = true,
             DefaultContentType = "text/html;charset=UTF-8",
             OnPrepareResponse = (ctx) =>
-                ctx.Context.Response.Headers.CacheControl = options.CacheControl
+                ctx.Context.Response.Headers.CacheControl = options.CacheControl,
         };
         app.UseWhen(
             ctx => fallback || match(ctx.Request),
@@ -46,7 +46,7 @@ public static class VirtualHostingExtensions
                 app2.UseSpa(spa =>
                 {
                     spa.Options.SourcePath = "ClientApp";
-                    spa.Options.DefaultPage = Path.Combine(pathString ?? "/", "index.html");
+                    spa.Options.DefaultPage = (pathString ?? "") + "/index.html";
                     spa.Options.DefaultPageStaticFileOptions = fileOptions;
                 });
             }
