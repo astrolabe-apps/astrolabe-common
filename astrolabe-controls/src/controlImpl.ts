@@ -346,15 +346,14 @@ export class ControlImpl<V> implements InternalControl<V> {
       const hadErrors = this._errors != null;
       const exE = this._errors;
       if (!error) error = null;
-      if (exE?.[key] != error) {
-        if (error) {
-          if (exE) exE[key] = error;
-          else this._errors = { [key]: error };
-        } else {
-          if (exE) {
-            if (Object.values(exE).length === 1) this._errors = undefined;
-            else delete exE[key];
-          }
+      if (exE?.[key] == error) return;
+      if (error) {
+        if (exE) exE[key] = error;
+        else this._errors = { [key]: error };
+      } else {
+        if (exE) {
+          if (Object.values(exE).length === 1) this._errors = undefined;
+          else delete exE[key];
         }
       }
       const hasErrors = this._errors != null;
