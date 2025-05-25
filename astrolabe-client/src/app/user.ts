@@ -407,7 +407,7 @@ export function useResetPasswordPage(
       : null,
   );
 
-  const authTokenControl = useControl<string>("");
+  const authTokenControl = useControl<string>(resetCode ?? "");
 
   return {
     control,
