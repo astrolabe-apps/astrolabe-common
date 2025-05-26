@@ -57,6 +57,7 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
         return _localUserService.ForgotPassword(email);
     }
 
+    [Authorize]
     [HttpPost("changeEmail")]
     public Task ChangeEmail(ChangeEmail email)
     {
@@ -69,6 +70,7 @@ public abstract class AbstractLocalUserController<TNewUser, TUserId> : Controlle
         return _localUserService.ChangeMfaNumber(number, GetUserId);
     }
 
+    [Authorize]
     [HttpPost("mfaChangeMfaNumber")]
     public Task MfaChangeMfaNumber(MfaChangeNumber change)
     {
