@@ -70,7 +70,6 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
     },
     html: reactNativeHtml,
     extraRenderers: (options): RendererRegistration[] => {
-      console.log(options);
       const renderers: RendererRegistration[] = [
         createRNSelectRenderer(options.data?.selectOptions),
         createRNCheckboxRenderer(options.data?.checkOptions),
@@ -212,15 +211,6 @@ function RNInput(props: HtmlInputProperties) {
           onChange={() => onChangeChecked?.(!checked)}
         />
       );
-    // case "checkbox":
-    //   return (
-    //     <RNCheckbox
-    //       key={id}
-    //       {...(rest as any)}
-    //       checked={!!checked}
-    //       onCheckedChange={(e) => onChangeChecked?.(!checked)}
-    //     />
-    //   );
     default:
       return (
         <RNTextInput
