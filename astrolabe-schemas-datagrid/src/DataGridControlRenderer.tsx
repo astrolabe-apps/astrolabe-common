@@ -281,15 +281,19 @@ function DynamicGridVisibility(props: DataGridRendererProps) {
     (n, c) =>
       (ensureMetaValue(c, "groupByRowSpan", () => newControl(n)).value = n),
   );
-  const overrides = useControl(
-    props.columns.map((x) => ({ hidden: undefined })),
-  );
+  const overrides = useControl<
+    Record<
+      number,
+      {
+        hidden?: boolean;
+        getRowSpan?: (c: Control<any>, index: number) => number | undefined;
+      }
+    >
+  >({});
+
   const newColumns = props.columns.map((x, i) => {
-    const colOverrides = overrides.elements[i];
-    const { hidden, getRowSpan } = colOverrides.fields as Record<
-      string,
-      Control<any>
-    >;
+    const colOverrides = overrides.fields[i];
+    const { hidden, getRowSpan } = colOverrides.fields;
 
     createScopedEffect((c) => {
       const data = x.data;
