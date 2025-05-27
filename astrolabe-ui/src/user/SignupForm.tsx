@@ -1,7 +1,11 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
-import { SignupFormData, useAuthPageSetup } from "@astroapps/client";
+import {
+  SignupFormData,
+  useAuthPageSetup,
+  useNavigationService,
+} from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { ReactNode } from "react";
 import { UserFormContainer } from "./UserFormContainer";
@@ -19,6 +23,7 @@ export function SignupForm({
   createAccount,
   children,
 }: SignupFormProps) {
+  const { Link } = useNavigationService();
   const {
     fields: { password, confirm, email },
     disabled,
@@ -66,12 +71,12 @@ export function SignupForm({
             </Button>
             <p className="text-sm font-light text-gray-500 dark:text-gray-400">
               Already have an account?{" "}
-              <a
+              <Link
                 href={login}
                 className="font-medium text-primary-600 hover:underline dark:text-primary-500"
               >
                 Login here
-              </a>
+              </Link>
             </p>
           </form>
         </>

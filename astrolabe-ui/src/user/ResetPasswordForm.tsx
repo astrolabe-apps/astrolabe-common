@@ -10,6 +10,7 @@ import {
   MfaFormData,
   ResetPasswordFormData,
   useAuthPageSetup,
+  useNavigationService,
 } from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
@@ -32,6 +33,7 @@ export function ResetPasswordForm({
   mfaControl,
   mfaAuthenticate,
 }: ResetPasswordFormProps) {
+  const { Link } = useNavigationService();
   const {
     fields: { password, confirm },
     disabled,
@@ -39,11 +41,12 @@ export function ResetPasswordForm({
   } = control;
 
   const passwordReset = useControl(false);
-
   const codeSent = useControl(false);
   const codeValid = useControl(false);
+
   const {
     errors: { codeLimit },
+    hrefs: { login },
   } = useAuthPageSetup();
 
   useControlEffect(
@@ -53,17 +56,8 @@ export function ResetPasswordForm({
     },
   );
 
-  const mfaNumber = useComputed(() => {
-    const tokenPayload = mfaControl?.value
-      ? JSON.parse(atob(mfaControl.value.token.split(".")[1]))
-      : null;
-    if (tokenPayload?.mn) {
-      return tokenPayload.mn as string;
-    }
-    return null;
-  });
-
   const contactNumber = useComputed(() => {
+    if (!mfaControl?.value.token.includes(".")) return null;
     const tokenPayload = mfaControl?.value
       ? JSON.parse(atob(mfaControl.value.token.split(".")[1]))
       : null;
@@ -87,9 +81,17 @@ export function ResetPasswordForm({
     <UserFormContainer className={className}>
       {passwordReset.value ? (
         <>
-          <h2>You password has been changed.</h2>
+          <h2>Your password has been changed.</h2>
           <p className="font-light text-gray-500 dark:text-gray-400">
             You may now login with your new password
+          </p>
+          <p className="text-center">
+            <Link
+              href={login}
+              className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500"
+            >
+              Back to Login
+            </Link>
           </p>
         </>
       ) : (
@@ -102,73 +104,72 @@ export function ResetPasswordForm({
               doChange();
             }}
           >
-            {!codeSent.value || !codeValid.value ? (
-              <>
-                {!codeSent.value ? (
-                  <>
-                    <p>
-                      We have the following mobile number XXXX XXX{" "}
-                      {mfaNumber.value?.slice(-3) ??
-                        contactNumber.value?.slice(-3)}
-                    </p>
-                    <Button
-                      type="button"
-                      onClick={async () => {
-                        if (send && (await send())) codeSent.value = true;
-                      }}
-                    >
-                      Send Verification Code
-                    </Button>
-                  </>
-                ) : (
-                  <div className="flex flex-col gap-3">
-                    <div>
-                      <p>
-                        We sent a code to XXXX XXX{" "}
-                        {mfaNumber.value?.slice(-3) ??
-                          contactNumber.value?.slice(-3)}
-                      </p>
-                      <Textfield
-                        control={mfaControl!.fields.code}
-                        label="Code"
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={async () =>
-                        (codeValid.value = await mfaAuthenticate!())
-                      }
-                      disabled={
-                        !mfaControl!.fields.code.value ||
-                        mfaControl!.fields.code.value.length != 6 ||
-                        control.error === codeLimit
-                      }
-                    >
-                      Verify code
-                    </Button>
-                    <p>
-                      Haven't got an SMS from us?{" "}
-                      <button
-                        className="underline"
-                        onClick={send}
-                        disabled={control.error === codeLimit}
-                        type="button"
-                      >
-                        Resend the code
-                      </button>
-                    </p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <ChangePassword />
-            )}
+            {
+              // Requires MFA
+              contactNumber.value && (!codeSent.value || !codeValid.value) ? (
+                <MfaForm />
+              ) : (
+                <ChangePassword />
+              )
+            }
             {error && <p className="text-danger">{error}</p>}
           </form>
         </>
       )}
     </UserFormContainer>
   );
+
+  function MfaForm() {
+    return (
+      <>
+        {!codeSent.value ? (
+          <>
+            <p>
+              We have the following mobile number XXXX XXX{" "}
+              {contactNumber.value?.slice(-3)}
+            </p>
+            <Button
+              type="button"
+              onClick={async () => {
+                if (send && (await send())) codeSent.value = true;
+              }}
+            >
+              Send Verification Code
+            </Button>
+          </>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <div>
+              <p>We sent a code to XXXX XXX {contactNumber.value?.slice(-3)}</p>
+              <Textfield control={mfaControl!.fields.code} label="Code" />
+            </div>
+            <Button
+              type="button"
+              onClick={async () => (codeValid.value = await mfaAuthenticate!())}
+              disabled={
+                !mfaControl!.fields.code.value ||
+                mfaControl!.fields.code.value.length != 6 ||
+                control.error === codeLimit
+              }
+            >
+              Verify code
+            </Button>
+            <p>
+              Haven't got an SMS from us?{" "}
+              <button
+                className="underline"
+                onClick={send}
+                disabled={control.error === codeLimit}
+                type="button"
+              >
+                Resend the code
+              </button>
+            </p>
+          </div>
+        )}
+      </>
+    );
+  }
 
   function ChangePassword() {
     return (

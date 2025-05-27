@@ -2,7 +2,11 @@ import { Textfield } from "../Textfield";
 import { Control, Fcheckbox, useControlEffect } from "@react-typed-forms/core";
 import { Button } from "../Button";
 import clsx from "clsx";
-import { LoginFormData, useAuthPageSetup } from "@astroapps/client";
+import {
+  LoginFormData,
+  useAuthPageSetup,
+  useNavigationService,
+} from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 
@@ -17,6 +21,7 @@ export function LoginForm({
   control,
   authenticate,
 }: LoginFormProps) {
+  const { Link } = useNavigationService();
   const {
     hrefs: { signup, forgotPassword },
   } = useAuthPageSetup();
@@ -44,9 +49,9 @@ export function LoginForm({
       >
         <div className="flex">
           <div>Do you have an account yet?</div>
-          <a className={clsx("ml-1 ", linkStyle)} href={signup}>
+          <Link className={clsx("ml-1", linkStyle)} href={signup}>
             Signup
-          </a>
+          </Link>
         </div>
         <Textfield
           control={username}
@@ -61,12 +66,13 @@ export function LoginForm({
         />
         <div className="flex justify-between text-sm">
           <div>
-            <Fcheckbox control={rememberMe} /> <label>Remember me</label>
+            <Fcheckbox id="rememberMe" control={rememberMe} />{" "}
+            <label htmlFor="rememberMe">Remember me</label>
           </div>
           <div>
-            <a href={forgotPassword} className={linkStyle}>
+            <Link href={forgotPassword} className={linkStyle}>
               Forgot your password?
-            </a>
+            </Link>
           </div>
         </div>
         {error && <p className="text-danger">{error}</p>}

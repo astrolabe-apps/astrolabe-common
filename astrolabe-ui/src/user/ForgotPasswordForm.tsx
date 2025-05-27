@@ -1,7 +1,11 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
-import { ForgotPasswordFormData } from "@astroapps/client";
+import {
+  ForgotPasswordFormData,
+  useAuthPageSetup,
+  useNavigationService,
+} from "@astroapps/client";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 
@@ -16,10 +20,14 @@ export function ForgotPasswordForm({
   control,
   requestResetPassword,
 }: ForgotPasswordFormProps) {
+  const { Link } = useNavigationService();
   const {
     fields: { email },
     disabled,
   } = control;
+  const {
+    hrefs: { login },
+  } = useAuthPageSetup();
   const resetRequested = useControl(false);
 
   return (
@@ -54,6 +62,14 @@ export function ForgotPasswordForm({
           </form>
         </>
       )}
+      <p className="text-center">
+        <Link
+          href={login}
+          className="text-sm font-medium text-primary-600 hover:underline dark:text-primary-500"
+        >
+          Back to Login
+        </Link>
+      </p>
     </UserFormContainer>
   );
 

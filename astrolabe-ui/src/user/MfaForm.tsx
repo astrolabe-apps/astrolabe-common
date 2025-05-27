@@ -118,8 +118,10 @@ export function MfaForm({
             {contactNumber.value && (
               <div>
                 <div className="flex flex-row gap-2 items-center">
-                  <Fcheckbox control={updateNumber}></Fcheckbox>
-                  <label>Send to a different number</label>
+                  <Fcheckbox id="updateNumber" control={updateNumber} />
+                  <label htmlFor="updateNumber">
+                    Send to a different number
+                  </label>
                 </div>
               </div>
             )}
