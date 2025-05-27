@@ -68,7 +68,7 @@ function CheckBoxRenderer({
   );
 }
 
-const RNCheckbox = React.forwardRef<
+export const RNCheckbox = React.forwardRef<
   CheckboxPrimitive.RootRef,
   CheckboxPrimitive.RootProps
 >(({ className, ...props }, ref) => {

@@ -22,7 +22,10 @@ import { createRNSelectRenderer } from "./components/RNSelectRenderer";
 import { StyleProp } from "react-native/Libraries/StyleSheet/StyleSheet";
 import { ViewStyle } from "react-native/Libraries/StyleSheet/StyleSheetTypes";
 import { Icon } from "./components/Icon";
-import { createRNCheckboxRenderer } from "./components/RNCheckboxRenderer";
+import {
+  createRNCheckboxRenderer,
+  RNCheckbox,
+} from "./components/RNCheckboxRenderer";
 
 export const reactNativeHtml: HtmlComponents = {
   I: RNIcon,
@@ -209,6 +212,15 @@ function RNInput(props: HtmlInputProperties) {
           {...(rest as any)}
           checked={!!checked}
           onChange={() => onChangeChecked?.(!checked)}
+        />
+      );
+    case "checkbox":
+      return (
+        <RNCheckbox
+          key={id}
+          {...(rest as any)}
+          checked={!!checked}
+          onCheckedChange={(e) => onChangeChecked?.(!checked)}
         />
       );
     default:
