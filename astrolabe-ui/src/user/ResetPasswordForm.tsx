@@ -106,11 +106,9 @@ export function ResetPasswordForm({
           >
             {
               // Requires MFA
-              contactNumber.value && (!codeSent.value || !codeValid.value) ? (
-                <MfaForm />
-              ) : (
-                <ChangePassword />
-              )
+              contactNumber.value && (!codeSent.value || !codeValid.value)
+                ? mfaForm()
+                : changePasswordForm()
             }
             {error && <p className="text-danger">{error}</p>}
           </form>
@@ -119,7 +117,7 @@ export function ResetPasswordForm({
     </UserFormContainer>
   );
 
-  function MfaForm() {
+  function mfaForm() {
     return (
       <>
         {!codeSent.value ? (
@@ -171,7 +169,7 @@ export function ResetPasswordForm({
     );
   }
 
-  function ChangePassword() {
+  function changePasswordForm() {
     return (
       <>
         <Textfield

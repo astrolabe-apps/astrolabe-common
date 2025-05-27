@@ -42,14 +42,14 @@ export function ChangePasswordForm({
               doChange();
             }}
           >
-            <ChangePassword />
+            {changePasswordForm()}
           </form>
         </>
       )}
     </UserFormContainer>
   );
 
-  function ChangePassword() {
+  function changePasswordForm() {
     return (
       <>
         <Textfield
