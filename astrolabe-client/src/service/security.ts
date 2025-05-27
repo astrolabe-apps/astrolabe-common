@@ -80,11 +80,14 @@ export function createAccessTokenFetcher(
   };
 }
 
-export function useControlTokenSecurity(options?: {
+export type ControlTokenSecurityOptions = {
   getUserData?: (
     fetch: SecurityService["fetch"],
   ) => Promise<Partial<UserState>>;
-}): TokenSecurityService {
+};
+export function useControlTokenSecurity(
+  options?: ControlTokenSecurityOptions,
+): TokenSecurityService {
   const tokens = getTokenStorage();
   const user = useControl<UserState>({
     busy: true,
