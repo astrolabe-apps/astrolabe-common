@@ -10,6 +10,7 @@ import { UserFormContainer } from "./UserFormContainer";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
 import React from "react";
+import { CircularProgress } from "../CircularProgress";
 
 type VerifyFormProps = {
   className?: string;
@@ -25,7 +26,7 @@ export function VerifyForm({
   send,
 }: VerifyFormProps) {
   const {
-    fields: { code, token, number, updateNumber },
+    fields: { code, token, number, updateNumber, requiresMfa },
     error,
   } = control;
   const {
@@ -72,7 +73,7 @@ export function VerifyForm({
 
       {error != verify ? (
         <>
-          {token.value && (
+          {requiresMfa.value ? (
             <>
               {!codeSent.value ? (
                 <div>
@@ -83,8 +84,10 @@ export function VerifyForm({
                           -3,
                         )}`}</p>
                         <div className="flex flex-row gap-2 items-center">
-                          <Fcheckbox control={updateNumber}></Fcheckbox>
-                          <label>Send to a different number</label>
+                          <Fcheckbox id="updateNumber" control={updateNumber} />
+                          <label htmlFor="updateNumber">
+                            Send to a different number
+                          </label>
                         </div>
                       </>
                     )}
@@ -137,6 +140,8 @@ export function VerifyForm({
               )}
               {error && <p className="text-danger">{error}</p>}
             </>
+          ) : (
+            <CircularProgress />
           )}
         </>
       ) : (
@@ -144,10 +149,4 @@ export function VerifyForm({
       )}
     </UserFormContainer>
   );
-
-  async function sendCode() {
-    await send();
-    code.touched = false;
-    if (!codeSent.value) codeSent.value = true;
-  }
 }
