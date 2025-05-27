@@ -4,7 +4,6 @@ import {
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
 import { Platform, Pressable, Text, View } from "react-native";
-import { RNCheckbox } from "./components/RNCheckbox";
 import { RNTextInput } from "./components/RNTextInput";
 import { RNRadioItem } from "./components/RNRadioItem";
 import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
@@ -23,6 +22,7 @@ import { createRNSelectRenderer } from "./components/RNSelectRenderer";
 import { StyleProp } from "react-native/Libraries/StyleSheet/StyleSheet";
 import { ViewStyle } from "react-native/Libraries/StyleSheet/StyleSheetTypes";
 import { Icon } from "./components/Icon";
+import { createRNCheckboxRenderer } from "./components/RNCheckboxRenderer";
 
 export const reactNativeHtml: HtmlComponents = {
   I: RNIcon,
@@ -40,6 +40,7 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
     data: {
       checkOptions: {
         entryClass: "flex flex-row items-center gap-[8px]",
+        labelClass: "flex-1",
       },
     },
     label: {
@@ -69,8 +70,10 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
     },
     html: reactNativeHtml,
     extraRenderers: (options): RendererRegistration[] => {
+      console.log(options);
       const renderers: RendererRegistration[] = [
         createRNSelectRenderer(options.data?.selectOptions),
+        createRNCheckboxRenderer(options.data?.checkOptions),
       ];
 
       if (Platform.OS !== "web") {
@@ -209,15 +212,15 @@ function RNInput(props: HtmlInputProperties) {
           onChange={() => onChangeChecked?.(!checked)}
         />
       );
-    case "checkbox":
-      return (
-        <RNCheckbox
-          key={id}
-          {...(rest as any)}
-          checked={!!checked}
-          onCheckedChange={(e) => onChangeChecked?.(!checked)}
-        />
-      );
+    // case "checkbox":
+    //   return (
+    //     <RNCheckbox
+    //       key={id}
+    //       {...(rest as any)}
+    //       checked={!!checked}
+    //       onCheckedChange={(e) => onChangeChecked?.(!checked)}
+    //     />
+    //   );
     default:
       return (
         <RNTextInput
