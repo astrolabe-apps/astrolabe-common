@@ -479,17 +479,11 @@ export function useSignupPage<A extends SignupFormData = SignupFormData>(
 export interface VerifyFormData {
   token: string | null;
   requiresMfa: boolean;
-  code: string;
-  updateNumber: boolean;
-  number: string | null;
 }
 
 const emptyVerifyFormData: VerifyFormData = {
   token: null,
   requiresMfa: false,
-  code: "",
-  updateNumber: false,
-  number: null,
 };
 
 interface VerifyProps {
