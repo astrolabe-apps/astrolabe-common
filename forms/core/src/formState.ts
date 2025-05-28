@@ -82,6 +82,7 @@ export interface FormState {
     parent: SchemaDataNode,
     formNode: FormNode,
     context: FormContextOptions,
+    runAsync: (af: () => void) => void,
   ): ControlState;
 
   cleanup(): void;
@@ -116,6 +117,7 @@ export function createFormState(
       parent: SchemaDataNode,
       formNode: FormNode,
       context: FormContextOptions,
+      runAsync: (af: () => void) => void,
     ): ControlState {
       const stateId = parent.id + "$" + formNode.id + (context.stateKey ?? "");
       const controlImpl = controlStates.fields[stateId];
@@ -137,6 +139,7 @@ export function createFormState(
             dataNode: parent,
             variables: controlImpl.fields.variables,
             schemaInterface,
+            runAsync,
           });
           return true;
         }
@@ -365,6 +368,7 @@ export function createFormState(
           schemaInterface,
           parent,
           formNode,
+          runAsync,
         );
 
         createSyncEffect(() => {

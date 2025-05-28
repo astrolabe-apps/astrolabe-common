@@ -45,6 +45,7 @@ export interface RenderFormProps {
   renderer: FormRenderer;
   options?: ControlRenderOptions;
 }
+
 /* @trackControls */
 export function RenderForm({
   data,
@@ -56,7 +57,10 @@ export function RenderForm({
   const [formState, setFormState] = useState(
     () => options?.formState ?? createFormState(schemaInterface),
   );
-  const state = formState.getControlState(data, form, options);
+  const effects: (() => void)[] = [];
+  const state = formState.getControlState(data, form, options, (cb) =>
+    effects.push(cb),
+  );
 
   useEffect(() => {
     if (!options?.formState) {
@@ -160,6 +164,7 @@ export function RenderForm({
         parent ?? state.dataNode ?? data,
         child,
         childOptions,
+        (cb) => effects.push(cb),
       );
     },
     runExpression: (scope, expr, returnResult) => {
@@ -169,6 +174,7 @@ export function RenderForm({
           dataNode: data,
           schemaInterface,
           returnResult,
+          runAsync: (cb) => effects.push(cb),
         });
       }
     },
@@ -182,7 +188,14 @@ export function RenderForm({
   const renderedControl = renderer.renderLayout(
     options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,
   );
-  return renderer.renderVisibility({ visibility, ...renderedControl });
+  const rendered = renderer.renderVisibility({
+    visibility,
+    ...renderedControl,
+  });
+  useEffect(() => {
+    effects.forEach((cb) => cb());
+  }, [effects]);
+  return rendered;
 }
 
 /**

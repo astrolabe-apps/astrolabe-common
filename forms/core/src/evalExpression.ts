@@ -28,6 +28,7 @@ export interface ExpressionEvalContext {
   dataNode: SchemaDataNode;
   schemaInterface: SchemaInterface;
   variables?: Value<Record<string, any> | undefined>;
+  runAsync(effect: () => void): void;
 }
 
 export type ExpressionEval<T extends EntityExpression> = (
@@ -72,7 +73,7 @@ const notEmptyEval: ExpressionEval<NotEmptyExpression> = (
 
 export const jsonataEval: ExpressionEval<JsonataExpression> = (
   expr,
-  { scope, returnResult, dataNode, variables },
+  { scope, returnResult, dataNode, variables, runAsync },
 ) => {
   const path = getJsonPath(dataNode);
   const pathString = jsonPathString(path, (x) => `#$i[${x}]`);
@@ -102,7 +103,8 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
     collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 
-  createAsyncEffect(runJsonata, scope);
+  const asyncEffect = createAsyncEffect(runJsonata, scope);
+  runAsync(() => asyncEffect.start());
 };
 
 export const uuidEval: ExpressionEval<EntityExpression> = (_, ctx) => {
