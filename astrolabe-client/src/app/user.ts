@@ -1,4 +1,9 @@
-import { Control, notEmpty, useControl } from "@react-typed-forms/core";
+import {
+  Control,
+  notEmpty,
+  useComputed,
+  useControl,
+} from "@react-typed-forms/core";
 import {
   isApiResponse,
   makeStatusCodeHandler,
@@ -489,6 +494,7 @@ const emptyVerifyFormData: VerifyFormData = {
 
 interface VerifyProps {
   control: Control<VerifyFormData>;
+  mfaControl: Control<MfaFormData>;
   authenticate: () => Promise<boolean>;
   send: () => Promise<boolean>;
 }
@@ -497,8 +503,8 @@ export function useVerifyPage(
   runVerify: (
     verificationCode: string,
   ) => Promise<Partial<VerifyFormData> | undefined>,
-  runAuthenticate: (data: VerifyFormData) => Promise<any>,
-  send: (data: VerifyFormData) => Promise<any>,
+  runAuthenticate: (data: MfaFormData) => Promise<any>,
+  send: (data: MfaFormData) => Promise<any>,
   errors?: Record<number, string>,
 ): VerifyProps {
   const {
@@ -510,6 +516,17 @@ export function useVerifyPage(
   const verificationCode = searchParams.get(verifyCode);
 
   const control = useControl(emptyVerifyFormData);
+  const mfaControl = useComputed<MfaFormData>(() => {
+    return {
+      token:
+        control.value.requiresMfa && control.value.token
+          ? control.value.token
+          : "",
+      code: "",
+      updateNumber: false,
+      number: null,
+    };
+  });
 
   useEffect(() => {
     doVerify();
@@ -517,17 +534,18 @@ export function useVerifyPage(
 
   return {
     control: control,
+    mfaControl,
     authenticate: () =>
       validateAndRunMessages(
         control,
-        () => runAuthenticate(control.value),
+        () => runAuthenticate(mfaControl.value),
         { 401: wrongCode, 429: codeLimit, ...(errors ?? statusCodes) },
         generic,
       ),
     send: () =>
       validateAndRunMessages(
         control,
-        () => send(control.value),
+        () => send(mfaControl.value),
         { 429: codeLimit, ...(errors ?? statusCodes) },
         generic,
       ),

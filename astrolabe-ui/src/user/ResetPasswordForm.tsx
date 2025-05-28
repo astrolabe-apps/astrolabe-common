@@ -1,9 +1,4 @@
-import {
-  Control,
-  useComputed,
-  useControl,
-  useControlEffect,
-} from "@react-typed-forms/core";
+import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
 import {
@@ -15,6 +10,7 @@ import {
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 import React from "react";
+import SmsMfa from "./SmsMfa";
 
 type ResetPasswordFormProps = {
   className?: string;
@@ -41,41 +37,17 @@ export function ResetPasswordForm({
   } = control;
 
   const passwordReset = useControl(false);
-  const codeSent = useControl(false);
   const codeValid = useControl(false);
 
   const {
-    errors: { codeLimit },
     hrefs: { login },
   } = useAuthPageSetup();
 
-  useControlEffect(
-    () => mfaControl?.fields.code.value,
-    () => {
-      if (control.error != codeLimit) control.error = null;
-    },
-  );
-
-  const contactNumber = useComputed(() => {
-    if (!mfaControl?.value.token.includes(".")) return null;
-    const tokenPayload = mfaControl?.value
-      ? JSON.parse(atob(mfaControl.value.token.split(".")[1]))
-      : null;
-    if (tokenPayload?.cn) {
-      return tokenPayload.cn as string;
-    }
-    return null;
-  });
-
-  useControlEffect(
-    () => contactNumber.value,
-    (v) => {
-      if (v) {
-        mfaControl!.fields.number.value = v;
-      }
-    },
-    true,
-  );
+  const requiresMfa =
+    mfaControl != undefined &&
+    mfaControl.value.token.includes(".") && // Hacks
+    send != undefined &&
+    mfaAuthenticate != undefined;
 
   return (
     <UserFormContainer className={className}>
@@ -106,9 +78,17 @@ export function ResetPasswordForm({
           >
             {
               // Requires MFA
-              contactNumber.value && (!codeSent.value || !codeValid.value)
-                ? mfaForm()
-                : changePasswordForm()
+              requiresMfa && !codeValid.value ? (
+                <SmsMfa
+                  control={mfaControl}
+                  sendCode={send}
+                  verifyCode={async () => {
+                    codeValid.value = await mfaAuthenticate();
+                  }}
+                />
+              ) : (
+                changePasswordForm()
+              )
             }
             {error && <p className="text-danger">{error}</p>}
           </form>
@@ -116,58 +96,6 @@ export function ResetPasswordForm({
       )}
     </UserFormContainer>
   );
-
-  function mfaForm() {
-    return (
-      <>
-        {!codeSent.value ? (
-          <>
-            <p>
-              We have the following mobile number XXXX XXX{" "}
-              {contactNumber.value?.slice(-3)}
-            </p>
-            <Button
-              type="button"
-              onClick={async () => {
-                if (send && (await send())) codeSent.value = true;
-              }}
-            >
-              Send Verification Code
-            </Button>
-          </>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <div>
-              <p>We sent a code to XXXX XXX {contactNumber.value?.slice(-3)}</p>
-              <Textfield control={mfaControl!.fields.code} label="Code" />
-            </div>
-            <Button
-              type="button"
-              onClick={async () => (codeValid.value = await mfaAuthenticate!())}
-              disabled={
-                !mfaControl!.fields.code.value ||
-                mfaControl!.fields.code.value.length != 6 ||
-                control.error === codeLimit
-              }
-            >
-              Verify code
-            </Button>
-            <p>
-              Haven't got an SMS from us?{" "}
-              <button
-                className="underline"
-                onClick={send}
-                disabled={control.error === codeLimit}
-                type="button"
-              >
-                Resend the code
-              </button>
-            </p>
-          </div>
-        )}
-      </>
-    );
-  }
 
   function changePasswordForm() {
     return (
