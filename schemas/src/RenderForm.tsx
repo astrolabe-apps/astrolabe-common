@@ -57,10 +57,12 @@ export function RenderForm({
   const [formState, setFormState] = useState(
     () => options?.formState ?? createFormState(schemaInterface),
   );
-  const effects: (() => void)[] = [];
-  const state = formState.getControlState(data, form, options, (cb) =>
-    effects.push(cb),
-  );
+  let effects: (() => void)[] | undefined = [];
+  const runAsync = (cb: () => void) => {
+    if (effects) effects.push(cb);
+    else cb();
+  };
+  const state = formState.getControlState(data, form, options, runAsync);
 
   useEffect(() => {
     if (!options?.formState) {
@@ -164,7 +166,7 @@ export function RenderForm({
         parent ?? state.dataNode ?? data,
         child,
         childOptions,
-        (cb) => effects.push(cb),
+        runAsync,
       );
     },
     runExpression: (scope, expr, returnResult) => {
@@ -174,7 +176,7 @@ export function RenderForm({
           dataNode: data,
           schemaInterface,
           returnResult,
-          runAsync: (cb) => effects.push(cb),
+          runAsync,
         });
       }
     },
@@ -193,7 +195,11 @@ export function RenderForm({
     ...renderedControl,
   });
   useEffect(() => {
-    effects.forEach((cb) => cb());
+    if (effects) {
+      const toRun = effects;
+      effects = undefined;
+      toRun.forEach((cb) => cb());
+    }
   }, [effects]);
   return rendered;
 }

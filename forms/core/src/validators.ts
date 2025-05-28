@@ -52,7 +52,7 @@ export const jsonataValidator: ValidatorEval<JsonataValidator> = (
       dataNode: context.parentData,
       returnResult: (v) => {
         trackControlChange(context.data.control, ControlChange.Validate);
-        console.log("Setting jsonata error", v);
+        // console.log("Setting jsonata error", v);
         context.data.control.setError("jsonata", v?.toString());
       },
       schemaInterface: context.schemaInterface,
