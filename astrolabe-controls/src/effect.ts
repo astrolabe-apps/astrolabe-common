@@ -71,7 +71,7 @@ export function createScopedEffect<V>(
 }
 
 export class AsyncEffect<V> extends SubscriptionTracker {
-  currentPromise: Promise<V>;
+  currentPromise!: Promise<V>;
   abortController?: AbortController;
   changedDetected = false;
   destroyed = false;
@@ -89,6 +89,10 @@ export class AsyncEffect<V> extends SubscriptionTracker {
         this.update();
       }
     }
+  }
+
+  start() {
+    this.currentPromise = this.runProcess();
   }
 
   cleanup() {
@@ -115,7 +119,6 @@ export class AsyncEffect<V> extends SubscriptionTracker {
         }
       });
     });
-    this.currentPromise = this.runProcess();
   }
 }
 

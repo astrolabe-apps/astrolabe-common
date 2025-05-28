@@ -32,6 +32,7 @@ export interface ValidationEvalContext {
   data: SchemaDataNode;
   schemaInterface: SchemaInterface;
   formContext: Control<FormContextOptions>;
+  runAsync(af: () => void): void;
 }
 
 export type ValidatorEval<T extends SchemaValidator> = (
@@ -56,6 +57,7 @@ export const jsonataValidator: ValidatorEval<JsonataValidator> = (
       },
       schemaInterface: context.schemaInterface,
       variables: context.formContext.fields.variables,
+      runAsync: context.runAsync,
     },
   );
 };
@@ -169,6 +171,7 @@ export function setupValidation(
   schemaInterface: SchemaInterface,
   parent: SchemaDataNode,
   formNode: FormNode,
+  runAsync: (af: () => void) => void,
 ) {
   const validationEnabled = createScopedComputed(
     controlImpl,
@@ -193,6 +196,7 @@ export function setupValidation(
             validatorsScope.addCleanup(cleanup);
           },
           formContext: controlImpl,
+          runAsync,
         });
 
         createEffect(
