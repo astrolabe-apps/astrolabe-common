@@ -1,7 +1,6 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { AppContext } from "./index";
 import { Control, newControl, useControl } from "@react-typed-forms/core";
-import { RouteData } from "../app/routeData";
 import { useNavigationService } from "./navigation";
 import { parseJwt } from "../util/jwt";
 
@@ -81,7 +80,14 @@ export function createAccessTokenFetcher(
   };
 }
 
-export function useControlTokenSecurity(): TokenSecurityService {
+export type ControlTokenSecurityOptions = {
+  getUserData?: (
+    fetch: SecurityService["fetch"],
+  ) => Promise<Partial<UserState>>;
+};
+export function useControlTokenSecurity(
+  options?: ControlTokenSecurityOptions,
+): TokenSecurityService {
   const tokens = getTokenStorage();
   const user = useControl<UserState>({
     busy: true,
@@ -89,8 +95,7 @@ export function useControlTokenSecurity(): TokenSecurityService {
     loggedIn: false,
   });
   useEffect(() => {
-    const accessToken = tokens.getItem("token");
-    user.value = { busy: false, ...userStateFromToken(accessToken) };
+    checkInitial();
   }, []);
   return {
     currentUser: user,
@@ -103,13 +108,38 @@ export function useControlTokenSecurity(): TokenSecurityService {
     },
     async login() {},
     async setToken(accessToken: string) {
-      tokens.setItem("token", accessToken);
-      user.setValue((v) => ({
-        ...v,
-        ...userStateFromToken(accessToken),
-      }));
+      await setupUserFromToken(accessToken);
     },
   };
+
+  async function checkInitial() {
+    const accessToken = tokens.getItem("token");
+    const userData =
+      accessToken && options?.getUserData
+        ? await options.getUserData(
+            createAccessTokenFetcher(async () => accessToken),
+          )
+        : undefined;
+
+    user.value = {
+      ...userStateFromToken(accessToken),
+      ...userData,
+      busy: false,
+    };
+  }
+
+  async function setupUserFromToken(accessToken: string) {
+    tokens.setItem("token", accessToken);
+    const userData = {
+      ...userStateFromToken(accessToken),
+      ...(options?.getUserData
+        ? await options.getUserData(
+            createAccessTokenFetcher(async () => accessToken),
+          )
+        : undefined),
+    };
+    user.setValue((cu) => ({ ...cu, ...userData }));
+  }
 }
 
 export function userStateFromToken(jwtToken: string | null): {
