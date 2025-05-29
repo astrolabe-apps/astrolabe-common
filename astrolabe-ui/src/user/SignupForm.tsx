@@ -1,14 +1,11 @@
 import { Control, useControl } from "@react-typed-forms/core";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";
-import {
-  SignupFormData,
-  useAuthPageSetup,
-  useNavigationService,
-} from "@astroapps/client";
+import { SignupFormData, useAuthPageSetup } from "@astroapps/client-localusers";
 import { CircularProgress } from "../CircularProgress";
 import { ReactNode } from "react";
 import { UserFormContainer } from "./UserFormContainer";
+import { useNavigationService } from "@astroapps/client";
 
 type SignupFormProps = {
   className?: string;

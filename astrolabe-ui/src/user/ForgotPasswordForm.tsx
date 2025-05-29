@@ -4,10 +4,10 @@ import { Button } from "../Button";
 import {
   ForgotPasswordFormData,
   useAuthPageSetup,
-  useNavigationService,
-} from "@astroapps/client";
+} from "@astroapps/client-localusers";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
+import { useNavigationService } from "@astroapps/client";
 
 type ForgotPasswordFormProps = {
   className?: string;

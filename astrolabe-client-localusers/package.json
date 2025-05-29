@@ -1,6 +1,6 @@
 {
-  "name": "@astroapps/client",
-  "version": "2.3.0",
+  "name": "@astroapps/client-localusers",
+  "version": "1.0.0",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
@@ -20,35 +20,25 @@
     "access": "public"
   },
   "dependencies": {
-    "clsx": "^2.0.0",
-    "tailwind-merge": "^1.14.0",
-    "tslib": "^2.6.2"
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.0.0",
+    "@astroapps/client": "^2.3.0",
     "react": "^18.2.0 || ^19"
   },
   "scripts": {
     "prepack": "npm run clean && npm run build",
-		"clean": "rimraf *.tsbuildinfo node_modules/.cache app/ hooks/ lib/ service/ util/ *.js *.js.map",
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
     "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "devDependencies": {
     "@react-typed-forms/core": "^4.0.0",
+    "@astroapps/client": "^2.3.0",
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/transform": "^0.2.0",
-    "@babel/core": "^7.23.7",
-    "@babel/cli": "^7.23.4",
-    "@babel/preset-env": "^7.23.8",
-    "@babel/preset-react": "^7.23.3",
-    "@babel/preset-typescript": "^7.23.3",
     "microbundle": "^0.15.1",
     "typescript": "^5.6.2",
     "rimraf": "^5.0.5",
     "@types/react": "^18.2.33",
-    "@types/shallowequal": "^1.1.2",
-    "@types/node": "^20.8.4",
     "prettier": "^3.0.3"
   }
 }

@@ -117,6 +117,7 @@
     "react-dnd": "16.0.1",
     "@astroapps/forms-core": "workspace:*",
     "@astroapps/client": "workspace:*",
+    "@astroapps/client-localusers": "workspace:*",
     "@astroapps/controls": "workspace:*",
     "@react-typed-forms/core": "workspace:*",
     "@react-typed-forms/schemas": "workspace:*",

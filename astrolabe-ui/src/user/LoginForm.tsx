@@ -2,13 +2,10 @@ import { Textfield } from "../Textfield";
 import { Control, Fcheckbox, useControlEffect } from "@react-typed-forms/core";
 import { Button } from "../Button";
 import clsx from "clsx";
-import {
-  LoginFormData,
-  useAuthPageSetup,
-  useNavigationService,
-} from "@astroapps/client";
+import { LoginFormData, useAuthPageSetup } from "@astroapps/client-localusers";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
+import { useNavigationService } from "@astroapps/client";
 
 type LoginFormProps = {
   className?: string;

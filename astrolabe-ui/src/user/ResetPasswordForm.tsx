@@ -5,12 +5,12 @@ import {
   MfaFormData,
   ResetPasswordFormData,
   useAuthPageSetup,
-  useNavigationService,
-} from "@astroapps/client";
+} from "@astroapps/client-localusers";
 import { CircularProgress } from "../CircularProgress";
 import { UserFormContainer } from "./UserFormContainer";
 import React from "react";
 import SmsMfa from "./SmsMfa";
+import { useNavigationService } from "@astroapps/client";
 
 type ResetPasswordFormProps = {
   className?: string;

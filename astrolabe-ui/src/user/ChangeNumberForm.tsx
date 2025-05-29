@@ -1,5 +1,8 @@
 import { Control, useControl, useControlEffect } from "@react-typed-forms/core";
-import { ChangeMfaNumberFormData, useAuthPageSetup } from "@astroapps/client";
+import {
+  ChangeMfaNumberFormData,
+  useAuthPageSetup,
+} from "@astroapps/client-localusers";
 import { UserFormContainer } from "./UserFormContainer";
 import { Textfield } from "../Textfield";
 import { Button } from "../Button";

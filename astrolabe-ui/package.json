@@ -8,6 +8,7 @@
 		"@react-typed-forms/core": "^4.4.0",
 		"@react-typed-forms/schemas": "^16.0.0",
 		"@astroapps/client": "^2.0.0",
+		"@astroapps/client-localusers": "^1.0.0",
 		"@astroapps/datagrid": "^1.0.8"
 	},
 	"dependencies": {
@@ -39,6 +40,7 @@
 		"@react-typed-forms/core": "^4.4.0",
 		"@react-typed-forms/schemas": "^16.0.0",
 		"@astroapps/client": "^2.0.0",
+		"@astroapps/client-localusers": "^1.0.0",
 		"@astroapps/datagrid": "^1.0.8",
 		"typescript": "^5.6.2",
 		"@types/react": "^18.2.33",

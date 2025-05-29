@@ -1,5 +1,5 @@
 import { Control } from "@react-typed-forms/core";
-import { MfaFormData, VerifyFormData } from "@astroapps/client";
+import { MfaFormData, VerifyFormData } from "@astroapps/client-localusers";
 import { UserFormContainer } from "./UserFormContainer";
 import React from "react";
 import { CircularProgress } from "../CircularProgress";

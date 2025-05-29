@@ -415,6 +415,11 @@
       "versionPolicyName": "client"
     },
     {
+      "packageName": "@astroapps/client-localusers",
+      "projectFolder": "../astrolabe-client-localusers",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@astroapps/datagrid",
       "projectFolder": "../astrolabe-datagrid",
       "shouldPublish": true

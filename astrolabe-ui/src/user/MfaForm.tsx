@@ -1,5 +1,5 @@
 import { Control } from "@react-typed-forms/core";
-import { MfaFormData } from "@astroapps/client";
+import { MfaFormData } from "@astroapps/client-localusers";
 import { UserFormContainer } from "./UserFormContainer";
 import React from "react";
 import SmsMfa from "./SmsMfa";

@@ -5,6 +5,7 @@ overrides:
   react-dnd: 16.0.1
   '@astroapps/forms-core': workspace:*
   '@astroapps/client': workspace:*
+  '@astroapps/client-localusers': workspace:*
   '@astroapps/controls': workspace:*
   '@react-typed-forms/core': workspace:*
   '@react-typed-forms/schemas': workspace:*
@@ -118,6 +119,26 @@ importers:
       react: 18.3.1
       rimraf: 5.0.10
       typescript: 5.6.3
+
+  ../../../astrolabe-client-localusers:
+    specifiers:
+      '@astroapps/client': workspace:*
+      '@react-typed-forms/core': workspace:*
+      '@types/react': ^18.2.33
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      react: ^18.2.0 || ^19
+      rimraf: ^5.0.5
+      typescript: ^5.6.2
+    devDependencies:
+      '@astroapps/client': link:../astrolabe-client
+      '@react-typed-forms/core': link:../core
+      '@types/react': 18.3.12
+      microbundle: 0.15.1
+      prettier: 3.4.2
+      react: 18.3.1
+      rimraf: 5.0.10
+      typescript: 5.7.2
 
   ../../../astrolabe-client-msal:
     specifiers:
@@ -567,6 +588,7 @@ importers:
   ../../../astrolabe-ui:
     specifiers:
       '@astroapps/client': workspace:*
+      '@astroapps/client-localusers': workspace:*
       '@astroapps/datagrid': workspace:*
       '@mui/base': ^5.0.0-beta.23
       '@radix-ui/react-accordion': ^1.2.4
@@ -616,6 +638,7 @@ importers:
       tailwind-merge: 1.14.0
     devDependencies:
       '@astroapps/client': link:../astrolabe-client
+      '@astroapps/client-localusers': link:../astrolabe-client-localusers
       '@astroapps/datagrid': link:../astrolabe-datagrid
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/schemas': link:../schemas
@@ -937,6 +960,7 @@ importers:
 
   ../../../schemas-rn:
     specifiers:
+      '@astroapps/controls': workspace:*
       '@babel/core': ^7.25.2
       '@expo/vector-icons': ^14.0.2
       '@internationalized/date': ^3.6.0
@@ -992,6 +1016,7 @@ importers:
       react-native-modal-datetime-picker: 18.0.0_peguu57gkf3kovz7u3witsspha
       tailwind-merge: 1.14.0
     devDependencies:
+      '@astroapps/controls': link:../astrolabe-controls
       '@babel/core': 7.26.0
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/schemas': link:../schemas
