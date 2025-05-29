@@ -24,15 +24,14 @@ import { SchemaInterface } from "./schemaInterface";
 import { FieldOption } from "./schemaField";
 import {
   CleanupScope,
-  clearMetaValue,
   Control,
   createScopedEffect,
   createSyncEffect,
   ensureMetaValue,
   getControlPath,
   getCurrentFields,
+  getMetaValue,
   newControl,
-  trackedValue,
   unsafeRestoreControl,
   updateComputedValue,
 } from "@astroapps/controls";
@@ -58,6 +57,7 @@ export interface ControlState {
   disabled: boolean;
   clearHidden: boolean;
   variables: Record<string, any>;
+  meta: Control<Record<string, any>>;
 }
 
 export interface FormContextOptions {
@@ -88,9 +88,23 @@ export interface FormState {
   cleanup(): void;
 
   evalExpression(expr: EntityExpression, context: ExpressionEvalContext): void;
+
+  getExistingControlState(
+    parent: SchemaDataNode,
+    formNode: FormNode,
+    stateKey?: string,
+  ): ControlState | undefined;
 }
 
 const formStates: FormState[] = [];
+
+export function getControlStateId(
+  parent: SchemaDataNode,
+  formNode: FormNode,
+  stateKey?: string,
+): string {
+  return parent.id + "$" + formNode.id + (stateKey ?? "");
+}
 
 export function createFormState(
   schemaInterface: SchemaInterface,
@@ -113,13 +127,25 @@ export function createFormState(
       // console.log("Cleanup form state");
       controlStates.cleanup();
     },
+    getExistingControlState(
+      parent: SchemaDataNode,
+      formNode: FormNode,
+      stateKey?: string,
+    ): ControlState | undefined {
+      const stateId = getControlStateId(parent, formNode, stateKey);
+      const control = getCurrentFields(controlStates)[stateId];
+      if (control) {
+        return getMetaValue<Control<ControlState>>(control, "impl")?.value;
+      }
+      return undefined;
+    },
     getControlState(
       parent: SchemaDataNode,
       formNode: FormNode,
       context: FormContextOptions,
       runAsync: (af: () => void) => void,
     ): ControlState {
-      const stateId = parent.id + "$" + formNode.id + (context.stateKey ?? "");
+      const stateId = getControlStateId(parent, formNode, context.stateKey);
       const controlImpl = controlStates.fields[stateId];
       controlImpl.value = context;
       function evalExpr<A>(
@@ -281,6 +307,7 @@ export function createFormState(
           hidden: false,
           variables: controlImpl.fields.variables.current.value ?? {},
           stateId,
+          meta: newControl({}),
         });
 
         const {

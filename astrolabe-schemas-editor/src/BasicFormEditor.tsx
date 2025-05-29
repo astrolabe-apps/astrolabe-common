@@ -73,7 +73,6 @@ import {
 } from "./types";
 import { EditorFormTree } from "./EditorFormTree";
 import { EditorSchemaTree } from "./EditorSchemaTree";
-import { SchemaTree } from "@astroapps/forms-core";
 
 export interface BasicFormEditorProps<A extends string> {
   formRenderer: FormRenderer;
@@ -181,7 +180,9 @@ export function BasicFormEditor<A extends string = string>({
     const tree = new EditorFormTree(editorControls ?? defaultEditorControls);
     const extraGroups: EditorGroup[] = extensions.flatMap((x) =>
       Object.values(x).flatMap((ro) =>
-        Array.isArray(ro) ? ro.flatMap((r) => r.groups ?? []) : ro.groups ?? [],
+        Array.isArray(ro)
+          ? ro.flatMap((r) => r.groups ?? [])
+          : (ro.groups ?? []),
       ),
     );
     extraGroups.forEach((g) => {

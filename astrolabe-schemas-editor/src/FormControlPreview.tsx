@@ -3,6 +3,7 @@ import {
   newControl,
   unsafeRestoreControl,
   useComputed,
+  useControl,
 } from "@react-typed-forms/core";
 import React, { HTMLAttributes, ReactNode, useMemo, Fragment } from "react";
 import {
@@ -79,6 +80,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const definition = node.definition;
   const { selected, renderer, hideFields } = context;
   const displayOnly = dOnly || isControlDisplayOnly(definition);
+  const meta = useControl<Record<string, any>>({});
 
   const isSelected = useComputed(() => {
     const selControlId = selected.value;
@@ -98,7 +100,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const sampleData = useMemo(
     () =>
       displayOptions
-        ? displayOptions.sampleText ?? "Sample Data"
+        ? (displayOptions.sampleText ?? "Sample Data")
         : field &&
           (dataNode?.elementIndex == null
             ? field.collection
@@ -149,6 +151,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       schemaInterface,
       ...formOptions,
       dataNode,
+      meta,
     },
     formNode: renderedNode,
     getChildState: (child, data) => {
@@ -156,6 +159,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         definition: child.definition,
         schemaInterface,
         ...formOptions,
+        meta: newControl({}),
       };
     },
     renderChild: (k, child, c) => {

@@ -20,7 +20,7 @@ import {
 import React, { ReactNode, useMemo, Fragment } from "react";
 import { JsonEditor } from "./JsonEditor";
 import { ViewContext } from "./types";
-import { getMetaFields } from "@astroapps/forms-core";
+import { getMetaFields } from "@react-typed-forms/schemas";
 
 export interface PreviewData {
   showing: boolean;

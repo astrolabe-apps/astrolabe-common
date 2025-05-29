@@ -390,7 +390,6 @@ importers:
     specifiers:
       '@astroapps/client': workspace:*
       '@astroapps/datagrid': workspace:*
-      '@astroapps/forms-core': workspace:*
       '@astroapps/schemas-datagrid': workspace:*
       '@astroapps/searchstate': ^2.0.0
       '@babel/cli': ^7.23.4
@@ -427,7 +426,6 @@ importers:
       use-resize-observer: ~9.1.0
     dependencies:
       '@astroapps/datagrid': link:../astrolabe-datagrid
-      '@astroapps/forms-core': link:../forms/core
       '@astroapps/schemas-datagrid': link:../astrolabe-schemas-datagrid
       '@codemirror/lang-json': 6.0.1
       '@mhsdesign/jit-browser-tailwindcss': 0.4.2_ozxlbmy37ax35fhqexzdkqxfce

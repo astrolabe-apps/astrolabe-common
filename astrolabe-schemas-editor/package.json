@@ -27,8 +27,8 @@
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^16.0.3",
-    "@react-typed-forms/schemas-html": "^4.0.1",
+    "@react-typed-forms/schemas": "^16.1.0",
+    "@react-typed-forms/schemas-html": "^4.1.0",
     "@astroapps/client": "^2.0.0",
     "react": "^18.2.0 || ^19",
     "@dnd-kit/core": "^6.0.5"
@@ -50,8 +50,8 @@
   },
   "devDependencies": {
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^16.0.3",
-    "@react-typed-forms/schemas-html": "^4.0.1",
+    "@react-typed-forms/schemas": "^16.1.0",
+    "@react-typed-forms/schemas-html": "^4.1.0",
     "@astroapps/searchstate": "^2.0.0",
     "@radix-ui/react-popover": "^1.0.7",
     "@astroapps/client": "^2.0.2",

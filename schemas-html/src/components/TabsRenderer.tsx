@@ -7,7 +7,6 @@ import {
   TabsRenderOptions,
 } from "@react-typed-forms/schemas";
 import React, { Fragment } from "react";
-import { useControl } from "@react-typed-forms/core";
 import clsx from "clsx";
 import { VisibleChildrenRenderer } from "./VisibleChildrenRenderer";
 
@@ -46,7 +45,7 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
   function renderAllTabs(
     {
       options,
-      groupProps: { designMode, formNode, className, renderChild },
+      groupProps: { designMode, formNode, className, renderChild, state },
       tabOptions,
     }: {
       options: DefaultTabsRenderOptions;
@@ -55,7 +54,7 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
     },
     isVisible: (i: number) => boolean,
   ) {
-    const tabIndex = useControl(0);
+    const tabIndex = state.meta.fields.tabIndex.as<number | undefined>();
     const {
       tabClass,
       labelClass,
@@ -64,7 +63,7 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
       activeClass,
       contentClass,
     } = options;
-    const currentTab = tabIndex.value;
+    const currentTab = tabIndex.value ?? 0;
     return designMode ? (
       <>{formNode.getChildNodes().map((x, i) => renderTabs([x], i))}</>
     ) : (
