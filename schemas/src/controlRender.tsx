@@ -242,7 +242,8 @@ export interface ArrayRendererProps {
     elemIndex: number,
     wrapEntry: (children: ReactNode) => ReactNode,
   ) => ReactNode;
-  arrayControl: Control<any[] | undefined | null>;
+  arrayControl?: Control<any[] | undefined | null>;
+  getElementCount(): number;
   className?: string;
   style?: React.CSSProperties;
   min?: number | null;
@@ -489,10 +490,10 @@ export function defaultDataProps(
             .map((x) =>
               typeof x === "object"
                 ? x
-                : fieldOptions?.find((y) => y.value == x) ?? {
+                : (fieldOptions?.find((y) => y.value == x) ?? {
                     name: x.toString(),
                     value: x,
-                  },
+                  }),
             )
             .filter((x) => x != null)
         : fieldOptions,
@@ -821,7 +822,11 @@ export function createArrayActions(
   options?: ArrayActionOptions,
 ): Pick<
   ArrayRendererProps,
-  "addAction" | "removeAction" | "editAction" | "arrayControl"
+  | "addAction"
+  | "removeAction"
+  | "editAction"
+  | "arrayControl"
+  | "getElementCount"
 > {
   const noun = field.displayName ?? field.field;
   const {
@@ -840,6 +845,7 @@ export function createArrayActions(
   } = options ?? {};
   return {
     arrayControl: control,
+    getElementCount: () => control.elements.length,
     addAction:
       !readonly && !noAdd
         ? makeAdd(() => {
@@ -940,7 +946,7 @@ export function createArrayActions(
 
 export function applyArrayLengthRestrictions(
   {
-    arrayControl,
+    getElementCount,
     min,
     max,
     editAction,
@@ -952,7 +958,7 @@ export function applyArrayLengthRestrictions(
     | "addAction"
     | "removeAction"
     | "editAction"
-    | "arrayControl"
+    | "getElementCount"
     | "min"
     | "max"
     | "required"
@@ -963,7 +969,7 @@ export function applyArrayLengthRestrictions(
   removeDisabled: boolean;
 } {
   const [removeAllowed, addAllowed] = applyLengthRestrictions(
-    arrayControl.elements?.length ?? 0,
+    getElementCount(),
     min == null && required ? 1 : min,
     max,
     true,

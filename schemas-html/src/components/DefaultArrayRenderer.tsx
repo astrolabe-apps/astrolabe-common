@@ -111,6 +111,7 @@ export function DataArrayRenderer({
     renderElement: (i, wrap) => (
       <RenderEntry
         index={i}
+        key={i}
         renderChildElement={renderChildElement}
         dataContext={dataContext}
         wrap={wrap}
@@ -195,35 +196,34 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     removableChildClass,
     removeActionClass,
     addActionClass,
-    arrayControl,
+    getElementCount,
     renderAction,
     style,
     editAction,
     html: { Div },
   } = props;
   const { addAction, removeAction } = applyArrayLengthRestrictions(props);
+
   return (
     <Div style={style}>
       <Div className={clsx(className, removeAction && removableClass)}>
-        <RenderElements control={arrayControl}>
-          {(_, x) =>
-            renderElement(x, (children) =>
-              removeAction || editAction ? (
-                <>
-                  <Div className={clsx(childClass, removableChildClass)}>
-                    {children}
-                  </Div>
-                  <Div className={removeActionClass}>
-                    {editAction && renderAction(editAction(x))}
-                    {removeAction && renderAction(removeAction(x))}
-                  </Div>
-                </>
-              ) : (
-                <Div className={childClass}>{children}</Div>
-              ),
-            )
-          }
-        </RenderElements>
+        {Array.from({ length: getElementCount() }, (_, x) =>
+          renderElement(x, (children) =>
+            removeAction || editAction ? (
+              <>
+                <Div className={clsx(childClass, removableChildClass)}>
+                  {children}
+                </Div>
+                <Div className={removeActionClass}>
+                  {editAction && renderAction(editAction(x))}
+                  {removeAction && renderAction(removeAction(x))}
+                </Div>
+              </>
+            ) : (
+              <Div className={childClass}>{children}</Div>
+            ),
+          ),
+        )}
       </Div>
       {addAction && (
         <Div className={addActionClass}>{renderAction(addAction)}</Div>
