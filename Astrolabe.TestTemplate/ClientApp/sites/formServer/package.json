@@ -16,6 +16,7 @@
 		"file-saver": "~2.0.5",
 		"codemirror": "^6.0.1",
 		"@astroapps/codemirror-evaluator": "workspace:*",
+		"@astroapps/forms-core": "workspace:*",
 		"@react-typed-forms/schemas": "workspace:*",
 		"@react-typed-forms/schemas-html": "workspace:*",
 		"@astroapps/client": "workspace:*",
@@ -38,7 +39,10 @@
 		"react-dnd": "16.0.1",
 		"react-dnd-html5-backend": "16.0.1",
 		"@mhsdesign/jit-browser-tailwindcss": "^0.4.2",
-		"@codemirror/autocomplete": "^6.18.6"
+		"@codemirror/autocomplete": "^6.18.6",
+		"use-resize-observer": "^9.1.0",
+		"react-arborist": "^3.4.3",
+		"clsx": "^2.1.1"
 	},
 	"devDependencies": {
 		"@astroapps/swc-controls-plugin": "1.1.0-next15",

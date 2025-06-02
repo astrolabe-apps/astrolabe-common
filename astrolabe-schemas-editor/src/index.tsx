@@ -6,3 +6,4 @@ export * from "./FormPreview";
 export * from "./renderer/FieldSelectionRenderer";
 export * from "./renderer/ClassSelectionRenderer";
 export * from "./types";
+export * from "./JsonEditor";

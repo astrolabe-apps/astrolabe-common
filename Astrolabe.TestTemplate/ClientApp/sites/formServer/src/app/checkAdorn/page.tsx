@@ -19,61 +19,18 @@ import {
 import { createStdFormRenderer } from "../../renderers";
 import { Button } from "@astrolabe/ui/Button";
 import { getAccordionState } from "@react-typed-forms/schemas-html";
-
-interface TestSchema {
-  selected: string;
-  selectables: Selectable[];
-}
-
-interface Selectable {
-  id: string;
-  name: string;
-}
-
-const TestSchema = buildSchema<TestSchema>({
-  selected: stringOptionsField(
-    "All",
-    { value: "choice1", name: "Choice1" },
-    { value: "choice2", name: "Choice2" },
-  ),
-  selectables: compoundField(
-    "Selectables",
-    buildSchema<Selectable>({
-      id: stringField("id"),
-      name: stringField("name"),
-    }),
-    { collection: true },
-  ),
-});
+import {
+  OptionForm,
+  TestOptionSchema,
+  TestSchema,
+} from "../../setup/testOptionTree";
 
 const renderer = createStdFormRenderer(null);
 const schemaLookup = createSchemaLookup({ TestSchema });
 const schemaNode = schemaLookup.getSchema("TestSchema")!;
-const selectable = groupedControl([
-  dataControl("selected", undefined, {
-    renderOptions: { type: DataRenderType.Radio },
-    adornments: [accordionOptions({ title: "Open" })],
-    children: [
-      dataControl("selectables", "Selectables", {
-        readonly: true,
-        hideTitle: true,
-        dynamic: [dynamicVisibility(jsonataExpr("$formData.optionSelected"))],
-        children: [
-          dataControl("name", null, {
-            renderOptions: { type: DataRenderType.DisplayOnly },
-            readonly: true,
-            dynamic: [
-              dynamicVisibility(jsonataExpr("$formData.option.value = id")),
-            ],
-          }),
-        ],
-      }),
-    ],
-  }),
-]);
 
 export default function CheckAdorn() {
-  const pageControl = useControl<TestSchema>({
+  const pageControl = useControl<TestOptionSchema>({
     selected: "",
     selectables: [
       { id: "choice1", name: "ONNNNEEE" },
@@ -81,7 +38,7 @@ export default function CheckAdorn() {
     ],
   });
   const Render = useControlRendererComponent(
-    selectable,
+    OptionForm,
     renderer,
     {},
     makeSchemaDataNode(schemaNode, pageControl),

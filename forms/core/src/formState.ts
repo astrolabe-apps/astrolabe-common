@@ -5,20 +5,13 @@ import {
   validDataNode,
 } from "./schemaDataNode";
 import {
-  AnyControlDefinition,
   ControlAdornmentType,
   ControlDefinition,
   DataRenderType,
   DynamicPropertyType,
-  HtmlDisplay,
-  isActionControl,
   isControlDisabled,
   isControlReadonly,
   isDataControl,
-  isDisplayControl,
-  isHtmlDisplay,
-  isTextDisplay,
-  TextDisplay,
 } from "./controlDefinition";
 import { SchemaInterface } from "./schemaInterface";
 import { FieldOption } from "./schemaField";
@@ -43,6 +36,7 @@ import {
 import { EntityExpression } from "./entityExpression";
 import { createScoped, jsonPathString } from "./util";
 import { setupValidation } from "./validators";
+import { coerceString, coerceStyle, createOverrideProxy, getDefinitionOverrides } from "./evaluateForm";
 
 export interface ControlState {
   definition: ControlDefinition;
@@ -174,104 +168,12 @@ export function createFormState(
       }
 
       return createScopedMetaValue(formNode, controlImpl, "impl", (scope) => {
-        const cf = controlImpl.fields;
-        const definitionOverrides = createScoped<Record<string, any>>(
-          controlImpl,
-          {},
-        );
-        const displayControl = createScoped<string | undefined>(
-          controlImpl,
-          undefined,
-        );
-
-        const displayOverrides = createScoped<Record<string, any>>(
-          controlImpl,
-          {},
-        );
         const def = formNode.definition;
-        const definition = createOverrideProxy(def, definitionOverrides);
-        const of = definitionOverrides.fields as Record<
-          KeysOfUnion<AnyControlDefinition>,
-          Control<any>
-        >;
 
-        const df = displayOverrides.fields as Record<
-          KeysOfUnion<TextDisplay | HtmlDisplay>,
-          Control<any>
-        >;
-
-        updateComputedValue(of.displayData, () =>
-          isDisplayControl(def)
-            ? createOverrideProxy(def.displayData, displayOverrides)
-            : undefined,
-        );
-
-        createScopedEffect((c) => {
-          evalExpr(
-            c,
-            def.hidden,
-            of.hidden,
-            firstExpr(formNode, DynamicPropertyType.Visible),
-            (r) => !r,
-          );
-        }, definitionOverrides);
-
-        createScopedEffect((c) => {
-          evalExpr(
-            c,
-            isControlReadonly(def),
-            of.readonly,
-            firstExpr(formNode, DynamicPropertyType.Readonly),
-            (r) => !!r,
-          );
-        }, definitionOverrides);
-
-        createScopedEffect((c) => {
-          evalExpr(
-            c,
-            isControlDisabled(def),
-            of.disabled,
-            firstExpr(formNode, DynamicPropertyType.Disabled),
-            (r) => !!r,
-          );
-        }, definitionOverrides);
-
-        createScopedEffect((c) => {
-          evalExpr(
-            c,
-            isDataControl(def) ? def.defaultValue : undefined,
-            of.defaultValue,
-            isDataControl(def)
-              ? firstExpr(formNode, DynamicPropertyType.DefaultValue)
-              : undefined,
-            (r) => r,
-          );
-        }, definitionOverrides);
-
-        createScopedEffect((c) => {
-          evalExpr(
-            c,
-            isActionControl(def) ? def.actionData : undefined,
-            of.actionData,
-            isActionControl(def)
-              ? firstExpr(formNode, DynamicPropertyType.ActionData)
-              : undefined,
-            (r) => r,
-          );
-        }, definitionOverrides);
-
-        createScopedEffect((c) => {
-          evalExpr(
-            c,
-            def.title,
-            of.title,
-            firstExpr(formNode, DynamicPropertyType.Label),
-            coerceString,
-          );
-        }, definitionOverrides);
+        const cf = controlImpl.fields;
 
         const control = createScoped<ControlState>(controlImpl, {
-          definition,
+          definition: def,
           dataNode: undefined,
           schemaInterface,
           disabled: false,
@@ -294,6 +196,15 @@ export function createFormState(
           variables,
           display,
         } = control.fields;
+
+        const definitionOverrides = getDefinitionOverrides(
+          def,
+          evalExpr,
+          controlImpl,
+          display
+        );
+        
+        const definition = createOverrideProxy(def, definitionOverrides);
 
         createScopedEffect(
           (c) =>
@@ -374,14 +285,6 @@ export function createFormState(
           }
         }, scope);
 
-        createSyncEffect(() => {
-          if (isDisplayControl(def)) {
-            if (isTextDisplay(def.displayData)) df.text.value = display.value;
-            else if (isHtmlDisplay(def.displayData))
-              df.html.value = display.value;
-          }
-        }, displayOverrides);
-
         setupValidation(
           controlImpl,
           definition,
@@ -433,7 +336,10 @@ export function createFormState(
             }
           }
         }, scope);
-        return createOverrideProxy(control.current.value, control);
+        return createOverrideProxy(
+          { ...control.current.value, definition },
+          control,
+        );
       });
     },
   };
@@ -446,14 +352,6 @@ function firstExpr(
   return formNode.definition.dynamic?.find(
     (x) => x.type === property && x.expr.type,
   )?.expr;
-}
-
-function coerceStyle(v: unknown): any {
-  return typeof v === "object" ? v : undefined;
-}
-
-function coerceString(v: unknown): string {
-  return typeof v === "string" ? v : (v?.toString() ?? "");
 }
 
 function createScopedMetaValue<A>(
@@ -479,38 +377,3 @@ function createScopedMetaValue<A>(
     return holder;
   }).value!;
 }
-
-export function createOverrideProxy<
-  A extends object,
-  B extends Record<string, any>,
->(proxyFor: A, handlers: Control<B>): A {
-  const overrides = getCurrentFields(handlers);
-  const allOwn = Reflect.ownKeys(proxyFor);
-  Reflect.ownKeys(overrides).forEach((k) => {
-    if (!allOwn.includes(k)) allOwn.push(k);
-  });
-  return new Proxy(proxyFor, {
-    get(target: A, p: string | symbol, receiver: any): any {
-      if (Object.hasOwn(overrides, p)) {
-        return overrides[p as keyof B]!.value;
-      }
-      return Reflect.get(target, p, receiver);
-    },
-    ownKeys(target: A): ArrayLike<string | symbol> {
-      return allOwn;
-    },
-    has(target: A, p: string | symbol): boolean {
-      return Reflect.has(proxyFor, p) || Reflect.has(overrides, p);
-    },
-    getOwnPropertyDescriptor(target, k) {
-      if (Object.hasOwn(overrides, k))
-        return {
-          enumerable: true,
-          configurable: true,
-        };
-      return Reflect.getOwnPropertyDescriptor(target, k);
-    },
-  });
-}
-
-type KeysOfUnion<T> = T extends T ? keyof T : never;
