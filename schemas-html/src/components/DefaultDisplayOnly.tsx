@@ -1,9 +1,8 @@
-import { Control } from "@react-typed-forms/core";
 import React from "react";
 import {
+  ControlState,
   FormRenderer,
   SchemaDataNode,
-  SchemaField,
   SchemaInterface,
 } from "@react-typed-forms/schemas";
 
@@ -16,6 +15,7 @@ export function DefaultDisplayOnly({
   renderer,
   textClass,
   inline,
+  state,
 }: {
   dataNode: SchemaDataNode;
   schemaInterface: SchemaInterface;
@@ -25,11 +25,17 @@ export function DefaultDisplayOnly({
   inline: boolean;
   renderer: FormRenderer;
   emptyText?: string | null;
+  state: ControlState;
 }) {
   const text =
-    (schemaInterface.isEmptyValue(dataNode.schema.field, dataNode.control.value)
-      ? emptyText
-      : schemaInterface.textValueForData(dataNode)) ?? "";
+    state.display != null
+      ? state.display
+      : ((schemaInterface.isEmptyValue(
+          dataNode.schema.field,
+          dataNode.control.value,
+        )
+          ? emptyText
+          : schemaInterface.textValueForData(dataNode)) ?? "");
   const { Div } = renderer.html;
   return (
     <Div

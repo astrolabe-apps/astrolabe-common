@@ -48,6 +48,7 @@ export interface ControlState {
   definition: ControlDefinition;
   schemaInterface: SchemaInterface;
   dataNode?: SchemaDataNode | undefined;
+  display?: string;
   stateId?: string;
   style?: object;
   layoutStyle?: object;
@@ -199,34 +200,6 @@ export function createFormState(
           Control<any>
         >;
 
-        createScopedEffect((c) => {
-          const textDisplay =
-            isDisplayControl(def) && isTextDisplay(def.displayData)
-              ? def.displayData
-              : undefined;
-          evalExpr(
-            c,
-            textDisplay?.text,
-            df.text,
-            textDisplay && firstExpr(formNode, DynamicPropertyType.Display),
-            coerceString,
-          );
-        }, displayOverrides);
-
-        createScopedEffect((c) => {
-          const htmlDisplay =
-            isDisplayControl(def) && isHtmlDisplay(def.displayData)
-              ? def.displayData
-              : undefined;
-          evalExpr(
-            c,
-            htmlDisplay?.html,
-            df.html,
-            htmlDisplay && firstExpr(formNode, DynamicPropertyType.Display),
-            coerceString,
-          );
-        }, displayOverrides);
-
         updateComputedValue(of.displayData, () =>
           isDisplayControl(def)
             ? createOverrideProxy(def.displayData, displayOverrides)
@@ -319,6 +292,7 @@ export function createFormState(
           allowedOptions,
           disabled,
           variables,
+          display,
         } = control.fields;
 
         createScopedEffect(
@@ -357,6 +331,18 @@ export function createFormState(
           scope,
         );
 
+        createScopedEffect(
+          (c) =>
+            evalExpr(
+              c,
+              undefined,
+              display,
+              firstExpr(formNode, DynamicPropertyType.Display),
+              coerceString,
+            ),
+          scope,
+        );
+
         updateComputedValue(dataNode, () => lookupDataNode(definition, parent));
         updateComputedValue(
           hidden,
@@ -387,6 +373,14 @@ export function createFormState(
             dn.control.disabled = disabled.value;
           }
         }, scope);
+
+        createSyncEffect(() => {
+          if (isDisplayControl(def)) {
+            if (isTextDisplay(def.displayData)) df.text.value = display.value;
+            else if (isHtmlDisplay(def.displayData))
+              df.html.value = display.value;
+          }
+        }, displayOverrides);
 
         setupValidation(
           controlImpl,

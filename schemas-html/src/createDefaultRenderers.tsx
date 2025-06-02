@@ -201,6 +201,7 @@ export function createDefaultDataRenderer(
           children: (
             <DefaultDisplayOnly
               dataNode={props.dataNode}
+              state={props.state}
               schemaInterface={props.dataContext.schemaInterface}
               className={props.className}
               textClass={props.textClass}
