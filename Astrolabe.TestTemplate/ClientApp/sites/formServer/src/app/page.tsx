@@ -23,6 +23,7 @@ import {
   boolField,
   buildSchema,
   compoundField,
+  createIconLibraryExtension,
   dataControl,
   dateField,
   dateTimeField,
@@ -73,6 +74,7 @@ const Extensions = [
   PagerExtension,
   FieldSelectionExtension,
   SignatureExtension,
+  createIconLibraryExtension("Custom Icon Library", "custom"),
 ];
 
 interface TabSchema {

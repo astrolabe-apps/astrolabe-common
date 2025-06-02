@@ -44,7 +44,7 @@ export function getDefinitionOverrides(
     Control<any>
   >;
 
-  const df = displayOverrides.fields as Record<
+  const { html, text } = displayOverrides.fields as Record<
     KeysOfUnion<TextDisplay | HtmlDisplay>,
     Control<any>
   >;
@@ -121,8 +121,17 @@ export function getDefinitionOverrides(
 
   createSyncEffect(() => {
     if (isDisplayControl(def)) {
-      if (isTextDisplay(def.displayData)) df.text.value = display.value;
-      else if (isHtmlDisplay(def.displayData)) df.html.value = display.value;
+      if (display.value !== undefined) {
+        text.value = isTextDisplay(def.displayData)
+          ? display.value
+          : NoOverride;
+        html.value = isHtmlDisplay(def.displayData)
+          ? display.value
+          : NoOverride;
+      } else {
+        text.value = NoOverride;
+        html.value = NoOverride;
+      }
     }
   }, displayOverrides);
 
@@ -155,7 +164,8 @@ export function createOverrideProxy<
   return new Proxy(proxyFor, {
     get(target: A, p: string | symbol, receiver: any): any {
       if (Object.hasOwn(overrides, p)) {
-        return overrides[p as keyof B]!.value;
+        const nv = overrides[p as keyof B]!.value;
+        if (nv !== NoOverride) return nv;
       }
       return Reflect.get(target, p, receiver);
     },
@@ -175,5 +185,8 @@ export function createOverrideProxy<
     },
   });
 }
+
+class NoValue {}
+const NoOverride = new NoValue();
 
 type KeysOfUnion<T> = T extends T ? keyof T : never;

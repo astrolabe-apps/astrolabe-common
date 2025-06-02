@@ -266,6 +266,17 @@ export function mergeField(
   }
 }
 
+export function mergeOption(
+  fields: SchemaField[],
+  name: string,
+  value: any,
+  fieldName: string,
+): SchemaField[] {
+  return fields.map((x) =>
+    x.field === fieldName ? addFieldOption(x, name, value) : x,
+  );
+}
+
 export function mergeFields(
   fields: SchemaField[],
   name: string,
