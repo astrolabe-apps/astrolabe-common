@@ -25,6 +25,7 @@ import {
   JsonataRenderOptions,
   JsonataValidator,
   LengthValidator,
+  mergeOption,
   RadioButtonRenderOptions,
   RenderOptions,
   SchemaField,
@@ -239,6 +240,7 @@ export interface CustomRenderOptions {
   fields?: SchemaField[];
   groups?: EditorGroup[];
   applies?: (sf: SchemaNode) => boolean;
+  optionField?: string;
 }
 
 export type ControlDefinitionExtension = {
@@ -247,6 +249,7 @@ export type ControlDefinitionExtension = {
   ControlAdornment?: CustomRenderOptions | CustomRenderOptions[];
   SchemaValidator?: CustomRenderOptions | CustomRenderOptions[];
   DisplayData?: CustomRenderOptions | CustomRenderOptions[];
+  IconReference?: CustomRenderOptions | CustomRenderOptions[];
 };
 
 export function applyExtensionToSchema<A extends SchemaMap>(
@@ -256,7 +259,10 @@ export function applyExtensionToSchema<A extends SchemaMap>(
   const outMap = { ...schemaMap };
   Object.entries(extension).forEach(([field, cro]) => {
     outMap[field as keyof A] = (Array.isArray(cro) ? cro : [cro]).reduce(
-      (a, cr) => mergeFields(a, cr.name, cr.value, cr.fields ?? []),
+      (a, cr) =>
+        cr.optionField
+          ? mergeOption(a, cr.name, cr.value, cr.optionField)
+          : mergeFields(a, cr.name, cr.value, cr.fields ?? []),
       outMap[field],
     ) as A[string];
   });
@@ -268,4 +274,17 @@ export function applyExtensionsToSchema<A extends SchemaMap>(
   extensions: ControlDefinitionExtension[],
 ) {
   return resolveSchemas(extensions.reduce(applyExtensionToSchema, schemaMap));
+}
+
+export function createIconLibraryExtension(
+  name: string,
+  value: string,
+): ControlDefinitionExtension {
+  return {
+    IconReference: {
+      optionField: "library",
+      name,
+      value,
+    },
+  };
 }
