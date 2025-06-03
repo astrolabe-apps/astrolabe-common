@@ -27,7 +27,9 @@ cssInterop(MaterialIcons, {
 cssInterop(FontAwesomeIcon, {
   className: {
     target: "style",
-    nativeStyleToProp: {},
+    nativeStyleToProp: {
+      fontSize: "size",
+    },
   },
 });
 
@@ -45,8 +47,11 @@ export function Icon({
       return undefined;
     default:
       return (
-        // @ts-ignore
-        <FontAwesomeIcon icon={toIconClass() as any} className={className} />
+        <FontAwesomeIcon
+          icon={toIconClass() as any}
+          // @ts-ignore
+          className={className}
+        />
       );
   }
 
