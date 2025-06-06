@@ -18,11 +18,11 @@ import {
 import { ValidationMessageType } from "./schemaField";
 import { SchemaInterface } from "./schemaInterface";
 
-import { FormContextOptions } from "./formState";
 import { FormNode } from "./formNode";
 import { jsonataEval } from "./evalExpression";
 import { ExpressionType } from "./entityExpression";
 import { createScopedComputed } from "./util";
+import { FormContextOptions } from "./evaluateForm";
 
 export interface ValidationEvalContext {
   addSync(validate: (value: unknown) => string | undefined | null): void;

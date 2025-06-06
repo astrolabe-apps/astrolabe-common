@@ -10,6 +10,7 @@ import {
   AsyncEffect,
   CleanupScope,
   collectChanges,
+  Control,
   createAsyncEffect,
   createSyncEffect,
   trackedValue,
@@ -118,3 +119,30 @@ export const defaultEvaluators: Record<string, ExpressionEval<any>> = {
   [ExpressionType.Jsonata]: jsonataEval,
   [ExpressionType.UUID]: uuidEval,
 };
+
+export function createEvalExpr(
+  evalExpression: (e: EntityExpression, ctx: ExpressionEvalContext) => void,
+  context: Omit<ExpressionEvalContext, "returnResult" | "scope">,
+) {
+  function evalExpr<A>(
+    scope: CleanupScope,
+    init: A,
+    nk: Control<A>,
+    e: EntityExpression | undefined,
+    coerce: (t: unknown) => any,
+  ): boolean {
+    nk.value = init;
+    if (e?.type) {
+      evalExpression(e, {
+        returnResult: (r) => {
+          nk.value = coerce(r);
+        },
+        scope,
+        ...context,
+      });
+      return true;
+    }
+    return false;
+  }
+  return evalExpr;
+}

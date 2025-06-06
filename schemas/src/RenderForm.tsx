@@ -57,11 +57,7 @@ export function RenderForm({
   const [formState, setFormState] = useState(
     () => options?.formState ?? createFormState(schemaInterface),
   );
-  let effects: (() => void)[] | undefined = [];
-  const runAsync = (cb: () => void) => {
-    if (effects) effects.push(cb);
-    else cb();
-  };
+  const { runAsync } = useAsyncRunner();
   const state = formState.getControlState(data, form, options, runAsync);
 
   useEffect(() => {
@@ -194,13 +190,6 @@ export function RenderForm({
     visibility,
     ...renderedControl,
   });
-  useEffect(() => {
-    if (effects) {
-      const toRun = effects;
-      effects = undefined;
-      toRun.forEach((cb) => cb());
-    }
-  }, [effects]);
   return rendered;
 }
 
@@ -317,4 +306,25 @@ export function useControlRenderer(
     },
     [r],
   );
+}
+
+export function useAsyncRunner(): {
+  runAsync: (cb: () => void) => void;
+} {
+  let effects: (() => void)[] | undefined = [];
+  const runAsync = (cb: () => void) => {
+    if (effects) effects.push(cb);
+    else cb();
+  };
+  useEffect(() => {
+    if (effects) {
+      const toRun = effects;
+      effects = undefined;
+      toRun.forEach((cb) => cb());
+    }
+  }, [effects]);
+
+  return {
+    runAsync,
+  };
 }

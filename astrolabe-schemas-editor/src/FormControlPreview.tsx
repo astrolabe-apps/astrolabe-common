@@ -152,6 +152,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       ...formOptions,
       dataNode,
       meta,
+      valid: true,
+      touched: false,
     },
     formNode: renderedNode,
     getChildState: (child, data) => {
@@ -160,6 +162,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         schemaInterface,
         ...formOptions,
         meta: newControl({}),
+        valid: true,
+        touched: false,
       };
     },
     renderChild: (k, child, c) => {

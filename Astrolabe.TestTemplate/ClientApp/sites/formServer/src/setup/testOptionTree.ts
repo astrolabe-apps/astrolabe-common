@@ -23,7 +23,7 @@ interface Selectable {
   name: string;
 }
 
-export const TestSchema = buildSchema<TestOptionSchema>({
+export const SchemaFields = buildSchema<TestOptionSchema>({
   selected: stringOptionsField(
     "All",
     { value: "choice1", name: "Choice1" },
@@ -39,7 +39,7 @@ export const TestSchema = buildSchema<TestOptionSchema>({
   ),
 });
 
-export const OptionForm = groupedControl([
+export const Form = groupedControl([
   dataControl("selected", undefined, {
     renderOptions: { type: DataRenderType.Radio },
     adornments: [accordionOptions({ title: "Open" })],

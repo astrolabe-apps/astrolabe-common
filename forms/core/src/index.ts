@@ -9,4 +9,7 @@ export * from "./schemaDataNode";
 export * from "./defaultSchemaInterface";
 export * from "./formNode";
 export * from "./formState";
+export * from "./evaluateForm";
+export * from "./evalExpression";
 export * from "./util";
+export * from "./overrideProxy";

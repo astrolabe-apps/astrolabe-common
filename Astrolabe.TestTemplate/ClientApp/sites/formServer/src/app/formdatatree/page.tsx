@@ -1,41 +1,107 @@
 "use client";
 import {
-  createFormLookup,
+  buildSchema,
+  compoundField,
+  createFormStateNode,
   createFormTree,
+  createSchemaDataNode,
   createSchemaLookup,
-  FormNode,
+  defaultEvaluators,
+  defaultSchemaInterface,
+  FormContextOptions,
+  FormStateNode,
+  intField,
+  ResolvedDefinition,
+  stringField,
 } from "@astroapps/forms-core";
-import { OptionForm, TestSchema } from "../../setup/testOptionTree";
-import { ControlNode, JsonEditor } from "@astroapps/schemas-editor";
+import { JsonEditor } from "@astroapps/schemas-editor";
 import useResizeObserver from "use-resize-observer";
 import { NodeRendererProps, Tree } from "react-arborist";
-import React, { ReactNode } from "react";
+import React, { useMemo } from "react";
 import clsx from "clsx";
-import { Control, RenderOptional, useControl } from "@react-typed-forms/core";
+import {
+  Control,
+  RenderOptional,
+  useControl,
+  useControlEffect,
+} from "@react-typed-forms/core";
+import {
+  createAction,
+  createFormRenderer,
+  dataControl,
+  groupedControl,
+  RenderForm,
+  useAsyncRunner,
+} from "@react-typed-forms/schemas";
+import {
+  createDefaultRenderers,
+  defaultTailwindTheme,
+} from "@react-typed-forms/schemas-html";
+import { SchemaFields, Form } from "../../setup/testOptionTree";
 
-const schemaLookup = createSchemaLookup({ TestSchema });
-const Form = createFormTree([OptionForm]);
-
+const schemaLookup = createSchemaLookup({ SchemaFields });
+const FormTree = createFormTree([Form]);
+const renderer = createFormRenderer(
+  [],
+  createDefaultRenderers(defaultTailwindTheme),
+);
 export default function FormDataTreePage() {
   const { ref, width, height } = useResizeObserver();
-  const selected = useControl<FormNode | undefined>();
+  const selected = useControl<FormStateNode | undefined>();
   const data = useControl({});
   const jsonText = useControl(() =>
     JSON.stringify(data.current.value, null, 2),
   );
+  useControlEffect(
+    () => data.value,
+    (v) => (jsonText.value = JSON.stringify(v, null, 2)),
+  );
+  const options = useControl<FormContextOptions>({});
+  const { runAsync } = useAsyncRunner();
+  const dataNode = createSchemaDataNode(
+    schemaLookup.getSchema("SchemaFields"),
+    data,
+  );
+  const rootControlState = useMemo(() => {
+    return createFormStateNode(FormTree.rootNode, dataNode, {
+      schemaInterface: defaultSchemaInterface,
+      runAsync,
+      contextOptions: options,
+      scope: options,
+      evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
+    });
+  }, []);
+
+  getWholeTree(rootControlState);
   return (
     <div className="flex flex-col h-full">
       <div className="h-64">
-        <JsonEditor control={jsonText} />
+        <div className="flex h-full">
+          <div className="overflow-auto basis-1/2">
+            <JsonEditor control={jsonText} />
+            {renderer.renderAction(
+              createAction("Apply Json", () => {
+                data.value = JSON.parse(jsonText.value);
+              }),
+            )}
+          </div>
+          <div className="overflow-auto h-full w-full p-4">
+            <RenderForm
+              data={dataNode}
+              form={FormTree.rootNode}
+              renderer={renderer}
+            />
+          </div>
+        </div>
       </div>
       <div className="flex grow">
         <div className="w-96 border" ref={ref}>
-          <Tree<FormNode>
+          <Tree<FormStateNode>
             width={width}
             height={height}
             onSelect={(n) => (selected.value = n[0]?.data)}
-            data={Form.rootNode.getChildNodes()}
-            childrenAccessor={(n) => n.getChildNodes()}
+            data={[rootControlState]}
+            idAccessor={(x) => x.uniqueId!}
             children={FormNodeRenderer}
           />
         </div>
@@ -49,16 +115,55 @@ export default function FormDataTreePage() {
   );
 }
 
-function CurrentNode({ node }: { node: Control<FormNode> }) {
+function getWholeTree(node: FormStateNode) {
+  return node.children.forEach(getWholeTree);
+}
+
+function CurrentNode({ node }: { node: Control<FormStateNode> }) {
   const n = node.value;
-  const { children, ...def } = n.definition;
-  return <pre>{JSON.stringify(def, null, 2)}</pre>;
+  const {
+    readonly,
+    hidden,
+    clearHidden,
+    dataNode,
+    valid,
+    resolved,
+    variables,
+  } = n;
+  return (
+    <pre>
+      {JSON.stringify(
+        {
+          dataNode: dataNode?.control?.value,
+          readonly,
+          hidden,
+          valid,
+          clearHidden,
+          variables,
+        },
+        null,
+        2,
+      )}
+      <br />
+      {resolved && resolvedData(resolved)}
+    </pre>
+  );
+
+  function resolvedData(data: ResolvedDefinition) {
+    const {
+      definition: { children, ...definition },
+      ...others
+    } = data;
+
+    return JSON.stringify({ ...others, definition }, null, 2);
+  }
 }
 function FormNodeRenderer({
   style,
   dragHandle,
   node,
-}: NodeRendererProps<FormNode>) {
+}: NodeRendererProps<FormStateNode>) {
+  const def = node.data.resolved?.definition;
   return (
     <div
       style={style}
@@ -85,7 +190,7 @@ function FormNodeRenderer({
           />
         )}
       </span>
-      {node.data.definition.type} - {node.data.definition.title}
+      {def?.type} - {def?.title}
     </div>
   );
 }
