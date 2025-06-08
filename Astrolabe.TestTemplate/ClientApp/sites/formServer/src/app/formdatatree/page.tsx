@@ -1,7 +1,5 @@
 "use client";
 import {
-  buildSchema,
-  compoundField,
   createFormStateNode,
   createFormTree,
   createSchemaDataNode,
@@ -10,9 +8,8 @@ import {
   defaultSchemaInterface,
   FormContextOptions,
   FormStateNode,
-  intField,
+  isDataControl,
   ResolvedDefinition,
-  stringField,
 } from "@astroapps/forms-core";
 import { JsonEditor } from "@astroapps/schemas-editor";
 import useResizeObserver from "use-resize-observer";
@@ -28,8 +25,6 @@ import {
 import {
   createAction,
   createFormRenderer,
-  dataControl,
-  groupedControl,
   RenderForm,
   useAsyncRunner,
 } from "@react-typed-forms/schemas";
@@ -37,7 +32,7 @@ import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
-import { SchemaFields, Form } from "../../setup/testOptionTree";
+import { Form, SchemaFields } from "../../setup/testOptionTree";
 
 const schemaLookup = createSchemaLookup({ SchemaFields });
 const FormTree = createFormTree([Form]);
@@ -125,6 +120,7 @@ function CurrentNode({ node }: { node: Control<FormStateNode> }) {
     readonly,
     hidden,
     clearHidden,
+    parent,
     dataNode,
     valid,
     resolved,
@@ -135,6 +131,7 @@ function CurrentNode({ node }: { node: Control<FormStateNode> }) {
       {JSON.stringify(
         {
           dataNode: dataNode?.control?.value,
+          parent: parent.control.value,
           readonly,
           hidden,
           valid,
@@ -163,7 +160,7 @@ function FormNodeRenderer({
   dragHandle,
   node,
 }: NodeRendererProps<FormStateNode>) {
-  const def = node.data.resolved?.definition;
+  const def = node.data.resolved.definition;
   return (
     <div
       style={style}
@@ -190,7 +187,7 @@ function FormNodeRenderer({
           />
         )}
       </span>
-      {def?.type} - {def?.title}
+      {def.type} {isDataControl(def) ? ` - ${def.field}` : ""}
     </div>
   );
 }

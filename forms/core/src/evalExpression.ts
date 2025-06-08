@@ -28,7 +28,7 @@ export interface ExpressionEvalContext {
   returnResult: (k: unknown) => void;
   dataNode: SchemaDataNode;
   schemaInterface: SchemaInterface;
-  variables?: Value<Record<string, any> | undefined>;
+  variables?: Record<string, any>;
   runAsync(effect: () => void): void;
 }
 
@@ -92,13 +92,9 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
   });
 
   async function runJsonata(effect: AsyncEffect<any>, signal: AbortSignal) {
-    const bindings = collectChanges(
-      effect.collectUsage,
-      () => variables?.value,
-    );
     const evalResult = await parsedJsonata.fields.expr.value.evaluate(
       trackedValue(rootData, effect.collectUsage),
-      bindings,
+      variables,
     );
     // console.log(parsedJsonata.fields.fullExpr.value, evalResult, bindings);
     collectChanges(effect.collectUsage, () => returnResult(evalResult));

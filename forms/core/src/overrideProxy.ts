@@ -13,15 +13,11 @@ export function createOverrideProxy<
     get(target: A, p: string | symbol, receiver: any): any {
       if (Object.hasOwn(overrides, p)) {
         const nv = overrides[p as keyof B]!.value;
-        if (p === "hidden") {
-          console.log("hidden", nv);
-        }
         if (nv !== NoOverride) return nv;
       }
       return Reflect.get(target, p, receiver);
     },
     ownKeys(target: A): ArrayLike<string | symbol> {
-      console.log(allOwn);
       return allOwn;
     },
     has(target: A, p: string | symbol): boolean {

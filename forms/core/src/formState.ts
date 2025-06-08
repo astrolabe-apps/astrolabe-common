@@ -129,7 +129,7 @@ export function createFormState(
           schemaInterface,
           runAsync,
           evalExpression,
-          contextOptions: controlImpl,
+          contextOptions: controlImpl.value,
         });
         return new ControlStateImpl(node);
       });

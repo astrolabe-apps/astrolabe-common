@@ -5,11 +5,13 @@ import {
   createSyncEffect,
   newControl,
   updateComputedValue,
+  updateElements,
 } from "@astroapps/controls";
 import {
   AnyControlDefinition,
   ControlAdornmentType,
   ControlDefinition,
+  ControlDefinitionType,
   DataRenderType,
   DynamicPropertyType,
   HtmlDisplay,
@@ -34,6 +36,7 @@ import {
 import { setupValidation } from "./validators";
 import { createEvalExpr, ExpressionEvalContext } from "./evalExpression";
 import { createOverrideProxy, KeysOfUnion, NoOverride } from "./overrideProxy";
+import { FieldOption } from "./schemaField";
 
 export type EvalExpr = <A>(
   scope: CleanupScope,
@@ -58,7 +61,7 @@ export interface ResolvedDefinition {
   stateId?: string;
   style?: object;
   layoutStyle?: object;
-  allowedOptions?: any[];
+  fieldOptions?: FieldOption[];
 }
 
 export interface FormStateBase {
@@ -85,7 +88,7 @@ export interface FormStateNode extends FormStateBase {
 interface FormStateOptions {
   schemaInterface: SchemaInterface;
   evalExpression: (e: EntityExpression, ctx: ExpressionEvalContext) => void;
-  contextOptions: Control<FormContextOptions>;
+  contextOptions: FormContextOptions;
   scope: CleanupScope;
   runAsync: (af: () => void) => void;
 }
@@ -222,7 +225,7 @@ export function createFormStateNode(
   parent: SchemaDataNode,
   options: FormStateOptions,
 ): FormStateNode {
-  const base = initFormState(formNode, parent, options);
+  const base = initFormState(formNode.definition, formNode, parent, options);
 
   return new FormStateNodeImpl(
     "ROOT",
@@ -235,6 +238,7 @@ export function createFormStateNode(
 
 export interface FormStateBaseImpl extends FormStateBase {
   children: FormStateBaseImpl[];
+  allowedOptions?: unknown;
 }
 
 class FormStateNodeImpl implements FormStateNode {
@@ -244,7 +248,7 @@ class FormStateNodeImpl implements FormStateNode {
     public parent: SchemaDataNode,
     public schemaInterface: SchemaInterface,
     private base: Control<FormStateBaseImpl>,
-    private context: Control<FormContextOptions>,
+    private context: FormContextOptions,
   ) {
     this.meta = newControl({});
     base.meta["$FormState"] = this;
@@ -274,11 +278,11 @@ class FormStateNodeImpl implements FormStateNode {
   }
 
   get clearHidden() {
-    return !!this.context.fields.clearHidden.value;
+    return !!this.context.clearHidden;
   }
 
   get variables() {
-    return this.context.fields.variables.value ?? {};
+    return this.context.variables ?? {};
   }
 
   get children() {
@@ -297,7 +301,8 @@ class FormStateNodeImpl implements FormStateNode {
 }
 
 function initFormState(
-  formNode: FormNode,
+  def: ControlDefinition,
+  form: FormNode,
   parent: SchemaDataNode,
   options: FormStateOptions,
 ): Control<FormStateBaseImpl> {
@@ -306,35 +311,36 @@ function initFormState(
 
   const evalExpr = createEvalExpr(evalExpression, {
     schemaInterface,
-    variables: contextOptions.fields.variables,
+    variables: contextOptions.variables,
     dataNode: parent,
     runAsync,
   });
-  const def = formNode.definition;
 
-  const cf = contextOptions.fields;
+  const cf = contextOptions;
 
-  const base = createScoped<FormStateBaseImpl>(contextOptions, {
+  const base = createScoped<FormStateBaseImpl>(scope, {
     readonly: false,
     hidden: false,
     disabled: false,
     children: [],
     resolved: { definition: def },
     parent,
+    allowedOptions: undefined,
   });
 
   const resolved = base.fields.resolved.as<ResolvedDefinition>();
   const {
     style,
     layoutStyle,
-    allowedOptions,
+    fieldOptions,
     display,
     definition: rd,
   } = resolved.fields;
 
   evalDynamic(display, DynamicPropertyType.Display, undefined, coerceString);
 
-  const { dataNode, readonly, disabled, hidden, children } = base.fields;
+  const { dataNode, readonly, disabled, hidden, children, allowedOptions } =
+    base.fields;
 
   const definition = createEvaluatedDefinition(def, evalExpr, scope, display);
   rd.value = definition;
@@ -347,7 +353,7 @@ function initFormState(
     coerceStyle,
   );
   evalDynamic(
-    allowedOptions,
+    fieldOptions,
     DynamicPropertyType.AllowedOptions,
     undefined,
     (x) => x,
@@ -359,7 +365,7 @@ function initFormState(
     hidden,
     () =>
       !!(
-        cf.hidden.value ||
+        cf.hidden ||
         definition.hidden ||
         (dataNode.value &&
           (!validDataNode(dataNode.value) ||
@@ -369,12 +375,33 @@ function initFormState(
 
   updateComputedValue(
     readonly,
-    () => !!cf.readonly.value || isControlReadonly(definition),
+    () => !!cf.readonly || isControlReadonly(definition),
   );
   updateComputedValue(
     disabled,
-    () => !!cf.disabled.value || isControlDisabled(definition),
+    () => !!cf.disabled || isControlDisabled(definition),
   );
+
+  updateComputedValue(fieldOptions, () => {
+    const dn = dataNode.value;
+    if (!dn) return undefined;
+    const fieldOptions = schemaInterface.getDataOptions(dn);
+    const _allowed = allowedOptions.value ?? [];
+    const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
+
+    return allowed.length > 0
+      ? allowed
+          .map((x) =>
+            typeof x === "object"
+              ? x
+              : (fieldOptions?.find((y) => y.value == x) ?? {
+                  name: x.toString(),
+                  value: x,
+                }),
+          )
+          .filter((x) => x != null)
+      : fieldOptions;
+  });
 
   createSyncEffect(() => {
     const dn = dataNode.value;
@@ -389,12 +416,12 @@ function initFormState(
   }, scope);
 
   setupValidation(
+    scope,
     contextOptions,
     definition,
     dataNode,
     schemaInterface,
     parent,
-    formNode,
     runAsync,
   );
 
@@ -402,10 +429,7 @@ function initFormState(
     const dn = dataNode.value?.control;
     if (dn && isDataControl(definition)) {
       if (definition.hidden) {
-        if (
-          contextOptions.fields.clearHidden.value &&
-          !definition.dontClearHidden
-        ) {
+        if (contextOptions.clearHidden && !definition.dontClearHidden) {
           // console.log("Clearing hidden");
           dn.value = undefined;
         }
@@ -440,7 +464,7 @@ function initFormState(
     }
   }, scope);
 
-  // initChildren(scope, children, formNode, parent, dataNode, options);
+  initChildren(scope, children, resolved, form, parent, dataNode, options);
 
   return base;
 
@@ -463,14 +487,55 @@ function initFormState(
   }
 }
 
-// function initChildren(
-//   scope: CleanupScope,
-//   children: Control<FormStateBaseImpl[]>,
-//   formNode: FormNode,
-//   parent: SchemaDataNode,
-//   dataNode: Control<SchemaDataNode | undefined> | undefined,
-//   options: FormStateOptions,
-// ) {
+function initChildren(
+  scope: CleanupScope,
+  children: Control<FormStateBaseImpl[]>,
+  resolved: Control<ResolvedDefinition>,
+  node: FormNode,
+  parent: SchemaDataNode,
+  dataNode: Control<SchemaDataNode | undefined> | undefined,
+  options: FormStateOptions,
+) {
+  const childMap = new Map<any, Control<FormStateBaseImpl>>();
+  createSyncEffect(() => {
+    const childs = getChildNodes(
+      resolved.value,
+      node,
+      parent,
+      dataNode?.value,
+      options.schemaInterface,
+    );
+    updateElements(children, () =>
+      childs.map(({ childKey, create }) => {
+        let child = childMap.get(childKey);
+        if (!child) {
+          const cc = create();
+          const co = cc.variables
+            ? {
+                ...options,
+                contextOptions: {
+                  ...options.contextOptions,
+                  variables: {
+                    ...options.contextOptions.variables,
+                    ...cc.variables,
+                  },
+                },
+              }
+            : options;
+          child = initFormState(cc.definition, cc.node, cc.parent, co);
+          new FormStateNodeImpl(
+            childKey,
+            cc.parent,
+            co.schemaInterface,
+            child,
+            co.contextOptions,
+          );
+        }
+        return child;
+      }),
+    );
+  }, scope);
+}
 //   const childMap = new Map<any, Control<FormStateBaseImpl>>();
 //   createSyncEffect(() => {
 //     // Object.entries(children.current.value.map(x => [x.childKey, x]));
@@ -613,8 +678,80 @@ export interface ChildNode {
   childKey: string | number;
   create: () => {
     definition: ControlDefinition;
-    dataNode: SchemaDataNode;
-    children: FormNode[];
+    parent: SchemaDataNode;
+    node: FormNode;
     variables?: Record<string, any>;
   };
+}
+
+function getChildNodes(
+  resolved: ResolvedDefinition,
+  node: FormNode,
+  parent: SchemaDataNode,
+  data: SchemaDataNode | undefined,
+  schemaInterface: SchemaInterface,
+): ChildNode[] {
+  const def = resolved.definition;
+  if (isDataControl(def)) {
+    if (!data) return [];
+    const type = def.renderOptions?.type;
+    if (type === DataRenderType.CheckList || type === DataRenderType.Radio) {
+      const n = node.getChildNodes();
+      if (n.length > 0 && resolved.fieldOptions) {
+        return resolved.fieldOptions.map((x) => ({
+          childKey: x.value?.toString(),
+          create: () => {
+            return {
+              definition: {
+                type: ControlDefinitionType.Group,
+              },
+              parent,
+              node,
+              variables: {
+                formData: {
+                  option: x,
+                  optionSelected: isOptionSelected(schemaInterface, x, data),
+                },
+              },
+            };
+          },
+        }));
+      }
+      return [];
+    }
+    if (data.schema.field.collection && data.elementIndex == null)
+      return data.control.as<any[]>().elements.map((x, i) => ({
+        childKey: x.uniqueId,
+        create: () => ({
+          definition: { type: ControlDefinitionType.Data, field: "." },
+          node,
+          parent: data!.getChildElement(i),
+        }),
+      }));
+  }
+  return node.getChildNodes().map((x) => ({
+    childKey: x.id,
+    create: () => ({
+      node: x,
+      parent: data ?? parent,
+      definition: x.definition,
+    }),
+  }));
+}
+
+function isOptionSelected(
+  schemaInteface: SchemaInterface,
+  option: FieldOption,
+  data: SchemaDataNode,
+) {
+  if (data.schema.field.collection) {
+    return !!data.control.as<any[] | undefined>().value?.includes(option.value);
+  }
+  return (
+    schemaInteface.compareValue(
+      data.schema.field,
+      data.control.value,
+      option.value,
+    ) === 0
+  );
 }

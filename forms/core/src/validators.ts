@@ -9,6 +9,7 @@ import {
 import { ControlDefinition, isDataControl } from "./controlDefinition";
 import { SchemaDataNode } from "./schemaDataNode";
 import {
+  CleanupScope,
   Control,
   ControlChange,
   createCleanupScope,
@@ -31,7 +32,7 @@ export interface ValidationEvalContext {
   parentData: SchemaDataNode;
   data: SchemaDataNode;
   schemaInterface: SchemaInterface;
-  formContext: Control<FormContextOptions>;
+  formContext: FormContextOptions;
   runAsync(af: () => void): void;
 }
 
@@ -56,7 +57,7 @@ export const jsonataValidator: ValidatorEval<JsonataValidator> = (
         context.data.control.setError("jsonata", v?.toString());
       },
       schemaInterface: context.schemaInterface,
-      variables: context.formContext.fields.variables,
+      variables: context.formContext.variables,
       runAsync: context.runAsync,
     },
   );
@@ -165,16 +166,16 @@ export function createValidators(
 }
 
 export function setupValidation(
-  controlImpl: Control<FormContextOptions>,
+  scope: CleanupScope,
+  controlImpl: FormContextOptions,
   definition: ControlDefinition,
   dataNode: Control<SchemaDataNode | undefined>,
   schemaInterface: SchemaInterface,
   parent: SchemaDataNode,
-  formNode: FormNode,
   runAsync: (af: () => void) => void,
 ) {
   const validationEnabled = createScopedComputed(
-    controlImpl,
+    scope,
     () => !definition.hidden,
   );
   const validatorsScope = createCleanupScope();
@@ -184,7 +185,7 @@ export function setupValidation(
       const dn = dataNode.value;
       if (dn) {
         let syncValidations: ((v: unknown) => string | undefined | null)[] = [];
-        createValidators(formNode.definition, {
+        createValidators(definition, {
           data: dn,
           parentData: parent,
           validationEnabled,
@@ -219,6 +220,6 @@ export function setupValidation(
       }
     },
     (c) => {},
-    controlImpl,
+    scope,
   );
 }

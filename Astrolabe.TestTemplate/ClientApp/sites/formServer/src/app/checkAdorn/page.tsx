@@ -2,32 +2,22 @@
 
 import { useControl } from "@react-typed-forms/core";
 import {
-  accordionOptions,
-  buildSchema,
-  compoundField,
   createSchemaLookup,
-  dataControl,
-  DataRenderType,
-  dynamicVisibility,
-  groupedControl,
-  jsonataExpr,
   makeSchemaDataNode,
-  stringField,
-  stringOptionsField,
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import { createStdFormRenderer } from "../../renderers";
 import { Button } from "@astrolabe/ui/Button";
 import { getAccordionState } from "@react-typed-forms/schemas-html";
 import {
-  OptionForm,
+  Form,
+  SchemaFields,
   TestOptionSchema,
-  TestSchema,
 } from "../../setup/testOptionTree";
 
 const renderer = createStdFormRenderer(null);
-const schemaLookup = createSchemaLookup({ TestSchema });
-const schemaNode = schemaLookup.getSchema("TestSchema")!;
+const schemaLookup = createSchemaLookup({ SchemaFields });
+const schemaNode = schemaLookup.getSchema("SchemaFields")!;
 
 export default function CheckAdorn() {
   const pageControl = useControl<TestOptionSchema>({
@@ -38,7 +28,7 @@ export default function CheckAdorn() {
     ],
   });
   const Render = useControlRendererComponent(
-    OptionForm,
+    Form,
     renderer,
     {},
     makeSchemaDataNode(schemaNode, pageControl),
