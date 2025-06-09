@@ -1,5 +1,6 @@
 import {
   Control,
+  newControl,
   RenderOptional,
   useControl,
   useControlEffect,
@@ -86,7 +87,9 @@ function RenderFormDesign({
     return groupedControl(controls);
   }, [configSchema]);
   const formPreviewNode = useMemo(() => {
-    return createPreviewNode("ROOT", defaultSchemaInterface, rootNode, schema);
+    return createPreviewNode("ROOT", defaultSchemaInterface, rootNode, () =>
+      createSchemaDataNode(schema.rootNode, newControl({})),
+    );
   }, []);
   return (
     <div className="flex flex-col h-full">

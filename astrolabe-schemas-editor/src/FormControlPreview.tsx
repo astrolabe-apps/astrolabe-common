@@ -300,70 +300,29 @@ function EditorDetails({
   );
 }
 
-class PreviewDataTree extends SchemaDataTree {
-  undefinedControl = newControl(undefined);
-  rootData = newControl({});
-
-  getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
-    return new SchemaDataNode(
-      parent.id + "/" + childNode.field.field,
-      childNode,
-      undefined,
-      this.undefinedControl,
-      this,
-      parent,
-    );
-  }
-  getChildElement(
-    parent: SchemaDataNode,
-    elementIndex: number,
-  ): SchemaDataNode {
-    return new SchemaDataNode(
-      parent.id + "/" + elementIndex,
-      parent.schema,
-      elementIndex,
-      this.undefinedControl,
-      this,
-      parent,
-    );
-  }
-  constructor(private schemaTree: EditorSchemaTree) {
-    super();
-  }
-
-  get rootNode(): SchemaDataNode {
-    return new SchemaDataNode(
-      "",
-      this.schemaTree.rootNode,
-      undefined,
-      this.rootData,
-      this,
-    );
-  }
-}
-
 export function createPreviewNode(
   childKey: string | number,
   schemaInterface: SchemaInterface,
   form: FormNode,
-  schema: EditorSchemaTree,
+  schema: () => SchemaDataNode,
 ) {
-  const dataTree = new PreviewDataTree(schema);
-
   return new FormPreviewStateNode(
     childKey,
     form,
     form.definition,
     schemaInterface,
-    () => dataTree.rootNode,
+    schema,
   );
 }
+
+let previewNodeId = 0;
 
 class FormPreviewStateNode implements FormStateNode {
   meta: Record<string, any> = {};
   _dataNode: Control<SchemaDataNode | undefined>;
   childMap = new Map<any, FormPreviewStateNode>();
   scope: CleanupScope;
+  uniqueId = (++previewNodeId).toString();
   constructor(
     public childKey: string | number,
     public formNode: FormNode,
@@ -386,10 +345,6 @@ class FormPreviewStateNode implements FormStateNode {
   }
 
   get id() {
-    return this.formNode.id;
-  }
-
-  get uniqueId() {
     return this.formNode.id;
   }
   get valid() {

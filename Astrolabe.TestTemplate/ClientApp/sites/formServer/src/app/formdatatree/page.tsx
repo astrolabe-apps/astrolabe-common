@@ -33,6 +33,7 @@ import {
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
 import { Form, SchemaFields } from "../../setup/allControls";
+import { createPreviewNode } from "@astroapps/schemas-editor";
 
 const schemaLookup = createSchemaLookup({ SchemaFields });
 const FormTree = createFormTree(Form);
@@ -58,18 +59,27 @@ export default function FormDataTreePage() {
   );
   const options = useControl<FormContextOptions>({});
   const { runAsync } = useAsyncRunner();
-  const dataNode = createSchemaDataNode(
-    schemaLookup.getSchema("SchemaFields"),
-    data,
-  );
+  const schemaTree = schemaLookup.getSchemaTree("SchemaFields");
+
+  const dataNode = createSchemaDataNode(schemaTree.rootNode, data);
   const rootControlState = useMemo(() => {
-    return createFormStateNode(FormTree.rootNode, dataNode, {
-      schemaInterface: defaultSchemaInterface,
-      runAsync,
-      contextOptions: options,
-      evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
-    });
+    return createPreviewNode(
+      "ROOT",
+      defaultSchemaInterface,
+      FormTree.rootNode,
+      () => schemaTree.rootNode,
+    );
   }, []);
+  console.log(rootControlState);
+
+  // const rootControlState = useMemo(() => {
+  //   return createFormStateNode(FormTree.rootNode, dataNode, {
+  //     schemaInterface: defaultSchemaInterface,
+  //     runAsync,
+  //     contextOptions: options,
+  //     evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
+  //   });
+  // }, []);
 
   getWholeTree(rootControlState);
   return (
