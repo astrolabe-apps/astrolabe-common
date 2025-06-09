@@ -68,7 +68,6 @@ export function DataArrayRenderer({
     style,
     dataContext,
     formNode,
-    getChildState,
   } = dataProps;
 
   const { addText, noAdd, noRemove, noReorder, removeText, editExternal } =
@@ -79,22 +78,7 @@ export function DataArrayRenderer({
       defaultActions as ArrayRenderOptions,
     );
 
-  const childDefs = formNode.getResolvedChildren();
-  const renderAsElement = !isCompoundField(field);
-  const defaultChildDef = {
-    type: ControlDefinitionType.Data,
-    field: ".",
-    renderOptions: { type: DataRenderType.Standard },
-    hideTitle: true,
-  };
-  const childDef = {
-    type: ControlDefinitionType.Group,
-    groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
-    children:
-      renderAsElement && childDefs.length == 0 ? [defaultChildDef] : childDefs,
-  };
-  const childNode: FormNode = formNode.createChildNode("child", childDef);
-  const childNodes = childNode.getChildNodes();
+  const childNodes = formNode.getChildNodes();
 
   const arrayProps = {
     ...createArrayActions(control.as(), field, {
@@ -108,18 +92,8 @@ export function DataArrayRenderer({
       editExternal,
     }),
     required,
-    renderElement: (i, wrap) => (
-      <RenderEntry
-        index={i}
-        key={i}
-        renderChildElement={renderChildElement}
-        dataContext={dataContext}
-        wrap={wrap}
-        isChildHidden={(dataNode) =>
-          childNodes.every((x) => getChildState(x, dataNode).hidden)
-        }
-      />
-    ),
+    renderElement: (i, wrap) =>
+      childNodes[i].hidden ? undefined : wrap(renderChild(i, childNodes[i])),
     className: className ? className : undefined,
     style,
     ...getLengthRestrictions(definition),
@@ -128,9 +102,11 @@ export function DataArrayRenderer({
   return renderers.renderArray(arrayProps);
 
   function renderChildElement(i: number, elementNode: SchemaDataNode) {
-    return renderChild(elementNode.control.uniqueId, childNode, {
-      parentDataNode: elementNode,
-    });
+    // TODO
+    return <div>TODO - array</div>;
+    // return renderChild(elementNode.control.uniqueId, childNode, {
+    //   parentDataNode: elementNode,
+    // });
   }
 }
 

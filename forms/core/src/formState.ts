@@ -125,7 +125,6 @@ export function createFormState(
 
       return createScopedMetaValue(formNode, controlImpl, "impl", (scope) => {
         const node = createFormStateNode(formNode, parent, {
-          scope,
           schemaInterface,
           runAsync,
           evalExpression,

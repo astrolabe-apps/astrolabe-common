@@ -5,6 +5,7 @@ import {
   createGroupRenderer,
   CustomRenderOptions,
   FormNode,
+  FormStateNode,
   getJsonPath,
 } from "@react-typed-forms/schemas";
 import { useTrackedComponent } from "@react-typed-forms/core";
@@ -55,13 +56,13 @@ function DataGridGroup({
   ...props
 }: {
   definition: ControlDefinition;
-  formNode: FormNode;
+  formNode: FormStateNode;
   dataContext: ControlDataContext;
   renderChild: ChildRenderer;
 }) {
   const Render = useTrackedComponent<{
     definition: ControlDefinition;
-    formNode: FormNode;
+    formNode: FormStateNode;
     dataContext: ControlDataContext;
     renderChild: ChildRenderer;
   }>(({ renderChild, definition, formNode, dataContext }) => {

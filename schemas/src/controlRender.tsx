@@ -30,6 +30,7 @@ import {
   FormContextOptions,
   FormNode,
   FormState,
+  FormStateNode,
   GroupRenderOptions,
   GroupRenderType,
   isActionControl,
@@ -387,14 +388,12 @@ export interface DisplayRendererProps {
 }
 
 export interface ParentRendererProps {
-  formNode: FormNode;
-  state: ControlState;
+  formNode: FormStateNode;
   renderChild: ChildRenderer;
   className?: string;
   textClass?: string;
   style?: React.CSSProperties;
   dataContext: ControlDataContext;
-  getChildState(node: FormNode, parent?: SchemaDataNode): ControlState;
   runExpression: RunExpression;
   designMode?: boolean;
   actionOnClick?: ControlActionHandler;
@@ -458,7 +457,6 @@ export function defaultDataProps(
   {
     formOptions,
     style,
-    allowedOptions,
     schemaInterface = defaultSchemaInterface,
     styleClass,
     textClass: tc,
@@ -474,9 +472,6 @@ export function defaultDataProps(
   const className = rendererClass(styleClass, definition.styleClass);
   const textClass = rendererClass(tc, definition.textClass);
   const required = !!definition.required && !displayOnly;
-  const fieldOptions = schemaInterface.getDataOptions(dataNode);
-  const _allowed = allowedOptions ?? [];
-  const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
   return {
     dataNode,
     definition,
@@ -484,19 +479,7 @@ export function defaultDataProps(
     field,
     id: "c" + control.uniqueId,
     inline: !!inline,
-    options:
-      allowed.length > 0
-        ? allowed
-            .map((x) =>
-              typeof x === "object"
-                ? x
-                : (fieldOptions?.find((y) => y.value == x) ?? {
-                    name: x.toString(),
-                    value: x,
-                  }),
-            )
-            .filter((x) => x != null)
-        : fieldOptions,
+    options: props.formNode.resolved.fieldOptions,
     readonly: !!formOptions.readonly,
     displayOnly: !!displayOnly,
     renderOptions: definition.renderOptions ?? { type: "Standard" },
@@ -524,22 +507,19 @@ export interface ChildRendererOptions {
 
 export type ChildRenderer = (
   k: Key,
-  child: FormNode,
+  child: FormStateNode,
   options?: ChildRendererOptions,
 ) => ReactNode;
 
 export interface RenderLayoutProps {
-  formNode: FormNode;
+  formNode: FormStateNode;
   renderer: FormRenderer;
-  state: ControlState;
   renderChild: ChildRenderer;
   createDataProps: CreateDataProps;
   formOptions: FormContextOptions;
   dataContext: ControlDataContext;
   control?: Control<any>;
   style?: React.CSSProperties;
-  allowedOptions?: any[];
-  getChildState(node: FormNode, parent?: SchemaDataNode): ControlState;
   runExpression: RunExpression;
 
   actionOnClick?: ControlActionHandler;
@@ -576,12 +556,10 @@ export function renderControlLayout(
     formNode,
     formOptions,
     actionOnClick,
-    state,
-    getChildState,
     inline,
     displayOnly,
   } = props;
-  const c = state.definition;
+  const c = formNode.definition;
   if (isDataControl(c)) {
     return renderData(c);
   }
@@ -599,7 +577,6 @@ export function renderControlLayout(
       inline,
       processLayout: renderer.renderGroup({
         formNode,
-        state,
         definition: c,
         renderChild,
         runExpression,
@@ -610,7 +587,6 @@ export function renderControlLayout(
         style,
         designMode,
         actionOnClick,
-        getChildState,
       }),
       label: {
         label: c.title,
@@ -647,14 +623,16 @@ export function renderControlLayout(
     };
 
     function renderActionGroup() {
-      const childDefs = formNode.getResolvedChildren();
-      const childDef = {
-        type: ControlDefinitionType.Group,
-        groupOptions: { type: GroupRenderType.Contents, hideTitle: true },
-        children: childDefs,
-      };
-      const childNode: FormNode = formNode.createChildNode("child", childDef);
-      return renderChild("child", childNode, {});
+      // TODO
+      return <div>TODO</div>;
+      // const childDefs = formNode.getResolvedChildren();
+      // const childDef = {
+      //   type: ControlDefinitionType.Group,
+      //   groupOptions: { type: GroupRenderType.Contents, hideTitle: true },
+      //   children: childDefs,
+      // };
+      // const childNode: FormNode = formNode.createChildNode("child", childDef);
+      // return renderChild("child", childNode, {});
     }
   }
   if (isDisplayControl(c)) {
@@ -985,18 +963,13 @@ export function applyArrayLengthRestrictions(
 }
 
 export function fieldOptionAdornment(p: DataRendererProps) {
-  return (o: FieldOption, fieldIndex: number, selected: boolean) => (
-    <RenderArrayElements
-      array={p.formNode.getChildNodes()}
-      children={(cd, i) =>
-        p.renderChild(i, cd, {
-          parentDataNode: p.dataContext.parentNode,
-          stateKey: fieldIndex.toString(),
-          variables: { formData: { option: o, optionSelected: selected } },
-        })
-      }
-    />
-  );
+  return (o: FieldOption, fieldIndex: number, selected: boolean) => {
+    const fieldChild = p.formNode
+      .getChildNodes()
+      .find((x) => x.variables.formData.option.value === o.value);
+    if (fieldChild) return p.renderChild(o.value?.toString(), fieldChild);
+    return undefined;
+  };
 }
 
 export function lookupChildDataContext(

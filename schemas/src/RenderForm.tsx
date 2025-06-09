@@ -19,11 +19,14 @@ import {
   ControlDefinition,
   ControlState,
   createFormState,
+  createFormStateNode,
   createSchemaDataNode,
   createSchemaTree,
+  defaultEvaluators,
   defaultSchemaInterface,
   FormNode,
   FormState,
+  FormStateNode,
   isDataControl,
   JsonPath,
   legacyFormNode,
@@ -54,22 +57,36 @@ export function RenderForm({
   options = {},
 }: RenderFormProps) {
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
-  const [formState, setFormState] = useState(
-    () => options?.formState ?? createFormState(schemaInterface),
-  );
   const { runAsync } = useAsyncRunner();
-  const state = formState.getControlState(data, form, options, runAsync);
 
-  useEffect(() => {
-    if (!options?.formState) {
-      return () => formState.cleanup();
-    }
-  }, [formState, options?.formState]);
+  const state = useMemo(
+    () =>
+      createFormStateNode(form, data, {
+        runAsync,
+        schemaInterface,
+        evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
+        contextOptions: options,
+      }),
+    [],
+  );
+  return <RenderFormNode node={state} renderer={renderer} options={options} />;
+  // formState.getControlState(data, form, options, runAsync);
+}
 
+export interface RenderFormNodeProps {
+  node: FormStateNode;
+  renderer: FormRenderer;
+  options?: ControlRenderOptions;
+}
+
+function RenderFormNode({
+  node: state,
+  renderer,
+  options = {},
+}: RenderFormNodeProps) {
+  const schemaInterface = state.schemaInterface;
   const definition = state.definition;
-
   const visible = !state.hidden;
-
   const visibility = useControl<Visibility | undefined>(() =>
     visible != null
       ? {
@@ -83,7 +100,7 @@ export function RenderForm({
   const dataContext: ControlDataContext = {
     schemaInterface: state.schemaInterface,
     dataNode: state.dataNode,
-    parentNode: data,
+    parentNode: state.parent,
     variables: state.variables,
   };
 
@@ -110,18 +127,15 @@ export function RenderForm({
     readonly,
     disabled,
     variables,
-    formState,
   };
 
   const labelAndChildren = renderControlLayout({
-    formNode: form,
+    formNode: state,
     renderer,
-    state,
     renderChild: (k, child, options) => {
       const overrideClasses = getGroupClassOverrides(definition);
       const { parentDataNode, actionOnClick, variables, ...renderOptions } =
         options ?? {};
-      const dContext = parentDataNode ?? dataContext.dataNode ?? data;
       const allChildOptions = {
         ...childOptions,
         ...overrideClasses,
@@ -133,11 +147,10 @@ export function RenderForm({
         ),
       };
       return (
-        <RenderForm
+        <RenderFormNode
           key={k}
-          form={child}
+          node={child}
           renderer={renderer}
-          data={dContext}
           options={allChildOptions}
         />
       );
@@ -149,31 +162,24 @@ export function RenderForm({
     dataContext,
     control: dataContext.dataNode?.control,
     schemaInterface,
-    style: state.style,
-    allowedOptions: state.allowedOptions,
+    style: state.resolved.style,
     customDisplay: options.customDisplay,
     actionOnClick: options.actionOnClick,
     styleClass: styleClass,
     labelClass: labelClass,
     labelTextClass: labelTextClass,
     textClass: textClass,
-    getChildState(child: FormNode, parent?: SchemaDataNode): ControlState {
-      return formState.getControlState(
-        parent ?? state.dataNode ?? data,
-        child,
-        childOptions,
-        runAsync,
-      );
-    },
     runExpression: (scope, expr, returnResult) => {
       if (expr?.type) {
-        formState.evalExpression(expr, {
-          scope,
-          dataNode: data,
-          schemaInterface,
-          returnResult,
-          runAsync,
-        });
+        // TODO
+        throw "TODO";
+        // formState.evalExpression(expr, {
+        //   scope,
+        //   dataNode: data,
+        //   schemaInterface,
+        //   returnResult,
+        //   runAsync,
+        // });
       }
     },
   });
@@ -181,7 +187,7 @@ export function RenderForm({
     ...labelAndChildren,
     adornments,
     className: rendererClass(options.layoutClass, definition.layoutClass),
-    style: state.layoutStyle,
+    style: state.resolved.layoutStyle,
   };
   const renderedControl = renderer.renderLayout(
     options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,

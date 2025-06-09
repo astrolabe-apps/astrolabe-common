@@ -189,29 +189,30 @@ export function createDataGridRenderer(
       const constantColumns: ColumnDefInit<
         Control<any>,
         DataGridColumnExtension
-      >[] =
-        definition.adornments?.filter(isColumnAdornment).map((x, i) => {
-          const def: DataControlDefinition = {
-            type: ControlDefinitionType.Data,
-            field: ".",
-            hideTitle: true,
-            renderOptions: x.renderOptions,
-            layoutClass: x.layoutClass,
-          };
-          const headerOptions = getColumnHeaderFromOptions(x, def, gridClasses);
-          const colNode = formNode.createChildNode(i.toString(), def);
-          return {
-            ...headerOptions,
-            id: "cc" + i,
-            render: (_, ri) =>
-              x.rowIndex
-                ? ri + 1
-                : renderChild("c" + i + "_" + ri, colNode, {
-                    parentDataNode: dataNode.getChildElement(ri),
-                    displayOnly: dataGridOptions.displayOnly,
-                  }),
-          };
-        }) ?? [];
+      >[] = [];
+      // TODO
+      // definition.adornments?.filter(isColumnAdornment).map((x, i) => {
+      //   const def: DataControlDefinition = {
+      //     type: ControlDefinitionType.Data,
+      //     field: ".",
+      //     hideTitle: true,
+      //     renderOptions: x.renderOptions,
+      //     layoutClass: x.layoutClass,
+      //   };
+      //   const headerOptions = getColumnHeaderFromOptions(x, def, gridClasses);
+      //   const colNode = formNode.createChildNode(i.toString(), def);
+      //   return {
+      //     ...headerOptions,
+      //     id: "cc" + i,
+      //     render: (_, ri) =>
+      //       x.rowIndex
+      //         ? ri + 1
+      //         : renderChild("c" + i + "_" + ri, colNode, {
+      //             parentDataNode: dataNode.getChildElement(ri),
+      //             displayOnly: dataGridOptions.displayOnly,
+      //           }),
+      //   };
+      // }) ?? [];
       const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
         formNode.getChildNodes().map((cn, i) => {
           const d = cn.definition;

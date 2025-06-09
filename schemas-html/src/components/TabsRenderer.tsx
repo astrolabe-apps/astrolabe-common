@@ -5,6 +5,7 @@ import {
   GroupRenderType,
   rendererClass,
   TabsRenderOptions,
+  FormStateNode,
 } from "@react-typed-forms/schemas";
 import React, { Fragment } from "react";
 import clsx from "clsx";
@@ -45,7 +46,7 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
   function renderAllTabs(
     {
       options,
-      groupProps: { designMode, formNode, className, renderChild, state },
+      groupProps: { designMode, formNode, className, renderChild },
       tabOptions,
     }: {
       options: DefaultTabsRenderOptions;
@@ -54,7 +55,7 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
     },
     isVisible: (i: number) => boolean,
   ) {
-    const tabIndex = state.meta.fields.tabIndex.as<number | undefined>();
+    const tabIndex = formNode.meta.fields.tabIndex.as<number | undefined>();
     const {
       tabClass,
       labelClass,
@@ -73,7 +74,7 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
       )
     );
 
-    function renderTabs(tabs: FormNode[], key: number) {
+    function renderTabs(tabs: FormStateNode[], key: number) {
       return (
         <div key={key} className={rendererClass(className, options.className)}>
           <ul className={rendererClass(null, tabListClass)}>

@@ -199,24 +199,28 @@ function renderWizard(
   }
 
   function validatePage() {
-    const pageNode = children[currentPage];
-    let hasErrors = false;
-    visitFormDataInContext(
-      props.dataContext.parentNode,
-      pageNode,
-      validationVisitor(() => {
-        hasErrors = true;
-      }),
-    );
-    return !hasErrors;
+    // TODO
+    return true;
+    // const pageNode = children[currentPage];
+    // let hasErrors = false;
+    // visitFormDataInContext(
+    //   props.dataContext.parentNode,
+    //   pageNode,
+    //   validationVisitor(() => {
+    //     hasErrors = true;
+    //   }),
+    // );
+    // return !hasErrors;
   }
 
   function isPageValid() {
-    const pageNode = children[currentPage];
-    let hasErrors = false;
-    visitFormDataInContext(props.dataContext.parentNode, pageNode, (c) => {
-      if (!c.control.valid) hasErrors = true;
-    });
-    return !hasErrors;
+    return true;
+    // TODO
+    // const pageNode = children[currentPage];
+    // let hasErrors = false;
+    // visitFormDataInContext(props.dataContext.parentNode, pageNode, (c) => {
+    //   if (!c.control.valid) hasErrors = true;
+    // });
+    // return !hasErrors;
   }
 }

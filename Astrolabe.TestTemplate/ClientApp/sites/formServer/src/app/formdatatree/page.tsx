@@ -43,7 +43,12 @@ const renderer = createFormRenderer(
 export default function FormDataTreePage() {
   const { ref, width, height } = useResizeObserver();
   const selected = useControl<FormStateNode | undefined>();
-  const data = useControl({});
+  const data = useControl({
+    selectables: [
+      { name: "WOW", id: "choice1" },
+      { name: "WOW2", id: "COOL2" },
+    ],
+  });
   const jsonText = useControl(() =>
     JSON.stringify(data.current.value, null, 2),
   );
@@ -62,7 +67,6 @@ export default function FormDataTreePage() {
       schemaInterface: defaultSchemaInterface,
       runAsync,
       contextOptions: options,
-      scope: options,
       evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
     });
   }, []);
@@ -81,11 +85,7 @@ export default function FormDataTreePage() {
             )}
           </div>
           <div className="overflow-auto h-full w-full p-4">
-            <RenderForm
-              data={dataNode}
-              form={FormTree.rootNode}
-              renderer={renderer}
-            />
+            <RenderFormNode node={rootControlState} renderer={renderer} />
           </div>
         </div>
       </div>
@@ -97,6 +97,7 @@ export default function FormDataTreePage() {
             onSelect={(n) => (selected.value = n[0]?.data)}
             data={[rootControlState]}
             idAccessor={(x) => x.uniqueId!}
+            childrenAccessor={(x) => x.getChildNodes()}
             children={FormNodeRenderer}
           />
         </div>
@@ -111,7 +112,7 @@ export default function FormDataTreePage() {
 }
 
 function getWholeTree(node: FormStateNode) {
-  return node.children.forEach(getWholeTree);
+  return node.getChildNodes().forEach(getWholeTree);
 }
 
 function CurrentNode({ node }: { node: Control<FormStateNode> }) {

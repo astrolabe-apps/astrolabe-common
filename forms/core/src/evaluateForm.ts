@@ -4,6 +4,7 @@ import {
   createScopedEffect,
   createSyncEffect,
   newControl,
+  trackedValue,
   updateComputedValue,
   updateElements,
 } from "@astroapps/controls";
@@ -12,6 +13,7 @@ import {
   ControlAdornmentType,
   ControlDefinition,
   ControlDefinitionType,
+  DataControlDefinition,
   DataRenderType,
   DynamicPropertyType,
   HtmlDisplay,
@@ -24,7 +26,7 @@ import {
   isTextDisplay,
   TextDisplay,
 } from "./controlDefinition";
-import { createScoped } from "./util";
+import { createScoped, createScopedComputed } from "./util";
 import { EntityExpression } from "./entityExpression";
 import { SchemaInterface } from "./schemaInterface";
 import { FormNode, lookupDataNode } from "./formNode";
@@ -76,20 +78,20 @@ export interface FormStateBase {
 export interface FormStateNode extends FormStateBase {
   childKey: string | number;
   uniqueId: string;
+  definition: ControlDefinition;
   schemaInterface: SchemaInterface;
   valid: boolean;
   touched: boolean;
   clearHidden: boolean;
   variables: Record<string, any>;
   meta: Control<Record<string, any>>;
-  children: FormStateNode[];
+  getChildNodes(): FormStateNode[];
 }
 
 interface FormStateOptions {
   schemaInterface: SchemaInterface;
   evalExpression: (e: EntityExpression, ctx: ExpressionEvalContext) => void;
   contextOptions: FormContextOptions;
-  scope: CleanupScope;
   runAsync: (af: () => void) => void;
 }
 
@@ -285,7 +287,11 @@ class FormStateNodeImpl implements FormStateNode {
     return this.context.variables ?? {};
   }
 
-  get children() {
+  get definition() {
+    return this.resolved.definition;
+  }
+
+  getChildNodes() {
     return this.base.fields.children.elements.map(
       (x) => x.meta["$FormState"] as FormStateNode,
     );
@@ -306,8 +312,7 @@ function initFormState(
   parent: SchemaDataNode,
   options: FormStateOptions,
 ): Control<FormStateBaseImpl> {
-  const { evalExpression, scope, runAsync, schemaInterface, contextOptions } =
-    options;
+  const { evalExpression, runAsync, schemaInterface, contextOptions } = options;
 
   const evalExpr = createEvalExpr(evalExpression, {
     schemaInterface,
@@ -318,7 +323,7 @@ function initFormState(
 
   const cf = contextOptions;
 
-  const base = createScoped<FormStateBaseImpl>(scope, {
+  const base = newControl<FormStateBaseImpl>({
     readonly: false,
     hidden: false,
     disabled: false,
@@ -327,6 +332,7 @@ function initFormState(
     parent,
     allowedOptions: undefined,
   });
+  const scope = base;
 
   const resolved = base.fields.resolved.as<ResolvedDefinition>();
   const {
@@ -509,7 +515,7 @@ function initChildren(
       childs.map(({ childKey, create }) => {
         let child = childMap.get(childKey);
         if (!child) {
-          const cc = create();
+          const cc = create(scope);
           const co = cc.variables
             ? {
                 ...options,
@@ -676,7 +682,7 @@ function initChildren(
 
 export interface ChildNode {
   childKey: string | number;
-  create: () => {
+  create: (scope: CleanupScope) => {
     definition: ControlDefinition;
     parent: SchemaDataNode;
     node: FormNode;
@@ -700,19 +706,25 @@ function getChildNodes(
       if (n.length > 0 && resolved.fieldOptions) {
         return resolved.fieldOptions.map((x) => ({
           childKey: x.value?.toString(),
-          create: () => {
+          create: (scope) => {
+            const vars = createScopedComputed(scope, () => {
+              console.log(
+                "Re-calculating option",
+                x,
+                isOptionSelected(schemaInterface, x, data),
+              );
+              return {
+                option: x,
+                optionSelected: isOptionSelected(schemaInterface, x, data),
+              };
+            });
             return {
               definition: {
                 type: ControlDefinitionType.Group,
               },
               parent,
               node,
-              variables: {
-                formData: {
-                  option: x,
-                  optionSelected: isOptionSelected(schemaInterface, x, data),
-                },
-              },
+              variables: { formData: trackedValue(vars) },
             };
           },
         }));
@@ -723,7 +735,12 @@ function getChildNodes(
       return data.control.as<any[]>().elements.map((x, i) => ({
         childKey: x.uniqueId,
         create: () => ({
-          definition: { type: ControlDefinitionType.Data, field: "." },
+          definition: {
+            type: ControlDefinitionType.Data,
+            field: ".",
+            hideTitle: true,
+            renderOptions: {},
+          } as DataControlDefinition,
           node,
           parent: data!.getChildElement(i),
         }),

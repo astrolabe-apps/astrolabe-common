@@ -146,42 +146,50 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     : node;
   const layout = renderControlLayout({
     renderer,
-    state: {
+    formNode: {
+      childKey: "TODO",
+      uniqueId: "TODO",
+      parent: parentDataNode,
+      getChildNodes: () => [],
       definition: renderedNode.definition,
       schemaInterface,
       ...formOptions,
       dataNode,
       meta,
+      resolved: {
+        definition: renderedNode.definition,
+      },
       valid: true,
       touched: false,
     },
-    formNode: renderedNode,
-    getChildState: (child, data) => {
-      return {
-        definition: child.definition,
-        schemaInterface,
-        ...formOptions,
-        meta: newControl({}),
-        valid: true,
-        touched: false,
-      };
-    },
+    // getChildState: (child, data) => {
+    //   return {
+    //     definition: child.definition,
+    //     schemaInterface,
+    //     ...formOptions,
+    //     meta: newControl({}),
+    //     valid: true,
+    //     touched: false,
+    //   };
+    // },
     renderChild: (k, child, c) => {
-      const pd = c?.parentDataNode ?? dataNode ?? parentDataNode;
-      return (
-        <FormControlPreview
-          key={unsafeRestoreControl(child.definition)?.uniqueId ?? k}
-          node={child}
-          dropIndex={0}
-          {...groupClasses}
-          {...c}
-          parentDataNode={pd}
-          keyPrefix={keyPrefix}
-          schemaInterface={schemaInterface}
-          displayOnly={c?.displayOnly || displayOnly}
-          context={context}
-        />
-      );
+      // TODO
+      return <div>TODO</div>;
+      // const pd = c?.parentDataNode ?? dataNode ?? parentDataNode;
+      // return (
+      //   <FormControlPreview
+      //     key={unsafeRestoreControl(child.definition)?.uniqueId ?? k}
+      //     node={child}
+      //     dropIndex={0}
+      //     {...groupClasses}
+      //     {...c}
+      //     parentDataNode={pd}
+      //     keyPrefix={keyPrefix}
+      //     schemaInterface={schemaInterface}
+      //     displayOnly={c?.displayOnly || displayOnly}
+      //     context={context}
+      //   />
+      // );
     },
     labelClass,
     styleClass,

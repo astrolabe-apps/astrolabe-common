@@ -96,7 +96,12 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
       trackedValue(rootData, effect.collectUsage),
       variables,
     );
-    // console.log(parsedJsonata.fields.fullExpr.value, evalResult, bindings);
+    console.log(
+      rootData,
+      parsedJsonata.fields.fullExpr.current.value,
+      evalResult,
+      variables,
+    );
     collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 
