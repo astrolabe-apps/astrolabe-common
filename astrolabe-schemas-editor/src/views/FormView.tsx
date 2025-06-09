@@ -159,9 +159,7 @@ function RenderFormDesign({
         )}
         <div className={clsx("grow overflow-auto", context.editorPanelClass)}>
           <FormControlPreview
-            keyPrefix="HAI"
             node={formPreviewNode}
-            dropIndex={0}
             context={{
               selected: c.fields.selectedControlId,
               VisibilityIcon: <i className="fa fa-eye" />,

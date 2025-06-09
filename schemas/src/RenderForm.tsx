@@ -74,6 +74,7 @@ export function RenderFormNode({
   renderer,
   options = {},
 }: RenderFormNodeProps) {
+  const { runAsync } = useAsyncRunner();
   const schemaInterface = state.schemaInterface;
   const definition = state.definition;
   const visible = !state.hidden;
@@ -158,15 +159,13 @@ export function RenderFormNode({
     textClass: textClass,
     runExpression: (scope, expr, returnResult) => {
       if (expr?.type) {
-        // TODO
-        throw "TODO";
-        // formState.evalExpression(expr, {
-        //   scope,
-        //   dataNode: data,
-        //   schemaInterface,
-        //   returnResult,
-        //   runAsync,
-        // });
+        defaultEvaluators[expr.type](expr, {
+          dataNode: state.parent,
+          schemaInterface,
+          scope,
+          returnResult,
+          runAsync,
+        });
       }
     },
   });

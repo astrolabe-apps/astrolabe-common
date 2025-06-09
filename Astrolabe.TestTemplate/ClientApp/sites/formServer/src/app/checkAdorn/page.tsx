@@ -2,9 +2,9 @@
 
 import { useControl } from "@react-typed-forms/core";
 import {
+  createSchemaDataNode,
   createSchemaLookup,
-  makeSchemaDataNode,
-  useControlRendererComponent,
+  RenderForm,
 } from "@react-typed-forms/schemas";
 import { createStdFormRenderer } from "../../renderers";
 import { Button } from "@astrolabe/ui/Button";
@@ -14,6 +14,7 @@ import {
   SchemaFields,
   TestOptionSchema,
 } from "../../setup/testOptionTree";
+import { createFormTree } from "@astroapps/forms-core";
 
 const renderer = createStdFormRenderer(null);
 const schemaLookup = createSchemaLookup({ SchemaFields });
@@ -27,15 +28,14 @@ export default function CheckAdorn() {
       { id: "choice2", name: "TWO" },
     ],
   });
-  const Render = useControlRendererComponent(
-    Form,
-    renderer,
-    {},
-    makeSchemaDataNode(schemaNode, pageControl),
-  );
+  const formTree = createFormTree(Form);
   return (
     <div>
-      <Render />
+      <RenderForm
+        renderer={renderer}
+        form={formTree.rootNode}
+        data={createSchemaDataNode(schemaNode, pageControl)}
+      />
       <Button onClick={toggle}>Toggle</Button>
     </div>
   );

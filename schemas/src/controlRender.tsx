@@ -12,7 +12,6 @@ import {
   ChangeListenerFunc,
   Control,
   removeElement,
-  RenderArrayElements,
 } from "@react-typed-forms/core";
 import {
   ActionStyle,
@@ -20,8 +19,6 @@ import {
   ArrayActionOptions,
   ControlAdornment,
   ControlDefinition,
-  ControlDefinitionType,
-  ControlState,
   CustomDisplay,
   DataControlDefinition,
   defaultSchemaInterface,
@@ -29,11 +26,8 @@ import {
   DisplayDataType,
   FieldOption,
   FormContextOptions,
-  FormNode,
-  FormState,
   FormStateNode,
   GroupRenderOptions,
-  GroupRenderType,
   isActionControl,
   isDataControl,
   isDisplayControl,
@@ -242,7 +236,7 @@ export interface ArrayRendererProps {
   editAction?: (elemIndex: number) => ActionRendererProps;
   renderElement: (
     elemIndex: number,
-    wrapEntry: (children: ReactNode) => ReactNode,
+    wrapEntry: (key: Key, children: ReactNode) => ReactNode,
   ) => ReactNode;
   arrayControl?: Control<any[] | undefined | null>;
   getElementCount(): number;
@@ -432,7 +426,6 @@ export type CreateDataProps = (
 ) => DataRendererProps;
 
 export interface ControlRenderOptions extends ControlClasses {
-  formState?: FormState;
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
   actionOnClick?: ControlActionHandler;
   customDisplay?: (
@@ -621,16 +614,9 @@ export function renderControlLayout(
     };
 
     function renderActionGroup() {
-      // TODO
-      return <div>TODO</div>;
-      // const childDefs = formNode.getResolvedChildren();
-      // const childDef = {
-      //   type: ControlDefinitionType.Group,
-      //   groupOptions: { type: GroupRenderType.Contents, hideTitle: true },
-      //   children: childDefs,
-      // };
-      // const childNode: FormNode = formNode.createChildNode("child", childDef);
-      // return renderChild("child", childNode, {});
+      return (
+        <>{formNode.getChildNodes().map((x) => renderChild(x.childKey, x))}</>
+      );
     }
   }
   if (isDisplayControl(c)) {
