@@ -2,22 +2,24 @@ import {
   CleanupScope,
   Control,
   createCleanupScope,
-  newControl,
   useComputed,
-  useControl,
 } from "@react-typed-forms/core";
-import React, { Fragment, HTMLAttributes, ReactNode } from "react";
+import React, { Fragment, HTMLAttributes, ReactNode, useMemo } from "react";
 import {
   ControlDataContext,
   ControlDefinition,
+  createScopedComputed,
   defaultDataProps,
+  defaultValueForField,
   DynamicPropertyType,
+  elementValueForField,
   fieldPathForDefinition,
   FormNode,
   FormRenderer,
   FormStateNode,
   getChildNodes,
   getDisplayOnlyOptions,
+  getGroupClassOverrides,
   isControlDisplayOnly,
   isDataControl,
   isGroupControl,
@@ -25,19 +27,13 @@ import {
   rendererClass,
   schemaDataForFieldPath,
   SchemaDataNode,
-  SchemaDataTree,
   SchemaInterface,
-  SchemaNode,
-  createScopedComputed,
+  textDisplayControl,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
-import { EditorSchemaTree } from "./EditorSchemaTree";
 
 export interface FormControlPreviewProps {
   node: FormPreviewStateNode;
-  dropIndex: number;
-  noDrop?: boolean;
-  keyPrefix?: string;
   styleClass?: string;
   layoutClass?: string;
   labelClass?: string;
@@ -64,9 +60,6 @@ const defaultLayoutChange = "position";
 export function FormControlPreview(props: FormControlPreviewProps) {
   const {
     node,
-    dropIndex,
-    noDrop,
-    keyPrefix,
     styleClass,
     labelClass,
     layoutClass,
@@ -75,7 +68,6 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     inline,
   } = props;
   const { definition, schemaInterface, parent, dataNode } = node;
-  console.log(node);
   const { selected, renderer, hideFields } = context;
   const displayOnly = dOnly || isControlDisplayOnly(definition);
 
@@ -86,30 +78,25 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const scrollRef = useScrollIntoView(isSelected);
   const dataDefinition = isDataControl(definition) ? definition : undefined;
 
-  // const fieldNamePath = fieldPathForDefinition(definition);
-  // const dataNode = fieldNamePath
-  //   ? schemaDataForFieldPath(fieldNamePath, parentDataNode)
-  //   : undefined;
   const childNode = dataNode?.schema;
   const isRequired = !!dataDefinition?.required;
   const displayOptions = getDisplayOnlyOptions(definition);
   const field = childNode?.field;
-  // const sampleData = useMemo(
-  //   () =>
-  //     displayOptions
-  //       ? (displayOptions.sampleText ?? "Sample Data")
-  //       : field &&
-  //         (dataNode?.elementIndex == null
-  //           ? field.collection
-  //             ? [undefined]
-  //             : defaultValueForField(field, isRequired)
-  //           : elementValueForField(field)),
-  //   [displayOptions?.sampleText, field, isRequired],
-  // );
-  // const control = useMemo(() => newControl(sampleData), [sampleData]);
-  // if (dataNode) {
-  //   dataNode.control = control;
-  // }
+  const sampleData = useMemo(
+    () =>
+      displayOptions
+        ? (displayOptions.sampleText ?? "Sample Data")
+        : field &&
+          (dataNode?.elementIndex == null
+            ? field.collection
+              ? [undefined]
+              : defaultValueForField(field, isRequired)
+            : elementValueForField(field)),
+    [displayOptions?.sampleText, field, isRequired],
+  );
+  if (dataNode) {
+    dataNode.control.value = sampleData;
+  }
   const dataContext: ControlDataContext = {
     schemaInterface,
     dataNode,
@@ -132,51 +119,20 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       }),
     ) ?? [];
 
-  // const groupClasses = getGroupClassOverrides(definition);
-  // const renderedNode = node.definition.childRefId
-  //   ? node.createChildNode(
-  //       "ref",
-  //       textDisplayControl("Reference:" + node.definition.childRefId),
-  //     )
-  //   : node;
-
+  const groupClasses = getGroupClassOverrides(definition);
   const layout = renderControlLayout({
     renderer,
     formNode: node,
-    // getChildState: (child, data) => {
-    //   return {
-    //     definition: child.definition,
-    //     schemaInterface,
-    //     ...formOptions,
-    //     meta: newControl({}),
-    //     valid: true,
-    //     touched: false,
-    //   };
-    // },
     renderChild: (k, child, c) => {
       return (
         <FormControlPreview
           key={child.childKey}
           node={child as FormPreviewStateNode}
-          dropIndex={0}
+          {...groupClasses}
+          displayOnly={c?.displayOnly || displayOnly}
           context={context}
         />
       );
-      // const pd = c?.parentDataNode ?? dataNode ?? parentDataNode;
-      // return (
-      //   <FormControlPreview
-      //     key={unsafeRestoreControl(child.definition)?.uniqueId ?? k}
-      //     node={child}
-      //     dropIndex={0}
-      //     {...groupClasses}
-      //     {...c}
-      //     parentDataNode={pd}
-      //     keyPrefix={keyPrefix}
-      //     schemaInterface={schemaInterface}
-      //     displayOnly={c?.displayOnly || displayOnly}
-      //     context={context}
-      //   />
-      // );
     },
     labelClass,
     styleClass,
@@ -361,13 +317,28 @@ class FormPreviewStateNode implements FormStateNode {
   }
 
   getChildNodes(): FormStateNode[] {
-    const kids = getChildNodes(
-      this.resolved,
-      this.formNode,
-      this.parent,
-      this.dataNode,
-      this.schemaInterface,
-    );
+    const kids = this.definition.childRefId
+      ? [
+          {
+            childKey: "0",
+            create: () => ({
+              node: this.formNode,
+              definition: textDisplayControl(
+                "Reference: " + this.definition.childRefId,
+              ),
+              parent: this.parent,
+              schemaInterface: this.schemaInterface,
+              dataNode: this.dataNode,
+            }),
+          },
+        ]
+      : getChildNodes(
+          this.resolved,
+          this.formNode,
+          this.parent,
+          this.dataNode,
+          this.schemaInterface,
+        );
     return kids.map(({ childKey, create }) => {
       let child = this.childMap.get(childKey);
       if (!child) {
@@ -385,7 +356,10 @@ class FormPreviewStateNode implements FormStateNode {
     });
   }
   ensureMeta<A>(key: string, init: (scope: CleanupScope) => A): A {
-    throw new Error("Method not implemented.");
+    if (key in this.meta) return this.meta[key];
+    const res = init(this.scope);
+    this.meta[key] = res;
+    return res;
   }
 
   get readonly() {

@@ -11,7 +11,7 @@ import {
   isDataControl,
   ResolvedDefinition,
 } from "@astroapps/forms-core";
-import { JsonEditor } from "@astroapps/schemas-editor";
+import { FormControlPreview, JsonEditor } from "@astroapps/schemas-editor";
 import useResizeObserver from "use-resize-observer";
 import { NodeRendererProps, Tree } from "react-arborist";
 import React, { useMemo } from "react";
@@ -32,7 +32,7 @@ import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
-import { Form, SchemaFields } from "../../setup/allControls";
+import { Form, SchemaFields } from "../../setup/basicForm";
 import { createPreviewNode } from "@astroapps/schemas-editor";
 
 const schemaLookup = createSchemaLookup({ SchemaFields });
@@ -67,11 +67,12 @@ export default function FormDataTreePage() {
       "ROOT",
       defaultSchemaInterface,
       FormTree.rootNode,
-      () => schemaTree.rootNode,
+      () => dataNode,
     );
   }, []);
-  console.log(rootControlState);
 
+  const hideFields = useControl(false);
+  const selectedControlId = useControl<string | undefined>();
   // const rootControlState = useMemo(() => {
   //   return createFormStateNode(FormTree.rootNode, dataNode, {
   //     schemaInterface: defaultSchemaInterface,
@@ -84,7 +85,7 @@ export default function FormDataTreePage() {
   getWholeTree(rootControlState);
   return (
     <div className="flex flex-col h-full">
-      <div className="h-64">
+      <div className="h-[50%]">
         <div className="flex h-full">
           <div className="overflow-auto basis-1/2">
             <JsonEditor control={jsonText} />
@@ -95,7 +96,16 @@ export default function FormDataTreePage() {
             )}
           </div>
           <div className="overflow-auto h-full w-full p-4">
-            <RenderFormNode node={rootControlState} renderer={renderer} />
+            <FormControlPreview
+              node={rootControlState}
+              context={{
+                selected: selectedControlId,
+                VisibilityIcon: <i className="fa fa-eye" />,
+                renderer,
+                hideFields,
+              }}
+            />
+            {/*<RenderFormNode node={rootControlState} renderer={renderer} />*/}
           </div>
         </div>
       </div>

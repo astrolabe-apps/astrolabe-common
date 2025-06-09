@@ -25,10 +25,12 @@ export const SchemaFields = buildSchema<TestSchema>({
   ),
 });
 
-export const Form = groupedControl([
-  dataControl("text", undefined),
-  dataControl("number", undefined),
-  dataControl("children", undefined, {
-    children: [dataControl("title", null, { required: true })],
-  }),
-]);
+export const Form = [
+  groupedControl([
+    dataControl("text", undefined),
+    dataControl("number", undefined),
+    dataControl("children", undefined, {
+      children: [dataControl("title", null, { required: true })],
+    }),
+  ]),
+];

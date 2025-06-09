@@ -39,25 +39,27 @@ export const SchemaFields = buildSchema<TestOptionSchema>({
   ),
 });
 
-export const Form = groupedControl([
-  dataControl("selected", undefined, {
-    renderOptions: { type: DataRenderType.Radio },
-    adornments: [accordionOptions({ title: "Open" })],
-    children: [
-      dataControl("selectables", "Selectables", {
-        readonly: true,
-        hideTitle: true,
-        dynamic: [dynamicVisibility(jsonataExpr("$formData.optionSelected"))],
-        children: [
-          dataControl("name", null, {
-            renderOptions: { type: DataRenderType.DisplayOnly },
-            readonly: true,
-            dynamic: [
-              dynamicVisibility(jsonataExpr("$formData.option.value = id")),
-            ],
-          }),
-        ],
-      }),
-    ],
-  }),
-]);
+export const Form = [
+  groupedControl([
+    dataControl("selected", undefined, {
+      renderOptions: { type: DataRenderType.Radio },
+      adornments: [accordionOptions({ title: "Open" })],
+      children: [
+        dataControl("selectables", "Selectables", {
+          readonly: true,
+          hideTitle: true,
+          dynamic: [dynamicVisibility(jsonataExpr("$formData.optionSelected"))],
+          children: [
+            dataControl("name", null, {
+              renderOptions: { type: DataRenderType.DisplayOnly },
+              readonly: true,
+              dynamic: [
+                dynamicVisibility(jsonataExpr("$formData.option.value = id")),
+              ],
+            }),
+          ],
+        }),
+      ],
+    }),
+  ]),
+];
