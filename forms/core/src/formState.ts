@@ -3,6 +3,7 @@ import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaInterface } from "./schemaInterface";
 import { FieldOption } from "./schemaField";
 import {
+  ChangeListenerFunc,
   CleanupScope,
   Control,
   createScopedEffect,
@@ -41,8 +42,8 @@ export interface ControlState {
   hidden: boolean;
   disabled: boolean;
   clearHidden: boolean;
-  variables: Record<string, any>;
-  meta: Control<Record<string, any>>;
+  variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
+  meta: Record<string, any>;
 }
 
 /**
@@ -183,8 +184,8 @@ class ControlStateImpl implements ControlState {
     return this.node.hidden;
   }
 
-  get meta(): Control<Record<string, any>> {
-    return this.node.meta!;
+  get meta(): Record<string, any> {
+    return this.node.meta;
   }
 
   get readonly(): boolean {
@@ -203,7 +204,7 @@ class ControlStateImpl implements ControlState {
     return this.node.valid;
   }
 
-  get variables(): Record<string, any> {
+  get variables() {
     return this.node.variables;
   }
 }

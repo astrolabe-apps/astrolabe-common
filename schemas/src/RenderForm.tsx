@@ -7,27 +7,16 @@ import {
   renderControlLayout,
   Visibility,
 } from "./controlRender";
-import React, {
-  FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { FC, useCallback, useEffect, useMemo } from "react";
 import {
   ControlDefinition,
-  ControlState,
-  createFormState,
   createFormStateNode,
   createSchemaDataNode,
   createSchemaTree,
   defaultEvaluators,
   defaultSchemaInterface,
   FormNode,
-  FormState,
   FormStateNode,
-  isDataControl,
   JsonPath,
   legacyFormNode,
   SchemaDataNode,
@@ -79,7 +68,8 @@ export interface RenderFormNodeProps {
   options?: ControlRenderOptions;
 }
 
-function RenderFormNode({
+/* @trackControls */
+export function RenderFormNode({
   node: state,
   renderer,
   options = {},
@@ -101,7 +91,6 @@ function RenderFormNode({
     schemaInterface: state.schemaInterface,
     dataNode: state.dataNode,
     parentNode: state.parent,
-    variables: state.variables,
   };
 
   const adornments =
@@ -134,13 +123,11 @@ function RenderFormNode({
     renderer,
     renderChild: (k, child, options) => {
       const overrideClasses = getGroupClassOverrides(definition);
-      const { parentDataNode, actionOnClick, variables, ...renderOptions } =
-        options ?? {};
+      const { actionOnClick, ...renderOptions } = options ?? {};
       const allChildOptions = {
         ...childOptions,
         ...overrideClasses,
         ...renderOptions,
-        variables: { ...childOptions.variables, ...variables },
         actionOnClick: actionHandlers(
           actionOnClick,
           childOptions.actionOnClick,
@@ -192,11 +179,10 @@ function RenderFormNode({
   const renderedControl = renderer.renderLayout(
     options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,
   );
-  const rendered = renderer.renderVisibility({
+  return renderer.renderVisibility({
     visibility,
     ...renderedControl,
   });
-  return rendered;
 }
 
 /**

@@ -8,7 +8,7 @@ import {
   SchemaInterface,
 } from "@astroapps/forms-core";
 import React, { Key, ReactNode } from "react";
-import { CleanupScope } from "@react-typed-forms/core";
+import { ChangeListenerFunc, CleanupScope } from "@react-typed-forms/core";
 
 /**
  * Interface representing the control data context.
@@ -17,7 +17,6 @@ export interface ControlDataContext {
   schemaInterface: SchemaInterface;
   dataNode: SchemaDataNode | undefined;
   parentNode: SchemaDataNode;
-  variables: Record<string, any>;
 }
 
 export type ControlActionHandler = (
@@ -48,5 +47,5 @@ export type RunExpression = (
   scope: CleanupScope,
   expression: EntityExpression,
   returnResult: (v: unknown) => void,
-  bindings?: FormContextData,
+  variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>,
 ) => void;

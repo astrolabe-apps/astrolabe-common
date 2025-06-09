@@ -235,7 +235,6 @@ export function createDataGridRenderer(
             },
             render: (_: Control<any>, rowIndex: number) =>
               renderChild(i, cn, {
-                parentDataNode: dataContext.dataNode!.getChildElement(rowIndex),
                 displayOnly: dataGridOptions.displayOnly,
               }),
           };

@@ -1,4 +1,5 @@
 import {
+  ChangeListenerFunc,
   CleanupScope,
   Control,
   createScopedEffect,
@@ -16,6 +17,8 @@ import {
   DataControlDefinition,
   DataRenderType,
   DynamicPropertyType,
+  GroupedControlsDefinition,
+  GroupRenderType,
   HtmlDisplay,
   isActionControl,
   isControlDisabled,
@@ -48,13 +51,16 @@ export type EvalExpr = <A>(
   coerce: (t: unknown) => any,
 ) => boolean;
 
+export type VariablesFunc = (
+  changes: ChangeListenerFunc<any>,
+) => Record<string, any>;
 export interface FormContextOptions {
   readonly?: boolean | null;
   hidden?: boolean | null;
   disabled?: boolean | null;
   clearHidden?: boolean;
   stateKey?: string;
-  variables?: Record<string, any>;
+  variables?: VariablesFunc;
 }
 
 export interface ResolvedDefinition {
@@ -83,9 +89,10 @@ export interface FormStateNode extends FormStateBase {
   valid: boolean;
   touched: boolean;
   clearHidden: boolean;
-  variables: Record<string, any>;
-  meta: Control<Record<string, any>>;
+  variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
+  meta: Record<string, any>;
   getChildNodes(): FormStateNode[];
+  ensureMeta<A>(key: string, init: (scope: CleanupScope) => A): A;
 }
 
 interface FormStateOptions {
@@ -231,6 +238,7 @@ export function createFormStateNode(
 
   return new FormStateNodeImpl(
     "ROOT",
+    {},
     parent,
     options.schemaInterface,
     base,
@@ -244,15 +252,14 @@ export interface FormStateBaseImpl extends FormStateBase {
 }
 
 class FormStateNodeImpl implements FormStateNode {
-  meta: Control<Record<string, any>>;
   constructor(
     public childKey: string | number,
+    public meta: Record<string, any>,
     public parent: SchemaDataNode,
     public schemaInterface: SchemaInterface,
     private base: Control<FormStateBaseImpl>,
     private context: FormContextOptions,
   ) {
-    this.meta = newControl({});
     base.meta["$FormState"] = this;
   }
 
@@ -284,7 +291,7 @@ class FormStateNodeImpl implements FormStateNode {
   }
 
   get variables() {
-    return this.context.variables ?? {};
+    return this.context.variables;
   }
 
   get definition() {
@@ -303,6 +310,13 @@ class FormStateNodeImpl implements FormStateNode {
 
   get dataNode() {
     return this.base.fields.dataNode.value;
+  }
+
+  ensureMeta<A>(key: string, init: (scope: CleanupScope) => A): A {
+    if (key in this.meta) return this.meta[key];
+    const res = init(this.base);
+    this.meta[key] = res;
+    return res;
   }
 }
 
@@ -493,6 +507,15 @@ function initFormState(
   }
 }
 
+export function combineVariables(
+  v1?: VariablesFunc,
+  v2?: VariablesFunc,
+): VariablesFunc | undefined {
+  if (!v1) return v2;
+  if (!v2) return v1;
+  return (c) => ({ ...v1(c), ...v2(c) });
+}
+
 function initChildren(
   scope: CleanupScope,
   children: Control<FormStateBaseImpl[]>,
@@ -515,27 +538,30 @@ function initChildren(
       childs.map(({ childKey, create }) => {
         let child = childMap.get(childKey);
         if (!child) {
-          const cc = create(scope);
+          const meta: Record<string, any> = {};
+          const cc = create(scope, meta);
           const co = cc.variables
             ? {
                 ...options,
                 contextOptions: {
                   ...options.contextOptions,
-                  variables: {
-                    ...options.contextOptions.variables,
-                    ...cc.variables,
-                  },
+                  variables: combineVariables(
+                    options.contextOptions.variables,
+                    cc.variables,
+                  ),
                 },
               }
             : options;
           child = initFormState(cc.definition, cc.node, cc.parent, co);
           new FormStateNodeImpl(
             childKey,
+            meta,
             cc.parent,
             co.schemaInterface,
             child,
             co.contextOptions,
           );
+          childMap.set(childKey, child);
         }
         return child;
       }),
@@ -682,15 +708,18 @@ function initChildren(
 
 export interface ChildNode {
   childKey: string | number;
-  create: (scope: CleanupScope) => {
+  create: (
+    scope: CleanupScope,
+    meta: Record<string, any>,
+  ) => {
     definition: ControlDefinition;
     parent: SchemaDataNode;
     node: FormNode;
-    variables?: Record<string, any>;
+    variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
   };
 }
 
-function getChildNodes(
+export function getChildNodes(
   resolved: ResolvedDefinition,
   node: FormNode,
   parent: SchemaDataNode,
@@ -706,13 +735,9 @@ function getChildNodes(
       if (n.length > 0 && resolved.fieldOptions) {
         return resolved.fieldOptions.map((x) => ({
           childKey: x.value?.toString(),
-          create: (scope) => {
+          create: (scope, meta) => {
+            meta["fieldOptionValue"] = x.value;
             const vars = createScopedComputed(scope, () => {
-              console.log(
-                "Re-calculating option",
-                x,
-                isOptionSelected(schemaInterface, x, data),
-              );
               return {
                 option: x,
                 optionSelected: isOptionSelected(schemaInterface, x, data),
@@ -721,10 +746,15 @@ function getChildNodes(
             return {
               definition: {
                 type: ControlDefinitionType.Group,
-              },
+                groupOptions: {
+                  type: GroupRenderType.Contents,
+                },
+              } as GroupedControlsDefinition,
               parent,
               node,
-              variables: { formData: trackedValue(vars) },
+              variables: (changes) => ({
+                formData: trackedValue(vars, changes),
+              }),
             };
           },
         }));
@@ -757,7 +787,7 @@ function getChildNodes(
 }
 
 function isOptionSelected(
-  schemaInteface: SchemaInterface,
+  schemaInterface: SchemaInterface,
   option: FieldOption,
   data: SchemaDataNode,
 ) {
@@ -765,7 +795,7 @@ function isOptionSelected(
     return !!data.control.as<any[] | undefined>().value?.includes(option.value);
   }
   return (
-    schemaInteface.compareValue(
+    schemaInterface.compareValue(
       data.schema.field,
       data.control.value,
       option.value,

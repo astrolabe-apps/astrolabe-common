@@ -1,24 +1,23 @@
 import {
+  CleanupScope,
   Control,
+  createCleanupScope,
   newControl,
-  unsafeRestoreControl,
   useComputed,
   useControl,
 } from "@react-typed-forms/core";
-import React, { HTMLAttributes, ReactNode, useMemo, Fragment } from "react";
+import React, { Fragment, HTMLAttributes, ReactNode } from "react";
 import {
   ControlDataContext,
   ControlDefinition,
   defaultDataProps,
-  defaultSchemaInterface,
-  defaultValueForField,
   DynamicPropertyType,
-  elementValueForField,
   fieldPathForDefinition,
   FormNode,
   FormRenderer,
+  FormStateNode,
+  getChildNodes,
   getDisplayOnlyOptions,
-  getGroupClassOverrides,
   isControlDisplayOnly,
   isDataControl,
   isGroupControl,
@@ -26,17 +25,18 @@ import {
   rendererClass,
   schemaDataForFieldPath,
   SchemaDataNode,
+  SchemaDataTree,
   SchemaInterface,
-  textDisplayControl,
+  SchemaNode,
+  createScopedComputed,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
+import { EditorSchemaTree } from "./EditorSchemaTree";
 
 export interface FormControlPreviewProps {
-  node: FormNode;
+  node: FormPreviewStateNode;
   dropIndex: number;
   noDrop?: boolean;
-  parentDataNode: SchemaDataNode;
-  schemaInterface?: SchemaInterface;
   keyPrefix?: string;
   styleClass?: string;
   layoutClass?: string;
@@ -64,11 +64,9 @@ const defaultLayoutChange = "position";
 export function FormControlPreview(props: FormControlPreviewProps) {
   const {
     node,
-    parentDataNode,
     dropIndex,
     noDrop,
     keyPrefix,
-    schemaInterface = defaultSchemaInterface,
     styleClass,
     labelClass,
     layoutClass,
@@ -76,11 +74,10 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     context,
     inline,
   } = props;
-
-  const definition = node.definition;
+  const { definition, schemaInterface, parent, dataNode } = node;
+  console.log(node);
   const { selected, renderer, hideFields } = context;
   const displayOnly = dOnly || isControlDisplayOnly(definition);
-  const meta = useControl<Record<string, any>>({});
 
   const isSelected = useComputed(() => {
     const selControlId = selected.value;
@@ -89,42 +86,40 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const scrollRef = useScrollIntoView(isSelected);
   const dataDefinition = isDataControl(definition) ? definition : undefined;
 
-  const fieldNamePath = fieldPathForDefinition(definition);
-  const dataNode = fieldNamePath
-    ? schemaDataForFieldPath(fieldNamePath, parentDataNode)
-    : undefined;
+  // const fieldNamePath = fieldPathForDefinition(definition);
+  // const dataNode = fieldNamePath
+  //   ? schemaDataForFieldPath(fieldNamePath, parentDataNode)
+  //   : undefined;
   const childNode = dataNode?.schema;
   const isRequired = !!dataDefinition?.required;
   const displayOptions = getDisplayOnlyOptions(definition);
   const field = childNode?.field;
-  const sampleData = useMemo(
-    () =>
-      displayOptions
-        ? (displayOptions.sampleText ?? "Sample Data")
-        : field &&
-          (dataNode?.elementIndex == null
-            ? field.collection
-              ? [undefined]
-              : defaultValueForField(field, isRequired)
-            : elementValueForField(field)),
-    [displayOptions?.sampleText, field, isRequired],
-  );
-  const control = useMemo(() => newControl(sampleData), [sampleData]);
-  if (dataNode) {
-    dataNode.control = control;
-  }
+  // const sampleData = useMemo(
+  //   () =>
+  //     displayOptions
+  //       ? (displayOptions.sampleText ?? "Sample Data")
+  //       : field &&
+  //         (dataNode?.elementIndex == null
+  //           ? field.collection
+  //             ? [undefined]
+  //             : defaultValueForField(field, isRequired)
+  //           : elementValueForField(field)),
+  //   [displayOptions?.sampleText, field, isRequired],
+  // );
+  // const control = useMemo(() => newControl(sampleData), [sampleData]);
+  // if (dataNode) {
+  //   dataNode.control = control;
+  // }
   const dataContext: ControlDataContext = {
     schemaInterface,
     dataNode,
-    parentNode: parentDataNode,
-    variables: {},
+    parentNode: parent,
   };
 
   const formOptions = {
     disabled: false,
     hidden: false,
     clearHidden: false,
-    variables: {},
     readonly: !!dataDefinition?.readonly,
   };
   const adornments =
@@ -137,31 +132,17 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       }),
     ) ?? [];
 
-  const groupClasses = getGroupClassOverrides(definition);
-  const renderedNode = node.definition.childRefId
-    ? node.createChildNode(
-        "ref",
-        textDisplayControl("Reference:" + node.definition.childRefId),
-      )
-    : node;
+  // const groupClasses = getGroupClassOverrides(definition);
+  // const renderedNode = node.definition.childRefId
+  //   ? node.createChildNode(
+  //       "ref",
+  //       textDisplayControl("Reference:" + node.definition.childRefId),
+  //     )
+  //   : node;
+
   const layout = renderControlLayout({
     renderer,
-    formNode: {
-      childKey: "TODO",
-      uniqueId: "TODO",
-      parent: parentDataNode,
-      getChildNodes: () => [],
-      definition: renderedNode.definition,
-      schemaInterface,
-      ...formOptions,
-      dataNode,
-      meta,
-      resolved: {
-        definition: renderedNode.definition,
-      },
-      valid: true,
-      touched: false,
-    },
+    formNode: node,
     // getChildState: (child, data) => {
     //   return {
     //     definition: child.definition,
@@ -173,8 +154,14 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     //   };
     // },
     renderChild: (k, child, c) => {
-      // TODO
-      return <div>TODO</div>;
+      return (
+        <FormControlPreview
+          key={child.childKey}
+          node={child as FormPreviewStateNode}
+          dropIndex={0}
+          context={context}
+        />
+      );
       // const pd = c?.parentDataNode ?? dataNode ?? parentDataNode;
       // return (
       //   <FormControlPreview
@@ -311,4 +298,153 @@ function EditorDetails({
       )}
     </div>
   );
+}
+
+class PreviewDataTree extends SchemaDataTree {
+  undefinedControl = newControl(undefined);
+  rootData = newControl({});
+
+  getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
+    return new SchemaDataNode(
+      parent.id + "/" + childNode.field.field,
+      childNode,
+      undefined,
+      this.undefinedControl,
+      this,
+      parent,
+    );
+  }
+  getChildElement(
+    parent: SchemaDataNode,
+    elementIndex: number,
+  ): SchemaDataNode {
+    return new SchemaDataNode(
+      parent.id + "/" + elementIndex,
+      parent.schema,
+      elementIndex,
+      this.undefinedControl,
+      this,
+      parent,
+    );
+  }
+  constructor(private schemaTree: EditorSchemaTree) {
+    super();
+  }
+
+  get rootNode(): SchemaDataNode {
+    return new SchemaDataNode(
+      "",
+      this.schemaTree.rootNode,
+      undefined,
+      this.rootData,
+      this,
+    );
+  }
+}
+
+export function createPreviewNode(
+  childKey: string | number,
+  schemaInterface: SchemaInterface,
+  form: FormNode,
+  schema: EditorSchemaTree,
+) {
+  const dataTree = new PreviewDataTree(schema);
+
+  return new FormPreviewStateNode(
+    childKey,
+    form,
+    form.definition,
+    schemaInterface,
+    () => dataTree.rootNode,
+  );
+}
+
+class FormPreviewStateNode implements FormStateNode {
+  meta: Record<string, any> = {};
+  _dataNode: Control<SchemaDataNode | undefined>;
+  childMap = new Map<any, FormPreviewStateNode>();
+  scope: CleanupScope;
+  constructor(
+    public childKey: string | number,
+    public formNode: FormNode,
+    public definition: ControlDefinition,
+    public schemaInterface: SchemaInterface,
+    public _parent: () => SchemaDataNode,
+  ) {
+    const scope = createCleanupScope();
+    this.scope = scope;
+    this._dataNode = createScopedComputed(scope, () => {
+      const parent = _parent();
+      const fieldNamePath = fieldPathForDefinition(definition);
+      return fieldNamePath
+        ? schemaDataForFieldPath(fieldNamePath, parent)
+        : undefined;
+    });
+  }
+  get parent() {
+    return this._parent();
+  }
+
+  get id() {
+    return this.formNode.id;
+  }
+
+  get uniqueId() {
+    return this.formNode.id;
+  }
+  get valid() {
+    return true;
+  }
+  get touched() {
+    return false;
+  }
+  get clearHidden() {
+    return false;
+  }
+  get dataNode() {
+    return this._dataNode.value;
+  }
+
+  getChildNodes(): FormStateNode[] {
+    const kids = getChildNodes(
+      this.resolved,
+      this.formNode,
+      this.parent,
+      this.dataNode,
+      this.schemaInterface,
+    );
+    return kids.map(({ childKey, create }) => {
+      let child = this.childMap.get(childKey);
+      if (!child) {
+        const meta: Record<string, any> = {};
+        const cc = create(this.scope, meta);
+        child = new FormPreviewStateNode(
+          childKey,
+          cc.node,
+          cc.definition,
+          this.schemaInterface,
+          () => cc.parent,
+        );
+      }
+      return child;
+    });
+  }
+  ensureMeta<A>(key: string, init: (scope: CleanupScope) => A): A {
+    throw new Error("Method not implemented.");
+  }
+
+  get readonly() {
+    return false;
+  }
+
+  get hidden() {
+    return false;
+  }
+
+  get disabled() {
+    return false;
+  }
+  get resolved() {
+    return { definition: this.definition };
+  }
 }

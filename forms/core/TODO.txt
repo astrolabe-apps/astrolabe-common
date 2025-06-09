@@ -1,3 +1,6 @@
-* Support formData in jsonata
 * nuances with default value
 * Data grid group
+
+* Column nodes
+* Ensure cleanup of nodes - child changes and react
+* Running expressions

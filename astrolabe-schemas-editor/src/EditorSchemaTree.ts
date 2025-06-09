@@ -9,7 +9,6 @@ import {
 import {
   addElement,
   Control,
-  newControl,
   removeElement,
   trackedValue,
   unsafeRestoreControl,

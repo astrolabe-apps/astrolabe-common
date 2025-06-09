@@ -1,23 +1,20 @@
 import {
   Control,
-  newControl,
   RenderOptional,
   useControl,
   useControlEffect,
   useDebounced,
 } from "@react-typed-forms/core";
-import { FormControlPreview } from "../FormControlPreview";
+import { createPreviewNode, FormControlPreview } from "../FormControlPreview";
 import {
   addMissingControlsForSchema,
   ControlDefinition,
   createSchemaDataNode,
   groupedControl,
   NewControlRenderer,
-  SchemaDataNode,
-  SchemaDataTree,
-  SchemaNode,
+  defaultSchemaInterface,
 } from "@react-typed-forms/schemas";
-import React, { useMemo, Fragment } from "react";
+import React, { Fragment, useMemo } from "react";
 import { FormPreview, PreviewData } from "../FormPreview";
 import clsx from "clsx";
 import { JsonEditor } from "../JsonEditor";
@@ -88,6 +85,9 @@ function RenderFormDesign({
       : [];
     return groupedControl(controls);
   }, [configSchema]);
+  const formPreviewNode = useMemo(() => {
+    return createPreviewNode("ROOT", defaultSchemaInterface, rootNode, schema);
+  }, []);
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-2">
@@ -157,8 +157,7 @@ function RenderFormDesign({
         <div className={clsx("grow overflow-auto", context.editorPanelClass)}>
           <FormControlPreview
             keyPrefix="HAI"
-            node={rootNode}
-            parentDataNode={new EditorDataTree(schema.rootNode).rootNode}
+            node={formPreviewNode}
             dropIndex={0}
             context={{
               selected: c.fields.selectedControlId,
@@ -169,45 +168,6 @@ function RenderFormDesign({
           />
         </div>
       </>
-    );
-  }
-}
-
-class EditorDataTree extends SchemaDataTree {
-  rootNode: SchemaDataNode;
-  undefinedControl = newControl(undefined);
-
-  getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
-    return new SchemaDataNode(
-      parent.id + "/" + childNode.field.field,
-      childNode,
-      undefined,
-      this.undefinedControl,
-      this,
-      parent,
-    );
-  }
-  getChildElement(
-    parent: SchemaDataNode,
-    elementIndex: number,
-  ): SchemaDataNode {
-    return new SchemaDataNode(
-      parent.id + "/" + elementIndex,
-      parent.schema,
-      elementIndex,
-      this.undefinedControl,
-      this,
-      parent,
-    );
-  }
-  constructor(rootSchema: SchemaNode) {
-    super();
-    this.rootNode = new SchemaDataNode(
-      "",
-      rootSchema,
-      undefined,
-      newControl({}),
-      this,
     );
   }
 }

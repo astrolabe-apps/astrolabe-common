@@ -25,17 +25,17 @@ import {
 import {
   createAction,
   createFormRenderer,
-  RenderForm,
+  RenderFormNode,
   useAsyncRunner,
 } from "@react-typed-forms/schemas";
 import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
-import { Form, SchemaFields } from "../../setup/testOptionTree";
+import { Form, SchemaFields } from "../../setup/allControls";
 
 const schemaLookup = createSchemaLookup({ SchemaFields });
-const FormTree = createFormTree([Form]);
+const FormTree = createFormTree(Form);
 const renderer = createFormRenderer(
   [],
   createDefaultRenderers(defaultTailwindTheme),

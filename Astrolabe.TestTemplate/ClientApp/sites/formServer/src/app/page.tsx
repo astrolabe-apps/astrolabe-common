@@ -66,7 +66,7 @@ import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
-import { AllControlsSchema } from "../AllControlsSchema";
+import { SchemaFields as AllControlsSchema } from "../setup/allControls";
 
 const Extensions = [
   DataGridExtension,

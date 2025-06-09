@@ -8,13 +8,13 @@ import {
 } from "./entityExpression";
 import {
   AsyncEffect,
+  ChangeListenerFunc,
   CleanupScope,
   collectChanges,
   Control,
   createAsyncEffect,
   createSyncEffect,
   trackedValue,
-  Value,
 } from "@astroapps/controls";
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
 import { SchemaInterface } from "./schemaInterface";
@@ -28,7 +28,7 @@ export interface ExpressionEvalContext {
   returnResult: (k: unknown) => void;
   dataNode: SchemaDataNode;
   schemaInterface: SchemaInterface;
-  variables?: Record<string, any>;
+  variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
   runAsync(effect: () => void): void;
 }
 
@@ -92,16 +92,17 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
   });
 
   async function runJsonata(effect: AsyncEffect<any>, signal: AbortSignal) {
+    const trackedVars = variables?.(effect.collectUsage);
     const evalResult = await parsedJsonata.fields.expr.value.evaluate(
       trackedValue(rootData, effect.collectUsage),
-      variables,
+      trackedVars,
     );
-    console.log(
-      rootData,
-      parsedJsonata.fields.fullExpr.current.value,
-      evalResult,
-      variables,
-    );
+    // console.log(
+    //   rootData,
+    //   parsedJsonata.fields.fullExpr.current.value,
+    //   evalResult,
+    //   trackedVars,
+    // );
     collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 

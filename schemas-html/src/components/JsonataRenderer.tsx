@@ -1,4 +1,5 @@
 import {
+  ChangeListenerFunc,
   Control,
   delayedValue,
   trackedValue,
@@ -56,13 +57,12 @@ export function JsonataRenderer({
   runExpression: RunExpression;
 }) {
   const sdn = dataNode.elementIndex != null ? dataNode : dataContext.parentNode;
-  const bindings = useComputed<Record<string, any>>(() => ({
-    ...dataContext.variables,
-    value: control.value,
+  const bindings = (changes: ChangeListenerFunc<any>) => ({
+    value: trackedValue(control, changes),
     readonly,
     disabled: control.disabled,
     dataPath: getJsonPath(dataNode),
-  }));
+  });
   const rendered = useExpression(
     "",
     runExpression,

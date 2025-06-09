@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import {
   addElement,
+  ChangeListenerFunc,
   Control,
   removeElement,
   RenderArrayElements,
@@ -450,7 +451,7 @@ export interface ControlRenderOptions extends ControlClasses {
   clearHidden?: boolean;
   stateKey?: string;
   schemaInterface?: SchemaInterface;
-  variables?: Record<string, any>;
+  variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
 }
 
 export function defaultDataProps(
@@ -493,7 +494,6 @@ export function defaultDataProps(
 }
 
 export interface ChildRendererOptions {
-  parentDataNode?: SchemaDataNode;
   inline?: boolean;
   displayOnly?: boolean;
   styleClass?: string;
@@ -501,8 +501,6 @@ export interface ChildRendererOptions {
   labelClass?: string;
   labelTextClass?: string;
   actionOnClick?: ControlActionHandler;
-  stateKey?: string;
-  variables?: Record<string, any>;
 }
 
 export type ChildRenderer = (
@@ -966,8 +964,8 @@ export function fieldOptionAdornment(p: DataRendererProps) {
   return (o: FieldOption, fieldIndex: number, selected: boolean) => {
     const fieldChild = p.formNode
       .getChildNodes()
-      .find((x) => x.variables.formData.option.value === o.value);
-    if (fieldChild) return p.renderChild(o.value?.toString(), fieldChild);
+      .find((x) => x.meta["fieldOptionValue"] === o.value);
+    if (fieldChild) return p.renderChild(fieldChild.childKey, fieldChild);
     return undefined;
   };
 }
