@@ -2,12 +2,16 @@ import {
   CleanupScope,
   Control,
   createCleanupScope,
+  createScopedEffect,
+  newControl,
+  updateElements,
   useComputed,
 } from "@react-typed-forms/core";
 import React, { Fragment, HTMLAttributes, ReactNode, useMemo } from "react";
 import {
   ControlDataContext,
   ControlDefinition,
+  createScoped,
   createScopedComputed,
   defaultDataProps,
   defaultValueForField,
@@ -29,6 +33,7 @@ import {
   SchemaDataNode,
   SchemaInterface,
   textDisplayControl,
+  ChildNode,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 
@@ -276,9 +281,10 @@ let previewNodeId = 0;
 class FormPreviewStateNode implements FormStateNode {
   meta: Record<string, any> = {};
   _dataNode: Control<SchemaDataNode | undefined>;
-  childMap = new Map<any, FormPreviewStateNode>();
+  _children: Control<FormPreviewStateNode[]>;
   scope: CleanupScope;
   uniqueId = (++previewNodeId).toString();
+
   constructor(
     public childKey: string | number,
     public formNode: FormNode,
@@ -288,6 +294,7 @@ class FormPreviewStateNode implements FormStateNode {
   ) {
     const scope = createCleanupScope();
     this.scope = scope;
+    this._children = createScoped(scope, []);
     this._dataNode = createScopedComputed(scope, () => {
       const parent = _parent();
       const fieldNamePath = fieldPathForDefinition(definition);
@@ -295,6 +302,28 @@ class FormPreviewStateNode implements FormStateNode {
         ? schemaDataForFieldPath(fieldNamePath, parent)
         : undefined;
     });
+    createScopedEffect((scope) => {
+      const kids = this.getKids();
+      updateElements(this._children, (c) => {
+        return kids.map(({ childKey, create }) => {
+          let child = c.find((x) => x.current.value.childKey == childKey);
+          if (!child) {
+            const meta: Record<string, any> = {};
+            const cc = create(this.scope, meta);
+            child = newControl(
+              new FormPreviewStateNode(
+                childKey,
+                cc.node,
+                cc.definition,
+                this.schemaInterface,
+                () => cc.parent,
+              ),
+            );
+          }
+          return child;
+        });
+      });
+    }, scope);
   }
   get parent() {
     return this._parent();
@@ -316,8 +345,8 @@ class FormPreviewStateNode implements FormStateNode {
     return this._dataNode.value;
   }
 
-  getChildNodes(): FormStateNode[] {
-    const kids = this.definition.childRefId
+  getKids(): ChildNode[] {
+    return this.definition.childRefId
       ? [
           {
             childKey: "0",
@@ -339,21 +368,9 @@ class FormPreviewStateNode implements FormStateNode {
           this.dataNode,
           this.schemaInterface,
         );
-    return kids.map(({ childKey, create }) => {
-      let child = this.childMap.get(childKey);
-      if (!child) {
-        const meta: Record<string, any> = {};
-        const cc = create(this.scope, meta);
-        child = new FormPreviewStateNode(
-          childKey,
-          cc.node,
-          cc.definition,
-          this.schemaInterface,
-          () => cc.parent,
-        );
-      }
-      return child;
-    });
+  }
+  getChildNodes(): FormStateNode[] {
+    return this._children.value;
   }
   ensureMeta<A>(key: string, init: (scope: CleanupScope) => A): A {
     if (key in this.meta) return this.meta[key];
