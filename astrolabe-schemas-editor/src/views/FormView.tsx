@@ -87,7 +87,10 @@ function RenderFormDesign({
     return groupedControl(controls);
   }, [configSchema]);
   const formPreviewNode = useMemo(() => {
-    return createPreviewNode("ROOT", defaultSchemaInterface, rootNode, () =>
+    return createPreviewNode(
+      "ROOT",
+      defaultSchemaInterface,
+      rootNode,
       createSchemaDataNode(schema.rootNode, newControl({})),
     );
   }, []);

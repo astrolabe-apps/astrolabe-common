@@ -71,10 +71,8 @@ export function DataArrayRenderer({
       defaultActions as ArrayRenderOptions,
     );
 
-  const childNodes = formNode.getChildNodes();
-
   const arrayProps = {
-    ...createArrayActions(control.as(), field, {
+    ...createArrayActions(control.as(), () => formNode.getChildCount(), field, {
       addText,
       removeText,
       noAdd,
@@ -86,8 +84,8 @@ export function DataArrayRenderer({
     }),
     required,
     renderElement: (i, wrap) => {
-      const n = childNodes[i];
-      return n.hidden ? undefined : wrap(n.childKey, renderChild(i, n));
+      const n = formNode.getChild(i);
+      return !n || n.hidden ? undefined : wrap(n.childKey, renderChild(i, n));
     },
     className: className ? className : undefined,
     style,

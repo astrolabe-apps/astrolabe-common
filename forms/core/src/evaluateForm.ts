@@ -92,6 +92,8 @@ export interface FormStateNode extends FormStateBase {
   variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
   meta: Record<string, any>;
   getChildNodes(): FormStateNode[];
+  getChildCount(): number;
+  getChild(index: number): FormStateNode | undefined;
   ensureMeta<A>(key: string, init: (scope: CleanupScope) => A): A;
 }
 
@@ -296,6 +298,16 @@ class FormStateNodeImpl implements FormStateNode {
 
   get definition() {
     return this.resolved.definition;
+  }
+
+  getChild(index: number) {
+    return this.base.fields.children.elements[index]?.meta[
+      "$FormState"
+    ] as FormStateNode;
+  }
+
+  getChildCount(): number {
+    return this.base.fields.children.elements.length;
   }
 
   getChildNodes() {

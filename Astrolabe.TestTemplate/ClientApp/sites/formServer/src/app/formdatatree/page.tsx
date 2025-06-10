@@ -67,7 +67,7 @@ export default function FormDataTreePage() {
       "ROOT",
       defaultSchemaInterface,
       FormTree.rootNode,
-      () => dataNode,
+      dataNode,
     );
   }, []);
 

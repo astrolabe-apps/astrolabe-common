@@ -780,6 +780,7 @@ export function getLengthRestrictions(definition: DataControlDefinition) {
 
 export function createArrayActions(
   control: Control<any[]>,
+  getElementCount: () => number,
   field: SchemaField,
   options?: ArrayActionOptions,
 ): Pick<
@@ -807,7 +808,7 @@ export function createArrayActions(
   } = options ?? {};
   return {
     arrayControl: control,
-    getElementCount: () => control.elements.length,
+    getElementCount,
     addAction:
       !readonly && !noAdd
         ? makeAdd(() => {

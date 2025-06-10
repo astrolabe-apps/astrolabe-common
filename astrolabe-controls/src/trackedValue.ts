@@ -25,6 +25,7 @@ export function trackedValue<A>(
         if (p === "length") return (cc.elements as any).length;
         if (typeof p === "symbol" || p[0] > "9" || p[0] < "0")
           return Reflect.get(cv, p);
+        // Treat array indexes specially
         const nc = (cc.elements as any)[p];
         if (typeof nc === "function") return nc;
         if (nc == null) return null;

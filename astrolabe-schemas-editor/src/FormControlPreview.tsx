@@ -265,7 +265,7 @@ export function createPreviewNode(
   childKey: string | number,
   schemaInterface: SchemaInterface,
   form: FormNode,
-  schema: () => SchemaDataNode,
+  schema: SchemaDataNode,
 ) {
   return new FormPreviewStateNode(
     childKey,
@@ -290,23 +290,28 @@ class FormPreviewStateNode implements FormStateNode {
     public formNode: FormNode,
     public definition: ControlDefinition,
     public schemaInterface: SchemaInterface,
-    public _parent: () => SchemaDataNode,
+    public parent: SchemaDataNode,
   ) {
     const scope = createCleanupScope();
     this.scope = scope;
     this._children = createScoped(scope, []);
     this._dataNode = createScopedComputed(scope, () => {
-      const parent = _parent();
       const fieldNamePath = fieldPathForDefinition(definition);
       return fieldNamePath
         ? schemaDataForFieldPath(fieldNamePath, parent)
         : undefined;
     });
     createScopedEffect((scope) => {
+      const lastId = this._children.meta["dataId"];
+      const nextId = this._dataNode.value?.id;
+      this._children.meta["dataId"] = nextId;
+      const canReuse = lastId === nextId;
       const kids = this.getKids();
       updateElements(this._children, (c) => {
         return kids.map(({ childKey, create }) => {
-          let child = c.find((x) => x.current.value.childKey == childKey);
+          let child = canReuse
+            ? c.find((x) => x.current.value.childKey == childKey)
+            : undefined;
           if (!child) {
             const meta: Record<string, any> = {};
             const cc = create(this.scope, meta);
@@ -316,7 +321,7 @@ class FormPreviewStateNode implements FormStateNode {
                 cc.node,
                 cc.definition,
                 this.schemaInterface,
-                () => cc.parent,
+                cc.parent,
               ),
             );
           }
@@ -324,9 +329,6 @@ class FormPreviewStateNode implements FormStateNode {
         });
       });
     }, scope);
-  }
-  get parent() {
-    return this._parent();
   }
 
   get id() {
@@ -349,7 +351,7 @@ class FormPreviewStateNode implements FormStateNode {
     return this.definition.childRefId
       ? [
           {
-            childKey: "0",
+            childKey: "Ref",
             create: () => ({
               node: this.formNode,
               definition: textDisplayControl(
@@ -368,6 +370,14 @@ class FormPreviewStateNode implements FormStateNode {
           this.dataNode,
           this.schemaInterface,
         );
+  }
+
+  getChildCount(): number {
+    return this._children.value.length;
+  }
+
+  getChild(index: number) {
+    return this.getChildNodes()[index];
   }
   getChildNodes(): FormStateNode[] {
     return this._children.value;

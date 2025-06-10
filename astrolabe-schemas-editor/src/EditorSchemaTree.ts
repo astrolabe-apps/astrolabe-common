@@ -9,12 +9,17 @@ import {
 import {
   addElement,
   Control,
+  createSyncEffect,
+  ensureMetaValue,
+  newControl,
   removeElement,
   trackedValue,
   unsafeRestoreControl,
+  updateElements,
 } from "@react-typed-forms/core";
 
 export class EditorSchemaTree extends SchemaTree {
+  rootNode: SchemaNode;
   getSchemaTree(schemaId: string): SchemaTree | undefined {
     return this.lookupSchema(schemaId);
   }
@@ -26,19 +31,24 @@ export class EditorSchemaTree extends SchemaTree {
     private formNodes?: Control<SchemaField[]>,
   ) {
     super();
-  }
-
-  get rootNode(): SchemaNode {
-    const formFields = this.formNodes ? trackedValue(this.formNodes) : [];
-    return new SchemaNode(
+    const allRootFields = ensureMetaValue(rootNodes, "AllRootNodes", () => {
+      const comp = newControl<SchemaField[]>([]);
+      createSyncEffect(() => {
+        const allElems = formNodes
+          ? [...rootNodes.elements, ...formNodes.elements]
+          : rootNodes.elements;
+        updateElements(comp, () => allElems);
+      }, comp);
+      return comp;
+    });
+    this.rootNode = new SchemaNode(
       "",
-      compoundField("", [...trackedValue(this.rootNodes), ...formFields])(
-        this.schemaId,
-      ),
+      compoundField("", [])(this.schemaId),
       this,
+      undefined,
+      () => trackedValue(allRootFields),
     );
   }
-
   createChildNode(parent: SchemaNode, field: SchemaField): SchemaNode {
     const fieldControl = unsafeRestoreControl(field);
     return new SchemaNode(
