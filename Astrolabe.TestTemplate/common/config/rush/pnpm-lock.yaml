@@ -887,6 +887,7 @@ importers:
   ../../../schemas-html:
     specifiers:
       '@astroapps/aria-base': workspace:*
+      '@astroapps/controls': workspace:*
       '@mui/base': ^5.0.0-beta.70
       '@react-stately/overlays': ^3.6.13
       '@react-typed-forms/core': workspace:*
@@ -911,6 +912,7 @@ importers:
       clsx: 2.1.1
       jsonata: 2.0.5
     devDependencies:
+      '@astroapps/controls': link:../astrolabe-controls
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/schemas': link:../schemas
       '@react-typed-forms/transform': 0.2.0

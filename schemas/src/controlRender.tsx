@@ -40,6 +40,7 @@ import {
   SchemaField,
   SchemaInterface,
   ValidatorType,
+  ChildNode,
 } from "@astroapps/forms-core";
 import {
   applyLengthRestrictions,
@@ -210,6 +211,8 @@ export interface FormRenderer {
   renderLabelText: (props: ReactNode) => ReactNode;
 
   html: HtmlComponents;
+
+  resolveFormChildren(c: FormStateNode): ChildNode[];
 }
 
 export interface AdornmentProps {
@@ -605,7 +608,7 @@ export function renderControlLayout(
         iconPlacement: c.iconPlacement,
         icon: c.icon,
         inline,
-        disabled: state.disabled,
+        disabled: formNode.disabled,
         onClick:
           props.actionOnClick?.(c.actionId, actionData, dataContext) ??
           (() => {}),

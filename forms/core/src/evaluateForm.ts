@@ -91,6 +91,7 @@ export interface FormStateNode extends FormStateBase {
   clearHidden: boolean;
   variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
   meta: Record<string, any>;
+  form: FormNode;
   getChildNodes(): FormStateNode[];
   getChildCount(): number;
   getChild(index: number): FormStateNode | undefined;
@@ -100,6 +101,7 @@ export interface FormStateNode extends FormStateBase {
 interface FormStateOptions {
   schemaInterface: SchemaInterface;
   evalExpression: (e: EntityExpression, ctx: ExpressionEvalContext) => void;
+  resolveFormChildren(c: FormStateNode): ChildNode[];
   contextOptions: FormContextOptions;
   runAsync: (af: () => void) => void;
 }
@@ -236,15 +238,13 @@ export function createFormStateNode(
   parent: SchemaDataNode,
   options: FormStateOptions,
 ): FormStateNode {
-  const base = initFormState(formNode.definition, formNode, parent, options);
-
   return new FormStateNodeImpl(
     "ROOT",
     {},
+    formNode.definition,
+    formNode,
+    options,
     parent,
-    options.schemaInterface,
-    base,
-    options.contextOptions,
   );
 }
 
@@ -254,15 +254,31 @@ export interface FormStateBaseImpl extends FormStateBase {
 }
 
 class FormStateNodeImpl implements FormStateNode {
+  readonly base: Control<FormStateBaseImpl>;
   constructor(
     public childKey: string | number,
     public meta: Record<string, any>,
+    definition: ControlDefinition,
+    public form: FormNode,
+    public options: FormStateOptions,
     public parent: SchemaDataNode,
-    public schemaInterface: SchemaInterface,
-    private base: Control<FormStateBaseImpl>,
-    private context: FormContextOptions,
   ) {
+    const base = newControl<FormStateBaseImpl>({
+      readonly: false,
+      hidden: false,
+      disabled: false,
+      children: [],
+      resolved: { definition } as ResolvedDefinition,
+      parent,
+      allowedOptions: undefined,
+    });
+    this.base = base;
     base.meta["$FormState"] = this;
+    initFormState(definition, this);
+  }
+
+  get schemaInterface(): SchemaInterface {
+    return this.options.schemaInterface;
   }
 
   get uniqueId() {
@@ -289,11 +305,11 @@ class FormStateNodeImpl implements FormStateNode {
   }
 
   get clearHidden() {
-    return !!this.context.clearHidden;
+    return !!this.options.contextOptions.clearHidden;
   }
 
   get variables() {
-    return this.context.variables;
+    return this.options.contextOptions.variables;
   }
 
   get definition() {
@@ -332,12 +348,8 @@ class FormStateNodeImpl implements FormStateNode {
   }
 }
 
-function initFormState(
-  def: ControlDefinition,
-  form: FormNode,
-  parent: SchemaDataNode,
-  options: FormStateOptions,
-): Control<FormStateBaseImpl> {
+function initFormState(def: ControlDefinition, impl: FormStateNodeImpl) {
+  const { base, options, parent } = impl;
   const { evalExpression, runAsync, schemaInterface, contextOptions } = options;
 
   const evalExpr = createEvalExpr(evalExpression, {
@@ -349,15 +361,7 @@ function initFormState(
 
   const cf = contextOptions;
 
-  const base = newControl<FormStateBaseImpl>({
-    readonly: false,
-    hidden: false,
-    disabled: false,
-    children: [],
-    resolved: { definition: def },
-    parent,
-    allowedOptions: undefined,
-  });
+  // const base = newControl<FormStateBaseImpl>();
   const scope = base;
 
   const resolved = base.fields.resolved.as<ResolvedDefinition>();
@@ -497,9 +501,7 @@ function initFormState(
     }
   }, scope);
 
-  initChildren(scope, children, resolved, form, parent, dataNode, options);
-
-  return base;
+  initChildren(impl);
 
   function firstExpr(
     property: DynamicPropertyType,
@@ -529,24 +531,14 @@ export function combineVariables(
   return (c) => ({ ...v1(c), ...v2(c) });
 }
 
-function initChildren(
-  scope: CleanupScope,
-  children: Control<FormStateBaseImpl[]>,
-  resolved: Control<ResolvedDefinition>,
-  node: FormNode,
-  parent: SchemaDataNode,
-  dataNode: Control<SchemaDataNode | undefined> | undefined,
-  options: FormStateOptions,
-) {
+function initChildren(formImpl: FormStateNodeImpl) {
   const childMap = new Map<any, Control<FormStateBaseImpl>>();
   createSyncEffect(() => {
-    const childs = getChildNodes(
-      resolved.value,
-      node,
-      parent,
-      dataNode?.value,
-      options.schemaInterface,
-    );
+    const base = formImpl.base;
+    const children = base.fields.children;
+    const childs = formImpl.options.resolveFormChildren(formImpl);
+    const scope = base;
+    const options = formImpl.options;
     updateElements(children, () =>
       childs.map(({ childKey, create }) => {
         let child = childMap.get(childKey);
@@ -565,21 +557,20 @@ function initChildren(
                 },
               }
             : options;
-          child = initFormState(cc.definition, cc.node, cc.parent, co);
-          new FormStateNodeImpl(
+          child = new FormStateNodeImpl(
             childKey,
             meta,
+            cc.definition,
+            cc.node,
+            co,
             cc.parent,
-            co.schemaInterface,
-            child,
-            co.contextOptions,
-          );
+          ).base;
           childMap.set(childKey, child);
         }
         return child;
       }),
     );
-  }, scope);
+  }, formImpl.base);
 }
 //   const childMap = new Map<any, Control<FormStateBaseImpl>>();
 //   createSyncEffect(() => {
@@ -732,13 +723,16 @@ export interface ChildNode {
   };
 }
 
-export function getChildNodes(
-  resolved: ResolvedDefinition,
-  node: FormNode,
-  parent: SchemaDataNode,
-  data: SchemaDataNode | undefined,
-  schemaInterface: SchemaInterface,
+export function defaultResolveChildNodes(
+  formStateNode: FormStateNode,
 ): ChildNode[] {
+  const {
+    resolved,
+    dataNode: data,
+    schemaInterface,
+    parent,
+    form: node,
+  } = formStateNode;
   const def = resolved.definition;
   if (isDataControl(def)) {
     if (!data) return [];

@@ -26,7 +26,12 @@ import {
   RendererRegistration,
   VisibilityRendererRegistration,
 } from "./renderers";
-import { DataRenderType } from "@astroapps/forms-core";
+import {
+  ChildNode,
+  DataRenderType,
+  defaultResolveChildNodes,
+  FormStateNode,
+} from "@astroapps/forms-core";
 import { ActionRendererProps } from "./types";
 
 export function createFormRenderer(
@@ -60,6 +65,9 @@ export function createFormRenderer(
     renderVisibility,
     renderLabelText,
     html: defaultRenderers.html,
+    resolveFormChildren(c: FormStateNode): ChildNode[] {
+      return defaultResolveChildNodes(c);
+    },
   };
 
   function renderVisibility(props: VisibilityRendererProps) {

@@ -18,6 +18,7 @@ import {
   AccordionAdornment,
   ControlAdornment,
   ControlAdornmentType,
+  FormStateNode,
   IconAdornment,
   OptionalAdornment,
   RenderOptions,
@@ -58,6 +59,7 @@ export interface DataRendererRegistration {
     props: DataRendererProps,
     renderers: FormRenderer,
   ) => ReactNode | ((layout: ControlLayoutProps) => ControlLayoutProps);
+  resolveFormChildren?: (c: FormStateNode) => ChildNode[] | undefined;
 }
 
 export interface LabelRendererRegistration {

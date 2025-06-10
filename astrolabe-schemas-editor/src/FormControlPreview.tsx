@@ -21,7 +21,7 @@ import {
   FormNode,
   FormRenderer,
   FormStateNode,
-  getChildNodes,
+  resolveChildNodes,
   getDisplayOnlyOptions,
   getGroupClassOverrides,
   isControlDisplayOnly,
@@ -287,7 +287,7 @@ class FormPreviewStateNode implements FormStateNode {
 
   constructor(
     public childKey: string | number,
-    public formNode: FormNode,
+    public form: FormNode,
     public definition: ControlDefinition,
     public schemaInterface: SchemaInterface,
     public parent: SchemaDataNode,
@@ -302,6 +302,7 @@ class FormPreviewStateNode implements FormStateNode {
         : undefined;
     });
     createScopedEffect((scope) => {
+      // Is there a better way to invalid children due to parent changing?
       const lastId = this._children.meta["dataId"];
       const nextId = this._dataNode.value?.id;
       this._children.meta["dataId"] = nextId;
@@ -332,7 +333,7 @@ class FormPreviewStateNode implements FormStateNode {
   }
 
   get id() {
-    return this.formNode.id;
+    return this.form.id;
   }
   get valid() {
     return true;
@@ -353,7 +354,7 @@ class FormPreviewStateNode implements FormStateNode {
           {
             childKey: "Ref",
             create: () => ({
-              node: this.formNode,
+              node: this.form,
               definition: textDisplayControl(
                 "Reference: " + this.definition.childRefId,
               ),
@@ -363,13 +364,7 @@ class FormPreviewStateNode implements FormStateNode {
             }),
           },
         ]
-      : getChildNodes(
-          this.resolved,
-          this.formNode,
-          this.parent,
-          this.dataNode,
-          this.schemaInterface,
-        );
+      : resolveChildNodes(this);
   }
 
   getChildCount(): number {

@@ -55,6 +55,7 @@ export function RenderForm({
         schemaInterface,
         evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
         contextOptions: options,
+        resolveFormChildren: renderer.resolveFormChildren,
       }),
     [],
   );
