@@ -43,8 +43,9 @@
     "react": "^18.2.0 || ^19"
   },
   "devDependencies": {
-    "@react-typed-forms/core": "^4.4.0",
-    "@react-typed-forms/schemas": "^16.1.1",
+    "@react-typed-forms/core": "^4.4.3",
+    "@react-typed-forms/schemas": "^16.2.2",
+    "@astroapps/controls": "^1.3.3",
     "react": "^18.2.0 || ^19",
     "react-dom": "^18.2.0 || ^19",
     "@react-typed-forms/transform": "^0.2.0",
