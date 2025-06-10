@@ -21,7 +21,6 @@ import {
   FormNode,
   FormRenderer,
   FormStateNode,
-  resolveChildNodes,
   getDisplayOnlyOptions,
   getGroupClassOverrides,
   isControlDisplayOnly,
@@ -33,7 +32,7 @@ import {
   SchemaDataNode,
   SchemaInterface,
   textDisplayControl,
-  ChildNode,
+  ChildNodeSpec,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 
@@ -266,6 +265,7 @@ export function createPreviewNode(
   schemaInterface: SchemaInterface,
   form: FormNode,
   schema: SchemaDataNode,
+  renderer: FormRenderer,
 ) {
   return new FormPreviewStateNode(
     childKey,
@@ -273,6 +273,7 @@ export function createPreviewNode(
     form.definition,
     schemaInterface,
     schema,
+    renderer.resolveChildren,
   );
 }
 
@@ -291,6 +292,7 @@ class FormPreviewStateNode implements FormStateNode {
     public definition: ControlDefinition,
     public schemaInterface: SchemaInterface,
     public parent: SchemaDataNode,
+    public resolver: FormRenderer["resolveChildren"],
   ) {
     const scope = createCleanupScope();
     this.scope = scope;
@@ -323,6 +325,7 @@ class FormPreviewStateNode implements FormStateNode {
                 cc.definition,
                 this.schemaInterface,
                 cc.parent,
+                this.resolver,
               ),
             );
           }
@@ -348,7 +351,7 @@ class FormPreviewStateNode implements FormStateNode {
     return this._dataNode.value;
   }
 
-  getKids(): ChildNode[] {
+  getKids(): ChildNodeSpec[] {
     return this.definition.childRefId
       ? [
           {
@@ -364,7 +367,7 @@ class FormPreviewStateNode implements FormStateNode {
             }),
           },
         ]
-      : resolveChildNodes(this);
+      : this.resolver(this);
   }
 
   getChildCount(): number {

@@ -16,6 +16,7 @@ import {
 } from "./controlRender";
 import {
   AccordionAdornment,
+  ChildNodeSpec,
   ControlAdornment,
   ControlAdornmentType,
   FormStateNode,
@@ -40,6 +41,13 @@ export interface DefaultRenderers {
   html: HtmlComponents;
 }
 
+export type ChildResolverFunc = (
+  c: FormStateNode,
+) => ChildNodeSpec[] | undefined;
+export interface ChildResolverRegistration {
+  resolveChildren?: ChildResolverFunc;
+}
+
 export interface LayoutRendererRegistration {
   type: "layout";
   match?: (props: ControlLayoutProps) => boolean;
@@ -48,7 +56,7 @@ export interface LayoutRendererRegistration {
     renderers: FormRenderer,
   ) => RenderedControl;
 }
-export interface DataRendererRegistration {
+export interface DataRendererRegistration extends ChildResolverRegistration {
   type: "data";
   schemaType?: string | string[];
   renderType?: string | string[];
@@ -59,7 +67,6 @@ export interface DataRendererRegistration {
     props: DataRendererProps,
     renderers: FormRenderer,
   ) => ReactNode | ((layout: ControlLayoutProps) => ControlLayoutProps);
-  resolveFormChildren?: (c: FormStateNode) => ChildNode[] | undefined;
 }
 
 export interface LabelRendererRegistration {

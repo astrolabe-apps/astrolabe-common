@@ -101,7 +101,7 @@ export interface FormStateNode extends FormStateBase {
 interface FormStateOptions {
   schemaInterface: SchemaInterface;
   evalExpression: (e: EntityExpression, ctx: ExpressionEvalContext) => void;
-  resolveFormChildren(c: FormStateNode): ChildNode[];
+  resolveChildren(c: FormStateNode): ChildNodeSpec[];
   contextOptions: FormContextOptions;
   runAsync: (af: () => void) => void;
 }
@@ -536,7 +536,7 @@ function initChildren(formImpl: FormStateNodeImpl) {
   createSyncEffect(() => {
     const base = formImpl.base;
     const children = base.fields.children;
-    const childs = formImpl.options.resolveFormChildren(formImpl);
+    const childs = formImpl.options.resolveChildren(formImpl);
     const scope = base;
     const options = formImpl.options;
     updateElements(children, () =>
@@ -710,7 +710,7 @@ function initChildren(formImpl: FormStateNodeImpl) {
 //   return base;
 // }
 
-export interface ChildNode {
+export interface ChildNodeSpec {
   childKey: string | number;
   create: (
     scope: CleanupScope,
@@ -725,7 +725,7 @@ export interface ChildNode {
 
 export function defaultResolveChildNodes(
   formStateNode: FormStateNode,
-): ChildNode[] {
+): ChildNodeSpec[] {
   const {
     resolved,
     dataNode: data,

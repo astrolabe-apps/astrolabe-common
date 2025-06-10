@@ -17,6 +17,7 @@ import {
   ActionStyle,
   AdornmentPlacement,
   ArrayActionOptions,
+  ChildNodeSpec,
   ControlAdornment,
   ControlDefinition,
   CustomDisplay,
@@ -40,7 +41,6 @@ import {
   SchemaField,
   SchemaInterface,
   ValidatorType,
-  ChildNode,
 } from "@astroapps/forms-core";
 import {
   applyLengthRestrictions,
@@ -212,7 +212,7 @@ export interface FormRenderer {
 
   html: HtmlComponents;
 
-  resolveFormChildren(c: FormStateNode): ChildNode[];
+  resolveChildren(c: FormStateNode): ChildNodeSpec[];
 }
 
 export interface AdornmentProps {

@@ -11,8 +11,7 @@ import {
   createDataRenderer,
   createOverrideProxy,
   CustomRenderOptions,
-  DataControlDefinition,
-  DynamicPropertyType,
+  EntityExpression,
   fieldPathForDefinition,
   getExternalEditData,
   getLengthRestrictions,
@@ -26,6 +25,7 @@ import {
   schemaForFieldPath,
   SchemaTags,
   stringField,
+  textDisplayControl,
 } from "@react-typed-forms/schemas";
 import {
   ColumnDef,
@@ -42,7 +42,6 @@ import {
   newControl,
   RenderControl,
   useControl,
-  useTrackedComponent,
 } from "@react-typed-forms/core";
 import React, { Fragment, ReactNode } from "react";
 import {
@@ -58,8 +57,6 @@ import {
 } from "@astroapps/searchstate";
 import { SortableHeader } from "./SortableHeader";
 import { useGroupedRows } from "./util";
-import { EntityExpression } from "@react-typed-forms/schemas";
-import { getCurrentFields } from "@react-typed-forms/core";
 
 interface DataGridOptions
   extends Pick<
@@ -274,7 +271,28 @@ export function createDataGridRenderer(
         />
       );
     },
-    { renderType: DataGridDefinition.value, collection: true },
+    {
+      renderType: DataGridDefinition.value,
+      collection: true,
+      resolveChildren: (c) => {
+        if (
+          isDataControl(c.definition) &&
+          c.definition.renderOptions?.type === DataGridDefinition.value
+        ) {
+          return [
+            {
+              childKey: "Test",
+              create: () => ({
+                definition: textDisplayControl("HALP"),
+                parent: c.parent,
+                node: c.form,
+              }),
+            },
+          ];
+        }
+        return undefined;
+      },
+    },
   );
 }
 

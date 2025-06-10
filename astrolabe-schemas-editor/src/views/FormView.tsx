@@ -92,6 +92,7 @@ function RenderFormDesign({
       defaultSchemaInterface,
       rootNode,
       createSchemaDataNode(schema.rootNode, newControl({})),
+      formRenderer,
     );
   }, []);
   return (

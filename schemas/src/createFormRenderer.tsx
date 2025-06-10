@@ -17,6 +17,8 @@ import {
   ActionRendererRegistration,
   AdornmentRendererRegistration,
   ArrayRendererRegistration,
+  ChildResolverFunc,
+  ChildResolverRegistration,
   DataRendererRegistration,
   DefaultRenderers,
   DisplayRendererRegistration,
@@ -27,7 +29,7 @@ import {
   VisibilityRendererRegistration,
 } from "./renderers";
 import {
-  ChildNode,
+  ChildNodeSpec,
   DataRenderType,
   defaultResolveChildNodes,
   FormStateNode,
@@ -42,6 +44,7 @@ export function createFormRenderer(
     ...customRenderers,
     ...(defaultRenderers.extraRenderers ?? []),
   ];
+  const resolvers = allRenderers.flatMap(getChildResolverRegistration);
   const dataRegistrations = allRenderers.filter(isDataRegistration);
   const groupRegistrations = allRenderers.filter(isGroupRegistration);
   const adornmentRegistrations = allRenderers.filter(isAdornmentRegistration);
@@ -65,7 +68,11 @@ export function createFormRenderer(
     renderVisibility,
     renderLabelText,
     html: defaultRenderers.html,
-    resolveFormChildren(c: FormStateNode): ChildNode[] {
+    resolveChildren(c: FormStateNode): ChildNodeSpec[] {
+      for (const r of resolvers) {
+        const childSpecs = r(c);
+        if (childSpecs) return childSpecs;
+      }
       return defaultResolveChildNodes(c);
     },
   };
@@ -187,6 +194,13 @@ function isAdornmentRegistration(
   x: RendererRegistration,
 ): x is AdornmentRendererRegistration {
   return x.type === "adornment";
+}
+
+function getChildResolverRegistration(
+  x: RendererRegistration,
+): ChildResolverFunc[] {
+  const f = (x as ChildResolverRegistration).resolveChildren;
+  return f ? [f] : [];
 }
 
 function isDataRegistration(
