@@ -360,7 +360,7 @@ export function createFormState(
         );
         updateComputedValue(
           disabled,
-          () => !!cf.disabled.value || isControlDisabled(definition),
+          () => !!cf.disabled.value || of.disabled.value,
         );
 
         updateComputedValue(variables, () => {
