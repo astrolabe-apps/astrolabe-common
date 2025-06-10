@@ -605,6 +605,7 @@ export function renderControlLayout(
         iconPlacement: c.iconPlacement,
         icon: c.icon,
         inline,
+        disabled: state.disabled,
         onClick:
           props.actionOnClick?.(c.actionId, actionData, dataContext) ??
           (() => {}),
