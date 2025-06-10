@@ -1298,6 +1298,8 @@ export interface ControlDefinitionForm {
   title: string | null;
   id: string | null;
   childRefId: string | null;
+  disabled: boolean | null;
+  hidden: boolean | null;
   dynamic: DynamicPropertyForm[] | null;
   adornments: ControlAdornmentForm[] | null;
   styleClass: string | null;
@@ -1313,7 +1315,6 @@ export interface ControlDefinitionForm {
   renderOptions: RenderOptionsForm | null;
   defaultValue: any | null;
   readonly: boolean | null;
-  disabled: boolean | null;
   dontClearHidden: boolean | null;
   validators: SchemaValidatorForm[] | null;
   compoundField: string | null;
@@ -1363,6 +1364,16 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   childRefId: makeScalarField({
     type: FieldType.String,
     displayName: "Child Ref Id",
+  }),
+  disabled: makeScalarField({
+    type: FieldType.Bool,
+    defaultValue: false,
+    displayName: "Disabled",
+  }),
+  hidden: makeScalarField({
+    type: FieldType.Bool,
+    defaultValue: false,
+    displayName: "Hidden",
   }),
   dynamic: makeCompoundField({
     children: DynamicPropertySchema,
@@ -1441,12 +1452,6 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     onlyForTypes: ["Data"],
     defaultValue: false,
     displayName: "Readonly",
-  }),
-  disabled: makeScalarField({
-    type: FieldType.Bool,
-    onlyForTypes: ["Data"],
-    defaultValue: false,
-    displayName: "Disabled",
   }),
   dontClearHidden: makeScalarField({
     type: FieldType.Bool,

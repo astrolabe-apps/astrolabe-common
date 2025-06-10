@@ -22,6 +22,7 @@ export interface ControlDefinition {
   childRefId?: string | null;
   title?: string | null;
   hidden?: boolean | null;
+  disabled?: boolean | null;
   styleClass?: string | null;
   textClass?: string | null;
   layoutClass?: string | null;
@@ -134,7 +135,6 @@ export interface DataControlDefinition extends ControlDefinition {
   renderOptions?: RenderOptions | null;
   defaultValue?: any;
   readonly?: boolean | null;
-  disabled?: boolean | null;
   validators?: SchemaValidator[] | null;
   hideTitle?: boolean | null;
   dontClearHidden?: boolean | null;
@@ -661,7 +661,7 @@ export function isControlReadonly(c: ControlDefinition): boolean {
  * @returns True if the control definition is disabled, false otherwise.
  */
 export function isControlDisabled(c: ControlDefinition): boolean {
-  return isDataControl(c) && !!c.disabled;
+  return !!c.disabled;
 }
 
 /**
