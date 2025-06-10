@@ -117,6 +117,7 @@ export function RenderFormNode({
     readonly,
     disabled,
     variables,
+    hidden,
   };
 
   const labelAndChildren = renderControlLayout({

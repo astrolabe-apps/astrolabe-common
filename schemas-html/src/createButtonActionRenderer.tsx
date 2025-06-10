@@ -79,11 +79,12 @@ export function createButtonActionRenderer(
         <I
           iconName={icon.name}
           iconLibrary={icon.library}
-          className={
+          className={rendererClass(
+            textClass,
             iconPlacement == IconPlacement.BeforeText
               ? options.iconBeforeClass
-              : options.iconAfterClass
-          }
+              : options.iconAfterClass,
+          )}
         />
       );
 

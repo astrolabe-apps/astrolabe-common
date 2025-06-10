@@ -560,8 +560,11 @@ export function DefaultHtmlIconRenderer({
     switch (iconLibrary) {
       case IconLibrary.FontAwesome:
         return "fa fa-" + iconName;
-      default:
+      case IconLibrary.Material:
+      case IconLibrary.CssClass:
         return iconName;
+      default:
+        return iconLibrary + " fa-" + iconName;
     }
   }
 }

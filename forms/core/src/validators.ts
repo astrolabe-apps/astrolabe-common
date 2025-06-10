@@ -6,7 +6,11 @@ import {
   SchemaValidator,
   ValidatorType,
 } from "./schemaValidator";
-import { ControlDefinition, isDataControl } from "./controlDefinition";
+import {
+  ControlDefinition,
+  DataControlDefinition,
+  isDataControl,
+} from "./controlDefinition";
 import { SchemaDataNode } from "./schemaDataNode";
 import {
   CleanupScope,
@@ -172,11 +176,12 @@ export function setupValidation(
   dataNode: Control<SchemaDataNode | undefined>,
   schemaInterface: SchemaInterface,
   parent: SchemaDataNode,
+  hidden: Control<boolean>,
   runAsync: (af: () => void) => void,
 ) {
   const validationEnabled = createScopedComputed(
     scope,
-    () => !definition.hidden,
+    () => !hidden.value,
   );
   const validatorsScope = createCleanupScope();
   createEffect(

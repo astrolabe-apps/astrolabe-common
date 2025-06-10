@@ -454,6 +454,7 @@ function initFormState(
     dataNode,
     schemaInterface,
     parent,
+    hidden,
     runAsync,
   );
 
