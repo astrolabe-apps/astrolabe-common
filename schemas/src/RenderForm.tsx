@@ -115,6 +115,7 @@ export function RenderForm({
     disabled,
     variables,
     formState,
+    hidden,
   };
 
   const labelAndChildren = renderControlLayout({

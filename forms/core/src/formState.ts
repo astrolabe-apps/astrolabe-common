@@ -397,6 +397,7 @@ export function createFormState(
           schemaInterface,
           parent,
           formNode,
+          hidden,
           runAsync,
         );
 
