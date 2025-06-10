@@ -139,9 +139,11 @@ export class ControlImpl<V> implements InternalControl<V> {
   }
 
   validate(): boolean {
-    this._logic.withChildren((x) => x.validate());
-    this._subscriptions?.runMatchingListeners(this, ControlChange.Validate);
-    return this.valid;
+    groupedChanges(() => {
+      this._logic.withChildren((x) => x.validate());
+      this._subscriptions?.runMatchingListeners(this, ControlChange.Validate);
+    });
+    return this.isValid();
   }
 
   get fields(): ControlFields<V> {
