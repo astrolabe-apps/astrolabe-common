@@ -41,13 +41,6 @@ export interface DefaultRenderers {
   html: HtmlComponents;
 }
 
-export type ChildResolverFunc = (
-  c: FormStateNode,
-) => ChildNodeSpec[] | undefined;
-export interface ChildResolverRegistration {
-  resolveChildren?: ChildResolverFunc;
-}
-
 export interface LayoutRendererRegistration {
   type: "layout";
   match?: (props: ControlLayoutProps) => boolean;
@@ -56,17 +49,18 @@ export interface LayoutRendererRegistration {
     renderers: FormRenderer,
   ) => RenderedControl;
 }
-export interface DataRendererRegistration extends ChildResolverRegistration {
+export interface DataRendererRegistration {
   type: "data";
   schemaType?: string | string[];
   renderType?: string | string[];
   options?: boolean;
   collection?: boolean;
-  match?: (props: DataRendererProps, renderOptions: RenderOptions) => boolean;
+  match?: (props: FormStateNode, renderOptions: RenderOptions) => boolean;
   render: (
     props: DataRendererProps,
     renderers: FormRenderer,
   ) => ReactNode | ((layout: ControlLayoutProps) => ControlLayoutProps);
+  resolveChildren?: ChildResolverFunc;
 }
 
 export interface LabelRendererRegistration {
@@ -84,6 +78,7 @@ export interface ActionRendererRegistration {
   type: "action";
   actionType?: string | string[];
   render: (props: ActionRendererProps, renderers: FormRenderer) => ReactElement;
+  resolveChildren?: ChildResolverFunc;
 }
 
 export interface ArrayRendererRegistration {
@@ -98,6 +93,7 @@ export interface GroupRendererRegistration {
     props: GroupRendererProps,
     renderers: FormRenderer,
   ) => ReactElement | ((layout: ControlLayoutProps) => ControlLayoutProps);
+  resolveChildren?: ChildResolverFunc;
 }
 
 export interface DisplayRendererRegistration {
@@ -107,6 +103,7 @@ export interface DisplayRendererRegistration {
     props: DisplayRendererProps,
     renderers: FormRenderer,
   ) => ReactElement;
+  resolveChildren?: ChildResolverFunc;
 }
 
 export interface AdornmentRendererRegistration {

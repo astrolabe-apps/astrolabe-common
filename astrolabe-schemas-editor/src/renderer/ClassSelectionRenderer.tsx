@@ -43,7 +43,8 @@ export function createClassSelectionRenderer(classes: [string, string][] = []) {
       </ComboBox>
     ),
     {
-      match: (x) => x.field.field.endsWith("Class"),
+      match: (x) =>
+        !!x.dataNode && x.dataNode.schema.field.field.endsWith("Class"),
     },
   );
 }

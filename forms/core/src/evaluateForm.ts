@@ -42,6 +42,7 @@ import { setupValidation } from "./validators";
 import { createEvalExpr, ExpressionEvalContext } from "./evalExpression";
 import { createOverrideProxy, KeysOfUnion, NoOverride } from "./overrideProxy";
 import { FieldOption } from "./schemaField";
+import { ChildNodeSpec } from "./resolveChildren";
 
 export type EvalExpr = <A>(
   scope: CleanupScope,
@@ -91,7 +92,7 @@ export interface FormStateNode extends FormStateBase {
   clearHidden: boolean;
   variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
   meta: Record<string, any>;
-  form: FormNode;
+  form: FormNode | undefined;
   getChildNodes(): FormStateNode[];
   getChildCount(): number;
   getChild(index: number): FormStateNode | undefined;
@@ -259,7 +260,7 @@ class FormStateNodeImpl implements FormStateNode {
     public childKey: string | number,
     public meta: Record<string, any>,
     definition: ControlDefinition,
-    public form: FormNode,
+    public form: FormNode | undefined,
     public options: FormStateOptions,
     public parent: SchemaDataNode,
   ) {
@@ -536,11 +537,11 @@ function initChildren(formImpl: FormStateNodeImpl) {
   createSyncEffect(() => {
     const base = formImpl.base;
     const children = base.fields.children;
-    const childs = formImpl.options.resolveChildren(formImpl);
+    const kids = formImpl.options.resolveChildren(formImpl);
     const scope = base;
     const options = formImpl.options;
     updateElements(children, () =>
-      childs.map(({ childKey, create }) => {
+      kids.map(({ childKey, create }) => {
         let child = childMap.get(childKey);
         if (!child) {
           const meta: Record<string, any> = {};
@@ -571,241 +572,4 @@ function initChildren(formImpl: FormStateNodeImpl) {
       }),
     );
   }, formImpl.base);
-}
-//   const childMap = new Map<any, Control<FormStateBaseImpl>>();
-//   createSyncEffect(() => {
-//     // Object.entries(children.current.value.map(x => [x.childKey, x]));
-//     const dn = dataNode?.value;
-//     if (dn && dn.elementIndex == null && dn.schema.field.collection) {
-//       updateElements(children, () =>
-//         dn.control.as<any[]>().elements.map((x, i) => {
-//           const childKey = x.uniqueId;
-//           let elemNode = childMap.get(childKey);
-//           if (!elemNode) {
-//             elemNode = createElementNode(
-//               childKey,
-//               formNode,
-//               dn.getChildElement(i),
-//               options,
-//             );
-//             childMap.set(childKey, elemNode);
-//           }
-//           return elemNode;
-//         }),
-//       );
-//     } else {
-//       const childNodes = formNode.getChildNodes();
-//       if (dn && !isCompoundNode(dn.schema) && childNodes.length > 0) {
-//         updateElements(
-//           children,
-//           () =>
-//             options.schemaInterface.getDataOptions(dn)?.map((x, i) => {
-//               const childKey = x.value?.toString();
-//               let childNode = childMap.get(childKey);
-//               if (!childNode) {
-//                 childNode = createOptionNode(
-//                   childKey,
-//                   x,
-//                   formNode,
-//                   parent,
-//                   options,
-//                 );
-//                 childMap.set(childKey, childNode);
-//               }
-//               return childNode;
-//             }) ?? [],
-//         );
-//       } else {
-//         updateElements(children, () =>
-//           childNodes.map((x) => {
-//             const childKey = x.id;
-//             let childNode = childMap.get(childKey);
-//             if (!childNode) {
-//               childNode = createChildNode(x, dn ?? parent, options);
-//               childMap.set(childKey, childNode);
-//             }
-//             return childNode;
-//           }),
-//         );
-//       }
-//     }
-//   }, scope);
-// }
-
-// export function createChildNode(
-//   formNode: FormNode,
-//   parent: SchemaDataNode,
-//   options: FormStateOptions,
-// ): Control<FormStateBaseImpl> {
-//   const base = initFormState(formNode, parent, options);
-//
-//   new FormStateNodeImpl(
-//     formNode.id,
-//     options.schemaInterface,
-//     base,
-//     options.contextOptions,
-//   );
-//   return base;
-// }
-//
-// function createElementNode(
-//   childKey: number,
-//   formNode: FormNode,
-//   element: SchemaDataNode,
-//   options: FormStateOptions,
-// ): Control<FormStateBaseImpl> {
-//   const base = createScoped<FormStateBaseImpl>(options.scope, {
-//     dataNode: element,
-//     disabled: false,
-//     hidden: false,
-//     readonly: false,
-//     children: [],
-//     resolved: { definition: { type: ControlDefinitionType.Group } },
-//   });
-//   const { children } = base.fields;
-//   initChildren(options.scope, children, formNode, element, undefined, options);
-//   new FormStateNodeImpl(
-//     childKey,
-//     options.schemaInterface,
-//     base,
-//     options.contextOptions,
-//   );
-//   return base;
-// }
-//
-// function createOptionNode(
-//   childKey: number,
-//   option: FieldOption,
-//   formNode: FormNode,
-//   dataNode: SchemaDataNode,
-//   options: FormStateOptions,
-// ): Control<FormStateBaseImpl> {
-//   const base = createScoped<FormStateBaseImpl>(options.scope, {
-//     dataNode,
-//     disabled: false,
-//     hidden: false,
-//     readonly: false,
-//     children: [],
-//     resolved: { definition: { type: ControlDefinitionType.Group } },
-//   });
-//   const { children } = base.fields;
-//   const oldVars = options.contextOptions.fields.variables;
-//   const newVars = createScoped<Record<string, any>>(
-//     options.scope,
-//     oldVars.current.value ?? {},
-//   );
-//   updateComputedValue(newVars, () => ({
-//     ...oldVars.value,
-//     formData: { option, optionSelected: true },
-//   }));
-//   const newOptions = cloneFields(options.contextOptions);
-//   setFields(newOptions, { variables: newVars });
-//
-//   initChildren(options.scope, children, formNode, dataNode, undefined, {
-//     ...options,
-//     contextOptions: newOptions,
-//   });
-//
-//   new FormStateNodeImpl(childKey, options.schemaInterface, base, newOptions);
-//   return base;
-// }
-
-export interface ChildNodeSpec {
-  childKey: string | number;
-  create: (
-    scope: CleanupScope,
-    meta: Record<string, any>,
-  ) => {
-    definition: ControlDefinition;
-    parent: SchemaDataNode;
-    node: FormNode;
-    variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
-  };
-}
-
-export function defaultResolveChildNodes(
-  formStateNode: FormStateNode,
-): ChildNodeSpec[] {
-  const {
-    resolved,
-    dataNode: data,
-    schemaInterface,
-    parent,
-    form: node,
-  } = formStateNode;
-  const def = resolved.definition;
-  if (isDataControl(def)) {
-    if (!data) return [];
-    const type = def.renderOptions?.type;
-    if (type === DataRenderType.CheckList || type === DataRenderType.Radio) {
-      const n = node.getChildNodes();
-      if (n.length > 0 && resolved.fieldOptions) {
-        return resolved.fieldOptions.map((x) => ({
-          childKey: x.value?.toString(),
-          create: (scope, meta) => {
-            meta["fieldOptionValue"] = x.value;
-            const vars = createScopedComputed(scope, () => {
-              return {
-                option: x,
-                optionSelected: isOptionSelected(schemaInterface, x, data),
-              };
-            });
-            return {
-              definition: {
-                type: ControlDefinitionType.Group,
-                groupOptions: {
-                  type: GroupRenderType.Contents,
-                },
-              } as GroupedControlsDefinition,
-              parent,
-              node,
-              variables: (changes) => ({
-                formData: trackedValue(vars, changes),
-              }),
-            };
-          },
-        }));
-      }
-      return [];
-    }
-    if (data.schema.field.collection && data.elementIndex == null)
-      return data.control.as<any[]>().elements.map((x, i) => ({
-        childKey: x.uniqueId,
-        create: () => ({
-          definition: {
-            type: ControlDefinitionType.Data,
-            field: ".",
-            hideTitle: true,
-            renderOptions: {},
-          } as DataControlDefinition,
-          node,
-          parent: data!.getChildElement(i),
-        }),
-      }));
-  }
-  return node.getChildNodes().map((x) => ({
-    childKey: x.id,
-    create: () => ({
-      node: x,
-      parent: data ?? parent,
-      definition: x.definition,
-    }),
-  }));
-}
-
-function isOptionSelected(
-  schemaInterface: SchemaInterface,
-  option: FieldOption,
-  data: SchemaDataNode,
-) {
-  if (data.schema.field.collection) {
-    return !!data.control.as<any[] | undefined>().value?.includes(option.value);
-  }
-  return (
-    schemaInterface.compareValue(
-      data.schema.field,
-      data.control.value,
-      option.value,
-    ) === 0
-  );
 }

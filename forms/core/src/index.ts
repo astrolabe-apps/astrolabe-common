@@ -13,3 +13,4 @@ export * from "./evaluateForm";
 export * from "./evalExpression";
 export * from "./util";
 export * from "./overrideProxy";
+export * from "./resolveChildren";

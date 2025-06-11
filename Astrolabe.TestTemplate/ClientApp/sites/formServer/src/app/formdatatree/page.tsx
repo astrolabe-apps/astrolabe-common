@@ -1,5 +1,6 @@
 "use client";
 import {
+  ControlDefinition,
   createFormStateNode,
   createFormTree,
   createSchemaDataNode,
@@ -32,24 +33,25 @@ import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
-import { Form, SchemaFields } from "../../setup/basicForm";
+// import { Form, SchemaFields } from "../../setup/basicForm";
 import { createPreviewNode } from "@astroapps/schemas-editor";
+import CarJson from "../../forms/CarSearch.json";
+import { SchemaMap } from "../../schemas";
+import { createDataGridRenderer } from "@astroapps/schemas-datagrid";
+const SchemaFields = SchemaMap.CarSearchPage;
+const Form = CarJson.controls as ControlDefinition[];
 
 const schemaLookup = createSchemaLookup({ SchemaFields });
 const FormTree = createFormTree(Form);
 const renderer = createFormRenderer(
-  [],
+  [createDataGridRenderer()],
   createDefaultRenderers(defaultTailwindTheme),
 );
 export default function FormDataTreePage() {
   const { ref, width, height } = useResizeObserver();
   const selected = useControl<FormStateNode | undefined>();
-  const data = useControl({
-    selectables: [
-      { name: "WOW", id: "choice1" },
-      { name: "WOW2", id: "COOL2" },
-    ],
-  });
+  const editorView = useControl(false);
+  const data = useControl({});
   const jsonText = useControl(() =>
     JSON.stringify(data.current.value, null, 2),
   );
@@ -62,28 +64,34 @@ export default function FormDataTreePage() {
   const schemaTree = schemaLookup.getSchemaTree("SchemaFields");
 
   const dataNode = createSchemaDataNode(schemaTree.rootNode, data);
-  const rootControlState = useMemo(() => {
+
+  const rootPreviewNode = useMemo(() => {
     return createPreviewNode(
       "ROOT",
       defaultSchemaInterface,
       FormTree.rootNode,
       dataNode,
-      renderer
+      renderer,
     );
-  }, []);
+  }, [renderer]);
+
+  const rootEditNode = useMemo(() => {
+    return createFormStateNode(FormTree.rootNode, dataNode, {
+      schemaInterface: defaultSchemaInterface,
+      runAsync,
+      contextOptions: options,
+      evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
+      resolveChildren: renderer.resolveChildren,
+    });
+  }, [renderer]);
 
   const hideFields = useControl(false);
   const selectedControlId = useControl<string | undefined>();
   // const rootControlState = useMemo(() => {
-  //   return createFormStateNode(FormTree.rootNode, dataNode, {
-  //     schemaInterface: defaultSchemaInterface,
-  //     runAsync,
-  //     contextOptions: options,
-  //     evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
-  //   });
   // }, []);
+  const rootNode = editorView.value ? rootPreviewNode : rootEditNode;
 
-  getWholeTree(rootControlState);
+  getWholeTree(rootNode);
   return (
     <div className="flex flex-col h-full">
       <div className="h-[50%]">
@@ -97,16 +105,19 @@ export default function FormDataTreePage() {
             )}
           </div>
           <div className="overflow-auto h-full w-full p-4">
-            <FormControlPreview
-              node={rootControlState}
-              context={{
-                selected: selectedControlId,
-                VisibilityIcon: <i className="fa fa-eye" />,
-                renderer,
-                hideFields,
-              }}
-            />
-            {/*<RenderFormNode node={rootControlState} renderer={renderer} />*/}
+            {editorView.value ? (
+              <FormControlPreview
+                node={rootPreviewNode}
+                context={{
+                  selected: selectedControlId,
+                  VisibilityIcon: <i className="fa fa-eye" />,
+                  renderer,
+                  hideFields,
+                }}
+              />
+            ) : (
+              <RenderFormNode node={rootEditNode} renderer={renderer} />
+            )}
           </div>
         </div>
       </div>
@@ -116,7 +127,7 @@ export default function FormDataTreePage() {
             width={width}
             height={height}
             onSelect={(n) => (selected.value = n[0]?.data)}
-            data={[rootControlState]}
+            data={[rootNode]}
             idAccessor={(x) => x.uniqueId!}
             childrenAccessor={(x) => x.getChildNodes()}
             children={FormNodeRenderer}

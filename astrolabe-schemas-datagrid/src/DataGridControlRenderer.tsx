@@ -4,6 +4,8 @@ import {
   ArrayRenderOptions,
   boolField,
   buildSchema,
+  ChildNodeInit,
+  ChildNodeSpec,
   ControlDataContext,
   ControlDefinition,
   ControlDefinitionType,
@@ -11,8 +13,11 @@ import {
   createDataRenderer,
   createOverrideProxy,
   CustomRenderOptions,
+  dataControl,
+  DynamicPropertyType,
   EntityExpression,
   fieldPathForDefinition,
+  FormStateNode,
   getExternalEditData,
   getLengthRestrictions,
   isDataControl,
@@ -26,6 +31,8 @@ import {
   SchemaTags,
   stringField,
   textDisplayControl,
+  resolveArrayChildren,
+  groupedControl,
 } from "@react-typed-forms/schemas";
 import {
   ColumnDef,
@@ -160,6 +167,8 @@ export function createDataGridRenderer(
   options?: DataGridOptions,
   classes?: DataGridClasses,
 ) {
+  const gridClasses =
+    mergeObjects(defaultDataGridClasses, classes) ?? defaultDataGridClasses;
   return createDataRenderer(
     (pareProps, renderers) => {
       const {
@@ -176,17 +185,26 @@ export function createDataGridRenderer(
         runExpression,
         dataNode,
       } = pareProps;
-      const gridClasses =
-        mergeObjects(defaultDataGridClasses, classes) ?? defaultDataGridClasses;
+
       const dataGridOptions =
         mergeObjects(
           renderOptions as DataGridOptions & RenderOptions,
           options,
         ) ?? {};
-      const constantColumns: ColumnDefInit<
-        Control<any>,
-        DataGridColumnExtension
-      >[] = [];
+
+      return (
+        <>
+          {formNode.getChildNodes().map((x) =>
+            renderChild(x.childKey, x, {
+              displayOnly: dataGridOptions.displayOnly,
+            }),
+          )}
+        </>
+      );
+      // const constantColumns: ColumnDefInit<
+      //   Control<any>,
+      //   DataGridColumnExtension
+      // >[] = [];
       // TODO
       // definition.adornments?.filter(isColumnAdornment).map((x, i) => {
       //   const def: DataControlDefinition = {
@@ -210,87 +228,134 @@ export function createDataGridRenderer(
       //           }),
       //   };
       // }) ?? [];
-      const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
-        formNode.getChildNodes().map((cn, i) => {
-          const d = cn.definition;
-          const colOptions = d.adornments?.find(isColumnAdornment);
-          const headerOptions = getColumnHeaderFromOptions(
-            colOptions,
-            d,
-            gridClasses,
-          );
-
-          return {
-            ...headerOptions,
-            id: "c" + i,
-            title: headerOptions?.title ?? d.title ?? "Column " + i,
-            data: {
-              dataContext,
-              definition: d,
-              evalHidden: colOptions?.visible,
-              evalRowSpan: colOptions?.rowSpan,
-            },
-            render: (_: Control<any>, rowIndex: number) =>
-              renderChild(i, cn, {
-                displayOnly: dataGridOptions.displayOnly,
-              }),
-          };
-        });
-      const allColumns = constantColumns.concat(columns);
-
-      const searchField = dataGridOptions.searchField;
-      return (
-        <DynamicGridVisibility
-          classes={gridClasses}
-          renderOptions={dataGridOptions}
-          renderAction={renderers.renderAction}
-          control={control.as()}
-          runExpression={runExpression}
-          searchControl={
-            searchField
-              ? (schemaDataForFieldRef(searchField, dataContext.parentNode)
-                  .control as Control<SearchOptions>)
-              : undefined
-          }
-          columns={allColumns}
-          className={className}
-          readonly={readonly}
-          {...applyArrayLengthRestrictions({
-            ...createArrayActions(
-              control.as(),
-              () => formNode.getChildCount(),
-              field,
-              {
-                ...dataGridOptions,
-                readonly,
-              },
-            ),
-            ...getLengthRestrictions(definition),
-            required,
-          })}
-        />
-      );
+      // const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
+      //   formNode.getChildNodes().map((cn, i) => {
+      //     const d = cn.definition;
+      //     const colOptions = d.adornments?.find(isColumnAdornment);
+      //     const headerOptions = getColumnHeaderFromOptions(
+      //       colOptions,
+      //       d,
+      //       gridClasses,
+      //     );
+      //
+      //     return {
+      //       ...headerOptions,
+      //       id: "c" + i,
+      //       title: headerOptions?.title ?? d.title ?? "Column " + i,
+      //       data: {
+      //         dataContext,
+      //         definition: d,
+      //         evalHidden: colOptions?.visible,
+      //         evalRowSpan: colOptions?.rowSpan,
+      //       },
+      //       render: (_: Control<any>, rowIndex: number) =>
+      //         renderChild(i, cn, {
+      //           displayOnly: dataGridOptions.displayOnly,
+      //         }),
+      //     };
+      //   });
+      // const allColumns = constantColumns.concat(columns);
+      //
+      // const searchField = dataGridOptions.searchField;
+      // return (
+      //   <DynamicGridVisibility
+      //     classes={gridClasses}
+      //     renderOptions={dataGridOptions}
+      //     renderAction={renderers.renderAction}
+      //     control={control.as()}
+      //     runExpression={runExpression}
+      //     searchControl={
+      //       searchField
+      //         ? (schemaDataForFieldRef(searchField, dataContext.parentNode)
+      //             .control as Control<SearchOptions>)
+      //         : undefined
+      //     }
+      //     columns={allColumns}
+      //     className={className}
+      //     readonly={readonly}
+      //     {...applyArrayLengthRestrictions({
+      //       ...createArrayActions(
+      //         control.as(),
+      //         () => formNode.getChildCount(),
+      //         field,
+      //         {
+      //           ...dataGridOptions,
+      //           readonly,
+      //         },
+      //       ),
+      //       ...getLengthRestrictions(definition),
+      //       required,
+      //     })}
+      //   />
+      // );
     },
     {
       renderType: DataGridDefinition.value,
       collection: true,
       resolveChildren: (c) => {
-        if (
-          isDataControl(c.definition) &&
-          c.definition.renderOptions?.type === DataGridDefinition.value
-        ) {
-          return [
-            {
-              childKey: "Test",
-              create: () => ({
-                definition: textDisplayControl("HALP"),
-                parent: c.parent,
-                node: c.form,
-              }),
-            },
-          ];
-        }
-        return undefined;
+        const formNode = c.form!;
+        const columnsChildren: ChildNodeSpec[] = formNode
+          .getChildNodes()
+          .map((cn, i) => {
+            const d = cn.definition;
+            return {
+              childKey: "c" + i,
+              create: (scope, meta) => {
+                const colOptions = d.adornments?.find(isColumnAdornment);
+                const header = getColumnHeaderFromOptions(
+                  colOptions,
+                  d,
+                  gridClasses,
+                );
+                meta.column = header;
+                return {
+                  definition: textDisplayControl(
+                    header.title ?? d.title ?? "Column " + i,
+                    {
+                      dynamic: colOptions?.visible
+                        ? [
+                            {
+                              type: DynamicPropertyType.Visible,
+                              expr: colOptions.visible,
+                            },
+                          ]
+                        : [],
+                    },
+                  ),
+                  parent: c.parent,
+                } satisfies ChildNodeInit;
+              },
+            };
+
+            // const d = cn.definition;
+
+            // const colDef: ColumnDefInit<FormStateNode, DataGridColumnExtension> =
+            //   {
+            //     ...headerOptions,
+            //     id: "c" + i,
+            //     title: headerOptions?.title ?? d.title ?? "Column " + i,
+            //     data: {
+            //       // evalHidden: colOptions?.visible,
+            //       evalRowSpan: colOptions?.rowSpan,
+            //     },
+            //     render: (_: FormStateNode, rowIndex: number) =>
+            //       renderChild(i, cn, {
+            //         displayOnly: dataGridOptions.displayOnly,
+            //       }),
+            //   };
+          });
+        return [
+          ...columnsChildren,
+          {
+            childKey: "rows",
+            create: () => ({
+              definition: groupedControl([], "Rows"),
+              parent: c.parent,
+              node: formNode,
+            }),
+          },
+          ...resolveArrayChildren(c.dataNode!, formNode),
+        ] satisfies ChildNodeSpec[];
       },
     },
   );
@@ -405,6 +470,45 @@ function DataGridControlRenderer({
 
   const rowCount = control.elements?.length ?? 0;
 
+  return (
+    <>
+      <DataGrid
+        className={rendererClass(className, classes.className)}
+        columns={allColumns}
+        bodyRows={rowCount}
+        getBodyRow={(i) => control.elements![i]}
+        defaultColumnTemplate="1fr"
+        cellClass=""
+        headerCellClass=""
+        bodyCellClass=""
+        wrapBodyRow={(rowIndex, render) => {
+          const c = control.elements![rowIndex];
+          return (
+            <RenderControl key={c.uniqueId}>
+              {() => render(c, rowIndex)}
+            </RenderControl>
+          );
+        }}
+        renderHeaderContent={renderHeaderContent}
+        renderExtraRows={(r) =>
+          rowCount === 0 ? (
+            <div
+              style={{ gridColumn: "1 / -1" }}
+              className={classes.noEntriesClass}
+            >
+              {renderOptions.noEntriesText ?? "No data"}
+            </div>
+          ) : (
+            <></>
+          )
+        }
+      />
+      <div className={classes.addContainerClass}>
+        {addAction && !readonly && disableActionIfEdit(addAction)}
+      </div>
+    </>
+  );
+
   function renderHeaderContent(
     col: ColumnDef<Control<any>, DataGridColumnExtension>,
   ) {
@@ -478,43 +582,4 @@ function DataGridControlRenderer({
     }
     return renderAction(action);
   }
-
-  return (
-    <>
-      <DataGrid
-        className={rendererClass(className, classes.className)}
-        columns={allColumns}
-        bodyRows={rowCount}
-        getBodyRow={(i) => control.elements![i]}
-        defaultColumnTemplate="1fr"
-        cellClass=""
-        headerCellClass=""
-        bodyCellClass=""
-        wrapBodyRow={(rowIndex, render) => {
-          const c = control.elements![rowIndex];
-          return (
-            <RenderControl key={c.uniqueId}>
-              {() => render(c, rowIndex)}
-            </RenderControl>
-          );
-        }}
-        renderHeaderContent={renderHeaderContent}
-        renderExtraRows={(r) =>
-          rowCount === 0 ? (
-            <div
-              style={{ gridColumn: "1 / -1" }}
-              className={classes.noEntriesClass}
-            >
-              {renderOptions.noEntriesText ?? "No data"}
-            </div>
-          ) : (
-            <></>
-          )
-        }
-      />
-      <div className={classes.addContainerClass}>
-        {addAction && !readonly && disableActionIfEdit(addAction)}
-      </div>
-    </>
-  );
 }

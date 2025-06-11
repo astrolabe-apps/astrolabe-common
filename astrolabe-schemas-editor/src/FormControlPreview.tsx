@@ -33,6 +33,8 @@ import {
   SchemaInterface,
   textDisplayControl,
   ChildNodeSpec,
+  isCompoundNode,
+  isCompoundField,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 
@@ -98,7 +100,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
             : elementValueForField(field)),
     [displayOptions?.sampleText, field, isRequired],
   );
-  if (dataNode) {
+  if (dataNode && field && (field.collection || !isCompoundField(field))) {
     dataNode.control.value = sampleData;
   }
   const dataContext: ControlDataContext = {
@@ -288,7 +290,7 @@ class FormPreviewStateNode implements FormStateNode {
 
   constructor(
     public childKey: string | number,
-    public form: FormNode,
+    public form: FormNode | undefined,
     public definition: ControlDefinition,
     public schemaInterface: SchemaInterface,
     public parent: SchemaDataNode,
@@ -336,7 +338,7 @@ class FormPreviewStateNode implements FormStateNode {
   }
 
   get id() {
-    return this.form.id;
+    return this.form?.id || "GEN";
   }
   get valid() {
     return true;

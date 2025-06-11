@@ -12,13 +12,11 @@ import {
   LabelType,
   VisibilityRendererProps,
 } from "./controlRender";
-import { hasOptions } from "./util";
 import {
   ActionRendererRegistration,
   AdornmentRendererRegistration,
   ArrayRendererRegistration,
   ChildResolverFunc,
-  ChildResolverRegistration,
   DataRendererRegistration,
   DefaultRenderers,
   DisplayRendererRegistration,
@@ -33,6 +31,9 @@ import {
   DataRenderType,
   defaultResolveChildNodes,
   FormStateNode,
+  isDataControl,
+  RenderOptions,
+  SchemaDataNode,
 } from "@astroapps/forms-core";
 import { ActionRendererProps } from "./types";
 
@@ -44,7 +45,6 @@ export function createFormRenderer(
     ...customRenderers,
     ...(defaultRenderers.extraRenderers ?? []),
   ];
-  const resolvers = allRenderers.flatMap(getChildResolverRegistration);
   const dataRegistrations = allRenderers.filter(isDataRegistration);
   const groupRegistrations = allRenderers.filter(isGroupRegistration);
   const adornmentRegistrations = allRenderers.filter(isAdornmentRegistration);
@@ -69,9 +69,14 @@ export function createFormRenderer(
     renderLabelText,
     html: defaultRenderers.html,
     resolveChildren(c: FormStateNode): ChildNodeSpec[] {
-      for (const r of resolvers) {
-        const childSpecs = r(c);
-        if (childSpecs) return childSpecs;
+      const def = c.definition;
+      if (isDataControl(def)) {
+        const matching = matchData(
+          c,
+          def.renderOptions ?? { type: DataRenderType.Standard },
+          c.dataNode!,
+        );
+        if (matching?.resolveChildren) return matching.resolveChildren(c);
       }
       return defaultResolveChildNodes(c);
     },
@@ -118,28 +123,22 @@ export function createFormRenderer(
     return renderer.render(props, labelStart, labelEnd, formRenderers);
   }
 
-  function renderData(
-    props: DataRendererProps,
-  ): (layout: ControlLayoutProps) => ControlLayoutProps {
-    const { renderOptions, field } = props;
-
-    const options = hasOptions(props);
+  function matchData(
+    formState: FormStateNode,
+    renderOptions: RenderOptions,
+    dataNode: SchemaDataNode,
+  ): DataRendererRegistration | undefined {
+    const field = dataNode.schema.field;
+    const options = (formState.resolved.fieldOptions?.length ?? 0) > 0;
     const renderType = renderOptions.type;
-    const renderer = dataRegistrations.find(matchesRenderer);
-
-    const result = (renderer ?? defaultRenderers.data).render(
-      props,
-      formRenderers,
-    );
-    if (typeof result === "function") return result;
-    return (l) => ({ ...l, children: result });
+    return dataRegistrations.find(matchesRenderer);
 
     function matchesRenderer(x: DataRendererRegistration) {
-      const noMatch = x.match ? !x.match(props, renderOptions) : undefined;
+      const noMatch = x.match ? !x.match(formState, renderOptions) : undefined;
       if (noMatch === true) return false;
       const matchCollection =
         (x.collection ?? false) ===
-        (props.dataNode.elementIndex == null && (field.collection ?? false));
+        (dataNode.elementIndex == null && (field.collection ?? false));
       const isSchemaAllowed =
         !!x.schemaType && renderType == DataRenderType.Standard
           ? isOneOf(x.schemaType, field.type)
@@ -154,6 +153,23 @@ export function createFormRenderer(
           (!x.renderType && !x.schemaType && noMatch === false))
       );
     }
+  }
+
+  function renderData(
+    props: DataRendererProps,
+  ): (layout: ControlLayoutProps) => ControlLayoutProps {
+    const renderer = matchData(
+      props.formNode,
+      props.renderOptions,
+      props.dataNode,
+    );
+
+    const result = (renderer ?? defaultRenderers.data).render(
+      props,
+      formRenderers,
+    );
+    if (typeof result === "function") return result;
+    return (l) => ({ ...l, children: result });
   }
 
   function renderGroup(
@@ -194,13 +210,6 @@ function isAdornmentRegistration(
   x: RendererRegistration,
 ): x is AdornmentRendererRegistration {
   return x.type === "adornment";
-}
-
-function getChildResolverRegistration(
-  x: RendererRegistration,
-): ChildResolverFunc[] {
-  const f = (x as ChildResolverRegistration).resolveChildren;
-  return f ? [f] : [];
 }
 
 function isDataRegistration(
