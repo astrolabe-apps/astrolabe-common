@@ -28,9 +28,9 @@ export interface ChildNodeSpec {
 }
 
 export interface ChildNodeInit {
-  definition: ControlDefinition;
-  parent: SchemaDataNode;
-  node?: FormNode;
+  definition?: ControlDefinition;
+  parent?: SchemaDataNode;
+  node?: FormNode | null;
   variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
   resolveChildren?: ChildResolverFunc;
 }

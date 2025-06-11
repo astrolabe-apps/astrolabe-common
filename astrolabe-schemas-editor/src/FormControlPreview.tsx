@@ -35,6 +35,8 @@ import {
   ChildNodeSpec,
   isCompoundNode,
   isCompoundField,
+  groupedControl,
+  ChildResolverFunc,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 
@@ -290,11 +292,12 @@ class FormPreviewStateNode implements FormStateNode {
 
   constructor(
     public childKey: string | number,
-    public form: FormNode | undefined,
+    public form: FormNode | undefined | null,
     public definition: ControlDefinition,
     public schemaInterface: SchemaInterface,
     public parent: SchemaDataNode,
     public resolver: FormRenderer["resolveChildren"],
+    public resolveChildren?: ChildResolverFunc,
   ) {
     const scope = createCleanupScope();
     this.scope = scope;
@@ -323,11 +326,12 @@ class FormPreviewStateNode implements FormStateNode {
             child = newControl(
               new FormPreviewStateNode(
                 childKey,
-                cc.node,
-                cc.definition,
+                cc.node === undefined ? this.form : cc.node,
+                cc.definition ?? groupedControl([]),
                 this.schemaInterface,
-                cc.parent,
+                cc.parent ?? this.parent,
                 this.resolver,
+                cc.resolveChildren,
               ),
             );
           }
@@ -369,7 +373,7 @@ class FormPreviewStateNode implements FormStateNode {
             }),
           },
         ]
-      : this.resolver(this);
+      : (this.resolveChildren?.(this) ?? this.resolver(this));
   }
 
   getChildCount(): number {

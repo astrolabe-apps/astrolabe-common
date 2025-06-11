@@ -42,7 +42,8 @@ import { setupValidation } from "./validators";
 import { createEvalExpr, ExpressionEvalContext } from "./evalExpression";
 import { createOverrideProxy, KeysOfUnion, NoOverride } from "./overrideProxy";
 import { FieldOption } from "./schemaField";
-import { ChildNodeSpec } from "./resolveChildren";
+import { ChildNodeSpec, ChildResolverFunc } from "./resolveChildren";
+import { groupedControl } from "./controlBuilder";
 
 export type EvalExpr = <A>(
   scope: CleanupScope,
@@ -92,7 +93,7 @@ export interface FormStateNode extends FormStateBase {
   clearHidden: boolean;
   variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
   meta: Record<string, any>;
-  form: FormNode | undefined;
+  form: FormNode | undefined | null;
   getChildNodes(): FormStateNode[];
   getChildCount(): number;
   getChild(index: number): FormStateNode | undefined;
@@ -260,9 +261,10 @@ class FormStateNodeImpl implements FormStateNode {
     public childKey: string | number,
     public meta: Record<string, any>,
     definition: ControlDefinition,
-    public form: FormNode | undefined,
+    public form: FormNode | undefined | null,
     public options: FormStateOptions,
     public parent: SchemaDataNode,
+    public resolveChildren?: ChildResolverFunc,
   ) {
     const base = newControl<FormStateBaseImpl>({
       readonly: false,
@@ -362,7 +364,6 @@ function initFormState(def: ControlDefinition, impl: FormStateNodeImpl) {
 
   const cf = contextOptions;
 
-  // const base = newControl<FormStateBaseImpl>();
   const scope = base;
 
   const resolved = base.fields.resolved.as<ResolvedDefinition>();
@@ -535,11 +536,11 @@ export function combineVariables(
 function initChildren(formImpl: FormStateNodeImpl) {
   const childMap = new Map<any, Control<FormStateBaseImpl>>();
   createSyncEffect(() => {
-    const base = formImpl.base;
+    const { base, resolveChildren, options } = formImpl;
     const children = base.fields.children;
-    const kids = formImpl.options.resolveChildren(formImpl);
+    const kids =
+      formImpl.resolveChildren?.(formImpl) ?? options.resolveChildren(formImpl);
     const scope = base;
-    const options = formImpl.options;
     updateElements(children, () =>
       kids.map(({ childKey, create }) => {
         let child = childMap.get(childKey);
@@ -561,10 +562,11 @@ function initChildren(formImpl: FormStateNodeImpl) {
           child = new FormStateNodeImpl(
             childKey,
             meta,
-            cc.definition,
-            cc.node,
+            cc.definition ?? groupedControl([]),
+            cc.node === undefined ? formImpl.form : cc.node,
             co,
-            cc.parent,
+            cc.parent ?? formImpl.parent,
+            cc.resolveChildren,
           ).base;
           childMap.set(childKey, child);
         }

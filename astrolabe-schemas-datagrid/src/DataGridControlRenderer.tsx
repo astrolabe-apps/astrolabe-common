@@ -293,72 +293,90 @@ export function createDataGridRenderer(
       renderType: DataGridDefinition.value,
       collection: true,
       resolveChildren: (c) => {
-        const formNode = c.form!;
-        const columnsChildren: ChildNodeSpec[] = formNode
-          .getChildNodes()
-          .map((cn, i) => {
-            const d = cn.definition;
-            return {
-              childKey: "c" + i,
-              create: (scope, meta) => {
-                const colOptions = d.adornments?.find(isColumnAdornment);
-                const header = getColumnHeaderFromOptions(
-                  colOptions,
-                  d,
-                  gridClasses,
-                );
-                meta.column = header;
-                return {
-                  definition: textDisplayControl(
-                    header.title ?? d.title ?? "Column " + i,
-                    {
-                      dynamic: colOptions?.visible
-                        ? [
-                            {
-                              type: DynamicPropertyType.Visible,
-                              expr: colOptions.visible,
-                            },
-                          ]
-                        : [],
-                    },
-                  ),
-                  parent: c.parent,
-                } satisfies ChildNodeInit;
-              },
-            };
-
-            // const d = cn.definition;
-
-            // const colDef: ColumnDefInit<FormStateNode, DataGridColumnExtension> =
-            //   {
-            //     ...headerOptions,
-            //     id: "c" + i,
-            //     title: headerOptions?.title ?? d.title ?? "Column " + i,
-            //     data: {
-            //       // evalHidden: colOptions?.visible,
-            //       evalRowSpan: colOptions?.rowSpan,
-            //     },
-            //     render: (_: FormStateNode, rowIndex: number) =>
-            //       renderChild(i, cn, {
-            //         displayOnly: dataGridOptions.displayOnly,
-            //       }),
-            //   };
-          });
         return [
-          ...columnsChildren,
           {
-            childKey: "rows",
+            childKey: "headers",
             create: () => ({
-              definition: groupedControl([], "Rows"),
+              definition: groupedControl([]),
+              node: c.form,
               parent: c.parent,
-              node: formNode,
+              resolveChildren: resolveHeaders,
             }),
           },
-          ...resolveArrayChildren(c.dataNode!, formNode),
-        ] satisfies ChildNodeSpec[];
+          {
+            childKey: "data",
+            create: () => ({
+              definition: dataControl("."),
+              resolveChildren: (c) =>
+                resolveArrayChildren(c.dataNode!, c.form!),
+            }),
+          },
+        ];
+
+        // const d = cn.definition;
+
+        // const colDef: ColumnDefInit<FormStateNode, DataGridColumnExtension> =
+        //   {
+        //     ...headerOptions,
+        //     id: "c" + i,
+        //     title: headerOptions?.title ?? d.title ?? "Column " + i,
+        //     data: {
+        //       // evalHidden: colOptions?.visible,
+        //       evalRowSpan: colOptions?.rowSpan,
+        //     },
+        //     render: (_: FormStateNode, rowIndex: number) =>
+        //       renderChild(i, cn, {
+        //         displayOnly: dataGridOptions.displayOnly,
+        //       }),
+        //   };
+        // });
+        // return [
+        //   ...columnsChildren,
+        //   {
+        //     childKey: "rows",
+        //     create: () => ({
+        //       definition: groupedControl([], "Rows"),
+        //       parent: c.parent,
+        //       node: formNode,
+        //     }),
+        //   },
+        //   ...resolveArrayChildren(c.dataNode!, formNode),
+        // ] satisfies ChildNodeSpec[];
       },
     },
   );
+
+  function resolveHeaders(c: FormStateNode): ChildNodeSpec[] {
+    const formNode = c.form!;
+    return formNode.getChildNodes().map((cn, i) => {
+      const d = cn.definition;
+      return {
+        childKey: "c" + i,
+        create: (scope, meta) => {
+          const colOptions = d.adornments?.find(isColumnAdornment);
+          const header = getColumnHeaderFromOptions(colOptions, d, gridClasses);
+          meta.column = header;
+          return {
+            definition: textDisplayControl(
+              header.title ?? d.title ?? "Column " + i,
+              {
+                dynamic: colOptions?.visible
+                  ? [
+                      {
+                        type: DynamicPropertyType.Visible,
+                        expr: colOptions.visible,
+                      },
+                    ]
+                  : [],
+              },
+            ),
+            node: null,
+            parent: c.parent,
+          } satisfies ChildNodeInit;
+        },
+      };
+    });
+  }
 }
 
 function DynamicGridVisibility(props: DataGridRendererProps) {

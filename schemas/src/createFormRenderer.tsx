@@ -16,7 +16,6 @@ import {
   ActionRendererRegistration,
   AdornmentRendererRegistration,
   ArrayRendererRegistration,
-  ChildResolverFunc,
   DataRendererRegistration,
   DefaultRenderers,
   DisplayRendererRegistration,

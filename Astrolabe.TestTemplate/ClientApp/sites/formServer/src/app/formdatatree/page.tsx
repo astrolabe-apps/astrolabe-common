@@ -103,6 +103,16 @@ export default function FormDataTreePage() {
                 data.value = JSON.parse(jsonText.value);
               }),
             )}
+            {renderer.renderAction(
+              createAction(
+                !editorView.value
+                  ? "Enable editor mode"
+                  : "Disable editor mode",
+                () => {
+                  editorView.setValue((x) => !x);
+                },
+              ),
+            )}
           </div>
           <div className="overflow-auto h-full w-full p-4">
             {editorView.value ? (

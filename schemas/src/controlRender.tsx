@@ -21,6 +21,7 @@ import {
   ControlAdornment,
   ControlDefinition,
   CustomDisplay,
+  dataControl,
   DataControlDefinition,
   defaultSchemaInterface,
   DisplayData,
@@ -51,7 +52,7 @@ import {
   getExternalEditData,
   rendererClass,
 } from "./util";
-import { createAction, dataControl } from "./controlBuilder";
+import { createAction } from "./controlBuilder";
 import {
   ActionRendererProps,
   ControlActionHandler,

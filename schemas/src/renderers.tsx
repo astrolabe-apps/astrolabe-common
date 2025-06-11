@@ -17,6 +17,7 @@ import {
 import {
   AccordionAdornment,
   ChildNodeSpec,
+  ChildResolverFunc,
   ControlAdornment,
   ControlAdornmentType,
   FormStateNode,

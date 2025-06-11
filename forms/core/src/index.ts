@@ -1,4 +1,5 @@
 export * from "./controlDefinition";
+export * from "./controlBuilder";
 export * from "./entityExpression";
 export * from "./schemaNode";
 export * from "./schemaBuilder";
