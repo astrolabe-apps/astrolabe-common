@@ -32,6 +32,7 @@ export type ColumnOptions = Pick<
   rowSpan?: EntityExpression;
   enabledSort?: boolean;
   enabledFilter?: boolean;
+  groupedColumn?: boolean;
 };
 
 export function getColumnHeaderFromOptions(
@@ -98,6 +99,7 @@ export const ColumnOptionsFields = buildSchema<ColumnOptions>({
     schemaRef: "EntityExpression",
     tags: [makeParamTag(SchemaTags.ControlRef, "Expression")],
   }),
+  groupedColumn: boolField("Grouped Column"),
 });
 
 export const DataGridAdornmentDefinition: CustomRenderOptions = {

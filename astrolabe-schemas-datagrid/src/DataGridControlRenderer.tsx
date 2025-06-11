@@ -12,7 +12,6 @@ import {
   createOverrideProxy,
   CustomRenderOptions,
   DataControlDefinition,
-  DynamicPropertyType,
   fieldPathForDefinition,
   getExternalEditData,
   getLengthRestrictions,
@@ -42,10 +41,10 @@ import {
   newControl,
   RenderControl,
   useControl,
-  useTrackedComponent,
 } from "@react-typed-forms/core";
 import React, { Fragment, ReactNode } from "react";
 import {
+  ColumnOptions,
   getColumnHeaderFromOptions,
   isColumnAdornment,
 } from "./columnAdornment";
@@ -58,8 +57,6 @@ import {
 } from "@astroapps/searchstate";
 import { SortableHeader } from "./SortableHeader";
 import { useGroupedRows } from "./util";
-import { EntityExpression } from "@react-typed-forms/schemas";
-import { getCurrentFields } from "@react-typed-forms/core";
 
 interface DataGridOptions
   extends Pick<
@@ -99,8 +96,7 @@ interface DataGridClasses {
 interface DataGridColumnExtension {
   dataContext: ControlDataContext;
   definition: ControlDefinition;
-  evalHidden?: EntityExpression;
-  evalRowSpan?: EntityExpression;
+  colOptions?: ColumnOptions;
 }
 
 const dataGridGroupOptions = {
@@ -229,8 +225,7 @@ export function createDataGridRenderer(
             data: {
               dataContext,
               definition: d,
-              evalHidden: colOptions?.visible,
-              evalRowSpan: colOptions?.rowSpan,
+              colOptions,
             },
             render: (_: Control<any>, rowIndex: number) =>
               renderChild(i, cn, {
@@ -298,17 +293,19 @@ function DynamicGridVisibility(props: DataGridRendererProps) {
     createScopedEffect((c) => {
       const data = x.data;
       if (!data) return;
-      if (data.evalHidden)
-        props.runExpression(c, data.evalHidden, (v) => {
+      const { colOptions } = data;
+      if (colOptions?.visible)
+        props.runExpression(c, colOptions.visible, (v) => {
           hidden.value = v === false;
         });
 
-      const rowSpanExpr = data.evalRowSpan;
+      const rowSpanExpr = colOptions?.rowSpan;
 
       const isGroupByColumn =
         groupByField &&
-        isDataControl(data.definition) &&
-        groupByField === data.definition.field;
+        (colOptions?.groupedColumn ||
+          (isDataControl(data.definition) &&
+            groupByField === data.definition.field));
 
       getRowSpan.value =
         rowSpanExpr || isGroupByColumn
