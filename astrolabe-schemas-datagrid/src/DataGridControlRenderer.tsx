@@ -298,8 +298,6 @@ export function createDataGridRenderer(
             childKey: "headers",
             create: () => ({
               definition: groupedControl([]),
-              node: c.form,
-              parent: c.parent,
               resolveChildren: resolveHeaders,
             }),
           },
@@ -307,6 +305,7 @@ export function createDataGridRenderer(
             childKey: "data",
             create: () => ({
               definition: dataControl("."),
+              parent: c.dataNode,
               resolveChildren: (c) =>
                 resolveArrayChildren(c.dataNode!, c.form!),
             }),
@@ -444,7 +443,8 @@ function DynamicGridVisibility(props: DataGridRendererProps) {
 
 interface DataGridRendererProps {
   renderOptions: DataGridOptions;
-  columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[];
+  rows: FormStateNode;
+  columns: ColumnDefInit<FormStateNode, DataGridColumnExtension>[];
   control: Control<any[] | undefined | null>;
   searchControl?: Control<SearchOptions>;
   className?: string;
@@ -460,7 +460,6 @@ interface DataGridRendererProps {
 function DataGridControlRenderer({
   renderOptions,
   columns,
-  control,
   searchControl,
   className,
   renderAction,
@@ -469,8 +468,10 @@ function DataGridControlRenderer({
   removeAction,
   editAction,
   classes,
+  rows,
 }: DataGridRendererProps) {
-  const allColumns = columnDefinitions<Control<any>, DataGridColumnExtension>(
+  
+  const allColumns = columnDefinitions<FormStateNode, DataGridColumnExtension>(
     ...columns,
     {
       id: "deleteCheck",
@@ -486,7 +487,7 @@ function DataGridControlRenderer({
     },
   );
 
-  const rowCount = control.elements?.length ?? 0;
+  const rowCount = rows.getChildCount()
 
   return (
     <>
@@ -494,13 +495,13 @@ function DataGridControlRenderer({
         className={rendererClass(className, classes.className)}
         columns={allColumns}
         bodyRows={rowCount}
-        getBodyRow={(i) => control.elements![i]}
+        getBodyRow={(i) => rows.getChild(i)}
         defaultColumnTemplate="1fr"
         cellClass=""
         headerCellClass=""
         bodyCellClass=""
         wrapBodyRow={(rowIndex, render) => {
-          const c = control.elements![rowIndex];
+          const c = rows.getChild(rowIndex)!;
           return (
             <RenderControl key={c.uniqueId}>
               {() => render(c, rowIndex)}
@@ -528,7 +529,7 @@ function DataGridControlRenderer({
   );
 
   function renderHeaderContent(
-    col: ColumnDef<Control<any>, DataGridColumnExtension>,
+    col: ColumnDef<FormStateNode, DataGridColumnExtension>,
   ) {
     const { filterField, sortField, title, data } = col;
     let filtered: ReactNode = undefined;
