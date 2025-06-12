@@ -17,7 +17,8 @@ export const defaultTailwindTheme = {
     standardClassName: "flex flex-col gap-4",
     grid: {
       className: "flex flex-col gap-4",
-      rowClass: "flex flex-row gap-4 justify-between *:flex-1",
+      rowClass: "flex flex-row gap-4 justify-between",
+      cellClass: "flex-1",
     },
     flexClassName: "gap-2",
     inlineClass: "",
