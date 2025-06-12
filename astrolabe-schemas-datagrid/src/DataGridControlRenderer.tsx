@@ -176,7 +176,7 @@ export function createDataGridRenderer(
         dataNode,
       } = pareProps;
       const gridClasses =
-        mergeObjects(defaultDataGridClasses, classes) ?? defaultDataGridClasses;
+        mergeObjects(classes, defaultDataGridClasses) ?? defaultDataGridClasses;
       const dataGridOptions =
         mergeObjects(
           renderOptions as DataGridOptions & RenderOptions,
