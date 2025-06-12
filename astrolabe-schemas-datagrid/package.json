@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-datagrid",
-  "version": "7.0.1",
+  "version": "7.1.1",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",

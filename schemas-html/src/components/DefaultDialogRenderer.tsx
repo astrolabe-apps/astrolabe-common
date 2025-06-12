@@ -18,6 +18,7 @@ export interface DefaultDialogRenderOptions {
   classes?: {
     className?: string;
     titleClass?: string;
+    containerClass?: string;
   };
 }
 
@@ -25,6 +26,8 @@ export const defaultDialogOptions = {
   classes: {
     className: "",
     titleClass: "text-2xl font-bold",
+    containerClass:
+      "relative m-4 p-4 min-w-[400px] max-w-[80%] rounded-lg bg-white shadow-sm",
   },
 } satisfies DefaultDialogRenderOptions;
 
@@ -56,7 +59,7 @@ export function DefaultDialogRenderer({
   renderer: FormRenderer;
 }) {
   const {
-    classes: { titleClass, className },
+    classes: { titleClass, className, containerClass },
   } = deepMerge(options as typeof defaultDialogOptions, defaultDialogOptions);
   const open = useControl(false);
   const overlayState = createOverlayState(open);
@@ -96,7 +99,11 @@ export function DefaultDialogRenderer({
       {props.designMode
         ? designContent()
         : open.value && (
-            <Modal state={overlayState} isDismissable>
+            <Modal
+              state={overlayState}
+              isDismissable
+              containerClass={containerClass}
+            >
               {dialogContent}
             </Modal>
           )}

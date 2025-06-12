@@ -85,7 +85,7 @@ export class SchemaDataTreeImpl extends SchemaDataTree {
     const elemControl = parent.control as Control<unknown[]>;
     const elemChild = elemControl.elements[elementIndex];
     return new SchemaDataNode(
-      elemChild.uniqueId.toString(),
+      elemChild.uniqueId.toString() + "_" + elementIndex,
       parent.schema,
       elementIndex,
       elemChild,
