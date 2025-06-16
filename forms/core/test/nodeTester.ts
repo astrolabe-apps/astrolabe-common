@@ -1,16 +1,16 @@
 import {
-  ControlDefinition,
-  createFormStateNode,
-  createFormTree,
-  createSchemaDataNode,
-  createSchemaTree,
-  defaultEvaluators,
-  defaultResolveChildNodes,
-  defaultSchemaInterface,
+    ControlDefinition,
+    createFormStateNode,
+    createFormTree,
+    createSchemaDataNode,
+    createSchemaTree,
+    defaultEvaluators,
+    defaultResolveChildNodes,
+    defaultSchemaInterface, EntityExpression, ExpressionEvalContext,
 } from "../src";
 import { newControl } from "@astroapps/controls";
 
-export function testNodeState(c: ControlDefinition) {
+export function testNodeState(c: ControlDefinition, evalExpression?: (e: EntityExpression, ctx: ExpressionEvalContext) => void) {
   const formTree = createFormTree([c]);
   const schemaTree = createSchemaTree([]);
   const data = newControl({});
@@ -21,7 +21,7 @@ export function testNodeState(c: ControlDefinition) {
       schemaInterface: defaultSchemaInterface,
       runAsync: (cb) => cb(),
       resolveChildren: defaultResolveChildNodes,
-      evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
+      evalExpression: evalExpression ?? ((e, ctx) => defaultEvaluators[e.type]?.(e, ctx)),
       contextOptions: {},
     },
   );
