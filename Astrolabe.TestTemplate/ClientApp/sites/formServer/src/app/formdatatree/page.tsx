@@ -160,6 +160,7 @@ function getWholeTree(node: FormStateNode) {
 function CurrentNode({ node }: { node: Control<FormStateNode> }) {
   const n = node.value;
   const {
+    childKey,
     readonly,
     hidden,
     clearHidden,
@@ -173,6 +174,7 @@ function CurrentNode({ node }: { node: Control<FormStateNode> }) {
     <pre>
       {JSON.stringify(
         {
+          childKey,
           dataNode: dataNode?.control?.value,
           parent: parent.control.value,
           readonly,

@@ -5,7 +5,6 @@ import {
   createScopedEffect,
   createSyncEffect,
   newControl,
-  trackedValue,
   updateComputedValue,
   updateElements,
 } from "@astroapps/controls";
@@ -13,12 +12,8 @@ import {
   AnyControlDefinition,
   ControlAdornmentType,
   ControlDefinition,
-  ControlDefinitionType,
-  DataControlDefinition,
   DataRenderType,
   DynamicPropertyType,
-  GroupedControlsDefinition,
-  GroupRenderType,
   HtmlDisplay,
   isActionControl,
   isControlDisabled,
@@ -29,7 +24,7 @@ import {
   isTextDisplay,
   TextDisplay,
 } from "./controlDefinition";
-import { createScoped, createScopedComputed } from "./util";
+import { createScoped } from "./util";
 import { EntityExpression } from "./entityExpression";
 import { SchemaInterface } from "./schemaInterface";
 import { FormNode, lookupDataNode } from "./formNode";
@@ -539,7 +534,7 @@ function initChildren(formImpl: FormStateNodeImpl) {
     const { base, resolveChildren, options } = formImpl;
     const children = base.fields.children;
     const kids =
-      formImpl.resolveChildren?.(formImpl) ?? options.resolveChildren(formImpl);
+      resolveChildren?.(formImpl) ?? options.resolveChildren(formImpl);
     const scope = base;
     updateElements(children, () =>
       kids.map(({ childKey, create }) => {
@@ -559,7 +554,7 @@ function initChildren(formImpl: FormStateNodeImpl) {
                 },
               }
             : options;
-          child = new FormStateNodeImpl(
+          const fsChild = new FormStateNodeImpl(
             childKey,
             meta,
             cc.definition ?? groupedControl([]),
@@ -567,7 +562,8 @@ function initChildren(formImpl: FormStateNodeImpl) {
             co,
             cc.parent ?? formImpl.parent,
             cc.resolveChildren,
-          ).base;
+          );
+          child = fsChild.base;
           childMap.set(childKey, child);
         }
         return child;

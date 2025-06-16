@@ -56,7 +56,6 @@ export function JsonataRenderer({
   readonly: boolean;
   runExpression: RunExpression;
 }) {
-  const sdn = dataNode.elementIndex != null ? dataNode : dataContext.parentNode;
   const bindings = (changes: ChangeListenerFunc<any>) => ({
     value: trackedValue(control, changes),
     readonly,

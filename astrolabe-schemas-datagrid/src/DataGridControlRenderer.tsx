@@ -6,33 +6,33 @@ import {
   buildSchema,
   ChildNodeInit,
   ChildNodeSpec,
+  ChildRenderer,
   ControlDataContext,
   ControlDefinition,
   ControlDefinitionType,
   createArrayActions,
   createDataRenderer,
-  createOverrideProxy,
   CustomRenderOptions,
   dataControl,
+  DataControlDefinition,
   DynamicPropertyType,
   EntityExpression,
   fieldPathForDefinition,
   FormStateNode,
   getExternalEditData,
   getLengthRestrictions,
+  groupedControl,
   isDataControl,
   makeParamTag,
   mergeObjects,
   rendererClass,
   RenderOptions,
+  resolveArrayChildren,
   RunExpression,
   schemaDataForFieldRef,
   schemaForFieldPath,
   SchemaTags,
   stringField,
-  textDisplayControl,
-  resolveArrayChildren,
-  groupedControl,
 } from "@react-typed-forms/schemas";
 import {
   ColumnDef,
@@ -42,13 +42,11 @@ import {
 } from "@astroapps/datagrid";
 import {
   Control,
-  createScopedEffect,
   ensureMetaValue,
   getMetaValue,
   groupedChanges,
   newControl,
   RenderControl,
-  useControl,
 } from "@react-typed-forms/core";
 import React, { Fragment, ReactNode } from "react";
 import {
@@ -191,114 +189,55 @@ export function createDataGridRenderer(
           renderOptions as DataGridOptions & RenderOptions,
           options,
         ) ?? {};
+      const headerChild = formNode.getChild(0)!.getChildNodes();
 
+      const searchField = dataGridOptions.searchField;
+      const dataChild = formNode.getChild(1)!;
       return (
-        <>
-          {formNode.getChildNodes().map((x) =>
-            renderChild(x.childKey, x, {
-              displayOnly: dataGridOptions.displayOnly,
-            }),
-          )}
-        </>
+        <DataGridControlRenderer
+          dataContext={dataContext}
+          control={control.as<any[]>()}
+          renderOptions={dataGridOptions}
+          className={className}
+          searchControl={
+            searchField
+              ? (schemaDataForFieldRef(searchField, dataContext.parentNode)
+                  .control as Control<SearchOptions>)
+              : undefined
+          }
+          columns={headerChild}
+          rows={dataChild}
+          readonly={readonly}
+          classes={gridClasses}
+          renderAction={renderers.renderAction}
+          runExpression={runExpression}
+          {...applyArrayLengthRestrictions({
+            ...createArrayActions(
+              control.as(),
+              () => dataChild.getChildCount(),
+              field,
+              {
+                ...dataGridOptions,
+                readonly,
+              },
+            ),
+            ...getLengthRestrictions(definition),
+            required,
+          })}
+          renderChild={renderChild}
+        />
       );
-      // const constantColumns: ColumnDefInit<
-      //   Control<any>,
-      //   DataGridColumnExtension
-      // >[] = [];
-      // TODO
-      // definition.adornments?.filter(isColumnAdornment).map((x, i) => {
-      //   const def: DataControlDefinition = {
-      //     type: ControlDefinitionType.Data,
-      //     field: ".",
-      //     hideTitle: true,
-      //     renderOptions: x.renderOptions,
-      //     layoutClass: x.layoutClass,
-      //   };
-      //   const headerOptions = getColumnHeaderFromOptions(x, def, gridClasses);
-      //   const colNode = formNode.createChildNode(i.toString(), def);
-      //   return {
-      //     ...headerOptions,
-      //     id: "cc" + i,
-      //     render: (_, ri) =>
-      //       x.rowIndex
-      //         ? ri + 1
-      //         : renderChild("c" + i + "_" + ri, colNode, {
-      //             parentDataNode: dataNode.getChildElement(ri),
-      //             displayOnly: dataGridOptions.displayOnly,
-      //           }),
-      //   };
-      // }) ?? [];
-      // const columns: ColumnDefInit<Control<any>, DataGridColumnExtension>[] =
-      //   formNode.getChildNodes().map((cn, i) => {
-      //     const d = cn.definition;
-      //     const colOptions = d.adornments?.find(isColumnAdornment);
-      //     const headerOptions = getColumnHeaderFromOptions(
-      //       colOptions,
-      //       d,
-      //       gridClasses,
-      //     );
-      //
-      //     return {
-      //       ...headerOptions,
-      //       id: "c" + i,
-      //       title: headerOptions?.title ?? d.title ?? "Column " + i,
-      //       data: {
-      //         dataContext,
-      //         definition: d,
-      //         evalHidden: colOptions?.visible,
-      //         evalRowSpan: colOptions?.rowSpan,
-      //       },
-      //       render: (_: Control<any>, rowIndex: number) =>
-      //         renderChild(i, cn, {
-      //           displayOnly: dataGridOptions.displayOnly,
-      //         }),
-      //     };
-      //   });
-      // const allColumns = constantColumns.concat(columns);
-      //
-      // const searchField = dataGridOptions.searchField;
-      // return (
-      //   <DynamicGridVisibility
-      //     classes={gridClasses}
-      //     renderOptions={dataGridOptions}
-      //     renderAction={renderers.renderAction}
-      //     control={control.as()}
-      //     runExpression={runExpression}
-      //     searchControl={
-      //       searchField
-      //         ? (schemaDataForFieldRef(searchField, dataContext.parentNode)
-      //             .control as Control<SearchOptions>)
-      //         : undefined
-      //     }
-      //     columns={allColumns}
-      //     className={className}
-      //     readonly={readonly}
-      //     {...applyArrayLengthRestrictions({
-      //       ...createArrayActions(
-      //         control.as(),
-      //         () => formNode.getChildCount(),
-      //         field,
-      //         {
-      //           ...dataGridOptions,
-      //           readonly,
-      //         },
-      //       ),
-      //       ...getLengthRestrictions(definition),
-      //       required,
-      //     })}
-      //   />
-      // );
     },
     {
       renderType: DataGridDefinition.value,
       collection: true,
-      resolveChildren: (c) => {
+      resolveChildren: (c): ChildNodeSpec[] => {
         return [
           {
             childKey: "headers",
             create: () => ({
               definition: groupedControl([]),
-              resolveChildren: resolveHeaders,
+              resolveChildren: () => resolveColumns(c, true),
             }),
           },
           {
@@ -307,144 +246,90 @@ export function createDataGridRenderer(
               definition: dataControl("."),
               parent: c.dataNode,
               resolveChildren: (c) =>
-                resolveArrayChildren(c.dataNode!, c.form!),
+                resolveArrayChildren(c.dataNode!, c.form!, (elem) => ({
+                  resolveChildren: (c) => resolveColumns(c, false),
+                })),
             }),
           },
         ];
-
-        // const d = cn.definition;
-
-        // const colDef: ColumnDefInit<FormStateNode, DataGridColumnExtension> =
-        //   {
-        //     ...headerOptions,
-        //     id: "c" + i,
-        //     title: headerOptions?.title ?? d.title ?? "Column " + i,
-        //     data: {
-        //       // evalHidden: colOptions?.visible,
-        //       evalRowSpan: colOptions?.rowSpan,
-        //     },
-        //     render: (_: FormStateNode, rowIndex: number) =>
-        //       renderChild(i, cn, {
-        //         displayOnly: dataGridOptions.displayOnly,
-        //       }),
-        //   };
-        // });
-        // return [
-        //   ...columnsChildren,
-        //   {
-        //     childKey: "rows",
-        //     create: () => ({
-        //       definition: groupedControl([], "Rows"),
-        //       parent: c.parent,
-        //       node: formNode,
-        //     }),
-        //   },
-        //   ...resolveArrayChildren(c.dataNode!, formNode),
-        // ] satisfies ChildNodeSpec[];
       },
     },
   );
 
-  function resolveHeaders(c: FormStateNode): ChildNodeSpec[] {
+  function resolveColumns(
+    c: FormStateNode,
+    forHeader: boolean,
+  ): ChildNodeSpec[] {
     const formNode = c.form!;
-    return formNode.getChildNodes().map((cn, i) => {
-      const d = cn.definition;
-      return {
-        childKey: "c" + i,
-        create: (scope, meta) => {
-          const colOptions = d.adornments?.find(isColumnAdornment);
-          const header = getColumnHeaderFromOptions(colOptions, d, gridClasses);
-          meta.column = header;
-          return {
-            definition: textDisplayControl(
-              header.title ?? d.title ?? "Column " + i,
-              {
-                dynamic: colOptions?.visible
-                  ? [
-                      {
-                        type: DynamicPropertyType.Visible,
-                        expr: colOptions.visible,
-                      },
-                    ]
-                  : [],
-              },
-            ),
+    const definition = formNode.definition;
+    const extraColumns: ChildNodeSpec[] =
+      definition.adornments?.filter(isColumnAdornment).map((x, i) => {
+        const def: DataControlDefinition = {
+          type: ControlDefinitionType.Data,
+          field: ".",
+          hideTitle: true,
+          renderOptions: x.renderOptions,
+          layoutClass: x.layoutClass,
+          adornments: [x],
+        };
+        return {
+          childKey: "cc" + i,
+          create: () => ({
+            definition: forHeader
+              ? {
+                  ...def,
+                  dynamic: x?.visible
+                    ? [
+                        {
+                          type: DynamicPropertyType.Visible,
+                          expr: x.visible,
+                        },
+                      ]
+                    : [],
+                }
+              : def,
             node: null,
             parent: c.parent,
-          } satisfies ChildNodeInit;
-        },
-      };
-    });
+          }),
+        };
+      }) ?? [];
+
+    const stdColumns: ChildNodeSpec[] = formNode
+      .getChildNodes()
+      .map((cn, i) => {
+        const d = cn.definition;
+        return {
+          childKey: "c" + i,
+          create: (scope, meta) => {
+            const colOptions = d.adornments?.find(isColumnAdornment);
+            return {
+              definition: forHeader
+                ? {
+                    ...d,
+                    dynamic: colOptions?.visible?.type
+                      ? [
+                          {
+                            type: DynamicPropertyType.Visible,
+                            expr: colOptions.visible,
+                          },
+                        ]
+                      : [],
+                  }
+                : d,
+              node: forHeader ? null : cn,
+              parent: c.parent,
+            } satisfies ChildNodeInit;
+          },
+        };
+      });
+    return [...extraColumns, ...stdColumns];
   }
-}
-
-function DynamicGridVisibility(props: DataGridRendererProps) {
-  const { groupByField } = props.renderOptions;
-  useGroupedRows(
-    props.control,
-    groupByField ? (t) => t.fields[groupByField as any].value : undefined,
-    (n, c) =>
-      (ensureMetaValue(c, "groupByRowSpan", () => newControl(n)).value = n),
-  );
-  const overrides = useControl<
-    Record<
-      number,
-      {
-        hidden?: boolean;
-        getRowSpan?: (c: Control<any>, index: number) => number | undefined;
-      }
-    >
-  >({});
-
-  const newColumns = props.columns.map((x, i) => {
-    const colOverrides = overrides.fields[i];
-    const { hidden, getRowSpan } = colOverrides.fields;
-
-    createScopedEffect((c) => {
-      const data = x.data;
-      if (!data) return;
-      if (data.evalHidden)
-        props.runExpression(c, data.evalHidden, (v) => {
-          hidden.value = v === false;
-        });
-
-      const rowSpanExpr = data.evalRowSpan;
-
-      const isGroupByColumn =
-        groupByField &&
-        isDataControl(data.definition) &&
-        groupByField === data.definition.field;
-
-      getRowSpan.value =
-        rowSpanExpr || isGroupByColumn
-          ? (t: Control<any>, index: number) => {
-              if (rowSpanExpr) {
-                const rs = ensureMetaValue(t, "rowSpan", () => newControl(1));
-                const elementContext =
-                  data.dataContext.dataNode!.getChildElement(index);
-                props.runExpression(t, rowSpanExpr, (x) => {
-                  rs.value = typeof x === "number" ? x : 1;
-                });
-                return rs.value;
-              } else {
-                return (
-                  getMetaValue<Control<number>>(t, "groupByRowSpan")?.value ?? 1
-                );
-              }
-            }
-          : undefined;
-    }, overrides);
-
-    return createOverrideProxy(x, colOverrides);
-  });
-
-  return <DataGridControlRenderer {...props} columns={newColumns} />;
 }
 
 interface DataGridRendererProps {
   renderOptions: DataGridOptions;
   rows: FormStateNode;
-  columns: ColumnDefInit<FormStateNode, DataGridColumnExtension>[];
+  columns: FormStateNode[];
   control: Control<any[] | undefined | null>;
   searchControl?: Control<SearchOptions>;
   className?: string;
@@ -455,11 +340,13 @@ interface DataGridRendererProps {
   editAction?: (i: number) => ActionRendererProps;
   classes: DataGridClasses;
   runExpression: RunExpression;
+  renderChild: ChildRenderer;
+  dataContext: ControlDataContext;
 }
 
 function DataGridControlRenderer({
   renderOptions,
-  columns,
+  columns: headerChild,
   searchControl,
   className,
   renderAction,
@@ -469,8 +356,76 @@ function DataGridControlRenderer({
   editAction,
   classes,
   rows,
+  control,
+  renderChild,
+  dataContext,
+  runExpression,
 }: DataGridRendererProps) {
-  
+  const { groupByField } = renderOptions;
+  useGroupedRows(
+    control,
+    groupByField ? (t) => t.fields[groupByField as any].value : undefined,
+    (n, c) =>
+      (ensureMetaValue(c, "groupByRowSpan", () => newControl(n)).value = n),
+  );
+
+  const columns: ColumnDefInit<FormStateNode, DataGridColumnExtension>[] =
+    headerChild
+      .filter((x) => !x.hidden)
+      .map((cn, i) => {
+        const d = cn.definition;
+        const colOptions = d.adornments?.find(isColumnAdornment);
+        const headerOptions = getColumnHeaderFromOptions(
+          colOptions,
+          d,
+          classes,
+        );
+
+        const rowSpanExpr = colOptions?.rowSpan;
+
+        const isGroupByColumn =
+          groupByField &&
+          ((isDataControl(d) && groupByField === d.field) ||
+            colOptions?.groupedColumn);
+
+        const getRowSpan =
+          rowSpanExpr || isGroupByColumn
+            ? (row: FormStateNode, index: number) => {
+                const rowControl = row.dataNode!.control;
+                if (rowSpanExpr) {
+                  const cell = row.getChild(i)!;
+                  const rs = cell.ensureMeta("rowSpan", () => newControl(1));
+                  runExpression(rowControl, rowSpanExpr, (x) => {
+                    rs.value = typeof x === "number" ? x : 1;
+                  });
+                  return rs.value;
+                } else {
+                  return (
+                    getMetaValue<Control<number>>(rowControl, "groupByRowSpan")
+                      ?.value ?? 1
+                  );
+                }
+              }
+            : undefined;
+
+        return {
+          ...headerOptions,
+          id: "c" + i,
+          title: headerOptions?.title ?? d.title ?? "Column " + i,
+          data: {
+            dataContext,
+            definition: d,
+          },
+          getRowSpan,
+          render: (row: FormStateNode, rowIndex: number) => {
+            if (colOptions?.rowIndex) return rowIndex + 1;
+            return renderChild(i, row.getChild(i)!, {
+              displayOnly: renderOptions.displayOnly,
+            });
+          },
+        };
+      });
+
   const allColumns = columnDefinitions<FormStateNode, DataGridColumnExtension>(
     ...columns,
     {
@@ -487,7 +442,7 @@ function DataGridControlRenderer({
     },
   );
 
-  const rowCount = rows.getChildCount()
+  const rowCount = rows.getChildCount();
 
   return (
     <>
@@ -495,7 +450,7 @@ function DataGridControlRenderer({
         className={rendererClass(className, classes.className)}
         columns={allColumns}
         bodyRows={rowCount}
-        getBodyRow={(i) => rows.getChild(i)}
+        getBodyRow={(i) => rows.getChild(i)!}
         defaultColumnTemplate="1fr"
         cellClass=""
         headerCellClass=""

@@ -98,7 +98,7 @@ export function resolveArrayChildren(
   data: SchemaDataNode,
   node: FormNode,
   adjustChild?: (elem: Control<any>, index: number) => Partial<ChildNodeInit>,
-) {
+): ChildNodeSpec[] {
   return data.control.as<any[]>().elements.map((x, i) => ({
     childKey: x.uniqueId,
     create: () => ({
@@ -106,7 +106,7 @@ export function resolveArrayChildren(
         type: ControlDefinitionType.Data,
         field: ".",
         hideTitle: true,
-        renderOptions: {},
+        renderOptions: { type: DataRenderType.Standard },
       } as DataControlDefinition,
       node,
       parent: data!.getChildElement(i),

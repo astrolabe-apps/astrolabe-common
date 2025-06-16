@@ -70,6 +70,7 @@ export function createFormRenderer(
     resolveChildren(c: FormStateNode): ChildNodeSpec[] {
       const def = c.definition;
       if (isDataControl(def)) {
+        if (!c.dataNode) return [];
         const matching = matchData(
           c,
           def.renderOptions ?? { type: DataRenderType.Standard },
