@@ -249,7 +249,6 @@ importers:
       markdown-magic: ^2.6.1
       microbundle: ^0.15.1
       prettier: ^3.0.3
-      react: ^18.2.0
       rimraf: ^3.0.2
       ts-jest: ^29.2.5
       tsx: ^4.19.1
@@ -261,7 +260,6 @@ importers:
       markdown-magic: 2.6.1
       microbundle: 0.15.1
       prettier: 3.3.3
-      react: 18.3.1
       rimraf: 3.0.2
       ts-jest: 29.2.5_7tzdje3fj44vzmbciw44xp3pru
       tsx: 4.19.2

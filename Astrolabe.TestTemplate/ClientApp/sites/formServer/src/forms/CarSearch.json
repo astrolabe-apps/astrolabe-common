@@ -24,7 +24,8 @@
               "enabledSort": true,
               "visible": {}
             }
-          ]
+          ],
+          "defaultValue": null
         },
         {
           "type": "Data",
@@ -55,7 +56,13 @@
           "renderOptions": {
             "type": "Standard"
           },
-          "hideTitle": true
+          "hideTitle": true,
+          "defaultValue": null,
+          "adornments": [
+            {
+              "type": "ColumnOptions"
+            }
+          ]
         },
         {
           "type": "Data",
@@ -82,9 +89,20 @@
       "renderOptions": {
         "type": "DataGrid",
         "searchField": "request",
-        "displayOnly": true
+        "displayOnly": true,
+        "groupByField": "make"
       },
-      "readonly": true
+      "readonly": true,
+      "defaultValue": null,
+      "dynamic": [
+        {
+          "type": "Label",
+          "expr": {
+            "type": "Jsonata",
+            "expression": "\u0027Dynamic\u0027"
+          }
+        }
+      ]
     },
     {
       "type": "Data",
