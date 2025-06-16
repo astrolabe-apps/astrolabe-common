@@ -13,6 +13,7 @@ export interface DefaultGridRenderOptions {
   className?: string;
   defaultColumns?: number;
   rowClass?: string;
+  cellClass?: string;
 }
 
 export function createGridRenderer(options?: DefaultGridRenderOptions) {
@@ -59,7 +60,14 @@ export function createGridRenderer(options?: DefaultGridRenderOptions) {
             key={rowIndex}
             className={rendererClass(gridOptions.rowClass, defaults.rowClass)}
           >
-            {row}
+            {row.map((cell, cellIndex) => (
+              <Div
+                key={cellIndex}
+                className={rendererClass(defaults.cellClass)}
+              >
+                {cell}
+              </Div>
+            ))}
           </Div>
         ))}
       </Div>
