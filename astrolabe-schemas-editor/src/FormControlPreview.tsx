@@ -277,6 +277,7 @@ export function createPreviewNode(
     form.definition,
     schemaInterface,
     schema,
+    undefined,
     renderer.resolveChildren,
   );
 }
@@ -296,6 +297,7 @@ class FormPreviewStateNode implements FormStateNode {
     public definition: ControlDefinition,
     public schemaInterface: SchemaInterface,
     public parent: SchemaDataNode,
+    public parentNode: FormStateNode | undefined,
     public resolver: FormRenderer["resolveChildren"],
     public resolveChildren?: ChildResolverFunc,
   ) {
@@ -330,6 +332,7 @@ class FormPreviewStateNode implements FormStateNode {
                 cc.definition ?? groupedControl([]),
                 this.schemaInterface,
                 cc.parent ?? this.parent,
+                this,
                 this.resolver,
                 cc.resolveChildren,
               ),
@@ -341,6 +344,9 @@ class FormPreviewStateNode implements FormStateNode {
     }, scope);
   }
 
+  get children() {
+    return this.getChildNodes();
+  }
   get id() {
     return this.form?.id || "GEN";
   }

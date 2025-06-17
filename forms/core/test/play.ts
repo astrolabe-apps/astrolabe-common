@@ -1,43 +1,41 @@
-import { ControlAndSchema } from "./gen";
 import { testNodeState } from "./nodeTester";
-import { CompoundField } from "../lib";
+import {
+  dataControl,
+  dataExpr,
+  defaultEvaluators,
+  DynamicPropertyType,
+} from "../src";
 
 const [c] = [
   {
-    control: {
-      type: "Data",
-      field: " ",
-      renderOptions: { type: "Standard" },
-      children: [],
-    },
     schema: {
-      field: "",
-      displayName: "ROOT",
-      type: "Compound",
+      field: " ",
+      type: "String",
       collection: false,
-      children: [
-        {
-          field: " ",
-          type: "Compound",
-          collection: true,
-          notNullable: true,
-          children: [
-            {
-              field: " ",
-              type: "String",
-              collection: false,
-              notNullable: false,
-              children: null,
-            },
-          ],
-        },
-      ],
+      notNullable: false,
+      children: null,
     },
-    data: { " ": [] },
+    data: { " ": " " },
   },
 ];
-
-const firstChild = testNodeState(c.control, c.schema as CompoundField, {
-  data: c.data,
-});
+const { schema, data } = c;
+const firstChild = testNodeState(
+  dataControl(schema.field, undefined, {
+    dynamic: [
+      {
+        type: DynamicPropertyType.Label,
+        expr: dataExpr(schema.field),
+      },
+    ],
+  }),
+  schema,
+  {
+    evalExpression: (e, ctx) => {
+      debugger;
+      defaultEvaluators[e.type]?.(e, ctx);
+      // ctx.returnResult("COOL");
+    },
+  },
+);
 debugger;
+// expect(firstChild.definition.title).toBe(data[schema.field]);

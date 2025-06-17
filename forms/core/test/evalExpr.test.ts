@@ -3,6 +3,7 @@ import fc from "fast-check";
 import { testNodeState } from "./nodeTester";
 import { randomValueForField, rootCompound } from "./gen-schema";
 import {
+  coerceString,
   dataControl,
   dataExpr,
   defaultEvaluators,
@@ -30,9 +31,17 @@ describe("expression evaluators", () => {
               ],
             }),
             schema,
-            { evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx) },
+            {
+              evalExpression: (e, ctx) => {
+                defaultEvaluators[e.type]?.(e, ctx);
+                // ctx.returnResult("COOL");
+              },
+              data,
+            },
           );
-          expect(firstChild.definition.title).toBe(data[schema.field]);
+          expect(firstChild.definition.title).toBe(
+            coerceString(data[schema.field]),
+          );
         },
       ),
     );
