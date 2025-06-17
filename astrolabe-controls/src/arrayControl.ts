@@ -6,7 +6,7 @@ import { ArrayLogic } from "./controlLogic";
 export function updateElements<V>(
   control: Control<V[] | null | undefined>,
   cb: (elems: Control<V>[]) => Control<V>[],
-): void {
+): Control<V>[] {
   const c = control as unknown as InternalControl;
   const oldElems = c.current.elements as InternalControl[];
   const arrayLogic = c._logic as ArrayLogic;
@@ -18,15 +18,16 @@ export function updateElements<V>(
     (oldElems.length === newElems.length &&
       oldElems.every((x, i) => x === newElems[i]))
   )
-    return;
+    return [];
 
+  const detached = oldElems.filter((x) => !newElems.includes(x));
   runTransaction(c, () => {
     newElems.forEach((x, i) => {
       const xc = x as InternalControl<V>;
       xc.updateParentLink(c, i);
     });
-    oldElems.forEach((x) => {
-      if (!newElems.includes(x)) x.updateParentLink(c, undefined);
+    detached.forEach((x) => {
+      x.updateParentLink(c, undefined);
     });
     arrayLogic._elems = newElems as unknown as InternalControl[];
     c._flags &= ~ControlFlags.ChildInvalid;
@@ -34,6 +35,7 @@ export function updateElements<V>(
     c.setValueImpl(newElems.map((x) => x.current.value));
     c._subscriptions?.applyChange(ControlChange.Structure);
   });
+  return detached as unknown as Control<V>[];
 }
 
 export function addElement<V>(

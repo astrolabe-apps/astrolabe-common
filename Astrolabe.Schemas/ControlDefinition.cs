@@ -35,6 +35,9 @@ public abstract record ControlDefinition(
     [DefaultValue(false)]
     public bool? Hidden { get; set; }
 
+    [DefaultValue(false)]
+    public bool? Readonly { get; set; }
+
     public IEnumerable<DynamicProperty>? Dynamic { get; set; }
 
     public IEnumerable<ControlAdornment>? Adornments { get; set; }
@@ -69,9 +72,6 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     public RenderOptions? RenderOptions { get; set; }
 
     public object? DefaultValue { get; set; }
-
-    [DefaultValue(false)]
-    public bool? Readonly { get; set; }
     
     public bool? DontClearHidden { get; set; }
     

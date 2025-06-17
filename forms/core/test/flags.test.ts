@@ -1,93 +1,147 @@
-import { describe, it } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import fc from "fast-check";
-import { arbitraryControl, arbitraryData } from "./gen";
-import { testNodeState } from "./nodeTester";
-import { DynamicPropertyType, isControlReadonly } from "../src";
+import { arbitraryData, schemaAndControl } from "./gen";
+import { allChildren, testNodeState } from "./nodeTester";
+import {
+  ControlDefinition,
+  dataControl,
+  DynamicPropertyType,
+  isControlReadonly,
+} from "../src";
+import { randomValueForField, rootCompound } from "./gen-schema";
 
-describe("hidden", () => {
+describe("form state flags", () => {
   it("static hidden on all definitions", () => {
     fc.assert(
-      fc.property(arbitraryControl, fc.boolean(), (c, hidden) => {
-        const firstChild = testNodeState({ ...c, hidden });
-        return !!(firstChild.hidden && firstChild.definition.hidden) === hidden;
+      fc.property(schemaAndControl(), fc.boolean(), (c, hidden) => {
+        const firstChild = testNodeState({ ...c.control, hidden }, c.schema);
+        return allChildren(firstChild).every((x) => x.hidden === hidden);
+      }),
+    );
+  });
+
+  it("context hidden on all definitions", () => {
+    fc.assert(
+      fc.property(schemaAndControl(), fc.boolean(), (c, hidden) => {
+        const firstChild = testNodeState(c.control, c.schema, {
+          contextOptions: { hidden },
+        });
+        return allChildren(firstChild).every(
+          (x) => !x.definition.hidden && x.hidden === hidden,
+        );
       }),
     );
   });
 
   it("static disabled on all definitions", () => {
     fc.assert(
-      fc.property(arbitraryControl, fc.boolean(), (c, disabled) => {
-        const firstChild = testNodeState({ ...c, disabled });
-        return (
-          !!(firstChild.disabled && firstChild.definition.disabled) === disabled
-        );
+      fc.property(schemaAndControl(), fc.boolean(), (c, disabled) => {
+        const firstChild = testNodeState({ ...c.control, disabled }, c.schema);
+        return allChildren(firstChild).every((x) => x.disabled === disabled);
+      }),
+    );
+  });
+
+  it("context disabled on all definitions", () => {
+    fc.assert(
+      fc.property(schemaAndControl(), fc.boolean(), (c, disabled) => {
+        const firstChild = testNodeState(c.control, c.schema, {
+          contextOptions: { disabled },
+        });
+        return allChildren(firstChild).every((x) => x.disabled === disabled);
       }),
     );
   });
 
   it("dynamic hidden on all definitions", () => {
     fc.assert(
-      fc.property(arbitraryControl, fc.boolean(), (c, hidden) => {
+      fc.property(schemaAndControl(), fc.boolean(), (c, hidden) => {
         const firstChild = testNodeState(
-          {
-            ...c,
-            dynamic: [
-              {
-                type: DynamicPropertyType.Visible,
-                expr: { type: "Anything" },
-              },
-            ],
-          },
-          (_, ctx) => ctx.returnResult(!hidden),
+          withDynamic(c.control, DynamicPropertyType.Visible),
+          c.schema,
+          { evalExpression: (_, ctx) => ctx.returnResult(!hidden) },
         );
-        return !!(firstChild.hidden && firstChild.definition.hidden) === hidden;
+        return (
+          !!firstChild.definition.hidden === hidden &&
+          allChildren(firstChild).every((x) => x.hidden === hidden)
+        );
       }),
     );
   });
 
   it("dynamic disabled on all definitions", () => {
     fc.assert(
-      fc.property(arbitraryControl, fc.boolean(), (c, disabled) => {
+      fc.property(schemaAndControl(), fc.boolean(), (c, disabled) => {
         const firstChild = testNodeState(
-          {
-            ...c,
-            dynamic: [
-              {
-                type: DynamicPropertyType.Disabled,
-                expr: { type: "Anything" },
-              },
-            ],
-          },
-          (_, ctx) => ctx.returnResult(disabled),
+          withDynamic(c.control, DynamicPropertyType.Disabled),
+          c.schema,
+          { evalExpression: (_, ctx) => ctx.returnResult(disabled) },
         );
         return (
-          !!(firstChild.disabled && firstChild.definition.disabled) === disabled
+          !!firstChild.definition.disabled === disabled &&
+          allChildren(firstChild).every((x) => x.disabled === disabled)
         );
       }),
     );
   });
 
-  it("dynamic readonly on all definitions", () => {
+  it("dynamic readonly on data definitions", () => {
     fc.assert(
-      fc.property(arbitraryData(), fc.boolean(), (c, readonly) => {
+      fc.property(schemaAndControl(), fc.boolean(), (c, readonly) => {
         const firstChild = testNodeState(
-          {
-            ...c,
-            dynamic: [
-              {
-                type: DynamicPropertyType.Readonly,
-                expr: { type: "Anything" },
-              },
-            ],
-          },
-          (_, ctx) => ctx.returnResult(readonly),
+          withDynamic(c.control, DynamicPropertyType.Readonly),
+          c.schema,
+          { evalExpression: (_, ctx) => ctx.returnResult(readonly) },
         );
         return (
-          !!(
-            firstChild.readonly && isControlReadonly(firstChild.definition)
-          ) === readonly
+          !!firstChild.definition.readonly === readonly &&
+          allChildren(firstChild).every((x) => x.readonly === readonly)
         );
       }),
     );
   });
+
+  it("array nodes get cleaned up when removed", () => {
+    fc.assert(
+      fc.property(
+        rootCompound({
+          forceArray: true,
+          notNullable: true,
+        }).chain(([root, first]) =>
+          fc.record({
+            schema: fc.constant(first),
+            data: randomValueForField(root),
+          }),
+        ),
+        (c) => {
+          let cleanUpsAdded = 0;
+          const firstChild = testNodeState(
+            dataControl(c.schema.field, undefined, {
+              children: [
+                withDynamic(dataControl("."), DynamicPropertyType.Label),
+              ],
+            }),
+            c.schema,
+            {
+              data: c.data,
+              evalExpression: (e, ctx) => {
+                cleanUpsAdded++;
+                ctx.scope.addCleanup(() => cleanUpsAdded--);
+              },
+            },
+          );
+          expect(cleanUpsAdded).toBe(firstChild.children.length);
+          firstChild.dataNode!.control.value = [];
+          return expect(cleanUpsAdded).toBe(0);
+        },
+      ),
+    );
+  });
 });
+
+function withDynamic(
+  c: ControlDefinition,
+  type: DynamicPropertyType,
+): ControlDefinition {
+  return { ...c, dynamic: [{ type, expr: { type: "Anything" } }] };
+}

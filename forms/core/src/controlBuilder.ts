@@ -140,9 +140,14 @@ export function dynamicDisabled(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.Disabled, expr };
 }
 
-export function fieldExpr(field: string): DataExpression {
+export function dataExpr(field: string): DataExpression {
   return { type: ExpressionType.Data, field };
 }
+
+/**
+ * @deprecated Use dataExpr
+ */
+export const fieldExpr = dataExpr;
 
 export function fieldEqExpr(field: string, value: any): DataMatchExpression {
   return { type: ExpressionType.DataMatch, field, value };

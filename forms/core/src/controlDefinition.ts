@@ -23,6 +23,7 @@ export interface ControlDefinition {
   title?: string | null;
   hidden?: boolean | null;
   disabled?: boolean | null;
+  readonly?: boolean | null;
   styleClass?: string | null;
   textClass?: string | null;
   layoutClass?: string | null;
@@ -134,7 +135,6 @@ export interface DataControlDefinition extends ControlDefinition {
   required?: boolean | null;
   renderOptions?: RenderOptions | null;
   defaultValue?: any;
-  readonly?: boolean | null;
   validators?: SchemaValidator[] | null;
   hideTitle?: boolean | null;
   dontClearHidden?: boolean | null;
@@ -652,7 +652,7 @@ export function fontAwesomeIcon(icon: string) {
  * @returns True if the control definition is readonly, false otherwise.
  */
 export function isControlReadonly(c: ControlDefinition): boolean {
-  return isDataControl(c) && !!c.readonly;
+  return !!c.readonly;
 }
 
 /**

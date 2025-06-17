@@ -89,6 +89,10 @@ export interface FormStateNode extends FormStateBase {
   variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
   meta: Record<string, any>;
   form: FormNode | undefined | null;
+  children: FormStateNode[];
+  /**
+   * @deprecated Use children
+   */
   getChildNodes(): FormStateNode[];
   getChildCount(): number;
   getChild(index: number): FormStateNode | undefined;
@@ -242,6 +246,7 @@ export function createFormStateNode(
     formNode,
     options,
     parent,
+    undefined,
   );
 }
 
@@ -259,6 +264,7 @@ class FormStateNodeImpl implements FormStateNode {
     public form: FormNode | undefined | null,
     public options: FormStateOptions,
     public parent: SchemaDataNode,
+    public parentNode: FormStateNode | undefined,
     public resolveChildren?: ChildResolverFunc,
   ) {
     const base = newControl<FormStateBaseImpl>({
@@ -272,11 +278,15 @@ class FormStateNodeImpl implements FormStateNode {
     });
     this.base = base;
     base.meta["$FormState"] = this;
-    initFormState(definition, this);
+    initFormState(definition, this, parentNode);
   }
 
   get schemaInterface(): SchemaInterface {
     return this.options.schemaInterface;
+  }
+
+  get children() {
+    return this.getChildNodes();
   }
 
   get uniqueId() {
@@ -346,7 +356,11 @@ class FormStateNodeImpl implements FormStateNode {
   }
 }
 
-function initFormState(def: ControlDefinition, impl: FormStateNodeImpl) {
+function initFormState(
+  def: ControlDefinition,
+  impl: FormStateNodeImpl,
+  parentNode: FormStateNode | undefined,
+) {
   const { base, options, parent } = impl;
   const { evalExpression, runAsync, schemaInterface, contextOptions } = options;
 
@@ -398,6 +412,7 @@ function initFormState(def: ControlDefinition, impl: FormStateNodeImpl) {
     hidden,
     () =>
       !!(
+        parentNode?.hidden ||
         cf.hidden ||
         definition.hidden ||
         (dataNode.value &&
@@ -408,11 +423,11 @@ function initFormState(def: ControlDefinition, impl: FormStateNodeImpl) {
 
   updateComputedValue(
     readonly,
-    () => !!cf.readonly || isControlReadonly(definition),
+    () => parentNode?.readonly || cf.readonly || isControlReadonly(definition),
   );
   updateComputedValue(
     disabled,
-    () => !!cf.disabled || isControlDisabled(definition),
+    () => parentNode?.disabled || cf.disabled || isControlDisabled(definition),
   );
 
   updateComputedValue(fieldOptions, () => {
@@ -536,7 +551,7 @@ function initChildren(formImpl: FormStateNodeImpl) {
     const kids =
       resolveChildren?.(formImpl) ?? options.resolveChildren(formImpl);
     const scope = base;
-    updateElements(children, () =>
+    const detached = updateElements(children, () =>
       kids.map(({ childKey, create }) => {
         let child = childMap.get(childKey);
         if (!child) {
@@ -561,6 +576,7 @@ function initChildren(formImpl: FormStateNodeImpl) {
             cc.node === undefined ? formImpl.form : cc.node,
             co,
             cc.parent ?? formImpl.parent,
+            formImpl,
             cc.resolveChildren,
           );
           child = fsChild.base;
@@ -569,5 +585,6 @@ function initChildren(formImpl: FormStateNodeImpl) {
         return child;
       }),
     );
+    detached.forEach((child) => child.cleanup());
   }, formImpl.base);
 }
