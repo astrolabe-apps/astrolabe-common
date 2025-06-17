@@ -10,8 +10,8 @@ import {
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { cn } from "../utils";
 import { Control, useControl } from "@react-typed-forms/core";
-import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { FontAwesome6 } from "@expo/vector-icons";
+import { useMemo } from "react";
 
 const Dialog = DialogPrimitive.Root;
 
@@ -138,6 +138,8 @@ export function RNDialog({
   const dialogOpen = open ?? useControl(false);
   const { width } = useWindowDimensions();
 
+  const maxWidth = useMemo(() => Math.min(width - 32, 448), [width]);
+
   return (
     <Dialog
       open={dialogOpen.value}
@@ -153,11 +155,13 @@ export function RNDialog({
       <DialogContent
         closeOnOutsidePress={closeOnOutsidePress}
         className={cn("min-w-[200px] min-h-[200px]", containerClass)}
-        style={{ maxWidth: width - 16 }}
+        style={{ maxWidth }}
         portalHost={Platform.select({ ios: portalHost })}
       >
         <View
-          className={"flex flex-row gap-[10px] justify-between items-start"}
+          className={
+            "flex flex-row gap-[10px] justify-between items-start w-full"
+          }
         >
           <DialogTitle asChild className={"flex-1 flex-shrink title2"}>
             {title}
