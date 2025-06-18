@@ -7,7 +7,7 @@ import {
   renderControlLayout,
   Visibility,
 } from "./controlRender";
-import React, { FC, useCallback, useEffect, useMemo } from "react";
+import React, {FC, MutableRefObject, useCallback, useEffect, useMemo} from "react";
 import {
   ControlDefinition,
   createFormStateNode,
@@ -36,6 +36,7 @@ export interface RenderFormProps {
   form: FormNode;
   renderer: FormRenderer;
   options?: ControlRenderOptions;
+  stateRef?: MutableRefObject<FormStateNode|null>;
 }
 
 /* @trackControls */
@@ -44,6 +45,7 @@ export function RenderForm({
   form,
   renderer,
   options = {},
+    stateRef,
 }: RenderFormProps) {
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const { runAsync } = useAsyncRunner();
@@ -59,8 +61,14 @@ export function RenderForm({
       }),
     [],
   );
+  if (stateRef)
+    stateRef.current = state;
+  useEffect(() => {
+    return () => {
+      state.cleanup();
+    }
+  }, [state]);
   return <RenderFormNode node={state} renderer={renderer} options={options} />;
-  // formState.getControlState(data, form, options, runAsync);
 }
 
 export interface RenderFormNodeProps {

@@ -16,9 +16,9 @@ import {
 import { SchemaDataNode } from "./schemaDataNode";
 import { FormNode } from "./formNode";
 import { createScopedComputed } from "./util";
-import { FormStateNode } from "./evaluateForm";
 import { SchemaInterface } from "./schemaInterface";
 import { FieldOption } from "./schemaField";
+import { FormStateNode } from "./formStateNode";
 
 export type ChildResolverFunc = (c: FormStateNode) => ChildNodeSpec[];
 

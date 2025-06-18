@@ -1,3 +1,11 @@
+import { FormNode, lookupDataNode } from "./formNode";
+import {
+  hideDisplayOnly,
+  SchemaDataNode,
+  validDataNode,
+} from "./schemaDataNode";
+import { SchemaInterface } from "./schemaInterface";
+import { FieldOption } from "./schemaField";
 import {
   ChangeListenerFunc,
   CleanupScope,
@@ -8,6 +16,9 @@ import {
   updateComputedValue,
   updateElements,
 } from "@astroapps/controls";
+import { createEvalExpr, ExpressionEvalContext } from "./evalExpression";
+import { EntityExpression } from "./entityExpression";
+import { createScoped } from "./util";
 import {
   AnyControlDefinition,
   ControlAdornmentType,
@@ -24,20 +35,9 @@ import {
   isTextDisplay,
   TextDisplay,
 } from "./controlDefinition";
-import { createScoped } from "./util";
-import { EntityExpression } from "./entityExpression";
-import { SchemaInterface } from "./schemaInterface";
-import { FormNode, lookupDataNode } from "./formNode";
-import {
-  hideDisplayOnly,
-  SchemaDataNode,
-  validDataNode,
-} from "./schemaDataNode";
-import { setupValidation } from "./validators";
-import { createEvalExpr, ExpressionEvalContext } from "./evalExpression";
 import { createOverrideProxy, KeysOfUnion, NoOverride } from "./overrideProxy";
-import { FieldOption } from "./schemaField";
 import { ChildNodeSpec, ChildResolverFunc } from "./resolveChildren";
+import { setupValidation } from "./validators";
 import { groupedControl } from "./controlBuilder";
 
 export type EvalExpr = <A>(
@@ -95,6 +95,7 @@ export interface FormStateNode extends FormStateBase {
   getChildCount(): number;
   getChild(index: number): FormStateNode | undefined;
   ensureMeta<A>(key: string, init: (scope: CleanupScope) => A): A;
+  cleanup(): void;
 }
 
 interface FormStateOptions {
@@ -292,7 +293,9 @@ class FormStateNodeImpl implements FormStateNode {
   }
 
   get children() {
-    return this.getChildNodes();
+    return this.base.fields.children.elements.map(
+      (x) => x.meta["$FormState"] as FormStateNode,
+    );
   }
 
   get uniqueId() {
@@ -354,10 +357,8 @@ class FormStateNodeImpl implements FormStateNode {
     return this.base.fields.children.elements.length;
   }
 
-  getChildNodes() {
-    return this.base.fields.children.elements.map(
-      (x) => x.meta["$FormState"] as FormStateNode,
-    );
+  cleanup() {
+    this.base.cleanup();
   }
 
   get resolved() {
@@ -621,4 +622,26 @@ function initChildren(formImpl: FormStateNodeImpl) {
     );
     detached.forEach((child) => child.cleanup());
   }, formImpl.base);
+}
+
+/**
+ * Interface representing the form context data.
+ */
+export interface FormContextData {
+  option?: FieldOption;
+  optionSelected?: boolean;
+}
+
+export function visitFormState<A>(
+  node: FormStateNode,
+  visitFn: (node: FormStateNode) => A | undefined,
+): A | undefined {
+  const v = visitFn(node);
+  if (v !== undefined) return v;
+  const childCount = node.getChildCount();
+  for (let i = 0; i < childCount; i++) {
+    const res = visitFormState(node.getChild(i)!, visitFn);
+    if (res !== undefined) return res;
+  }
+  return undefined;
 }

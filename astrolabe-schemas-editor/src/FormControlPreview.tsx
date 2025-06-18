@@ -1,5 +1,6 @@
 import {
   CleanupScope,
+  CleanupScopeImpl,
   Control,
   createCleanupScope,
   createScopedEffect,
@@ -9,6 +10,8 @@ import {
 } from "@react-typed-forms/core";
 import React, { Fragment, HTMLAttributes, ReactNode, useMemo } from "react";
 import {
+  ChildNodeSpec,
+  ChildResolverFunc,
   ControlDataContext,
   ControlDefinition,
   createScoped,
@@ -23,6 +26,8 @@ import {
   FormStateNode,
   getDisplayOnlyOptions,
   getGroupClassOverrides,
+  groupedControl,
+  isCompoundField,
   isControlDisplayOnly,
   isDataControl,
   isGroupControl,
@@ -32,11 +37,6 @@ import {
   SchemaDataNode,
   SchemaInterface,
   textDisplayControl,
-  ChildNodeSpec,
-  isCompoundNode,
-  isCompoundField,
-  groupedControl,
-  ChildResolverFunc,
 } from "@react-typed-forms/schemas";
 import { useScrollIntoView } from "./useScrollIntoView";
 
@@ -129,12 +129,12 @@ export function FormControlPreview(props: FormControlPreviewProps) {
 
   const groupClasses = getGroupClassOverrides(definition);
   const layout = renderControlLayout({
-    renderer,  
+    renderer,
     formNode: node,
     renderChild: (child, c) => {
       return (
         <FormControlPreview
-          key={child.childKey} 
+          key={child.childKey}
           node={child as FormPreviewStateNode}
           {...groupClasses}
           displayOnly={c?.displayOnly || displayOnly}
@@ -288,7 +288,7 @@ class FormPreviewStateNode implements FormStateNode {
   meta: Record<string, any> = {};
   _dataNode: Control<SchemaDataNode | undefined>;
   _children: Control<FormPreviewStateNode[]>;
-  scope: CleanupScope;
+  scope: CleanupScopeImpl;
   uniqueId = (++previewNodeId).toString();
 
   constructor(
@@ -343,13 +343,16 @@ class FormPreviewStateNode implements FormStateNode {
       });
     }, scope);
   }
-  
+
   validate(): boolean {
     return true;
   }
-  
-  setTouched(b: boolean, notChildren?: boolean) {
+
+  cleanup() {
+    this.scope.cleanup();
   }
+
+  setTouched(b: boolean, notChildren?: boolean) {}
 
   get children() {
     return this.getChildNodes();

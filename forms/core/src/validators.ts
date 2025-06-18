@@ -6,11 +6,7 @@ import {
   SchemaValidator,
   ValidatorType,
 } from "./schemaValidator";
-import {
-  ControlDefinition,
-  DataControlDefinition,
-  isDataControl,
-} from "./controlDefinition";
+import { ControlDefinition, isDataControl } from "./controlDefinition";
 import { SchemaDataNode } from "./schemaDataNode";
 import {
   CleanupScope,
@@ -22,12 +18,10 @@ import {
 } from "@astroapps/controls";
 import { ValidationMessageType } from "./schemaField";
 import { SchemaInterface } from "./schemaInterface";
-
-import { FormNode } from "./formNode";
 import { jsonataEval } from "./evalExpression";
 import { ExpressionType } from "./entityExpression";
 import { createScopedComputed } from "./util";
-import { FormContextOptions } from "./evaluateForm";
+import { FormContextOptions } from "./formStateNode";
 
 export interface ValidationEvalContext {
   addSync(validate: (value: unknown) => string | undefined | null): void;
