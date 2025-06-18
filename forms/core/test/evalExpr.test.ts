@@ -6,8 +6,11 @@ import {
   coerceString,
   dataControl,
   dataExpr,
+  dataMatchExpr,
   defaultEvaluators,
   DynamicPropertyType,
+  EntityExpression,
+  SchemaField,
 } from "../src";
 
 describe("expression evaluators", () => {
@@ -21,24 +24,7 @@ describe("expression evaluators", () => {
           }),
         ),
         ({ schema, data }) => {
-          const firstChild = testNodeState(
-            dataControl(schema.field, undefined, {
-              dynamic: [
-                {
-                  type: DynamicPropertyType.Label,
-                  expr: dataExpr(schema.field),
-                },
-              ],
-            }),
-            schema,
-            {
-              evalExpression: (e, ctx) => {
-                defaultEvaluators[e.type]?.(e, ctx);
-                // ctx.returnResult("COOL");
-              },
-              data,
-            },
-          );
+          const firstChild = labelExpr(schema, data, dataExpr(schema.field));
           expect(firstChild.definition.title).toBe(
             coerceString(data[schema.field]),
           );
@@ -46,4 +32,43 @@ describe("expression evaluators", () => {
       ),
     );
   });
+
+  it("data match expression", () => {
+    fc.assert(
+      fc.property(
+        rootCompound().chain(([root, f]) =>
+          fc.record({
+            schema: fc.constant(f),
+            data: randomValueForField(root),
+          }),
+        ),
+        ({ schema, data }) => {
+          const firstChild = labelExpr(
+            schema,
+            data,
+            dataMatchExpr(schema.field, data[schema.field]),
+          );
+          expect(firstChild.definition.title).toBe("true");
+        },
+      ),
+    );
+  });
 });
+
+function labelExpr(schema: SchemaField, data: any, expr: EntityExpression) {
+  return testNodeState(
+    dataControl(schema.field, undefined, {
+      dynamic: [
+        {
+          type: DynamicPropertyType.Label,
+          expr,
+        },
+      ],
+    }),
+    schema,
+    {
+      evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
+      data,
+    },
+  );
+}

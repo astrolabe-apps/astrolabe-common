@@ -4,7 +4,9 @@
     <attachedFolders>
       <Path>.</Path>
     </attachedFolders>
-    <explicitIncludes />
+    <explicitIncludes>
+      <Path>forms/core</Path>
+    </explicitIncludes>
     <explicitExcludes />
   </component>
 </project>

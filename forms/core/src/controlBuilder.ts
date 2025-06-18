@@ -149,7 +149,12 @@ export function dataExpr(field: string): DataExpression {
  */
 export const fieldExpr = dataExpr;
 
-export function fieldEqExpr(field: string, value: any): DataMatchExpression {
+/**
+ * @deprecated Use dataMatchExpr
+ */
+export const fieldEqExpr = dataMatchExpr;
+
+export function dataMatchExpr(field: string, value: any): DataMatchExpression {
   return { type: ExpressionType.DataMatch, field, value };
 }
 export function jsonataExpr(expression: string): JsonataExpression {
