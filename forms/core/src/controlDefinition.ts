@@ -366,7 +366,7 @@ export interface GroupElementRenderer extends GroupRenderOptions {
   value: any;
 }
 
-export interface GridRenderer extends GroupRenderOptions {
+export interface GridRendererOptions extends GroupRenderOptions {
   type: GroupRenderType.Grid;
   columns?: number | null;
   rowClass?: string | null;
@@ -471,7 +471,7 @@ export function visitControlDefinition<A>(
 }
 export function isGridRenderer(
   options: GroupRenderOptions,
-): options is GridRenderer {
+): options is GridRendererOptions {
   return options.type === GroupRenderType.Grid;
 }
 
@@ -487,9 +487,7 @@ export function isDialogRenderer(
   return options.type === GroupRenderType.Dialog;
 }
 
-export function isInlineRenderer(
-  options: GroupRenderOptions,
-): options is GridRenderer {
+export function isInlineRenderer(options: GroupRenderOptions): boolean {
   return options.type === GroupRenderType.Inline;
 }
 
