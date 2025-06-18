@@ -14,9 +14,9 @@ public class SmtpEmailSenderService : IEmailSenderService
         _from = from;
     }
 
-    public async Task SendEmail(string to, string subject, string message, bool notHtml = false)
+    public async Task SendEmail(string to, string subject, string message, bool notHtml = false, string? from = null)
     {
         using var smtpClient = _smtpClientBuilder(); 
-        await smtpClient.SendMailAsync(new MailMessage(_from, to, subject, message) {IsBodyHtml = !notHtml});
+        await smtpClient.SendMailAsync(new MailMessage(from ?? _from, to, subject, message) {IsBodyHtml = !notHtml});
     }
 }
