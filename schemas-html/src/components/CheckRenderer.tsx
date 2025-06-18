@@ -258,7 +258,7 @@ function CheckBoxSelected({
         className={options.checkClass}
         renderer={renderer}
       />
-      {p.label && renderer.renderLabel(p.label, undefined, undefined)}
+      {p.label?.label && renderer.renderLabel(p.label, undefined, undefined)}
     </Div>
   );
 }

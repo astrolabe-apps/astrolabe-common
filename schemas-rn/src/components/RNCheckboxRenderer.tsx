@@ -76,7 +76,7 @@ export const RNCheckbox = React.forwardRef<
     <CheckboxPrimitive.Root
       ref={ref}
       className={cn(
-        "web:peer h-4 w-4 native:h-[20] native:w-[20] shrink-0 rounded-sm native:rounded border border-primary web:ring-offset-background web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+        "web:peer h-4 w-4 native:h-[24px] native:w-[24px] shrink-0 rounded-sm native:rounded border border-accent web:ring-offset-background web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}
@@ -89,7 +89,7 @@ export const RNCheckbox = React.forwardRef<
           entering={ZoomIn.duration(150)}
           exiting={ZoomOut.duration(150)}
         >
-          <Icon name={"check"} className={"text-primary-500"} />
+          <Icon name={"check"} className={"text-accent text-[18px]"} />
         </Animated.View>
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
