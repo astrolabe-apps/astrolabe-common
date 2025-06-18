@@ -33,6 +33,7 @@ import {
   schemaForFieldPath,
   SchemaTags,
   stringField,
+  textDisplayControl,
 } from "@react-typed-forms/schemas";
 import {
   ColumnDef,
@@ -193,6 +194,7 @@ export function createDataGridRenderer(
 
       const searchField = dataGridOptions.searchField;
       const dataChild = formNode.getChild(1)!;
+
       return (
         <DataGridControlRenderer
           dataContext={dataContext}
@@ -304,8 +306,7 @@ export function createDataGridRenderer(
             const colOptions = d.adornments?.find(isColumnAdornment);
             return {
               definition: forHeader
-                ? {
-                    ...d,
+                ? textDisplayControl(d.title!, {
                     dynamic: colOptions?.visible?.type
                       ? [
                           {
@@ -314,7 +315,9 @@ export function createDataGridRenderer(
                           },
                         ]
                       : [],
-                  }
+                    adornments: colOptions ? [colOptions] : [],
+                    title: d.title,
+                  })
                 : d,
               node: forHeader ? null : cn,
               parent: c.parent,
