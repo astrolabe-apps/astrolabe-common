@@ -129,12 +129,12 @@ export function FormControlPreview(props: FormControlPreviewProps) {
 
   const groupClasses = getGroupClassOverrides(definition);
   const layout = renderControlLayout({
-    renderer,
+    renderer,  
     formNode: node,
-    renderChild: (k, child, c) => {
+    renderChild: (child, c) => {
       return (
         <FormControlPreview
-          key={child.childKey}
+          key={child.childKey} 
           node={child as FormPreviewStateNode}
           {...groupClasses}
           displayOnly={c?.displayOnly || displayOnly}
@@ -342,6 +342,13 @@ class FormPreviewStateNode implements FormStateNode {
         });
       });
     }, scope);
+  }
+  
+  validate(): boolean {
+    return true;
+  }
+  
+  setTouched(b: boolean, notChildren?: boolean) {
   }
 
   get children() {

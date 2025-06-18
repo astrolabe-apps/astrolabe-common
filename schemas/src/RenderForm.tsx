@@ -124,7 +124,7 @@ export function RenderFormNode({
   const labelAndChildren = renderControlLayout({
     formNode: state,
     renderer,
-    renderChild: (k, child, options) => {
+    renderChild: (child, options) => {
       const overrideClasses = getGroupClassOverrides(definition);
       const { actionOnClick, ...renderOptions } = options ?? {};
       const allChildOptions = {
@@ -138,7 +138,7 @@ export function RenderFormNode({
       };
       return (
         <RenderFormNode
-          key={k}
+          key={child.childKey}
           node={child}
           renderer={renderer}
           options={allChildOptions}

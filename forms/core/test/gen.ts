@@ -123,12 +123,12 @@ export function arbitraryControl(
 
 export function schemaAndControl(): Arbitrary<{
   control: ControlDefinition;
-  schema: CompoundField;
+  schema: SchemaField;
 }> {
-  return rootCompound().chain((root) =>
-    arbitraryControl(root[0]).map((x) => ({
+  return rootCompound().chain((s) =>
+    arbitraryControl(s.root).map((x) => ({
       control: x.control,
-      schema: root[0],
+      schema: s.schema,
     })),
   );
 }

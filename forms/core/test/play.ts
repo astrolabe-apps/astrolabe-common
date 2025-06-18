@@ -4,38 +4,28 @@ import {
   dataExpr,
   defaultEvaluators,
   DynamicPropertyType,
+  groupedControl,
 } from "../src";
 
 const [c] = [
   {
     schema: {
-      field: " ",
+      field: "toString",
       type: "String",
       collection: false,
       notNullable: false,
       children: null,
     },
-    data: { " ": " " },
+    data: { toString: " " },
   },
 ];
+
 const { schema, data } = c;
-const firstChild = testNodeState(
-  dataControl(schema.field, undefined, {
-    dynamic: [
-      {
-        type: DynamicPropertyType.Label,
-        expr: dataExpr(schema.field),
-      },
-    ],
-  }),
+const state = testNodeState(
+  groupedControl([dataControl(schema.field, undefined, { required: true })]),
   schema,
-  {
-    evalExpression: (e, ctx) => {
-      debugger;
-      defaultEvaluators[e.type]?.(e, ctx);
-      // ctx.returnResult("COOL");
-    },
-  },
+  { data },
 );
-debugger;
-// expect(firstChild.definition.title).toBe(data[schema.field]);
+console.log(state.valid);
+state.parent.control.value = {};
+console.log(state.valid);

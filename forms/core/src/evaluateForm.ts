@@ -90,10 +90,8 @@ export interface FormStateNode extends FormStateBase {
   meta: Record<string, any>;
   form: FormNode | undefined | null;
   children: FormStateNode[];
-  /**
-   * @deprecated Use children
-   */
-  getChildNodes(): FormStateNode[];
+  setTouched(b: boolean, notChildren?: boolean): void;
+  validate(): boolean;
   getChildCount(): number;
   getChild(index: number): FormStateNode | undefined;
   ensureMeta<A>(key: string, init: (scope: CleanupScope) => A): A;
@@ -231,7 +229,15 @@ export function coerceStyle(v: unknown): any {
 }
 
 export function coerceString(v: unknown): string {
-  return typeof v === "string" ? v : (v?.toString() ?? "");
+  if (typeof v === "string") return v;
+  if (v == null) return "";
+  switch (typeof v) {
+    case "number":
+    case "boolean":
+      return v.toString();
+    default:
+      return JSON.stringify(v);
+  }
 }
 
 export function createFormStateNode(
@@ -298,6 +304,20 @@ class FormStateNodeImpl implements FormStateNode {
 
   get touched(): boolean {
     return this.base.touched;
+  }
+
+  setTouched(touched: boolean, notChildren?: boolean) {
+    this.base.setTouched(touched, notChildren);
+  }
+
+  validate(): boolean {
+    this.children.forEach((child) => {
+      child.validate();
+    });
+    if (this.dataNode) {
+      this.dataNode.control.validate();
+    }
+    return this.valid;
   }
 
   get readonly() {
@@ -455,6 +475,20 @@ function initFormState(
     const dn = dataNode.value;
     if (dn) {
       dn.control.disabled = disabled.value;
+    }
+  }, scope);
+
+  createSyncEffect(() => {
+    const dn = dataNode.value;
+    if (dn) {
+      dn.control.touched = base.touched;
+    }
+  }, scope);
+
+  createSyncEffect(() => {
+    const dn = dataNode.value;
+    if (dn) {
+      base.touched = dn.control.touched;
     }
   }, scope);
 

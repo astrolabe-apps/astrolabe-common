@@ -1,17 +1,14 @@
 import {
   createGroupRenderer,
-  FormNode,
+  createScoped,
+  FormStateNode,
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
   TabsRenderOptions,
-  FormStateNode,
-  createScoped,
 } from "@react-typed-forms/schemas";
 import React, { Fragment } from "react";
 import clsx from "clsx";
-import { VisibleChildrenRenderer } from "./VisibleChildrenRenderer";
-import { newControl } from "@react-typed-forms/core";
 
 export interface DefaultTabsRenderOptions {
   className?: string;
@@ -27,16 +24,10 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
   return createGroupRenderer(
     (p, renderer) => {
       return (
-        <VisibleChildrenRenderer
-          render={renderAllTabs}
-          dataContext={p.dataContext}
-          parentFormNode={p.formNode}
-          parent={p}
-          props={{
-            groupProps: p,
-            tabOptions: p.renderOptions as TabsRenderOptions,
-            options: options,
-          }}
+        <TabsRenderer
+          groupProps={p}
+          tabOptions={p.renderOptions as TabsRenderOptions}
+          options={options}
         />
       );
     },
@@ -45,18 +36,15 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
     },
   );
 
-  function renderAllTabs(
-    {
-      options,
-      groupProps: { designMode, formNode, className, renderChild },
-      tabOptions,
-    }: {
-      options: DefaultTabsRenderOptions;
-      groupProps: GroupRendererProps;
-      tabOptions: TabsRenderOptions;
-    },
-    isVisible: (i: number) => boolean,
-  ) {
+  function TabsRenderer({
+    options,
+    groupProps: { designMode, formNode, className, renderChild },
+    tabOptions,
+  }: {
+    options: DefaultTabsRenderOptions;
+    groupProps: GroupRendererProps;
+    tabOptions: TabsRenderOptions;
+  }) {
     const tabIndex = formNode.ensureMeta("tabIndex", (c) => createScoped(c, 0));
     const {
       tabClass,
@@ -68,10 +56,10 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
     } = options;
     const currentTab = tabIndex.value;
     return designMode ? (
-      <>{formNode.getChildNodes().map((x, i) => renderTabs([x], i))}</>
+      <>{formNode.children.map((x, i) => renderTabs([x], i))}</>
     ) : (
       renderTabs(
-        formNode.getChildNodes().filter((x, i) => isVisible(i)),
+        formNode.children.filter((x, i) => !x.hidden),
         0,
       )
     );
@@ -101,7 +89,7 @@ export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
             ))}
           </ul>
           <div className={rendererClass(tabOptions.contentClass, contentClass)}>
-            {renderChild(currentTab, tabs[currentTab])}
+            {renderChild(tabs[currentTab])}
           </div>
         </div>
       );

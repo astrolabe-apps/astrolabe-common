@@ -273,14 +273,16 @@ export class ObjectLogic extends ControlLogic {
   valueChanged() {
     const ov = this.control._value as Record<string, unknown> | null;
     Object.entries(this._fields).forEach(([k, c]) => {
-      c.setValueImpl(ov?.[k], this.control);
+      const childValue = ov && Object.hasOwn(ov, k) ? ov[k] : undefined;
+      c.setValueImpl(childValue, this.control);
     });
   }
 
   initialValueChanged() {
     const ov = this.control._initialValue as Record<string, unknown> | null;
     Object.entries(this._fields).forEach(([k, c]) => {
-      c.setInitialValueImpl(ov?.[k]);
+      const childValue = ov && Object.hasOwn(ov, k) ? ov[k] : undefined;
+      c.setInitialValueImpl(childValue);
     });
   }
 

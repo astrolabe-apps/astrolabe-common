@@ -179,10 +179,7 @@ export function setupValidation(
   hidden: Control<boolean>,
   runAsync: (af: () => void) => void,
 ) {
-  const validationEnabled = createScopedComputed(
-    scope,
-    () => !hidden.value,
-  );
+  const validationEnabled = createScopedComputed(scope, () => !hidden.value);
   const validatorsScope = createCleanupScope();
   createEffect(
     () => {

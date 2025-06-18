@@ -501,7 +501,6 @@ export interface ChildRendererOptions {
 }
 
 export type ChildRenderer = (
-  k: Key,
   child: FormStateNode,
   options?: ChildRendererOptions,
 ) => ReactNode;
@@ -619,9 +618,7 @@ export function renderControlLayout(
     };
 
     function renderActionGroup() {
-      return (
-        <>{formNode.getChildNodes().map((x) => renderChild(x.childKey, x))}</>
-      );
+      return <>{formNode.children.map((x) => renderChild(x))}</>;
     }
   }
   if (isDisplayControl(c)) {
@@ -954,10 +951,10 @@ export function applyArrayLengthRestrictions(
 
 export function fieldOptionAdornment(p: DataRendererProps) {
   return (o: FieldOption, fieldIndex: number, selected: boolean) => {
-    const fieldChild = p.formNode
-      .getChildNodes()
-      .find((x) => x.meta["fieldOptionValue"] === o.value);
-    if (fieldChild) return p.renderChild(fieldChild.childKey, fieldChild);
+    const fieldChild = p.formNode.children.find(
+      (x) => x.meta["fieldOptionValue"] === o.value,
+    );
+    if (fieldChild) return p.renderChild(fieldChild);
     return undefined;
   };
 }

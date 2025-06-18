@@ -1,8 +1,5 @@
 * nuances with default value
 * Data grid group
 
-* Column nodes
-* Ensure cleanup of nodes - child changes and react, what actually needs cleaning up?
-* Cleanup renderChild - no need for key
-* Rename getChildNodes() to just be children property
-* Store the FormStateNodeImpl straight in the control
+
+* Test for jsonata path updating on change of array index

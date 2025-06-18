@@ -189,7 +189,7 @@ export function createDataGridRenderer(
           renderOptions as DataGridOptions & RenderOptions,
           options,
         ) ?? {};
-      const headerChild = formNode.getChild(0)!.getChildNodes();
+      const headerChild = formNode.getChild(0)!.children;
 
       const searchField = dataGridOptions.searchField;
       const dataChild = formNode.getChild(1)!;
@@ -419,7 +419,7 @@ function DataGridControlRenderer({
           getRowSpan,
           render: (row: FormStateNode, rowIndex: number) => {
             if (colOptions?.rowIndex) return rowIndex + 1;
-            return renderChild(i, row.getChild(i)!, {
+            return renderChild(row.getChild(i)!, {
               displayOnly: renderOptions.displayOnly,
             });
           },

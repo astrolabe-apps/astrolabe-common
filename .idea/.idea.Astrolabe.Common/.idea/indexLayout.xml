@@ -5,6 +5,7 @@
       <Path>.</Path>
     </attachedFolders>
     <explicitIncludes>
+      <Path>astrolabe-schemas-editor</Path>
       <Path>forms/core</Path>
     </explicitIncludes>
     <explicitExcludes />

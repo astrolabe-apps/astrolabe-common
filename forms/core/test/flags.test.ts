@@ -1,12 +1,13 @@
 import { describe, expect, it } from "@jest/globals";
 import fc from "fast-check";
-import { arbitraryData, schemaAndControl } from "./gen";
+import { schemaAndControl } from "./gen";
 import { allChildren, testNodeState } from "./nodeTester";
 import {
   ControlDefinition,
   dataControl,
   DynamicPropertyType,
-  isControlReadonly,
+  groupedControl,
+  isDataControl,
 } from "../src";
 import { randomValueForField, rootCompound } from "./gen-schema";
 
@@ -101,15 +102,52 @@ describe("form state flags", () => {
     );
   });
 
+  it("touched flag flows through to children", () => {
+    fc.assert(
+      fc.property(schemaAndControl(), (c) => {
+        const firstChild = testNodeState(groupedControl([c.control]), c.schema);
+        expect(firstChild.touched).toBe(false);
+        firstChild.setTouched(true);
+        allChildren(firstChild).forEach((x) => expect(x.touched).toBe(true));
+        firstChild.setTouched(false);
+        allChildren(firstChild).forEach((x) => expect(x.touched).toBe(false));
+      }),
+    );
+  });
+
+  it("touched flag syncs with control", () => {
+    fc.assert(
+      fc.property(
+        rootCompound().map((x) => x.schema),
+        (schema) => {
+          const firstChild = testNodeState(
+            groupedControl([dataControl(schema.field)]),
+            schema,
+          );
+          const dataChild = firstChild.children[0];
+          const childControl = dataChild.dataNode!;
+          expect(firstChild.touched).toBe(false);
+          firstChild.setTouched(true);
+          allChildren(firstChild).forEach((x) => expect(x.touched).toBe(true));
+          expect(childControl.control.touched).toBe(true);
+          childControl.control.touched = true;
+          expect(dataChild.touched).toBe(true);
+          childControl.control.touched = false;
+          expect(dataChild.touched).toBe(false);
+        },
+      ),
+    );
+  });
+
   it("array nodes get cleaned up when removed", () => {
     fc.assert(
       fc.property(
         rootCompound({
           forceArray: true,
           notNullable: true,
-        }).chain(([root, first]) =>
+        }).chain(({ root, schema }) =>
           fc.record({
-            schema: fc.constant(first),
+            schema: fc.constant(schema),
             data: randomValueForField(root),
           }),
         ),

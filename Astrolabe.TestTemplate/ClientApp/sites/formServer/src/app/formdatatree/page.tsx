@@ -139,7 +139,6 @@ export default function FormDataTreePage() {
             onSelect={(n) => (selected.value = n[0]?.data)}
             data={[rootNode]}
             idAccessor={(x) => x.uniqueId!}
-            childrenAccessor={(x) => x.getChildNodes()}
             children={FormNodeRenderer}
           />
         </div>
@@ -154,7 +153,7 @@ export default function FormDataTreePage() {
 }
 
 function getWholeTree(node: FormStateNode) {
-  return node.getChildNodes().forEach(getWholeTree);
+  return node.children.forEach(getWholeTree);
 }
 
 function CurrentNode({ node }: { node: Control<FormStateNode> }) {

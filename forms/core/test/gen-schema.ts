@@ -1,4 +1,4 @@
-import fc, { Arbitrary } from "fast-check";
+import fc, { Arbitrary, ArrayConstraints, StringConstraints } from "fast-check";
 import {
   compoundField,
   CompoundField,
@@ -98,17 +98,19 @@ export interface SchemaFieldGenOptions {
 }
 
 export function arbitraryFieldName(): Arbitrary<string> {
-  return fc.string({ minLength: 1 }).filter((x) => !x.includes("/"));
+  return fc
+    .string({ minLength: 1 })
+    .filter((x) => x != "." && x != ".." && !x.includes("/"));
 }
 
 export function rootCompound(
   options: SchemaFieldGenOptions = {},
-): Arbitrary<[CompoundField, SchemaField]> {
+): Arbitrary<{ root: CompoundField; schema: SchemaField }> {
   return arbitraryFieldName().chain((x) =>
-    randomSchemaField(x, options).map((c) => [
-      compoundField("ROOT", [c], { notNullable: true })(""),
-      c,
-    ]),
+    randomSchemaField(x, options).map((c) => ({
+      root: compoundField("ROOT", [c], { notNullable: true })(""),
+      schema: c,
+    })),
   );
 }
 
@@ -187,19 +189,34 @@ export function randomSchemaField(
         })),
       );
 }
+
+export interface FieldValueConstraints {
+  nullableChance?: number;
+  element?: boolean;
+  string?: StringConstraints;
+  array?: ArrayConstraints;
+  childConstraints?: () => FieldValueConstraints;
+}
 export function randomValueForField(
   f: SchemaField,
+  constraints?: FieldValueConstraints,
   element?: boolean,
 ): Arbitrary<any> {
-  return fc.integer({ min: 0, max: 100 }).chain(((nc) => {
-    if (nc <= 75 || f.notNullable) {
+  const chance = constraints?.nullableChance ?? (f.notNullable ? 0 : 25);
+  const childConstraints = constraints?.childConstraints?.() ?? constraints;
+  return fc.noBias(fc.integer({ min: 0, max: 100 })).chain(((nc) => {
+    if (nc >= chance) {
       if (!element && f.collection) {
-        return fc.array(randomValueForField(f, true), {
+        const arrayConstraints = constraints?.array ?? {
           minLength: 0,
           maxLength: 10,
-        });
+        };
+        return fc.array(
+          randomValueForField(f, childConstraints, true),
+          arrayConstraints,
+        );
       }
-      if (f.type === FieldType.String) return fc.string();
+      if (f.type === FieldType.String) return fc.string(constraints?.string);
       if (f.type === FieldType.Int) return fc.integer();
       if (f.type === FieldType.Double) return fc.double({ noNaN: true });
       if (f.type === FieldType.Bool) return fc.boolean();
@@ -209,12 +226,16 @@ export function randomValueForField(
         return fc.date().map((x) => x.toISOString());
       if (f.type === FieldType.Time)
         return fc.date().map((x) => x.toISOString().substring(11));
-      if (isCompoundField(f))
+      if (isCompoundField(f)) {
         return fc.record(
           Object.fromEntries(
-            f.children.map((x) => [x.field, randomValueForField(x)]),
+            f.children.map((x) => [
+              x.field,
+              randomValueForField(x, childConstraints),
+            ]),
           ),
         );
+      }
     }
     return fc.constantFrom(null);
   }) as (x: number) => Arbitrary<any>);

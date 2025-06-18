@@ -85,7 +85,7 @@ export function DataArrayRenderer({
     required,
     renderElement: (i, wrap) => {
       const n = formNode.getChild(i);
-      return !n || n.hidden ? undefined : wrap(n.childKey, renderChild(i, n));
+      return !n || n.hidden ? undefined : wrap(n.childKey, renderChild(n));
     },
     className: className ? className : undefined,
     style,

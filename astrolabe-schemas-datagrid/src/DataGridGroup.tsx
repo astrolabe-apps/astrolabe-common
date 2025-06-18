@@ -96,9 +96,8 @@ function DataGridGroup({
         };
       }) ?? [];
 
-    const columns: ColumnDefInit<undefined>[] = formNode
-      .getChildNodes()
-      .map((cn, i) => {
+    const columns: ColumnDefInit<undefined>[] = formNode.children.map(
+      (cn, i) => {
         const d = cn.definition;
         const colOptions = d.adornments?.find(isColumnAdornment);
         return {
@@ -109,10 +108,11 @@ function DataGridGroup({
             const childIndex = 0;
             return childIndex == null
               ? ""
-              : renderChild(i, cn.getChildNodes()[childIndex]);
+              : renderChild(cn.getChild(childIndex)!);
           },
         };
-      });
+      },
+    );
     const allColumns = constantColumns.concat(columns);
     return (
       <DataGrid

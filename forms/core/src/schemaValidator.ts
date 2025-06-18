@@ -30,3 +30,22 @@ export interface DateValidator extends SchemaValidator {
   fixedDate?: string | null;
   daysFromCurrent?: number | null;
 }
+
+export function jsonataValidator(expr: string): JsonataValidator {
+  return { type: ValidatorType.Jsonata, expression: expr };
+}
+
+export function dateValidator(
+  comparison: DateComparison,
+  fixedDate?: string | null,
+  daysFromCurrent?: number | null,
+): DateValidator {
+  return { type: ValidatorType.Date, comparison, fixedDate, daysFromCurrent };
+}
+
+export function lengthValidator(
+  min?: number | null,
+  max?: number | null,
+): LengthValidator {
+  return { type: ValidatorType.Length, min, max };
+}

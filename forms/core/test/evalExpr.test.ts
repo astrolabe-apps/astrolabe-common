@@ -17,14 +17,18 @@ describe("expression evaluators", () => {
   it("data expression", () => {
     fc.assert(
       fc.property(
-        rootCompound().chain(([root, f]) =>
+        rootCompound().chain(({ root, schema }) =>
           fc.record({
-            schema: fc.constant(f),
+            schema: fc.constant(schema),
             data: randomValueForField(root),
           }),
         ),
         ({ schema, data }) => {
-          const firstChild = labelExpr(schema, data, dataExpr(schema.field));
+          const firstChild = testLabelExpr(
+            schema,
+            data,
+            dataExpr(schema.field),
+          );
           expect(firstChild.definition.title).toBe(
             coerceString(data[schema.field]),
           );
@@ -36,14 +40,14 @@ describe("expression evaluators", () => {
   it("data match expression", () => {
     fc.assert(
       fc.property(
-        rootCompound().chain(([root, f]) =>
+        rootCompound().chain(({ root, schema }) =>
           fc.record({
-            schema: fc.constant(f),
+            schema: fc.constant(schema),
             data: randomValueForField(root),
           }),
         ),
         ({ schema, data }) => {
-          const firstChild = labelExpr(
+          const firstChild = testLabelExpr(
             schema,
             data,
             dataMatchExpr(schema.field, data[schema.field]),
@@ -55,7 +59,7 @@ describe("expression evaluators", () => {
   });
 });
 
-function labelExpr(schema: SchemaField, data: any, expr: EntityExpression) {
+function testLabelExpr(schema: SchemaField, data: any, expr: EntityExpression) {
   return testNodeState(
     dataControl(schema.field, undefined, {
       dynamic: [
