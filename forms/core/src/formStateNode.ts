@@ -76,6 +76,12 @@ export interface FormStateBase {
   hidden: boolean;
   disabled: boolean;
   resolved: ResolvedDefinition;
+  childIndex: number;
+}
+
+export interface FormNodeUi {
+  ensureVisible(): void;
+  ensureChildVisible(childIndex: number): void;
 }
 
 export interface FormStateNode extends FormStateBase {
@@ -90,12 +96,15 @@ export interface FormStateNode extends FormStateBase {
   meta: Record<string, any>;
   form: FormNode | undefined | null;
   children: FormStateNode[];
+  parentNode: FormStateNode | undefined,
   setTouched(b: boolean, notChildren?: boolean): void;
   validate(): boolean;
   getChildCount(): number;
   getChild(index: number): FormStateNode | undefined;
   ensureMeta<A>(key: string, init: (scope: CleanupScope) => A): A;
   cleanup(): void;
+  ui: FormNodeUi;
+  attachUi(f: FormNodeUi): void;
 }
 
 interface FormStateOptions {
@@ -254,6 +263,7 @@ export function createFormStateNode(
     options,
     parent,
     undefined,
+    0,
   );
 }
 
@@ -262,8 +272,15 @@ export interface FormStateBaseImpl extends FormStateBase {
   allowedOptions?: unknown;
 }
 
+export const noopUi: FormNodeUi = {
+  ensureChildVisible(childIndex: number) {},
+  ensureVisible() {},
+};
+
 class FormStateNodeImpl implements FormStateNode {
   readonly base: Control<FormStateBaseImpl>;
+  ui = noopUi;
+
   constructor(
     public childKey: string | number,
     public meta: Record<string, any>,
@@ -272,6 +289,7 @@ class FormStateNodeImpl implements FormStateNode {
     public options: FormStateOptions,
     public parent: SchemaDataNode,
     public parentNode: FormStateNode | undefined,
+    childIndex: number,
     public resolveChildren?: ChildResolverFunc,
   ) {
     const base = newControl<FormStateBaseImpl>({
@@ -282,10 +300,19 @@ class FormStateNodeImpl implements FormStateNode {
       resolved: { definition } as ResolvedDefinition,
       parent,
       allowedOptions: undefined,
+      childIndex,
     });
     this.base = base;
     base.meta["$FormState"] = this;
     initFormState(definition, this, parentNode);
+  }
+
+  attachUi(f: FormNodeUi) {
+    this.ui = f;
+  }
+
+  get childIndex() {
+    return this.base.fields.childIndex.value;
   }
 
   get schemaInterface(): SchemaInterface {
@@ -587,9 +614,11 @@ function initChildren(formImpl: FormStateNodeImpl) {
       resolveChildren?.(formImpl) ?? options.resolveChildren(formImpl);
     const scope = base;
     const detached = updateElements(children, () =>
-      kids.map(({ childKey, create }) => {
+      kids.map(({ childKey, create }, childIndex) => {
         let child = childMap.get(childKey);
-        if (!child) {
+        if (child) {
+          child.fields.childIndex.value = childIndex;
+        } else {
           const meta: Record<string, any> = {};
           const cc = create(scope, meta);
           const co = cc.variables
@@ -612,6 +641,7 @@ function initChildren(formImpl: FormStateNodeImpl) {
             co,
             cc.parent ?? formImpl.parent,
             formImpl,
+            childIndex,
             cc.resolveChildren,
           );
           child = fsChild.base;

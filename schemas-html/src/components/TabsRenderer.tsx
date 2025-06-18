@@ -1,14 +1,17 @@
 import {
   createGroupRenderer,
   createScoped,
+  DefaultFormNodeUi,
   FormStateNode,
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
   TabsRenderOptions,
 } from "@react-typed-forms/schemas";
-import React, { Fragment } from "react";
+import React, { Fragment, useEffect } from "react";
 import clsx from "clsx";
+import { useControl } from "@react-typed-forms/core";
+import { Control } from "@astroapps/controls";
 
 export interface DefaultTabsRenderOptions {
   className?: string;
@@ -46,7 +49,12 @@ function TabsRenderer({
   groupProps: GroupRendererProps;
   tabOptions: TabsRenderOptions;
 }) {
-  const tabIndex = formNode.ensureMeta("tabIndex", (c) => createScoped(c, 0));
+  const tabIndex = useControl(0);
+  
+  useEffect(() => {
+    formNode.attachUi(new TabUi(tabIndex, formNode));
+  }, [formNode, tabIndex]);
+  
   const {
     tabClass,
     labelClass,
@@ -94,5 +102,18 @@ function TabsRenderer({
         </div>
       </div>
     );
+  }
+}
+
+class TabUi extends DefaultFormNodeUi {
+  constructor(
+    private tabIndex: Control<number>,
+    node: FormStateNode,
+  ) {
+    super(node);
+  }
+  ensureChildVisible(childIndex: number) {
+    this.tabIndex.value = childIndex;
+    super.ensureChildVisible(childIndex);
   }
 }

@@ -22,6 +22,7 @@ import {
   elementValueForField,
   fieldPathForDefinition,
   FormNode,
+  FormNodeUi,
   FormRenderer,
   FormStateNode,
   getDisplayOnlyOptions,
@@ -31,6 +32,7 @@ import {
   isControlDisplayOnly,
   isDataControl,
   isGroupControl,
+  noopUi,
   renderControlLayout,
   rendererClass,
   schemaDataForFieldPath,
@@ -278,6 +280,7 @@ export function createPreviewNode(
     schemaInterface,
     schema,
     undefined,
+    0,
     renderer.resolveChildren,
   );
 }
@@ -285,6 +288,7 @@ export function createPreviewNode(
 let previewNodeId = 0;
 
 class FormPreviewStateNode implements FormStateNode {
+  ui = noopUi;
   meta: Record<string, any> = {};
   _dataNode: Control<SchemaDataNode | undefined>;
   _children: Control<FormPreviewStateNode[]>;
@@ -298,6 +302,7 @@ class FormPreviewStateNode implements FormStateNode {
     public schemaInterface: SchemaInterface,
     public parent: SchemaDataNode,
     public parentNode: FormStateNode | undefined,
+    public childIndex: number,
     public resolver: FormRenderer["resolveChildren"],
     public resolveChildren?: ChildResolverFunc,
   ) {
@@ -318,7 +323,7 @@ class FormPreviewStateNode implements FormStateNode {
       const canReuse = lastId === nextId;
       const kids = this.getKids();
       updateElements(this._children, (c) => {
-        return kids.map(({ childKey, create }) => {
+        return kids.map(({ childKey, create }, childIndex) => {
           let child = canReuse
             ? c.find((x) => x.current.value.childKey == childKey)
             : undefined;
@@ -333,6 +338,7 @@ class FormPreviewStateNode implements FormStateNode {
                 this.schemaInterface,
                 cc.parent ?? this.parent,
                 this,
+                childIndex,
                 this.resolver,
                 cc.resolveChildren,
               ),
@@ -342,6 +348,10 @@ class FormPreviewStateNode implements FormStateNode {
         });
       });
     }, scope);
+  }
+
+  attachUi(f: FormNodeUi) {
+    this.ui = f;
   }
 
   validate(): boolean {

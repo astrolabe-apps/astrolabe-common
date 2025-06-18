@@ -7,7 +7,13 @@ import {
   renderControlLayout,
   Visibility,
 } from "./controlRender";
-import React, {FC, MutableRefObject, useCallback, useEffect, useMemo} from "react";
+import React, {
+  FC,
+  MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+} from "react";
 import {
   ControlDefinition,
   createFormStateNode,
@@ -16,6 +22,7 @@ import {
   defaultEvaluators,
   defaultSchemaInterface,
   FormNode,
+  FormNodeUi,
   FormStateNode,
   JsonPath,
   legacyFormNode,
@@ -36,7 +43,7 @@ export interface RenderFormProps {
   form: FormNode;
   renderer: FormRenderer;
   options?: ControlRenderOptions;
-  stateRef?: MutableRefObject<FormStateNode|null>;
+  stateRef?: MutableRefObject<FormStateNode | null>;
 }
 
 /* @trackControls */
@@ -45,7 +52,7 @@ export function RenderForm({
   form,
   renderer,
   options = {},
-    stateRef,
+  stateRef,
 }: RenderFormProps) {
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const { runAsync } = useAsyncRunner();
@@ -61,12 +68,11 @@ export function RenderForm({
       }),
     [],
   );
-  if (stateRef)
-    stateRef.current = state;
+  if (stateRef) stateRef.current = state;
   useEffect(() => {
     return () => {
       state.cleanup();
-    }
+    };
   }, [state]);
   return <RenderFormNode node={state} renderer={renderer} options={options} />;
 }
@@ -83,6 +89,9 @@ export function RenderFormNode({
   renderer,
   options = {},
 }: RenderFormNodeProps) {
+  useEffect(() => {
+    state.attachUi(new DefaultFormNodeUi(state));
+  }, [state]);
   const { runAsync } = useAsyncRunner();
   const schemaInterface = state.schemaInterface;
   const definition = state.definition;
@@ -328,4 +337,15 @@ export function useAsyncRunner(): {
   return {
     runAsync,
   };
+}
+
+export class DefaultFormNodeUi implements FormNodeUi {
+  constructor(protected node: FormStateNode) {}
+  ensureVisible() {
+    this.node.parentNode?.ui.ensureChildVisible(this.node.childIndex);
+  }
+
+  ensureChildVisible(childIndex: number) {
+    this.ensureVisible();
+  }
 }

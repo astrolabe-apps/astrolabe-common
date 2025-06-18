@@ -102,8 +102,6 @@ interface DataGridClasses {
 interface DataGridColumnExtension {
   dataContext: ControlDataContext;
   definition: ControlDefinition;
-  evalHidden?: EntityExpression;
-  evalRowSpan?: EntityExpression;
 }
 
 const dataGridGroupOptions = {
@@ -167,7 +165,7 @@ export function createDataGridRenderer(
   classes?: DataGridClasses,
 ) {
   const gridClasses =
-    mergeObjects(defaultDataGridClasses, classes) ?? defaultDataGridClasses;
+    mergeObjects(classes, defaultDataGridClasses) ?? defaultDataGridClasses;
   return createDataRenderer(
     (pareProps, renderers) => {
       const {
@@ -276,23 +274,26 @@ export function createDataGridRenderer(
         };
         return {
           childKey: "cc" + i,
-          create: () => ({
-            definition: forHeader
-              ? {
-                  ...def,
-                  dynamic: x?.visible
-                    ? [
-                        {
-                          type: DynamicPropertyType.Visible,
-                          expr: x.visible,
-                        },
-                      ]
-                    : [],
-                }
-              : def,
-            node: null,
-            parent: c.parent,
-          }),
+          create: (scope, meta) => {
+            meta.original = def;
+            return {
+              definition: forHeader
+                ? {
+                    ...def,
+                    dynamic: x?.visible
+                      ? [
+                          {
+                            type: DynamicPropertyType.Visible,
+                            expr: x.visible,
+                          },
+                        ]
+                      : [],
+                  }
+                : def,
+              node: null,
+              parent: c.parent,
+            };
+          },
         };
       }) ?? [];
 
@@ -304,6 +305,7 @@ export function createDataGridRenderer(
           childKey: "c" + i,
           create: (scope, meta) => {
             const colOptions = d.adornments?.find(isColumnAdornment);
+            meta.original = d;
             return {
               definition: forHeader
                 ? textDisplayControl(d.title!, {
@@ -376,7 +378,7 @@ function DataGridControlRenderer({
     headerChild
       .filter((x) => !x.hidden)
       .map((cn, i) => {
-        const d = cn.definition;
+        const d = cn.meta.original as ControlDefinition;
         const colOptions = d.adornments?.find(isColumnAdornment);
         const headerOptions = getColumnHeaderFromOptions(
           colOptions,
