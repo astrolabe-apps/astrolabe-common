@@ -8,6 +8,7 @@ import {
   defaultEvaluators,
   defaultResolveChildNodes,
   defaultSchemaInterface,
+  DynamicPropertyType,
   EntityExpression,
   ExpressionEvalContext,
   FormContextOptions,
@@ -17,7 +18,6 @@ import {
 } from "../src";
 import { newControl } from "@astroapps/controls";
 import { FieldAndValue } from "./gen-schema";
-import { CompoundField } from "../lib";
 
 export interface TestNodeOptions {
   evalExpression?: (e: EntityExpression, ctx: ExpressionEvalContext) => void;
@@ -65,4 +65,11 @@ export function makeDataNode(fv: FieldAndValue): SchemaDataNode {
       .getChildNode(fv.field.field)!,
     newControl(fv.value),
   );
+}
+
+export function withDynamic(
+  c: ControlDefinition,
+  type: DynamicPropertyType,
+): ControlDefinition {
+  return { ...c, dynamic: [{ type, expr: { type: "Anything" } }] };
 }

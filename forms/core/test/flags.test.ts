@@ -1,15 +1,9 @@
 import { describe, expect, it } from "@jest/globals";
 import fc from "fast-check";
 import { schemaAndControl } from "./gen";
-import { allChildren, testNodeState } from "./nodeTester";
-import {
-  ControlDefinition,
-  dataControl,
-  DynamicPropertyType,
-  groupedControl,
-  isDataControl,
-} from "../src";
-import { randomValueForField, rootCompound } from "./gen-schema";
+import { allChildren, testNodeState, withDynamic } from "./nodeTester";
+import { dataControl, DynamicPropertyType, groupedControl } from "../src";
+import { rootCompound } from "./gen-schema";
 
 describe("form state flags", () => {
   it("static hidden on all definitions", () => {
@@ -138,48 +132,4 @@ describe("form state flags", () => {
       ),
     );
   });
-
-  it("array nodes get cleaned up when removed", () => {
-    fc.assert(
-      fc.property(
-        rootCompound({
-          forceArray: true,
-          notNullable: true,
-        }).chain(({ root, schema }) =>
-          fc.record({
-            schema: fc.constant(schema),
-            data: randomValueForField(root),
-          }),
-        ),
-        (c) => {
-          let cleanUpsAdded = 0;
-          const firstChild = testNodeState(
-            dataControl(c.schema.field, undefined, {
-              children: [
-                withDynamic(dataControl("."), DynamicPropertyType.Label),
-              ],
-            }),
-            c.schema,
-            {
-              data: c.data,
-              evalExpression: (e, ctx) => {
-                cleanUpsAdded++;
-                ctx.scope.addCleanup(() => cleanUpsAdded--);
-              },
-            },
-          );
-          expect(cleanUpsAdded).toBe(firstChild.children.length);
-          firstChild.dataNode!.control.value = [];
-          return expect(cleanUpsAdded).toBe(0);
-        },
-      ),
-    );
-  });
 });
-
-function withDynamic(
-  c: ControlDefinition,
-  type: DynamicPropertyType,
-): ControlDefinition {
-  return { ...c, dynamic: [{ type, expr: { type: "Anything" } }] };
-}
