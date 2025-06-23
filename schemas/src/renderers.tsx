@@ -16,8 +16,11 @@ import {
 } from "./controlRender";
 import {
   AccordionAdornment,
+  ChildNodeSpec,
+  ChildResolverFunc,
   ControlAdornment,
   ControlAdornmentType,
+  FormStateNode,
   IconAdornment,
   OptionalAdornment,
   RenderOptions,
@@ -53,11 +56,12 @@ export interface DataRendererRegistration {
   renderType?: string | string[];
   options?: boolean;
   collection?: boolean;
-  match?: (props: DataRendererProps, renderOptions: RenderOptions) => boolean;
+  match?: (props: FormStateNode, renderOptions: RenderOptions) => boolean;
   render: (
     props: DataRendererProps,
     renderers: FormRenderer,
   ) => ReactNode | ((layout: ControlLayoutProps) => ControlLayoutProps);
+  resolveChildren?: ChildResolverFunc;
 }
 
 export interface LabelRendererRegistration {
@@ -75,6 +79,7 @@ export interface ActionRendererRegistration {
   type: "action";
   actionType?: string | string[];
   render: (props: ActionRendererProps, renderers: FormRenderer) => ReactElement;
+  resolveChildren?: ChildResolverFunc;
 }
 
 export interface ArrayRendererRegistration {
@@ -89,6 +94,7 @@ export interface GroupRendererRegistration {
     props: GroupRendererProps,
     renderers: FormRenderer,
   ) => ReactElement | ((layout: ControlLayoutProps) => ControlLayoutProps);
+  resolveChildren?: ChildResolverFunc;
 }
 
 export interface DisplayRendererRegistration {
@@ -98,6 +104,7 @@ export interface DisplayRendererRegistration {
     props: DisplayRendererProps,
     renderers: FormRenderer,
   ) => ReactElement;
+  resolveChildren?: ChildResolverFunc;
 }
 
 export interface AdornmentRendererRegistration {

@@ -22,6 +22,8 @@ export interface ControlDefinition {
   childRefId?: string | null;
   title?: string | null;
   hidden?: boolean | null;
+  disabled?: boolean | null;
+  readonly?: boolean | null;
   styleClass?: string | null;
   textClass?: string | null;
   layoutClass?: string | null;
@@ -133,8 +135,6 @@ export interface DataControlDefinition extends ControlDefinition {
   required?: boolean | null;
   renderOptions?: RenderOptions | null;
   defaultValue?: any;
-  readonly?: boolean | null;
-  disabled?: boolean | null;
   validators?: SchemaValidator[] | null;
   hideTitle?: boolean | null;
   dontClearHidden?: boolean | null;
@@ -366,7 +366,7 @@ export interface GroupElementRenderer extends GroupRenderOptions {
   value: any;
 }
 
-export interface GridRenderer extends GroupRenderOptions {
+export interface GridRendererOptions extends GroupRenderOptions {
   type: GroupRenderType.Grid;
   columns?: number | null;
   rowClass?: string | null;
@@ -471,7 +471,7 @@ export function visitControlDefinition<A>(
 }
 export function isGridRenderer(
   options: GroupRenderOptions,
-): options is GridRenderer {
+): options is GridRendererOptions {
   return options.type === GroupRenderType.Grid;
 }
 
@@ -487,9 +487,7 @@ export function isDialogRenderer(
   return options.type === GroupRenderType.Dialog;
 }
 
-export function isInlineRenderer(
-  options: GroupRenderOptions,
-): options is GridRenderer {
+export function isInlineRenderer(options: GroupRenderOptions): boolean {
   return options.type === GroupRenderType.Inline;
 }
 
@@ -652,7 +650,7 @@ export function fontAwesomeIcon(icon: string) {
  * @returns True if the control definition is readonly, false otherwise.
  */
 export function isControlReadonly(c: ControlDefinition): boolean {
-  return isDataControl(c) && !!c.readonly;
+  return !!c.readonly;
 }
 
 /**
@@ -661,7 +659,7 @@ export function isControlReadonly(c: ControlDefinition): boolean {
  * @returns True if the control definition is disabled, false otherwise.
  */
 export function isControlDisabled(c: ControlDefinition): boolean {
-  return isDataControl(c) && !!c.disabled;
+  return !!c.disabled;
 }
 
 /**

@@ -1,4 +1,5 @@
 export * from "./controlDefinition";
+export * from "./controlBuilder";
 export * from "./entityExpression";
 export * from "./schemaNode";
 export * from "./schemaBuilder";
@@ -8,5 +9,8 @@ export * from "./schemaValidator";
 export * from "./schemaDataNode";
 export * from "./defaultSchemaInterface";
 export * from "./formNode";
-export * from "./formState";
+export * from "./formStateNode";
+export * from "./evalExpression";
 export * from "./util";
+export * from "./overrideProxy";
+export * from "./resolveChildren";

@@ -4,7 +4,10 @@
     <attachedFolders>
       <Path>.</Path>
     </attachedFolders>
-    <explicitIncludes />
+    <explicitIncludes>
+      <Path>astrolabe-schemas-editor</Path>
+      <Path>forms/core</Path>
+    </explicitIncludes>
     <explicitExcludes />
   </component>
 </project>

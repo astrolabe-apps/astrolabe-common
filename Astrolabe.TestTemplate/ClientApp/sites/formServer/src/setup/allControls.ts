@@ -13,7 +13,9 @@ import {
   makeParamTag,
   FieldType,
   makeScalarField,
+  ControlDefinition,
 } from "@react-typed-forms/schemas";
+import form from "../forms/AllControls.json";
 
 interface ControlsData {
   // Basic scalar fields
@@ -62,7 +64,7 @@ interface ControlsData {
   };
 }
 
-export const AllControlsSchema = buildSchema<ControlsData>({
+export const SchemaFields = buildSchema<ControlsData>({
   // Basic field types
   string: stringField("String Field"),
   integer: intField("Integer Field"),
@@ -154,3 +156,5 @@ export const AllControlsSchema = buildSchema<ControlsData>({
     stringField("Country")("country"),
   ]),
 });
+
+export const Form = form.controls as ControlDefinition[];

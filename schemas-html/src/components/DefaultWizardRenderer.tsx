@@ -10,10 +10,7 @@ import {
   IconPlacement,
   IconReference,
   rendererClass,
-  validationVisitor,
-  visitFormDataInContext,
 } from "@react-typed-forms/schemas";
-import { VisibleChildrenRenderer } from "./VisibleChildrenRenderer";
 import { useComputed, useControl } from "@react-typed-forms/core";
 import { Fragment, ReactNode } from "react";
 
@@ -84,12 +81,10 @@ function defaultNavigationRender({
 export function createWizardRenderer(options?: DefaultWizardRenderOptions) {
   return createGroupRenderer(
     (props, formRenderer) => (
-      <VisibleChildrenRenderer
-        props={{ ...props, formRenderer, defaultOptions: options }}
-        render={renderWizard}
-        parent={props}
-        dataContext={props.dataContext}
-        parentFormNode={props.formNode}
+      <WizardRenderer
+        groupProps={props}
+        formRenderer={formRenderer}
+        options={options}
       />
     ),
     {
@@ -98,15 +93,17 @@ export function createWizardRenderer(options?: DefaultWizardRenderOptions) {
   );
 }
 
-function renderWizard(
-  props: GroupRendererProps & {
-    formRenderer: FormRenderer;
-    defaultOptions?: DefaultWizardRenderOptions;
-  },
-  isChildVisible: (i: number) => boolean,
-) {
+function WizardRenderer({
+  groupProps: props,
+  formRenderer,
+  options,
+}: {
+  groupProps: GroupRendererProps;
+  formRenderer: FormRenderer;
+  options?: DefaultWizardRenderOptions;
+}) {
   const mergedOptions = deepMerge(
-    (props.defaultOptions ?? {}) as typeof defaultOptions,
+    (options ?? {}) as typeof defaultOptions,
     defaultOptions,
   );
   const {
@@ -121,40 +118,40 @@ function renderWizard(
     },
     renderNavigation,
   } = mergedOptions;
+  const { formNode, designMode, renderChild } = props;
   const {
     html: { Div },
-  } = props.formRenderer;
-  const children = props.formNode.getChildNodes();
-  const allVisible = children.map((_, i) => isChildVisible(i));
+  } = formRenderer;
+  const childrenLength = formNode.getChildCount();
   const page = useControl(0);
   const currentPage = page.value;
   const isValid = useComputed(() => isPageValid());
 
   const next = createAction("nav", () => nav(1, nextValidate), nextText, {
-    hidden: !props.designMode && nextVisibleInDirection(1) == null,
+    hidden: !designMode && nextVisibleInDirection(1) == null,
     disabled: !isValid.value,
     icon: nextIcon,
     iconPlacement: IconPlacement.AfterText,
   });
 
   const prev = createAction("nav", () => nav(-1, prevValidate), prevText, {
-    disabled: !props.designMode && nextVisibleInDirection(-1) == null,
+    disabled: !designMode && nextVisibleInDirection(-1) == null,
     icon: prevIcon,
   });
   const navElement = renderNavigation({
-    formRenderer: props.formRenderer,
+    formRenderer,
     page: countVisibleUntil(currentPage),
-    totalPages: countVisibleUntil(children.length),
+    totalPages: countVisibleUntil(childrenLength),
     prev,
     next: next,
     className: navContainerClass,
     validatePage: async () => validatePage(),
   });
-  const content = props.designMode ? (
-    <Div>{children.map((child, i) => props.renderChild(i, child))}</Div>
-  ) : currentPage < children.length ? (
+  const content = designMode ? (
+    <Div>{formNode.children.map((child) => renderChild(child))}</Div>
+  ) : currentPage < childrenLength ? (
     <Div className={contentClass}>
-      {props.renderChild(currentPage, children[currentPage])}
+      {renderChild(formNode.getChild(currentPage)!)}
     </Div>
   ) : (
     <Fragment />
@@ -169,8 +166,8 @@ function renderWizard(
 
   function countVisibleUntil(untilPage: number) {
     let count = 0;
-    for (let i = 0; i < untilPage && i < allVisible.length; i++) {
-      if (allVisible[i]) {
+    for (let i = 0; i < untilPage && i < childrenLength; i++) {
+      if (formNode.getChild(i)!.visible) {
         count++;
       }
     }
@@ -189,8 +186,8 @@ function renderWizard(
 
   function nextVisibleInDirection(dir: number): number | null {
     let next = currentPage + dir;
-    while (next >= 0 && next < children.length) {
-      if (allVisible[next]) {
+    while (next >= 0 && next < childrenLength) {
+      if (formNode.getChild(next)!.visible) {
         return next;
       }
       next += dir;
@@ -199,24 +196,10 @@ function renderWizard(
   }
 
   function validatePage() {
-    const pageNode = children[currentPage];
-    let hasErrors = false;
-    visitFormDataInContext(
-      props.dataContext.parentNode,
-      pageNode,
-      validationVisitor(() => {
-        hasErrors = true;
-      }),
-    );
-    return !hasErrors;
+    return formNode.getChild(currentPage)!.validate();
   }
 
   function isPageValid() {
-    const pageNode = children[currentPage];
-    let hasErrors = false;
-    visitFormDataInContext(props.dataContext.parentNode, pageNode, (c) => {
-      if (!c.control.valid) hasErrors = true;
-    });
-    return !hasErrors;
+    return formNode.getChild(currentPage)!.valid;
   }
 }

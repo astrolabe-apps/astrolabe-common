@@ -9,22 +9,21 @@ import {
 } from "./controlRender";
 import React, {
   FC,
+  MutableRefObject,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
-  useState,
 } from "react";
 import {
   ControlDefinition,
-  ControlState,
-  createFormState,
+  createFormStateNode,
   createSchemaDataNode,
   createSchemaTree,
+  defaultEvaluators,
   defaultSchemaInterface,
   FormNode,
-  FormState,
-  isDataControl,
+  FormNodeUi,
+  FormStateNode,
   JsonPath,
   legacyFormNode,
   SchemaDataNode,
@@ -44,6 +43,7 @@ export interface RenderFormProps {
   form: FormNode;
   renderer: FormRenderer;
   options?: ControlRenderOptions;
+  stateRef?: MutableRefObject<FormStateNode | null>;
 }
 
 /* @trackControls */
@@ -52,28 +52,50 @@ export function RenderForm({
   form,
   renderer,
   options = {},
+  stateRef,
 }: RenderFormProps) {
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
-  const [formState, setFormState] = useState(
-    () => options?.formState ?? createFormState(schemaInterface),
+  const { runAsync } = useAsyncRunner();
+
+  const state = useMemo(
+    () =>
+      createFormStateNode(form, data, {
+        runAsync,
+        schemaInterface,
+        evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
+        contextOptions: options,
+        resolveChildren: renderer.resolveChildren,
+      }),
+    [],
   );
-  let effects: (() => void)[] | undefined = [];
-  const runAsync = (cb: () => void) => {
-    if (effects) effects.push(cb);
-    else cb();
-  };
-  const state = formState.getControlState(data, form, options, runAsync);
-
+  if (stateRef) stateRef.current = state;
   useEffect(() => {
-    if (!options?.formState) {
-      return () => formState.cleanup();
-    }
-  }, [formState, options?.formState]);
+    return () => {
+      state.cleanup();
+    };
+  }, [state]);
+  return <RenderFormNode node={state} renderer={renderer} options={options} />;
+}
 
+export interface RenderFormNodeProps {
+  node: FormStateNode;
+  renderer: FormRenderer;
+  options?: ControlRenderOptions;
+}
+
+/* @trackControls */
+export function RenderFormNode({
+  node: state,
+  renderer,
+  options = {},
+}: RenderFormNodeProps) {
+  useEffect(() => {
+    state.attachUi(new DefaultFormNodeUi(state));
+  }, [state]);
+  const { runAsync } = useAsyncRunner();
+  const schemaInterface = state.schemaInterface;
   const definition = state.definition;
-
-  const visible = !state.hidden;
-
+  const visible = state.visible;
   const visibility = useControl<Visibility | undefined>(() =>
     visible != null
       ? {
@@ -82,13 +104,14 @@ export function RenderForm({
         }
       : undefined,
   );
-  visibility.fields.visible.value = visible;
-
+  if (visible != null) {
+    visibility.fields.visible.value = visible;
+  }
+  
   const dataContext: ControlDataContext = {
     schemaInterface: state.schemaInterface,
     dataNode: state.dataNode,
-    parentNode: data,
-    variables: state.variables,
+    parentNode: state.parent,
   };
 
   const adornments =
@@ -108,41 +131,35 @@ export function RenderForm({
     textClass,
     ...inheritableOptions
   } = options;
-  const { readonly, hidden, disabled, variables } = state;
+  const { readonly, visible:vis, disabled, variables } = state;
   const childOptions: ControlRenderOptions = {
     ...inheritableOptions,
     readonly,
     disabled,
     variables,
-    formState,
-    hidden,
+    hidden: vis === false,
   };
 
   const labelAndChildren = renderControlLayout({
-    formNode: form,
+    formNode: state,
     renderer,
-    state,
-    renderChild: (k, child, options) => {
+    renderChild: (child, options) => {
       const overrideClasses = getGroupClassOverrides(definition);
-      const { parentDataNode, actionOnClick, variables, ...renderOptions } =
-        options ?? {};
-      const dContext = parentDataNode ?? dataContext.dataNode ?? data;
+      const { actionOnClick, ...renderOptions } = options ?? {};
       const allChildOptions = {
         ...childOptions,
         ...overrideClasses,
         ...renderOptions,
-        variables: { ...childOptions.variables, ...variables },
         actionOnClick: actionHandlers(
           actionOnClick,
           childOptions.actionOnClick,
         ),
       };
       return (
-        <RenderForm
-          key={k}
-          form={child}
+        <RenderFormNode
+          key={child.childKey}
+          node={child}
           renderer={renderer}
-          data={dContext}
           options={allChildOptions}
         />
       );
@@ -154,28 +171,19 @@ export function RenderForm({
     dataContext,
     control: dataContext.dataNode?.control,
     schemaInterface,
-    style: state.style,
-    allowedOptions: state.allowedOptions,
+    style: state.resolved.style,
     customDisplay: options.customDisplay,
     actionOnClick: options.actionOnClick,
     styleClass: styleClass,
     labelClass: labelClass,
     labelTextClass: labelTextClass,
     textClass: textClass,
-    getChildState(child: FormNode, parent?: SchemaDataNode): ControlState {
-      return formState.getControlState(
-        parent ?? state.dataNode ?? data,
-        child,
-        childOptions,
-        runAsync,
-      );
-    },
     runExpression: (scope, expr, returnResult) => {
       if (expr?.type) {
-        formState.evalExpression(expr, {
-          scope,
-          dataNode: data,
+        defaultEvaluators[expr.type](expr, {
+          dataNode: state.parent,
           schemaInterface,
+          scope,
           returnResult,
           runAsync,
         });
@@ -186,23 +194,15 @@ export function RenderForm({
     ...labelAndChildren,
     adornments,
     className: rendererClass(options.layoutClass, definition.layoutClass),
-    style: state.layoutStyle,
+    style: state.resolved.layoutStyle,
   };
   const renderedControl = renderer.renderLayout(
     options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,
   );
-  const rendered = renderer.renderVisibility({
+  return renderer.renderVisibility({
     visibility,
     ...renderedControl,
   });
-  useEffect(() => {
-    if (effects) {
-      const toRun = effects;
-      effects = undefined;
-      toRun.forEach((cb) => cb());
-    }
-  }, [effects]);
-  return rendered;
 }
 
 /**
@@ -318,4 +318,36 @@ export function useControlRenderer(
     },
     [r],
   );
+}
+
+export function useAsyncRunner(): {
+  runAsync: (cb: () => void) => void;
+} {
+  let effects: (() => void)[] | undefined = [];
+  const runAsync = (cb: () => void) => {
+    if (effects) effects.push(cb);
+    else cb();
+  };
+  useEffect(() => {
+    if (effects) {
+      const toRun = effects;
+      effects = undefined;
+      toRun.forEach((cb) => cb());
+    }
+  }, [effects]);
+
+  return {
+    runAsync,
+  };
+}
+
+export class DefaultFormNodeUi implements FormNodeUi {
+  constructor(protected node: FormStateNode) {}
+  ensureVisible() {
+    this.node.parentNode?.ui.ensureChildVisible(this.node.childIndex);
+  }
+
+  ensureChildVisible(childIndex: number) {
+    this.ensureVisible();
+  }
 }

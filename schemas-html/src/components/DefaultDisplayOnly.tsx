@@ -1,7 +1,7 @@
 import React from "react";
 import {
-  ControlState,
   FormRenderer,
+  FormStateNode,
   SchemaDataNode,
   SchemaInterface,
 } from "@react-typed-forms/schemas";
@@ -25,11 +25,12 @@ export function DefaultDisplayOnly({
   inline: boolean;
   renderer: FormRenderer;
   emptyText?: string | null;
-  state: ControlState;
+  state: FormStateNode;
 }) {
+  const { display } = state.resolved;
   const text =
-    state.display != null
-      ? state.display
+    display != null
+      ? display
       : ((schemaInterface.isEmptyValue(
           dataNode.schema.field,
           dataNode.control.value,

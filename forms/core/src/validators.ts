@@ -6,13 +6,10 @@ import {
   SchemaValidator,
   ValidatorType,
 } from "./schemaValidator";
-import {
-  ControlDefinition,
-  DataControlDefinition,
-  isDataControl,
-} from "./controlDefinition";
+import { ControlDefinition, isDataControl } from "./controlDefinition";
 import { SchemaDataNode } from "./schemaDataNode";
 import {
+  CleanupScope,
   Control,
   ControlChange,
   createCleanupScope,
@@ -21,12 +18,10 @@ import {
 } from "@astroapps/controls";
 import { ValidationMessageType } from "./schemaField";
 import { SchemaInterface } from "./schemaInterface";
-
-import { FormContextOptions } from "./formState";
-import { FormNode } from "./formNode";
 import { jsonataEval } from "./evalExpression";
 import { ExpressionType } from "./entityExpression";
 import { createScopedComputed } from "./util";
+import { FormContextOptions } from "./formStateNode";
 
 export interface ValidationEvalContext {
   addSync(validate: (value: unknown) => string | undefined | null): void;
@@ -35,7 +30,7 @@ export interface ValidationEvalContext {
   parentData: SchemaDataNode;
   data: SchemaDataNode;
   schemaInterface: SchemaInterface;
-  formContext: Control<FormContextOptions>;
+  formContext: FormContextOptions;
   runAsync(af: () => void): void;
 }
 
@@ -60,7 +55,7 @@ export const jsonataValidator: ValidatorEval<JsonataValidator> = (
         context.data.control.setError("jsonata", v?.toString());
       },
       schemaInterface: context.schemaInterface,
-      variables: context.formContext.fields.variables,
+      variables: context.formContext.variables,
       runAsync: context.runAsync,
     },
   );
@@ -169,19 +164,16 @@ export function createValidators(
 }
 
 export function setupValidation(
-  controlImpl: Control<FormContextOptions>,
+  scope: CleanupScope,
+  controlImpl: FormContextOptions,
   definition: ControlDefinition,
   dataNode: Control<SchemaDataNode | undefined>,
   schemaInterface: SchemaInterface,
   parent: SchemaDataNode,
-  formNode: FormNode,
-  hidden: Control<boolean>,
+  visible: Control<boolean | null>,
   runAsync: (af: () => void) => void,
 ) {
-  const validationEnabled = createScopedComputed(
-    controlImpl,
-    () => !hidden.value,
-  );
+  const validationEnabled = createScopedComputed(scope, () => !!visible.value);
   const validatorsScope = createCleanupScope();
   createEffect(
     () => {
@@ -189,7 +181,7 @@ export function setupValidation(
       const dn = dataNode.value;
       if (dn) {
         let syncValidations: ((v: unknown) => string | undefined | null)[] = [];
-        createValidators(formNode.definition, {
+        createValidators(definition, {
           data: dn,
           parentData: parent,
           validationEnabled,
@@ -224,6 +216,6 @@ export function setupValidation(
       }
     },
     (c) => {},
-    controlImpl,
+    scope,
   );
 }

@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import React, { Fragment, ReactNode } from "react";
-import { RenderElements } from "@react-typed-forms/core";
 import {
   ActionRendererProps,
   applyArrayLengthRestrictions,
@@ -8,22 +7,16 @@ import {
   ArrayRendererProps,
   ArrayRendererRegistration,
   ArrayRenderOptions,
-  ControlDataContext,
-  ControlDefinitionType,
   createArrayActions,
   createDataRenderer,
   DataRendererProps,
   DataRendererRegistration,
   DataRenderType,
-  FormNode,
   FormRenderer,
   getLengthRestrictions,
-  GroupRenderType,
   HtmlComponents,
   isArrayRenderer,
-  isCompoundField,
   mergeObjects,
-  SchemaDataNode,
 } from "@react-typed-forms/schemas";
 
 export function createDefaultArrayDataRenderer(
@@ -68,7 +61,6 @@ export function DataArrayRenderer({
     style,
     dataContext,
     formNode,
-    getChildState,
   } = dataProps;
 
   const { addText, noAdd, noRemove, noReorder, removeText, editExternal } =
@@ -79,25 +71,8 @@ export function DataArrayRenderer({
       defaultActions as ArrayRenderOptions,
     );
 
-  const childDefs = formNode.getResolvedChildren();
-  const renderAsElement = !isCompoundField(field);
-  const defaultChildDef = {
-    type: ControlDefinitionType.Data,
-    field: ".",
-    renderOptions: { type: DataRenderType.Standard },
-    hideTitle: true,
-  };
-  const childDef = {
-    type: ControlDefinitionType.Group,
-    groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
-    children:
-      renderAsElement && childDefs.length == 0 ? [defaultChildDef] : childDefs,
-  };
-  const childNode: FormNode = formNode.createChildNode("child", childDef);
-  const childNodes = childNode.getChildNodes();
-
   const arrayProps = {
-    ...createArrayActions(control.as(), field, {
+    ...createArrayActions(control.as(), () => formNode.getChildCount(), field, {
       addText,
       removeText,
       noAdd,
@@ -108,50 +83,16 @@ export function DataArrayRenderer({
       editExternal,
     }),
     required,
-    renderElement: (i, wrap) => (
-      <RenderEntry
-        index={i}
-        renderChildElement={renderChildElement}
-        dataContext={dataContext}
-        wrap={wrap}
-        isChildHidden={(dataNode) =>
-          childNodes.every((x) => getChildState(x, dataNode).hidden)
-        }
-      />
-    ),
+    renderElement: (i, wrap) => {
+      const n = formNode.getChild(i);
+      return !n || !n.visible ? undefined : wrap(n.childKey, renderChild(n));
+    },
     className: className ? className : undefined,
     style,
     ...getLengthRestrictions(definition),
   } satisfies ArrayRendererProps;
 
   return renderers.renderArray(arrayProps);
-
-  function renderChildElement(i: number, elementNode: SchemaDataNode) {
-    return renderChild(elementNode.control.uniqueId, childNode, {
-      parentDataNode: elementNode,
-    });
-  }
-}
-
-/**
- * @trackControls
- */
-function RenderEntry({
-  index: i,
-  renderChildElement,
-  wrap,
-  isChildHidden,
-  dataContext,
-}: {
-  index: number;
-  renderChildElement: (i: number, element: SchemaDataNode) => ReactNode;
-  dataContext: ControlDataContext;
-  wrap: (n: ReactNode) => ReactNode;
-  isChildHidden: (dataNode: SchemaDataNode) => boolean;
-}) {
-  const elementNode = dataContext.dataNode!.getChildElement(i);
-  if (isChildHidden(elementNode)) return undefined;
-  return wrap(renderChildElement(i, elementNode));
 }
 
 export interface DefaultArrayRendererOptions extends ArrayActionOptions {
@@ -195,35 +136,36 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     removableChildClass,
     removeActionClass,
     addActionClass,
-    arrayControl,
+    getElementCount,
     renderAction,
     style,
     editAction,
     html: { Div },
   } = props;
   const { addAction, removeAction } = applyArrayLengthRestrictions(props);
+
   return (
     <Div style={style}>
       <Div className={clsx(className, removeAction && removableClass)}>
-        <RenderElements control={arrayControl}>
-          {(_, x) =>
-            renderElement(x, (children) =>
-              removeAction || editAction ? (
-                <>
-                  <Div className={clsx(childClass, removableChildClass)}>
-                    {children}
-                  </Div>
-                  <Div className={removeActionClass}>
-                    {editAction && renderAction(editAction(x))}
-                    {removeAction && renderAction(removeAction(x))}
-                  </Div>
-                </>
-              ) : (
-                <Div className={childClass}>{children}</Div>
-              ),
-            )
-          }
-        </RenderElements>
+        {Array.from({ length: getElementCount() }, (_, x) =>
+          renderElement(x, (key, children) =>
+            removeAction || editAction ? (
+              <Fragment key={key}>
+                <Div className={clsx(childClass, removableChildClass)}>
+                  {children}
+                </Div>
+                <Div className={removeActionClass}>
+                  {editAction && renderAction(editAction(x))}
+                  {removeAction && renderAction(removeAction(x))}
+                </Div>
+              </Fragment>
+            ) : (
+              <Div key={key} className={childClass}>
+                {children}
+              </Div>
+            ),
+          ),
+        )}
       </Div>
       {addAction && (
         <Div className={addActionClass}>{renderAction(addAction)}</Div>

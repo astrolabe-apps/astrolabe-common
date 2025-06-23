@@ -8,8 +8,6 @@ import {
   ControlElements,
   ControlFields,
   ControlProperties,
-  ControlSetup,
-  ControlValue,
   DelayedSetup,
   Subscription,
   Value,
@@ -22,8 +20,6 @@ import {
   ResolvedControlSetup,
 } from "./internal";
 import { groupedChanges, runTransaction } from "./transactions";
-import { ObjectLogic } from "./objectControl";
-import { ArrayLogic } from "./arrayControl";
 
 export let collectChange: ChangeListenerFunc<any> | undefined;
 
@@ -520,144 +516,6 @@ export function resolveSetup(
 
 export function trackControlChange(c: Control<any>, change: ControlChange) {
   collectChange?.(c, change);
-}
-
-export function newControl<V>(
-  value: V,
-  setup?: ControlSetup<V, any>,
-  initialValue?: V,
-): Control<V> {
-  return new ControlImpl<V>(
-    value,
-    arguments.length == 3 ? initialValue! : value,
-    ControlFlags.None,
-    setup ? new ConfiguredControlLogic(setup) : new DefaultControlLogic(),
-  );
-}
-
-export function controlGroup<C extends { [k: string]: Control<unknown> }>(
-  fields: C,
-): Control<{ [K in keyof C]: ControlValue<C[K]> }> {
-  const obj = new ObjectLogic(
-    deepEquals,
-    (f, v, iv, flags) =>
-      new ControlImpl(v, iv, flags, new DefaultControlLogic()),
-  );
-  const newParent = new ControlImpl(
-    undefined,
-    undefined,
-    ControlFlags.None,
-    obj,
-  );
-  obj.setFields(fields as unknown as Record<string, InternalControl>);
-  return newParent as unknown as Control<{
-    [K in keyof C]: ControlValue<C[K]>;
-  }>;
-}
-
-class DefaultControlLogic extends ControlLogic {
-  constructor() {
-    super(deepEquals);
-  }
-
-  withChildren(f: (c: InternalControl) => void): void {}
-
-  ensureObject(): ControlLogic {
-    const objectLogic = new ObjectLogic(
-      this.isEqual,
-      (p, v, iv, flags) =>
-        new ControlImpl(v, iv, flags, new DefaultControlLogic()),
-    );
-    objectLogic.attach(this.control);
-    return objectLogic;
-  }
-
-  getField(p: string): InternalControl {
-    return this.ensureObject().getField(p);
-  }
-
-  ensureArray(): ControlLogic {
-    const arrayLogic = new ArrayLogic(
-      this.isEqual,
-      (v, iv, flags) =>
-        new ControlImpl(v, iv, flags, new DefaultControlLogic()),
-    );
-    arrayLogic.attach(this.control);
-    return arrayLogic;
-  }
-
-  getElements(): InternalControl[] {
-    return this.ensureArray().getElements();
-  }
-}
-
-class ConfiguredControlLogic extends ControlLogic {
-  setup: ResolvedControlSetup;
-  withChildren(f: (c: InternalControl) => void): void {}
-  constructor(_setup: ControlSetup<any>) {
-    const setup = resolveSetup(_setup);
-    super(setup.equals);
-    this.setup = setup;
-  }
-
-  attach(c: InternalControl): ControlLogic {
-    super.attach(c);
-    const { meta, elems, fields, validator: v, afterCreate } = this.setup;
-    if (v !== undefined) {
-      const runValidation = () => c.setError("default", v?.(c.current.value));
-      runValidation();
-      c.subscribe(runValidation, ControlChange.Value | ControlChange.Validate);
-      c._flags |= ControlFlags.DontClearError;
-    }
-    if (fields) {
-      Object.entries(fields).forEach(([k, fc]) => {
-        if (fc?.validator !== undefined) this.getField(k);
-      });
-    } else if (elems) {
-      this.getElements();
-    }
-    if (meta) Object.assign(c.meta, meta);
-    afterCreate?.(c);
-    return this;
-  }
-
-  ensureObject(): ControlLogic {
-    const objectLogic = new ObjectLogic(this.isEqual, (p, v, iv, flags) => {
-      const fieldSetup = this.setup.fields?.[p];
-      return new ControlImpl(
-        v,
-        iv,
-        flags,
-        fieldSetup
-          ? new ConfiguredControlLogic(fieldSetup)
-          : new DefaultControlLogic(),
-      );
-    });
-    return objectLogic.attach(this.control);
-  }
-
-  getField(p: string): InternalControl {
-    return this.ensureObject().getField(p);
-  }
-
-  ensureArray(): ControlLogic {
-    const arrayLogic = new ArrayLogic(this.isEqual, (v, iv, flags) => {
-      const elemSetup = this.setup.elems;
-      return new ControlImpl(
-        v,
-        iv,
-        flags,
-        elemSetup
-          ? new ConfiguredControlLogic(elemSetup)
-          : new DefaultControlLogic(),
-      );
-    });
-    return arrayLogic.attach(this.control);
-  }
-
-  getElements(): InternalControl[] {
-    return this.ensureArray().getElements();
-  }
 }
 
 export function collectChanges<A>(

@@ -3,8 +3,6 @@ export {
   collectChange,
   setChangeCollector,
   trackControlChange,
-  newControl,
-  controlGroup,
   addCleanup,
   cleanupControl,
   collectChanges,
@@ -49,6 +47,7 @@ export {
   unsafeRestoreControl,
   unwrapTrackedControl,
 } from "./trackedValue";
-export { setFields, getCurrentFields } from "./objectControl";
+export { setFields, getCurrentFields, cloneFields } from "./objectControl";
 export { ControlChange } from "./types";
+export { newControl, controlGroup } from "./newControl";
 export type * from "./types";

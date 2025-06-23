@@ -175,7 +175,9 @@ export function createDefaultDataRenderer(
     const { field } = props;
     const fieldType = field.type;
     const renderOptions = props.renderOptions;
-    let renderType = renderOptions.type;
+    let renderType = renderOptions.type
+      ? renderOptions.type
+      : DataRenderType.Standard;
     if (
       field.collection &&
       props.dataNode.elementIndex == null &&
@@ -187,7 +189,11 @@ export function createDefaultDataRenderer(
         return arrayElementRenderer.render(props, renderers);
       return arrayRenderer.render(props, renderers);
     }
-    if (fieldType === FieldType.Compound) {
+    if (
+      fieldType === FieldType.Compound &&
+      (isDataGroupRenderer(renderOptions) ||
+        renderType === DataRenderType.Standard)
+    ) {
       const groupOptions = (isDataGroupRenderer(renderOptions)
         ? renderOptions.groupOptions
         : undefined) ?? { type: "Standard", hideTitle: true };
@@ -201,7 +207,7 @@ export function createDefaultDataRenderer(
           children: (
             <DefaultDisplayOnly
               dataNode={props.dataNode}
-              state={props.state}
+              state={props.formNode}
               schemaInterface={props.dataContext.schemaInterface}
               className={props.className}
               textClass={props.textClass}

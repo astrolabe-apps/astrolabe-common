@@ -8,12 +8,13 @@ import {
 } from "./entityExpression";
 import {
   AsyncEffect,
+  ChangeListenerFunc,
   CleanupScope,
   collectChanges,
+  Control,
   createAsyncEffect,
   createSyncEffect,
   trackedValue,
-  Value,
 } from "@astroapps/controls";
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
 import { SchemaInterface } from "./schemaInterface";
@@ -27,7 +28,7 @@ export interface ExpressionEvalContext {
   returnResult: (k: unknown) => void;
   dataNode: SchemaDataNode;
   schemaInterface: SchemaInterface;
-  variables?: Value<Record<string, any> | undefined>;
+  variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
   runAsync(effect: () => void): void;
 }
 
@@ -91,15 +92,17 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
   });
 
   async function runJsonata(effect: AsyncEffect<any>, signal: AbortSignal) {
-    const bindings = collectChanges(
-      effect.collectUsage,
-      () => variables?.value,
-    );
+    const trackedVars = variables?.(effect.collectUsage);
     const evalResult = await parsedJsonata.fields.expr.value.evaluate(
       trackedValue(rootData, effect.collectUsage),
-      bindings,
+      trackedVars,
     );
-    // console.log(parsedJsonata.fields.fullExpr.value, evalResult, bindings);
+    // console.log(
+    //   rootData,
+    //   parsedJsonata.fields.fullExpr.current.value,
+    //   evalResult,
+    //   trackedVars,
+    // );
     collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 
@@ -118,3 +121,30 @@ export const defaultEvaluators: Record<string, ExpressionEval<any>> = {
   [ExpressionType.Jsonata]: jsonataEval,
   [ExpressionType.UUID]: uuidEval,
 };
+
+export function createEvalExpr(
+  evalExpression: (e: EntityExpression, ctx: ExpressionEvalContext) => void,
+  context: Omit<ExpressionEvalContext, "returnResult" | "scope">,
+) {
+  function evalExpr<A>(
+    scope: CleanupScope,
+    init: A,
+    nk: Control<A>,
+    e: EntityExpression | undefined,
+    coerce: (t: unknown) => any,
+  ): boolean {
+    nk.value = init;
+    if (e?.type) {
+      evalExpression(e, {
+        returnResult: (r) => {
+          nk.value = coerce(r);
+        },
+        scope,
+        ...context,
+      });
+      return true;
+    }
+    return false;
+  }
+  return evalExpr;
+}

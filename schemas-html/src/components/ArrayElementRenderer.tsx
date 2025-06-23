@@ -66,16 +66,17 @@ function ArrayElementRenderer({
       dataProps.dataNode.schema,
       extData.fields.data,
     );
-    const elementGroup: FormNode = formNode.createChildNode("group", {
-      type: ControlDefinitionType.Group,
-      groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
-      children: formNode.getResolvedChildren(),
-    } as GroupedControlsDefinition);
+    // TODO
+    // const elementGroup: FormNode = formNode.createChildNode("group", {
+    //   type: ControlDefinitionType.Group,
+    //   groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
+    //   children: formNode.getResolvedChildren(),
+    // } as GroupedControlsDefinition);
     const editContent = (
       <div className={rendererClass(dataProps.className, options.className)}>
-        {renderChild("", elementGroup, {
-          parentDataNode,
-        })}
+        {/*{renderChild("", elementGroup, {*/}
+        {/*  parentDataNode,*/}
+        {/*})}*/}
         <div className={options.actionsClass}>
           <RenderElements control={extData.fields.actions}>
             {(c) => formRenderer.renderAction(applyValidation(c.value))}
@@ -92,15 +93,16 @@ function ArrayElementRenderer({
     );
 
     function runValidation(onClick: () => void) {
-      let hasErrors = false;
-      visitFormDataInContext(
-        parentDataNode,
-        elementGroup,
-        validationVisitor(() => {
-          hasErrors = true;
-        }),
-      );
-      if (!hasErrors) onClick();
+      // TODO
+      // let hasErrors = false;
+      // visitFormDataInContext(
+      //   parentDataNode,
+      //   elementGroup,
+      //   validationVisitor(() => {
+      //     hasErrors = true;
+      //   }),
+      // );
+      // if (!hasErrors) onClick();
     }
     function applyValidation({
       action,

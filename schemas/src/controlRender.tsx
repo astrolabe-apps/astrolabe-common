@@ -9,29 +9,27 @@ import React, {
 } from "react";
 import {
   addElement,
+  ChangeListenerFunc,
   Control,
   removeElement,
-  RenderArrayElements,
 } from "@react-typed-forms/core";
 import {
   ActionStyle,
   AdornmentPlacement,
   ArrayActionOptions,
+  ChildNodeSpec,
   ControlAdornment,
   ControlDefinition,
-  ControlDefinitionType,
-  ControlState,
   CustomDisplay,
+  dataControl,
   DataControlDefinition,
   defaultSchemaInterface,
   DisplayData,
   DisplayDataType,
   FieldOption,
   FormContextOptions,
-  FormNode,
-  FormState,
+  FormStateNode,
   GroupRenderOptions,
-  GroupRenderType,
   isActionControl,
   isDataControl,
   isDisplayControl,
@@ -54,7 +52,7 @@ import {
   getExternalEditData,
   rendererClass,
 } from "./util";
-import { createAction, dataControl } from "./controlBuilder";
+import { createAction } from "./controlBuilder";
 import {
   ActionRendererProps,
   ControlActionHandler,
@@ -214,6 +212,8 @@ export interface FormRenderer {
   renderLabelText: (props: ReactNode) => ReactNode;
 
   html: HtmlComponents;
+
+  resolveChildren(c: FormStateNode): ChildNodeSpec[];
 }
 
 export interface AdornmentProps {
@@ -240,9 +240,10 @@ export interface ArrayRendererProps {
   editAction?: (elemIndex: number) => ActionRendererProps;
   renderElement: (
     elemIndex: number,
-    wrapEntry: (children: ReactNode) => ReactNode,
+    wrapEntry: (key: Key, children: ReactNode) => ReactNode,
   ) => ReactNode;
-  arrayControl: Control<any[] | undefined | null>;
+  arrayControl?: Control<any[] | undefined | null>;
+  getElementCount(): number;
   className?: string;
   style?: React.CSSProperties;
   min?: number | null;
@@ -386,14 +387,12 @@ export interface DisplayRendererProps {
 }
 
 export interface ParentRendererProps {
-  formNode: FormNode;
-  state: ControlState;
+  formNode: FormStateNode;
   renderChild: ChildRenderer;
   className?: string;
   textClass?: string;
   style?: React.CSSProperties;
   dataContext: ControlDataContext;
-  getChildState(node: FormNode, parent?: SchemaDataNode): ControlState;
   runExpression: RunExpression;
   designMode?: boolean;
   actionOnClick?: ControlActionHandler;
@@ -431,7 +430,6 @@ export type CreateDataProps = (
 ) => DataRendererProps;
 
 export interface ControlRenderOptions extends ControlClasses {
-  formState?: FormState;
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
   actionOnClick?: ControlActionHandler;
   customDisplay?: (
@@ -450,14 +448,13 @@ export interface ControlRenderOptions extends ControlClasses {
   clearHidden?: boolean;
   stateKey?: string;
   schemaInterface?: SchemaInterface;
-  variables?: Record<string, any>;
+  variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
 }
 
 export function defaultDataProps(
   {
     formOptions,
     style,
-    allowedOptions,
     schemaInterface = defaultSchemaInterface,
     styleClass,
     textClass: tc,
@@ -473,9 +470,6 @@ export function defaultDataProps(
   const className = rendererClass(styleClass, definition.styleClass);
   const textClass = rendererClass(tc, definition.textClass);
   const required = !!definition.required && !displayOnly;
-  const fieldOptions = schemaInterface.getDataOptions(dataNode);
-  const _allowed = allowedOptions ?? [];
-  const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
   return {
     dataNode,
     definition,
@@ -483,19 +477,7 @@ export function defaultDataProps(
     field,
     id: "c" + control.uniqueId,
     inline: !!inline,
-    options:
-      allowed.length > 0
-        ? allowed
-            .map((x) =>
-              typeof x === "object"
-                ? x
-                : fieldOptions?.find((y) => y.value == x) ?? {
-                    name: x.toString(),
-                    value: x,
-                  },
-            )
-            .filter((x) => x != null)
-        : fieldOptions,
+    options: props.formNode.resolved.fieldOptions,
     readonly: !!formOptions.readonly,
     displayOnly: !!displayOnly,
     renderOptions: definition.renderOptions ?? { type: "Standard" },
@@ -509,7 +491,6 @@ export function defaultDataProps(
 }
 
 export interface ChildRendererOptions {
-  parentDataNode?: SchemaDataNode;
   inline?: boolean;
   displayOnly?: boolean;
   styleClass?: string;
@@ -517,28 +498,22 @@ export interface ChildRendererOptions {
   labelClass?: string;
   labelTextClass?: string;
   actionOnClick?: ControlActionHandler;
-  stateKey?: string;
-  variables?: Record<string, any>;
 }
 
 export type ChildRenderer = (
-  k: Key,
-  child: FormNode,
+  child: FormStateNode,
   options?: ChildRendererOptions,
 ) => ReactNode;
 
 export interface RenderLayoutProps {
-  formNode: FormNode;
+  formNode: FormStateNode;
   renderer: FormRenderer;
-  state: ControlState;
   renderChild: ChildRenderer;
   createDataProps: CreateDataProps;
   formOptions: FormContextOptions;
   dataContext: ControlDataContext;
   control?: Control<any>;
   style?: React.CSSProperties;
-  allowedOptions?: any[];
-  getChildState(node: FormNode, parent?: SchemaDataNode): ControlState;
   runExpression: RunExpression;
 
   actionOnClick?: ControlActionHandler;
@@ -575,12 +550,10 @@ export function renderControlLayout(
     formNode,
     formOptions,
     actionOnClick,
-    state,
-    getChildState,
     inline,
     displayOnly,
   } = props;
-  const c = state.definition;
+  const c = formNode.definition;
   if (isDataControl(c)) {
     return renderData(c);
   }
@@ -598,7 +571,6 @@ export function renderControlLayout(
       inline,
       processLayout: renderer.renderGroup({
         formNode,
-        state,
         definition: c,
         renderChild,
         runExpression,
@@ -609,7 +581,6 @@ export function renderControlLayout(
         style,
         designMode,
         actionOnClick,
-        getChildState,
       }),
       label: {
         label: c.title,
@@ -637,7 +608,7 @@ export function renderControlLayout(
         iconPlacement: c.iconPlacement,
         icon: c.icon,
         inline,
-        disabled: state.disabled,
+        disabled: formNode.disabled,
         onClick:
           props.actionOnClick?.(c.actionId, actionData, dataContext) ??
           (() => {}),
@@ -647,14 +618,7 @@ export function renderControlLayout(
     };
 
     function renderActionGroup() {
-      const childDefs = formNode.getResolvedChildren();
-      const childDef = {
-        type: ControlDefinitionType.Group,
-        groupOptions: { type: GroupRenderType.Contents, hideTitle: true },
-        children: childDefs,
-      };
-      const childNode: FormNode = formNode.createChildNode("child", childDef);
-      return renderChild("child", childNode, {});
+      return <>{formNode.children.map((x) => renderChild(x))}</>;
     }
   }
   if (isDisplayControl(c)) {
@@ -818,11 +782,16 @@ export function getLengthRestrictions(definition: DataControlDefinition) {
 
 export function createArrayActions(
   control: Control<any[]>,
+  getElementCount: () => number,
   field: SchemaField,
   options?: ArrayActionOptions,
 ): Pick<
   ArrayRendererProps,
-  "addAction" | "removeAction" | "editAction" | "arrayControl"
+  | "addAction"
+  | "removeAction"
+  | "editAction"
+  | "arrayControl"
+  | "getElementCount"
 > {
   const noun = field.displayName ?? field.field;
   const {
@@ -841,6 +810,7 @@ export function createArrayActions(
   } = options ?? {};
   return {
     arrayControl: control,
+    getElementCount,
     addAction:
       !readonly && !noAdd
         ? makeAdd(() => {
@@ -941,7 +911,7 @@ export function createArrayActions(
 
 export function applyArrayLengthRestrictions(
   {
-    arrayControl,
+    getElementCount,
     min,
     max,
     editAction,
@@ -953,7 +923,7 @@ export function applyArrayLengthRestrictions(
     | "addAction"
     | "removeAction"
     | "editAction"
-    | "arrayControl"
+    | "getElementCount"
     | "min"
     | "max"
     | "required"
@@ -964,7 +934,7 @@ export function applyArrayLengthRestrictions(
   removeDisabled: boolean;
 } {
   const [removeAllowed, addAllowed] = applyLengthRestrictions(
-    arrayControl.elements?.length ?? 0,
+    getElementCount(),
     min == null && required ? 1 : min,
     max,
     true,
@@ -980,18 +950,13 @@ export function applyArrayLengthRestrictions(
 }
 
 export function fieldOptionAdornment(p: DataRendererProps) {
-  return (o: FieldOption, fieldIndex: number, selected: boolean) => (
-    <RenderArrayElements
-      array={p.formNode.getChildNodes()}
-      children={(cd, i) =>
-        p.renderChild(i, cd, {
-          parentDataNode: p.dataContext.parentNode,
-          stateKey: fieldIndex.toString(),
-          variables: { formData: { option: o, optionSelected: selected } },
-        })
-      }
-    />
-  );
+  return (o: FieldOption, fieldIndex: number, selected: boolean) => {
+    const fieldChild = p.formNode.children.find(
+      (x) => x.meta["fieldOptionValue"] === o.value,
+    );
+    if (fieldChild) return p.renderChild(fieldChild);
+    return undefined;
+  };
 }
 
 export function lookupChildDataContext(

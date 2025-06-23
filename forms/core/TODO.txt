@@ -1,3 +1,8 @@
-* Support formData in jsonata
 * nuances with default value
 * Data grid group
+
+
+Test for:
+* jsonata path updating on change of array index
+* Check and radio list tree structure
+* Ensuring calculated visibility doesn't become visible if it were never hidden - vop

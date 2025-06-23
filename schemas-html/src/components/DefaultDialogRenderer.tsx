@@ -73,29 +73,27 @@ export function DefaultDialogRenderer({
     }
   };
 
-  const triggerChildren = props.formNode
-    .getChildNodes()
-    .filter((x) => x.definition.placement === "trigger");
+  const allChildren = props.formNode.children;
+  const triggerChildren = allChildren.filter(
+    (x) => x.definition.placement === "trigger",
+  );
   const dialogContent = (
     <Dialog
       title={renderOptions.title}
       titleClass={titleClass}
       className={rendererClass(props.className, className)}
     >
-      {props.formNode
-        .getChildNodes()
+      {allChildren
         .filter(
           (x) => !x.definition.placement || x.definition.placement === "dialog",
         )
-        .map((x, i) => props.renderChild(i, x, { actionOnClick }))}
+        .map((x, i) => props.renderChild(x, { actionOnClick }))}
     </Dialog>
   );
 
   return (
     <>
-      {triggerChildren.map((x, i) =>
-        props.renderChild(i, x, { actionOnClick }),
-      )}
+      {triggerChildren.map((x, i) => props.renderChild(x, { actionOnClick }))}
       {props.designMode
         ? designContent()
         : open.value && (

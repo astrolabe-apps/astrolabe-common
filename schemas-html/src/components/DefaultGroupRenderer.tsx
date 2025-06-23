@@ -97,8 +97,8 @@ export function createDefaultGroupRenderer(
         : ({ className: standardClassName } as StyleProps);
     const { Div } = renderer.html;
     const inline = renderOptions.type == GroupRenderType.Inline;
-    const children = formNode.getChildNodes().map((c, i) =>
-      renderChild(i, c, {
+    const children = formNode.children.map((c, i) =>
+      renderChild(c, {
         inline,
       }),
     );
@@ -120,9 +120,7 @@ export function createDefaultGroupRenderer(
   ): ReactElement | ((layout: ControlLayoutProps) => ControlLayoutProps) {
     if (props.renderOptions.type === GroupRenderType.Contents) {
       const { formNode, renderChild } = props;
-      const children = formNode
-        .getChildNodes()
-        .map((c, i) => renderChild(i, c));
+      const children = formNode.children.map((c) => renderChild(c));
       return (layout) => {
         return {
           ...layout,
@@ -152,13 +150,13 @@ function SelectChildGroupRenderer(props: SelectChildProps) {
     (x) => (typeof x == "string" ? parseInt(x) : x),
   );
   const childIndex = ctrl?.value;
-  const childDefinitions = props.formNode.getChildNodes();
+  const childCount = props.formNode.getChildCount();
   return (
     <div>
       {typeof childIndex === "number" &&
-        childIndex < childDefinitions.length &&
+        childIndex < childCount &&
         childIndex >= 0 &&
-        props.renderChild(childIndex, childDefinitions[childIndex])}
+        props.renderChild(props.formNode.getChild(childIndex)!)}
     </div>
   );
 }

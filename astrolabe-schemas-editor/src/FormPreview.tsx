@@ -1,6 +1,7 @@
 import {
   Control,
   RenderControl,
+  trackedValue,
   useControl,
   useControlEffect,
 } from "@react-typed-forms/core";
@@ -16,6 +17,7 @@ import {
   RendererRegistration,
   RenderForm,
   SchemaNode,
+  combineVariables,
 } from "@react-typed-forms/schemas";
 import React, { ReactNode, useMemo, Fragment } from "react";
 import { JsonEditor } from "./JsonEditor";
@@ -85,14 +87,9 @@ export function FormPreview({
     (v) => (metadataText.value = JSON.stringify(v, null, 2)),
   );
   const rootDataNode = createSchemaDataNode(rootSchema, data);
-  const allMetadata = {
-    ...(previewOptions?.variables?.metadata || {}),
-    ...metadata.value,
-  };
-  const allVariables = {
-    ...(previewOptions?.variables || {}),
-    metadata: allMetadata,
-  };
+  const allVariables = combineVariables(previewOptions?.variables, (c) => ({
+    metadata: trackedValue(metadata, c),
+  }));
   return (
     <>
       <div className="px-4 flex gap-4">

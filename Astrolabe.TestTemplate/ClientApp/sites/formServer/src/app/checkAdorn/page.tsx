@@ -2,93 +2,40 @@
 
 import { useControl } from "@react-typed-forms/core";
 import {
-  accordionOptions,
-  buildSchema,
-  compoundField,
+  createSchemaDataNode,
   createSchemaLookup,
-  dataControl,
-  DataRenderType,
-  dynamicVisibility,
-  groupedControl,
-  jsonataExpr,
-  makeSchemaDataNode,
-  stringField,
-  stringOptionsField,
-  useControlRendererComponent,
+  RenderForm,
 } from "@react-typed-forms/schemas";
 import { createStdFormRenderer } from "../../renderers";
 import { Button } from "@astrolabe/ui/Button";
 import { getAccordionState } from "@react-typed-forms/schemas-html";
-
-interface TestSchema {
-  selected: string;
-  selectables: Selectable[];
-}
-
-interface Selectable {
-  id: string;
-  name: string;
-}
-
-const TestSchema = buildSchema<TestSchema>({
-  selected: stringOptionsField(
-    "All",
-    { value: "choice1", name: "Choice1" },
-    { value: "choice2", name: "Choice2" },
-  ),
-  selectables: compoundField(
-    "Selectables",
-    buildSchema<Selectable>({
-      id: stringField("id"),
-      name: stringField("name"),
-    }),
-    { collection: true },
-  ),
-});
+import {
+  Form,
+  SchemaFields,
+  TestOptionSchema,
+} from "../../setup/testOptionTree";
+import { createFormTree } from "@astroapps/forms-core";
 
 const renderer = createStdFormRenderer(null);
-const schemaLookup = createSchemaLookup({ TestSchema });
-const schemaNode = schemaLookup.getSchema("TestSchema")!;
-const selectable = groupedControl([
-  dataControl("selected", undefined, {
-    renderOptions: { type: DataRenderType.Radio },
-    adornments: [accordionOptions({ title: "Open" })],
-    children: [
-      dataControl("selectables", "Selectables", {
-        readonly: true,
-        hideTitle: true,
-        dynamic: [dynamicVisibility(jsonataExpr("$formData.optionSelected"))],
-        children: [
-          dataControl("name", null, {
-            renderOptions: { type: DataRenderType.DisplayOnly },
-            readonly: true,
-            dynamic: [
-              dynamicVisibility(jsonataExpr("$formData.option.value = id")),
-            ],
-          }),
-        ],
-      }),
-    ],
-  }),
-]);
+const schemaLookup = createSchemaLookup({ SchemaFields });
+const schemaNode = schemaLookup.getSchema("SchemaFields")!;
 
 export default function CheckAdorn() {
-  const pageControl = useControl<TestSchema>({
+  const pageControl = useControl<TestOptionSchema>({
     selected: "",
     selectables: [
       { id: "choice1", name: "ONNNNEEE" },
       { id: "choice2", name: "TWO" },
     ],
   });
-  const Render = useControlRendererComponent(
-    selectable,
-    renderer,
-    {},
-    makeSchemaDataNode(schemaNode, pageControl),
-  );
+  const formTree = createFormTree(Form);
   return (
     <div>
-      <Render />
+      <RenderForm
+        renderer={renderer}
+        form={formTree.rootNode}
+        data={createSchemaDataNode(schemaNode, pageControl)}
+      />
       <Button onClick={toggle}>Toggle</Button>
     </div>
   );

@@ -1,12 +1,11 @@
 import {
   createGroupRenderer,
   FormRenderer,
-  GridRenderer,
+  GridRendererOptions,
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
 } from "@react-typed-forms/schemas";
-import { VisibleChildrenRenderer } from "./VisibleChildrenRenderer";
 import { ReactNode } from "react";
 
 export interface DefaultGridRenderOptions {
@@ -19,58 +18,50 @@ export interface DefaultGridRenderOptions {
 export function createGridRenderer(options?: DefaultGridRenderOptions) {
   return createGroupRenderer(
     (props, formRenderer) => (
-      <VisibleChildrenRenderer
-        props={{ ...props, formRenderer, defaultOptions: options }}
-        render={renderGrid}
-        parent={props}
-        dataContext={props.dataContext}
-        parentFormNode={props.formNode}
+      <GridRenderer
+        groupProps={props}
+        formRenderer={formRenderer}
+        options={options}
       />
     ),
     {
       renderType: GroupRenderType.Grid,
     },
   );
+}
 
-  function renderGrid(
-    props: GroupRendererProps & {
-      formRenderer: FormRenderer;
-      defaultOptions?: DefaultGridRenderOptions;
-    },
-    isChildVisible: (i: number) => boolean,
-  ) {
-    const filteredChildren = props.formNode
-      .getChildNodes()
-      .filter((x, i) => isChildVisible(i));
-    const { Div } = props.formRenderer.html;
-    const defaults = props.defaultOptions ?? {};
-    const gridOptions = props.renderOptions as GridRenderer;
-    const numColumns = gridOptions.columns ?? defaults.defaultColumns ?? 2;
-    const allChildren = filteredChildren.map((x, i) => props.renderChild(i, x));
+function GridRenderer(props: {
+  groupProps: GroupRendererProps;
+  formRenderer: FormRenderer;
+  options?: DefaultGridRenderOptions;
+}) {
+  const { formNode, renderOptions, renderChild, className } = props.groupProps;
+  const filteredChildren = formNode.children.filter((x, i) => x.visible);
+  const { Div } = props.formRenderer.html;
+  const defaults = props.options ?? {};
+  const gridOptions = renderOptions as GridRendererOptions;
+  const numColumns = gridOptions.columns ?? defaults.defaultColumns ?? 2;
+  const allChildren = filteredChildren.map((x) => renderChild(x));
 
-    // split into numColumns items wrapped a div each
-    const rows: ReactNode[][] = [];
-    for (let i = 0; i < allChildren.length; i += numColumns) {
-      rows.push(allChildren.slice(i, i + numColumns));
-    }
-    return (
-      <Div className={rendererClass(props.className, defaults.className)}>
-        {rows.map((row, rowIndex) => (
-          <Div
-            key={rowIndex}
-            className={rendererClass(gridOptions.rowClass, defaults.rowClass)}
-          >
-            {row.map((cell, cellIndex) => (
-              <Div
-                key={cellIndex}
-                className={rendererClass(defaults.cellClass)}
-              >
-                {cell}
-              </Div>
-            ))}
-          </Div>
-        ))}
-      </Div>
-    );
+  // split into numColumns items wrapped a div each
+  const rows: ReactNode[][] = [];
+  for (let i = 0; i < allChildren.length; i += numColumns) {
+    rows.push(allChildren.slice(i, i + numColumns));
   }
+  return (
+    <Div className={rendererClass(className, defaults.className)}>
+      {rows.map((row, rowIndex) => (
+        <Div
+          key={rowIndex}
+          className={rendererClass(gridOptions.rowClass, defaults.rowClass)}
+        >
+          {row.map((cell, cellIndex) => (
+            <Div key={cellIndex} className={rendererClass(defaults.cellClass)}>
+              {cell}
+            </Div>
+          ))}
+        </Div>
+      ))}
+    </Div>
+  );
 }

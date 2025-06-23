@@ -1,107 +1,12 @@
 import { Control, ControlChange } from "./types";
-import { ControlFlags, ControlLogic, InternalControl } from "./internal";
+import { ControlFlags, InternalControl } from "./internal";
 import { runTransaction } from "./transactions";
-
-export class ArrayLogic extends ControlLogic {
-  _elems!: InternalControl[];
-
-  constructor(
-    isEqual: (v1: unknown, v2: unknown) => boolean,
-    public makeChild: (
-      v: unknown,
-      iv: unknown,
-      flags: ControlFlags,
-    ) => InternalControl,
-  ) {
-    super(isEqual);
-  }
-
-  getField(p: string): InternalControl {
-    throw new Error("This is an array control, not an object control.");
-  }
-
-  ensureObject(): ControlLogic {
-    throw new Error("This is an array control, not an object control.");
-  }
-
-  ensureArray(): ControlLogic {
-    return this;
-  }
-
-  getElements(): InternalControl[] {
-    if (!this._elems) {
-      this.updateFromValue([]);
-    }
-    return this._elems;
-  }
-
-  updateFromValue(
-    existing: InternalControl[],
-    noInitial?: boolean,
-    noValue?: boolean,
-  ): void {
-    const tc = this.control;
-    const origLength = existing.length;
-    const v = (tc._value as unknown[]) ?? [];
-    const iv = (tc._initialValue as unknown[]) ?? [];
-    const flags = tc._flags & (ControlFlags.Disabled | ControlFlags.Touched);
-    const newElems = v.map((x, i) => {
-      let child: InternalControl;
-      if (i < origLength) {
-        child = existing[i];
-        if (!noValue) child.setValueImpl(x, this.control);
-        if (!noInitial) {
-          child.setInitialValueImpl(iv[i]);
-          child.updateParentLink(this.control, i, true);
-        }
-      } else {
-        child = this.makeChild(x, iv[i], flags);
-        child.updateParentLink(this.control, i, !noInitial);
-      }
-      return child;
-    });
-    if (noInitial && newElems.length != origLength) {
-      tc._subscriptions?.applyChange(ControlChange.Structure);
-    }
-    if (newElems.length < origLength) {
-      existing
-        .slice(newElems.length)
-        .forEach((x) => x.updateParentLink(this.control, undefined));
-    }
-    this._elems = newElems;
-  }
-
-  valueChanged() {
-    this.updateFromValue(this._elems, true);
-  }
-
-  initialValueChanged() {
-    this.updateFromValue(this._elems, false, true);
-  }
-
-  withChildren(f: (c: InternalControl) => void): void {
-    this.getElements().forEach(f);
-  }
-
-  copy(v: unknown): unknown[] {
-    return v == null ? [] : [...(v as unknown[])];
-  }
-
-  childValueChange(prop: string | number, v: unknown) {
-    const copied = this.copy(this.control._value);
-    copied[prop as number] = v;
-    this.control.setValueImpl(copied);
-  }
-
-  childrenValid(): boolean {
-    return this._elems.every((x) => x.isValid());
-  }
-}
+import { ArrayLogic } from "./controlLogic";
 
 export function updateElements<V>(
   control: Control<V[] | null | undefined>,
   cb: (elems: Control<V>[]) => Control<V>[],
-): void {
+): Control<V>[] {
   const c = control as unknown as InternalControl;
   const oldElems = c.current.elements as InternalControl[];
   const arrayLogic = c._logic as ArrayLogic;
@@ -113,15 +18,16 @@ export function updateElements<V>(
     (oldElems.length === newElems.length &&
       oldElems.every((x, i) => x === newElems[i]))
   )
-    return;
+    return [];
 
+  const detached = oldElems.filter((x) => !newElems.includes(x));
   runTransaction(c, () => {
     newElems.forEach((x, i) => {
       const xc = x as InternalControl<V>;
       xc.updateParentLink(c, i);
     });
-    oldElems.forEach((x) => {
-      if (!newElems.includes(x)) x.updateParentLink(c, undefined);
+    detached.forEach((x) => {
+      x.updateParentLink(c, undefined);
     });
     arrayLogic._elems = newElems as unknown as InternalControl[];
     c._flags &= ~ControlFlags.ChildInvalid;
@@ -129,6 +35,7 @@ export function updateElements<V>(
     c.setValueImpl(newElems.map((x) => x.current.value));
     c._subscriptions?.applyChange(ControlChange.Structure);
   });
+  return detached as unknown as Control<V>[];
 }
 
 export function addElement<V>(

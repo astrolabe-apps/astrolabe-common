@@ -28,6 +28,16 @@ public abstract record ControlDefinition(
     public string? Id { get; set; }
 
     public string? ChildRefId { get; set; }
+    
+    [DefaultValue(false)]
+    public bool? Disabled { get; set; }
+
+    [DefaultValue(false)]
+    public bool? Hidden { get; set; }
+
+    [DefaultValue(false)]
+    public bool? Readonly { get; set; }
+
     public IEnumerable<DynamicProperty>? Dynamic { get; set; }
 
     public IEnumerable<ControlAdornment>? Adornments { get; set; }
@@ -62,13 +72,7 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     public RenderOptions? RenderOptions { get; set; }
 
     public object? DefaultValue { get; set; }
-
-    [DefaultValue(false)]
-    public bool? Readonly { get; set; }
-
-    [DefaultValue(false)]
-    public bool? Disabled { get; set; }
-
+    
     public bool? DontClearHidden { get; set; }
     
     public IEnumerable<SchemaValidator>? Validators { get; set; }

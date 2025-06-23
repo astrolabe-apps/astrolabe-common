@@ -9,7 +9,10 @@ import {
 export interface SchemaTreeLookup {
   getSchema(schemaId: string): SchemaNode | undefined;
 
-  getSchemaTree(schemaId: string, additional?: SchemaField[]): SchemaTree | undefined;
+  getSchemaTree(
+    schemaId: string,
+    additional?: SchemaField[],
+  ): SchemaTree | undefined;
 }
 
 export abstract class SchemaTree {
@@ -63,6 +66,7 @@ export class SchemaNode {
     public field: SchemaField,
     public tree: SchemaTree,
     public parent?: SchemaNode,
+    private getChildFields?: () => SchemaField[],
   ) {}
 
   getSchema(schemaId: string): SchemaNode | undefined {
@@ -70,6 +74,7 @@ export class SchemaNode {
   }
 
   getUnresolvedFields(): SchemaField[] {
+    if (this.getChildFields) return this.getChildFields();
     return isCompoundField(this.field) ? this.field.children : [];
   }
 

@@ -35,6 +35,7 @@ import {
 import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
 import {
+  ChangeListenerFunc,
   Control,
   ControlChange,
   createScopedEffect,
@@ -1022,7 +1023,7 @@ export function useExpression<T>(
   runExpression: RunExpression,
   expression: EntityExpression | null | undefined,
   coerce: (x: any) => T,
-  bindings?: Record<string, any>,
+  bindings?: (changes: ChangeListenerFunc<any>) => Record<string, any>,
 ): Control<T> {
   const value = useControl<T>(defaultValue);
   createScopedEffect((scope) => {
