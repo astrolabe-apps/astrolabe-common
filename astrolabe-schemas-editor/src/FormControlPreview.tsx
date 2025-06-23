@@ -140,6 +140,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           node={child as FormPreviewStateNode}
           {...groupClasses}
           displayOnly={c?.displayOnly || displayOnly}
+          inline={c?.inline}
           context={context}
         />
       );

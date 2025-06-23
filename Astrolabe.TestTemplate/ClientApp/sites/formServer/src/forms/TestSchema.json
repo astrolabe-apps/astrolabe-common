@@ -1,86 +1,29 @@
 {
   "controls": [
     {
-      "type": "Action",
+      "type": "Group",
       "title": "New",
       "children": [
         {
           "type": "Display",
-          "title": "Cool",
+          "title": "Date",
           "displayData": {
             "type": "Text",
-            "text": "Cool"
+            "text": "Wow"
           }
         },
         {
-          "type": "Data",
-          "title": "New",
-          "children": [
-            {
-              "type": "Data",
-              "field": "text",
-              "renderOptions": {
-                "type": "Standard"
-              }
-            },
-            {
-              "type": "Data",
-              "field": "../../array",
-              "renderOptions": {
-                "type": "ElementSelected",
-                "elementExpression": {
-                  "type": "Data",
-                  "field": "text"
-                }
-              }
-            }
-          ],
-          "field": "stuff",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "defaultValue": null,
-          "dynamic": [
-            {
-              "type": "Label",
-              "expr": {
-                "type": "NotEmpty",
-                "field": "time",
-                "empty": true
-              }
-            }
-          ]
+          "type": "Display",
+          "title": "Date Time",
+          "displayData": {
+            "type": "Html",
+            "html": "\u003Cb\u003EInline\u003C/b\u003E"
+          }
         }
       ],
-      "icon": {},
-      "actionStyle": "Group"
-    },
-    {
-      "type": "Group",
-      "title": "New",
       "groupOptions": {
-        "type": "Contents"
-      },
-      "children": [
-        {
-          "type": "Display",
-          "title": "test",
-          "displayData": {
-            "type": "Text",
-            "text": "test"
-          },
-          "dynamic": [
-            {
-              "type": "Display",
-              "expr": {
-                "type": "Data",
-                "metaField": "data",
-                "field": "metaField"
-              }
-            }
-          ]
-        }
-      ]
+        "type": "Inline"
+      }
     }
   ],
   "config": null
