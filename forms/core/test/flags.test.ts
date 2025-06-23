@@ -10,7 +10,7 @@ describe("form state flags", () => {
     fc.assert(
       fc.property(schemaAndControl(), fc.boolean(), (c, hidden) => {
         const firstChild = testNodeState({ ...c.control, hidden }, c.schema);
-        return allChildren(firstChild).every((x) => x.hidden === hidden);
+        return allChildren(firstChild).every((x) => x.visible === !hidden);
       }),
     );
   });
@@ -22,7 +22,7 @@ describe("form state flags", () => {
           contextOptions: { hidden },
         });
         return allChildren(firstChild).every(
-          (x) => !x.definition.hidden && x.hidden === hidden,
+          (x) => !x.definition.hidden && x.visible === !hidden,
         );
       }),
     );
@@ -58,7 +58,7 @@ describe("form state flags", () => {
         );
         return (
           !!firstChild.definition.hidden === hidden &&
-          allChildren(firstChild).every((x) => x.hidden === hidden)
+          allChildren(firstChild).every((x) => x.visible === !hidden)
         );
       }),
     );

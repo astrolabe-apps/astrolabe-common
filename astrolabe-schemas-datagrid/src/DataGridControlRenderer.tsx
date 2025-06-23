@@ -376,7 +376,7 @@ function DataGridControlRenderer({
 
   const columns: ColumnDefInit<FormStateNode, DataGridColumnExtension>[] =
     headerChild
-      .filter((x) => !x.hidden)
+      .filter((x) => x.visible)
       .map((cn, i) => {
         const d = cn.meta.original as ControlDefinition;
         const colOptions = d.adornments?.find(isColumnAdornment);

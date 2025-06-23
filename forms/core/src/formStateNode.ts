@@ -73,7 +73,7 @@ export interface FormStateBase {
   parent: SchemaDataNode;
   dataNode?: SchemaDataNode | undefined;
   readonly: boolean;
-  hidden: boolean;
+  visible: boolean | null;
   disabled: boolean;
   resolved: ResolvedDefinition;
   childIndex: number;
@@ -96,7 +96,7 @@ export interface FormStateNode extends FormStateBase {
   meta: Record<string, any>;
   form: FormNode | undefined | null;
   children: FormStateNode[];
-  parentNode: FormStateNode | undefined,
+  parentNode: FormStateNode | undefined;
   setTouched(b: boolean, notChildren?: boolean): void;
   validate(): boolean;
   getChildCount(): number;
@@ -143,7 +143,8 @@ export function createEvaluatedDefinition(
   evalDynamic(
     of.hidden,
     DynamicPropertyType.Visible,
-    () => def.hidden,
+    // Make sure it's not null if no scripting
+    (x) => (x ? def.hidden : !!def.hidden),
     (r) => !r,
   );
 
@@ -225,11 +226,12 @@ export function createEvaluatedDefinition(
   function evalDynamic<A>(
     control: Control<A>,
     property: DynamicPropertyType,
-    init: () => A,
+    init: (ex: EntityExpression | undefined) => A,
     coerce: (v: unknown) => any,
   ) {
     createScopedEffect((c) => {
-      evalExpr(c, init(), control, firstExpr(property), coerce);
+      const x = firstExpr(property);
+      evalExpr(c, init(x), control, x, coerce);
     }, scope);
   }
 }
@@ -294,7 +296,7 @@ class FormStateNodeImpl implements FormStateNode {
   ) {
     const base = newControl<FormStateBaseImpl>({
       readonly: false,
-      hidden: false,
+      visible: null,
       disabled: false,
       children: [],
       resolved: { definition } as ResolvedDefinition,
@@ -354,8 +356,8 @@ class FormStateNodeImpl implements FormStateNode {
     return this.base.fields.readonly.value;
   }
 
-  get hidden() {
-    return this.base.fields.hidden.value;
+  get visible() {
+    return this.base.fields.visible.value;
   }
 
   get disabled() {
@@ -419,7 +421,7 @@ function initFormState(
     runAsync,
   });
 
-  const cf = contextOptions;
+  const context = contextOptions;
 
   const scope = base;
 
@@ -434,7 +436,7 @@ function initFormState(
 
   evalDynamic(display, DynamicPropertyType.Display, undefined, coerceString);
 
-  const { dataNode, readonly, disabled, hidden, children, allowedOptions } =
+  const { dataNode, readonly, disabled, visible, children, allowedOptions } =
     base.fields;
 
   const definition = createEvaluatedDefinition(def, evalExpr, scope, display);
@@ -456,26 +458,27 @@ function initFormState(
 
   updateComputedValue(dataNode, () => lookupDataNode(definition, parent));
 
-  updateComputedValue(
-    hidden,
-    () =>
-      !!(
-        parentNode?.hidden ||
-        cf.hidden ||
-        definition.hidden ||
-        (dataNode.value &&
-          (!validDataNode(dataNode.value) ||
-            hideDisplayOnly(dataNode.value, schemaInterface, definition)))
-      ),
-  );
+  updateComputedValue(visible, () => {
+    if (context.hidden) return false;
+    if (parentNode && !parentNode.visible) return parentNode.visible;
+    const dn = dataNode.value;
+    if (
+      dn &&
+      (!validDataNode(dn) || hideDisplayOnly(dn, schemaInterface, definition))
+    )
+      return false;
+    return definition.hidden == null ? null : !definition.hidden;
+  });
 
   updateComputedValue(
     readonly,
-    () => parentNode?.readonly || cf.readonly || isControlReadonly(definition),
+    () =>
+      parentNode?.readonly || context.readonly || isControlReadonly(definition),
   );
   updateComputedValue(
     disabled,
-    () => parentNode?.disabled || cf.disabled || isControlDisabled(definition),
+    () =>
+      parentNode?.disabled || context.disabled || isControlDisabled(definition),
   );
 
   updateComputedValue(fieldOptions, () => {
@@ -532,7 +535,7 @@ function initFormState(
     dataNode,
     schemaInterface,
     parent,
-    hidden,
+    visible,
     runAsync,
   );
 

@@ -36,7 +36,7 @@ function GridRenderer(props: {
   options?: DefaultGridRenderOptions;
 }) {
   const { formNode, renderOptions, renderChild, className } = props.groupProps;
-  const filteredChildren = formNode.children.filter((x, i) => !x.hidden);
+  const filteredChildren = formNode.children.filter((x, i) => x.visible);
   const { Div } = props.formRenderer.html;
   const defaults = props.options ?? {};
   const gridOptions = renderOptions as GridRendererOptions;

@@ -68,7 +68,7 @@ function TabsRenderer({
     <>{formNode.children.map((x, i) => renderTabs([x], i))}</>
   ) : (
     renderTabs(
-      formNode.children.filter((x, i) => !x.hidden),
+      formNode.children.filter((x, i) => x.visible),
       0,
     )
   );

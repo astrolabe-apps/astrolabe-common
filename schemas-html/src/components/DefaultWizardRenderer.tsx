@@ -167,7 +167,7 @@ function WizardRenderer({
   function countVisibleUntil(untilPage: number) {
     let count = 0;
     for (let i = 0; i < untilPage && i < childrenLength; i++) {
-      if (!formNode.getChild(i)!.hidden) {
+      if (formNode.getChild(i)!.visible) {
         count++;
       }
     }
@@ -187,7 +187,7 @@ function WizardRenderer({
   function nextVisibleInDirection(dir: number): number | null {
     let next = currentPage + dir;
     while (next >= 0 && next < childrenLength) {
-      if (!formNode.getChild(next)!.hidden) {
+      if (formNode.getChild(next)!.visible) {
         return next;
       }
       next += dir;

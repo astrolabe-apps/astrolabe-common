@@ -170,10 +170,10 @@ export function setupValidation(
   dataNode: Control<SchemaDataNode | undefined>,
   schemaInterface: SchemaInterface,
   parent: SchemaDataNode,
-  hidden: Control<boolean>,
+  visible: Control<boolean | null>,
   runAsync: (af: () => void) => void,
 ) {
-  const validationEnabled = createScopedComputed(scope, () => !hidden.value);
+  const validationEnabled = createScopedComputed(scope, () => !!visible.value);
   const validatorsScope = createCleanupScope();
   createEffect(
     () => {

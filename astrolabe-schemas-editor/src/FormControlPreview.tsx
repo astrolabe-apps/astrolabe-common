@@ -423,8 +423,8 @@ class FormPreviewStateNode implements FormStateNode {
     return false;
   }
 
-  get hidden() {
-    return false;
+  get visible() {
+    return true;
   }
 
   get disabled() {

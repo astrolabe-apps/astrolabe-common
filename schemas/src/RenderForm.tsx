@@ -95,7 +95,7 @@ export function RenderFormNode({
   const { runAsync } = useAsyncRunner();
   const schemaInterface = state.schemaInterface;
   const definition = state.definition;
-  const visible = !state.hidden;
+  const visible = state.visible;
   const visibility = useControl<Visibility | undefined>(() =>
     visible != null
       ? {
@@ -104,8 +104,10 @@ export function RenderFormNode({
         }
       : undefined,
   );
-  visibility.fields.visible.value = visible;
-
+  if (visible != null) {
+    visibility.fields.visible.value = visible;
+  }
+  
   const dataContext: ControlDataContext = {
     schemaInterface: state.schemaInterface,
     dataNode: state.dataNode,
@@ -129,13 +131,13 @@ export function RenderFormNode({
     textClass,
     ...inheritableOptions
   } = options;
-  const { readonly, hidden, disabled, variables } = state;
+  const { readonly, visible:vis, disabled, variables } = state;
   const childOptions: ControlRenderOptions = {
     ...inheritableOptions,
     readonly,
     disabled,
     variables,
-    hidden,
+    hidden: vis === false,
   };
 
   const labelAndChildren = renderControlLayout({
