@@ -95,7 +95,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const sampleData = useMemo(
     () =>
       displayOptions
-        ? (displayOptions.sampleText ?? "Sample Data")
+        ? displayOptions.sampleText ?? "Sample Data"
         : field &&
           (dataNode?.elementIndex == null
             ? field.collection
@@ -276,6 +276,7 @@ export function createPreviewNode(
 ) {
   return new FormPreviewStateNode(
     childKey,
+    {},
     form,
     form.definition,
     schemaInterface,
@@ -290,7 +291,6 @@ let previewNodeId = 0;
 
 class FormPreviewStateNode implements FormStateNode {
   ui = noopUi;
-  meta: Record<string, any> = {};
   _dataNode: Control<SchemaDataNode | undefined>;
   _children: Control<FormPreviewStateNode[]>;
   scope: CleanupScopeImpl;
@@ -298,6 +298,7 @@ class FormPreviewStateNode implements FormStateNode {
 
   constructor(
     public childKey: string | number,
+    public meta: Record<string, any>,
     public form: FormNode | undefined | null,
     public definition: ControlDefinition,
     public schemaInterface: SchemaInterface,
@@ -334,6 +335,7 @@ class FormPreviewStateNode implements FormStateNode {
             child = newControl(
               new FormPreviewStateNode(
                 childKey,
+                meta,
                 cc.node === undefined ? this.form : cc.node,
                 cc.definition ?? groupedControl([]),
                 this.schemaInterface,
@@ -400,7 +402,7 @@ class FormPreviewStateNode implements FormStateNode {
             }),
           },
         ]
-      : (this.resolveChildren?.(this) ?? this.resolver(this));
+      : this.resolveChildren?.(this) ?? this.resolver(this);
   }
 
   getChildCount(): number {
