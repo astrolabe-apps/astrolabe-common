@@ -161,7 +161,7 @@ function CurrentNode({ node }: { node: Control<FormStateNode> }) {
   const {
     childKey,
     readonly,
-    hidden,
+    visible,
     clearHidden,
     parent,
     dataNode,
@@ -177,7 +177,7 @@ function CurrentNode({ node }: { node: Control<FormStateNode> }) {
           dataNode: dataNode?.control?.value,
           parent: parent.control.value,
           readonly,
-          hidden,
+          visible,
           valid,
           clearHidden,
           variables,
