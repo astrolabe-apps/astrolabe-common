@@ -47,12 +47,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
     {
         return new TsImport("@react-typed-forms/schemas", type);
     }
-
-    private static TsImport EditorLibImport(string type)
-    {
-        return new TsImport("@astrolabe/schemas-editor/schemaSchemas", type);
-    }
-
+    
     private static readonly TsRawExpr MakeScalarField =
         new("makeScalarField", FormLibImport("makeScalarField"));
 
@@ -75,51 +70,6 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
     private static readonly TsRawExpr BuildSchemaFunc =
         new("buildSchema", FormLibImport("buildSchema"));
 
-    private static readonly HashSet<string> FormLibTypes =
-        new()
-        {
-            "FieldType",
-            "ControlDefinitionType",
-            "DisplayDataType",
-            "ExpressionType",
-            "DynamicPropertyType",
-            "ControlAdornmentType",
-            "DataRenderType",
-            "SyncTextType",
-            "GroupRenderType",
-            "DisplayDataType",
-            "ControlDefinitionType",
-            "ControlDefinition",
-            "SchemaFieldType",
-            "SchemaField",
-            "IconMapping",
-            "RenderOptions",
-            "GroupRenderOptions",
-            "DisplayData",
-            "FieldOption",
-            "EntityExpression",
-            "DynamicProperty",
-            "ControlAdornment",
-            "SchemaRestrictions",
-            "AdornmentPlacement",
-            "SchemaValidator",
-            "JsonataValidator",
-            "DateComparison",
-            "DateValidator",
-            "IconReference",
-            "ActionStyle",
-            "IconPlacement",
-            "ActionOptions"
-        };
-
-    private static readonly HashSet<string> EditorLibImports =
-        new()
-        {
-            "SchemaFieldForm",
-            "SchemaFieldSchema",
-            "ControlDefinitionForm",
-            "ControlDefinitionSchema"
-        };
 
     private TsExpr BuildSchema(string schemaType)
     {
@@ -535,58 +485,6 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         return JsonNamingPolicy.CamelCase.ConvertName(propertyInfo.PropertyName);
     }
 }
-
-public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
-{
-    public Func<Type, TsImport> ImportType { get; }
-    private Func<Type, ResolvedSchema> ResolveSchema { get; }
-    private Dictionary<Type, ResolvedSchema> ResolvedSchemas { get; } = new();
-
-    public SchemaFieldsGeneratorOptions(Func<Type, TsImport> importType, Func<Type, ResolvedSchema>? resolveSchema = null)
-    {
-        ImportType = importType;
-        ResolveSchema = resolveSchema ?? DefaultSchemaResolver.Create(importType);
-    }
-
-    public SchemaFieldsGeneratorOptions(string clientModule) : this(x => new TsImport(clientModule,  ResolvedSchema.ToTsTypeName(ResolvedSchema.FlattenedTypeName(x))))
-    {
-    }
-
-    public ResolvedSchema GetResolvedSchema(Type type)
-    {
-        if (ResolvedSchemas.TryGetValue(type, out var schema))
-            return schema;
-        schema = ResolveSchema(type);
-        ResolvedSchemas[type] = schema;
-        return schema;
-    }
-
-    public Func<string, string>? DisplayNameFromProperty { get; set; }
-
-    public Func<Type, string?>? CustomFieldType { get; set; }
-
-    public IEnumerable<string>? CustomFieldTypes { get; set; }
-    
-    public bool DontResolve { get; set; }
-    
-    //
-    // public string FormTypeName(Type type)
-    // {
-    //     return FlattenedTypeName(type) + "Form";
-    // }
-    //
-    // public string SchemaConstName(Type type)
-    // {
-    //     return FlattenedTypeName(type) + "Schema";
-    // }
-    //
-    // public string SchemaRefName(Type type)
-    // {
-    //     return FlattenedTypeName(type);
-    // }
-
-}
-
 
 // var formName = _options.FormTypeName(type);
 // return !_options.ForEditorLib && EditorLibImports.Contains(formName)

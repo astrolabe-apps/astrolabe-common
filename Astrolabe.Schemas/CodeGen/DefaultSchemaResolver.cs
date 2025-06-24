@@ -17,7 +17,7 @@ public static class DefaultSchemaResolver
             if (primType != null)
                 return ResolvedSchema.Primitive(new TsTypeRef(primType));
             var schemaGenAttr = x.GetCustomAttribute<SchemaGenAttribute>();
-            var flattened = ResolvedSchema.FlattenedTypeName(x);
+            var flattened = FlattenedTypeName(x);
             var endsWithForm = flattened.EndsWith("Form");
             var formTypeName = schemaGenAttr?.FormName ?? (endsWithForm ? flattened : flattened + "Form");
             var includeApi = schemaGenAttr?.ApiClass ?? !endsWithForm;
@@ -66,5 +66,23 @@ public static class DefaultSchemaResolver
     public static bool IsTsBoolType(Type type)
     {
         return type == typeof(bool);
+    }
+    
+    public static string FlattenedTypeName(Type type)
+    {
+        if (!type.IsGenericType) return type.Name;
+        var args = type.GetGenericArguments();
+        return args[0].Name + type.Name[..type.Name.IndexOf('`')];
+    }
+    public static string ToTsTypeName(string typeName)
+    {
+        if (char.IsAsciiLetterUpper(typeName[0]))
+            return typeName;
+        return char.ToUpper(typeName[0]) + typeName[1..];
+    }
+
+    public static Func<Type, TsImport> ClientImport(string clientModule)
+    {
+        return x => new TsImport(clientModule, ToTsTypeName(FlattenedTypeName(x)));
     }
 }

@@ -15,7 +15,7 @@ public class CodeGenController : ControllerBase
     public string GetSchemas()
     {
         var gen = new SchemaFieldsGenerator(
-            new SchemaFieldsGeneratorOptions("../client") { ForEditorLib = true }
+            new SchemaFieldsGeneratorOptions( EditorTsImporter.MakeImporter("../client"))
         );
         var allGenSchemas = gen.CollectDataForTypes(typeof(SchemaField), typeof(ControlDefinition))
             .ToList();
