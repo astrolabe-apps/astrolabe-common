@@ -25,7 +25,7 @@ public record TsImport(string File, string Import, bool DefaultImport = false) :
 {
     public IEnumerable<TsImport> AllImports()
     {
-        return new[] { this };
+        return [this];
     }
 
     public TsTypeRef TypeRef => new(Import, this);
@@ -134,7 +134,12 @@ public record TsObjectField(TsExpr Field, TsExpr Value)
 {
     public static TsObjectField NamedField(string name, TsExpr value)
     {
-        return new TsObjectField(new TsRawExpr(name), value);
+        return NamedField(new TsRawExpr(name), value);
+    }
+
+    public static TsObjectField NamedField(TsExpr fieldExpr, TsExpr value)
+    {
+        return new TsObjectField(fieldExpr, value);
     }
 
     public static TsObjectField ForVariable(TsExpr varExpr)

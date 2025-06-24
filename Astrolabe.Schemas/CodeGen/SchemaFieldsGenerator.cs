@@ -128,42 +128,30 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
             new[] { new TsTypeRef(schemaType) }.Concat(_customFieldTypeParams)
         );
     }
-
-    private string DefaultConstName(Type type)
-    {
-        return $"default{_options.FormTypeName(type)}";
-    }
-
-    private TsAssignment CreateDefaultFormConst(Type type)
+    
+    private TsAssignment CreateDefaultFormConst(ResolvedSchema resolved)
     {
         return new TsAssignment(
-            DefaultConstName(type),
+            resolved.DefaultValueName,
             new TsRawExpr(
-                $"defaultValueForFields({_options.SchemaConstName(type)})",
-                new TsImports(new[] { DefaultValueForFields })
+                $"defaultValueForFields({resolved.SchemaConstName})",
+                new TsImports([DefaultValueForFields])
             ),
-            new TsTypeRef(_options.FormTypeName(type))
+            resolved.FormType
         );
     }
 
-    private TsRawFunction CreateConvertFunction(Type type)
+    private TsRawFunction CreateConvertFunction(ResolvedSchema resolved)
     {
         return new TsRawFunction(
-            $"function to{_options.FormTypeName(type)}(v: {_options.FlattenedTypeName(type)}): {_options.FormTypeName(type)} "
+            $"function to{resolved.FormTypeName}(v: {resolved.ApiImport?.Import}): {resolved.FormTypeName} "
                 + "{\n"
-                + $"return applyDefaultValues(v, {_options.SchemaConstName(type)});"
+                + $"return applyDefaultValues(v, {resolved.SchemaConstName});"
                 + "\n}\n",
-            new TsImports(new[] { ClientImport(type), ApplyDefaultValuesImport })
+            new TsImports([resolved.ApiImport, ApplyDefaultValuesImport])
         );
     }
-
-    private TsImport ClientImport(Type type)
-    {
-        return FormLibTypes.Contains(type.Name)
-            ? FormLibImport(type.Name)
-            : _options.ImportType(type);
-    }
-
+    
     public static string FullKeyForObjectType(Type t)
     {
         return t switch
@@ -196,19 +184,20 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         IEnumerable<GeneratedSchema> ObjectDeclarations(ObjectData objectTypeData)
         {
             var type = objectTypeData.Type;
+            var resolved = _options.GetResolvedSchema(type);
             var members = objectTypeData
                 .Members.Where(x => x.GetAttribute<JsonExtensionDataAttribute>() == null)
                 .ToList();
 
             var controlsInterface = new TsInterface(
-                _options.FormTypeName(type),
+                resolved.FormTypeName,
                 new TsObjectType(members.Select(ControlsMember))
             );
 
             var deps = objectTypeData.Members.SelectMany(x => CollectData(x.Data()));
 
-            var tsConstName = _options.SchemaConstName(type);
-            var tsAllName = _options.FormTypeName(type);
+            var tsConstName = resolved.SchemaConstName;
+            var tsAllName = resolved.FormTypeName;
 
             var baseType = objectTypeData.GetAttribute<JsonBaseTypeAttribute>();
             var subTypes = objectTypeData.Metadata.OfType<JsonSubTypeAttribute>();
@@ -230,18 +219,18 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
                         }
                     )
                 ),
-                CreateDefaultFormConst(objectTypeData.Type),
+                CreateDefaultFormConst(resolved),
             };
-            if (_options.ShouldCreateConvert(objectTypeData.Type))
+            if (resolved.ApiImport != null)
             {
-                declarations = declarations.Append(CreateConvertFunction(objectTypeData.Type));
+                declarations = declarations.Append(CreateConvertFunction(resolved));
             }
 
             return deps.Append(
                 new GeneratedSchema(
                     declarations,
                     TsObjectField.NamedField(
-                        _options.SchemaRefName(type),
+                        resolved.SchemaRefNameExpr,
                         new TsRawExpr(tsConstName)
                     )
                 )
@@ -376,49 +365,8 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         {
             EnumerableData enumerableTypeData
                 => new TsArrayType(FormType(enumerableTypeData.Element()), Nullable: data.Nullable),
-            _ => TsTypeOnly(data.Type) with { Nullable = data.Nullable }
+            _ => _options.GetResolvedSchema(data.Type).FormType with { Nullable = data.Nullable }
         };
-    }
-
-    private TsType TsTypeOnly(Type type)
-    {
-        if (type.IsEnum)
-        {
-            return ClientImport(type).TypeRef;
-        }
-
-        if (
-            type == typeof(string)
-            || type == typeof(Guid)
-            || type == typeof(DateTime)
-            || type == typeof(DateOnly)
-            || type == typeof(TimeOnly)
-            || type == typeof(DateTimeOffset)
-        )
-            return new TsTypeRef("string");
-        if (
-            type == typeof(int)
-            || type == typeof(double)
-            || type == typeof(long)
-            || type == typeof(short)
-            || type == typeof(ushort)
-            || type == typeof(decimal)
-        )
-            return new TsTypeRef("number");
-        if (type == typeof(bool))
-            return new TsTypeRef("boolean");
-        if (
-            type == typeof(object)
-            || (
-                type.IsGenericType
-                && typeof(IDictionary<,>).IsAssignableFrom(type.GetGenericTypeDefinition())
-            )
-        )
-            return new TsTypeRef("any");
-        var formName = _options.FormTypeName(type);
-        return !_options.ForEditorLib && EditorLibImports.Contains(formName)
-            ? EditorLibImport(formName).TypeRef
-            : new TsTypeRef(formName);
     }
 
     private static TsCallExpression SetOptions(
@@ -519,6 +467,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
 
         TsCallExpression DoObject(ObjectData objectTypeData)
         {
+            var resolvedSchema = _options.GetResolvedSchema(objectTypeData.Type);
             var fields =
                 objectTypeData == parentObject
                     ? new[] { TsObjectField.NamedField("treeChildren", new TsConstExpr(true)) }
@@ -528,22 +477,14 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
                             "children",
                             _options.DontResolve
                                 ? new TsConstExpr(Enumerable.Empty<TsRawExpr>())
-                                : ChildSchemaExpr(objectTypeData.Type)
+                                : resolvedSchema.SchemaRefExpr
                         ),
                         TsObjectField.NamedField(
                             "schemaRef",
-                            new TsConstExpr(_options.SchemaRefName(objectTypeData.Type))
+                            resolvedSchema.SchemaRefNameExpr
                         )
                     ];
             return TsCallExpression.Make(MakeCompoundField, TsObjectExpr.Make(fields));
-        }
-
-        TsExpr ChildSchemaExpr(Type type)
-        {
-            var constName = _options.SchemaConstName(type);
-            return !_options.ForEditorLib && EditorLibImports.Contains(constName)
-                ? EditorLibImport(constName).Ref
-                : new TsRawExpr(constName);
         }
     }
 
@@ -598,57 +539,70 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
 public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
 {
     public Func<Type, TsImport> ImportType { get; }
+    private Func<Type, ResolvedSchema> ResolveSchema { get; }
+    private Dictionary<Type, ResolvedSchema> ResolvedSchemas { get; } = new();
 
-    public SchemaFieldsGeneratorOptions(Func<Type, TsImport> importType)
+    public SchemaFieldsGeneratorOptions(Func<Type, TsImport> importType, Func<Type, ResolvedSchema>? resolveSchema = null)
     {
         ImportType = importType;
+        ResolveSchema = resolveSchema ?? DefaultSchemaResolver.Create(importType);
     }
 
-    public SchemaFieldsGeneratorOptions(string clientModule)
+    public SchemaFieldsGeneratorOptions(string clientModule) : this(x => new TsImport(clientModule,  ResolvedSchema.ToTsTypeName(ResolvedSchema.FlattenedTypeName(x))))
     {
-        ImportType = x => new TsImport(clientModule, FlattenedTypeName(x));
+    }
+
+    public ResolvedSchema GetResolvedSchema(Type type)
+    {
+        if (ResolvedSchemas.TryGetValue(type, out var schema))
+            return schema;
+        schema = ResolveSchema(type);
+        ResolvedSchemas[type] = schema;
+        return schema;
     }
 
     public Func<string, string>? DisplayNameFromProperty { get; set; }
-    public Func<Type, bool>? CreateConvert { get; set; }
+
     public Func<Type, string?>? CustomFieldType { get; set; }
 
     public IEnumerable<string>? CustomFieldTypes { get; set; }
-
-    public bool ForEditorLib { get; set; }
-
+    
     public bool DontResolve { get; set; }
+    
+    //
+    // public string FormTypeName(Type type)
+    // {
+    //     return FlattenedTypeName(type) + "Form";
+    // }
+    //
+    // public string SchemaConstName(Type type)
+    // {
+    //     return FlattenedTypeName(type) + "Schema";
+    // }
+    //
+    // public string SchemaRefName(Type type)
+    // {
+    //     return FlattenedTypeName(type);
+    // }
 
-    public bool ShouldCreateConvert(Type type)
-    {
-        return CreateConvert?.Invoke(type) ?? true;
-    }
-
-    public string FlattenedTypeName(Type type)
-    {
-        if (type.IsGenericType)
-        {
-            var args = type.GetGenericArguments();
-            return args[0].Name + type.Name[..type.Name.IndexOf('`')];
-        }
-        return type.Name;
-    }
-
-    public string FormTypeName(Type type)
-    {
-        return FlattenedTypeName(type) + "Form";
-    }
-
-    public string SchemaConstName(Type type)
-    {
-        return FlattenedTypeName(type) + "Schema";
-    }
-
-    public string SchemaRefName(Type type)
-    {
-        return FlattenedTypeName(type);
-    }
 }
+
+
+// var formName = _options.FormTypeName(type);
+// return !_options.ForEditorLib && EditorLibImports.Contains(formName)
+//     ? EditorLibImport(formName).TypeRef
+//     : new TsTypeRef(formName);
+
+
+// TsExpr ChildSchemaExpr(Type type)
+// {
+//             
+//     new TsConstExpr(_options.SchemaRefName(objectTypeData.Type)
+//     var constName = _options.SchemaConstName(type);
+//     return !_options.ForEditorLib && EditorLibImports.Contains(constName)
+//         ? EditorLibImport(constName).Ref
+//         : new TsRawExpr(constName);
+// }
 
 public record GeneratedSchema(IEnumerable<TsDeclaration> Declarations, TsObjectField SchemaEntry)
 {

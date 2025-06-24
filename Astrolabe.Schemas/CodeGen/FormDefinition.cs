@@ -65,7 +65,7 @@ public static class FormDefinition
                 x.Value + "Json",
                 true
             ).Ref;
-
+            var resolved = options.GetResolvedSchema(x.GetSchema());
             return new TsAssignment(
                 x.Value,
                 new TsObjectExpr(
@@ -74,11 +74,11 @@ public static class FormDefinition
                         TsObjectField.NamedField("name", new TsConstExpr(x.Name)),
                         TsObjectField.NamedField(
                             "schema",
-                            new TsImport(schemaModule, options.SchemaConstName(x.GetSchema())).Ref
+                            new TsImport(schemaModule, resolved.SchemaConstName).Ref
                         ),
                         TsObjectField.NamedField(
                             "schemaName",
-                            new TsConstExpr(options.SchemaRefName(x.GetSchema()))
+                            resolved.SchemaRefNameExpr
                         ),
                         TsObjectField.NamedField("defaultConfig", new TsConstExpr(x.Config)),
                         TsObjectField.NamedField(
