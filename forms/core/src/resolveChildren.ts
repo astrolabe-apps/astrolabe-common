@@ -19,6 +19,7 @@ import { createScopedComputed } from "./util";
 import { SchemaInterface } from "./schemaInterface";
 import { FieldOption } from "./schemaField";
 import { FormStateNode } from "./formStateNode";
+import { groupedControl } from "./controlBuilder";
 
 export type ChildResolverFunc = (c: FormStateNode) => ChildNodeSpec[];
 
@@ -99,15 +100,18 @@ export function resolveArrayChildren(
   node: FormNode,
   adjustChild?: (elem: Control<any>, index: number) => Partial<ChildNodeInit>,
 ): ChildNodeSpec[] {
+  const hasChildren = node.getChildNodes().length > 0;
   return data.control.as<any[]>().elements.map((x, i) => ({
     childKey: x.uniqueId,
     create: () => ({
-      definition: {
-        type: ControlDefinitionType.Data,
-        field: ".",
-        hideTitle: true,
-        renderOptions: { type: DataRenderType.Standard },
-      } as DataControlDefinition,
+      definition: !hasChildren
+        ? ({
+            type: ControlDefinitionType.Data,
+            field: ".",
+            hideTitle: true,
+            renderOptions: { type: DataRenderType.Standard },
+          } as DataControlDefinition)
+        : groupedControl([]),
       node,
       parent: data!.getChildElement(i),
       ...(adjustChild?.(x, i) ?? {}),
