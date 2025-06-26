@@ -396,7 +396,7 @@ function DataGridControlRenderer({
         const getRowSpan =
           rowSpanExpr || isGroupByColumn
             ? (row: FormStateNode, index: number) => {
-                const rowControl = row.dataNode!.control;
+                const rowControl = row.parent.control;
                 if (rowSpanExpr) {
                   const cell = row.getChild(i)!;
                   const rs = cell.ensureMeta("rowSpan", () => newControl(1));
