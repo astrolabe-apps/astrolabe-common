@@ -30,6 +30,9 @@ export interface PreviewData {
   showRawEditor: boolean;
   showMetadata: boolean;
   data: any;
+  readonly: boolean;
+  disabled: boolean;
+  displayOnly: boolean;
 }
 
 export function FormPreview({
@@ -60,7 +63,15 @@ export function FormPreview({
     | ((c: FormNode, data: Control<any>) => ReactNode);
 }) {
   const rawRenderer = useMemo(() => createEditorRenderer([]), []);
-  const { data, showJson, showRawEditor, showMetadata } = previewData.fields;
+  const {
+    data,
+    showJson,
+    showRawEditor,
+    showMetadata,
+    readonly,
+    disabled,
+    displayOnly,
+  } = previewData.fields;
   const metadata = getMetaFields(data);
   const metadataText = useControl(() =>
     JSON.stringify(metadata.current.value, null, 2),
@@ -96,6 +107,9 @@ export function FormPreview({
         {viewContext.checkbox(showRawEditor, "Show Raw Editor")}
         {viewContext.checkbox(showJson, "Show Json")}
         {viewContext.checkbox(showMetadata, "Show Metadata")}
+        {viewContext.checkbox(readonly, "Readonly")}
+        {viewContext.checkbox(disabled, "Disabled")}
+        {viewContext.checkbox(displayOnly, "Display Only")}
         {formRenderer.renderAction({
           onClick: runValidation,
           actionId: "validate",
@@ -113,7 +127,13 @@ export function FormPreview({
             form={controls}
             data={rootDataNode}
             renderer={formRenderer}
-            options={{ ...previewOptions, variables: allVariables }}
+            options={{
+              readonly: readonly.value,
+              disabled: disabled.value,
+              displayOnly: displayOnly.value,
+              ...previewOptions,
+              variables: allVariables,
+            }}
           />
           {/*<NewControlRenderer*/}
           {/*  definition={controls}*/}

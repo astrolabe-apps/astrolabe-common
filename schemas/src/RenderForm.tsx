@@ -21,6 +21,7 @@ import {
   createSchemaTree,
   defaultEvaluators,
   defaultSchemaInterface,
+  FormContextOptions,
   FormNode,
   FormNodeUi,
   FormStateNode,
@@ -36,7 +37,7 @@ import {
   rendererClass,
   useUpdatedRef,
 } from "./util";
-import { Control, useControl } from "@react-typed-forms/core";
+import { Control, trackedValue, useControl } from "@react-typed-forms/core";
 
 export interface RenderFormProps {
   data: SchemaDataNode;
@@ -54,6 +55,17 @@ export function RenderForm({
   options = {},
   stateRef,
 }: RenderFormProps) {
+  const { readonly, disabled, displayOnly, hidden, variables, clearHidden } =
+    options;
+  const currentContext: FormContextOptions = {
+    readonly,
+    disabled,
+    variables,
+    hidden,
+    clearHidden,
+  };
+  const contextOptions = useControl(currentContext);
+  contextOptions.value = currentContext;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const { runAsync } = useAsyncRunner();
 
@@ -63,7 +75,7 @@ export function RenderForm({
         runAsync,
         schemaInterface,
         evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
-        contextOptions: options,
+        contextOptions: trackedValue(contextOptions),
         resolveChildren: renderer.resolveChildren,
       }),
     [],
@@ -107,7 +119,7 @@ export function RenderFormNode({
   if (visible != null) {
     visibility.fields.visible.value = visible;
   }
-  
+
   const dataContext: ControlDataContext = {
     schemaInterface: state.schemaInterface,
     dataNode: state.dataNode,
@@ -131,7 +143,7 @@ export function RenderFormNode({
     textClass,
     ...inheritableOptions
   } = options;
-  const { readonly, visible:vis, disabled, variables } = state;
+  const { readonly, visible: vis, disabled, variables } = state;
   const childOptions: ControlRenderOptions = {
     ...inheritableOptions,
     readonly,

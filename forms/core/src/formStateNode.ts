@@ -56,7 +56,6 @@ export interface FormContextOptions {
   hidden?: boolean | null;
   disabled?: boolean | null;
   clearHidden?: boolean;
-  stateKey?: string;
   variables?: VariablesFunc;
 }
 
