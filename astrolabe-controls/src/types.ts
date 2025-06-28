@@ -10,6 +10,7 @@ export interface ControlSetup<V, M = {}> {
   elems?: V extends Array<infer X> ? DelayedSetup<X, M> : unknown;
   afterCreate?: (control: Control<V>) => void;
   meta?: Partial<M>;
+  dontClearError?: boolean;
 }
 
 export type ChangeListenerFunc<V> = (

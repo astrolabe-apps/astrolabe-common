@@ -7,6 +7,7 @@ import {
   dateValidator,
   defaultEvaluators,
   DynamicPropertyType,
+  FieldType,
   FormStateNode,
   groupedControl,
   jsonataValidator,
@@ -57,15 +58,22 @@ describe("validator types", () => {
   it("length validator", () => {
     fc.assert(
       fc.property(
-        rootCompound().chain(({ root, schema }) =>
-          fc.record({
-            schema: fc.constant(schema),
-            data: randomValueForField(root, {
-              string: { minLength: 0, maxLength: 100 },
+        rootCompound({
+          fieldType: fc.constant(FieldType.String),
+          arrayChance: 50,
+          notNullable: true,
+        }).chain(({ root, schema }) =>
+          fc.integer({ min: 0, max: 100 }).chain((al) =>
+            fc.record({
+              schema: fc.constant(schema),
+              data: randomValueForField(root, {
+                string: { minLength: 0, maxLength: 100 },
+                array: { minLength: al, maxLength: al },
+              }),
+              minLength: fc.integer({ min: 0, max: 50 }),
+              maxLength: fc.integer({ min: 51, max: 100 }),
             }),
-            minLength: fc.integer({ min: 0, max: 50 }),
-            maxLength: fc.integer({ min: 51, max: 100 }),
-          }),
+          ),
         ),
         ({ schema, data, minLength, maxLength }) => {
           const state = testNodeState(
@@ -75,11 +83,15 @@ describe("validator types", () => {
             schema,
             { data },
           );
-
           const value = data[schema.field];
-          if (typeof value === "string") {
-            expect(state.valid).toBe(
-              value.length >= minLength && value.length <= maxLength,
+          const minValid = schema.collection || value.length >= minLength;
+          const maxValid = value.length <= maxLength;
+          expect(state.valid).toBe(minValid && maxValid);
+          if (!state.valid) {
+            expect(state.dataNode!.control.error).toBe(
+              !minValid
+                ? "Length must be at least " + minLength
+                : "Length must be less than " + maxLength,
             );
           }
         },

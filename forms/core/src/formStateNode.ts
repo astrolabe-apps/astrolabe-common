@@ -302,16 +302,19 @@ class FormStateNodeImpl implements FormStateNode {
     childIndex: number,
     public resolveChildren?: ChildResolverFunc,
   ) {
-    const base = newControl<FormStateBaseImpl>({
-      readonly: false,
-      visible: null,
-      disabled: false,
-      children: [],
-      resolved: { definition } as ResolvedDefinition,
-      parent,
-      allowedOptions: undefined,
-      childIndex,
-    });
+    const base = newControl<FormStateBaseImpl>(
+      {
+        readonly: false,
+        visible: null,
+        disabled: false,
+        children: [],
+        resolved: { definition } as ResolvedDefinition,
+        parent,
+        allowedOptions: undefined,
+        childIndex,
+      },
+      { dontClearError: true },
+    );
     this.base = base;
     base.meta["$FormState"] = this;
     initFormState(definition, this, parentNode);
