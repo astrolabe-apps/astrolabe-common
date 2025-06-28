@@ -1,4 +1,9 @@
-import fc, { Arbitrary, ArrayConstraints, StringConstraints } from "fast-check";
+import fc, {
+  Arbitrary,
+  ArrayConstraints,
+  IntegerConstraints,
+  StringConstraints,
+} from "fast-check";
 import {
   compoundField,
   CompoundField,
@@ -202,6 +207,7 @@ export interface FieldValueConstraints {
   element?: boolean;
   string?: StringConstraints;
   array?: ArrayConstraints;
+  int?: IntegerConstraints;
   childConstraints?: () => FieldValueConstraints;
 }
 export function randomValueForField(
@@ -224,7 +230,7 @@ export function randomValueForField(
         );
       }
       if (f.type === FieldType.String) return fc.string(constraints?.string);
-      if (f.type === FieldType.Int) return fc.integer();
+      if (f.type === FieldType.Int) return fc.integer(constraints?.int);
       if (f.type === FieldType.Double) return fc.double({ noNaN: true });
       if (f.type === FieldType.Bool) return fc.boolean();
       if (f.type === FieldType.Date)
