@@ -16,7 +16,12 @@ import {
   SchemaDataNode,
   SchemaField,
 } from "../src";
-import { newControl } from "@astroapps/controls";
+import {
+  createCleanupScope,
+  createSyncEffect,
+  deepEquals,
+  newControl,
+} from "@astroapps/controls";
 import { FieldAndValue } from "./gen-schema";
 
 export interface TestNodeOptions {
@@ -72,4 +77,44 @@ export function withDynamic(
   type: DynamicPropertyType,
 ): ControlDefinition {
   return { ...c, dynamic: [{ type, expr: { type: "Anything" } }] };
+}
+
+export function notNullPromise<A>(f: () => A | null | undefined) {
+  return new Promise<A>((resolve, reject) => {
+    const scope = createCleanupScope();
+    createSyncEffect(() => {
+      const v = f();
+      if (v != null) {
+        resolve(v);
+        scope.cleanup();
+      }
+    }, scope);
+  });
+}
+
+export function changePromise<A>(f: () => A) {
+  return new Promise<A>((resolve, reject) => {
+    const scope = createCleanupScope();
+    const initial = f();
+    createSyncEffect(() => {
+      const v = f();
+      if (v !== initial) {
+        resolve(v);
+        scope.cleanup();
+      }
+    }, scope);
+  });
+}
+
+export function deepEqualPromise<A>(f: () => A, expected: A) {
+  return new Promise<A>((resolve, reject) => {
+    const scope = createCleanupScope();
+    createSyncEffect(() => {
+      const v = f();
+      if (deepEquals(v, expected)) {
+        resolve(v);
+        scope.cleanup();
+      }
+    }, scope);
+  });
 }

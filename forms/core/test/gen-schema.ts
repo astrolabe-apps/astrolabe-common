@@ -95,18 +95,22 @@ export interface SchemaFieldGenOptions {
   idField?: boolean;
   maxDepth?: number;
   notNullable?: boolean;
+  fieldType?: Arbitrary<FieldType>;
 }
 
-export function arbitraryFieldName(): Arbitrary<string> {
+export function arbitraryFieldName(
+  fieldConstraints?: StringConstraints,
+): Arbitrary<string> {
   return fc
-    .string({ minLength: 1 })
+    .string({ minLength: 1, ...fieldConstraints })
     .filter((x) => x != "." && x != ".." && !x.includes("/"));
 }
 
 export function rootCompound(
   options: SchemaFieldGenOptions = {},
+  fieldConstraints?: StringConstraints,
 ): Arbitrary<{ root: CompoundField; schema: SchemaField }> {
-  return arbitraryFieldName().chain((x) =>
+  return arbitraryFieldName(fieldConstraints).chain((x) =>
     randomSchemaField(x, options).map((c) => ({
       root: compoundField("ROOT", [c], { notNullable: true })(""),
       schema: c,
@@ -125,27 +129,30 @@ export function randomSchemaField(
     forceArray,
     idField,
     maxDepth = 3,
+    fieldType,
   } = options;
   const nextOptions = { arrayChance, compoundChance, maxDepth: maxDepth - 1 };
   const realCompoundChance = maxDepth > 0 ? compoundChance : 0;
-  const fieldType = fc.oneof(
-    {
-      weight: forceCompound ? 100 : realCompoundChance,
-      arbitrary: fc.constant(FieldType.Compound),
-    },
-    {
-      weight: forceCompound ? 0 : 100 - realCompoundChance,
-      arbitrary: fc.constantFrom(
-        FieldType.String,
-        FieldType.Int,
-        FieldType.Double,
-        FieldType.Bool,
-        FieldType.Date,
-        FieldType.DateTime,
-        FieldType.Time,
-      ),
-    },
-  );
+  const arbFieldType =
+    fieldType ??
+    fc.oneof(
+      {
+        weight: forceCompound ? 100 : realCompoundChance,
+        arbitrary: fc.constant(FieldType.Compound),
+      },
+      {
+        weight: forceCompound ? 0 : 100 - realCompoundChance,
+        arbitrary: fc.constantFrom(
+          FieldType.String,
+          FieldType.Int,
+          FieldType.Double,
+          FieldType.Bool,
+          FieldType.Date,
+          FieldType.DateTime,
+          FieldType.Time,
+        ),
+      },
+    );
   const collection = fc.oneof(
     {
       weight: forceArray ? 0 : 100 - arrayChance,
@@ -157,7 +164,7 @@ export function randomSchemaField(
     },
   );
 
-  const withoutId = fieldType.chain((ft) =>
+  const withoutId = arbFieldType.chain((ft) =>
     fc.record({
       field: fc.constant(field),
       type: fc.constant(ft),
