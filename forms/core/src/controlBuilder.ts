@@ -34,6 +34,7 @@ import {
   EntityExpression,
   ExpressionType,
   JsonataExpression,
+  NotEmptyExpression,
 } from "./entityExpression";
 
 export function dataControl(
@@ -154,8 +155,16 @@ export const fieldExpr = dataExpr;
  */
 export const fieldEqExpr = dataMatchExpr;
 
+export const uuidExpr = { type: ExpressionType.UUID };
 export function dataMatchExpr(field: string, value: any): DataMatchExpression {
   return { type: ExpressionType.DataMatch, field, value };
+}
+
+export function notEmptyExpr(
+  field: string,
+  empty?: boolean,
+): NotEmptyExpression {
+  return { type: ExpressionType.NotEmpty, field, empty };
 }
 export function jsonataExpr(expression: string): JsonataExpression {
   return { type: ExpressionType.Jsonata, expression };

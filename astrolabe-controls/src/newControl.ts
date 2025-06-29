@@ -15,7 +15,7 @@ export function newControl<V>(
   return new ControlImpl<V>(
     value,
     arguments.length == 3 ? initialValue! : value,
-    ControlFlags.None,
+    setup?.dontClearError ? ControlFlags.DontClearError : ControlFlags.None,
     setup ? new ConfiguredControlLogic(setup) : new DefaultControlLogic(),
   );
 }

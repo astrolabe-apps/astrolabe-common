@@ -1,31 +1,31 @@
 import { testNodeState } from "./nodeTester";
-import {
-  dataControl,
-  dataExpr,
-  defaultEvaluators,
-  DynamicPropertyType,
-  groupedControl,
-} from "../src";
+import { dataControl, lengthValidator } from "../src";
 
 const [c] = [
   {
     schema: {
-      field: "toString",
+      field: "pr",
       type: "String",
-      collection: false,
-      notNullable: false,
+      collection: true,
+      notNullable: true,
       children: null,
     },
-    data: { toString: " " },
+    data: { pr: [] },
+    minLength: 1,
+    maxLength: 51,
   },
 ];
 
-const { schema, data } = c;
+const { schema, data, minLength, maxLength } = c;
+
 const state = testNodeState(
-  groupedControl([dataControl(schema.field, undefined, { required: true })]),
+  dataControl(schema.field, undefined, {
+    validators: [lengthValidator(minLength, maxLength)],
+  }),
   schema,
   { data },
 );
-console.log(state.valid);
-state.parent.control.value = {};
+
+const value = data.pr;
+
 console.log(state.valid);

@@ -123,7 +123,15 @@ export function createEvaluatedDefinition(
   const definitionOverrides = createScoped<Record<string, any>>(scope, {});
   const displayOverrides = createScoped<Record<string, any>>(scope, {});
 
-  const of = definitionOverrides.fields as Record<
+  const {
+    hidden,
+    displayData,
+    readonly,
+    disabled,
+    defaultValue,
+    actionData,
+    title,
+  } = definitionOverrides.fields as Record<
     KeysOfUnion<AnyControlDefinition>,
     Control<any>
   >;
@@ -133,14 +141,14 @@ export function createEvaluatedDefinition(
     Control<any>
   >;
 
-  updateComputedValue(of.displayData, () =>
+  updateComputedValue(displayData, () =>
     isDisplayControl(def)
       ? createOverrideProxy(def.displayData, displayOverrides)
       : undefined,
   );
 
   evalDynamic(
-    of.hidden,
+    hidden,
     DynamicPropertyType.Visible,
     // Make sure it's not null if no scripting
     (x) => (x ? def.hidden : !!def.hidden),
@@ -148,7 +156,7 @@ export function createEvaluatedDefinition(
   );
 
   evalDynamic(
-    of.readonly,
+    readonly,
     DynamicPropertyType.Readonly,
     () => isControlReadonly(def),
     (r) => !!r,
@@ -158,7 +166,7 @@ export function createEvaluatedDefinition(
     evalExpr(
       c,
       isControlDisabled(def),
-      of.disabled,
+      disabled,
       firstExpr(DynamicPropertyType.Disabled),
       (r) => !!r,
     );
@@ -168,7 +176,7 @@ export function createEvaluatedDefinition(
     evalExpr(
       c,
       isDataControl(def) ? def.defaultValue : undefined,
-      of.defaultValue,
+      defaultValue,
       isDataControl(def)
         ? firstExpr(DynamicPropertyType.DefaultValue)
         : undefined,
@@ -180,7 +188,7 @@ export function createEvaluatedDefinition(
     evalExpr(
       c,
       isActionControl(def) ? def.actionData : undefined,
-      of.actionData,
+      actionData,
       isActionControl(def)
         ? firstExpr(DynamicPropertyType.ActionData)
         : undefined,
@@ -192,7 +200,7 @@ export function createEvaluatedDefinition(
     evalExpr(
       c,
       def.title,
-      of.title,
+      title,
       firstExpr(DynamicPropertyType.Label),
       coerceString,
     );
@@ -293,16 +301,19 @@ class FormStateNodeImpl implements FormStateNode {
     childIndex: number,
     public resolveChildren?: ChildResolverFunc,
   ) {
-    const base = newControl<FormStateBaseImpl>({
-      readonly: false,
-      visible: null,
-      disabled: false,
-      children: [],
-      resolved: { definition } as ResolvedDefinition,
-      parent,
-      allowedOptions: undefined,
-      childIndex,
-    });
+    const base = newControl<FormStateBaseImpl>(
+      {
+        readonly: false,
+        visible: null,
+        disabled: false,
+        children: [],
+        resolved: { definition } as ResolvedDefinition,
+        parent,
+        allowedOptions: undefined,
+        childIndex,
+      },
+      { dontClearError: true },
+    );
     this.base = base;
     base.meta["$FormState"] = this;
     initFormState(definition, this, parentNode);
