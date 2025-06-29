@@ -1,3 +1,5 @@
+using System.Reflection;
+using Astrolabe.Annotation;
 using Astrolabe.CodeGen;
 using Astrolabe.CodeGen.Typescript;
 
@@ -8,6 +10,8 @@ public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
     public Func<Type, TsImport> ImportType { get; }
     private Func<Type, ResolvedSchema> ResolveSchema { get; }
     private Dictionary<Type, ResolvedSchema> ResolvedSchemas { get; } = new();
+    
+    public Func<Type, bool>? GetIsStringEnum { get; set; }
 
     public SchemaFieldsGeneratorOptions(Func<Type, TsImport> importType, Func<Type, ResolvedSchema>? resolveSchema = null)
     {
@@ -35,6 +39,12 @@ public class SchemaFieldsGeneratorOptions : BaseGeneratorOptions
     public IEnumerable<string>? CustomFieldTypes { get; set; }
     
     public bool DontResolve { get; set; }
+    
+    public bool IsStringEnum(Type type)
+    {
+       return GetIsStringEnum?.Invoke(type) ?? type.GetCustomAttribute<JsonStringAttribute>() != null;
+    }
+
     
     //
     // public string FormTypeName(Type type)

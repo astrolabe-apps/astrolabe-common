@@ -211,7 +211,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         var tags = member.GetAttributes<SchemaTagAttribute>().Select(x => x.Tag).ToList();
         var enumType =
             member.GetAttribute<SchemaOptionsAttribute>()?.EnumType ?? GetEnumType(memberData);
-        var options = enumType != null ? EnumOptions(enumType, IsStringEnum(enumType)) : null;
+        var options = enumType != null ? EnumOptions(enumType, _options.IsStringEnum(enumType)) : null;
         var (makeField, isScalar) = FieldForType(
             memberData,
             parent,
@@ -300,11 +300,11 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         }
     }
 
-    private static object? ConvertDefaultValue(object? v)
+    private object? ConvertDefaultValue(object? v)
     {
         return v switch
         {
-            not null when v.GetType().IsEnum => IsStringEnum(v.GetType()) ? v.ToString() : (int)v,
+            not null when v.GetType().IsEnum => _options.IsStringEnum(v.GetType()) ? v.ToString() : (int)v,
             _ => v
         };
     }
@@ -347,11 +347,11 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
         return call with { Args = args };
     }
 
-    public static FieldType FieldTypeForTypeOnly(Type type)
+    public static FieldType FieldTypeForTypeOnly(Type type, SchemaFieldsGeneratorOptions options)
     {
         return type switch
         {
-            { IsEnum: true } when IsStringEnum(type) is var stringEnum
+            { IsEnum: true } when options.IsStringEnum(type) is var stringEnum
                 => stringEnum ? FieldType.String : FieldType.Int,
             _ when type == typeof(DateTime) => FieldType.DateTime,
             _ when type == typeof(DateTimeOffset) => FieldType.DateTime,
@@ -407,7 +407,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
                 => (
                     MakeScalar(
                         new TsRawExpr(
-                            "FieldType." + FieldTypeForTypeOnly(simpleType.Type),
+                            "FieldType." + FieldTypeForTypeOnly(simpleType.Type, _options),
                             FieldTypeImport
                         )
                     ),
@@ -450,12 +450,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
     {
         return SetOptions(call, new Dictionary<string, object?> { { field, value } });
     }
-
-    private static bool IsStringEnum(Type type)
-    {
-        return type.GetCustomAttribute<JsonStringAttribute>() != null;
-    }
-
+    
     private static IEnumerable<FieldOption> EnumOptions(Type type, bool stringEnum)
     {
         return type.GetFields(BindingFlags.Static | BindingFlags.Public)
