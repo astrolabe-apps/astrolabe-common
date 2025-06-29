@@ -135,7 +135,7 @@ public class SchemaFieldsInstanceGenerator : CodeGenerator<SimpleTypeData, Field
             ObjectTypeData objectTypeData => DoObject(objectTypeData),
             _
                 => new SimpleSchemaField(
-                    SchemaFieldsGenerator.FieldTypeForTypeOnly(simpleType.Type).ToString(),
+                    SchemaFieldsGenerator.FieldTypeForTypeOnly(simpleType.Type, _options).ToString(),
                     field
                 )
         };
