@@ -370,7 +370,7 @@ export default function Editor() {
           }
         }}
         previewOptions={{
-          actionOnClick: (aid, data) => async () => {
+          actionOnClick: (aid, data) => async (ctx) => {
             await new Promise((r) => setTimeout(r, 1000));
             console.log("Clicked", aid, data);
           },

@@ -122,6 +122,7 @@ public enum IconPlacement
 {
     BeforeText,
     AfterText,
+    ReplaceText,
 }
 
 [JsonString]

@@ -1539,6 +1539,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
         name: "AfterText",
         value: "AfterText",
       },
+      {
+        name: "ReplaceText",
+        value: "ReplaceText",
+      },
     ],
   }),
   disableType: makeScalarField({
