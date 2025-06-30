@@ -6,6 +6,7 @@ import {
   IconReference,
   SchemaDataNode,
   SchemaInterface,
+  ControlDisableType,
 } from "@astroapps/forms-core";
 import React, { Key, ReactNode } from "react";
 import { ChangeListenerFunc, CleanupScope } from "@react-typed-forms/core";
@@ -18,12 +19,15 @@ export interface ControlDataContext {
   dataNode: SchemaDataNode | undefined;
   parentNode: SchemaDataNode;
 }
+export interface ControlActionContext {
+  disableForm(disable: ControlDisableType): void;
+}
 
 export type ControlActionHandler = (
   actionId: string,
   actionData: any,
-  ctx: ControlDataContext,
-) => (() => void) | undefined;
+  dataContext: ControlDataContext,
+) => ((actionContext: ControlActionContext) => void | Promise<any>) | undefined;
 
 export interface ActionRendererProps {
   key?: Key;
@@ -41,6 +45,7 @@ export interface ActionRendererProps {
   disabled?: boolean;
   hidden?: boolean;
   inline?: boolean;
+  busy?: boolean;
 }
 
 export type RunExpression = (

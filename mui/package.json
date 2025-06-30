@@ -43,6 +43,6 @@
 	"gitHead": "698e16cd3ab31b7dd0528fc76536f4d3205ce8c6",
 	"scripts": {
 		"build": "rimraf ./lib/ node_modules/.cache && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
-		"watch": "tsc -w"
+		"watch": "tsc"
 	}
 }

@@ -54,7 +54,7 @@ export function createOptionalAdornment(
         !isEditing || !!(adornment.allowNull && !nullToggler.value);
       return {
         apply: (rl) => {
-          if (props.formOptions.readonly) return rl;
+          if (props.formNode.readonly) return rl;
           if (!options.hideEdit && adornment.editSelectable)
             appendMarkupAt(
               adornment.placement ??

@@ -50,11 +50,11 @@ function TabsRenderer({
   tabOptions: TabsRenderOptions;
 }) {
   const tabIndex = useControl(0);
-  
+
   useEffect(() => {
     formNode.attachUi(new TabUi(tabIndex, formNode));
   }, [formNode, tabIndex]);
-  
+
   const {
     tabClass,
     labelClass,

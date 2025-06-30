@@ -16,13 +16,15 @@ import React, {
 } from "react";
 import {
   ControlDefinition,
+  ControlDisableType,
   createFormStateNode,
   createSchemaDataNode,
   createSchemaTree,
   defaultEvaluators,
   defaultSchemaInterface,
-  FormContextOptions,
+  FormGlobalOptions,
   FormNode,
+  FormNodeOptions,
   FormNodeUi,
   FormStateNode,
   JsonPath,
@@ -37,7 +39,7 @@ import {
   rendererClass,
   useUpdatedRef,
 } from "./util";
-import { Control, trackedValue, useControl } from "@react-typed-forms/core";
+import { Control, useControl } from "@react-typed-forms/core";
 
 export interface RenderFormProps {
   data: SchemaDataNode;
@@ -57,29 +59,27 @@ export function RenderForm({
 }: RenderFormProps) {
   const { readonly, disabled, displayOnly, hidden, variables, clearHidden } =
     options;
-  const currentContext: FormContextOptions = {
-    readonly,
-    disabled,
+  const nodeOptions: FormNodeOptions = {
+    forceReadonly: !!readonly,
+    forceDisabled: !!disabled,
     variables,
-    hidden,
-    clearHidden,
+    forceHidden: !!hidden,
   };
-  const contextOptions = useControl(currentContext);
-  contextOptions.value = currentContext;
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const { runAsync } = useAsyncRunner();
-
+  const globals: FormGlobalOptions = {
+    runAsync,
+    schemaInterface,
+    evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
+    resolveChildren: renderer.resolveChildren,
+    clearHidden: !!clearHidden,
+  };
   const state = useMemo(
-    () =>
-      createFormStateNode(form, data, {
-        runAsync,
-        schemaInterface,
-        evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
-        contextOptions: trackedValue(contextOptions),
-        resolveChildren: renderer.resolveChildren,
-      }),
+    () => createFormStateNode(form, data, globals, nodeOptions),
     [],
   );
+  state.globals.value = globals;
+  state.options.value = nodeOptions;
   if (stateRef) stateRef.current = state;
   useEffect(() => {
     return () => {
@@ -131,7 +131,7 @@ export function RenderFormNode({
       renderer.renderAdornment({
         adornment: x,
         dataContext,
-        formOptions: state,
+        formNode: state,
       }),
     ) ?? [];
 
@@ -179,7 +179,6 @@ export function RenderFormNode({
     inline: options?.inline,
     displayOnly: options?.displayOnly,
     createDataProps: defaultDataProps,
-    formOptions: state,
     dataContext,
     control: dataContext.dataNode?.control,
     schemaInterface,
@@ -358,8 +357,26 @@ export class DefaultFormNodeUi implements FormNodeUi {
   ensureVisible() {
     this.node.parentNode?.ui.ensureChildVisible(this.node.childIndex);
   }
-
   ensureChildVisible(childIndex: number) {
     this.ensureVisible();
+  }
+  getDisabler(type: ControlDisableType): () => () => void {
+    if (type === ControlDisableType.Self) {
+      return () => {
+        const old = !!this.node.forceDisabled;
+        this.node.setForceDisabled(true);
+        return () => {
+          this.node.setForceDisabled(old);
+        };
+      };
+    }
+    if (type === ControlDisableType.Global) {
+      let topLevel = this.node;
+      while (topLevel.parentNode) {
+        topLevel = topLevel.parentNode;
+      }
+      return topLevel.ui.getDisabler(ControlDisableType.Self);
+    }
+    return () => () => {};
   }
 }

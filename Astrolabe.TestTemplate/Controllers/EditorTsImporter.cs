@@ -39,7 +39,8 @@ public static class EditorTsImporter
             "IconReference",
             "ActionStyle",
             "IconPlacement",
-            "ActionOptions"
+            "ActionOptions",
+            "ControlDisableType"
         };
 
     private static readonly HashSet<string> EditorLibImports =

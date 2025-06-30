@@ -21,7 +21,7 @@ import { SchemaInterface } from "./schemaInterface";
 import { jsonataEval } from "./evalExpression";
 import { ExpressionType } from "./entityExpression";
 import { createScopedComputed } from "./util";
-import { FormContextOptions } from "./formStateNode";
+import { FormStateBaseImpl, VariablesFunc } from "./formStateNode";
 
 export interface ValidationEvalContext {
   addSync(validate: (value: unknown) => string | undefined | null): void;
@@ -30,7 +30,7 @@ export interface ValidationEvalContext {
   parentData: SchemaDataNode;
   data: SchemaDataNode;
   schemaInterface: SchemaInterface;
-  formContext: FormContextOptions;
+  variables?: VariablesFunc;
   runAsync(af: () => void): void;
 }
 
@@ -55,7 +55,7 @@ export const jsonataValidator: ValidatorEval<JsonataValidator> = (
         context.data.control.setError("jsonata", v?.toString());
       },
       schemaInterface: context.schemaInterface,
-      variables: context.formContext.variables,
+      variables: context.variables,
       runAsync: context.runAsync,
     },
   );
@@ -165,7 +165,7 @@ export function createValidators(
 
 export function setupValidation(
   scope: CleanupScope,
-  controlImpl: FormContextOptions,
+  variables: VariablesFunc | undefined,
   definition: ControlDefinition,
   dataNode: Control<SchemaDataNode | undefined>,
   schemaInterface: SchemaInterface,
@@ -192,7 +192,7 @@ export function setupValidation(
           addCleanup(cleanup: () => void) {
             validatorsScope.addCleanup(cleanup);
           },
-          formContext: controlImpl,
+          variables,
           runAsync,
         });
 

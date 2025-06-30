@@ -25,9 +25,12 @@ export interface DefaultActionRendererOptions {
     actionText: string,
     actionId: string,
     actionData: any,
+    busy?: boolean,
   ) => ReactNode;
   icon?: IconReference;
   iconPlacement?: IconPlacement;
+  busyIcon?: IconReference;
+  busyIconPlacement?: IconPlacement;
   notWrapInText?: boolean;
   androidRippleColor?: string;
 }
@@ -52,12 +55,20 @@ export function createButtonActionRenderer(
         actionStyle,
         inline,
         actionContent,
+        busy,
       } = props;
-      const icon = props.icon?.name ? props.icon : options.icon;
-      const iconPlacement =
+      const busyIcon = props.busy ? options.busyIcon : undefined;
+      const stdIcon = props.icon?.name ? props.icon : options.icon;
+      const icon = busyIcon ?? stdIcon;
+      const stdIconPlacement =
         props.iconPlacement ??
         options.iconPlacement ??
         IconPlacement.BeforeText;
+      const busyPlacement =
+        props.iconPlacement ??
+        options.busyIconPlacement ??
+        IconPlacement.ReplaceText;
+      const iconPlacement = busyIcon ? busyPlacement : stdIconPlacement;
 
       const { Button, I, Span } = renderer.html;
       const isLink = actionStyle == ActionStyle.Link;
@@ -120,7 +131,7 @@ export function createButtonActionRenderer(
           notWrapInText={options.notWrapInText}
           androidRippleColor={options.androidRippleColor}
         >
-          {options.renderContent?.(actionText, actionId, actionData) ?? (
+          {options.renderContent?.(actionText, actionId, actionData, busy) ?? (
             <>
               {iconPlacement == IconPlacement.BeforeText && iconElement}
               {iconPlacement != IconPlacement.ReplaceText && textElement}

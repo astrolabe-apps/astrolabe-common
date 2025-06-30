@@ -21,6 +21,7 @@ import {
   DisplayData,
   ActionStyle,
   IconPlacement,
+  ControlDisableType,
   ControlDefinition,
 } from "@react-typed-forms/schemas";
 
@@ -1325,6 +1326,7 @@ export interface ControlDefinitionForm {
   icon: IconReferenceForm | null;
   actionStyle: ActionStyle | null;
   iconPlacement: IconPlacement | null;
+  disableType: ControlDisableType | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -1536,6 +1538,25 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
       {
         name: "AfterText",
         value: "AfterText",
+      },
+    ],
+  }),
+  disableType: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Action"],
+    displayName: "Disable Type",
+    options: [
+      {
+        name: "None",
+        value: "None",
+      },
+      {
+        name: "Self",
+        value: "Self",
+      },
+      {
+        name: "Global",
+        value: "Global",
       },
     ],
   }),

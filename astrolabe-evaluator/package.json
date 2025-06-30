@@ -36,6 +36,6 @@
     "prepack": "npm run build",
     "prepare": "lezer-generator src/eval.grammar --typeScript -o src/parser.ts",
     "build": "rimraf ./lib/ && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle -w -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
+    "watch": "microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   }
 }

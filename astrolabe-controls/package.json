@@ -45,7 +45,7 @@
   "scripts": {
     "prepack": "npm run build",
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress",
-    "watch": "microbundle -w -f modern,cjs --no-compress",
+    "watch": "microbundle -f modern,cjs --no-compress",
     "test": "jest --coverage",
     "run": "tsx test/play.ts",
     "update-readme": "md-magic --path README.md"

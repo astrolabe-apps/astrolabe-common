@@ -422,6 +422,12 @@ export interface CustomDisplay extends DisplayData {
   customId: string;
 }
 
+export enum ControlDisableType {
+  None = "None",
+  Self = "Self",
+  Global = "Global",
+}
+
 export interface ActionControlDefinition extends ControlDefinition {
   type: ControlDefinitionType.Action;
   actionId: string;
@@ -429,6 +435,7 @@ export interface ActionControlDefinition extends ControlDefinition {
   icon?: IconReference | null;
   actionStyle?: ActionStyle | null;
   iconPlacement?: IconPlacement | null;
+  disableType?: ControlDisableType | null;
 }
 
 export enum ActionStyle {

@@ -370,7 +370,10 @@ export default function Editor() {
           }
         }}
         previewOptions={{
-          actionOnClick: (aid, data) => () => console.log("Clicked", aid, data),
+          actionOnClick: (aid, data) => async () => {
+            await new Promise((r) => setTimeout(r, 1000));
+            console.log("Clicked", aid, data);
+          },
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
           // useEvalExpressionHook: evalHook,
         }}

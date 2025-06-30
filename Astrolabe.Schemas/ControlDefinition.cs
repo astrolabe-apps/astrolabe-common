@@ -97,8 +97,16 @@ public record ActionControlDefinition(
     string? ActionData,
     IconReference? Icon,
     ActionStyle? ActionStyle,
-    IconPlacement? IconPlacement
-) : ControlDefinition(ControlDefinitionType.Action.ToString());
+    IconPlacement? IconPlacement,
+    ControlDisableType? DisableType 
+) : ControlDefinition(nameof(ControlDefinitionType.Action));
+
+[JsonString]
+public enum ControlDisableType {
+    None,
+    Self,
+    Global
+}
 
 [JsonString]
 public enum ActionStyle

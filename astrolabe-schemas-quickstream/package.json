@@ -49,7 +49,7 @@
   "scripts": {
     "prepack": "npm run build",
     "build": "rimraf ./lib/ && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle -w -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
     "update-readme": "md-magic --path README.md"
   }
 }

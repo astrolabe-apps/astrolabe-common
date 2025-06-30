@@ -11,6 +11,7 @@ import {
   addElement,
   ChangeListenerFunc,
   Control,
+  newControl,
   removeElement,
 } from "@react-typed-forms/core";
 import {
@@ -20,6 +21,7 @@ import {
   ChildNodeSpec,
   ControlAdornment,
   ControlDefinition,
+  ControlDisableType,
   CustomDisplay,
   dataControl,
   DataControlDefinition,
@@ -27,7 +29,6 @@ import {
   DisplayData,
   DisplayDataType,
   FieldOption,
-  FormContextOptions,
   FormStateNode,
   GroupRenderOptions,
   isActionControl,
@@ -221,7 +222,7 @@ export interface AdornmentProps {
   dataContext: ControlDataContext;
   runExpression?: RunExpression;
   designMode?: boolean;
-  formOptions: FormContextOptions;
+  formNode: FormStateNode;
 }
 
 export const AppendAdornmentPriority = 0;
@@ -453,7 +454,7 @@ export interface ControlRenderOptions extends ControlClasses {
 
 export function defaultDataProps(
   {
-    formOptions,
+    formNode,
     style,
     schemaInterface = defaultSchemaInterface,
     styleClass,
@@ -472,17 +473,18 @@ export function defaultDataProps(
   const required = !!definition.required && !displayOnly;
   return {
     dataNode,
+    formNode,
     definition,
     control,
     field,
     id: "c" + control.uniqueId,
     inline: !!inline,
-    options: props.formNode.resolved.fieldOptions,
-    readonly: !!formOptions.readonly,
+    options: formNode.resolved.fieldOptions,
+    readonly: formNode.readonly,
     displayOnly: !!displayOnly,
     renderOptions: definition.renderOptions ?? { type: "Standard" },
     required,
-    hidden: !!formOptions.hidden,
+    hidden: !formNode.visible,
     className,
     textClass,
     style,
@@ -510,7 +512,6 @@ export interface RenderLayoutProps {
   renderer: FormRenderer;
   renderChild: ChildRenderer;
   createDataProps: CreateDataProps;
-  formOptions: FormContextOptions;
   dataContext: ControlDataContext;
   control?: Control<any>;
   style?: React.CSSProperties;
@@ -548,7 +549,6 @@ export function renderControlLayout(
     styleClass,
     textClass,
     formNode,
-    formOptions,
     actionOnClick,
     inline,
     displayOnly,
@@ -596,6 +596,7 @@ export function renderControlLayout(
     const actionStyle = c.actionStyle ?? ActionStyle.Button;
     const actionContent =
       actionStyle == ActionStyle.Group ? renderActionGroup() : undefined;
+    const handler = props.actionOnClick?.(c.actionId, actionData, dataContext);
     return {
       inline,
       children: renderer.renderAction({
@@ -609,11 +610,27 @@ export function renderControlLayout(
         icon: c.icon,
         inline,
         disabled: formNode.disabled,
-        onClick:
-          props.actionOnClick?.(c.actionId, actionData, dataContext) ??
-          (() => {}),
+        onClick: handler
+          ? () => {
+              let disableType: ControlDisableType = c.disableType ?? ControlDisableType.Self;
+              const r = handler({
+                disableForm(type: ControlDisableType) {
+                  disableType = type;
+                },
+              });
+              if (r instanceof Promise) {
+                const cleanup = formNode.ui.getDisabler(disableType)();
+                formNode.setBusy(true);
+                r.then(() => {
+                  cleanup();
+                  formNode.setBusy(false);
+                });
+              }
+            }
+          : () => {},
         className: rendererClass(styleClass, c.styleClass),
         style,
+        busy: formNode.busy,
       }),
     };
 
@@ -966,4 +983,8 @@ export function lookupChildDataContext(
   const parentNode = dataContext.dataNode ?? dataContext.parentNode;
   const dataNode = lookupDataNode(c, parentNode);
   return { ...dataContext, parentNode, dataNode };
+}
+
+function getBusyControl(formNode: FormStateNode) {
+  return formNode.ensureMeta("$busy", () => newControl(false));
 }

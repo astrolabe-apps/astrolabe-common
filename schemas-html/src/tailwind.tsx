@@ -1,6 +1,6 @@
 import React from "react";
-import { DefaultRendererOptions } from "./createDefaultRenderers";
-import { fontAwesomeIcon } from "@react-typed-forms/schemas";
+import {DefaultRendererOptions} from "./createDefaultRenderers";
+import {fontAwesomeIcon, IconPlacement} from "@react-typed-forms/schemas";
 
 export const defaultTailwindTheme = {
   label: {
@@ -43,6 +43,7 @@ export const defaultTailwindTheme = {
     secondaryClass: "bg-secondary-500",
     iconBeforeClass: "px-2",
     iconAfterClass: "px-2",
+    busyIcon: fontAwesomeIcon("spinner fa-spin")
   },
   layout: {
     className: "flex flex-col",

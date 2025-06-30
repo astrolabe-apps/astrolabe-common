@@ -7,12 +7,16 @@ import {
   createSchemaLookup,
   defaultEvaluators,
   defaultSchemaInterface,
-  FormContextOptions,
   FormStateNode,
   isDataControl,
   ResolvedDefinition,
 } from "@astroapps/forms-core";
-import { FormControlPreview, JsonEditor } from "@astroapps/schemas-editor";
+// import { Form, SchemaFields } from "../../setup/basicForm";
+import {
+  createPreviewNode,
+  FormControlPreview,
+  JsonEditor,
+} from "@astroapps/schemas-editor";
 import useResizeObserver from "use-resize-observer";
 import { NodeRendererProps, Tree } from "react-arborist";
 import React, { useMemo } from "react";
@@ -33,11 +37,10 @@ import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
-// import { Form, SchemaFields } from "../../setup/basicForm";
-import { createPreviewNode } from "@astroapps/schemas-editor";
 import CarJson from "../../forms/CarSearch.json";
 import { SchemaMap } from "../../schemas";
 import { createDataGridRenderer } from "@astroapps/schemas-datagrid";
+
 const SchemaFields = SchemaMap.CarSearchPage;
 const Form = CarJson.controls as ControlDefinition[];
 
@@ -59,7 +62,6 @@ export default function FormDataTreePage() {
     () => data.value,
     (v) => (jsonText.value = JSON.stringify(v, null, 2)),
   );
-  const options = useControl<FormContextOptions>({});
   const { runAsync } = useAsyncRunner();
   const schemaTree = schemaLookup.getSchemaTree("SchemaFields");
 
@@ -76,13 +78,18 @@ export default function FormDataTreePage() {
   }, [renderer]);
 
   const rootEditNode = useMemo(() => {
-    return createFormStateNode(FormTree.rootNode, dataNode, {
-      schemaInterface: defaultSchemaInterface,
-      runAsync,
-      contextOptions: options,
-      evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
-      resolveChildren: renderer.resolveChildren,
-    });
+    return createFormStateNode(
+      FormTree.rootNode,
+      dataNode,
+      {
+        schemaInterface: defaultSchemaInterface,
+        runAsync,
+        evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
+        resolveChildren: renderer.resolveChildren,
+        clearHidden: false,
+      },
+      {},
+    );
   }, [renderer]);
 
   const hideFields = useControl(false);

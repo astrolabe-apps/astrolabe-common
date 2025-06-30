@@ -95,7 +95,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const sampleData = useMemo(
     () =>
       displayOptions
-        ? displayOptions.sampleText ?? "Sample Data"
+        ? (displayOptions.sampleText ?? "Sample Data")
         : field &&
           (dataNode?.elementIndex == null
             ? field.collection
@@ -125,7 +125,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         adornment: x,
         designMode: true,
         dataContext,
-        formOptions,
+        formNode: node,
       }),
     ) ?? [];
 
@@ -148,7 +148,6 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     labelClass,
     styleClass,
     createDataProps: defaultDataProps,
-    formOptions,
     inline,
     displayOnly,
     dataContext,
@@ -353,6 +352,14 @@ class FormPreviewStateNode implements FormStateNode {
     }, scope);
   }
 
+  get busy() {
+    return false;
+  }
+
+  setBusy(busy: boolean) {}
+
+  setForceDisabled(forceDisabled: boolean) {}
+
   attachUi(f: FormNodeUi) {
     this.ui = f;
   }
@@ -402,7 +409,7 @@ class FormPreviewStateNode implements FormStateNode {
             }),
           },
         ]
-      : this.resolveChildren?.(this) ?? this.resolver(this);
+      : (this.resolveChildren?.(this) ?? this.resolver(this));
   }
 
   getChildCount(): number {

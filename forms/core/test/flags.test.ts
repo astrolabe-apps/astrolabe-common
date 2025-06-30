@@ -17,12 +17,12 @@ describe("form state flags", () => {
 
   it("context hidden on all definitions", () => {
     fc.assert(
-      fc.property(schemaAndControl(), fc.boolean(), (c, hidden) => {
+      fc.property(schemaAndControl(), fc.boolean(), (c, forceHidden) => {
         const firstChild = testNodeState(c.control, c.schema, {
-          contextOptions: { hidden },
+          contextOptions: { forceHidden },
         });
         return allChildren(firstChild).every(
-          (x) => !x.definition.hidden && x.visible === !hidden,
+          (x) => !x.definition.hidden && x.visible === !forceHidden,
         );
       }),
     );
@@ -39,11 +39,13 @@ describe("form state flags", () => {
 
   it("context disabled on all definitions", () => {
     fc.assert(
-      fc.property(schemaAndControl(), fc.boolean(), (c, disabled) => {
+      fc.property(schemaAndControl(), fc.boolean(), (c, forceDisabled) => {
         const firstChild = testNodeState(c.control, c.schema, {
-          contextOptions: { disabled },
+          contextOptions: { forceDisabled },
         });
-        return allChildren(firstChild).every((x) => x.disabled === disabled);
+        return allChildren(firstChild).every(
+          (x) => x.disabled === forceDisabled,
+        );
       }),
     );
   });

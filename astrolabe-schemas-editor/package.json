@@ -22,7 +22,7 @@
   "scripts": {
     "prepack": "npm run build",
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsxImportSource react",
-    "watch": "microbundle -w -f modern,cjs --no-compress --jsxImportSource react",
+    "watch": "microbundle -f modern,cjs --no-compress --jsxImportSource react",
     "genschemas": "h get http://localhost:5000/api/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
   },
   "peerDependencies": {
