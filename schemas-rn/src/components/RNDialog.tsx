@@ -4,6 +4,7 @@ import {
   Platform,
   Pressable,
   StyleSheet,
+  TouchableOpacity,
   useWindowDimensions,
   View,
 } from "react-native";
@@ -170,8 +171,11 @@ export function RNDialog({
             className={
               "web:group rounded-sm web:ring-offset-background web:transition-opacity web:hover:opacity-100 web:focus:outline-none web:focus:ring-2 web:focus:ring-ring web:focus:ring-offset-2 web:disabled:pointer-events-none"
             }
+            asChild
           >
-            <FontAwesome6 name="xmark-circle" size={24} color={"#267151"} />
+            <TouchableOpacity>
+              <FontAwesome6 name="xmark-circle" size={24} color={"#267151"} />
+            </TouchableOpacity>
           </DialogClose>
         </View>
         {content}
