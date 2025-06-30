@@ -1,32 +1,6 @@
 {
   "controls": [
     {
-      "type": "Action",
-      "title": "New",
-      "children": [
-        {
-          "type": "Display",
-          "title": "Date",
-          "displayData": {
-            "type": "Text",
-            "text": "Wow"
-          },
-          "children": null
-        },
-        {
-          "type": "Display",
-          "title": "Date Time",
-          "displayData": {
-            "type": "Html",
-            "html": "\u003Cb\u003EInline\u003C/b\u003E"
-          },
-          "children": null
-        }
-      ],
-      "icon": {},
-      "disableType": "Global"
-    },
-    {
       "type": "Data",
       "title": "Date",
       "field": "date",
@@ -73,58 +47,6 @@
     },
     {
       "type": "Data",
-      "title": "Stuff",
-      "field": "stuff",
-      "children": [
-        {
-          "type": "Data",
-          "title": "Type",
-          "field": "type",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "children": null
-        },
-        {
-          "type": "Data",
-          "title": "Disable",
-          "field": "disable",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "children": null
-        },
-        {
-          "type": "Data",
-          "title": "Pure Text",
-          "field": "text",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "children": null
-        },
-        {
-          "type": "Data",
-          "title": "String",
-          "field": "options",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "children": null
-        },
-        {
-          "type": "Data",
-          "title": "String",
-          "field": "singleOption",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "children": null
-        }
-      ]
-    },
-    {
-      "type": "Data",
       "title": "Double",
       "field": "number",
       "renderOptions": {
@@ -156,6 +78,32 @@
         "type": "Standard"
       },
       "children": null
+    },
+    {
+      "type": "Action",
+      "title": "New",
+      "children": [
+        {
+          "type": "Display",
+          "title": "Date",
+          "displayData": {
+            "type": "Text",
+            "text": "Wow"
+          },
+          "children": null
+        },
+        {
+          "type": "Display",
+          "title": "Date Time",
+          "displayData": {
+            "type": "Html",
+            "html": "\u003Cb\u003EInline\u003C/b\u003E"
+          },
+          "children": null
+        }
+      ],
+      "icon": {},
+      "disableType": "Global"
     }
   ],
   "config": null
