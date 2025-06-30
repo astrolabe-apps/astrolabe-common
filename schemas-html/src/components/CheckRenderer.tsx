@@ -99,20 +99,23 @@ export interface CheckButtonsProps {
   entryAdornment?: (c: FieldOption, i: number, selected: boolean) => ReactNode;
 }
 
-export function CheckButtons({
-  control,
-  options,
-  readonly,
-  className,
-  id,
-  type,
-  isChecked,
-  setChecked,
-  entryAdornment,
-  classes,
-  controlClasses = {},
-  renderer,
-}: CheckButtonsProps & { renderer: FormRenderer }) {
+export function CheckButtons(
+  props: CheckButtonsProps & { renderer: FormRenderer },
+) {
+  const {
+    control,
+    options,
+    readonly,
+    className,
+    id,
+    type,
+    isChecked,
+    setChecked,
+    entryAdornment,
+    classes,
+    controlClasses = {},
+    renderer,
+  } = props;
   const { Button, Input, Label, Div } = renderer.html;
   const { disabled } = control;
   const name = "r" + control.uniqueId;
