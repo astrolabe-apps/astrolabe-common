@@ -86,18 +86,6 @@ export function createButtonActionRenderer(
                   : options.primaryClass,
               ),
       );
-      const iconElement = icon && (
-        <I
-          iconName={icon.name}
-          iconLibrary={icon.library}
-          className={rendererClass(
-            textClass,
-            iconPlacement == IconPlacement.BeforeText
-              ? options.iconBeforeClass
-              : options.iconAfterClass,
-          )}
-        />
-      );
 
       const textClassNames = rendererClass(
         textClass,
@@ -109,6 +97,19 @@ export function createButtonActionRenderer(
                 ? options.secondaryTextClass
                 : options.primaryTextClass,
             ),
+      );
+
+      const iconElement = icon && (
+        <I
+          iconName={icon.name}
+          iconLibrary={icon.library}
+          className={rendererClass(
+            textClassNames,
+            iconPlacement == IconPlacement.BeforeText
+              ? options.iconBeforeClass
+              : options.iconAfterClass,
+          )}
+        />
       );
 
       const textElement =
