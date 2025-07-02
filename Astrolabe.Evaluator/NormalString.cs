@@ -10,16 +10,21 @@ public static class NormalString
     {
         return evalExpr switch
         {
-            ArrayExpr arrayExpr => "["+string.Join(",", arrayExpr.Values.Select(ToNormalString))+"]",
-            CallExpr callExpr => $"({Escape(callExpr.Function, Commas)},{string.Join(",", callExpr.Args.Select(ToNormalString))})",
+            ArrayExpr arrayExpr => "["
+                + string.Join(",", arrayExpr.Values.Select(ToNormalString))
+                + "]",
+            CallExpr callExpr =>
+                $"({Escape(callExpr.Function, Commas)}{string.Concat(callExpr.Args.SelectMany(x => new[] { ",", x.ToNormalString() }))})",
             ValueExpr valueExpr => valueExpr.ToNormalString(),
             PropertyExpr pExpr => $"'{Escape(pExpr.Property, Single)}'",
             VarExpr varExpr => $"${Escape(varExpr.Name, Dollar)}$",
-            LambdaExpr lambdaExpr => $"\\{Escape(lambdaExpr.Variable, Commas)},{lambdaExpr.Value.ToNormalString()}",
-            LetExpr letExpr => $"=,{string.Join(",", letExpr.Vars.Select(x => 
-                $"{Escape(x.Item1.Name, Commas)},{x.Item2.ToNormalString()}"))}={letExpr.In.ToNormalString()}",
+            LambdaExpr lambdaExpr =>
+                $"\\{Escape(lambdaExpr.Variable, Commas)},{lambdaExpr.Value.ToNormalString()}",
+            LetExpr letExpr =>
+                $"={string.Concat(letExpr.Vars.Select(x => 
+                $",{Escape(x.Item1.Name, Commas)},{x.Item2.ToNormalString()}"))}={letExpr.In.ToNormalString()}",
             null => "~",
-            _ => throw new ArgumentOutOfRangeException(nameof(evalExpr))
+            _ => throw new ArgumentOutOfRangeException(nameof(evalExpr)),
         };
     }
 
@@ -34,24 +39,31 @@ public static class NormalString
         {
             null => "n",
             string s => $"\"{Escape(s, Quote)}\"",
-            bool b =>  b ? "t" : "f",
+            bool b => b ? "t" : "f",
             int i => i.ToString(),
-            double d => d.ToString(CultureInfo.InvariantCulture)
+            double d => d.ToString(CultureInfo.InvariantCulture),
+            decimal d => ((double)d).ToString(CultureInfo.InvariantCulture),
+            short s => s.ToString(),
+            _ => throw new ArgumentOutOfRangeException(nameof(evalExpr)),
         };
     }
-    
 
     private static EscapeChars Commas = MakeEscape(new() { { ',', 'c' } });
+    private static EscapeChars CommaArg = MakeEscape(new() { { ',', 'c' } }, ')');
+    private static EscapeChars CommaLet = MakeEscape(new() { { ',', 'c' } }, '=');
     private static EscapeChars Quote = MakeEscape(new() { { '"', 'q' } });
     private static EscapeChars Single = MakeEscape(new() { { '\'', 's' } });
     private static EscapeChars Dollar = MakeEscape(new() { { '$', 'd' } });
     private static char[] NumberChars = "0123456789.".ToCharArray();
 
-    private static EscapeChars MakeEscape(Dictionary<char, char> escapes)
+    private static EscapeChars MakeEscape(Dictionary<char, char> escapes, char? extraStop = null)
     {
-        return new EscapeChars(escapes, escapes.Keys.ToArray());
+        var stops = escapes.Keys.ToList();
+        if (extraStop != null)
+            stops.Add(extraStop.Value);
+        return new EscapeChars(escapes, stops.ToArray());
     }
-    
+
     delegate ParseResult<T> ParseFunc<T>(ReadOnlySpan<char> source);
 
     internal delegate T2 RunFunc<in T, out T2>(ReadOnlySpan<char> source, T value);
@@ -61,17 +73,28 @@ public static class NormalString
         if (source.Length == 0)
             throw new ArgumentException($"'{nameof(source)}' cannot be empty", nameof(source));
         var ch = source[0];
-        var next =  source[1..];
+        var next = source[1..];
         return ch switch
         {
             '\"' => Unescape(next, Quote).Map(EvalExpr (x) => ValueExpr.From(x)),
-            '=' when ParseWhile(next, ParseAssignment) is {Remaining: var rem, Result: var result} => 
-                Parse(rem).Map(EvalExpr (i) => new LetExpr(result.Select(x => (new VarExpr(x.Item1), x.Item2)), i)),
+            '='
+                when ParseWhile(next, ParseAssignment)
+                    is { Remaining: var rem, Result: var result } => Parse(rem)
+                .Map(
+                    EvalExpr (i) =>
+                        new LetExpr(result.Select(x => (new VarExpr(x.Item1), x.Item2)), i)
+                ),
             '\'' => Unescape(next, Single).Map(EvalExpr (x) => new PropertyExpr(x)),
-            '(' when Unescape(next, Commas, true) is {Result:var funcName, Remaining: var next2} => 
-                ParseWhile(next2, Parse).Map(EvalExpr (r) => new CallExpr(funcName, r.ToList())),
-            >= '0' and <= '9' => ParseNum(source), 
-            _ => throw new ArgumentOutOfRangeException(nameof(ch))
+            '('
+                when Unescape(next, CommaArg, true)
+                    is { Result: var funcName, Remaining: var next2 } => ParseWhile(next2, Parse)
+                .Map(EvalExpr (r) => new CallExpr(funcName, r.ToList())),
+            >= '0' and <= '9' => ParseNum(source),
+            '$' => Unescape(next, Dollar).Map(EvalExpr (s) => new VarExpr(s)),
+            't' => new ParseResult<EvalExpr>(next, ValueExpr.True),
+            'f' => new ParseResult<EvalExpr>(next, ValueExpr.False),
+            'n' => new ParseResult<EvalExpr>(next, ValueExpr.Null),
+            _ => throw new ArgumentOutOfRangeException(nameof(ch)),
         };
     }
 
@@ -88,12 +111,15 @@ public static class NormalString
 
     private static ParseResult<(string, EvalExpr)> ParseAssignment(ReadOnlySpan<char> source)
     {
-        var nameResult = Unescape(source, Commas);
+        var nameResult = Unescape(source, CommaLet);
         var varName = nameResult.Result;
         return Parse(nameResult.Remaining).Map(x => (varName, x));
     }
-    
-    private static ParseResult<IEnumerable<T>> ParseWhile<T>(ReadOnlySpan<char> source, ParseFunc<T> single)
+
+    private static ParseResult<IEnumerable<T>> ParseWhile<T>(
+        ReadOnlySpan<char> source,
+        ParseFunc<T> single
+    )
     {
         var elems = new List<T>();
         while (source[0] == ',')
@@ -104,11 +130,12 @@ public static class NormalString
         }
         return new ParseResult<IEnumerable<T>>(source[1..], elems);
     }
-    
+
     public static ParseResult<string> Unescape(
         ReadOnlySpan<char> source,
         EscapeChars escapes,
-        bool dontConsume = false)
+        bool dontConsume = false
+    )
     {
         var endIndex = source.IndexOfAny(escapes.Stops);
         if (endIndex == -1)
@@ -126,14 +153,17 @@ public static class NormalString
             {
                 stringBuilder.Append(isEscape ? ch : replacements[ch]);
                 prvEscape = false;
-            }  else if (isEscape)
+            }
+            else if (isEscape)
                 prvEscape = true;
             else
                 stringBuilder.Append(ch);
         }
-        return new ParseResult<string>(source[(dontConsume ? endIndex : endIndex+1)..], stringBuilder.ToString());
+        return new ParseResult<string>(
+            source[(dontConsume ? endIndex : endIndex + 1)..],
+            stringBuilder.ToString()
+        );
     }
-
 }
 
 public readonly ref struct ParseResult<T>(ReadOnlySpan<char> Remaining, T Result)
