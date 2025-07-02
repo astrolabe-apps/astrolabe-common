@@ -67,6 +67,7 @@ import {
   EditableForm,
   FormInfo,
   FormLoader,
+  PreviewData,
   SchemaLoader,
   Snippet,
   ViewContext,
@@ -94,6 +95,7 @@ export interface BasicFormEditorProps<A extends string> {
   editorControls?: ControlDefinition[];
   schemaEditorControls?: ControlDefinition[];
   previewOptions?: ControlRenderOptions;
+  setupPreview?: (previewData: Control<PreviewData>) => void;
   tailwindConfig?: TailwindConfig;
   collectClasses?: (c: ControlDefinition) => (string | undefined | null)[];
   rootControlClass?: string;
@@ -123,6 +125,7 @@ export function BasicFormEditor<A extends string = string>({
   editorControls,
   schemaEditorControls,
   previewOptions,
+  setupPreview,
   tailwindConfig,
   editorPanelClass = "p-4",
   editorClass,
@@ -319,6 +322,7 @@ export function BasicFormEditor<A extends string = string>({
     getCurrentForm: () =>
       selectedForm.value ? getForm(selectedForm.value) : undefined,
     extensions,
+    setupPreview,
     editorControls: editorTree,
     schemaEditorControls: schemaEditorTree,
     createEditorRenderer,

@@ -906,6 +906,7 @@ export interface RenderOptionsForm {
   iconMappings: IconMappingForm[];
   allowImages: boolean;
   elementExpression: EntityExpressionForm;
+  bottomActionId: string | null;
 }
 
 export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
@@ -996,6 +997,10 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
       {
         name: "Element Selected",
         value: "ElementSelected",
+      },
+      {
+        name: "Scroll List",
+        value: "ScrollList",
       },
     ],
   }),
@@ -1205,6 +1210,11 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     notNullable: true,
     displayName: "Element Expression",
     tags: ["_ControlRef:Expression"],
+  }),
+  bottomActionId: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["ScrollList"],
+    displayName: "Bottom Action Id",
   }),
 });
 

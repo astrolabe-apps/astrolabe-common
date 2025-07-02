@@ -16,15 +16,15 @@ import {
   defaultSchemaInterface,
 } from "@react-typed-forms/schemas";
 import React, { Fragment, useMemo } from "react";
-import { FormPreview, PreviewData } from "../FormPreview";
+import { FormPreview } from "../FormPreview";
 import clsx from "clsx";
 import { JsonEditor } from "../JsonEditor";
-import { EditableForm, ViewContext } from "../types";
+import { EditableForm, PreviewData, ViewContext } from "../types";
 
 export function FormView(props: { formId: string; context: ViewContext }) {
   const { formId, context } = props;
   const control = context.getForm(formId);
-  const previewData = useControl<PreviewData>({
+  const previewData = useControl<PreviewData>(() => ({
     showing: false,
     showJson: false,
     showRawEditor: false,
@@ -33,7 +33,8 @@ export function FormView(props: { formId: string; context: ViewContext }) {
     disabled: false,
     readonly: false,
     displayOnly: false,
-  });
+    formId,
+  }));
   useControlEffect(
     () =>
       [

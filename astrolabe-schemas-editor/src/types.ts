@@ -63,6 +63,7 @@ export interface ViewContext {
     label: string,
   ) => ReactNode;
   previewOptions?: ControlRenderOptions;
+  setupPreview?: (previewData: Control<PreviewData>) => void;
   validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
   openForm: (formId: string) => void;
   extraPreviewControls?:
@@ -98,4 +99,16 @@ export interface EditableForm {
   name: string;
   config?: any;
   configSchema?: SchemaNode;
+}
+
+export interface PreviewData {
+  formId: string;
+  showing: boolean;
+  showJson: boolean;
+  showRawEditor: boolean;
+  showMetadata: boolean;
+  data: any;
+  readonly: boolean;
+  disabled: boolean;
+  displayOnly: boolean;
 }

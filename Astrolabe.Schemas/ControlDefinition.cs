@@ -183,7 +183,10 @@ public enum DataRenderType
     ArrayElement,
 
     [Display(Name = "Element Selected")]
-    ElementSelected
+    ElementSelected,
+    
+    [Display(Name = "Scroll List")]
+    ScrollList
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]
@@ -202,6 +205,7 @@ public enum DataRenderType
 [JsonSubType("Autocomplete", typeof(AutocompleteRenderOptions))]
 [JsonSubType("ArrayElement", typeof(ArrayElementRenderOptions))]
 [JsonSubType(nameof(DataRenderType.ElementSelected), typeof(ElementSelectedRenderOptions))]
+[JsonSubType(nameof(DataRenderType.ScrollList), typeof(ScrollListRenderOptions))]
 public abstract record RenderOptions(
     [property: DefaultValue("Standard")]
     [property: SchemaOptions(typeof(DataRenderType))]
@@ -295,6 +299,8 @@ public record IconMapping(string Value, string? MaterialIcon);
 
 public record ElementSelectedRenderOptions(
     [property: SchemaTag(SchemaTags.ControlRef + "Expression")] EntityExpression ElementExpression) : RenderOptions(nameof(DataRenderType.ElementSelected));
+
+public record ScrollListRenderOptions(string? BottomActionId) : RenderOptions(nameof(DataRenderType.ScrollList));
 
 [JsonString]
 public enum DisplayDataType
@@ -410,6 +416,7 @@ public record SelectChildRenderer(
     [property: SchemaTag(SchemaTags.ControlRef + "Expression")]
         EntityExpression ChildIndexExpression
 ) : GroupRenderOptions(GroupRenderType.SelectChild.ToString());
+
 
 [JsonString]
 public enum AdornmentPlacement

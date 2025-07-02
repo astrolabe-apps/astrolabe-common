@@ -91,6 +91,10 @@ import {
   createButtonActionRenderer,
   DefaultActionRendererOptions,
 } from "./createButtonActionRenderer";
+import {
+  createScrollListRenderer,
+  DefaultScrollListOptions,
+} from "./components/ScrollListRenderer";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -127,6 +131,7 @@ export interface DefaultDataRendererOptions {
   jsonataClass?: string;
   arrayOptions?: ArrayActionOptions;
   defaultEmptyText?: string;
+  scrollListOptions?: DefaultScrollListOptions;
 }
 
 export function createDefaultDataRenderer(
@@ -169,6 +174,10 @@ export function createDefaultDataRenderer(
 
   const autocompleteRenderer = createAutocompleteRenderer(
     options.autocompleteOptions,
+  );
+
+  const scrollListRenderer = createScrollListRenderer(
+    options.scrollListOptions,
   );
 
   return createDataRenderer((props, renderers) => {
@@ -235,6 +244,8 @@ export function createDefaultDataRenderer(
         return nullToggler.render(props, renderers);
       case DataRenderType.CheckList:
         return checkListRenderer.render(props, renderers);
+      case DataRenderType.ScrollList:
+        return scrollListRenderer.render(props, renderers);
       case DataRenderType.Dropdown:
         return selectRenderer.render(props, renderers);
       case DataRenderType.Radio:

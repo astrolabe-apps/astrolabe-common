@@ -12,10 +12,12 @@ import {
   Snippet,
 } from "@astroapps/schemas-editor";
 import {
+  addElement,
   Control,
   ensureSelectableValues,
   Fcheckbox,
   RenderElements,
+  updateElements,
   useControl,
   useSelectableArray,
 } from "@react-typed-forms/core";
@@ -27,8 +29,12 @@ import {
   dataControl,
   dateField,
   dateTimeField,
+  defaultValueForField,
   doubleField,
+  elementValueForField,
   FormNode,
+  getHasMoreControl,
+  getLoadingControl,
   groupedControl,
   GroupRenderType,
   intField,
@@ -357,6 +363,12 @@ export default function Editor() {
           data.clearErrors();
           data.validate();
         }}
+        setupPreview={(p) => {
+          if (p.fields.formId.value !== "Test") {
+            const hasMore = getHasMoreControl(p.fields.data.fields["stuff"]);
+            hasMore.value = true;
+          }
+        }}
         saveForm={async (controls, formId) => {
           if (formId === "EditorControls") {
             await new CodeGenClient().editControlDefinition(controls);
@@ -370,8 +382,20 @@ export default function Editor() {
           }
         }}
         previewOptions={{
-          actionOnClick: (aid, data) => async (ctx) => {
+          actionOnClick: (aid, data, dataContext) => async () => {
             await new Promise((r) => setTimeout(r, 1000));
+            if (aid === "loadMore") {
+              const stuffArray =
+                dataContext.dataNode!.control.as<DisabledStuff[]>();
+              const lc = getLoadingControl(stuffArray);
+              lc.value = true;
+              await new Promise((r) => setTimeout(r, 1000));
+              addElement<DisabledStuff>(
+                stuffArray,
+                elementValueForField(dataContext.dataNode!.schema.field),
+              );
+              lc.value = false;
+            }
             console.log("Clicked", aid, data);
           },
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,

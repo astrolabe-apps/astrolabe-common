@@ -165,6 +165,7 @@ export enum DataRenderType {
   Array = "Array",
   ArrayElement = "ArrayElement",
   ElementSelected = "ElementSelected",
+  ScrollList = "ScrollList",
 }
 
 export interface TextfieldRenderOptions extends RenderOptions {
@@ -308,6 +309,11 @@ export interface UserSelectionRenderOptions extends RenderOptions {
 
 export interface IconSelectionRenderOptions extends RenderOptions {
   type: DataRenderType.IconSelector;
+}
+
+export interface ScrollListRenderOptions extends RenderOptions {
+  type: DataRenderType.ScrollList;
+  bottomActionId?: string;
 }
 
 export interface GroupedControlsDefinition extends ControlDefinition {

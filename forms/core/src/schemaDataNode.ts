@@ -186,3 +186,11 @@ export function hideDisplayOnly(
     schemaInterface.isEmptyValue(context.schema.field, context.control?.value)
   );
 }
+
+export function getLoadingControl(data: Control<any>): Control<boolean> {
+  return ensureMetaValue(data, "loading", () => newControl(false));
+}
+
+export function getHasMoreControl(data: Control<any>): Control<boolean> {
+  return ensureMetaValue(data, "hasMore", () => newControl(false));
+}

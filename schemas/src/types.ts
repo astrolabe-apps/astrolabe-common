@@ -23,6 +23,11 @@ export interface ControlActionContext {
   disableForm(disable: ControlDisableType): void;
 }
 
+export const NoOpControlActionContext : ControlActionContext = {
+  disableForm(disable: ControlDisableType) {
+  }
+}
+
 export type ControlActionHandler = (
   actionId: string,
   actionData: any,

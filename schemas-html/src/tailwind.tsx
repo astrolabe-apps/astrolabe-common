@@ -1,6 +1,6 @@
 import React from "react";
-import {DefaultRendererOptions} from "./createDefaultRenderers";
-import {fontAwesomeIcon, IconPlacement} from "@react-typed-forms/schemas";
+import { DefaultRendererOptions } from "./createDefaultRenderers";
+import { fontAwesomeIcon, IconPlacement } from "@react-typed-forms/schemas";
 
 export const defaultTailwindTheme = {
   label: {
@@ -43,7 +43,7 @@ export const defaultTailwindTheme = {
     secondaryClass: "bg-secondary-500",
     iconBeforeClass: "px-2",
     iconAfterClass: "px-2",
-    busyIcon: fontAwesomeIcon("spinner fa-spin")
+    busyIcon: fontAwesomeIcon("spinner fa-spin"),
   },
   layout: {
     className: "flex flex-col",
@@ -70,6 +70,9 @@ export const defaultTailwindTheme = {
         "flex flex-row items-center px-3 py-1 rounded-full bg-surface-100 m-1 gap-2 truncate",
       chipCloseButtonClass:
         "fa-solid fa-xmark p-1 bg-surface-300 rounded-full min-w-[24px] flex justify-center text-surface-50 hover:bg-surface-400 hover:text-surface-100 hover:cursor-pointer",
+    },
+    scrollListOptions: {
+      loadingIcon: fontAwesomeIcon("spinner fa-spin"),
     },
   },
   adornment: {

@@ -19,21 +19,10 @@ import {
   SchemaNode,
   combineVariables,
 } from "@react-typed-forms/schemas";
-import React, { ReactNode, useMemo, Fragment } from "react";
+import React, { ReactNode, useMemo, Fragment, useEffect } from "react";
 import { JsonEditor } from "./JsonEditor";
-import { ViewContext } from "./types";
+import { PreviewData, ViewContext } from "./types";
 import { getMetaFields } from "@react-typed-forms/schemas";
-
-export interface PreviewData {
-  showing: boolean;
-  showJson: boolean;
-  showRawEditor: boolean;
-  showMetadata: boolean;
-  data: any;
-  readonly: boolean;
-  disabled: boolean;
-  displayOnly: boolean;
-}
 
 export function FormPreview({
   previewData,
@@ -101,6 +90,9 @@ export function FormPreview({
   const allVariables = combineVariables(previewOptions?.variables, (c) => ({
     metadata: trackedValue(metadata, c),
   }));
+  useEffect(() => {
+    viewContext.setupPreview?.(previewData);
+  }, []);
   return (
     <>
       <div className="px-4 flex gap-4">

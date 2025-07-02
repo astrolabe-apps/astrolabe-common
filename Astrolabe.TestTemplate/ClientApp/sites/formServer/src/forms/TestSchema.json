@@ -104,6 +104,57 @@
       ],
       "icon": {},
       "disableType": "Global"
+    },
+    {
+      "type": "Data",
+      "title": "Stuff",
+      "field": "stuff",
+      "children": [
+        {
+          "type": "Data",
+          "title": "Type",
+          "field": "type",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Disable",
+          "field": "disable",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Pure Text",
+          "field": "text",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "String",
+          "field": "options",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "String",
+          "field": "singleOption",
+          "renderOptions": {
+            "type": "Standard"
+          }
+        }
+      ],
+      "renderOptions": {
+        "type": "ScrollList",
+        "bottomActionId": "loadMore"
+      }
     }
   ],
   "config": null
