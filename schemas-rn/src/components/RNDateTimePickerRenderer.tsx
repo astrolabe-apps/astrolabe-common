@@ -1,8 +1,8 @@
 ﻿import DateTimePickerModal, {
   DateTimePickerProps,
 } from "react-native-modal-datetime-picker";
-import { Pressable, Text, View } from "react-native";
-import { RNTextInput } from "./RNTextInput";
+import { Pressable, View } from "react-native";
+import { RNTextInput } from "./RNTextInputRenderer";
 import { Control, useControl } from "@react-typed-forms/core";
 import {
   createDataRenderer,

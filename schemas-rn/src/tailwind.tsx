@@ -4,7 +4,7 @@ import {
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
 import { Platform, Pressable, Text, View } from "react-native";
-import { RNTextInput } from "./components/RNTextInput";
+import { RNTextInput } from "./components/RNTextInputRenderer";
 import { RNRadioItem } from "./components/RNRadioItem";
 import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
 import {
@@ -26,6 +26,7 @@ import {
   createRNCheckboxRenderer,
   RNCheckbox,
 } from "./components/RNCheckboxRenderer";
+import { createRNTextInputRenderer } from "./components/RNTextInputRenderer";
 
 export const reactNativeHtml: HtmlComponents = {
   I: RNIcon,
@@ -76,6 +77,10 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
       const renderers: RendererRegistration[] = [
         createRNSelectRenderer(options.data?.selectOptions),
         createRNCheckboxRenderer(options.data?.checkOptions),
+        createRNTextInputRenderer(
+          options.data?.inputClass,
+          options.data?.inputTextClass,
+        ),
       ];
 
       if (Platform.OS !== "web") {
@@ -227,7 +232,7 @@ function RNInput(props: HtmlInputProperties) {
       return (
         <RNTextInput
           {...(rest as any)}
-          value={typeof value == "number" ? value.toString() : value}
+          defaultValue={typeof value == "number" ? value.toString() : value}
           onChangeText={(t) => onChangeValue?.(t)}
         />
       );

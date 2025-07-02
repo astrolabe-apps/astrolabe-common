@@ -6,6 +6,6 @@ export * from "./components/RNHtmlRenderer";
 export * from "./components/RNRadioItem";
 export * from "./components/RNSelectRenderer";
 export * from "./components/RNText";
-export * from "./components/RNTextInput";
+export * from "./components/RNTextInputRenderer";
 export * from "./components/RNDialog";
 export * from "./components/Icon";
