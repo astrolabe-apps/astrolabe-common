@@ -122,14 +122,19 @@ export function createFormTree(
   controls: ControlDefinition[],
   getForm: FormTreeLookup = { getForm: () => undefined },
 ): FormTree {
-  return new FormTreeImpl(getForm, {
-    type: ControlDefinitionType.Group,
-    children: controls,
-    groupOptions: {
-      type: GroupRenderType.Standard,
-      hideTitle: true,
-    },
-  } as GroupedControlsDefinition);
+  return new FormTreeImpl(
+    getForm,
+    controls.length === 1
+      ? controls[0]
+      : ({
+          type: ControlDefinitionType.Group,
+          children: controls,
+          groupOptions: {
+            type: GroupRenderType.Standard,
+            hideTitle: true,
+          },
+        } as GroupedControlsDefinition),
+  );
 }
 
 export function createFormLookup<A extends Record<string, ControlDefinition[]>>(

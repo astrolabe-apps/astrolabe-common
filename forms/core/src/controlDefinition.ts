@@ -314,6 +314,7 @@ export interface IconSelectionRenderOptions extends RenderOptions {
 export interface ScrollListRenderOptions extends RenderOptions {
   type: DataRenderType.ScrollList;
   bottomActionId?: string;
+  refreshActionId?: string;
 }
 
 export interface GroupedControlsDefinition extends ControlDefinition {

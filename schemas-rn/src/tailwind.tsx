@@ -27,6 +27,10 @@ import {
   RNCheckbox,
 } from "./components/RNCheckboxRenderer";
 import { createRNTextInputRenderer } from "./components/RNTextInputRenderer";
+import {
+  createRNScrollListRenderer,
+  ExtendedDefaultScrollListOptions,
+} from "./components/RNScrollListRenderer";
 
 export const reactNativeHtml: HtmlComponents = {
   I: RNIcon,
@@ -80,6 +84,9 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
         createRNTextInputRenderer(
           options.data?.inputClass,
           options.data?.inputTextClass,
+        ),
+        createRNScrollListRenderer(
+          options.data?.scrollListOptions as ExtendedDefaultScrollListOptions,
         ),
       ];
 

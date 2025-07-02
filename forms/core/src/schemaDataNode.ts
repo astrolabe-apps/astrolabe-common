@@ -191,6 +191,10 @@ export function getLoadingControl(data: Control<any>): Control<boolean> {
   return ensureMetaValue(data, "loading", () => newControl(false));
 }
 
+export function getRefreshingControl(data: Control<any>): Control<boolean> {
+  return ensureMetaValue(data, "refreshing", () => newControl(false));
+}
+
 export function getHasMoreControl(data: Control<any>): Control<boolean> {
   return ensureMetaValue(data, "hasMore", () => newControl(false));
 }
