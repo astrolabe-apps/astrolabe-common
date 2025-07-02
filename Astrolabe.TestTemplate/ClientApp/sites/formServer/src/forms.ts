@@ -1,6 +1,6 @@
 import { CarSearchPageSchema } from "./schemas";
 import CarSearchJson from "./forms/CarSearch.json";
-import { ControlDefinition } from "@react-typed-forms/schemas";
+import { ControlDefinition, SchemaField } from "@react-typed-forms/schemas";
 
 export const CarSearch = {
   value: "CarSearch",
@@ -10,6 +10,7 @@ export const CarSearch = {
   defaultConfig: null,
   controls: CarSearchJson.controls as ControlDefinition[],
   config: CarSearchJson.config,
+  formFields: CarSearchJson.fields as SchemaField[],
 };
 
 export const FormDefinitions = {

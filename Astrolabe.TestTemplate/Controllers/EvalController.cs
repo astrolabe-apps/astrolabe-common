@@ -18,10 +18,13 @@ public class EvalController : ControllerBase
         var valEnv = RuleValidator.FromData(
             JsonDataLookup.FromObject(JsonSerializer.SerializeToNode(evalData.Data))
         );
-        var result = valEnv.Evaluate(ExprParser.Parse(evalData.Expression));
+        var evalExpr = ExprParser.Parse(evalData.Expression);
+        var result = valEnv.Evaluate(evalExpr);
+        var normalString = evalExpr.ToNormalString();
         return new EvalResult(
             ToValueWithDeps(result.Value),
-            result.Env.Errors.Select(x => x.Message)
+            result.Env.Errors.Select(x => x.Message),
+            normalString + ":"+ NormalString.Parse(normalString).Result.ToNormalString()
         );
     }
 
@@ -43,7 +46,7 @@ public class EvalController : ControllerBase
 
 public record EvalData(string Expression, IDictionary<string, object?> Data);
 
-public record EvalResult(ValueWithDeps Result, IEnumerable<string> Errors);
+public record EvalResult(ValueWithDeps Result, IEnumerable<string> Errors, string NormalString);
 
 public record ValueWithDeps(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] object? Value,

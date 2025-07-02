@@ -731,6 +731,9 @@ export interface ControlDefinition {
     title: string | null;
     id: string | null;
     childRefId: string | null;
+    disabled: boolean | null;
+    hidden: boolean | null;
+    readonly: boolean | null;
     dynamic: DynamicProperty[] | null;
     adornments: ControlAdornment[] | null;
     styleClass: string | null;
@@ -738,6 +741,7 @@ export interface ControlDefinition {
     layoutClass: string | null;
     labelClass: string | null;
     labelTextClass: string | null;
+    placement: string | null;
     children: ControlDefinition[] | null;
 
     [key: string]: any;
@@ -749,13 +753,16 @@ export interface ActionControlDefinition extends ControlDefinition {
     icon: IconReference | null;
     actionStyle: ActionStyle | null;
     iconPlacement: IconPlacement | null;
+    disableType: ControlDisableType | null;
 
     [key: string]: any;
 }
 
 export enum ActionStyle {
     Button = "Button",
+    Secondary = "Secondary",
     Link = "Link",
+    Group = "Group",
 }
 
 export enum AdornmentPlacement {
@@ -787,7 +794,6 @@ export interface ArrayRenderOptions extends RenderOptions {
     noAdd: boolean | null;
     noRemove: boolean | null;
     noReorder: boolean | null;
-    childOptions: RenderOptions | null;
     editExternal: boolean | null;
 
     [key: string]: any;
@@ -840,6 +846,12 @@ export interface CheckListRenderOptions extends RenderOptions {
     [key: string]: any;
 }
 
+export enum ControlDisableType {
+    None = "None",
+    Self = "Self",
+    Global = "Global",
+}
+
 export interface DisplayData {
     type: string;
 
@@ -858,8 +870,6 @@ export interface DataControlDefinition extends ControlDefinition {
     required: boolean | null;
     renderOptions: RenderOptions | null;
     defaultValue: any | null;
-    readonly: boolean | null;
-    disabled: boolean | null;
     dontClearHidden: boolean | null;
     validators: SchemaValidator[] | null;
 
@@ -918,6 +928,19 @@ export interface DateValidator extends SchemaValidator {
     [key: string]: any;
 }
 
+export interface GroupRenderOptions {
+    type: string;
+    hideTitle: boolean | null;
+    childStyleClass: string | null;
+    childLayoutClass: string | null;
+    childLabelClass: string | null;
+    displayOnly: boolean | null;
+}
+
+export interface DialogRenderOptions extends GroupRenderOptions {
+    title: string | null;
+}
+
 export interface DisplayControlDefinition extends ControlDefinition {
     displayData: DisplayData;
 
@@ -936,6 +959,12 @@ export interface DynamicProperty {
     expr: EntityExpression;
 }
 
+export interface ElementSelectedRenderOptions extends RenderOptions {
+    elementExpression: EntityExpression;
+
+    [key: string]: any;
+}
+
 export interface EvalData {
     expression: string;
     data: { [key: string]: any; };
@@ -944,15 +973,7 @@ export interface EvalData {
 export interface EvalResult {
     result: ValueWithDeps;
     errors: string[];
-}
-
-export interface GroupRenderOptions {
-    type: string;
-    hideTitle: boolean | null;
-    childStyleClass: string | null;
-    childLayoutClass: string | null;
-    childLabelClass: string | null;
-    displayOnly: boolean | null;
+    normalString: string;
 }
 
 export interface FlexRenderer extends GroupRenderOptions {
@@ -962,6 +983,7 @@ export interface FlexRenderer extends GroupRenderOptions {
 
 export interface GridRenderer extends GroupRenderOptions {
     columns: number | null;
+    rowClass: string | null;
 }
 
 export interface GroupElementRenderer extends GroupRenderOptions {
@@ -1023,6 +1045,7 @@ export interface IconMapping {
 export enum IconPlacement {
     BeforeText = "BeforeText",
     AfterText = "AfterText",
+    ReplaceText = "ReplaceText",
 }
 
 export interface IconReference {
@@ -1062,6 +1085,7 @@ export interface LengthValidator extends SchemaValidator {
 
 export interface NotEmptyExpression extends EntityExpression {
     field: string;
+    empty: boolean | null;
 
     [key: string]: any;
 }
@@ -1084,6 +1108,12 @@ export interface RadioButtonRenderOptions extends RenderOptions {
     entryWrapperClass: string | null;
     selectedClass: string | null;
     notSelectedClass: string | null;
+
+    [key: string]: any;
+}
+
+export interface ScrollListRenderOptions extends RenderOptions {
+    bottomActionId: string | null;
 
     [key: string]: any;
 }

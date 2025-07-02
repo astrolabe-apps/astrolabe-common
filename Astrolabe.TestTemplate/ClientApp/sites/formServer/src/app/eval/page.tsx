@@ -27,6 +27,7 @@ import { basicSetup, EditorView } from "codemirror";
 import { Evaluator } from "@astroapps/codemirror-evaluator";
 import { autocompletion } from "@codemirror/autocomplete";
 import { evalCompletions } from "@astroapps/codemirror-evaluator";
+import { JsonEditor } from "@astroapps/schemas-editor";
 
 export default function EvalPage() {
   const client = useApiClient(EvalClient);
@@ -34,7 +35,7 @@ export default function EvalPage() {
   const input = useControl("");
   const data = useControl(sample);
   const dataText = useControl(() => JSON.stringify(sample, null, 2));
-  const output = useControl<any>();
+  const outputJson = useControl<string>("");
   const editor = useControl<EditorView>();
   useControlEffect(
     () => dataText.value,
@@ -54,7 +55,7 @@ export default function EvalPage() {
           try {
             setEvalResult(await client.eval({ expression: v, data: dv }));
           } catch (e) {
-            output.value = e;
+            setOutput(e);
           }
         } else {
           const exprTree = parseEval(v);
@@ -65,10 +66,11 @@ export default function EvalPage() {
             setEvalResult({
               result: toValueDeps(value),
               errors: outEnv.errors,
+              normalString: "",
             });
           } catch (e) {
             console.error(e);
-            output.value = e;
+            setOutput(e);
           }
         }
       } catch (e) {
@@ -79,27 +81,33 @@ export default function EvalPage() {
   const editorRef = useCallback(setupEditor, [editor]);
   return (
     <div className="h-screen flex flex-col">
-      <div>
-        <Fcheckbox control={serverMode} /> Server Mode
+      <div className="grow flex">
+        <div className="basis-1/2 flex flex-col h-screen">
+          <div>
+            <Fcheckbox control={serverMode} /> Server Mode
+          </div>
+          <div className="basis-1/2 overflow-y-scroll">
+            <div ref={editorRef} />
+          </div>
+          <div className="basis-1/2 overflow-y-scroll">
+            <JsonEditor control={outputJson} />
+          </div>
+        </div>
+        <div className="basis-1/2 flex flex-col">
+          <div className="basis-1 grow overflow-y-scroll">
+            <JsonEditor control={dataText} />
+          </div>
+        </div>
       </div>
-      <div className="flex grow">
-        <div className="w-80 grow" ref={editorRef} />
-        <textarea
-          className="grow"
-          value={dataText.value}
-          onChange={(e) => (dataText.value = e.target.value)}
-        />
-      </div>
-      <textarea
-        className="grow"
-        value={JSON.stringify(output.value, null, 2)}
-      />
     </div>
   );
 
   function setEvalResult(result: EvalResult) {
-    output.value =
-      result.errors && result.errors.length > 0 ? result : result.result;
+    setOutput(result);
+  }
+
+  function setOutput(output: any) {
+    outputJson.value = JSON.stringify(output, null, 2);
   }
 
   function setupEditor(elem: HTMLElement | null) {
