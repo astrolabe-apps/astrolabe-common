@@ -204,6 +204,16 @@ public record ValueExpr(object? Value, DataPath? Path = null, IEnumerable<DataPa
     {
         return new ValueExpr(v);
     }
+    
+    public static ValueExpr From(double? v)
+    {
+        return new ValueExpr(v);
+    }
+
+    public static ValueExpr From(decimal? v)
+    {
+        return new ValueExpr((double?)v);
+    }
 
     public object? ToNative()
     {

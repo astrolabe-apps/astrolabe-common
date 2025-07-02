@@ -11,7 +11,7 @@ public static class NormalString
         return evalExpr switch
         {
             ArrayExpr arrayExpr => "["
-                + string.Join(",", arrayExpr.Values.Select(ToNormalString))
+                + string.Concat(arrayExpr.Values.SelectMany(x => new []{",", x.ToNormalString()}))
                 + "]",
             CallExpr callExpr =>
                 $"({Escape(callExpr.Function, Commas)}{string.Concat(callExpr.Args.SelectMany(x => new[] { ",", x.ToNormalString() }))})",
@@ -50,11 +50,11 @@ public static class NormalString
 
     private static EscapeChars Commas = MakeEscape(new() { { ',', 'c' } });
     private static EscapeChars CommaArg = MakeEscape(new() { { ',', 'c' } }, ')');
-    private static EscapeChars CommaLet = MakeEscape(new() { { ',', 'c' } }, '=');
+    private static EscapeChars CommaLet = MakeEscape(new() { { ',', 'c' } });
     private static EscapeChars Quote = MakeEscape(new() { { '"', 'q' } });
     private static EscapeChars Single = MakeEscape(new() { { '\'', 's' } });
     private static EscapeChars Dollar = MakeEscape(new() { { '$', 'd' } });
-    private static char[] NumberChars = "0123456789.".ToCharArray();
+    private static char[] NumberChars = "0123456789.-".ToCharArray();
 
     private static EscapeChars MakeEscape(Dictionary<char, char> escapes, char? extraStop = null)
     {
@@ -84,12 +84,15 @@ public static class NormalString
                     EvalExpr (i) =>
                         new LetExpr(result.Select(x => (new VarExpr(x.Item1), x.Item2)), i)
                 ),
+            '[' => ParseWhile(next, Parse).Map(EvalExpr (i) => new ArrayExpr(i)),
             '\'' => Unescape(next, Single).Map(EvalExpr (x) => new PropertyExpr(x)),
+            '\\' when Unescape(next, Commas) is {Result:{} v, 
+                Remaining: var next2} => Parse(next2).Map(EvalExpr (x) => new LambdaExpr(v, x)),
             '('
                 when Unescape(next, CommaArg, true)
                     is { Result: var funcName, Remaining: var next2 } => ParseWhile(next2, Parse)
                 .Map(EvalExpr (r) => new CallExpr(funcName, r.ToList())),
-            >= '0' and <= '9' => ParseNum(source),
+            '-' or >= '0' and <= '9' => ParseNum(source),
             '$' => Unescape(next, Dollar).Map(EvalExpr (s) => new VarExpr(s)),
             't' => new ParseResult<EvalExpr>(next, ValueExpr.True),
             'f' => new ParseResult<EvalExpr>(next, ValueExpr.False),
