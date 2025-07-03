@@ -17,3 +17,4 @@ export * from "./adornments/optionalAdornment";
 export * from "./createDefaultRenderers";
 export * from "./tailwind";
 export * from "./createButtonActionRenderer";
+export * from "./components/ScrollListRenderer";

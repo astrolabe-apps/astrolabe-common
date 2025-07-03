@@ -1,5 +1,4 @@
-﻿import { DefaultScrollListOptions } from "@react-typed-forms/schemas-html/lib/components/ScrollListRenderer";
-import {
+﻿import {
   createDataRenderer,
   DataRendererProps,
   DataRenderType,
@@ -14,6 +13,7 @@ import {
 import { ActivityIndicator, RefreshControl, Text, View } from "react-native";
 import { isValidElement, ReactElement } from "react";
 import Animated, { LinearTransition } from "react-native-reanimated";
+import { DefaultScrollListOptions } from "@react-typed-forms/schemas-html";
 
 export interface ExtendedDefaultScrollListOptions
   extends DefaultScrollListOptions {
@@ -102,8 +102,31 @@ function RNScrollListRenderer({
         handleLoadMore?.(NoOpControlActionContext);
       }}
       keyExtractor={(item) => item.uniqueId}
-      ListEmptyComponent={<ListEmptyComponent />}
-      ListFooterComponent={<ListFooterComponent />}
+      ListEmptyComponent={
+        <Animated.View className={"h-full items-center justify-center"}>
+          {loadingControl.value ? (
+            <ActivityIndicator size={"large"} color={refreshControlTintColor} />
+          ) : (
+            <Text className={"headline"}>No results found</Text>
+          )}
+        </Animated.View>
+      }
+      ListFooterComponent={
+        elements.length > 0 ? (
+          <Animated.View
+            layout={LinearTransition}
+            className={"flex flex-row items-center justify-center py-[16px]"}
+          >
+            {hasMoreControl.value ? (
+              loadingControl.value && <ActivityIndicator size={"large"} />
+            ) : (
+              <Text className={"subhead"}>
+                You’ve reached the end of the list.
+              </Text>
+            )}
+          </Animated.View>
+        ) : undefined
+      }
       itemLayoutAnimation={LinearTransition}
     />
   );
@@ -111,29 +134,5 @@ function RNScrollListRenderer({
   function renderItem(item: FormStateNode): ReactElement | null {
     const children = renderChild(item);
     return isValidElement(children) ? children : null;
-  }
-
-  function ListEmptyComponent() {
-    return (
-      <View className={"h-full items-center justify-center"}>
-        {loadingControl.value ? (
-          <ActivityIndicator size={"large"} color={refreshControlTintColor} />
-        ) : (
-          <Text className={"headline"}>No results found</Text>
-        )}
-      </View>
-    );
-  }
-
-  function ListFooterComponent() {
-    return elements.length > 0 ? (
-      <View className={"flex flex-row items-center justify-center py-[16px]"}>
-        {hasMoreControl.value ? (
-          loadingControl.value && <ActivityIndicator size={"large"} />
-        ) : (
-          <Text className={"subhead"}>You’ve reached the end of the list.</Text>
-        )}
-      </View>
-    ) : undefined;
   }
 }
