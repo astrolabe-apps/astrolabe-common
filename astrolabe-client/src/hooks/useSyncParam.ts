@@ -25,9 +25,11 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
   paramName: string,
   convert: ConvertParam<A, P>,
   use?: Control<A>,
+  updateForAnyPath = false,
 ): Control<A> {
-  const currentQuery = useNavigationService().query;
-  const query = queryControl.fields.query;
+  const { query: currentQuery, pathname: currentPathname } =
+    useNavigationService();
+  const { query, pathname } = queryControl.fields;
   const control = useControl(
     () => convert.fromParam(convert.normalise(currentQuery[paramName])),
     { use },
@@ -35,7 +37,12 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
 
   useControlEffect(
     () => convert.normalise(query.value[paramName]),
-    (param) => (control.value = convert.fromParam(param)),
+    (param) => {
+      // Only update if the paths match or if updateForAnyPath is true
+      if (updateForAnyPath || currentPathname === pathname.value) {
+        control.value = convert.fromParam(param);
+      }
+    },
     !!use,
   );
 

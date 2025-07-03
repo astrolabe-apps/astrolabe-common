@@ -24,17 +24,17 @@ export function useNextNavigationService<T = {}>(
         "get" | "getAll" | "size"
       >)
     : useSearchParams()!;
+  const pathname = usePathname()!;
   const paramString = searchParams.toString();
   const queryRef = useRef<string | null>(null);
   const query = parse(paramString);
-  const queryControl = useControl({ query, isReady: false });
-  const pathname = usePathname()!;
+  const queryControl = useControl({ query, pathname, isReady: false });
   const pathSegments = pathname
     ? pathname.split("/").filter((x) => x.length)
     : [];
 
   if (queryRef.current !== paramString)
-    queryControl.value = { query, isReady: true };
+    queryControl.value = { query, pathname, isReady: true };
 
   useDefaultSyncRoute(queryControl, (query) => {
     queryRef.current = query;
