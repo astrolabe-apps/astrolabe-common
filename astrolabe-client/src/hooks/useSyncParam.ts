@@ -1,6 +1,7 @@
 import { Control, useControl, useControlEffect } from "@react-typed-forms/core";
 import { compareAsSet } from "../util/arrays";
 import { QueryControl, useNavigationService } from "../service/navigation";
+import {useRef} from "react";
 
 interface ConvertParam<A, P extends string | string[] | undefined> {
   normalise: (q: string | string[] | undefined) => P;
@@ -27,19 +28,19 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
   use?: Control<A>,
   updateForAnyPath = false,
 ): Control<A> {
-  const { query: currentQuery, pathname: currentPathname } =
-    useNavigationService();
+  const currentQuery  =    useNavigationService().query;
   const { query, pathname } = queryControl.fields;
   const control = useControl(
     () => convert.fromParam(convert.normalise(currentQuery[paramName])),
     { use },
   );
+  const originalPathname = useRef(pathname.current.value);
 
   useControlEffect(
     () => convert.normalise(query.value[paramName]),
     (param) => {
       // Only update if the paths match or if updateForAnyPath is true
-      if (updateForAnyPath || currentPathname === pathname.value) {
+      if (updateForAnyPath || originalPathname.current === pathname.current.value) {
         control.value = convert.fromParam(param);
       }
     },
