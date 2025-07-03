@@ -7,7 +7,11 @@ export type ParsedUrlQuery = {
   [k: string]: string | string[] | undefined;
 };
 
-export type QueryControl = Control<{ query: ParsedUrlQuery; pathname: string, isReady: boolean }>;
+export type QueryControl = Control<{
+  query: ParsedUrlQuery;
+  pathname: string;
+  isReady: boolean;
+}>;
 
 export interface NavigationService<T = {}> {
   query: ParsedUrlQuery;
