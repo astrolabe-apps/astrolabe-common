@@ -813,7 +813,7 @@
                 "renderOptions": {
                   "type": "ValueForField",
                   "fieldRef": "field",
-                  "refIsDirect": true
+                  "refIsDirect": false
                 },
                 "hideTitle": true
               }
