@@ -21,10 +21,13 @@ import clsx from "clsx";
 import {
   ControlDefinition,
   ControlDefinitionType,
+  createSchemaNode,
   fieldPathForDefinition,
   FormNode,
   groupedControl,
   isDataControl,
+  missingField,
+  resolveSchemaNode,
   schemaForFieldPath,
   SchemaNode,
 } from "@react-typed-forms/schemas";
@@ -152,7 +155,7 @@ export function FormControlTree({
         };
         const schemaPath = fieldPathForDefinition(f.data.form.definition);
         if (schemaPath) {
-          selectedField.value = schemaForFieldPath(schemaPath, f.data.schema);
+          selectedField.value = schemaForDataPath(schemaPath, f.data.schema);
         }
       } else {
         selectedControl.value = undefined;
@@ -175,7 +178,13 @@ export function FormControlTree({
       c.length == 0 && !canAddChildren(def, dataSchema)
         ? null
         : c.map((x) => toControlNode(x, dataSchema ?? parentSchema));
-    return { id: form.id, form, dataSchema, schema: parentSchema, children };
+    return {
+      id: form.id,
+      form,
+      dataSchema,
+      schema: parentSchema,
+      children,
+    };
   }
 }
 
@@ -300,4 +309,33 @@ function ControlMenu({
       }
     }
   }
+}
+
+export function schemaForDataPath(
+  fieldPath: string[],
+  schema: SchemaNode,
+): SchemaNode {
+  let i = 0;
+  let element = schema.field.collection;
+  while (i < fieldPath.length) {
+    const nextField = fieldPath[i];
+    if (nextField == ".." && element) {
+      element = false;
+      i++;
+      continue;
+    }
+    let childNode = resolveSchemaNode(schema, nextField);
+    if (!childNode) {
+      childNode = createSchemaNode(
+        missingField(nextField),
+        schema.tree,
+        schema,
+      );
+    } else {
+      element = childNode.field.collection;
+    }
+    schema = childNode;
+    i++;
+  }
+  return schema;
 }
