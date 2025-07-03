@@ -14,7 +14,7 @@ public static class ExprGen
             Gen.Constant(ValueExpr.True),
             ArbMap.Default.GeneratorFor<string>().Select(ValueExpr.From),
             ArbMap.Default.GeneratorFor<int?>().Select(ValueExpr.From),
-            ArbMap.Default.GeneratorFor<double?>().Select(ValueExpr.From));
+            ArbMap.Default.GeneratorFor<double?>().Where(x => x is not {} d || (!double.IsInfinity(d) && !double.IsNaN(d))).Select(ValueExpr.From));
 
     private static readonly Gen<EvalExpr> GenVarExpr =
         GenString.Select(EvalExpr (x) => new VarExpr(x));

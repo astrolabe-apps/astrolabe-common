@@ -19,7 +19,8 @@ public class NormaliseTest(ITestOutputHelper output)
                     Assert.Equivalent(JsonSerializer.Serialize(x), reflected);
                 }
             )
-            // .QuickCheckThrowOnFailure();
-            .Check(Config.VerboseThrowOnFailure.WithReplay(11188303408321914308,5320079614174359401, 11));
+            // .Check(Config.VerboseThrowOnFailure.WithMaxTest(100000));
+            .VerboseCheckThrowOnFailure();
+            // .Check(Config.VerboseThrowOnFailure.WithReplay(17740565117687559759,4192450112079655587, 4));
     }
 }

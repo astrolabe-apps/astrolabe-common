@@ -14,7 +14,7 @@ public static class NormalString
                 + string.Concat(arrayExpr.Values.SelectMany(x => new []{",", x.ToNormalString()}))
                 + "]",
             CallExpr callExpr =>
-                $"({Escape(callExpr.Function, Commas)}{string.Concat(callExpr.Args.SelectMany(x => new[] { ",", x.ToNormalString() }))})",
+                $"({Escape(callExpr.Function, CommaArg)}{string.Concat(callExpr.Args.SelectMany(x => new[] { ",", x.ToNormalString() }))})",
             ValueExpr valueExpr => valueExpr.ToNormalString(),
             PropertyExpr pExpr => $"'{Escape(pExpr.Property, Single)}'",
             VarExpr varExpr => $"${Escape(varExpr.Name, Dollar)}$",
@@ -23,7 +23,6 @@ public static class NormalString
             LetExpr letExpr =>
                 $"={string.Concat(letExpr.Vars.Select(x => 
                 $",{Escape(x.Item1.Name, Commas)},{x.Item2.ToNormalString()}"))}={letExpr.In.ToNormalString()}",
-            null => "~",
             _ => throw new ArgumentOutOfRangeException(nameof(evalExpr)),
         };
     }
@@ -41,27 +40,25 @@ public static class NormalString
             string s => $"\"{Escape(s, Quote)}\"",
             bool b => b ? "t" : "f",
             int i => i.ToString(),
-            double d => d.ToString(CultureInfo.InvariantCulture),
-            decimal d => ((double)d).ToString(CultureInfo.InvariantCulture),
+            double d => "d"+d.ToString(CultureInfo.InvariantCulture),
+            decimal d => "d"+((double)d).ToString(CultureInfo.InvariantCulture),
             short s => s.ToString(),
             _ => throw new ArgumentOutOfRangeException(nameof(evalExpr)),
         };
     }
 
     private static EscapeChars Commas = MakeEscape(new() { { ',', 'c' } });
-    private static EscapeChars CommaArg = MakeEscape(new() { { ',', 'c' } }, ')');
+    private static EscapeChars CommaArg = MakeEscape(new() { { ',', 'c' }, {')', 'b'} });
     private static EscapeChars CommaLet = MakeEscape(new() { { ',', 'c' } });
     private static EscapeChars Quote = MakeEscape(new() { { '"', 'q' } });
     private static EscapeChars Single = MakeEscape(new() { { '\'', 's' } });
     private static EscapeChars Dollar = MakeEscape(new() { { '$', 'd' } });
-    private static char[] NumberChars = "0123456789.-".ToCharArray();
+    private static char[] NumberChars = "0123456789.-E+".ToCharArray();
 
-    private static EscapeChars MakeEscape(Dictionary<char, char> escapes, char? extraStop = null)
+    private static EscapeChars MakeEscape(Dictionary<char, char> escapes)
     {
         var stops = escapes.Keys.ToList();
-        if (extraStop != null)
-            stops.Add(extraStop.Value);
-        return new EscapeChars(escapes, stops.ToArray());
+        return new EscapeChars(escapes, escapes.ToDictionary(x => x.Value, x => x.Key), stops.ToArray());
     }
 
     delegate ParseResult<T> ParseFunc<T>(ReadOnlySpan<char> source);
@@ -92,7 +89,8 @@ public static class NormalString
                 when Unescape(next, CommaArg, true)
                     is { Result: var funcName, Remaining: var next2 } => ParseWhile(next2, Parse)
                 .Map(EvalExpr (r) => new CallExpr(funcName, r.ToList())),
-            '-' or >= '0' and <= '9' => ParseNum(source),
+            '-' or >= '0' and <= '9' => ParseNum(source, false),
+            'd' => ParseNum(next, true),
             '$' => Unescape(next, Dollar).Map(EvalExpr (s) => new VarExpr(s)),
             't' => new ParseResult<EvalExpr>(next, ValueExpr.True),
             'f' => new ParseResult<EvalExpr>(next, ValueExpr.False),
@@ -101,14 +99,13 @@ public static class NormalString
         };
     }
 
-    private static ParseResult<EvalExpr> ParseNum(ReadOnlySpan<char> source)
+    private static ParseResult<EvalExpr> ParseNum(ReadOnlySpan<char> source, bool fp)
     {
         var numberEnd = source.IndexOfAnyExcept(NumberChars);
         if (numberEnd == -1)
             numberEnd = source.Length;
         var numSpan = source[..numberEnd];
-        var hasDot = numSpan.IndexOf('.');
-        object result = hasDot == -1 ? int.Parse(numSpan) : double.Parse(numSpan);
+        object result = !fp ? int.Parse(numSpan) : double.Parse(numSpan);
         return new ParseResult<EvalExpr>(source[numberEnd..], new ValueExpr(result));
     }
 
@@ -143,8 +140,8 @@ public static class NormalString
         var endIndex = source.IndexOfAny(escapes.Stops);
         if (endIndex == -1)
             endIndex = source.Length;
-        var replacements = escapes.Replacements;
-        const char escapeChar = '\'';
+        var replacements = escapes.Reverse;
+        const char escapeChar = '\\';
         var stringBuilder = new StringBuilder(endIndex);
         var prvEscape = false;
         var offset = 0;
@@ -180,8 +177,9 @@ public readonly ref struct ParseResult<T>(ReadOnlySpan<char> Remaining, T Result
     }
 }
 
-public readonly struct EscapeChars(IDictionary<char, char> Replacements, char[] Stops)
+public readonly struct EscapeChars(IDictionary<char, char> Replacements, IDictionary<char, char> Reverse, char[] Stops)
 {
+    public IDictionary<char, char> Reverse { get; } = Reverse;
     public IDictionary<char, char> Replacements { get; } = Replacements;
     public char[] Stops { get; } = Stops;
 }
