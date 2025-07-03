@@ -10,9 +10,14 @@
   NoOpControlActionContext,
   ScrollListRenderOptions,
 } from "@react-typed-forms/schemas";
-import { ActivityIndicator, RefreshControl, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  Text,
+  View,
+} from "react-native";
 import { isValidElement, ReactElement } from "react";
-import Animated, { LinearTransition } from "react-native-reanimated";
 import { DefaultScrollListOptions } from "@react-typed-forms/schemas-html";
 
 export interface ExtendedDefaultScrollListOptions
@@ -74,7 +79,7 @@ function RNScrollListRenderer({
     : undefined;
 
   return (
-    <Animated.FlatList
+    <FlatList
       refreshControl={
         <RefreshControl
           refreshing={refreshingControl.value}
@@ -103,18 +108,17 @@ function RNScrollListRenderer({
       }}
       keyExtractor={(item) => item.uniqueId}
       ListEmptyComponent={
-        <Animated.View className={"h-full items-center justify-center"}>
+        <View className={"h-full items-center justify-center"}>
           {loadingControl.value ? (
             <ActivityIndicator size={"large"} color={refreshControlTintColor} />
           ) : (
             <Text className={"headline"}>No results found</Text>
           )}
-        </Animated.View>
+        </View>
       }
       ListFooterComponent={
         elements.length > 0 ? (
-          <Animated.View
-            layout={LinearTransition}
+          <View
             className={"flex flex-row items-center justify-center py-[16px]"}
           >
             {hasMoreControl.value ? (
@@ -124,10 +128,9 @@ function RNScrollListRenderer({
                 You’ve reached the end of the list.
               </Text>
             )}
-          </Animated.View>
+          </View>
         ) : undefined
       }
-      itemLayoutAnimation={LinearTransition}
     />
   );
 
