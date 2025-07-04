@@ -16,18 +16,16 @@ import {
   useControl,
 } from "@react-typed-forms/core";
 import { defaultControlDefinitionForm } from "./schemaSchemas";
-import React, { Key, MutableRefObject, useEffect, Fragment } from "react";
+import React, { Fragment, Key, MutableRefObject, useEffect } from "react";
 import clsx from "clsx";
 import {
   ControlDefinition,
   ControlDefinitionType,
-  createSchemaNode,
   fieldPathForDefinition,
   FormNode,
   groupedControl,
   isDataControl,
-  missingField,
-  resolveSchemaNode,
+  schemaForDataPath,
   schemaForFieldPath,
   SchemaNode,
 } from "@react-typed-forms/schemas";
@@ -155,7 +153,10 @@ export function FormControlTree({
         };
         const schemaPath = fieldPathForDefinition(f.data.form.definition);
         if (schemaPath) {
-          selectedField.value = schemaForDataPath(schemaPath, f.data.schema);
+          selectedField.value = schemaForDataPath(
+            schemaPath,
+            f.data.schema,
+          ).node;
         }
       } else {
         selectedControl.value = undefined;
@@ -309,33 +310,4 @@ function ControlMenu({
       }
     }
   }
-}
-
-export function schemaForDataPath(
-  fieldPath: string[],
-  schema: SchemaNode,
-): SchemaNode {
-  let i = 0;
-  let element = schema.field.collection;
-  while (i < fieldPath.length) {
-    const nextField = fieldPath[i];
-    if (nextField == ".." && element) {
-      element = false;
-      i++;
-      continue;
-    }
-    let childNode = resolveSchemaNode(schema, nextField);
-    if (!childNode) {
-      childNode = createSchemaNode(
-        missingField(nextField),
-        schema.tree,
-        schema,
-      );
-    } else {
-      element = childNode.field.collection;
-    }
-    schema = childNode;
-    i++;
-  }
-  return schema;
 }

@@ -2,16 +2,17 @@
   ControlDefinitionExtension,
   createAction,
   createDataRenderer,
+  DataPathNode,
   FieldType,
   FormRenderer,
-  getSchemaNodePath,
+  getParentDataPath,
   isCompoundField,
   isCompoundNode,
   missingField,
-  relativePath,
+  relativeSegmentPath,
   RenderOptions,
   resolveSchemaNode,
-  schemaForFieldRef,
+  schemaForDataPath,
   SchemaNode,
 } from "@react-typed-forms/schemas";
 import React, {
@@ -84,13 +85,18 @@ export function FieldSelection({
   edit?: (n: SchemaNode) => ReactNode;
   formRenderer: FormRenderer;
 }) {
+  const parentDataNode = {
+    node: parentNode,
+    element: !!parentNode.field.collection,
+  };
   const editingNode = useControl<SchemaNode>();
   const open = useControl(false);
   const term = useControl("");
-  const selNode = schemaForFieldRef(control.value, parentNode);
+  const path = control.value?.split("/") ?? [];
+  const selNode = schemaForDataPath(path, parentNode);
   const triggerRef = useRef<HTMLDivElement | null>(null);
 
-  const selectorSchemaNode = useControl<SchemaNode>(parentNode);
+  const selectorSchemaNode = useControl<DataPathNode>(parentDataNode);
   const canEdit = !!edit;
   useControlEffect(
     () => open.value,
@@ -99,13 +105,7 @@ export function FieldSelection({
         editingNode.value = undefined;
         return;
       }
-
-      const parentSchema = getParentSchema(
-        control.value?.split("/") ?? [],
-        parentNode,
-      );
-
-      selectorSchemaNode.value = parentSchema;
+      selectorSchemaNode.value = parentDataNode;
     },
   );
   return (
@@ -123,7 +123,7 @@ export function FieldSelection({
         >
           {(c) => (
             <span>
-              {selNode.field.displayName} ({c.value})
+              {selNode.node.field.displayName} ({c.value})
             </span>
           )}
         </RenderOptional>
@@ -163,7 +163,7 @@ export function FieldSelection({
 
                 <SchemaNodeList
                   selectorSchemaNode={selectorSchemaNode}
-                  parentNode={parentNode}
+                  parentNode={parentDataNode}
                   selectedField={control}
                   searchTerm={term}
                   onEdit={canEdit ? (n) => (editingNode.value = n) : undefined}
@@ -190,8 +190,8 @@ export function FieldSelection({
   }
   function addChild() {
     const selected = selectorSchemaNode.value;
-    const tree = selected.tree as EditorSchemaTree;
-    const result = tree.addNode(selected, {
+    const tree = selected.node.tree as EditorSchemaTree;
+    const result = tree.addNode(selected.node, {
       field: "",
       type: FieldType.String,
     });
@@ -209,31 +209,31 @@ function SchemaNodeList({
   onEdit,
   onDelete,
 }: {
-  selectorSchemaNode: Control<SchemaNode>;
-  parentNode: SchemaNode;
+  selectorSchemaNode: Control<DataPathNode>;
+  parentNode: DataPathNode;
   selectedField: Control<string | undefined>;
   searchTerm: Control<string>;
   onEdit?: (n: SchemaNode) => void;
   onDelete?: (n: SchemaNode) => void;
 }) {
-  const allNodes = makeChildNodes(parentNode, selectorSchemaNode.value);
+  const allNodes = makeChildNodes(selectorSchemaNode.value);
 
   const [clickTimeout, setClickTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const onNodeClick = useCallback(
-    (e: MouseEvent, n: SchemaNode) => {
+    (e: MouseEvent, n: DataPathNode) => {
       const onSingleClick = (
         e: MouseEvent,
-        selectedSchema: SchemaNode,
+        selectedSchema: DataPathNode,
       ): void => {
-        selectedField.value = relativePath(parentNode, selectedSchema);
+        selectedField.value = relativeDataPath(parentNode, selectedSchema);
       };
 
-      const onDoubleClick = (e: MouseEvent, n: SchemaNode): void => {
-        const hasChildrenNodes = isCompoundNode(n) && !n.field.collection;
+      const onDoubleClick = (e: MouseEvent, n: DataPathNode): void => {
+        const hasChildrenNodes =
+          isCompoundNode(n.node) && !n.node.field.collection;
 
         if (!hasChildrenNodes) return;
-
         selectorSchemaNode.value = n;
       };
 
@@ -256,17 +256,16 @@ function SchemaNodeList({
     <div className={"flex flex-col gap-1"}>
       {allNodes.map((n) => (
         <SchemaNodeRenderer
-          key={n.id}
+          key={n.node.id}
           nodeSchema={n}
           searchTerm={searchTerm}
-          parentNode={parentNode}
           selection={selectedField.value}
           onClick={(e) => onNodeClick(e, n)}
           onEdit={
             onEdit
               ? (e) => {
                   e.stopPropagation();
-                  onEdit(n);
+                  onEdit(n.node);
                 }
               : undefined
           }
@@ -274,7 +273,7 @@ function SchemaNodeList({
             onDelete
               ? (e) => {
                   e.stopPropagation();
-                  onDelete(n);
+                  onDelete(n.node);
                 }
               : undefined
           }
@@ -286,7 +285,6 @@ function SchemaNodeList({
 
 function SchemaNodeRenderer({
   nodeSchema,
-  parentNode,
   onClick,
   onEdit,
   selection,
@@ -294,15 +292,14 @@ function SchemaNodeRenderer({
   onDelete,
 }: {
   searchTerm: Control<string>;
-  nodeSchema: SchemaNode;
-  parentNode: SchemaNode;
+  nodeSchema: DataPathNode;
   onClick: (e: MouseEvent) => void;
   onEdit?: (e: MouseEvent) => void;
   onDelete?: (e: MouseEvent) => void;
   selection?: string;
 }) {
-  const isSelected = selection === relativePath(parentNode, nodeSchema);
-  const field = nodeSchema.field;
+  const isSelected = false; // selection === relativePath(parentNode, nodeSchema);
+  const field = nodeSchema.node.field;
   const hasChildrenNodes =
     field.field != "." && isCompoundField(field) && !field.collection;
   const show =
@@ -317,14 +314,9 @@ function SchemaNodeRenderer({
       )}
       onClick={onClick}
     >
-      <i
-        className={clsx(
-          "fa-solid w-4 h-4",
-          schemaNodeIcon(nodeSchema.field.type),
-        )}
-      />
+      <i className={clsx("fa-solid w-4 h-4", schemaNodeIcon(field.type))} />
       <span>
-        {nodeSchema.field.displayName} ({nodeSchema.field.field})
+        {field.displayName} ({field.field})
       </span>
       {onEdit && <button onClick={onEdit}>Edit</button>}
       {onDelete && <button onClick={onDelete}>Delete</button>}
@@ -336,34 +328,28 @@ function SchemaNodeRenderer({
   );
 }
 
-function makeChildNodes(parent: SchemaNode, n: SchemaNode): SchemaNode[] {
-  let allNodes = n.getChildNodes();
-  if (parent.id == n.id && parent.field.field.length > 0) {
-    const selfNode = n.createChildNode({
-      field: ".",
-      displayName: "[" + parent.field.displayName + "]",
-      type: parent.field.type,
-    });
-    allNodes = [selfNode, ...allNodes];
-  }
-  return allNodes;
+function makeChildNodes(n: DataPathNode): DataPathNode[] {
+  if (!n.element && n.node.field.collection)
+    return [{ node: n.node, element: true }];
+  return n.node
+    .getChildNodes()
+    .map((child) => ({ node: child, element: false }));
 }
 
 function SchemaHierarchyBreadcrumb({
   selectorSchemaNode,
 }: {
-  selectorSchemaNode: Control<SchemaNode>;
+  selectorSchemaNode: Control<DataPathNode>;
 }) {
-  const schemaHierarchy = getSchemaNodePath(selectorSchemaNode.value);
+  const schemaHierarchy = getSchemaDataPath(selectorSchemaNode.value);
 
   function onBreadcrumbClick(upLevels: number) {
     groupedChanges(() => {
-      for (let i = 0; i < upLevels; i++) {
-        const parent = selectorSchemaNode.fields.parent.value;
-        if (parent) {
-          selectorSchemaNode.value = parent;
-        }
+      let current: DataPathNode | undefined = selectorSchemaNode.value;
+      for (let i = 0; i < upLevels && current; i++) {
+        current = getParentDataPath(current);
       }
+      if (current) selectorSchemaNode.value = current;
     });
   }
 
@@ -406,16 +392,33 @@ function Breadcrumb({
   );
 }
 
-function getParentSchema(fieldPath: string[], schema: SchemaNode) {
-  let i = 0;
-  while (i < fieldPath.length - 1) {
-    const previousField = fieldPath[i];
-    let parentNode = resolveSchemaNode(schema, previousField);
-    if (!parentNode) {
-      parentNode = schema.createChildNode(missingField(previousField));
-    }
-    schema = parentNode;
-    i++;
+export function getSchemaDataPath(node: DataPathNode) {
+  const paths: string[] = [];
+  let curNode: DataPathNode | undefined = node;
+  while (curNode) {
+    const field = curNode.node.field;
+    paths.push(
+      field.field + (field.collection && !curNode.element ? "[]" : ""),
+    );
+    curNode = getParentDataPath(curNode);
   }
-  return schema;
+  return paths.reverse();
+}
+
+function relativeDataPath(node: DataPathNode, node2: DataPathNode) {
+  const rel = relativeSegmentPath(dataPath(node), dataPath(node2));
+  return rel ? rel : ".";
+
+  function dataPath(node: DataPathNode) {
+    const paths: string[] = [];
+    let curNode: DataPathNode | undefined = node;
+    while (curNode) {
+      const field = curNode.node.field;
+      if (curNode.element) {
+        paths.push(".");
+      } else paths.push(field.field);
+      curNode = getParentDataPath(curNode);
+    }
+    return paths.reverse();
+  }
 }

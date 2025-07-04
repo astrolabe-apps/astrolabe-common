@@ -233,6 +233,54 @@ export function schemaForFieldPath(
   return schema;
 }
 
+export function schemaForDataPath(
+  fieldPath: string[],
+  schema: SchemaNode,
+): DataPathNode {
+  let i = 0;
+  let element = schema.field.collection;
+  while (i < fieldPath.length) {
+    const nextField = fieldPath[i];
+    let childNode: SchemaNode | undefined;
+    if (nextField == ".") {
+      i++;
+      continue;
+    } else if (nextField == "..") {
+      if (element) {
+        element = false;
+        i++;
+        continue;
+      }
+      childNode = schema.parent;
+    } else {
+      childNode = schema.getChildNode(nextField);
+    }
+    if (!childNode) {
+      childNode = createSchemaNode(
+        missingField(nextField),
+        schema.tree,
+        schema,
+      );
+    } else {
+      element = childNode.field.collection;
+    }
+    schema = childNode;
+    i++;
+  }
+  return { node: schema, element: !!element };
+}
+
+export function getParentDataPath({
+  node,
+  element,
+}: DataPathNode): DataPathNode | undefined {
+  if (element) return { node, element: false };
+  const parent = node.parent;
+  return parent
+    ? { node: parent, element: !!parent.field.collection }
+    : undefined;
+}
+
 export function getSchemaNodePath(node: SchemaNode) {
   const paths: string[] = [];
   let curNode: SchemaNode | undefined = node;
@@ -287,4 +335,9 @@ export function relativeSegmentPath(
   const downPath = childPath.slice(i).join("/");
 
   return "../".repeat(upLevels) + downPath;
+}
+
+export interface DataPathNode {
+  node: SchemaNode;
+  element: boolean;
 }
