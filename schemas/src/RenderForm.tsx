@@ -76,7 +76,7 @@ export function RenderForm({
   };
   const state = useMemo(
     () => createFormStateNode(form, data, globals, nodeOptions),
-    [],
+    [form.id],
   );
   state.globals.value = globals;
   state.options.value = nodeOptions;
