@@ -115,7 +115,7 @@ class FormTreeImpl extends FormTree {
 }
 
 export function legacyFormNode(definition: ControlDefinition) {
-  return createFormTree([definition]).rootNode.getChildNodes()[0];
+  return createFormTree([definition]).rootNode;
 }
 
 export function createFormTree(
