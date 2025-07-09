@@ -14,9 +14,10 @@ import {
   lengthValidator,
   SchemaField,
 } from "../src";
-import { testNodeState } from "./nodeTester";
-import { randomValueForField, rootCompound } from "./gen-schema";
+import { deepEqualPromise, testNodeState } from "./nodeTester";
+import { normalDate, randomValueForField, rootCompound } from "./gen-schema";
 import { Control, createSyncEffect, newControl } from "@astroapps/controls";
+import { escapeJsonataField } from "./gen";
 
 describe("validator types", () => {
   it("required validator", () => {
@@ -102,12 +103,16 @@ describe("validator types", () => {
   it("date validator", () => {
     fc.assert(
       fc.property(
-        rootCompound().chain(({ root, schema }) =>
+        rootCompound({
+          fieldType: fc.constant(FieldType.DateTime),
+          notNullable: true,
+          arrayChance: 0,
+        }).chain(({ root, schema }) =>
           fc.record({
             schema: fc.constant(schema),
             data: randomValueForField(root),
-            minDate: fc.date().map((x) => x.toISOString()),
-            maxDate: fc.date().map((x) => x.toISOString()),
+            minDate: normalDate.map((x) => x.toISOString()),
+            maxDate: normalDate.map((x) => x.toISOString()),
           }),
         ),
         ({ schema, data, minDate, maxDate }) => {
@@ -129,10 +134,14 @@ describe("validator types", () => {
     );
   });
 
-  it("jsonata validator", () => {
+  it("jsonata validator", async () => {
     fc.assert(
-      fc.property(
-        rootCompound().chain(({ root, schema }) =>
+      fc.asyncProperty(
+        rootCompound({
+          fieldType: fc.constant(FieldType.Int),
+          arrayChance: 0,
+          notNullable: true,
+        }).chain(({ root, schema }) =>
           fc.record({
             schema: fc.constant(schema),
             data: randomValueForField(root, {
@@ -140,28 +149,36 @@ describe("validator types", () => {
             }),
           }),
         ),
-        ({ schema, data }) => {
+        async ({ schema, data }) => {
           const state = testNodeState(
             dataControl(schema.field, undefined, {
-              validators: [jsonataValidator(`$ > 50`)],
+              validators: [
+                jsonataValidator(
+                  `${escapeJsonataField(schema.field)} > 50 ? 'good' : 'bad'`,
+                ),
+              ],
             }),
             schema,
             { data },
           );
 
+          const intControl = state.dataNode!.control as Control<number>;
           const value = data[schema.field];
-          if (typeof value === "number") {
-            expect(state.valid).toBe(value > 50);
-          }
+          await deepEqualPromise(() => state.valid, false);
+          expect(intControl.error).toBe(value > 50 ? "good" : "bad");
         },
       ),
     );
   });
 
-  it("combined validators", () => {
+  it("combined validators", async () => {
     fc.assert(
-      fc.property(
-        rootCompound().chain(({ root, schema }) =>
+      fc.asyncProperty(
+        rootCompound({
+          arrayChance: 0,
+          fieldType: fc.constant(FieldType.String),
+          notNullable: true,
+        }).chain(({ root, schema }) =>
           fc.record({
             schema: fc.constant(schema),
             data: randomValueForField(root, {
@@ -171,26 +188,32 @@ describe("validator types", () => {
             maxLength: fc.integer({ min: 51, max: 100 }),
           }),
         ),
-        ({ schema, data, minLength, maxLength }) => {
+        async ({ schema, data, minLength, maxLength }) => {
           const state = testNodeState(
             dataControl(schema.field, undefined, {
               validators: [
                 lengthValidator(minLength, maxLength),
-                jsonataValidator(`$length($) > ${minLength}`),
+                jsonataValidator(
+                  `$length(${escapeJsonataField(schema.field)}) % 2 = 0 ? 'even' : 'odd'`,
+                ),
               ],
             }),
             schema,
             { data },
           );
 
-          const value = data[schema.field];
-          if (typeof value === "string") {
-            expect(state.valid).toBe(
-              value.length >= minLength &&
-                value.length <= maxLength &&
-                value.length > minLength,
-            );
-          }
+          const intControl = state.dataNode!.control;
+          const value = data[schema.field].length as number;
+          await deepEqualPromise(() => state.valid, false);
+          expect(intControl.error).toBe(
+            value < minLength
+              ? "Length must be at least " + minLength
+              : value > maxLength
+                ? "Length must be less than " + maxLength
+                : value % 2 === 0
+                  ? "even"
+                  : "odd",
+          );
         },
       ),
     );

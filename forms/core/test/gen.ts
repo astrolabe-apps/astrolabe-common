@@ -139,3 +139,7 @@ export function withContext(
 ): Arbitrary<ControlAndSchema> {
   return control.map((control) => ({ control, schema }));
 }
+
+export function escapeJsonataField(field: string) {
+  return "`" + field + "`";
+}

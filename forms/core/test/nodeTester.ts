@@ -11,7 +11,7 @@ import {
   DynamicPropertyType,
   EntityExpression,
   ExpressionEvalContext,
-  FormContextOptions,
+  FormNodeOptions,
   FormStateNode,
   SchemaDataNode,
   SchemaField,
@@ -26,7 +26,7 @@ import { FieldAndValue } from "./gen-schema";
 
 export interface TestNodeOptions {
   evalExpression?: (e: EntityExpression, ctx: ExpressionEvalContext) => void;
-  contextOptions?: FormContextOptions;
+  contextOptions?: FormNodeOptions;
   data?: any;
 }
 
@@ -43,15 +43,16 @@ export function testNodeState(
     createSchemaDataNode(schemaTree.rootNode, data),
     {
       schemaInterface: defaultSchemaInterface,
+      clearHidden: false,
       runAsync: (cb) => cb(),
       resolveChildren: defaultResolveChildNodes,
       evalExpression:
         options.evalExpression ??
         ((e, ctx) => defaultEvaluators[e.type]?.(e, ctx)),
-      contextOptions: options.contextOptions ?? {},
     },
+    options.contextOptions ?? {},
   );
-  return formState.getChild(0)!;
+  return formState;
 }
 
 export function allChildren(

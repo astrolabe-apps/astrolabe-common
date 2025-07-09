@@ -108,7 +108,9 @@ export function arbitraryFieldName(
 ): Arbitrary<string> {
   return fc
     .string({ minLength: 1, ...fieldConstraints })
-    .filter((x) => x != "." && x != ".." && !x.includes("/"));
+    .filter(
+      (x) => x != "." && x != ".." && !x.includes("`") && !x.includes("/"),
+    );
 }
 
 export function rootCompound(
@@ -234,11 +236,11 @@ export function randomValueForField(
       if (f.type === FieldType.Double) return fc.double({ noNaN: true });
       if (f.type === FieldType.Bool) return fc.boolean();
       if (f.type === FieldType.Date)
-        return fc.date().map((x) => x.toISOString().substring(0, 10));
+        return normalDate.map((x) => x.toISOString().substring(0, 10));
       if (f.type === FieldType.DateTime)
-        return fc.date().map((x) => x.toISOString());
+        return normalDate.map((x) => x.toISOString());
       if (f.type === FieldType.Time)
-        return fc.date().map((x) => x.toISOString().substring(11));
+        return normalDate.map((x) => x.toISOString().substring(11));
       if (isCompoundField(f)) {
         return fc.record(
           Object.fromEntries(
@@ -304,3 +306,9 @@ export function changeValue(
     }
   });
 }
+
+export const normalDate = fc.date({
+  noInvalidDate: true,
+  min: new Date(0, 0, 1),
+  max: new Date(9999, 0, 100),
+});
