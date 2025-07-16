@@ -1,7 +1,7 @@
 {
   "controls": [
     {
-      "type": "Group",
+      "type": "Data",
       "title": "New",
       "children": [
         {
@@ -42,11 +42,15 @@
             "type": "Text",
             "text": "BREAKPOINT"
           }
+        },
+        {
+          "type": "Display",
+          "displayData": {
+            "type": "Html",
+            "html": "\u003Cb\u003EBOLD\u003C/b\u003E"
+          }
         }
       ],
-      "groupOptions": {
-        "type": "Grid"
-      },
       "dynamic": [
         {
           "type": "GridColumns",
@@ -55,7 +59,14 @@
             "expression": "$breakpoint = \u0027desktop\u0027 ? 4 : 1"
           }
         }
-      ]
+      ],
+      "renderOptions": {
+        "type": "Group",
+        "groupOptions": {
+          "type": "Grid"
+        }
+      },
+      "field": "nested"
     }
   ],
   "config": null
