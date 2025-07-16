@@ -46,8 +46,12 @@ export function DefaultAccordion({
   const toggler = renderToggler ? (
     renderToggler(open, title)
   ) : (
-    <Button className={className} onClick={() => open.setValue((x) => !x)}>
-      <Label className={titleClass}>{title}</Label>
+    <Button
+      className={className}
+      notWrapInText
+      onClick={() => open.setValue((x) => !x)}
+    >
+      <Label textClass={titleClass}>{title}</Label>
       {currentIcon && (
         <I iconLibrary={currentIcon.library} iconName={currentIcon.name} />
       )}
