@@ -1117,6 +1117,7 @@ importers:
       react-dom: ^19.0.0
       tailwindcss: ^3.4.1
       typescript: ^5.6.2
+      use-breakpoint: ^4.0.6
       use-resize-observer: ^9.1.0
     dependencies:
       '@astroapps/aria-base': link:../../../../aria-base
@@ -1151,6 +1152,7 @@ importers:
       react-dnd: 16.0.1_5p3x4m3l7z63jp4tm56wjyngzy
       react-dnd-html5-backend: 16.0.1
       react-dom: 19.0.0_react@19.0.0
+      use-breakpoint: 4.0.6_upmzqgzhjrquwzo2dphtigtdgi
       use-resize-observer: 9.1.0_upmzqgzhjrquwzo2dphtigtdgi
     devDependencies:
       '@astroapps/swc-controls-plugin': 1.1.0-next15
@@ -22656,6 +22658,16 @@ packages:
       punycode: 1.4.1
       qs: 6.13.0
     dev: true
+
+  /use-breakpoint/4.0.6_upmzqgzhjrquwzo2dphtigtdgi:
+    resolution: {integrity: sha512-1s7vUjf36eeZYTgY1KkmPNXrTbKJVRA9cjBFQdYjK8+pDr0qJgH6/cuX5qQ2zcfkqxN5LieVd/DTVK6ofnwRTQ==}
+    peerDependencies:
+      react: '>=18'
+      react-dom: '>=18'
+    dependencies:
+      react: 19.0.0
+      react-dom: 19.0.0_react@19.0.0
+    dev: false
 
   /use-callback-ref/1.3.3_ryhct6r6jz2fex4xfo2quarxhi:
     resolution: {integrity: sha512-jQL3lRnocaFtu3V00JToYz/4QkNWswxijDaCVNZRiRTO3HQDLsdu1ZtmIUvV4yPp+rvWm5j0y0TG/S61cuijTg==}

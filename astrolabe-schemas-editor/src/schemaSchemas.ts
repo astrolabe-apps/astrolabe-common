@@ -488,6 +488,10 @@ export const DynamicPropertySchema = buildSchema<DynamicPropertyForm>({
         name: "ActionData",
         value: "ActionData",
       },
+      {
+        name: "GridColumns",
+        value: "GridColumns",
+      },
     ],
   }),
   expr: makeCompoundField({
@@ -907,7 +911,6 @@ export interface RenderOptionsForm {
   allowImages: boolean;
   elementExpression: EntityExpressionForm;
   bottomActionId: string | null;
-  refreshActionId: string | null;
 }
 
 export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
@@ -1216,11 +1219,6 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["ScrollList"],
     displayName: "Bottom Action Id",
-  }),
-  refreshActionId: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["ScrollList"],
-    displayName: "Refresh Action Id",
   }),
 });
 

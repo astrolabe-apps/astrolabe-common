@@ -26,12 +26,14 @@ import {
   ControlDisableType,
   DataRenderType,
   DynamicPropertyType,
+  GridRendererOptions,
   HtmlDisplay,
   isActionControl,
   isControlDisabled,
   isControlReadonly,
   isDataControl,
   isDisplayControl,
+  isGroupControl,
   isHtmlDisplay,
   isTextDisplay,
   TextDisplay,
@@ -124,6 +126,7 @@ export function createEvaluatedDefinition(
 ): ControlDefinition {
   const definitionOverrides = createScoped<Record<string, any>>(scope, {});
   const displayOverrides = createScoped<Record<string, any>>(scope, {});
+  const groupOptionsOverrides = createScoped<Record<string, any>>(scope, {});
 
   const {
     hidden,
@@ -133,8 +136,14 @@ export function createEvaluatedDefinition(
     defaultValue,
     actionData,
     title,
+    groupOptions,
   } = definitionOverrides.fields as Record<
     KeysOfUnion<AnyControlDefinition>,
+    Control<any>
+  >;
+
+  const { columns } = groupOptionsOverrides.fields as Record<
+    KeysOfUnion<GridRendererOptions>,
     Control<any>
   >;
 
@@ -146,6 +155,12 @@ export function createEvaluatedDefinition(
   updateComputedValue(displayData, () =>
     isDisplayControl(def)
       ? createOverrideProxy(def.displayData, displayOverrides)
+      : undefined,
+  );
+
+  updateComputedValue(groupOptions, () =>
+    isGroupControl(def)
+      ? createOverrideProxy(def.groupOptions ?? {}, groupOptionsOverrides)
       : undefined,
   );
 
@@ -173,6 +188,20 @@ export function createEvaluatedDefinition(
       (r) => !!r,
     );
   }, definitionOverrides);
+
+  createScopedEffect((c) => {
+    evalExpr(
+      c,
+      isGroupControl(def)
+        ? (def.groupOptions as GridRendererOptions)?.columns
+        : undefined,
+      columns,
+      isGroupControl(def)
+        ? firstExpr(DynamicPropertyType.GridColumns)
+        : undefined,
+      (r) => (typeof r === "number" ? r : undefined),
+    );
+  }, groupOptionsOverrides);
 
   createScopedEffect((c) => {
     evalExpr(

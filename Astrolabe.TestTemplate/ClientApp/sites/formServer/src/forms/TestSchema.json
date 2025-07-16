@@ -1,160 +1,61 @@
 {
   "controls": [
     {
-      "type": "Data",
-      "title": "Date",
-      "field": "date",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "children": null
-    },
-    {
-      "type": "Data",
-      "title": "Date Time",
-      "field": "dateTime",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "children": null
-    },
-    {
-      "type": "Data",
-      "title": "Time",
-      "field": "time",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "children": null
-    },
-    {
-      "type": "Data",
-      "title": "Numbers",
-      "field": "array",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "children": null
-    },
-    {
-      "type": "Data",
-      "title": "Bool",
-      "field": "bool",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "children": null
-    },
-    {
-      "type": "Data",
-      "title": "Double",
-      "field": "number",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "children": null
-    },
-    {
-      "type": "Data",
-      "title": "Nested",
-      "field": "nested",
-      "children": [
-        {
-          "type": "Data",
-          "title": "Data",
-          "field": "data",
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "children": null
-        }
-      ]
-    },
-    {
-      "type": "Data",
-      "title": "Meta Field",
-      "field": "metaField",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "children": null
-    },
-    {
-      "type": "Action",
+      "type": "Group",
       "title": "New",
       "children": [
         {
           "type": "Display",
-          "title": "Date",
+          "title": "New",
           "displayData": {
             "type": "Text",
-            "text": "Wow"
-          },
-          "children": null
+            "text": "Col1"
+          }
         },
         {
           "type": "Display",
-          "title": "Date Time",
           "displayData": {
-            "type": "Html",
-            "html": "\u003Cb\u003EInline\u003C/b\u003E"
-          },
-          "children": null
-        }
-      ],
-      "icon": {},
-      "disableType": "Global"
-    },
-    {
-      "type": "Data",
-      "title": "Stuff",
-      "field": "stuff",
-      "children": [
-        {
-          "type": "Data",
-          "title": "Type",
-          "field": "type",
-          "renderOptions": {
-            "type": "Standard"
+            "type": "Text",
+            "text": "Col2"
           }
         },
         {
-          "type": "Data",
-          "title": "Disable",
-          "field": "disable",
-          "renderOptions": {
-            "type": "Standard"
+          "type": "Display",
+          "displayData": {
+            "type": "Text",
+            "text": "Col3"
           }
         },
         {
-          "type": "Data",
-          "title": "Pure Text",
-          "field": "text",
-          "renderOptions": {
-            "type": "Standard"
-          }
-        },
-        {
-          "type": "Data",
-          "title": "String",
-          "field": "options",
-          "renderOptions": {
-            "type": "Standard"
-          }
-        },
-        {
-          "type": "Data",
-          "title": "String",
-          "field": "singleOption",
-          "renderOptions": {
-            "type": "Standard"
+          "type": "Display",
+          "title": "New",
+          "dynamic": [
+            {
+              "type": "Display",
+              "expr": {
+                "type": "Jsonata",
+                "expression": "$breakpoint"
+              }
+            }
+          ],
+          "displayData": {
+            "type": "Text",
+            "text": "BREAKPOINT"
           }
         }
       ],
-      "renderOptions": {
-        "type": "ScrollList",
-        "bottomActionId": "loadMore"
-      }
+      "groupOptions": {
+        "type": "Grid"
+      },
+      "dynamic": [
+        {
+          "type": "GridColumns",
+          "expr": {
+            "type": "Jsonata",
+            "expression": "$breakpoint = \u0027desktop\u0027 ? 4 : 1"
+          }
+        }
+      ]
     }
   ],
   "config": null

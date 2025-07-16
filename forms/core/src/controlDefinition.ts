@@ -58,6 +58,7 @@ export enum DynamicPropertyType {
   AllowedOptions = "AllowedOptions",
   Label = "Label",
   ActionData = "ActionData",
+  GridColumns = "GridColumns",
 }
 
 export interface ControlAdornment {

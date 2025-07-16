@@ -73,6 +73,13 @@ import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
 import { SchemaFields as AllControlsSchema } from "../setup/allControls";
+import useBreakpoint from "use-breakpoint";
+
+/**
+ * It is important to bind the object of breakpoints to a variable for memoization to work correctly.
+ * If they are created dynamically, try using the `useMemo` hook.
+ */
+const BREAKPOINTS = { mobile: 0, tablet: 768, desktop: 1280 };
 
 const Extensions = [
   DataGridExtension,
@@ -302,6 +309,12 @@ export default function Editor() {
     roles,
     ensureSelectableValues(["Student", "Teacher"], (x) => x),
   );
+  const { breakpoint, maxWidth, minWidth } = useBreakpoint(
+    BREAKPOINTS,
+    "desktop",
+  );
+  const breakpointControl = useControl(breakpoint);
+  breakpointControl.value = breakpoint;
   const [container, setContainer] = useState<HTMLElement | null>(null);
   const selectedForm = useSyncParam(qc, "form", OptStringParam);
   const StdFormRenderer = useMemo(
@@ -399,6 +412,7 @@ export default function Editor() {
             console.log("Clicked", aid, data);
           },
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
+          variables: () => ({ breakpoint: breakpointControl.value }),
           // useEvalExpressionHook: evalHook,
         }}
         extensions={Extensions}

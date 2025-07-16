@@ -346,7 +346,8 @@ public enum DynamicPropertyType
     LayoutStyle,
     AllowedOptions,
     Label,
-    ActionData
+    ActionData,
+    GridColumns
 }
 
 public record DynamicProperty(
