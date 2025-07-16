@@ -30,12 +30,15 @@
     "microbundle": "^0.15.1",
     "prettier": "^3.0.3",
     "rimraf": "^3.0.2",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "fast-check": "^4.2.0",
+    "vitest": "^3.2.4"
   },
   "scripts": {
     "prepack": "npm run build",
     "prepare": "lezer-generator src/eval.grammar --typeScript -o src/parser.ts",
     "build": "rimraf ./lib/ && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
+    "watch": "microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "test": "vitest run"
   }
 }
