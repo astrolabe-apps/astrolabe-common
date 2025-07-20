@@ -88,7 +88,6 @@ test("NormaliseReflective", { timeout: 1000000 }, () => {
     fc.property(evalExprArb, (evalExpr) => {
       const reflected = JSON.stringify(parse(toNormalString(evalExpr)).result);
       const stringify = JSON.stringify(evalExpr);
-      console.log(`Reflected: ${reflected}`);
       expect(stringify).toEqual(reflected);
     }),
     {
