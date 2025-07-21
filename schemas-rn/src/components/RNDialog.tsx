@@ -22,10 +22,12 @@ const DialogPortal = DialogPrimitive.Portal;
 
 const DialogClose = DialogPrimitive.Close;
 
-const DialogOverlayWeb = React.forwardRef<
-  DialogPrimitive.OverlayRef,
-  DialogPrimitive.OverlayProps
->(({ className, ...props }, ref) => {
+function DialogOverlayWeb({
+  className,
+  ...props
+}: DialogPrimitive.OverlayProps & {
+  ref?: React.RefObject<DialogPrimitive.OverlayRef>;
+}) {
   const { open } = DialogPrimitive.useRootContext();
   return (
     <DialogPrimitive.Overlay
@@ -37,17 +39,20 @@ const DialogOverlayWeb = React.forwardRef<
         className,
       )}
       {...props}
-      ref={ref}
     />
   );
-});
+}
 
 DialogOverlayWeb.displayName = "DialogOverlayWeb";
 
-const DialogOverlayNative = React.forwardRef<
-  DialogPrimitive.OverlayRef,
-  DialogPrimitive.OverlayProps
->(({ className, children, ...props }, ref) => {
+function DialogOverlayNative({
+  className,
+  children,
+  ...props
+}: DialogPrimitive.OverlayProps & {
+  ref?: React.RefObject<DialogPrimitive.OverlayRef>;
+  children?: React.ReactNode;
+}) {
   return (
     <DialogPrimitive.Overlay
       style={StyleSheet.absoluteFill}
@@ -56,17 +61,16 @@ const DialogOverlayNative = React.forwardRef<
         className,
       )}
       {...props}
-      ref={ref}
     >
       <Animated.View
         entering={FadeIn.duration(150)}
         exiting={FadeOut.duration(150)}
       >
-        <Pressable>{children}</Pressable>
+        {children}
       </Animated.View>
     </DialogPrimitive.Overlay>
   );
-});
+}
 
 DialogOverlayNative.displayName = "DialogOverlayNative";
 
@@ -125,6 +129,9 @@ export type RNDialogProps = {
   portalHost?: string;
 };
 
+/**
+ * If the content is <ScrollView>, the first child of the ScrollView should be a View with a prop of onStartShouldSetResponder={() => true}
+ */
 export function RNDialog({
   title,
   trigger,
@@ -139,7 +146,7 @@ export function RNDialog({
   const dialogOpen = open ?? useControl(false);
   const { width } = useWindowDimensions();
 
-  const maxWidth = useMemo(() => Math.min(width - 32, 448), [width]);
+  const maxWidth = useMemo(() => Math.min(width - 32, 1024), [width]);
 
   return (
     <Dialog
@@ -155,7 +162,7 @@ export function RNDialog({
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
       <DialogContent
         closeOnOutsidePress={closeOnOutsidePress}
-        className={cn("min-w-[200px] min-h-[200px]", containerClass)}
+        className={cn("min-w-[200px] min-h-[200px] z-10", containerClass)}
         style={{ maxWidth }}
         portalHost={Platform.select({ ios: portalHost })}
       >

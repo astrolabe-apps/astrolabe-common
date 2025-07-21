@@ -11,7 +11,7 @@ import {
   FormRenderer,
   rendererClass,
 } from "@react-typed-forms/schemas";
-import { Pressable } from "react-native";
+import { Pressable, View } from "react-native";
 import { formControlProps } from "@react-typed-forms/core";
 import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
 
@@ -85,12 +85,14 @@ export const RNCheckbox = React.forwardRef<
         className={cn("items-center justify-center h-full w-full")}
         asChild
       >
-        <Animated.View
-          entering={ZoomIn.duration(150)}
-          exiting={ZoomOut.duration(150)}
-        >
+        {/*<Animated.View*/}
+        {/*  entering={ZoomIn.duration(150)}*/}
+        {/*  exiting={ZoomOut.duration(150)}*/}
+        {/*>*/}
+        <View>
           <Icon name={"check"} className={"text-accent text-[18px]"} />
-        </Animated.View>
+        </View>
+        {/*</Animated.View>*/}
       </CheckboxPrimitive.Indicator>
     </CheckboxPrimitive.Root>
   );
