@@ -86,7 +86,10 @@ export function createDefaultGroupRenderer(
       return dialogRenderer.render(props, renderer);
     if (isSelectChildRenderer(renderOptions) && !props.designMode) {
       return (
-        <SelectChildGroupRenderer {...props} renderOptions={renderOptions} />
+        <SelectChildGroupRenderer
+          props={{ ...props, renderOptions }}
+          renderer={renderer}
+        />
       );
     }
 
@@ -141,7 +144,14 @@ type SelectChildProps = Pick<
 > & {
   renderOptions: SelectChildRenderer;
 };
-function SelectChildGroupRenderer(props: SelectChildProps) {
+function SelectChildGroupRenderer({
+  props,
+  renderer,
+}: {
+  props: SelectChildProps;
+  renderer: FormRenderer;
+}) {
+  const { Div } = renderer.html;
   const { runExpression, renderOptions } = props;
   const ctrl = useExpression(
     undefined,
@@ -152,11 +162,11 @@ function SelectChildGroupRenderer(props: SelectChildProps) {
   const childIndex = ctrl?.value;
   const childCount = props.formNode.getChildCount();
   return (
-    <div>
+    <Div>
       {typeof childIndex === "number" &&
         childIndex < childCount &&
         childIndex >= 0 &&
         props.renderChild(props.formNode.getChild(childIndex)!)}
-    </div>
+    </Div>
   );
 }
