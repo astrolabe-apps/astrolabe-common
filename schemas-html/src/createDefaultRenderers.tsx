@@ -494,10 +494,10 @@ export function DefaultHtmlButtonRenderer({
   nonTextContent,
   ...props
 }: HtmlButtonProperties) {
-  const Comp = nonTextContent ? "div" : "button";
+  const Comp = inline ? "span" : nonTextContent ? "div" : "button";
   return (
     <Comp
-      role={nonTextContent ? "button" : undefined}
+      role={nonTextContent || inline ? "button" : undefined}
       onClick={
         onClick
           ? (e) => {
