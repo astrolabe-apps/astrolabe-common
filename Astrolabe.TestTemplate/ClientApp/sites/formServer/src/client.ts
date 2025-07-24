@@ -973,7 +973,6 @@ export interface EvalData {
 export interface EvalResult {
     result: ValueWithDeps;
     errors: string[];
-    normalString: string;
 }
 
 export interface FlexRenderer extends GroupRenderOptions {

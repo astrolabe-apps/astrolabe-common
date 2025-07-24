@@ -384,8 +384,14 @@ const condFunction = functionValue(
 export const defaultFunctions = {
   "?": condFunction,
   "!": evalFunction((a) => !a[0], constGetType(BooleanType)),
-  and: binFunction((a, b) => a && b, constGetType(BooleanType)),
-  or: binFunction((a, b) => a || b, constGetType(BooleanType)),
+  and: aggFunction(
+    () => true,
+    (acc, b) => acc && (b as boolean),
+  ),
+  or: aggFunction(
+    () => false,
+    (acc, b) => acc || (b as boolean),
+  ),
   "+": binFunction((a, b) => a + b, constGetType(NumberType)),
   "-": binFunction((a, b) => a - b, constGetType(NumberType)),
   "*": binFunction((a, b) => a * b, constGetType(NumberType)),
