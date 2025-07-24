@@ -20,11 +20,9 @@ public class EvalController : ControllerBase
         );
         var evalExpr = ExprParser.Parse(evalData.Expression);
         var result = valEnv.Evaluate(evalExpr);
-        var normalString = evalExpr.ToNormalString();
         return new EvalResult(
             ToValueWithDeps(result.Value),
-            result.Env.Errors.Select(x => x.Message),
-            normalString + ":"+ NormalString.Parse(normalString).Result.ToNormalString()
+            result.Env.Errors.Select(x => x.Message)
         );
     }
 
@@ -34,7 +32,7 @@ public class EvalController : ControllerBase
         {
             ArrayValue av => av.Values.Select(ToValueWithDeps),
             ObjectValue ov => ov.Object,
-            var v => v
+            var v => v,
         };
         return new ValueWithDeps(
             value,
@@ -46,7 +44,7 @@ public class EvalController : ControllerBase
 
 public record EvalData(string Expression, IDictionary<string, object?> Data);
 
-public record EvalResult(ValueWithDeps Result, IEnumerable<string> Errors, string NormalString);
+public record EvalResult(ValueWithDeps Result, IEnumerable<string> Errors);
 
 public record ValueWithDeps(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] object? Value,

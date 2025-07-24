@@ -66,7 +66,6 @@ export default function EvalPage() {
             setEvalResult({
               result: toValueDeps(value),
               errors: outEnv.errors,
-              normalString: "",
             });
           } catch (e) {
             console.error(e);
