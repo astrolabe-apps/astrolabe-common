@@ -5,3 +5,4 @@ export * from "./parseEval";
 export * from "./printExpr";
 export * from "./defaultFunctions";
 export * from "./typeCheck";
+export * from "./normalString";
