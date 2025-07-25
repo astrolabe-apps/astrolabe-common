@@ -46,7 +46,7 @@ export interface EditorGroup {
 }
 
 export interface CustomRenderOptions {
-  value: string;
+  value?: string;
   name: string;
   fields?: SchemaField[];
   groups?: EditorGroup[];
@@ -61,6 +61,7 @@ export type ControlDefinitionExtension = {
   SchemaValidator?: CustomRenderOptions | CustomRenderOptions[];
   DisplayData?: CustomRenderOptions | CustomRenderOptions[];
   IconReference?: CustomRenderOptions | CustomRenderOptions[];
+  ControlDefinition?: CustomRenderOptions | CustomRenderOptions[];
 };
 
 export function applyExtensionToSchema<A extends SchemaMap>(

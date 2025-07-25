@@ -22,16 +22,18 @@ public class JsonBaseTypeConverter : JsonConverter<object>
         var baseTypeAttribute = typeToConvert.GetCustomAttribute<JsonBaseTypeAttribute>()!;
         var discriminator = baseTypeAttribute.TypeField;
         using var jsonDocument = JsonDocument.ParseValue(ref reader);
-        if (!jsonDocument.RootElement.TryGetProperty(discriminator, out var typeProperty))
+        Type realType;
+        if (jsonDocument.RootElement.TryGetProperty(discriminator, out var typeProperty))
         {
-            throw new JsonException();
-        }
-
-        var typeString = typeProperty.GetString();
-        var attributes = typeToConvert.GetCustomAttributes(typeof(JsonSubTypeAttribute), false);
-        var realType = attributes.Cast<JsonSubTypeAttribute>().FirstOrDefault(x => typeString!.Equals(x.Discriminator))?.SubType ??
+            var typeString = typeProperty.GetString();
+            var attributes = typeToConvert.GetCustomAttributes(typeof(JsonSubTypeAttribute), false);
+            realType = attributes.Cast<JsonSubTypeAttribute>().FirstOrDefault(x => typeString!.Equals(x.Discriminator))?.SubType ??
                        baseTypeAttribute.DefaultType;
-
+        }
+        else
+        {
+            realType = baseTypeAttribute.DefaultType;
+        }
         return jsonDocument.Deserialize(realType, options)!;
     }
 

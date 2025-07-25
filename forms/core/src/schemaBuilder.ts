@@ -283,6 +283,9 @@ export function mergeFields(
   value: any,
   newFields: SchemaField[],
 ): SchemaField[] {
+  if (name === "*") {
+    return newFields.reduce((af, x) => mergeField(x, af), fields);
+  }
   const withType = fields.map((x) =>
     x.isTypeField ? addFieldOption(x, name, value) : x,
   );

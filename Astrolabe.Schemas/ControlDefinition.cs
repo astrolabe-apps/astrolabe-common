@@ -396,6 +396,10 @@ public abstract record GroupRenderOptions(
     public string? ChildLabelClass { get; set; }
 
     public bool? DisplayOnly { get; set; }
+    
+    [JsonExtensionData]
+    public IDictionary<string, object?>? Extensions { get; set; }
+
 }
 
 public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
