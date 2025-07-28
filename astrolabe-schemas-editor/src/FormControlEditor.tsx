@@ -105,8 +105,8 @@ function addApplies(
   extension: CustomRenderOptions,
 ) {
   const applies = extension.applies;
-  if (applies) {
-    const value = extension.value;
+  const value = extension.value;
+  if (applies && value) {
     const origApplies = appliesMap[value];
     appliesMap[value] = origApplies
       ? (n: SchemaNode) => origApplies(n) && applies(n)
