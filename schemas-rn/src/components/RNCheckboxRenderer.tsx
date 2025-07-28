@@ -52,16 +52,21 @@ function CheckBoxRenderer({
     control.value = !value;
   }
 
+  const { disabled } = formControlProps(control);
+  const checkboxDisabled = disabled || props.readonly;
+
   return (
     <Pressable
       className={rendererClass(props.className, options.entryClass)}
       onPress={onCheckboxPressed}
+      disabled={checkboxDisabled}
     >
       <RNCheckbox
         id={props.id}
         className={options.checkClass}
         checked={!!value}
         onCheckedChange={onCheckboxPressed}
+        disabled={checkboxDisabled}
       />
       {p.label && renderer.renderLabel(p.label, undefined, undefined)}
     </Pressable>
