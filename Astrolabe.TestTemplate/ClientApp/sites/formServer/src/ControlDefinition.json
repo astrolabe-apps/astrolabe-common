@@ -600,7 +600,8 @@
         "groupOptions": {
           "type": "Standard",
           "hideTitle": true
-        }
+        },
+        "id": "DetailsTab"
       },
       {
         "type": "Group",
@@ -813,7 +814,7 @@
                 "renderOptions": {
                   "type": "ValueForField",
                   "fieldRef": "field",
-                  "refIsDirect": true
+                  "refIsDirect": false
                 },
                 "hideTitle": true
               }
@@ -977,6 +978,14 @@
             "type": "Data",
             "title": "Compound Field (deprecated)",
             "field": "compoundField",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
+            "title": "Required Error Text",
+            "field": "requiredErrorText",
             "renderOptions": {
               "type": "Standard"
             }

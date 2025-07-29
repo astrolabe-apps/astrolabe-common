@@ -139,6 +139,7 @@ export interface DataControlDefinition extends ControlDefinition {
   validators?: SchemaValidator[] | null;
   hideTitle?: boolean | null;
   dontClearHidden?: boolean | null;
+  requiredErrorText?: string | null;
 }
 
 export interface RenderOptions {

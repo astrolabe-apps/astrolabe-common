@@ -75,6 +75,8 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     
     public bool? DontClearHidden { get; set; }
     
+    public string? RequiredErrorText { get; set; }
+    
     public IEnumerable<SchemaValidator>? Validators { get; set; }
 }
 

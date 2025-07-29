@@ -150,12 +150,14 @@ export function createValidators(
       context.addSync((v) => {
         const field = context.data.schema.field;
         return schemaInterface.isEmptyValue(field, v)
-          ? schemaInterface.validationMessageText(
-              field,
-              ValidationMessageType.NotEmpty,
-              false,
-              true,
-            )
+          ? def.requiredErrorText
+            ? def.requiredErrorText
+            : schemaInterface.validationMessageText(
+                field,
+                ValidationMessageType.NotEmpty,
+                false,
+                true,
+              )
           : null;
       });
     }

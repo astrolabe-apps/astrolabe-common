@@ -1331,6 +1331,7 @@ export interface ControlDefinitionForm {
   renderOptions: RenderOptionsForm | null;
   defaultValue: any | null;
   dontClearHidden: boolean | null;
+  requiredErrorText: string | null;
   validators: SchemaValidatorForm[] | null;
   compoundField: string | null;
   groupOptions: GroupRenderOptionsForm | null;
@@ -1472,6 +1473,11 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     type: FieldType.Bool,
     onlyForTypes: ["Data"],
     displayName: "Dont Clear Hidden",
+  }),
+  requiredErrorText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Data"],
+    displayName: "Required Error Text",
   }),
   validators: makeCompoundField({
     children: SchemaValidatorSchema,

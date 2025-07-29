@@ -984,6 +984,14 @@
           },
           {
             "type": "Data",
+            "title": "Required Error Text",
+            "field": "requiredErrorText",
+            "renderOptions": {
+              "type": "Standard"
+            }
+          },
+          {
+            "type": "Data",
             "title": "Validators",
             "field": "validators",
             "children": [
