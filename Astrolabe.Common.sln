@@ -50,6 +50,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Common.Tests", "A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Evaluator.Test", "Astrolabe.Evaluator.Test\Astrolabe.Evaluator.Test.csproj", "{BE4E5A86-989B-4C05-8448-FD8043E9959D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.FileStorage", "Astrolabe.FileStorage\Astrolabe.FileStorage.csproj", "{D43CD9B3-2852-4AF5-96F9-DD94E3C46B9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -156,5 +158,9 @@ Global
 		{BE4E5A86-989B-4C05-8448-FD8043E9959D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BE4E5A86-989B-4C05-8448-FD8043E9959D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BE4E5A86-989B-4C05-8448-FD8043E9959D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D43CD9B3-2852-4AF5-96F9-DD94E3C46B9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D43CD9B3-2852-4AF5-96F9-DD94E3C46B9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D43CD9B3-2852-4AF5-96F9-DD94E3C46B9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D43CD9B3-2852-4AF5-96F9-DD94E3C46B9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
