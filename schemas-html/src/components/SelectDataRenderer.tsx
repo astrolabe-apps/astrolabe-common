@@ -13,21 +13,29 @@ export interface SelectRendererOptions {
   requiredText?: string;
 }
 
+interface ExtendedDropdown {
+  requiredText?: string;
+}
+
 export function createSelectRenderer(options: SelectRendererOptions = {}) {
   return createDataRenderer(
-    (props, asArray) => (
-      <SelectDataRenderer
-        className={rendererClass(props.className, options.className)}
-        state={props.control}
-        id={props.id}
-        readonly={props.readonly}
-        options={props.options ?? []}
-        required={props.required}
-        emptyText={options.emptyText}
-        requiredText={options.requiredText}
-        convert={createSelectConversion(props.field.type)}
-      />
-    ),
+    (props, asArray) => {
+      const renderOptions = props.definition.renderOptions as ExtendedDropdown;
+
+      return (
+        <SelectDataRenderer
+          className={rendererClass(props.className, options.className)}
+          state={props.control}
+          id={props.id}
+          readonly={props.readonly}
+          options={props.options ?? []}
+          required={props.required}
+          emptyText={options.emptyText}
+          requiredText={renderOptions?.requiredText ?? options.requiredText}
+          convert={createSelectConversion(props.field.type)}
+        />
+      );
+    },
     {
       options: true,
     },

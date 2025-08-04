@@ -23,6 +23,7 @@ import { useComputed } from "@react-typed-forms/core";
 
 export interface ExtendedDropdown {
   portalHost?: string;
+  requiredText?: string;
 }
 
 export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
@@ -38,7 +39,7 @@ export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
           options={props.options ?? []}
           required={props.required}
           emptyText={options.emptyText}
-          requiredText={options.requiredText}
+          requiredText={renderOptions.requiredText ?? options.requiredText}
           convert={createSelectConversion(props.field.type)}
           portalHost={renderOptions.portalHost}
         />
@@ -52,7 +53,7 @@ export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
   );
 }
 
-function RNSelectRenderer({
+export function RNSelectRenderer({
   state,
   options,
   className,
@@ -74,6 +75,7 @@ function RNSelectRenderer({
     right: 12,
   };
   const { value, disabled } = state;
+  // const showEmpty = useControl(!required || value == null);
   const optionStringMap = useMemo(
     () => Object.fromEntries(options.map((x) => [convert(x.value), x.value])),
     [options],
@@ -111,6 +113,7 @@ function RNSelectRenderer({
         state.value = optionStringMap[o.value];
       }}
       value={selectedOption.value}
+      className={"flex-1"}
     >
       <SelectTrigger className={"bg-white"}>
         <SelectValue placeholder={required ? requiredText : emptyText} />
@@ -121,6 +124,13 @@ function RNSelectRenderer({
         portalHost={Platform.select({ ios: portalHost })}
       >
         <ScrollView className={"max-h-64"}>
+          {/*{showEmpty && (*/}
+          {/*  <SelectItem*/}
+          {/*    key={"empty"}*/}
+          {/*    value={""}*/}
+          {/*    label={required ? requiredText : emptyText}*/}
+          {/*  />*/}
+          {/*)}*/}
           {optionGroups.map((x) => (
             <SelectGroup key={x}>
               <SelectLabel>{x}</SelectLabel>
@@ -140,9 +150,7 @@ function RNSelectRenderer({
         value={convert(x.value).toString()}
         label={x.name}
         disabled={!!x.disabled}
-      >
-        {x.name}
-      </SelectItem>
+      />
     );
   }
 }
@@ -242,7 +250,7 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative web:group flex flex-row w-full web:cursor-default web:select-none items-center rounded-sm py-1.5 native:py-2 pl-8 native:pl-10 pr-2 web:hover:bg-accent/50 active:bg-accent web:outline-none web:focus:bg-accent",
+      "relative web:group flex flex-row w-full web:cursor-default web:select-none items-center rounded-sm py-1.5 native:py-2 pl-8 native:pl-10 pr-2 web:hover:bg-[#DDD]/50 active:bg-[#DDD] web:outline-none web:focus:bg-[#DDD]",
       props.disabled && "web:pointer-events-none opacity-50",
       className,
     )}

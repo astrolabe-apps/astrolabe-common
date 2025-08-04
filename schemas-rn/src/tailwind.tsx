@@ -50,6 +50,7 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
         entryClass: "flex flex-row items-center gap-[8px]",
         labelClass: "flex-1",
       },
+      selectOptions: { emptyText: "select" },
     },
     label: {
       labelContainer: (c) => (
