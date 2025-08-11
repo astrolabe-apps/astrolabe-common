@@ -9,3 +9,4 @@ export * from "./components/RNText";
 export * from "./components/RNTextInputRenderer";
 export * from "./components/RNDialog";
 export * from "./components/Icon";
+export * from "./components/RNScrollListRenderer";
