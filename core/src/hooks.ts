@@ -133,8 +133,8 @@ export function useAsyncValidator<V>(
   delay: number,
   validCheckValue: (control: Control<V>) => any = (c) => c.value,
 ) {
-  const handler = useRef<number>(null);
-  const abortController = useRef<AbortController>(null);
+  const handler = useRef<number>();
+  const abortController = useRef<AbortController>();
   useControlEffect(
     () => {
       trackControlChange(control, ControlChange.Validate);
