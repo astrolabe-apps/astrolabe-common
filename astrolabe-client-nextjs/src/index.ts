@@ -1,4 +1,8 @@
-import { NavigationService } from "@astroapps/client";
+import {
+  getMatchingRoute,
+  NavigationService,
+  RouteData,
+} from "@astroapps/client";
 import Link from "next/link";
 import {
   ReadonlyURLSearchParams,
@@ -7,10 +11,8 @@ import {
   useSearchParams,
 } from "next/navigation";
 import { parse, stringify } from "querystring";
-import { AnchorHTMLAttributes, FC, useEffect, useRef } from "react";
-import { getMatchingRoute, RouteData } from "@astroapps/client";
+import { AnchorHTMLAttributes, FC } from "react";
 import { useControl } from "@react-typed-forms/core";
-import { useDefaultSyncRoute } from "@astroapps/client";
 
 export function useNextNavigationService<T = {}>(
   routes?: Record<string, RouteData<T>>,
@@ -26,20 +28,14 @@ export function useNextNavigationService<T = {}>(
     : useSearchParams()!;
   const pathname = usePathname()!;
   const paramString = searchParams.toString();
-  const queryRef = useRef<string | null>(null);
   const query = parse(paramString);
   const queryControl = useControl({ query, pathname, isReady: false });
   const pathSegments = pathname
     ? pathname.split("/").filter((x) => x.length)
     : [];
 
-  if (queryRef.current !== paramString)
-    queryControl.value = { query, pathname, isReady: true };
+  queryControl.value = { query, pathname, isReady: true };
 
-  useDefaultSyncRoute(queryControl, (query) => {
-    queryRef.current = query;
-    router.replace(pathname + "?" + query, { scroll: false });
-  });
   const route =
     (routes && getMatchingRoute(routes, pathSegments)) ??
     defaultRoute ??

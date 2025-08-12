@@ -20,8 +20,8 @@ export interface NavigationService<T = {}> {
   getAll(queryParam: string): string[];
   pathSegments: string[];
   pathname: string;
-  replace(path: string): void;
-  push(path: string): void;
+  replace(path: string, opts?: { scroll: boolean }): void;
+  push(path: string, opts?: { scroll: boolean }): void;
   Link: FC<AnchorHTMLAttributes<HTMLAnchorElement>>;
   route: RouteData<T>;
   pathAndQuery(): string;

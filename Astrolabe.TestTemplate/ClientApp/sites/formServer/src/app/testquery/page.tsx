@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 export default function TestQueryPage() {
   const qc = useQueryControl();
   const test = useSyncParam(qc, "test", StringParam);
+  const derp = useSyncParam(qc, "derp", StringParam);
   const router = useRouter();
 
   useControlEffect(
@@ -25,7 +26,13 @@ export default function TestQueryPage() {
     true,
   );
 
-  return <Finput control={test} />;
+  return (
+    <>
+      <Finput control={test} />
+      <br />
+      <Finput control={derp} />
+    </>
+  );
   async function redirectToBlah() {
     console.log("Redirecting to /eval with test:", test.value);
     router.push("/eval");
