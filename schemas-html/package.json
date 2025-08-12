@@ -62,8 +62,8 @@
   "gitHead": "698e16cd3ab31b7dd0528fc76536f4d3205ce8c6",
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsxImportSource=react",
-    "build-tsup": "rimraf ./lib && tsup src/index.ts --format esm,cjs --no-minify --out-dir lib --clean --dts",
+    "build-microbundle": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsxImportSource=react",
+    "build": "rimraf ./lib && tsup src/index.ts --format esm,cjs --no-minify --out-dir lib --clean --dts",
     "watch": "microbundle -f modern,cjs --no-compress --jsxImportSource=react",
     "update-readme": "md-magic --path README.md"
   }
