@@ -1,4 +1,3 @@
-export * from "./hooks/useDefaultSyncRoute";
 export * from "./hooks/useApiClient";
 export * from "./hooks/useSyncParam";
 export * from "./hooks/useIsOffscreen";
@@ -20,3 +19,4 @@ export * from "./util/jwt";
 export * from "./util/arrays";
 export * from "./util/validation";
 export * from "./util/scrollToElement";
+export * from "./util/query";
