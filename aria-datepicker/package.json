@@ -19,10 +19,10 @@
     "watch": "microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "dependencies": {
-    "react-stately": "^3.34.0",
-    "react-aria": "^3.36.0",
+    "react-stately": "^3.40.0",
+    "react-aria": "^3.42.0",
     "clsx": "^2",
-    "@internationalized/date": "^3.6.0",
+    "@internationalized/date": "^3.8.2",
     "@astroapps/aria-base": "workspace:^1.1.0"
   },
   "peerDependencies": {

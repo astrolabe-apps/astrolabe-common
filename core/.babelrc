@@ -1,5 +1,6 @@
-
 {
+  "presets": ["@babel/preset-typescript", "@babel/preset-react"],
   "plugins": [
-    ["module:@react-typed-forms/transform", {"importSource": "./hooks"}]]
+    ["module:@react-typed-forms/transform", {"importSource": "./hooks"}]
+  ]
 }

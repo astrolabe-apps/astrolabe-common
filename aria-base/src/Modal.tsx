@@ -90,7 +90,11 @@ export function ModalTrigger({
   const { onPress, ...otherTriggerProps } = triggerProps;
   return (
     <>
-      {React.cloneElement(trigger, { ...otherTriggerProps, onClick: onPress })}
+      // TODO: react-19
+      {React.cloneElement(trigger, {
+        ...otherTriggerProps,
+        onClick: onPress,
+      } as any)}
       {state.isOpen && (
         <Modal state={state} {...props}>
           {React.cloneElement(children, overlayProps)}

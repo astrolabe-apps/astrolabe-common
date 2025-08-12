@@ -1,4 +1,6 @@
-
 {
-  "plugins": ["module:@react-typed-forms/transform"]
+  "presets": ["@babel/preset-typescript", "@babel/preset-react"],
+  "plugins": [
+    "module:@react-typed-forms/transform"
+  ]
 }

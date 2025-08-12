@@ -30,7 +30,7 @@
 		"@astrolabe/ui": "workspace:*",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
-		"next": "^15.1.7",
+		"next": "^15.4.6",
 		"@astroapps/schemas-editor": "workspace:*",
 		"@astroapps/schemas-datepicker": "workspace:*",
 		"@astroapps/searchstate": "workspace:*",
@@ -46,7 +46,7 @@
 		"use-breakpoint": "^4.0.6"
 	},
 	"devDependencies": {
-		"@astroapps/swc-controls-plugin": "1.1.0-next15",
+		"@astroapps/swc-controls-plugin": "1.1.0-next15-2",
 		"typescript": "^5.6.2",
 		"@types/node": "^20.8.4",
 		"@types/react": "^18.2.33",

@@ -10,11 +10,11 @@ export type FSelectAutocompleteProps<T> = {
 } & Omit<AutocompleteProps<T, false, false, false>, "renderInput">;
 
 export function FSelectAutocomplete(
-  props: FSelectAutocompleteProps<string>
+  props: FSelectAutocompleteProps<string>,
 ): ReactElement;
 
 export function FSelectAutocomplete<T>(
-  props: FSelectAutocompleteProps<T> & { getOptionLabel: (t: T) => string }
+  props: FSelectAutocompleteProps<T> & { getOptionLabel: (t: T) => string },
 ): ReactElement;
 
 export function FSelectAutocomplete({
@@ -36,7 +36,7 @@ export function FSelectAutocomplete({
               if (reason === "selectOption") {
                 state.value = newValue;
                 query.setValue(
-                  () => getOptionLabel?.(newValue) ?? newValue.toString()
+                  () => getOptionLabel?.(newValue) ?? newValue.toString(),
                 );
               }
             }}
@@ -52,7 +52,9 @@ export function FSelectAutocomplete({
                 <TextField
                   {...p}
                   label={label}
-                  ref={(e) => (state.element = e)}
+                  ref={(e) => {
+                    state.element = e;
+                  }}
                   error={Boolean(error)}
                   helperText={error}
                   variant="outlined"

@@ -10,7 +10,7 @@ export type FAutocompleteProps<T> = {
 export function FAutocomplete(props: FAutocompleteProps<string>): ReactElement;
 
 export function FAutocomplete<T>(
-  props: FAutocompleteProps<T> & { getOptionLabel: (t: T) => string }
+  props: FAutocompleteProps<T> & { getOptionLabel: (t: T) => string },
 ): ReactElement;
 
 export function FAutocomplete({
@@ -33,7 +33,7 @@ export function FAutocomplete({
                 const newTextValue =
                   typeof newValue === "string"
                     ? newValue
-                    : getOptionLabel?.(newValue) ?? newValue.toString();
+                    : (getOptionLabel?.(newValue) ?? newValue.toString());
                 state.value = newTextValue;
               }
             }}
@@ -49,7 +49,9 @@ export function FAutocomplete({
                 <TextField
                   {...p}
                   label={label}
-                  ref={(e) => (state.element = e)}
+                  ref={(e) => {
+                    state.element = e;
+                  }}
                   error={Boolean(error)}
                   helperText={error}
                   variant="outlined"

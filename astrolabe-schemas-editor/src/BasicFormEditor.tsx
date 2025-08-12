@@ -227,22 +227,21 @@ export function BasicFormEditor<A extends string = string>({
       .join(" ");
   });
 
+  const styles = useControl("");
+
+  async function runTailwind(classes: string) {
+    const html = `<div class="${classes}"></div>`;
+    styles.value = await genStyles.generateStylesFromContent(
+      `@tailwind utilities;`,
+      [html],
+    );
+  }
+
   useControlEffect(
     () => allClasses.value,
     (cv) => runTailwind(cv),
     true,
   );
-  const styles = useControl("");
-
-  async function runTailwind(classes: string) {
-    {
-      const html = `<div class="${classes}"></div>`;
-      styles.value = await genStyles.generateStylesFromContent(
-        `@tailwind utilities;`,
-        [html],
-      );
-    }
-  }
 
   function button(onClick: () => void, action: string, actionId?: string) {
     return editorFormRenderer.renderAction({

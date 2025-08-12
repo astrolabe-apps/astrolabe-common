@@ -1,10 +1,10 @@
 ﻿import { Control, formControlProps } from "@react-typed-forms/core";
-import React from "react";
+import React, { ReactElement } from "react";
 
 type RadioButtonProps<T> = React.HTMLProps<HTMLInputElement> & {
-	control: Control<T | undefined | null>;
-	radioValue: T;
-	valueString?: (t: T) => string;
+  control: Control<T | undefined | null>;
+  radioValue: T;
+  valueString?: (t: T) => string;
 };
 
 /**
@@ -43,35 +43,35 @@ type RadioButtonProps<T> = React.HTMLProps<HTMLInputElement> & {
  */
 
 export function RadioButton<T>({
-	control,
-	radioValue,
-	disabled,
-	className,
-	valueString = (t: T) => t?.toString() ?? "",
-	...inputProps
-}: RadioButtonProps<T>): JSX.Element {
-	const {
-		errorText,
-		value: defValue,
-		onChange,
-		ref,
-		...props
-	} = formControlProps<T | undefined | null, HTMLInputElement>(control);
+  control,
+  radioValue,
+  disabled,
+  className,
+  valueString = (t: T) => t?.toString() ?? "",
+  ...inputProps
+}: RadioButtonProps<T>): ReactElement {
+  const {
+    errorText,
+    value: defValue,
+    onChange,
+    ref,
+    ...props
+  } = formControlProps<T | undefined | null, HTMLInputElement>(control);
 
-	const innerValue = valueString(radioValue);
-	const innerDefValue = defValue != null ? valueString(defValue) : "";
+  const innerValue = valueString(radioValue);
+  const innerDefValue = defValue != null ? valueString(defValue) : "";
 
-	return (
-		<input
-			{...props}
-			onChange={(e) => (e.target.checked ? (control.value = radioValue) : null)}
-			className={className}
-			type="radio"
-			name={"radio-" + control.uniqueId}
-			value={innerValue}
-			checked={innerValue === innerDefValue}
-			disabled={props.disabled || disabled}
-			{...inputProps}
-		/>
-	);
+  return (
+    <input
+      {...props}
+      onChange={(e) => (e.target.checked ? (control.value = radioValue) : null)}
+      className={className}
+      type="radio"
+      name={"radio-" + control.uniqueId}
+      value={innerValue}
+      checked={innerValue === innerDefValue}
+      disabled={props.disabled || disabled}
+      {...inputProps}
+    />
+  );
 }
