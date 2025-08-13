@@ -6,7 +6,7 @@ export function useScrollIntoView<E extends HTMLElement = HTMLDivElement>(
   shouldBeInView: boolean,
 ) {
   const inViewControl = useControl(true);
-  const itemRef = useRef<HTMLElement | null>();
+  const itemRef = useRef<HTMLElement | null>(null);
   const setElement = useInViewEffect(
     ([entry], observer) => (inViewControl.value = entry.isIntersecting),
   );

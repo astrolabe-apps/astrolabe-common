@@ -557,6 +557,12 @@
       "shouldPublish": true
     },
 //    {
+//      "packageName": "tsup",
+//      "projectFolder": "../../tsup",
+//      "decoupledLocalDependencies": ["tsup"],
+//      "shouldPublish": false
+//    },
+//    {
 //      "packageName": "expoapp",
 //      "projectFolder": "ClientApp/expoapp"
 //    }
