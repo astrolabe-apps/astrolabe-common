@@ -1,6 +1,12 @@
 ﻿import * as SelectPrimitive from "@rn-primitives/select";
 import * as React from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+  ScrollView,
+} from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { cn } from "../utils";
 import {
@@ -17,7 +23,6 @@ import {
 } from "@react-typed-forms/schemas";
 import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ScrollView } from "react-native-gesture-handler";
 import { Icon } from "./Icon";
 import { useComputed } from "@react-typed-forms/core";
 
@@ -123,7 +128,7 @@ export function RNSelectRenderer({
         className={"bg-white w-[250px]"}
         portalHost={Platform.select({ ios: portalHost })}
       >
-        <ScrollView className={"max-h-64"}>
+        <ScrollView className={"max-h-64"} removeClippedSubviews={false}>
           {/*{showEmpty && (*/}
           {/*  <SelectItem*/}
           {/*    key={"empty"}*/}
