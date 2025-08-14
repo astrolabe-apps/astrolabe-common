@@ -32,7 +32,8 @@
     "prepack": "npm run clean && npm run build",
 		"clean": "rimraf *.tsbuildinfo node_modules/.cache app/ hooks/ lib/ service/ util/ *.js *.js.map",
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
+    "watch": "microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "test": "vitest run"
   },
   "devDependencies": {
     "@react-typed-forms/core": "^4.0.0",
@@ -49,6 +50,7 @@
     "@types/react": "^18.2.33",
     "@types/shallowequal": "^1.1.2",
     "@types/node": "^20.8.4",
-    "prettier": "^3.0.3"
+    "prettier": "^3.0.3",
+    "vitest": "^3.2.4"
   }
 }
