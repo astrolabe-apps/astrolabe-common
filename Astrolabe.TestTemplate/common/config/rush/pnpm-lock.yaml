@@ -103,6 +103,7 @@ importers:
       tailwind-merge: ^1.14.0
       tslib: ^2.6.2
       typescript: ^5.6.2
+      vitest: ^3.2.4
     dependencies:
       clsx: 2.1.1
       tailwind-merge: 1.14.0
@@ -123,6 +124,7 @@ importers:
       react: 19.0.0
       rimraf: 5.0.10
       typescript: 5.6.3
+      vitest: 3.2.4_@types+node@20.17.2
 
   ../../../astrolabe-client-localusers:
     specifiers:
@@ -991,7 +993,7 @@ importers:
       react-native-render-html: ^6.3.4
       react-native-safe-area-context: 5.4.0
       react-native-svg: 15.11.2
-      react-native-web: ~0.19.13
+      react-native-web: ^0.20.0
       rimraf: ^3.0.2
       tailwind-merge: 1.14.0
       tailwindcss: ^3.4.17
@@ -1001,12 +1003,12 @@ importers:
       '@internationalized/date': 3.8.0
       '@react-native-community/datetimepicker': 8.4.1_xptahs4rc3lymgslxxo4pyqape
       '@react-typed-forms/schemas-html': link:../schemas-html
-      '@rn-primitives/checkbox': 1.1.0_2cvhthksyz6qjftwhjfjyqdftq
-      '@rn-primitives/dialog': 1.1.0_2cvhthksyz6qjftwhjfjyqdftq
-      '@rn-primitives/radio-group': 1.1.0_2cvhthksyz6qjftwhjfjyqdftq
-      '@rn-primitives/select': 1.1.0_2cvhthksyz6qjftwhjfjyqdftq
-      '@rn-primitives/slot': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
-      '@rn-primitives/types': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
+      '@rn-primitives/checkbox': 1.1.0_4kqpenpwvx3n6p5m5x3jtkurgy
+      '@rn-primitives/dialog': 1.1.0_4kqpenpwvx3n6p5m5x3jtkurgy
+      '@rn-primitives/radio-group': 1.1.0_4kqpenpwvx3n6p5m5x3jtkurgy
+      '@rn-primitives/select': 1.1.0_4kqpenpwvx3n6p5m5x3jtkurgy
+      '@rn-primitives/slot': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/types': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
       class-variance-authority: 0.7.1
       clsx: 2.1.1
       react-native-gesture-handler: 2.24.0_xptahs4rc3lymgslxxo4pyqape
@@ -1032,7 +1034,7 @@ importers:
       react-native-render-html: 6.3.4_vzypnvkmesj3grr6pzjdidecwe
       react-native-safe-area-context: 5.4.0_xptahs4rc3lymgslxxo4pyqape
       react-native-svg: 15.11.2_xptahs4rc3lymgslxxo4pyqape
-      react-native-web: 0.19.13_upmzqgzhjrquwzo2dphtigtdgi
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
       rimraf: 3.0.2
       tailwindcss: 3.4.17
       typescript: 5.8.3
@@ -11014,7 +11016,7 @@ packages:
       '@react-types/shared': 3.31.0_react@19.0.0
       react: 19.0.0
 
-  /@rn-primitives/checkbox/1.1.0_2cvhthksyz6qjftwhjfjyqdftq:
+  /@rn-primitives/checkbox/1.1.0_4kqpenpwvx3n6p5m5x3jtkurgy:
     resolution: {integrity: sha512-drIWeB41LOkkGDHUKM++7e5vuODB6KeX7qJR3JfYoF0FDRGMG23f3cCo6cQy6DNgsjBctGPpTojQQxuLjuuTWg==}
     peerDependencies:
       react: '*'
@@ -11027,19 +11029,19 @@ packages:
         optional: true
     dependencies:
       '@radix-ui/react-checkbox': 1.1.4_lcaisjnxengxgo467g33uhvsq4
-      '@rn-primitives/hooks': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
-      '@rn-primitives/slot': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
-      '@rn-primitives/types': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
+      '@rn-primitives/hooks': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/slot': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/types': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
       react: 19.0.0
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-      react-native-web: 0.19.13_upmzqgzhjrquwzo2dphtigtdgi
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
       - react-dom
     dev: false
 
-  /@rn-primitives/dialog/1.1.0_2cvhthksyz6qjftwhjfjyqdftq:
+  /@rn-primitives/dialog/1.1.0_4kqpenpwvx3n6p5m5x3jtkurgy:
     resolution: {integrity: sha512-ZEq0eayERy9Nwys9GFAM2Q1UHu/JOBuSSCSLXUXtAn26SAdFfKn2KAWZwCxQXGW2Kph9GV9B/Vm6X5vCe8Ct2w==}
     peerDependencies:
       '@rn-primitives/portal': '*'
@@ -11053,19 +11055,19 @@ packages:
         optional: true
     dependencies:
       '@radix-ui/react-dialog': 1.1.7_lcaisjnxengxgo467g33uhvsq4
-      '@rn-primitives/hooks': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
-      '@rn-primitives/slot': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
-      '@rn-primitives/types': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
+      '@rn-primitives/hooks': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/slot': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/types': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
       react: 19.0.0
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-      react-native-web: 0.19.13_upmzqgzhjrquwzo2dphtigtdgi
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
       - react-dom
     dev: false
 
-  /@rn-primitives/hooks/1.1.0_zfkxy4ry53r7xewojvmzjqye7i:
+  /@rn-primitives/hooks/1.1.0_6zigs6jbt3nslptl5e3g2l4qh4:
     resolution: {integrity: sha512-+WP4i395UDXZueL6PE0PiyLgheD4EbZ0ONgVaHjbrWjGKalfXuCyVNeaN79y3Aw9sY+SYQm7P9RckBAgi0C5xQ==}
     peerDependencies:
       react: '*'
@@ -11077,13 +11079,13 @@ packages:
       react-native-web:
         optional: true
     dependencies:
-      '@rn-primitives/types': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
+      '@rn-primitives/types': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
       react: 19.0.0
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-      react-native-web: 0.19.13_upmzqgzhjrquwzo2dphtigtdgi
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
     dev: false
 
-  /@rn-primitives/radio-group/1.1.0_2cvhthksyz6qjftwhjfjyqdftq:
+  /@rn-primitives/radio-group/1.1.0_4kqpenpwvx3n6p5m5x3jtkurgy:
     resolution: {integrity: sha512-CBmOfStZvX00B1e3MooORrVu8m/acsN8W0jZY2ptSZb1nWYfQI2Su6zka+O6gmoytBpun16LNTxD5/ZCz95e+A==}
     peerDependencies:
       react: '*'
@@ -11096,18 +11098,18 @@ packages:
         optional: true
     dependencies:
       '@radix-ui/react-radio-group': 1.2.3_lcaisjnxengxgo467g33uhvsq4
-      '@rn-primitives/slot': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
-      '@rn-primitives/types': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
+      '@rn-primitives/slot': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/types': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
       react: 19.0.0
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-      react-native-web: 0.19.13_upmzqgzhjrquwzo2dphtigtdgi
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
       - react-dom
     dev: false
 
-  /@rn-primitives/select/1.1.0_2cvhthksyz6qjftwhjfjyqdftq:
+  /@rn-primitives/select/1.1.0_4kqpenpwvx3n6p5m5x3jtkurgy:
     resolution: {integrity: sha512-DgBzEGi36NjXfrftMEuitDrfwaD0zgCNfTWnLtIzYkZ9G19uHSEnO2PL6wCy8qInPgDWevKvcy8Cilj2lj9+jA==}
     peerDependencies:
       '@rn-primitives/portal': '*'
@@ -11121,19 +11123,19 @@ packages:
         optional: true
     dependencies:
       '@radix-ui/react-select': 2.1.6_lcaisjnxengxgo467g33uhvsq4
-      '@rn-primitives/hooks': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
-      '@rn-primitives/slot': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
-      '@rn-primitives/types': 1.1.0_zfkxy4ry53r7xewojvmzjqye7i
+      '@rn-primitives/hooks': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/slot': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/types': 1.1.0_6zigs6jbt3nslptl5e3g2l4qh4
       react: 19.0.0
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-      react-native-web: 0.19.13_upmzqgzhjrquwzo2dphtigtdgi
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
     transitivePeerDependencies:
       - '@types/react'
       - '@types/react-dom'
       - react-dom
     dev: false
 
-  /@rn-primitives/slot/1.1.0_zfkxy4ry53r7xewojvmzjqye7i:
+  /@rn-primitives/slot/1.1.0_6zigs6jbt3nslptl5e3g2l4qh4:
     resolution: {integrity: sha512-/6LkEPMoGGyJiCAYo3MTCy9letbH6SIm5Dw6wal/ypq3Jvar9llYJstIP2KSZNhx3PmZMN1a581KVgNZ2Jyt5g==}
     peerDependencies:
       react: '*'
@@ -11147,10 +11149,10 @@ packages:
     dependencies:
       react: 19.0.0
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-      react-native-web: 0.19.13_upmzqgzhjrquwzo2dphtigtdgi
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
     dev: false
 
-  /@rn-primitives/types/1.1.0_zfkxy4ry53r7xewojvmzjqye7i:
+  /@rn-primitives/types/1.1.0_6zigs6jbt3nslptl5e3g2l4qh4:
     resolution: {integrity: sha512-duS4La965KsVVAeytcSFDJUafw6ZScvejgxlFkwqzW06pDBRMxwfunmZmf3JZ82P/2xaEVPIGseeyblertC/+g==}
     peerDependencies:
       react: '*'
@@ -11164,7 +11166,7 @@ packages:
     dependencies:
       react: 19.0.0
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-      react-native-web: 0.19.13_upmzqgzhjrquwzo2dphtigtdgi
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
     dev: false
 
   /@rollup/plugin-alias/3.1.9_rollup@2.79.2:
@@ -13153,7 +13155,7 @@ packages:
       '@vitest/spy': 3.2.4
       estree-walker: 3.0.3
       magic-string: 0.30.17
-      vite: 7.0.4
+      vite: 7.0.4_@types+node@20.17.2
     dev: true
 
   /@vitest/pretty-format/3.2.4:
@@ -16751,9 +16753,6 @@ packages:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
     dev: true
 
-  /fast-loops/1.1.4:
-    resolution: {integrity: sha512-8dbd3XWoKCTms18ize6JmQF1SFnnfj5s0B7rRry22EofgMu7B6LKHVh+XfFqFGsqnbH54xgeO83PzpKI+ODhlg==}
-
   /fast-uri/3.0.3:
     resolution: {integrity: sha512-aLrHthzCjH5He4Z2H9YZ+v6Ujb9ocRuW6ZzkJQOrTxleEijANq4v1TsaPaVG1PZcuurEzrLcWRyYBYXD5cEiaw==}
     dev: true
@@ -17810,11 +17809,10 @@ packages:
     resolution: {integrity: sha512-JV/yugV2uzW5iMRSiZAyDtQd+nxtUnjeLt0acNdw98kKLrvuRVyB80tsREOE7yvGVgalhZ6RNXCmEHkUKBKxew==}
     dev: true
 
-  /inline-style-prefixer/6.0.4:
-    resolution: {integrity: sha512-FwXmZC2zbeeS7NzGjJ6pAiqRhXR0ugUShSNb6GApMl6da0/XGc4MOJsoWAywia52EEWbXNSy0pzkwz/+Y+swSg==}
+  /inline-style-prefixer/7.0.1:
+    resolution: {integrity: sha512-lhYo5qNTQp3EvSSp3sRvXMbVQTLrvGV6DycRMJ5dm2BLMiJ30wpXKdDdgX+GmJZ5uQMucwRKHamXSst3Sj/Giw==}
     dependencies:
       css-in-js-utils: 3.1.0
-      fast-loops: 1.1.4
 
   /internal-slot/1.0.7:
     resolution: {integrity: sha512-NGnrKwXzSms2qUUih/ILZ5JBqNTSa1+ZmP6flaIp6KmSElgE9qdndzS3cqjrDovwFdmwsGsLdeFgB6suw+1e9g==}
@@ -22159,16 +22157,16 @@ packages:
       warn-once: 0.1.1
     dev: true
 
-  /react-native-web/0.19.13_upmzqgzhjrquwzo2dphtigtdgi:
-    resolution: {integrity: sha512-etv3bN8rJglrRCp/uL4p7l8QvUNUC++QwDbdZ8CB7BvZiMvsxfFIRM1j04vxNldG3uo2puRd6OSWR3ibtmc29A==}
+  /react-native-web/0.20.0_upmzqgzhjrquwzo2dphtigtdgi:
+    resolution: {integrity: sha512-OOSgrw+aON6R3hRosCau/xVxdLzbjEcsLysYedka0ZON4ZZe6n9xgeN9ZkoejhARM36oTlUgHIQqxGutEJ9Wxg==}
     peerDependencies:
-      react: ^18.0.0
-      react-dom: ^18.0.0
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
     dependencies:
       '@babel/runtime': 7.26.0
       '@react-native/normalize-colors': 0.74.89
       fbjs: 3.0.5
-      inline-style-prefixer: 6.0.4
+      inline-style-prefixer: 7.0.1
       memoize-one: 6.0.0
       nullthrows: 1.1.1
       postcss-value-parser: 4.2.0
@@ -24877,6 +24875,31 @@ packages:
       - yaml
     dev: true
 
+  /vite-node/3.2.4_@types+node@20.17.2:
+    resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
+    engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
+    hasBin: true
+    dependencies:
+      cac: 6.7.14
+      debug: 4.4.1
+      es-module-lexer: 1.7.0
+      pathe: 2.0.3
+      vite: 7.0.4_@types+node@20.17.2
+    transitivePeerDependencies:
+      - '@types/node'
+      - jiti
+      - less
+      - lightningcss
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - yaml
+    dev: true
+
   /vite/7.0.4:
     resolution: {integrity: sha512-SkaSguuS7nnmV7mfJ8l81JGBFV7Gvzp8IzgE8A8t23+AxuNX61Q5H1Tpz5efduSN7NHC8nQXD3sKQKZAu5mNEA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -24917,6 +24940,57 @@ packages:
       yaml:
         optional: true
     dependencies:
+      esbuild: 0.25.6
+      fdir: 6.4.6_picomatch@4.0.2
+      picomatch: 4.0.2
+      postcss: 8.5.6
+      rollup: 4.45.1
+      tinyglobby: 0.2.14
+    optionalDependencies:
+      fsevents: 2.3.3
+    dev: true
+
+  /vite/7.0.4_@types+node@20.17.2:
+    resolution: {integrity: sha512-SkaSguuS7nnmV7mfJ8l81JGBFV7Gvzp8IzgE8A8t23+AxuNX61Q5H1Tpz5efduSN7NHC8nQXD3sKQKZAu5mNEA==}
+    engines: {node: ^20.19.0 || >=22.12.0}
+    hasBin: true
+    peerDependencies:
+      '@types/node': ^20.19.0 || >=22.12.0
+      jiti: '>=1.21.0'
+      less: ^4.0.0
+      lightningcss: ^1.21.0
+      sass: ^1.70.0
+      sass-embedded: ^1.70.0
+      stylus: '>=0.54.8'
+      sugarss: ^5.0.0
+      terser: ^5.16.0
+      tsx: ^4.8.1
+      yaml: ^2.4.2
+    peerDependenciesMeta:
+      '@types/node':
+        optional: true
+      jiti:
+        optional: true
+      less:
+        optional: true
+      lightningcss:
+        optional: true
+      sass:
+        optional: true
+      sass-embedded:
+        optional: true
+      stylus:
+        optional: true
+      sugarss:
+        optional: true
+      terser:
+        optional: true
+      tsx:
+        optional: true
+      yaml:
+        optional: true
+    dependencies:
+      '@types/node': 20.17.2
       esbuild: 0.25.6
       fdir: 6.4.6_picomatch@4.0.2
       picomatch: 4.0.2
@@ -24977,6 +25051,73 @@ packages:
       tinyrainbow: 2.0.0
       vite: 7.0.4
       vite-node: 3.2.4
+      why-is-node-running: 2.3.0
+    transitivePeerDependencies:
+      - jiti
+      - less
+      - lightningcss
+      - msw
+      - sass
+      - sass-embedded
+      - stylus
+      - sugarss
+      - supports-color
+      - terser
+      - tsx
+      - yaml
+    dev: true
+
+  /vitest/3.2.4_@types+node@20.17.2:
+    resolution: {integrity: sha512-LUCP5ev3GURDysTWiP47wRRUpLKMOfPh+yKTx3kVIEiu5KOMeqzpnYNsKyOoVrULivR8tLcks4+lga33Whn90A==}
+    engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
+    hasBin: true
+    peerDependencies:
+      '@edge-runtime/vm': '*'
+      '@types/debug': ^4.1.12
+      '@types/node': ^18.0.0 || ^20.0.0 || >=22.0.0
+      '@vitest/browser': 3.2.4
+      '@vitest/ui': 3.2.4
+      happy-dom: '*'
+      jsdom: '*'
+    peerDependenciesMeta:
+      '@edge-runtime/vm':
+        optional: true
+      '@types/debug':
+        optional: true
+      '@types/node':
+        optional: true
+      '@vitest/browser':
+        optional: true
+      '@vitest/ui':
+        optional: true
+      happy-dom:
+        optional: true
+      jsdom:
+        optional: true
+    dependencies:
+      '@types/chai': 5.2.2
+      '@types/node': 20.17.2
+      '@vitest/expect': 3.2.4
+      '@vitest/mocker': 3.2.4_vite@7.0.4
+      '@vitest/pretty-format': 3.2.4
+      '@vitest/runner': 3.2.4
+      '@vitest/snapshot': 3.2.4
+      '@vitest/spy': 3.2.4
+      '@vitest/utils': 3.2.4
+      chai: 5.2.1
+      debug: 4.4.1
+      expect-type: 1.2.2
+      magic-string: 0.30.17
+      pathe: 2.0.3
+      picomatch: 4.0.2
+      std-env: 3.9.0
+      tinybench: 2.9.0
+      tinyexec: 0.3.2
+      tinyglobby: 0.2.14
+      tinypool: 1.1.1
+      tinyrainbow: 2.0.0
+      vite: 7.0.4_@types+node@20.17.2
+      vite-node: 3.2.4_@types+node@20.17.2
       why-is-node-running: 2.3.0
     transitivePeerDependencies:
       - jiti
