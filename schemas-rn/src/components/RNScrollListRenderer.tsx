@@ -131,7 +131,6 @@ function RNScrollListRenderer({
           </View>
         ) : undefined
       }
-      removeClippedSubviews={false}
     />
   );
 
