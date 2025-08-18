@@ -198,6 +198,17 @@ public static class SearchHelper
         int maxLength = 50
     )
     {
+        return CreateSearcher((q,s,t) => select(q.Skip(s).Take(t)), count, sorter, filterer, maxLength);
+    }
+    
+    public static Searcher<T, T2> CreateSearcher<T, T2>(
+        Func<IQueryable<T>, int, int, Task<List<T2>>> select,
+        Func<IQueryable<T>, Task<int>> count,
+        QuerySorter<T>? sorter = null,
+        QueryFilterer<T>? filterer = null,
+        int maxLength = 50
+    )
+    {
         sorter ??= MakeSorter<T>();
         filterer ??= MakeFilterer<T>();
         return async (query, options, includeTotal) =>
@@ -212,9 +223,10 @@ public static class SearchHelper
             }
 
             var pageResults = await select(
-                sorter(options.Sort, filteredQuery).Skip(offset).Take(take)
+                sorter(options.Sort, filteredQuery), offset, take
             );
             return new SearchResults<T2>(total, pageResults);
         };
     }
+
 }
