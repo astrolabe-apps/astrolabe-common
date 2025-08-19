@@ -147,7 +147,7 @@ export function createFormRenderer(
         !!x.renderType && isOneOf(x.renderType, renderType);
       return (
         matchCollection &&
-        (x.options ?? false) === options &&
+        (x.options || !options) &&
         (isSchemaAllowed ||
           isRendererAllowed ||
           (!x.renderType && !x.schemaType && noMatch === false))
