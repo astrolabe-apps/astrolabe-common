@@ -196,7 +196,13 @@ function WizardRenderer({
   }
 
   function validatePage() {
-    return formNode.getChild(currentPage)!.validate();
+    const pageNode = formNode.getChild(currentPage);
+    if (pageNode) {
+      const valid = pageNode.validate();
+      pageNode.setTouched(true);
+      return valid;
+    }
+    return false;
   }
 
   function isPageValid() {
