@@ -62,6 +62,7 @@ export type ControlDefinitionExtension = {
   DisplayData?: CustomRenderOptions | CustomRenderOptions[];
   IconReference?: CustomRenderOptions | CustomRenderOptions[];
   ControlDefinition?: CustomRenderOptions | CustomRenderOptions[];
+  SchemaField?: CustomRenderOptions | CustomRenderOptions[];
 };
 
 export function applyExtensionToSchema<A extends SchemaMap>(

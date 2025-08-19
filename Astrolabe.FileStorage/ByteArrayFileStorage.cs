@@ -2,24 +2,55 @@ namespace Astrolabe.FileStorage;
 
 public static class ByteArrayFileStorage
 {
-    public static IFileStorage<T> Create<T>(Func<byte[], UploadRequest, T> Create, Func<T, Task<(byte[] Content, string ContentType)>> GetBytes)
+    public static IFileStorage<T> Create<T>(
+        Func<byte[], UploadRequest, Task<T>> create,
+        Func<T, Task<ByteArrayResponse>> getBytes,
+        FileStorageOptions? options = null,
+        Func<T, Task>? deleteFile = null
+    )
     {
-        return new ByteArrayFileStorage<T>(Create, GetBytes);
+        return new ByteArrayFileStorage<T>(
+            create,
+            getBytes,
+            options ?? new FileStorageOptions(),
+            deleteFile
+        );
     }
 }
 
-public record ByteArrayFileStorage<T>(Func<byte[], UploadRequest, T> Create, Func<T, Task<(byte[] Content, string ContentType)>> GetBytes) : IFileStorage<T>
+public class ByteArrayFileStorage<T>(
+    Func<byte[], UploadRequest, Task<T>> create,
+    Func<T, Task<ByteArrayResponse>> getBytes,
+    FileStorageOptions options,
+    Func<T, Task>? deleteFile
+) : IFileStorage<T>
 {
     public async Task<T> UploadFile(UploadRequest request)
     {
         var memoryStream = new MemoryStream();
-        await request.Content.CopyToAsync(memoryStream);
-        return Create(memoryStream.GetBuffer(), request);
+        await using var reqStream = new LimitedStream(request.Content, options.MaxLength);
+        await reqStream.CopyToAsync(memoryStream);
+        return await create(memoryStream.GetBuffer(), request);
     }
 
     public async Task<DownloadResponse?> DownloadFile(T key)
     {
-        var (bytes, ct) = await GetBytes(key);
-        return new DownloadResponse(new MemoryStream(bytes), ct);
+        var byteResponse = await getBytes(key);
+        var contentType = options.GetContentTypeForFilename(
+            byteResponse.ContentType,
+            byteResponse.FileName
+        );
+        return new DownloadResponse(
+            new MemoryStream(byteResponse.Content),
+            contentType,
+            byteResponse.FileName
+        );
     }
-} 
+
+    public Task DeleteFile(T file)
+    {
+        return deleteFile?.Invoke(file) ?? Task.CompletedTask;
+    }
+}
+
+public record ByteArrayResponse(byte[] Content, string? ContentType, string? FileName);

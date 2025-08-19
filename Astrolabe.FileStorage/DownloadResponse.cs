@@ -1,3 +1,3 @@
 namespace Astrolabe.FileStorage;
 
-public record DownloadResponse(Stream Content, string ContentType);
+public record DownloadResponse(Stream Content, string ContentType, string? FileName);

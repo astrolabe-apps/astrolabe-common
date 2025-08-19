@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { FormSchemaTree, SchemaNodeCtx } from "../FormSchemaTree";
 import {
   addElement,
@@ -6,7 +6,10 @@ import {
   controlNotNull,
   useControlEffect,
 } from "@react-typed-forms/core";
-import { defaultControlForField } from "@react-typed-forms/schemas";
+import {
+  defaultControlForField,
+  SchemaField,
+} from "@react-typed-forms/schemas";
 import { InactiveView } from "./InactiveView";
 import { EditableForm, ViewContext } from "../types";
 import { TreeApi } from "react-arborist";
@@ -53,9 +56,20 @@ function CurrentSchema({
     <div className="flex flex-col h-full">
       <div className="flex gap-2 p-4">
         {button(() => treeApi.current?.closeAll(), "Collapse", "collapse")}
-        {button(addRootField, "Add Form Field", "add")}
+        {button(
+          () => addRootField(schemaTree.getFormFields()),
+          "Add Form Field",
+          "add",
+        )}
         {context.saveSchema && (
-          <div className="p-4">{context.button(doSave, "Save Schema")}</div>
+          <>
+            {button(
+              () => addRootField(schemaTree.getRootFields()),
+              "Add Schema Field",
+              "addSchema",
+            )}
+            {context.button(doSave, "Save Schema")}
+          </>
         )}
       </div>
       <FormSchemaTree
@@ -73,8 +87,7 @@ function CurrentSchema({
     </div>
   );
 
-  function addRootField() {
-    const rootList = schemaTree.getFormFields();
+  function addRootField(rootList: Control<SchemaField[]> | undefined) {
     if (rootList) {
       addElement(rootList, { ...defaultSchemaFieldForm });
     }
