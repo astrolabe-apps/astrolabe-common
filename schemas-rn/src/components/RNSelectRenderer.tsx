@@ -176,7 +176,7 @@ const SelectTrigger = React.forwardRef<
     )}
     {...props}
   >
-    <Pressable>{children}</Pressable>
+    <Pressable pointerEvents={"none"}>{children}</Pressable>
     <Icon
       name={"chevron-down"}
       className={"!text-[12px] text-foreground text-accent"}

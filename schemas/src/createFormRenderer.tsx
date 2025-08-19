@@ -145,9 +145,11 @@ export function createFormRenderer(
           : undefined;
       const isRendererAllowed =
         !!x.renderType && isOneOf(x.renderType, renderType);
+      const optionsMatch =
+        isRendererAllowed || (x.options ?? false) === options;
       return (
         matchCollection &&
-        (x.options || !options) &&
+        optionsMatch &&
         (isSchemaAllowed ||
           isRendererAllowed ||
           (!x.renderType && !x.schemaType && noMatch === false))
