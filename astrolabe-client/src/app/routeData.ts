@@ -16,7 +16,7 @@ export function getMatchingRoute<A>(
   while (segmentOffset < segments.length) {
     const seg = segments[segmentOffset];
     const routeKey = Object.keys(routes).find(key => key.toLowerCase() === seg.toLowerCase()) ?? (routes["*"] ? "*" : undefined);
-    const definition = routeKey ? routes[routeKey] : undefined;
+    const definition = routeKey != null ? routes[routeKey] : undefined;
     if (!definition) return undefined;
     if (segmentOffset === segments.length - 1) return definition;
     if (definition.children) {
