@@ -109,7 +109,7 @@ export class DefaultSchemaInterface implements SchemaInterface {
           ? new Date("1970-01-01T" + value).toLocaleTimeString()
           : undefined;
       case FieldType.Bool:
-        return this.boolStrings[value ? 1 : 0];
+        return value != null ? this.boolStrings[value ? 1 : 0] : undefined;
       default:
         return value != null ? value.toString() : undefined;
     }
@@ -122,7 +122,8 @@ export class DefaultSchemaInterface implements SchemaInterface {
   }
 
   valueLength(field: SchemaField, value: any): number {
-    return (value && value?.length) ?? 0;
+    const len = value?.length;
+    return typeof len === "number" ? len : 0;
   }
 
   compareValue(field: SchemaField, v1: unknown, v2: unknown): number {
