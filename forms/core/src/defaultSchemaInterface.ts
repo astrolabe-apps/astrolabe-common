@@ -136,7 +136,7 @@ export class DefaultSchemaInterface implements SchemaInterface {
       case FieldType.String:
         return (v1 as string).localeCompare(v2 as string);
       case FieldType.Bool:
-        return (v1 as boolean) ? ((v2 as boolean) ? 0 : 1) : -1;
+        return v1 === v2 ? 0 : !v1 ? -1 : 1;
       case FieldType.Int:
       case FieldType.Double:
         return (v1 as number) - (v2 as number);

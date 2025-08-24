@@ -21,6 +21,7 @@ describe("DefaultSchemaInterface property tests", () => {
         fc.property(
           randomSchemaField("testField", {
             fieldType: fc.constant(FieldType.String),
+            arrayChance: 0,
           }),
           fc.string(),
           (field, value) => {
@@ -162,6 +163,50 @@ describe("DefaultSchemaInterface property tests", () => {
       );
     });
 
+    it("datetime fields format as datetime string", () => {
+      fc.assert(
+        fc.property(
+          randomSchemaField("testField", {
+            fieldType: fc.constant(FieldType.DateTime),
+          }),
+          fc.date({ min: new Date(1970, 0, 1), max: new Date(2100, 11, 31) }),
+          (field, date) => {
+            // Format date as ISO string as expected for DateTime field type
+            const isoString = date.toISOString();
+            const text = schemaInterface.textValue(field, isoString);
+
+            // The DefaultSchemaInterface parses the ISO string and formats it as locale string
+            const expectedText = new Date(
+              schemaInterface.parseToMillis(field, isoString),
+            ).toLocaleString();
+            expect(text).toBe(expectedText);
+          },
+        ),
+      );
+    });
+
+    it("time fields format as time string", () => {
+      fc.assert(
+        fc.property(
+          randomSchemaField("testField", {
+            fieldType: fc.constant(FieldType.Time),
+          }),
+          fc.date({ min: new Date(1970, 0, 1), max: new Date(2100, 11, 31) }),
+          (field, date) => {
+            // Format time as HH:MM:SS string as expected for Time field type
+            const timeString = date.toISOString().substring(11); // Gets the time part with timezone
+            const text = schemaInterface.textValue(field, timeString);
+
+            // The DefaultSchemaInterface creates a date from "1970-01-01T" + timeString and formats as locale time
+            const expectedText = new Date(
+              "1970-01-01T" + timeString,
+            ).toLocaleTimeString();
+            expect(text).toBe(expectedText);
+          },
+        ),
+      );
+    });
+
     it("null/undefined values return undefined", () => {
       fc.assert(
         fc.property(randomSchemaField("testField"), (field) => {
@@ -235,19 +280,65 @@ describe("DefaultSchemaInterface property tests", () => {
   });
 
   describe("compareValue", () => {
-    it("string comparison is consistent with localeCompare", () => {
+    it("string, date, datetime, and time comparison is consistent with localeCompare", () => {
       fc.assert(
         fc.property(
           randomSchemaField("testField", {
-            fieldType: fc.constant(FieldType.String),
-          }),
-          fc.string(),
-          fc.string(),
-          (field, a, b) => {
-            const result = schemaInterface.compareValue(field, a, b);
-            const expected = a.localeCompare(b);
+            fieldType: fc.constantFrom(
+              FieldType.String,
+              FieldType.Date,
+              FieldType.DateTime,
+              FieldType.Time,
+            ),
+            arrayChance: 0, // Don't test arrays here
+          }).chain((field) =>
+            fc.record({
+              field: fc.constant(field),
+              valueA: randomValueForField(field, { nullableChance: 0 }),
+              valueB: randomValueForField(field, { nullableChance: 0 }),
+            }),
+          ),
+          ({ field, valueA, valueB }) => {
+            const result = schemaInterface.compareValue(field, valueA, valueB);
+            const expected = (valueA as string).localeCompare(valueB as string);
             // Both should have same sign (or both zero)
             expect(Math.sign(result)).toBe(Math.sign(expected));
+          },
+        ),
+      );
+    });
+
+    it("boolean comparison works correctly", () => {
+      fc.assert(
+        fc.property(
+          randomSchemaField("testField", {
+            fieldType: fc.constant(FieldType.Bool),
+            arrayChance: 0,
+          }).chain((field) =>
+            fc.record({
+              field: fc.constant(field),
+              valueA: randomValueForField(field, { nullableChance: 0 }),
+              valueB: randomValueForField(field, { nullableChance: 0 }),
+            }),
+          ),
+          ({ field, valueA, valueB }) => {
+            const result = schemaInterface.compareValue(field, valueA, valueB);
+
+            // Boolean comparison logic: true > false
+            // true === true: 0
+            // false === false: 0
+            // true > false: positive (1)
+            // false < true: negative (-1)
+            let expected: number;
+            if (valueA === valueB) {
+              expected = 0;
+            } else if (valueA && !valueB) {
+              expected = 1;
+            } else {
+              expected = -1;
+            }
+
+            expect(result).toBe(expected);
           },
         ),
       );

@@ -53,14 +53,14 @@ describe("expression evaluators", () => {
         rootCompound().chain(({ root, schema }) =>
           fc.record({
             schema: fc.constant(schema),
-            data: randomValueForField(root),
+            data: randomValueForField(schema, undefined, true),
           }),
         ),
         ({ schema, data }) => {
           const firstChild = testLabelExpr(
             schema,
-            data,
-            dataMatchExpr(schema.field, data[schema.field]),
+            { [schema.field]: schema.collection ? [data] : data },
+            dataMatchExpr(schema.field, data),
           );
           expect(firstChild.definition.title).toBe("true");
         },
