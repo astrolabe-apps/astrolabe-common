@@ -185,7 +185,7 @@ export function groupedControl(
 }
 export function compoundControl(
   field: string,
-  title: string | undefined,
+  title: string | undefined | null,
   children: ControlDefinition[],
   options?: Partial<DataControlDefinition>,
 ): DataControlDefinition {

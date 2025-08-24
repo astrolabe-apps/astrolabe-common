@@ -209,7 +209,7 @@ export class ArrayLogic extends ControlLogic {
 }
 
 export class ObjectLogic extends ControlLogic {
-  _fields: Record<string, InternalControl> = {};
+  _fields: Record<string, InternalControl> = Object.create(null);
 
   constructor(
     isEqual: (v1: unknown, v2: unknown) => boolean,
