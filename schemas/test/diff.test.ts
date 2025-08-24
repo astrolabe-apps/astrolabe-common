@@ -3,11 +3,12 @@ import fc from "fast-check";
 import {
   makeDataNode,
   newIndexes,
-  valueSchemaAndChange,
   valuesAndSchema,
+  valueSchemaAndChange,
 } from "./gen";
 import {
   collectDifferences,
+  getAllValues,
   getDiffObject,
   getTagParam,
   isCompoundNode,
@@ -154,11 +155,11 @@ describe("diff", () => {
         (fv) => {
           const dataNode = makeDataNode(fv);
           const distinct = [dataNode.control.value];
-          collectDifferences(dataNode, fv.newValues);
+          collectDifferences(dataNode, [fv.value, ...fv.newValues]);
           fv.newValues.forEach((x) => {
             if (!distinct.includes(x)) distinct.push(x);
           });
-          expect(dataNode.control.meta.changes).toStrictEqual(distinct);
+          expect(getAllValues(dataNode.control).value).toStrictEqual(distinct);
         },
       ),
     );
@@ -175,8 +176,9 @@ describe("diff", () => {
         }),
         (fv) => {
           const dataNode = makeDataNode(fv);
-          collectDifferences(dataNode, fv.newValues);
-          checkCompound(dataNode, fv.newValues);
+          const allValues = [fv.value, ...fv.newValues];
+          collectDifferences(dataNode, allValues);
+          checkCompound(dataNode, allValues);
         },
       ),
     );
@@ -192,15 +194,12 @@ function checkCompound(node: SchemaDataNode, newValues: any[]) {
         newValues.map((n) => n?.[x.field.field]),
       );
     } else {
-      let distinct: any[] | undefined = undefined;
+      let distinct: any[] = [];
       newValues.forEach((newValue) => {
         const nv = newValue?.[x.field.field];
-        if (nv !== childNode.control.value) {
-          if (distinct === undefined) distinct = [childNode.control.value];
-          if (!distinct.includes(nv)) distinct.push(nv);
-        }
+        if (!distinct.includes(nv)) distinct.push(nv);
       });
-      expect(childNode.control.meta.changes).toStrictEqual(distinct);
+      expect(getAllValues(childNode.control).value).toStrictEqual(distinct);
     }
   });
 }
