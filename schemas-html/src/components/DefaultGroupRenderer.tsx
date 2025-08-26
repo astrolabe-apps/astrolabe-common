@@ -30,7 +30,10 @@ import {
   DefaultDialogRenderOptions,
 } from "./DefaultDialogRenderer";
 import { createAccordionGroupRenderer } from "./DefaultAccordion";
-import { DefaultAccordionRendererOptions, DefaultAdornmentRendererOptions } from "../createDefaultRenderers";
+import {
+  DefaultAccordionRendererOptions,
+  DefaultAdornmentRendererOptions,
+} from "../createDefaultRenderers";
 
 interface StyleProps {
   className?: string;
@@ -58,7 +61,9 @@ export function createDefaultGroupRenderer(
   const tabsRenderer = createTabsRenderer(options?.tabs);
   const wizardRenderer = createWizardRenderer(options?.wizard);
   const dialogRenderer = createDialogRenderer(options?.dialog);
-  const accordionRenderer = createAccordionGroupRenderer(options?.accordion ?? adornmentOptions?.accordion);
+  const accordionRenderer = createAccordionGroupRenderer(
+    options?.accordion ?? adornmentOptions?.accordion,
+  );
   const {
     className,
     standardClassName,

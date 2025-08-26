@@ -8,11 +8,13 @@ import {
   FormRenderer,
   GroupRendererProps,
   GroupRenderType,
+  rendererClass,
 } from "@react-typed-forms/schemas";
 
 export function DefaultAccordion({
   children,
   contentStyle,
+  className,
   contentClassName,
   designMode,
   renderers,
@@ -20,9 +22,14 @@ export function DefaultAccordion({
   title,
   options,
   defaultExpanded,
+  isGroup,
+  titleTextClass,
 }: {
   children: ReactElement;
   title: ReactNode;
+  isGroup: boolean;
+  className?: string;
+  titleTextClass?: string;
   defaultExpanded?: boolean | null;
   contentStyle?: CSSProperties;
   contentClassName?: string;
@@ -34,11 +41,9 @@ export function DefaultAccordion({
   const {
     iconOpen,
     iconClosed,
-    className,
     togglerClass,
     renderTitle = (t: ReactNode) => t,
     renderToggler,
-    titleClass,
     useCss,
   } = options ?? {};
 
@@ -52,15 +57,26 @@ export function DefaultAccordion({
   const fullContentStyle =
     isOpen || designMode ? contentStyle : { ...contentStyle, display: "none" };
   const currentIcon = isOpen ? iconOpen : iconClosed;
+  const accordionClassName = rendererClass(className, options?.className);
+  const accordionTitleTextClass = rendererClass(
+    titleTextClass,
+    options?.titleTextClass,
+  );
+  const accordionTitle = isGroup ? (
+    title
+  ) : (
+    <Label textClass={accordionTitleTextClass}>{title}</Label>
+  );
+
   const toggler = renderToggler ? (
     renderToggler(open, renderTitle(title, open))
   ) : (
     <Button
-      className={className}
+      className={accordionClassName}
       notWrapInText
       onClick={() => open.setValue((x) => !x)}
     >
-      <Label textClass={titleClass}>{title}</Label>
+      {accordionTitle}
       {currentIcon && (
         <I
           className={togglerClass}
@@ -71,6 +87,7 @@ export function DefaultAccordion({
     </Button>
   );
 
+  // The content class name not currently used since if the content is wrapped in a group, the group will handle the styling
   return (
     <>
       {toggler}
@@ -125,14 +142,15 @@ function AccordionGroupRenderer({
   const renderOptions = groupProps.renderOptions as AccordionRenderer;
   return (
     <DefaultAccordion
+      isGroup={true}
       options={options}
       children={<>{contentChildren.map((x) => groupProps.renderChild(x))}</>}
       title={<>{titleChildren.map((x) => groupProps.renderChild(x))}</>}
       renderers={renderer}
+      className={groupProps.className}
       dataContext={groupProps.dataContext}
       designMode={groupProps.designMode}
       defaultExpanded={renderOptions.defaultExpanded}
-      contentClassName={groupProps.className}
       contentStyle={groupProps.style}
     />
   );

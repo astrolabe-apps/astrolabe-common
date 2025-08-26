@@ -67,7 +67,7 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
     },
     adornment: {
       accordion: {
-        className: "flex flex-row items-center gap-2 my-2 p-0",
+        className: "flex flex-row items-center gap-2 my-2 p-0 self-start",
       },
       helpText: {
         iconName: "info-circle",

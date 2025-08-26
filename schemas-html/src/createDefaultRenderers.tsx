@@ -7,7 +7,12 @@ import {
   DefaultLayoutRendererOptions,
 } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, { Fragment, ReactElement, ReactNode } from "react";
+import React, {
+  Fragment,
+  isValidElement,
+  ReactElement,
+  ReactNode,
+} from "react";
 import clsx from "clsx";
 import {
   createSelectRenderer,
@@ -290,7 +295,7 @@ export function createDefaultDataRenderer(
 
 export interface DefaultAccordionRendererOptions {
   className?: string;
-  titleClass?: string;
+  titleTextClass?: string;
   togglerClass?: string;
   iconOpen?: IconReference;
   iconClosed?: IconReference;
@@ -350,19 +355,27 @@ export function createDefaultAdornmentRenderer(
             )(rl);
           }
           if (isAccordionAdornment(adornment)) {
-            return wrapLayout((x) => (
-              <DefaultAccordion
-                renderers={renderers}
-                children={x}
-                title={renderers.renderLabelText(adornment.title)}
-                defaultExpanded={adornment.defaultExpanded}
-                contentStyle={rl.style}
-                contentClassName={rl.className}
-                designMode={designMode}
-                dataContext={dataContext}
-                options={options.accordion}
-              />
-            ))(rl);
+            return wrapLayout((x) => {
+              const displayProps = isValidElement(rl.children)
+                ? rl.children.props?.displayProps
+                : undefined;
+              return (
+                <DefaultAccordion
+                  isGroup={false}
+                  renderers={renderers}
+                  children={x}
+                  className={displayProps?.className}
+                  titleTextClass={displayProps?.textClass}
+                  title={renderers.renderLabelText(adornment.title)}
+                  defaultExpanded={adornment.defaultExpanded}
+                  contentStyle={rl.style}
+                  contentClassName={rl.className}
+                  designMode={designMode}
+                  dataContext={dataContext}
+                  options={options.accordion}
+                />
+              );
+            })(rl);
           }
         },
         priority: 0,

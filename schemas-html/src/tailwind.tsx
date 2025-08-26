@@ -77,8 +77,8 @@ export const defaultTailwindTheme = {
   },
   adornment: {
     accordion: {
-      className: "flex items-center gap-2 my-2",
-      titleClass: "cursor-pointer",
+      className: "flex items-center gap-2 my-2 w-fit",
+      titleTextClass: "cursor-pointer",
       iconOpen: fontAwesomeIcon("chevron-up"),
       iconClosed: fontAwesomeIcon("chevron-down"),
     },
