@@ -5,6 +5,7 @@ import {
   GroupRendererProps,
   GroupRendererRegistration,
   GroupRenderType,
+  isAccordionRenderer,
   isDialogRenderer,
   isFlexRenderer,
   isGridRenderer,
@@ -28,6 +29,8 @@ import {
   createDialogRenderer,
   DefaultDialogRenderOptions,
 } from "./DefaultDialogRenderer";
+import { createAccordionGroupRenderer } from "./DefaultAccordion";
+import { DefaultAccordionRendererOptions, DefaultAdornmentRendererOptions } from "../createDefaultRenderers";
 
 interface StyleProps {
   className?: string;
@@ -44,15 +47,18 @@ export interface DefaultGroupRendererOptions {
   tabs?: DefaultTabsRenderOptions;
   wizard?: DefaultWizardRenderOptions;
   dialog?: DefaultDialogRenderOptions;
+  accordion?: DefaultAccordionRendererOptions;
 }
 
 export function createDefaultGroupRenderer(
   options?: DefaultGroupRendererOptions,
+  adornmentOptions?: DefaultAdornmentRendererOptions,
 ): GroupRendererRegistration {
   const gridRenderer = createGridRenderer(options?.grid);
   const tabsRenderer = createTabsRenderer(options?.tabs);
   const wizardRenderer = createWizardRenderer(options?.wizard);
   const dialogRenderer = createDialogRenderer(options?.dialog);
+  const accordionRenderer = createAccordionGroupRenderer(options?.accordion ?? adornmentOptions?.accordion);
   const {
     className,
     standardClassName,
@@ -84,6 +90,8 @@ export function createDefaultGroupRenderer(
       return wizardRenderer.render(props, renderer);
     if (isDialogRenderer(renderOptions))
       return dialogRenderer.render(props, renderer);
+    if (isAccordionRenderer(renderOptions))
+      return accordionRenderer.render(props, renderer);
     if (isSelectChildRenderer(renderOptions) && !props.designMode) {
       return (
         <SelectChildGroupRenderer

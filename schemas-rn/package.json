@@ -32,7 +32,7 @@
   ],
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
-    "@internationalized/date": "^3.7.0",
+    "@internationalized/date": "^3.8.2",
     "@react-native-community/datetimepicker": "8.2.0",
     "@react-typed-forms/schemas-html": "^4.1.1",
     "@rn-primitives/checkbox": "^1.2.0",

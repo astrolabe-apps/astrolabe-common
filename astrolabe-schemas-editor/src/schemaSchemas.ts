@@ -719,6 +719,7 @@ export interface GroupRenderOptionsForm {
   rowClass: string | null;
   value: any;
   childIndexExpression: EntityExpressionForm;
+  defaultExpanded: boolean | null;
 }
 
 export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
@@ -769,6 +770,10 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
       {
         name: "Contents",
         value: "Contents",
+      },
+      {
+        name: "Accordion",
+        value: "Accordion",
       },
     ],
   }),
@@ -837,6 +842,11 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     notNullable: true,
     displayName: "Child Index Expression",
     tags: ["_ControlRef:Expression"],
+  }),
+  defaultExpanded: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Accordion"],
+    displayName: "Default Expanded",
   }),
 });
 

@@ -353,6 +353,12 @@ export enum GroupRenderType {
   Wizard = "Wizard",
   Dialog = "Dialog",
   Contents = "Contents",
+  Accordion = "Accordion",
+}
+
+export interface AccordionRenderer extends GroupRenderOptions {
+  type: GroupRenderType.Accordion;
+  defaultExpanded?: boolean | null;
 }
 
 export interface DialogRenderOptions extends GroupRenderOptions {
@@ -501,6 +507,12 @@ export function isDialogRenderer(
   options: GroupRenderOptions,
 ): options is DialogRenderOptions {
   return options.type === GroupRenderType.Dialog;
+}
+
+export function isAccordionRenderer(
+  options: GroupRenderOptions,
+): options is AccordionRenderer {
+  return options.type === GroupRenderType.Accordion;
 }
 
 export function isInlineRenderer(options: GroupRenderOptions): boolean {

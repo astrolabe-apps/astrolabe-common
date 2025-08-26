@@ -369,7 +369,8 @@ public enum GroupRenderType
     Inline,
     Wizard,
     Dialog,
-    Contents
+    Contents,
+    Accordion
 }
 
 [JsonBaseType("type", typeof(SimpleGroupRenderOptions))]
@@ -383,6 +384,7 @@ public enum GroupRenderType
 [JsonSubType("Wizard", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("Contents", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("Dialog", typeof(DialogRenderOptions))]
+[JsonSubType("Accordion", typeof(AccordionRenderer))]
 public abstract record GroupRenderOptions(
     [property: SchemaOptions(typeof(GroupRenderType))]
     [property: DefaultValue("Standard")]
@@ -407,23 +409,24 @@ public abstract record GroupRenderOptions(
 public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
 
 public record TabsRenderOptions(string? ContentClass)
-    : GroupRenderOptions(GroupRenderType.Tabs.ToString());
+    : GroupRenderOptions(nameof(GroupRenderType.Tabs));
 
-public record DialogRenderOptions(string? Title) : GroupRenderOptions(GroupRenderType.Dialog.ToString());
+public record DialogRenderOptions(string? Title) : GroupRenderOptions(nameof(GroupRenderType.Dialog));
 
 public record FlexRenderer(string? Direction, string? Gap)
-    : GroupRenderOptions(GroupRenderType.Flex.ToString());
+    : GroupRenderOptions(nameof(GroupRenderType.Flex));
 
-public record GridRenderer(int? Columns, string? RowClass) : GroupRenderOptions(GroupRenderType.Grid.ToString());
+public record GridRenderer(int? Columns, string? RowClass) : GroupRenderOptions(nameof(GroupRenderType.Grid));
 
 public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)] object Value)
-    : GroupRenderOptions(GroupRenderType.GroupElement.ToString());
+    : GroupRenderOptions(nameof(GroupRenderType.GroupElement));
 
 public record SelectChildRenderer(
     [property: SchemaTag(SchemaTags.ControlRef + "Expression")]
         EntityExpression ChildIndexExpression
-) : GroupRenderOptions(GroupRenderType.SelectChild.ToString());
+) : GroupRenderOptions(nameof(GroupRenderType.SelectChild));
 
+public record AccordionRenderer(bool? DefaultExpanded) : GroupRenderOptions(nameof(GroupRenderType.Accordion));
 
 [JsonString]
 public enum AdornmentPlacement

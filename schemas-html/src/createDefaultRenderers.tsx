@@ -294,10 +294,7 @@ export interface DefaultAccordionRendererOptions {
   togglerClass?: string;
   iconOpen?: IconReference;
   iconClosed?: IconReference;
-  renderTitle?: (
-    title: string | undefined,
-    current: Control<boolean>,
-  ) => ReactNode;
+  renderTitle?: (title: ReactNode, current: Control<boolean>) => ReactNode;
   renderToggler?: (current: Control<boolean>, title: ReactNode) => ReactNode;
   useCss?: boolean;
 }
@@ -357,12 +354,13 @@ export function createDefaultAdornmentRenderer(
               <DefaultAccordion
                 renderers={renderers}
                 children={x}
-                accordion={adornment}
+                title={renderers.renderLabelText(adornment.title)}
+                defaultExpanded={adornment.defaultExpanded}
                 contentStyle={rl.style}
                 contentClassName={rl.className}
                 designMode={designMode}
                 dataContext={dataContext}
-                {...options.accordion}
+                options={options.accordion}
               />
             ))(rl);
           }
@@ -594,7 +592,7 @@ export function createDefaultRenderers(
     display: createDefaultDisplayRenderer(options.display),
     action: createButtonActionRenderer(undefined, options.action),
     array: createDefaultArrayRenderer(options.array),
-    group: createDefaultGroupRenderer(options.group),
+    group: createDefaultGroupRenderer(options.group, options.adornment),
     label: createDefaultLabelRenderer(options.label),
     adornment: createDefaultAdornmentRenderer(options.adornment),
     renderLayout: createDefaultLayoutRenderer(options.layout),

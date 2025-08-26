@@ -127,6 +127,8 @@
     "@react-typed-forms/schemas": "workspace:*",
     "@react-typed-forms/schemas-html": "workspace:*",
     "@astroapps/aria-base": "workspace:*",
+    "@astroapps/aria-datepicker": "workspace:*",
+    "@astroapps/schemas-datepicker": "workspace:*",
     "@astroapps/schemas-editor": "workspace:*",
     "@astroapps/schemas-datagrid": "workspace:*",
     "@astroapps/datagrid": "workspace:*",
