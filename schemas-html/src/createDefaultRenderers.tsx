@@ -357,7 +357,7 @@ export function createDefaultAdornmentRenderer(
           if (isAccordionAdornment(adornment)) {
             return wrapLayout((x) => {
               const displayProps = isValidElement(rl.children)
-                ? rl.children.props?.displayProps
+                ? (rl.children as ReactElement as any).props?.displayProps
                 : undefined;
               return (
                 <DefaultAccordion
