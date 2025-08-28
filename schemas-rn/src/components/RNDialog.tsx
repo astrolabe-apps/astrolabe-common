@@ -63,8 +63,8 @@ function DialogOverlayNative({
       {...props}
     >
       <Animated.View
-        entering={FadeIn.duration(150)}
-        exiting={FadeOut.duration(150)}
+      // entering={FadeIn.duration(150)} TODO: Enable animation after the lib fix the issue
+      // exiting={FadeOut.duration(150)}
       >
         {children}
       </Animated.View>
