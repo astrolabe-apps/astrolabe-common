@@ -16,13 +16,11 @@ export function HtmlCheckButtons(props: CheckButtonsProps) {
     entryAdornment,
     classes,
     controlClasses = {},
-    renderer,
   } = props;
-  const { Button, Input, Label, Div } = renderer.html;
   const { disabled } = control;
   const name = "r" + control.uniqueId;
   return (
-    <Div className={className} id={id}>
+    <div className={className} id={id}>
       <RenderArrayElements array={options?.filter((x) => x.value != null)}>
         {(o, i) => {
           const checked = useComputed(() => isChecked(control, o)).value;
@@ -36,7 +34,7 @@ export function HtmlCheckButtons(props: CheckButtonsProps) {
                 classes.notSelectedClass,
               );
           return (
-            <Button
+            <div
               className={clsx(
                 rendererClass(
                   controlClasses?.entryWrapperClass,
@@ -44,10 +42,9 @@ export function HtmlCheckButtons(props: CheckButtonsProps) {
                 ),
                 selOrUnsel,
               )}
-              onClick={() => !readonly && setChecked(control, o, !checked)}
             >
-              <Div className={classes.entryClass}>
-                <Input
+              <div className={classes.entryClass}>
+                <input
                   id={name + "_" + i}
                   className={classes.checkClass}
                   type={type}
@@ -55,19 +52,19 @@ export function HtmlCheckButtons(props: CheckButtonsProps) {
                   readOnly={readonly}
                   disabled={disabled}
                   checked={checked}
-                  onChangeChecked={(x) => {
-                    !readonly && setChecked(control, o, x);
+                  onChange={(x) => {
+                    !readonly && setChecked(control, o, x.target.checked);
                   }}
                 />
-                <Label className={classes.labelClass} htmlFor={name + "_" + i}>
+                <label className={classes.labelClass} htmlFor={name + "_" + i}>
                   {o.name}
-                </Label>
-              </Div>
+                </label>
+              </div>
               {entryAdornment?.(o, i, checked)}
-            </Button>
+            </div>
           );
         }}
       </RenderArrayElements>
-    </Div>
+    </div>
   );
 }

@@ -31,6 +31,7 @@ import {
   createRNScrollListRenderer,
   ExtendedDefaultScrollListOptions,
 } from "./components/RNScrollListRenderer";
+import { RNCheckButtons } from "./components/RNCheckButtons";
 
 export const reactNativeHtml: HtmlComponents = {
   I: RNIcon,
@@ -41,6 +42,7 @@ export const reactNativeHtml: HtmlComponents = {
   H1: RNSpan,
   Div: RNDiv,
   Input: RNInput,
+  CheckButtons: RNCheckButtons,
 };
 
 export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(

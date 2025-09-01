@@ -2,7 +2,6 @@
 import * as React from "react";
 import { Pressable, View } from "react-native";
 import { cn } from "../utils";
-import { CheckButtonsProps } from "@react-typed-forms/schemas-html";
 
 const RNRadioItem = React.forwardRef<
   RadioGroupPrimitive.ItemRef,

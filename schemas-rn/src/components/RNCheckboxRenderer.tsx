@@ -2,8 +2,8 @@
 import * as React from "react";
 import { cn } from "../utils";
 import { Icon } from "./Icon";
-import { CheckRendererOptions } from "@react-typed-forms/schemas-html";
 import {
+  CheckRendererOptions,
   ControlLayoutProps,
   createDataRenderer,
   DataRendererProps,
@@ -13,7 +13,6 @@ import {
 } from "@react-typed-forms/schemas";
 import { Pressable, View } from "react-native";
 import { formControlProps } from "@react-typed-forms/core";
-import Animated, { ZoomIn, ZoomOut } from "react-native-reanimated";
 
 export function createRNCheckboxRenderer(options: CheckRendererOptions = {}) {
   return createDataRenderer(
