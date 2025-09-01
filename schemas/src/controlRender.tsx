@@ -18,6 +18,7 @@ import {
   ActionStyle,
   AdornmentPlacement,
   ArrayActionOptions,
+  CheckEntryClasses,
   ChildNodeSpec,
   ControlAdornment,
   ControlDefinition,
@@ -118,6 +119,32 @@ export interface HtmlButtonProperties {
   androidRippleColor?: string;
   nonTextContent?: boolean;
 }
+
+export interface CheckRendererOptions {
+  className?: string;
+  entryClass?: string;
+  checkClass?: string;
+  labelClass?: string;
+  entryWrapperClass?: string;
+  selectedClass?: string;
+  notSelectedClass?: string;
+}
+
+export interface CheckButtonsProps {
+  id?: string;
+  className?: string;
+  options?: FieldOption[] | null;
+  control: Control<any>;
+  classes: CheckRendererOptions;
+  controlClasses?: CheckEntryClasses;
+  readonly?: boolean;
+  type: "checkbox" | "radio";
+  isChecked: (c: Control<any>, o: FieldOption) => boolean;
+  setChecked: (c: Control<any>, o: FieldOption, checked: boolean) => void;
+  entryAdornment?: (c: FieldOption, i: number, selected: boolean) => ReactNode;
+  renderer: FormRenderer;
+}
+
 export interface HtmlComponents {
   Div: ComponentType<HtmlDivProperties>;
   Span: ElementType<HTMLAttributes<HTMLSpanElement>>;
@@ -127,6 +154,7 @@ export interface HtmlComponents {
   B: ElementType<HTMLAttributes<HTMLElement>>;
   H1: ElementType<HTMLAttributes<HTMLElement>>;
   Input: ComponentType<HtmlInputProperties>;
+  CheckButtons: ComponentType<CheckButtonsProps>;
 }
 /**
  * Interface for rendering different types of form controls.
@@ -612,7 +640,8 @@ export function renderControlLayout(
         disabled: formNode.disabled,
         onClick: handler
           ? () => {
-              let disableType: ControlDisableType = c.disableType ?? ControlDisableType.Self;
+              let disableType: ControlDisableType =
+                c.disableType ?? ControlDisableType.Self;
               const r = handler({
                 disableForm(type: ControlDisableType) {
                   disableType = type;

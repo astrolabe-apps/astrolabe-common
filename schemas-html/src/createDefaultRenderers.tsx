@@ -27,7 +27,6 @@ import {
   DefaultArrayRendererOptions,
 } from "./components/DefaultArrayRenderer";
 import {
-  CheckRendererOptions,
   createCheckboxRenderer,
   createCheckListRenderer,
   createElementSelectedRenderer,
@@ -42,6 +41,7 @@ import {
   AdornmentRendererRegistration,
   appendMarkupAt,
   ArrayActionOptions,
+  CheckRendererOptions,
   ControlDataContext,
   createDataRenderer,
   DataRendererRegistration,
@@ -100,6 +100,7 @@ import {
   createScrollListRenderer,
   DefaultScrollListOptions,
 } from "./components/ScrollListRenderer";
+import { HtmlCheckButtons } from "./components/HtmlCheckButtons";
 
 export interface DefaultRendererOptions {
   data?: DefaultDataRendererOptions;
@@ -493,6 +494,7 @@ export const StandardHtmlComponents: HtmlComponents = {
   H1: "h1",
   B: "b",
   Input: DefaultHtmlInputRenderer,
+  CheckButtons: HtmlCheckButtons,
 };
 
 export function DefaultHtmlButtonRenderer({
