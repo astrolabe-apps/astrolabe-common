@@ -10,7 +10,10 @@ import React, { ReactNode, Fragment } from "react";
 export interface DefaultLayoutRendererOptions {
   className?: string;
   errorClass?: string;
-  renderError?: (errorText: string | null | undefined) => ReactNode;
+  renderError?: (
+    errorText: string | null | undefined,
+    errorId?: string,
+  ) => ReactNode;
 }
 
 export function createDefaultLayoutRenderer(
@@ -38,13 +41,15 @@ export function DefaultLayout({
   renderer: {
     html: { Div, Span },
   },
-  renderError = (e) =>
+  renderError = (e, errorId) =>
     e && (
       <Div>
-        <Span className={errorClass}>{e}</Span>
+        <Span id={errorId} className={errorClass}>
+          {e}
+        </Span>
       </Div>
     ),
-  layout: { controlEnd, controlStart, label, children, errorControl },
+  layout: { controlEnd, controlStart, label, children, errorControl, errorId },
 }: DefaultLayoutRendererOptions & {
   layout: RenderedLayout;
   renderer: FormRenderer;
@@ -56,7 +61,7 @@ export function DefaultLayout({
       {label}
       {controlStart}
       {children}
-      {renderError(errorText)}
+      {renderError(errorText, errorId)}
       {controlEnd}
     </>
   );

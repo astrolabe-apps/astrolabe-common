@@ -104,6 +104,8 @@ export interface HtmlInputProperties {
   inputRef?: (e: HTMLElement | null) => void;
   onChangeValue?: (value: string) => void;
   onChangeChecked?: (checked: boolean) => void;
+  "aria-describedby"?: string;
+  "aria-invalid"?: boolean;
 }
 
 export interface HtmlButtonProperties {
@@ -292,6 +294,7 @@ export interface RenderedLayout {
   label?: ReactNode;
   children?: ReactNode;
   errorControl?: Control<any>;
+  errorId?: string;
   className?: string;
   style?: React.CSSProperties;
   wrapLayout: (layout: ReactElement) => ReactElement;
@@ -313,6 +316,7 @@ export interface VisibilityRendererProps extends RenderedControl {
 export interface ControlLayoutProps {
   label?: LabelRendererProps;
   errorControl?: Control<any>;
+  errorId?: string;
   adornments?: AdornmentRenderer[];
   children?: ReactNode;
   processLayout?: (props: ControlLayoutProps) => ControlLayoutProps;
@@ -445,6 +449,7 @@ export interface DataRendererProps extends ParentRendererProps {
   dataNode: SchemaDataNode;
   displayOnly: boolean;
   inline: boolean;
+  errorId: string;
 }
 
 export interface ControlRenderProps {
@@ -499,13 +504,15 @@ export function defaultDataProps(
   const className = rendererClass(styleClass, definition.styleClass);
   const textClass = rendererClass(tc, definition.textClass);
   const required = !!definition.required && !displayOnly;
+  const id = "c" + control.uniqueId;
   return {
     dataNode,
     formNode,
     definition,
     control,
     field,
-    id: "c" + control.uniqueId,
+    id,
+    errorId: "err_" + id,
     inline: !!inline,
     options: formNode.resolved.fieldOptions,
     readonly: formNode.readonly,
@@ -710,6 +717,7 @@ export function renderControlLayout(
         textClass: rendererClass(labelTextClass, c.labelTextClass),
       },
       errorControl: control,
+      errorId: rendererProps.errorId,
     };
   }
 }
@@ -723,6 +731,7 @@ type MarkupKeys = keyof Omit<
   | "readonly"
   | "disabled"
   | "inline"
+  | "errorId"
 >;
 export function appendMarkup(
   k: MarkupKeys,
@@ -792,6 +801,7 @@ export function renderLayoutParts(
     label,
     adornments,
     inline,
+    errorId,
   } = props.processLayout?.(props) ?? props;
   const layout: RenderedLayout = {
     children,
@@ -799,6 +809,7 @@ export function renderLayoutParts(
     style,
     className: className!,
     inline,
+    errorId,
     wrapLayout: (x) => x,
   };
   (adornments ?? [])

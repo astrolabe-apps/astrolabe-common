@@ -284,6 +284,7 @@ export function createDefaultDataRenderer(
         textClass={rendererClass(props.textClass, inputTextClass)}
         style={props.style}
         id={props.id}
+        errorId={props.errorId}
         readOnly={props.readonly}
         control={props.control}
         placeholder={placeholder ?? undefined}

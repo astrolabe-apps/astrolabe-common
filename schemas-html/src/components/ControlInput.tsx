@@ -12,6 +12,7 @@ export interface ControlInputProps {
   textClass?: string;
   style?: React.CSSProperties;
   id?: string;
+  errorId?: string;
   readOnly?: boolean;
   placeholder?: string;
   control: Control<any>;
@@ -22,6 +23,7 @@ export function ControlInput({
   control,
   convert,
   renderer,
+  errorId,
   ...props
 }: ControlInputProps) {
   const { errorText, value, onChange, ref, ...inputProps } =
@@ -38,6 +40,8 @@ export function ControlInput({
       inputRef={ref}
       type={convert[0]}
       value={textValue.value}
+      aria-describedby={!!errorText ? errorId : undefined}
+      aria-invalid={!!errorText || undefined}
       onChangeValue={(e) => {
         textValue.value = e;
         const converted = convert[1](e);
