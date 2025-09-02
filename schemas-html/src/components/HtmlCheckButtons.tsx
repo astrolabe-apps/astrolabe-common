@@ -20,7 +20,7 @@ export function HtmlCheckButtons(props: CheckButtonsProps) {
   const { disabled } = control;
   const name = "r" + control.uniqueId;
   return (
-    <div className={className} id={id}>
+    <div role="group" className={className} id={id}>
       <RenderArrayElements array={options?.filter((x) => x.value != null)}>
         {(o, i) => {
           const checked = useComputed(() => isChecked(control, o)).value;

@@ -1,4 +1,10 @@
-import React, { CSSProperties, Fragment, ReactElement, ReactNode } from "react";
+import React, {
+  CSSProperties,
+  Fragment,
+  ReactElement,
+  ReactNode,
+  useId,
+} from "react";
 import { Control, useControl } from "@react-typed-forms/core";
 import { DefaultAccordionRendererOptions } from "../createDefaultRenderers";
 import {
@@ -46,7 +52,7 @@ export function DefaultAccordion({
     renderToggler,
     useCss,
   } = options ?? {};
-
+  const panelId = useId();
   const { Button, I, Div, Label } = renderers.html;
   const dataControl = (dataContext.dataNode ?? dataContext.parentNode).control;
   const open = useControl(!!defaultExpanded);
@@ -75,6 +81,8 @@ export function DefaultAccordion({
       className={accordionClassName}
       notWrapInText
       onClick={() => open.setValue((x) => !x)}
+      aria-expanded={isOpen}
+      aria-controls={panelId}
     >
       {accordionTitle}
       {currentIcon && (
@@ -92,7 +100,12 @@ export function DefaultAccordion({
     <>
       {toggler}
       {(useCss || isOpen || designMode) && (
-        <Div style={fullContentStyle} className={contentClassName}>
+        <Div
+          id={panelId}
+          role="region"
+          style={fullContentStyle}
+          className={contentClassName}
+        >
           {children}
         </Div>
       )}

@@ -86,6 +86,7 @@ export interface HtmlDivProperties {
   html?: string;
   nativeRef?: (e: HTMLElement | null) => void;
   inline?: boolean;
+  role?: string;
 }
 
 export interface HtmlInputProperties {
@@ -120,6 +121,8 @@ export interface HtmlButtonProperties {
   notWrapInText?: boolean;
   androidRippleColor?: string;
   nonTextContent?: boolean;
+  "aria-expanded"?: boolean;
+  "aria-controls"?: string;
 }
 
 export interface CheckRendererOptions {
