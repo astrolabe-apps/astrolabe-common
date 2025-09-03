@@ -3,7 +3,7 @@ import {
   DefaultRendererOptions,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
-import { Platform, Pressable, Text, View } from "react-native";
+import { Platform, Pressable, Role, Text, View } from "react-native";
 import { RNTextInput } from "./components/RNTextInputRenderer";
 import { RNRadioItem } from "./components/RNRadioItem";
 import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
@@ -163,12 +163,14 @@ function RNLabel({
   text,
   style,
   inline,
+  role,
   ...props
 }: HtmlDivProperties) {
   return (
     <View
       className={className}
       style={style as StyleProp<ViewStyle>}
+      role={role as Role}
       {...props}
     >
       <Text className={textClass}>{children}</Text>
@@ -184,6 +186,7 @@ function RNDiv({
   text,
   style,
   inline,
+  role,
   ...props
 }: HtmlDivProperties) {
   if (html != null) {
@@ -201,6 +204,7 @@ function RNDiv({
       <View
         className={className}
         style={style as StyleProp<ViewStyle>}
+        role={role as Role}
         {...props}
       >
         <Text className={textClass}>{text}</Text>
@@ -212,6 +216,7 @@ function RNDiv({
       className={className}
       style={style as StyleProp<ViewStyle>}
       children={children}
+      role={role as Role}
       {...props}
     />
   );
