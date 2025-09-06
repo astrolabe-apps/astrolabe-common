@@ -2,6 +2,7 @@ import {
   createGroupRenderer,
   createScoped,
   DefaultFormNodeUi,
+  DefaultTabsRenderOptions,
   FormStateNode,
   GroupRendererProps,
   GroupRenderType,
@@ -12,16 +13,6 @@ import React, { Fragment, useEffect } from "react";
 import clsx from "clsx";
 import { useControl } from "@react-typed-forms/core";
 import { Control } from "@astroapps/controls";
-
-export interface DefaultTabsRenderOptions {
-  className?: string;
-  tabListClass?: string;
-  tabClass?: string;
-  labelClass?: string;
-  activeClass?: string;
-  inactiveClass?: string;
-  contentClass?: string;
-}
 
 export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
   return createGroupRenderer(

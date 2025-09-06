@@ -1,10 +1,12 @@
 import React from "react";
-import { DefaultRendererOptions, fontAwesomeIcon, IconPlacement } from "@react-typed-forms/schemas";
+import { DefaultRendererOptions } from "@react-typed-forms/schemas";
+import { fontAwesomeIcon } from "@react-typed-forms/schemas";
 
+// Default tailwind theme adapted for React Native
 export const defaultTailwindTheme = {
   label: {
     groupLabelClass: "font-bold",
-    requiredElement: ({ Span }) => <Span className="text-red-500"> *</Span>,
+    requiredElement: ({ Span }) => React.createElement(Span, { className: "text-red-500" }, " *"),
   },
   array: {
     removableClass: "grid grid-cols-[1fr_auto] items-center gap-x-2",

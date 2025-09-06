@@ -2,7 +2,9 @@ import {
   ActionRendererProps,
   createAction,
   createGroupRenderer,
+  CustomNavigationProps,
   deepMerge,
+  DefaultWizardRenderOptions,
   fontAwesomeIcon,
   FormRenderer,
   GroupRendererProps,
@@ -14,32 +16,6 @@ import {
 import { useComputed, useControl } from "@react-typed-forms/core";
 import { Fragment, ReactNode } from "react";
 
-export interface CustomNavigationProps {
-  className?: string;
-  page: number;
-  totalPages: number;
-  next: ActionRendererProps;
-  prev: ActionRendererProps;
-  formRenderer: FormRenderer;
-  validatePage: () => Promise<boolean>;
-}
-
-export interface DefaultWizardRenderOptions {
-  classes?: {
-    className?: string;
-    navContainerClass?: string;
-    contentClass?: string;
-  };
-  actions?: {
-    nextText?: string;
-    nextIcon?: IconReference;
-    nextValidate?: boolean;
-    prevText?: string;
-    prevIcon?: IconReference;
-    prevValidate?: boolean;
-  };
-  renderNavigation?: (props: CustomNavigationProps) => ReactNode;
-}
 
 const defaultOptions = {
   classes: {

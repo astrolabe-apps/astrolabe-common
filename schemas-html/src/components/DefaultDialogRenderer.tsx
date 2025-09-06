@@ -4,6 +4,7 @@ import {
   createAction,
   createGroupRenderer,
   deepMerge,
+  DefaultDialogRenderOptions,
   DialogRenderOptions,
   FormRenderer,
   GroupRendererProps,
@@ -13,14 +14,6 @@ import {
 import { createOverlayState, Dialog, Modal } from "@astroapps/aria-base";
 import { useControl } from "@react-typed-forms/core";
 import { Fragment } from "react";
-
-export interface DefaultDialogRenderOptions {
-  classes?: {
-    className?: string;
-    titleClass?: string;
-    containerClass?: string;
-  };
-}
 
 export const defaultDialogOptions = {
   classes: {

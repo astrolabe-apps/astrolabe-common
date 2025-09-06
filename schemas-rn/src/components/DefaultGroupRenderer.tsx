@@ -1,11 +1,5 @@
 import {
   ControlLayoutProps,
-  DefaultAccordionRendererOptions,
-  DefaultDialogRenderOptions,
-  DefaultGridRenderOptions,
-  DefaultGroupRendererOptions,
-  DefaultTabsRenderOptions,
-  DefaultWizardRenderOptions,
   FlexRenderer,
   FormRenderer,
   GroupRendererProps,
@@ -23,24 +17,43 @@ import {
   SelectChildRenderer,
   useExpression,
 } from "@react-typed-forms/schemas";
-import { DefaultAdornmentRendererOptions } from "../createDefaultRenderers";
 import clsx from "clsx";
 import React, { CSSProperties, ReactElement } from "react";
+import { 
+  DefaultTabsRenderOptions,
+  DefaultGridRenderOptions,
+  DefaultWizardRenderOptions,
+  DefaultDialogRenderOptions,
+} from "@react-typed-forms/schemas";
 import { createTabsRenderer } from "./TabsRenderer";
 import { createGridRenderer } from "./GridRenderer";
-import {
-  createWizardRenderer,
-} from "./DefaultWizardRenderer";
-import {
-  createDialogRenderer,
-} from "./DefaultDialogRenderer";
+import { createWizardRenderer } from "./DefaultWizardRenderer";
+import { createDialogRenderer } from "./DefaultDialogRenderer";
 import { createAccordionGroupRenderer } from "./DefaultAccordion";
+import {
+  DefaultAccordionRendererOptions,
+} from "@react-typed-forms/schemas";
+import {
+  DefaultAdornmentRendererOptions,
+} from "../createDefaultRNRenderers";
 
 interface StyleProps {
   className?: string;
   style?: CSSProperties;
 }
 
+export interface DefaultGroupRendererOptions {
+  className?: string;
+  standardClassName?: string;
+  grid?: DefaultGridRenderOptions;
+  flexClassName?: string;
+  defaultFlexGap?: string;
+  inlineClass?: string;
+  tabs?: DefaultTabsRenderOptions;
+  wizard?: DefaultWizardRenderOptions;
+  dialog?: DefaultDialogRenderOptions;
+  accordion?: DefaultAccordionRendererOptions;
+}
 
 export function createDefaultGroupRenderer(
   options?: DefaultGroupRendererOptions,

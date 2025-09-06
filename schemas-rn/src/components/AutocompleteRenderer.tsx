@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import {
   Control,
   controlValues,
@@ -8,7 +8,6 @@ import {
 } from "@react-typed-forms/core";
 import {
   AutocompleteClasses,
-  AutocompleteRendererOptions,
   createDataRenderer,
   DataRenderType,
   FieldOption,
@@ -16,6 +15,14 @@ import {
 } from "@react-typed-forms/schemas";
 import { useAutocomplete, UseAutocompleteProps } from "@mui/base";
 import clsx from "clsx";
+
+export interface AutocompleteRendererOptions {
+  className?: string;
+  listContainerClass?: string;
+  listEntryClass?: string;
+  chipContainerClass?: string;
+  chipCloseButtonClass?: string;
+}
 
 export interface AutocompleteProps<A, Multiple extends boolean>
   extends UseAutocompleteProps<A, Multiple, false, true> {

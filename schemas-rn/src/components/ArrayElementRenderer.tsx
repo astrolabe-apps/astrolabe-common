@@ -1,7 +1,6 @@
 import {
   ActionRendererProps,
   ArrayElementRenderOptions,
-  ArrayElementRendererOptions,
   ControlDefinitionType,
   createDataRenderer,
   DataRendererProps,
@@ -21,6 +20,11 @@ import React, { Fragment } from "react";
 import { Dialog, Modal } from "@astroapps/aria-base";
 import { useOverlayTriggerState } from "@react-stately/overlays";
 import { RenderElements } from "@react-typed-forms/core";
+
+export interface ArrayElementRendererOptions {
+  className?: string;
+  actionsClass?: string;
+}
 export function createArrayElementRenderer(
   options: ArrayElementRendererOptions = {},
 ) {

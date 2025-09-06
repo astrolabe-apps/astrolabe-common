@@ -14,7 +14,6 @@ import React, {
 import clsx from "clsx";
 import {
   createSelectRenderer,
-  SelectRendererOptions,
 } from "./components/SelectDataRenderer";
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
 import { Control, useControlEffect } from "@react-typed-forms/core";
@@ -72,19 +71,22 @@ import {
   SetFieldAdornment,
   useExpression,
   wrapLayout,
+  // Import all the options interfaces from the schemas package
+  DefaultRendererOptions,
   DefaultDataRendererOptions,
   DefaultAccordionRendererOptions,
   DefaultHelpTextRendererOptions,
-  DefaultGroupRendererOptions,
   DefaultLabelRendererOptions,
   DefaultBoolOptions,
-  DefaultScrollListOptions,
+  DefaultDisplayRendererOptions,
+  DefaultLayoutRendererOptions,
+  DefaultArrayRendererOptions,
+  DefaultGroupRendererOptions,
+  DefaultActionRendererOptions,
+  SelectRendererOptions,
   AutocompleteRendererOptions,
   ArrayElementRendererOptions,
-  DefaultActionRendererOptions,
-  DefaultDisplayRendererOptions,
-  DefaultArrayRendererOptions,
-  DefaultLayoutRendererOptions,
+  DefaultScrollListOptions,
 } from "@react-typed-forms/schemas";
 import {
   createDefaultGroupRenderer,
@@ -96,25 +98,6 @@ import {
   createOptionalAdornment,
   DefaultOptionalAdornmentOptions,
 } from "./adornments/optionalAdornment";
-
-export interface DefaultAdornmentRendererOptions {
-  accordion?: DefaultAccordionRendererOptions;
-  helpText?: DefaultHelpTextRendererOptions;
-  optional?: DefaultOptionalAdornmentOptions;
-}
-
-export interface DefaultRendererOptions {
-  data?: DefaultDataRendererOptions;
-  display?: DefaultDisplayRendererOptions;
-  action?: DefaultActionRendererOptions;
-  array?: DefaultArrayRendererOptions;
-  group?: DefaultGroupRendererOptions;
-  label?: DefaultLabelRendererOptions;
-  adornment?: DefaultAdornmentRendererOptions;
-  layout?: DefaultLayoutRendererOptions;
-  extraRenderers?: (options: DefaultRendererOptions) => RendererRegistration[];
-  html?: FormRenderer["html"];
-}
 import {
   createArrayElementRenderer,
 } from "./components/ArrayElementRenderer";
@@ -126,7 +109,11 @@ import {
 } from "./components/ScrollListRenderer";
 import { HtmlCheckButtons } from "./components/HtmlCheckButtons";
 
-
+export interface DefaultAdornmentRendererOptions {
+  accordion?: DefaultAccordionRendererOptions;
+  helpText?: DefaultHelpTextRendererOptions;
+  optional?: DefaultOptionalAdornmentOptions;
+}
 
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
@@ -283,9 +270,6 @@ export function createDefaultDataRenderer(
   });
 }
 
-
-
-
 export function createDefaultAdornmentRenderer(
   options: DefaultAdornmentRendererOptions = {},
 ): AdornmentRendererRegistration {
@@ -351,7 +335,6 @@ export function createDefaultAdornmentRenderer(
     },
   };
 }
-
 
 function SetFieldWrapper({
   children,
@@ -563,9 +546,9 @@ export function createDefaultRenderers(
     display: createDefaultDisplayRenderer(options.display),
     action: createButtonActionRenderer(undefined, options.action),
     array: createDefaultArrayRenderer(options.array),
-    group: createDefaultGroupRenderer(options.group, options.adornment),
+    group: createDefaultGroupRenderer(options.group, options.adornment as DefaultAdornmentRendererOptions),
     label: createDefaultLabelRenderer(options.label),
-    adornment: createDefaultAdornmentRenderer(options.adornment),
+    adornment: createDefaultAdornmentRenderer(options.adornment as DefaultAdornmentRendererOptions),
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
     extraRenderers: options.extraRenderers?.(options) ?? [],

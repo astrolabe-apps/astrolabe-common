@@ -6,3 +6,4 @@ export * from "./renderers";
 export * from "./createFormRenderer";
 export * from "./RenderForm";
 export * from "./types";
+export * from "./rendererOptions";

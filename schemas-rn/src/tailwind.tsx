@@ -1,8 +1,8 @@
 import { HTMLAttributes } from "react";
 import {
   DefaultRendererOptions,
-  defaultTailwindTheme,
-} from "@react-typed-forms/schemas-html";
+} from "@react-typed-forms/schemas";
+import { defaultTailwindTheme } from "./defaultTailwindTheme";
 import { Platform, Pressable, Role, Text, View } from "react-native";
 import { RNTextInput } from "./components/RNTextInputRenderer";
 import { RNRadioItem } from "./components/RNRadioItem";

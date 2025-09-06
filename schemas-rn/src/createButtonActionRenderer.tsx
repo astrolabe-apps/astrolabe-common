@@ -4,11 +4,36 @@ import {
   ActionRendererRegistration,
   ActionStyle,
   createActionRenderer,
-  DefaultActionRendererOptions,
   IconPlacement,
   IconReference,
   rendererClass,
 } from "@react-typed-forms/schemas";
+
+export interface DefaultActionRendererOptions {
+  buttonClass?: string;
+  textClass?: string;
+  primaryClass?: string;
+  primaryTextClass?: string;
+  secondaryClass?: string;
+  secondaryTextClass?: string;
+  linkClass?: string;
+  linkTextClass?: string;
+  iconBeforeClass?: string;
+  iconAfterClass?: string;
+  groupClass?: string;
+  renderContent?: (
+    actionText: string,
+    actionId: string,
+    actionData: any,
+    busy?: boolean,
+  ) => ReactNode;
+  icon?: IconReference;
+  iconPlacement?: IconPlacement;
+  busyIcon?: IconReference;
+  busyIconPlacement?: IconPlacement;
+  notWrapInText?: boolean;
+  androidRippleColor?: string;
+}
 
 export function createButtonActionRenderer(
   actionId: string | string[] | undefined,

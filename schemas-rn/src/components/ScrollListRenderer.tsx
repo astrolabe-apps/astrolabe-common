@@ -11,10 +11,15 @@ import {
   NoOpControlActionContext,
   rendererClass,
   ScrollListRenderOptions,
-  DefaultScrollListOptions,
 } from "@react-typed-forms/schemas";
 import { useEffect, useRef, Fragment } from "react";
 
+export interface DefaultScrollListOptions {
+  loadingIcon?: IconReference;
+  iconClass?: string;
+  spinnerClass?: string;
+  className?: string;
+}
 
 const defaultOptions = {
   spinnerClass: "flex justify-center my-6",

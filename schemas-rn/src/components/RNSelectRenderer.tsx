@@ -4,10 +4,12 @@ import { Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { cn } from "../utils";
 import {
+  SelectRendererOptions,
+} from "@react-typed-forms/schemas";
+import {
   createSelectConversion,
   SelectDataRendererProps,
-  SelectRendererOptions,
-} from "@react-typed-forms/schemas-html";
+} from "../selectUtils";
 import {
   createDataRenderer,
   DataRenderType,

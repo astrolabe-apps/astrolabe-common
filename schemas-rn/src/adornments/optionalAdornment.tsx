@@ -24,7 +24,6 @@ export interface OptionalRenderProps {
   options: DefaultOptionalAdornmentOptions;
   dataControl: Control<any>;
 }
-
 export interface DefaultOptionalAdornmentOptions {
   className?: string;
   checkClass?: string;
