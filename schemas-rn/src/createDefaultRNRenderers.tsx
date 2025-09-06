@@ -84,23 +84,15 @@ import {
   DefaultGroupRendererOptions,
   DefaultActionRendererOptions,
   SelectRendererOptions,
-  AutocompleteRendererOptions,
-  ArrayElementRendererOptions,
   DefaultScrollListOptions,
 } from "@react-typed-forms/schemas";
 import {
   createDefaultGroupRenderer,
 } from "./components/DefaultGroupRenderer";
 import {
-  createAutocompleteRenderer,
-} from "./components/AutocompleteRenderer";
-import {
   createOptionalAdornment,
   DefaultOptionalAdornmentOptions,
 } from "./adornments/optionalAdornment";
-import {
-  createArrayElementRenderer,
-} from "./components/ArrayElementRenderer";
 import {
   createButtonActionRenderer,
 } from "./createButtonActionRenderer";
@@ -136,9 +128,6 @@ export function createDefaultDataRenderer(
   const checkListRenderer = createCheckListRenderer(
     options.checkListOptions ?? options.checkOptions,
   );
-  const arrayElementRenderer = createArrayElementRenderer(
-    options.arrayElementOptions,
-  );
   const {
     inputClass,
     inputTextClass,
@@ -153,9 +142,6 @@ export function createDefaultDataRenderer(
   };
   const arrayRenderer = createDefaultArrayDataRenderer(options.arrayOptions);
 
-  const autocompleteRenderer = createAutocompleteRenderer(
-    options.autocompleteOptions,
-  );
 
   const scrollListRenderer = createScrollListRenderer(
     options.scrollListOptions,
@@ -176,7 +162,7 @@ export function createDefaultDataRenderer(
         renderType == DataRenderType.ArrayElement)
     ) {
       if (renderType == DataRenderType.ArrayElement)
-        return arrayElementRenderer.render(props, renderers);
+        throw new Error("ArrayElement renderer not implemented for React Native");
       return arrayRenderer.render(props, renderers);
     }
     if (
@@ -236,7 +222,7 @@ export function createDefaultDataRenderer(
       case DataRenderType.Jsonata:
         return jsonataRenderer.render(props, renderers);
       case DataRenderType.Autocomplete:
-        return autocompleteRenderer.render(props, renderers);
+        throw new Error("Autocomplete renderer not implemented for React Native");
       case DataRenderType.ElementSelected:
         return elementSelectedRenderer.render(props, renderers);
     }
