@@ -1,5 +1,6 @@
 import React from "react";
-import { DefaultRendererOptions, fontAwesomeIcon, IconPlacement } from "@react-typed-forms/schemas";
+import { fontAwesomeIcon, IconPlacement } from "@react-typed-forms/schemas";
+import { DefaultRendererOptions } from "./rendererOptions";
 
 export const defaultTailwindTheme = {
   label: {

@@ -10,8 +10,8 @@ import {
   getNullToggler,
   OptionalAdornment,
   wrapMarkup,
-  DefaultOptionalAdornmentOptions,
 } from "@react-typed-forms/schemas";
+import { DefaultOptionalAdornmentOptions } from "../rendererOptions";
 import { Control, Fcheckbox, newControl } from "@react-typed-forms/core";
 import React, { ReactNode } from "react";
 

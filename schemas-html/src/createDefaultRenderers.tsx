@@ -14,7 +14,6 @@ import React, {
 import clsx from "clsx";
 import {
   createSelectRenderer,
-  SelectRendererOptions,
 } from "./components/SelectDataRenderer";
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
 import { Control, useControlEffect } from "@react-typed-forms/core";
@@ -72,6 +71,11 @@ import {
   SetFieldAdornment,
   useExpression,
   wrapLayout,
+} from "@react-typed-forms/schemas";
+import {
+  DefaultOptionalAdornmentOptions,
+  DefaultAdornmentRendererOptions,
+  DefaultRendererOptions,
   DefaultDataRendererOptions,
   DefaultAccordionRendererOptions,
   DefaultHelpTextRendererOptions,
@@ -85,10 +89,8 @@ import {
   DefaultDisplayRendererOptions,
   DefaultArrayRendererOptions,
   DefaultLayoutRendererOptions,
-  DefaultOptionalAdornmentOptions,
-  DefaultAdornmentRendererOptions,
-  DefaultRendererOptions,
-} from "@react-typed-forms/schemas";
+  SelectRendererOptions,
+} from "./rendererOptions";
 import {
   createDefaultGroupRenderer,
 } from "./components/DefaultGroupRenderer";

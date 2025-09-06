@@ -11,8 +11,8 @@ import {
   NoOpControlActionContext,
   rendererClass,
   ScrollListRenderOptions,
-  DefaultScrollListOptions,
 } from "@react-typed-forms/schemas";
+import { DefaultScrollListOptions } from "../rendererOptions";
 import { useEffect, useRef, Fragment } from "react";
 
 

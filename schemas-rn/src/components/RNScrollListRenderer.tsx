@@ -18,7 +18,7 @@ import {
   View,
 } from "react-native";
 import { isValidElement, ReactElement } from "react";
-import { DefaultScrollListOptions } from "@react-typed-forms/schemas";
+import { DefaultScrollListOptions } from "../rendererOptions";
 
 export interface ExtendedDefaultScrollListOptions
   extends DefaultScrollListOptions {

@@ -24,14 +24,14 @@ import {
   DefaultGridRenderOptions,
   DefaultWizardRenderOptions,
   DefaultDialogRenderOptions,
-} from "@react-typed-forms/schemas";
+} from "../rendererOptions";
 import { createGridRenderer } from "./GridRenderer";
 import { createWizardRenderer } from "./DefaultWizardRenderer";
 import { createAccordionGroupRenderer } from "./DefaultAccordion";
 import {
   DefaultAccordionRendererOptions,
   DefaultAdornmentRendererOptions,
-} from "@react-typed-forms/schemas";
+} from "../rendererOptions";
 
 interface StyleProps {
   className?: string;

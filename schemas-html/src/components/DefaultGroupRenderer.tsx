@@ -1,11 +1,5 @@
 import {
   ControlLayoutProps,
-  DefaultAccordionRendererOptions,
-  DefaultDialogRenderOptions,
-  DefaultGridRenderOptions,
-  DefaultGroupRendererOptions,
-  DefaultTabsRenderOptions,
-  DefaultWizardRenderOptions,
   FlexRenderer,
   FormRenderer,
   GroupRendererProps,
@@ -22,8 +16,16 @@ import {
   rendererClass,
   SelectChildRenderer,
   useExpression,
-  DefaultAdornmentRendererOptions,
 } from "@react-typed-forms/schemas";
+import {
+  DefaultAccordionRendererOptions,
+  DefaultDialogRenderOptions,
+  DefaultGridRenderOptions,
+  DefaultGroupRendererOptions,
+  DefaultTabsRenderOptions,
+  DefaultWizardRenderOptions,
+  DefaultAdornmentRendererOptions,
+} from "../rendererOptions";
 import clsx from "clsx";
 import React, { CSSProperties, ReactElement } from "react";
 import { createTabsRenderer } from "./TabsRenderer";

@@ -8,12 +8,12 @@ import {
 } from "@react-typed-forms/core";
 import {
   AutocompleteClasses,
-  AutocompleteRendererOptions,
   createDataRenderer,
   DataRenderType,
   FieldOption,
   rendererClass,
 } from "@react-typed-forms/schemas";
+import { AutocompleteRendererOptions } from "../rendererOptions";
 import { useAutocomplete, UseAutocompleteProps } from "@mui/base";
 import clsx from "clsx";
 

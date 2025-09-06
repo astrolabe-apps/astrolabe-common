@@ -3,9 +3,7 @@ import * as React from "react";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import { cn } from "../utils";
-import {
-  SelectRendererOptions,
-} from "@react-typed-forms/schemas";
+import { SelectRendererOptions } from "../rendererOptions";
 import {
   createSelectConversion,
   SelectDataRendererProps,

@@ -10,12 +10,12 @@ import {
   AccordionRenderer,
   ControlDataContext,
   createGroupRenderer,
-  DefaultAccordionRendererOptions,
   FormRenderer,
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
 } from "@react-typed-forms/schemas";
+import { DefaultAccordionRendererOptions } from "../rendererOptions";
 
 export function DefaultAccordion({
   children,

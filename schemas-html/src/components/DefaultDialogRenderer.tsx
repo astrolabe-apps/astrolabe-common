@@ -4,13 +4,13 @@ import {
   createAction,
   createGroupRenderer,
   deepMerge,
-  DefaultDialogRenderOptions,
   DialogRenderOptions,
   FormRenderer,
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
 } from "@react-typed-forms/schemas";
+import { DefaultDialogRenderOptions } from "../rendererOptions";
 import { createOverlayState, Dialog, Modal } from "@astroapps/aria-base";
 import { useControl } from "@react-typed-forms/core";
 import { Fragment } from "react";

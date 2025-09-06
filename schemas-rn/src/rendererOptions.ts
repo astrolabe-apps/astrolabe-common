@@ -13,7 +13,9 @@ import {
   RenderOptions,
   SchemaNode,
   ActionRendererProps,
-} from "./index";
+  ControlDataContext,
+  OptionalAdornment,
+} from "@react-typed-forms/schemas";
 
 // ============================================================================
 // SHARED TYPES AND INTERFACES
@@ -30,8 +32,20 @@ export interface CustomNavigationProps {
   validatePage: () => Promise<boolean>;
 }
 
+// Optional render props for optional adornment (React Native)
+export interface OptionalRenderProps {
+  allValues: Control<unknown[]>;
+  editing: Control<boolean | undefined>;
+  children: ReactNode;
+  adornment: OptionalAdornment;
+  nullToggler: Control<boolean>;
+  dataContext: ControlDataContext;
+  options: DefaultOptionalAdornmentOptions;
+  dataControl: Control<any>;
+}
+
 // ============================================================================
-// INDIVIDUAL COMPONENT OPTIONS INTERFACES
+// INDIVIDUAL COMPONENT OPTIONS INTERFACES (React Native)
 // ============================================================================
 
 export interface SelectRendererOptions {
@@ -108,17 +122,6 @@ export interface DefaultWizardRenderOptions {
   renderNavigation?: (props: CustomNavigationProps) => ReactNode;
 }
 
-export interface ValueForFieldRenderOptions extends RenderOptions {
-  type: "ValueForField";
-  fieldRef?: string | null;
-  noOptions?: boolean;
-  refIsDirect?: boolean;
-}
-
-export interface ValueForFieldOptions {
-  schema: SchemaNode;
-}
-
 export interface DefaultArrayRendererOptions extends ArrayActionOptions {
   className?: string;
   removableClass?: string;
@@ -173,7 +176,7 @@ export interface DefaultOptionalAdornmentOptions {
   setNullText?: string;
   defaultPlacement?: AdornmentPlacement;
   hideEdit?: boolean;
-  customRender?: (props: any) => ReactNode;
+  customRender?: (props: OptionalRenderProps) => ReactNode;
 }
 
 export interface DefaultAccordionRendererOptions {
@@ -221,13 +224,14 @@ export interface DefaultGroupRendererOptions {
   defaultFlexGap?: string;
   inlineClass?: string;
   tabs?: DefaultTabsRenderOptions;
-  wizard?: DefaultWizardRenderOptions;
   dialog?: DefaultDialogRenderOptions;
+  // Note: dialog not fully supported in React Native
+  wizard?: DefaultWizardRenderOptions;
   accordion?: DefaultAccordionRendererOptions;
 }
 
 // ============================================================================
-// MAIN COMPOSITE OPTIONS INTERFACES
+// MAIN COMPOSITE OPTIONS INTERFACES (React Native)
 // ============================================================================
 
 export interface DefaultDataRendererOptions {

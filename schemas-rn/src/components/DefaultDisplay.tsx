@@ -12,8 +12,8 @@ import {
   IconDisplay,
   rendererClass,
   TextDisplay,
-  DefaultDisplayRendererOptions,
 } from "@react-typed-forms/schemas";
+import { DefaultDisplayRendererOptions } from "../rendererOptions";
 
 export function createDefaultDisplayRenderer(
   options: DefaultDisplayRendererOptions = {},

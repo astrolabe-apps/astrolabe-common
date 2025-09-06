@@ -2,9 +2,7 @@ import {
   ActionRendererProps,
   createAction,
   createGroupRenderer,
-  CustomNavigationProps,
   deepMerge,
-  DefaultWizardRenderOptions,
   fontAwesomeIcon,
   FormRenderer,
   GroupRendererProps,
@@ -13,6 +11,7 @@ import {
   IconReference,
   rendererClass,
 } from "@react-typed-forms/schemas";
+import { CustomNavigationProps, DefaultWizardRenderOptions } from "../rendererOptions";
 import { useComputed, useControl } from "@react-typed-forms/core";
 import { Fragment, ReactNode } from "react";
 

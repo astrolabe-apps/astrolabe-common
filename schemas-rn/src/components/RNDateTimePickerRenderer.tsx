@@ -9,7 +9,7 @@ import {
   DataRenderType,
   FieldType,
 } from "@react-typed-forms/schemas";
-import { DefaultDataRendererOptions } from "@react-typed-forms/schemas";
+import { DefaultDataRendererOptions } from "../rendererOptions";
 import {
   DateFormatter,
   fromDate,

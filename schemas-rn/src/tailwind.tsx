@@ -1,7 +1,5 @@
 import { HTMLAttributes } from "react";
-import {
-  DefaultRendererOptions,
-} from "@react-typed-forms/schemas";
+import { DefaultRendererOptions } from "./rendererOptions";
 import { defaultTailwindTheme } from "./defaultTailwindTheme";
 import { Platform, Pressable, Role, Text, View } from "react-native";
 import { RNTextInput } from "./components/RNTextInputRenderer";

@@ -1,7 +1,6 @@
 import {
   ActionRendererProps,
   ArrayElementRenderOptions,
-  ArrayElementRendererOptions,
   ControlDefinitionType,
   createDataRenderer,
   DataRendererProps,
@@ -17,6 +16,7 @@ import {
   validationVisitor,
   visitFormDataInContext,
 } from "@react-typed-forms/schemas";
+import { ArrayElementRendererOptions } from "../rendererOptions";
 import React, { Fragment } from "react";
 import { Dialog, Modal } from "@astroapps/aria-base";
 import { useOverlayTriggerState } from "@react-stately/overlays";

@@ -71,7 +71,8 @@ import {
   SetFieldAdornment,
   useExpression,
   wrapLayout,
-  // Import all the options interfaces from the schemas package
+} from "@react-typed-forms/schemas";
+import {
   DefaultRendererOptions,
   DefaultDataRendererOptions,
   DefaultAccordionRendererOptions,
@@ -86,8 +87,7 @@ import {
   SelectRendererOptions,
   DefaultScrollListOptions,
   DefaultAdornmentRendererOptions,
-  DefaultOptionalAdornmentOptions,
-} from "@react-typed-forms/schemas";
+} from "./rendererOptions";
 import {
   createDefaultGroupRenderer,
 } from "./components/DefaultGroupRenderer";

@@ -1,5 +1,5 @@
 import React from "react";
-import { DefaultRendererOptions } from "@react-typed-forms/schemas";
+import { DefaultRendererOptions } from "./rendererOptions";
 import { fontAwesomeIcon } from "@react-typed-forms/schemas";
 
 // Default tailwind theme adapted for React Native

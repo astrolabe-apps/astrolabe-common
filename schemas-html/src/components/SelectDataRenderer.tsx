@@ -6,12 +6,7 @@ import {
   FieldType,
   rendererClass,
 } from "@react-typed-forms/schemas";
-
-export interface SelectRendererOptions {
-  className?: string;
-  emptyText?: string;
-  requiredText?: string;
-}
+import { SelectRendererOptions } from "../rendererOptions";
 
 interface ExtendedDropdown {
   requiredText?: string;

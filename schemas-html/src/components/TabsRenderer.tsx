@@ -2,13 +2,13 @@ import {
   createGroupRenderer,
   createScoped,
   DefaultFormNodeUi,
-  DefaultTabsRenderOptions,
   FormStateNode,
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
   TabsRenderOptions,
 } from "@react-typed-forms/schemas";
+import { DefaultTabsRenderOptions } from "../rendererOptions";
 import React, { Fragment, useEffect } from "react";
 import clsx from "clsx";
 import { useControl } from "@react-typed-forms/core";

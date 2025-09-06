@@ -4,11 +4,11 @@ import {
   ActionRendererRegistration,
   ActionStyle,
   createActionRenderer,
-  DefaultActionRendererOptions,
   IconPlacement,
   IconReference,
   rendererClass,
 } from "@react-typed-forms/schemas";
+import { DefaultActionRendererOptions } from "./rendererOptions";
 
 export function createButtonActionRenderer(
   actionId: string | string[] | undefined,

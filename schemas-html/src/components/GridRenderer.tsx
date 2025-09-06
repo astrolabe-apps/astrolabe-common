@@ -1,12 +1,12 @@
 import {
   createGroupRenderer,
-  DefaultGridRenderOptions,
   FormRenderer,
   GridRendererOptions,
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
 } from "@react-typed-forms/schemas";
+import { DefaultGridRenderOptions } from "../rendererOptions";
 import { ReactNode } from "react";
 
 export function createGridRenderer(options?: DefaultGridRenderOptions) {
