@@ -32,17 +32,6 @@ export interface CustomNavigationProps {
   validatePage: () => Promise<boolean>;
 }
 
-// Optional render props for optional adornment (HTML-specific)
-export interface OptionalRenderProps {
-  allValues: Control<unknown[]>;
-  editing: Control<boolean | undefined>;
-  children: ReactNode;
-  adornment: OptionalAdornment;
-  nullToggler: Control<boolean>;
-  dataContext: ControlDataContext;
-  options: DefaultOptionalAdornmentOptions;
-  dataControl: Control<any>;
-}
 
 // ============================================================================
 // INDIVIDUAL COMPONENT OPTIONS INTERFACES
@@ -175,6 +164,17 @@ export interface DefaultActionRendererOptions {
   busyIconPlacement?: IconPlacement;
   notWrapInText?: boolean;
   androidRippleColor?: string;
+}
+
+export interface OptionalRenderProps {
+  allValues: Control<unknown[]>;
+  editing: Control<boolean | undefined>;
+  children: ReactNode;
+  adornment: OptionalAdornment;
+  nullToggler: Control<boolean>;
+  dataContext: ControlDataContext;
+  options: DefaultOptionalAdornmentOptions;
+  dataControl: Control<any>;
 }
 
 export interface DefaultOptionalAdornmentOptions {

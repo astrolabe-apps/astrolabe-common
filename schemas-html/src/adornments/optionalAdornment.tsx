@@ -11,22 +11,9 @@ import {
   OptionalAdornment,
   wrapMarkup,
 } from "@react-typed-forms/schemas";
-import { DefaultOptionalAdornmentOptions } from "../rendererOptions";
+import { DefaultOptionalAdornmentOptions, OptionalRenderProps } from "../rendererOptions";
 import { Control, Fcheckbox, newControl } from "@react-typed-forms/core";
 import React, { ReactNode } from "react";
-
-export interface OptionalRenderProps {
-  allValues: Control<unknown[]>;
-  editing: Control<boolean | undefined>;
-  children: ReactNode;
-  adornment: OptionalAdornment;
-  nullToggler: Control<boolean>;
-  dataContext: ControlDataContext;
-  options: DefaultOptionalAdornmentOptions;
-  dataControl: Control<any>;
-}
-
-// Interfaces moved to @react-typed-forms/schemas
 export function createOptionalAdornment(
   options: DefaultOptionalAdornmentOptions = {},
 ): AdornmentRendererRegistration {

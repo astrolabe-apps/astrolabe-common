@@ -5,16 +5,8 @@ import {
   rendererClass,
   renderLayoutParts,
 } from "@react-typed-forms/schemas";
+import { DefaultLayoutRendererOptions } from "../rendererOptions";
 import React, { ReactNode, Fragment } from "react";
-
-export interface DefaultLayoutRendererOptions {
-  className?: string;
-  errorClass?: string;
-  renderError?: (
-    errorText: string | null | undefined,
-    errorId?: string,
-  ) => ReactNode;
-}
 
 export function createDefaultLayoutRenderer(
   options: DefaultLayoutRendererOptions = {},

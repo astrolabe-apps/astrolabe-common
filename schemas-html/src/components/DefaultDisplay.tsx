@@ -13,12 +13,7 @@ import {
   rendererClass,
   TextDisplay,
 } from "@react-typed-forms/schemas";
-
-export interface DefaultDisplayRendererOptions {
-  textClassName?: string;
-  textTextClass?: string;
-  htmlClassName?: string;
-}
+import { DefaultDisplayRendererOptions } from "../rendererOptions";
 
 export function createDefaultDisplayRenderer(
   options: DefaultDisplayRendererOptions = {},

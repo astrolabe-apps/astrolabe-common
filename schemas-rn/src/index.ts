@@ -13,3 +13,4 @@ export * from "./components/RNScrollListRenderer";
 export * from "./createDefaultRNRenderers";
 export * from "./selectUtils";
 export * from "./defaultTailwindTheme";
+export * from "./rendererOptions";

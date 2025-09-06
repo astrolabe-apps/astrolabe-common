@@ -18,6 +18,7 @@ import {
   isArrayRenderer,
   mergeObjects,
 } from "@react-typed-forms/schemas";
+import { DefaultArrayRendererOptions } from "../rendererOptions";
 
 export function createDefaultArrayDataRenderer(
   defaultActions?: ArrayActionOptions,
@@ -93,15 +94,6 @@ export function DataArrayRenderer({
   } satisfies ArrayRendererProps;
 
   return renderers.renderArray(arrayProps);
-}
-
-export interface DefaultArrayRendererOptions extends ArrayActionOptions {
-  className?: string;
-  removableClass?: string;
-  childClass?: string;
-  removableChildClass?: string;
-  removeActionClass?: string;
-  addActionClass?: string;
 }
 
 export function createDefaultArrayRenderer(

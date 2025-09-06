@@ -23,14 +23,8 @@ import {
   SchemaNode,
   stringField,
 } from "@react-typed-forms/schemas";
+import { ValueForFieldRenderOptions, ValueForFieldOptions } from "../rendererOptions";
 import React, { Fragment, useMemo } from "react";
-
-export interface ValueForFieldRenderOptions extends RenderOptions {
-  type: "ValueForField";
-  fieldRef?: string | null;
-  noOptions?: boolean;
-  refIsDirect?: boolean;
-}
 
 const RenderType = "ValueForField";
 
@@ -45,10 +39,6 @@ export const ValueForFieldExtension: ControlDefinitionExtension = {
     }),
   },
 };
-
-export interface ValueForFieldOptions {
-  schema: SchemaNode;
-}
 
 export function createValueForFieldRenderer(options: ValueForFieldOptions) {
   return createDataRenderer(
