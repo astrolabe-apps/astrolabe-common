@@ -562,6 +562,10 @@
 //      "decoupledLocalDependencies": ["tsup"],
 //      "shouldPublish": false
 //    },
+    {
+      "packageName": "@react-typed-forms/schemas-rn-demo",
+      "projectFolder": "../schemas-rn-demo"
+    }
 //    {
 //      "packageName": "expoapp",
 //      "projectFolder": "ClientApp/expoapp"
