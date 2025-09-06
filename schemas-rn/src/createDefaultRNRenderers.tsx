@@ -559,7 +559,7 @@ function RNInput(props: HtmlInputProperties) {
 }
 
 // React Native HTML Components
-const ReactNativeHtmlComponents: HtmlComponents = {
+export const ReactNativeHtmlComponents: HtmlComponents = {
   I: RNIcon,
   B: RNSpan,
   Button: RNButton,
@@ -590,7 +590,7 @@ export function createDefaultRenderers(
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
     extraRenderers: options.extraRenderers?.(options) ?? [],
-    html: ReactNativeHtmlComponents,
+    html: options.html ?? ReactNativeHtmlComponents,
   };
 }
 
