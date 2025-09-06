@@ -74,10 +74,10 @@ export function createDefaultGroupRenderer(
   } = options ?? {};
 
   function flexStyles(options: FlexRenderer): StyleProps {
+    // React Native uses flexbox by default, no need for display: "flex"
     return {
       className: flexClassName,
       style: {
-        display: "flex",
         gap: options.gap ? options.gap : defaultFlexGap,
         flexDirection: options.direction
           ? (options.direction as any)

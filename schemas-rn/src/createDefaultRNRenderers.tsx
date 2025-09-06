@@ -1,9 +1,5 @@
-import {
-  createDefaultDisplayRenderer,
-} from "./components/DefaultDisplay";
-import {
-  createDefaultLayoutRenderer,
-} from "./components/DefaultLayout";
+import { createDefaultDisplayRenderer } from "./components/DefaultDisplay";
+import { createDefaultLayoutRenderer } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
 import React, {
   Fragment,
@@ -11,50 +7,64 @@ import React, {
   ReactElement,
   ReactNode,
 } from "react";
-import clsx from "clsx";
 import {
-  createSelectRenderer,
-} from "./components/SelectDataRenderer";
+  Text,
+  View,
+  Pressable,
+  StyleProp,
+  ViewStyle,
+  Role,
+} from "react-native";
+import clsx from "clsx";
+import { Icon } from "./components/Icon";
+import { RNRadioItem } from "./components/RNRadioItem";
+import { RNTextInput } from "./components/RNTextInputRenderer";
+import { RNHtmlRenderer } from "./components/RNHtmlRenderer";
+import { RNCheckButtons } from "./components/RNCheckButtons";
+import { RNCheckbox } from "./components/RNCheckboxRenderer";
+import { HTMLAttributes } from "react";
+import {
+  HtmlButtonProperties,
+  HtmlDivProperties,
+  HtmlIconProperties,
+  HtmlInputProperties,
+  HtmlComponents,
+  IconLibrary,
+} from "@react-typed-forms/schemas";
+import { createRNSelectRenderer } from "./components/RNSelectRenderer";
+import { createRNCheckboxRenderer } from "./components/RNCheckboxRenderer";
+import { createRNTextInputRenderer } from "./components/RNTextInputRenderer";
+import {
+  createRNScrollListRenderer,
+  ExtendedDefaultScrollListOptions,
+} from "./components/RNScrollListRenderer";
+import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
+import { Platform } from "react-native";
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
-import { Control, useControlEffect } from "@react-typed-forms/core";
+import { useControlEffect } from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
 import {
   createDefaultArrayDataRenderer,
   createDefaultArrayRenderer,
 } from "./components/DefaultArrayRenderer";
 import {
-  createCheckboxRenderer,
   createCheckListRenderer,
   createElementSelectedRenderer,
   createRadioRenderer,
 } from "./components/CheckRenderer";
 import { DefaultAccordion } from "./components/DefaultAccordion";
 import { createNullToggleRenderer } from "./components/NullToggle";
-import { createMultilineFieldRenderer } from "./components/MultilineTextfield";
-import { createJsonataRenderer } from "./components/JsonataRenderer";
 import {
   AdornmentPlacement,
   AdornmentRendererRegistration,
   appendMarkupAt,
-  ArrayActionOptions,
-  CheckRendererOptions,
   ControlDataContext,
   createDataRenderer,
   DataRendererRegistration,
   DataRenderType,
   DefaultRenderers,
-  FieldOption,
   FieldType,
-  FormRenderer,
   hasOptions,
-  HtmlButtonProperties,
-  HtmlComponents,
-  HtmlDivProperties,
-  HtmlIconProperties,
-  HtmlInputProperties,
-  HtmlLabelProperties,
-  IconLibrary,
-  IconReference,
   isAccordionAdornment,
   isDataGroupRenderer,
   isDisplayOnlyRenderer,
@@ -65,7 +75,6 @@ import {
   LabelRendererRegistration,
   LabelType,
   rendererClass,
-  RendererRegistration,
   RunExpression,
   schemaDataForFieldRef,
   SetFieldAdornment,
@@ -75,30 +84,12 @@ import {
 import {
   DefaultRendererOptions,
   DefaultDataRendererOptions,
-  DefaultAccordionRendererOptions,
-  DefaultHelpTextRendererOptions,
   DefaultLabelRendererOptions,
   DefaultBoolOptions,
-  DefaultDisplayRendererOptions,
-  DefaultLayoutRendererOptions,
-  DefaultArrayRendererOptions,
-  DefaultGroupRendererOptions,
-  DefaultActionRendererOptions,
-  SelectRendererOptions,
-  DefaultScrollListOptions,
   DefaultAdornmentRendererOptions,
 } from "./rendererOptions";
-import {
-  createDefaultGroupRenderer,
-} from "./components/DefaultGroupRenderer";
-import {
-  createButtonActionRenderer,
-} from "./createButtonActionRenderer";
-import {
-  createScrollListRenderer,
-} from "./components/ScrollListRenderer";
-import { HtmlCheckButtons } from "./components/HtmlCheckButtons";
-
+import { createDefaultGroupRenderer } from "./components/DefaultGroupRenderer";
+import { createButtonActionRenderer } from "./createButtonActionRenderer";
 
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
@@ -106,39 +97,39 @@ export function createDefaultDataRenderer(
   const elementSelectedRenderer = createElementSelectedRenderer(
     options.checkboxOptions ?? options.checkOptions,
   );
-  const jsonataRenderer = createJsonataRenderer(options.jsonataClass);
   const nullToggler = createNullToggleRenderer();
-  const multilineRenderer = createMultilineFieldRenderer(
-    options.multilineClass,
-  );
-  const checkboxRenderer = createCheckboxRenderer(
+  // Use RN-specific renderers directly
+  const checkboxRenderer = createRNCheckboxRenderer(
     options.checkboxOptions ?? options.checkOptions,
   );
-  const selectRenderer = createSelectRenderer(options.selectOptions);
+  const selectRenderer = createRNSelectRenderer(options.selectOptions);
   const radioRenderer = createRadioRenderer(
     options.radioOptions ?? options.checkOptions,
   );
   const checkListRenderer = createCheckListRenderer(
     options.checkListOptions ?? options.checkOptions,
   );
-  const {
-    inputClass,
-    inputTextClass,
-    booleanOptions,
-    optionRenderer,
-    displayOnlyClass,
-    defaultEmptyText,
-  } = {
-    optionRenderer: selectRenderer,
-    booleanOptions: DefaultBoolOptions,
-    ...options,
-  };
+  const { booleanOptions, optionRenderer, displayOnlyClass, defaultEmptyText } =
+    {
+      optionRenderer: selectRenderer,
+      booleanOptions: DefaultBoolOptions,
+      ...options,
+    };
   const arrayRenderer = createDefaultArrayDataRenderer(options.arrayOptions);
 
-
-  const scrollListRenderer = createScrollListRenderer(
-    options.scrollListOptions,
+  const scrollListRenderer = createRNScrollListRenderer(
+    options.scrollListOptions as ExtendedDefaultScrollListOptions,
   );
+
+  // Add RN-specific text input renderer
+  const textInputRenderer = createRNTextInputRenderer(
+    options.inputClass,
+    options.inputTextClass,
+  );
+
+  // Add RN datetime picker for non-web platforms
+  const dateTimeRenderer =
+    Platform.OS !== "web" ? createRNDateTimePickerRenderer(options) : null;
 
   return createDataRenderer((props, renderers) => {
     const { field } = props;
@@ -155,7 +146,9 @@ export function createDefaultDataRenderer(
         renderType == DataRenderType.ArrayElement)
     ) {
       if (renderType == DataRenderType.ArrayElement)
-        throw new Error("ArrayElement renderer not implemented for React Native");
+        throw new Error(
+          "ArrayElement renderer not implemented for React Native",
+        );
       return arrayRenderer.render(props, renderers);
     }
     if (
@@ -213,12 +206,23 @@ export function createDefaultDataRenderer(
       case DataRenderType.Checkbox:
         return checkboxRenderer.render(props, renderers);
       case DataRenderType.Jsonata:
-        return jsonataRenderer.render(props, renderers);
+        throw new Error("Jsonata renderer not implemented for React Native");
       case DataRenderType.Autocomplete:
-        throw new Error("Autocomplete renderer not implemented for React Native");
+        throw new Error(
+          "Autocomplete renderer not implemented for React Native",
+        );
       case DataRenderType.ElementSelected:
         return elementSelectedRenderer.render(props, renderers);
     }
+
+    // Handle DateTime fields with RN-specific datetime picker (if available)
+    if (
+      (fieldType === FieldType.Date || fieldType === FieldType.DateTime) &&
+      dateTimeRenderer
+    ) {
+      return dateTimeRenderer.render(props, renderers);
+    }
+
     if (fieldType == FieldType.Any) {
       return (
         <>
@@ -226,22 +230,21 @@ export function createDefaultDataRenderer(
         </>
       );
     }
-    if (isTextfieldRenderer(renderOptions) && renderOptions.multiline)
-      return multilineRenderer.render(props, renderers);
-    const placeholder = isTextfieldRenderer(renderOptions)
-      ? renderOptions.placeholder
-      : undefined;
+    // Use RN text input renderer for explicit textfield renderers
+    if (isTextfieldRenderer(renderOptions)) {
+      return textInputRenderer.render(props, renderers);
+    }
 
+    // Use ControlInput for default inputs (handles numbers, etc.)
     return (
       <ControlInput
-        className={rendererClass(props.className, inputClass)}
-        textClass={rendererClass(props.textClass, inputTextClass)}
+        className={rendererClass(props.className, options.inputClass)}
+        textClass={rendererClass(props.textClass, options.inputTextClass)}
         style={props.style}
         id={props.id}
         errorId={props.errorId}
         readOnly={props.readonly}
         control={props.control}
-        placeholder={placeholder ?? undefined}
         convert={createInputConversion(props.field.type)}
         renderer={renderers}
       />
@@ -402,119 +405,171 @@ export function createDefaultLabelRenderer(
   };
 }
 
-export const StandardHtmlComponents: HtmlComponents = {
-  Button: DefaultHtmlButtonRenderer,
-  Label: DefaultHtmlLabelRenderer,
-  I: DefaultHtmlIconRenderer,
-  Span: "span",
-  Div: DefaultHtmlDivRenderer,
-  H1: "h1",
-  B: "b",
-  Input: DefaultHtmlInputRenderer,
-  CheckButtons: HtmlCheckButtons,
-};
+// React Native HTML Components Implementation
+function RNIcon({ iconName, className, iconLibrary }: HtmlIconProperties) {
+  return iconName ? (
+    <Icon
+      name={iconName}
+      className={className}
+      iconLibrary={iconLibrary as IconLibrary}
+    />
+  ) : undefined;
+}
 
-export function DefaultHtmlButtonRenderer({
+function RNSpan(props: HTMLAttributes<HTMLElement>) {
+  return <Text {...(props as any)} />;
+}
+
+function RNButton({
   inline,
   textClass,
-  className,
+  children,
   notWrapInText,
   androidRippleColor,
-  onClick,
   nonTextContent,
+  onClick,
   ...props
 }: HtmlButtonProperties) {
-  const Comp = inline ? "span" : nonTextContent ? "div" : "button";
+  if (inline) {
+    return (
+      <Text
+        {...(props as any)}
+        className={textClass}
+        onPress={onClick as any}
+        children={children}
+      />
+    );
+  }
   return (
-    <Comp
-      role={nonTextContent || inline ? "button" : undefined}
-      onClick={
-        onClick
-          ? (e) => {
-              e.stopPropagation();
-              onClick();
-            }
-          : undefined
-      }
-      className={nonTextContent ? className : clsx(className, textClass)}
-      {...props}
-    />
+    <Pressable
+      {...(props as any)}
+      onPress={() => {
+        onClick?.();
+      }}
+      android_ripple={{
+        color: androidRippleColor,
+      }}
+    >
+      {notWrapInText || nonTextContent ? (
+        children
+      ) : (
+        <Text className={textClass}>{children}</Text>
+      )}
+    </Pressable>
   );
 }
-export function DefaultHtmlInputRenderer({
-  textClass,
+
+function RNLabel({
   className,
-  onChangeValue,
-  onChangeChecked,
-  inputRef,
-  ...props
-}: HtmlInputProperties) {
-  return (
-    <input
-      ref={inputRef}
-      {...props}
-      className={clsx(className, textClass)}
-      onChange={
-        onChangeValue
-          ? (e) => onChangeValue(e.target.value)
-          : onChangeChecked
-            ? (e) => onChangeChecked(e.target.checked)
-            : undefined
-      }
-    />
-  );
-}
-export function DefaultHtmlDivRenderer({
-  text,
   html,
   children,
-  className,
   textClass,
-  nativeRef,
+  text,
+  style,
   inline,
+  role,
   ...props
 }: HtmlDivProperties) {
-  const Tag = inline ? "span" : "div";
   return (
-    <Tag
+    <View
+      className={className}
+      style={style as StyleProp<ViewStyle>}
+      role={role as Role}
       {...props}
-      ref={nativeRef}
-      className={clsx(className, textClass)}
-      children={text ?? children}
-      dangerouslySetInnerHTML={html ? { __html: html } : undefined}
+    >
+      <Text className={textClass}>{children}</Text>
+    </View>
+  );
+}
+
+function RNDiv({
+  className,
+  html,
+  children,
+  textClass,
+  text,
+  style,
+  inline,
+  role,
+  ...props
+}: HtmlDivProperties) {
+  if (html != null) {
+    return <RNHtmlRenderer {...props} html={html} />;
+  }
+  if (inline) {
+    return (
+      <Text style={style as StyleProp<ViewStyle>} className={textClass}>
+        {text ?? children}
+      </Text>
+    );
+  }
+  if (text != null) {
+    return (
+      <View
+        className={className}
+        style={style as StyleProp<ViewStyle>}
+        role={role as Role}
+        {...props}
+      >
+        <Text className={textClass}>{text}</Text>
+      </View>
+    );
+  }
+  return (
+    <View
+      className={className}
+      style={style as StyleProp<ViewStyle>}
+      children={children}
+      role={role as Role}
+      {...props}
     />
   );
 }
-export function DefaultHtmlLabelRenderer({
-  textClass,
-  className,
-  ...props
-}: HtmlLabelProperties) {
-  return <label {...props} className={clsx(className, textClass)} />;
-}
-export function DefaultHtmlIconRenderer({
-  iconName,
-  iconLibrary,
-  className,
-  style,
-}: HtmlIconProperties) {
-  return iconName ? (
-    <i className={clsx(className, toIconClass())} style={style} />
-  ) : undefined;
 
-  function toIconClass() {
-    if (!iconName) return undefined;
-    switch (iconLibrary) {
-      case IconLibrary.FontAwesome:
-        return "fa fa-" + iconName;
-      case IconLibrary.Material:
-      case IconLibrary.CssClass:
-        return iconName;
-      default:
-        return iconLibrary + " fa-" + iconName;
-    }
+function RNInput(props: HtmlInputProperties) {
+  const { id, type, onChangeValue, onChangeChecked, checked, value, ...rest } =
+    props;
+  switch (type) {
+    case "radio":
+      return (
+        <RNRadioItem
+          {...(rest as any)}
+          checked={!!checked}
+          onChange={() => onChangeChecked?.(!checked)}
+        />
+      );
+    case "checkbox":
+      return (
+        <RNCheckbox
+          key={id}
+          {...(rest as any)}
+          checked={!!checked}
+          onCheckedChange={() => onChangeChecked?.(!checked)}
+        />
+      );
+    default:
+      return (
+        <RNTextInput
+          {...(rest as any)}
+          defaultValue={typeof value == "number" ? value.toString() : value}
+          onChangeText={(t) => onChangeValue?.(t)}
+        />
+      );
   }
 }
+
+// React Native HTML Components
+const ReactNativeHtmlComponents: HtmlComponents = {
+  I: RNIcon,
+  B: RNSpan,
+  Button: RNButton,
+  Label: RNLabel,
+  Span: RNSpan,
+  H1: RNSpan,
+  Div: RNDiv,
+  Input: RNInput,
+  CheckButtons: RNCheckButtons,
+};
 
 export function createDefaultRenderers(
   options: DefaultRendererOptions = {},
@@ -524,13 +579,18 @@ export function createDefaultRenderers(
     display: createDefaultDisplayRenderer(options.display),
     action: createButtonActionRenderer(undefined, options.action),
     array: createDefaultArrayRenderer(options.array),
-    group: createDefaultGroupRenderer(options.group, options.adornment as DefaultAdornmentRendererOptions),
+    group: createDefaultGroupRenderer(
+      options.group,
+      options.adornment as DefaultAdornmentRendererOptions,
+    ),
     label: createDefaultLabelRenderer(options.label),
-    adornment: createDefaultAdornmentRenderer(options.adornment as DefaultAdornmentRendererOptions),
+    adornment: createDefaultAdornmentRenderer(
+      options.adornment as DefaultAdornmentRendererOptions,
+    ),
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
     extraRenderers: options.extraRenderers?.(options) ?? [],
-    html: options.html ?? StandardHtmlComponents,
+    html: ReactNativeHtmlComponents,
   };
 }
 
