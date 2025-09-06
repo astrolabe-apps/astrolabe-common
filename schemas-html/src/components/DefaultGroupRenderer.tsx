@@ -22,8 +22,8 @@ import {
   rendererClass,
   SelectChildRenderer,
   useExpression,
+  DefaultAdornmentRendererOptions,
 } from "@react-typed-forms/schemas";
-import { DefaultAdornmentRendererOptions } from "../createDefaultRenderers";
 import clsx from "clsx";
 import React, { CSSProperties, ReactElement } from "react";
 import { createTabsRenderer } from "./TabsRenderer";

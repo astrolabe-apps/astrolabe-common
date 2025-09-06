@@ -30,13 +30,6 @@ export interface CustomNavigationProps {
   validatePage: () => Promise<boolean>;
 }
 
-// Optional render props for optional adornment
-export interface OptionalRenderProps {
-  isNull: boolean;
-  toggle: () => void;
-  dataControl: Control<any>;
-}
-
 // ============================================================================
 // INDIVIDUAL COMPONENT OPTIONS INTERFACES
 // ============================================================================
@@ -180,7 +173,7 @@ export interface DefaultOptionalAdornmentOptions {
   setNullText?: string;
   defaultPlacement?: AdornmentPlacement;
   hideEdit?: boolean;
-  customRender?: (props: OptionalRenderProps) => ReactNode;
+  customRender?: (props: any) => ReactNode;
 }
 
 export interface DefaultAccordionRendererOptions {

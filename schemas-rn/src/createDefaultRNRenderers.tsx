@@ -85,14 +85,12 @@ import {
   DefaultActionRendererOptions,
   SelectRendererOptions,
   DefaultScrollListOptions,
+  DefaultAdornmentRendererOptions,
+  DefaultOptionalAdornmentOptions,
 } from "@react-typed-forms/schemas";
 import {
   createDefaultGroupRenderer,
 } from "./components/DefaultGroupRenderer";
-import {
-  createOptionalAdornment,
-  DefaultOptionalAdornmentOptions,
-} from "./adornments/optionalAdornment";
 import {
   createButtonActionRenderer,
 } from "./createButtonActionRenderer";
@@ -101,11 +99,6 @@ import {
 } from "./components/ScrollListRenderer";
 import { HtmlCheckButtons } from "./components/HtmlCheckButtons";
 
-export interface DefaultAdornmentRendererOptions {
-  accordion?: DefaultAccordionRendererOptions;
-  helpText?: DefaultHelpTextRendererOptions;
-  optional?: DefaultOptionalAdornmentOptions;
-}
 
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
@@ -259,12 +252,11 @@ export function createDefaultDataRenderer(
 export function createDefaultAdornmentRenderer(
   options: DefaultAdornmentRendererOptions = {},
 ): AdornmentRendererRegistration {
-  const optional = createOptionalAdornment(options.optional);
   return {
     type: "adornment",
     render: (props, renderers) => {
       if (isOptionalAdornment(props.adornment)) {
-        return optional.render(props, renderers);
+        throw new Error("Optional adornment not implemented for React Native");
       }
       const { adornment, designMode, dataContext, runExpression } = props;
       return {

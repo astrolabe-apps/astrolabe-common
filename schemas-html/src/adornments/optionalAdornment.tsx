@@ -10,6 +10,7 @@ import {
   getNullToggler,
   OptionalAdornment,
   wrapMarkup,
+  DefaultOptionalAdornmentOptions,
 } from "@react-typed-forms/schemas";
 import { Control, Fcheckbox, newControl } from "@react-typed-forms/core";
 import React, { ReactNode } from "react";
@@ -25,18 +26,7 @@ export interface OptionalRenderProps {
   dataControl: Control<any>;
 }
 
-export interface DefaultOptionalAdornmentOptions {
-  className?: string;
-  checkClass?: string;
-  childWrapperClass?: string;
-  multiValuesClass?: string;
-  multiValuesText?: string;
-  nullWrapperClass?: string;
-  setNullText?: string;
-  defaultPlacement?: AdornmentPlacement;
-  hideEdit?: boolean;
-  customRender?: (props: OptionalRenderProps) => ReactNode;
-}
+// Interfaces moved to @react-typed-forms/schemas
 export function createOptionalAdornment(
   options: DefaultOptionalAdornmentOptions = {},
 ): AdornmentRendererRegistration {

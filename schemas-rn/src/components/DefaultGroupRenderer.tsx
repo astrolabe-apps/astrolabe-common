@@ -30,10 +30,8 @@ import { createWizardRenderer } from "./DefaultWizardRenderer";
 import { createAccordionGroupRenderer } from "./DefaultAccordion";
 import {
   DefaultAccordionRendererOptions,
-} from "@react-typed-forms/schemas";
-import {
   DefaultAdornmentRendererOptions,
-} from "../createDefaultRNRenderers";
+} from "@react-typed-forms/schemas";
 
 interface StyleProps {
   className?: string;

@@ -85,6 +85,9 @@ import {
   DefaultDisplayRendererOptions,
   DefaultArrayRendererOptions,
   DefaultLayoutRendererOptions,
+  DefaultOptionalAdornmentOptions,
+  DefaultAdornmentRendererOptions,
+  DefaultRendererOptions,
 } from "@react-typed-forms/schemas";
 import {
   createDefaultGroupRenderer,
@@ -94,27 +97,8 @@ import {
 } from "./components/AutocompleteRenderer";
 import {
   createOptionalAdornment,
-  DefaultOptionalAdornmentOptions,
 } from "./adornments/optionalAdornment";
 
-export interface DefaultAdornmentRendererOptions {
-  accordion?: DefaultAccordionRendererOptions;
-  helpText?: DefaultHelpTextRendererOptions;
-  optional?: DefaultOptionalAdornmentOptions;
-}
-
-export interface DefaultRendererOptions {
-  data?: DefaultDataRendererOptions;
-  display?: DefaultDisplayRendererOptions;
-  action?: DefaultActionRendererOptions;
-  array?: DefaultArrayRendererOptions;
-  group?: DefaultGroupRendererOptions;
-  label?: DefaultLabelRendererOptions;
-  adornment?: DefaultAdornmentRendererOptions;
-  layout?: DefaultLayoutRendererOptions;
-  extraRenderers?: (options: DefaultRendererOptions) => RendererRegistration[];
-  html?: FormRenderer["html"];
-}
 import {
   createArrayElementRenderer,
 } from "./components/ArrayElementRenderer";
