@@ -18,7 +18,7 @@ import {
     FieldType,
     groupedControl,
     makeScalarField,
-    RenderForm
+    RenderForm, textfieldOptions
 } from '@react-typed-forms/schemas';
 import {FormDataDisplay} from '../../components/FormDataDisplay';
 
@@ -141,7 +141,7 @@ const surveyForm = [
   ], 'Satisfaction Survey'),
   groupedControl([
     dataControl('improvements', 'What would you like to see improved?'),
-    dataControl('feedback', 'Additional Comments'),
+    dataControl('feedback', 'Additional Comments', textfieldOptions({multiline: true })),
     dataControl('recommend', 'Would you recommend this app to others?', {
       renderOptions: { type: DataRenderType.Checkbox },
     }),

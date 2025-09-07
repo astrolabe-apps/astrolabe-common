@@ -13,7 +13,7 @@ import {
     FieldType,
     groupedControl,
     makeScalarField,
-    RenderForm
+    RenderForm, textfieldOptions
 } from '@react-typed-forms/schemas';
 import {FormDataDisplay} from '../../components/FormDataDisplay';
 
@@ -72,7 +72,7 @@ const profileForm = [
     dataControl('email', 'Email'),
     dataControl('phone', 'Phone Number'),
     dataControl('dateOfBirth', 'Date of Birth'),
-    dataControl('bio', 'Biography'),
+    dataControl('bio', 'Biography', textfieldOptions({multiline: true })),
     dataControl('age', 'Age'),
     dataControl('isActive', 'Account Active', {
       renderOptions: { type: DataRenderType.Checkbox },
