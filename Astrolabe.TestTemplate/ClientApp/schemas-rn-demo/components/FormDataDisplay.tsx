@@ -18,7 +18,7 @@ export function FormDataDisplay({
     <View className="mt-6 pt-4 border-t border-gray-200">
       <Text className="text-lg font-semibold text-gray-800 mb-2">{title}:</Text>
       <View className="bg-gray-50 rounded-lg p-4" style={maxHeightStyle}>
-        <ScrollView>
+        <ScrollView nestedScrollEnabled>
           <Text className="font-mono text-xs text-gray-700">
             {JSON.stringify(control.value, null, 2)}
           </Text>
