@@ -1043,111 +1043,6 @@ importers:
       tailwindcss: 3.4.17
       typescript: 5.8.3
 
-  ../../../schemas-rn-demo:
-    specifiers:
-      '@astroapps/controls': workspace:*
-      '@astroapps/forms-core': workspace:*
-      '@babel/core': ^7.25.2
-      '@expo/vector-icons': ^14.1.0
-      '@internationalized/date': ^3.8.2
-      '@react-native-community/datetimepicker': 8.4.1
-      '@react-native/metro-config': ^0.80.2
-      '@react-navigation/bottom-tabs': ^7.0.15
-      '@react-navigation/native': ^7.0.15
-      '@react-typed-forms/core': workspace:*
-      '@react-typed-forms/schemas': workspace:*
-      '@react-typed-forms/schemas-rn': workspace:*
-      '@react-typed-forms/transform': ^0.4.0
-      '@rn-primitives/checkbox': ^1.2.0
-      '@rn-primitives/dialog': ^1.2.0
-      '@rn-primitives/portal': ^1.2.0
-      '@rn-primitives/radio-group': ^1.2.0
-      '@rn-primitives/select': ^1.2.0
-      '@rn-primitives/slot': ^1.2.0
-      '@rn-primitives/tooltip': ^1.2.0
-      '@rn-primitives/types': ^1.2.0
-      '@rnx-kit/metro-config': ^2.0.1
-      '@rnx-kit/metro-resolver-symlinks': ^0.2.1
-      '@types/react': ^19.0.0
-      '@types/react-dom': ^19.0.0
-      class-variance-authority: ^0.7.0
-      clsx: ^2.1.1
-      expo: ~53.0.0
-      expo-constants: ~17.1.7
-      expo-font: ~13.3.2
-      expo-linking: ~7.1.7
-      expo-router: ~5.1.5
-      expo-status-bar: ~2.2.3
-      metro-cache: ^0.82.0
-      nativewind: ^4.1.23
-      react: ^19.0.0
-      react-dom: ^19.0.0
-      react-native: 0.79.5
-      react-native-css-interop: ^0.1.22
-      react-native-gesture-handler: ~2.24.0
-      react-native-modal-datetime-picker: ^18.0.0
-      react-native-reanimated: ~3.17.0
-      react-native-render-html: ^6.3.4
-      react-native-safe-area-context: 5.4.0
-      react-native-screens: ~4.11.1
-      react-native-svg: 15.11.2
-      react-native-web: ^0.20.0
-      tailwind-merge: ^2.5.4
-      tailwindcss: ^3.4.17
-      typescript: ~5.8.3
-    dependencies:
-      '@astroapps/controls': link:../astrolabe-controls
-      '@astroapps/forms-core': link:../forms/core
-      '@expo/vector-icons': 14.1.0_yzpquuu2vtpzn4gp63frs2zwue
-      '@internationalized/date': 3.8.2
-      '@react-native-community/datetimepicker': 8.4.1_vaerzj76hdplfiesx7atg6p2fq
-      '@react-navigation/bottom-tabs': 7.4.7_njxgtmdd3ofcv7vkxkqf3k52ga
-      '@react-navigation/native': 7.1.17_xptahs4rc3lymgslxxo4pyqape
-      '@react-typed-forms/core': link:../core
-      '@react-typed-forms/schemas': link:../schemas
-      '@react-typed-forms/schemas-rn': link:../schemas-rn
-      '@rn-primitives/checkbox': 1.2.0_2w7rhzav7qihxjujx6mb2jh3z4
-      '@rn-primitives/dialog': 1.2.0_ibi3yhuan4uur7jmretty3veqm
-      '@rn-primitives/portal': 1.3.0_2nl5dini3piefy2w5it23wfrn4
-      '@rn-primitives/radio-group': 1.2.0_2w7rhzav7qihxjujx6mb2jh3z4
-      '@rn-primitives/select': 1.2.0_ibi3yhuan4uur7jmretty3veqm
-      '@rn-primitives/slot': 1.2.0_6zigs6jbt3nslptl5e3g2l4qh4
-      '@rn-primitives/tooltip': 1.2.0_ibi3yhuan4uur7jmretty3veqm
-      '@rn-primitives/types': 1.2.0_6zigs6jbt3nslptl5e3g2l4qh4
-      class-variance-authority: 0.7.1
-      clsx: 2.1.1
-      expo: 53.0.22_hbrvr7v35vh7slnwjda7m2pwdm
-      expo-constants: 17.1.7_nkywthqjugjvdmams6yttdk5lq
-      expo-font: 13.3.2_expo@53.0.22+react@19.0.0
-      expo-linking: 7.1.7_vaerzj76hdplfiesx7atg6p2fq
-      expo-router: 5.1.5_ran24e52hukgz3qr3bvxu473ba
-      expo-status-bar: 2.2.3_xptahs4rc3lymgslxxo4pyqape
-      metro-cache: 0.82.5
-      nativewind: 4.1.23_myrjlzfg6vbdwqfnlto2vausua
-      react: 19.0.0
-      react-dom: 19.0.0_react@19.0.0
-      react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-      react-native-css-interop: 0.1.22_myrjlzfg6vbdwqfnlto2vausua
-      react-native-gesture-handler: 2.24.0_xptahs4rc3lymgslxxo4pyqape
-      react-native-modal-datetime-picker: 18.0.0_mqvd2y5jecbxi6lvk2liuur5fm
-      react-native-reanimated: 3.17.5_hbrvr7v35vh7slnwjda7m2pwdm
-      react-native-render-html: 6.3.4_vzypnvkmesj3grr6pzjdidecwe
-      react-native-safe-area-context: 5.4.0_xptahs4rc3lymgslxxo4pyqape
-      react-native-screens: 4.11.1_xptahs4rc3lymgslxxo4pyqape
-      react-native-svg: 15.11.2_xptahs4rc3lymgslxxo4pyqape
-      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
-      tailwind-merge: 2.6.0
-    devDependencies:
-      '@babel/core': 7.28.0
-      '@react-native/metro-config': 0.80.2_@babel+core@7.28.0
-      '@react-typed-forms/transform': 0.4.0
-      '@rnx-kit/metro-config': 2.1.1_zhmafdkerij6ixeswpt2dvdaka
-      '@rnx-kit/metro-resolver-symlinks': 0.2.6
-      '@types/react': 19.1.10
-      '@types/react-dom': 19.1.7_@types+react@19.1.10
-      tailwindcss: 3.4.17
-      typescript: 5.8.3
-
   ../../../schemas-signature:
     specifiers:
       '@react-typed-forms/core': workspace:*
@@ -1176,6 +1071,123 @@ importers:
       react: 19.0.0
       rimraf: 5.0.10
       typescript: 5.7.2
+
+  ../../ClientApp/schemas-rn-demo:
+    specifiers:
+      '@astroapps/client': workspace:*
+      '@astroapps/controls': workspace:*
+      '@astroapps/forms-core': workspace:*
+      '@astroapps/searchstate': ^2.0.0
+      '@babel/core': ^7.25.2
+      '@expo/vector-icons': ^14.0.2
+      '@internationalized/date': ^3.8.2
+      '@react-native-community/datetimepicker': 8.2.0
+      '@react-native/assets-registry': 0.79.5
+      '@react-native/metro-config': ^0.80.2
+      '@react-navigation/bottom-tabs': ^7.3.10
+      '@react-navigation/elements': ^2.6.3
+      '@react-navigation/native': ^7.1.6
+      '@react-typed-forms/core': workspace:*
+      '@react-typed-forms/schemas': workspace:*
+      '@react-typed-forms/schemas-rn': workspace:*
+      '@react-typed-forms/transform': ^0.4.0
+      '@rn-primitives/checkbox': ^1.2.0
+      '@rn-primitives/dialog': ^1.2.0
+      '@rn-primitives/portal': ^1.3.0
+      '@rn-primitives/radio-group': ^1.2.0
+      '@rn-primitives/select': ^1.2.0
+      '@rn-primitives/slot': ^1.2.0
+      '@rn-primitives/switch': ^1.2.0
+      '@rn-primitives/tooltip': ^1.2.0
+      '@rn-primitives/types': ^1.2.0
+      '@rnx-kit/metro-config': ^2.0.1
+      '@rnx-kit/metro-resolver-symlinks': ^0.2.1
+      '@types/react': ^19.0.0
+      '@types/react-dom': ^19.0.0
+      class-variance-authority: ^0.7.0
+      clsx: ^1 || ^2
+      expo: 53.0.22
+      expo-asset: ~11.1.7
+      expo-constants: ~17.1.7
+      expo-font: ~13.3.2
+      expo-linking: ~7.1.7
+      expo-router: ~5.1.5
+      expo-status-bar: ~2.2.3
+      metro-cache: ^0.82.0
+      nativewind: ^4.1.23
+      react: ^19.0.0
+      react-dom: ^19.0.0
+      react-native: 0.79.5
+      react-native-css-interop: ^0.1.22
+      react-native-gesture-handler: '>=2.20.2'
+      react-native-modal-datetime-picker: ^18.0.0
+      react-native-reanimated: ~3.17.4
+      react-native-render-html: ^6.3.4
+      react-native-safe-area-context: 5.4.0
+      react-native-screens: ~4.11.1
+      react-native-svg: 15.11.2
+      react-native-web: ^0.20.0
+      tailwind-merge: 1.14.0
+      tailwindcss: ^3.4.17
+      typescript: ~5.8.3
+    dependencies:
+      '@astroapps/client': link:../../../astrolabe-client
+      '@astroapps/controls': link:../../../astrolabe-controls
+      '@astroapps/forms-core': link:../../../forms/core
+      '@astroapps/searchstate': 2.0.0
+      '@expo/vector-icons': 14.1.0_yzpquuu2vtpzn4gp63frs2zwue
+      '@internationalized/date': 3.8.2
+      '@react-native-community/datetimepicker': 8.2.0_vaerzj76hdplfiesx7atg6p2fq
+      '@react-native/assets-registry': 0.79.5
+      '@react-navigation/bottom-tabs': 7.4.7_njxgtmdd3ofcv7vkxkqf3k52ga
+      '@react-navigation/elements': 2.6.4_fxkxqqfh374igpngwxdz7aq7hm
+      '@react-navigation/native': 7.1.17_xptahs4rc3lymgslxxo4pyqape
+      '@react-typed-forms/core': link:../../../core
+      '@react-typed-forms/schemas': link:../../../schemas
+      '@react-typed-forms/schemas-rn': link:../../../schemas-rn
+      '@rn-primitives/checkbox': 1.2.0_2w7rhzav7qihxjujx6mb2jh3z4
+      '@rn-primitives/dialog': 1.2.0_ibi3yhuan4uur7jmretty3veqm
+      '@rn-primitives/portal': 1.3.0_2nl5dini3piefy2w5it23wfrn4
+      '@rn-primitives/radio-group': 1.2.0_2w7rhzav7qihxjujx6mb2jh3z4
+      '@rn-primitives/select': 1.2.0_ibi3yhuan4uur7jmretty3veqm
+      '@rn-primitives/slot': 1.2.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/switch': 1.2.0_2w7rhzav7qihxjujx6mb2jh3z4
+      '@rn-primitives/tooltip': 1.2.0_ibi3yhuan4uur7jmretty3veqm
+      '@rn-primitives/types': 1.2.0_6zigs6jbt3nslptl5e3g2l4qh4
+      class-variance-authority: 0.7.1
+      clsx: 2.1.1
+      expo: 53.0.22_hbrvr7v35vh7slnwjda7m2pwdm
+      expo-asset: 11.1.7_vaerzj76hdplfiesx7atg6p2fq
+      expo-constants: 17.1.7_nkywthqjugjvdmams6yttdk5lq
+      expo-font: 13.3.2_expo@53.0.22+react@19.0.0
+      expo-linking: 7.1.7_vaerzj76hdplfiesx7atg6p2fq
+      expo-router: 5.1.5_ran24e52hukgz3qr3bvxu473ba
+      expo-status-bar: 2.2.3_xptahs4rc3lymgslxxo4pyqape
+      metro-cache: 0.82.5
+      nativewind: 4.1.23_myrjlzfg6vbdwqfnlto2vausua
+      react: 19.0.0
+      react-dom: 19.0.0_react@19.0.0
+      react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
+      react-native-css-interop: 0.1.22_myrjlzfg6vbdwqfnlto2vausua
+      react-native-gesture-handler: 2.24.0_xptahs4rc3lymgslxxo4pyqape
+      react-native-modal-datetime-picker: 18.0.0_rt2bwdxmb2paycsikwmimoltdu
+      react-native-reanimated: 3.17.5_hbrvr7v35vh7slnwjda7m2pwdm
+      react-native-render-html: 6.3.4_vzypnvkmesj3grr6pzjdidecwe
+      react-native-safe-area-context: 5.4.0_xptahs4rc3lymgslxxo4pyqape
+      react-native-screens: 4.11.1_xptahs4rc3lymgslxxo4pyqape
+      react-native-svg: 15.11.2_xptahs4rc3lymgslxxo4pyqape
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
+      tailwind-merge: 1.14.0
+    devDependencies:
+      '@babel/core': 7.28.0
+      '@react-native/metro-config': 0.80.2_@babel+core@7.28.0
+      '@react-typed-forms/transform': 0.4.0
+      '@rnx-kit/metro-config': 2.1.1_zhmafdkerij6ixeswpt2dvdaka
+      '@rnx-kit/metro-resolver-symlinks': 0.2.6
+      '@types/react': 19.1.10
+      '@types/react-dom': 19.1.7_@types+react@19.1.10
+      tailwindcss: 3.4.17
+      typescript: 5.8.3
 
   ../../ClientApp/sites/formServer:
     specifiers:
@@ -1304,7 +1316,6 @@ packages:
 
   /@astroapps/searchstate/2.0.0:
     resolution: {integrity: sha512-NpsPtdy1VrpyjucfbLYOSRhTD53QiErYlFYBjmmLMAiiFrd8vTUyMs0WKOrGhLKyQkjIpL2qOzudf6VNJ7SE+g==}
-    dev: true
 
   /@astroapps/swc-controls-plugin/1.1.0-next15-2:
     resolution: {integrity: sha512-//n2VgN/OLh8OMTNQCkOL8LXAmABDQtVFUZ73seqFwxTUrzc5DRtlo0RiGTXDOOgOnklp6piZ28Hg78q1J+OIQ==}
@@ -1386,6 +1397,7 @@ packages:
   /@babel/compat-data/7.26.0:
     resolution: {integrity: sha512-qETICbZSLe7uXv9VE8T/RWOdIE5qqyTucOt4zLYMafj2MRO271VGgLd4RACJMeBO37UPWhXiKMBk7YlJ0fOzQA==}
     engines: {node: '>=6.9.0'}
+    dev: true
 
   /@babel/compat-data/7.28.0:
     resolution: {integrity: sha512-60X7qkglvrap8mn1lh2ebxXdZYtUcpd7gsmy9kLaBJ4i/WdY8PqTSdxyA8qraikqKQK5C1KRBKXqznrVapyNaw==}
@@ -1420,14 +1432,14 @@ packages:
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@babel/code-frame': 7.27.1
-      '@babel/generator': 7.28.0
+      '@babel/generator': 7.28.3
       '@babel/helper-compilation-targets': 7.27.2
       '@babel/helper-module-transforms': 7.27.3_@babel+core@7.28.0
       '@babel/helpers': 7.28.2
-      '@babel/parser': 7.28.0
+      '@babel/parser': 7.28.4
       '@babel/template': 7.27.2
-      '@babel/traverse': 7.28.0
-      '@babel/types': 7.28.2
+      '@babel/traverse': 7.28.4
+      '@babel/types': 7.28.4
       convert-source-map: 2.0.0
       debug: 4.4.1
       gensync: 1.0.0-beta.2
@@ -1440,22 +1452,12 @@ packages:
     resolution: {integrity: sha512-/AIkAmInnWwgEAJGQr9vY0c66Mj6kjkE2ZPB1PurTRaRAh3U+J45sAQMjQDJdh4WbR3l0x5xkimXBKyBXXAu2w==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/parser': 7.28.0
+      '@babel/parser': 7.28.4
       '@babel/types': 7.28.4
       '@jridgewell/gen-mapping': 0.3.12
       '@jridgewell/trace-mapping': 0.3.29
       jsesc: 3.0.2
     dev: true
-
-  /@babel/generator/7.28.0:
-    resolution: {integrity: sha512-lJjzvrbEeWrhB4P3QBsH7tey117PjLZnDbLiQEKjQ/fNJTjuq4HSqgFA+UNSwZT8D7dxxbnuSBMsa1lrWzKlQg==}
-    engines: {node: '>=6.9.0'}
-    dependencies:
-      '@babel/parser': 7.28.0
-      '@babel/types': 7.28.4
-      '@jridgewell/gen-mapping': 0.3.12
-      '@jridgewell/trace-mapping': 0.3.29
-      jsesc: 3.0.2
 
   /@babel/generator/7.28.3:
     resolution: {integrity: sha512-3lSpxGgvnmZznmBkCRnVREPUFJv2wrv9iAoFDvADJc0ypmdOxdUtcLeBgBJ6zE0PMeTKnxeQzyk0xTBq4Ep7zw==}
@@ -1478,7 +1480,6 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/types': 7.28.4
-    dev: false
 
   /@babel/helper-builder-binary-assignment-operator-visitor/7.25.9:
     resolution: {integrity: sha512-C47lC7LIDCnz0h4vai/tpNOI95tCd5ZT3iBt/DBH5lXKHZsyNQv18yf1wIIg2ntiQNgmAvA+DgZ82iW8Qdym8g==}
@@ -1494,8 +1495,8 @@ packages:
     resolution: {integrity: sha512-j9Db8Suy6yV/VHa4qzrj9yZfZxhLWQdVnRlXxmKLYlhWUVB1sB2G5sxuWYXk/whHD9iW76PmNzxZ4UCnTQTVEQ==}
     engines: {node: '>=6.9.0'}
     dependencies:
-      '@babel/compat-data': 7.26.0
-      '@babel/helper-validator-option': 7.25.9
+      '@babel/compat-data': 7.28.0
+      '@babel/helper-validator-option': 7.27.1
       browserslist: 4.24.2
       lru-cache: 5.1.1
       semver: 6.3.1
@@ -1546,6 +1547,24 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@babel/helper-create-class-features-plugin/7.28.3_@babel+core@7.26.0:
+    resolution: {integrity: sha512-V9f6ZFIYSLNEbuGA/92uOvYsGCJNsuA8ESZ4ldc09bWk/j8H8TKiPw8Mk1eG6olpnO0ALHJmYfZvF4MEE4gajg==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+    dependencies:
+      '@babel/core': 7.26.0
+      '@babel/helper-annotate-as-pure': 7.27.3
+      '@babel/helper-member-expression-to-functions': 7.27.1
+      '@babel/helper-optimise-call-expression': 7.27.1
+      '@babel/helper-replace-supers': 7.27.1_@babel+core@7.26.0
+      '@babel/helper-skip-transparent-expression-wrappers': 7.27.1
+      '@babel/traverse': 7.28.4
+      semver: 6.3.1
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@babel/helper-create-class-features-plugin/7.28.3_@babel+core@7.28.0:
     resolution: {integrity: sha512-V9f6ZFIYSLNEbuGA/92uOvYsGCJNsuA8ESZ4ldc09bWk/j8H8TKiPw8Mk1eG6olpnO0ALHJmYfZvF4MEE4gajg==}
     engines: {node: '>=6.9.0'}
@@ -1562,7 +1581,6 @@ packages:
       semver: 6.3.1
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@babel/helper-create-regexp-features-plugin/7.25.9_@babel+core@7.26.0:
     resolution: {integrity: sha512-ORPNZ3h6ZRkOyAa/SaHU+XsLZr0UQzRwuDQ0cczIA17nAzZ+85G5cVkOJIj7QavLZGSe8QXUmNFxSZzjcZF9bw==}
@@ -1637,7 +1655,6 @@ packages:
       '@babel/types': 7.28.4
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@babel/helper-module-imports/7.25.9:
     resolution: {integrity: sha512-tnUA4RsrmflIM6W6RFTLFSXITtl0wKjgpnLgXyowocVPrbYrLUXSBXDgTs8BlbmIzIdlBySRQjINYs2BAkiLtw==}
@@ -1710,7 +1727,6 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/types': 7.28.4
-    dev: false
 
   /@babel/helper-plugin-utils/7.25.9:
     resolution: {integrity: sha512-kSMlyUVdWe25rEsRGviIgOWnoT/nfABVWlqt9N19/dIPWViAOW2s9wznP5tURbs/IDuNk4gPy3YdYRgH3uxhBw==}
@@ -1774,6 +1790,20 @@ packages:
     transitivePeerDependencies:
       - supports-color
 
+  /@babel/helper-replace-supers/7.27.1_@babel+core@7.26.0:
+    resolution: {integrity: sha512-7EHz6qDZc8RYS5ElPoShMheWvEgERonFCs7IAonWLLUTXW59DP14bCZt89/GKyreYn8g3S83m21FelHKbeDCKA==}
+    engines: {node: '>=6.9.0'}
+    peerDependencies:
+      '@babel/core': ^7.0.0
+    dependencies:
+      '@babel/core': 7.26.0
+      '@babel/helper-member-expression-to-functions': 7.27.1
+      '@babel/helper-optimise-call-expression': 7.27.1
+      '@babel/traverse': 7.28.4
+    transitivePeerDependencies:
+      - supports-color
+    dev: true
+
   /@babel/helper-replace-supers/7.27.1_@babel+core@7.28.0:
     resolution: {integrity: sha512-7EHz6qDZc8RYS5ElPoShMheWvEgERonFCs7IAonWLLUTXW59DP14bCZt89/GKyreYn8g3S83m21FelHKbeDCKA==}
     engines: {node: '>=6.9.0'}
@@ -1786,7 +1816,6 @@ packages:
       '@babel/traverse': 7.28.4
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@babel/helper-simple-access/7.25.9:
     resolution: {integrity: sha512-c6WHXuiaRsJTyHYLJV75t9IqsmTbItYfdj99PnzYGQZkYKvan5/2jKJ7gu31J3/BJ/A18grImSPModuyG/Eo0Q==}
@@ -1814,7 +1843,6 @@ packages:
       '@babel/types': 7.28.4
     transitivePeerDependencies:
       - supports-color
-    dev: false
 
   /@babel/helper-string-parser/7.27.1:
     resolution: {integrity: sha512-qMlSxKbpRlAridDExk92nSobyDdpPijUq2DW6oDnUqd0iOGxmQjyqhMIihI9+zv4LPyZdRje2cavWPbCbWm3eA==}
@@ -1874,13 +1902,6 @@ packages:
     dependencies:
       '@babel/types': 7.28.4
     dev: true
-
-  /@babel/parser/7.28.0:
-    resolution: {integrity: sha512-jVZGvOxOuNSsuQuLRTh13nU0AogFlw32w/MT+LV6D3sP5WdbW61E77RnkbaO2dUvmPAYrBDJXGn5gGS6tH4j8g==}
-    engines: {node: '>=6.0.0'}
-    hasBin: true
-    dependencies:
-      '@babel/types': 7.28.4
 
   /@babel/parser/7.28.4:
     resolution: {integrity: sha512-yZbBqeM6TkpP9du/I2pUZnJsRMGGvOuIrhjzC1AwHwW+6he4mni6Bp/m8ijn0iOuZuPI2BfkCoSRunpyjnrQKg==}
@@ -3125,7 +3146,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.26.0
-      '@babel/helper-create-class-features-plugin': 7.25.9_@babel+core@7.26.0
+      '@babel/helper-create-class-features-plugin': 7.28.3_@babel+core@7.26.0
       '@babel/helper-plugin-utils': 7.27.1
     transitivePeerDependencies:
       - supports-color
@@ -3138,7 +3159,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.28.0
-      '@babel/helper-create-class-features-plugin': 7.25.9_@babel+core@7.28.0
+      '@babel/helper-create-class-features-plugin': 7.28.3_@babel+core@7.28.0
       '@babel/helper-plugin-utils': 7.27.1
     transitivePeerDependencies:
       - supports-color
@@ -3150,8 +3171,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.26.0
-      '@babel/helper-annotate-as-pure': 7.25.9
-      '@babel/helper-create-class-features-plugin': 7.25.9_@babel+core@7.26.0
+      '@babel/helper-annotate-as-pure': 7.27.3
+      '@babel/helper-create-class-features-plugin': 7.28.3_@babel+core@7.26.0
       '@babel/helper-plugin-utils': 7.27.1
     transitivePeerDependencies:
       - supports-color
@@ -3164,8 +3185,8 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.28.0
-      '@babel/helper-annotate-as-pure': 7.25.9
-      '@babel/helper-create-class-features-plugin': 7.25.9_@babel+core@7.28.0
+      '@babel/helper-annotate-as-pure': 7.27.3
+      '@babel/helper-create-class-features-plugin': 7.28.3_@babel+core@7.28.0
       '@babel/helper-plugin-utils': 7.27.1
     transitivePeerDependencies:
       - supports-color
@@ -3882,7 +3903,7 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/code-frame': 7.27.1
-      '@babel/parser': 7.28.0
+      '@babel/parser': 7.28.4
       '@babel/types': 7.28.4
     dev: true
 
@@ -3899,8 +3920,8 @@ packages:
     engines: {node: '>=6.9.0'}
     dependencies:
       '@babel/code-frame': 7.27.1
-      '@babel/generator': 7.28.0
-      '@babel/parser': 7.28.0
+      '@babel/generator': 7.28.3
+      '@babel/parser': 7.28.4
       '@babel/template': 7.27.2
       '@babel/types': 7.28.4
       debug: 4.4.1
@@ -3908,20 +3929,6 @@ packages:
     transitivePeerDependencies:
       - supports-color
     dev: true
-
-  /@babel/traverse/7.28.0:
-    resolution: {integrity: sha512-mGe7UK5wWyh0bKRfupsUchrQGqvDbZDbKJw+kcRGSmdHVYrv+ltd0pnpDTVpiTqnaBru9iEvA8pz8W46v0Amwg==}
-    engines: {node: '>=6.9.0'}
-    dependencies:
-      '@babel/code-frame': 7.27.1
-      '@babel/generator': 7.28.0
-      '@babel/helper-globals': 7.28.0
-      '@babel/parser': 7.28.0
-      '@babel/template': 7.27.2
-      '@babel/types': 7.28.4
-      debug: 4.4.1
-    transitivePeerDependencies:
-      - supports-color
 
   /@babel/traverse/7.28.4:
     resolution: {integrity: sha512-YEzuboP2qvQavAcjgQNVgsvHIDv6ZpwXvcvjmyySP2DIMuByS/6ioU5G9pYrWHM6T2YDfc7xga9iNzYOs12CFQ==}
@@ -3944,13 +3951,6 @@ packages:
       '@babel/helper-string-parser': 7.27.1
       '@babel/helper-validator-identifier': 7.27.1
     dev: true
-
-  /@babel/types/7.28.2:
-    resolution: {integrity: sha512-ruv7Ae4J5dUYULmeXw1gmb7rYRz57OWCPM57pHojnLq/3Z1CK2lNSLTCVjxVk1F/TZHwOZZrOWi0ur95BbLxNQ==}
-    engines: {node: '>=6.9.0'}
-    dependencies:
-      '@babel/helper-string-parser': 7.27.1
-      '@babel/helper-validator-identifier': 7.27.1
 
   /@babel/types/7.28.4:
     resolution: {integrity: sha512-bkFqkLhh3pMBUQQkpVgWDWq/lqzc2678eUyDlTBhRqhCHFguYYGM0Efga7tYk4TogG/3x0EEl66/OQ+WGbWB/Q==}
@@ -8498,6 +8498,32 @@ packages:
       react: 19.0.0
     dev: false
 
+  /@radix-ui/react-switch/1.2.6_eyyptzjprmppizp3hnbbs5ffqe:
+    resolution: {integrity: sha512-bByzr1+ep1zk4VubeEVViV592vu2lHE2BZY5OnzehZqOOgogN80+mNtCqPkhn2gklJqOpxWgPoYTSnhBCqpOXQ==}
+    peerDependencies:
+      '@types/react': '*'
+      '@types/react-dom': '*'
+      react: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+      react-dom: ^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      '@types/react-dom':
+        optional: true
+    dependencies:
+      '@radix-ui/primitive': 1.1.3
+      '@radix-ui/react-compose-refs': 1.1.2_gd4ggzpzqm6sxwt7vsylqzqd3u
+      '@radix-ui/react-context': 1.1.2_gd4ggzpzqm6sxwt7vsylqzqd3u
+      '@radix-ui/react-primitive': 2.1.3_eyyptzjprmppizp3hnbbs5ffqe
+      '@radix-ui/react-use-controllable-state': 1.2.2_gd4ggzpzqm6sxwt7vsylqzqd3u
+      '@radix-ui/react-use-previous': 1.1.1_gd4ggzpzqm6sxwt7vsylqzqd3u
+      '@radix-ui/react-use-size': 1.1.1_gd4ggzpzqm6sxwt7vsylqzqd3u
+      '@types/react': 19.1.10
+      '@types/react-dom': 19.1.7_@types+react@19.1.10
+      react: 19.0.0
+      react-dom: 19.0.0_react@19.0.0
+    dev: false
+
   /@radix-ui/react-tabs/1.1.4_lcaisjnxengxgo467g33uhvsq4:
     resolution: {integrity: sha512-fuHMHWSf5SRhXke+DbHXj2wVMo+ghVH30vhX3XVacdXqDl+J4XWafMIGOOER861QpBx1jxgwKXL2dQnfrsd8MQ==}
     peerDependencies:
@@ -10275,6 +10301,25 @@ packages:
   /@react-dnd/shallowequal/4.0.2:
     resolution: {integrity: sha512-/RVXdLvJxLg4QKvMoM5WlwNR9ViO9z8B/qPcc+C0Sa/teJY7QG7kJ441DwzOjMYEY7GmU4dj5EcGHIkKZiQZCA==}
 
+  /@react-native-community/datetimepicker/8.2.0_vaerzj76hdplfiesx7atg6p2fq:
+    resolution: {integrity: sha512-qrUPhiBvKGuG9Y+vOqsc56RPFcHa1SU2qbAMT0hfGkoFIj3FodE0VuPVrEa8fgy7kcD5NQmkZIKgHOBLV0+hWg==}
+    peerDependencies:
+      expo: '>=50.0.0'
+      react: '*'
+      react-native: '*'
+      react-native-windows: '*'
+    peerDependenciesMeta:
+      expo:
+        optional: true
+      react-native-windows:
+        optional: true
+    dependencies:
+      expo: 53.0.22_hbrvr7v35vh7slnwjda7m2pwdm
+      invariant: 2.2.4
+      react: 19.0.0
+      react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
+    dev: false
+
   /@react-native-community/datetimepicker/8.2.0_xptahs4rc3lymgslxxo4pyqape:
     resolution: {integrity: sha512-qrUPhiBvKGuG9Y+vOqsc56RPFcHa1SU2qbAMT0hfGkoFIj3FodE0VuPVrEa8fgy7kcD5NQmkZIKgHOBLV0+hWg==}
     peerDependencies:
@@ -10288,25 +10333,6 @@ packages:
       react-native-windows:
         optional: true
     dependencies:
-      invariant: 2.2.4
-      react: 19.0.0
-      react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-    dev: false
-
-  /@react-native-community/datetimepicker/8.4.1_vaerzj76hdplfiesx7atg6p2fq:
-    resolution: {integrity: sha512-DrK+CUS5fZnz8dhzBezirkzQTcNDdaXer3oDLh0z4nc2tbdIdnzwvXCvi8IEOIvleoc9L95xS5tKUl0/Xv71Mg==}
-    peerDependencies:
-      expo: '>=52.0.0'
-      react: '*'
-      react-native: '*'
-      react-native-windows: '*'
-    peerDependenciesMeta:
-      expo:
-        optional: true
-      react-native-windows:
-        optional: true
-    dependencies:
-      expo: 53.0.22_hbrvr7v35vh7slnwjda7m2pwdm
       invariant: 2.2.4
       react: 19.0.0
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
@@ -11300,7 +11326,7 @@ packages:
   /@react-typed-forms/transform/0.2.0:
     resolution: {integrity: sha512-P8qYhc5b801cI8uJ8/5Ks8Ja2iJNADw+KiMw2t55Zb1y3RtbWxz7H9tXR2ZFdkf4J9CoAJ+At1XEqMkd0Z8ieQ==}
     dependencies:
-      '@babel/core': 7.26.0
+      '@babel/core': 7.28.0
       '@babel/helper-module-imports': 7.25.9
       '@babel/helper-plugin-utils': 7.25.9
     transitivePeerDependencies:
@@ -11311,8 +11337,8 @@ packages:
     resolution: {integrity: sha512-Xsy2jWLLbCXE755lQsNEJk5c5mIER3gM9YVloOD9Jprumyi2dwPzUYOAxgf+iV7ipOWAh3DMZH/HQ8ltj4uPgw==}
     dependencies:
       '@babel/core': 7.28.0
-      '@babel/helper-module-imports': 7.25.9
-      '@babel/helper-plugin-utils': 7.25.9
+      '@babel/helper-module-imports': 7.27.1
+      '@babel/helper-plugin-utils': 7.27.1
       minimatch: 10.0.1
     transitivePeerDependencies:
       - supports-color
@@ -11967,6 +11993,30 @@ packages:
       react: 19.0.0
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
       react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
+    dev: false
+
+  /@rn-primitives/switch/1.2.0_2w7rhzav7qihxjujx6mb2jh3z4:
+    resolution: {integrity: sha512-M4r4LvLUFgn3SIkrMuEkDIxnRbHPLZF2cvKhdHmsk1vk6DSIw3WxYEA+0GkU6a8wnOCFzWRl4kHh5+x86bo1/w==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native:
+        optional: true
+      react-native-web:
+        optional: true
+    dependencies:
+      '@radix-ui/react-switch': 1.2.6_eyyptzjprmppizp3hnbbs5ffqe
+      '@rn-primitives/slot': 1.2.0_6zigs6jbt3nslptl5e3g2l4qh4
+      '@rn-primitives/types': 1.2.0_6zigs6jbt3nslptl5e3g2l4qh4
+      react: 19.0.0
+      react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
+      react-native-web: 0.20.0_upmzqgzhjrquwzo2dphtigtdgi
+    transitivePeerDependencies:
+      - '@types/react'
+      - '@types/react-dom'
+      - react-dom
     dev: false
 
   /@rn-primitives/tooltip/1.2.0_ibi3yhuan4uur7jmretty3veqm:
@@ -14906,7 +14956,7 @@ packages:
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
     dependencies:
-      '@babel/compat-data': 7.26.0
+      '@babel/compat-data': 7.28.0
       '@babel/core': 7.26.0
       '@babel/helper-define-polyfill-provider': 0.6.2_@babel+core@7.26.0
       semver: 6.3.1
@@ -14919,7 +14969,7 @@ packages:
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
     dependencies:
-      '@babel/compat-data': 7.26.0
+      '@babel/compat-data': 7.28.0
       '@babel/core': 7.28.0
       '@babel/helper-define-polyfill-provider': 0.6.2_@babel+core@7.28.0
       semver: 6.3.1
@@ -15002,7 +15052,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.28.0
-      '@babel/parser': 7.28.0
+      '@babel/parser': 7.28.4
     dev: true
 
   /babel-preset-current-node-syntax/1.1.0_@babel+core@7.28.0:
@@ -23312,24 +23362,13 @@ packages:
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
     dev: false
 
-  /react-native-modal-datetime-picker/18.0.0_mqvd2y5jecbxi6lvk2liuur5fm:
-    resolution: {integrity: sha512-0jdvhhraZQlRACwr7pM6vmZ2kxgzJ4CpnmV6J3TVA6MrXMXK6Zo/upRBKkRp0+fTOiKuNblzesA2U59rYo6SGA==}
-    peerDependencies:
-      '@react-native-community/datetimepicker': '>=6.7.0'
-      react-native: '>=0.65.0'
-    dependencies:
-      '@react-native-community/datetimepicker': 8.4.1_vaerzj76hdplfiesx7atg6p2fq
-      prop-types: 15.8.1
-      react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
-    dev: false
-
   /react-native-modal-datetime-picker/18.0.0_rt2bwdxmb2paycsikwmimoltdu:
     resolution: {integrity: sha512-0jdvhhraZQlRACwr7pM6vmZ2kxgzJ4CpnmV6J3TVA6MrXMXK6Zo/upRBKkRp0+fTOiKuNblzesA2U59rYo6SGA==}
     peerDependencies:
       '@react-native-community/datetimepicker': '>=6.7.0'
       react-native: '>=0.65.0'
     dependencies:
-      '@react-native-community/datetimepicker': 8.2.0_xptahs4rc3lymgslxxo4pyqape
+      '@react-native-community/datetimepicker': 8.2.0_vaerzj76hdplfiesx7atg6p2fq
       prop-types: 15.8.1
       react-native: 0.79.5_rl7ou2sey2vgd3bzgkzi5d6njq
     dev: false
@@ -25146,10 +25185,6 @@ packages:
 
   /tailwind-merge/1.14.0:
     resolution: {integrity: sha512-3mFKyCo/MBcgyOTlrY8T7odzZFx+w+qKSMAmdFzRvqBfLlSigU6TZnlFHK0lkMwj9Bj8OYU+9yW9lmGuS0QEnQ==}
-    dev: false
-
-  /tailwind-merge/2.6.0:
-    resolution: {integrity: sha512-P+Vu1qXfzediirmHOC3xKGAYeZtPcV9g76X+xg2FD4tYgR71ewMA35Y3sCz3zhiN/dwefRpJX0yBcgwi1fXNQA==}
     dev: false
 
   /tailwind-merge/3.0.2:

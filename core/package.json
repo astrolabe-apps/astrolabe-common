@@ -3,18 +3,16 @@
   "version": "4.4.3",
   "description": "",
   "type": "module",
-  "main": "lib/index.cjs",
   "module": "lib/index.js",
   "types": "lib/index.d.ts",
   "exports": {
     "types": "./lib/index.d.ts",
-    "require": "./lib/index.cjs",
     "default": "./lib/index.js"
   },
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsx React --jsxImportSource react",
-    "watch": "microbundle -f modern,cjs --no-compress --jsx React --jsxImportSource react",
+    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern --no-compress --jsx React --jsxImportSource react",
+    "watch": "microbundle -f modern --no-compress --jsx React --jsxImportSource react",
     "test": "jest --coverage",
     "update-readme": "md-magic --path README.md --path ../../README.md"
   },

@@ -1,23 +1,68 @@
 import React from 'react';
-import { ScrollView, Text, View } from 'react-native';
-import { useControl } from '@react-typed-forms/core';
-import { createDefaultRenderers } from '@react-typed-forms/schemas-rn';
-import { RenderForm, createSchemaDataNode, createFormTree, createSchemaTree, createFormRenderer } from '@react-typed-forms/schemas';
-import { defaultRnTailwindTheme } from '@react-typed-forms/schemas-rn';
-import { FieldType, SchemaField, dataControl, groupedControl } from '@astroapps/forms-core';
+import {ScrollView, Text, View} from 'react-native';
+import {useControl} from '@react-typed-forms/core';
+import {createDefaultRenderers, defaultRnTailwindTheme} from '@react-typed-forms/schemas-rn';
+import {
+    buildSchema,
+    createFormRenderer,
+    createFormTree,
+    createSchemaDataNode,
+    createSchemaTree,
+    dataControl,
+    DataRenderType,
+    FieldType,
+    groupedControl,
+    makeScalarField,
+    RenderForm
+} from '@react-typed-forms/schemas';
+import {FormDataDisplay} from '../../components/FormDataDisplay';
 
-// Schema definition for user profile
-const profileSchema: SchemaField[] = [
-  { field: 'firstName', type: FieldType.String, required: true },
-  { field: 'lastName', type: FieldType.String, required: true },
-  { field: 'email', type: FieldType.String, required: true },
-  { field: 'phone', type: FieldType.String },
-  { field: 'dateOfBirth', type: FieldType.Date },
-  { field: 'bio', type: FieldType.String },
-  { field: 'age', type: FieldType.Int },
-  { field: 'isActive', type: FieldType.Bool },
-  { field: 'profilePicture', type: FieldType.String },
-];
+// Schema definition for user profile using buildSchema
+const profileSchema = buildSchema<UserProfile>({
+  firstName: makeScalarField({
+    type: FieldType.String,
+    notNullable: true,
+    required: true,
+    displayName: 'First Name',
+  }),
+  lastName: makeScalarField({
+    type: FieldType.String,
+    notNullable: true,
+    required: true,
+    displayName: 'Last Name',
+  }),
+  email: makeScalarField({
+    type: FieldType.String,
+    notNullable: true,
+    required: true,
+    displayName: 'Email',
+  }),
+  phone: makeScalarField({
+    type: FieldType.String,
+    displayName: 'Phone Number',
+  }),
+  dateOfBirth: makeScalarField({
+    type: FieldType.Date,
+    displayName: 'Date of Birth',
+  }),
+  bio: makeScalarField({
+    type: FieldType.String,
+    displayName: 'Biography',
+  }),
+  age: makeScalarField({
+    type: FieldType.Int,
+    displayName: 'Age',
+  }),
+  isActive: makeScalarField({
+    type: FieldType.Bool,
+    notNullable: true,
+    displayName: 'Account Active',
+  }),
+  profilePicture: makeScalarField({
+    type: FieldType.String,
+    displayName: 'Profile Picture URL',
+  }),
+});
 
 // Form definition for user profile
 const profileForm = [
@@ -29,7 +74,9 @@ const profileForm = [
     dataControl('dateOfBirth', 'Date of Birth'),
     dataControl('bio', 'Biography'),
     dataControl('age', 'Age'),
-    dataControl('isActive', 'Account Active'),
+    dataControl('isActive', 'Account Active', {
+      renderOptions: { type: DataRenderType.Checkbox },
+    }),
     dataControl('profilePicture', 'Profile Picture URL'),
   ], 'Personal Information'),
 ];
@@ -39,7 +86,7 @@ interface UserProfile {
   lastName: string;
   email: string;
   phone?: string;
-  dateOfBirth?: Date;
+  dateOfBirth?: string;
   bio?: string;
   age?: number;
   isActive: boolean;
@@ -85,14 +132,7 @@ export default function ProfileScreen() {
             }}
           />
           
-          <View className="mt-6 pt-4 border-t border-gray-200">
-            <Text className="text-lg font-semibold text-gray-800 mb-2">Current Values:</Text>
-            <View className="bg-gray-50 rounded-lg p-4">
-              <Text className="font-mono text-sm text-gray-700">
-                {JSON.stringify(control.value, null, 2)}
-              </Text>
-            </View>
-          </View>
+          <FormDataDisplay control={control} title="Current Values" />
         </View>
       </View>
     </ScrollView>

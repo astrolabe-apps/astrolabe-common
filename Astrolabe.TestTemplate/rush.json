@@ -564,7 +564,7 @@
 //    },
     {
       "packageName": "@react-typed-forms/schemas-rn-demo",
-      "projectFolder": "../schemas-rn-demo"
+      "projectFolder": "ClientApp/schemas-rn-demo"
     }
 //    {
 //      "packageName": "expoapp",

@@ -579,28 +579,12 @@ export function createDefaultRenderers(
     display: createDefaultDisplayRenderer(options.display),
     action: createButtonActionRenderer(undefined, options.action),
     array: createDefaultArrayRenderer(options.array),
-    group: createDefaultGroupRenderer(
-      options.group,
-      options.adornment as DefaultAdornmentRendererOptions,
-    ),
+    group: createDefaultGroupRenderer(options.group, options.adornment),
     label: createDefaultLabelRenderer(options.label),
-    adornment: createDefaultAdornmentRenderer(
-      options.adornment as DefaultAdornmentRendererOptions,
-    ),
+    adornment: createDefaultAdornmentRenderer(options.adornment),
     renderLayout: createDefaultLayoutRenderer(options.layout),
     visibility: createDefaultVisibilityRenderer(),
     extraRenderers: options.extraRenderers?.(options) ?? [],
     html: options.html ?? ReactNativeHtmlComponents,
   };
-}
-
-export function createClassStyledRenderers() {
-  return createDefaultRenderers({
-    layout: { className: "control" },
-    group: { className: "group" },
-    array: { className: "control-array" },
-    action: { buttonClass: "action" },
-    data: { inputClass: "data" },
-    display: { htmlClassName: "html", textClassName: "text" },
-  });
 }

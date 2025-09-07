@@ -9,7 +9,7 @@ const {
 } = require("react-native-reanimated/metro-config");
 
 const projectDir = __dirname;
-const workspaceRoot = path.resolve(projectDir, "..");
+const workspaceRoot = path.resolve(projectDir, "../../..");
 
 const symlinksResolver = MetroSymlinksResolver();
 
