@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import React, { Fragment, ReactNode } from "react";
+import { View, StyleProp, ViewStyle } from "react-native";
 import {
   ActionRendererProps,
   applyArrayLengthRestrictions,
@@ -14,7 +15,6 @@ import {
   DataRenderType,
   FormRenderer,
   getLengthRestrictions,
-  HtmlComponents,
   isArrayRenderer,
   mergeObjects,
 } from "@react-typed-forms/schemas";
@@ -108,12 +108,11 @@ export function createDefaultArrayRenderer(
   options?: DefaultArrayRendererOptions,
 ): ArrayRendererRegistration {
   return {
-    render: (props, { renderAction, html }) => (
+    render: (props, { renderAction }) => (
       <DefaultArrayRenderer
         {...props}
         {...options}
         renderAction={renderAction}
-        html={html}
       />
     ),
     type: "array",
@@ -124,7 +123,6 @@ export interface DefaultArrayRendererProps
   extends DefaultArrayRendererOptions,
     ArrayRendererProps {
   renderAction: (props: ActionRendererProps) => ReactNode;
-  html: HtmlComponents;
 }
 
 export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
@@ -140,36 +138,35 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     renderAction,
     style,
     editAction,
-    html: { Div },
   } = props;
   const { addAction, removeAction } = applyArrayLengthRestrictions(props);
 
   return (
-    <Div style={style}>
-      <Div className={clsx(className, removeAction && removableClass)}>
+    <View style={style as StyleProp<ViewStyle>}>
+      <View className={clsx(className, removeAction && removableClass)}>
         {Array.from({ length: getElementCount() }, (_, x) =>
           renderElement(x, (key, children) =>
             removeAction || editAction ? (
               <Fragment key={key}>
-                <Div className={clsx(childClass, removableChildClass)}>
+                <View className={clsx(childClass, removableChildClass)}>
                   {children}
-                </Div>
-                <Div className={removeActionClass}>
+                </View>
+                <View className={removeActionClass}>
                   {editAction && renderAction(editAction(x))}
                   {removeAction && renderAction(removeAction(x))}
-                </Div>
+                </View>
               </Fragment>
             ) : (
-              <Div key={key} className={childClass}>
+              <View key={key} className={childClass}>
                 {children}
-              </Div>
+              </View>
             ),
           ),
         )}
-      </Div>
+      </View>
       {addAction && (
-        <Div className={addActionClass}>{renderAction(addAction)}</Div>
+        <View className={addActionClass}>{renderAction(addAction)}</View>
       )}
-    </Div>
+    </View>
   );
 }

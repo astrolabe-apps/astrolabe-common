@@ -228,6 +228,7 @@ interface RNDataRendererRegistration {
 4. Replace `html.Label` with `<View><Text>` combinations
 5. Replace `html.Button` with `<Pressable>` or `<TouchableOpacity>`
 6. Replace `html.I` with direct `<Icon>` component usage
+7. **Important**: Cast style props when needed - `style={style as StyleProp<ViewStyle>}` due to type conflicts between CSS and RN styles
 
 ### Step 3: Testing & Validation
 1. Verify all renderer components work with direct RN components
