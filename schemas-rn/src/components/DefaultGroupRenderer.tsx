@@ -19,7 +19,7 @@ import {
 } from "@react-typed-forms/schemas";
 import clsx from "clsx";
 import React, { CSSProperties, ReactElement } from "react";
-import { 
+import {
   DefaultTabsRenderOptions,
   DefaultGridRenderOptions,
   DefaultWizardRenderOptions,
@@ -58,10 +58,20 @@ export function createDefaultGroupRenderer(
   // These renderers work with React Native via the HTML abstraction layer
   const gridRenderer = createGridRenderer(options?.grid);
   const wizardRenderer = createWizardRenderer(options?.wizard);
-  
+
   // Stub renderers for React Native - these should be replaced with RN implementations
-  const tabsRenderer = { render: (props: any, renderer: any) => { throw new Error("Tabs renderer not implemented for React Native"); } };
-  const dialogRenderer = { render: (props: any, renderer: any) => { throw new Error("Dialog renderer not implemented for React Native"); } };
+  const tabsRenderer = {
+    render: (props: any, renderer: any) => {
+      console.error("Tabs renderer not implemented for React Native");
+      return <></>;
+    },
+  };
+  const dialogRenderer = {
+    render: (props: any, renderer: any) => {
+      console.error("Dialog renderer not implemented for React Native");
+      return <></>;
+    },
+  };
   const accordionRenderer = createAccordionGroupRenderer(
     options?.accordion ?? adornmentOptions?.accordion,
   );

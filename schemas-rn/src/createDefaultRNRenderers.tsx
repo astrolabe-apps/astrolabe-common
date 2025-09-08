@@ -146,9 +146,8 @@ export function createDefaultDataRenderer(
         renderType == DataRenderType.ArrayElement)
     ) {
       if (renderType == DataRenderType.ArrayElement)
-        throw new Error(
-          "ArrayElement renderer not implemented for React Native",
-        );
+        console.error("ArrayElement renderer not implemented for React Native");
+
       return arrayRenderer.render(props, renderers);
     }
     if (
@@ -206,11 +205,11 @@ export function createDefaultDataRenderer(
       case DataRenderType.Checkbox:
         return checkboxRenderer.render(props, renderers);
       case DataRenderType.Jsonata:
-        throw new Error("Jsonata renderer not implemented for React Native");
+        console.error("Jsonata renderer not implemented for React Native");
+        return <></>;
       case DataRenderType.Autocomplete:
-        throw new Error(
-          "Autocomplete renderer not implemented for React Native",
-        );
+        console.error("Autocomplete renderer not implemented for React Native");
+        return <></>;
       case DataRenderType.ElementSelected:
         return elementSelectedRenderer.render(props, renderers);
     }
@@ -259,7 +258,13 @@ export function createDefaultAdornmentRenderer(
     type: "adornment",
     render: (props, renderers) => {
       if (isOptionalAdornment(props.adornment)) {
-        throw new Error("Optional adornment not implemented for React Native");
+        console.error("Optional adornment not implemented for React Native");
+        return {
+          apply: () => {
+            return <></>;
+          },
+          priority: 0,
+        };
       }
       const { adornment, designMode, dataContext, runExpression } = props;
       return {
