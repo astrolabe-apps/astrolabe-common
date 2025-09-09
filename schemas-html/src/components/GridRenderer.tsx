@@ -37,6 +37,10 @@ function GridRenderer(props: {
   const numColumns = gridOptions.columns ?? defaults.defaultColumns ?? 2;
   const allChildren = filteredChildren.map((x) => renderChild(x));
 
+  const cellClass = gridOptions.cellClass
+    ? getCellClassNames(gridOptions.cellClass)
+    : getCellClassNames(defaults.cellClass);
+
   // split into numColumns items wrapped a div each
   const rows: ReactNode[][] = [];
   for (let i = 0; i < allChildren.length; i += numColumns) {
@@ -52,10 +56,7 @@ function GridRenderer(props: {
           {row.map((cell, cellIndex) => (
             <Div
               key={cellIndex}
-              className={rendererClass(
-                gridOptions.cellClass,
-                defaults.cellClass,
-              )}
+              className={cellClass?.at(cellIndex) ?? "flex-1"}
             >
               {cell}
             </Div>
@@ -64,4 +65,8 @@ function GridRenderer(props: {
       ))}
     </Div>
   );
+}
+
+function getCellClassNames(cellClass?: string) {
+  return cellClass?.split(",");
 }

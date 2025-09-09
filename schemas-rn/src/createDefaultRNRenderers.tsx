@@ -1,12 +1,7 @@
 import { createDefaultDisplayRenderer } from "./components/DefaultDisplay";
 import { createDefaultLayoutRenderer } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, {
-  Fragment,
-  isValidElement,
-  ReactElement,
-  ReactNode,
-} from "react";
+import React, { isValidElement, ReactElement, ReactNode } from "react";
 import {
   Text,
   View,
@@ -476,14 +471,16 @@ function RNLabel({
   ...props
 }: HtmlDivProperties) {
   return (
-    <View
-      className={className}
-      style={style as StyleProp<ViewStyle>}
-      role={role as Role}
-      {...props}
-    >
-      <Text className={textClass}>{children}</Text>
-    </View>
+    !isNodeEmpty(children) && (
+      <View
+        className={className}
+        style={style as StyleProp<ViewStyle>}
+        role={role as Role}
+        {...props}
+      >
+        <Text className={textClass}>{children}</Text>
+      </View>
+    )
   );
 }
 
@@ -592,4 +589,24 @@ export function createDefaultRenderers(
     extraRenderers: options.extraRenderers?.(options) ?? [],
     html: options.html ?? ReactNativeHtmlComponents,
   };
+}
+
+function isNodeEmpty(node: React.ReactNode): boolean {
+  if (node === null || node === undefined || typeof node === "boolean") {
+    return true;
+  }
+
+  if (typeof node === "string" || typeof node === "number") {
+    return false;
+  }
+  if (Array.isArray(node)) {
+    return node.every(isNodeEmpty);
+  }
+
+  if (React.isValidElement(node)) {
+    const element = node as React.ReactElement<{ children?: React.ReactNode }>;
+    return isNodeEmpty(element.props?.children ?? undefined);
+  }
+
+  return false;
 }
