@@ -50,7 +50,13 @@ function GridRenderer(props: {
           className={rendererClass(gridOptions.rowClass, defaults.rowClass)}
         >
           {row.map((cell, cellIndex) => (
-            <Div key={cellIndex} className={rendererClass(defaults.cellClass)}>
+            <Div
+              key={cellIndex}
+              className={rendererClass(
+                gridOptions.cellClass,
+                defaults.cellClass,
+              )}
+            >
               {cell}
             </Div>
           ))}

@@ -385,6 +385,7 @@ export interface GridRendererOptions extends GroupRenderOptions {
   type: GroupRenderType.Grid;
   columns?: number | null;
   rowClass?: string | null;
+  cellClass?: string | null;
 }
 
 export interface TabsRenderOptions extends GroupRenderOptions {

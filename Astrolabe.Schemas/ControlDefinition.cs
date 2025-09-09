@@ -416,7 +416,7 @@ public record DialogRenderOptions(string? Title) : GroupRenderOptions(nameof(Gro
 public record FlexRenderer(string? Direction, string? Gap)
     : GroupRenderOptions(nameof(GroupRenderType.Flex));
 
-public record GridRenderer(int? Columns, string? RowClass) : GroupRenderOptions(nameof(GroupRenderType.Grid));
+public record GridRenderer(int? Columns, string? RowClass, string? CellClass) : GroupRenderOptions(nameof(GroupRenderType.Grid));
 
 public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)] object Value)
     : GroupRenderOptions(nameof(GroupRenderType.GroupElement));
