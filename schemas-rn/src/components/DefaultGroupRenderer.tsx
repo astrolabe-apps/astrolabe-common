@@ -32,6 +32,7 @@ import {
   DefaultAccordionRendererOptions,
   DefaultAdornmentRendererOptions,
 } from "../rendererOptions";
+import { createDialogRenderer } from "./DefaultDialogRenderer";
 
 interface StyleProps {
   className?: string;
@@ -66,12 +67,7 @@ export function createDefaultGroupRenderer(
       return <></>;
     },
   };
-  const dialogRenderer = {
-    render: (props: any, renderer: any) => {
-      console.error("Dialog renderer not implemented for React Native");
-      return <></>;
-    },
-  };
+  const dialogRenderer = createDialogRenderer(options?.dialog);
   const accordionRenderer = createAccordionGroupRenderer(
     options?.accordion ?? adornmentOptions?.accordion,
   );

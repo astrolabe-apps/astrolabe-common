@@ -1,28 +1,28 @@
 import {
-  FieldType,
-  makeScalarField,
-  buildSchema,
-  defaultValueForFields,
-  FieldOption,
-  applyDefaultValues,
-  DateComparison,
-  SchemaValidator,
-  makeCompoundField,
-  SchemaField,
-  EntityExpression,
-  DynamicProperty,
-  IconReference,
+  ActionStyle,
   AdornmentPlacement,
+  applyDefaultValues,
+  buildSchema,
   ControlAdornment,
+  ControlDefinition,
+  ControlDisableType,
+  DateComparison,
+  defaultValueForFields,
+  DisplayData,
+  DynamicProperty,
+  EntityExpression,
+  FieldOption,
+  FieldType,
   GroupRenderOptions,
   IconMapping,
-  SyncTextType,
-  RenderOptions,
-  DisplayData,
-  ActionStyle,
   IconPlacement,
-  ControlDisableType,
-  ControlDefinition,
+  IconReference,
+  makeCompoundField,
+  makeScalarField,
+  RenderOptions,
+  SchemaField,
+  SchemaValidator,
+  SyncTextType,
 } from "@react-typed-forms/schemas";
 
 export interface FieldOptionForm {
@@ -718,6 +718,7 @@ export interface GroupRenderOptionsForm {
   columns: number | null;
   rowClass: string | null;
   cellClass: string | null;
+  portalHost: string | null;
   value: any;
   childIndexExpression: EntityExpressionForm;
   defaultExpanded: boolean | null;
@@ -807,6 +808,11 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["Dialog"],
     displayName: "Title",
+  }),
+  portalHost: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Dialog"],
+    displayName: "PortalHost",
   }),
   direction: makeScalarField({
     type: FieldType.String,

@@ -14,13 +14,13 @@ import { Control, useControl } from "@react-typed-forms/core";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { useMemo } from "react";
 
-const Dialog = DialogPrimitive.Root;
+export const Dialog = DialogPrimitive.Root;
 
-const DialogTrigger = DialogPrimitive.Trigger;
+export const DialogTrigger = DialogPrimitive.Trigger;
 
-const DialogPortal = DialogPrimitive.Portal;
+export const DialogPortal = DialogPrimitive.Portal;
 
-const DialogClose = DialogPrimitive.Close;
+export const DialogClose = DialogPrimitive.Close;
 
 function DialogOverlayWeb({
   className,
@@ -79,7 +79,7 @@ const DialogOverlay = Platform.select({
   default: DialogOverlayNative,
 });
 
-const DialogContent = React.forwardRef<
+export const DialogContent = React.forwardRef<
   DialogPrimitive.ContentRef,
   DialogPrimitive.ContentProps & {
     portalHost?: string;
@@ -109,7 +109,7 @@ const DialogContent = React.forwardRef<
 });
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
-const DialogTitle = React.forwardRef<
+export const DialogTitle = React.forwardRef<
   DialogPrimitive.TitleRef,
   DialogPrimitive.TitleProps
 >(({ className, ...props }, ref) => (
@@ -174,12 +174,7 @@ export function RNDialog({
           <DialogTitle asChild className={"flex-1 flex-shrink title2"}>
             {title}
           </DialogTitle>
-          <DialogClose
-            className={
-              "web:group rounded-sm web:ring-offset-background web:transition-opacity web:hover:opacity-100 web:focus:outline-none web:focus:ring-2 web:focus:ring-ring web:focus:ring-offset-2 web:disabled:pointer-events-none"
-            }
-            asChild
-          >
+          <DialogClose className={"rounded-sm"} asChild>
             <TouchableOpacity>
               <FontAwesome6 name="xmark-circle" size={24} color={"#267151"} />
             </TouchableOpacity>

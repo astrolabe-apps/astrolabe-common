@@ -364,6 +364,7 @@ export interface AccordionRenderer extends GroupRenderOptions {
 export interface DialogRenderOptions extends GroupRenderOptions {
   type: GroupRenderType.Dialog;
   title?: string | null;
+  portalHost?: string | null;
 }
 
 export interface StandardGroupRenderer extends GroupRenderOptions {

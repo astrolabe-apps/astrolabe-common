@@ -11,7 +11,7 @@ public enum ControlDefinitionType
     Data,
     Group,
     Display,
-    Action
+    Action,
 }
 
 [JsonBaseType("type", typeof(DataControlDefinition))]
@@ -28,7 +28,7 @@ public abstract record ControlDefinition(
     public string? Id { get; set; }
 
     public string? ChildRefId { get; set; }
-    
+
     [DefaultValue(false)]
     public bool? Disabled { get; set; }
 
@@ -51,7 +51,7 @@ public abstract record ControlDefinition(
     public string? LabelClass { get; set; }
 
     public string? LabelTextClass { get; set; }
-    
+
     public string? Placement { get; set; }
 
     [SchemaTag(SchemaTags.NoControl)]
@@ -72,11 +72,11 @@ public record DataControlDefinition([property: SchemaTag(SchemaTags.SchemaField)
     public RenderOptions? RenderOptions { get; set; }
 
     public object? DefaultValue { get; set; }
-    
+
     public bool? DontClearHidden { get; set; }
-    
+
     public string? RequiredErrorText { get; set; }
-    
+
     public IEnumerable<SchemaValidator>? Validators { get; set; }
 }
 
@@ -100,14 +100,15 @@ public record ActionControlDefinition(
     IconReference? Icon,
     ActionStyle? ActionStyle,
     IconPlacement? IconPlacement,
-    ControlDisableType? DisableType 
+    ControlDisableType? DisableType
 ) : ControlDefinition(nameof(ControlDefinitionType.Action));
 
 [JsonString]
-public enum ControlDisableType {
+public enum ControlDisableType
+{
     None,
     Self,
-    Global
+    Global,
 }
 
 [JsonString]
@@ -116,7 +117,7 @@ public enum ActionStyle
     Button,
     Secondary,
     Link,
-    Group
+    Group,
 }
 
 [JsonString]
@@ -186,9 +187,9 @@ public enum DataRenderType
 
     [Display(Name = "Element Selected")]
     ElementSelected,
-    
+
     [Display(Name = "Scroll List")]
-    ScrollList
+    ScrollList,
 }
 
 [JsonBaseType("type", typeof(SimpleRenderOptions))]
@@ -300,9 +301,11 @@ public record HtmlEditorRenderOptions(bool AllowImages)
 public record IconMapping(string Value, string? MaterialIcon);
 
 public record ElementSelectedRenderOptions(
-    [property: SchemaTag(SchemaTags.ControlRef + "Expression")] EntityExpression ElementExpression) : RenderOptions(nameof(DataRenderType.ElementSelected));
+    [property: SchemaTag(SchemaTags.ControlRef + "Expression")] EntityExpression ElementExpression
+) : RenderOptions(nameof(DataRenderType.ElementSelected));
 
-public record ScrollListRenderOptions(string? BottomActionId) : RenderOptions(nameof(DataRenderType.ScrollList));
+public record ScrollListRenderOptions(string? BottomActionId)
+    : RenderOptions(nameof(DataRenderType.ScrollList));
 
 [JsonString]
 public enum DisplayDataType
@@ -310,7 +313,7 @@ public enum DisplayDataType
     Text,
     Html,
     Icon,
-    Custom
+    Custom,
 }
 
 [JsonBaseType("type", typeof(SimpleDisplayData))]
@@ -349,7 +352,7 @@ public enum DynamicPropertyType
     AllowedOptions,
     Label,
     ActionData,
-    GridColumns
+    GridColumns,
 }
 
 public record DynamicProperty(
@@ -370,7 +373,7 @@ public enum GroupRenderType
     Wizard,
     Dialog,
     Contents,
-    Accordion
+    Accordion,
 }
 
 [JsonBaseType("type", typeof(SimpleGroupRenderOptions))]
@@ -400,10 +403,9 @@ public abstract record GroupRenderOptions(
     public string? ChildLabelClass { get; set; }
 
     public bool? DisplayOnly { get; set; }
-    
+
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
-
 }
 
 public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
@@ -411,12 +413,14 @@ public record SimpleGroupRenderOptions(string Type) : GroupRenderOptions(Type);
 public record TabsRenderOptions(string? ContentClass)
     : GroupRenderOptions(nameof(GroupRenderType.Tabs));
 
-public record DialogRenderOptions(string? Title) : GroupRenderOptions(nameof(GroupRenderType.Dialog));
+public record DialogRenderOptions(string? Title, string? PortalHost)
+    : GroupRenderOptions(nameof(GroupRenderType.Dialog));
 
 public record FlexRenderer(string? Direction, string? Gap)
     : GroupRenderOptions(nameof(GroupRenderType.Flex));
 
-public record GridRenderer(int? Columns, string? RowClass, string? CellClass) : GroupRenderOptions(nameof(GroupRenderType.Grid));
+public record GridRenderer(int? Columns, string? RowClass, string? CellClass)
+    : GroupRenderOptions(nameof(GroupRenderType.Grid));
 
 public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)] object Value)
     : GroupRenderOptions(nameof(GroupRenderType.GroupElement));
@@ -426,7 +430,8 @@ public record SelectChildRenderer(
         EntityExpression ChildIndexExpression
 ) : GroupRenderOptions(nameof(GroupRenderType.SelectChild));
 
-public record AccordionRenderer(bool? DefaultExpanded) : GroupRenderOptions(nameof(GroupRenderType.Accordion));
+public record AccordionRenderer(bool? DefaultExpanded)
+    : GroupRenderOptions(nameof(GroupRenderType.Accordion));
 
 [JsonString]
 public enum AdornmentPlacement
@@ -454,7 +459,7 @@ public enum ControlAdornmentType
     HelpText,
     Icon,
     SetField,
-    Optional
+    Optional,
 }
 
 [JsonBaseType("type", typeof(HelpTextAdornment))]
@@ -506,5 +511,5 @@ public enum IconLibrary
 {
     FontAwesome,
     Material,
-    CssClass
+    CssClass,
 }
