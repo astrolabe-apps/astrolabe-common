@@ -57,6 +57,7 @@ import {
 import { createAction } from "./controlBuilder";
 import {
   ActionRendererProps,
+  ControlActionContext,
   ControlActionHandler,
   ControlDataContext,
   RunExpression,
@@ -652,11 +653,26 @@ export function renderControlLayout(
           ? () => {
               let disableType: ControlDisableType =
                 c.disableType ?? ControlDisableType.Self;
-              const r = handler({
+              const actionContext: ControlActionContext = {
                 disableForm(type: ControlDisableType) {
                   disableType = type;
                 },
-              });
+                runAction(
+                  actionId: string,
+                  actionData?: any,
+                ): void | Promise<any> {
+                  const h = props.actionOnClick?.(
+                    actionId,
+                    actionData,
+                    dataContext,
+                  );
+                  if (h) {
+                    h(actionContext);
+                  }
+                  return;
+                },
+              };
+              const r = handler(actionContext);
               if (r instanceof Promise) {
                 const cleanup = formNode.ui.getDisabler(disableType)();
                 formNode.setBusy(true);

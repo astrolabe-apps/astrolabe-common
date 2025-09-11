@@ -21,12 +21,13 @@ export interface ControlDataContext {
 }
 export interface ControlActionContext {
   disableForm(disable: ControlDisableType): void;
+  runAction(action: string, actionData?: any): void | Promise<any>;
 }
 
-export const NoOpControlActionContext : ControlActionContext = {
-  disableForm(disable: ControlDisableType) {
-  }
-}
+export const NoOpControlActionContext: ControlActionContext = {
+  disableForm(disable: ControlDisableType) {},
+  runAction(actionId: string, actionData?: any): void | Promise<any> {},
+};
 
 export type ControlActionHandler = (
   actionId: string,

@@ -395,7 +395,7 @@ export default function Editor() {
           }
         }}
         previewOptions={{
-          actionOnClick: (aid, data, dataContext) => async () => {
+          actionOnClick: (aid, data, dataContext) => async (ctx) => {
             await new Promise((r) => setTimeout(r, 1000));
             if (aid === "loadMore") {
               const stuffArray =
@@ -410,6 +410,7 @@ export default function Editor() {
               lc.value = false;
             }
             console.log("Clicked", aid, data);
+            await ctx.runAction("closeDialog");
           },
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
           variables: () => ({ breakpoint: breakpointControl.value }),
