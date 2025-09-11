@@ -101,7 +101,7 @@ export function DefaultDialogRenderer({
         className={cn("min-w-[200px] min-h-[200px] z-10", containerClass)}
         style={{ maxWidth }}
         portalHost={Platform.select({
-          ios: portalHost ?? undefined,
+          ios: portalHost?.trim() ? portalHost : undefined,
         })}
       >
         <View
