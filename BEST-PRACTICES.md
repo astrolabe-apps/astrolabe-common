@@ -588,6 +588,308 @@ public async Task<GroupView> GetGroupById(Guid id)
 
 The `ExceptionHandler` will automatically convert these exceptions to the appropriate HTTP responses with proper status codes and error formatting.
 
+## Control Styling with Class Properties
+
+**Important**: Every control has three distinct class properties for proper styling separation.
+
+Each control in the astrolabe-schemas system supports three class properties that serve different purposes:
+
+### **Class Property Types:**
+
+```typescript
+// Control styling structure
+interface ControlStyling {
+  layoutClass: string;    // Overall layout and positioning of the control container
+  labelClass: string;     // Styling for the title/label text
+  styleClass: string;     // Styling for the actual control element (input, button, etc.)
+}
+```
+
+### **Usage Examples:**
+
+```typescript
+// Text input with proper styling
+dataControl("email", "Email Address", {
+  required: true,
+  layoutClass: "mb-4",                              // Container spacing
+  labelClass: "text-sm font-medium text-gray-700 mb-1 block", // Label styling
+  styleClass: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500", // Input styling
+  ...textfieldOptions({
+    placeholder: "Enter your email address",
+  }),
+});
+
+// Action button with layout control
+actionControl("Save", "saveAction", {
+  layoutClass: "flex justify-end mt-4",             // Right-aligned button container
+  styleClass: "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors",
+});
+
+// Read-only display with status styling
+dataControl("status", "Current Status", {
+  readonly: true,
+  layoutClass: "mb-2",                              // Container spacing
+  labelClass: "text-xs font-medium text-gray-600 mb-1 block", // Small label
+  styleClass: "text-sm bg-gray-50 px-3 py-2 rounded-md border font-mono", // Display styling
+});
+
+// Grouped controls with container styling
+groupedControl([
+  // ... child controls
+], "User Information", {
+  styleClass: "bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4", // Group container styling
+});
+```
+
+### **Best Practices for Control Styling:**
+
+1. **Separation of Concerns**: Use each class property for its intended purpose
+   - `layoutClass`: Flexbox, grid, margins, positioning
+   - `labelClass`: Typography, colors, spacing for labels
+   - `styleClass`: Input appearance, buttons, borders, backgrounds
+
+2. **Consistent Spacing**: Use systematic spacing classes
+   ```typescript
+   layoutClass: "mb-3"        // Standard field spacing
+   layoutClass: "mb-4"        // Section spacing
+   labelClass: "mb-1 block"   // Standard label spacing
+   ```
+
+3. **Accessibility Considerations**:
+   ```typescript
+   // Hide labels when not needed (e.g., in data tables)
+   labelClass: "sr-only"
+   
+   // Proper label structure for form fields
+   labelClass: "text-sm font-medium text-gray-700 mb-1 block"
+   ```
+
+4. **Dynamic Styling**: Combine with dynamic properties for conditional styling
+   ```typescript
+   dataControl("status", "Status", {
+     styleClass: "px-2 py-1 rounded text-sm",
+     dynamic: [
+       {
+         type: "StyleClass",
+         expr: jsonataExpr("success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"),
+       }
+     ],
+   });
+   ```
+
+5. **Responsive Design**: Use responsive Tailwind classes
+   ```typescript
+   layoutClass: "mb-4 md:mb-6"              // Responsive spacing
+   styleClass: "w-full md:w-1/2 lg:w-1/3"  // Responsive width
+   ```
+
+### **Common Styling Patterns:**
+
+```typescript
+// Form section headers
+groupedControl(controls, "📊 Section Title", {
+  styleClass: "bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4 shadow-sm",
+});
+
+// Command/action areas
+groupedControl(controls, "🤖 Actions", {
+  styleClass: "bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-4",
+});
+
+// Status/info displays
+groupedControl(controls, "📋 Information", {
+  styleClass: "bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4",
+});
+
+// Warning/error sections
+groupedControl(controls, "⚠️ Warnings", {
+  styleClass: "bg-orange-50 border border-orange-200 rounded-lg p-3 mb-4",
+});
+```
+
+### **❌ Common Mistakes to Avoid:**
+
+```typescript
+// DON'T mix concerns
+styleClass: "mb-4 text-sm bg-blue-500"  // ❌ Layout + styling mixed
+
+// DO separate properly  
+layoutClass: "mb-4"                      // ✅ Layout
+styleClass: "text-sm bg-blue-500"       // ✅ Styling
+
+// DON'T use wrong property names
+className: "px-4 py-2"                   // ❌ Wrong property name
+
+// DO use correct property names
+styleClass: "px-4 py-2"                  // ✅ Correct property
+```
+
+## Control Definition System
+
+The framework uses a comprehensive control definition system defined in `forms/core/src/controlDefinition.ts` that provides a structured way to define form controls and their behaviors.
+
+### Core Control Types
+
+**Control Definition Types:**
+- `DataControlDefinition` - Form input controls (text fields, dropdowns, checkboxes, etc.)
+- `GroupedControlsDefinition` - Container controls that group other controls
+- `ActionControlDefinition` - Interactive buttons and action triggers
+- `DisplayControlDefinition` - Read-only display elements (text, icons, HTML)
+
+**Type Safety Pattern:**
+```typescript
+export type AnyControlDefinition =
+  | DataControlDefinition
+  | GroupedControlsDefinition
+  | ActionControlDefinition
+  | DisplayControlDefinition;
+```
+
+### Data Control Rendering
+
+**Render Options System:**
+Data controls use a render options pattern to specify how they should be displayed:
+
+```typescript
+interface DataControlDefinition extends ControlDefinition {
+  type: ControlDefinitionType.Data;
+  field: string;                    // Field name for data binding
+  renderOptions?: RenderOptions;    // Rendering configuration
+  validators?: SchemaValidator[];   // Validation rules
+  defaultValue?: any;              // Default field value
+}
+```
+
+**Common Render Types:**
+- `Standard` - Default renderer based on field type
+- `Textfield` - Text input with optional multiline support
+- `Dropdown` - Select dropdown with options
+- `Radio` - Radio button group
+- `Checkbox` - Checkbox input
+- `DateTime` - Date/time picker with format options
+- `Autocomplete` - Type-ahead search input
+- `Array` - Dynamic array editor with add/remove capabilities
+- `DisplayOnly` - Read-only field display
+
+### Group Control Rendering
+
+**Group Render Types:**
+- `Standard` - Basic container
+- `Grid` - CSS Grid layout with configurable columns
+- `Flex` - Flexbox layout with direction and gap options
+- `Tabs` - Tabbed interface
+- `Dialog` - Modal dialog container
+- `Accordion` - Collapsible sections
+- `Wizard` - Step-by-step navigation
+
+**Group Options Pattern:**
+```typescript
+interface GroupRenderOptions {
+  type: string;
+  hideTitle?: boolean;
+  childStyleClass?: string;
+  childLayoutClass?: string;
+  displayOnly?: boolean;
+}
+```
+
+### Dynamic Properties
+
+Controls support dynamic behavior through expressions:
+
+```typescript
+interface DynamicProperty {
+  type: string;           // Property type (Visible, DefaultValue, etc.)
+  expr: EntityExpression; // Expression for dynamic evaluation
+}
+```
+
+**Dynamic Property Types:**
+- `Visible` - Show/hide based on conditions
+- `DefaultValue` - Dynamic default values
+- `Readonly` - Conditional read-only state
+- `Disabled` - Conditional disabled state
+- `AllowedOptions` - Dynamic option filtering
+- `Label` - Dynamic label text
+
+### Control Adornments
+
+Adornments add auxiliary functionality to controls:
+
+**Adornment Types:**
+- `Tooltip` - Contextual help text
+- `HelpText` - Extended help information
+- `Icon` - Visual indicators (FontAwesome, Material, CSS classes)
+- `Accordion` - Collapsible wrapper
+- `SetField` - Automatic field value setting
+- `Optional` - Null value handling
+
+**Icon Integration:**
+```typescript
+interface IconReference {
+  library: string; // FontAwesome, Material, CssClass
+  name: string;    // Icon identifier
+}
+```
+
+### Form Manipulation Utilities
+
+**Key Utility Functions:**
+```typescript
+// Type guards
+isDataControl(c: ControlDefinition): c is DataControlDefinition
+isGroupControl(c: ControlDefinition): c is GroupedControlsDefinition
+isActionControl(c: ControlDefinition): c is ActionControlDefinition
+
+// Renderer type guards
+isGridRenderer(options: GroupRenderOptions): options is GridRendererOptions
+isTextfieldRenderer(options: RenderOptions): options is TextfieldRenderOptions
+isArrayRenderer(options: RenderOptions): options is ArrayRenderOptions
+
+// State utilities
+isControlReadonly(c: ControlDefinition): boolean
+isControlDisabled(c: ControlDefinition): boolean
+isControlDisplayOnly(def: ControlDefinition): boolean
+```
+
+### Schema Path Navigation
+
+The system provides utilities for navigating control hierarchies:
+
+```typescript
+// Get JSON path for data binding
+getJsonPath(dataNode: SchemaDataNode): (string | number)[]
+
+// Get schema field hierarchy
+getSchemaPath(schemaNode: SchemaNode): SchemaField[]
+
+// Traverse parent relationships
+traverseParents<A, B>(current: B, get: (b: B) => A, until?: (b: B) => boolean): A[]
+```
+
+### Working with Control Definitions
+
+**When Creating Controls:**
+1. Always specify the correct `ControlDefinitionType`
+2. Use appropriate render options for the desired UI behavior
+3. Add validators for data controls that require validation
+4. Consider using adornments for enhanced UX
+5. Use dynamic properties for conditional behavior
+
+**When Manipulating Forms:**
+1. Use type guards to safely cast control definitions
+2. Preserve existing structure when making modifications
+3. Update both the control definition and any related schema fields
+4. Consider the impact on data binding when changing field names
+
+**Integration Points:**
+- Control definitions are rendered by `RenderForm` components
+- Schema fields provide type information for control generation
+- Form state is managed through @react-typed-forms
+- Validation is integrated with the schema validator system
+
+This control definition system enables the creation of sophisticated, type-safe forms with rich interaction patterns while maintaining consistency across the framework.
+
 ## AbstractWorkflowExecutor Pattern
 
 **Recommendation**: Use AbstractWorkflowExecutor for implementing CRUD operations on entities that require workflow states, audit events, bulk operations, or authorization checks.

@@ -13,6 +13,7 @@ import {
 import { ReactNode } from "react";
 import { EditorFormTree } from "./EditorFormTree";
 import { EditorSchemaTree } from "./EditorSchemaTree";
+import { ClaudeService } from "./services/ClaudeService";
 
 export interface ControlNode extends SelectedControlNode {
   id: string;
@@ -76,6 +77,7 @@ export interface ViewContext {
   editorFormRenderer: FormRenderer;
   snippets?: Snippet[];
   getSchemaForForm(form: Control<EditableForm>): EditorSchemaTree;
+  claudeService?: ClaudeService;
 }
 
 export interface FormInfo {

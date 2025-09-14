@@ -9,6 +9,7 @@ import { SnippetsView } from "./SnippetsView";
 import { SchemaJsonView } from "./SchemaJsonView";
 import { ViewContext } from "../types";
 import { FieldPropertiesView } from "./FieldPropertiesView";
+import { AgentView } from "./AgentView";
 
 export function getTabTitle(viewType: string, viewParams?: string): string {
   switch (viewType) {
@@ -26,6 +27,8 @@ export function getTabTitle(viewType: string, viewParams?: string): string {
       return "Control Properties";
     case "snippets":
       return "Snippets";
+    case "agent":
+      return "Agent";
     default:
       return "Unknown";
   }
@@ -65,6 +68,8 @@ export function createView(
         return "Snippets";
       case "currentSchemaJson":
         return "Schema JSON";
+      case "agent":
+        return "Agent";
       default:
         return "Unknown";
     }
@@ -90,6 +95,8 @@ export function createView(
         return <SnippetsView context={context} />;
       case "fieldProperties":
         return <FieldPropertiesView context={context} />;
+      case "agent":
+        return <AgentView context={context} />;
       default:
         return <div>Unknown view type: {viewType}</div>;
     }

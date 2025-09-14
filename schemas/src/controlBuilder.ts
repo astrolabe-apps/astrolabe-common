@@ -11,7 +11,7 @@ import {
 } from "@astroapps/forms-core";
 import { useMemo } from "react";
 import { addMissingControls } from "./util";
-import { ActionRendererProps } from "./types";
+import { ActionRendererProps, ControlActionHandler, ControlActionContext } from "./types";
 
 export function createAction(
   actionId: string,
@@ -99,5 +99,20 @@ export function createIconLibraryExtension(
       name,
       value,
     },
+  };
+}
+
+export type ActionHandler<A> = (
+  a: A,
+  ctx: ControlActionContext,
+) => void | Promise<any>;
+
+export function makeActions<A extends Record<string, ActionHandler<any>>>(
+  handlerMap: A,
+): ControlActionHandler {
+  return (actionId, actionData) => {
+    const h = handlerMap[actionId];
+    if (h) return (ctx: ControlActionContext) => h(actionData, ctx);
+    return undefined;
   };
 }
