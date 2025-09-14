@@ -187,23 +187,55 @@ import { useApiClient } from "@astroapps/client";
 export default function MyPage() {
   const client = useApiClient(MyClient);
   const formData = useControl<MyFormType>();
-  
+
   // Load data effects
   useControlEffect(() => /* dependencies */, /* effect */, true);
-  
+
   // Render logic
   return (
     <div>
       {/* Component content */}
     </div>
   );
-  
+
   // Helper functions at bottom
   async function loadData() {
     // Implementation
   }
 }
 ```
+
+#### Component Declaration Guidelines
+
+**Recommendation**: Use function declarations instead of const arrow functions for React components.
+
+Function declarations provide better debugging experience and are the preferred pattern in this codebase:
+
+```typescript
+// ✅ DO - Use function declarations
+export default function MyPage() {
+  return <div>Content</div>;
+}
+
+function MyComponent({ prop }: { prop: string }) {
+  return <span>{prop}</span>;
+}
+
+// ❌ DON'T - Use const arrow functions
+const MyPage = () => {
+  return <div>Content</div>;
+};
+
+const MyComponent = ({ prop }: { prop: string }) => {
+  return <span>{prop}</span>;
+};
+```
+
+**Benefits of function declarations:**
+- Better stack traces in debugging
+- Clearer component names in React DevTools
+- Consistent with established codebase patterns
+- Hoisting allows flexible component organization
 
 #### Client API Integration:
 ```typescript
