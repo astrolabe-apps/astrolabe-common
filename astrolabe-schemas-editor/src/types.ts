@@ -86,6 +86,11 @@ export interface FormInfo {
   folder?: string | null;
 }
 
+export interface ConversationMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export interface EditableForm {
   selectedControl?: SelectedControlNode;
   selectedField?: SchemaNode;
@@ -101,6 +106,7 @@ export interface EditableForm {
   name: string;
   config?: any;
   configSchema?: SchemaNode;
+  conversationHistory?: ConversationMessage[];
 }
 
 export interface PreviewData {

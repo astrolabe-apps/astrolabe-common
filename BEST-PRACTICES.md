@@ -174,6 +174,81 @@ useControlEffect(
 - ✅ **useControl** - For form data, complex objects, arrays, any data that needs validation
 - ✅ **useState** - Only for simple primitive values that don't need validation (rare in this codebase)
 
+#### Critical: Control Value Assignment Rules
+
+**IMPORTANT**: When working with Control objects from @react-typed-forms, you MUST use the Control API methods to update values, never direct assignment.
+
+**✅ CORRECT - Use Control API:**
+```typescript
+import { useControl, Control } from "@react-typed-forms/core";
+
+// Basic value updates
+const userControl = useControl({ name: "", email: "" });
+userControl.value = { name: "John", email: "john@example.com" };  // ✅ Direct .value assignment
+userControl.setValue(prevValue => ({ ...prevValue, name: "John" }));  // ✅ Using setValue with updater
+
+// Array updates
+const itemsControl = useControl<string[]>([]);
+itemsControl.value = [...itemsControl.value, "new item"];  // ✅ Replace entire array
+itemsControl.setValue(prev => [...prev, "new item"]);      // ✅ Using setValue updater
+
+// Nested field updates
+const formControl = useControl({ user: { name: "", email: "" } });
+formControl.fields.user.fields.name.value = "John";        // ✅ Using fields API
+formControl.fields.user.setValue(prev => ({ ...prev, name: "John" }));  // ✅ Using setValue
+
+// Object property updates - use spread or setValue
+const configControl = useControl({ settings: { theme: "light" } });
+configControl.value = { ...configControl.value, settings: { theme: "dark" } };  // ✅ Spread pattern
+```
+
+**❌ INCORRECT - Direct mutation:**
+```typescript
+// These patterns will NOT trigger reactive updates and will cause bugs:
+userControl.value.name = "John";                    // ❌ Direct mutation
+itemsControl.value.push("new item");                // ❌ Array mutation
+formControl.value.user.name = "John";               // ❌ Nested mutation
+delete configControl.value.someProperty;            // ❌ Direct deletion
+
+// These patterns are also incorrect for Control objects:
+Object.assign(userControl.value, { name: "John" }); // ❌ Object.assign mutation
+userControl.value.splice(0, 1);                     // ❌ Array splice mutation
+```
+
+**Key Rules:**
+1. **Always use `.value = newValue`** for complete value replacement
+2. **Always use `.setValue(updater)`** for functional updates
+3. **Use `.fields.propertyName` API** for nested property access
+4. **Never mutate** the existing value object directly
+5. **Always create new objects/arrays** when updating
+
+**Real-world Examples from this codebase:**
+```typescript
+// Conversation history management
+const conversationHistory = formControl.fields.conversationHistory;
+conversationHistory.value = [];  // ✅ Clear array
+conversationHistory.setValue(prev => [...prev, newMessage]);  // ✅ Add to array
+
+// Form definition updates
+const rootDefinitions = formTree.getRootDefinitions();
+rootDefinitions.value = updatedFormDefinition;  // ✅ Replace entire definition
+
+// Complex form state
+const agentMode = useControl<AgentModeState>({
+  enabled: false,
+  pendingChanges: null,
+  // ... other properties
+});
+agentMode.fields.enabled.value = true;  // ✅ Update specific field
+agentMode.setValue(prev => ({ ...prev, isProcessing: true }));  // ✅ Functional update
+```
+
+**Why This Matters:**
+- Control objects use reactive patterns that depend on proper value assignment
+- Direct mutations bypass the reactivity system and cause state inconsistencies
+- The `.value` and `.setValue()` methods trigger necessary change notifications
+- The `.fields` API provides type-safe access to nested properties
+
 ### Component Architecture
 
 **Recommendation**: Follow the established patterns for component structure and organization.

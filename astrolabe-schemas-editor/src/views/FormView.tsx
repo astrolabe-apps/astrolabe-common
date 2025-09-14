@@ -28,7 +28,7 @@ interface AgentModeState {
   enabled: boolean;
   pendingChanges: ControlDefinition[] | null;
   diff: JsonDiff | null;
-  approvalState: 'pending' | 'approved' | 'rejected' | null;
+  approvalState: "pending" | "approved" | "rejected" | null;
   commandHistory: AgentCommand[];
   isProcessing: boolean;
 }
@@ -147,10 +147,12 @@ function RenderFormDesign({
                   "px-3 py-1 rounded-lg transition-colors text-sm font-medium",
                   agentMode.fields.enabled.value
                     ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-gray-200 hover:bg-gray-300 text-gray-700"
+                    : "bg-gray-200 hover:bg-gray-300 text-gray-700",
                 )}
               >
-                {agentMode.fields.enabled.value ? "Disable Agent" : "Enable Agent"}
+                {agentMode.fields.enabled.value
+                  ? "Disable Agent"
+                  : "Enable Agent"}
               </button>
             </div>
           )}
@@ -203,14 +205,18 @@ function RenderFormDesign({
 
       // If there's an updated form definition, show diff instead of applying directly
       if (result.updatedFormDefinition) {
-        const currentControls = c.fields.formTree.value.getRootDefinitions().value;
-        const diff = calculateJsonDiff(currentControls, result.updatedFormDefinition);
+        const currentControls =
+          c.fields.formTree.value.getRootDefinitions().value;
+        const diff = calculateJsonDiff(
+          currentControls,
+          result.updatedFormDefinition,
+        );
 
         agentMode.value = {
           ...agentMode.value,
           pendingChanges: result.updatedFormDefinition,
           diff,
-          approvalState: 'pending'
+          approvalState: "pending",
         };
       }
     } catch (error) {
@@ -244,13 +250,13 @@ function RenderFormDesign({
         ...agentMode.value,
         pendingChanges: null,
         diff: null,
-        approvalState: 'approved'
+        approvalState: "approved",
       };
 
       addToHistory(
         "Apply Changes",
         "Form changes have been applied successfully.",
-        true
+        true,
       );
     }
   }
@@ -260,18 +266,19 @@ function RenderFormDesign({
       ...agentMode.value,
       pendingChanges: null,
       diff: null,
-      approvalState: 'rejected'
+      approvalState: "rejected",
     };
 
-    addToHistory(
-      "Reject Changes",
-      "Form changes have been rejected.",
-      true
-    );
+    addToHistory("Reject Changes", "Form changes have been rejected.", true);
   }
 
   function handleClearHistory() {
     agentMode.fields.commandHistory.value = [];
+
+    // Also clear the Claude service conversation history
+    if (context.claudeService) {
+      context.claudeService.clearHistory(c);
+    }
   }
 
   function addMissing() {
@@ -323,14 +330,22 @@ function RenderFormDesign({
             />
           </div>
         )}
-        <div className={clsx(
-          "grow overflow-auto",
-          agentMode.fields.enabled.value ? "grid grid-cols-1 lg:grid-cols-2 gap-4 px-4" : ""
-        )}>
-          <div className={clsx(
-            agentMode.fields.enabled.value ? "overflow-auto" : "grow overflow-auto",
-            context.editorPanelClass
-          )}>
+        <div
+          className={clsx(
+            "grow overflow-auto",
+            agentMode.fields.enabled.value
+              ? "grid grid-cols-1 lg:grid-cols-2 gap-4 px-4"
+              : "",
+          )}
+        >
+          <div
+            className={clsx(
+              agentMode.fields.enabled.value
+                ? "overflow-auto"
+                : "grow overflow-auto",
+              context.editorPanelClass,
+            )}
+          >
             <FormControlPreview
               node={formPreviewNode}
               context={{
@@ -347,7 +362,9 @@ function RenderFormDesign({
               <AgentAssistPanel
                 onChangesProposed={() => {}} // Not used in new workflow
                 pendingChanges={agentMode.fields.pendingChanges.value}
-                currentControls={c.fields.formTree.value.getRootDefinitions().value}
+                currentControls={
+                  c.fields.formTree.value.getRootDefinitions().value
+                }
                 diff={agentMode.fields.diff.value}
                 onApprove={handleApproveChanges}
                 onReject={handleRejectChanges}

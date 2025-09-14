@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { ViewContext, EditableForm } from "../types";
+import { ViewContext, EditableForm, ConversationMessage } from "../types";
 import { ControlDefinition, SchemaField } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
 import {
@@ -30,6 +30,23 @@ export class ClaudeService {
   }
 
   /**
+   * Clear conversation history for a specific form
+   */
+  clearHistory(currentForm: Control<EditableForm>): void {
+    // Use Control API to properly update the conversation history
+    if (currentForm.fields.conversationHistory) {
+      currentForm.fields.conversationHistory.value = [];
+    }
+  }
+
+  /**
+   * Get conversation history for a specific form
+   */
+  getHistory(currentForm: Control<EditableForm>): ConversationMessage[] {
+    return currentForm.fields.conversationHistory?.value || [];
+  }
+
+  /**
    * Process an agent command using Claude to directly manipulate form JSON
    */
   async processCommand(
@@ -41,30 +58,60 @@ export class ClaudeService {
     if (!editableForm) {
       throw "No selected form";
     }
+
     try {
+      const formControl = currentForm as Control<EditableForm>;
+
+      // Initialize conversation history if it doesn't exist
+      const conversationHistoryControl = formControl.fields.conversationHistory;
+      if (!conversationHistoryControl?.value) {
+        if (conversationHistoryControl) {
+          conversationHistoryControl.value = [];
+        }
+      }
+
       const currentFormDefinition =
         editableForm.formTree.getRootDefinitions().value;
       const systemPrompt = this.createSystemPrompt(
         editableForm,
         currentFormDefinition,
       );
-      const userPrompt = this.createUserPrompt(
-        command,
-        currentFormDefinition,
-        currentForm.as(),
-        context,
-      );
+
+      const conversationHistory = conversationHistoryControl?.value || [];
+
+      // Always include current form state, but use different prompts for first vs follow-up messages
+      const userPrompt =
+        conversationHistory.length === 0
+          ? this.createDetailedUserPrompt(
+              command,
+              currentFormDefinition,
+              currentForm.as(),
+              context,
+            )
+          : this.createFollowUpUserPrompt(
+              command,
+              currentFormDefinition,
+              currentForm.as(),
+              context,
+            );
+
+      // Build messages array from conversation history plus current message
+      const messages: Anthropic.MessageParam[] = [
+        ...conversationHistory.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        })),
+        {
+          role: "user" as const,
+          content: userPrompt,
+        },
+      ];
 
       const message = await this.client.messages.create({
         model: "claude-3-7-sonnet-20250219",
         max_tokens: 2048,
         system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: userPrompt,
-          },
-        ],
+        messages,
         tools: [
           {
             name: "update_form_definition",
@@ -91,7 +138,38 @@ export class ClaudeService {
           },
         ],
       });
-      return this.processClaudeResponse(message, editableForm, context);
+
+      // Add user message to history using Control API
+      const newUserMessage: ConversationMessage = {
+        role: "user",
+        content: command, // Store the simple command, not the detailed prompt
+      };
+      if (conversationHistoryControl) {
+        conversationHistoryControl.setValue((prev) => [
+          ...(prev || []),
+          newUserMessage,
+        ]);
+      }
+
+      const response = this.processClaudeResponse(
+        message,
+        editableForm,
+        context,
+      );
+
+      // Add assistant response to history using Control API
+      const newAssistantMessage: ConversationMessage = {
+        role: "assistant",
+        content: response.response,
+      };
+      if (conversationHistoryControl) {
+        conversationHistoryControl.setValue((prev) => [
+          ...(prev || []),
+          newAssistantMessage,
+        ]);
+      }
+
+      return response;
     } catch (error) {
       console.error("Claude API error:", error);
       return {
@@ -319,9 +397,9 @@ IMPORTANT: Always use the update_form_definition tool to make changes. Include t
   }
 
   /**
-   * Create user prompt with command, current form JSON, and complete schema
+   * Create detailed user prompt with command, current form JSON, and complete schema (for first message)
    */
-  private createUserPrompt(
+  private createDetailedUserPrompt(
     command: string,
     currentFormDefinition: ControlDefinition[],
     editableForm: Control<EditableForm>,
@@ -355,6 +433,38 @@ ${JSON.stringify(formSchema, null, 2)}
 - Consider schema relationships when organizing form structure
 
 Please modify this form definition according to the user's request and return the complete updated form definition.`;
+  }
+
+  /**
+   * Create follow-up prompt with current form state (for subsequent messages in conversation)
+   */
+  private createFollowUpUserPrompt(
+    command: string,
+    currentFormDefinition: ControlDefinition[],
+    editableForm: Control<EditableForm>,
+    context: ViewContext,
+  ): string {
+    // Get the complete schema for this form using ViewContext
+    let formSchema: SchemaField[] = [];
+    try {
+      formSchema = context.getSchemaForForm(editableForm).getRootFields().value;
+    } catch (error) {
+      console.warn("Could not get schema for form:", error);
+    }
+
+    return `**Follow-up Request:** ${command}
+
+**Current Form Definition:**
+\`\`\`json
+${JSON.stringify(currentFormDefinition, null, 2)}
+\`\`\`
+
+**Form Schema:**
+\`\`\`json
+${JSON.stringify(formSchema, null, 2)}
+\`\`\`
+
+Please continue working with this form definition and make the requested changes.`;
   }
 
   /**
