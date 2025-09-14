@@ -87,3 +87,5 @@ common/autoinstallers/*/.npmrc
 /ClientApp/nativeapp/.turbo/cookies/6.cookie
 /ClientApp/nativeapp/.turbo/cookies/7.cookie
 /ClientApp/nativeapp/.turbo/daemon/d0eaa87163f8ff0a-turbo.log.2024-10-23
+
+appsettings.Development.json

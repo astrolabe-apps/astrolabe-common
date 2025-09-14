@@ -108,7 +108,7 @@ export interface BasicFormEditorProps<A extends string> {
     | ReactNode
     | ((c: FormNode, data: Control<any>) => ReactNode);
   snippets?: Snippet[];
-  claudeApiKey?: string;
+  claudeApiUrl?: string;
 }
 
 export function BasicFormEditor<A extends string = string>({
@@ -137,7 +137,7 @@ export function BasicFormEditor<A extends string = string>({
   handleIcon,
   extraPreviewControls,
   snippets,
-  claudeApiKey,
+  claudeApiUrl,
 }: BasicFormEditorProps<A>): ReactElement {
   const selectedForm = useControl<A | undefined>(undefined, { use: sf });
   const extensions = useMemo(
@@ -313,13 +313,13 @@ export function BasicFormEditor<A extends string = string>({
     Array.isArray(e) ? { id: e[0], name: e[1] } : e,
   );
 
-  // Create Claude service if API key is provided
+  // Create Claude service if API URL is provided
   const claudeService = useMemo(() => {
-    if (claudeApiKey) {
-      return new ClaudeService(claudeApiKey);
+    if (claudeApiUrl) {
+      return new ClaudeService(claudeApiUrl);
     }
     return undefined;
-  }, [claudeApiKey]);
+  }, [claudeApiUrl]);
 
   const viewContext: ViewContext = {
     validation,

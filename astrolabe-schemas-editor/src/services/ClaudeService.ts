@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { ViewContext, EditableForm, ConversationMessage } from "../types";
 import { ControlDefinition, SchemaField } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
@@ -17,16 +16,25 @@ export interface ClaudeResponse {
   updatedFormDefinition?: ControlDefinition[];
 }
 
-export class ClaudeService {
-  private client: Anthropic;
+interface AnthropicMessage {
+  role: "user" | "assistant";
+  content: string;
+}
 
-  constructor(apiKey: string) {
-    this.client = new Anthropic({
-      apiKey,
-      dangerouslyAllowBrowser: true,
-      // Note: In a browser environment, you might need to configure CORS
-      // or use a proxy server for API calls
-    });
+interface AnthropicMessageResponse {
+  content: Array<{
+    type: "text" | "tool_use";
+    text?: string;
+    name?: string;
+    input?: any;
+  }>;
+}
+
+export class ClaudeService {
+  private apiUrl: string;
+
+  constructor(apiUrl: string) {
+    this.apiUrl = apiUrl.endsWith("/") ? apiUrl.slice(0, -1) : apiUrl;
   }
 
   /**
@@ -96,7 +104,7 @@ export class ClaudeService {
             );
 
       // Build messages array from conversation history plus current message
-      const messages: Anthropic.MessageParam[] = [
+      const messages: AnthropicMessage[] = [
         ...conversationHistory.map((msg) => ({
           role: msg.role,
           content: msg.content,
@@ -107,37 +115,51 @@ export class ClaudeService {
         },
       ];
 
-      const message = await this.client.messages.create({
-        model: "claude-3-7-sonnet-20250219",
-        max_tokens: 2048,
-        system: systemPrompt,
-        messages,
-        tools: [
-          {
-            name: "update_form_definition",
-            description: "Update the form definition with new structure",
-            input_schema: {
-              type: "object",
-              properties: {
-                explanation: {
-                  type: "string",
-                  description: "Brief explanation of what changes were made",
-                },
-                form_definition: {
-                  type: "array",
-                  description:
-                    "The complete updated form definition as an array of control definitions",
-                  items: {
-                    type: "object",
-                    description: "A control definition object",
+      // Call the proxy endpoint instead of Anthropic directly
+      const fetchResponse = await fetch(`${this.apiUrl}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-3-7-sonnet-20250219",
+          max_tokens: 4096,
+          system: systemPrompt,
+          messages,
+          tools: [
+            {
+              name: "update_form_definition",
+              description: "Update the form definition with new structure",
+              input_schema: {
+                type: "object",
+                properties: {
+                  explanation: {
+                    type: "string",
+                    description: "Brief explanation of what changes were made",
+                  },
+                  form_definition: {
+                    type: "array",
+                    description:
+                      "The complete updated form definition as an array of control definitions",
+                    items: {
+                      type: "object",
+                      description: "A control definition object",
+                    },
                   },
                 },
+                required: ["explanation", "form_definition"],
               },
-              required: ["explanation", "form_definition"],
             },
-          },
-        ],
+          ],
+        }),
       });
+
+      if (!fetchResponse.ok) {
+        const errorText = await fetchResponse.text();
+        throw new Error(`HTTP ${fetchResponse.status}: ${errorText}`);
+      }
+
+      const message: AnthropicMessageResponse = await fetchResponse.json();
 
       // Add user message to history using Control API
       const newUserMessage: ConversationMessage = {
@@ -471,19 +493,19 @@ Please continue working with this form definition and make the requested changes
    * Process Claude's response and extract tool calls
    */
   private processClaudeResponse(
-    message: Anthropic.Messages.Message,
+    message: AnthropicMessageResponse,
     _currentForm: EditableForm,
     _context: ViewContext,
   ): ClaudeResponse {
     const textContent = message.content
-      .filter((block: any) => block.type === "text")
-      .map((block: any) => (block as Anthropic.TextBlock).text)
+      .filter((block) => block.type === "text")
+      .map((block) => block.text || "")
       .join("\n");
 
     // Look for tool use in the response
     const toolUses = message.content.filter(
-      (block: any) => block.type === "tool_use",
-    ) as Anthropic.ToolUseBlock[];
+      (block) => block.type === "tool_use",
+    );
 
     // Find the update_form_definition tool call
     const updateFormTool = toolUses.find(

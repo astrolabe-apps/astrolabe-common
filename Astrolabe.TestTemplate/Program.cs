@@ -22,6 +22,12 @@ builder
 
 builder.Services.AddSingleton<CarService>();
 
+// Configure Anthropic service
+builder.Services.AddHttpClient<AnthropicService>(client =>
+{
+    client.Timeout = TimeSpan.FromMinutes(2); // Configure timeout for long-running AI requests
+});
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
