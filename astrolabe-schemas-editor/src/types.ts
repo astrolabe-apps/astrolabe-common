@@ -13,6 +13,7 @@ import {
 import { ReactNode } from "react";
 import { EditorFormTree } from "./EditorFormTree";
 import { EditorSchemaTree } from "./EditorSchemaTree";
+import { RenderOptions } from "@react-typed-forms/schemas";
 
 export interface ControlNode extends SelectedControlNode {
   id: string;
@@ -35,6 +36,7 @@ export type FormLoader<A> = (formId: A) => Promise<{
   renderer?: FormRenderer;
   config?: any;
   configSchema?: SchemaField[];
+  configOptions?: ControlRenderOptions;
   formFields?: SchemaField[];
 }>;
 
@@ -99,6 +101,7 @@ export interface EditableForm {
   name: string;
   config?: any;
   configSchema?: SchemaNode;
+  configOptions?: ControlRenderOptions;
 }
 
 export interface PreviewData {
