@@ -71,28 +71,38 @@ export function createScopedEffect<V>(
 }
 
 export class AsyncEffect<V> extends SubscriptionTracker {
-  currentPromise!: Promise<V>;
+  currentPromise: Promise<V>;
   abortController?: AbortController;
   changedDetected = false;
   destroyed = false;
+  pendingRun = false;
 
-  async runProcess() {
+  runProcess() {
+    if (this.pendingRun) {
+      return; // Already have a run queued
+    }
+
+    this.pendingRun = true;
     this.abortController?.abort();
     const aborter = new AbortController();
     this.abortController = aborter;
-    try {
-      return await collectChanges(this.collectUsage, () =>
-        this.process(this, aborter.signal),
-      );
-    } finally {
-      if (!this.destroyed) {
-        this.update();
-      }
-    }
+
+    this.currentPromise = this.currentPromise
+      .then(() =>
+        collectChanges(this.collectUsage, () =>
+          this.process(this, aborter.signal),
+        ),
+      )
+      .finally(() => {
+        this.pendingRun = false;
+        if (!this.destroyed) {
+          this.update();
+        }
+      });
   }
 
   start() {
-    this.currentPromise = this.runProcess();
+    this.runProcess();
   }
 
   cleanup() {
@@ -109,16 +119,14 @@ export class AsyncEffect<V> extends SubscriptionTracker {
         return;
       }
       this.changedDetected = true;
-      addAfterChangesCallback(async () => {
+      addAfterChangesCallback(() => {
         this.changedDetected = false;
-        try {
-          await this.currentPromise;
-        } catch (e) {}
-        if (!this.destroyed) {
-          this.currentPromise = this.runProcess();
-        }
+        this.runProcess();
       });
     });
+
+    // Initialize currentPromise to prevent race condition
+    this.currentPromise = Promise.resolve({} as V);
   }
 }
 

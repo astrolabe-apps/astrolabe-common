@@ -37,7 +37,7 @@ export {
 export {
   createEffect,
   type Effect,
-  type AsyncEffect,
+  AsyncEffect,
   createAsyncEffect,
   createSyncEffect,
   createScopedEffect,
