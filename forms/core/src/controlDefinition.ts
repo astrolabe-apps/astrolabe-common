@@ -259,6 +259,7 @@ export interface ArrayRenderOptions extends RenderOptions {
   noRemove?: boolean | null;
   noReorder?: boolean | null;
   editExternal?: boolean | null;
+  childOverrideClass?: string | null;
 }
 
 export interface ArrayElementRenderOptions extends RenderOptions {

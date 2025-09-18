@@ -17,6 +17,7 @@ import {
   HtmlComponents,
   isArrayRenderer,
   mergeObjects,
+  rendererClass,
 } from "@react-typed-forms/schemas";
 import { DefaultArrayRendererOptions } from "../rendererOptions";
 
@@ -64,13 +65,18 @@ export function DataArrayRenderer({
     formNode,
   } = dataProps;
 
-  const { addText, noAdd, noRemove, noReorder, removeText, editExternal } =
-    mergeObjects(
-      isArrayRenderer(renderOptions)
-        ? renderOptions
-        : ({} as ArrayRenderOptions),
-      defaultActions as ArrayRenderOptions,
-    );
+  const {
+    addText,
+    noAdd,
+    noRemove,
+    noReorder,
+    removeText,
+    editExternal,
+    childOverrideClass,
+  } = mergeObjects(
+    isArrayRenderer(renderOptions) ? renderOptions : ({} as ArrayRenderOptions),
+    defaultActions as ArrayRenderOptions,
+  );
 
   const arrayProps = {
     ...createArrayActions(control.as(), () => formNode.getChildCount(), field, {
@@ -83,6 +89,7 @@ export function DataArrayRenderer({
       designMode,
       editExternal,
     }),
+    childOverrideClass,
     required,
     renderElement: (i, wrap) => {
       const n = formNode.getChild(i);
@@ -126,6 +133,7 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     removableClass,
     childClass,
     removableChildClass,
+    childOverrideClass,
     removeActionClass,
     addActionClass,
     getElementCount,
@@ -143,7 +151,12 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
           renderElement(x, (key, children) =>
             removeAction || editAction ? (
               <Fragment key={key}>
-                <Div className={clsx(childClass, removableChildClass)}>
+                <Div
+                  className={clsx(
+                    rendererClass(childOverrideClass, childClass),
+                    removableChildClass,
+                  )}
+                >
                   {children}
                 </Div>
                 <Div className={removeActionClass}>
@@ -152,7 +165,10 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
                 </Div>
               </Fragment>
             ) : (
-              <Div key={key} className={childClass}>
+              <Div
+                key={key}
+                className={rendererClass(childOverrideClass, childClass)}
+              >
                 {children}
               </Div>
             ),

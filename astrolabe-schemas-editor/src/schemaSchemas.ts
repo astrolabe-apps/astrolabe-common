@@ -917,6 +917,7 @@ export interface RenderOptionsForm {
   listEntryClass: string | null;
   chipContainerClass: string | null;
   chipCloseButtonClass: string | null;
+  childOverrideClass: string | null;
   placeholder: string | null;
   multiline: boolean | null;
   groupOptions: GroupRenderOptionsForm;
@@ -1086,6 +1087,11 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     type: FieldType.Bool,
     onlyForTypes: ["Array"],
     displayName: "Edit External",
+  }),
+  childOverrideClass: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Array"],
+    displayName: "Child Class",
   }),
   showInline: makeScalarField({
     type: FieldType.Bool,
