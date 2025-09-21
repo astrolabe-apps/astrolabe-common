@@ -455,6 +455,7 @@ export function BasicFormEditor<A extends string = string>({
       name,
       config: res.config,
       formSchema: res.formFields ?? [],
+      configOptions: res.configOptions,
       configSchema: res.configSchema
         ? createSchemaTree(res.configSchema).rootNode
         : undefined,

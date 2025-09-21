@@ -109,6 +109,7 @@ function RenderFormDesign({
     formTree: { value: tree },
     renderer: { value: formRenderer },
     configSchema: { value: configSchema },
+    configOptions: { value: configOptions },
     config,
   } = c.fields;
   const schema = context.getSchemaForForm(c);
@@ -327,6 +328,7 @@ function RenderFormDesign({
               definition={configDefinition}
               renderer={context.editorFormRenderer}
               parentDataNode={createSchemaDataNode(configSchema, config)}
+              options={configOptions}
             />
           </div>
         )}

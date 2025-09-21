@@ -1,6 +1,12 @@
 import { describe, expect, it } from "@jest/globals";
 import fc from "fast-check";
-import { createEffect, groupedChanges, newControl } from "../src";
+import {
+  createEffect,
+  groupedChanges,
+  newControl,
+  AsyncEffect,
+  createCleanupScope,
+} from "../src";
 
 describe("effect", () => {
   it("effect runs for all change types", () => {
@@ -128,5 +134,107 @@ describe("effect", () => {
         expect(effectRuns).toStrictEqual([v, v + "a"]);
       }),
     );
+  });
+
+  it("async effect process function is not called twice", async () => {
+    const control = newControl("initial");
+    const processCallCount = { count: 0 };
+    const processResults: string[] = [];
+    const cleanupScope = createCleanupScope();
+
+    const asyncEffect = new AsyncEffect<string>(async (effect, signal) => {
+      processCallCount.count++;
+      const value = control.value;
+      processResults.push(value);
+
+      // Simulate async work
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      if (signal.aborted) {
+        throw new Error("Aborted");
+      }
+
+      return value;
+    });
+
+    cleanupScope.addCleanup(() => asyncEffect.cleanup());
+
+    // This reproduces the race condition:
+    // 1. Change control value which triggers the subscription callback
+    control.value = "changed";
+
+    // 2. Before the async callback executes, call start()
+    // This should NOT cause double execution
+    asyncEffect.start();
+
+    // Wait for all promises to settle
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // The process function should only be called once, not twice
+    expect(processCallCount.count).toBe(1);
+    expect(processResults).toStrictEqual(["changed"]);
+
+    cleanupScope.cleanup();
+  });
+
+  it("async effect doesnt run twice and only queues a single effect", async () => {
+    const control = newControl("initial");
+    let concurrentCount = 0;
+    let maxConcurrent = 0;
+    let abortedCount = 0;
+    const processResults: string[] = [];
+    let callNumber = 0;
+
+    const asyncEffect = new AsyncEffect<string>(async (effect, signal) => {
+      const thisCall = ++callNumber;
+      concurrentCount++;
+      maxConcurrent = Math.max(maxConcurrent, concurrentCount);
+
+      const value = control.value;
+      processResults.push(`call-${thisCall}: ${value}`);
+
+      try {
+        // Simulate async work
+        await new Promise((resolve) => setTimeout(resolve, 50));
+
+        if (signal.aborted) {
+          abortedCount++;
+        }
+
+        return value;
+      } finally {
+        concurrentCount--;
+      }
+    });
+
+    // Start first execution
+    control.value = "first";
+    asyncEffect.start();
+
+    // While first is still running, trigger multiple runs
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    control.value = "second";
+    asyncEffect.runProcess(); // Should abort first, queue second
+
+    control.value = "third";
+    asyncEffect.runProcess(); // Should do nothing (second already queued)
+
+    control.value = "fourth";
+    asyncEffect.runProcess(); // Should do nothing (second already queued)
+
+    // Wait for all to complete
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    // Verify behavior
+    expect(maxConcurrent).toBe(1); // Never more than 1 concurrent
+    expect(abortedCount).toBe(1); // First execution was aborted
+    expect(callNumber).toBe(2); // Only 2 executions total
+    expect(processResults).toStrictEqual([
+      "call-1: first",
+      "call-2: fourth", // Second execution sees final value
+    ]);
+
+    asyncEffect.cleanup();
   });
 });

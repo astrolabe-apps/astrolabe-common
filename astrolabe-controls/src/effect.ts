@@ -71,28 +71,41 @@ export function createScopedEffect<V>(
 }
 
 export class AsyncEffect<V> extends SubscriptionTracker {
-  currentPromise!: Promise<V>;
+  running = false;
   abortController?: AbortController;
   changedDetected = false;
   destroyed = false;
+  pendingRun = false;
 
-  async runProcess() {
-    this.abortController?.abort();
+  runProcess() {
+    if (this.running) {
+      // If already running, abort current and queue a new run
+      this.abortController?.abort();
+      this.pendingRun = true;
+      return;
+    }
+
+    // Start new execution
+    this.running = true;
     const aborter = new AbortController();
     this.abortController = aborter;
-    try {
-      return await collectChanges(this.collectUsage, () =>
-        this.process(this, aborter.signal),
-      );
-    } finally {
+    collectChanges(this.collectUsage, () =>
+      this.process(this, aborter.signal),
+    ).finally(() => {
       if (!this.destroyed) {
         this.update();
+        this.abortController = undefined;
+        this.running = false;
+        if (this.pendingRun) {
+          this.pendingRun = false;
+          this.runProcess();
+        }
       }
-    }
+    });
   }
 
   start() {
-    this.currentPromise = this.runProcess();
+    this.runProcess();
   }
 
   cleanup() {
@@ -109,14 +122,9 @@ export class AsyncEffect<V> extends SubscriptionTracker {
         return;
       }
       this.changedDetected = true;
-      addAfterChangesCallback(async () => {
+      addAfterChangesCallback(() => {
         this.changedDetected = false;
-        try {
-          await this.currentPromise;
-        } catch (e) {}
-        if (!this.destroyed) {
-          this.currentPromise = this.runProcess();
-        }
+        this.runProcess();
       });
     });
   }

@@ -17,6 +17,7 @@ import {
   getLengthRestrictions,
   isArrayRenderer,
   mergeObjects,
+  rendererClass,
 } from "@react-typed-forms/schemas";
 
 export function createDefaultArrayDataRenderer(
@@ -63,13 +64,18 @@ export function DataArrayRenderer({
     formNode,
   } = dataProps;
 
-  const { addText, noAdd, noRemove, noReorder, removeText, editExternal } =
-    mergeObjects(
-      isArrayRenderer(renderOptions)
-        ? renderOptions
-        : ({} as ArrayRenderOptions),
-      defaultActions as ArrayRenderOptions,
-    );
+  const {
+    addText,
+    noAdd,
+    noRemove,
+    noReorder,
+    removeText,
+    editExternal,
+    childOverrideClass,
+  } = mergeObjects(
+    isArrayRenderer(renderOptions) ? renderOptions : ({} as ArrayRenderOptions),
+    defaultActions as ArrayRenderOptions,
+  );
 
   const arrayProps = {
     ...createArrayActions(control.as(), () => formNode.getChildCount(), field, {
@@ -82,6 +88,7 @@ export function DataArrayRenderer({
       designMode,
       editExternal,
     }),
+    childOverrideClass,
     required,
     renderElement: (i, wrap) => {
       const n = formNode.getChild(i);
@@ -138,9 +145,9 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     renderAction,
     style,
     editAction,
+    childOverrideClass,
   } = props;
   const { addAction, removeAction } = applyArrayLengthRestrictions(props);
-
   return (
     <View style={style as StyleProp<ViewStyle>}>
       <View className={clsx(className, removeAction && removableClass)}>
@@ -148,7 +155,12 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
           renderElement(x, (key, children) =>
             removeAction || editAction ? (
               <Fragment key={key}>
-                <View className={clsx(childClass, removableChildClass)}>
+                <View
+                  className={clsx(
+                    rendererClass(childOverrideClass, childClass),
+                    removableChildClass,
+                  )}
+                >
                   {children}
                 </View>
                 <View className={removeActionClass}>
@@ -157,7 +169,10 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
                 </View>
               </Fragment>
             ) : (
-              <View key={key} className={childClass}>
+              <View
+                key={key}
+                className={rendererClass(childOverrideClass, childClass)}
+              >
                 {children}
               </View>
             ),

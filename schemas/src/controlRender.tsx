@@ -284,6 +284,7 @@ export interface ArrayRendererProps {
   min?: number | null;
   max?: number | null;
   disabled?: boolean;
+  childOverrideClass?: string | null;
 }
 export interface Visibility {
   visible: boolean;
