@@ -15,42 +15,18 @@ interface ChatInterfaceProps {
   isProcessing: boolean;
   onSendCommand: (command: string) => Promise<void>;
   onClearHistory: () => void;
-  currentFormName: string;
 }
 
 export function ChatInterface({
   commandHistory,
   isProcessing,
   onSendCommand,
-  onClearHistory,
-  currentFormName
+  onClearHistory
 }: ChatInterfaceProps) {
   const currentCommand = useControl<string>("");
 
   return (
     <div className="chat-interface flex flex-col h-full">
-      {/* Current Form Status */}
-      <div className="status-section bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
-        <div className="mb-2">
-          <label className="text-xs font-medium text-gray-600 mb-1 block">
-            📄 Current Form
-          </label>
-          <div className="text-sm bg-gray-50 px-3 py-2 rounded-md border font-mono text-gray-800">
-            {currentFormName}
-          </div>
-        </div>
-        <div className="mb-2">
-          <label className="text-xs font-medium text-gray-600 mb-1 block">
-            ⚡ Status
-          </label>
-          <div className={clsx(
-            "text-sm font-medium px-2 py-1 rounded-md",
-            isProcessing ? "text-blue-600" : "text-green-600"
-          )}>
-            {isProcessing ? "🔄 Processing command..." : "✅ Ready"}
-          </div>
-        </div>
-      </div>
 
       {/* Command Input */}
       <div className="command-input-section bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4 mb-4 shadow-sm">

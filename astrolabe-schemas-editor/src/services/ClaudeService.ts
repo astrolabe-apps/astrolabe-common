@@ -123,7 +123,7 @@ export class ClaudeService {
         },
         body: JSON.stringify({
           model: "claude-3-7-sonnet-20250219",
-          max_tokens: 4096,
+          max_tokens: 8192,
           system: systemPrompt,
           messages,
           tools: [
@@ -393,6 +393,97 @@ Current Form:
 - Name: ${formInfo.name}
 - Fields: ${formInfo.fields.join(", ")}
 
+## Schema-First Approach
+
+**ALWAYS reference the provided schema to:**
+- Verify field existence before creating Data controls
+- Use correct field types and validation
+- Respect enumValues for dropdown/selection controls
+- Apply schema-defined constraints
+- Understand field relationships and dependencies
+
+**Schema Property Mapping:**
+- Schema "required" → Control "required": true
+- Schema "enumValues" → Use Dropdown/Radio render types
+- Schema "maxLength" → Add appropriate validation
+- Schema nested objects → Use Group controls
+
+## Common Modification Patterns
+
+**Adding a new field:**
+- Always check schema for field type and constraints
+- Use appropriate render type for data type
+- Consider validation requirements
+- Place logically within form structure
+
+**Example: Adding a text field**
+{
+  "type": "Data",
+  "field": "description",
+  "title": "Description",
+  "required": false,
+  "renderOptions": {
+    "type": "Textfield",
+    "placeholder": "Enter description...",
+    "multiline": true
+  }
+}
+
+**Example: Adding a dropdown from schema**
+{
+  "type": "Data",
+  "field": "status",
+  "title": "Status",
+  "required": true,
+  "renderOptions": {
+    "type": "Dropdown"
+  }
+}
+
+## Critical Validation Rules
+
+**MUST VALIDATE:**
+- All field names exist in schema before adding Data controls
+- Required properties are never removed
+- Array structures maintain proper nesting
+- Group children arrays are never empty
+- Field references match schema exactly (case-sensitive)
+
+**COMMON MISTAKES TO AVOID:**
+- Using field names not in schema
+- Missing required properties in control definitions
+- Inconsistent naming conventions
+- Breaking parent-child relationships in groups
+
+## Decision Framework
+
+**When adding fields, consider:**
+1. Schema constraints (required, type, validation)
+2. User workflow and logical grouping
+3. Form length and complexity
+4. Mobile/responsive considerations
+
+**When organizing fields:**
+- Group related fields together
+- Place required fields prominently
+- Consider conditional logic dependencies
+- Maintain intuitive flow
+
+## User Experience Guidelines
+
+**Form Design Principles:**
+- Progressive disclosure (show most important fields first)
+- Logical grouping and clear section headers
+- Appropriate field sizes and input types
+- Clear validation messages and help text
+- Consistent styling and spacing
+
+**Accessibility Considerations:**
+- Meaningful labels and titles
+- Proper field associations
+- Helpful placeholder text and descriptions
+- Logical tab order through groups
+
 ## Guidelines for Form Manipulation
 
 **Best Practices:**
@@ -414,6 +505,19 @@ Current Form:
 - Use clear, descriptive names
 - Follow consistent naming patterns
 - Use appropriate data types in schema
+
+## Response Requirements
+
+**Always explain your reasoning:**
+- Why you chose specific control types
+- How you organized the form structure
+- What schema constraints influenced decisions
+- Any assumptions made about user intent
+
+**Structure your response:**
+1. Brief summary of changes
+2. Explanation of key decisions
+3. Any recommendations or alternatives considered
 
 IMPORTANT: Always use the update_form_definition tool to make changes. Include the complete updated form definition, not just the changes.`;
   }

@@ -48,7 +48,7 @@ export function FormView(props: { formId: string; context: ViewContext }) {
     formId,
   }));
 
-  // Agent mode state
+  // Agent mode state - only initialize if Claude service is available
   const agentMode = useControl<AgentModeState>({
     enabled: false,
     pendingChanges: null,
@@ -137,7 +137,7 @@ function RenderFormDesign({
             {checkbox(preview.fields.showing, "Preview Mode")}
             {button(save, "Save")}
           </div>
-          {!preview.fields.showing.value && (
+          {!preview.fields.showing.value && context.claudeService && (
             <div className="flex gap-2 items-center">
               <label className="text-sm font-medium text-gray-700">
                 Agent Assistance
@@ -335,14 +335,14 @@ function RenderFormDesign({
         <div
           className={clsx(
             "grow overflow-auto",
-            agentMode.fields.enabled.value
+            context.claudeService && agentMode.fields.enabled.value
               ? "grid grid-cols-1 lg:grid-cols-2 gap-4 px-4"
               : "",
           )}
         >
           <div
             className={clsx(
-              agentMode.fields.enabled.value
+              context.claudeService && agentMode.fields.enabled.value
                 ? "overflow-auto"
                 : "grow overflow-auto",
               context.editorPanelClass,
@@ -359,7 +359,7 @@ function RenderFormDesign({
             />
           </div>
 
-          {agentMode.fields.enabled.value && (
+          {context.claudeService && agentMode.fields.enabled.value && (
             <div className="overflow-auto">
               <AgentAssistPanel
                 onChangesProposed={() => {}} // Not used in new workflow
@@ -374,7 +374,6 @@ function RenderFormDesign({
                 isProcessing={agentMode.fields.isProcessing.value}
                 onSendCommand={handleSendCommand}
                 onClearHistory={handleClearHistory}
-                currentFormName={c.fields.name.value || "Unnamed Form"}
               />
             </div>
           )}

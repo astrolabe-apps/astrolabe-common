@@ -21,7 +21,6 @@ export const defaultLayout: IJsonModel = {
             type: "tabset",
             children: [
               { name: "Snippets", id: "snippets" },
-              { name: "Agent", id: "agent" },
             ],
           },
         ],

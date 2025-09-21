@@ -14,7 +14,6 @@ interface AgentAssistPanelProps {
   isProcessing: boolean;
   onSendCommand: (command: string) => Promise<void>;
   onClearHistory: () => void;
-  currentFormName: string;
 }
 
 export function AgentAssistPanel({
@@ -27,8 +26,7 @@ export function AgentAssistPanel({
   commandHistory,
   isProcessing,
   onSendCommand,
-  onClearHistory,
-  currentFormName
+  onClearHistory
 }: AgentAssistPanelProps) {
   return (
     <div className="agent-assist-panel bg-gray-50 border border-gray-200 rounded-lg p-4 flex flex-col h-full">
@@ -44,7 +42,6 @@ export function AgentAssistPanel({
           isProcessing={isProcessing}
           onSendCommand={onSendCommand}
           onClearHistory={onClearHistory}
-          currentFormName={currentFormName}
         />
       </div>
 
