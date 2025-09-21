@@ -22,9 +22,22 @@ builder
 
 builder.Services.AddSingleton<CarService>();
 
-// Configure Anthropic service
+// Configure Anthropic service with improved architecture
 builder.Services.AddHttpClient<AnthropicService>(client =>
 {
+    var configuration = builder.Configuration;
+    var apiKey = configuration["Anthropic:ApiKey"];
+
+    if (string.IsNullOrEmpty(apiKey))
+    {
+        throw new InvalidOperationException("Anthropic API key is not configured. Please set Anthropic:ApiKey in configuration.");
+    }
+
+    var baseUrl = configuration["Anthropic:BaseUrl"] ?? "https://api.anthropic.com/v1/";
+    client.BaseAddress = new Uri(baseUrl);
+    client.DefaultRequestHeaders.Add("x-api-key", apiKey);
+    client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+    client.DefaultRequestHeaders.Add("User-Agent", "Astrolabe-TestTemplate/1.0");
     client.Timeout = TimeSpan.FromMinutes(2); // Configure timeout for long-running AI requests
 });
 

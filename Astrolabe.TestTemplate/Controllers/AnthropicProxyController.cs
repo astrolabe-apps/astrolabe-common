@@ -1,5 +1,8 @@
 using Astrolabe.TestTemplate.Service;
+using Astrolabe.TestTemplate.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
+using System.Text.Json;
 
 namespace Astrolabe.TestTemplate.Controllers;
 
@@ -32,6 +35,86 @@ public class AnthropicProxyController : ControllerBase
         _logger.LogInformation("Proxying message request to Anthropic API");
 
         return await _anthropicService.CreateMessage(request);
+    }
+
+    /// <summary>
+    /// Process a command using Claude with structured response
+    /// </summary>
+    /// <param name="request">The command processing request</param>
+    /// <returns>Processed command response</returns>
+    [HttpPost("process-command")]
+    public async Task<ProcessCommandResponse> ProcessCommand([FromBody] ProcessCommandRequest request)
+    {
+        if (request == null)
+        {
+            return new ProcessCommandResponse
+            {
+                Response = "Request body is required",
+                Success = false
+            };
+        }
+
+        _logger.LogInformation("Processing command: {Command}", request.Command);
+
+        return await _anthropicService.ProcessCommand(request);
+    }
+
+    /// <summary>
+    /// Stream a command using Claude with real-time responses
+    /// </summary>
+    /// <param name="request">The command processing request</param>
+    /// <returns>Server-sent events stream</returns>
+    [HttpPost("stream-command")]
+    public async Task StreamCommand([FromBody] ProcessCommandRequest request)
+    {
+        if (request == null)
+        {
+            Response.StatusCode = 400;
+            await Response.WriteAsync("Request body is required");
+            return;
+        }
+
+        _logger.LogInformation("Streaming command: {Command}", request.Command);
+
+        Response.Headers.Append("Content-Type", "text/event-stream");
+        Response.Headers.Append("Cache-Control", "no-cache");
+        Response.Headers.Append("Connection", "keep-alive");
+        Response.Headers.Append("Access-Control-Allow-Origin", "*");
+
+        try
+        {
+            await foreach (var chunk in _anthropicService.StreamCompletion(request, HttpContext.RequestAborted))
+            {
+                var jsonChunk = JsonSerializer.Serialize(chunk, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+                await Response.WriteAsync($"data: {jsonChunk}\n\n");
+                await Response.Body.FlushAsync();
+
+                if (HttpContext.RequestAborted.IsCancellationRequested)
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during streaming command");
+            var errorChunk = JsonSerializer.Serialize(new StreamChunk
+            {
+                Type = "error",
+                Error = ex.Message
+            }, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            await Response.WriteAsync($"data: {errorChunk}\n\n");
+        }
+        finally
+        {
+            await Response.WriteAsync("data: [DONE]\n\n");
+        }
     }
 
     /// <summary>
