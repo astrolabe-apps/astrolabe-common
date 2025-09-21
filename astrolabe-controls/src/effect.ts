@@ -71,34 +71,37 @@ export function createScopedEffect<V>(
 }
 
 export class AsyncEffect<V> extends SubscriptionTracker {
-  currentPromise: Promise<V>;
+  running = false;
   abortController?: AbortController;
   changedDetected = false;
   destroyed = false;
   pendingRun = false;
 
   runProcess() {
-    if (this.pendingRun) {
-      return; // Already have a run queued
+    if (this.running) {
+      // If already running, abort current and queue a new run
+      this.abortController?.abort();
+      this.pendingRun = true;
+      return;
     }
 
-    this.pendingRun = true;
-    this.abortController?.abort();
+    // Start new execution
+    this.running = true;
     const aborter = new AbortController();
     this.abortController = aborter;
-
-    this.currentPromise = this.currentPromise
-      .then(() =>
-        collectChanges(this.collectUsage, () =>
-          this.process(this, aborter.signal),
-        ),
-      )
-      .finally(() => {
-        this.pendingRun = false;
-        if (!this.destroyed) {
-          this.update();
+    collectChanges(this.collectUsage, () =>
+      this.process(this, aborter.signal),
+    ).finally(() => {
+      if (!this.destroyed) {
+        this.update();
+        this.abortController = undefined;
+        this.running = false;
+        if (this.pendingRun) {
+          this.pendingRun = false;
+          this.runProcess();
         }
-      });
+      }
+    });
   }
 
   start() {
@@ -124,9 +127,6 @@ export class AsyncEffect<V> extends SubscriptionTracker {
         this.runProcess();
       });
     });
-
-    // Initialize currentPromise to prevent race condition
-    this.currentPromise = Promise.resolve({} as V);
   }
 }
 
