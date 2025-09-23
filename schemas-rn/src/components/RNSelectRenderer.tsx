@@ -62,6 +62,7 @@ export function RNSelectRenderer({
   emptyText = "N/A",
   requiredText = "Please select",
   portalHost,
+  readonly,
   ...props
 }: SelectDataRendererProps & ExtendedDropdown) {
   const insets = useSafeAreaInsets();
@@ -104,8 +105,8 @@ export function RNSelectRenderer({
   return (
     <Select
       {...props}
-      disabled={disabled}
-      aria-disabled={disabled}
+      disabled={disabled || readonly}
+      aria-disabled={disabled || readonly}
       defaultValue={{
         value: value,
         label: required ? requiredText : emptyText,
@@ -122,6 +123,8 @@ export function RNSelectRenderer({
         onLayout={(e) => {
           selectContentWidth.value = e.nativeEvent.layout.width;
         }}
+        disabled={disabled || readonly}
+        aria-disabled={disabled || readonly}
       >
         <SelectValue placeholder={required ? requiredText : emptyText} />
       </SelectTrigger>
