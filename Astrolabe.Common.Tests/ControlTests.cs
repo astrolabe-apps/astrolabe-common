@@ -36,6 +36,7 @@ public class ControlTests
     public void Setting_Value_Should_Trigger_Notification()
     {
         var control = new Control();
+        var editor = new ControlEditor();
         var changeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
         IControl? notifiedControl = null;
@@ -47,7 +48,7 @@ public class ControlTests
             notifiedControl = ctrl;
         }, ControlChange.Value);
 
-        control.Value = "new value";
+        editor.SetValue(control, "new value");
 
         Assert.True(changeNotified);
         Assert.Equal(ControlChange.Value, notifiedChange);
@@ -58,6 +59,7 @@ public class ControlTests
     public void Setting_Same_Value_Should_Not_Trigger_Notification()
     {
         var control = new Control("initial");
+        var editor = new ControlEditor();
         var changeNotified = false;
 
         var subscription = control.Subscribe((ctrl, change) =>
@@ -65,7 +67,7 @@ public class ControlTests
             changeNotified = true;
         }, ControlChange.Value);
 
-        control.Value = "initial"; // Same value
+        editor.SetValue(control, "initial"); // Same value
 
         Assert.False(changeNotified);
     }
@@ -74,6 +76,7 @@ public class ControlTests
     public void Unsubscribe_Should_Stop_Notifications()
     {
         var control = new Control();
+        var editor = new ControlEditor();
         var changeNotified = false;
 
         var subscription = control.Subscribe((ctrl, change) =>
@@ -82,7 +85,7 @@ public class ControlTests
         }, ControlChange.Value);
 
         subscription.Unsubscribe();
-        control.Value = "new value";
+        editor.SetValue(control, "new value");
 
         Assert.False(changeNotified);
     }
@@ -91,6 +94,7 @@ public class ControlTests
     public void Multiple_Subscribers_Should_All_Be_Notified()
     {
         var control = new Control();
+        var editor = new ControlEditor();
         var change1Notified = false;
         var change2Notified = false;
 
@@ -104,7 +108,7 @@ public class ControlTests
             change2Notified = true;
         }, ControlChange.Value);
 
-        control.Value = "new value";
+        editor.SetValue(control, "new value");
 
         Assert.True(change1Notified);
         Assert.True(change2Notified);
@@ -114,6 +118,7 @@ public class ControlTests
     public void Subscription_Should_Only_Fire_For_Subscribed_Changes()
     {
         var control = new Control();
+        var editor = new ControlEditor();
         var valueChangeNotified = false;
         var allChangeNotified = false;
 
@@ -129,7 +134,7 @@ public class ControlTests
             allChangeNotified = true;
         }, ControlChange.All);
 
-        control.Value = "new value";
+        editor.SetValue(control, "new value");
 
         Assert.True(valueChangeNotified);
         Assert.True(allChangeNotified);

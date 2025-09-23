@@ -1,24 +1,13 @@
 namespace Astrolabe.Controls;
 
-public class Control : IControl
+public class Control : IControl, IControlMutation
 {
     private static int _nextId = 1;
     private object? _value;
 
     public int UniqueId { get; } = Interlocked.Increment(ref _nextId);
 
-    public virtual object? Value
-    {
-        get => _value;
-        set
-        {
-            if (!Equals(_value, value))
-            {
-                _value = value;
-                NotifyChange(ControlChange.Value);
-            }
-        }
-    }
+    public virtual object? Value => _value;
 
     private Subscriptions? _subscriptions;
     Subscriptions? IControl.InternalSubscriptions => _subscriptions;
@@ -43,6 +32,39 @@ public class Control : IControl
     {
         // For basic implementation, assume all states are "normal"
         return ControlChange.None;
+    }
+
+    protected virtual ControlChange GetChangeState(ControlChange mask)
+    {
+        // Return None - ApplyChange will handle tracking changes in subscription lists
+        return ControlChange.None;
+    }
+
+    // Internal mutation interface implementation
+    bool IControlMutation.SetValueInternal(object? value)
+    {
+        if (!Equals(_value, value))
+        {
+            _value = value;
+            _subscriptions?.ApplyChange(ControlChange.Value);
+            return true;
+        }
+        return false;
+    }
+
+    void IControlMutation.NotifyChange(ControlChange changeType)
+    {
+        _subscriptions?.RunListeners(this, changeType);
+    }
+
+    void IControlMutation.RunListeners()
+    {
+        var s = _subscriptions;
+        if (s != null)
+        {
+            var currentChanges = GetChangeState(s.Mask);
+            s.RunListeners(this, currentChanges);
+        }
     }
 
     protected void NotifyChange(ControlChange changeType)

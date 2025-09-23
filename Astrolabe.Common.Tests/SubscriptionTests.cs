@@ -40,6 +40,7 @@ public class SubscriptionTests
     public void Unsubscribe_Via_Control_Should_Work()
     {
         var control = new Control();
+        var editor = new ControlEditor();
         var changeNotified = false;
 
         var subscription = control.Subscribe((ctrl, change) =>
@@ -48,7 +49,7 @@ public class SubscriptionTests
         }, ControlChange.Value);
 
         control.Unsubscribe(subscription);
-        control.Value = "new value";
+        editor.SetValue(control, "new value");
 
         Assert.False(changeNotified);
     }
