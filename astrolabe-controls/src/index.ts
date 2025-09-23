@@ -20,6 +20,16 @@ export {
   runPendingChanges,
   addAfterChangesCallback,
 } from "./transactions";
+export {
+  getControlMetrics,
+  getHeavyControls,
+  findControlsByValue,
+  printControlMetrics,
+  printHeavyControls,
+  ControlMetricsRegistry,
+  type ControlMetrics,
+  type ControlInfo,
+} from "./controlMetrics";
 export { notEmpty } from "./validation";
 export {
   updateElements,

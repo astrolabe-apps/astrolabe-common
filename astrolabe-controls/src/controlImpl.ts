@@ -1,4 +1,5 @@
 import { Subscriptions } from "./subscriptions";
+import { ControlMetricsRegistry } from "./controlMetrics";
 import {
   ChangeListenerFunc,
   CleanupScope,
@@ -52,6 +53,8 @@ export class ControlImpl<V> implements InternalControl<V> {
   ) {
     this.uniqueId = ++uniqueIdCounter;
     _logic.attach(this);
+    // Capture creation stack trace if enabled
+    ControlMetricsRegistry.captureCreationStack(this);
   }
 
   addCleanup(cleanup: () => void) {
@@ -61,6 +64,8 @@ export class ControlImpl<V> implements InternalControl<V> {
 
   cleanup() {
     this._cleanup?.cleanup();
+    // Unregister from metrics collection
+    ControlMetricsRegistry.unregister(this);
     this._logic.withChildren((c) =>
       c.parents?.length == 1 ? c.cleanup() : undefined,
     );
@@ -330,13 +335,25 @@ export class ControlImpl<V> implements InternalControl<V> {
     listener: ChangeListenerFunc<V>,
     mask: ControlChange,
   ): Subscription {
+    const isFirstSubscription = !this._subscriptions;
     this._subscriptions ??= new Subscriptions();
+
+    // Register for metrics collection on first subscription
+    if (isFirstSubscription) {
+      ControlMetricsRegistry.register(this);
+    }
+
     const currentChanges = this.getChangeState(mask);
     return this._subscriptions.subscribe(listener, currentChanges, mask);
   }
 
   unsubscribe(subscription: Subscription) {
     this._subscriptions?.unsubscribe(subscription);
+
+    // Unregister from metrics if no more subscriptions
+    if (this._subscriptions && !this._subscriptions.hasSubscriptions()) {
+      ControlMetricsRegistry.unregister(this);
+    }
   }
 
   setError(key: string, error?: string | null) {

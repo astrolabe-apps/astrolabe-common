@@ -32,6 +32,10 @@ export class Subscriptions {
     (sub as SubscriptionInternal).list.remove(sub);
   }
 
+  hasSubscriptions(): boolean {
+    return this.lists.some((list) => list.hasSubscriptions());
+  }
+
   runListeners(control: Control<any>, current: ControlChange) {
     this.lists.forEach((s) => s.runListeners(control, current));
   }
@@ -89,12 +93,18 @@ export class SubscriptionList {
   canBeAdded(current: ControlChange, mask: ControlChange): boolean {
     return (this.changeState & mask) === current;
   }
+
+  hasSubscriptions(): boolean {
+    return this.subscriptions.length > 0;
+  }
 }
 
 export class SubscriptionTracker {
   subscriptions: TrackedSubscription[] = [];
 
-  constructor(public listen: ChangeListenerFunc<any>) {}
+  constructor(public listen: ChangeListenerFunc<any>) {
+    (listen as any).tracker = this;
+  }
 
   collectUsage: ChangeListenerFunc<any> = (c, change) => {
     const existing = this.subscriptions.find((x) => x[0] === c);
