@@ -23,7 +23,7 @@ export {
 export {
   getControlMetrics,
   getHeavyControls,
-  findControlsByValue,
+  getControlById,
   printControlMetrics,
   printHeavyControls,
   ControlMetricsRegistry,

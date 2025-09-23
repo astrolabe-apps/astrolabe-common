@@ -1,5 +1,6 @@
-import { ControlChange, Control } from "./types";
+import { ControlChange, Control, Subscription } from "./types";
 import { InternalControl } from "./internal";
+import { Subscriptions, SubscriptionList } from "./subscriptions";
 
 // Simple path calculation to avoid circular dependency
 function getSimpleControlPath(control: Control<any>): string {
@@ -193,12 +194,11 @@ export function getControlMetrics(): ControlMetrics {
     // Analyze subscriptions (all controls in registry have subscriptions)
     const subscriptions = internalControl._subscriptions;
     if (subscriptions) {
-
-      const lists = (subscriptions as any).lists || [];
+      const lists = subscriptions.lists;
       let controlSubscriptionCount = 0;
 
-      lists.forEach((list: any) => {
-        const count = list.subscriptions?.length || 0;
+      lists.forEach((list: SubscriptionList) => {
+        const count = list.subscriptions.length;
         controlSubscriptionCount += count;
 
         // Track change types
@@ -243,6 +243,58 @@ export function getControlMetrics(): ControlMetrics {
   };
 }
 
+function buildControlInfo(control: Control<any>): ControlInfo {
+  const internalControl = control as InternalControl<any>;
+  const subscriptions = internalControl._subscriptions;
+  let subscriptionCount = 0;
+  const allChangeTypes = new Set<string>();
+
+  const subscriptionDetails: Array<{
+    mask: number;
+    changeTypes: string[];
+    listenerCount: number;
+    listeners: Array<{
+      listener: Function;
+      mask: number;
+      changeTypes: string[];
+    }>;
+  }> = [];
+
+  if (subscriptions) {
+    const lists = subscriptions.lists;
+    lists.forEach((list: SubscriptionList) => {
+      const listSubscriptions = list.subscriptions;
+      const listenerCount = listSubscriptions.length;
+      subscriptionCount += listenerCount;
+      const listChangeTypes = getChangeTypeNames(list.mask);
+
+      subscriptionDetails.push({
+        mask: list.mask,
+        changeTypes: listChangeTypes,
+        listenerCount,
+        listeners: listSubscriptions.map((sub: Subscription) => ({
+          listener: sub.listener,
+          mask: sub.mask,
+          changeTypes: getChangeTypeNames(sub.mask)
+        }))
+      });
+
+      listChangeTypes.forEach(type => allChangeTypes.add(type));
+    });
+  }
+
+  return {
+    control,
+    value: control.current.value,
+    valueType: getValueTypeString(control.current.value),
+    subscriptionCount,
+    changeTypes: Array.from(allChangeTypes),
+    subscriptions: subscriptionDetails,
+    path: getSimpleControlPath(control) || undefined,
+    creationStack: ControlRegistry.getStackTrace(control)
+  };
+}
+
 export function getHeavyControls(threshold: number = 5): ControlInfo[] {
   const allControls = ControlRegistry.getAll();
   const heavyControls: ControlInfo[] = [];
@@ -252,123 +304,26 @@ export function getHeavyControls(threshold: number = 5): ControlInfo[] {
     const subscriptions = internalControl._subscriptions;
     if (!subscriptions) return;
 
-    const lists = (subscriptions as any).lists || [];
+    const lists = subscriptions.lists;
     let subscriptionCount = 0;
-    const allChangeTypes = new Set<string>();
 
-    lists.forEach((list: any) => {
-      const count = list.subscriptions?.length || 0;
+    lists.forEach((list: SubscriptionList) => {
+      const count = list.subscriptions.length;
       subscriptionCount += count;
-
-      const changeTypes = getChangeTypeNames(list.mask);
-      changeTypes.forEach(type => allChangeTypes.add(type));
     });
 
     if (subscriptionCount >= threshold) {
-      // Build detailed subscription info
-      const subscriptionDetails = lists.map((list: any) => {
-        const listSubscriptions = list.subscriptions || [];
-        return {
-          mask: list.mask,
-          changeTypes: getChangeTypeNames(list.mask),
-          listenerCount: listSubscriptions.length,
-          listeners: listSubscriptions.map((sub: any) => ({
-            listener: sub.listener,
-            mask: sub.mask,
-            changeTypes: getChangeTypeNames(sub.mask)
-          }))
-        };
-      });
-
-      heavyControls.push({
-        control,
-        value: control.current.value,
-        valueType: getValueTypeString(control.current.value),
-        subscriptionCount,
-        changeTypes: Array.from(allChangeTypes),
-        subscriptions: subscriptionDetails,
-        path: getSimpleControlPath(control) || undefined,
-        creationStack: ControlRegistry.getStackTrace(control)
-      });
+      heavyControls.push(buildControlInfo(control));
     }
   });
 
   return heavyControls.sort((a, b) => b.subscriptionCount - a.subscriptionCount);
 }
 
-export function findControlsByValue(searchValue: any): ControlInfo[] {
+export function getControlById(uniqueId: number): ControlInfo | undefined {
   const allControls = ControlRegistry.getAll();
-  const matchingControls: ControlInfo[] = [];
-
-  allControls.forEach(control => {
-    try {
-      const value = control.current.value;
-
-      // Simple matching logic
-      const matches =
-        value === searchValue ||
-        (typeof value === 'string' && typeof searchValue === 'string' && value.includes(searchValue)) ||
-        (typeof value === 'object' && value !== null && JSON.stringify(value).includes(JSON.stringify(searchValue)));
-
-      if (matches) {
-        const internalControl = control as InternalControl<any>;
-        const subscriptions = internalControl._subscriptions;
-        let subscriptionCount = 0;
-        const changeTypes: string[] = [];
-
-        const subscriptionDetails: Array<{
-          mask: number;
-          changeTypes: string[];
-          listenerCount: number;
-          listeners: Array<{
-            listener: Function;
-            mask: number;
-            changeTypes: string[];
-          }>;
-        }> = [];
-
-        if (subscriptions) {
-          const lists = (subscriptions as any).lists || [];
-          lists.forEach((list: any) => {
-            const listSubscriptions = list.subscriptions || [];
-            const listenerCount = listSubscriptions.length;
-            subscriptionCount += listenerCount;
-            const listChangeTypes = getChangeTypeNames(list.mask);
-
-            subscriptionDetails.push({
-              mask: list.mask,
-              changeTypes: listChangeTypes,
-              listenerCount,
-              listeners: listSubscriptions.map((sub: any) => ({
-                listener: sub.listener,
-                mask: sub.mask,
-                changeTypes: getChangeTypeNames(sub.mask)
-              }))
-            });
-
-            listChangeTypes.forEach(type => {
-              if (!changeTypes.includes(type)) changeTypes.push(type);
-            });
-          });
-        }
-
-        matchingControls.push({
-          control,
-          value,
-          valueType: getValueTypeString(value),
-          subscriptionCount,
-          changeTypes,
-          subscriptions: subscriptionDetails,
-          path: getSimpleControlPath(control) || undefined,
-          creationStack: ControlRegistry.getStackTrace(control)
-        });
-      }
-    } catch {
-      // Skip controls that can't be analyzed
-    }
-  });
-
-  return matchingControls;
+  const matchingControl = allControls.find(control => control.uniqueId === uniqueId);
+  return matchingControl ? buildControlInfo(matchingControl) : undefined;
 }
 
 function getValueTypeString(value: any): string {
@@ -418,25 +373,7 @@ export function printHeavyControls(threshold: number = 5): void {
     console.log(`No controls found with ${threshold}+ subscriptions`);
   } else {
     heavyControls.forEach((controlInfo, index) => {
-      console.group(`#${index + 1} - ${controlInfo.subscriptionCount} subscriptions`);
-      console.log('📝 Value:', controlInfo.value);
-      console.log(`📋 Type: ${controlInfo.valueType}`);
-      console.log(`🔗 Change Types: ${controlInfo.changeTypes.join(', ')}`);
-      if (controlInfo.path) console.log(`🗺️ Path: ${controlInfo.path}`);
-      if (controlInfo.creationStack) {
-        console.group('📍 Creation Stack Trace');
-        console.log(controlInfo.creationStack);
-        console.groupEnd();
-      }
-      console.log('🎮 Control:', controlInfo.control);
-
-      console.group('📊 Subscription Details');
-      controlInfo.subscriptions.forEach((sub, i) => {
-        console.log(`  ${i + 1}. Mask: ${sub.mask}, Listeners: ${sub.listenerCount}, Types: [${sub.changeTypes.join(', ')}]`);
-      });
-      console.groupEnd();
-
-      console.groupEnd();
+      console.log(`#${index + 1} - ${controlInfo.subscriptionCount} subscriptions:`, controlInfo);
     });
   }
 
@@ -460,25 +397,29 @@ export const ControlMetricsRegistry = {
 // Make functions available on window for browser debugging
 declare global {
   interface Window {
-    printControlMetrics?: () => void;
-    printHeavyControls?: (threshold?: number) => void;
-    getControlMetrics?: () => ControlMetrics;
-    getHeavyControls?: (threshold?: number) => ControlInfo[];
-    findControlsByValue?: (value: any) => ControlInfo[];
-    enableControlStackTraces?: () => void;
-    disableControlStackTraces?: () => void;
-    isControlStackTracesEnabled?: () => boolean;
+    ControlMetrics?: {
+      printControlMetrics: () => void;
+      printHeavyControls: (threshold?: number) => void;
+      getControlMetrics: () => ControlMetrics;
+      getHeavyControls: (threshold?: number) => ControlInfo[];
+      getControlById: (uniqueId: number) => ControlInfo | undefined;
+      enableControlStackTraces: () => void;
+      disableControlStackTraces: () => void;
+      isControlStackTracesEnabled: () => boolean;
+    };
   }
 }
 
 // Auto-register debugging functions in browser environment
 if (typeof window !== 'undefined') {
-  window.printControlMetrics = printControlMetrics;
-  window.printHeavyControls = printHeavyControls;
-  window.getControlMetrics = getControlMetrics;
-  window.getHeavyControls = getHeavyControls;
-  window.findControlsByValue = findControlsByValue;
-  window.enableControlStackTraces = ControlMetricsRegistry.enableStackTraceCapture;
-  window.disableControlStackTraces = ControlMetricsRegistry.disableStackTraceCapture;
-  window.isControlStackTracesEnabled = ControlMetricsRegistry.isStackTraceCaptureEnabled;
+  window.ControlMetrics = {
+    printControlMetrics,
+    printHeavyControls,
+    getControlMetrics,
+    getHeavyControls,
+    getControlById,
+    enableControlStackTraces: ControlMetricsRegistry.enableStackTraceCapture,
+    disableControlStackTraces: ControlMetricsRegistry.disableStackTraceCapture,
+    isControlStackTracesEnabled: ControlMetricsRegistry.isStackTraceCaptureEnabled,
+  };
 }

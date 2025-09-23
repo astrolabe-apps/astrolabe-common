@@ -10,7 +10,7 @@ export interface SubscriptionInternal extends Subscription {
   list: SubscriptionList;
 }
 export class Subscriptions {
-  private lists: SubscriptionList[] = [];
+  public lists: SubscriptionList[] = [];
   public mask: ControlChange = ControlChange.None;
   public onListenerList = false;
 
@@ -49,11 +49,11 @@ export class Subscriptions {
 }
 
 export class SubscriptionList {
-  private subscriptions: Subscription[] = [];
+  public subscriptions: Subscription[] = [];
 
   constructor(
     private changeState: ControlChange,
-    private mask: ControlChange,
+    public mask: ControlChange,
   ) {}
 
   remove(sub: Subscription) {
