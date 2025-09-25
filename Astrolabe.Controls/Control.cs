@@ -12,8 +12,8 @@ public class Control : IControl, IControlMutation
     // Parent-child tracking
     private List<ParentLink>? _parents;
 
-    // Child control management
-    private readonly Dictionary<string, IControl> _fieldControls = new();
+    // Child control management - lazily initialized
+    private Dictionary<string, IControl>? _fieldControls;
     private List<IControl>? _elementControls;
 
     // Static empty collections for non-object/array controls
@@ -104,21 +104,33 @@ public class Control : IControl, IControlMutation
     {
         get
         {
-            if (!IsObject) return null;
+            // Lazy initialization indicates this should be an object type
+            _fieldControls ??= new Dictionary<string, IControl>();
 
             // Return cached control if exists
             if (_fieldControls.TryGetValue(propertyName, out var existing))
                 return existing;
 
-            // Check if property exists in underlying dictionary
-            var dict = (IDictionary<string, object>)Value!;
+            // For null parent values, create child control with null value
+            if (Value == null)
+            {
+                var childControl = CreateChildControl(null, propertyName);
+                _fieldControls[propertyName] = childControl;
+                return childControl;
+            }
+
+            // Check if we have an object type
+            if (Value is not IDictionary<string, object> dict)
+                return null;
+
+            // Check if property exists in dictionary - return null for missing properties
             if (!dict.TryGetValue(propertyName, out var value))
                 return null;
 
             // Create and cache child control
-            var childControl = CreateChildControl(value, propertyName);
-            _fieldControls[propertyName] = childControl;
-            return childControl;
+            var child = CreateChildControl(value, propertyName);
+            _fieldControls[propertyName] = child;
+            return child;
         }
     }
 
@@ -126,9 +138,13 @@ public class Control : IControl, IControlMutation
     {
         get
         {
-            if (!IsArray) return null;
+            // For null parent values, we can't create array children without knowing the length
+            // Return null - arrays need to be explicitly created first
+            if (Value == null) return null;
 
-            var collection = (ICollection)Value!;
+            if (Value is not ICollection collection)
+                return null;
+
             if (index < 0 || index >= collection.Count) return null;
 
             // Ensure element controls list is created
@@ -235,9 +251,12 @@ public class Control : IControl, IControlMutation
     private void WithChildren(Action<IControl> action)
     {
         // Apply to field controls
-        foreach (var child in _fieldControls.Values)
+        if (_fieldControls != null)
         {
-            action(child);
+            foreach (var child in _fieldControls.Values)
+            {
+                action(child);
+            }
         }
 
         // Apply to element controls
@@ -314,7 +333,9 @@ public class Control : IControl, IControlMutation
         {
             // Update existing field controls
             var fieldsToRemove = new List<string>();
-            foreach (var kvp in _fieldControls)
+            if (_fieldControls != null)
+            {
+                foreach (var kvp in _fieldControls)
             {
                 var fieldName = kvp.Key;
                 var childControl = kvp.Value;
@@ -338,10 +359,11 @@ public class Control : IControl, IControlMutation
                 }
             }
 
-            // Remove controls for fields that no longer exist
-            foreach (var fieldName in fieldsToRemove)
-            {
-                _fieldControls.Remove(fieldName);
+                // Remove controls for fields that no longer exist
+                foreach (var fieldName in fieldsToRemove)
+                {
+                    _fieldControls.Remove(fieldName);
+                }
             }
         }
 
@@ -400,14 +422,17 @@ public class Control : IControl, IControlMutation
     private void ClearAllChildControls()
     {
         // Clear field controls
-        foreach (var child in _fieldControls.Values)
+        if (_fieldControls != null)
         {
-            if (child is IControlMutation childMutation)
+            foreach (var child in _fieldControls.Values)
             {
-                childMutation.UpdateParentLink(this, null); // Remove parent link
+                if (child is IControlMutation childMutation)
+                {
+                    childMutation.UpdateParentLink(this, null); // Remove parent link
+                }
             }
+            _fieldControls.Clear();
         }
-        _fieldControls.Clear();
 
         // Clear element controls
         if (_elementControls != null)
@@ -426,6 +451,24 @@ public class Control : IControl, IControlMutation
     private void UpdateChildValue(object key, object? value)
     {
         bool structureChanged = false;
+
+        // Create parent object if it's null and we can determine the type
+        if (_value == null)
+        {
+            if (_fieldControls != null && key is string)
+            {
+                // Field access indicates this should be an object
+                _value = new Dictionary<string, object>();
+                _flags |= ControlFlags.ValueMutable;
+                structureChanged = true;
+            }
+            else if (_elementControls != null && key is int)
+            {
+                // Element access indicates this should be an array, but we can't create one without knowing size
+                // This shouldn't happen in practice as array indexer returns null for null parent
+                throw new InvalidOperationException("Cannot create array parent from null - arrays must be explicitly initialized");
+            }
+        }
 
         // If value isn't mutable, we need to take ownership by cloning
         if ((_flags & ControlFlags.ValueMutable) == 0)
@@ -512,7 +555,7 @@ public class Control : IControl, IControlMutation
     private void PropagateInitialValueToChildren(object? newInitialValue)
     {
         // Update field controls
-        if (IsObject && newInitialValue is IDictionary<string, object> initialDict)
+        if (IsObject && newInitialValue is IDictionary<string, object> initialDict && _fieldControls != null)
         {
             foreach (var kvp in _fieldControls)
             {
