@@ -4,20 +4,20 @@ internal class SubscriptionList
 {
     private readonly List<ISubscription> _subscriptions = new();
     private ControlChange _changeState;
-
-    public ControlChange Mask { get; }
+    private ControlChange _mask;
     public IReadOnlyList<ISubscription> Subscriptions => _subscriptions.AsReadOnly();
 
     public SubscriptionList(ControlChange changeState, ControlChange mask)
     {
         _changeState = changeState;
-        Mask = mask;
+        _mask = mask;
     }
 
     public ISubscription Add(ChangeListenerFunc listener, ControlChange mask)
     {
         var subscription = new Subscription(listener, mask, this);
         _subscriptions.Add(subscription);
+        _mask |= mask;
         return subscription;
     }
 
@@ -28,7 +28,7 @@ internal class SubscriptionList
 
     public void RunListeners(IControl control, ControlChange current)
     {
-        var nextCurrent = current & Mask;
+        var nextCurrent = current & _mask;
         var actualChange = (nextCurrent ^ _changeState);
         _changeState = nextCurrent;
 
@@ -59,6 +59,6 @@ internal class SubscriptionList
 
     public void ApplyChange(ControlChange change)
     {
-        _changeState |= change & Mask;
+        _changeState |= change & _mask;
     }
 }

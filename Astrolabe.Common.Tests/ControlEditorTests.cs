@@ -146,4 +146,200 @@ public class ControlEditorTests
         Assert.Equal(1, notificationCount);
         Assert.Equal("value1", control.Value);
     }
+
+    [Fact]
+    public void SetInitialValue_Should_Update_Initial_Value_And_Notify()
+    {
+        var control = new Control("initial");
+        var editor = new ControlEditor();
+        var initialValueChangeNotified = false;
+        ControlChange notifiedChange = ControlChange.None;
+
+        control.Subscribe((ctrl, change) =>
+        {
+            initialValueChangeNotified = true;
+            notifiedChange = change;
+        }, ControlChange.InitialValue);
+
+        editor.SetInitialValue(control, "new initial");
+
+        Assert.True(initialValueChangeNotified);
+        Assert.Equal(ControlChange.InitialValue, notifiedChange);
+        Assert.Equal("new initial", control.InitialValue);
+        Assert.Equal("initial", control.Value); // Value unchanged
+    }
+
+    [Fact]
+    public void SetInitialValue_With_Same_Value_Should_Not_Notify()
+    {
+        var control = new Control("initial");
+        var editor = new ControlEditor();
+        var initialValueChangeNotified = false;
+
+        control.Subscribe((ctrl, change) =>
+        {
+            initialValueChangeNotified = true;
+        }, ControlChange.InitialValue);
+
+        editor.SetInitialValue(control, "initial"); // Same as current initial value
+
+        Assert.False(initialValueChangeNotified);
+    }
+
+    [Fact]
+    public void SetInitialValue_Should_Affect_Dirty_State()
+    {
+        var control = new Control("initial");
+        var editor = new ControlEditor();
+
+        // Change value to make it dirty
+        editor.SetValue(control, "changed");
+        Assert.True(control.IsDirty);
+
+        // Change initial value to match current value
+        editor.SetInitialValue(control, "changed");
+        Assert.False(control.IsDirty);
+
+        // Change initial value to be different from current value
+        editor.SetInitialValue(control, "different");
+        Assert.True(control.IsDirty);
+    }
+
+    [Fact]
+    public void SetDisabled_Should_Update_Disabled_State_And_Notify()
+    {
+        var control = new Control();
+        var editor = new ControlEditor();
+        var disabledChangeNotified = false;
+        ControlChange notifiedChange = ControlChange.None;
+
+        control.Subscribe((ctrl, change) =>
+        {
+            disabledChangeNotified = true;
+            notifiedChange = change;
+        }, ControlChange.Disabled);
+
+        Assert.False(control.IsDisabled);
+
+        editor.SetDisabled(control, true);
+
+        Assert.True(disabledChangeNotified);
+        Assert.Equal(ControlChange.Disabled, notifiedChange);
+        Assert.True(control.IsDisabled);
+    }
+
+    [Fact]
+    public void SetDisabled_With_Same_State_Should_Not_Notify()
+    {
+        var control = new Control();
+        var editor = new ControlEditor();
+        var disabledChangeNotified = false;
+
+        control.Subscribe((ctrl, change) =>
+        {
+            disabledChangeNotified = true;
+        }, ControlChange.Disabled);
+
+        editor.SetDisabled(control, false); // Same as initial state
+
+        Assert.False(disabledChangeNotified);
+        Assert.False(control.IsDisabled);
+    }
+
+    [Fact]
+    public void SetDisabled_Should_Work_Both_Ways()
+    {
+        var control = new Control();
+        var editor = new ControlEditor();
+        var notificationCount = 0;
+
+        control.Subscribe((ctrl, change) =>
+        {
+            notificationCount++;
+        }, ControlChange.Disabled);
+
+        // Enable -> Disable
+        editor.SetDisabled(control, true);
+        Assert.True(control.IsDisabled);
+        Assert.Equal(1, notificationCount);
+
+        // Disable -> Enable
+        editor.SetDisabled(control, false);
+        Assert.False(control.IsDisabled);
+        Assert.Equal(2, notificationCount);
+    }
+
+    [Fact]
+    public void MarkAsClean_Should_Set_Initial_Value_To_Current_Value()
+    {
+        var control = new Control("initial");
+        var editor = new ControlEditor();
+
+        editor.SetValue(control, "changed");
+        Assert.True(control.IsDirty);
+        Assert.Equal("initial", control.InitialValue);
+        Assert.Equal("changed", control.Value);
+
+        editor.MarkAsClean(control);
+
+        Assert.False(control.IsDirty);
+        Assert.Equal("changed", control.InitialValue);
+        Assert.Equal("changed", control.Value);
+    }
+
+    [Fact]
+    public void MarkAsClean_Should_Notify_Initial_Value_Change()
+    {
+        var control = new Control("initial");
+        var editor = new ControlEditor();
+        var initialValueChangeNotified = false;
+
+        editor.SetValue(control, "changed");
+
+        control.Subscribe((ctrl, change) =>
+        {
+            initialValueChangeNotified = true;
+        }, ControlChange.InitialValue);
+
+        editor.MarkAsClean(control);
+
+        Assert.True(initialValueChangeNotified);
+    }
+
+    [Fact]
+    public void Multiple_State_Changes_In_Transaction_Should_Batch_Properly()
+    {
+        var control = new Control("initial");
+        var editor = new ControlEditor();
+        var valueNotificationCount = 0;
+        var initialValueNotificationCount = 0;
+        var disabledNotificationCount = 0;
+
+        control.Subscribe((ctrl, change) => valueNotificationCount++, ControlChange.Value);
+        control.Subscribe((ctrl, change) => initialValueNotificationCount++, ControlChange.InitialValue);
+        control.Subscribe((ctrl, change) => disabledNotificationCount++, ControlChange.Disabled);
+
+        editor.RunInTransaction(() =>
+        {
+            editor.SetValue(control, "changed");
+            editor.SetInitialValue(control, "new initial");
+            editor.SetDisabled(control, true);
+
+            // No notifications yet
+            Assert.Equal(0, valueNotificationCount);
+            Assert.Equal(0, initialValueNotificationCount);
+            Assert.Equal(0, disabledNotificationCount);
+        });
+
+        // All notifications fire after transaction
+        Assert.Equal(1, valueNotificationCount);
+        Assert.Equal(1, initialValueNotificationCount);
+        Assert.Equal(1, disabledNotificationCount);
+
+        Assert.Equal("changed", control.Value);
+        Assert.Equal("new initial", control.InitialValue);
+        Assert.True(control.IsDisabled);
+        Assert.True(control.IsDirty); // Still dirty because value != initial
+    }
+
 }

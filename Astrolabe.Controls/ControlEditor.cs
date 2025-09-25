@@ -22,25 +22,36 @@ public class ControlEditor
         }
     }
 
+    private void RunWithMutator(IControl control, Func<IControlMutation, bool> action)
+    {
+        RunInTransaction(() =>
+        {
+            if (control is not IControlMutation mutator) return;
+            if (action(mutator))
+            {
+                _modifiedControls.Add(control);
+            }
+        });
+    }
+    
     public void SetValue(IControl control, object? value)
     {
-        if (_transactionDepth > 0)
-        {
-            // In transaction - defer notifications
-            if (control is IControlMutation mutator)
-            {
-                // Only track if value actually changed
-                if (mutator.SetValueInternal(value))
-                {
-                    _modifiedControls.Add(control);
-                }
-            }
-        }
-        else
-        {
-            // Auto-wrap in transaction for convenience
-            RunInTransaction(() => SetValue(control, value));
-        }
+        RunWithMutator(control, x => x.SetValueInternal(this, value));
+    }
+
+    public void SetInitialValue(IControl control, object? initialValue)
+    {
+        RunWithMutator(control, x => x.SetInitialValueInternal(this, initialValue));
+    }
+
+    public void SetDisabled(IControl control, bool disabled)
+    {
+        RunWithMutator(control, x => x.SetDisabledInternal(this, disabled));
+    }
+
+    public void MarkAsClean(IControl control)
+    {
+        SetInitialValue(control, control.Value);
     }
 
     private void CommitChanges()
