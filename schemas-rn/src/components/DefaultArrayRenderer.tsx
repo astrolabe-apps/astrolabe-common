@@ -19,6 +19,7 @@ import {
   mergeObjects,
   rendererClass,
 } from "@react-typed-forms/schemas";
+import { RenderControl } from "@react-typed-forms/core";
 
 export function createDefaultArrayDataRenderer(
   defaultActions?: ArrayActionOptions,
@@ -151,33 +152,37 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
   return (
     <View style={style as StyleProp<ViewStyle>}>
       <View className={clsx(className, removeAction && removableClass)}>
-        {Array.from({ length: getElementCount() }, (_, x) =>
-          renderElement(x, (key, children) =>
-            removeAction || editAction ? (
-              <Fragment key={key}>
-                <View
-                  className={clsx(
-                    rendererClass(childOverrideClass, childClass),
-                    removableChildClass,
-                  )}
-                >
-                  {children}
-                </View>
-                <View className={removeActionClass}>
-                  {editAction && renderAction(editAction(x))}
-                  {removeAction && renderAction(removeAction(x))}
-                </View>
-              </Fragment>
-            ) : (
-              <View
-                key={key}
-                className={rendererClass(childOverrideClass, childClass)}
-              >
-                {children}
-              </View>
-            ),
-          ),
-        )}
+        {Array.from({ length: getElementCount() }, (_, x) => (
+          <RenderControl
+            render={() =>
+              renderElement(x, (key, children) =>
+                removeAction || editAction ? (
+                  <Fragment key={key}>
+                    <View
+                      className={clsx(
+                        rendererClass(childOverrideClass, childClass),
+                        removableChildClass,
+                      )}
+                    >
+                      {children}
+                    </View>
+                    <View className={removeActionClass}>
+                      {editAction && renderAction(editAction(x))}
+                      {removeAction && renderAction(removeAction(x))}
+                    </View>
+                  </Fragment>
+                ) : (
+                  <View
+                    key={key}
+                    className={rendererClass(childOverrideClass, childClass)}
+                  >
+                    {children}
+                  </View>
+                ),
+              )
+            }
+          />
+        ))}
       </View>
       {addAction && (
         <View className={addActionClass}>{renderAction(addAction)}</View>

@@ -100,19 +100,23 @@ export function resolveArrayChildren(
   node: FormNode,
   adjustChild?: (elem: Control<any>, index: number) => Partial<ChildNodeInit>,
 ): ChildNodeSpec[] {
-  const hasChildren = node.getChildNodes().length > 0;
+  const childNodes = node.getChildNodes();
+  const childCount = childNodes.length;
+  const singleChild = childCount === 1 ? childNodes[0] : null;
   return data.control.as<any[]>().elements.map((x, i) => ({
     childKey: x.uniqueId,
     create: () => ({
-      definition: !hasChildren
+      definition: !childCount
         ? ({
             type: ControlDefinitionType.Data,
             field: ".",
             hideTitle: true,
             renderOptions: { type: DataRenderType.Standard },
           } as DataControlDefinition)
-        : groupedControl([]),
-      node,
+        : singleChild
+          ? singleChild.definition
+          : groupedControl([]),
+      node: singleChild ?? node,
       parent: data!.getChildElement(i),
       ...(adjustChild?.(x, i) ?? {}),
     }),
