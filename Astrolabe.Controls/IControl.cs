@@ -8,7 +8,4 @@ public interface IControl
     // Subscription methods
     ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask);
     void Unsubscribe(ISubscription subscription);
-
-    // Internal subscription access
-    internal Subscriptions? InternalSubscriptions { get; }
 }

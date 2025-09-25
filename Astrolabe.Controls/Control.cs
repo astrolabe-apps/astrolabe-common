@@ -10,8 +10,6 @@ public class Control : IControl, IControlMutation
     public virtual object? Value => _value;
 
     private Subscriptions? _subscriptions;
-    Subscriptions? IControl.InternalSubscriptions => _subscriptions;
-
     public Control(object? initialValue = null)
     {
         _value = initialValue;
@@ -51,12 +49,7 @@ public class Control : IControl, IControlMutation
         }
         return false;
     }
-
-    void IControlMutation.NotifyChange(ControlChange changeType)
-    {
-        _subscriptions?.RunListeners(this, changeType);
-    }
-
+    
     void IControlMutation.RunListeners()
     {
         var s = _subscriptions;
