@@ -144,7 +144,6 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     html: { Div },
   } = props;
   const { addAction, removeAction } = applyArrayLengthRestrictions(props);
-  console.log("Whole array");
   return (
     <Div style={style}>
       <Div className={clsx(className, removeAction && removableClass)}>
