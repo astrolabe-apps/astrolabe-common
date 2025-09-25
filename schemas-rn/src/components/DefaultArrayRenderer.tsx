@@ -154,6 +154,7 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
       <View className={clsx(className, removeAction && removableClass)}>
         {Array.from({ length: getElementCount() }, (_, x) => (
           <RenderControl
+            key={x}
             render={() =>
               renderElement(x, (key, children) =>
                 removeAction || editAction ? (
