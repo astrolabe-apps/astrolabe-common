@@ -8,7 +8,7 @@ public class ControlEditorTests
     [Fact]
     public void Single_SetValue_Should_Auto_Wrap_In_Transaction()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var changeNotified = false;
 
@@ -26,8 +26,8 @@ public class ControlEditorTests
     [Fact]
     public void RunInTransaction_Should_Batch_Notifications()
     {
-        var control1 = new Control();
-        var control2 = new Control();
+        var control1 = Control.Create();
+        var control2 = Control.Create();
         var editor = new ControlEditor();
         var notificationCount = 0;
 
@@ -52,9 +52,9 @@ public class ControlEditorTests
     [Fact]
     public void Nested_Transactions_Should_Defer_Until_Outermost_Completes()
     {
-        var control1 = new Control();
-        var control2 = new Control();
-        var control3 = new Control();
+        var control1 = Control.Create();
+        var control2 = Control.Create();
+        var control3 = Control.Create();
         var editor = new ControlEditor();
         var notificationCount = 0;
 
@@ -88,7 +88,7 @@ public class ControlEditorTests
     [Fact]
     public void Setting_Same_Value_In_Transaction_Should_Not_Track_Control()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
         var notificationCount = 0;
 
@@ -106,7 +106,7 @@ public class ControlEditorTests
     [Fact]
     public void Multiple_Changes_To_Same_Control_Should_Only_Notify_Once()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var notificationCount = 0;
 
@@ -127,7 +127,7 @@ public class ControlEditorTests
     [Fact]
     public void Exception_In_Transaction_Should_Still_Complete_Transaction()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var notificationCount = 0;
 
@@ -150,7 +150,7 @@ public class ControlEditorTests
     [Fact]
     public void SetInitialValue_Should_Update_Initial_Value_And_Notify()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
         var initialValueChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
@@ -172,7 +172,7 @@ public class ControlEditorTests
     [Fact]
     public void SetInitialValue_With_Same_Value_Should_Not_Notify()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
         var initialValueChangeNotified = false;
 
@@ -189,7 +189,7 @@ public class ControlEditorTests
     [Fact]
     public void SetInitialValue_Should_Affect_Dirty_State()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
 
         // Change value to make it dirty
@@ -208,7 +208,7 @@ public class ControlEditorTests
     [Fact]
     public void SetDisabled_Should_Update_Disabled_State_And_Notify()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var disabledChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
@@ -231,7 +231,7 @@ public class ControlEditorTests
     [Fact]
     public void SetDisabled_With_Same_State_Should_Not_Notify()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var disabledChangeNotified = false;
 
@@ -249,7 +249,7 @@ public class ControlEditorTests
     [Fact]
     public void SetDisabled_Should_Work_Both_Ways()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var notificationCount = 0;
 
@@ -272,7 +272,7 @@ public class ControlEditorTests
     [Fact]
     public void MarkAsClean_Should_Set_Initial_Value_To_Current_Value()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
 
         editor.SetValue(control, "changed");
@@ -290,7 +290,7 @@ public class ControlEditorTests
     [Fact]
     public void MarkAsClean_Should_Notify_Initial_Value_Change()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
         var initialValueChangeNotified = false;
 
@@ -309,7 +309,7 @@ public class ControlEditorTests
     [Fact]
     public void Multiple_State_Changes_In_Transaction_Should_Batch_Properly()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
         var valueNotificationCount = 0;
         var initialValueNotificationCount = 0;

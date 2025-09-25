@@ -8,8 +8,8 @@ public class ControlTests
     [Fact]
     public void Control_Should_Have_Unique_Id()
     {
-        var control1 = new Control();
-        var control2 = new Control();
+        var control1 = Control.Create();
+        var control2 = Control.Create();
 
         Assert.NotEqual(control1.UniqueId, control2.UniqueId);
         Assert.True(control1.UniqueId > 0);
@@ -17,9 +17,31 @@ public class ControlTests
     }
 
     [Fact]
+    public void Control_Constructor_Should_Set_Explicit_Values()
+    {
+        var control = new Control("current", "initial", ControlFlags.Disabled);
+
+        Assert.Equal("current", control.Value);
+        Assert.Equal("initial", control.InitialValue);
+        Assert.True(control.IsDisabled);
+        Assert.True(control.IsDirty); // current != initial
+    }
+
+    [Fact]
+    public void Control_Factory_Should_Create_Clean_Control()
+    {
+        var control = Control.Create("value");
+
+        Assert.Equal("value", control.Value);
+        Assert.Equal("value", control.InitialValue);
+        Assert.False(control.IsDisabled);
+        Assert.False(control.IsDirty); // value == initialValue
+    }
+
+    [Fact]
     public void Control_Should_Accept_Initial_Value()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
 
         Assert.Equal("initial", control.Value);
     }
@@ -27,7 +49,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Default_To_Null_Value()
     {
-        var control = new Control();
+        var control = Control.Create();
 
         Assert.Null(control.Value);
     }
@@ -35,7 +57,7 @@ public class ControlTests
     [Fact]
     public void Setting_Value_Should_Trigger_Notification()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var changeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
@@ -58,7 +80,7 @@ public class ControlTests
     [Fact]
     public void Setting_Same_Value_Should_Not_Trigger_Notification()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
         var changeNotified = false;
 
@@ -75,7 +97,7 @@ public class ControlTests
     [Fact]
     public void Unsubscribe_Should_Stop_Notifications()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var changeNotified = false;
 
@@ -93,7 +115,7 @@ public class ControlTests
     [Fact]
     public void Multiple_Subscribers_Should_All_Be_Notified()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var change1Notified = false;
         var change2Notified = false;
@@ -117,7 +139,7 @@ public class ControlTests
     [Fact]
     public void Subscription_Should_Only_Fire_For_Subscribed_Changes()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var valueChangeNotified = false;
         var allChangeNotified = false;
@@ -143,8 +165,8 @@ public class ControlTests
     [Fact]
     public void Control_Should_Initialize_With_Same_Initial_And_Current_Value()
     {
-        var control1 = new Control();
-        var control2 = new Control("test");
+        var control1 = Control.Create();
+        var control2 = Control.Create("test");
 
         Assert.Null(control1.InitialValue);
         Assert.Null(control1.Value);
@@ -158,8 +180,8 @@ public class ControlTests
     [Fact]
     public void Control_Should_Not_Be_Dirty_Initially()
     {
-        var control1 = new Control();
-        var control2 = new Control("initial");
+        var control1 = Control.Create();
+        var control2 = Control.Create("initial");
 
         Assert.False(control1.IsDirty);
         Assert.False(control2.IsDirty);
@@ -168,7 +190,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Be_Dirty_When_Value_Changes()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
 
         Assert.False(control.IsDirty);
@@ -183,7 +205,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Not_Be_Dirty_When_Value_Reverts_To_Initial()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
 
         editor.SetValue(control, "changed");
@@ -196,15 +218,57 @@ public class ControlTests
     [Fact]
     public void Control_Should_Not_Be_Disabled_Initially()
     {
-        var control = new Control();
+        var control = Control.Create();
 
         Assert.False(control.IsDisabled);
     }
 
     [Fact]
+    public void Control_Should_Not_Be_Touched_Initially()
+    {
+        var control = Control.Create();
+
+        Assert.False(control.IsTouched);
+    }
+
+    [Fact]
+    public void SetTouched_Should_Update_Touched_State()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        Assert.False(control.IsTouched);
+
+        editor.SetTouched(control, true);
+
+        Assert.True(control.IsTouched);
+    }
+
+    [Fact]
+    public void SetTouched_Should_Notify_Subscribers()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+        var touchedChangeNotified = false;
+        ControlChange notifiedChange = ControlChange.None;
+
+        control.Subscribe((ctrl, change) =>
+        {
+            touchedChangeNotified = true;
+            notifiedChange = change;
+        }, ControlChange.Touched);
+
+        editor.SetTouched(control, true);
+
+        Assert.True(touchedChangeNotified);
+        Assert.Equal(ControlChange.Touched, notifiedChange);
+        Assert.True(control.IsTouched);
+    }
+
+    [Fact]
     public void Dirty_State_Should_Be_Computed_Property()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
 
         // Test multiple changes to verify it's computed, not cached
@@ -224,7 +288,7 @@ public class ControlTests
     [Fact]
     public void Subscribers_Should_Only_Receive_Changes_They_Subscribed_To()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
         var dirtyChangeReceived = false;
         var disabledChangeReceived = false;
@@ -273,7 +337,7 @@ public class ControlTests
     [Fact]
     public void Dirty_Change_Should_Notify_Subscribers()
     {
-        var control = new Control("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
         var dirtyChangeNotified = false;
         var valueChangeNotified = false;
@@ -304,7 +368,7 @@ public class ControlTests
     [Fact]
     public void Disabled_Change_Should_Notify_Subscribers()
     {
-        var control = new Control();
+        var control = Control.Create();
         var editor = new ControlEditor();
         var disabledChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;

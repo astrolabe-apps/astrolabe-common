@@ -49,6 +49,11 @@ public class ControlEditor
         RunWithMutator(control, x => x.SetDisabledInternal(this, disabled));
     }
 
+    public void SetTouched(IControl control, bool touched)
+    {
+        RunWithMutator(control, x => x.SetTouchedInternal(this, touched));
+    }
+
     public void MarkAsClean(IControl control)
     {
         SetInitialValue(control, control.Value);
@@ -64,5 +69,56 @@ public class ControlEditor
             }
         }
         _modifiedControls.Clear();
+    }
+
+    // Array/Object operations
+    public void SetField(IControl control, string fieldName, object? value)
+    {
+        var fieldControl = control[fieldName];
+        if (fieldControl != null)
+            SetValue(fieldControl, value);
+    }
+
+    public void SetElement(IControl control, int index, object? value)
+    {
+        var elementControl = control[index];
+        if (elementControl != null)
+            SetValue(elementControl, value);
+    }
+
+    public void AddElement(IControl control, object? value)
+    {
+        if (!control.IsArray) return;
+
+        RunInTransaction(() =>
+        {
+            if (control is Control concreteControl)
+            {
+                concreteControl.AddElementInternal(value);
+
+                if (control is IControlMutation mutation)
+                {
+                    mutation.NotifyParentsOfChange();
+                }
+            }
+        });
+    }
+
+    public void RemoveElement(IControl control, int index)
+    {
+        if (!control.IsArray) return;
+
+        RunInTransaction(() =>
+        {
+            if (control is Control concreteControl)
+            {
+                concreteControl.RemoveElementInternal(index);
+
+                if (control is IControlMutation mutation)
+                {
+                    mutation.NotifyParentsOfChange();
+                }
+            }
+        });
     }
 }

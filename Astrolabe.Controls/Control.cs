@@ -1,3 +1,5 @@
+using System.Collections;
+
 namespace Astrolabe.Controls;
 
 public class Control : IControl, IControlMutation
@@ -7,19 +9,168 @@ public class Control : IControl, IControlMutation
     private object? _initialValue;
     private ControlFlags _flags;
 
+    // Parent-child tracking
+    private List<ParentLink>? _parents;
+
+    // Child control management
+    private readonly Dictionary<string, IControl> _fieldControls = new();
+    private List<IControl>? _elementControls;
+
+    // Static empty collections for non-object/array controls
+    private static readonly IEnumerable<string> EmptyFieldNames = Enumerable.Empty<string>();
+    private static readonly IReadOnlyList<IControl> EmptyElements = new List<IControl>();
+
     public int UniqueId { get; } = Interlocked.Increment(ref _nextId);
 
-    public object? Value => _value;
-    public object? InitialValue => _initialValue;
-    public bool IsDirty => !Equals(_value, _initialValue);
+    public object? Value
+    {
+        get
+        {
+            if ((_flags & ControlFlags.ValueMutable) != 0)
+            {
+                // Value was mutable (we own it), clone and freeze for external access
+                _value = DeepClone(_value);
+                _flags &= ~ControlFlags.ValueMutable;
+            }
+            return _value;
+        }
+    }
+
+    public object? InitialValue
+    {
+        get
+        {
+            if ((_flags & ControlFlags.InitialValueMutable) != 0)
+            {
+                // InitialValue was mutable (we own it), clone and freeze for external access
+                _initialValue = DeepClone(_initialValue);
+                _flags &= ~ControlFlags.InitialValueMutable;
+            }
+            return _initialValue;
+        }
+    }
+    public bool IsDirty => !IControl.IsEqual(_value, _initialValue);
     public bool IsDisabled => (_flags & ControlFlags.Disabled) != 0;
+    public bool IsTouched => (_flags & ControlFlags.Touched) != 0;
+
+    // Type detection
+    public bool IsObject => Value is IDictionary<string, object>;
+    public bool IsArray => Value is ICollection && Value is not IDictionary<string, object> && Value is not string;
+
+    // Internal access to mutable values (for parent-child updates)
+    internal object? InternalValue => _value;
+    internal object? InternalInitialValue => _initialValue;
+
+    // Internal methods for array operations
+    internal void AddElementInternal(object? value)
+    {
+        if (!IsArray) return;
+
+        // If value isn't mutable, we need to take ownership by cloning
+        if ((_flags & ControlFlags.ValueMutable) == 0)
+        {
+            _value = DeepClone(_value);
+            _flags |= ControlFlags.ValueMutable;
+        }
+
+        if (InternalValue is System.Collections.IList list)
+        {
+            list.Add(value);
+            _subscriptions?.ApplyChange(ControlChange.Structure);
+        }
+    }
+
+    internal void RemoveElementInternal(int index)
+    {
+        if (!IsArray) return;
+
+        // If value isn't mutable, we need to take ownership by cloning
+        if ((_flags & ControlFlags.ValueMutable) == 0)
+        {
+            _value = DeepClone(_value);
+            _flags |= ControlFlags.ValueMutable;
+        }
+
+        if (InternalValue is System.Collections.IList list && index >= 0 && index < list.Count)
+        {
+            list.RemoveAt(index);
+            _subscriptions?.ApplyChange(ControlChange.Structure);
+        }
+    }
+    public int Count => IsArray ? ((ICollection)Value!).Count : IsObject ? ((IDictionary<string, object>)Value!).Count : 0;
+
+    // Indexer access
+    public IControl? this[string propertyName]
+    {
+        get
+        {
+            if (!IsObject) return null;
+
+            // Return cached control if exists
+            if (_fieldControls.TryGetValue(propertyName, out var existing))
+                return existing;
+
+            // Check if property exists in underlying dictionary
+            var dict = (IDictionary<string, object>)Value!;
+            if (!dict.TryGetValue(propertyName, out var value))
+                return null;
+
+            // Create and cache child control
+            var childControl = CreateChildControl(value, propertyName);
+            _fieldControls[propertyName] = childControl;
+            return childControl;
+        }
+    }
+
+    public IControl? this[int index]
+    {
+        get
+        {
+            if (!IsArray) return null;
+
+            var collection = (ICollection)Value!;
+            if (index < 0 || index >= collection.Count) return null;
+
+            // Ensure element controls list is created
+            EnsureElementControlsCreated();
+
+            return index < _elementControls!.Count ? _elementControls[index] : null;
+        }
+    }
+
+    // Collection properties
+    public IEnumerable<string> FieldNames
+    {
+        get
+        {
+            if (!IsObject) return EmptyFieldNames;
+            return ((IDictionary<string, object>)Value!).Keys;
+        }
+    }
+
+    public IReadOnlyList<IControl> Elements
+    {
+        get
+        {
+            if (!IsArray) return EmptyElements;
+            EnsureElementControlsCreated();
+            return _elementControls!;
+        }
+    }
 
     private Subscriptions? _subscriptions;
-    public Control(object? initialValue = null)
+
+    public Control(object? value, object? initialValue, ControlFlags flags = ControlFlags.None)
     {
-        _value = initialValue;
+        _value = value;
         _initialValue = initialValue;
-        _flags = 0;
+        _flags = flags;
+    }
+
+    // Factory method for simple control creation (replaces old constructor behavior)
+    public static Control Create(object? initialValue = null)
+    {
+        return new Control(initialValue, initialValue, ControlFlags.None);
     }
 
     public ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask)
@@ -41,42 +192,412 @@ public class Control : IControl, IControlMutation
             changeFlags |= ControlChange.Dirty;
         if ((mask & ControlChange.Disabled) != 0 && IsDisabled)
             changeFlags |= ControlChange.Disabled;
-        // TODO: Add other state flags like Valid, Touched when implemented
+        if ((mask & ControlChange.Touched) != 0 && IsTouched)
+            changeFlags |= ControlChange.Touched;
+        // TODO: Add other state flags like Valid, Error when implemented
 
         return changeFlags;
     }
 
-    // Internal mutation interface implementation
-    bool IControlMutation.SetValueInternal(ControlEditor editor, object? value)
+    // Immutability support
+    private static object? DeepClone(object? value)
     {
-        if (!Equals(_value, value))
+        return value switch
         {
-            _value = value;
+            null => null,
+            IDictionary<string, object> dict => CloneDictionary(dict),
+            IList list => CloneList(list),
+            _ => value // Primitive types and other objects are treated as immutable
+        };
+    }
+
+    private static Dictionary<string, object> CloneDictionary(IDictionary<string, object> original)
+    {
+        var cloned = new Dictionary<string, object>(original.Count);
+        foreach (var kvp in original)
+        {
+            cloned[kvp.Key] = DeepClone(kvp.Value)!;
+        }
+        return cloned;
+    }
+
+    private static List<object?> CloneList(IList original)
+    {
+        var cloned = new List<object?>(original.Count);
+        foreach (var item in original)
+        {
+            cloned.Add(DeepClone(item));
+        }
+        return cloned;
+    }
+
+    // Child control management
+    private void WithChildren(Action<IControl> action)
+    {
+        // Apply to field controls
+        foreach (var child in _fieldControls.Values)
+        {
+            action(child);
+        }
+
+        // Apply to element controls
+        if (_elementControls != null)
+        {
+            foreach (var child in _elementControls)
+            {
+                action(child);
+            }
+        }
+    }
+
+    private IControl CreateChildControl(object? value, object key)
+    {
+        // Inherit parent flags (disabled, touched)
+        var inheritedFlags = _flags & (ControlFlags.Disabled | ControlFlags.Touched);
+
+        // Determine child's initial value from parent's initial value
+        object? childInitialValue = value; // fallback
+
+        if (InternalInitialValue is IDictionary<string, object> initialDict && key is string stringKey)
+        {
+            // Object case: use parent's initial value for this field
+            if (!initialDict.TryGetValue(stringKey, out childInitialValue))
+            {
+                childInitialValue = value; // fallback to current value
+            }
+        }
+        else if (InternalInitialValue is ICollection initialCollection && key is int index)
+        {
+            // Array case: use parent's initial value for this index
+            var initialArray = initialCollection.Cast<object?>().ToArray();
+            if (index >= 0 && index < initialArray.Length)
+            {
+                childInitialValue = initialArray[index];
+            }
+            else
+            {
+                childInitialValue = value; // fallback to current value
+            }
+        }
+
+        var child = new Control(value, childInitialValue, inheritedFlags);
+
+        // Set up parent-child relationship
+        if (child is IControlMutation childMutation)
+        {
+            childMutation.UpdateParentLink(this, key, initial: true);
+        }
+
+        return child;
+    }
+
+    private void EnsureElementControlsCreated()
+    {
+        if (_elementControls != null) return;
+
+        var collection = (ICollection)Value!;
+        _elementControls = new List<IControl>(collection.Count);
+
+        int index = 0;
+        foreach (var item in collection)
+        {
+            var childControl = CreateChildControl(item, index);
+            _elementControls.Add(childControl);
+            index++;
+        }
+    }
+
+    private void UpdateChildControlValues(object? newValue)
+    {
+        // For object controls
+        if (IsObject && newValue is IDictionary<string, object> newDict)
+        {
+            // Update existing field controls
+            var fieldsToRemove = new List<string>();
+            foreach (var kvp in _fieldControls)
+            {
+                var fieldName = kvp.Key;
+                var childControl = kvp.Value;
+
+                if (newDict.TryGetValue(fieldName, out var newChildValue))
+                {
+                    // Update existing child's value
+                    if (childControl is IControlMutation childMutation)
+                    {
+                        childMutation.SetValueInternal(null!, newChildValue);
+                    }
+                }
+                else
+                {
+                    // Field no longer exists - mark for removal
+                    fieldsToRemove.Add(fieldName);
+                    if (childControl is IControlMutation childMutation)
+                    {
+                        childMutation.UpdateParentLink(this, null); // Remove parent link
+                    }
+                }
+            }
+
+            // Remove controls for fields that no longer exist
+            foreach (var fieldName in fieldsToRemove)
+            {
+                _fieldControls.Remove(fieldName);
+            }
+        }
+
+        // For array controls
+        if (IsArray && newValue is ICollection newCollection)
+        {
+            if (_elementControls != null)
+            {
+                var newList = newCollection.Cast<object?>().ToList();
+                var currentCount = _elementControls.Count;
+                var newCount = newList.Count;
+
+                // Update existing elements
+                for (int i = 0; i < Math.Min(currentCount, newCount); i++)
+                {
+                    if (_elementControls[i] is IControlMutation childMutation)
+                    {
+                        childMutation.SetValueInternal(null!, newList[i]);
+                    }
+                }
+
+                // Add new elements if array grew
+                for (int i = currentCount; i < newCount; i++)
+                {
+                    var childControl = CreateChildControl(newList[i], i);
+                    _elementControls.Add(childControl);
+                }
+
+                // Remove excess elements if array shrunk
+                if (newCount < currentCount)
+                {
+                    for (int i = newCount; i < currentCount; i++)
+                    {
+                        if (_elementControls[i] is IControlMutation childMutation)
+                        {
+                            childMutation.UpdateParentLink(this, null); // Remove parent link
+                        }
+                    }
+                    _elementControls.RemoveRange(newCount, currentCount - newCount);
+                }
+            }
+        }
+    }
+
+    private bool ShouldClearChildren(object? oldValue, object? newValue)
+    {
+        // Clear children if switching between different collection types
+        var wasArray = oldValue is ICollection && oldValue is not IDictionary<string, object> && oldValue is not string;
+        var wasObject = oldValue is IDictionary<string, object>;
+        var isArray = newValue is ICollection && newValue is not IDictionary<string, object> && newValue is not string;
+        var isObject = newValue is IDictionary<string, object>;
+
+        return (wasArray != isArray) || (wasObject != isObject);
+    }
+
+    private void ClearAllChildControls()
+    {
+        // Clear field controls
+        foreach (var child in _fieldControls.Values)
+        {
+            if (child is IControlMutation childMutation)
+            {
+                childMutation.UpdateParentLink(this, null); // Remove parent link
+            }
+        }
+        _fieldControls.Clear();
+
+        // Clear element controls
+        if (_elementControls != null)
+        {
+            foreach (var child in _elementControls)
+            {
+                if (child is IControlMutation childMutation)
+                {
+                    childMutation.UpdateParentLink(this, null); // Remove parent link
+                }
+            }
+            _elementControls = null;
+        }
+    }
+
+    private void UpdateChildValue(object key, object? value)
+    {
+        bool structureChanged = false;
+
+        // If value isn't mutable, we need to take ownership by cloning
+        if ((_flags & ControlFlags.ValueMutable) == 0)
+        {
+            _value = DeepClone(_value);
+            _flags |= ControlFlags.ValueMutable;
+        }
+
+        if (IsObject && key is string stringKey)
+        {
+            var dict = (IDictionary<string, object>)InternalValue!;
+            if (!dict.ContainsKey(stringKey) || !IControl.IsEqual(dict[stringKey], value))
+            {
+                dict[stringKey] = value!;
+                structureChanged = true;
+            }
+        }
+        else if (IsArray && key is int index)
+        {
+            var list = (IList)InternalValue!;
+            if (index >= 0 && index < list.Count && !IControl.IsEqual(list[index], value))
+            {
+                list[index] = value;
+                structureChanged = true;
+            }
+        }
+
+        if (structureChanged)
+        {
+            _subscriptions?.ApplyChange(ControlChange.Structure);
+        }
+    }
+
+    // Internal mutation interface implementation
+    bool IControlMutation.SetValueInternal(ControlEditor? editor, object? value)
+    {
+        var oldValue = _value;
+        var changed = !IControl.IsEqual(_value, value);
+
+        if (changed)
+        {
+            _value = DeepClone(value); // Take ownership by cloning
+            _flags |= ControlFlags.ValueMutable; // Mark as mutable since we own it
+
+            // Handle child controls based on value type change
+            if (ShouldClearChildren(oldValue, value))
+            {
+                // Type changed (e.g., object to array) - clear all children
+                ClearAllChildControls();
+            }
+            else
+            {
+                // Same type or compatible - update existing children
+                UpdateChildControlValues(value);
+            }
+
             _subscriptions?.ApplyChange(ControlChange.Value);
+
+            // Notify parents of the change
+            ((IControlMutation)this).NotifyParentsOfChange();
+
             return true;
         }
+
         return false;
     }
 
-    bool IControlMutation.SetInitialValueInternal(ControlEditor editor, object? initialValue)
+    bool IControlMutation.SetInitialValueInternal(ControlEditor? editor, object? initialValue)
     {
-        if (!Equals(_initialValue, initialValue))
+        if (!IControl.IsEqual(_initialValue, initialValue))
         {
-            _initialValue = initialValue;
+            _initialValue = DeepClone(initialValue); // Take ownership by cloning
+            _flags |= ControlFlags.InitialValueMutable; // Mark as mutable since we own it
+
+            // Propagate initial value changes to children
+            PropagateInitialValueToChildren(initialValue);
+
             _subscriptions?.ApplyChange(ControlChange.InitialValue);
             return true;
         }
         return false;
     }
 
-    bool IControlMutation.SetDisabledInternal(ControlEditor editor, bool disabled)
+    private void PropagateInitialValueToChildren(object? newInitialValue)
     {
-        if (disabled == IsDisabled) return false;
-        if (disabled) _flags |= ControlFlags.Disabled;
-        else _flags &= ~ControlFlags.Disabled;
-        return true;
+        // Update field controls
+        if (IsObject && newInitialValue is IDictionary<string, object> initialDict)
+        {
+            foreach (var kvp in _fieldControls)
+            {
+                var fieldName = kvp.Key;
+                var childControl = kvp.Value;
+
+                var childInitialValue = initialDict.TryGetValue(fieldName, out var value) ? value : null;
+                if (childControl is IControlMutation childMutation)
+                {
+                    childMutation.SetInitialValueInternal(null, childInitialValue);
+                }
+            }
+        }
+
+        // Update element controls
+        if (IsArray && newInitialValue is ICollection initialCollection && _elementControls != null)
+        {
+            var initialArray = initialCollection.Cast<object?>().ToArray();
+            for (int i = 0; i < _elementControls.Count && i < initialArray.Length; i++)
+            {
+                if (_elementControls[i] is IControlMutation childMutation)
+                {
+                    childMutation.SetInitialValueInternal(null, initialArray[i]);
+                }
+            }
+
+            // For elements beyond the initial array length, set initial value to null
+            for (int i = initialArray.Length; i < _elementControls.Count; i++)
+            {
+                if (_elementControls[i] is IControlMutation childMutation)
+                {
+                    childMutation.SetInitialValueInternal(null, null);
+                }
+            }
+        }
     }
-    
+
+    bool IControlMutation.SetDisabledInternal(ControlEditor? editor, bool disabled, bool childrenOnly)
+    {
+        var changed = false;
+
+        if (!childrenOnly)
+        {
+            if (disabled == IsDisabled) return false;
+            if (disabled) _flags |= ControlFlags.Disabled;
+            else _flags &= ~ControlFlags.Disabled;
+            changed = true;
+        }
+
+        // Propagate to children
+        WithChildren(child =>
+        {
+            if (child is IControlMutation childMutation)
+            {
+                childMutation.SetDisabledInternal(editor, disabled, childrenOnly: false);
+            }
+        });
+
+        return changed;
+    }
+
+    bool IControlMutation.SetTouchedInternal(ControlEditor? editor, bool touched, bool childrenOnly)
+    {
+        var changed = false;
+
+        if (!childrenOnly)
+        {
+            if (touched == IsTouched) return false;
+            if (touched) _flags |= ControlFlags.Touched;
+            else _flags &= ~ControlFlags.Touched;
+            changed = true;
+        }
+
+        // Propagate to children
+        WithChildren(child =>
+        {
+            if (child is IControlMutation childMutation)
+            {
+                childMutation.SetTouchedInternal(editor, touched, childrenOnly: false);
+            }
+        });
+
+        return changed;
+    }
+
     void IControlMutation.RunListeners()
     {
         var s = _subscriptions;
@@ -86,10 +607,58 @@ public class Control : IControl, IControlMutation
             s.RunListeners(this, currentState);
         }
     }
+
+    // Parent-child relationship management
+    void IControlMutation.UpdateParentLink(IControl parent, object? key, bool initial)
+    {
+        if (key == null)
+        {
+            // Remove this parent
+            _parents = _parents?.Where(p => p.Control != parent).ToList();
+            if (_parents?.Count == 0) _parents = null;
+            return;
+        }
+
+        var existing = _parents?.Find(p => p.Control == parent);
+        if (existing != null)
+        {
+            existing.Key = key;
+            if (initial) existing.OriginalKey = key;
+        }
+        else
+        {
+            var newLink = new ParentLink
+            {
+                Control = parent,
+                Key = key,
+                OriginalKey = initial ? key : null
+            };
+            _parents ??= new List<ParentLink>();
+            _parents.Add(newLink);
+        }
+    }
+
+    void IControlMutation.NotifyParentsOfChange()
+    {
+        if (_parents == null) return;
+
+        foreach (var parentLink in _parents)
+        {
+            if (parentLink.Control is Control parentControl)
+            {
+                parentControl.UpdateChildValue(parentLink.Key, Value);
+            }
+        }
+    }
+
 }
 
 [Flags]
 public enum ControlFlags
 {
-    Disabled = 1
+    None = 0,
+    Disabled = 1,
+    Touched = 2,
+    ValueMutable = 4,
+    InitialValueMutable = 8
 }
