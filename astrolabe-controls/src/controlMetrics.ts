@@ -2,6 +2,10 @@ import { ControlChange, Control, Subscription } from "./types";
 import { InternalControl } from "./internal";
 import { Subscriptions, SubscriptionList } from "./subscriptions";
 
+// Development mode detection - allows tree-shaking in production
+// @ts-ignore - process.env is replaced by bundlers
+const isDevelopment = typeof process !== 'undefined' && process.env.NODE_ENV !== 'production';
+
 // Simple path calculation to avoid circular dependency
 function getSimpleControlPath(control: Control<any>): string {
   try {
@@ -80,33 +84,39 @@ export interface ControlInfo {
   creationStack?: string;
 }
 
-// Global registry - simple approach
+// Global registry - simple approach (dev-only)
 class ControlRegistry {
   private static controls = new Set<Control<any>>();
   private static stackTraces = new WeakMap<Control<any>, string>();
   private static captureStackTraces = false;
 
   static enableStackTraceCapture() {
+    if (!isDevelopment) return;
     ControlRegistry.captureStackTraces = true;
   }
 
   static disableStackTraceCapture() {
+    if (!isDevelopment) return;
     ControlRegistry.captureStackTraces = false;
   }
 
   static isStackTraceCaptureEnabled(): boolean {
+    if (!isDevelopment) return false;
     return ControlRegistry.captureStackTraces;
   }
 
   static register(control: Control<any>) {
+    if (!isDevelopment) return;
     ControlRegistry.controls.add(control);
   }
 
   static registerWithStack(control: Control<any>) {
+    if (!isDevelopment) return;
     ControlRegistry.controls.add(control);
   }
 
   static captureCreationStack(control: Control<any>) {
+    if (!isDevelopment) return;
     if (ControlRegistry.captureStackTraces) {
       try {
         // Capture stack trace, excluding this function and the calling function
@@ -124,19 +134,23 @@ class ControlRegistry {
   }
 
   static unregister(control: Control<any>) {
+    if (!isDevelopment) return;
     ControlRegistry.controls.delete(control);
     ControlRegistry.stackTraces.delete(control);
   }
 
   static getAll(): Control<any>[] {
+    if (!isDevelopment) return [];
     return Array.from(ControlRegistry.controls);
   }
 
   static getStackTrace(control: Control<any>): string | undefined {
+    if (!isDevelopment) return undefined;
     return ControlRegistry.stackTraces.get(control);
   }
 
   static clear() {
+    if (!isDevelopment) return;
     ControlRegistry.controls.clear();
     ControlRegistry.stackTraces = new WeakMap();
   }
@@ -410,8 +424,8 @@ declare global {
   }
 }
 
-// Auto-register debugging functions in browser environment
-if (typeof window !== 'undefined') {
+// Auto-register debugging functions in browser environment (dev-only)
+if (isDevelopment && typeof window !== 'undefined') {
   window.ControlMetrics = {
     printControlMetrics,
     printHeavyControls,
