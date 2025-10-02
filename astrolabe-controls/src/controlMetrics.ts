@@ -408,25 +408,23 @@ export const ControlMetricsRegistry = {
   isStackTraceCaptureEnabled: ControlRegistry.isStackTraceCaptureEnabled
 };
 
-// Make functions available on window for browser debugging
+// Make functions available globally for debugging (works in browser, React Native, Node.js, etc.)
 declare global {
-  interface Window {
-    ControlMetrics?: {
-      printControlMetrics: () => void;
-      printHeavyControls: (threshold?: number) => void;
-      getControlMetrics: () => ControlMetrics;
-      getHeavyControls: (threshold?: number) => ControlInfo[];
-      getControlById: (uniqueId: number) => ControlInfo | undefined;
-      enableControlStackTraces: () => void;
-      disableControlStackTraces: () => void;
-      isControlStackTracesEnabled: () => boolean;
-    };
-  }
+  var ControlMetrics: {
+    printControlMetrics: () => void;
+    printHeavyControls: (threshold?: number) => void;
+    getControlMetrics: () => ControlMetrics;
+    getHeavyControls: (threshold?: number) => ControlInfo[];
+    getControlById: (uniqueId: number) => ControlInfo | undefined;
+    enableControlStackTraces: () => void;
+    disableControlStackTraces: () => void;
+    isControlStackTracesEnabled: () => boolean;
+  } | undefined;
 }
 
-// Auto-register debugging functions in browser environment (dev-only)
-if (isDevelopment && typeof window !== 'undefined') {
-  window.ControlMetrics = {
+// Auto-register debugging functions globally (dev-only)
+if (isDevelopment) {
+  (globalThis as any).ControlMetrics = {
     printControlMetrics,
     printHeavyControls,
     getControlMetrics,
