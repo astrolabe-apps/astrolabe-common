@@ -59,12 +59,6 @@ export function RenderForm({
 }: RenderFormProps) {
   const { readonly, disabled, displayOnly, hidden, variables, clearHidden } =
     options;
-  const nodeOptions: FormNodeOptions = {
-    forceReadonly: !!readonly,
-    forceDisabled: !!disabled,
-    variables,
-    forceHidden: !!hidden,
-  };
   const schemaInterface = options.schemaInterface ?? defaultSchemaInterface;
   const { runAsync } = useAsyncRunner();
   const globals: FormGlobalOptions = {
@@ -75,11 +69,22 @@ export function RenderForm({
     clearHidden: !!clearHidden,
   };
   const state = useMemo(
-    () => createFormStateNode(form, data, globals, nodeOptions),
+    () =>
+      createFormStateNode(form, data, globals, {
+        forceReadonly: !!readonly,
+        forceDisabled: !!disabled,
+        variables,
+        forceHidden: !!hidden,
+      }),
     [form.id],
   );
   state.globals.value = globals;
-  state.options.value = nodeOptions;
+  state.options.setValue((x) => ({
+    variables,
+    forceHidden: hidden ?? x.forceHidden,
+    forceDisabled: disabled ?? x.forceDisabled,
+    forceReadonly: readonly ?? x.forceReadonly,
+  }));
   if (stateRef) stateRef.current = state;
   useEffect(() => {
     return () => {

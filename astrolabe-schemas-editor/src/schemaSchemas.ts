@@ -722,6 +722,7 @@ export interface GroupRenderOptionsForm {
   value: any;
   childIndexExpression: EntityExpressionForm;
   defaultExpanded: boolean | null;
+  expandStateField: string | null;
 }
 
 export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
@@ -859,6 +860,11 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     type: FieldType.Bool,
     onlyForTypes: ["Accordion"],
     displayName: "Default Expanded",
+  }),
+  expandStateField: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Accordion"],
+    displayName: "Expand State Field",
   }),
 });
 

@@ -304,7 +304,7 @@ public record ElementSelectedRenderOptions(
     [property: SchemaTag(SchemaTags.ControlRef + "Expression")] EntityExpression ElementExpression
 ) : RenderOptions(nameof(DataRenderType.ElementSelected));
 
-public record ScrollListRenderOptions(string? BottomActionId)
+public record ScrollListRenderOptions(string? BottomActionId, string? RefreshActionId)
     : RenderOptions(nameof(DataRenderType.ScrollList));
 
 [JsonString]
@@ -430,7 +430,7 @@ public record SelectChildRenderer(
         EntityExpression ChildIndexExpression
 ) : GroupRenderOptions(nameof(GroupRenderType.SelectChild));
 
-public record AccordionRenderer(bool? DefaultExpanded)
+public record AccordionRenderer(bool? DefaultExpanded, string? ExpandStateField)
     : GroupRenderOptions(nameof(GroupRenderType.Accordion));
 
 [JsonString]

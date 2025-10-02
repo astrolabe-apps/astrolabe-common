@@ -360,6 +360,7 @@ export enum GroupRenderType {
 export interface AccordionRenderer extends GroupRenderOptions {
   type: GroupRenderType.Accordion;
   defaultExpanded?: boolean | null;
+  expandStateField?: string | null;
 }
 
 export interface DialogRenderOptions extends GroupRenderOptions {

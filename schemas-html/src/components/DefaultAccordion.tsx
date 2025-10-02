@@ -14,10 +14,12 @@ import {
   GroupRendererProps,
   GroupRenderType,
   rendererClass,
+  schemaDataForFieldRef,
 } from "@react-typed-forms/schemas";
 import { DefaultAccordionRendererOptions } from "../rendererOptions";
 
 export function DefaultAccordion({
+  openCtrl,
   children,
   contentStyle,
   className,
@@ -31,6 +33,7 @@ export function DefaultAccordion({
   isGroup,
   titleTextClass,
 }: {
+  openCtrl?: Control<boolean> | undefined;
   children: ReactElement;
   title: ReactNode;
   isGroup: boolean;
@@ -55,7 +58,7 @@ export function DefaultAccordion({
   const panelId = useId();
   const { Button, I, Div, Label } = renderers.html;
   const dataControl = (dataContext.dataNode ?? dataContext.parentNode).control;
-  const open = useControl(!!defaultExpanded);
+  const open = useControl(!!defaultExpanded, { use: openCtrl });
   if (dataControl && !dataControl.meta.accordionState) {
     dataControl.meta.accordionState = open;
   }
@@ -152,9 +155,19 @@ function AccordionGroupRenderer({
   const contentChildren = allChildren.filter(
     (x) => x.definition.placement !== "title",
   );
-  const renderOptions = groupProps.renderOptions as AccordionRenderer;
+
+  const { expandStateField, defaultExpanded } =
+    groupProps.renderOptions as AccordionRenderer;
+
+  const expandStateFieldNode = expandStateField
+    ? schemaDataForFieldRef(expandStateField, groupProps.dataContext.parentNode)
+    : null;
+
+  const open = expandStateFieldNode?.control.as<boolean>();
+
   return (
     <DefaultAccordion
+      openCtrl={open}
       isGroup={true}
       options={options}
       children={<>{contentChildren.map((x) => groupProps.renderChild(x))}</>}
@@ -163,7 +176,7 @@ function AccordionGroupRenderer({
       className={groupProps.className}
       dataContext={groupProps.dataContext}
       designMode={groupProps.designMode}
-      defaultExpanded={renderOptions.defaultExpanded}
+      defaultExpanded={defaultExpanded}
       contentStyle={groupProps.style}
     />
   );

@@ -20,6 +20,7 @@ import {
   rendererClass,
 } from "@react-typed-forms/schemas";
 import { DefaultArrayRendererOptions } from "../rendererOptions";
+import { RenderControl } from "@react-typed-forms/core";
 
 export function createDefaultArrayDataRenderer(
   defaultActions?: ArrayActionOptions,
@@ -143,37 +144,41 @@ export function DefaultArrayRenderer(props: DefaultArrayRendererProps) {
     html: { Div },
   } = props;
   const { addAction, removeAction } = applyArrayLengthRestrictions(props);
-
   return (
     <Div style={style}>
       <Div className={clsx(className, removeAction && removableClass)}>
-        {Array.from({ length: getElementCount() }, (_, x) =>
-          renderElement(x, (key, children) =>
-            removeAction || editAction ? (
-              <Fragment key={key}>
-                <Div
-                  className={clsx(
-                    rendererClass(childOverrideClass, childClass),
-                    removableChildClass,
-                  )}
-                >
-                  {children}
-                </Div>
-                <Div className={removeActionClass}>
-                  {editAction && renderAction(editAction(x))}
-                  {removeAction && renderAction(removeAction(x))}
-                </Div>
-              </Fragment>
-            ) : (
-              <Div
-                key={key}
-                className={rendererClass(childOverrideClass, childClass)}
-              >
-                {children}
-              </Div>
-            ),
-          ),
-        )}
+        {Array.from({ length: getElementCount() }, (_, x) => (
+          <RenderControl
+            key={x}
+            render={() =>
+              renderElement(x, (key, children) =>
+                removeAction || editAction ? (
+                  <Fragment key={key}>
+                    <Div
+                      className={clsx(
+                        rendererClass(childOverrideClass, childClass),
+                        removableChildClass,
+                      )}
+                    >
+                      {children}
+                    </Div>
+                    <Div className={removeActionClass}>
+                      {editAction && renderAction(editAction(x))}
+                      {removeAction && renderAction(removeAction(x))}
+                    </Div>
+                  </Fragment>
+                ) : (
+                  <Div
+                    key={key}
+                    className={rendererClass(childOverrideClass, childClass)}
+                  >
+                    {children}
+                  </Div>
+                ),
+              )
+            }
+          />
+        ))}
       </Div>
       {addAction && (
         <Div className={addActionClass}>{renderAction(addAction)}</Div>

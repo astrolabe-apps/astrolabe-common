@@ -19,7 +19,7 @@ import { useMemo } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScrollView } from "react-native-gesture-handler";
 import { Icon } from "./Icon";
-import { useComputed } from "@react-typed-forms/core";
+import { useComputed, useControl } from "@react-typed-forms/core";
 
 export interface ExtendedDropdown {
   portalHost?: string;
@@ -62,6 +62,7 @@ export function RNSelectRenderer({
   emptyText = "N/A",
   requiredText = "Please select",
   portalHost,
+  readonly,
   ...props
 }: SelectDataRendererProps & ExtendedDropdown) {
   const insets = useSafeAreaInsets();
@@ -99,11 +100,13 @@ export function RNSelectRenderer({
       .at(0);
   });
 
+  const selectContentWidth = useControl(100); // Min width 100 px
+
   return (
     <Select
       {...props}
-      disabled={disabled}
-      aria-disabled={disabled}
+      disabled={disabled || readonly}
+      aria-disabled={disabled || readonly}
       defaultValue={{
         value: value,
         label: required ? requiredText : emptyText,
@@ -115,12 +118,20 @@ export function RNSelectRenderer({
       value={selectedOption.value}
       className={"flex-1"}
     >
-      <SelectTrigger className={"bg-white"}>
+      <SelectTrigger
+        className={"bg-white"}
+        onLayout={(e) => {
+          selectContentWidth.value = e.nativeEvent.layout.width;
+        }}
+        disabled={disabled || readonly}
+        aria-disabled={disabled || readonly}
+      >
         <SelectValue placeholder={required ? requiredText : emptyText} />
       </SelectTrigger>
       <SelectContent
         insets={contentInsets}
-        className={"bg-white w-[250px]"}
+        className={"bg-white"}
+        style={{ width: selectContentWidth.value }}
         portalHost={Platform.select({ ios: portalHost })}
       >
         <ScrollView className={"max-h-64"}>
@@ -163,27 +174,30 @@ const SelectGroup = SelectPrimitive.Group;
 
 const SelectValue = SelectPrimitive.Value;
 
-const SelectTrigger = React.forwardRef<
-  SelectPrimitive.TriggerRef,
-  SelectPrimitive.TriggerProps
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "flex flex-row h-10 native:h-12 items-center text-sm justify-between border border-[#E7E7E8] bg-background px-3 py-2 web:ring-offset-background text-muted-foreground web:focus:outline-none web:focus:ring-2 web:focus:ring-ring web:focus:ring-offset-2 [&>span]:line-clamp-1 min-w-[128px]",
-      props.disabled && "web:cursor-not-allowed opacity-50",
-      className,
-    )}
-    {...props}
-  >
-    <Pressable pointerEvents={"none"}>{children}</Pressable>
-    <Icon
-      name={"chevron-down"}
-      className={"!text-[12px] text-foreground text-accent"}
-    />
-  </SelectPrimitive.Trigger>
-));
-SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
+function SelectTrigger({
+  ref,
+  className,
+  children,
+  ...props
+}: SelectPrimitive.TriggerProps &
+  React.RefAttributes<SelectPrimitive.TriggerRef> & {
+    children?: React.ReactNode;
+  }) {
+  return (
+    <SelectPrimitive.Trigger
+      ref={ref}
+      className={cn(
+        "flex flex-row h-10 native:h-12 items-center text-sm justify-between border border-[#E7E7E8] bg-background px-3 py-2 [&>span]:line-clamp-1 min-w-[128px]",
+        props.disabled && "opacity-50",
+        className,
+      )}
+      {...props}
+    >
+      <Pressable pointerEvents={"none"}>{children}</Pressable>
+      <Icon name={"chevron-down"} className={"!text-[12px] text-accent"} />
+    </SelectPrimitive.Trigger>
+  );
+}
 
 const SelectContent = React.forwardRef<
   SelectPrimitive.ContentRef,
@@ -269,14 +283,15 @@ const SelectItem = React.forwardRef<
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
 
-const SelectSeparator = React.forwardRef<
-  SelectPrimitive.SeparatorRef,
-  SelectPrimitive.SeparatorProps
->(({ className, ...props }, ref) => (
-  <SelectPrimitive.Separator
-    ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-muted", className)}
-    {...props}
-  />
-));
-SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
+function SelectSeparator({
+  className,
+  ...props
+}: SelectPrimitive.SeparatorProps &
+  React.RefAttributes<SelectPrimitive.SeparatorRef>) {
+  return (
+    <SelectPrimitive.Separator
+      className={cn("bg-border -mx-1 my-1 h-px", className)}
+      {...props}
+    />
+  );
+}

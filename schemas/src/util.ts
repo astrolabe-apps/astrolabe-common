@@ -1038,3 +1038,14 @@ export function useExpression<T>(
   }, value);
   return value;
 }
+
+export function setIncluded<A>(array: A[], elem: A, included: boolean): A[] {
+  const already = array.includes(elem);
+  if (included === already) {
+    return array;
+  }
+  if (included) {
+    return [...array, elem];
+  }
+  return array.filter((e) => e !== elem);
+}
