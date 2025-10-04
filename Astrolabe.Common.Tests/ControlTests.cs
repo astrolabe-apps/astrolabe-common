@@ -63,12 +63,15 @@ public class ControlTests
         ControlChange notifiedChange = ControlChange.None;
         IControl? notifiedControl = null;
 
-        var subscription = control.Subscribe((ctrl, change) =>
-        {
-            changeNotified = true;
-            notifiedChange = change;
-            notifiedControl = ctrl;
-        }, ControlChange.Value);
+        var subscription = control.Subscribe(
+            (ctrl, change) =>
+            {
+                changeNotified = true;
+                notifiedChange = change;
+                notifiedControl = ctrl;
+            },
+            ControlChange.Value
+        );
 
         editor.SetValue(control, "new value");
 
@@ -84,10 +87,13 @@ public class ControlTests
         var editor = new ControlEditor();
         var changeNotified = false;
 
-        var subscription = control.Subscribe((ctrl, change) =>
-        {
-            changeNotified = true;
-        }, ControlChange.Value);
+        var subscription = control.Subscribe(
+            (ctrl, change) =>
+            {
+                changeNotified = true;
+            },
+            ControlChange.Value
+        );
 
         editor.SetValue(control, "initial"); // Same value
 
@@ -101,10 +107,13 @@ public class ControlTests
         var editor = new ControlEditor();
         var changeNotified = false;
 
-        var subscription = control.Subscribe((ctrl, change) =>
-        {
-            changeNotified = true;
-        }, ControlChange.Value);
+        var subscription = control.Subscribe(
+            (ctrl, change) =>
+            {
+                changeNotified = true;
+            },
+            ControlChange.Value
+        );
 
         subscription.Unsubscribe();
         editor.SetValue(control, "new value");
@@ -120,15 +129,21 @@ public class ControlTests
         var change1Notified = false;
         var change2Notified = false;
 
-        var subscription1 = control.Subscribe((ctrl, change) =>
-        {
-            change1Notified = true;
-        }, ControlChange.Value);
+        var subscription1 = control.Subscribe(
+            (ctrl, change) =>
+            {
+                change1Notified = true;
+            },
+            ControlChange.Value
+        );
 
-        var subscription2 = control.Subscribe((ctrl, change) =>
-        {
-            change2Notified = true;
-        }, ControlChange.Value);
+        var subscription2 = control.Subscribe(
+            (ctrl, change) =>
+            {
+                change2Notified = true;
+            },
+            ControlChange.Value
+        );
 
         editor.SetValue(control, "new value");
 
@@ -145,16 +160,22 @@ public class ControlTests
         var allChangeNotified = false;
 
         // Subscribe only to Value changes
-        var valueSubscription = control.Subscribe((ctrl, change) =>
-        {
-            valueChangeNotified = true;
-        }, ControlChange.Value);
+        var valueSubscription = control.Subscribe(
+            (ctrl, change) =>
+            {
+                valueChangeNotified = true;
+            },
+            ControlChange.Value
+        );
 
         // Subscribe to all changes
-        var allSubscription = control.Subscribe((ctrl, change) =>
-        {
-            allChangeNotified = true;
-        }, ControlChange.All);
+        var allSubscription = control.Subscribe(
+            (ctrl, change) =>
+            {
+                allChangeNotified = true;
+            },
+            ControlChange.All
+        );
 
         editor.SetValue(control, "new value");
 
@@ -252,11 +273,14 @@ public class ControlTests
         var touchedChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
 
-        control.Subscribe((ctrl, change) =>
-        {
-            touchedChangeNotified = true;
-            notifiedChange = change;
-        }, ControlChange.Touched);
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                touchedChangeNotified = true;
+                notifiedChange = change;
+            },
+            ControlChange.Touched
+        );
 
         editor.SetTouched(control, true);
 
@@ -295,22 +319,31 @@ public class ControlTests
         var valueChangeReceived = false;
 
         // Subscribe only to dirty changes
-        control.Subscribe((ctrl, change) =>
-        {
-            dirtyChangeReceived = (change & ControlChange.Dirty) != 0;
-        }, ControlChange.Dirty);
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                dirtyChangeReceived = (change & ControlChange.Dirty) != 0;
+            },
+            ControlChange.Dirty
+        );
 
         // Subscribe only to disabled changes
-        control.Subscribe((ctrl, change) =>
-        {
-            disabledChangeReceived = (change & ControlChange.Disabled) != 0;
-        }, ControlChange.Disabled);
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                disabledChangeReceived = (change & ControlChange.Disabled) != 0;
+            },
+            ControlChange.Disabled
+        );
 
         // Subscribe only to value changes
-        control.Subscribe((ctrl, change) =>
-        {
-            valueChangeReceived = (change & ControlChange.Value) != 0;
-        }, ControlChange.Value);
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                valueChangeReceived = (change & ControlChange.Value) != 0;
+            },
+            ControlChange.Value
+        );
 
         // Make control dirty and disabled
         editor.SetValue(control, "changed");
@@ -344,19 +377,25 @@ public class ControlTests
         ControlChange notifiedChange = ControlChange.None;
 
         // Subscribe to dirty changes
-        control.Subscribe((ctrl, change) =>
-        {
-            if ((change & ControlChange.Dirty) != 0)
-                dirtyChangeNotified = true;
-        }, ControlChange.Dirty);
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                if ((change & ControlChange.Dirty) != 0)
+                    dirtyChangeNotified = true;
+            },
+            ControlChange.Dirty
+        );
 
         // Subscribe to value changes
-        control.Subscribe((ctrl, change) =>
-        {
-            if ((change & ControlChange.Value) != 0)
-                valueChangeNotified = true;
-            notifiedChange = change;
-        }, ControlChange.Value);
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                if ((change & ControlChange.Value) != 0)
+                    valueChangeNotified = true;
+                notifiedChange = change;
+            },
+            ControlChange.Value
+        );
 
         // Change value - should trigger both value and dirty notifications
         editor.SetValue(control, "changed");
@@ -373,16 +412,262 @@ public class ControlTests
         var disabledChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
 
-        control.Subscribe((ctrl, change) =>
-        {
-            disabledChangeNotified = true;
-            notifiedChange = change;
-        }, ControlChange.Disabled);
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                disabledChangeNotified = true;
+                notifiedChange = change;
+            },
+            ControlChange.Disabled
+        );
 
         editor.SetDisabled(control, true);
 
         Assert.True(disabledChangeNotified);
         Assert.Equal(ControlChange.Disabled, notifiedChange);
         Assert.True(control.IsDisabled);
+    }
+
+    [Fact]
+    public void Control_Should_Have_No_Errors_Initially()
+    {
+        var control = Control.Create();
+
+        Assert.Empty(control.Errors);
+        Assert.False(control.HasErrors);
+        Assert.True(control.IsValid);
+    }
+
+    [Fact]
+    public void SetError_Should_Add_Error_To_Control()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        editor.SetError(control, "required", "Value is required");
+
+        Assert.Single(control.Errors);
+        Assert.True(control.HasErrors);
+        Assert.False(control.IsValid);
+        Assert.Equal("Value is required", control.Errors["required"]);
+    }
+
+    [Fact]
+    public void SetError_Should_Notify_Subscribers()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+        var errorChangeNotified = false;
+        ControlChange notifiedChange = ControlChange.None;
+
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                errorChangeNotified = true;
+                notifiedChange = change;
+            },
+            ControlChange.Error
+        );
+
+        editor.SetError(control, "required", "Value is required");
+
+        Assert.True(errorChangeNotified);
+        Assert.Equal(ControlChange.Error, notifiedChange);
+    }
+
+    [Fact]
+    public void SetError_With_Null_Should_Remove_Error()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        // Add error
+        editor.SetError(control, "required", "Value is required");
+        Assert.True(control.HasErrors);
+
+        // Remove error with null
+        editor.SetError(control, "required", null);
+        Assert.False(control.HasErrors);
+        Assert.Empty(control.Errors);
+    }
+
+    [Fact]
+    public void SetError_With_Empty_String_Should_Remove_Error()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        // Add error
+        editor.SetError(control, "required", "Value is required");
+        Assert.True(control.HasErrors);
+
+        // Remove error with empty string
+        editor.SetError(control, "required", "");
+        Assert.False(control.HasErrors);
+        Assert.Empty(control.Errors);
+    }
+
+    [Fact]
+    public void SetError_Should_Not_Notify_When_Same_Error_Set()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+        var errorChangeCount = 0;
+
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                if ((change & ControlChange.Error) != 0)
+                    errorChangeCount++;
+            },
+            ControlChange.Error
+        );
+
+        // Set error first time
+        editor.SetError(control, "required", "Value is required");
+        Assert.Equal(1, errorChangeCount);
+
+        // Set same error again
+        editor.SetError(control, "required", "Value is required");
+        Assert.Equal(1, errorChangeCount); // Should not increment
+    }
+
+    [Fact]
+    public void SetErrors_Should_Set_Multiple_Errors()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        var errors = new Dictionary<string, string>
+        {
+            ["required"] = "Value is required",
+            ["minLength"] = "Value must be at least 5 characters"
+        };
+
+        editor.SetErrors(control, errors);
+
+        Assert.Equal(2, control.Errors.Count);
+        Assert.True(control.HasErrors);
+        Assert.False(control.IsValid);
+        Assert.Equal("Value is required", control.Errors["required"]);
+        Assert.Equal("Value must be at least 5 characters", control.Errors["minLength"]);
+    }
+
+    [Fact]
+    public void SetErrors_Should_Filter_Out_Empty_Values()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        var errors = new Dictionary<string, string>
+        {
+            ["required"] = "Value is required",
+            ["empty"] = "",
+            ["null"] = null!,
+            ["minLength"] = "Value must be at least 5 characters"
+        };
+
+        editor.SetErrors(control, errors);
+
+        Assert.Equal(2, control.Errors.Count);
+        Assert.Contains("required", control.Errors.Keys);
+        Assert.Contains("minLength", control.Errors.Keys);
+        Assert.DoesNotContain("empty", control.Errors.Keys);
+        Assert.DoesNotContain("null", control.Errors.Keys);
+    }
+
+    [Fact]
+    public void ClearErrors_Should_Remove_All_Errors()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        // Add multiple errors
+        editor.SetError(control, "required", "Value is required");
+        editor.SetError(control, "minLength", "Value must be at least 5 characters");
+        Assert.Equal(2, control.Errors.Count);
+
+        // Clear all errors
+        editor.ClearErrors(control);
+        Assert.Empty(control.Errors);
+        Assert.False(control.HasErrors);
+        Assert.True(control.IsValid);
+    }
+
+    [Fact]
+    public void ClearErrors_Should_Notify_Subscribers()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+        var errorChangeNotified = false;
+
+        // Add error first
+        editor.SetError(control, "required", "Value is required");
+
+        control.Subscribe(
+            (ctrl, change) =>
+            {
+                errorChangeNotified = true;
+            },
+            ControlChange.Error
+        );
+
+        editor.ClearErrors(control);
+
+        Assert.True(errorChangeNotified);
+    }
+
+    [Fact]
+    public void SetError_Should_Update_Existing_Error_Message()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        // Set initial error
+        editor.SetError(control, "required", "Value is required");
+        Assert.Equal("Value is required", control.Errors["required"]);
+
+        // Update error message
+        editor.SetError(control, "required", "This field is mandatory");
+        Assert.Single(control.Errors);
+        Assert.Equal("This field is mandatory", control.Errors["required"]);
+    }
+
+    [Fact]
+    public void Multiple_Errors_Can_Exist_Simultaneously()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        editor.SetError(control, "required", "Value is required");
+        editor.SetError(control, "minLength", "Must be at least 5 chars");
+        editor.SetError(control, "maxLength", "Must be at most 50 chars");
+
+        Assert.Equal(3, control.Errors.Count);
+        Assert.True(control.HasErrors);
+        Assert.False(control.IsValid);
+        Assert.Equal("Value is required", control.Errors["required"]);
+        Assert.Equal("Must be at least 5 chars", control.Errors["minLength"]);
+        Assert.Equal("Must be at most 50 chars", control.Errors["maxLength"]);
+    }
+
+    [Fact]
+    public void Removing_One_Error_Should_Leave_Others_Intact()
+    {
+        var control = Control.Create();
+        var editor = new ControlEditor();
+
+        editor.SetError(control, "required", "Value is required");
+        editor.SetError(control, "minLength", "Must be at least 5 chars");
+        editor.SetError(control, "maxLength", "Must be at most 50 chars");
+
+        // Remove one error
+        editor.SetError(control, "minLength", null);
+
+        Assert.Equal(2, control.Errors.Count);
+        Assert.True(control.HasErrors);
+        Assert.Contains("required", control.Errors.Keys);
+        Assert.Contains("maxLength", control.Errors.Keys);
+        Assert.DoesNotContain("minLength", control.Errors.Keys);
     }
 }

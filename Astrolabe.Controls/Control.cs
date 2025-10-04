@@ -8,6 +8,7 @@ public class Control : IControl, IControlMutation
     private object? _value;
     private object? _initialValue;
     private ControlFlags _flags;
+    private Dictionary<string, string>? _errors;
 
     // Parent-child tracking
     private List<ParentLink>? _parents;
@@ -19,6 +20,8 @@ public class Control : IControl, IControlMutation
     // Static empty collections for non-object/array controls
     private static readonly IEnumerable<string> EmptyFieldNames = Enumerable.Empty<string>();
     private static readonly IReadOnlyList<IControl> EmptyElements = new List<IControl>();
+    private static readonly IReadOnlyDictionary<string, string> EmptyErrors = 
+        new Dictionary<string, string>().AsReadOnly();
 
     public int UniqueId { get; } = Interlocked.Increment(ref _nextId);
 
@@ -52,6 +55,26 @@ public class Control : IControl, IControlMutation
     public bool IsDirty => !IControl.IsEqual(_value, _initialValue);
     public bool IsDisabled => (_flags & ControlFlags.Disabled) != 0;
     public bool IsTouched => (_flags & ControlFlags.Touched) != 0;
+    
+    // Error management
+    public IReadOnlyDictionary<string, string> Errors
+    {
+        get
+        {
+            if (_errors == null) return EmptyErrors;
+            
+            if ((_flags & ControlFlags.ErrorsMutable) != 0)
+            {
+                // Errors are mutable (we own them), clone and freeze for external access
+                _errors = _errors.ToDictionary(x => x.Key, x => x.Value);
+                _flags &= ~ControlFlags.ErrorsMutable;
+            }
+            return _errors;
+        }
+    }
+    
+    public bool HasErrors => Errors.Count > 0;
+    public bool IsValid => !HasErrors;
 
     // Type detection
     public bool IsObject => Value is IDictionary<string, object>;
@@ -700,6 +723,85 @@ public class Control : IControl, IControlMutation
         }
     }
 
+    // Error management implementation
+    bool IControlMutation.SetErrorsInternal(ControlEditor editor, IDictionary<string, string> errors)
+    {
+        // Remove empty/null values from input
+        var cleanedErrors = errors.Where(x => !string.IsNullOrEmpty(x.Value))
+                                  .ToDictionary(x => x.Key, x => x.Value);
+        
+        if (DictionariesEqual(_errors, cleanedErrors)) return false;
+
+        _errors = cleanedErrors.Count > 0 ? new Dictionary<string, string>(cleanedErrors) : null;
+        _flags |= ControlFlags.ErrorsMutable; // Mark as mutable since we own them
+
+        _subscriptions?.ApplyChange(ControlChange.Error);
+        return true;
+    }
+
+    bool IControlMutation.SetErrorInternal(ControlEditor editor, string key, string? message)
+    {
+        // Check current state first to avoid unnecessary mutations
+        var currentHasError = _errors?.ContainsKey(key) == true;
+        var currentMessage = currentHasError ? _errors![key] : null;
+        var newMessage = string.IsNullOrEmpty(message) ? null : message;
+        
+        // No change needed
+        if (currentMessage == newMessage) return false;
+        
+        // Now we know a change is needed - ensure we own the errors dictionary
+        if ((_flags & ControlFlags.ErrorsMutable) == 0)
+        {
+            _errors = _errors?.ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, string>();
+            _flags |= ControlFlags.ErrorsMutable;
+        }
+        
+        if (newMessage == null)
+        {
+            // Remove error (we already know it exists from the check above)
+            _errors!.Remove(key);
+        }
+        else
+        {
+            // Set/update error
+            _errors![key] = newMessage;
+        }
+
+        // Clean up empty dictionary
+        if (_errors!.Count == 0)
+        {
+            _errors = null;
+            _flags &= ~ControlFlags.ErrorsMutable;
+        }
+
+        _subscriptions?.ApplyChange(ControlChange.Error);
+        return true;
+    }
+
+    bool IControlMutation.ClearErrorsInternal(ControlEditor editor)
+    {
+        if (_errors == null || _errors.Count == 0) return false;
+
+        _errors = null;
+        _flags &= ~ControlFlags.ErrorsMutable;
+        _subscriptions?.ApplyChange(ControlChange.Error);
+        return true;
+    }
+
+    private static bool DictionariesEqual(IDictionary<string, string>? dict1, IDictionary<string, string>? dict2)
+    {
+        if (dict1 == null && dict2 == null) return true;
+        if (dict1 == null || dict2 == null) return false;
+        if (dict1.Count != dict2.Count) return false;
+
+        foreach (var kvp in dict1)
+        {
+            if (!dict2.TryGetValue(kvp.Key, out var value) || value != kvp.Value)
+                return false;
+        }
+        return true;
+    }
+
 }
 
 [Flags]
@@ -709,5 +811,6 @@ public enum ControlFlags
     Disabled = 1,
     Touched = 2,
     ValueMutable = 4,
-    InitialValueMutable = 8
+    InitialValueMutable = 8,
+    ErrorsMutable = 16
 }

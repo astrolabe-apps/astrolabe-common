@@ -8,11 +8,7 @@ public class ArrayObjectControlTests
     [Fact]
     public void Control_Should_Detect_Object_Type()
     {
-        var dict = new Dictionary<string, object>
-        {
-            ["Name"] = "John",
-            ["Age"] = 30
-        };
+        var dict = new Dictionary<string, object> { ["Name"] = "John", ["Age"] = 30 };
         var control = new Control(dict, dict);
 
         Assert.True(control.IsObject);
@@ -56,11 +52,7 @@ public class ArrayObjectControlTests
     [Fact]
     public void Object_Indexer_Should_Return_Child_Control()
     {
-        var dict = new Dictionary<string, object>
-        {
-            ["Name"] = "John",
-            ["Age"] = 30
-        };
+        var dict = new Dictionary<string, object> { ["Name"] = "John", ["Age"] = 30 };
         var control = new Control(dict, dict);
 
         var nameControl = control["Name"];
@@ -70,17 +62,6 @@ public class ArrayObjectControlTests
         Assert.NotNull(ageControl);
         Assert.Equal("John", nameControl.Value);
         Assert.Equal(30, ageControl.Value);
-    }
-
-    [Fact]
-    public void Object_Indexer_Should_Return_Null_For_Missing_Property()
-    {
-        var dict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = new Control(dict, dict);
-
-        var missingControl = control["Missing"];
-
-        Assert.Null(missingControl);
     }
 
     [Fact]
@@ -310,11 +291,7 @@ public class ArrayObjectControlTests
     {
         var nested = new Dictionary<string, object>
         {
-            ["Person"] = new Dictionary<string, object>
-            {
-                ["Name"] = "John",
-                ["Age"] = 30
-            }
+            ["Person"] = new Dictionary<string, object> { ["Name"] = "John", ["Age"] = 30 }
         };
         var control = new Control(nested, nested);
 

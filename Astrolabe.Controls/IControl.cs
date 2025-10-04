@@ -19,6 +19,11 @@ public interface IControl
     /// Returns true if this control has an undefined value (e.g., missing object property).
     /// </summary>
     bool IsUndefined => Value is UndefinedValue;
+    
+    // Error management
+    IReadOnlyDictionary<string, string> Errors { get; }
+    bool HasErrors => Errors.Count > 0;
+    bool IsValid => !HasErrors;
     int Count { get; }
 
     // Indexer access

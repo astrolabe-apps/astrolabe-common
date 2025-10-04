@@ -121,4 +121,20 @@ public class ControlEditor
             }
         });
     }
+
+    // Error management methods
+    public void SetErrors(IControl control, IDictionary<string, string> errors)
+    {
+        RunWithMutator(control, x => x.SetErrorsInternal(this, errors));
+    }
+
+    public void SetError(IControl control, string key, string? message)
+    {
+        RunWithMutator(control, x => x.SetErrorInternal(this, key, message));
+    }
+
+    public void ClearErrors(IControl control)
+    {
+        RunWithMutator(control, x => x.ClearErrorsInternal(this));
+    }
 }
