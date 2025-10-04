@@ -10,7 +10,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Create_Without_Validator_Should_Create_Normal_Control()
     {
-        var control = Control.Create<string>("test");
+        var control = Control.Create("test");
         
         Assert.False(control.HasErrors);
         Assert.False(control.Errors.ContainsKey("default"));
@@ -253,14 +253,14 @@ public class ValidatorFactoryTests
     public void Validator_Should_Handle_Default_Values_Correctly()
     {
         // Test with default value for value type
-        var intControl = Control.Create<int>(validator: value => 
+        var intControl = Control.Create<int>(0, value =>
             value == 0 ? "Cannot be zero" : null);
-        
+
         Assert.Equal(0, intControl.Value);
         Assert.Equal("Cannot be zero", intControl.Errors["default"]);
-        
+
         // Test with default value for reference type
-        var stringControl = Control.Create<string>(validator: value => 
+        var stringControl = Control.Create<string?>(null, value =>
             value == null ? "Cannot be null" : null);
         
         Assert.Null(stringControl.Value);

@@ -187,12 +187,129 @@ public class UndefinedControlTests
     public void Cached_Undefined_Controls_Should_Be_Reused()
     {
         var parentControl = Control.Create(new Dictionary<string, object>());
-        
+
         var child1 = parentControl["testField"];
         var child2 = parentControl["testField"];
-        
+
         Assert.Same(child1, child2);
         Assert.True(child1!.IsUndefined);
         Assert.True(child2!.IsUndefined);
+    }
+
+    [Fact]
+    public void UndefinedValue_Control_Should_Allow_Child_Field_Access()
+    {
+        var parentControl = Control.Create(new Dictionary<string, object>
+        {
+            ["definedField"] = "value"
+        });
+
+        // Get an undefined child control
+        var undefinedChild = parentControl["missingField"];
+        Assert.True(undefinedChild!.IsUndefined);
+
+        // Should be able to access child fields of undefined control
+        var grandChild = undefinedChild["childProperty"];
+        Assert.NotNull(grandChild);
+        Assert.Null(grandChild.Value); // Child gets null value, not undefined
+        Assert.Null(grandChild.InitialValue);
+    }
+
+    [Fact]
+    public void UndefinedValue_Control_Child_Assignment_Should_Create_Parent_Object()
+    {
+        var parentControl = Control.Create(new Dictionary<string, object>());
+        var editor = new ControlEditor();
+
+        // Get an undefined child control
+        var undefinedChild = parentControl["missingField"];
+        Assert.True(undefinedChild!.IsUndefined);
+
+        // Access a child of the undefined control
+        var grandChild = undefinedChild["childProperty"];
+        Assert.NotNull(grandChild);
+        Assert.Null(grandChild.Value);
+
+        // Assign value to the grandchild
+        editor.SetValue(grandChild, "test value");
+
+        // This should promote the undefined parent to a real object
+        Assert.False(undefinedChild.IsUndefined);
+        Assert.True(undefinedChild.IsObject);
+
+        var undefinedChildDict = (Dictionary<string, object>)undefinedChild.Value!;
+        Assert.Single(undefinedChildDict);
+        Assert.True(undefinedChildDict.ContainsKey("childProperty"));
+        Assert.Equal("test value", undefinedChildDict["childProperty"]);
+
+        // And the top-level parent should also be updated
+        var parentDict = (Dictionary<string, object>)parentControl.Value!;
+        Assert.True(parentDict.ContainsKey("missingField"));
+        Assert.Equal(undefinedChildDict, parentDict["missingField"]);
+    }
+
+    [Fact]
+    public void Null_Control_Should_Allow_Child_Field_Access_Like_UndefinedValue()
+    {
+        var parentControl = Control.Create((object?)null);
+
+        // Should be able to access child fields of null control
+        var child = parentControl["testProperty"];
+        Assert.NotNull(child);
+        Assert.Null(child.Value);
+        Assert.Null(child.InitialValue);
+    }
+
+    [Fact]
+    public void Null_Control_Child_Assignment_Should_Create_Parent_Object()
+    {
+        var parentControl = Control.Create((object?)null);
+        var editor = new ControlEditor();
+
+        // Access a child of the null control
+        var child = parentControl["testProperty"];
+        Assert.NotNull(child);
+
+        // Assign value to the child
+        editor.SetValue(child, "test value");
+
+        // This should promote the null parent to a real object
+        Assert.True(parentControl.IsObject);
+        Assert.Null(parentControl.InitialValue); // Initial value stays null
+
+        var parentDict = (Dictionary<string, object>)parentControl.Value!;
+        Assert.Single(parentDict);
+        Assert.True(parentDict.ContainsKey("testProperty"));
+        Assert.Equal("test value", parentDict["testProperty"]);
+    }
+
+    [Fact]
+    public void UndefinedValue_And_Null_Controls_Should_Behave_Identically_For_Child_Access()
+    {
+        var nullControl = Control.Create((object?)null);
+        var undefinedControl = Control.Create(UndefinedValue.Instance);
+        var editor = new ControlEditor();
+
+        // Both should allow child field access
+        var nullChild = nullControl["testField"];
+        var undefinedChild = undefinedControl["testField"];
+
+        Assert.NotNull(nullChild);
+        Assert.NotNull(undefinedChild);
+        Assert.Null(nullChild.Value);
+        Assert.Null(undefinedChild.Value);
+
+        // Both should promote to objects when child values are assigned
+        editor.SetValue(nullChild, "value1");
+        editor.SetValue(undefinedChild, "value2");
+
+        Assert.True(nullControl.IsObject);
+        Assert.True(undefinedControl.IsObject);
+
+        var nullDict = (Dictionary<string, object>)nullControl.Value!;
+        var undefinedDict = (Dictionary<string, object>)undefinedControl.Value!;
+
+        Assert.Equal("value1", nullDict["testField"]);
+        Assert.Equal("value2", undefinedDict["testField"]);
     }
 }

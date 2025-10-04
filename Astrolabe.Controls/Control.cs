@@ -2,12 +2,13 @@ using System.Collections;
 
 namespace Astrolabe.Controls;
 
-public class Control : IControl, IControlMutation
+public class Control(object? value, object? initialValue, ControlFlags flags = ControlFlags.None)
+    : IControl, IControlMutation
 {
     private static int _nextId = 1;
-    private object? _value;
-    private object? _initialValue;
-    private ControlFlags _flags;
+    private object? _value = value;
+    private object? _initialValue = initialValue;
+    private ControlFlags _flags = flags;
     private Dictionary<string, string>? _errors;
     private bool? _cachedChildInvalidity;
 
@@ -19,7 +20,7 @@ public class Control : IControl, IControlMutation
     private List<IControl>? _elementControls;
 
     // Static empty collections for non-object/array controls
-    private static readonly IEnumerable<string> EmptyFieldNames = Enumerable.Empty<string>();
+    private static readonly IEnumerable<string> EmptyFieldNames = [];
     private static readonly IReadOnlyList<IControl> EmptyElements = new List<IControl>();
     private static readonly IReadOnlyDictionary<string, string> EmptyErrors = new Dictionary<
         string,
@@ -67,12 +68,10 @@ public class Control : IControl, IControlMutation
             if (_errors == null)
                 return EmptyErrors;
 
-            if ((_flags & ControlFlags.ErrorsMutable) != 0)
-            {
-                // Errors are mutable (we own them), clone and freeze for external access
-                _errors = _errors.ToDictionary(x => x.Key, x => x.Value);
-                _flags &= ~ControlFlags.ErrorsMutable;
-            }
+            if ((_flags & ControlFlags.ErrorsMutable) == 0) return _errors;
+            // Errors are mutable (we own them), clone and freeze for external access
+            _errors = _errors.ToDictionary(x => x.Key, x => x.Value);
+            _flags &= ~ControlFlags.ErrorsMutable;
             return _errors;
         }
     }
@@ -86,8 +85,8 @@ public class Control : IControl, IControlMutation
         Value is ICollection && Value is not IDictionary<string, object> && Value is not string;
 
     // Internal access to mutable values (for parent-child updates)
-    internal object? InternalValue => _value;
-    internal object? InternalInitialValue => _initialValue;
+    private object? InternalValue => _value;
+    private object? InternalInitialValue => _initialValue;
 
     // Internal methods for array operations
     internal void AddElementInternal(object? value)
@@ -174,8 +173,8 @@ public class Control : IControl, IControlMutation
             if (_fieldControls.TryGetValue(propertyName, out var existing))
                 return existing;
 
-            // For null parent values, create child control with null value
-            if (Value == null)
+            // For null or undefined parent values, create child control with null value
+            if (Value is null or UndefinedValue)
             {
                 var childControl = CreateChildControl(null, propertyName);
                 _fieldControls[propertyName] = childControl;
@@ -224,15 +223,7 @@ public class Control : IControl, IControlMutation
     }
 
     // Collection properties
-    public IEnumerable<string> FieldNames
-    {
-        get
-        {
-            if (!IsObject)
-                return EmptyFieldNames;
-            return ((IDictionary<string, object>)Value!).Keys;
-        }
-    }
+    public IEnumerable<string> FieldNames => !IsObject ? EmptyFieldNames : ((IDictionary<string, object>)Value!).Keys;
 
     public IReadOnlyList<IControl> Elements
     {
@@ -246,13 +237,6 @@ public class Control : IControl, IControlMutation
     }
 
     private Subscriptions? _subscriptions;
-
-    public Control(object? value, object? initialValue, ControlFlags flags = ControlFlags.None)
-    {
-        _value = value;
-        _initialValue = initialValue;
-        _flags = flags;
-    }
 
     // Factory method for simple control creation (replaces old constructor behavior)
     public static Control Create(object? initialValue = null, bool dontClearError = false)
@@ -297,7 +281,7 @@ public class Control : IControl, IControlMutation
         _subscriptions?.Unsubscribe(subscription);
     }
 
-    protected ControlChange GetChangeState(ControlChange mask)
+    private ControlChange GetChangeState(ControlChange mask)
     {
         ControlChange changeFlags = ControlChange.None;
 
@@ -397,10 +381,7 @@ public class Control : IControl, IControlMutation
     {
         get
         {
-            if (_cachedChildInvalidity == null)
-            {
-                _cachedChildInvalidity = CalculateIsAnyChildInvalid();
-            }
+            _cachedChildInvalidity ??= CalculateIsAnyChildInvalid();
             return _cachedChildInvalidity.Value;
         }
     }
@@ -522,16 +503,12 @@ public class Control : IControl, IControlMutation
                     var fieldName = kvp.Key;
                     var childControl = kvp.Value;
 
-                    if (newDict.TryGetValue(fieldName, out var newChildValue))
-                    {
-                        // Update existing child's value
-                        editor.SetValue(childControl, newChildValue);
-                    }
-                    else
-                    {
-                        // Field no longer exists in new dict - set child to undefined but keep in cache
-                        editor.SetValue(childControl, UndefinedValue.Instance);
-                    }
+                    // Update existing child's value
+                    editor.SetValue(childControl,
+                        newDict.TryGetValue(fieldName, out var newChildValue)
+                            ? newChildValue
+                            // Field no longer exists in new dict - set child to undefined but keep in cache
+                            : UndefinedValue.Instance);
                 }
             }
         }
@@ -646,9 +623,8 @@ public class Control : IControl, IControlMutation
             if (IsObject && key is string fieldKey)
             {
                 var dict = (IDictionary<string, object>)InternalValue!;
-                if (dict.ContainsKey(fieldKey))
+                if (dict.Remove(fieldKey))
                 {
-                    dict.Remove(fieldKey);
                     structureChanged = true;
                 }
             }
@@ -661,8 +637,9 @@ public class Control : IControl, IControlMutation
             return;
         }
 
-        // Create parent object if it's null and we can determine the type
-        if (_value == null)
+        // Create parent object if it's null or undefined and we can determine the type
+        bool wasPromoted = false;
+        if (_value == null || _value is UndefinedValue)
         {
             if (_fieldControls != null && key is string)
             {
@@ -670,6 +647,7 @@ public class Control : IControl, IControlMutation
                 _value = new Dictionary<string, object>();
                 _flags |= ControlFlags.ValueMutable;
                 structureChanged = true;
+                wasPromoted = true;
             }
             else if (_elementControls != null && key is int)
             {
@@ -688,21 +666,19 @@ public class Control : IControl, IControlMutation
             _flags |= ControlFlags.ValueMutable;
         }
 
-        if (IsObject && key is string stringKey)
+        if (InternalValue is IDictionary<string, object> objDict && key is string stringKey)
         {
-            var dict = (IDictionary<string, object>)InternalValue!;
-            if (!dict.ContainsKey(stringKey) || !IControl.IsEqual(dict[stringKey], value))
+            if (!objDict.ContainsKey(stringKey) || !IControl.IsEqual(objDict[stringKey], value))
             {
-                dict[stringKey] = value!;
+                objDict[stringKey] = value!;
                 structureChanged = true;
             }
         }
-        else if (IsArray && key is int index)
+        else if (InternalValue is IList arrayList && key is int index)
         {
-            var list = (IList)InternalValue!;
-            if (index >= 0 && index < list.Count && !IControl.IsEqual(list[index], value))
+            if (index >= 0 && index < arrayList.Count && !IControl.IsEqual(arrayList[index], value))
             {
-                list[index] = value;
+                arrayList[index] = value;
                 structureChanged = true;
             }
         }
@@ -710,6 +686,12 @@ public class Control : IControl, IControlMutation
         if (structureChanged)
         {
             _subscriptions?.ApplyChange(ControlChange.Structure);
+        }
+
+        // Notify parents if this control was promoted from null/undefined to object
+        if (wasPromoted)
+        {
+            ((IControlMutation)this).NotifyParentsOfChange();
         }
     }
 
