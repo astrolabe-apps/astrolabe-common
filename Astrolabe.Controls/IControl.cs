@@ -14,6 +14,11 @@ public interface IControl
     // Type detection
     bool IsArray { get; }
     bool IsObject { get; }
+    
+    /// <summary>
+    /// Returns true if this control has an undefined value (e.g., missing object property).
+    /// </summary>
+    bool IsUndefined => Value is UndefinedValue;
     int Count { get; }
 
     // Indexer access
@@ -33,6 +38,9 @@ public interface IControl
     {
         if (ReferenceEquals(left, right)) return true;
         if (left is null || right is null) return false;
+
+        // UndefinedValue only equals itself (already handled by ReferenceEquals above)
+        if (left is UndefinedValue || right is UndefinedValue) return false;
 
         // Dictionary comparison
         if (left is IDictionary<string, object> leftDict && right is IDictionary<string, object> rightDict)
