@@ -25,8 +25,6 @@ public interface IControl
     bool HasErrors => Errors.Count > 0;
     bool IsValid => !HasErrors;
     
-    // Validation
-    bool Validate(ControlEditor? editor = null);
     int Count { get; }
 
     // Indexer access

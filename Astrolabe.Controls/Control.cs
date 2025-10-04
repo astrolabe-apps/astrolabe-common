@@ -21,8 +21,10 @@ public class Control : IControl, IControlMutation
     // Static empty collections for non-object/array controls
     private static readonly IEnumerable<string> EmptyFieldNames = Enumerable.Empty<string>();
     private static readonly IReadOnlyList<IControl> EmptyElements = new List<IControl>();
-    private static readonly IReadOnlyDictionary<string, string> EmptyErrors = 
-        new Dictionary<string, string>().AsReadOnly();
+    private static readonly IReadOnlyDictionary<string, string> EmptyErrors = new Dictionary<
+        string,
+        string
+    >().AsReadOnly();
 
     public int UniqueId { get; } = Interlocked.Increment(ref _nextId);
 
@@ -56,14 +58,15 @@ public class Control : IControl, IControlMutation
     public bool IsDirty => !IControl.IsEqual(_value, _initialValue);
     public bool IsDisabled => (_flags & ControlFlags.Disabled) != 0;
     public bool IsTouched => (_flags & ControlFlags.Touched) != 0;
-    
+
     // Error management
     public IReadOnlyDictionary<string, string> Errors
     {
         get
         {
-            if (_errors == null) return EmptyErrors;
-            
+            if (_errors == null)
+                return EmptyErrors;
+
             if ((_flags & ControlFlags.ErrorsMutable) != 0)
             {
                 // Errors are mutable (we own them), clone and freeze for external access
@@ -73,13 +76,14 @@ public class Control : IControl, IControlMutation
             return _errors;
         }
     }
-    
+
     public bool HasErrors => Errors.Count > 0;
     public bool IsValid => !HasErrors && !IsAnyChildInvalid;
 
     // Type detection
     public bool IsObject => Value is IDictionary<string, object>;
-    public bool IsArray => Value is ICollection && Value is not IDictionary<string, object> && Value is not string;
+    public bool IsArray =>
+        Value is ICollection && Value is not IDictionary<string, object> && Value is not string;
 
     // Internal access to mutable values (for parent-child updates)
     internal object? InternalValue => _value;
@@ -88,7 +92,8 @@ public class Control : IControl, IControlMutation
     // Internal methods for array operations
     internal void AddElementInternal(object? value)
     {
-        if (!IsArray) return;
+        if (!IsArray)
+            return;
 
         // If value isn't mutable, we need to take ownership by cloning
         if ((_flags & ControlFlags.ValueMutable) == 0)
@@ -100,7 +105,7 @@ public class Control : IControl, IControlMutation
         if (InternalValue is System.Collections.IList list)
         {
             list.Add(value);
-            
+
             // Also add to element controls if they exist
             if (_elementControls != null)
             {
@@ -108,9 +113,9 @@ public class Control : IControl, IControlMutation
                 var childControl = CreateChildControl(value, newIndex);
                 _elementControls.Add(childControl);
             }
-            
+
             _subscriptions?.ApplyChange(ControlChange.Structure);
-            
+
             // Invalidate parent validity cache since children changed
             InvalidateChildValidityCache();
         }
@@ -118,7 +123,8 @@ public class Control : IControl, IControlMutation
 
     internal void RemoveElementInternal(int index)
     {
-        if (!IsArray) return;
+        if (!IsArray)
+            return;
 
         // If value isn't mutable, we need to take ownership by cloning
         if ((_flags & ControlFlags.ValueMutable) == 0)
@@ -130,7 +136,7 @@ public class Control : IControl, IControlMutation
         if (InternalValue is System.Collections.IList list && index >= 0 && index < list.Count)
         {
             list.RemoveAt(index);
-            
+
             // Also remove from element controls if they exist
             if (_elementControls != null && index < _elementControls.Count)
             {
@@ -141,14 +147,20 @@ public class Control : IControl, IControlMutation
                 }
                 _elementControls.RemoveAt(index);
             }
-            
+
             _subscriptions?.ApplyChange(ControlChange.Structure);
-            
+
             // Invalidate parent validity cache since children changed
             InvalidateChildValidityCache();
         }
     }
-    public int Count => IsArray ? ((ICollection)Value!).Count : IsObject ? ((IDictionary<string, object>)Value!).Count : 0;
+
+    public int Count =>
+        IsArray
+            ? ((ICollection)Value!).Count
+            : IsObject
+                ? ((IDictionary<string, object>)Value!).Count
+                : 0;
 
     // Indexer access
     public IControl? this[string propertyName]
@@ -195,12 +207,14 @@ public class Control : IControl, IControlMutation
         {
             // For null parent values, we can't create array children without knowing the length
             // Return null - arrays need to be explicitly created first
-            if (Value == null) return null;
+            if (Value == null)
+                return null;
 
             if (Value is not ICollection collection)
                 return null;
 
-            if (index < 0 || index >= collection.Count) return null;
+            if (index < 0 || index >= collection.Count)
+                return null;
 
             // Ensure element controls list is created
             EnsureElementControlsCreated();
@@ -214,7 +228,8 @@ public class Control : IControl, IControlMutation
     {
         get
         {
-            if (!IsObject) return EmptyFieldNames;
+            if (!IsObject)
+                return EmptyFieldNames;
             return ((IDictionary<string, object>)Value!).Keys;
         }
     }
@@ -223,7 +238,8 @@ public class Control : IControl, IControlMutation
     {
         get
         {
-            if (!IsArray) return EmptyElements;
+            if (!IsArray)
+                return EmptyElements;
             EnsureElementControlsCreated();
             return _elementControls!;
         }
@@ -242,6 +258,33 @@ public class Control : IControl, IControlMutation
     public static Control Create(object? initialValue = null)
     {
         return new Control(initialValue, initialValue, ControlFlags.None);
+    }
+
+    // Generic factory method with automatic validator setup
+    public static Control Create<T>(T? initialValue = default, Func<T?, string?>? validator = null)
+    {
+        var control = new Control(initialValue, initialValue, ControlFlags.None);
+
+        if (validator != null)
+        {
+            control.Subscribe(
+                (ctrl, change, editor) =>
+                {
+                    // No need to check change flags - subscription mask ensures we only get Value or Validate changes
+                    var typedValue = (T?)ctrl.Value;
+                    var errorMessage = validator(typedValue);
+                    editor.SetError(ctrl, "default", errorMessage);
+                },
+                ControlChange.Value | ControlChange.Validate
+            );
+
+            // Run initial validation
+            var editor = new ControlEditor();
+            var initialErrorMessage = validator(initialValue);
+            editor.SetError(control, "default", initialErrorMessage);
+        }
+
+        return control;
     }
 
     public ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask)
@@ -333,19 +376,21 @@ public class Control : IControl, IControlMutation
         {
             foreach (var child in _fieldControls.Values)
             {
-                if (!child.IsValid) return true; // Found invalid child
+                if (!child.IsValid)
+                    return true; // Found invalid child
             }
         }
-        
+
         // Check element controls (array elements)
         if (_elementControls != null)
         {
             foreach (var child in _elementControls)
             {
-                if (!child.IsValid) return true; // Found invalid child
+                if (!child.IsValid)
+                    return true; // Found invalid child
             }
         }
-        
+
         return false; // No invalid children found
     }
 
@@ -376,13 +421,13 @@ public class Control : IControl, IControlMutation
         if (!hasErrors || _cachedChildInvalidity == false)
         {
             _cachedChildInvalidity = null;
-            
+
             // Let ControlEditor handle notifications through transaction system
             if (this is IControlMutation mutation)
             {
                 editor.AddToModifiedControls(this);
             }
-            
+
             // Propagate up to parents
             NotifyParentsOfValidityChange(editor, hasErrors);
         }
@@ -392,7 +437,8 @@ public class Control : IControl, IControlMutation
 
     private void NotifyParentsOfValidityChange(ControlEditor editor, bool hasErrors)
     {
-        if (_parents == null) return;
+        if (_parents == null)
+            return;
 
         foreach (var parentLink in _parents)
         {
@@ -411,7 +457,10 @@ public class Control : IControl, IControlMutation
         // Determine child's initial value from parent's initial value
         object? childInitialValue = value; // fallback
 
-        if (InternalInitialValue is IDictionary<string, object> initialDict && key is string stringKey)
+        if (
+            InternalInitialValue is IDictionary<string, object> initialDict
+            && key is string stringKey
+        )
         {
             // Object case: use parent's initial value for this field
             if (!initialDict.TryGetValue(stringKey, out childInitialValue))
@@ -446,7 +495,8 @@ public class Control : IControl, IControlMutation
 
     private void EnsureElementControlsCreated()
     {
-        if (_elementControls != null) return;
+        if (_elementControls != null)
+            return;
 
         var collection = (ICollection)Value!;
         _elementControls = new List<IControl>(collection.Count);
@@ -521,7 +571,7 @@ public class Control : IControl, IControlMutation
                     }
                     _elementControls.RemoveRange(newCount, currentCount - newCount);
                 }
-                
+
                 // Invalidate validity cache if child count changed
                 if (currentCount != newCount)
                 {
@@ -534,9 +584,15 @@ public class Control : IControl, IControlMutation
     private bool ShouldClearChildren(object? oldValue, object? newValue)
     {
         // Clear children if switching between different collection types
-        var wasArray = oldValue is ICollection && oldValue is not IDictionary<string, object> && oldValue is not string;
+        var wasArray =
+            oldValue is ICollection
+            && oldValue is not IDictionary<string, object>
+            && oldValue is not string;
         var wasObject = oldValue is IDictionary<string, object>;
-        var isArray = newValue is ICollection && newValue is not IDictionary<string, object> && newValue is not string;
+        var isArray =
+            newValue is ICollection
+            && newValue is not IDictionary<string, object>
+            && newValue is not string;
         var isObject = newValue is IDictionary<string, object>;
 
         return (wasArray != isArray) || (wasObject != isObject);
@@ -569,7 +625,7 @@ public class Control : IControl, IControlMutation
             }
             _elementControls = null;
         }
-        
+
         // Invalidate validity cache since all children are gone
         InvalidateChildValidityCache();
     }
@@ -620,7 +676,9 @@ public class Control : IControl, IControlMutation
             {
                 // Element access indicates this should be an array, but we can't create one without knowing size
                 // This shouldn't happen in practice as array indexer returns null for null parent
-                throw new InvalidOperationException("Cannot create array parent from null - arrays must be explicitly initialized");
+                throw new InvalidOperationException(
+                    "Cannot create array parent from null - arrays must be explicitly initialized"
+                );
             }
         }
 
@@ -709,14 +767,20 @@ public class Control : IControl, IControlMutation
     private void PropagateInitialValueToChildren(ControlEditor editor, object? newInitialValue)
     {
         // Update field controls
-        if (IsObject && newInitialValue is IDictionary<string, object> initialDict && _fieldControls != null)
+        if (
+            IsObject
+            && newInitialValue is IDictionary<string, object> initialDict
+            && _fieldControls != null
+        )
         {
             foreach (var kvp in _fieldControls)
             {
                 var fieldName = kvp.Key;
                 var childControl = kvp.Value;
 
-                var childInitialValue = initialDict.TryGetValue(fieldName, out var value) ? value : null;
+                var childInitialValue = initialDict.TryGetValue(fieldName, out var value)
+                    ? value
+                    : null;
                 editor.SetInitialValue(childControl, childInitialValue);
             }
         }
@@ -738,15 +802,22 @@ public class Control : IControl, IControlMutation
         }
     }
 
-    bool IControlMutation.SetDisabledInternal(ControlEditor editor, bool disabled, bool childrenOnly)
+    bool IControlMutation.SetDisabledInternal(
+        ControlEditor editor,
+        bool disabled,
+        bool childrenOnly
+    )
     {
         var changed = false;
 
         if (!childrenOnly)
         {
-            if (disabled == IsDisabled) return false;
-            if (disabled) _flags |= ControlFlags.Disabled;
-            else _flags &= ~ControlFlags.Disabled;
+            if (disabled == IsDisabled)
+                return false;
+            if (disabled)
+                _flags |= ControlFlags.Disabled;
+            else
+                _flags &= ~ControlFlags.Disabled;
             changed = true;
         }
 
@@ -768,9 +839,12 @@ public class Control : IControl, IControlMutation
 
         if (!childrenOnly)
         {
-            if (touched == IsTouched) return false;
-            if (touched) _flags |= ControlFlags.Touched;
-            else _flags &= ~ControlFlags.Touched;
+            if (touched == IsTouched)
+                return false;
+            if (touched)
+                _flags |= ControlFlags.Touched;
+            else
+                _flags &= ~ControlFlags.Touched;
             changed = true;
         }
 
@@ -792,7 +866,7 @@ public class Control : IControl, IControlMutation
         if (s != null)
         {
             var editor = new ControlEditor();
-            editor.RunInTransaction(() => 
+            editor.RunInTransaction(() =>
             {
                 var currentState = GetChangeState(s.Mask);
                 s.RunListeners(this, currentState, editor);
@@ -807,7 +881,8 @@ public class Control : IControl, IControlMutation
         {
             // Remove this parent
             _parents = _parents?.Where(p => p.Control != parent).ToList();
-            if (_parents?.Count == 0) _parents = null;
+            if (_parents?.Count == 0)
+                _parents = null;
             return;
         }
 
@@ -815,7 +890,8 @@ public class Control : IControl, IControlMutation
         if (existing != null)
         {
             existing.Key = key;
-            if (initial) existing.OriginalKey = key;
+            if (initial)
+                existing.OriginalKey = key;
         }
         else
         {
@@ -832,7 +908,8 @@ public class Control : IControl, IControlMutation
 
     void IControlMutation.NotifyParentsOfChange()
     {
-        if (_parents == null) return;
+        if (_parents == null)
+            return;
 
         foreach (var parentLink in _parents)
         {
@@ -844,22 +921,27 @@ public class Control : IControl, IControlMutation
     }
 
     // Error management implementation
-    bool IControlMutation.SetErrorsInternal(ControlEditor editor, IDictionary<string, string> errors)
+    bool IControlMutation.SetErrorsInternal(
+        ControlEditor editor,
+        IDictionary<string, string> errors
+    )
     {
         // Remove empty/null values from input
-        var cleanedErrors = errors.Where(x => !string.IsNullOrEmpty(x.Value))
-                                  .ToDictionary(x => x.Key, x => x.Value);
-        
-        if (DictionariesEqual(_errors, cleanedErrors)) return false;
+        var cleanedErrors = errors
+            .Where(x => !string.IsNullOrEmpty(x.Value))
+            .ToDictionary(x => x.Key, x => x.Value);
+
+        if (DictionariesEqual(_errors, cleanedErrors))
+            return false;
 
         _errors = cleanedErrors.Count > 0 ? new Dictionary<string, string>(cleanedErrors) : null;
         _flags |= ControlFlags.ErrorsMutable; // Mark as mutable since we own them
 
         _subscriptions?.ApplyChange(ControlChange.Error);
-        
+
         // Notify parents of validity change if error state changed
         NotifyParentsOfValidityChange(editor, _errors != null);
-        
+
         return true;
     }
 
@@ -869,17 +951,19 @@ public class Control : IControl, IControlMutation
         var currentHasError = _errors?.ContainsKey(key) == true;
         var currentMessage = currentHasError ? _errors![key] : null;
         var newMessage = string.IsNullOrEmpty(message) ? null : message;
-        
+
         // No change needed
-        if (currentMessage == newMessage) return false;
-        
+        if (currentMessage == newMessage)
+            return false;
+
         // Now we know a change is needed - ensure we own the errors dictionary
         if ((_flags & ControlFlags.ErrorsMutable) == 0)
         {
-            _errors = _errors?.ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, string>();
+            _errors =
+                _errors?.ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, string>();
             _flags |= ControlFlags.ErrorsMutable;
         }
-        
+
         if (newMessage == null)
         {
             // Remove error (we already know it exists from the check above)
@@ -899,50 +983,55 @@ public class Control : IControl, IControlMutation
         }
 
         _subscriptions?.ApplyChange(ControlChange.Error);
-        
+
         // Notify parents of validity change if error state changed
         NotifyParentsOfValidityChange(editor, _errors != null);
-        
+
         return true;
     }
 
     bool IControlMutation.ClearErrorsInternal(ControlEditor editor)
     {
-        if (_errors == null || _errors.Count == 0) return false;
+        if (_errors == null || _errors.Count == 0)
+            return false;
 
         _errors = null;
         _flags &= ~ControlFlags.ErrorsMutable;
         _subscriptions?.ApplyChange(ControlChange.Error);
-        
+
         // Notify parents of validity change (errors cleared, so hasErrors = false)
         NotifyParentsOfValidityChange(editor, false);
-        
+
         return true;
     }
 
-    // Validation method implementation
-    public bool Validate(ControlEditor? editor = null)
+    // IControlMutation validation implementation
+    public void RunValidationListeners(ControlEditor editor)
     {
-        editor ??= new ControlEditor();
-        
-        editor.RunInTransaction(() => 
+        // First validate all children recursively
+        WithChildren(child =>
         {
-            // First validate all children
-            WithChildren(child => child.Validate(editor));
-            
-            // Then run validation listeners for this control
-            _subscriptions?.RunMatchingListeners(this, ControlChange.Validate, editor);
+            if (child is IControlMutation childMutation)
+            {
+                childMutation.RunValidationListeners(editor);
+            }
         });
-        
-        // Return current validity state after validation
-        return IsValid;
+
+        // Then run validation listeners for this control
+        _subscriptions?.RunMatchingListeners(this, ControlChange.Validate, editor);
     }
 
-    private static bool DictionariesEqual(IDictionary<string, string>? dict1, IDictionary<string, string>? dict2)
+    private static bool DictionariesEqual(
+        IDictionary<string, string>? dict1,
+        IDictionary<string, string>? dict2
+    )
     {
-        if (dict1 == null && dict2 == null) return true;
-        if (dict1 == null || dict2 == null) return false;
-        if (dict1.Count != dict2.Count) return false;
+        if (dict1 == null && dict2 == null)
+            return true;
+        if (dict1 == null || dict2 == null)
+            return false;
+        if (dict1.Count != dict2.Count)
+            return false;
 
         foreach (var kvp in dict1)
         {
@@ -951,7 +1040,6 @@ public class Control : IControl, IControlMutation
         }
         return true;
     }
-
 }
 
 [Flags]

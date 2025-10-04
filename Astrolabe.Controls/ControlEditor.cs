@@ -143,4 +143,20 @@ public class ControlEditor
     {
         _modifiedControls.Add(control);
     }
+
+    // Validation methods
+    /// <summary>
+    /// Validates a single control and all its children
+    /// </summary>
+    public bool Validate(IControl control)
+    {
+        RunInTransaction(() =>
+        {
+            if (control is IControlMutation mutation)
+            {
+                mutation.RunValidationListeners(this);
+            }
+        });
+        return control.IsValid;
+    }
 }

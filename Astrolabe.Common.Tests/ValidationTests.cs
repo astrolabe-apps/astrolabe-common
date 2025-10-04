@@ -118,15 +118,15 @@ public class ValidationTests
         var editor = new ControlEditor();
         
         // Initially valid
-        Assert.True(control.Validate());
+        Assert.True(editor.Validate(control));
         
         // Add error and validate again
         editor.SetError(control, "required", "Value is required");
-        Assert.False(control.Validate());
+        Assert.False(editor.Validate(control));
         
         // Clear error and validate again
         editor.ClearErrors(control);
-        Assert.True(control.Validate());
+        Assert.True(editor.Validate(control));
     }
 
     [Fact]
@@ -154,7 +154,8 @@ public class ValidationTests
         }, ControlChange.Validate);
         
         // Call validate
-        bool result = control.Validate();
+        var editor = new ControlEditor();
+        bool result = editor.Validate(control);
         
         Assert.True(validationTriggered);
         Assert.False(result); // Should be invalid due to validation logic
@@ -206,7 +207,8 @@ public class ValidationTests
         }, ControlChange.Validate);
         
         // Validate parent (should validate children first)
-        parent.Validate();
+        var editor = new ControlEditor();
+        editor.Validate(parent);
         
         // Children should be validated before parent
         Assert.Equal(3, validationOrder.Count);

@@ -32,7 +32,8 @@ public class EditorIntegrationTests
         }, ControlChange.Validate);
         
         // Validate should trigger the listener and set the error
-        var isValid = control.Validate();
+        var editor = new ControlEditor();
+        var isValid = editor.Validate(control);
         
         Assert.True(listenerCalled);
         Assert.False(isValid);
@@ -67,7 +68,8 @@ public class EditorIntegrationTests
         }, ControlChange.Validate);
         
         // Validate should execute both listeners in the same transaction
-        var isValid = control.Validate();
+        var editor = new ControlEditor();
+        var isValid = editor.Validate(control);
         
         Assert.Equal(2, executionOrder.Count);
         Assert.Contains("listener1", executionOrder);
@@ -99,7 +101,7 @@ public class EditorIntegrationTests
             executionOrder.Add("transaction_start");
             
             // This should reuse the existing editor/transaction
-            var isValid = control.Validate(editor);
+            var isValid = editor.Validate(control);
             
             executionOrder.Add("transaction_end");
             
@@ -143,7 +145,8 @@ public class EditorIntegrationTests
         }, ControlChange.Validate);
         
         // Validate should detect mismatch
-        var isValid = parent.Validate();
+        var editor = new ControlEditor();
+        var isValid = editor.Validate(parent);
         
         Assert.False(isValid);
         

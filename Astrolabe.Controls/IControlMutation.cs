@@ -4,6 +4,7 @@ internal interface IControlMutation
 {
     bool SetValueInternal(ControlEditor editor, object? value);
     void RunListeners();
+    void RunValidationListeners(ControlEditor editor);
     bool SetInitialValueInternal(ControlEditor editor, object? initialValue);
     bool SetDisabledInternal(ControlEditor editor, bool disabled, bool childrenOnly = false);
     bool SetTouchedInternal(ControlEditor editor, bool touched, bool childrenOnly = false);
