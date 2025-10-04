@@ -255,34 +255,33 @@ public class Control : IControl, IControlMutation
     }
 
     // Factory method for simple control creation (replaces old constructor behavior)
-    public static Control Create(object? initialValue = null)
+    public static Control Create(object? initialValue = null, bool dontClearError = false)
     {
-        return new Control(initialValue, initialValue, ControlFlags.None);
+        var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
+        return new Control(initialValue, initialValue, flags);
     }
 
     // Generic factory method with automatic validator setup
-    public static Control Create<T>(T? initialValue = default, Func<T?, string?>? validator = null)
+    public static Control Create<T>(T? initialValue, Func<T?, string?> validator)
     {
-        var control = new Control(initialValue, initialValue, ControlFlags.None);
+        // Always set DontClearError for controls with validators
+        var control = new Control(initialValue, initialValue, ControlFlags.DontClearError);
 
-        if (validator != null)
-        {
-            control.Subscribe(
-                (ctrl, change, editor) =>
-                {
-                    // No need to check change flags - subscription mask ensures we only get Value or Validate changes
-                    var typedValue = (T?)ctrl.Value;
-                    var errorMessage = validator(typedValue);
-                    editor.SetError(ctrl, "default", errorMessage);
-                },
-                ControlChange.Value | ControlChange.Validate
-            );
+        control.Subscribe(
+            (ctrl, change, editor) =>
+            {
+                // No need to check change flags - subscription mask ensures we only get Value or Validate changes
+                var typedValue = (T?)ctrl.Value;
+                var errorMessage = validator(typedValue);
+                editor.SetError(ctrl, "default", errorMessage);
+            },
+            ControlChange.Value | ControlChange.Validate
+        );
 
-            // Run initial validation
-            var editor = new ControlEditor();
-            var initialErrorMessage = validator(initialValue);
-            editor.SetError(control, "default", initialErrorMessage);
-        }
+        // Run initial validation
+        var editor = new ControlEditor();
+        var initialErrorMessage = validator(initialValue);
+        editor.SetError(control, "default", initialErrorMessage);
 
         return control;
     }
@@ -725,6 +724,12 @@ public class Control : IControl, IControlMutation
             _value = DeepClone(value); // Take ownership by cloning
             _flags |= ControlFlags.ValueMutable; // Mark as mutable since we own it
 
+            // Clear errors unless DontClearError flag is set
+            if ((_flags & ControlFlags.DontClearError) == 0)
+            {
+                ((IControlMutation)this).ClearErrorsInternal(editor);
+            }
+
             // Handle child controls based on value type change
             if (ShouldClearChildren(oldValue, value))
             {
@@ -1050,5 +1055,6 @@ public enum ControlFlags
     Touched = 2,
     ValueMutable = 4,
     InitialValueMutable = 8,
-    ErrorsMutable = 16
+    ErrorsMutable = 16,
+    DontClearError = 32
 }
