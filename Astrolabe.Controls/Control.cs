@@ -209,7 +209,12 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
             if (Value == null)
                 return null;
 
-            if (Value is not ICollection collection)
+            // Only allow array indexing for actual arrays, not objects (which also implement ICollection)
+            if (Value is not ICollection collection || Value is IDictionary<string, object>)
+                return null;
+
+            // Also exclude strings since they implement ICollection but aren't arrays in our context
+            if (Value is string)
                 return null;
 
             if (index < 0 || index >= collection.Count)
@@ -570,6 +575,13 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
             && newValue is not IDictionary<string, object>
             && newValue is not string;
         var isObject = newValue is IDictionary<string, object>;
+
+        // Special case: null/undefined to object/array should preserve children
+        // since null/undefined controls can already have field children
+        if ((oldValue == null || oldValue is UndefinedValue) && (isObject || isArray))
+        {
+            return false; // Don't clear children when promoting null/undefined to collection
+        }
 
         return (wasArray != isArray) || (wasObject != isObject);
     }
