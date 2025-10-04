@@ -137,4 +137,10 @@ public class ControlEditor
     {
         RunWithMutator(control, x => x.ClearErrorsInternal(this));
     }
+
+    // Internal method for validity change notifications
+    internal void AddToModifiedControls(IControl control)
+    {
+        _modifiedControls.Add(control);
+    }
 }

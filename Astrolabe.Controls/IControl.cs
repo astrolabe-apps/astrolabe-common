@@ -24,6 +24,9 @@ public interface IControl
     IReadOnlyDictionary<string, string> Errors { get; }
     bool HasErrors => Errors.Count > 0;
     bool IsValid => !HasErrors;
+    
+    // Validation
+    bool Validate();
     int Count { get; }
 
     // Indexer access

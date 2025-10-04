@@ -9,6 +9,7 @@ public class Control : IControl, IControlMutation
     private object? _initialValue;
     private ControlFlags _flags;
     private Dictionary<string, string>? _errors;
+    private bool? _cachedChildInvalidity;
 
     // Parent-child tracking
     private List<ParentLink>? _parents;
@@ -74,7 +75,7 @@ public class Control : IControl, IControlMutation
     }
     
     public bool HasErrors => Errors.Count > 0;
-    public bool IsValid => !HasErrors;
+    public bool IsValid => !HasErrors && !IsAnyChildInvalid;
 
     // Type detection
     public bool IsObject => Value is IDictionary<string, object>;
@@ -99,7 +100,19 @@ public class Control : IControl, IControlMutation
         if (InternalValue is System.Collections.IList list)
         {
             list.Add(value);
+            
+            // Also add to element controls if they exist
+            if (_elementControls != null)
+            {
+                var newIndex = list.Count - 1;
+                var childControl = CreateChildControl(value, newIndex);
+                _elementControls.Add(childControl);
+            }
+            
             _subscriptions?.ApplyChange(ControlChange.Structure);
+            
+            // Invalidate parent validity cache since children changed
+            InvalidateChildValidityCache();
         }
     }
 
@@ -117,7 +130,22 @@ public class Control : IControl, IControlMutation
         if (InternalValue is System.Collections.IList list && index >= 0 && index < list.Count)
         {
             list.RemoveAt(index);
+            
+            // Also remove from element controls if they exist
+            if (_elementControls != null && index < _elementControls.Count)
+            {
+                var removedControl = _elementControls[index];
+                if (removedControl is IControlMutation childMutation)
+                {
+                    childMutation.UpdateParentLink(this, null); // Remove parent link
+                }
+                _elementControls.RemoveAt(index);
+            }
+            
             _subscriptions?.ApplyChange(ControlChange.Structure);
+            
+            // Invalidate parent validity cache since children changed
+            InvalidateChildValidityCache();
         }
     }
     public int Count => IsArray ? ((ICollection)Value!).Count : IsObject ? ((IDictionary<string, object>)Value!).Count : 0;
@@ -237,7 +265,8 @@ public class Control : IControl, IControlMutation
             changeFlags |= ControlChange.Disabled;
         if ((mask & ControlChange.Touched) != 0 && IsTouched)
             changeFlags |= ControlChange.Touched;
-        // TODO: Add other state flags like Valid, Error when implemented
+        if ((mask & ControlChange.Valid) != 0 && IsValid)
+            changeFlags |= ControlChange.Valid;
 
         return changeFlags;
     }
@@ -292,6 +321,84 @@ public class Control : IControl, IControlMutation
             foreach (var child in _elementControls)
             {
                 action(child);
+            }
+        }
+    }
+
+    // Child validity calculation
+    private bool CalculateIsAnyChildInvalid()
+    {
+        // Check field controls (object properties)
+        if (_fieldControls != null)
+        {
+            foreach (var child in _fieldControls.Values)
+            {
+                if (!child.IsValid) return true; // Found invalid child
+            }
+        }
+        
+        // Check element controls (array elements)
+        if (_elementControls != null)
+        {
+            foreach (var child in _elementControls)
+            {
+                if (!child.IsValid) return true; // Found invalid child
+            }
+        }
+        
+        return false; // No invalid children found
+    }
+
+    private bool IsAnyChildInvalid
+    {
+        get
+        {
+            if (_cachedChildInvalidity == null)
+            {
+                _cachedChildInvalidity = CalculateIsAnyChildInvalid();
+            }
+            return _cachedChildInvalidity.Value;
+        }
+    }
+
+    // Cache invalidation methods
+    private void InvalidateChildValidityCache()
+    {
+        // Simple version for structure changes - always invalidate cache
+        _cachedChildInvalidity = null;
+    }
+
+    private void InvalidateChildValidityCache(ControlEditor editor, bool hasErrors)
+    {
+        // Only invalidate if:
+        // 1. Child became valid (!hasErrors) - might affect parent validity
+        // 2. Cache shows all children were valid (_cachedChildInvalidity == false) - this change matters
+        if (!hasErrors || _cachedChildInvalidity == false)
+        {
+            _cachedChildInvalidity = null;
+            
+            // Let ControlEditor handle notifications through transaction system
+            if (this is IControlMutation mutation)
+            {
+                editor.AddToModifiedControls(this);
+            }
+            
+            // Propagate up to parents
+            NotifyParentsOfValidityChange(editor, hasErrors);
+        }
+        // If hasErrors && _cachedChildInvalidity == true: no invalidation needed
+        // (child became invalid but we already knew some child was invalid)
+    }
+
+    private void NotifyParentsOfValidityChange(ControlEditor editor, bool hasErrors)
+    {
+        if (_parents == null) return;
+
+        foreach (var parentLink in _parents)
+        {
+            if (parentLink.Control is Control parentControl)
+            {
+                parentControl.InvalidateChildValidityCache(editor, hasErrors);
             }
         }
     }
@@ -414,6 +521,12 @@ public class Control : IControl, IControlMutation
                     }
                     _elementControls.RemoveRange(newCount, currentCount - newCount);
                 }
+                
+                // Invalidate validity cache if child count changed
+                if (currentCount != newCount)
+                {
+                    InvalidateChildValidityCache();
+                }
             }
         }
     }
@@ -456,6 +569,9 @@ public class Control : IControl, IControlMutation
             }
             _elementControls = null;
         }
+        
+        // Invalidate validity cache since all children are gone
+        InvalidateChildValidityCache();
     }
 
     private void UpdateChildValue(object key, object? value)
@@ -736,6 +852,10 @@ public class Control : IControl, IControlMutation
         _flags |= ControlFlags.ErrorsMutable; // Mark as mutable since we own them
 
         _subscriptions?.ApplyChange(ControlChange.Error);
+        
+        // Notify parents of validity change if error state changed
+        NotifyParentsOfValidityChange(editor, _errors != null);
+        
         return true;
     }
 
@@ -775,6 +895,10 @@ public class Control : IControl, IControlMutation
         }
 
         _subscriptions?.ApplyChange(ControlChange.Error);
+        
+        // Notify parents of validity change if error state changed
+        NotifyParentsOfValidityChange(editor, _errors != null);
+        
         return true;
     }
 
@@ -785,7 +909,24 @@ public class Control : IControl, IControlMutation
         _errors = null;
         _flags &= ~ControlFlags.ErrorsMutable;
         _subscriptions?.ApplyChange(ControlChange.Error);
+        
+        // Notify parents of validity change (errors cleared, so hasErrors = false)
+        NotifyParentsOfValidityChange(editor, false);
+        
         return true;
+    }
+
+    // Validation method implementation
+    public bool Validate()
+    {
+        // First validate all children
+        WithChildren(child => child.Validate());
+        
+        // Then run validation listeners for this control
+        _subscriptions?.RunMatchingListeners(this, ControlChange.Validate);
+        
+        // Return current validity state after validation
+        return IsValid;
     }
 
     private static bool DictionariesEqual(IDictionary<string, string>? dict1, IDictionary<string, string>? dict2)
