@@ -31,7 +31,7 @@ public class UndefinedControlTests
         Assert.True(missingChild!.IsUndefined);
         
         var notificationFired = false;
-        missingChild.Subscribe((ctrl, change) => 
+        missingChild.Subscribe((ctrl, change, editor) => 
         {
             notificationFired = true;
         }, ControlChange.Value);

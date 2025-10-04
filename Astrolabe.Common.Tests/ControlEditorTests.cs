@@ -12,7 +12,7 @@ public class ControlEditorTests
         var editor = new ControlEditor();
         var changeNotified = false;
 
-        var subscription = control.Subscribe((ctrl, change) =>
+        var subscription = control.Subscribe((ctrl, change, editor) =>
         {
             changeNotified = true;
         }, ControlChange.Value);
@@ -31,8 +31,8 @@ public class ControlEditorTests
         var editor = new ControlEditor();
         var notificationCount = 0;
 
-        control1.Subscribe((ctrl, change) => notificationCount++, ControlChange.Value);
-        control2.Subscribe((ctrl, change) => notificationCount++, ControlChange.Value);
+        control1.Subscribe((ctrl, change, editor) => notificationCount++, ControlChange.Value);
+        control2.Subscribe((ctrl, change, editor) => notificationCount++, ControlChange.Value);
 
         editor.RunInTransaction(() =>
         {
@@ -58,9 +58,9 @@ public class ControlEditorTests
         var editor = new ControlEditor();
         var notificationCount = 0;
 
-        control1.Subscribe((ctrl, change) => notificationCount++, ControlChange.Value);
-        control2.Subscribe((ctrl, change) => notificationCount++, ControlChange.Value);
-        control3.Subscribe((ctrl, change) => notificationCount++, ControlChange.Value);
+        control1.Subscribe((ctrl, change, editor) => notificationCount++, ControlChange.Value);
+        control2.Subscribe((ctrl, change, editor) => notificationCount++, ControlChange.Value);
+        control3.Subscribe((ctrl, change, editor) => notificationCount++, ControlChange.Value);
 
         editor.RunInTransaction(() =>
         {
@@ -92,7 +92,7 @@ public class ControlEditorTests
         var editor = new ControlEditor();
         var notificationCount = 0;
 
-        control.Subscribe((ctrl, change) => notificationCount++, ControlChange.Value);
+        control.Subscribe((ctrl, change, editor) => notificationCount++, ControlChange.Value);
 
         editor.RunInTransaction(() =>
         {
@@ -110,7 +110,7 @@ public class ControlEditorTests
         var editor = new ControlEditor();
         var notificationCount = 0;
 
-        control.Subscribe((ctrl, change) => notificationCount++, ControlChange.Value);
+        control.Subscribe((ctrl, change, editor) => notificationCount++, ControlChange.Value);
 
         editor.RunInTransaction(() =>
         {
@@ -131,7 +131,7 @@ public class ControlEditorTests
         var editor = new ControlEditor();
         var notificationCount = 0;
 
-        control.Subscribe((ctrl, change) => notificationCount++, ControlChange.Value);
+        control.Subscribe((ctrl, change, editor) => notificationCount++, ControlChange.Value);
 
         Assert.Throws<InvalidOperationException>(() =>
         {
@@ -155,7 +155,7 @@ public class ControlEditorTests
         var initialValueChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
 
-        control.Subscribe((ctrl, change) =>
+        control.Subscribe((ctrl, change, editor) =>
         {
             initialValueChangeNotified = true;
             notifiedChange = change;
@@ -176,7 +176,7 @@ public class ControlEditorTests
         var editor = new ControlEditor();
         var initialValueChangeNotified = false;
 
-        control.Subscribe((ctrl, change) =>
+        control.Subscribe((ctrl, change, editor) =>
         {
             initialValueChangeNotified = true;
         }, ControlChange.InitialValue);
@@ -213,7 +213,7 @@ public class ControlEditorTests
         var disabledChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
 
-        control.Subscribe((ctrl, change) =>
+        control.Subscribe((ctrl, change, editor) =>
         {
             disabledChangeNotified = true;
             notifiedChange = change;
@@ -235,7 +235,7 @@ public class ControlEditorTests
         var editor = new ControlEditor();
         var disabledChangeNotified = false;
 
-        control.Subscribe((ctrl, change) =>
+        control.Subscribe((ctrl, change, editor) =>
         {
             disabledChangeNotified = true;
         }, ControlChange.Disabled);
@@ -253,7 +253,7 @@ public class ControlEditorTests
         var editor = new ControlEditor();
         var notificationCount = 0;
 
-        control.Subscribe((ctrl, change) =>
+        control.Subscribe((ctrl, change, editor) =>
         {
             notificationCount++;
         }, ControlChange.Disabled);
@@ -296,7 +296,7 @@ public class ControlEditorTests
 
         editor.SetValue(control, "changed");
 
-        control.Subscribe((ctrl, change) =>
+        control.Subscribe((ctrl, change, editor) =>
         {
             initialValueChangeNotified = true;
         }, ControlChange.InitialValue);
@@ -315,9 +315,9 @@ public class ControlEditorTests
         var initialValueNotificationCount = 0;
         var disabledNotificationCount = 0;
 
-        control.Subscribe((ctrl, change) => valueNotificationCount++, ControlChange.Value);
-        control.Subscribe((ctrl, change) => initialValueNotificationCount++, ControlChange.InitialValue);
-        control.Subscribe((ctrl, change) => disabledNotificationCount++, ControlChange.Disabled);
+        control.Subscribe((ctrl, change, editor) => valueNotificationCount++, ControlChange.Value);
+        control.Subscribe((ctrl, change, editor) => initialValueNotificationCount++, ControlChange.InitialValue);
+        control.Subscribe((ctrl, change, editor) => disabledNotificationCount++, ControlChange.Disabled);
 
         editor.RunInTransaction(() =>
         {

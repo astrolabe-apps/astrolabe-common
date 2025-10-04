@@ -133,11 +133,10 @@ public class ValidationTests
     public void Validate_Should_Trigger_Validation_Listeners()
     {
         var control = Control.Create("");
-        var editor = new ControlEditor();
         bool validationTriggered = false;
         
         // Subscribe to validation events
-        control.Subscribe((ctrl, change) =>
+        control.Subscribe((ctrl, change, editor) =>
         {
             if ((change & ControlChange.Validate) != 0)
             {
@@ -171,7 +170,6 @@ public class ValidationTests
             { "age", 25 }
         };
         var parent = Control.Create(parentData);
-        var editor = new ControlEditor();
         var validationOrder = new List<string>();
         
         // Access children
@@ -179,7 +177,7 @@ public class ValidationTests
         var ageControl = parent["age"]!;
         
         // Set up validation listeners
-        nameControl.Subscribe((ctrl, change) =>
+        nameControl.Subscribe((ctrl, change, editor) =>
         {
             if ((change & ControlChange.Validate) != 0)
             {
@@ -191,7 +189,7 @@ public class ValidationTests
             }
         }, ControlChange.Validate);
         
-        ageControl.Subscribe((ctrl, change) =>
+        ageControl.Subscribe((ctrl, change, editor) =>
         {
             if ((change & ControlChange.Validate) != 0)
             {
@@ -199,7 +197,7 @@ public class ValidationTests
             }
         }, ControlChange.Validate);
         
-        parent.Subscribe((ctrl, change) =>
+        parent.Subscribe((ctrl, change, editor) =>
         {
             if ((change & ControlChange.Validate) != 0)
             {
@@ -229,7 +227,7 @@ public class ValidationTests
         editor.SetError(control, "test", "Test error");
         
         // Subscribe to valid changes
-        control.Subscribe((ctrl, change) =>
+        control.Subscribe((ctrl, change, editor) =>
         {
             if ((change & ControlChange.Valid) != 0)
             {
@@ -254,7 +252,7 @@ public class ValidationTests
         editor.SetError(control, "test", "Test error");
         
         // Then subscribe
-        control.Subscribe((ctrl, change) =>
+        control.Subscribe((ctrl, change, editor) =>
         {
             if ((change & ControlChange.Valid) != 0)
             {

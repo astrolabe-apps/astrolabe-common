@@ -791,8 +791,12 @@ public class Control : IControl, IControlMutation
         var s = _subscriptions;
         if (s != null)
         {
-            var currentState = GetChangeState(s.Mask);
-            s.RunListeners(this, currentState);
+            var editor = new ControlEditor();
+            editor.RunInTransaction(() => 
+            {
+                var currentState = GetChangeState(s.Mask);
+                s.RunListeners(this, currentState, editor);
+            });
         }
     }
 
@@ -917,13 +921,18 @@ public class Control : IControl, IControlMutation
     }
 
     // Validation method implementation
-    public bool Validate()
+    public bool Validate(ControlEditor? editor = null)
     {
-        // First validate all children
-        WithChildren(child => child.Validate());
+        editor ??= new ControlEditor();
         
-        // Then run validation listeners for this control
-        _subscriptions?.RunMatchingListeners(this, ControlChange.Validate);
+        editor.RunInTransaction(() => 
+        {
+            // First validate all children
+            WithChildren(child => child.Validate(editor));
+            
+            // Then run validation listeners for this control
+            _subscriptions?.RunMatchingListeners(this, ControlChange.Validate, editor);
+        });
         
         // Return current validity state after validation
         return IsValid;

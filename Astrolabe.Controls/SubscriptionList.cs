@@ -26,7 +26,7 @@ internal class SubscriptionList
         _subscriptions.Remove(subscription);
     }
 
-    public void RunListeners(IControl control, ControlChange current)
+    public void RunListeners(IControl control, ControlChange current, ControlEditor editor)
     {
         var nextCurrent = current & _mask;
         var actualChange = (nextCurrent ^ _changeState);
@@ -34,18 +34,18 @@ internal class SubscriptionList
 
         if (actualChange != ControlChange.None)
         {
-            RunMatchingListeners(control, actualChange);
+            RunMatchingListeners(control, actualChange, editor);
         }
     }
 
-    public void RunMatchingListeners(IControl control, ControlChange mask)
+    public void RunMatchingListeners(IControl control, ControlChange mask, ControlEditor editor)
     {
         foreach (var subscription in _subscriptions)
         {
             var change = subscription.Mask & mask;
             if (change != ControlChange.None)
             {
-                subscription.Listener(control, change);
+                subscription.Listener(control, change, editor);
             }
         }
     }

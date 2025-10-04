@@ -64,7 +64,7 @@ public class ControlTests
         IControl? notifiedControl = null;
 
         var subscription = control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 changeNotified = true;
                 notifiedChange = change;
@@ -88,7 +88,7 @@ public class ControlTests
         var changeNotified = false;
 
         var subscription = control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 changeNotified = true;
             },
@@ -108,7 +108,7 @@ public class ControlTests
         var changeNotified = false;
 
         var subscription = control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 changeNotified = true;
             },
@@ -130,7 +130,7 @@ public class ControlTests
         var change2Notified = false;
 
         var subscription1 = control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 change1Notified = true;
             },
@@ -138,7 +138,7 @@ public class ControlTests
         );
 
         var subscription2 = control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 change2Notified = true;
             },
@@ -161,7 +161,7 @@ public class ControlTests
 
         // Subscribe only to Value changes
         var valueSubscription = control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 valueChangeNotified = true;
             },
@@ -170,7 +170,7 @@ public class ControlTests
 
         // Subscribe to all changes
         var allSubscription = control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 allChangeNotified = true;
             },
@@ -274,7 +274,7 @@ public class ControlTests
         ControlChange notifiedChange = ControlChange.None;
 
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 touchedChangeNotified = true;
                 notifiedChange = change;
@@ -320,7 +320,7 @@ public class ControlTests
 
         // Subscribe only to dirty changes
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 dirtyChangeReceived = (change & ControlChange.Dirty) != 0;
             },
@@ -329,7 +329,7 @@ public class ControlTests
 
         // Subscribe only to disabled changes
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 disabledChangeReceived = (change & ControlChange.Disabled) != 0;
             },
@@ -338,7 +338,7 @@ public class ControlTests
 
         // Subscribe only to value changes
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 valueChangeReceived = (change & ControlChange.Value) != 0;
             },
@@ -378,7 +378,7 @@ public class ControlTests
 
         // Subscribe to dirty changes
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 if ((change & ControlChange.Dirty) != 0)
                     dirtyChangeNotified = true;
@@ -388,7 +388,7 @@ public class ControlTests
 
         // Subscribe to value changes
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 if ((change & ControlChange.Value) != 0)
                     valueChangeNotified = true;
@@ -413,7 +413,7 @@ public class ControlTests
         ControlChange notifiedChange = ControlChange.None;
 
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 disabledChangeNotified = true;
                 notifiedChange = change;
@@ -461,7 +461,7 @@ public class ControlTests
         ControlChange notifiedChange = ControlChange.None;
 
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 errorChangeNotified = true;
                 notifiedChange = change;
@@ -515,7 +515,7 @@ public class ControlTests
         var errorChangeCount = 0;
 
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 if ((change & ControlChange.Error) != 0)
                     errorChangeCount++;
@@ -605,7 +605,7 @@ public class ControlTests
         editor.SetError(control, "required", "Value is required");
 
         control.Subscribe(
-            (ctrl, change) =>
+            (ctrl, change, editor) =>
             {
                 errorChangeNotified = true;
             },

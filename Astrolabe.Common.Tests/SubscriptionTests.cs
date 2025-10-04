@@ -9,7 +9,7 @@ public class SubscriptionTests
     public void Subscription_Should_Have_Correct_Mask()
     {
         var control = Control.Create();
-        var subscription = control.Subscribe((ctrl, change) => { }, ControlChange.Value | ControlChange.Valid);
+        var subscription = control.Subscribe((ctrl, change, editor) => { }, ControlChange.Value | ControlChange.Valid);
 
         Assert.Equal(ControlChange.Value | ControlChange.Valid, subscription.Mask);
     }
@@ -18,7 +18,7 @@ public class SubscriptionTests
     public void Subscription_Should_Store_Listener()
     {
         var control = Control.Create();
-        ChangeListenerFunc listener = (ctrl, change) => { };
+        ChangeListenerFunc listener = (ctrl, change, editor) => { };
         var subscription = control.Subscribe(listener, ControlChange.Value);
 
         Assert.Same(listener, subscription.Listener);
@@ -29,8 +29,8 @@ public class SubscriptionTests
     {
         var control = Control.Create();
 
-        var subscription1 = control.Subscribe((ctrl, change) => { }, ControlChange.Value);
-        var subscription2 = control.Subscribe((ctrl, change) => { }, ControlChange.Valid);
+        var subscription1 = control.Subscribe((ctrl, change, editor) => { }, ControlChange.Value);
+        var subscription2 = control.Subscribe((ctrl, change, editor) => { }, ControlChange.Valid);
 
         Assert.Equal(ControlChange.Value, subscription1.Mask);
         Assert.Equal(ControlChange.Valid, subscription2.Mask);
@@ -43,7 +43,7 @@ public class SubscriptionTests
         var editor = new ControlEditor();
         var changeNotified = false;
 
-        var subscription = control.Subscribe((ctrl, change) =>
+        var subscription = control.Subscribe((ctrl, change, editor) =>
         {
             changeNotified = true;
         }, ControlChange.Value);

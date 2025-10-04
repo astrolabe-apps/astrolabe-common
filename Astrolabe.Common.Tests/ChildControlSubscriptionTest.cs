@@ -19,7 +19,7 @@ public class ChildControlSubscriptionTest
         
         var childNotificationFired = false;
         
-        childControl.Subscribe((ctrl, change) => 
+        childControl.Subscribe((ctrl, change, editor) => 
         {
             childNotificationFired = true;
         }, ControlChange.Value);
@@ -44,7 +44,7 @@ public class ChildControlSubscriptionTest
         
         var elementNotificationFired = false;
         
-        elementControl.Subscribe((ctrl, change) => 
+        elementControl.Subscribe((ctrl, change, editor) => 
         {
             elementNotificationFired = true;
         }, ControlChange.Value);

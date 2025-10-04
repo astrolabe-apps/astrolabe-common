@@ -37,19 +37,19 @@ public class Subscriptions
         return _lists.Any(list => list.HasSubscriptions);
     }
 
-    public void RunListeners(IControl control, ControlChange current)
+    public void RunListeners(IControl control, ControlChange current, ControlEditor editor)
     {
         foreach (var list in _lists)
         {
-            list.RunListeners(control, current);
+            list.RunListeners(control, current, editor);
         }
     }
 
-    public void RunMatchingListeners(IControl control, ControlChange mask)
+    public void RunMatchingListeners(IControl control, ControlChange mask, ControlEditor editor)
     {
         foreach (var list in _lists)
         {
-            list.RunMatchingListeners(control, mask);
+            list.RunMatchingListeners(control, mask, editor);
         }
     }
 
