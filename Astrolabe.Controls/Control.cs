@@ -873,17 +873,13 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         return changed;
     }
 
-    void IControlMutation.RunListeners()
+    void IControlMutation.RunListeners(ControlEditor editor)
     {
         var s = _subscriptions;
         if (s != null)
         {
-            var editor = new ControlEditor();
-            editor.RunInTransaction(() =>
-            {
-                var currentState = GetChangeState(s.Mask);
-                s.RunListeners(this, currentState, editor);
-            });
+            var currentState = GetChangeState(s.Mask);
+            s.RunListeners(this, currentState, editor);
         }
     }
 

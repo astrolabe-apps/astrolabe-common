@@ -2,23 +2,40 @@ namespace Astrolabe.Controls;
 
 public class ControlEditor
 {
-    private int _transactionDepth = 0;
-    private readonly HashSet<IControl> _modifiedControls = new();
+    private int _transactionCount = 0;
+    private readonly List<IControl> _runListenerList = new();
+    private readonly List<Action> _afterChangesCallbacks = new();
 
     public void RunInTransaction(Action action)
     {
-        _transactionDepth++;
+        _transactionCount++;
         try
         {
             action();
         }
         finally
         {
-            _transactionDepth--;
-            if (_transactionDepth == 0)
+            _transactionCount--;
+            if (_transactionCount == 0)
             {
-                CommitChanges();
+                RunPendingChanges();
             }
+        }
+    }
+
+    /// <summary>
+    /// Runs the callback after all listeners have been notified in the current transaction.
+    /// </summary>
+    public void RunAfterChanges(Action callback)
+    {
+        _afterChangesCallbacks.Add(callback);
+    }
+
+    internal void AddToRunListenerList(IControl control)
+    {
+        if (!_runListenerList.Contains(control))
+        {
+            _runListenerList.Add(control);
         }
     }
 
@@ -29,7 +46,7 @@ public class ControlEditor
             if (control is not IControlMutation mutator) return;
             if (action(mutator))
             {
-                _modifiedControls.Add(control);
+                AddToRunListenerList(control);
             }
         });
     }
@@ -59,16 +76,45 @@ public class ControlEditor
         SetInitialValue(control, control.Value);
     }
 
-    private void CommitChanges()
+    private void RunPendingChanges()
     {
-        foreach (var control in _modifiedControls)
+        // Matches TypeScript runPendingChanges() logic
+        while (_transactionCount == 0 &&
+               (_afterChangesCallbacks.Count > 0 || _runListenerList.Count > 0))
         {
-            if (control is IControlMutation mutator)
+            try
             {
-                mutator.RunListeners();
+                _transactionCount++; // Prevent re-entry
+
+                if (_runListenerList.Count == 0)
+                {
+                    // Only callbacks left to run
+                    var callbacksToRun = _afterChangesCallbacks.ToList();
+                    _afterChangesCallbacks.Clear();
+                    foreach (var callback in callbacksToRun)
+                    {
+                        callback();
+                    }
+                }
+                else
+                {
+                    // Run listeners first
+                    var listenersToRun = _runListenerList.ToList();
+                    _runListenerList.Clear();
+                    foreach (var control in listenersToRun)
+                    {
+                        if (control is IControlMutation mutator)
+                        {
+                            mutator.RunListeners(this);
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                _transactionCount--;
             }
         }
-        _modifiedControls.Clear();
     }
 
     // Array/Object operations
@@ -141,7 +187,7 @@ public class ControlEditor
     // Internal method for validity change notifications
     internal void AddToModifiedControls(IControl control)
     {
-        _modifiedControls.Add(control);
+        AddToRunListenerList(control);
     }
 
     // Validation methods
