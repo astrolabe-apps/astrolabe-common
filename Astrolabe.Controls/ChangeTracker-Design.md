@@ -11,8 +11,7 @@ The `ChangeTracker` provides automatic dependency tracking for expression evalua
 3. **Fine-Grained Subscriptions**: Subscribe only to the specific properties that are accessed (Value, IsValid, etc.)
 4. **Simple API**: Minimal surface area focused on the core use case
 5. **Performance**: Efficient subscription management and change batching
-6. **Thread Safety**: Safe for concurrent access
-7. **Lifecycle Management**: Proper cleanup of subscriptions
+6. **Lifecycle Management**: Proper cleanup of subscriptions
 
 ## Architecture
 
@@ -117,43 +116,40 @@ public void UpdateSubscriptions(Action changedCallback)
 {
     _changeCallback = changedCallback;
 
-    lock (_lock)
+    // 1. Add or update subscriptions for tracked controls
+    foreach (var (control, changeMask) in _trackedAccess)
     {
-        // 1. Add or update subscriptions for tracked controls
-        foreach (var (control, changeMask) in _trackedAccess)
+        // Unsubscribe old subscription if mask changed
+        if (_subscriptions.TryGetValue(control, out var oldSub))
         {
-            // Unsubscribe old subscription if mask changed
-            if (_subscriptions.TryGetValue(control, out var oldSub))
+            if (oldSub.Mask != changeMask)
             {
-                if (oldSub.Mask != changeMask)
-                {
-                    oldSub.Unsubscribe();
-                    _subscriptions.Remove(control);
-                }
-                else
-                {
-                    continue; // Subscription unchanged
-                }
+                oldSub.Unsubscribe();
+                _subscriptions.Remove(control);
             }
-
-            // Subscribe with the tracked change mask
-            var subscription = control.Subscribe(OnControlChanged, changeMask);
-            _subscriptions[control] = subscription;
+            else
+            {
+                continue; // Subscription unchanged
+            }
         }
 
-        // 2. Remove subscriptions for no-longer-tracked controls
-        var toRemove = _subscriptions.Keys
-            .Where(c => !_trackedAccess.ContainsKey(c))
-            .ToList();
-        foreach (var control in toRemove)
-        {
-            _subscriptions[control].Unsubscribe();
-            _subscriptions.Remove(control);
-        }
-
-        // 3. Clear tracked access for next evaluation
-        _trackedAccess.Clear();
+        // Subscribe with the tracked change mask
+        var subscription = control.Subscribe(OnControlChanged, changeMask);
+        _subscriptions[control] = subscription;
     }
+
+    // 2. Remove subscriptions for no-longer-tracked controls
+    var toRemove = _subscriptions.Keys
+        .Where(c => !_trackedAccess.ContainsKey(c))
+        .ToList();
+    foreach (var control in toRemove)
+    {
+        _subscriptions[control].Unsubscribe();
+        _subscriptions.Remove(control);
+    }
+
+    // 3. Clear tracked access for next evaluation
+    _trackedAccess.Clear();
 }
 ```
 
@@ -184,43 +180,20 @@ private void OnControlChanged(IControl control, ControlChange changeType, Contro
 - **Safe**: Avoids re-entrancy issues during control mutations
 - **Precise**: Only triggers for changes matching the subscription mask
 
-### 4. Thread Safety
-
-**Locking Strategy**: Single lock (`_lock`) protects all mutable state
-**Critical Sections**:
-- Adding/removing tracked controls
-- Adding/removing subscriptions
-- Setting change callback
-
-```csharp
-private readonly object _lock = new();
-
-public void UpdateSubscriptions(Action changedCallback)
-{
-    lock (_lock)
-    {
-        // All subscription management here
-    }
-}
-```
-
-### 5. Lifecycle Management
+### 4. Lifecycle Management
 
 **IDisposable Implementation**:
 ```csharp
 public void Dispose()
 {
-    lock (_lock)
-    {
-        // Unsubscribe from all controls
-        foreach (var subscription in _subscriptions)
-            subscription.Unsubscribe();
+    // Unsubscribe from all controls
+    foreach (var subscription in _subscriptions.Values)
+        subscription.Unsubscribe();
 
-        // Clear all state
-        _subscriptions.Clear();
-        _trackedControls.Clear();
-        _changeCallback = null;
-    }
+    // Clear all state
+    _subscriptions.Clear();
+    _trackedAccess.Clear();
+    _changeCallback = null;
 }
 ```
 
@@ -370,7 +343,6 @@ greeting.ValueChanged += msg => Console.WriteLine(msg);
 - Dependency tracking accuracy
 - Subscription lifecycle management
 - Change notification timing
-- Thread safety under concurrent access
 - Memory leak prevention
 
 ### 2. Integration Tests
