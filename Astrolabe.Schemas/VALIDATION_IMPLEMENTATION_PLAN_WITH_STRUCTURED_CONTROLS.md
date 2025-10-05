@@ -4,8 +4,9 @@
 
 With the addition of structured control support to Astrolabe.Controls, we can now implement server-side validation using the same reactive pattern as the TypeScript implementation. This document outlines the implementation plan.
 
-## Key Achievement: Structured Controls
+## Key Achievements: Structured Controls + Computed Controls
 
+### 1. Structured Controls
 The `Control.CreateStructured<T>()` method and `Field()` extension method enable type-safe access to structured object properties:
 
 ```csharp
@@ -17,6 +18,27 @@ const visible = base.fields.visible; // Control<boolean | null>
 var baseCtrl = Control.CreateStructured(new FormStateBase { Visible = null, Readonly = false });
 var visible = baseCtrl.Field(x => x.Visible); // ITypedControl<bool?>
 ```
+
+### 2. Computed Controls (NEW!)
+The `Control.CreateComputed<T>()` method enables reactive derived values that automatically update when dependencies change:
+
+```csharp
+// TypeScript pattern:
+const fullName = useComputed(() => {
+  const first = firstName.value;
+  const last = lastName.value;
+  return `${first} ${last}`;
+});
+
+// C# equivalent (NOW POSSIBLE):
+var fullName = Control.CreateComputed(tracker => {
+    var first = tracker.Tracked(firstName).Value;
+    var last = tracker.Tracked(lastName).Value;
+    return $"{first} {last}";
+}, editor);
+```
+
+This primitive **eliminates** the need for manual `SetCallback()` + `UpdateSubscriptions()` boilerplate!
 
 ## Architecture Overview
 
@@ -58,8 +80,7 @@ public interface IFormStateNode
 
 public class FormStateNodeImpl : IFormStateNode
 {
-    private readonly ITypedControl<FormStateBase> _base;
-    private readonly ChangeTracker _tracker;
+    private readonly IStructuredControl<FormStateBase> _base;
     private readonly ControlEditor _editor;
     private readonly ISchemaInterface _schemaInterface;
     private readonly ExpressionEvaluationService _expressionEvaluator;
@@ -78,7 +99,6 @@ public class FormStateNodeImpl : IFormStateNode
         _schemaInterface = schemaInterface;
         _expressionEvaluator = expressionEvaluator;
         _editor = editor;
-        _tracker = new ChangeTracker();
 
         // Create structured control for reactive state
         _base = Control.CreateStructured(new FormStateBase
@@ -91,21 +111,21 @@ public class FormStateNodeImpl : IFormStateNode
             Children = new List<IFormStateNode>()
         });
 
-        // Setup reactive computations for dynamic properties
-        SetupReactiveVisibility();
-        SetupReactiveReadonly();
-        SetupReactiveDisabled();
+        // Make fields computed for dynamic properties using MakeComputed!
+        Control.MakeComputed(_base.Field(x => x.Visible), tracker => EvaluateVisibility(tracker), editor);
+        Control.MakeComputed(_base.Field(x => x.Readonly), tracker => EvaluateReadonly(tracker), editor);
+        Control.MakeComputed(_base.Field(x => x.Disabled), tracker => EvaluateDisabled(tracker), editor);
 
         // Resolve children after state is initialized
         ResolveChildren();
     }
 
-    // Properties read from tracked controls - creates reactive dependencies
-    public bool? Visible => _tracker.Tracked(_base.Field(x => x.Visible)).Value;
-    public bool Readonly => _tracker.Tracked(_base.Field(x => x.Readonly)).Value;
-    public bool Disabled => _tracker.Tracked(_base.Field(x => x.Disabled)).Value;
-    public SchemaDataNode? DataNode => _tracker.Tracked(_base.Field(x => x.DataNode)).Value;
-    public IReadOnlyList<IFormStateNode> Children => _tracker.Tracked(_base.Field(x => x.Children)).Value;
+    // Properties simply read from the structured control fields - no manual tracking needed!
+    public bool? Visible => _base.Field(x => x.Visible).Value;
+    public bool Readonly => _base.Field(x => x.Readonly).Value;
+    public bool Disabled => _base.Field(x => x.Disabled).Value;
+    public SchemaDataNode? DataNode => _base.Field(x => x.DataNode).Value;
+    public IReadOnlyList<IFormStateNode> Children => _base.Field(x => x.Children).Value;
 
     public string UniqueId => DataNode?.Control.UniqueId.ToString() ?? Guid.NewGuid().ToString();
     public SchemaDataNode Parent { get; }
@@ -113,28 +133,7 @@ public class FormStateNodeImpl : IFormStateNode
     public ControlDefinition Definition { get; }
     public bool Valid => DataNode?.Control.IsValid ?? true;
 
-    private void SetupReactiveVisibility()
-    {
-        _tracker.SetCallback(() =>
-        {
-            // Compute new visibility value
-            var newVisible = EvaluateVisibility();
-
-            // Update the visible field
-            var visibleField = _base.Field(x => x.Visible);
-            _editor.SetValue(visibleField, newVisible);
-
-            // Update subscriptions
-            _tracker.UpdateSubscriptions();
-        });
-
-        // Initial evaluation
-        var initialVisible = EvaluateVisibility();
-        _editor.SetValue(_base.Field(x => x.Visible), initialVisible);
-        _tracker.UpdateSubscriptions();
-    }
-
-    private bool? EvaluateVisibility()
+    private bool? EvaluateVisibility(ChangeTracker tracker)
     {
         var dynamicProp = Definition.Dynamic?
             .FirstOrDefault(x => x.Type == DynamicPropertyType.Visible.ToString());
@@ -147,28 +146,14 @@ public class FormStateNodeImpl : IFormStateNode
             Parent,
             _schemaInterface,
             _editor,
-            _tracker // Pass tracker for reactive evaluation
+            tracker // Tracker is passed automatically by MakeComputed
         );
 
         var result = _expressionEvaluator.Evaluate(dynamicProp.Expr, context);
         return !(bool)(result ?? false);
     }
 
-    private void SetupReactiveReadonly()
-    {
-        _tracker.SetCallback(() =>
-        {
-            var newReadonly = EvaluateReadonly();
-            _editor.SetValue(_base.Field(x => x.Readonly), newReadonly);
-            _tracker.UpdateSubscriptions();
-        });
-
-        var initialReadonly = EvaluateReadonly();
-        _editor.SetValue(_base.Field(x => x.Readonly), initialReadonly);
-        _tracker.UpdateSubscriptions();
-    }
-
-    private bool EvaluateReadonly()
+    private bool EvaluateReadonly(ChangeTracker tracker)
     {
         var dynamicProp = Definition.Dynamic?
             .FirstOrDefault(x => x.Type == DynamicPropertyType.Readonly.ToString());
@@ -176,26 +161,12 @@ public class FormStateNodeImpl : IFormStateNode
         if (dynamicProp?.Expr == null)
             return Definition.Readonly ?? false;
 
-        var context = new ExpressionEvaluationContext(Parent, _schemaInterface, _editor, _tracker);
+        var context = new ExpressionEvaluationContext(Parent, _schemaInterface, _editor, tracker);
         var result = _expressionEvaluator.Evaluate(dynamicProp.Expr, context);
         return (bool)(result ?? false);
     }
 
-    private void SetupReactiveDisabled()
-    {
-        _tracker.SetCallback(() =>
-        {
-            var newDisabled = EvaluateDisabled();
-            _editor.SetValue(_base.Field(x => x.Disabled), newDisabled);
-            _tracker.UpdateSubscriptions();
-        });
-
-        var initialDisabled = EvaluateDisabled();
-        _editor.SetValue(_base.Field(x => x.Disabled), initialDisabled);
-        _tracker.UpdateSubscriptions();
-    }
-
-    private bool EvaluateDisabled()
+    private bool EvaluateDisabled(ChangeTracker tracker)
     {
         var dynamicProp = Definition.Dynamic?
             .FirstOrDefault(x => x.Type == DynamicPropertyType.Disabled.ToString());
@@ -203,7 +174,7 @@ public class FormStateNodeImpl : IFormStateNode
         if (dynamicProp?.Expr == null)
             return Definition.Disabled ?? false;
 
-        var context = new ExpressionEvaluationContext(Parent, _schemaInterface, _editor, _tracker);
+        var context = new ExpressionEvaluationContext(Parent, _schemaInterface, _editor, tracker);
         var result = _expressionEvaluator.Evaluate(dynamicProp.Expr, context);
         return (bool)(result ?? false);
     }
@@ -553,21 +524,16 @@ createEffect(() => {
 });
 ```
 
-### C# (With Structured Controls)
+### C# (With Structured Controls + MakeComputed)
 ```csharp
 var baseCtrl = Control.CreateStructured(new FormStateBase { Visible = null, Readonly = false });
 var visibleField = baseCtrl.Field(x => x.Visible); // ITypedControl<bool?>
 
-// Reactive computation
-_tracker.SetCallback(() =>
-{
-    var newVisible = EvaluateVisibility();
-    _editor.SetValue(visibleField, newVisible);
-    _tracker.UpdateSubscriptions();
-});
+// Reactive computation using MakeComputed - even cleaner!
+Control.MakeComputed(visibleField, tracker => EvaluateVisibility(tracker), editor);
 ```
 
-**Nearly identical pattern!**
+**Even better than TypeScript - one line instead of a whole effect block!**
 
 ## Benefits
 

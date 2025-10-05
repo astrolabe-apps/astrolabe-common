@@ -338,4 +338,239 @@ public class ChangeTrackerTests
         editor.SetError(control, "test", "error");
         Assert.Equal(2, callbackCount);
     }
+
+    [Fact]
+    public void CreateComputed_Should_Compute_Initial_Value()
+    {
+        var firstName = Control.CreateTyped("John");
+        var lastName = Control.CreateTyped("Doe");
+        var editor = new ControlEditor();
+
+        var fullName = Control.CreateComputed(tracker =>
+        {
+            var first = tracker.Tracked(firstName).Value;
+            var last = tracker.Tracked(lastName).Value;
+            return $"{first} {last}";
+        }, editor);
+
+        Assert.Equal("John Doe", fullName.Value);
+    }
+
+    [Fact]
+    public void CreateComputed_Should_Update_When_Dependencies_Change()
+    {
+        var firstName = Control.CreateTyped("John");
+        var lastName = Control.CreateTyped("Doe");
+        var editor = new ControlEditor();
+
+        var fullName = Control.CreateComputed(tracker =>
+        {
+            var first = tracker.Tracked(firstName).Value;
+            var last = tracker.Tracked(lastName).Value;
+            return $"{first} {last}";
+        }, editor);
+
+        Assert.Equal("John Doe", fullName.Value);
+
+        // Change first name
+        editor.SetValue(firstName, "Jane");
+        Assert.Equal("Jane Doe", fullName.Value);
+
+        // Change last name
+        editor.SetValue(lastName, "Smith");
+        Assert.Equal("Jane Smith", fullName.Value);
+    }
+
+    [Fact]
+    public void CreateComputed_Should_Track_Multiple_Properties()
+    {
+        var control = Control.CreateTyped("test");
+        var editor = new ControlEditor();
+
+        var computed = Control.CreateComputed(tracker =>
+        {
+            var props = tracker.Tracked(control);
+            return $"{props.Value}:{props.IsDirty}:{props.IsTouched}";
+        }, editor);
+
+        Assert.Equal("test:False:False", computed.Value);
+
+        // Change value - affects both Value and IsDirty
+        editor.SetValue(control, "changed");
+        Assert.Equal("changed:True:False", computed.Value);
+
+        // Change touched
+        editor.SetTouched(control, true);
+        Assert.Equal("changed:True:True", computed.Value);
+    }
+
+    [Fact]
+    public void CreateComputed_Should_Work_With_Conditional_Dependencies()
+    {
+        var useFirstName = Control.CreateTyped(true);
+        var firstName = Control.CreateTyped("John");
+        var lastName = Control.CreateTyped("Doe");
+        var editor = new ControlEditor();
+
+        var displayName = Control.CreateComputed(tracker =>
+        {
+            var useFirst = tracker.Tracked(useFirstName).Value;
+            if (useFirst)
+            {
+                return tracker.Tracked(firstName).Value;
+            }
+            else
+            {
+                return tracker.Tracked(lastName).Value;
+            }
+        }, editor);
+
+        Assert.Equal("John", displayName.Value);
+
+        // Changing lastName shouldn't trigger update (not tracked)
+        editor.SetValue(lastName, "Smith");
+        Assert.Equal("John", displayName.Value);
+
+        // Switch to using lastName
+        editor.SetValue(useFirstName, false);
+        Assert.Equal("Smith", displayName.Value);
+
+        // Now changing firstName shouldn't trigger update
+        editor.SetValue(firstName, "Jane");
+        Assert.Equal("Smith", displayName.Value);
+
+        // Changing lastName should trigger update now
+        editor.SetValue(lastName, "Jones");
+        Assert.Equal("Jones", displayName.Value);
+    }
+
+    [Fact]
+    public void CreateComputed_Should_Support_Chained_Computations()
+    {
+        var firstName = Control.CreateTyped("John");
+        var lastName = Control.CreateTyped("Doe");
+        var editor = new ControlEditor();
+
+        var fullName = Control.CreateComputed(tracker =>
+        {
+            var first = tracker.Tracked(firstName).Value;
+            var last = tracker.Tracked(lastName).Value;
+            return $"{first} {last}";
+        }, editor);
+
+        var greeting = Control.CreateComputed(tracker =>
+        {
+            var name = tracker.Tracked(fullName).Value;
+            return $"Hello, {name}!";
+        }, editor);
+
+        Assert.Equal("Hello, John Doe!", greeting.Value);
+
+        editor.SetValue(firstName, "Jane");
+        Assert.Equal("Hello, Jane Doe!", greeting.Value);
+    }
+
+    [Fact]
+    public void MakeComputed_Should_Update_Existing_Control()
+    {
+        var firstName = Control.CreateTyped("John");
+        var target = Control.CreateTyped("initial");
+        var editor = new ControlEditor();
+
+        // Make target computed based on firstName
+        Control.MakeComputed(target, tracker =>
+        {
+            var name = tracker.Tracked(firstName).Value;
+            return name.ToUpper();
+        }, editor);
+
+        Assert.Equal("JOHN", target.Value);
+
+        editor.SetValue(firstName, "Jane");
+        Assert.Equal("JANE", target.Value);
+    }
+
+    [Fact]
+    public void MakeComputed_Should_Work_With_Structured_Control_Fields()
+    {
+        var condition = Control.CreateTyped(true);
+        var editor = new ControlEditor();
+
+        var baseCtrl = Control.CreateStructured(new { Visible = (bool?)null, Readonly = false });
+        var visibleField = baseCtrl.Field(x => x.Visible);
+
+        // Make the Visible field computed
+        Control.MakeComputed(visibleField, tracker =>
+        {
+            var cond = tracker.Tracked(condition).Value;
+            return cond ? true : (bool?)null;
+        }, editor);
+
+        Assert.True(visibleField.Value);
+
+        editor.SetValue(condition, false);
+        Assert.Null(visibleField.Value);
+    }
+
+    [Fact]
+    public void MakeComputed_Should_Track_Multiple_Dependencies()
+    {
+        var a = Control.CreateTyped(10);
+        var b = Control.CreateTyped(20);
+        var target = Control.CreateTyped(0);
+        var editor = new ControlEditor();
+
+        Control.MakeComputed(target, tracker =>
+        {
+            var valA = tracker.Tracked(a).Value;
+            var valB = tracker.Tracked(b).Value;
+            return valA + valB;
+        }, editor);
+
+        Assert.Equal(30, target.Value);
+
+        editor.SetValue(a, 15);
+        Assert.Equal(35, target.Value);
+
+        editor.SetValue(b, 25);
+        Assert.Equal(40, target.Value);
+    }
+
+    [Fact]
+    public void MakeComputed_Should_Allow_Overriding_Structured_Fields()
+    {
+        var userType = Control.CreateTyped("admin");
+        var editor = new ControlEditor();
+
+        var formState = Control.CreateStructured(new
+        {
+            Visible = true,
+            Readonly = false,
+            Message = ""
+        });
+
+        var readonlyField = formState.Field(x => x.Readonly);
+        var messageField = formState.Field(x => x.Message);
+
+        // Make readonly computed based on user type
+        Control.MakeComputed(readonlyField, tracker =>
+        {
+            var type = tracker.Tracked(userType).Value;
+            return type == "viewer";
+        }, editor);
+
+        // Make message computed based on readonly state
+        Control.MakeComputed(messageField, tracker =>
+        {
+            var isReadonly = tracker.Tracked(readonlyField).Value;
+            return isReadonly ? "Read-only mode" : "Edit mode";
+        }, editor);
+
+        Assert.False(readonlyField.Value);
+        Assert.Equal("Edit mode", messageField.Value);
+
+        editor.SetValue(userType, "viewer");
+        Assert.True(readonlyField.Value);
+        Assert.Equal("Read-only mode", messageField.Value);
+    }
 }

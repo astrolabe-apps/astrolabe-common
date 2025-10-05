@@ -339,6 +339,100 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         return control;
     }
 
+    /// <summary>
+    /// Creates a computed control whose value is automatically derived from other controls.
+    /// The compute function is called initially and whenever any tracked dependencies change.
+    /// </summary>
+    /// <typeparam name="T">The type of the computed value</typeparam>
+    /// <param name="compute">Function that computes the value, receiving a ChangeTracker to track dependencies</param>
+    /// <param name="editor">ControlEditor instance to use for updates</param>
+    /// <returns>A typed control that automatically updates when dependencies change</returns>
+    /// <example>
+    /// <code>
+    /// var firstName = Control.CreateTyped("John");
+    /// var lastName = Control.CreateTyped("Doe");
+    /// var editor = new ControlEditor();
+    ///
+    /// var fullName = Control.CreateComputed(tracker => {
+    ///     var first = tracker.Tracked(firstName).Value;
+    ///     var last = tracker.Tracked(lastName).Value;
+    ///     return $"{first} {last}";
+    /// }, editor);
+    ///
+    /// // fullName.Value is "John Doe"
+    /// editor.SetValue(firstName, "Jane");
+    /// // fullName.Value automatically becomes "Jane Doe"
+    /// </code>
+    /// </example>
+    public static ITypedControl<T> CreateComputed<T>(
+        Func<ChangeTracker, T> compute,
+        ControlEditor editor)
+    {
+        var tracker = new ChangeTracker();
+
+        // Initial computation
+        var initialValue = compute(tracker);
+        var control = new Control(initialValue, initialValue);
+
+        // Set up reactive callback
+        tracker.SetCallback(() =>
+        {
+            var newValue = compute(tracker);
+            editor.SetValue(control, newValue);
+            tracker.UpdateSubscriptions();
+        });
+
+        // Establish initial subscriptions
+        tracker.UpdateSubscriptions();
+
+        return control.AsTyped<T>();
+    }
+
+    /// <summary>
+    /// Makes an existing control computed by setting up a reactive computation that updates its value.
+    /// The compute function is called initially and whenever any tracked dependencies change.
+    /// This is useful for overriding fields in structured controls with computed values.
+    /// </summary>
+    /// <typeparam name="T">The type of the control value</typeparam>
+    /// <param name="control">The control to make computed</param>
+    /// <param name="compute">Function that computes the value, receiving a ChangeTracker to track dependencies</param>
+    /// <param name="editor">ControlEditor instance to use for updates</param>
+    /// <example>
+    /// <code>
+    /// var baseCtrl = Control.CreateStructured(new FormStateBase { Visible = null, Readonly = false });
+    /// var visibleField = baseCtrl.Field(x => x.Visible);
+    /// var editor = new ControlEditor();
+    ///
+    /// // Make the Visible field computed based on other controls
+    /// Control.MakeComputed(visibleField, tracker => {
+    ///     var someCondition = tracker.Tracked(otherControl).Value;
+    ///     return someCondition ? true : null;
+    /// }, editor);
+    ///
+    /// // Now visibleField.Value is automatically computed
+    /// </code>
+    /// </example>
+    public static void MakeComputed<T>(
+        ITypedControl<T> control,
+        Func<ChangeTracker, T> compute,
+        ControlEditor editor)
+    {
+        var tracker = new ChangeTracker();
+
+        // Set up reactive callback
+        tracker.SetCallback(() =>
+        {
+            var newValue = compute(tracker);
+            editor.SetValue(control, newValue);
+            tracker.UpdateSubscriptions();
+        });
+
+        // Initial computation and subscription setup
+        var initialValue = compute(tracker);
+        editor.SetValue(control, initialValue);
+        tracker.UpdateSubscriptions();
+    }
+
     public ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask)
     {
         _subscriptions ??= new Subscriptions();
