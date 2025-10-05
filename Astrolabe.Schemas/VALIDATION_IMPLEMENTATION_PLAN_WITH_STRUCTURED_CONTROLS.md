@@ -42,21 +42,64 @@ This primitive **eliminates** the need for manual `SetCallback()` + `UpdateSubsc
 
 ## Architecture Overview
 
-### 1. FormStateBase - Structured State Record
+### 1. ControlDefinition with Generic Dynamic Property System
+
+```csharp
+public class ControlDefinition
+{
+    // Static properties
+    public string? Type { get; set; }
+    public bool? Hidden { get; set; }
+    public bool? Readonly { get; set; }
+    public bool? Disabled { get; set; }
+    public string? Label { get; set; }
+    public string? Placeholder { get; set; }
+    // ... many more properties
+
+    // Generic dynamic property override system
+    // Key = property path (e.g., "visible", "label", "placeholder", "validators.0.minLength")
+    // Value = expression to evaluate for that property
+    public Dictionary<string, EntityExpression>? DynamicProperties { get; set; }
+}
+
+// Example usage in JSON:
+// {
+//   "type": "text",
+//   "label": "Email",
+//   "dynamicProperties": {
+//     "visible": { "type": "data", "field": "showEmail" },
+//     "label": { "type": "concat", "parts": ["Email for ", { "type": "data", "field": "userName" }] },
+//     "readonly": { "type": "dataMatch", "field": "userType", "match": "viewer" }
+//   }
+// }
+```
+
+### 2. FormStateBase - Mirrors ControlDefinition Structure
 
 ```csharp
 public record FormStateBase
 {
+    // Core reactive state
     public bool? Visible { get; set; }
     public bool Readonly { get; set; }
     public bool Disabled { get; set; }
     public SchemaDataNode? DataNode { get; set; }
     public ResolvedDefinition? Resolved { get; set; }
     public List<IFormStateNode> Children { get; set; } = new();
+
+    // Mirror ANY ControlDefinition property that can be overridden dynamically
+    public string? Label { get; set; }
+    public string? Placeholder { get; set; }
+    public string? HelpText { get; set; }
+    public int? MaxLength { get; set; }
+    // ... etc - just add properties from ControlDefinition as needed
 }
 ```
 
-### 2. FormStateNode Implementation - Reactive Pattern
+**The Magic**: FormStateBase properties + ControlDefinition.DynamicProperties + MakeComputed =
+**Zero-code reactive property system!**
+
+### 3. FormStateNode Implementation - Generic Reactive Property Binding
 
 ```csharp
 public interface IFormStateNode
@@ -111,10 +154,15 @@ public class FormStateNodeImpl : IFormStateNode
             Children = new List<IFormStateNode>()
         });
 
-        // Make fields computed for dynamic properties using MakeComputed!
-        Control.MakeComputed(_base.Field(x => x.Visible), tracker => EvaluateVisibility(tracker), editor);
-        Control.MakeComputed(_base.Field(x => x.Readonly), tracker => EvaluateReadonly(tracker), editor);
-        Control.MakeComputed(_base.Field(x => x.Disabled), tracker => EvaluateDisabled(tracker), editor);
+        // GENERIC DYNAMIC PROPERTY BINDING!
+        // Loop through DynamicProperties and automatically wire up MakeComputed for each
+        if (definition.DynamicProperties != null)
+        {
+            foreach (var (propertyPath, expression) in definition.DynamicProperties)
+            {
+                ApplyDynamicProperty(propertyPath, expression);
+            }
+        }
 
         // Resolve children after state is initialized
         ResolveChildren();
@@ -166,17 +214,88 @@ public class FormStateNodeImpl : IFormStateNode
         return (bool)(result ?? false);
     }
 
-    private bool EvaluateDisabled(ChangeTracker tracker)
+    // GENERIC DYNAMIC PROPERTY SYSTEM
+    // This method uses reflection to find the matching FormStateBase property
+    // and automatically wire up MakeComputed - NO CODE CHANGES needed for new properties!
+    private void ApplyDynamicProperty(string propertyPath, EntityExpression expression)
     {
-        var dynamicProp = Definition.Dynamic?
-            .FirstOrDefault(x => x.Type == DynamicPropertyType.Disabled.ToString());
+        // Use reflection to get the property from FormStateBase
+        var propInfo = typeof(FormStateBase).GetProperty(
+            ToPascalCase(propertyPath),
+            BindingFlags.Public | BindingFlags.Instance
+        );
 
-        if (dynamicProp?.Expr == null)
-            return Definition.Disabled ?? false;
+        if (propInfo == null)
+        {
+            // Property not in FormStateBase - skip it
+            return;
+        }
 
-        var context = new ExpressionEvaluationContext(Parent, _schemaInterface, _editor, tracker);
-        var result = _expressionEvaluator.Evaluate(dynamicProp.Expr, context);
-        return (bool)(result ?? false);
+        // Get the field control using reflection-based Field() lookup
+        var fieldControl = GetFieldControl(propInfo);
+
+        if (fieldControl == null)
+            return;
+
+        // Use MakeComputed with a generic evaluator function
+        MakeComputedGeneric(fieldControl, propInfo.PropertyType, tracker =>
+        {
+            var context = new ExpressionEvaluationContext(Parent, _schemaInterface, _editor, tracker);
+            var result = _expressionEvaluator.Evaluate(expression, context);
+
+            // Fallback to static property value if expression returns null
+            if (result == null)
+            {
+                return GetStaticPropertyValue(propertyPath);
+            }
+
+            return result;
+        });
+    }
+
+    private object? GetFieldControl(PropertyInfo propInfo)
+    {
+        // Call _base.Field(x => x.PropertyName) via reflection
+        // This gets us the ITypedControl for the property
+        var fieldMethod = typeof(StructuredControlExtensions)
+            .GetMethod(nameof(StructuredControlExtensions.Field))
+            .MakeGenericMethod(typeof(FormStateBase), propInfo.PropertyType);
+
+        var parameter = Expression.Parameter(typeof(FormStateBase), "x");
+        var propertyAccess = Expression.Property(parameter, propInfo);
+        var lambda = Expression.Lambda(propertyAccess, parameter);
+
+        return fieldMethod.Invoke(null, new object[] { _base, lambda });
+    }
+
+    private void MakeComputedGeneric(object fieldControl, Type propertyType, Func<ChangeTracker, object?> compute)
+    {
+        // Call Control.MakeComputed<T>(fieldControl, compute, editor) via reflection
+        var makeComputedMethod = typeof(Control)
+            .GetMethod(nameof(Control.MakeComputed))
+            .MakeGenericMethod(propertyType);
+
+        Func<ChangeTracker, object?> typedCompute = tracker => compute(tracker);
+        makeComputedMethod.Invoke(null, new object[] { fieldControl, typedCompute, _editor });
+    }
+
+    private object? GetStaticPropertyValue(string propertyPath)
+    {
+        // Get the static value from the ControlDefinition for this property path
+        var propInfo = typeof(ControlDefinition).GetProperty(
+            ToPascalCase(propertyPath),
+            BindingFlags.Public | BindingFlags.Instance
+        );
+
+        return propInfo?.GetValue(Definition);
+    }
+
+    private string ToPascalCase(string str)
+    {
+        if (string.IsNullOrEmpty(str))
+            return str;
+
+        return char.ToUpper(str[0]) + str.Substring(1);
     }
 
     private void ResolveChildren()
@@ -544,6 +663,10 @@ Control.MakeComputed(visibleField, tracker => EvaluateVisibility(tracker), edito
 5. ✅ **Structured State**: Clean record-based state management
 6. ✅ **Expression Evaluation**: Dynamic properties evaluated with reactive tracking
 7. ✅ **Nested Validation**: Recursive validation respecting visibility rules
+8. ✅ **Extensibility**: Any ControlDefinition property can be made reactive by:
+   - Adding it to `FormStateBase` record
+   - Adding one line: `Control.MakeComputed(_base.Field(x => x.NewProp), tracker => Evaluate(tracker), editor)`
+   - Exposing it as a property on `IFormStateNode`
 
 ## Implementation Phases
 
