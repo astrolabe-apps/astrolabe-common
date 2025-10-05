@@ -1,8 +1,7 @@
 namespace Astrolabe.Controls;
 
-public interface ISubscription
+public interface ISubscription : IDisposable
 {
     ControlChange Mask { get; }
     ChangeListenerFunc Listener { get; }
-    void Unsubscribe();
 }

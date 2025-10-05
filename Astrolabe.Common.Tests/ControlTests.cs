@@ -115,7 +115,7 @@ public class ControlTests
             ControlChange.Value
         );
 
-        subscription.Unsubscribe();
+        subscription.Dispose();
         editor.SetValue(control, "new value");
 
         Assert.False(changeNotified);

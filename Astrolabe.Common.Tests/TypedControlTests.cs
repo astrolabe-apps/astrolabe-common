@@ -94,7 +94,7 @@ public class TypedControlTests
         var callCount = 0;
         string? capturedValue = null;
 
-        var subscription = typedControl.Subscribe(
+        var subscription = typedControl.UnderlyingControl.Subscribe(
             (ctrl, change, editor) =>
             {
                 callCount++;
@@ -109,7 +109,7 @@ public class TypedControlTests
         Assert.Equal(1, callCount);
         Assert.Equal("changed", capturedValue);
 
-        typedControl.Unsubscribe(subscription);
+        subscription.Dispose();
     }
 
     [Fact]
@@ -174,7 +174,7 @@ public class TypedControlTests
         var typedControl = control.AsTyped<string>();
         var notifications = 0;
 
-        typedControl.Subscribe(
+        typedControl.UnderlyingControl.Subscribe(
             (ctrl, change, editor) => notifications++,
             ControlChange.Value
         );

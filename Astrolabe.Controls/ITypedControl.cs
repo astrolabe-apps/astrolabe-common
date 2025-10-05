@@ -9,7 +9,9 @@ public interface ITypedControl<out T> : IControlProperties<T>
 {
     int UniqueId { get; }
 
-    // Subscriptions - uses same listener as IControl since you already have the typed control
-    ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask);
-    void Unsubscribe(ISubscription subscription);
+    /// <summary>
+    /// Gets the underlying untyped control for subscription handling.
+    /// Use this to subscribe/unsubscribe to control changes.
+    /// </summary>
+    IControl UnderlyingControl { get; }
 }

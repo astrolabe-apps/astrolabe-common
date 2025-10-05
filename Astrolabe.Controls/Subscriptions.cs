@@ -24,14 +24,6 @@ public class Subscriptions
         return list.Add(listener, mask);
     }
 
-    public void Unsubscribe(ISubscription subscription)
-    {
-        if (subscription is Subscription sub)
-        {
-            sub.ParentList.Remove(subscription);
-        }
-    }
-
     public bool HasSubscriptions()
     {
         return _lists.Any(list => list.HasSubscriptions);

@@ -24,6 +24,9 @@ public interface IControl : ITypedControl<object?>
     /// </summary>
     ITypedControl<T> AsTyped<T>();
 
+    // Subscription method on IControl for convenience
+    ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask);
+
     // Deep equality comparison for control values
     static bool IsEqual(object? left, object? right)
     {

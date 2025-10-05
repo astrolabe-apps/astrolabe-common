@@ -37,7 +37,7 @@ public class SubscriptionTests
     }
 
     [Fact]
-    public void Unsubscribe_Via_Control_Should_Work()
+    public void Unsubscribe_Via_Dispose_Should_Work()
     {
         var control = Control.Create();
         var editor = new ControlEditor();
@@ -48,7 +48,7 @@ public class SubscriptionTests
             changeNotified = true;
         }, ControlChange.Value);
 
-        control.Unsubscribe(subscription);
+        subscription.Dispose();
         editor.SetValue(control, "new value");
 
         Assert.False(changeNotified);

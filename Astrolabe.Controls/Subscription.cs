@@ -13,5 +13,5 @@ internal class Subscription : ISubscription
         ParentList = parentList;
     }
 
-    public void Unsubscribe() => ParentList.Remove(this);
+    public void Dispose() => ParentList.Remove(this);
 }

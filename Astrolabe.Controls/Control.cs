@@ -29,6 +29,8 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
 
     public int UniqueId { get; } = Interlocked.Increment(ref _nextId);
 
+    public IControl UnderlyingControl => this;
+
     public object? Value
     {
         get
@@ -279,11 +281,6 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     {
         _subscriptions ??= new Subscriptions();
         return _subscriptions.Subscribe(listener, GetChangeState(mask), mask);
-    }
-
-    public void Unsubscribe(ISubscription subscription)
-    {
-        _subscriptions?.Unsubscribe(subscription);
     }
 
     public ITypedControl<T> AsTyped<T>()
@@ -1076,16 +1073,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
 
         public IReadOnlyDictionary<string, string> Errors => control.Errors;
 
-        public ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask)
-        {
-            // Delegate directly to underlying control
-            return control.Subscribe(listener, mask);
-        }
-
-        public void Unsubscribe(ISubscription subscription)
-        {
-            control.Unsubscribe(subscription);
-        }
+        public IControl UnderlyingControl => control;
     }
 }
 
