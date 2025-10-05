@@ -2,10 +2,8 @@ using System.Collections;
 
 namespace Astrolabe.Controls;
 
-public interface IControl : IControlProperties<object?>
+public interface IControl : ITypedControl<object?>
 {
-    int UniqueId { get; }
-
     // Type detection
     bool IsArray { get; }
     bool IsObject { get; }
@@ -20,9 +18,11 @@ public interface IControl : IControlProperties<object?>
     IEnumerable<string> FieldNames { get; }
     IReadOnlyList<IControl> Elements { get; }
 
-    // Subscription methods
-    ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask);
-    void Unsubscribe(ISubscription subscription);
+    /// <summary>
+    /// Returns a typed view of this control. Use this when you know the control's value type.
+    /// Throws InvalidCastException if the control's value cannot be cast to T.
+    /// </summary>
+    ITypedControl<T> AsTyped<T>();
 
     // Deep equality comparison for control values
     static bool IsEqual(object? left, object? right)

@@ -286,6 +286,23 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         _subscriptions?.Unsubscribe(subscription);
     }
 
+    public ITypedControl<T> AsTyped<T>()
+    {
+        // Allow null and undefined for any T
+        if (Value == null || Value is UndefinedValue)
+            return new TypedControlView<T>(this);
+
+        // Check if value is compatible with T
+        if (Value is not T)
+        {
+            throw new InvalidCastException(
+                $"Cannot cast control value of type {Value.GetType().Name} to {typeof(T).Name}"
+            );
+        }
+
+        return new TypedControlView<T>(this);
+    }
+
     private ControlChange GetChangeState(ControlChange mask)
     {
         ControlChange changeFlags = ControlChange.None;
@@ -1038,6 +1055,37 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
                 return false;
         }
         return true;
+    }
+
+    // Typed control view wrapper
+    private class TypedControlView<T>(Control control) : ITypedControl<T>
+    {
+        public int UniqueId => control.UniqueId;
+
+        public T Value => (T)control.Value!;
+        public T InitialValue => (T)control.InitialValue!;
+
+        public bool IsDirty => control.IsDirty;
+        public bool IsDisabled => control.IsDisabled;
+        public bool IsTouched => control.IsTouched;
+        public bool IsValid => control.IsValid;
+
+        // Explicitly implement IsUndefined to check underlying control's value
+        // (avoids trying to cast UndefinedValue to T)
+        public bool IsUndefined => control.Value is UndefinedValue;
+
+        public IReadOnlyDictionary<string, string> Errors => control.Errors;
+
+        public ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask)
+        {
+            // Delegate directly to underlying control
+            return control.Subscribe(listener, mask);
+        }
+
+        public void Unsubscribe(ISubscription subscription)
+        {
+            control.Unsubscribe(subscription);
+        }
     }
 }
 
