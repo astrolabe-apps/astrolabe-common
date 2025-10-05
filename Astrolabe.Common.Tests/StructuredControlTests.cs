@@ -30,7 +30,7 @@ public class StructuredControlTests
 
         // Assert
         Assert.NotNull(control);
-        Assert.IsAssignableFrom<ITypedControl<SimpleData>>(control);
+        Assert.IsAssignableFrom<IStructuredControl<SimpleData>>(control);
 
         // Should be able to access underlying control
         var underlyingControl = control.UnderlyingControl;

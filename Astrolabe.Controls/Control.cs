@@ -269,7 +269,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     /// <typeparam name="T">The type of the structured object</typeparam>
     /// <param name="initialValue">The initial value object</param>
     /// <param name="dontClearError">If true, errors won't be cleared when value changes</param>
-    /// <returns>A typed control wrapping the structured object with accessible child controls</returns>
+    /// <returns>A structured control with accessible child controls via Field() extension</returns>
     /// <example>
     /// <code>
     /// record FormState(bool? Visible, bool Readonly);
@@ -277,14 +277,13 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     /// var visibleControl = control.Field(x => x.Visible); // Access child control
     /// </code>
     /// </example>
-    public static ITypedControl<T> CreateStructured<T>(T initialValue, bool dontClearError = false)
+    public static IStructuredControl<T> CreateStructured<T>(T initialValue, bool dontClearError = false)
         where T : class
     {
         // Convert the structured object to a dictionary for internal storage
         var dict = ObjectToDictionary(initialValue);
         var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
         var control = new Control(dict, dict, flags);
-        // Use StructuredControlView instead of AsTyped since the value is a Dictionary
         return new StructuredControlView<T>(control);
     }
 
@@ -1133,25 +1132,17 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
 
     // Structured control view wrapper - for controls created with CreateStructured
     // The value is stored as Dictionary<string, object?> internally, so we don't expose Value/InitialValue
-    private class StructuredControlView<T>(Control control) : ITypedControl<T>
+    private class StructuredControlView<T>(Control control) : IStructuredControl<T>
+        where T : class
     {
         public int UniqueId => control.UniqueId;
-
-        // Structured controls store values as Dictionary - accessing Value/InitialValue would throw
-        // Users should access child controls via Field() extension method instead
-        public T Value => throw new InvalidOperationException(
-            $"Cannot access Value on structured control of type {typeof(T).Name}. " +
-            "Use the Field() extension method to access individual fields.");
-
-        public T InitialValue => throw new InvalidOperationException(
-            $"Cannot access InitialValue on structured control of type {typeof(T).Name}. " +
-            "Use the Field() extension method to access individual fields.");
 
         public bool IsDirty => control.IsDirty;
         public bool IsDisabled => control.IsDisabled;
         public bool IsTouched => control.IsTouched;
         public bool IsValid => control.IsValid;
         public bool IsUndefined => control.Value is UndefinedValue;
+        public bool HasErrors => control.HasErrors;
 
         public IReadOnlyDictionary<string, string> Errors => control.Errors;
 

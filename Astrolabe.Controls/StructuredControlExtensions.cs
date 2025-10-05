@@ -28,8 +28,9 @@ public static class StructuredControlExtensions
     /// </code>
     /// </example>
     public static ITypedControl<TField> Field<T, TField>(
-        this ITypedControl<T> control,
+        this IStructuredControl<T> control,
         Expression<Func<T, TField>> fieldSelector)
+        where T : class
     {
         var propertyName = GetPropertyName(fieldSelector);
         var childControl = control.UnderlyingControl[propertyName];
