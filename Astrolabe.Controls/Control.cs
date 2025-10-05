@@ -5,7 +5,7 @@ namespace Astrolabe.Controls;
 public class Control(object? value, object? initialValue, ControlFlags flags = ControlFlags.None)
     : IControl, IControlMutation
 {
-    private static int _nextId = 1;
+    private static int NextId = 1;
     private object? _value = value;
     private object? _initialValue = initialValue;
     private ControlFlags _flags = flags;
@@ -27,7 +27,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         string
     >().AsReadOnly();
 
-    public int UniqueId { get; } = Interlocked.Increment(ref _nextId);
+    public int UniqueId { get; } = Interlocked.Increment(ref NextId);
 
     public IControl UnderlyingControl => this;
 
@@ -103,7 +103,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
             _flags |= ControlFlags.ValueMutable;
         }
 
-        if (InternalValue is System.Collections.IList list)
+        if (InternalValue is IList list)
         {
             list.Add(value);
 
@@ -250,6 +250,16 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     {
         var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
         return new Control(initialValue, initialValue, flags);
+    }
+
+    /// <summary>
+    /// Creates a new control with a typed value, returning a typed control wrapper.
+    /// </summary>
+    public static ITypedControl<T> CreateTyped<T>(T? initialValue = default, bool dontClearError = false)
+    {
+        var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
+        var control = new Control(initialValue, initialValue, flags);
+        return control.AsTyped<T>();
     }
 
     // Generic factory method with automatic validator setup
@@ -421,11 +431,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         {
             _cachedChildInvalidity = null;
 
-            // Let ControlEditor handle notifications through transaction system
-            if (this is IControlMutation mutation)
-            {
-                editor.AddToModifiedControls(this);
-            }
+            editor.AddToModifiedControls(this);
 
             // Propagate up to parents
             NotifyParentsOfValidityChange(editor, hasErrors);

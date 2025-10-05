@@ -56,9 +56,25 @@ public class ControlEditor
         RunWithMutator(control, x => x.SetValueInternal(this, value));
     }
 
+    /// <summary>
+    /// Sets the value of a typed control.
+    /// </summary>
+    public void SetValue<T>(ITypedControl<T> control, T value)
+    {
+        SetValue(control.UnderlyingControl, value);
+    }
+
     public void SetInitialValue(IControl control, object? initialValue)
     {
         RunWithMutator(control, x => x.SetInitialValueInternal(this, initialValue));
+    }
+
+    /// <summary>
+    /// Sets the initial value of a typed control.
+    /// </summary>
+    public void SetInitialValue<T>(ITypedControl<T> control, T initialValue)
+    {
+        SetInitialValue(control.UnderlyingControl, initialValue);
     }
 
     public void SetDisabled(IControl control, bool disabled)
@@ -66,14 +82,38 @@ public class ControlEditor
         RunWithMutator(control, x => x.SetDisabledInternal(this, disabled));
     }
 
+    /// <summary>
+    /// Sets the disabled state of a typed control.
+    /// </summary>
+    public void SetDisabled<T>(ITypedControl<T> control, bool disabled)
+    {
+        SetDisabled(control.UnderlyingControl, disabled);
+    }
+
     public void SetTouched(IControl control, bool touched)
     {
         RunWithMutator(control, x => x.SetTouchedInternal(this, touched));
     }
 
+    /// <summary>
+    /// Sets the touched state of a typed control.
+    /// </summary>
+    public void SetTouched<T>(ITypedControl<T> control, bool touched)
+    {
+        SetTouched(control.UnderlyingControl, touched);
+    }
+
     public void MarkAsClean(IControl control)
     {
         SetInitialValue(control, control.Value);
+    }
+
+    /// <summary>
+    /// Marks a typed control as clean by setting its initial value to the current value.
+    /// </summary>
+    public void MarkAsClean<T>(ITypedControl<T> control)
+    {
+        SetInitialValue(control.UnderlyingControl, control.Value);
     }
 
     private void RunPendingChanges()
@@ -174,14 +214,38 @@ public class ControlEditor
         RunWithMutator(control, x => x.SetErrorsInternal(this, errors));
     }
 
+    /// <summary>
+    /// Sets all errors for a typed control.
+    /// </summary>
+    public void SetErrors<T>(ITypedControl<T> control, IDictionary<string, string> errors)
+    {
+        SetErrors(control.UnderlyingControl, errors);
+    }
+
     public void SetError(IControl control, string key, string? message)
     {
         RunWithMutator(control, x => x.SetErrorInternal(this, key, message));
     }
 
+    /// <summary>
+    /// Sets a single error for a typed control.
+    /// </summary>
+    public void SetError<T>(ITypedControl<T> control, string key, string? message)
+    {
+        SetError(control.UnderlyingControl, key, message);
+    }
+
     public void ClearErrors(IControl control)
     {
         RunWithMutator(control, x => x.ClearErrorsInternal(this));
+    }
+
+    /// <summary>
+    /// Clears all errors for a typed control.
+    /// </summary>
+    public void ClearErrors<T>(ITypedControl<T> control)
+    {
+        ClearErrors(control.UnderlyingControl);
     }
 
     // Internal method for validity change notifications
@@ -204,5 +268,13 @@ public class ControlEditor
             }
         });
         return control.IsValid;
+    }
+
+    /// <summary>
+    /// Validates a typed control and all its children
+    /// </summary>
+    public bool Validate<T>(ITypedControl<T> control)
+    {
+        return Validate(control.UnderlyingControl);
     }
 }
