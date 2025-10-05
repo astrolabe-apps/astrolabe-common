@@ -21,7 +21,8 @@ The `ChangeTracker` provides automatic dependency tracking for expression evalua
 public class ChangeTracker : IDisposable
 {
     public IControlProperties<T> Tracked<T>(ITypedControl<T> control);
-    public void UpdateSubscriptions(Action changedCallback);
+    public void SetCallback(Action callback);
+    public void UpdateSubscriptions();
     public void Dispose();
 }
 
@@ -44,20 +45,24 @@ public interface IControlProperties<out T>
 // 1. Create tracker
 var tracker = new ChangeTracker();
 
-// 2. Wrap controls with tracking proxies and compute result
+// 2. Set up change callback
+tracker.SetCallback(() => {
+    // Re-evaluate when any tracked properties change
+    var newResult = $"{nameTracked.Value} is {ageTracked.Value} years old";
+    Console.WriteLine(newResult);
+
+    // Update subscriptions based on what was accessed
+    tracker.UpdateSubscriptions();
+});
+
+// 3. Initial evaluation - wrap controls with tracking proxies
 var nameTracked = tracker.Tracked(nameControl);
 var ageTracked = tracker.Tracked(ageControl);
 
 var result = $"{nameTracked.Value} is {ageTracked.Value} years old";
 
-// 3. Set up change callback and establish subscriptions
-tracker.UpdateSubscriptions(() => {
-    // Re-evaluate when any tracked properties change
-    var newResult = $"{nameTracked.Value} is {ageTracked.Value} years old";
-
-    // Update UI, cache, etc.
-    Console.WriteLine(newResult);
-});
+// 4. Establish subscriptions based on what was tracked
+tracker.UpdateSubscriptions();
 
 // The tracker now subscribes only to Value changes on nameControl and ageControl
 ```
@@ -112,19 +117,22 @@ internal class TrackedControlProxy<T> : IControlProperties<T>
 
 **Algorithm**:
 ```csharp
-public void UpdateSubscriptions(Action changedCallback)
+public void SetCallback(Action callback)
 {
-    _changeCallback = changedCallback;
+    _changeCallback = callback;
+}
 
+public void UpdateSubscriptions()
+{
     // 1. Add or update subscriptions for tracked controls
     foreach (var (control, changeMask) in _trackedAccess)
     {
-        // Unsubscribe old subscription if mask changed
+        // Dispose old subscription if mask changed
         if (_subscriptions.TryGetValue(control, out var oldSub))
         {
             if (oldSub.Mask != changeMask)
             {
-                oldSub.Unsubscribe();
+                oldSub.Dispose();
                 _subscriptions.Remove(control);
             }
             else
@@ -144,7 +152,7 @@ public void UpdateSubscriptions(Action changedCallback)
         .ToList();
     foreach (var control in toRemove)
     {
-        _subscriptions[control].Unsubscribe();
+        _subscriptions[control].Dispose();
         _subscriptions.Remove(control);
     }
 
@@ -186,9 +194,9 @@ private void OnControlChanged(IControl control, ControlChange changeType, Contro
 ```csharp
 public void Dispose()
 {
-    // Unsubscribe from all controls
+    // Dispose all subscriptions
     foreach (var subscription in _subscriptions.Values)
-        subscription.Unsubscribe();
+        subscription.Dispose();
 
     // Clear all state
     _subscriptions.Clear();
@@ -199,110 +207,97 @@ public void Dispose()
 
 ## Usage Scenarios
 
-### 1. Expression Evaluator
+### Creating Computed ITypedControl
+
+The primary use case for `ChangeTracker` is creating computed controls that automatically update when their dependencies change.
 
 ```csharp
-public class ExpressionEvaluator<T>
+public static class TypedControlExtensions
 {
-    private readonly ChangeTracker _tracker = new();
-    private readonly Func<T> _expression;
-    private T _value;
-
-    public ExpressionEvaluator(Func<T> expression)
+    /// <summary>
+    /// Creates a computed ITypedControl that automatically updates when dependencies change.
+    /// </summary>
+    public static ITypedControl<T> CreateComputed<T>(
+        Func<ChangeTracker, T> computation,
+        T? initialValue = default)
     {
-        _expression = expression;
+        var tracker = new ChangeTracker();
+        var control = Control.Create(initialValue);
+        var editor = new ControlEditor();
+
+        // Set up the callback that will re-evaluate and update subscriptions
+        tracker.SetCallback(() => {
+            var value = computation(tracker);
+            editor.SetValue(control, value);
+            // Update subscriptions based on what was accessed during this evaluation
+            tracker.UpdateSubscriptions();
+        });
 
         // Initial evaluation to discover dependencies
-        _value = _expression();
+        var initialValue = computation(tracker);
+        editor.SetValue(control, initialValue);
 
-        // Set up reactive updates
-        _tracker.UpdateSubscriptions(() => {
-            var newValue = _expression();
-            if (!EqualityComparer<T>.Default.Equals(_value, newValue))
-            {
-                _value = newValue;
-                ValueChanged?.Invoke(newValue);
-            }
-        });
+        // Establish initial subscriptions
+        tracker.UpdateSubscriptions();
+
+        return control.AsTyped<T>();
     }
-
-    public T Value => _value;
-    public event Action<T>? ValueChanged;
 }
 
-// Usage
-var xTracked = tracker.Tracked(xControl);
-var yTracked = tracker.Tracked(yControl);
+// Example 1: Simple computed value
+var firstName = Control.Create("John");
+var lastName = Control.Create("Doe");
 
-var evaluator = new ExpressionEvaluator<int>(() =>
-    xTracked.Value + yTracked.Value
-);
-
-evaluator.ValueChanged += sum => Console.WriteLine($"Sum: {sum}");
-```
-
-### 2. Conditional UI Updates
-
-```csharp
-var tracker = new ChangeTracker();
-
-var roleTracked = tracker.Tracked(roleControl);
-var formTracked = tracker.Tracked(formControl);
-
-// Initial evaluation
-bool shouldShow = roleTracked.Value == "admin" && formTracked.IsValid;
-adminPanel.Visible = shouldShow;
-
-// Set up reactive updates
-tracker.UpdateSubscriptions(() => {
-    var newShouldShow = roleTracked.Value == "admin" && formTracked.IsValid;
-    adminPanel.Visible = newShouldShow;
+var fullName = TypedControlExtensions.CreateComputed<string>(tracker => {
+    var first = tracker.Tracked(firstName.AsTyped<string>()).Value;
+    var last = tracker.Tracked(lastName.AsTyped<string>()).Value;
+    return $"{first} {last}";
 });
 
-// Tracker now subscribes to:
-// - roleControl with ControlChange.Value mask
-// - formControl with ControlChange.Valid mask
+// fullName.Value is now "John Doe"
+// When firstName or lastName changes, fullName automatically updates
+
+// Example 2: Computed with validation state
+var email = Control.Create("test@example.com");
+var phone = Control.Create("555-1234");
+
+var hasContactInfo = TypedControlExtensions.CreateComputed<bool>(tracker => {
+    var emailTracked = tracker.Tracked(email.AsTyped<string>());
+    var phoneTracked = tracker.Tracked(phone.AsTyped<string>());
+
+    return !string.IsNullOrEmpty(emailTracked.Value) ||
+           !string.IsNullOrEmpty(phoneTracked.Value);
+});
+
+// hasContactInfo automatically updates when email or phone change
+
+// Example 3: Computed from multiple property accesses
+var quantity = Control.Create(5);
+var price = Control.Create(10.0);
+var discountForm = Control.Create(new { /* form data */ });
+
+var total = TypedControlExtensions.CreateComputed<double>(tracker => {
+    var qty = tracker.Tracked(quantity.AsTyped<int>()).Value;
+    var prc = tracker.Tracked(price.AsTyped<double>()).Value;
+    var formValid = tracker.Tracked(discountForm).IsValid;
+
+    var subtotal = qty * prc;
+    // Only apply discount if discount form is valid
+    return formValid ? subtotal * 0.9 : subtotal;
+});
+
+// Tracker subscribes to:
+// - quantity.Value changes
+// - price.Value changes
+// - discountForm.IsValid changes
 ```
 
-### 3. Computed Properties
-
-```csharp
-public class ComputedProperty<T> : IDisposable
-{
-    private readonly ChangeTracker _tracker = new();
-    private readonly Func<T> _computation;
-    private T _value;
-
-    public ComputedProperty(Func<T> computation)
-    {
-        _computation = computation;
-        _value = _computation();
-
-        _tracker.UpdateSubscriptions(() => {
-            var newValue = _computation();
-            if (!EqualityComparer<T>.Default.Equals(_value, newValue))
-            {
-                _value = newValue;
-                ValueChanged?.Invoke(_value);
-            }
-        });
-    }
-
-    public T Value => _value;
-    public event Action<T>? ValueChanged;
-    public void Dispose() => _tracker.Dispose();
-}
-
-// Usage
-var nameTracked = tracker.Tracked(nameControl);
-var ageTracked = tracker.Tracked(ageControl);
-
-var greeting = new ComputedProperty<string>(() =>
-    $"{nameTracked.Value} is {ageTracked.Value} years old"
-);
-
-greeting.ValueChanged += msg => Console.WriteLine(msg);
-```
+**Key Benefits**:
+- **Automatic Dependency Tracking**: Dependencies are discovered by what's accessed in the computation function
+- **Fine-Grained Updates**: Only subscribes to the specific properties accessed (Value, IsValid, etc.)
+- **Lazy Evaluation**: Computation only runs when dependencies change
+- **Type Safe**: Full IntelliSense support with typed controls
+- **Composable**: Computed controls can depend on other computed controls
 
 ## Performance Considerations
 
@@ -321,22 +316,6 @@ greeting.ValueChanged += msg => Console.WriteLine(msg);
 - **Single Callback**: Multiple changes trigger callback only once per transaction
 - **No Redundant Work**: Callback only runs when dependencies actually change
 
-## Alternative Designs Considered
-
-### 1. Weak Reference Tracking
-**Rejected**: Adds complexity without clear benefit. Explicit disposal is preferred.
-
-### 2. Automatic Proxy-Based Tracking
-**Rejected**: Too "magical" - violates design goal of explicit tracking.
-
-### 3. Fluent Builder API
-**Considered**: `tracker.Track(control1).Track(control2).OnChange(callback)`
-**Rejected**: Current API is simpler and more aligned with expression evaluator use case.
-
-### 4. Generic Change Types
-**Considered**: Track only specific change types per control
-**Deferred**: Current implementation tracks all changes for simplicity. Can be added later if needed.
-
 ## Testing Strategy
 
 ### 1. Unit Tests
@@ -354,25 +333,3 @@ greeting.ValueChanged += msg => Console.WriteLine(msg);
 - Expression evaluator implementations
 - Computed property patterns
 - Conditional logic use cases
-
-## Future Enhancements
-
-### 1. Change Type Filtering
-Allow tracking specific change types per control:
-```csharp
-reader.GetValue(control, ControlChange.Value); // Only track value changes
-```
-
-### 2. Conditional Tracking
-Enable/disable tracking for specific controls:
-```csharp
-tracker.SetEnabled(control, false); // Temporarily ignore this control
-```
-
-### 3. Debug Support
-Provide visibility into tracked dependencies:
-```csharp
-var dependencies = tracker.GetTrackedControls(); // For debugging
-```
-
-This design provides a solid foundation for reactive expression evaluation while maintaining simplicity and performance.
