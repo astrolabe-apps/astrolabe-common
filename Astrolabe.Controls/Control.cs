@@ -262,6 +262,59 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         return control.AsTyped<T>();
     }
 
+    /// <summary>
+    /// Creates a structured control from a POCO/record object.
+    /// The object's properties become child controls accessible via the Field() extension method.
+    /// </summary>
+    /// <typeparam name="T">The type of the structured object</typeparam>
+    /// <param name="initialValue">The initial value object</param>
+    /// <param name="dontClearError">If true, errors won't be cleared when value changes</param>
+    /// <returns>A typed control wrapping the structured object with accessible child controls</returns>
+    /// <example>
+    /// <code>
+    /// record FormState(bool? Visible, bool Readonly);
+    /// var control = Control.CreateStructured(new FormState(null, false));
+    /// var visibleControl = control.Field(x => x.Visible); // Access child control
+    /// </code>
+    /// </example>
+    public static ITypedControl<T> CreateStructured<T>(T initialValue, bool dontClearError = false)
+        where T : class
+    {
+        // Convert the structured object to a dictionary for internal storage
+        var dict = ObjectToDictionary(initialValue);
+        var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
+        var control = new Control(dict, dict, flags);
+        // Use StructuredControlView instead of AsTyped since the value is a Dictionary
+        return new StructuredControlView<T>(control);
+    }
+
+    /// <summary>
+    /// Converts a POCO/record object to a dictionary for internal control storage.
+    /// Uses reflection to read all public readable properties.
+    /// </summary>
+    private static Dictionary<string, object?> ObjectToDictionary<T>(T obj) where T : class
+    {
+        if (obj == null)
+            throw new ArgumentNullException(nameof(obj));
+
+        var dict = new Dictionary<string, object?>();
+        var properties = typeof(T).GetProperties(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+        );
+
+        foreach (var property in properties)
+        {
+            // Only include readable properties
+            if (property.CanRead)
+            {
+                var value = property.GetValue(obj);
+                dict[property.Name] = value;
+            }
+        }
+
+        return dict;
+    }
+
     // Generic factory method with automatic validator setup
     public static Control Create<T>(T? initialValue, Func<T?, string?> validator)
     {
@@ -456,8 +509,8 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
 
     private IControl CreateChildControl(object? value, object key)
     {
-        // Inherit parent flags (disabled, touched)
-        var inheritedFlags = _flags & (ControlFlags.Disabled | ControlFlags.Touched);
+        // Inherit parent flags (disabled, touched, dontClearError)
+        var inheritedFlags = _flags & (ControlFlags.Disabled | ControlFlags.Touched | ControlFlags.DontClearError);
 
         // Determine child's initial value from parent's initial value
         object? childInitialValue = value; // fallback
@@ -1071,6 +1124,33 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
 
         // Explicitly implement IsUndefined to check underlying control's value
         // (avoids trying to cast UndefinedValue to T)
+        public bool IsUndefined => control.Value is UndefinedValue;
+
+        public IReadOnlyDictionary<string, string> Errors => control.Errors;
+
+        public IControl UnderlyingControl => control;
+    }
+
+    // Structured control view wrapper - for controls created with CreateStructured
+    // The value is stored as Dictionary<string, object?> internally, so we don't expose Value/InitialValue
+    private class StructuredControlView<T>(Control control) : ITypedControl<T>
+    {
+        public int UniqueId => control.UniqueId;
+
+        // Structured controls store values as Dictionary - accessing Value/InitialValue would throw
+        // Users should access child controls via Field() extension method instead
+        public T Value => throw new InvalidOperationException(
+            $"Cannot access Value on structured control of type {typeof(T).Name}. " +
+            "Use the Field() extension method to access individual fields.");
+
+        public T InitialValue => throw new InvalidOperationException(
+            $"Cannot access InitialValue on structured control of type {typeof(T).Name}. " +
+            "Use the Field() extension method to access individual fields.");
+
+        public bool IsDirty => control.IsDirty;
+        public bool IsDisabled => control.IsDisabled;
+        public bool IsTouched => control.IsTouched;
+        public bool IsValid => control.IsValid;
         public bool IsUndefined => control.Value is UndefinedValue;
 
         public IReadOnlyDictionary<string, string> Errors => control.Errors;
