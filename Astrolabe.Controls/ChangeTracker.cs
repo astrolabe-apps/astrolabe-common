@@ -1,17 +1,17 @@
 namespace Astrolabe.Controls;
 
-public class ChangeTracker
+public class ChangeTracker : IDisposable
 {
-    public T TrackChanges<T>(Func<IControlReader, T> readControls)
+    public IControlProperties<T> Tracked<T>(ITypedControl<T> control)
     {
-        // TODO implement
+        // wrap control with a proxy that tracks which ControlChanges flags to listen to
         throw new NotImplementedException();
     }
 
     public void UpdateSubscriptions(Action changedCallback)
     {
         // subscribe or unsubscribe from controls
-        // Call the changed callback whenever anything called with TrackChanges
+        // Call the changed callback whenever *any* of the subscriptions fires
         // TODO implement
     }
 
@@ -19,15 +19,4 @@ public class ChangeTracker
     {
         // unsubscribe from all subscriptions
     }
-}
-
-public interface IControlReader
-{
-    object? GetValue(IControl control);
-
-    object? GetInitialValue(IControl control);
-
-    bool IsDirty(IControl control);
-
-    // etc GetError(), GetErrors() ...
 }

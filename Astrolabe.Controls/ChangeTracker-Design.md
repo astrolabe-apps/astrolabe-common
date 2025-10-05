@@ -7,11 +7,12 @@ The `ChangeTracker` provides automatic dependency tracking for expression evalua
 ## Design Goals
 
 1. **Support Expression Evaluators**: Enable reactive computations that depend on multiple controls
-2. **Explicit Tracking**: No "magic" - controls are tracked when explicitly accessed through `IControlReader`
-3. **Simple API**: Minimal surface area focused on the core use case
-4. **Performance**: Efficient subscription management and change batching
-5. **Thread Safety**: Safe for concurrent access
-6. **Lifecycle Management**: Proper cleanup of subscriptions
+2. **Explicit Tracking**: No "magic" - controls are tracked when explicitly wrapped with `Tracked()` and their properties accessed
+3. **Fine-Grained Subscriptions**: Subscribe only to the specific properties that are accessed (Value, IsValid, etc.)
+4. **Simple API**: Minimal surface area focused on the core use case
+5. **Performance**: Efficient subscription management and change batching
+6. **Thread Safety**: Safe for concurrent access
+7. **Lifecycle Management**: Proper cleanup of subscriptions
 
 ## Architecture
 
@@ -20,20 +21,21 @@ The `ChangeTracker` provides automatic dependency tracking for expression evalua
 ```csharp
 public class ChangeTracker : IDisposable
 {
-    public T TrackChanges<T>(Func<IControlReader, T> readControls);
+    public IControlProperties<T> Tracked<T>(ITypedControl<T> control);
     public void UpdateSubscriptions(Action changedCallback);
     public void Dispose();
 }
 
-public interface IControlReader
+// Returns a proxy that tracks which properties are accessed
+public interface IControlProperties<out T>
 {
-    object? GetValue(IControl control);
-    object? GetInitialValue(IControl control);
-    bool IsDirty(IControl control);
-    bool IsValid(IControl control);
-    bool IsTouched(IControl control);
-    bool IsDisabled(IControl control);
-    IReadOnlyDictionary<string, string> GetErrors(IControl control);
+    T Value { get; }
+    T InitialValue { get; }
+    bool IsDirty { get; }
+    bool IsDisabled { get; }
+    bool IsTouched { get; }
+    bool IsValid { get; }
+    IReadOnlyDictionary<string, string> Errors { get; }
 }
 ```
 
@@ -43,42 +45,52 @@ public interface IControlReader
 // 1. Create tracker
 var tracker = new ChangeTracker();
 
-// 2. Define computation that tracks dependencies
-var result = tracker.TrackChanges(reader => {
-    var name = reader.GetValue(nameControl) as string;
-    var age = reader.GetValue(ageControl) as int?;
-    return $"{name} is {age} years old";
-});
+// 2. Wrap controls with tracking proxies and compute result
+var nameTracked = tracker.Tracked(nameControl);
+var ageTracked = tracker.Tracked(ageControl);
+
+var result = $"{nameTracked.Value} is {ageTracked.Value} years old";
 
 // 3. Set up change callback and establish subscriptions
 tracker.UpdateSubscriptions(() => {
-    // Re-evaluate when any tracked control changes
-    var newResult = tracker.TrackChanges(reader => {
-        var name = reader.GetValue(nameControl) as string;
-        var age = reader.GetValue(ageControl) as int?;
-        return $"{name} is {age} years old";
-    });
+    // Re-evaluate when any tracked properties change
+    var newResult = $"{nameTracked.Value} is {ageTracked.Value} years old";
 
     // Update UI, cache, etc.
     Console.WriteLine(newResult);
 });
+
+// The tracker now subscribes only to Value changes on nameControl and ageControl
 ```
 
 ## Detailed Design
 
 ### 1. Dependency Tracking Mechanism
 
-**Approach**: Track controls when they are accessed through `IControlReader` methods.
+**Approach**: Track controls via proxy wrappers that record which properties are accessed.
 
 ```csharp
-internal class ControlReader : IControlReader
+internal class TrackedControlProxy<T> : IControlProperties<T>
 {
+    private readonly ITypedControl<T> _control;
     private readonly ChangeTracker _tracker;
 
-    public object? GetValue(IControl control)
+    public T Value
     {
-        _tracker.TrackControl(control);  // Register dependency
-        return control.Value;            // Return actual value
+        get
+        {
+            _tracker.RecordAccess(_control, ControlChange.Value);
+            return _control.Value;
+        }
+    }
+
+    public bool IsValid
+    {
+        get
+        {
+            _tracker.RecordAccess(_control, ControlChange.Valid);
+            return _control.IsValid;
+        }
     }
 
     // Similar for other properties...
@@ -86,48 +98,75 @@ internal class ControlReader : IControlReader
 ```
 
 **Benefits**:
-- Explicit tracking - only accessed controls are monitored
-- Automatic cleanup - unused controls are automatically untracked
+- Explicit tracking - only accessed properties are monitored
+- Fine-grained subscriptions - subscribe only to accessed properties (Value, IsValid, etc.)
+- Automatic cleanup - unused controls/properties are automatically untracked
 - Flexible - works with any control access pattern
 
 ### 2. Subscription Management
 
-**Current Tracked Controls**: `HashSet<IControl> _trackedControls`
-**Active Subscriptions**: `List<ISubscription> _subscriptions`
+**Tracked Dependencies**: `Dictionary<IControl, ControlChange> _trackedAccess`
+- Key: Control being tracked
+- Value: Bitwise OR of all accessed properties (e.g., `ControlChange.Value | ControlChange.Valid`)
+
+**Active Subscriptions**: `Dictionary<IControl, ISubscription> _subscriptions`
 
 **Algorithm**:
 ```csharp
 public void UpdateSubscriptions(Action changedCallback)
 {
-    // 1. Add subscriptions for newly tracked controls
-    foreach (var control in _trackedControls)
-    {
-        if (!HasSubscription(control))
-        {
-            var subscription = control.Subscribe(OnControlChanged, ControlChange.All);
-            _subscriptions.Add(new ControlSubscription(control, subscription));
-        }
-    }
+    _changeCallback = changedCallback;
 
-    // 2. Remove subscriptions for no-longer-tracked controls
-    var toRemove = _subscriptions.Where(s => !_trackedControls.Contains(s.Control));
-    foreach (var sub in toRemove)
+    lock (_lock)
     {
-        sub.Subscription.Unsubscribe();
-        _subscriptions.Remove(sub);
+        // 1. Add or update subscriptions for tracked controls
+        foreach (var (control, changeMask) in _trackedAccess)
+        {
+            // Unsubscribe old subscription if mask changed
+            if (_subscriptions.TryGetValue(control, out var oldSub))
+            {
+                if (oldSub.Mask != changeMask)
+                {
+                    oldSub.Unsubscribe();
+                    _subscriptions.Remove(control);
+                }
+                else
+                {
+                    continue; // Subscription unchanged
+                }
+            }
+
+            // Subscribe with the tracked change mask
+            var subscription = control.Subscribe(OnControlChanged, changeMask);
+            _subscriptions[control] = subscription;
+        }
+
+        // 2. Remove subscriptions for no-longer-tracked controls
+        var toRemove = _subscriptions.Keys
+            .Where(c => !_trackedAccess.ContainsKey(c))
+            .ToList();
+        foreach (var control in toRemove)
+        {
+            _subscriptions[control].Unsubscribe();
+            _subscriptions.Remove(control);
+        }
+
+        // 3. Clear tracked access for next evaluation
+        _trackedAccess.Clear();
     }
 }
 ```
 
 **Benefits**:
-- Efficient: Only subscribes to controls actually being tracked
-- Dynamic: Automatically adjusts subscriptions as dependencies change
-- Clean: Removes unused subscriptions to prevent memory leaks
+- **Fine-grained**: Only subscribes to accessed properties (Value, IsValid, etc.)
+- **Efficient**: Only subscribes to controls actually being tracked
+- **Dynamic**: Automatically adjusts subscriptions as dependencies change
+- **Clean**: Removes unused subscriptions to prevent memory leaks
 
 ### 3. Change Notification
 
-**Change Detection**: Subscribe to `ControlChange.All` on tracked controls
-**Callback Timing**: Use `ControlEditor.RunAfterChanges()` to defer callback until after transaction
+**Change Detection**: Subscribe with tracked change masks (e.g., `ControlChange.Value | ControlChange.Valid`)
+**Callback Timing**: Defer callback execution until after transaction completes
 
 ```csharp
 private void OnControlChanged(IControl control, ControlChange changeType, ControlEditor editor)
@@ -141,8 +180,9 @@ private void OnControlChanged(IControl control, ControlChange changeType, Contro
 
 **Benefits**:
 - **Batched**: Multiple control changes in a transaction trigger callback only once
-- **Consistent**: Callback runs after all changes in transaction are complete
+- **Consistent**: Callback runs after all changes and listeners in transaction are complete
 - **Safe**: Avoids re-entrancy issues during control mutations
+- **Precise**: Only triggers for changes matching the subscription mask
 
 ### 4. Thread Safety
 
@@ -189,36 +229,43 @@ public void Dispose()
 ### 1. Expression Evaluator
 
 ```csharp
-public class ExpressionEvaluator
+public class ExpressionEvaluator<T>
 {
     private readonly ChangeTracker _tracker = new();
-    private readonly Func<IControlReader, object> _expression;
+    private readonly Func<T> _expression;
+    private T _value;
 
-    public ExpressionEvaluator(Func<IControlReader, object> expression)
+    public ExpressionEvaluator(Func<T> expression)
     {
         _expression = expression;
 
         // Initial evaluation to discover dependencies
-        var result = _tracker.TrackChanges(_expression);
+        _value = _expression();
 
         // Set up reactive updates
         _tracker.UpdateSubscriptions(() => {
-            var newResult = _tracker.TrackChanges(_expression);
-            OnResultChanged?.Invoke(newResult);
+            var newValue = _expression();
+            if (!EqualityComparer<T>.Default.Equals(_value, newValue))
+            {
+                _value = newValue;
+                ValueChanged?.Invoke(newValue);
+            }
         });
     }
 
-    public event Action<object>? OnResultChanged;
+    public T Value => _value;
+    public event Action<T>? ValueChanged;
 }
 
 // Usage
-var evaluator = new ExpressionEvaluator(reader => {
-    var x = (int)reader.GetValue(xControl);
-    var y = (int)reader.GetValue(yControl);
-    return x + y;
-});
+var xTracked = tracker.Tracked(xControl);
+var yTracked = tracker.Tracked(yControl);
 
-evaluator.OnResultChanged += result => Console.WriteLine($"Sum: {result}");
+var evaluator = new ExpressionEvaluator<int>(() =>
+    xTracked.Value + yTracked.Value
+);
+
+evaluator.ValueChanged += sum => Console.WriteLine($"Sum: {sum}");
 ```
 
 ### 2. Conditional UI Updates
@@ -226,22 +273,22 @@ evaluator.OnResultChanged += result => Console.WriteLine($"Sum: {result}");
 ```csharp
 var tracker = new ChangeTracker();
 
-// Track visibility condition
-bool shouldShow = tracker.TrackChanges(reader => {
-    var userRole = reader.GetValue(roleControl) as string;
-    var isValid = reader.IsValid(formControl);
-    return userRole == "admin" && isValid;
-});
+var roleTracked = tracker.Tracked(roleControl);
+var formTracked = tracker.Tracked(formControl);
 
+// Initial evaluation
+bool shouldShow = roleTracked.Value == "admin" && formTracked.IsValid;
+adminPanel.Visible = shouldShow;
+
+// Set up reactive updates
 tracker.UpdateSubscriptions(() => {
-    var newShouldShow = tracker.TrackChanges(reader => {
-        var userRole = reader.GetValue(roleControl) as string;
-        var isValid = reader.IsValid(formControl);
-        return userRole == "admin" && isValid;
-    });
-
+    var newShouldShow = roleTracked.Value == "admin" && formTracked.IsValid;
     adminPanel.Visible = newShouldShow;
 });
+
+// Tracker now subscribes to:
+// - roleControl with ControlChange.Value mask
+// - formControl with ControlChange.Valid mask
 ```
 
 ### 3. Computed Properties
@@ -250,14 +297,16 @@ tracker.UpdateSubscriptions(() => {
 public class ComputedProperty<T> : IDisposable
 {
     private readonly ChangeTracker _tracker = new();
+    private readonly Func<T> _computation;
     private T _value;
 
-    public ComputedProperty(Func<IControlReader, T> computation)
+    public ComputedProperty(Func<T> computation)
     {
-        _value = _tracker.TrackChanges(computation);
+        _computation = computation;
+        _value = _computation();
 
         _tracker.UpdateSubscriptions(() => {
-            var newValue = _tracker.TrackChanges(computation);
+            var newValue = _computation();
             if (!EqualityComparer<T>.Default.Equals(_value, newValue))
             {
                 _value = newValue;
@@ -270,6 +319,16 @@ public class ComputedProperty<T> : IDisposable
     public event Action<T>? ValueChanged;
     public void Dispose() => _tracker.Dispose();
 }
+
+// Usage
+var nameTracked = tracker.Tracked(nameControl);
+var ageTracked = tracker.Tracked(ageControl);
+
+var greeting = new ComputedProperty<string>(() =>
+    $"{nameTracked.Value} is {ageTracked.Value} years old"
+);
+
+greeting.ValueChanged += msg => Console.WriteLine(msg);
 ```
 
 ## Performance Considerations
