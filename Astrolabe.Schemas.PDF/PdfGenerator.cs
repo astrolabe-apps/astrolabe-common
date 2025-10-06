@@ -31,8 +31,8 @@ public static class PdfGenerator
         var formDataNode = pdfContext.FormNode;
         switch (formDataNode.FormNode.Definition)
         {
-            case DataControlDefinition when formDataNode.DataNode is { Data: var data }:
-                container.Text(data?.ToString());
+            case DataControlDefinition when formDataNode.DataNode is { Control: var control }:
+                container.Text(control?.Value?.ToString());
                 break;
             case DataControlDefinition:
                 container.Text("Missing data");

@@ -18,11 +18,15 @@
     <ItemGroup>
         <PackageReference Include="Astrolabe.Annotation" Version="1.2.0"/>
         <PackageReference Include="Astrolabe.CodeGen" Version="1.4.0"/>
-        <PackageReference Include="Astrolabe.JSON" Version="1.2.1"/>
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="Jsonata.Net.Native.SystemTextJson" Version="2.4.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Astrolabe.Controls\Astrolabe.Controls.csproj" />
+        <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
     </ItemGroup>
 
     <ItemGroup>

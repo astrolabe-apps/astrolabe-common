@@ -1,11 +1,12 @@
 using System.Text.Json.Nodes;
 using Astrolabe.JSON;
+using Astrolabe.Controls;
 
 namespace Astrolabe.Schemas;
 
 public record SchemaDataNode(
     ISchemaNode Schema,
-    JsonNode? Data,
+    IControl Control,
     SchemaDataNode? Parent,
     int? ElementIndex = null
 );
@@ -14,38 +15,35 @@ public static class SchemaDataNodeExtensions
 {
     public static SchemaDataNode WithData(this ISchemaNode schema, JsonNode? data)
     {
-        return new SchemaDataNode(schema, data, null);
+        var control = JsonNodeConverter.JsonNodeToControl(data);
+        return new SchemaDataNode(schema, control, null);
     }
 
     public static int ElementCount(this SchemaDataNode dataNode)
     {
-        return dataNode.Data switch
-        {
-            JsonArray ja => ja.Count,
-            _ => 0
-        };
+        return dataNode.Control.IsArray ? dataNode.Control.Count : 0;
     }
 
     public static SchemaDataNode? GetChildElement(this SchemaDataNode dataNode, int element)
     {
-        return dataNode.Data switch
-        {
-            JsonArray jsonArray when element < jsonArray.Count
-                => new SchemaDataNode(dataNode.Schema, jsonArray[element], dataNode, element),
-            _ => null
-        };
+        if (!dataNode.Control.IsArray || element >= dataNode.Control.Count)
+            return null;
+
+        var childControl = dataNode.Control[element];
+        return childControl != null
+            ? new SchemaDataNode(dataNode.Schema, childControl, dataNode, element)
+            : null;
     }
 
     public static SchemaDataNode? GetChild(this SchemaDataNode dataNode, ISchemaNode schemaNode)
     {
-        return dataNode.Data switch
-        {
-            JsonObject jsonObject
-                => jsonObject.TryGetPropertyValue(schemaNode.Field.Field, out var childField)
-                    ? new SchemaDataNode(schemaNode, childField, dataNode)
-                    : null,
-            _ => null
-        };
+        if (!dataNode.Control.IsObject)
+            return null;
+
+        var childControl = dataNode.Control[schemaNode.Field.Field];
+        return childControl != null
+            ? new SchemaDataNode(schemaNode, childControl, dataNode)
+            : null;
     }
 
     public static SchemaDataNode? GetChildForFieldRef(this SchemaDataNode dataNode, string fieldRef)

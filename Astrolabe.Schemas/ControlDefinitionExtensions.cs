@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using Astrolabe.JSON;
+using Astrolabe.Controls;
 
 namespace Astrolabe.Schemas;
 
@@ -28,7 +29,7 @@ public static class ControlDefinitionExtensions
 
     public static bool IsVisible(
         this ControlDefinition definition,
-        JsonObject data,
+        IControl data,
         JsonPathSegments context,
         ExprEvalBool? evalBool = null
     )
@@ -50,9 +51,9 @@ public static class ControlDefinitionExtensions
         };
     }
 
-    public static (JsonNode?, SchemaField)? FindChildField(
+    public static (IControl?, SchemaField)? FindChildField(
         this ControlDefinition definition,
-        JsonObject data,
+        IControl data,
         IEnumerable<SchemaField> fields
     )
     {
