@@ -1,0 +1,198 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using Astrolabe.Schemas;
+using Astrolabe.Schemas.CodeGen;
+using Astrolabe.Schemas.PDF;
+using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
+using Xunit;
+
+namespace Astrolabe.Schemas.PDF.Tests;
+
+public class PdfGeneratorTests
+{
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    static PdfGeneratorTests()
+    {
+        // Configure QuestPDF license for testing
+        QuestPDF.Settings.License = LicenseType.Community;
+    }
+    [Fact]
+    public void Should_Generate_Pdf_With_Simple_Fields()
+    {
+        // Arrange - Create SchemaFields using SchemaFieldsInstanceGenerator
+        var schemas = new SchemaFieldsInstanceGenerator(
+            new SchemaFieldsGeneratorOptions("")
+        ).CollectDataForTypes(typeof(TestPerson));
+
+        var schemaLookup = SchemaTreeLookup.Create(
+            schemas.ToDictionary(x => x.Type.Name, x => x.Fields)
+        );
+
+        // Create ControlDefinitions in code (use lowercase first letter to match JSON serialization)
+        var controls = new ControlDefinition[]
+        {
+            new DataControlDefinition("name")
+            {
+                Title = "Full Name"
+            },
+            new DataControlDefinition("age")
+            {
+                Title = "Age"
+            },
+            new DataControlDefinition("email")
+            {
+                Title = "Email Address"
+            }
+        };
+
+        // Create test data
+        var testData = new TestPerson("John Doe", 30, "john@example.com");
+        var jsonData = JsonSerializer.SerializeToNode(testData, JsonOptions);
+
+        // Prepare PDF context (similar to CarController.cs)
+        var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
+        var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
+
+        // Act - Generate PDF
+        var doc = Document.Create(dc =>
+        {
+            var pdfContext = new PdfFormContext(
+                rootFormNode.WithData(
+                    rootSchemaNode.WithData(jsonData)
+                )
+            );
+            dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
+        });
+
+        var pdfBytes = doc.GeneratePdf();
+
+        // Assert
+        Assert.NotNull(pdfBytes);
+        Assert.NotEmpty(pdfBytes);
+        Assert.True(pdfBytes.Length > 100); // PDF should have some content
+    }
+
+    [Fact]
+    public void Should_Generate_Pdf_With_Grouped_Controls()
+    {
+        // Arrange
+        var schemas = new SchemaFieldsInstanceGenerator(
+            new SchemaFieldsGeneratorOptions("")
+        ).CollectDataForTypes(typeof(TestPerson));
+
+        var schemaLookup = SchemaTreeLookup.Create(
+            schemas.ToDictionary(x => x.Type.Name, x => x.Fields)
+        );
+
+        // Create grouped controls
+        var controls = new ControlDefinition[]
+        {
+            new GroupedControlsDefinition
+            {
+                Title = "Personal Information",
+                Children = new ControlDefinition[]
+                {
+                    new DataControlDefinition("name")
+                    {
+                        Title = "Name"
+                    },
+                    new DataControlDefinition("age")
+                    {
+                        Title = "Age"
+                    }
+                }
+            },
+            new GroupedControlsDefinition
+            {
+                Title = "Contact Information",
+                Children = new ControlDefinition[]
+                {
+                    new DataControlDefinition("email")
+                    {
+                        Title = "Email"
+                    }
+                }
+            }
+        };
+
+        var testData = new TestPerson("Jane Smith", 25, "jane@example.com");
+        var jsonData = JsonSerializer.SerializeToNode(testData, JsonOptions);
+
+        var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
+        var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
+
+        // Act
+        var doc = Document.Create(dc =>
+        {
+            var pdfContext = new PdfFormContext(
+                rootFormNode.WithData(
+                    rootSchemaNode.WithData(jsonData)
+                )
+            );
+            dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
+        });
+
+        var pdfBytes = doc.GeneratePdf();
+
+        // Assert
+        Assert.NotNull(pdfBytes);
+        Assert.NotEmpty(pdfBytes);
+        Assert.True(pdfBytes.Length > 100);
+    }
+
+    [Fact]
+    public void Should_Throw_Exception_For_Missing_Field()
+    {
+        // Arrange
+        var schemas = new SchemaFieldsInstanceGenerator(
+            new SchemaFieldsGeneratorOptions("")
+        ).CollectDataForTypes(typeof(TestPerson));
+
+        var schemaLookup = SchemaTreeLookup.Create(
+            schemas.ToDictionary(x => x.Type.Name, x => x.Fields)
+        );
+
+        var controls = new ControlDefinition[]
+        {
+            new DataControlDefinition("name")
+            {
+                Title = "Name"
+            },
+            new DataControlDefinition("nonExistentField") // This field doesn't exist
+            {
+                Title = "Missing Field"
+            }
+        };
+
+        var testData = new TestPerson("Test User", 20, "test@example.com");
+        var jsonData = JsonSerializer.SerializeToNode(testData, JsonOptions);
+
+        var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
+        var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
+
+        // Act & Assert - Should throw exception for missing field
+        var ex = Assert.Throws<Exception>(() =>
+        {
+            var doc = Document.Create(dc =>
+            {
+                var pdfContext = new PdfFormContext(
+                    rootFormNode.WithData(
+                        rootSchemaNode.WithData(jsonData)
+                    )
+                );
+                dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
+            });
+            doc.GeneratePdf();
+        });
+
+        Assert.Contains("Missing field", ex.Message);
+    }
+}
+
+// Test model
+public record TestPerson(string Name, int Age, string Email);
