@@ -11,6 +11,7 @@ import { TextInput, type TextInputProps } from "react-native";
 
 export interface ExtendedTextInput {
   keyboardType?: string;
+  autoComplete?: string;
 }
 
 export function createRNTextInputRenderer(
@@ -21,7 +22,7 @@ export function createRNTextInputRenderer(
     (p) => {
       const { renderOptions, control, readonly, ...rest } = p;
       const { disabled } = formControlProps(control);
-      const { placeholder, multiline, keyboardType } =
+      const { placeholder, multiline, keyboardType, autoComplete } =
         renderOptions as TextfieldRenderOptions & ExtendedTextInput;
 
       return (
@@ -38,6 +39,7 @@ export function createRNTextInputRenderer(
           onChangeText={(v) => (control.value = v)}
           multiline={multiline}
           keyboardType={keyboardType}
+          autoComplete={autoComplete}
         />
       );
     },
