@@ -11,27 +11,25 @@ public static class PdfGenerator
         IContainer container
     )
     {
-        var formDataNode = pdfContext.FormNode;
+        var stateNode = pdfContext.StateNode;
         container.Column(cd =>
         {
-            formDataNode
-                .FormNode.GetChildNodes()
-                .ToList()
-                .ForEach(fn =>
-                {
-                    pdfContext
-                        .WithFormNode(fn.WithData(formDataNode.DataNode ?? formDataNode.Parent))
-                        .RenderControlLayout(cd.Item());
-                });
+            // Children are already resolved in the FormStateNode tree
+            foreach (var child in stateNode.Children)
+            {
+                pdfContext
+                    .WithStateNode(child)
+                    .RenderControlLayout(cd.Item());
+            }
         });
     }
 
     public static void RenderContent(this PdfFormContext pdfContext, IContainer container)
     {
-        var formDataNode = pdfContext.FormNode;
-        switch (formDataNode.FormNode.Definition)
+        var stateNode = pdfContext.StateNode;
+        switch (stateNode.Definition)
         {
-            case DataControlDefinition when formDataNode.DataNode is { Control: var control }:
+            case DataControlDefinition when stateNode.DataNode is { Control: var control }:
                 container.Text(control?.Value?.ToString());
                 break;
             case DataControlDefinition:
@@ -59,13 +57,13 @@ public static class PdfGenerator
 
     public static void RenderControlLayout(this PdfFormContext pdfContext, IContainer document)
     {
-        var formNode = pdfContext.FormNode;
+        var stateNode = pdfContext.StateNode;
         document.Row(cd =>
         {
-            if (!formNode.Definition.IsTitleHidden())
+            if (!stateNode.Definition.IsTitleHidden())
                 pdfContext.RenderLabel(
-                    formNode.Definition.GetLabelType(),
-                    formNode.Title(),
+                    stateNode.Definition.GetLabelType(),
+                    stateNode.GetTitle(),
                     cd.AutoItem()
                 );
             pdfContext.RenderContent(cd.AutoItem());

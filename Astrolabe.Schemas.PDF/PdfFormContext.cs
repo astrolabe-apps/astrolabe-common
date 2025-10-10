@@ -1,9 +1,9 @@
 namespace Astrolabe.Schemas.PDF;
 
-public record PdfFormContext(FormDataNode FormNode)
+public record PdfFormContext(IFormStateNode StateNode)
 {
-    public PdfFormContext WithFormNode(FormDataNode formNode)
+    public PdfFormContext WithStateNode(IFormStateNode node)
     {
-        return new PdfFormContext(formNode);
+        return new PdfFormContext(node);
     }
 }

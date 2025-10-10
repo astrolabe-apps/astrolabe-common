@@ -129,13 +129,17 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
     {
         var rootFormNode = FormLookup.Create(_ => pdfData.Controls).GetForm("")!;
         var rootSchemaNode = carService.SchemaLookup.GetSchema(pdfData.SchemaName)!;
+        var rootSchemaData = rootSchemaNode.WithData(JsonSerializer.SerializeToNode(pdfData.Data));
+
+        // Build the FormStateNode tree once
+        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
+            rootFormNode,
+            rootSchemaData
+        );
+
         var doc = Document.Create(dc =>
         {
-            var pdfContext = new PdfFormContext(
-                rootFormNode.WithData(
-                    rootSchemaNode.WithData(JsonSerializer.SerializeToNode(pdfData.Data))
-                )
-            );
+            var pdfContext = new PdfFormContext(formStateTree);
             dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
         });
         return File(doc.GeneratePdf(), "application/pdf");

@@ -74,14 +74,16 @@ public class PdfGeneratorProgram
 
         var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
         var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
+        var rootSchemaData = rootSchemaNode.WithData(jsonData);
+
+        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
+            rootFormNode,
+            rootSchemaData
+        );
 
         var doc = Document.Create(dc =>
         {
-            var pdfContext = new PdfFormContext(
-                rootFormNode.WithData(
-                    rootSchemaNode.WithData(jsonData)
-                )
-            );
+            var pdfContext = new PdfFormContext(formStateTree);
 
             dc.Page(page =>
             {
@@ -163,14 +165,16 @@ public class PdfGeneratorProgram
 
         var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
         var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
+        var rootSchemaData = rootSchemaNode.WithData(jsonData);
+
+        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
+            rootFormNode,
+            rootSchemaData
+        );
 
         var doc = Document.Create(dc =>
         {
-            var pdfContext = new PdfFormContext(
-                rootFormNode.WithData(
-                    rootSchemaNode.WithData(jsonData)
-                )
-            );
+            var pdfContext = new PdfFormContext(formStateTree);
 
             dc.Page(page =>
             {
@@ -289,14 +293,16 @@ public class PdfGeneratorProgram
 
         var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
         var rootSchemaNode = schemaLookup.GetSchema(nameof(Employee))!;
+        var rootSchemaData = rootSchemaNode.WithData(jsonData);
+
+        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
+            rootFormNode,
+            rootSchemaData
+        );
 
         var doc = Document.Create(dc =>
         {
-            var pdfContext = new PdfFormContext(
-                rootFormNode.WithData(
-                    rootSchemaNode.WithData(jsonData)
-                )
-            );
+            var pdfContext = new PdfFormContext(formStateTree);
 
             dc.Page(page =>
             {

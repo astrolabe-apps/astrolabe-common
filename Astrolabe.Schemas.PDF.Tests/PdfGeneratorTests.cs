@@ -57,15 +57,18 @@ public class PdfGeneratorTests
         // Prepare PDF context (similar to CarController.cs)
         var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
         var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
+        var rootSchemaData = rootSchemaNode.WithData(jsonData);
+
+        // Build the FormStateNode tree once
+        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
+            rootFormNode,
+            rootSchemaData
+        );
 
         // Act - Generate PDF
         var doc = Document.Create(dc =>
         {
-            var pdfContext = new PdfFormContext(
-                rootFormNode.WithData(
-                    rootSchemaNode.WithData(jsonData)
-                )
-            );
+            var pdfContext = new PdfFormContext(formStateTree);
             dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
         });
 
@@ -125,15 +128,18 @@ public class PdfGeneratorTests
 
         var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
         var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
+        var rootSchemaData = rootSchemaNode.WithData(jsonData);
+
+        // Build the FormStateNode tree once
+        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
+            rootFormNode,
+            rootSchemaData
+        );
 
         // Act
         var doc = Document.Create(dc =>
         {
-            var pdfContext = new PdfFormContext(
-                rootFormNode.WithData(
-                    rootSchemaNode.WithData(jsonData)
-                )
-            );
+            var pdfContext = new PdfFormContext(formStateTree);
             dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
         });
 
@@ -174,17 +180,20 @@ public class PdfGeneratorTests
 
         var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
         var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
+        var rootSchemaData = rootSchemaNode.WithData(jsonData);
 
         // Act & Assert - Should throw exception for missing field
         var ex = Assert.Throws<Exception>(() =>
         {
+            // Build the FormStateNode tree - this should throw for missing field
+            var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
+                rootFormNode,
+                rootSchemaData
+            );
+
             var doc = Document.Create(dc =>
             {
-                var pdfContext = new PdfFormContext(
-                    rootFormNode.WithData(
-                        rootSchemaNode.WithData(jsonData)
-                    )
-                );
+                var pdfContext = new PdfFormContext(formStateTree);
                 dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
             });
             doc.GeneratePdf();
