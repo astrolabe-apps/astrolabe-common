@@ -784,9 +784,10 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
                     _elementControls.RemoveRange(newCount, currentCount - newCount);
                 }
 
-                // Invalidate validity cache if child count changed
+                // Fire Structure change and invalidate validity cache if child count changed
                 if (currentCount != newCount)
                 {
+                    _subscriptions?.ApplyChange(ControlChange.Structure);
                     InvalidateChildValidityCache();
                 }
             }

@@ -181,6 +181,7 @@ public class ControlEditor
             if (control is Control concreteControl)
             {
                 concreteControl.AddElementInternal(value);
+                AddToRunListenerList(control);
 
                 if (control is IControlMutation mutation)
                 {
@@ -199,6 +200,7 @@ public class ControlEditor
             if (control is Control concreteControl)
             {
                 concreteControl.RemoveElementInternal(index);
+                AddToRunListenerList(control);
 
                 if (control is IControlMutation mutation)
                 {

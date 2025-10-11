@@ -432,4 +432,317 @@ public class ArrayObjectControlTests
         Assert.True(newChild.IsDisabled);
         Assert.True(newChild.IsTouched);
     }
+
+    [Fact]
+    public void AddElement_Should_Fire_Structure_Change_Notification()
+    {
+        var list = new List<object> { "first", "second" };
+        var control = new Control(list, list);
+        var editor = new ControlEditor();
+        var structureChangeCount = 0;
+        ControlChange notifiedChange = ControlChange.None;
+
+        control.Subscribe(
+            (ctrl, change, ed) =>
+            {
+                structureChangeCount++;
+                notifiedChange = change;
+            },
+            ControlChange.Structure
+        );
+
+        editor.AddElement(control, "third");
+
+        // Should fire Structure notification
+        Assert.Equal(1, structureChangeCount);
+        Assert.True((notifiedChange & ControlChange.Structure) != 0);
+        Assert.Equal(3, control.Elements.Count);
+    }
+
+    [Fact]
+    public void RemoveElement_Should_Fire_Structure_Change_Notification()
+    {
+        var list = new List<object> { "first", "second", "third" };
+        var control = new Control(list, list);
+        var editor = new ControlEditor();
+        var structureChangeCount = 0;
+        ControlChange notifiedChange = ControlChange.None;
+
+        control.Subscribe(
+            (ctrl, change, ed) =>
+            {
+                structureChangeCount++;
+                notifiedChange = change;
+            },
+            ControlChange.Structure
+        );
+
+        editor.RemoveElement(control, 1);
+
+        // Should fire Structure notification
+        Assert.Equal(1, structureChangeCount);
+        Assert.True((notifiedChange & ControlChange.Structure) != 0);
+        Assert.Equal(2, control.Elements.Count);
+    }
+
+    [Fact]
+    public void Multiple_AddElement_Calls_Should_Fire_Structure_Notifications()
+    {
+        var list = new List<object> { "first" };
+        var control = new Control(list, list);
+        var editor = new ControlEditor();
+        var structureChangeCount = 0;
+
+        control.Subscribe(
+            (ctrl, change, ed) =>
+            {
+                if ((change & ControlChange.Structure) != 0)
+                {
+                    structureChangeCount++;
+                }
+            },
+            ControlChange.Structure
+        );
+
+        editor.AddElement(control, "second");
+        Assert.Equal(1, structureChangeCount);
+
+        editor.AddElement(control, "third");
+        Assert.Equal(2, structureChangeCount);
+
+        editor.AddElement(control, "fourth");
+        Assert.Equal(3, structureChangeCount);
+
+        Assert.Equal(4, control.Elements.Count);
+    }
+
+    [Fact]
+    public void ChangeTracker_Should_Track_Structure_Changes()
+    {
+        var list = new List<object> { "first", "second" };
+        var arrayControl = Control.Create(list);
+        var computedControl = Control.CreateTyped<int>(0);
+        var editor = new ControlEditor();
+        var computeCallCount = 0;
+
+        Control.MakeComputed(
+            computedControl,
+            tracker =>
+            {
+                computeCallCount++;
+                var elements = tracker.TrackElements(arrayControl);
+                return elements.Count;
+            },
+            editor
+        );
+
+        // Initial computation should happen
+        Assert.Equal(1, computeCallCount);
+        Assert.Equal(2, computedControl.Value);
+
+        // Add element - should trigger recomputation via Structure change
+        editor.AddElement(arrayControl, "third");
+        Assert.Equal(2, computeCallCount);
+        Assert.Equal(3, computedControl.Value);
+
+        // Remove element - should trigger recomputation via Structure change
+        editor.RemoveElement(arrayControl, 0);
+        Assert.Equal(3, computeCallCount);
+        Assert.Equal(2, computedControl.Value);
+    }
+
+    [Fact]
+    public void Structure_Changes_Should_Batch_In_Transaction()
+    {
+        var list = new List<object> { "first" };
+        var control = new Control(list, list);
+        var editor = new ControlEditor();
+        var structureChangeCount = 0;
+
+        control.Subscribe(
+            (ctrl, change, ed) =>
+            {
+                if ((change & ControlChange.Structure) != 0)
+                {
+                    structureChangeCount++;
+                }
+            },
+            ControlChange.Structure
+        );
+
+        editor.RunInTransaction(() =>
+        {
+            editor.AddElement(control, "second");
+            editor.AddElement(control, "third");
+            editor.RemoveElement(control, 0);
+
+            // No notifications yet (still in transaction)
+            Assert.Equal(0, structureChangeCount);
+        });
+
+        // After transaction, only one notification (batched)
+        Assert.Equal(1, structureChangeCount);
+        Assert.Equal(2, control.Elements.Count);
+    }
+
+    [Fact]
+    public void SetValue_Growing_Array_Should_Fire_Structure_Change()
+    {
+        var list = new List<object> { "item1", "item2" };
+        var control = new Control(list, list);
+        var editor = new ControlEditor();
+        var structureChangeCount = 0;
+        ControlChange notifiedChange = ControlChange.None;
+
+        // Access Elements to ensure _elementControls is created
+        var initialElements = control.Elements;
+        Assert.Equal(2, initialElements.Count);
+
+        control.Subscribe(
+            (ctrl, change, ed) =>
+            {
+                if ((change & ControlChange.Structure) != 0)
+                {
+                    structureChangeCount++;
+                    notifiedChange = change;
+                }
+            },
+            ControlChange.Structure
+        );
+
+        // Grow array using SetValue
+        var newList = new List<object> { "item1", "item2", "item3", "item4" };
+        editor.SetValue(control, newList);
+
+        // Should fire Structure notification
+        Assert.Equal(1, structureChangeCount);
+        Assert.True((notifiedChange & ControlChange.Structure) != 0);
+        Assert.Equal(4, control.Elements.Count);
+    }
+
+    [Fact]
+    public void SetValue_Shrinking_Array_Should_Fire_Structure_Change()
+    {
+        var list = new List<object> { "item1", "item2", "item3", "item4" };
+        var control = new Control(list, list);
+        var editor = new ControlEditor();
+        var structureChangeCount = 0;
+        ControlChange notifiedChange = ControlChange.None;
+
+        // Access Elements to ensure _elementControls is created
+        var initialElements = control.Elements;
+        Assert.Equal(4, initialElements.Count);
+
+        control.Subscribe(
+            (ctrl, change, ed) =>
+            {
+                if ((change & ControlChange.Structure) != 0)
+                {
+                    structureChangeCount++;
+                    notifiedChange = change;
+                }
+            },
+            ControlChange.Structure
+        );
+
+        // Shrink array using SetValue
+        var newList = new List<object> { "item1", "item2" };
+        editor.SetValue(control, newList);
+
+        // Should fire Structure notification
+        Assert.Equal(1, structureChangeCount);
+        Assert.True((notifiedChange & ControlChange.Structure) != 0);
+        Assert.Equal(2, control.Elements.Count);
+    }
+
+    [Fact]
+    public void SetValue_Same_Size_Array_Should_Not_Fire_Structure_Change()
+    {
+        var list = new List<object> { "item1", "item2" };
+        var control = new Control(list, list);
+        var editor = new ControlEditor();
+        var structureChangeCount = 0;
+        var valueChangeCount = 0;
+
+        // Access Elements to ensure _elementControls is created
+        var initialElements = control.Elements;
+        Assert.Equal(2, initialElements.Count);
+
+        control.Subscribe(
+            (ctrl, change, ed) =>
+            {
+                if ((change & ControlChange.Structure) != 0)
+                {
+                    structureChangeCount++;
+                }
+            },
+            ControlChange.Structure
+        );
+
+        control.Subscribe(
+            (ctrl, change, ed) =>
+            {
+                if ((change & ControlChange.Value) != 0)
+                {
+                    valueChangeCount++;
+                }
+            },
+            ControlChange.Value
+        );
+
+        // Change array with same size using SetValue
+        var newList = new List<object> { "newItem1", "newItem2" };
+        editor.SetValue(control, newList);
+
+        // Should NOT fire Structure notification (same size)
+        Assert.Equal(0, structureChangeCount);
+        // But SHOULD fire Value notification
+        Assert.Equal(1, valueChangeCount);
+        Assert.Equal(2, control.Elements.Count);
+        Assert.Equal("newItem1", control.Elements[0].Value);
+        Assert.Equal("newItem2", control.Elements[1].Value);
+    }
+
+    [Fact]
+    public void ChangeTracker_Should_Track_Structure_Changes_Via_SetValue()
+    {
+        var list = new List<object> { "first", "second" };
+        var arrayControl = Control.Create(list);
+        var computedControl = Control.CreateTyped<int>(0);
+        var editor = new ControlEditor();
+        var computeCallCount = 0;
+
+        // Access Elements to ensure _elementControls is created
+        var initialElements = arrayControl.Elements;
+
+        Control.MakeComputed(
+            computedControl,
+            tracker =>
+            {
+                computeCallCount++;
+                var elements = tracker.TrackElements(arrayControl);
+                return elements.Count;
+            },
+            editor
+        );
+
+        // Initial computation should happen
+        Assert.Equal(1, computeCallCount);
+        Assert.Equal(2, computedControl.Value);
+
+        // Grow array using SetValue - should trigger recomputation via Structure change
+        editor.SetValue(arrayControl, new List<object> { "first", "second", "third" });
+        Assert.Equal(2, computeCallCount);
+        Assert.Equal(3, computedControl.Value);
+
+        // Shrink array using SetValue - should trigger recomputation via Structure change
+        editor.SetValue(arrayControl, new List<object> { "first" });
+        Assert.Equal(3, computeCallCount);
+        Assert.Equal(1, computedControl.Value);
+
+        // Same size change - should NOT trigger recomputation (no Structure change)
+        editor.SetValue(arrayControl, new List<object> { "changed" });
+        Assert.Equal(3, computeCallCount); // No additional computation
+        Assert.Equal(1, computedControl.Value);
+    }
 }
