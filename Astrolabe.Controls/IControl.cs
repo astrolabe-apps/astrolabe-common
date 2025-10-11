@@ -2,8 +2,26 @@ using System.Collections;
 
 namespace Astrolabe.Controls;
 
-public interface IControl : ITypedControl<object?>
+public interface IControl
 {
+    // Properties from IControlProperties (now using object?)
+    object? Value { get; }
+    object? InitialValue { get; }
+    bool IsDirty { get; }
+    bool IsDisabled { get; }
+    bool IsTouched { get; }
+    bool IsValid { get; }
+    IReadOnlyDictionary<string, string> Errors { get; }
+
+    /// <summary>
+    /// Returns true if this control has an undefined value (e.g., missing object property).
+    /// </summary>
+    bool IsUndefined { get; }
+
+    bool HasErrors { get; }
+
+    int UniqueId { get; }
+
     // Type detection
     bool IsArray { get; }
     bool IsObject { get; }
@@ -11,18 +29,12 @@ public interface IControl : ITypedControl<object?>
     int Count { get; }
 
     // Indexer access
-    IControl? this[string propertyName] { get; }
+    IControl this[string propertyName] { get; }
     IControl? this[int index] { get; }
 
     // Collection properties
     IEnumerable<string> FieldNames { get; }
     IReadOnlyList<IControl> Elements { get; }
-
-    /// <summary>
-    /// Returns a typed view of this control. Use this when you know the control's value type.
-    /// Throws InvalidCastException if the control's value cannot be cast to T.
-    /// </summary>
-    ITypedControl<T> AsTyped<T>();
 
     // Subscription method on IControl for convenience
     ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask);

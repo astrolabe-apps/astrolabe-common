@@ -30,13 +30,9 @@ public class ChildControlCleanupTests
         var arrayData = new[] { "item1", "item2" };
         editor.SetValue(control, arrayData);
 
-        // Field controls should be cleared - accessing same fields should return null
-        Assert.Null(control["name"]);
-        Assert.Null(control["age"]);
-
-        // New field access should not return the old cached children
-        var newNameChild = control["name"];
-        Assert.Null(newNameChild); // Array types don't support field access
+        // Field controls should be cleared - accessing same fields should throw exception
+        Assert.Throws<InvalidOperationException>(() => control["name"]);
+        Assert.Throws<InvalidOperationException>(() => control["age"]);
     }
 
     [Fact]
@@ -251,7 +247,8 @@ public class ChildControlCleanupTests
         // Create child of null control
         var nameChild = control["name"];
         Assert.NotNull(nameChild);
-        Assert.Null(nameChild.Value);
+        Assert.True(nameChild.IsUndefined); // Child of null parent is undefined
+        Assert.Equal(UndefinedValue.Instance, nameChild.Value);
 
         var nameChildId = nameChild.UniqueId;
 
@@ -274,8 +271,8 @@ public class ChildControlCleanupTests
         var editor = new ControlEditor();
 
         // String should not allow children initially
-        Assert.Null(control[0]);
-        Assert.Null(control["prop"]);
+        Assert.Null(control[0]); // Array indexer returns null for string type
+        Assert.Throws<InvalidOperationException>(() => control["prop"]); // String indexer throws for non-dict
 
         // Change to array
         var arrayData = new[] { "item1", "item2" };
@@ -321,8 +318,8 @@ public class ChildControlCleanupTests
         var arrayData = new[] { "newItem" };
         editor.SetValue(control, arrayData);
 
-        // Object children should be cleared
-        Assert.Null(control["key"]);
+        // Object children should be cleared - accessing string property on array throws exception
+        Assert.Throws<InvalidOperationException>(() => control["key"]);
 
         // Array children should be accessible
         Assert.NotNull(control[0]);

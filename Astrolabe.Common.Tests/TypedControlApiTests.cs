@@ -6,18 +6,18 @@ namespace Astrolabe.Common.Tests;
 public class TypedControlApiTests
 {
     [Fact]
-    public void CreateTyped_Should_Return_Typed_Control()
+    public void Create_Should_Return_Control()
     {
-        var control = Control.CreateTyped<string>("initial");
+        var control = Control.Create("initial");
 
         Assert.Equal("initial", control.Value);
-        Assert.IsAssignableFrom<ITypedControl<string>>(control);
+        Assert.IsAssignableFrom<IControl>(control);
     }
 
     [Fact]
-    public void SetValue_With_Typed_Control_Should_Work()
+    public void SetValue_Should_Work()
     {
-        var control = Control.CreateTyped<int>(42);
+        var control = Control.Create(42);
         var editor = new ControlEditor();
 
         editor.SetValue(control, 100);
@@ -26,9 +26,9 @@ public class TypedControlApiTests
     }
 
     [Fact]
-    public void SetInitialValue_With_Typed_Control_Should_Work()
+    public void SetInitialValue_Should_Work()
     {
-        var control = Control.CreateTyped<string>("current");
+        var control = Control.Create("current");
         var editor = new ControlEditor();
 
         editor.SetInitialValue(control, "initial");
@@ -38,9 +38,9 @@ public class TypedControlApiTests
     }
 
     [Fact]
-    public void SetDisabled_With_Typed_Control_Should_Work()
+    public void SetDisabled_Should_Work()
     {
-        var control = Control.CreateTyped<bool>(true);
+        var control = Control.Create(true);
         var editor = new ControlEditor();
 
         editor.SetDisabled(control, true);
@@ -49,9 +49,9 @@ public class TypedControlApiTests
     }
 
     [Fact]
-    public void SetTouched_With_Typed_Control_Should_Work()
+    public void SetTouched_Should_Work()
     {
-        var control = Control.CreateTyped<double>(3.14);
+        var control = Control.Create(3.14);
         var editor = new ControlEditor();
 
         editor.SetTouched(control, true);
@@ -60,9 +60,9 @@ public class TypedControlApiTests
     }
 
     [Fact]
-    public void MarkAsClean_With_Typed_Control_Should_Work()
+    public void MarkAsClean_Should_Work()
     {
-        var control = Control.CreateTyped<string>("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
 
         editor.SetValue(control, "changed");
@@ -74,9 +74,9 @@ public class TypedControlApiTests
     }
 
     [Fact]
-    public void SetError_With_Typed_Control_Should_Work()
+    public void SetError_Should_Work()
     {
-        var control = Control.CreateTyped<string>("test");
+        var control = Control.Create("test");
         var editor = new ControlEditor();
 
         editor.SetError(control, "validation", "Invalid value");
@@ -87,9 +87,9 @@ public class TypedControlApiTests
     }
 
     [Fact]
-    public void ClearErrors_With_Typed_Control_Should_Work()
+    public void ClearErrors_Should_Work()
     {
-        var control = Control.CreateTyped<string>("test");
+        var control = Control.Create("test");
         var editor = new ControlEditor();
 
         editor.SetError(control, "validation", "Invalid");
@@ -101,32 +101,31 @@ public class TypedControlApiTests
     }
 
     [Fact]
-    public void Validate_With_Typed_Control_Should_Work()
+    public void Validate_Should_Work()
     {
         var control = Control.Create<string>("initial", value =>
             string.IsNullOrEmpty(value) ? "Required" : null);
 
-        var typedControl = control.AsTyped<string>();
         var editor = new ControlEditor();
 
-        editor.SetValue(typedControl, "");
-        var isValid = editor.Validate(typedControl);
+        editor.SetValue(control, "");
+        var isValid = editor.Validate(control);
 
         Assert.False(isValid);
-        Assert.False(typedControl.IsValid);
+        Assert.False(control.IsValid);
     }
 
     [Fact]
-    public void Typed_API_Works_With_ChangeTracker()
+    public void Control_Works_With_ChangeTracker()
     {
-        var control = Control.CreateTyped<int>(10);
+        var control = Control.Create(10);
         var tracker = new ChangeTracker();
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
 
-        var tracked = tracker.Tracked(control);
-        _ = tracked.Value;
+        tracker.RecordAccess(control, ControlChange.Value);
+        _ = control.Value;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();

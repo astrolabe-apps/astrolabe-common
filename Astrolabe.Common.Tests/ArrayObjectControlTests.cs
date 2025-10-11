@@ -521,7 +521,7 @@ public class ArrayObjectControlTests
     {
         var list = new List<object> { "first", "second" };
         var arrayControl = Control.Create(list);
-        var computedControl = Control.CreateTyped<int>(0);
+        var computedControl = Control.Create(0);
         var editor = new ControlEditor();
         var computeCallCount = 0;
 
@@ -708,7 +708,7 @@ public class ArrayObjectControlTests
     {
         var list = new List<object> { "first", "second" };
         var arrayControl = Control.Create(list);
-        var computedControl = Control.CreateTyped<int>(0);
+        var computedControl = Control.Create(0);
         var editor = new ControlEditor();
         var computeCallCount = 0;
 

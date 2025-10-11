@@ -7,7 +7,7 @@ namespace Astrolabe.Schemas;
 /// </summary>
 public class FormStateNode : IFormStateNode
 {
-    private readonly ITypedControl<List<IFormStateNode>> _childrenControl;
+    private readonly IControl _childrenControl;
     private readonly ControlEditor _editor;
 
     public FormStateNode(
@@ -30,10 +30,10 @@ public class FormStateNode : IFormStateNode
         ChildKey = childKey;
         _editor = editor;
 
-        _childrenControl = Control.CreateTyped<List<IFormStateNode>>(new List<IFormStateNode>());
+        _childrenControl = Control.Create(new List<IFormStateNode>());
 
         // Set up reactive children that update when array data changes
-        Control.MakeComputedWithPrevious(_childrenControl, (tracker, currentChildren) =>
+        Control.MakeComputedWithPrevious<List<IFormStateNode>>(_childrenControl, (tracker, currentChildren) =>
         {
             var childSpecs = FormStateNodeHelpers.ResolveChildren(this, tracker);
             return UpdateChildren(currentChildren, childSpecs);
@@ -42,7 +42,7 @@ public class FormStateNode : IFormStateNode
 
     public ControlDefinition Definition { get; }
     public IFormNode? Form { get; }
-    public ICollection<IFormStateNode> Children => _childrenControl.Value;
+    public ICollection<IFormStateNode> Children => (List<IFormStateNode>)_childrenControl.Value!;
     public IFormStateNode? ParentNode { get; }
     public SchemaDataNode Parent { get; }
     public SchemaDataNode? DataNode { get; }

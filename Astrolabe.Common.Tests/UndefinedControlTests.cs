@@ -206,13 +206,14 @@ public class UndefinedControlTests
 
         // Get an undefined child control
         var undefinedChild = parentControl["missingField"];
-        Assert.True(undefinedChild!.IsUndefined);
+        Assert.True(undefinedChild.IsUndefined);
 
         // Should be able to access child fields of undefined control
         var grandChild = undefinedChild["childProperty"];
         Assert.NotNull(grandChild);
-        Assert.Null(grandChild.Value); // Child gets null value, not undefined
-        Assert.Null(grandChild.InitialValue);
+        Assert.True(grandChild.IsUndefined); // Child gets undefined value when parent is undefined
+        Assert.Equal(UndefinedValue.Instance, grandChild.Value);
+        Assert.Equal(UndefinedValue.Instance, grandChild.InitialValue);
     }
 
     [Fact]
@@ -223,12 +224,13 @@ public class UndefinedControlTests
 
         // Get an undefined child control
         var undefinedChild = parentControl["missingField"];
-        Assert.True(undefinedChild!.IsUndefined);
+        Assert.True(undefinedChild.IsUndefined);
 
         // Access a child of the undefined control
         var grandChild = undefinedChild["childProperty"];
         Assert.NotNull(grandChild);
-        Assert.Null(grandChild.Value);
+        Assert.True(grandChild.IsUndefined); // Child of undefined parent is also undefined
+        Assert.Equal(UndefinedValue.Instance, grandChild.Value);
 
         // Assign value to the grandchild
         editor.SetValue(grandChild, "test value");
@@ -256,8 +258,9 @@ public class UndefinedControlTests
         // Should be able to access child fields of null control
         var child = parentControl["testProperty"];
         Assert.NotNull(child);
-        Assert.Null(child.Value);
-        Assert.Null(child.InitialValue);
+        Assert.True(child.IsUndefined); // Child of null parent is undefined
+        Assert.Equal(UndefinedValue.Instance, child.Value);
+        Assert.Equal(UndefinedValue.Instance, child.InitialValue);
     }
 
     [Fact]
@@ -296,8 +299,10 @@ public class UndefinedControlTests
 
         Assert.NotNull(nullChild);
         Assert.NotNull(undefinedChild);
-        Assert.Null(nullChild.Value);
-        Assert.Null(undefinedChild.Value);
+        Assert.True(nullChild.IsUndefined); // Children of null/undefined parents are undefined
+        Assert.True(undefinedChild.IsUndefined);
+        Assert.Equal(UndefinedValue.Instance, nullChild.Value);
+        Assert.Equal(UndefinedValue.Instance, undefinedChild.Value);
 
         // Both should promote to objects when child values are assigned
         editor.SetValue(nullChild, "value1");

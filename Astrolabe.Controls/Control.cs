@@ -29,8 +29,6 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
 
     public int UniqueId { get; } = Interlocked.Increment(ref NextId);
 
-    public IControl UnderlyingControl => this;
-
     public object? Value
     {
         get
@@ -80,6 +78,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
 
     public bool HasErrors => Errors.Count > 0;
     public bool IsValid => !HasErrors && !IsAnyChildInvalid;
+    public bool IsUndefined => Value is UndefinedValue;
 
     // Type detection
     public bool IsObject => Value is IDictionary<string, object>;
@@ -164,7 +163,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
                 : 0;
 
     // Indexer access
-    public IControl? this[string propertyName]
+    public IControl this[string propertyName]
     {
         get
         {
@@ -175,17 +174,19 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
             if (_fieldControls.TryGetValue(propertyName, out var existing))
                 return existing;
 
-            // For null or undefined parent values, create child control with null value
+            // For null or undefined parent values, create child control with undefined value
             if (Value is null or UndefinedValue)
             {
-                var childControl = CreateChildControl(null, propertyName);
+                var childControl = CreateChildControl(UndefinedValue.Instance, propertyName);
                 _fieldControls[propertyName] = childControl;
                 return childControl;
             }
 
-            // Check if we have an object type
+            // Check if we have an object type - throw exception if not a dictionary
             if (Value is not IDictionary<string, object> dict)
-                return null;
+                throw new InvalidOperationException(
+                    $"Cannot access property '{propertyName}' on a non-object control. Value type: {Value.GetType().Name}"
+                );
 
             // Check if property exists in dictionary - return undefined control for missing properties
             if (!dict.TryGetValue(propertyName, out var value))
@@ -253,13 +254,11 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     }
 
     /// <summary>
-    /// Creates a new control with a typed value, returning a typed control wrapper.
+    /// Creates a new reactive wrapper with a typed value.
     /// </summary>
-    public static ITypedControl<T> CreateTyped<T>(T? initialValue = default, bool dontClearError = false)
+    public static IReactive<T> CreateReactive<T>(T? initialValue = default)
     {
-        var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
-        var control = new Control(initialValue, initialValue, flags);
-        return control.AsTyped<T>();
+        return new Reactive<T>(initialValue!);
     }
 
     /// <summary>
@@ -269,22 +268,21 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     /// <typeparam name="T">The type of the structured object</typeparam>
     /// <param name="initialValue">The initial value object</param>
     /// <param name="dontClearError">If true, errors won't be cleared when value changes</param>
-    /// <returns>A structured control with accessible child controls via Field() extension</returns>
+    /// <returns>A control with the object's properties stored as a dictionary</returns>
     /// <example>
     /// <code>
     /// record FormState(bool? Visible, bool Readonly);
     /// var control = Control.CreateStructured(new FormState(null, false));
-    /// var visibleControl = control.Field(x => x.Visible); // Access child control
+    /// var visibleControl = control["Visible"]; // Access child control via indexer
     /// </code>
     /// </example>
-    public static IStructuredControl<T> CreateStructured<T>(T initialValue, bool dontClearError = false)
+    public static IControl CreateStructured<T>(T initialValue, bool dontClearError = false)
         where T : class
     {
         // Convert the structured object to a dictionary for internal storage
         var dict = ObjectToDictionary(initialValue);
         var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
-        var control = new Control(dict, dict, flags);
-        return new StructuredControlView<T>(control);
+        return new Control(dict, dict, flags);
     }
 
     /// <summary>
@@ -346,17 +344,16 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     /// <typeparam name="T">The type of the computed value</typeparam>
     /// <param name="compute">Function that computes the value, receiving a ChangeTracker to track dependencies</param>
     /// <param name="editor">ControlEditor instance to use for updates</param>
-    /// <returns>A typed control that automatically updates when dependencies change</returns>
+    /// <returns>A control that automatically updates when dependencies change</returns>
     /// <example>
     /// <code>
-    /// var firstName = Control.CreateTyped("John");
-    /// var lastName = Control.CreateTyped("Doe");
+    /// var firstName = Control.Create("John");
+    /// var lastName = Control.Create("Doe");
     /// var editor = new ControlEditor();
     ///
     /// var fullName = Control.CreateComputed(tracker => {
-    ///     var first = tracker.Tracked(firstName).Value;
-    ///     var last = tracker.Tracked(lastName).Value;
-    ///     return $"{first} {last}";
+    ///     // Track dependencies using extension methods
+    ///     return $"{firstName.Value} {lastName.Value}";
     /// }, editor);
     ///
     /// // fullName.Value is "John Doe"
@@ -364,7 +361,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     /// // fullName.Value automatically becomes "Jane Doe"
     /// </code>
     /// </example>
-    public static ITypedControl<T> CreateComputed<T>(
+    public static IControl CreateComputed<T>(
         Func<ChangeTracker, T> compute,
         ControlEditor editor)
     {
@@ -385,7 +382,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         // Establish initial subscriptions
         tracker.UpdateSubscriptions();
 
-        return control.AsTyped<T>();
+        return control;
     }
 
     /// <summary>
@@ -405,7 +402,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     ///
     /// // Make the Visible field computed based on other controls
     /// Control.MakeComputed(visibleField, tracker => {
-    ///     var someCondition = tracker.Tracked(otherControl).Value;
+    ///     var someCondition = (bool?)otherControl.Value;
     ///     return someCondition ? true : null;
     /// }, editor);
     ///
@@ -413,7 +410,7 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     /// </code>
     /// </example>
     public static void MakeComputed<T>(
-        ITypedControl<T> control,
+        IControl control,
         Func<ChangeTracker, T> compute,
         ControlEditor editor)
     {
@@ -444,18 +441,18 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     /// <param name="editor">ControlEditor instance to use for updates</param>
     /// <example>
     /// <code>
-    /// var listControl = Control.CreateTyped&lt;List&lt;Item&gt;&gt;(new List&lt;Item&gt;());
+    /// var listControl = Control.Create(new List&lt;Item&gt;());
     /// var editor = new ControlEditor();
     ///
     /// // Reuse existing items when source changes, only add/remove as needed
-    /// Control.MakeComputedWithPrevious(listControl, (tracker, currentList) => {
-    ///     var source = tracker.Tracked(sourceControl).Value;
+    /// Control.MakeComputedWithPrevious&lt;List&lt;Item&gt;&gt;(listControl, (tracker, currentList) => {
+    ///     var source = (List&lt;Source&gt;)sourceControl.Value;
     ///     return UpdateList(currentList, source); // Reuses items from currentList
     /// }, editor);
     /// </code>
     /// </example>
     public static void MakeComputedWithPrevious<T>(
-        ITypedControl<T> control,
+        IControl control,
         Func<ChangeTracker, T, T> compute,
         ControlEditor editor)
     {
@@ -464,14 +461,14 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         // Set up reactive callback
         tracker.SetCallback(() =>
         {
-            var currentValue = control.Value;
+            var currentValue = (T)control.Value!;
             var newValue = compute(tracker, currentValue);
             editor.SetValue(control, newValue);
             tracker.UpdateSubscriptions();
         });
 
         // Initial computation and subscription setup
-        var initialValue = compute(tracker, control.Value);
+        var initialValue = compute(tracker, (T)control.Value!);
         editor.SetValue(control, initialValue);
         tracker.UpdateSubscriptions();
     }
@@ -480,23 +477,6 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
     {
         _subscriptions ??= new Subscriptions();
         return _subscriptions.Subscribe(listener, GetChangeState(mask), mask);
-    }
-
-    public ITypedControl<T> AsTyped<T>()
-    {
-        // Allow null and undefined for any T
-        if (Value == null || Value is UndefinedValue)
-            return new TypedControlView<T>(this);
-
-        // Check if value is compatible with T
-        if (Value is not T)
-        {
-            throw new InvalidCastException(
-                $"Cannot cast control value of type {Value.GetType().Name} to {typeof(T).Name}"
-            );
-        }
-
-        return new TypedControlView<T>(this);
     }
 
     private ControlChange GetChangeState(ControlChange mask)
@@ -1268,46 +1248,6 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         return true;
     }
 
-    // Typed control view wrapper
-    private class TypedControlView<T>(Control control) : ITypedControl<T>
-    {
-        public int UniqueId => control.UniqueId;
-
-        public T Value => (T)control.Value!;
-        public T InitialValue => (T)control.InitialValue!;
-
-        public bool IsDirty => control.IsDirty;
-        public bool IsDisabled => control.IsDisabled;
-        public bool IsTouched => control.IsTouched;
-        public bool IsValid => control.IsValid;
-
-        // Explicitly implement IsUndefined to check underlying control's value
-        // (avoids trying to cast UndefinedValue to T)
-        public bool IsUndefined => control.Value is UndefinedValue;
-
-        public IReadOnlyDictionary<string, string> Errors => control.Errors;
-
-        public IControl UnderlyingControl => control;
-    }
-
-    // Structured control view wrapper - for controls created with CreateStructured
-    // The value is stored as Dictionary<string, object?> internally, so we don't expose Value/InitialValue
-    private class StructuredControlView<T>(Control control) : IStructuredControl<T>
-        where T : class
-    {
-        public int UniqueId => control.UniqueId;
-
-        public bool IsDirty => control.IsDirty;
-        public bool IsDisabled => control.IsDisabled;
-        public bool IsTouched => control.IsTouched;
-        public bool IsValid => control.IsValid;
-        public bool IsUndefined => control.Value is UndefinedValue;
-        public bool HasErrors => control.HasErrors;
-
-        public IReadOnlyDictionary<string, string> Errors => control.Errors;
-
-        public IControl UnderlyingControl => control;
-    }
 }
 
 [Flags]

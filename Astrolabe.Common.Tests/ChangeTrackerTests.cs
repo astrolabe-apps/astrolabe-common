@@ -10,11 +10,10 @@ public class ChangeTrackerTests
     {
         var tracker = new ChangeTracker();
         var control = Control.Create("test");
-        var typedControl = control.AsTyped<string>();
 
-        var tracked = tracker.Tracked(typedControl);
+        tracker.RecordAccess(control, ControlChange.Value);
 
-        Assert.Equal("test", tracked.Value);
+        Assert.Equal("test", control.Value);
     }
 
     [Fact]
@@ -22,15 +21,14 @@ public class ChangeTrackerTests
     {
         var tracker = new ChangeTracker();
         var control = Control.Create("initial");
-        var typedControl = control.AsTyped<string>();
         var callbackCount = 0;
 
         // Set up callback
         tracker.SetCallback(() => callbackCount++);
 
         // Access Value property
-        var tracked = tracker.Tracked(typedControl);
-        _ = tracked.Value;
+        tracker.RecordAccess(control, ControlChange.Value);
+        _ = control.Value;
 
         // Establish subscriptions
         tracker.UpdateSubscriptions();
@@ -47,14 +45,13 @@ public class ChangeTrackerTests
     {
         var tracker = new ChangeTracker();
         var control = Control.Create("initial");
-        var typedControl = control.AsTyped<string>();
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
 
         // Access only Value, not IsDirty
-        var tracked = tracker.Tracked(typedControl);
-        _ = tracked.Value;
+        tracker.RecordAccess(control, ControlChange.Value);
+        _ = control.Value;
 
         tracker.UpdateSubscriptions();
 
@@ -70,19 +67,18 @@ public class ChangeTrackerTests
     {
         var tracker = new ChangeTracker();
         var control = Control.Create("initial");
-        var typedControl = control.AsTyped<string>();
         var callbackCount = 0;
 
         tracker.SetCallback(() => {
             callbackCount++;
-            var tracked = tracker.Tracked(typedControl);
-            _ = tracked.Value;
+            tracker.RecordAccess(control, ControlChange.Value);
+            _ = control.Value;
             tracker.UpdateSubscriptions();
         });
 
         // Initial evaluation
-        var tracked = tracker.Tracked(typedControl);
-        _ = tracked.Value;
+        tracker.RecordAccess(control, ControlChange.Value);
+        _ = control.Value;
         tracker.UpdateSubscriptions();
 
         // Change value - should trigger callback and re-track
@@ -102,15 +98,14 @@ public class ChangeTrackerTests
     {
         var tracker = new ChangeTracker();
         var control = Control.Create("initial");
-        var typedControl = control.AsTyped<string>();
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
 
         // Access multiple properties
-        var tracked = tracker.Tracked(typedControl);
-        _ = tracked.Value;
-        _ = tracked.IsDirty;
+        tracker.RecordAccess(control, ControlChange.Value | ControlChange.Dirty);
+        _ = control.Value;
+        _ = control.IsDirty;
 
         tracker.UpdateSubscriptions();
 
@@ -136,10 +131,10 @@ public class ChangeTrackerTests
         tracker.SetCallback(() => callbackCount++);
 
         // Access both controls
-        var tracked1 = tracker.Tracked(control1.AsTyped<string>());
-        var tracked2 = tracker.Tracked(control2.AsTyped<string>());
-        _ = tracked1.Value;
-        _ = tracked2.Value;
+        tracker.RecordAccess(control1, ControlChange.Value);
+        tracker.RecordAccess(control2, ControlChange.Value);
+        _ = control1.Value;
+        _ = control2.Value;
 
         tracker.UpdateSubscriptions();
 
@@ -164,13 +159,13 @@ public class ChangeTrackerTests
         tracker.SetCallback(() => callbackCount++);
 
         // First evaluation - track control1
-        var tracked1 = tracker.Tracked(control1.AsTyped<string>());
-        _ = tracked1.Value;
+        tracker.RecordAccess(control1, ControlChange.Value);
+        _ = control1.Value;
         tracker.UpdateSubscriptions();
 
         // Second evaluation - track only control2
-        var tracked2 = tracker.Tracked(control2.AsTyped<string>());
-        _ = tracked2.Value;
+        tracker.RecordAccess(control2, ControlChange.Value);
+        _ = control2.Value;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();
@@ -193,8 +188,8 @@ public class ChangeTrackerTests
 
         tracker.SetCallback(() => callbackCount++);
 
-        var tracked = tracker.Tracked(control.AsTyped<string>());
-        _ = tracked.Value;
+        tracker.RecordAccess(control, ControlChange.Value);
+        _ = control.Value;
         tracker.UpdateSubscriptions();
 
         // Dispose tracker
@@ -215,17 +210,15 @@ public class ChangeTrackerTests
         var editor = new ControlEditor();
         editor.SetError(control, "test", "error");
 
-        var tracked = tracker.Tracked(control.AsTyped<string>());
-
-        Assert.Equal("value", tracked.Value);
-        Assert.Equal("initial", tracked.InitialValue);
-        Assert.True(tracked.IsDirty);
-        Assert.True(tracked.IsDisabled);
-        Assert.True(tracked.IsTouched);
-        Assert.False(tracked.IsValid);
-        Assert.Single(tracked.Errors);
-        Assert.True(tracked.HasErrors);
-        Assert.False(tracked.IsUndefined);
+        Assert.Equal("value", control.Value);
+        Assert.Equal("initial", control.InitialValue);
+        Assert.True(control.IsDirty);
+        Assert.True(control.IsDisabled);
+        Assert.True(control.IsTouched);
+        Assert.False(control.IsValid);
+        Assert.Single(control.Errors);
+        Assert.True(control.HasErrors);
+        Assert.False(control.IsUndefined);
     }
 
     [Fact]
@@ -237,8 +230,8 @@ public class ChangeTrackerTests
 
         tracker.SetCallback(() => callbackCount++);
 
-        var tracked = tracker.Tracked(control.AsTyped<string>());
-        _ = tracked.Value;
+        tracker.RecordAccess(control, ControlChange.Value);
+        _ = control.Value;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();
@@ -261,7 +254,7 @@ public class ChangeTrackerTests
         var executionOrder = new List<string>();
 
         // Add a listener to the control
-        control.UnderlyingControl.Subscribe((ctrl, change, editor) => {
+        control.Subscribe((ctrl, change, editor) => {
             executionOrder.Add("listener");
         }, ControlChange.Value);
 
@@ -270,8 +263,8 @@ public class ChangeTrackerTests
             executionOrder.Add("tracker-callback");
         });
 
-        var tracked = tracker.Tracked(control.AsTyped<string>());
-        _ = tracked.Value;
+        tracker.RecordAccess(control, ControlChange.Value);
+        _ = control.Value;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();
@@ -294,10 +287,10 @@ public class ChangeTrackerTests
         tracker.SetCallback(() => callbackCount++);
 
         // Track both controls
-        var tracked1 = tracker.Tracked(control1.AsTyped<string>());
-        var tracked2 = tracker.Tracked(control2.AsTyped<string>());
-        _ = tracked1.Value;
-        _ = tracked2.Value;
+        tracker.RecordAccess(control1, ControlChange.Value);
+        tracker.RecordAccess(control2, ControlChange.Value);
+        _ = control1.Value;
+        _ = control2.Value;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();
@@ -322,10 +315,10 @@ public class ChangeTrackerTests
         tracker.SetCallback(() => callbackCount++);
 
         // Access same control's Value property multiple times
-        var tracked = tracker.Tracked(control.AsTyped<string>());
-        _ = tracked.Value;
-        _ = tracked.Value;
-        _ = tracked.IsValid;
+        tracker.RecordAccess(control, ControlChange.Value | ControlChange.Valid);
+        _ = control.Value;
+        _ = control.Value;
+        _ = control.IsValid;
 
         tracker.UpdateSubscriptions();
 
@@ -342,14 +335,16 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Compute_Initial_Value()
     {
-        var firstName = Control.CreateTyped("John");
-        var lastName = Control.CreateTyped("Doe");
+        var firstName = Control.Create("John");
+        var lastName = Control.Create("Doe");
         var editor = new ControlEditor();
 
         var fullName = Control.CreateComputed(tracker =>
         {
-            var first = tracker.Tracked(firstName).Value;
-            var last = tracker.Tracked(lastName).Value;
+            tracker.RecordAccess(firstName, ControlChange.Value);
+            tracker.RecordAccess(lastName, ControlChange.Value);
+            var first = (string)firstName.Value!;
+            var last = (string)lastName.Value!;
             return $"{first} {last}";
         }, editor);
 
@@ -359,14 +354,16 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Update_When_Dependencies_Change()
     {
-        var firstName = Control.CreateTyped("John");
-        var lastName = Control.CreateTyped("Doe");
+        var firstName = Control.Create("John");
+        var lastName = Control.Create("Doe");
         var editor = new ControlEditor();
 
         var fullName = Control.CreateComputed(tracker =>
         {
-            var first = tracker.Tracked(firstName).Value;
-            var last = tracker.Tracked(lastName).Value;
+            tracker.RecordAccess(firstName, ControlChange.Value);
+            tracker.RecordAccess(lastName, ControlChange.Value);
+            var first = (string)firstName.Value!;
+            var last = (string)lastName.Value!;
             return $"{first} {last}";
         }, editor);
 
@@ -384,13 +381,13 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Track_Multiple_Properties()
     {
-        var control = Control.CreateTyped("test");
+        var control = Control.Create("test");
         var editor = new ControlEditor();
 
         var computed = Control.CreateComputed(tracker =>
         {
-            var props = tracker.Tracked(control);
-            return $"{props.Value}:{props.IsDirty}:{props.IsTouched}";
+            tracker.RecordAccess(control, ControlChange.Value | ControlChange.Dirty | ControlChange.Touched);
+            return $"{control.Value}:{control.IsDirty}:{control.IsTouched}";
         }, editor);
 
         Assert.Equal("test:False:False", computed.Value);
@@ -407,21 +404,24 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Work_With_Conditional_Dependencies()
     {
-        var useFirstName = Control.CreateTyped(true);
-        var firstName = Control.CreateTyped("John");
-        var lastName = Control.CreateTyped("Doe");
+        var useFirstName = Control.Create(true);
+        var firstName = Control.Create("John");
+        var lastName = Control.Create("Doe");
         var editor = new ControlEditor();
 
         var displayName = Control.CreateComputed(tracker =>
         {
-            var useFirst = tracker.Tracked(useFirstName).Value;
+            tracker.RecordAccess(useFirstName, ControlChange.Value);
+            var useFirst = (bool)useFirstName.Value!;
             if (useFirst)
             {
-                return tracker.Tracked(firstName).Value;
+                tracker.RecordAccess(firstName, ControlChange.Value);
+                return (string)firstName.Value!;
             }
             else
             {
-                return tracker.Tracked(lastName).Value;
+                tracker.RecordAccess(lastName, ControlChange.Value);
+                return (string)lastName.Value!;
             }
         }, editor);
 
@@ -447,20 +447,23 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Support_Chained_Computations()
     {
-        var firstName = Control.CreateTyped("John");
-        var lastName = Control.CreateTyped("Doe");
+        var firstName = Control.Create("John");
+        var lastName = Control.Create("Doe");
         var editor = new ControlEditor();
 
         var fullName = Control.CreateComputed(tracker =>
         {
-            var first = tracker.Tracked(firstName).Value;
-            var last = tracker.Tracked(lastName).Value;
+            tracker.RecordAccess(firstName, ControlChange.Value);
+            tracker.RecordAccess(lastName, ControlChange.Value);
+            var first = (string)firstName.Value!;
+            var last = (string)lastName.Value!;
             return $"{first} {last}";
         }, editor);
 
         var greeting = Control.CreateComputed(tracker =>
         {
-            var name = tracker.Tracked(fullName).Value;
+            tracker.RecordAccess(fullName, ControlChange.Value);
+            var name = (string)fullName.Value!;
             return $"Hello, {name}!";
         }, editor);
 
@@ -473,14 +476,15 @@ public class ChangeTrackerTests
     [Fact]
     public void MakeComputed_Should_Update_Existing_Control()
     {
-        var firstName = Control.CreateTyped("John");
-        var target = Control.CreateTyped("initial");
+        var firstName = Control.Create("John");
+        var target = Control.Create("initial");
         var editor = new ControlEditor();
 
         // Make target computed based on firstName
         Control.MakeComputed(target, tracker =>
         {
-            var name = tracker.Tracked(firstName).Value;
+            tracker.RecordAccess(firstName, ControlChange.Value);
+            var name = (string)firstName.Value!;
             return name.ToUpper();
         }, editor);
 
@@ -493,20 +497,21 @@ public class ChangeTrackerTests
     [Fact]
     public void MakeComputed_Should_Work_With_Structured_Control_Fields()
     {
-        var condition = Control.CreateTyped(true);
+        var condition = Control.Create(true);
         var editor = new ControlEditor();
 
         var baseCtrl = Control.CreateStructured(new { Visible = (bool?)null, Readonly = false });
-        var visibleField = baseCtrl.Field(x => x.Visible);
+        var visibleField = baseCtrl["Visible"];
 
         // Make the Visible field computed
-        Control.MakeComputed(visibleField, tracker =>
+        Control.MakeComputed(visibleField!, tracker =>
         {
-            var cond = tracker.Tracked(condition).Value;
+            tracker.RecordAccess(condition, ControlChange.Value);
+            var cond = (bool)condition.Value!;
             return cond ? true : (bool?)null;
         }, editor);
 
-        Assert.True(visibleField.Value);
+        Assert.True((bool)visibleField!.Value!);
 
         editor.SetValue(condition, false);
         Assert.Null(visibleField.Value);
@@ -515,15 +520,17 @@ public class ChangeTrackerTests
     [Fact]
     public void MakeComputed_Should_Track_Multiple_Dependencies()
     {
-        var a = Control.CreateTyped(10);
-        var b = Control.CreateTyped(20);
-        var target = Control.CreateTyped(0);
+        var a = Control.Create(10);
+        var b = Control.Create(20);
+        var target = Control.Create(0);
         var editor = new ControlEditor();
 
         Control.MakeComputed(target, tracker =>
         {
-            var valA = tracker.Tracked(a).Value;
-            var valB = tracker.Tracked(b).Value;
+            tracker.RecordAccess(a, ControlChange.Value);
+            tracker.RecordAccess(b, ControlChange.Value);
+            var valA = (int)a.Value!;
+            var valB = (int)b.Value!;
             return valA + valB;
         }, editor);
 
@@ -539,7 +546,7 @@ public class ChangeTrackerTests
     [Fact]
     public void MakeComputed_Should_Allow_Overriding_Structured_Fields()
     {
-        var userType = Control.CreateTyped("admin");
+        var userType = Control.Create("admin");
         var editor = new ControlEditor();
 
         var formState = Control.CreateStructured(new
@@ -549,28 +556,30 @@ public class ChangeTrackerTests
             Message = ""
         });
 
-        var readonlyField = formState.Field(x => x.Readonly);
-        var messageField = formState.Field(x => x.Message);
+        var readonlyField = formState["Readonly"];
+        var messageField = formState["Message"];
 
         // Make readonly computed based on user type
-        Control.MakeComputed(readonlyField, tracker =>
+        Control.MakeComputed(readonlyField!, tracker =>
         {
-            var type = tracker.Tracked(userType).Value;
+            tracker.RecordAccess(userType, ControlChange.Value);
+            var type = (string)userType.Value!;
             return type == "viewer";
         }, editor);
 
         // Make message computed based on readonly state
-        Control.MakeComputed(messageField, tracker =>
+        Control.MakeComputed(messageField!, tracker =>
         {
-            var isReadonly = tracker.Tracked(readonlyField).Value;
+            tracker.RecordAccess(readonlyField!, ControlChange.Value);
+            var isReadonly = (bool)readonlyField!.Value!;
             return isReadonly ? "Read-only mode" : "Edit mode";
         }, editor);
 
-        Assert.False(readonlyField.Value);
-        Assert.Equal("Edit mode", messageField.Value);
+        Assert.False((bool)readonlyField!.Value!);
+        Assert.Equal("Edit mode", messageField!.Value);
 
         editor.SetValue(userType, "viewer");
-        Assert.True(readonlyField.Value);
+        Assert.True((bool)readonlyField.Value!);
         Assert.Equal("Read-only mode", messageField.Value);
     }
 }

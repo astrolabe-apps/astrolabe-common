@@ -8,24 +8,6 @@ public class ChangeTracker : IDisposable
     private bool _callbackPending = false;
 
     /// <summary>
-    /// Returns a tracking proxy for the given control that records property accesses.
-    /// </summary>
-    public IControlProperties<T> Tracked<T>(ITypedControl<T> control)
-    {
-        return new TrackedControlProxy<T>(control, this);
-    }
-
-    /// <summary>
-    /// Tracks array elements and subscribes to Structure changes.
-    /// Returns the current elements collection.
-    /// </summary>
-    public IReadOnlyList<IControl> TrackElements(IControl control)
-    {
-        RecordAccess(control, ControlChange.Structure);
-        return control.Elements;
-    }
-
-    /// <summary>
     /// Sets the callback to invoke when tracked dependencies change.
     /// </summary>
     public void SetCallback(Action callback)
@@ -57,7 +39,7 @@ public class ChangeTracker : IDisposable
             }
 
             // Subscribe with the tracked change mask
-            var subscription = control.UnderlyingControl.Subscribe(OnControlChanged, changeMask);
+            var subscription = control.Subscribe(OnControlChanged, changeMask);
             _subscriptions[control] = subscription;
         }
 
@@ -90,7 +72,11 @@ public class ChangeTracker : IDisposable
         _changeCallback = null;
     }
 
-    internal void RecordAccess(IControl control, ControlChange changeType)
+    /// <summary>
+    /// Records access to a control property for tracking purposes.
+    /// This is used by extension methods to track property accesses.
+    /// </summary>
+    public void RecordAccess(IControl control, ControlChange changeType)
     {
         if (_trackedAccess.TryGetValue(control, out var existing))
         {
@@ -120,87 +106,5 @@ public class ChangeTracker : IDisposable
                 }
             });
         }
-    }
-
-    /// <summary>
-    /// Tracking proxy that records property accesses.
-    /// </summary>
-    private class TrackedControlProxy<T> : IControlProperties<T>
-    {
-        private readonly ITypedControl<T> _control;
-        private readonly ChangeTracker _tracker;
-
-        public TrackedControlProxy(ITypedControl<T> control, ChangeTracker tracker)
-        {
-            _control = control;
-            _tracker = tracker;
-        }
-
-        public T Value
-        {
-            get
-            {
-                _tracker.RecordAccess(_control.UnderlyingControl, ControlChange.Value);
-                return _control.Value;
-            }
-        }
-
-        public T InitialValue
-        {
-            get
-            {
-                _tracker.RecordAccess(_control.UnderlyingControl, ControlChange.InitialValue);
-                return _control.InitialValue;
-            }
-        }
-
-        public bool IsDirty
-        {
-            get
-            {
-                _tracker.RecordAccess(_control.UnderlyingControl, ControlChange.Dirty);
-                return _control.IsDirty;
-            }
-        }
-
-        public bool IsDisabled
-        {
-            get
-            {
-                _tracker.RecordAccess(_control.UnderlyingControl, ControlChange.Disabled);
-                return _control.IsDisabled;
-            }
-        }
-
-        public bool IsTouched
-        {
-            get
-            {
-                _tracker.RecordAccess(_control.UnderlyingControl, ControlChange.Touched);
-                return _control.IsTouched;
-            }
-        }
-
-        public bool IsValid
-        {
-            get
-            {
-                _tracker.RecordAccess(_control.UnderlyingControl, ControlChange.Valid);
-                return _control.IsValid;
-            }
-        }
-
-        public IReadOnlyDictionary<string, string> Errors
-        {
-            get
-            {
-                _tracker.RecordAccess(_control.UnderlyingControl, ControlChange.Error);
-                return _control.Errors;
-            }
-        }
-
-        public bool IsUndefined => _control.IsUndefined;
-
-        public bool HasErrors => _control.HasErrors;
     }
 }

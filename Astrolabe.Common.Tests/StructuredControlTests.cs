@@ -30,16 +30,14 @@ public class StructuredControlTests
 
         // Assert
         Assert.NotNull(control);
-        Assert.IsAssignableFrom<IStructuredControl<SimpleData>>(control);
+        Assert.IsAssignableFrom<IControl>(control);
 
-        // Should be able to access underlying control
-        var underlyingControl = control.UnderlyingControl;
-        Assert.NotNull(underlyingControl);
-        Assert.True(underlyingControl.IsObject);
+        // Should be an object control
+        Assert.True(control.IsObject);
 
         // Should be able to access fields
-        var nameControl = control.Field(x => x.Name);
-        var ageControl = control.Field(x => x.Age);
+        var nameControl = control["Name"];
+        var ageControl = control["Age"];
         Assert.NotNull(nameControl);
         Assert.NotNull(ageControl);
     }
@@ -51,14 +49,14 @@ public class StructuredControlTests
         var control = Control.CreateStructured(new SimpleData("John", 30));
 
         // Act
-        var nameControl = control.Field(x => x.Name);
-        var ageControl = control.Field(x => x.Age);
+        var nameControl = control["Name"];
+        var ageControl = control["Age"];
 
         // Assert
         Assert.NotNull(nameControl);
         Assert.NotNull(ageControl);
-        Assert.Equal("John", nameControl.Value);
-        Assert.Equal(30, ageControl.Value);
+        Assert.Equal("John", nameControl!.Value);
+        Assert.Equal(30, ageControl!.Value);
     }
 
     [Fact]
@@ -73,14 +71,14 @@ public class StructuredControlTests
         });
 
         // Act
-        var visibleControl = control.Field(x => x.Visible);
-        var readonlyControl = control.Field(x => x.Readonly);
-        var descriptionControl = control.Field(x => x.Description);
+        var visibleControl = control["Visible"];
+        var readonlyControl = control["Readonly"];
+        var descriptionControl = control["Description"];
 
         // Assert
-        Assert.Null(visibleControl.Value);
-        Assert.True(readonlyControl.Value);
-        Assert.Equal("test", descriptionControl.Value);
+        Assert.Null(visibleControl!.Value);
+        Assert.True((bool)readonlyControl!.Value!);
+        Assert.Equal("test", descriptionControl!.Value);
     }
 
     [Fact]
@@ -90,7 +88,7 @@ public class StructuredControlTests
         var control = Control.CreateStructured(new SimpleData("John", 30));
 
         // Act - Access a field that doesn't exist in the dictionary
-        var nonExistentControl = control.UnderlyingControl["NonExistentField"];
+        var nonExistentControl = control["NonExistentField"];
 
         // Assert - Should return an undefined control, not null
         Assert.NotNull(nonExistentControl);
@@ -105,15 +103,15 @@ public class StructuredControlTests
         var editor = new ControlEditor();
 
         // Act
-        var nameControl = control.Field(x => x.Name);
-        var ageControl = control.Field(x => x.Age);
+        var nameControl = control["Name"];
+        var ageControl = control["Age"];
 
-        editor.SetValue(nameControl, "Jane");
-        editor.SetValue(ageControl, 25);
+        editor.SetValue(nameControl!, "Jane");
+        editor.SetValue(ageControl!, 25);
 
         // Assert
-        Assert.Equal("Jane", nameControl.Value);
-        Assert.Equal(25, ageControl.Value);
+        Assert.Equal("Jane", nameControl!.Value);
+        Assert.Equal(25, ageControl!.Value);
     }
 
     [Fact]
@@ -124,10 +122,10 @@ public class StructuredControlTests
         var editor = new ControlEditor();
 
         // Act
-        var nameControl = control.Field(x => x.Name);
+        var nameControl = control["Name"];
 
         // Initially not dirty
-        Assert.False(nameControl.IsDirty);
+        Assert.False(nameControl!.IsDirty);
 
         // Modify value
         editor.SetValue(nameControl, "Jane");
@@ -149,12 +147,12 @@ public class StructuredControlTests
         tracker.SetCallback(() => callbackCount++);
 
         // Act - Track name field access
-        var tracked = tracker.Tracked(control.Field(x => x.Name));
-        _ = tracked.Value; // Access value to create dependency
+        var nameControl = control["Name"];
+        tracker.RecordAccess(nameControl!, ControlChange.Value);
+        _ = nameControl!.Value; // Access value to create dependency
         tracker.UpdateSubscriptions();
 
         // Modify the name field
-        var nameControl = control.Field(x => x.Name);
         editor.SetValue(nameControl, "Jane");
 
         // Assert
@@ -168,11 +166,11 @@ public class StructuredControlTests
         var control = Control.CreateStructured(new SimpleData("John", 30));
 
         // Act
-        var nameControl1 = control.Field(x => x.Name);
-        var nameControl2 = control.Field(x => x.Name);
+        var nameControl1 = control["Name"];
+        var nameControl2 = control["Name"];
 
         // Assert - Should return the same underlying control
-        Assert.Equal(nameControl1.UniqueId, nameControl2.UniqueId);
+        Assert.Equal(nameControl1!.UniqueId, nameControl2!.UniqueId);
     }
 
     [Fact]
@@ -183,13 +181,13 @@ public class StructuredControlTests
         var editor = new ControlEditor();
 
         // Act
-        var nameControl = control.Field(x => x.Name);
+        var nameControl = control["Name"];
 
         // Set error
-        editor.SetError(nameControl, "required", "Name is required");
+        editor.SetError(nameControl!, "required", "Name is required");
 
         // Assert
-        Assert.True(nameControl.HasErrors);
+        Assert.True(nameControl!.HasErrors);
         Assert.False(nameControl.IsValid);
         Assert.Equal("Name is required", nameControl.Errors["required"]);
     }
@@ -204,11 +202,11 @@ public class StructuredControlTests
         });
 
         // Act
-        var itemsControl = control.Field(x => x.Items);
+        var itemsControl = control["Items"];
 
         // Assert
         Assert.NotNull(itemsControl);
-        var value = itemsControl.Value;
+        var value = itemsControl!.Value;
         Assert.IsType<List<string>>(value);
         Assert.Equal(3, ((List<string>)value!).Count);
     }
@@ -225,12 +223,12 @@ public class StructuredControlTests
         });
 
         // Act
-        var visibleControl = control.Field(x => x.Visible);
-        var descriptionControl = control.Field(x => x.Description);
+        var visibleControl = control["Visible"];
+        var descriptionControl = control["Description"];
 
         // Assert
-        Assert.Null(visibleControl.Value);
-        Assert.Null(descriptionControl.Value);
+        Assert.Null(visibleControl!.Value);
+        Assert.Null(descriptionControl!.Value);
     }
 
     [Fact]
@@ -243,13 +241,13 @@ public class StructuredControlTests
             Readonly = false
         });
 
-        // Act - Different property access styles
-        var visible1 = control.Field(x => x.Visible);
-        var visible2 = control.Field(data => data.Visible);
+        // Act - Multiple accesses to same field
+        var visible1 = control["Visible"];
+        var visible2 = control["Visible"];
 
-        // Assert - Should both work
-        Assert.Equal(visible1.UniqueId, visible2.UniqueId);
-        Assert.True(visible1.Value);
+        // Assert - Should both work and return same control
+        Assert.Equal(visible1!.UniqueId, visible2!.UniqueId);
+        Assert.True((bool)visible1.Value!);
     }
 
     [Fact]
@@ -270,22 +268,24 @@ public class StructuredControlTests
         tracker.SetCallback(() => callbackCount++);
 
         // Act - Track multiple fields
-        var trackedVisible = tracker.Tracked(control.Field(x => x.Visible));
-        var trackedReadonly = tracker.Tracked(control.Field(x => x.Readonly));
-        _ = trackedVisible.Value;
-        _ = trackedReadonly.Value;
+        var visibleControl = control["Visible"];
+        var readonlyControl = control["Readonly"];
+        tracker.RecordAccess(visibleControl!, ControlChange.Value);
+        tracker.RecordAccess(readonlyControl!, ControlChange.Value);
+        _ = visibleControl!.Value;
+        _ = readonlyControl!.Value;
         tracker.UpdateSubscriptions();
 
         // Modify visible
-        editor.SetValue(control.Field(x => x.Visible), false);
+        editor.SetValue(control["Visible"]!, false);
         Assert.Equal(1, callbackCount);
 
         // Modify readonly
-        editor.SetValue(control.Field(x => x.Readonly), true);
+        editor.SetValue(control["Readonly"]!, true);
         Assert.Equal(2, callbackCount);
 
         // Modify untracked field - should not trigger
-        editor.SetValue(control.Field(x => x.Description), "changed");
+        editor.SetValue(control["Description"]!, "changed");
         Assert.Equal(2, callbackCount); // Still 2
     }
 
@@ -295,10 +295,10 @@ public class StructuredControlTests
         // Arrange
         var control = Control.CreateStructured(new SimpleData("John", 30));
         var editor = new ControlEditor();
-        var nameControl = control.Field(x => x.Name);
+        var nameControl = control["Name"];
 
         // Act & Assert
-        Assert.False(nameControl.IsTouched);
+        Assert.False(nameControl!.IsTouched);
 
         editor.SetTouched(nameControl, true);
         Assert.True(nameControl.IsTouched);
@@ -313,10 +313,10 @@ public class StructuredControlTests
         // Arrange
         var control = Control.CreateStructured(new SimpleData("John", 30));
         var editor = new ControlEditor();
-        var nameControl = control.Field(x => x.Name);
+        var nameControl = control["Name"];
 
         // Act & Assert
-        Assert.False(nameControl.IsDisabled);
+        Assert.False(nameControl!.IsDisabled);
 
         editor.SetDisabled(nameControl, true);
         Assert.True(nameControl.IsDisabled);
@@ -334,14 +334,14 @@ public class StructuredControlTests
             dontClearError: true
         );
         var editor = new ControlEditor();
-        var nameControl = control.Field(x => x.Name);
+        var nameControl = control["Name"];
 
         // Act
-        editor.SetError(nameControl, "test", "Error message");
-        editor.SetValue(nameControl, "Jane");
+        editor.SetError(nameControl!, "test", "Error message");
+        editor.SetValue(nameControl!, "Jane");
 
         // Assert - Error should still be there
-        Assert.True(nameControl.HasErrors);
+        Assert.True(nameControl!.HasErrors);
     }
 
     [Fact]
@@ -365,8 +365,9 @@ public class StructuredControlTests
         tracker.SetCallback(() =>
         {
             // Read visible through tracker
-            var tracked = tracker.Tracked(control.Field(x => x.Visible));
-            var visible = tracked.Value;
+            var visibleControl = control["Visible"];
+            tracker.RecordAccess(visibleControl!, ControlChange.Value);
+            var visible = visibleControl!.Value as bool?;
 
             // Compute derived value
             computedValue = visible == true;
@@ -376,18 +377,19 @@ public class StructuredControlTests
         });
 
         // Initial computation
-        var trackedInitial = tracker.Tracked(control.Field(x => x.Visible));
-        _ = trackedInitial.Value;
+        var visibleControl = control["Visible"];
+        tracker.RecordAccess(visibleControl!, ControlChange.Value);
+        _ = visibleControl!.Value;
         tracker.UpdateSubscriptions();
 
         // Act - Change visible
-        editor.SetValue(control.Field(x => x.Visible), true);
+        editor.SetValue(control["Visible"]!, true);
 
         // Assert - Callback should have fired and updated computedValue
         Assert.True(computedValue);
 
         // Act - Change visible again
-        editor.SetValue(control.Field(x => x.Visible), false);
+        editor.SetValue(control["Visible"]!, false);
 
         // Assert
         Assert.False(computedValue);
