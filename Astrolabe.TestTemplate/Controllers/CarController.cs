@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Astrolabe.Annotation;
+using Astrolabe.Controls;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.PDF;
 using Astrolabe.SearchState;
@@ -132,9 +133,11 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
         var rootSchemaData = rootSchemaNode.WithData(JsonSerializer.SerializeToNode(pdfData.Data));
 
         // Build the FormStateNode tree once
+        var editor = new ControlEditor();
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
-            rootSchemaData
+            rootSchemaData,
+            editor
         );
 
         var doc = Document.Create(dc =>

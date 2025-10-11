@@ -1,3 +1,5 @@
+using Astrolabe.Controls;
+
 namespace Astrolabe.Schemas;
 
 /// <summary>
@@ -7,11 +9,17 @@ public static class FormStateNodeBuilder
 {
     /// <summary>
     /// Creates a complete form state node tree from a form node and data.
+    /// The tree will reactively update when the underlying data structure changes.
     /// </summary>
     /// <param name="form">The form node containing the form definition</param>
     /// <param name="data">The root schema data node containing the data</param>
-    /// <returns>The root form state node with all children built recursively</returns>
-    public static IFormStateNode CreateFormStateNode(IFormNode form, SchemaDataNode data)
+    /// <param name="editor">The control editor to use for reactive updates</param>
+    /// <returns>The root form state node with all children built reactively</returns>
+    public static IFormStateNode CreateFormStateNode(
+        IFormNode form,
+        SchemaDataNode data,
+        ControlEditor editor
+    )
     {
         var definition = form.Definition;
         var dataNode = FormStateNodeHelpers.LookupDataNode(definition, data);
@@ -23,10 +31,9 @@ public static class FormStateNodeBuilder
             parentNode: null,
             dataNode: dataNode,
             childIndex: 0,
-            childKey: "ROOT"
+            childKey: "ROOT",
+            editor: editor
         );
-
-        root.BuildChildren();
 
         return root;
     }

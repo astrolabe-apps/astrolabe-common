@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Astrolabe.Controls;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
 using Astrolabe.Schemas.PDF;
@@ -11,16 +12,15 @@ namespace Astrolabe.Schemas.PDF.Tests;
 
 public class PdfGeneratorTests
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
+    private static readonly JsonSerializerOptions JsonOptions =
+        new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     static PdfGeneratorTests()
     {
         // Configure QuestPDF license for testing
         QuestPDF.Settings.License = LicenseType.Community;
     }
+
     [Fact]
     public void Should_Generate_Pdf_With_Simple_Fields()
     {
@@ -36,18 +36,9 @@ public class PdfGeneratorTests
         // Create ControlDefinitions in code (use lowercase first letter to match JSON serialization)
         var controls = new ControlDefinition[]
         {
-            new DataControlDefinition("name")
-            {
-                Title = "Full Name"
-            },
-            new DataControlDefinition("age")
-            {
-                Title = "Age"
-            },
-            new DataControlDefinition("email")
-            {
-                Title = "Email Address"
-            }
+            new DataControlDefinition("name") { Title = "Full Name" },
+            new DataControlDefinition("age") { Title = "Age" },
+            new DataControlDefinition("email") { Title = "Email Address" }
         };
 
         // Create test data
@@ -60,9 +51,11 @@ public class PdfGeneratorTests
         var rootSchemaData = rootSchemaNode.WithData(jsonData);
 
         // Build the FormStateNode tree once
+        var editor = new ControlEditor();
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
-            rootSchemaData
+            rootSchemaData,
+            editor
         );
 
         // Act - Generate PDF
@@ -100,14 +93,8 @@ public class PdfGeneratorTests
                 Title = "Personal Information",
                 Children = new ControlDefinition[]
                 {
-                    new DataControlDefinition("name")
-                    {
-                        Title = "Name"
-                    },
-                    new DataControlDefinition("age")
-                    {
-                        Title = "Age"
-                    }
+                    new DataControlDefinition("name") { Title = "Name" },
+                    new DataControlDefinition("age") { Title = "Age" }
                 }
             },
             new GroupedControlsDefinition
@@ -115,10 +102,7 @@ public class PdfGeneratorTests
                 Title = "Contact Information",
                 Children = new ControlDefinition[]
                 {
-                    new DataControlDefinition("email")
-                    {
-                        Title = "Email"
-                    }
+                    new DataControlDefinition("email") { Title = "Email" }
                 }
             }
         };
@@ -131,9 +115,11 @@ public class PdfGeneratorTests
         var rootSchemaData = rootSchemaNode.WithData(jsonData);
 
         // Build the FormStateNode tree once
+        var editor = new ControlEditor();
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
-            rootSchemaData
+            rootSchemaData,
+            editor
         );
 
         // Act
@@ -165,10 +151,7 @@ public class PdfGeneratorTests
 
         var controls = new ControlDefinition[]
         {
-            new DataControlDefinition("name")
-            {
-                Title = "Name"
-            },
+            new DataControlDefinition("name") { Title = "Name" },
             new DataControlDefinition("nonExistentField") // This field doesn't exist
             {
                 Title = "Missing Field"
@@ -186,9 +169,11 @@ public class PdfGeneratorTests
         var ex = Assert.Throws<Exception>(() =>
         {
             // Build the FormStateNode tree - this should throw for missing field
+            var editor = new ControlEditor();
             var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
                 rootFormNode,
-                rootSchemaData
+                rootSchemaData,
+                editor
             );
 
             var doc = Document.Create(dc =>

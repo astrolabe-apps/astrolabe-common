@@ -1,3 +1,5 @@
+using Astrolabe.Controls;
+
 namespace Astrolabe.Schemas;
 
 /// <summary>
@@ -32,7 +34,8 @@ public static class FormStateNodeHelpers
     /// </summary>
     public static IEnumerable<ChildNodeSpec> ResolveArrayChildren(
         SchemaDataNode dataNode,
-        IFormNode formNode
+        IFormNode formNode,
+        ChangeTracker tracker
     )
     {
         var childNodes = formNode.GetChildNodes().ToList();
@@ -42,7 +45,8 @@ public static class FormStateNodeHelpers
         if (!dataNode.Control.IsArray)
             yield break;
 
-        var elements = dataNode.Control.Elements;
+        var elements = tracker.TrackElements(dataNode.Control);
+
         for (var i = 0; i < elements.Count; i++)
         {
             var element = elements[i];
@@ -93,7 +97,10 @@ public static class FormStateNodeHelpers
     /// Resolves children for a form state node.
     /// Ported from TypeScript resolveChildren.ts defaultResolveChildNodes function.
     /// </summary>
-    public static IEnumerable<ChildNodeSpec> ResolveChildren(IFormStateNode formStateNode)
+    public static IEnumerable<ChildNodeSpec> ResolveChildren(
+        IFormStateNode formStateNode,
+        ChangeTracker tracker
+    )
     {
         var form = formStateNode.Form;
         var parent = formStateNode.Parent;
@@ -142,7 +149,7 @@ public static class FormStateNodeHelpers
             // Check for array/collection handling
             if (dataNode.Schema.Field.Collection == true && dataNode.ElementIndex == null)
             {
-                foreach (var child in ResolveArrayChildren(dataNode, form))
+                foreach (var child in ResolveArrayChildren(dataNode, form, tracker))
                 {
                     yield return child;
                 }

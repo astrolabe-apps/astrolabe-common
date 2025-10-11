@@ -433,6 +433,49 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         tracker.UpdateSubscriptions();
     }
 
+    /// <summary>
+    /// Makes an existing control computed by setting up a reactive computation that updates its value.
+    /// Unlike MakeComputed, this version passes the current value to the compute function,
+    /// allowing you to reuse or transform the existing value rather than creating a new one from scratch.
+    /// </summary>
+    /// <typeparam name="T">The type of the control value</typeparam>
+    /// <param name="control">The control to make computed</param>
+    /// <param name="compute">Function that computes the value, receiving a ChangeTracker and current value</param>
+    /// <param name="editor">ControlEditor instance to use for updates</param>
+    /// <example>
+    /// <code>
+    /// var listControl = Control.CreateTyped&lt;List&lt;Item&gt;&gt;(new List&lt;Item&gt;());
+    /// var editor = new ControlEditor();
+    ///
+    /// // Reuse existing items when source changes, only add/remove as needed
+    /// Control.MakeComputedWithPrevious(listControl, (tracker, currentList) => {
+    ///     var source = tracker.Tracked(sourceControl).Value;
+    ///     return UpdateList(currentList, source); // Reuses items from currentList
+    /// }, editor);
+    /// </code>
+    /// </example>
+    public static void MakeComputedWithPrevious<T>(
+        ITypedControl<T> control,
+        Func<ChangeTracker, T, T> compute,
+        ControlEditor editor)
+    {
+        var tracker = new ChangeTracker();
+
+        // Set up reactive callback
+        tracker.SetCallback(() =>
+        {
+            var currentValue = control.Value;
+            var newValue = compute(tracker, currentValue);
+            editor.SetValue(control, newValue);
+            tracker.UpdateSubscriptions();
+        });
+
+        // Initial computation and subscription setup
+        var initialValue = compute(tracker, control.Value);
+        editor.SetValue(control, initialValue);
+        tracker.UpdateSubscriptions();
+    }
+
     public ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask)
     {
         _subscriptions ??= new Subscriptions();
@@ -494,8 +537,30 @@ public class Control(object? value, object? initialValue, ControlFlags flags = C
         return cloned;
     }
 
-    private static List<object?> CloneList(IList original)
+    private static object CloneList(IList original)
     {
+        // Check if this is a generic List<T> where T is a reference type that shouldn't be deep cloned
+        var listType = original.GetType();
+        if (listType.IsGenericType && listType.GetGenericTypeDefinition() == typeof(List<>))
+        {
+            var elementType = listType.GetGenericArguments()[0];
+
+            // If element type is a reference type (class/interface), preserve the typed list
+            // This avoids converting List<IFormStateNode> to List<object?>
+            if (!elementType.IsValueType && elementType != typeof(string))
+            {
+                // Create a new list of the same type
+                var newList = (IList)Activator.CreateInstance(listType, original.Count)!;
+                foreach (var item in original)
+                {
+                    // Don't deep clone reference type elements - treat them as immutable references
+                    newList.Add(item);
+                }
+                return newList;
+            }
+        }
+
+        // For non-generic lists or lists of value types, use the original deep clone logic
         var cloned = new List<object?>(original.Count);
         foreach (var item in original)
         {

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Astrolabe.Controls;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
 using Xunit;
@@ -8,10 +9,8 @@ namespace Astrolabe.Schemas.PDF.Tests;
 
 public class FormStateNodeTests
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
+    private static readonly JsonSerializerOptions JsonOptions =
+        new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     [Fact]
     public void Should_Create_FormStateNode_With_Simple_Flat_Children()
@@ -32,7 +31,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         Assert.NotNull(formStateNode);
@@ -59,7 +59,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
         var firstChild = formStateNode.Children.First();
 
         // Assert
@@ -94,7 +95,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         Assert.Single(formStateNode.Children); // One group
@@ -122,7 +124,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         Assert.Equal(2, formStateNode.Children.Count);
@@ -180,7 +183,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var addressesControl = formStateNode.Children.First();
@@ -228,7 +232,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var root = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var root = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var groupChild = root.Children.First();
@@ -272,7 +277,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var statusControl = formStateNode.Children.First();
@@ -315,7 +321,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var statusControl = formStateNode.Children.First();
@@ -335,9 +342,7 @@ public class FormStateNodeTests
             new DataControlDefinition("address/city") { Title = "City" }
         };
 
-        var testData = new PersonWithAddress(
-            new Address("789 Oak Ave", "Capital City")
-        );
+        var testData = new PersonWithAddress(new Address("789 Oak Ave", "Capital City"));
         var jsonData = JsonSerializer.SerializeToNode(testData, JsonOptions);
 
         var formNode = FormLookup.Create(_ => controls).GetForm("")!;
@@ -345,7 +350,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         Assert.Equal(2, formStateNode.Children.Count);
@@ -379,9 +385,7 @@ public class FormStateNodeTests
             }
         };
 
-        var testData = new PersonWithAddress(
-            new Address("999 Pine Rd", "Metropolis")
-        );
+        var testData = new PersonWithAddress(new Address("999 Pine Rd", "Metropolis"));
         var jsonData = JsonSerializer.SerializeToNode(testData, JsonOptions);
 
         var formNode = FormLookup.Create(_ => controls).GetForm("")!;
@@ -389,7 +393,8 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var groupNode = formStateNode.Children.First();
@@ -424,12 +429,71 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
 
         // Act
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode);
+        var editor = new ControlEditor();
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var children = formStateNode.Children.ToList();
         Assert.Equal(0, children[0].ChildIndex);
         Assert.Equal(1, children[1].ChildIndex);
+    }
+
+    [Fact]
+    public void Should_Update_Children_Reactively_When_Array_Size_Changes()
+    {
+        // Arrange
+        var schemas = CreateSchemaLookup<PersonWithTags>();
+        var controls = new ControlDefinition[]
+        {
+            new DataControlDefinition("tags") { Title = "Tags" }
+        };
+
+        var testData = new PersonWithTags("Alice", new[] { "tag1", "tag2" });
+        var jsonData = JsonSerializer.SerializeToNode(testData, JsonOptions);
+
+        var formNode = FormLookup.Create(_ => controls).GetForm("")!;
+        var schemaNode = schemas.GetSchema(nameof(PersonWithTags))!;
+        var dataNode = schemaNode.WithData(jsonData);
+        var editor = new ControlEditor();
+
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
+        var tagsControl = formStateNode.Children.First();
+
+        // Verify initial state
+        Assert.Equal(2, tagsControl.Children.Count);
+        var originalFirstChild = tagsControl.Children.First();
+        var originalSecondChild = tagsControl.Children.Last();
+
+        // Get the underlying array control
+        var tagsDataNode = tagsControl.DataNode!;
+        var arrayControl = tagsDataNode.Control;
+
+        // Act - Add a new element to the array
+        editor.AddElement(arrayControl, "tag3");
+
+        // Assert - Children should automatically update
+        Assert.Equal(3, tagsControl.Children.Count);
+
+        // First two children should be reused (same instances)
+        Assert.Same(originalFirstChild, tagsControl.Children.ElementAt(0));
+        Assert.Same(originalSecondChild, tagsControl.Children.ElementAt(1));
+
+        // Third child should be new
+        var thirdChild = tagsControl.Children.ElementAt(2);
+        Assert.NotNull(thirdChild);
+        Assert.Equal("tag3", thirdChild.DataNode?.Control.Value);
+
+        // Act - Remove the middle element
+        editor.RemoveElement(arrayControl, 1);
+
+        // Assert - Children should update again
+        Assert.Equal(2, tagsControl.Children.Count);
+
+        // First child should still be reused
+        Assert.Same(originalFirstChild, tagsControl.Children.ElementAt(0));
+
+        // Second child should now be the third child (tag3)
+        Assert.Same(thirdChild, tagsControl.Children.ElementAt(1));
     }
 
     // Helper method to create schema lookup
@@ -439,9 +503,7 @@ public class FormStateNodeTests
             new SchemaFieldsGeneratorOptions("")
         ).CollectDataForTypes(typeof(T));
 
-        return SchemaTreeLookup.Create(
-            schemas.ToDictionary(x => x.Type.Name, x => x.Fields)
-        );
+        return SchemaTreeLookup.Create(schemas.ToDictionary(x => x.Type.Name, x => x.Fields));
     }
 }
 

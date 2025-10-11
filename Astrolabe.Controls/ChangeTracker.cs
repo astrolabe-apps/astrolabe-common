@@ -16,6 +16,16 @@ public class ChangeTracker : IDisposable
     }
 
     /// <summary>
+    /// Tracks array elements and subscribes to Structure changes.
+    /// Returns the current elements collection.
+    /// </summary>
+    public IReadOnlyList<IControl> TrackElements(IControl control)
+    {
+        RecordAccess(control, ControlChange.Structure);
+        return control.Elements;
+    }
+
+    /// <summary>
     /// Sets the callback to invoke when tracked dependencies change.
     /// </summary>
     public void SetCallback(Action callback)

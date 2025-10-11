@@ -1,3 +1,5 @@
+using Astrolabe.Controls;
+
 namespace Astrolabe.Schemas;
 
 /// <summary>
@@ -5,7 +7,8 @@ namespace Astrolabe.Schemas;
 /// </summary>
 public class FormStateNode : IFormStateNode
 {
-    private readonly List<IFormStateNode> _children = new();
+    private readonly ITypedControl<List<IFormStateNode>> _childrenControl;
+    private readonly ControlEditor _editor;
 
     public FormStateNode(
         ControlDefinition definition,
@@ -14,7 +17,8 @@ public class FormStateNode : IFormStateNode
         IFormStateNode? parentNode,
         SchemaDataNode? dataNode,
         int childIndex,
-        object childKey
+        object childKey,
+        ControlEditor editor
     )
     {
         Definition = definition;
@@ -24,11 +28,21 @@ public class FormStateNode : IFormStateNode
         DataNode = dataNode;
         ChildIndex = childIndex;
         ChildKey = childKey;
+        _editor = editor;
+
+        _childrenControl = Control.CreateTyped<List<IFormStateNode>>(new List<IFormStateNode>());
+
+        // Set up reactive children that update when array data changes
+        Control.MakeComputedWithPrevious(_childrenControl, (tracker, currentChildren) =>
+        {
+            var childSpecs = FormStateNodeHelpers.ResolveChildren(this, tracker);
+            return UpdateChildren(currentChildren, childSpecs);
+        }, _editor);
     }
 
     public ControlDefinition Definition { get; }
     public IFormNode? Form { get; }
-    public ICollection<IFormStateNode> Children => _children;
+    public ICollection<IFormStateNode> Children => _childrenControl.Value;
     public IFormStateNode? ParentNode { get; }
     public SchemaDataNode Parent { get; }
     public SchemaDataNode? DataNode { get; }
@@ -36,43 +50,52 @@ public class FormStateNode : IFormStateNode
 
     internal object ChildKey { get; }
 
-    internal void AddChild(IFormStateNode child)
+    private List<IFormStateNode> UpdateChildren(
+        List<IFormStateNode> currentChildren,
+        IEnumerable<ChildNodeSpec> childSpecs
+    )
     {
-        _children.Add(child);
-    }
-
-    /// <summary>
-    /// Builds the children for this form state node based on the form definition and data.
-    /// This should be called after construction to populate the Children collection.
-    /// </summary>
-    internal void BuildChildren()
-    {
-        var childSpecs = FormStateNodeHelpers.ResolveChildren(this);
+        var newChildren = new List<IFormStateNode>();
         var childIndex = 0;
 
         foreach (var spec in childSpecs)
         {
-            var definition = spec.Definition ?? GroupedControlsDefinition.Default;
-            var parent = spec.Parent ?? Parent;
+            var childKey = spec.ChildKey;
 
-            var childDataNode = FormStateNodeHelpers.LookupDataNode(definition, parent);
-
-            var childNode = new FormStateNode(
-                definition: definition,
-                form: spec.Node,
-                parent: parent,
-                parentNode: this,
-                dataNode: childDataNode,
-                childIndex: childIndex,
-                childKey: spec.ChildKey
+            // Try to reuse existing child with same key
+            var existingChild = currentChildren.FirstOrDefault(c =>
+                c is FormStateNode fsNode && Equals(fsNode.ChildKey, childKey)
             );
 
-            AddChild(childNode);
+            if (existingChild != null)
+            {
+                // Reuse existing child
+                newChildren.Add(existingChild);
+            }
+            else
+            {
+                // Create new child
+                var definition = spec.Definition ?? GroupedControlsDefinition.Default;
+                var parent = spec.Parent ?? Parent;
+                var childDataNode = FormStateNodeHelpers.LookupDataNode(definition, parent);
 
-            // Recursively build children for this child
-            childNode.BuildChildren();
+                var childNode = new FormStateNode(
+                    definition: definition,
+                    form: spec.Node,
+                    parent: parent,
+                    parentNode: this,
+                    dataNode: childDataNode,
+                    childIndex: childIndex,
+                    childKey: childKey,
+                    editor: _editor
+                );
+
+                newChildren.Add(childNode);
+            }
 
             childIndex++;
         }
+
+        return newChildren;
     }
 }

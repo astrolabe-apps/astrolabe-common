@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Astrolabe.Controls;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
 using Astrolabe.Schemas.PDF;
@@ -76,9 +77,11 @@ public class PdfGeneratorProgram
         var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
         var rootSchemaData = rootSchemaNode.WithData(jsonData);
 
+        var editor = new ControlEditor();
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
-            rootSchemaData
+            rootSchemaData,
+            editor
         );
 
         var doc = Document.Create(dc =>
@@ -167,9 +170,11 @@ public class PdfGeneratorProgram
         var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
         var rootSchemaData = rootSchemaNode.WithData(jsonData);
 
+        var editor = new ControlEditor();
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
-            rootSchemaData
+            rootSchemaData,
+            editor
         );
 
         var doc = Document.Create(dc =>
@@ -295,9 +300,11 @@ public class PdfGeneratorProgram
         var rootSchemaNode = schemaLookup.GetSchema(nameof(Employee))!;
         var rootSchemaData = rootSchemaNode.WithData(jsonData);
 
+        var editor = new ControlEditor();
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
-            rootSchemaData
+            rootSchemaData,
+            editor
         );
 
         var doc = Document.Create(dc =>
