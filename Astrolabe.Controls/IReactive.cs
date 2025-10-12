@@ -11,11 +11,15 @@ public interface IReactive<T>
 {
     /// <summary>
     /// Gets a value from the underlying object using an expression selector.
-    /// Supports nested property access (e.g., x => x.Address.City).
+    /// Only supports single-level property access (e.g., x => x.Name).
+    /// For nested properties, use GetReactive to navigate first (e.g., reactive.GetReactive(x => x.Address).Get(x => x.City)).
+    /// If a control exists for the property, returns the control's value (which may be computed).
+    /// Otherwise, returns the property value from the underlying instance.
     /// </summary>
     /// <typeparam name="T2">The type of the property being accessed.</typeparam>
-    /// <param name="selector">An expression that selects the property to access.</param>
+    /// <param name="selector">An expression that selects the property to access. Must be a single-level property access.</param>
     /// <returns>The value of the selected property.</returns>
+    /// <exception cref="ArgumentException">Thrown if the selector contains nested property access.</exception>
     T2 Get<T2>(Expression<Func<T, T2>> selector);
 
     /// <summary>

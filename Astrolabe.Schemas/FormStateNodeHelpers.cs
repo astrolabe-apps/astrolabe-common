@@ -168,4 +168,25 @@ public static class FormStateNodeHelpers
             );
         }
     }
+
+    /// <summary>
+    /// Checks if a data node is in a valid state for display.
+    /// A data node is valid if its control is not undefined.
+    /// </summary>
+    public static bool ValidDataNode(SchemaDataNode node)
+    {
+        return !node.Control.IsUndefined;
+    }
+
+    /// <summary>
+    /// Checks if a display-only control should be hidden when its data is undefined.
+    /// Display-only controls are hidden when the data is undefined.
+    /// TODO: Port full logic from TypeScript hideDisplayOnly function.
+    /// </summary>
+    public static bool HideDisplayOnly(SchemaDataNode node, ControlDefinition definition)
+    {
+        // For now, return false - this can be expanded later
+        // when we identify all display-only render types
+        return false;
+    }
 }

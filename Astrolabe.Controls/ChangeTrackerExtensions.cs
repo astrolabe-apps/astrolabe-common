@@ -24,6 +24,7 @@ public static class ChangeTrackerExtensions
             var control = reactive.GetControl(selector);
             tracker.RecordAccess(control, ControlChange.Value);
         }
+        // Get() will return the control's value if it exists, or the instance value otherwise
         return reactive.Get(selector);
     }
 

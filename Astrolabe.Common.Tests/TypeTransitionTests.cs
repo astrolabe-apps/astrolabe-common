@@ -32,8 +32,8 @@ public class TypeTransitionTests
         Assert.Equal(3, control.Count);
 
         // Old field children should no longer be accessible through the same indexer
-        var newNameChild = control["name"];
-        Assert.Null(newNameChild); // Object indexer returns null for array types
+        // Should throw exception when trying to access object field on array control
+        Assert.Throws<InvalidOperationException>(() => control["name"]);
 
         // Array elements should be accessible
         Assert.NotNull(control[0]);
@@ -105,8 +105,8 @@ public class TypeTransitionTests
         Assert.Equal("simple string", control.Value);
 
         // Children should no longer be accessible
-        var newNameChild = control["name"];
-        Assert.Null(newNameChild);
+        // Should throw exception when trying to access object field on primitive control
+        Assert.Throws<InvalidOperationException>(() => control["name"]);
     }
 
     [Fact]
@@ -276,10 +276,10 @@ public class TypeTransitionTests
         var control = Control.Create((object?)null);
         var editor = new ControlEditor();
 
-        // Access child of null control (should create child with null value)
+        // Access child of null control (should create child with undefined value)
         var nameChild = control["name"];
         Assert.NotNull(nameChild);
-        Assert.Null(nameChild.Value);
+        Assert.True(nameChild.Value is UndefinedValue);
 
         // Set the control to an object
         var objectData = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
@@ -393,7 +393,8 @@ public class TypeTransitionTests
         Assert.Equal(2, control.Count);
 
         // Old nested children should no longer be accessible via object indexer
-        Assert.Null(control["user"]);
+        // Should throw exception when trying to access object field on array control
+        Assert.Throws<InvalidOperationException>(() => control["user"]);
 
         // New array elements should be accessible
         Assert.NotNull(control[0]);

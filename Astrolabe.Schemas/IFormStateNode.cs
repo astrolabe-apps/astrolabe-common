@@ -9,4 +9,8 @@ public interface IFormStateNode
     public SchemaDataNode Parent { get; }
     public SchemaDataNode? DataNode { get; }
     public int ChildIndex { get; }
+    public bool? Visible { get; }
+    public bool Readonly { get; }
+    public bool Disabled { get; }
+    public ICollection<FieldOption>? FieldOptions { get; }
 }

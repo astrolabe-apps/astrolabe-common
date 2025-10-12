@@ -24,6 +24,17 @@ public class Reactive<T> : IReactive<T>
 
     public T2 Get<T2>(Expression<Func<T, T2>> selector)
     {
+        // Only support single-level property access (consistent with GetControl/HaveControl)
+        var propertyName = GetSinglePropertyName(selector, nameof(Get));
+
+        // Check if a control exists for this property
+        if (_controlCache.TryGetValue(propertyName, out var control))
+        {
+            // Return the control's value (which may be computed)
+            return (T2)control.Value!;
+        }
+
+        // Fall back to instance value if no control exists
         var accessor = GetOrCompileAccessor(selector);
         return ((Func<T, T2>)accessor)(_instance);
     }
