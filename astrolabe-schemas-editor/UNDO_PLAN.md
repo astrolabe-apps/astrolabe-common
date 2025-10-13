@@ -8,7 +8,28 @@ Implement a composable undo/redo system for the form editor that tracks data-onl
 
 ## Core Architecture
 
-### 1. State Management Model
+### 1. State Persistence Strategy
+
+**Critical Requirement**: Undo/redo state must persist when `FormView` is unmounted (e.g., when user switches tabs).
+
+**Solution**: Store state in the `EditableForm` control's metadata using `ensureMetaValue()`:
+
+```typescript
+const undoRedoState = ensureMetaValue(editableForm, "undoRedoState", () => ({
+  past: [],
+  present: captureSnapshot(editableForm),
+  future: [],
+}));
+```
+
+**Why This Works**:
+
+- `EditableForm` control persists in `BasicFormEditor` even when tab is not visible
+- Metadata survives component mount/unmount cycles
+- Each form has its own isolated undo/redo history
+- State is automatically cleaned up when form is closed (control cleanup)
+
+### 2. State Management Model
 
 The undo/redo system follows a **triple-stack architecture**:
 
@@ -22,7 +43,7 @@ interface UndoRedoState {
 
 **Key Insight**: We store immutable snapshots of control `.value` properties directly. No serialization needed since control values are already immutable plain objects. Dirty state is preserved naturally by only restoring `.value` and leaving `.initialValue` unchanged.
 
-### 2. Snapshot Strategy
+### 3. Snapshot Strategy
 
 #### What Gets Captured
 
@@ -125,7 +146,7 @@ function restoreSnapshot(
 6. User undos: value = A, initialValue = B (dirty ✓)
 ```
 
-### 3. Change Detection & Debouncing
+### 4. Change Detection & Debouncing
 
 #### The Reactivity Chain
 
@@ -148,18 +169,22 @@ Snapshot pushed to 'past' stack
 #### Implementation Pattern
 
 ```typescript
-export function useFormUndoRedo(
-  editableForm: Control<EditableForm>,
-  controlDefinitionTree: SchemaNode
-) {
-  // State management using @astrolabe-controls
-  const undoRedoState = useControl<UndoRedoState>(() => ({
-    past: [],
-    present: serializeFormSnapshot(editableForm, controlDefinitionTree),
-    future: [],
-  }));
+export function useFormUndoRedo(editableForm: Control<EditableForm>) {
+  // CRITICAL: Store undo/redo state IN the editableForm itself
+  // FormView can be unmounted when tab is not visible
+  // State must persist across mount/unmount cycles
+  const undoRedoState = ensureMetaValue(
+    editableForm,
+    "undoRedoState",
+    (): UndoRedoState => ({
+      past: [],
+      present: captureSnapshot(editableForm),
+      future: [],
+    })
+  );
 
   // Flag to prevent capturing during undo/redo operations
+  // This can be component-local since it's only active during restoration
   const isRestoring = useControl(false);
 
   // Debounced snapshot capture
@@ -168,7 +193,7 @@ export function useFormUndoRedo(
 
     const snapshot = captureSnapshot(editableForm);
 
-    undoRedoState.setValue((state) => {
+    undoRedoState.setValue((state: UndoRedoState) => {
       const newPast = [...state.past, state.present];
 
       // Enforce max stack size (FIFO)
@@ -184,23 +209,13 @@ export function useFormUndoRedo(
     });
   }, UNDO_REDO_DEBOUNCE_MS);
 
-  // Watch for changes to the form tree
-  useControlEffect(() => {
-    // Track changes to the entire form tree control
-    const formTree = editableForm.fields.formTree.value;
-    const rootControl = formTree.control;
-
-    // We need to trigger on any change to the root control
-    // This will reactively track all child changes
-    return rootControl.value;
-  }, debouncedCapture);
-
-  // Also watch config changes
-  useControlEffect(() => editableForm.fields.config.value, debouncedCapture);
-
-  // Also watch formSchema changes
+  // Watch for changes to any of the three data sources
   useControlEffect(
-    () => editableForm.fields.formSchema.value,
+    () => ({
+      tree: editableForm.fields.formTree.value.getRootDefinitions().value,
+      config: editableForm.fields.config.value,
+      schema: editableForm.fields.formSchema.value,
+    }),
     debouncedCapture
   );
 
@@ -250,26 +265,30 @@ export function useFormUndoRedo(
 
 ## Deep Dive: Critical Design Decisions
 
-### Decision 1: Why Track the Root Control Value?
+### Decision 1: Track getRootDefinitions() for Changes
 
 ```typescript
 useControlEffect(
-  () => editableForm.fields.formTree.value.control.value
+  () => editableForm.fields.formTree.value.getRootDefinitions().value
   // ...
 );
 ```
 
-**Rationale**: The `EditorFormTree` wraps a `Control<ControlDefinition>` in its `control` property. When ANY child control within the tree changes (adding elements, changing field values, etc.), the root control's value changes due to the reactive propagation in `@astrolabe-controls`.
+**Rationale**: Controls automatically track deep changes through their reactivity system. When ANY nested control within the tree changes, the parent control's `.value` updates due to reactive propagation in `@astrolabe-controls`.
 
-**Alternative Considered**: Track `formTree.value.getRootDefinitions().value` instead.
+**Key Insight**:
 
-- **Problem**: This only tracks changes to the root array reference, not deep changes within existing controls.
+- `getRootDefinitions()` returns a `Control<ControlDefinition[]>`
+- Accessing `.value` on this control subscribes to ALL changes in the tree
+- Deep changes (nested fields, array elements, etc.) bubble up automatically
+- No need to track `formTree.control.value` separately
 
-**Chosen Approach**: Track `formTree.value.control.value`
+**Why This Works**:
 
-- This leverages the existing reactivity system
-- Any child change bubbles up to the root control
-- Automatically handles nested changes without manual deep watching
+- Controls use immutable values
+- Changing a deeply nested field creates new parent references all the way up
+- This is standard immutable data structure propagation
+- The reactive system handles subscription automatically
 
 ### Decision 2: Restoration Guard Pattern
 
@@ -341,40 +360,35 @@ if (newPast.length > UNDO_REDO_MAX_STACK_SIZE) {
 - 50 snapshots = 2.5-25MB worst case
 - Acceptable for modern browsers
 
-### Decision 5: Triple Change Tracking
+### Decision 5: Combined Change Tracking
 
-We track `formTree`, `config`, AND `formSchema` changes separately:
-
-```typescript
-useControlEffect(() => formTree.control.value, debouncedCapture);
-useControlEffect(() => config.value, debouncedCapture);
-useControlEffect(() => formSchema.value, debouncedCapture);
-```
-
-**Why separate watchers?**
-
-- All three are independent controls
-- User might edit any in isolation
-- All should create undo points
-- Debouncing coalesces rapid changes across any/all of them
-
-**Why not combine into one watcher?**
+We track all three data sources in a single watcher:
 
 ```typescript
-// DON'T DO THIS:
 useControlEffect(
   () => ({
-    tree: formTree.control.value,
-    config: config.value,
-    schema: formSchema.value,
+    tree: editableForm.fields.formTree.value.getRootDefinitions().value,
+    config: editableForm.fields.config.value,
+    schema: editableForm.fields.formSchema.value,
   }),
   debouncedCapture
 );
 ```
 
-- Creates new object every render (unnecessary allocations)
-- All three watchers call the same debounced function anyway
-- Separate watchers are cleaner and more efficient
+**Why combined instead of separate watchers?**
+
+- **Single subscription point**: More efficient reactivity tracking
+- **Simpler code**: One effect instead of three
+- **Atomic dependency tracking**: All three changes tracked together
+- **Object allocation is fine**: The cost is negligible, and this only runs when values change
+- **Better semantics**: We want to capture a snapshot when ANY of these change
+
+**Key Insight**:
+
+- The object is only created when the effect **runs** (i.e., when a value changes)
+- Not created on every render
+- `useControlEffect` only re-runs the compute function when dependencies change
+- Debouncing further reduces the frequency
 
 ---
 
@@ -440,19 +454,33 @@ const undoRedoState = useControl<UndoRedoState>(() => ({
 
 Initial snapshot is set as `present` before any changes occur.
 
-### Edge Case 4: Concurrent Form Instances
+### Edge Case 4: FormView Unmount
 
-**Scenario**: Multiple forms open in tabs.
+**Scenario**: User navigates and `FormView` component unmounts.
 
 **Behavior**:
 
-- Each `FormView` creates its own `useFormUndoRedo` instance
-- Completely independent undo stacks
-- No shared state
+- `useFormUndoRedo` hook is destroyed
+- **But** undo/redo state persists in `editableForm` metadata
+- When user switches back, hook re-initializes
+- `ensureMetaValue()` returns existing state
+- Undo/redo history is preserved!
 
-**Expected**: Works correctly due to per-instance state management.
+**Critical**: This is why state must be in control metadata, not component state.
 
-### Edge Case 5: Schema Changes
+### Edge Case 5: Concurrent Form Instances
+
+**Scenario**: Multiple forms open in different tabs.
+
+**Behavior**:
+
+- Each form has its own `EditableForm` control instance
+- Completely independent undo stacks (stored in respective control metadata)
+- No shared state between forms
+
+**Expected**: Works correctly due to per-control metadata storage.
+
+### Edge Case 6: Schema Changes
 
 **Scenario**: User changes schema, adding/removing fields.
 
@@ -532,16 +560,13 @@ Initial snapshot is set as `present` before any changes occur.
 
 From `@react-typed-forms/core`:
 
-- `useControl` - State management
+- `useControl` - Component-local state (isRestoring flag)
 - `useControlEffect` - Change detection
 - `useDebounced` - Debouncing
 - `useComputed` - Derived state (canUndo/canRedo)
 - `groupedChanges` - Batched updates
+- `ensureMetaValue` - **Critical**: Persistent state storage in control metadata
 - `Control` type
-
-From `@react-typed-forms/schemas`:
-
-- `SchemaNode` - Type information (if needed for validation)
 
 ### Hook API Contract
 
@@ -661,6 +686,12 @@ const { undo, redo, canUndo, canRedo } = useFormUndoRedo(c);
 6. **Debounce timing**: 300ms (hardcoded constant)
 
 7. **Stack size**: 50 snapshots (hardcoded constant)
+
+8. **State persistence**: Stored in `EditableForm` control metadata to survive tab switching
+
+9. **Change tracking**: Single combined watcher for all three data sources (formTree, config, formSchema)
+
+10. **Track changes via**: `getRootDefinitions().value` - automatically picks up deep nested changes
 
 ## Open Questions
 
