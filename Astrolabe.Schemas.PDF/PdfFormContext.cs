@@ -35,3 +35,18 @@ public record PdfFormContext(IFormStateNode FormNode)
         return new PdfFormContext(formNode);
     }
 }
+
+/// <summary>
+/// Extension methods for PDF form state nodes
+/// </summary>
+public static class PdfFormStateExtensions
+{
+    /// <summary>
+    /// Gets only the visible children of a form state node.
+    /// Filters out children where Visible is false (null and true are considered visible).
+    /// </summary>
+    public static IEnumerable<IFormStateNode> VisibleChildren(this IFormStateNode node)
+    {
+        return node.Children.Where(child => child.Visible != false);
+    }
+}

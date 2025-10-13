@@ -245,7 +245,9 @@ public class FormStateNode : IFormStateNode
                 return false;
             }
 
-            return definition.Hidden == null ? null : !definition.Hidden;
+            // Temporary: return true for null Hidden until visibility scripting is implemented
+            // null means visibility hasn't been evaluated yet (async scripting), but we default to visible
+            return definition.Hidden == null ? true : !definition.Hidden;
         }, _editor);
     }
 }

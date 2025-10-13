@@ -93,7 +93,7 @@ public static class PdfGenerator
                 c.TryConfigColumnGap(styleClassNames);
 
                 formDataNode
-                    .Children
+                    .VisibleChildren()
                     .ToList()
                     .ForEach(fn =>
                     {
@@ -121,7 +121,7 @@ public static class PdfGenerator
                         text.TryParseTextAlign(styleClassNames);
 
                         formDataNode
-                            .Children
+                            .VisibleChildren()
                             .ToList()
                             .ForEach(fn =>
                             {
@@ -158,7 +158,7 @@ public static class PdfGenerator
 
                 var index = 0;
                 formDataNode
-                    .Children
+                    .VisibleChildren()
                     .ToList()
                     .ForEach(fn =>
                     {

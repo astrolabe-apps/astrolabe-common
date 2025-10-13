@@ -98,6 +98,9 @@ The framework uses a schema system where UI components are generated from type d
 ### Form State Management
 Uses @react-typed-forms for type-safe form state with validation. Components follow the pattern of accepting a `state` prop for form control integration.
 
+### Reactive Controls (ControlEditor)
+The .NET `ControlEditor` and reactive control system (`Control.MakeComputed()`) manage automatic updates for form state properties. Once reactive computations are set up in FormStateNode initialization, they automatically track dependencies and update when values change. **No manual flushing, update calls, or refresh operations are needed** - the reactive system handles all updates automatically.
+
 ### Component Architecture
 - Base components in `astrolabe-ui` using Radix UI primitives
 - Specialized implementations in `schemas-*` packages

@@ -65,7 +65,8 @@ public class PdfGeneratorProgram
             },
             new DataControlDefinition("age")
             {
-                Title = "Age"
+                Title = "Age",
+                Hidden = true  // This field should NOT appear in the PDF
             },
             new DataControlDefinition("email")
             {
