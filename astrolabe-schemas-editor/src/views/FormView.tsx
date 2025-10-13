@@ -116,6 +116,7 @@ function RenderFormDesign({
 
       // Undo: Ctrl+Z or Cmd+Z
       if (e.key === "z" && !e.shiftKey) {
+        console.debug('[FormView] Undo keyboard shortcut triggered');
         e.preventDefault();
         undo();
         return;
@@ -123,6 +124,7 @@ function RenderFormDesign({
 
       // Redo: Ctrl+Y or Cmd+Shift+Z
       if (e.key === "y" || (e.key === "z" && e.shiftKey)) {
+        console.debug('[FormView] Redo keyboard shortcut triggered');
         e.preventDefault();
         redo();
         return;
@@ -145,7 +147,10 @@ function RenderFormDesign({
           {button(save, "Save")}
           <div className="flex gap-1">
             <button
-              onClick={undo}
+              onClick={() => {
+                console.debug('[FormView] Undo button clicked');
+                undo();
+              }}
               disabled={!canUndo.value}
               className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Undo (Ctrl+Z)"
@@ -153,7 +158,10 @@ function RenderFormDesign({
               <i className="fa fa-undo" />
             </button>
             <button
-              onClick={redo}
+              onClick={() => {
+                console.debug('[FormView] Redo button clicked');
+                redo();
+              }}
               disabled={!canRedo.value}
               className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Redo (Ctrl+Y)"
