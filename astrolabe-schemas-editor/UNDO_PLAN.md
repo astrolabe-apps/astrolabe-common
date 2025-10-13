@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-Implement a composable undo/redo system for the form editor that tracks complete `EditableForm` state snapshots with debounced capture, maintains per-form history stacks, and preserves dirty state semantics during restoration.
+Implement a composable undo/redo system for the form editor that tracks data-only `EditableForm` state snapshots (excluding UI state) with debounced capture, maintains per-form history stacks using immutable control values directly (no serialization needed).
 
 ---
 
@@ -14,126 +14,115 @@ The undo/redo system follows a **triple-stack architecture**:
 
 ```typescript
 interface UndoRedoState {
-  past: SerializedFormSnapshot[]; // Max 50 entries (FIFO when full)
-  present: SerializedFormSnapshot; // Current state
-  future: SerializedFormSnapshot[]; // Redo stack (cleared on new changes)
+  past: FormSnapshot[]; // Max 50 entries (FIFO when full)
+  present: FormSnapshot; // Current state
+  future: FormSnapshot[]; // Redo stack (cleared on new changes)
 }
 ```
 
-**Key Insight**: We don't store the actual `Control` instances, but serialized snapshots that can reconstruct the exact state including dirty flags.
+**Key Insight**: We store immutable snapshots of control `.value` properties directly. No serialization needed since control values are already immutable plain objects. Dirty state is preserved naturally by only restoring `.value` and leaving `.initialValue` unchanged.
 
 ### 2. Snapshot Strategy
 
 #### What Gets Captured
 
-For each `EditableForm`, we need to capture:
+For each `EditableForm`, we capture **data state only** (no UI state):
 
 1. **Form Tree State**
 
-   - All `ControlDefinition[]` from `formTree.getRootDefinitions().value`
-   - Both current `value` AND `initialValue` for dirty state preservation
+   - `ControlDefinition[]` from `formTree.getRootDefinitions().value`
+   - **Only current `.value`** - NOT `initialValue`
+   - `initialValue` is set on load and only changes on save
 
 2. **Config State**
 
-   - `config.value` and `config.initialValue`
+   - `config.value` only
+   - **NOT** `initialValue`
 
 3. **Form Schema State**
+   - `formSchema.value` - this is stored with the form and should be undoable
 
-   - `formSchema` array (though this might be read-only?)
+**Explicitly Excluded** (UI state):
 
-4. **UI State** (debatable - may exclude these)
-   - `selectedControlId` - probably should NOT be in undo/redo
-   - `hideFields`, `showJson`, `showConfig` - probably should NOT be in undo/redo
+- `selectedControlId`
+- `hideFields`, `showJson`, `showConfig`
+- Any other ephemeral UI toggles
 
-**Decision Point**: Should we capture selectedControlId and UI toggles? Claude's recommendation is **NO** - only capture data state, not ephemeral UI state. @doolse to advise.
-
-#### Serialization Approach
+#### Snapshot Structure (No Serialization Needed!)
 
 ```typescript
-interface SerializedFormSnapshot {
-  formTreeData: {
-    value: ControlDefinition[];
-    initialValue: ControlDefinition[];
-  };
-  configData: {
-    value: any;
-    initialValue: any;
-  };
-  formSchemaData: SchemaField[];
+interface FormSnapshot {
+  formTreeValue: ControlDefinition[]; // Direct immutable value
+  configValue: any; // Direct immutable value
+  formSchemaValue: SchemaField[]; // Direct immutable value
   timestamp: number; // For debugging/analytics
 }
 ```
 
-**Critical Implementation Detail**: We use `cleanDataForSchema()` to serialize the form tree, which strips out Control metadata and returns plain objects suitable for JSON serialization.
+**Critical Insight**: Control values are **immutable**. We can store them directly without serialization or deep cloning!
 
 ```typescript
-function serializeFormSnapshot(
-  editableForm: Control<EditableForm>,
-  controlDefinitionTree: SchemaNode
-): SerializedFormSnapshot {
+function captureSnapshot(editableForm: Control<EditableForm>): FormSnapshot {
   const formTree = editableForm.fields.formTree.value;
   const rootDefs = formTree.getRootDefinitions();
 
   return {
-    formTreeData: {
-      value: rootDefs.value.map((c) =>
-        cleanDataForSchema(c, controlDefinitionTree, true)
-      ),
-      initialValue: rootDefs.initialValue.map((c) =>
-        cleanDataForSchema(c, controlDefinitionTree, true)
-      ),
-    },
-    configData: {
-      value: JSON.parse(JSON.stringify(editableForm.fields.config.value)),
-      initialValue: JSON.parse(
-        JSON.stringify(editableForm.fields.config.initialValue)
-      ),
-    },
-    formSchemaData: JSON.parse(
-      JSON.stringify(editableForm.fields.formSchema.value)
-    ),
+    formTreeValue: rootDefs.value, // Already immutable!
+    configValue: editableForm.fields.config.value, // Already immutable!
+    formSchemaValue: editableForm.fields.formSchema.value, // Already immutable!
     timestamp: Date.now(),
   };
 }
 ```
 
-#### Deserialization & Restoration
+**Why No Serialization?**
 
-**The Critical Challenge**: When restoring state, we need to preserve the exact dirty state. This means:
+- Control values are immutable by design in `@astrolabe-controls`
+- Setting a control's value creates new references
+- We can safely store and restore these references
+- No need for `cleanDataForSchema()`, `JSON.parse(JSON.stringify())`, or `structuredClone()`
 
-1. Setting both `value` AND `initialValue` atomically
-2. Using `groupedChanges()` to batch all updates
-3. Avoiding triggering the change listener that would create a new snapshot
+#### Snapshot Restoration
+
+**The Critical Insight**: We only restore `.value`, NOT `.initialValue`. This naturally preserves dirty state!
 
 ```typescript
-function restoreFormSnapshot(
+function restoreSnapshot(
   editableForm: Control<EditableForm>,
-  snapshot: SerializedFormSnapshot,
-  skipChangeTracking: boolean = true
+  snapshot: FormSnapshot
 ): void {
-  // CRITICAL: We need to temporarily disable change tracking
-  // to avoid creating a new undo snapshot while restoring
-
   groupedChanges(() => {
     const formTree = editableForm.fields.formTree.value;
     const rootDefs = formTree.getRootDefinitions();
 
-    // Restore form tree with both value and initialValue
-    rootDefs.setValueAndInitial(
-      snapshot.formTreeData.value,
-      snapshot.formTreeData.initialValue
-    );
-
-    // Restore config with both value and initialValue
-    editableForm.fields.config.setValueAndInitial(
-      snapshot.configData.value,
-      snapshot.configData.initialValue
-    );
-
-    // Restore form schema
-    editableForm.fields.formSchema.value = snapshot.formSchemaData;
+    // Restore ONLY the value, NOT initialValue
+    rootDefs.value = snapshot.formTreeValue;
+    editableForm.fields.config.value = snapshot.configValue;
+    editableForm.fields.formSchema.value = snapshot.formSchemaValue;
   });
 }
+```
+
+**How Dirty State Is Preserved**:
+
+1. `initialValue` is set when form loads and only changes on **save**
+2. Dirty state = `value !== initialValue`
+3. When we undo/redo:
+   - We restore the `value` to a previous state
+   - `initialValue` remains unchanged
+   - If restored value equals initialValue → form is clean
+   - If restored value differs from initialValue → form is dirty
+4. **No special logic needed!** Dirty state is automatically correct.
+
+**Example**:
+
+```
+1. Form loads: value = A, initialValue = A (clean)
+2. User edits: value = B, initialValue = A (dirty)
+3. User saves: value = B, initialValue = B (clean)
+4. User edits: value = C, initialValue = B (dirty)
+5. User undos: value = B, initialValue = B (clean ✓)
+6. User undos: value = A, initialValue = B (dirty ✓)
 ```
 
 ### 3. Change Detection & Debouncing
@@ -174,8 +163,10 @@ export function useFormUndoRedo(
   const isRestoring = useControl(false);
 
   // Debounced snapshot capture
-  const captureSnapshot = useDebounced((snapshot: SerializedFormSnapshot) => {
+  const debouncedCapture = useDebounced(() => {
     if (isRestoring.value) return; // Don't capture during restoration
+
+    const snapshot = captureSnapshot(editableForm);
 
     undoRedoState.setValue((state) => {
       const newPast = [...state.past, state.present];
@@ -194,35 +185,23 @@ export function useFormUndoRedo(
   }, UNDO_REDO_DEBOUNCE_MS);
 
   // Watch for changes to the form tree
-  useControlEffect(
-    () => {
-      // Track changes to the entire form tree control
-      const formTree = editableForm.fields.formTree.value;
-      const rootControl = formTree.control;
+  useControlEffect(() => {
+    // Track changes to the entire form tree control
+    const formTree = editableForm.fields.formTree.value;
+    const rootControl = formTree.control;
 
-      // We need to trigger on any change to the root control
-      // This will reactively track all child changes
-      return rootControl.value;
-    },
-    () => {
-      const snapshot = serializeFormSnapshot(
-        editableForm,
-        controlDefinitionTree
-      );
-      captureSnapshot(snapshot);
-    }
-  );
+    // We need to trigger on any change to the root control
+    // This will reactively track all child changes
+    return rootControl.value;
+  }, debouncedCapture);
 
   // Also watch config changes
+  useControlEffect(() => editableForm.fields.config.value, debouncedCapture);
+
+  // Also watch formSchema changes
   useControlEffect(
-    () => editableForm.fields.config.value,
-    () => {
-      const snapshot = serializeFormSnapshot(
-        editableForm,
-        controlDefinitionTree
-      );
-      captureSnapshot(snapshot);
-    }
+    () => editableForm.fields.formSchema.value,
+    debouncedCapture
   );
 
   // Undo/Redo operations
@@ -242,12 +221,12 @@ export function useFormUndoRedo(
         future: [state.present, ...state.future],
       };
 
-      restoreFormSnapshot(editableForm, previous);
+      restoreSnapshot(editableForm, previous);
     } finally {
       // Use setTimeout to ensure restoration completes before re-enabling
       setTimeout(() => {
         isRestoring.value = false;
-      }, 0); // @doolse codesmell?
+      }, 0);
     }
   };
 
@@ -318,22 +297,25 @@ Early return (no snapshot captured)
 - Moves flag reset to next event loop tick
 - Prevents race conditions with debounced capture
 
-### Decision 3: Serialization Depth
+### Decision 3: No Serialization Required
 
-We use `cleanDataForSchema()` which:
+**Key Architectural Decision**: Control values are immutable, so we store them directly.
 
-1. Strips Control wrappers
-2. Returns plain objects
-3. Handles `trackedValue()` unwrapping
-4. Preserves the actual data structure
+**Why This Works**:
 
-**Why not just `JSON.parse(JSON.stringify())`?**
+1. `@astrolabe-controls` uses immutable value semantics
+2. Setting `control.value = newValue` creates new object references
+3. Previous values remain unchanged in memory
+4. We can safely store and restore these references
+5. No deep cloning, serialization, or `cleanDataForSchema()` needed
 
-- Controls have circular references
-- Need proper handling of undefined vs null
-- Schema-aware cleaning ensures type safety
+**Memory Sharing**:
 
-@doolse should we use structuredClone() instead of JSON.parse(JSON.stringify())? - structuredClone() handles more types (e.g., Dates, Maps).
+- Multiple snapshots may share unchanged subtrees
+- JavaScript engine handles reference counting
+- More memory efficient than deep cloning!
+
+**Trade-off**: If control values were mutable, we'd need deep cloning. But they're not, so we don't!
 
 ### Decision 4: Stack Size Management
 
@@ -359,35 +341,40 @@ if (newPast.length > UNDO_REDO_MAX_STACK_SIZE) {
 - 50 snapshots = 2.5-25MB worst case
 - Acceptable for modern browsers
 
-### Decision 5: Dual Change Tracking
+### Decision 5: Triple Change Tracking
 
-We track both `formTree` changes AND `config` changes separately:
+We track `formTree`, `config`, AND `formSchema` changes separately:
 
 ```typescript
-useControlEffect(() => formTree.control.value, captureSnapshot);
-useControlEffect(() => config.value, captureSnapshot);
+useControlEffect(() => formTree.control.value, debouncedCapture);
+useControlEffect(() => config.value, debouncedCapture);
+useControlEffect(() => formSchema.value, debouncedCapture);
 ```
 
 **Why separate watchers?**
 
-- Config and formTree are independent controls
-- User might edit config while tree is unchanged
-- Both should create undo points
-- Debouncing coalesces rapid changes to either
+- All three are independent controls
+- User might edit any in isolation
+- All should create undo points
+- Debouncing coalesces rapid changes across any/all of them
 
-**Potential Optimization**: Could combine into single watcher that tracks a computed composite:
+**Why not combine into one watcher?**
 
 ```typescript
+// DON'T DO THIS:
 useControlEffect(
   () => ({
     tree: formTree.control.value,
     config: config.value,
+    schema: formSchema.value,
   }),
-  captureSnapshot
+  debouncedCapture
 );
 ```
 
-But this creates a new object every render. Current approach is cleaner.
+- Creates new object every render (unnecessary allocations)
+- All three watchers call the same debounced function anyway
+- Separate watchers are cleaner and more efficient
 
 ---
 
@@ -427,7 +414,7 @@ const undo = () => {
 };
 ```
 
-**Decision**: @doolse to advise. Start without flush, add if users report issues.
+**Decision**: Start without flush, add if users report issues.
 
 ### Edge Case 3: Form Loading
 
@@ -446,7 +433,7 @@ const undo = () => {
 ```typescript
 const undoRedoState = useControl<UndoRedoState>(() => ({
   past: [],
-  present: serializeFormSnapshot(editableForm, controlDefinitionTree), // Captures loaded state
+  present: captureSnapshot(editableForm), // Captures loaded state
   future: [],
 }));
 ```
@@ -469,13 +456,7 @@ Initial snapshot is set as `present` before any changes occur.
 
 **Scenario**: User changes schema, adding/removing fields.
 
-**Question**: Should schema changes be undoable?
-
-**Current Plan**: `formSchema` is captured in snapshots.
-
-**Consideration**: Schema editing might be a separate undo context?
-
-**Decision**: Keep it simple - include in main undo for now. Can split later if needed. @doolse to advise.
+**Decision**: FormSchema changes ARE undoable. FormSchema is stored with the form and is part of the form's data state, so it belongs in the undo/redo system.
 
 ---
 
@@ -483,16 +464,16 @@ Initial snapshot is set as `present` before any changes occur.
 
 ### Snapshot Capture Cost
 
-**Operation**: Serialize entire form tree
+**Operation**: Capture immutable references
 
-- `cleanDataForSchema()` traverses entire tree
-- JSON serialization of result
-- Deep copy of config
+- Read `.value` from three controls (formTree, config, formSchema)
+- Create new snapshot object with these references
+- No traversal, no serialization, no deep copying
 
-**Estimated Cost**: O(n) where n = number of controls
+**Estimated Cost**: O(1) - constant time!
 
-- Typical form: 50-200 controls
-- Estimated time: 1-10ms
+- Just reading references and creating small object
+- Estimated time: < 1ms
 
 **Mitigated By**:
 
@@ -501,10 +482,10 @@ Initial snapshot is set as `present` before any changes occur.
 
 ### Restoration Cost
 
-**Operation**: Deserialize and apply to controls
+**Operation**: Restore immutable references
 
-- `setValueAndInitial()` on root control
-- Propagates to all children
+- Set `.value` on three controls (formTree, config, formSchema)
+- Propagates to all children through reactivity
 - `groupedChanges()` batches updates
 
 **Estimated Cost**: O(n) control updates
@@ -520,18 +501,28 @@ Initial snapshot is set as `present` before any changes occur.
 
 **Per Snapshot**:
 
-- Serialized JSON string
-- Retained in `past`/`future` arrays
+- Three immutable object references
+- Tiny snapshot object (~100 bytes overhead)
+- **Structural sharing**: Unchanged subtrees are shared between snapshots
 
-**Total Memory**: 50 snapshots × ~100KB = ~5MB (typical)
+**Total Memory**: Depends on actual changes, not snapshot count!
 
-**Optimization Opportunities** (future):
+- If user edits one field: ~1KB additional per snapshot (changed path only)
+- If user replaces entire form: ~100KB per snapshot
+- Structural sharing makes this very efficient
+- **Much better than expected** due to immutability!
 
-1. **Compression**: Use LZ-string or similar for snapshots
-2. **Differential Snapshots**: Only store deltas after first snapshot
-3. **Sparse Snapshots**: Only capture changed subtrees
+**Why Optimization Isn't Needed**:
 
-**Decision**: Start with full snapshots. Optimize if memory becomes an issue.
+1. **Already optimal**: Immutability provides structural sharing for free
+2. **No serialization cost**: O(1) snapshot capture
+3. **Memory efficient**: Only changed paths consume additional memory
+
+**Future Considerations** (unlikely to be needed):
+
+1. **Weak references**: Could use WeakMap for very old snapshots
+2. **Compression**: Only if forms become extremely large (>10MB)
+3. **Differential encoding**: Immutability already provides this naturally
 
 ---
 
@@ -550,17 +541,11 @@ From `@react-typed-forms/core`:
 
 From `@react-typed-forms/schemas`:
 
-- `cleanDataForSchema` - Serialization
-- `SchemaNode` - Type information
+- `SchemaNode` - Type information (if needed for validation)
 
 ### Hook API Contract
 
 ```typescript
-interface UseFormUndoRedoOptions {
-  editableForm: Control<EditableForm>;
-  controlDefinitionTree: SchemaNode;
-}
-
 interface UseFormUndoRedoReturn {
   undo: () => void;
   redo: () => void;
@@ -569,18 +554,17 @@ interface UseFormUndoRedoReturn {
 }
 
 export function useFormUndoRedo(
-  options: UseFormUndoRedoOptions
+  editableForm: Control<EditableForm>
 ): UseFormUndoRedoReturn;
 ```
 
 **Usage in FormView**:
 
 ```typescript
-const { undo, redo, canUndo, canRedo } = useFormUndoRedo({
-  editableForm: c,
-  controlDefinitionTree: context.editorFields,
-});
+const { undo, redo, canUndo, canRedo } = useFormUndoRedo(c);
 ```
+
+**Note**: No longer needs `controlDefinitionTree` parameter since we're not using `cleanDataForSchema()`!
 
 ---
 
@@ -588,11 +572,11 @@ const { undo, redo, canUndo, canRedo } = useFormUndoRedo({
 
 ### Unit Tests (Future)
 
-1. **Snapshot Serialization**
+1. **Snapshot Capture/Restore**
 
-   - Verify `serializeFormSnapshot()` captures all state
-   - Verify `restoreFormSnapshot()` restores correctly
-   - Test dirty state preservation
+   - Verify `captureSnapshot()` captures all state correctly
+   - Verify `restoreSnapshot()` restores correctly
+   - Test dirty state preservation (value vs initialValue)
 
 2. **Stack Operations**
 
@@ -662,28 +646,29 @@ const { undo, redo, canUndo, canRedo } = useFormUndoRedo({
 
 ---
 
-## Open Questions for Review
+## Resolved Decisions
 
-1. **Should we capture UI state** (`selectedControlId`, `hideFields`, etc.) or only data state?
+1. **UI state**: NOT captured - data only (formTree, config, formSchema)
 
-   - **Recommendation**: Data state only
+2. **FormSchema**: Included in undo/redo (stored with form)
 
-2. **Should form schema changes be in the same undo context** as form tree changes?
+3. **InitialValue**: NOT captured in snapshots - only set on load/save
 
-   - **Recommendation**: Yes, for simplicity
+4. **Serialization**: NOT needed - store immutable values directly
 
-3. **Debounce timing**: Is 300ms appropriate, or should it be configurable?
+5. **Dirty state**: Automatically preserved by only restoring `.value`
 
-   - **Recommendation**: Start with 300ms constant
+6. **Debounce timing**: 300ms (hardcoded constant)
 
-4. **Should we implement "flush pending" logic** for undo during debounce window?
+7. **Stack size**: 50 snapshots (hardcoded constant)
 
-   - **Recommendation**: Add if users report issues
+## Open Questions
 
-5. **Memory limits**: Is 50 snapshots appropriate for all forms?
+1. **Should we implement "flush pending" logic** for undo during debounce window?
 
-   - **Recommendation**: Start with 50, make configurable if needed
+   - **Recommendation**: Start without it, add if users report issues
 
-6. **Should undo/redo affect the tab's "dirty" indicator** (the asterisk in tab title)?
-   - **Current plan**: No, dirty state is calculated from value vs initialValue
-   - If we restore initialValue correctly, dirty state is preserved automatically
+2. **setTimeout pattern**: Is `setTimeout(..., 0)` the right way to reset `isRestoring` flag?
+   - Ensures restoration completes before re-enabling change tracking
+   - Alternative: Could use Promise.resolve().then() for microtask timing
+   - **Recommendation**: Start with setTimeout, profile if issues arise
