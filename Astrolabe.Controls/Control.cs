@@ -256,6 +256,12 @@ public class Control<T>(T value, T initialValue, ControlFlags flags = ControlFla
         return (IControl<TField>)(object)new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance);
     }
 
+    public bool HaveField<TField>(Expression<Func<T, TField>> selector)
+    {
+        var fieldName = _behavior.GetFieldName(selector);
+        return _fieldControls?.ContainsKey(fieldName) == true;
+    }
+
     private Subscriptions? _subscriptions;
 
     // Factory method for simple control creation (replaces old constructor behavior)
@@ -263,14 +269,6 @@ public class Control<T>(T value, T initialValue, ControlFlags flags = ControlFla
     {
         var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
         return new Control<object?>(initialValue, initialValue, flags);
-    }
-
-    /// <summary>
-    /// Creates a new reactive wrapper with a typed value.
-    /// </summary>
-    public static IReactive<T> CreateReactive<T>(T? initialValue = default)
-    {
-        return new Reactive<T>(initialValue!);
     }
 
     /// <summary>

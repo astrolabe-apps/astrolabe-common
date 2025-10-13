@@ -138,4 +138,13 @@ public interface IControl<T> : IControl
     /// <param name="selector">Expression that selects the field (e.g., p => p.Name)</param>
     /// <returns>A typed control for the field</returns>
     IControl<TField> Field<TField>(Expression<Func<T, TField>> selector);
+
+    /// <summary>
+    /// Checks if a field control has already been created for the specified field.
+    /// This allows checking for control existence without creating one.
+    /// </summary>
+    /// <typeparam name="TField">The type of the field</typeparam>
+    /// <param name="selector">Expression that selects the field (e.g., p => p.Name)</param>
+    /// <returns>True if a control exists for the field; otherwise, false</returns>
+    bool HaveField<TField>(Expression<Func<T, TField>> selector);
 }

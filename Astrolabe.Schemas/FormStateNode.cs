@@ -7,13 +7,13 @@ namespace Astrolabe.Schemas;
 /// </summary>
 public class FormStateNode : IFormStateNode
 {
-    private readonly IReactive<FormStateImpl> _state;
+    private readonly IControl<FormStateImpl> _stateControl;
     private readonly IControl _childrenControl;
     private readonly ControlEditor _editor;
 
-    // Expose reactive state for parent-child reactive tracking
+    // Expose state control for parent-child reactive tracking
     // Not part of IFormStateNode interface - only accessible from FormStateNode
-    internal IReactive<FormStateImpl> State => _state;
+    internal IControl<FormStateImpl> State => _stateControl;
 
     public FormStateNode(
         ControlDefinition definition,
@@ -34,8 +34,20 @@ public class FormStateNode : IFormStateNode
         ChildKey = childKey;
         _editor = editor;
 
-        // Create reactive wrapper with initial state
-        _state = Control<object?>.CreateReactive(new FormStateImpl
+        // Create control with initial state
+        _stateControl = new Control<FormStateImpl>(new FormStateImpl
+        {
+            Visible = null,
+            Readonly = false,
+            Disabled = false,
+            ForceHidden = false,
+            ForceReadonly = null,
+            ForceDisabled = null,
+            DataNode = dataNode,
+            Definition = definition,
+            FieldOptions = null,
+            AllowedOptions = null
+        }, new FormStateImpl
         {
             Visible = null,
             Readonly = false,
@@ -77,12 +89,12 @@ public class FormStateNode : IFormStateNode
     public ICollection<IFormStateNode> Children => (List<IFormStateNode>)_childrenControl.Value!;
     public IFormStateNode? ParentNode { get; }
     public SchemaDataNode Parent { get; }
-    public SchemaDataNode? DataNode => (SchemaDataNode?)_state.Field(x => x.DataNode).Value;
+    public SchemaDataNode? DataNode => _stateControl.ValueT.DataNode;
     public int ChildIndex { get; }
-    public bool? Visible => (bool?)_state.Field(x => x.Visible).Value;
-    public bool Readonly => (bool)_state.Field(x => x.Readonly).Value!;
-    public bool Disabled => (bool)_state.Field(x => x.Disabled).Value!;
-    public ICollection<FieldOption>? FieldOptions => (ICollection<FieldOption>?)_state.Field(x => x.FieldOptions).Value;
+    public bool? Visible => _stateControl.ValueT.Visible;
+    public bool Readonly => _stateControl.ValueT.Readonly;
+    public bool Disabled => _stateControl.ValueT.Disabled;
+    public ICollection<FieldOption>? FieldOptions => _stateControl.ValueT.FieldOptions;
 
     internal object ChildKey { get; }
 
@@ -137,18 +149,18 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeDataNode()
     {
-        var dataNodeField = _state.GetControl(x => x.DataNode);
+        var dataNodeField = _stateControl.Field(x => x.DataNode);
 
         Control<object?>.MakeComputed(dataNodeField, tracker =>
         {
-            var definition = tracker.TrackValue(_state, x => x.Definition);
+            var definition = tracker.TrackValue(_stateControl, x => x.Definition);
             return FormStateNodeHelpers.LookupDataNode(definition, Parent);
         }, _editor);
     }
 
     private void InitializeReadonly()
     {
-        var readonlyField = _state.GetControl(x => x.Readonly);
+        var readonlyField = _stateControl.Field(x => x.Readonly);
 
         Control<object?>.MakeComputed(readonlyField, tracker =>
         {
@@ -161,18 +173,18 @@ public class FormStateNode : IFormStateNode
             }
 
             // Track our own force override and definition
-            var forceReadonly = tracker.TrackValue(_state, x => x.ForceReadonly);
+            var forceReadonly = tracker.TrackValue(_stateControl, x => x.ForceReadonly);
             if (forceReadonly == true)
                 return true;
 
-            var definition = tracker.TrackValue(_state, x => x.Definition);
+            var definition = tracker.TrackValue(_stateControl, x => x.Definition);
             return definition.Readonly == true;
         }, _editor);
     }
 
     private void InitializeDisabled()
     {
-        var disabledField = _state.GetControl(x => x.Disabled);
+        var disabledField = _stateControl.Field(x => x.Disabled);
 
         Control<object?>.MakeComputed(disabledField, tracker =>
         {
@@ -185,23 +197,23 @@ public class FormStateNode : IFormStateNode
             }
 
             // Track our own force override and definition
-            var forceDisabled = tracker.TrackValue(_state, x => x.ForceDisabled);
+            var forceDisabled = tracker.TrackValue(_stateControl, x => x.ForceDisabled);
             if (forceDisabled == true)
                 return true;
 
-            var definition = tracker.TrackValue(_state, x => x.Definition);
+            var definition = tracker.TrackValue(_stateControl, x => x.Definition);
             return definition.Disabled == true;
         }, _editor);
     }
 
     private void InitializeFieldOptions()
     {
-        var fieldOptionsField = _state.GetControl(x => x.FieldOptions);
+        var fieldOptionsField = _stateControl.Field(x => x.FieldOptions);
 
         Control<object?>.MakeComputed(fieldOptionsField, tracker =>
         {
             // Track dataNode from our state
-            var dn = tracker.TrackValue(_state, x => x.DataNode);
+            var dn = tracker.TrackValue(_stateControl, x => x.DataNode);
             if (dn == null)
                 return null;
 
@@ -217,12 +229,12 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeVisibility()
     {
-        var visibleField = _state.GetControl(x => x.Visible);
+        var visibleField = _stateControl.Field(x => x.Visible);
 
         Control<object?>.MakeComputed(visibleField, tracker =>
         {
             // Track forceHidden from our state
-            var forceHidden = tracker.TrackValue(_state, x => x.ForceHidden);
+            var forceHidden = tracker.TrackValue(_stateControl, x => x.ForceHidden);
             if (forceHidden == true)
                 return false;
 
@@ -235,8 +247,8 @@ public class FormStateNode : IFormStateNode
             }
 
             // Track dataNode and definition from our state
-            var dn = tracker.TrackValue(_state, x => x.DataNode);
-            var definition = tracker.TrackValue(_state, x => x.Definition);
+            var dn = tracker.TrackValue(_stateControl, x => x.DataNode);
+            var definition = tracker.TrackValue(_stateControl, x => x.Definition);
 
             if (dn != null &&
                 (!FormStateNodeHelpers.ValidDataNode(dn) ||
