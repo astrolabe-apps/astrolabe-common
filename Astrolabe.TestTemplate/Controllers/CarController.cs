@@ -143,7 +143,7 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
         var doc = Document.Create(dc =>
         {
             var pdfContext = new PdfFormContext(formStateTree);
-            dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
+            dc.Page(p => pdfContext.RenderContent(p.Content()));
         });
         return File(doc.GeneratePdf(), "application/pdf");
     }

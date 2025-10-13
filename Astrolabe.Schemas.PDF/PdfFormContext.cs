@@ -1,9 +1,37 @@
+using Astrolabe.Schemas.PDF.utils;
+
 namespace Astrolabe.Schemas.PDF;
 
-public record PdfFormContext(IFormStateNode StateNode)
+public record PdfFormContext(IFormStateNode FormNode)
 {
-    public PdfFormContext WithStateNode(IFormStateNode node)
+    public readonly Lazy<string[]> StyleClassNames =
+        new(() => FormNode.Definition.StyleClass?.Split(" ") ?? [ ]);
+
+    public readonly Lazy<string[]> LabelClassNames =
+        new(() => FormNode.Definition.LabelClass?.Split(" ") ?? [ ]);
+
+    public readonly Lazy<string[]> LayoutClassNames =
+        new(() => FormNode.Definition.LayoutClass?.Split(" ") ?? [ ]);
+
+    public readonly Lazy<string> TextValue =
+        new(
+            () =>
+                FormNode.Definition switch
+                {
+                    DataControlDefinition
+                        when FormNode.DataNode?.Schema.Field.Type == "Date"
+                            && FormNode.DataNode is { Control: var data }
+                        => data.Value?.ToString()?.DateStringToLocalDateString() ?? "No Data",
+                    DataControlDefinition when FormNode.DataNode is { Control: var data }
+                        => data.Value?.ToString() ?? "Missing data",
+                    DisplayControlDefinition { DisplayData: TextDisplay } displayControlDefinition
+                        => (displayControlDefinition.DisplayData as TextDisplay)?.Text ?? "",
+                    _ => throw new ArgumentOutOfRangeException()
+                }
+        );
+
+    public static PdfFormContext WithFormNode(IFormStateNode formNode)
     {
-        return new PdfFormContext(node);
+        return new PdfFormContext(formNode);
     }
 }

@@ -1,72 +1,264 @@
 ﻿using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 
 namespace Astrolabe.Schemas.PDF;
 
 public static class PdfGenerator
 {
-    public static void RenderGroupContent(
-        this PdfFormContext pdfContext,
-        GroupRenderOptions? options,
-        IContainer container
-    )
+    private enum ListType
     {
-        var stateNode = pdfContext.StateNode;
-        container.Column(cd =>
+        BulletPoint,
+        Numeric
+    }
+
+    public static Document CreateDocument(this PdfFormContext pdfContext)
+    {
+        return Document.Create(container =>
         {
-            // Children are already resolved in the FormStateNode tree
-            foreach (var child in stateNode.Children)
+            container.Page(p =>
             {
-                pdfContext
-                    .WithStateNode(child)
-                    .RenderControlLayout(cd.Item());
-            }
+                var totalStart = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                Console.WriteLine($"Total start: {totalStart}");
+
+                // p.Header();
+
+                pdfContext.RenderContent(p.Content());
+
+                p.Footer().AlignCenter().Text(t => t.CurrentPageNumber());
+                var totalEnd = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                Console.WriteLine($"Total after: {totalEnd}");
+                Console.WriteLine($"Total takes: {totalEnd - totalStart}ms\n\n\n");
+            });
         });
     }
 
     public static void RenderContent(this PdfFormContext pdfContext, IContainer container)
     {
-        var stateNode = pdfContext.StateNode;
-        switch (stateNode.Definition)
+        switch (pdfContext.FormNode.Definition)
         {
-            case DataControlDefinition when stateNode.DataNode is { Control: var control }:
-                container.Text(control?.Value?.ToString());
-                break;
-            case DataControlDefinition:
-                container.Text("Missing data");
-                break;
             case GroupedControlsDefinition group:
                 pdfContext.RenderGroupContent(group.GroupOptions, container);
                 break;
-            case DisplayControlDefinition displayControlDefinition:
-                throw new NotImplementedException();
+            case DataControlDefinition
+            or DisplayControlDefinition:
+                pdfContext.RenderControlLayout(container);
+                break;
             default:
                 throw new ArgumentOutOfRangeException();
         }
     }
 
-    public static void RenderLabel(
+    private static void RenderGroupContent(
+        this PdfFormContext pdfContext,
+        GroupRenderOptions? options,
+        IContainer container
+    )
+    {
+        var styleClassNames = pdfContext.StyleClassNames.Value;
+
+        if (styleClassNames.Contains("paragraph"))
+        {
+            pdfContext.RenderParagraphGroup(container);
+        }
+        else if (styleClassNames.Contains("list-disc") || styleClassNames.Contains("list-decimal"))
+        {
+            var className = styleClassNames.LastOrDefault(
+                x => x.Contains("list-disc") || x.Contains("list-decimal")
+            );
+            var type = className switch
+            {
+                "list-disc" => ListType.BulletPoint,
+                "list-decimal" => ListType.Numeric,
+                _ => ListType.BulletPoint
+            };
+            pdfContext.RenderListGroup(container, type);
+        }
+        else
+        {
+            pdfContext.RenderGeneralGroup(container);
+        }
+    }
+
+    private static void RenderGeneralGroup(this PdfFormContext pdfContext, IContainer container)
+    {
+        var formDataNode = pdfContext.FormNode;
+        var styleClassNames = pdfContext.StyleClassNames.Value;
+        container
+            // .DebugArea("General group")
+            // .DebugPointer("General group")
+            .Element(x => x.RunLayoutParser(styleClassNames))
+            .Column(c =>
+            {
+                c.TryConfigColumnGap(styleClassNames);
+
+                formDataNode
+                    .Children
+                    .ToList()
+                    .ForEach(fn =>
+                    {
+                        PdfFormContext
+                            .WithFormNode(fn)
+                            .RenderContent(c.Item());
+                    });
+            });
+    }
+
+    private static void RenderParagraphGroup(this PdfFormContext pdfContext, IContainer container)
+    {
+        var formDataNode = pdfContext.FormNode;
+        var styleClassNames = pdfContext.StyleClassNames.Value;
+
+        container
+            // .DebugArea("Paragraph group", Colors.Orange.Accent1)
+            // .DebugPointer("Paragraph group")
+            .Element(x => x.RunLayoutParser(styleClassNames))
+            .Column(c =>
+            {
+                c.Item()
+                    .Text(text =>
+                    {
+                        text.TryParseTextAlign(styleClassNames);
+
+                        formDataNode
+                            .Children
+                            .ToList()
+                            .ForEach(fn =>
+                            {
+                                PdfFormContext
+                                    .WithFormNode(
+                                        fn
+                                    )
+                                    .RenderParagraphSpan(text);
+                            });
+                    });
+            });
+    }
+
+    private static void RenderParagraphSpan(this PdfFormContext pdfContext, TextDescriptor text)
+    {
+        text.Span(pdfContext.TextValue.Value).WithStyles(pdfContext.StyleClassNames.Value);
+    }
+
+    private static void RenderListGroup(
+        this PdfFormContext pdfContext,
+        IContainer container,
+        ListType listType
+    )
+    {
+        var formDataNode = pdfContext.FormNode;
+        var styleClassNames = pdfContext.StyleClassNames.Value;
+        container
+            // .DebugArea("List group", Colors.Blue.Accent1)
+            // .DebugPointer("List group")
+            .Element(x => x.RunLayoutParser(styleClassNames))
+            .Column(c =>
+            {
+                c.TryConfigColumnGap(styleClassNames);
+
+                var index = 0;
+                formDataNode
+                    .Children
+                    .ToList()
+                    .ForEach(fn =>
+                    {
+                        PdfFormContext
+                            .WithFormNode(fn)
+                            .RenderListItem(c.Item(), listType, index);
+                        index++;
+                    });
+            });
+    }
+
+    private static void RenderListItem(
+        this PdfFormContext pdfContext,
+        IContainer container,
+        ListType listType,
+        int index
+    )
+    {
+        var styleClassNames = pdfContext.StyleClassNames.Value;
+        var textValue = pdfContext.TextValue.Value;
+
+        container
+            .Element(x => x.RunLayoutParser(styleClassNames))
+            .Row(r =>
+            {
+                r.Spacing(5);
+
+                var prefix = listType switch
+                {
+                    ListType.BulletPoint => "•",
+                    ListType.Numeric => $"{index + 1}.",
+                    _ => "•"
+                };
+
+                r.AutoItem().Text(prefix).WithStyles(styleClassNames);
+                r.RelativeItem()
+                    .Text(text =>
+                    {
+                        text.RenderText(textValue, styleClassNames);
+                    });
+            });
+    }
+
+    #region Render Control
+
+    private static void RenderControlLayout(this PdfFormContext pdfContext, IContainer container)
+    {
+        var formNode = pdfContext.FormNode;
+        var styleClassNames = pdfContext.LayoutClassNames.Value;
+        container
+            .Element(x => x.RunLayoutParser(styleClassNames))
+            .Row(r =>
+            {
+                if (!formNode.Definition.IsTitleHidden())
+                {
+                    pdfContext.RenderLabel(
+                        formNode.Definition.GetLabelType(),
+                        formNode.GetTitle(),
+                        r.AutoItem()
+                    );
+                }
+
+                pdfContext.RenderControlContent(r.RelativeItem());
+            });
+    }
+
+    private static void RenderLabel(
         this PdfFormContext pdfContext,
         LabelType labelType,
         string labelText,
         IContainer container
     )
     {
-        container.Text(labelText);
+        var labelClassNames = pdfContext.LabelClassNames.Value;
+        container
+            .Element(x => x.RunLayoutParser(labelClassNames))
+            .Text(text =>
+            {
+                text.RenderText(labelText, labelClassNames);
+            });
     }
 
-    public static void RenderControlLayout(this PdfFormContext pdfContext, IContainer document)
+    private static void RenderControlContent(this PdfFormContext pdfContext, IContainer container)
     {
-        var stateNode = pdfContext.StateNode;
-        document.Row(cd =>
-        {
-            if (!stateNode.Definition.IsTitleHidden())
-                pdfContext.RenderLabel(
-                    stateNode.Definition.GetLabelType(),
-                    stateNode.GetTitle(),
-                    cd.AutoItem()
-                );
-            pdfContext.RenderContent(cd.AutoItem());
-        });
+        var textValue = pdfContext.TextValue.Value;
+        var styleClassNames = pdfContext.StyleClassNames.Value;
+
+        container
+            .Element(x => x.RunLayoutParser(styleClassNames))
+            .Text(text =>
+            {
+                text.RenderText(textValue, styleClassNames);
+            });
+    }
+
+    #endregion
+
+    private static void RenderText(this TextDescriptor text, string value, string[] classNames)
+    {
+        text.TryParseTextAlign(classNames);
+        text.Span(value).WithStyles(classNames);
     }
 }

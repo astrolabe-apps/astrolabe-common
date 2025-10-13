@@ -62,7 +62,7 @@ public class PdfGeneratorTests
         var doc = Document.Create(dc =>
         {
             var pdfContext = new PdfFormContext(formStateTree);
-            dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
+            dc.Page(p => p.Content().Column(c => pdfContext.RenderContent(c.Item())));
         });
 
         var pdfBytes = doc.GeneratePdf();
@@ -126,7 +126,7 @@ public class PdfGeneratorTests
         var doc = Document.Create(dc =>
         {
             var pdfContext = new PdfFormContext(formStateTree);
-            dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
+            dc.Page(p => p.Content().Column(c => pdfContext.RenderContent(c.Item())));
         });
 
         var pdfBytes = doc.GeneratePdf();
@@ -179,7 +179,7 @@ public class PdfGeneratorTests
             var doc = Document.Create(dc =>
             {
                 var pdfContext = new PdfFormContext(formStateTree);
-                dc.Page(p => pdfContext.RenderControlLayout(p.Content()));
+                dc.Page(p => p.Content().Column(c => pdfContext.RenderContent(c.Item())));
             });
             doc.GeneratePdf();
         });
