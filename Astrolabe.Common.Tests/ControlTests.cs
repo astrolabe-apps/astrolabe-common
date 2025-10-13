@@ -8,8 +8,8 @@ public class ControlTests
     [Fact]
     public void Control_Should_Have_Unique_Id()
     {
-        var control1 = Control.Create();
-        var control2 = Control.Create();
+        var control1 = Control<object?>.Create();
+        var control2 = Control<object?>.Create();
 
         Assert.NotEqual(control1.UniqueId, control2.UniqueId);
         Assert.True(control1.UniqueId > 0);
@@ -19,7 +19,7 @@ public class ControlTests
     [Fact]
     public void Control_Constructor_Should_Set_Explicit_Values()
     {
-        var control = new Control("current", "initial", ControlFlags.Disabled);
+        var control = new Control<object?>("current", "initial", ControlFlags.Disabled);
 
         Assert.Equal("current", control.Value);
         Assert.Equal("initial", control.InitialValue);
@@ -30,7 +30,7 @@ public class ControlTests
     [Fact]
     public void Control_Factory_Should_Create_Clean_Control()
     {
-        var control = Control.Create("value");
+        var control = Control<object?>.Create("value");
 
         Assert.Equal("value", control.Value);
         Assert.Equal("value", control.InitialValue);
@@ -41,7 +41,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Accept_Initial_Value()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
 
         Assert.Equal("initial", control.Value);
     }
@@ -49,7 +49,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Default_To_Null_Value()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
 
         Assert.Null(control.Value);
     }
@@ -57,7 +57,7 @@ public class ControlTests
     [Fact]
     public void Setting_Value_Should_Trigger_Notification()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
         var changeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
@@ -83,7 +83,7 @@ public class ControlTests
     [Fact]
     public void Setting_Same_Value_Should_Not_Trigger_Notification()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
         var editor = new ControlEditor();
         var changeNotified = false;
 
@@ -103,7 +103,7 @@ public class ControlTests
     [Fact]
     public void Unsubscribe_Should_Stop_Notifications()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
         var changeNotified = false;
 
@@ -124,7 +124,7 @@ public class ControlTests
     [Fact]
     public void Multiple_Subscribers_Should_All_Be_Notified()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
         var change1Notified = false;
         var change2Notified = false;
@@ -154,7 +154,7 @@ public class ControlTests
     [Fact]
     public void Subscription_Should_Only_Fire_For_Subscribed_Changes()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
         var valueChangeNotified = false;
         var allChangeNotified = false;
@@ -186,8 +186,8 @@ public class ControlTests
     [Fact]
     public void Control_Should_Initialize_With_Same_Initial_And_Current_Value()
     {
-        var control1 = Control.Create();
-        var control2 = Control.Create("test");
+        var control1 = Control<object?>.Create();
+        var control2 = Control<object?>.Create("test");
 
         Assert.Null(control1.InitialValue);
         Assert.Null(control1.Value);
@@ -201,8 +201,8 @@ public class ControlTests
     [Fact]
     public void Control_Should_Not_Be_Dirty_Initially()
     {
-        var control1 = Control.Create();
-        var control2 = Control.Create("initial");
+        var control1 = Control<object?>.Create();
+        var control2 = Control<object?>.Create("initial");
 
         Assert.False(control1.IsDirty);
         Assert.False(control2.IsDirty);
@@ -211,7 +211,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Be_Dirty_When_Value_Changes()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
         var editor = new ControlEditor();
 
         Assert.False(control.IsDirty);
@@ -226,7 +226,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Not_Be_Dirty_When_Value_Reverts_To_Initial()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
         var editor = new ControlEditor();
 
         editor.SetValue(control, "changed");
@@ -239,7 +239,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Not_Be_Disabled_Initially()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
 
         Assert.False(control.IsDisabled);
     }
@@ -247,7 +247,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Not_Be_Touched_Initially()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
 
         Assert.False(control.IsTouched);
     }
@@ -255,7 +255,7 @@ public class ControlTests
     [Fact]
     public void SetTouched_Should_Update_Touched_State()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         Assert.False(control.IsTouched);
@@ -268,7 +268,7 @@ public class ControlTests
     [Fact]
     public void SetTouched_Should_Notify_Subscribers()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
         var touchedChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
@@ -292,7 +292,7 @@ public class ControlTests
     [Fact]
     public void Dirty_State_Should_Be_Computed_Property()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
         var editor = new ControlEditor();
 
         // Test multiple changes to verify it's computed, not cached
@@ -312,7 +312,7 @@ public class ControlTests
     [Fact]
     public void Subscribers_Should_Only_Receive_Changes_They_Subscribed_To()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
         var editor = new ControlEditor();
         var dirtyChangeReceived = false;
         var disabledChangeReceived = false;
@@ -370,7 +370,7 @@ public class ControlTests
     [Fact]
     public void Dirty_Change_Should_Notify_Subscribers()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
         var editor = new ControlEditor();
         var dirtyChangeNotified = false;
         var valueChangeNotified = false;
@@ -407,7 +407,7 @@ public class ControlTests
     [Fact]
     public void Disabled_Change_Should_Notify_Subscribers()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
         var disabledChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
@@ -431,7 +431,7 @@ public class ControlTests
     [Fact]
     public void Control_Should_Have_No_Errors_Initially()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
 
         Assert.Empty(control.Errors);
         Assert.False(control.HasErrors);
@@ -441,7 +441,7 @@ public class ControlTests
     [Fact]
     public void SetError_Should_Add_Error_To_Control()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         editor.SetError(control, "required", "Value is required");
@@ -455,7 +455,7 @@ public class ControlTests
     [Fact]
     public void SetError_Should_Notify_Subscribers()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
         var errorChangeNotified = false;
         ControlChange notifiedChange = ControlChange.None;
@@ -478,7 +478,7 @@ public class ControlTests
     [Fact]
     public void SetError_With_Null_Should_Remove_Error()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         // Add error
@@ -494,7 +494,7 @@ public class ControlTests
     [Fact]
     public void SetError_With_Empty_String_Should_Remove_Error()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         // Add error
@@ -510,7 +510,7 @@ public class ControlTests
     [Fact]
     public void SetError_Should_Not_Notify_When_Same_Error_Set()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
         var errorChangeCount = 0;
 
@@ -535,7 +535,7 @@ public class ControlTests
     [Fact]
     public void SetErrors_Should_Set_Multiple_Errors()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         var errors = new Dictionary<string, string>
@@ -556,7 +556,7 @@ public class ControlTests
     [Fact]
     public void SetErrors_Should_Filter_Out_Empty_Values()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         var errors = new Dictionary<string, string>
@@ -579,7 +579,7 @@ public class ControlTests
     [Fact]
     public void ClearErrors_Should_Remove_All_Errors()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         // Add multiple errors
@@ -597,7 +597,7 @@ public class ControlTests
     [Fact]
     public void ClearErrors_Should_Notify_Subscribers()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
         var errorChangeNotified = false;
 
@@ -620,7 +620,7 @@ public class ControlTests
     [Fact]
     public void SetError_Should_Update_Existing_Error_Message()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         // Set initial error
@@ -636,7 +636,7 @@ public class ControlTests
     [Fact]
     public void Multiple_Errors_Can_Exist_Simultaneously()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         editor.SetError(control, "required", "Value is required");
@@ -654,7 +654,7 @@ public class ControlTests
     [Fact]
     public void Removing_One_Error_Should_Leave_Others_Intact()
     {
-        var control = Control.Create();
+        var control = Control<object?>.Create();
         var editor = new ControlEditor();
 
         editor.SetError(control, "required", "Value is required");

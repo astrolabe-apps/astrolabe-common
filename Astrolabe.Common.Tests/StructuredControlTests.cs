@@ -26,7 +26,7 @@ public class StructuredControlTests
     public void CreateStructured_Should_Create_Control_With_Child_Fields()
     {
         // Arrange & Act
-        var control = Control.CreateStructured(new SimpleData("John", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("John", 30));
 
         // Assert
         Assert.NotNull(control);
@@ -46,7 +46,7 @@ public class StructuredControlTests
     public void Field_Should_Return_Typed_Control_For_Property()
     {
         // Arrange
-        var control = Control.CreateStructured(new SimpleData("John", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("John", 30));
 
         // Act
         var nameControl = control["Name"];
@@ -63,7 +63,7 @@ public class StructuredControlTests
     public void Field_Should_Work_With_Nullable_Properties()
     {
         // Arrange
-        var control = Control.CreateStructured(new ComplexData
+        var control = Control<object?>.CreateStructured(new ComplexData
         {
             Visible = null,
             Readonly = true,
@@ -85,7 +85,7 @@ public class StructuredControlTests
     public void Field_Should_Return_Undefined_For_NonExistent_Field()
     {
         // Arrange
-        var control = Control.CreateStructured(new SimpleData("John", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("John", 30));
 
         // Act - Access a field that doesn't exist in the dictionary
         var nonExistentControl = control["NonExistentField"];
@@ -99,7 +99,7 @@ public class StructuredControlTests
     public void Field_Controls_Should_Be_Mutable_Via_ControlEditor()
     {
         // Arrange
-        var control = Control.CreateStructured(new SimpleData("John", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("John", 30));
         var editor = new ControlEditor();
 
         // Act
@@ -118,7 +118,7 @@ public class StructuredControlTests
     public void Field_Controls_Should_Track_Dirty_State()
     {
         // Arrange
-        var control = Control.CreateStructured(new SimpleData("John", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("John", 30));
         var editor = new ControlEditor();
 
         // Act
@@ -138,7 +138,7 @@ public class StructuredControlTests
     public void Field_Controls_Should_Work_With_ChangeTracker()
     {
         // Arrange
-        var control = Control.CreateStructured(new SimpleData("John", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("John", 30));
         var tracker = new ChangeTracker();
         var editor = new ControlEditor();
         var callbackCount = 0;
@@ -163,7 +163,7 @@ public class StructuredControlTests
     public void Multiple_Field_Accesses_Should_Return_Same_Control()
     {
         // Arrange
-        var control = Control.CreateStructured(new SimpleData("John", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("John", 30));
 
         // Act
         var nameControl1 = control["Name"];
@@ -177,7 +177,7 @@ public class StructuredControlTests
     public void Field_Controls_Should_Support_Validation()
     {
         // Arrange
-        var control = Control.CreateStructured(new SimpleData("", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("", 30));
         var editor = new ControlEditor();
 
         // Act
@@ -196,7 +196,7 @@ public class StructuredControlTests
     public void Field_Controls_Should_Support_Collections()
     {
         // Arrange
-        var control = Control.CreateStructured(new ComplexData
+        var control = Control<object?>.CreateStructured(new ComplexData
         {
             Items = new List<string> { "a", "b", "c" }
         });
@@ -215,7 +215,7 @@ public class StructuredControlTests
     public void CreateStructured_Should_Handle_Null_Properties()
     {
         // Arrange & Act
-        var control = Control.CreateStructured(new ComplexData
+        var control = Control<object?>.CreateStructured(new ComplexData
         {
             Visible = null,
             Readonly = false,
@@ -235,7 +235,7 @@ public class StructuredControlTests
     public void Field_Access_Should_Work_With_Property_Syntax()
     {
         // Arrange
-        var control = Control.CreateStructured(new ComplexData
+        var control = Control<object?>.CreateStructured(new ComplexData
         {
             Visible = true,
             Readonly = false
@@ -254,7 +254,7 @@ public class StructuredControlTests
     public void Structured_Control_Should_Work_With_ChangeTracker_For_Multiple_Fields()
     {
         // Arrange
-        var control = Control.CreateStructured(new ComplexData
+        var control = Control<object?>.CreateStructured(new ComplexData
         {
             Visible = true,
             Readonly = false,
@@ -293,7 +293,7 @@ public class StructuredControlTests
     public void Field_Controls_Should_Support_Touch_State()
     {
         // Arrange
-        var control = Control.CreateStructured(new SimpleData("John", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("John", 30));
         var editor = new ControlEditor();
         var nameControl = control["Name"];
 
@@ -311,7 +311,7 @@ public class StructuredControlTests
     public void Field_Controls_Should_Support_Disabled_State()
     {
         // Arrange
-        var control = Control.CreateStructured(new SimpleData("John", 30));
+        var control = Control<object?>.CreateStructured(new SimpleData("John", 30));
         var editor = new ControlEditor();
         var nameControl = control["Name"];
 
@@ -329,7 +329,7 @@ public class StructuredControlTests
     public void CreateStructured_With_DontClearError_Should_Preserve_Errors()
     {
         // Arrange
-        var control = Control.CreateStructured(
+        var control = Control<object?>.CreateStructured(
             new SimpleData("John", 30),
             dontClearError: true
         );
@@ -351,7 +351,7 @@ public class StructuredControlTests
         // similar to what will be used in FormStateNode
 
         // Arrange
-        var control = Control.CreateStructured(new ComplexData
+        var control = Control<object?>.CreateStructured(new ComplexData
         {
             Visible = null,
             Readonly = false

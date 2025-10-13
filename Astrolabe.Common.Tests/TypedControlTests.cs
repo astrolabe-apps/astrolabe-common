@@ -8,7 +8,7 @@ public class TypedControlTests
     [Fact]
     public void Create_Should_Return_Control_For_String()
     {
-        var control = Control.Create("hello");
+        var control = Control<object?>.Create("hello");
 
         Assert.Equal("hello", control.Value);
         Assert.IsAssignableFrom<IControl>(control);
@@ -17,7 +17,7 @@ public class TypedControlTests
     [Fact]
     public void Create_Should_Return_Control_For_Int()
     {
-        var control = Control.Create(42);
+        var control = Control<object?>.Create(42);
 
         Assert.Equal(42, control.Value);
         Assert.IsAssignableFrom<IControl>(control);
@@ -26,7 +26,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Handle_Null_Value()
     {
-        var control = Control.Create(null);
+        var control = Control<object?>.Create(null);
 
         Assert.Null(control.Value);
     }
@@ -34,7 +34,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Handle_Undefined_Value()
     {
-        var objControl = Control.Create(new Dictionary<string, object> { ["name"] = "Alice" });
+        var objControl = Control<object?>.Create(new Dictionary<string, object> { ["name"] = "Alice" });
         var missingField = objControl["age"]; // This field doesn't exist, so it's undefined
 
         // Should not throw - undefined is compatible with any type
@@ -45,7 +45,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Expose_All_Properties()
     {
-        var control = new Control("current", "initial", ControlFlags.Touched);
+        var control = new Control<object?>("current", "initial", ControlFlags.Touched);
 
         Assert.Equal("current", control.Value);
         Assert.Equal("initial", control.InitialValue);
@@ -58,7 +58,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Reflect_Error_State()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
 
         editor.SetError(control, "validation", "Test error");
@@ -72,7 +72,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Support_Subscriptions()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
         var callCount = 0;
         string? capturedValue = null;
 
@@ -97,7 +97,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Track_Value_Changes()
     {
-        var control = Control.Create(10);
+        var control = Control<object?>.Create(10);
         var editor = new ControlEditor();
 
         Assert.Equal(10, control.Value);
@@ -113,7 +113,7 @@ public class TypedControlTests
     public void Create_Should_Work_With_Complex_Objects()
     {
         var person = new { Name = "Alice", Age = 30 };
-        var control = Control.Create(person);
+        var control = Control<object?>.Create(person);
 
         Assert.Equal(person, control.Value);
     }
@@ -121,7 +121,7 @@ public class TypedControlTests
     [Fact]
     public void Create_Should_Work_For_Nullable_Types()
     {
-        var control = Control.Create(42);
+        var control = Control<object?>.Create(42);
 
         Assert.Equal(42, control.Value);
     }
@@ -129,7 +129,7 @@ public class TypedControlTests
     [Fact]
     public void Create_Should_Accept_Null_For_Nullable_Types()
     {
-        var control = Control.Create(null);
+        var control = Control<object?>.Create(null);
 
         Assert.Null(control.Value);
     }
@@ -137,7 +137,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Subscriptions_Should_Trigger_On_Changes()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
         var notifications = 0;
 
         control.Subscribe(
@@ -154,7 +154,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Work_With_Object_Child_Controls()
     {
-        var objControl = Control.Create(
+        var objControl = Control<object?>.Create(
             new Dictionary<string, object> { ["name"] = "Alice", ["age"] = 30 }
         );
 
@@ -170,7 +170,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Work_With_Array_Elements()
     {
-        var arrayControl = Control.Create(new object[] { "first", 123, "third" });
+        var arrayControl = Control<object?>.Create(new object[] { "first", 123, "third" });
 
         var elem0 = arrayControl[0];
         var elem1 = arrayControl[1];
@@ -184,7 +184,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Reflect_InitialValue_Changes()
     {
-        var control = Control.Create("initial");
+        var control = Control<object?>.Create("initial");
         var editor = new ControlEditor();
 
         Assert.Equal("initial", control.InitialValue);
@@ -197,7 +197,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Reflect_Disabled_State()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
 
         Assert.False(control.IsDisabled);
@@ -210,7 +210,7 @@ public class TypedControlTests
     [Fact]
     public void Control_Should_Reflect_Touched_State()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
 
         Assert.False(control.IsTouched);
@@ -223,7 +223,7 @@ public class TypedControlTests
     [Fact]
     public void Create_With_Validator_Should_Maintain_Type_Safety()
     {
-        var control = Control.Create<string>(
+        var control = Control<string>.Create(
             "test@example.com",
             value => string.IsNullOrEmpty(value) || !value.Contains("@") ? "Invalid email" : null
         );

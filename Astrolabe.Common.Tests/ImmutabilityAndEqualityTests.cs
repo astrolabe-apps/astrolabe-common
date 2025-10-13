@@ -71,7 +71,7 @@ public class ImmutabilityAndEqualityTests
     public void Value_Should_Be_Immutable_When_Accessed()
     {
         var originalDict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = Control.Create(originalDict);
+        var control = Control<object?>.Create(originalDict);
 
         // First access to Value should return a reference to the value
         var value1 = control.Value;
@@ -86,7 +86,7 @@ public class ImmutabilityAndEqualityTests
     public void InitialValue_Should_Be_Immutable_When_Accessed()
     {
         var originalDict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = new Control(originalDict, originalDict, ControlFlags.None);
+        var control = new Control<object?>(originalDict, originalDict, ControlFlags.None);
 
         // First access to InitialValue should return a reference to the value
         var initialValue1 = control.InitialValue;
@@ -101,7 +101,7 @@ public class ImmutabilityAndEqualityTests
     public void Value_Should_Clone_When_Needs_Internal_Mutation()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = new Control(dict, dict, ControlFlags.None);
+        var control = new Control<object?>(dict, dict, ControlFlags.None);
         var editor = new ControlEditor();
 
         // Access Value first - should return original reference
@@ -127,7 +127,7 @@ public class ImmutabilityAndEqualityTests
     {
         var initialDict = new Dictionary<string, object> { ["Name"] = "John", ["Age"] = 30 };
         var currentDict = new Dictionary<string, object> { ["Name"] = "Jane", ["Age"] = 35 };
-        var control = new Control(currentDict, initialDict, ControlFlags.None);
+        var control = new Control<object?>(currentDict, initialDict, ControlFlags.None);
 
         var nameChild = control["Name"];
         var ageChild = control["Age"];
@@ -153,7 +153,7 @@ public class ImmutabilityAndEqualityTests
     {
         var initialArray = new List<object> { "initial1", "initial2" };
         var currentArray = new List<object> { "current1", "current2" };
-        var control = new Control(currentArray, initialArray, ControlFlags.None);
+        var control = new Control<object?>(currentArray, initialArray, ControlFlags.None);
 
         var elements = control.Elements;
         Assert.Equal(2, elements.Count);
@@ -176,7 +176,7 @@ public class ImmutabilityAndEqualityTests
     {
         var initialDict = new Dictionary<string, object> { ["Name"] = "John" }; // Missing Age
         var currentDict = new Dictionary<string, object> { ["Name"] = "Jane", ["Age"] = 35 };
-        var control = new Control(currentDict, initialDict, ControlFlags.None);
+        var control = new Control<object?>(currentDict, initialDict, ControlFlags.None);
 
         var nameChild = control["Name"];
         var ageChild = control["Age"];
@@ -199,7 +199,7 @@ public class ImmutabilityAndEqualityTests
     public void SetInitialValue_Should_Propagate_To_Children()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John", ["Age"] = 30 };
-        var control = Control.Create(dict);
+        var control = Control<object?>.Create(dict);
         var editor = new ControlEditor();
 
         var nameChild = control["Name"];
@@ -232,7 +232,7 @@ public class ImmutabilityAndEqualityTests
     public void SetInitialValue_Should_Propagate_To_Array_Children()
     {
         var list = new List<object> { "first", "second" };
-        var control = Control.Create(list);
+        var control = Control<object?>.Create(list);
         var editor = new ControlEditor();
 
         var elements = control.Elements;

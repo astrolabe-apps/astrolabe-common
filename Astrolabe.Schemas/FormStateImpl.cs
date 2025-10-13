@@ -2,7 +2,7 @@ namespace Astrolabe.Schemas;
 
 /// <summary>
 /// Contains all reactive state for a form state node.
-/// This record is used with Control.CreateReactive to create a reactive wrapper with type-safe property access.
+/// This record is used with Control<object?>.CreateReactive to create a reactive wrapper with type-safe property access.
 /// </summary>
 public record FormStateImpl
 {

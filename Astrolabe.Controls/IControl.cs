@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Linq.Expressions;
 
 namespace Astrolabe.Controls;
 
@@ -110,4 +111,31 @@ public interface IControl
         }
         return true;
     }
+}
+
+/// <summary>
+/// Generic version of IControl that provides type-safe access to control values.
+/// </summary>
+/// <typeparam name="T">The type of value held by this control</typeparam>
+public interface IControl<T> : IControl
+{
+    /// <summary>
+    /// Gets the current typed value of this control.
+    /// </summary>
+    T ValueT { get; }
+
+    /// <summary>
+    /// Gets the initial typed value of this control.
+    /// </summary>
+    T InitialValueT { get; }
+
+    /// <summary>
+    /// Gets a typed child control for the specified field using an expression selector.
+    /// This provides compile-time type safety for field access.
+    /// Returns an undefined control if the field doesn't exist, enabling safe chaining.
+    /// </summary>
+    /// <typeparam name="TField">The type of the field</typeparam>
+    /// <param name="selector">Expression that selects the field (e.g., p => p.Name)</param>
+    /// <returns>A typed control for the field</returns>
+    IControl<TField> Field<TField>(Expression<Func<T, TField>> selector);
 }

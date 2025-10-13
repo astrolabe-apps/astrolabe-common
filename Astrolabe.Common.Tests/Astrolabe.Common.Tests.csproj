@@ -10,6 +10,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Astrolabe.Controls\Astrolabe.Controls.csproj" />
+        <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+        <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
     </ItemGroup>
 
     <ItemGroup>

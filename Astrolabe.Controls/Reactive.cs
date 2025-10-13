@@ -60,7 +60,7 @@ public class Reactive<T> : IReactive<T>
         {
             // Get the current value from the POCO and create a control with it
             var value = Get(selector);
-            control = Control.Create(value);
+            control = Control<object?>.Create(value);
             _controlCache[propertyName] = control;
         }
         return control;

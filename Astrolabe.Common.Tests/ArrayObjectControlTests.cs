@@ -9,7 +9,7 @@ public class ArrayObjectControlTests
     public void Control_Should_Detect_Object_Type()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John", ["Age"] = 30 };
-        var control = new Control(dict, dict);
+        var control = new Control<object?>(dict, dict);
 
         Assert.True(control.IsObject);
         Assert.False(control.IsArray);
@@ -20,7 +20,7 @@ public class ArrayObjectControlTests
     public void Control_Should_Detect_Array_Type()
     {
         var list = new List<object> { 1, 2, 3, 4 };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
 
         Assert.True(control.IsArray);
         Assert.False(control.IsObject);
@@ -30,7 +30,7 @@ public class ArrayObjectControlTests
     [Fact]
     public void Control_Should_Not_Treat_String_As_Array()
     {
-        var control = new Control("hello", "hello");
+        var control = new Control<object?>("hello", "hello");
 
         Assert.False(control.IsArray);
         Assert.False(control.IsObject);
@@ -40,7 +40,7 @@ public class ArrayObjectControlTests
     [Fact]
     public void Control_Should_Return_Empty_For_Non_Collection_Types()
     {
-        var control = new Control(42, 42);
+        var control = new Control<object?>(42, 42);
 
         Assert.False(control.IsArray);
         Assert.False(control.IsObject);
@@ -53,7 +53,7 @@ public class ArrayObjectControlTests
     public void Object_Indexer_Should_Return_Child_Control()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John", ["Age"] = 30 };
-        var control = new Control(dict, dict);
+        var control = new Control<object?>(dict, dict);
 
         var nameControl = control["Name"];
         var ageControl = control["Age"];
@@ -68,7 +68,7 @@ public class ArrayObjectControlTests
     public void Object_Indexer_Should_Cache_Child_Controls()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = new Control(dict, dict);
+        var control = new Control<object?>(dict, dict);
 
         var nameControl1 = control["Name"];
         var nameControl2 = control["Name"];
@@ -80,7 +80,7 @@ public class ArrayObjectControlTests
     public void Array_Indexer_Should_Return_Child_Control()
     {
         var list = new List<object> { "first", "second", "third" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
 
         var firstControl = control[0];
         var secondControl = control[1];
@@ -95,7 +95,7 @@ public class ArrayObjectControlTests
     public void Array_Indexer_Should_Return_Null_For_Out_Of_Bounds()
     {
         var list = new List<object> { "first" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
 
         var negativeControl = control[-1];
         var tooLargeControl = control[5];
@@ -113,7 +113,7 @@ public class ArrayObjectControlTests
             ["Age"] = 30,
             ["Email"] = "john@example.com"
         };
-        var control = new Control(dict, dict);
+        var control = new Control<object?>(dict, dict);
 
         var fieldNames = control.FieldNames.ToList();
 
@@ -127,7 +127,7 @@ public class ArrayObjectControlTests
     public void Elements_Should_Return_All_Array_Controls()
     {
         var list = new List<object> { "first", "second", "third" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
 
         var elements = control.Elements;
 
@@ -141,7 +141,7 @@ public class ArrayObjectControlTests
     public void Child_Control_Should_Have_Parent_Reference()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John" };
-        var parent = new Control(dict, dict);
+        var parent = new Control<object?>(dict, dict);
         var editor = new ControlEditor();
 
         var child = parent["Name"];
@@ -161,7 +161,7 @@ public class ArrayObjectControlTests
     public void Array_Child_Control_Should_Update_Parent_Array()
     {
         var list = new List<object> { "first", "second" };
-        var parent = new Control(list, list);
+        var parent = new Control<object?>(list, list);
         var editor = new ControlEditor();
 
         var child = parent[0];
@@ -181,7 +181,7 @@ public class ArrayObjectControlTests
     public void SetField_Should_Update_Object_Property()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = new Control(dict, dict);
+        var control = new Control<object?>(dict, dict);
         var editor = new ControlEditor();
 
         editor.SetField(control, "Name", "Jane");
@@ -197,7 +197,7 @@ public class ArrayObjectControlTests
     public void SetElement_Should_Update_Array_Element()
     {
         var list = new List<object> { "first", "second" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
 
         editor.SetElement(control, 0, "changed");
@@ -213,7 +213,7 @@ public class ArrayObjectControlTests
     public void AddElement_Should_Add_To_Array()
     {
         var list = new List<object> { "first", "second" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
 
         editor.AddElement(control, "third");
@@ -231,7 +231,7 @@ public class ArrayObjectControlTests
     public void RemoveElement_Should_Remove_From_Array()
     {
         var list = new List<object> { "first", "second", "third" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
 
         editor.RemoveElement(control, 1);
@@ -250,7 +250,7 @@ public class ArrayObjectControlTests
     {
         var dict1 = new Dictionary<string, object> { ["Name"] = "John" };
         var dict2 = new Dictionary<string, object> { ["Name"] = "Jane" };
-        var control = new Control(dict1, dict1);
+        var control = new Control<object?>(dict1, dict1);
         var editor = new ControlEditor();
 
         var originalChild = control["Name"];
@@ -272,7 +272,7 @@ public class ArrayObjectControlTests
     public void Control_Should_Track_Dirty_State_For_Child_Changes()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = new Control(dict, dict);
+        var control = new Control<object?>(dict, dict);
         var editor = new ControlEditor();
 
         var child = control["Name"];
@@ -293,7 +293,7 @@ public class ArrayObjectControlTests
         {
             ["Person"] = new Dictionary<string, object> { ["Name"] = "John", ["Age"] = 30 }
         };
-        var control = new Control(nested, nested);
+        var control = new Control<object?>(nested, nested);
 
         var personControl = control["Person"];
         Assert.NotNull(personControl);
@@ -312,7 +312,7 @@ public class ArrayObjectControlTests
             new List<object> { 1, 2, 3 },
             new List<object> { 4, 5, 6 }
         };
-        var control = new Control(nestedArrays, nestedArrays);
+        var control = new Control<object?>(nestedArrays, nestedArrays);
 
         var firstArray = control[0];
         Assert.NotNull(firstArray);
@@ -328,7 +328,7 @@ public class ArrayObjectControlTests
     public void Child_Controls_Should_Inherit_Parent_Disabled_State()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = new Control(dict, dict, ControlFlags.Disabled);
+        var control = new Control<object?>(dict, dict, ControlFlags.Disabled);
         var editor = new ControlEditor();
 
         // Parent is disabled
@@ -344,7 +344,7 @@ public class ArrayObjectControlTests
     public void Child_Controls_Should_Inherit_Parent_Touched_State()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = new Control(dict, dict, ControlFlags.Touched);
+        var control = new Control<object?>(dict, dict, ControlFlags.Touched);
 
         // Parent is touched
         Assert.True(control.IsTouched);
@@ -359,7 +359,7 @@ public class ArrayObjectControlTests
     public void SetDisabled_Should_Propagate_To_Child_Controls()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John", ["Age"] = 30 };
-        var control = new Control(dict, dict);
+        var control = new Control<object?>(dict, dict);
         var editor = new ControlEditor();
 
         // Get child controls
@@ -386,7 +386,7 @@ public class ArrayObjectControlTests
     public void SetTouched_Should_Propagate_To_Child_Controls()
     {
         var list = new List<object> { "first", "second", "third" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
 
         // Get child controls
@@ -415,7 +415,7 @@ public class ArrayObjectControlTests
     public void New_Child_Controls_Should_Inherit_Current_Parent_State()
     {
         var dict = new Dictionary<string, object> { ["Name"] = "John" };
-        var control = new Control(dict, dict);
+        var control = new Control<object?>(dict, dict);
         var editor = new ControlEditor();
 
         // Set parent state first
@@ -437,7 +437,7 @@ public class ArrayObjectControlTests
     public void AddElement_Should_Fire_Structure_Change_Notification()
     {
         var list = new List<object> { "first", "second" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
         var structureChangeCount = 0;
         ControlChange notifiedChange = ControlChange.None;
@@ -463,7 +463,7 @@ public class ArrayObjectControlTests
     public void RemoveElement_Should_Fire_Structure_Change_Notification()
     {
         var list = new List<object> { "first", "second", "third" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
         var structureChangeCount = 0;
         ControlChange notifiedChange = ControlChange.None;
@@ -489,7 +489,7 @@ public class ArrayObjectControlTests
     public void Multiple_AddElement_Calls_Should_Fire_Structure_Notifications()
     {
         var list = new List<object> { "first" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
         var structureChangeCount = 0;
 
@@ -520,12 +520,12 @@ public class ArrayObjectControlTests
     public void ChangeTracker_Should_Track_Structure_Changes()
     {
         var list = new List<object> { "first", "second" };
-        var arrayControl = Control.Create(list);
-        var computedControl = Control.Create(0);
+        var arrayControl = Control<object?>.Create(list);
+        var computedControl = Control<object?>.Create(0);
         var editor = new ControlEditor();
         var computeCallCount = 0;
 
-        Control.MakeComputed(
+        Control<object?>.MakeComputed(
             computedControl,
             tracker =>
             {
@@ -555,7 +555,7 @@ public class ArrayObjectControlTests
     public void Structure_Changes_Should_Batch_In_Transaction()
     {
         var list = new List<object> { "first" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
         var structureChangeCount = 0;
 
@@ -589,7 +589,7 @@ public class ArrayObjectControlTests
     public void SetValue_Growing_Array_Should_Fire_Structure_Change()
     {
         var list = new List<object> { "item1", "item2" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
         var structureChangeCount = 0;
         ControlChange notifiedChange = ControlChange.None;
@@ -624,7 +624,7 @@ public class ArrayObjectControlTests
     public void SetValue_Shrinking_Array_Should_Fire_Structure_Change()
     {
         var list = new List<object> { "item1", "item2", "item3", "item4" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
         var structureChangeCount = 0;
         ControlChange notifiedChange = ControlChange.None;
@@ -659,7 +659,7 @@ public class ArrayObjectControlTests
     public void SetValue_Same_Size_Array_Should_Not_Fire_Structure_Change()
     {
         var list = new List<object> { "item1", "item2" };
-        var control = new Control(list, list);
+        var control = new Control<object?>(list, list);
         var editor = new ControlEditor();
         var structureChangeCount = 0;
         var valueChangeCount = 0;
@@ -707,15 +707,15 @@ public class ArrayObjectControlTests
     public void ChangeTracker_Should_Track_Structure_Changes_Via_SetValue()
     {
         var list = new List<object> { "first", "second" };
-        var arrayControl = Control.Create(list);
-        var computedControl = Control.Create(0);
+        var arrayControl = Control<object?>.Create(list);
+        var computedControl = Control<object?>.Create(0);
         var editor = new ControlEditor();
         var computeCallCount = 0;
 
         // Access Elements to ensure _elementControls is created
         var initialElements = arrayControl.Elements;
 
-        Control.MakeComputed(
+        Control<object?>.MakeComputed(
             computedControl,
             tracker =>
             {

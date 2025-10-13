@@ -40,7 +40,7 @@ public static class ReactiveExtensions
         ControlEditor editor)
     {
         var control = reactive.GetControl(fieldSelector);
-        Control.MakeComputed(control, compute, editor);
+        Control<object?>.MakeComputed(control, compute, editor);
     }
 
     /// <summary>
@@ -61,6 +61,6 @@ public static class ReactiveExtensions
         ControlEditor editor)
     {
         var control = reactive.GetControl(fieldSelector);
-        Control.MakeComputedWithPrevious(control, compute, editor);
+        Control<object?>.MakeComputedWithPrevious(control, compute, editor);
     }
 }

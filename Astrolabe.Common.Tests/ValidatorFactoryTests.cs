@@ -10,7 +10,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Create_Without_Validator_Should_Create_Normal_Control()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         
         Assert.False(control.HasErrors);
         Assert.False(control.Errors.ContainsKey("default"));
@@ -20,7 +20,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Create_With_Validator_Should_Setup_Initial_Validation()
     {
-        var control = Control.Create<string>("", value => 
+        var control = Control<string>.Create("", value => 
             string.IsNullOrEmpty(value) ? "Required" : null);
         
         Assert.True(control.HasErrors);
@@ -31,7 +31,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Create_With_Valid_Initial_Value_Should_Have_No_Errors()
     {
-        var control = Control.Create<string>("valid", value => 
+        var control = Control<string>.Create("valid", value => 
             string.IsNullOrEmpty(value) ? "Required" : null);
         
         Assert.False(control.HasErrors);
@@ -42,7 +42,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Validator_Should_Trigger_On_Value_Change()
     {
-        var control = Control.Create<int>(5, value => 
+        var control = Control<int>.Create(5, value => 
             value < 0 ? "Must be positive" : null);
         var editor = new ControlEditor();
         
@@ -58,7 +58,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Validator_Should_Clear_Error_When_Value_Becomes_Valid()
     {
-        var control = Control.Create<string>("", value => 
+        var control = Control<string>.Create("", value => 
             string.IsNullOrEmpty(value) ? "Required" : null);
         var editor = new ControlEditor();
         
@@ -74,7 +74,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Validator_Should_Trigger_On_Explicit_Validate()
     {
-        var control = Control.Create<string>("invalid", value => "Always invalid");
+        var control = Control<string>.Create("invalid", value => "Always invalid");
         
         // Initial validation has already run
         Assert.True(control.HasErrors);
@@ -92,7 +92,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Generic_Factory_Should_Handle_Value_Types()
     {
-        var control = Control.Create<int>(42, value => 
+        var control = Control<int>.Create(42, value => 
             value > 100 ? "Too large" : null);
         
         Assert.False(control.HasErrors);
@@ -103,8 +103,8 @@ public class ValidatorFactoryTests
     [Fact]
     public void Generic_Factory_Should_Handle_Nullable_Value_Types()
     {
-        var control = Control.Create<int?>(null, value => 
-            value.HasValue && value < 0 ? "Must be positive" : null);
+        var control = Control<int?>.Create(null, (Func<int?, string?>)(value =>
+            value.HasValue && value < 0 ? "Must be positive" : null));
         
         Assert.False(control.HasErrors);
         Assert.Null(control.Value);
@@ -114,8 +114,8 @@ public class ValidatorFactoryTests
     [Fact]
     public void Generic_Factory_Should_Handle_Reference_Types()
     {
-        var control = Control.Create<string?>(null, value => 
-            value?.Length > 10 ? "Too long" : null);
+        var control = Control<string?>.Create(null, (Func<string?, string?>)(value =>
+            value?.Length > 10 ? "Too long" : null));
         
         Assert.False(control.HasErrors);
         Assert.Null(control.Value);
@@ -125,7 +125,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Validator_Should_Handle_Type_Casting_Correctly()
     {
-        var control = Control.Create<decimal>(99.99m, value => 
+        var control = Control<decimal>.Create(99.99m, value => 
             value > 100 ? "Over budget" : null);
         var editor = new ControlEditor();
         
@@ -140,7 +140,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Complex_Validator_Should_Work()
     {
-        var control = Control.Create<string>("", password =>
+        var control = Control<string>.Create("", password =>
         {
             if (string.IsNullOrEmpty(password)) return "Password is required";
             if (password.Length < 8) return "Password must be at least 8 characters";
@@ -165,7 +165,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Validated_Control_Should_Work_With_ControlEditor_Transactions()
     {
-        var control = Control.Create<string>("", value => 
+        var control = Control<string>.Create("", value => 
             string.IsNullOrEmpty(value) ? "Required" : null);
         var editor = new ControlEditor();
         
@@ -185,7 +185,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Validated_Control_Should_Work_With_Manual_Validation()
     {
-        var control = Control.Create<string>("test", value => 
+        var control = Control<string>.Create("test", value => 
             string.IsNullOrEmpty(value) ? "Required" : null);
         
         // Add additional manual validation and trigger it
@@ -215,9 +215,9 @@ public class ValidatorFactoryTests
     [Fact]
     public void Multiple_Validated_Controls_Should_Work_Independently()
     {
-        var emailControl = Control.Create<string>("", value => 
+        var emailControl = Control<string>.Create("", value => 
             string.IsNullOrEmpty(value) ? "Email required" : null);
-        var ageControl = Control.Create<int>(-1, value => 
+        var ageControl = Control<int>.Create(-1, value => 
             value < 0 ? "Age must be positive" : null);
         var editor = new ControlEditor();
         
@@ -238,11 +238,11 @@ public class ValidatorFactoryTests
             { "email", "" },
             { "age", 25 }
         };
-        var parent = Control.Create(parentData);
+        var parent = Control<object?>.Create(parentData);
         
         // Get child control and add validator
         var emailChild = parent["email"]!;
-        var validatedEmailChild = Control.Create<string>(emailChild.Value as string ?? "", value => 
+        var validatedEmailChild = Control<string>.Create(emailChild.Value as string ?? "", value => 
             string.IsNullOrEmpty(value) ? "Email is required" : null);
         
         Assert.True(validatedEmailChild.HasErrors);
@@ -253,15 +253,15 @@ public class ValidatorFactoryTests
     public void Validator_Should_Handle_Default_Values_Correctly()
     {
         // Test with default value for value type
-        var intControl = Control.Create<int>(0, value =>
+        var intControl = Control<int>.Create(0, value =>
             value == 0 ? "Cannot be zero" : null);
 
         Assert.Equal(0, intControl.Value);
         Assert.Equal("Cannot be zero", intControl.Errors["default"]);
 
         // Test with default value for reference type
-        var stringControl = Control.Create<string?>(null, value =>
-            value == null ? "Cannot be null" : null);
+        var stringControl = Control<string?>.Create(null, (Func<string?, string?>)(value =>
+            value == null ? "Cannot be null" : null));
         
         Assert.Null(stringControl.Value);
         Assert.Equal("Cannot be null", stringControl.Errors["default"]);
@@ -270,7 +270,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Range_Validator_Example_Should_Work()
     {
-        var ageControl = Control.Create<int>(150, age => 
+        var ageControl = Control<int>.Create(150, age => 
             age < 0 || age > 120 ? "Age must be between 0 and 120" : null);
         var editor = new ControlEditor();
         
@@ -286,7 +286,7 @@ public class ValidatorFactoryTests
     [Fact]
     public void Email_Format_Validator_Example_Should_Work()
     {
-        var emailControl = Control.Create<string>("invalid-email", email =>
+        var emailControl = Control<string>.Create("invalid-email", email =>
             !string.IsNullOrEmpty(email) && !email.Contains('@') ? "Invalid email format" : null);
         var editor = new ControlEditor();
         
@@ -306,10 +306,10 @@ public class ValidatorFactoryTests
     public void Backward_Compatibility_Should_Be_Maintained()
     {
         // All existing Create calls should continue to work
-        var control1 = Control.Create();
-        var control2 = Control.Create("test");
-        var control3 = Control.Create(42);
-        var control4 = Control.Create(new { name = "test" });
+        var control1 = Control<object?>.Create();
+        var control2 = Control<object?>.Create("test");
+        var control3 = Control<object?>.Create(42);
+        var control4 = Control<object?>.Create(new { name = "test" });
         
         Assert.NotNull(control1);
         Assert.NotNull(control2);

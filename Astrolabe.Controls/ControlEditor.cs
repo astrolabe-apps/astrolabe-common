@@ -138,9 +138,11 @@ public class ControlEditor
 
         RunInTransaction(() =>
         {
-            if (control is Control concreteControl)
+            if (control is IControlMutation)
             {
-                concreteControl.AddElementInternal(value);
+                // Use dynamic to call AddElementInternal on any Control<T>
+                dynamic? concreteControl = control;
+                concreteControl?.AddElementInternal(value);
                 AddToRunListenerList(control);
 
                 if (control is IControlMutation mutation)
@@ -157,9 +159,11 @@ public class ControlEditor
 
         RunInTransaction(() =>
         {
-            if (control is Control concreteControl)
+            if (control is IControlMutation)
             {
-                concreteControl.RemoveElementInternal(index);
+                // Use dynamic to call RemoveElementInternal on any Control<T>
+                dynamic? concreteControl = control;
+                concreteControl?.RemoveElementInternal(index);
                 AddToRunListenerList(control);
 
                 if (control is IControlMutation mutation)

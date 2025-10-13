@@ -8,7 +8,7 @@ public class UndefinedControlTests
     [Fact]
     public void Missing_Property_Should_Return_Undefined_Control()
     {
-        var parentControl = Control.Create(new Dictionary<string, object>
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>
         {
             ["existingField"] = "value"
         });
@@ -24,7 +24,7 @@ public class UndefinedControlTests
     [Fact]
     public void Undefined_Control_Should_Fire_Subscriptions()
     {
-        var parentControl = Control.Create(new Dictionary<string, object>());
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>());
         var editor = new ControlEditor();
         var missingChild = parentControl["testField"];
         
@@ -47,7 +47,7 @@ public class UndefinedControlTests
     [Fact]
     public void Setting_Undefined_Value_Should_Remove_From_Parent_Dictionary()
     {
-        var parentControl = Control.Create(new Dictionary<string, object>
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>
         {
             ["field1"] = "value1",
             ["field2"] = "value2"
@@ -74,7 +74,7 @@ public class UndefinedControlTests
     [Fact]
     public void Parent_Update_Should_Make_Missing_Fields_Undefined()
     {
-        var parentControl = Control.Create(new Dictionary<string, object>
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>
         {
             ["field1"] = "value1",
             ["field2"] = "value2"
@@ -105,7 +105,7 @@ public class UndefinedControlTests
     [Fact]
     public void Undefined_To_Defined_Transition_Should_Update_Parent()
     {
-        var parentControl = Control.Create(new Dictionary<string, object>());
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>());
         var editor = new ControlEditor();
         var undefinedChild = parentControl["newField"];
         
@@ -133,7 +133,7 @@ public class UndefinedControlTests
     [Fact]
     public void Undefined_Controls_Should_Inherit_Parent_State()
     {
-        var parentControl = Control.Create(new Dictionary<string, object>());
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>());
         var editor = new ControlEditor();
         
         // Set parent as disabled and touched
@@ -151,7 +151,7 @@ public class UndefinedControlTests
     public void Undefined_Control_IsDirty_Should_Work_Correctly()
     {
         // Test undefined vs undefined (not dirty)
-        var parentControl = Control.Create(new Dictionary<string, object>());
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>());
         var undefinedChild = parentControl["testField"];
         
         Assert.True(undefinedChild!.IsUndefined);
@@ -186,7 +186,7 @@ public class UndefinedControlTests
     [Fact]
     public void Cached_Undefined_Controls_Should_Be_Reused()
     {
-        var parentControl = Control.Create(new Dictionary<string, object>());
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>());
 
         var child1 = parentControl["testField"];
         var child2 = parentControl["testField"];
@@ -199,7 +199,7 @@ public class UndefinedControlTests
     [Fact]
     public void UndefinedValue_Control_Should_Allow_Child_Field_Access()
     {
-        var parentControl = Control.Create(new Dictionary<string, object>
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>
         {
             ["definedField"] = "value"
         });
@@ -219,7 +219,7 @@ public class UndefinedControlTests
     [Fact]
     public void UndefinedValue_Control_Child_Assignment_Should_Create_Parent_Object()
     {
-        var parentControl = Control.Create(new Dictionary<string, object>());
+        var parentControl = Control<object?>.Create(new Dictionary<string, object>());
         var editor = new ControlEditor();
 
         // Get an undefined child control
@@ -253,7 +253,7 @@ public class UndefinedControlTests
     [Fact]
     public void Null_Control_Should_Allow_Child_Field_Access_Like_UndefinedValue()
     {
-        var parentControl = Control.Create((object?)null);
+        var parentControl = Control<object?>.Create((object?)null);
 
         // Should be able to access child fields of null control
         var child = parentControl["testProperty"];
@@ -266,7 +266,7 @@ public class UndefinedControlTests
     [Fact]
     public void Null_Control_Child_Assignment_Should_Create_Parent_Object()
     {
-        var parentControl = Control.Create((object?)null);
+        var parentControl = Control<object?>.Create((object?)null);
         var editor = new ControlEditor();
 
         // Access a child of the null control
@@ -289,8 +289,8 @@ public class UndefinedControlTests
     [Fact]
     public void UndefinedValue_And_Null_Controls_Should_Behave_Identically_For_Child_Access()
     {
-        var nullControl = Control.Create((object?)null);
-        var undefinedControl = Control.Create(UndefinedValue.Instance);
+        var nullControl = Control<object?>.Create((object?)null);
+        var undefinedControl = Control<object?>.Create(UndefinedValue.Instance);
         var editor = new ControlEditor();
 
         // Both should allow child field access

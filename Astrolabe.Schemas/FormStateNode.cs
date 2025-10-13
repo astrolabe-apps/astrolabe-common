@@ -35,7 +35,7 @@ public class FormStateNode : IFormStateNode
         _editor = editor;
 
         // Create reactive wrapper with initial state
-        _state = Control.CreateReactive(new FormStateImpl
+        _state = Control<object?>.CreateReactive(new FormStateImpl
         {
             Visible = null,
             Readonly = false,
@@ -49,7 +49,7 @@ public class FormStateNode : IFormStateNode
             AllowedOptions = null
         });
 
-        _childrenControl = Control.Create(new List<IFormStateNode>());
+        _childrenControl = Control<object?>.Create(new List<IFormStateNode>());
 
         // Set up reactive DataNode (must come before visibility as visibility depends on it)
         InitializeDataNode();
@@ -65,7 +65,7 @@ public class FormStateNode : IFormStateNode
         InitializeVisibility();
 
         // Set up reactive children that update when array data changes
-        Control.MakeComputedWithPrevious<List<IFormStateNode>>(_childrenControl, (tracker, currentChildren) =>
+        Control<object?>.MakeComputedWithPrevious<List<IFormStateNode>>(_childrenControl, (tracker, currentChildren) =>
         {
             var childSpecs = FormStateNodeHelpers.ResolveChildren(this, tracker);
             return UpdateChildren(currentChildren, childSpecs);
@@ -139,7 +139,7 @@ public class FormStateNode : IFormStateNode
     {
         var dataNodeField = _state.GetControl(x => x.DataNode);
 
-        Control.MakeComputed(dataNodeField, tracker =>
+        Control<object?>.MakeComputed(dataNodeField, tracker =>
         {
             var definition = tracker.TrackValue(_state, x => x.Definition);
             return FormStateNodeHelpers.LookupDataNode(definition, Parent);
@@ -150,7 +150,7 @@ public class FormStateNode : IFormStateNode
     {
         var readonlyField = _state.GetControl(x => x.Readonly);
 
-        Control.MakeComputed(readonlyField, tracker =>
+        Control<object?>.MakeComputed(readonlyField, tracker =>
         {
             // Track parent readonly reactively if parent exists
             if (ParentNode is FormStateNode parentNode)
@@ -174,7 +174,7 @@ public class FormStateNode : IFormStateNode
     {
         var disabledField = _state.GetControl(x => x.Disabled);
 
-        Control.MakeComputed(disabledField, tracker =>
+        Control<object?>.MakeComputed(disabledField, tracker =>
         {
             // Track parent disabled reactively if parent exists
             if (ParentNode is FormStateNode parentNode)
@@ -198,7 +198,7 @@ public class FormStateNode : IFormStateNode
     {
         var fieldOptionsField = _state.GetControl(x => x.FieldOptions);
 
-        Control.MakeComputed(fieldOptionsField, tracker =>
+        Control<object?>.MakeComputed(fieldOptionsField, tracker =>
         {
             // Track dataNode from our state
             var dn = tracker.TrackValue(_state, x => x.DataNode);
@@ -219,7 +219,7 @@ public class FormStateNode : IFormStateNode
     {
         var visibleField = _state.GetControl(x => x.Visible);
 
-        Control.MakeComputed(visibleField, tracker =>
+        Control<object?>.MakeComputed(visibleField, tracker =>
         {
             // Track forceHidden from our state
             var forceHidden = tracker.TrackValue(_state, x => x.ForceHidden);

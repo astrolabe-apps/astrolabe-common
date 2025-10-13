@@ -11,7 +11,7 @@ public class TypeTransitionTests
     public void Object_To_Array_Should_Clear_All_Children()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
-        var control = Control.Create(objectData);
+        var control = Control<object?>.Create(objectData);
         var editor = new ControlEditor();
 
         // Create field children
@@ -32,8 +32,10 @@ public class TypeTransitionTests
         Assert.Equal(3, control.Count);
 
         // Old field children should no longer be accessible through the same indexer
-        // Should throw exception when trying to access object field on array control
-        Assert.Throws<InvalidOperationException>(() => control["name"]);
+        // Accessing object field on array control should return undefined control (safe chaining)
+        var undefinedChild = control["name"];
+        Assert.NotNull(undefinedChild);
+        Assert.True(undefinedChild.IsUndefined);
 
         // Array elements should be accessible
         Assert.NotNull(control[0]);
@@ -48,7 +50,7 @@ public class TypeTransitionTests
     public void Array_To_Object_Should_Clear_All_Children()
     {
         var arrayData = new[] { "item1", "item2", "item3" };
-        var control = Control.Create(arrayData);
+        var control = Control<object?>.Create(arrayData);
         var editor = new ControlEditor();
 
         // Create element children
@@ -86,7 +88,7 @@ public class TypeTransitionTests
     public void Object_To_Primitive_Should_Clear_All_Children()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
-        var control = Control.Create(objectData);
+        var control = Control<object?>.Create(objectData);
         var editor = new ControlEditor();
 
         // Create field children
@@ -105,15 +107,17 @@ public class TypeTransitionTests
         Assert.Equal("simple string", control.Value);
 
         // Children should no longer be accessible
-        // Should throw exception when trying to access object field on primitive control
-        Assert.Throws<InvalidOperationException>(() => control["name"]);
+        // Accessing object field on primitive control should return undefined control (safe chaining)
+        var undefinedChild = control["name"];
+        Assert.NotNull(undefinedChild);
+        Assert.True(undefinedChild.IsUndefined);
     }
 
     [Fact]
     public void Array_To_Primitive_Should_Clear_All_Children()
     {
         var arrayData = new[] { "item1", "item2", "item3" };
-        var control = Control.Create(arrayData);
+        var control = Control<object?>.Create(arrayData);
         var editor = new ControlEditor();
 
         // Create element children
@@ -139,7 +143,7 @@ public class TypeTransitionTests
     [Fact]
     public void Primitive_To_Object_Should_Allow_New_Children()
     {
-        var control = Control.Create("simple string");
+        var control = Control<object?>.Create("simple string");
         var editor = new ControlEditor();
 
         // Initially primitive
@@ -165,7 +169,7 @@ public class TypeTransitionTests
     [Fact]
     public void Primitive_To_Array_Should_Allow_New_Children()
     {
-        var control = Control.Create(42);
+        var control = Control<object?>.Create(42);
         var editor = new ControlEditor();
 
         // Initially primitive
@@ -193,7 +197,7 @@ public class TypeTransitionTests
     [Fact]
     public void String_Should_Not_Be_Treated_As_Array()
     {
-        var control = Control.Create("hello");
+        var control = Control<object?>.Create("hello");
         var editor = new ControlEditor();
 
         // String should not be treated as array
@@ -219,7 +223,7 @@ public class TypeTransitionTests
     public void Array_To_String_Should_Clear_Children()
     {
         var arrayData = new[] { "item1", "item2" };
-        var control = Control.Create(arrayData);
+        var control = Control<object?>.Create(arrayData);
         var editor = new ControlEditor();
 
         // Create element children
@@ -243,7 +247,7 @@ public class TypeTransitionTests
     public void Child_Control_Parent_Links_Should_Be_Cleared_On_Type_Change()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John" };
-        var control = Control.Create(objectData);
+        var control = Control<object?>.Create(objectData);
         var editor = new ControlEditor();
 
         // Create child and verify it has parent link
@@ -273,7 +277,7 @@ public class TypeTransitionTests
     [Fact]
     public void Null_To_Object_Should_Not_Clear_Children()
     {
-        var control = Control.Create((object?)null);
+        var control = Control<object?>.Create((object?)null);
         var editor = new ControlEditor();
 
         // Access child of null control (should create child with undefined value)
@@ -300,7 +304,7 @@ public class TypeTransitionTests
     {
         var objectData1 = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
         var objectData2 = new Dictionary<string, object> { ["name"] = "Jane", ["city"] = "NYC" };
-        var control = Control.Create(objectData1);
+        var control = Control<object?>.Create(objectData1);
         var editor = new ControlEditor();
 
         // Create children
@@ -332,7 +336,7 @@ public class TypeTransitionTests
     {
         var arrayData1 = new[] { "item1", "item2", "item3" };
         var arrayData2 = new[] { "newItem1", "newItem2" };
-        var control = Control.Create(arrayData1);
+        var control = Control<object?>.Create(arrayData1);
         var editor = new ControlEditor();
 
         // Create element children
@@ -372,7 +376,7 @@ public class TypeTransitionTests
                 ["hobbies"] = new[] { "reading", "gaming" }
             }
         };
-        var control = Control.Create(nestedObject);
+        var control = Control<object?>.Create(nestedObject);
         var editor = new ControlEditor();
 
         // Access nested structures
@@ -393,8 +397,10 @@ public class TypeTransitionTests
         Assert.Equal(2, control.Count);
 
         // Old nested children should no longer be accessible via object indexer
-        // Should throw exception when trying to access object field on array control
-        Assert.Throws<InvalidOperationException>(() => control["user"]);
+        // Accessing object field on array control should return undefined control (safe chaining)
+        var undefinedUser = control["user"];
+        Assert.NotNull(undefinedUser);
+        Assert.True(undefinedUser.IsUndefined);
 
         // New array elements should be accessible
         Assert.NotNull(control[0]);

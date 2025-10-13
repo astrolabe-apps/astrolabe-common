@@ -9,7 +9,7 @@ public class ValidationTests
     [Fact]
     public void Control_Without_Errors_Should_Be_Valid()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         
         Assert.True(control.IsValid);
         Assert.False(control.HasErrors);
@@ -19,7 +19,7 @@ public class ValidationTests
     [Fact]
     public void Control_With_Errors_Should_Be_Invalid()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
         
         editor.SetError(control, "required", "Value is required");
@@ -38,7 +38,7 @@ public class ValidationTests
             { "name", "John" },
             { "age", 30 }
         };
-        var parent = Control.Create(parentData);
+        var parent = Control<object?>.Create(parentData);
         
         // Access child controls to create them
         var nameControl = parent["name"];
@@ -57,7 +57,7 @@ public class ValidationTests
             { "name", "John" },
             { "age", 30 }
         };
-        var parent = Control.Create(parentData);
+        var parent = Control<object?>.Create(parentData);
         var editor = new ControlEditor();
         
         // Access child controls
@@ -87,7 +87,7 @@ public class ValidationTests
                 }
             }
         };
-        var root = Control.Create(data);
+        var root = Control<object?>.Create(data);
         var editor = new ControlEditor();
         
         // Navigate to deeply nested control
@@ -114,7 +114,7 @@ public class ValidationTests
     [Fact]
     public void Validate_Method_Should_Return_Current_Validity_State()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
         
         // Initially valid
@@ -132,7 +132,7 @@ public class ValidationTests
     [Fact]
     public void Validate_Should_Trigger_Validation_Listeners()
     {
-        var control = Control.Create("");
+        var control = Control<object?>.Create("");
         bool validationTriggered = false;
         
         // Subscribe to validation events
@@ -170,7 +170,7 @@ public class ValidationTests
             { "name", "" },
             { "age", 25 }
         };
-        var parent = Control.Create(parentData);
+        var parent = Control<object?>.Create(parentData);
         var validationOrder = new List<string>();
         
         // Access children
@@ -221,7 +221,7 @@ public class ValidationTests
     [Fact]
     public void GetChangeState_Should_Include_Valid_Flag_When_Valid()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
         bool validNotificationReceived = false;
         
@@ -246,7 +246,7 @@ public class ValidationTests
     [Fact]
     public void GetChangeState_Should_Not_Include_Valid_Flag_When_Invalid()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
         bool validNotificationReceived = false;
         
@@ -270,7 +270,7 @@ public class ValidationTests
     public void Array_Controls_Should_Propagate_Validity()
     {
         var arrayData = new List<object> { "item1", "item2", "item3" };
-        var arrayControl = Control.Create(arrayData);
+        var arrayControl = Control<object?>.Create(arrayData);
         var editor = new ControlEditor();
         
         // Access array elements
@@ -305,7 +305,7 @@ public class ValidationTests
     public void Adding_Elements_Should_Invalidate_Validity_Cache()
     {
         var arrayData = new List<object> { "item1" };
-        var arrayControl = Control.Create(arrayData);
+        var arrayControl = Control<object?>.Create(arrayData);
         var editor = new ControlEditor();
         
         // Initially valid
@@ -326,7 +326,7 @@ public class ValidationTests
     public void Removing_Elements_Should_Invalidate_Validity_Cache()
     {
         var arrayData = new List<object> { "item1", "item2" };
-        var arrayControl = Control.Create(arrayData);
+        var arrayControl = Control<object?>.Create(arrayData);
         var editor = new ControlEditor();
         
         // Access elements to ensure they're created
@@ -364,7 +364,7 @@ public class ValidationTests
             };
         }
         
-        var control = Control.Create(data);
+        var control = Control<object?>.Create(data);
         
         // Access all children to create them
         for (int i = 0; i < 100; i++)
@@ -393,7 +393,7 @@ public class ValidationTests
         {
             { "child", new Dictionary<string, object> { { "value", "test" } } }
         };
-        var parent = Control.Create(parentData);
+        var parent = Control<object?>.Create(parentData);
         var editor = new ControlEditor();
         
         var child = parent["child"]!;
@@ -424,7 +424,7 @@ public class ValidationTests
     [Fact]
     public void SetErrors_Should_Handle_Empty_And_Null_Values()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
         
         // Set errors with empty and null values
@@ -450,7 +450,7 @@ public class ValidationTests
     [Fact]
     public void SetError_With_Null_Should_Remove_Error()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
         
         // Add error
@@ -473,7 +473,7 @@ public class ValidationTests
     [Fact]
     public void ClearErrors_Should_Make_Control_Valid()
     {
-        var control = Control.Create("test");
+        var control = Control<object?>.Create("test");
         var editor = new ControlEditor();
         
         // Add multiple errors
