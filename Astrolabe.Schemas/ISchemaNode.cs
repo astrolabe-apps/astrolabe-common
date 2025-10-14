@@ -59,7 +59,8 @@ public static class SchemaNodeExtensions
             var childNode = schema.GetChildNode(field);
             if (childNode == null)
             {
-                throw new Exception("Missing field: " + field);
+                // Field doesn't exist in schema - return default for T
+                return default(T)!;
             }
             acc = next(acc, childNode);
             schema = childNode;

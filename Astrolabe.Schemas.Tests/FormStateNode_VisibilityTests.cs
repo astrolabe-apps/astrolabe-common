@@ -210,7 +210,7 @@ public class FormStateNode_VisibilityTests
         var editor = new ControlEditor();
 
         // Create undefined control
-        var undefinedControl = Control.Create(UndefinedValue.Instance);
+        var undefinedControl = Control<object?>.CreateUndefined();
         var undefinedDataNode = new SchemaDataNode(schema, undefinedControl, null);
 
         var definition = TestHelpers.CreateDataControl(".");

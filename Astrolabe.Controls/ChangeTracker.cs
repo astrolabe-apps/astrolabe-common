@@ -107,4 +107,46 @@ public class ChangeTracker : IDisposable
             });
         }
     }
+
+    /// <summary>
+    /// Gets the value of a control and records access for reactive tracking.
+    /// Combines RecordAccess and Value access in one convenient method.
+    /// </summary>
+    /// <param name="control">The control to get the value from</param>
+    /// <returns>The current value of the control</returns>
+    public object? GetValue(IControl control)
+    {
+        RecordAccess(control, ControlChange.Value);
+        return control.Value;
+    }
+
+    /// <summary>
+    /// Sets up reactive evaluation with automatic re-evaluation on dependency changes.
+    /// Creates a ChangeTracker, sets up the callback, performs initial evaluation, and returns the tracker.
+    /// </summary>
+    /// <typeparam name="T">The type of result being computed</typeparam>
+    /// <param name="evaluate">Function that evaluates the result and tracks dependencies</param>
+    /// <param name="returnResult">Callback to return results (called initially and on changes)</param>
+    /// <returns>The ChangeTracker as IDisposable for cleanup</returns>
+    public static IDisposable Evaluate<T>(
+        Func<ChangeTracker, T> evaluate,
+        Action<T> returnResult)
+    {
+        var tracker = new ChangeTracker();
+
+        // Set up callback for when dependencies change
+        tracker.SetCallback(() =>
+        {
+            var result = evaluate(tracker);
+            returnResult(result);
+            tracker.UpdateSubscriptions();
+        });
+
+        // Initial evaluation
+        var initialResult = evaluate(tracker);
+        returnResult(initialResult);
+        tracker.UpdateSubscriptions();
+
+        return tracker;
+    }
 }

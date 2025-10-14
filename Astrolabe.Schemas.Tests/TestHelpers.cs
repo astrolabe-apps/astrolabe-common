@@ -69,7 +69,24 @@ public static class TestHelpers
         var jsonObject = new JsonObject();
         foreach (var (key, value) in values)
         {
-            jsonObject[key] = value != null ? JsonValue.Create(value) : null;
+            if (value == null)
+            {
+                jsonObject[key] = null;
+            }
+            else if (value is Array arr)
+            {
+                // Convert arrays to JsonArray
+                var jsonArray = new JsonArray();
+                foreach (var item in arr)
+                {
+                    jsonArray.Add(item != null ? JsonValue.Create(item) : null);
+                }
+                jsonObject[key] = jsonArray;
+            }
+            else
+            {
+                jsonObject[key] = JsonValue.Create(value);
+            }
         }
         var control = JsonNodeConverter.JsonNodeToControl(jsonObject);
         return new SchemaDataNode(schema, control, null);
