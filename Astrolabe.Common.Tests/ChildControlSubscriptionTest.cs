@@ -8,7 +8,7 @@ public class ChildControlSubscriptionTest
     [Fact]
     public void Child_Control_Subscriptions_Should_Fire_When_Parent_Updated()
     {
-        var parentControl = Control<object?>.Create(new Dictionary<string, object>
+        var parentControl = Control.Create(new Dictionary<string, object>
         {
             ["field1"] = "initial1"
         });
@@ -37,7 +37,7 @@ public class ChildControlSubscriptionTest
     [Fact]
     public void Array_Element_Subscriptions_Should_Fire_When_Parent_Updated()
     {
-        var parentControl = Control<object?>.Create(new List<object> { "item1", "item2" });
+        var parentControl = Control.Create(new List<object> { "item1", "item2" });
         var editor = new ControlEditor();
         var elementControl = parentControl[1];
         Assert.NotNull(elementControl);

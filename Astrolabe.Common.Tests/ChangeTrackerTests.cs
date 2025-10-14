@@ -9,7 +9,7 @@ public class ChangeTrackerTests
     public void Tracked_Should_Return_Proxy_That_Accesses_Control_Value()
     {
         var tracker = new ChangeTracker();
-        var control = Control<object?>.Create("test");
+        var control = Control.Create("test");
 
         tracker.RecordAccess(control, ControlChange.Value);
 
@@ -20,7 +20,7 @@ public class ChangeTrackerTests
     public void UpdateSubscriptions_Should_Subscribe_To_Accessed_Properties()
     {
         var tracker = new ChangeTracker();
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
         var callbackCount = 0;
 
         // Set up callback
@@ -44,7 +44,7 @@ public class ChangeTrackerTests
     public void UpdateSubscriptions_Should_Not_Subscribe_To_Non_Accessed_Properties()
     {
         var tracker = new ChangeTracker();
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
@@ -66,7 +66,7 @@ public class ChangeTrackerTests
     public void Callback_Should_Retrack_Dependencies()
     {
         var tracker = new ChangeTracker();
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
         var callbackCount = 0;
 
         tracker.SetCallback(() => {
@@ -97,7 +97,7 @@ public class ChangeTrackerTests
     public void UpdateSubscriptions_Should_Track_Multiple_Properties()
     {
         var tracker = new ChangeTracker();
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
@@ -124,8 +124,8 @@ public class ChangeTrackerTests
     public void UpdateSubscriptions_Should_Track_Multiple_Controls()
     {
         var tracker = new ChangeTracker();
-        var control1 = Control<object?>.Create("a");
-        var control2 = Control<object?>.Create("b");
+        var control1 = Control.Create("a");
+        var control2 = Control.Create("b");
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
@@ -152,8 +152,8 @@ public class ChangeTrackerTests
     public void UpdateSubscriptions_Should_Remove_Unused_Subscriptions()
     {
         var tracker = new ChangeTracker();
-        var control1 = Control<object?>.Create("a");
-        var control2 = Control<object?>.Create("b");
+        var control1 = Control.Create("a");
+        var control2 = Control.Create("b");
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
@@ -183,7 +183,7 @@ public class ChangeTrackerTests
     public void Dispose_Should_Remove_All_Subscriptions()
     {
         var tracker = new ChangeTracker();
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
@@ -206,7 +206,7 @@ public class ChangeTrackerTests
     public void TrackedProxy_Should_Access_All_Properties()
     {
         var tracker = new ChangeTracker();
-        var control = new Control<object?>("value", "initial", ControlFlags.Touched | ControlFlags.Disabled);
+        var control = Control.Create("value", "initial", ControlFlags.Touched | ControlFlags.Disabled);
         var editor = new ControlEditor();
         editor.SetError(control, "test", "error");
 
@@ -225,7 +225,7 @@ public class ChangeTrackerTests
     public void Callback_Should_Only_Run_Once_Per_Transaction()
     {
         var tracker = new ChangeTracker();
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
@@ -250,7 +250,7 @@ public class ChangeTrackerTests
     public void Callback_Should_Run_After_All_Listeners()
     {
         var tracker = new ChangeTracker();
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
         var executionOrder = new List<string>();
 
         // Add a listener to the control
@@ -280,8 +280,8 @@ public class ChangeTrackerTests
     public void Multiple_Tracker_Callbacks_Should_Batch_In_Same_Transaction()
     {
         var tracker = new ChangeTracker();
-        var control1 = Control<object?>.Create("a");
-        var control2 = Control<object?>.Create("b");
+        var control1 = Control.Create("a");
+        var control2 = Control.Create("b");
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
@@ -309,7 +309,7 @@ public class ChangeTrackerTests
     public void Tracked_Should_Combine_Multiple_Access_Masks()
     {
         var tracker = new ChangeTracker();
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
         var callbackCount = 0;
 
         tracker.SetCallback(() => callbackCount++);
@@ -335,11 +335,11 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Compute_Initial_Value()
     {
-        var firstName = Control<object?>.Create("John");
-        var lastName = Control<object?>.Create("Doe");
+        var firstName = Control.Create("John");
+        var lastName = Control.Create("Doe");
         var editor = new ControlEditor();
 
-        var fullName = Control<object?>.CreateComputed(tracker =>
+        var fullName = Control.CreateComputed(tracker =>
         {
             tracker.RecordAccess(firstName, ControlChange.Value);
             tracker.RecordAccess(lastName, ControlChange.Value);
@@ -354,11 +354,11 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Update_When_Dependencies_Change()
     {
-        var firstName = Control<object?>.Create("John");
-        var lastName = Control<object?>.Create("Doe");
+        var firstName = Control.Create("John");
+        var lastName = Control.Create("Doe");
         var editor = new ControlEditor();
 
-        var fullName = Control<object?>.CreateComputed(tracker =>
+        var fullName = Control.CreateComputed(tracker =>
         {
             tracker.RecordAccess(firstName, ControlChange.Value);
             tracker.RecordAccess(lastName, ControlChange.Value);
@@ -381,10 +381,10 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Track_Multiple_Properties()
     {
-        var control = Control<object?>.Create("test");
+        var control = Control.Create("test");
         var editor = new ControlEditor();
 
-        var computed = Control<object?>.CreateComputed(tracker =>
+        var computed = Control.CreateComputed(tracker =>
         {
             tracker.RecordAccess(control, ControlChange.Value | ControlChange.Dirty | ControlChange.Touched);
             return $"{control.Value}:{control.IsDirty}:{control.IsTouched}";
@@ -404,12 +404,12 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Work_With_Conditional_Dependencies()
     {
-        var useFirstName = Control<object?>.Create(true);
-        var firstName = Control<object?>.Create("John");
-        var lastName = Control<object?>.Create("Doe");
+        var useFirstName = Control.Create(true);
+        var firstName = Control.Create("John");
+        var lastName = Control.Create("Doe");
         var editor = new ControlEditor();
 
-        var displayName = Control<object?>.CreateComputed(tracker =>
+        var displayName = Control.CreateComputed(tracker =>
         {
             tracker.RecordAccess(useFirstName, ControlChange.Value);
             var useFirst = (bool)useFirstName.Value!;
@@ -447,11 +447,11 @@ public class ChangeTrackerTests
     [Fact]
     public void CreateComputed_Should_Support_Chained_Computations()
     {
-        var firstName = Control<object?>.Create("John");
-        var lastName = Control<object?>.Create("Doe");
+        var firstName = Control.Create("John");
+        var lastName = Control.Create("Doe");
         var editor = new ControlEditor();
 
-        var fullName = Control<object?>.CreateComputed(tracker =>
+        var fullName = Control.CreateComputed(tracker =>
         {
             tracker.RecordAccess(firstName, ControlChange.Value);
             tracker.RecordAccess(lastName, ControlChange.Value);
@@ -460,7 +460,7 @@ public class ChangeTrackerTests
             return $"{first} {last}";
         }, editor);
 
-        var greeting = Control<object?>.CreateComputed(tracker =>
+        var greeting = Control.CreateComputed(tracker =>
         {
             tracker.RecordAccess(fullName, ControlChange.Value);
             var name = (string)fullName.Value!;
@@ -476,8 +476,8 @@ public class ChangeTrackerTests
     [Fact]
     public void MakeComputed_Should_Update_Existing_Control()
     {
-        var firstName = Control<object?>.Create("John");
-        var target = Control<object?>.Create("initial");
+        var firstName = Control.Create("John");
+        var target = Control.Create("initial");
         var editor = new ControlEditor();
 
         // Make target computed based on firstName
@@ -497,10 +497,10 @@ public class ChangeTrackerTests
     [Fact]
     public void MakeComputed_Should_Work_With_Structured_Control_Fields()
     {
-        var condition = Control<object?>.Create(true);
+        var condition = Control.Create(true);
         var editor = new ControlEditor();
 
-        var baseCtrl = Control<object?>.CreateStructured(new { Visible = (bool?)null, Readonly = false });
+        var baseCtrl = Control.CreateStructured(new { Visible = (bool?)null, Readonly = false });
         var visibleField = baseCtrl["Visible"];
 
         // Make the Visible field computed
@@ -520,9 +520,9 @@ public class ChangeTrackerTests
     [Fact]
     public void MakeComputed_Should_Track_Multiple_Dependencies()
     {
-        var a = Control<object?>.Create(10);
-        var b = Control<object?>.Create(20);
-        var target = Control<object?>.Create(0);
+        var a = Control.Create(10);
+        var b = Control.Create(20);
+        var target = Control.Create(0);
         var editor = new ControlEditor();
 
         Control<object?>.MakeComputed(target, tracker =>
@@ -546,10 +546,10 @@ public class ChangeTrackerTests
     [Fact]
     public void MakeComputed_Should_Allow_Overriding_Structured_Fields()
     {
-        var userType = Control<object?>.Create("admin");
+        var userType = Control.Create("admin");
         var editor = new ControlEditor();
 
-        var formState = Control<object?>.CreateStructured(new
+        var formState = Control.CreateStructured(new
         {
             Visible = true,
             Readonly = false,

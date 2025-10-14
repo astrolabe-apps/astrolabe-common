@@ -11,7 +11,7 @@ public class TypeTransitionTests
     public void Object_To_Array_Should_Clear_All_Children()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
-        var control = Control<object?>.Create(objectData);
+        var control = Control.Create<object?>(objectData);
         var editor = new ControlEditor();
 
         // Create field children
@@ -50,7 +50,7 @@ public class TypeTransitionTests
     public void Array_To_Object_Should_Clear_All_Children()
     {
         var arrayData = new[] { "item1", "item2", "item3" };
-        var control = Control<object?>.Create(arrayData);
+        var control = Control.Create<object?>(arrayData);
         var editor = new ControlEditor();
 
         // Create element children
@@ -88,7 +88,7 @@ public class TypeTransitionTests
     public void Object_To_Primitive_Should_Clear_All_Children()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
-        var control = Control<object?>.Create(objectData);
+        var control = Control.Create<object?>(objectData);
         var editor = new ControlEditor();
 
         // Create field children
@@ -117,7 +117,7 @@ public class TypeTransitionTests
     public void Array_To_Primitive_Should_Clear_All_Children()
     {
         var arrayData = new[] { "item1", "item2", "item3" };
-        var control = Control<object?>.Create(arrayData);
+        var control = Control.Create<object?>(arrayData);
         var editor = new ControlEditor();
 
         // Create element children
@@ -143,7 +143,7 @@ public class TypeTransitionTests
     [Fact]
     public void Primitive_To_Object_Should_Allow_New_Children()
     {
-        var control = Control<object?>.Create("simple string");
+        var control = Control.Create<object?>("simple string");
         var editor = new ControlEditor();
 
         // Initially primitive
@@ -169,7 +169,7 @@ public class TypeTransitionTests
     [Fact]
     public void Primitive_To_Array_Should_Allow_New_Children()
     {
-        var control = Control<object?>.Create(42);
+        var control = Control.Create<object?>(42);
         var editor = new ControlEditor();
 
         // Initially primitive
@@ -197,7 +197,7 @@ public class TypeTransitionTests
     [Fact]
     public void String_Should_Not_Be_Treated_As_Array()
     {
-        var control = Control<object?>.Create("hello");
+        var control = Control.Create<object?>("hello");
         var editor = new ControlEditor();
 
         // String should not be treated as array
@@ -223,7 +223,7 @@ public class TypeTransitionTests
     public void Array_To_String_Should_Clear_Children()
     {
         var arrayData = new[] { "item1", "item2" };
-        var control = Control<object?>.Create(arrayData);
+        var control = Control.Create<object?>(arrayData);
         var editor = new ControlEditor();
 
         // Create element children
@@ -247,7 +247,7 @@ public class TypeTransitionTests
     public void Child_Control_Parent_Links_Should_Be_Cleared_On_Type_Change()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John" };
-        var control = Control<object?>.Create(objectData);
+        var control = Control.Create<object?>(objectData);
         var editor = new ControlEditor();
 
         // Create child and verify it has parent link
@@ -277,7 +277,7 @@ public class TypeTransitionTests
     [Fact]
     public void Null_To_Object_Should_Not_Clear_Children()
     {
-        var control = Control<object?>.Create((object?)null);
+        var control = Control.Create((object?)null);
         var editor = new ControlEditor();
 
         // Access child of null control (should create child with undefined value)
@@ -304,7 +304,7 @@ public class TypeTransitionTests
     {
         var objectData1 = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
         var objectData2 = new Dictionary<string, object> { ["name"] = "Jane", ["city"] = "NYC" };
-        var control = Control<object?>.Create(objectData1);
+        var control = Control.Create<object?>(objectData1);
         var editor = new ControlEditor();
 
         // Create children
@@ -336,7 +336,7 @@ public class TypeTransitionTests
     {
         var arrayData1 = new[] { "item1", "item2", "item3" };
         var arrayData2 = new[] { "newItem1", "newItem2" };
-        var control = Control<object?>.Create(arrayData1);
+        var control = Control.Create<object?>(arrayData1);
         var editor = new ControlEditor();
 
         // Create element children
@@ -376,7 +376,7 @@ public class TypeTransitionTests
                 ["hobbies"] = new[] { "reading", "gaming" }
             }
         };
-        var control = Control<object?>.Create(nestedObject);
+        var control = Control.Create<object?>(nestedObject);
         var editor = new ControlEditor();
 
         // Access nested structures

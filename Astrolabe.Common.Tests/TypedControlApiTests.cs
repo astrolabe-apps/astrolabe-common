@@ -8,7 +8,7 @@ public class TypedControlApiTests
     [Fact]
     public void Create_Should_Return_Control()
     {
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
 
         Assert.Equal("initial", control.Value);
         Assert.IsAssignableFrom<IControl>(control);
@@ -17,7 +17,7 @@ public class TypedControlApiTests
     [Fact]
     public void SetValue_Should_Work()
     {
-        var control = Control<object?>.Create(42);
+        var control = Control.Create(42);
         var editor = new ControlEditor();
 
         editor.SetValue(control, 100);
@@ -28,7 +28,7 @@ public class TypedControlApiTests
     [Fact]
     public void SetInitialValue_Should_Work()
     {
-        var control = Control<object?>.Create("current");
+        var control = Control.Create("current");
         var editor = new ControlEditor();
 
         editor.SetInitialValue(control, "initial");
@@ -40,7 +40,7 @@ public class TypedControlApiTests
     [Fact]
     public void SetDisabled_Should_Work()
     {
-        var control = Control<object?>.Create(true);
+        var control = Control.Create(true);
         var editor = new ControlEditor();
 
         editor.SetDisabled(control, true);
@@ -51,7 +51,7 @@ public class TypedControlApiTests
     [Fact]
     public void SetTouched_Should_Work()
     {
-        var control = Control<object?>.Create(3.14);
+        var control = Control.Create(3.14);
         var editor = new ControlEditor();
 
         editor.SetTouched(control, true);
@@ -62,7 +62,7 @@ public class TypedControlApiTests
     [Fact]
     public void MarkAsClean_Should_Work()
     {
-        var control = Control<object?>.Create("initial");
+        var control = Control.Create("initial");
         var editor = new ControlEditor();
 
         editor.SetValue(control, "changed");
@@ -76,7 +76,7 @@ public class TypedControlApiTests
     [Fact]
     public void SetError_Should_Work()
     {
-        var control = Control<object?>.Create("test");
+        var control = Control.Create("test");
         var editor = new ControlEditor();
 
         editor.SetError(control, "validation", "Invalid value");
@@ -89,7 +89,7 @@ public class TypedControlApiTests
     [Fact]
     public void ClearErrors_Should_Work()
     {
-        var control = Control<object?>.Create("test");
+        var control = Control.Create("test");
         var editor = new ControlEditor();
 
         editor.SetError(control, "validation", "Invalid");
@@ -103,7 +103,7 @@ public class TypedControlApiTests
     [Fact]
     public void Validate_Should_Work()
     {
-        var control = Control<string>.Create("initial", value =>
+        var control = Control.Create("initial", value =>
             string.IsNullOrEmpty(value) ? "Required" : null);
 
         var editor = new ControlEditor();
@@ -118,7 +118,7 @@ public class TypedControlApiTests
     [Fact]
     public void Control_Works_With_ChangeTracker()
     {
-        var control = Control<object?>.Create(10);
+        var control = Control.Create(10);
         var tracker = new ChangeTracker();
         var callbackCount = 0;
 

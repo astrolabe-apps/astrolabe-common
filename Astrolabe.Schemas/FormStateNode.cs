@@ -35,19 +35,7 @@ public class FormStateNode : IFormStateNode
         _editor = editor;
 
         // Create control with initial state
-        _stateControl = new Control<FormStateImpl>(new FormStateImpl
-        {
-            Visible = null,
-            Readonly = false,
-            Disabled = false,
-            ForceHidden = false,
-            ForceReadonly = null,
-            ForceDisabled = null,
-            DataNode = dataNode,
-            Definition = definition,
-            FieldOptions = null,
-            AllowedOptions = null
-        }, new FormStateImpl
+        _stateControl = Control.Create(new FormStateImpl
         {
             Visible = null,
             Readonly = false,
@@ -61,7 +49,7 @@ public class FormStateNode : IFormStateNode
             AllowedOptions = null
         });
 
-        _childrenControl = Control<object?>.Create(new List<IFormStateNode>());
+        _childrenControl = Control.Create(new List<IFormStateNode>());
 
         // Set up reactive DataNode (must come before visibility as visibility depends on it)
         InitializeDataNode();

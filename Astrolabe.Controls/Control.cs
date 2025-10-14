@@ -5,14 +5,13 @@ using Astrolabe.Common;
 
 namespace Astrolabe.Controls;
 
-public class Control<T>(T value, T initialValue, ControlFlags flags = ControlFlags.None, ControlBehavior<T>? behavior = null)
-    : IControl<T>, IControlMutation
+public class Control<T> : IControl<T>, IControlMutation
 {
     private static int NextId = 1;
-    private T _value = value;
-    private T _initialValue = initialValue;
-    private ControlFlags _flags = flags;
-    private readonly ControlBehavior<T> _behavior = behavior ?? DefaultBehavior;
+    private T _value;
+    private T _initialValue;
+    private ControlFlags _flags;
+    private readonly ControlBehavior<T> _behavior;
     private Dictionary<string, string>? _errors;
     private bool? _cachedChildInvalidity;
 
@@ -40,7 +39,17 @@ public class Control<T>(T value, T initialValue, ControlFlags flags = ControlFla
         GetFieldName = DefaultGetFieldName
     };
 
-    public int UniqueId { get; } = Interlocked.Increment(ref NextId);
+    // Internal constructor - use factory methods instead
+    internal Control(T value, T initialValue, ControlFlags flags = ControlFlags.None, ControlBehavior<T>? behavior = null)
+    {
+        _value = value;
+        _initialValue = initialValue;
+        _flags = flags;
+        _behavior = behavior ?? DefaultBehavior;
+        UniqueId = Interlocked.Increment(ref NextId);
+    }
+
+    public int UniqueId { get; }
 
     public object? Value
     {
@@ -264,136 +273,6 @@ public class Control<T>(T value, T initialValue, ControlFlags flags = ControlFla
 
     private Subscriptions? _subscriptions;
 
-    // Factory method for simple control creation (replaces old constructor behavior)
-    public static Control<object?> Create(object? initialValue = null, bool dontClearError = false)
-    {
-        var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
-        return new Control<object?>(initialValue, initialValue, flags);
-    }
-
-    /// <summary>
-    /// Creates a structured control from a POCO/record object.
-    /// The object's properties become child controls accessible via the Field() extension method.
-    /// </summary>
-    /// <typeparam name="T">The type of the structured object</typeparam>
-    /// <param name="initialValue">The initial value object</param>
-    /// <param name="dontClearError">If true, errors won't be cleared when value changes</param>
-    /// <returns>A control with the object's properties stored as a dictionary</returns>
-    /// <example>
-    /// <code>
-    /// record FormState(bool? Visible, bool Readonly);
-    /// var control = Control.CreateStructured(new FormState(null, false));
-    /// var visibleControl = control["Visible"]; // Access child control via indexer
-    /// </code>
-    /// </example>
-    public static IControl CreateStructured<TValue>(TValue initialValue, bool dontClearError = false)
-        where TValue : class
-    {
-        // Convert the structured object to a dictionary for internal storage
-        var dict = ObjectToDictionary(initialValue);
-        var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
-        return new Control<IDictionary<string, object?>>(dict, dict, flags);
-    }
-
-    /// <summary>
-    /// Converts a POCO/record object to a dictionary for internal control storage.
-    /// Uses reflection to read all public readable properties.
-    /// </summary>
-    private static Dictionary<string, object?> ObjectToDictionary<T>(T obj) where T : class
-    {
-        if (obj == null)
-            throw new ArgumentNullException(nameof(obj));
-
-        var dict = new Dictionary<string, object?>();
-        var properties = typeof(T).GetProperties(
-            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
-        );
-
-        foreach (var property in properties)
-        {
-            // Only include readable properties
-            if (property.CanRead)
-            {
-                var value = property.GetValue(obj);
-                dict[property.Name] = value;
-            }
-        }
-
-        return dict;
-    }
-
-    // Generic factory method with automatic validator setup
-    public static Control<T> Create<T>(T? initialValue, Func<T?, string?> validator)
-    {
-        // Always set DontClearError for controls with validators
-        var control = new Control<T>(initialValue, initialValue, ControlFlags.DontClearError);
-
-        control.Subscribe(
-            (ctrl, change, editor) =>
-            {
-                // No need to check change flags - subscription mask ensures we only get Value or Validate changes
-                var typedValue = (T?)ctrl.Value;
-                var errorMessage = validator(typedValue);
-                editor.SetError(ctrl, "default", errorMessage);
-            },
-            ControlChange.Value | ControlChange.Validate
-        );
-
-        // Run initial validation
-        var editor = new ControlEditor();
-        var initialErrorMessage = validator(initialValue);
-        editor.SetError(control, "default", initialErrorMessage);
-
-        return control;
-    }
-
-    /// <summary>
-    /// Creates a computed control whose value is automatically derived from other controls.
-    /// The compute function is called initially and whenever any tracked dependencies change.
-    /// </summary>
-    /// <typeparam name="T">The type of the computed value</typeparam>
-    /// <param name="compute">Function that computes the value, receiving a ChangeTracker to track dependencies</param>
-    /// <param name="editor">ControlEditor instance to use for updates</param>
-    /// <returns>A control that automatically updates when dependencies change</returns>
-    /// <example>
-    /// <code>
-    /// var firstName = Control.Create("John");
-    /// var lastName = Control.Create("Doe");
-    /// var editor = new ControlEditor();
-    ///
-    /// var fullName = Control.CreateComputed(tracker => {
-    ///     // Track dependencies using extension methods
-    ///     return $"{firstName.Value} {lastName.Value}";
-    /// }, editor);
-    ///
-    /// // fullName.Value is "John Doe"
-    /// editor.SetValue(firstName, "Jane");
-    /// // fullName.Value automatically becomes "Jane Doe"
-    /// </code>
-    /// </example>
-    public static IControl CreateComputed<T>(
-        Func<ChangeTracker, T> compute,
-        ControlEditor editor)
-    {
-        var tracker = new ChangeTracker();
-
-        // Initial computation
-        var initialValue = compute(tracker);
-        var control = new Control<T>(initialValue, initialValue);
-
-        // Set up reactive callback
-        tracker.SetCallback(() =>
-        {
-            var newValue = compute(tracker);
-            editor.SetValue(control, newValue);
-            tracker.UpdateSubscriptions();
-        });
-
-        // Establish initial subscriptions
-        tracker.UpdateSubscriptions();
-
-        return control;
-    }
 
     /// <summary>
     /// Makes an existing control computed by setting up a reactive computation that updates its value.
@@ -618,9 +497,13 @@ public class Control<T>(T value, T initialValue, ControlFlags flags = ControlFla
             ? propInfo.GetValue(initialValue)
             : propValue;
 
-        // Create Control<TProperty> using reflection
+        // Create Control<TProperty> using reflection with NonPublic binding flags to access internal constructor
         var controlType = typeof(Control<>).MakeGenericType(propInfo.PropertyType);
-        var control = Activator.CreateInstance(controlType, propValue, initialPropValue, childFlags, null);
+        var control = Activator.CreateInstance(controlType,
+            BindingFlags.Instance | BindingFlags.NonPublic,
+            null,
+            new object?[] { propValue, initialPropValue, childFlags, null },
+            null);
         return (IControl)control!;
     }
 
@@ -674,7 +557,7 @@ public class Control<T>(T value, T initialValue, ControlFlags flags = ControlFla
         throw new ArgumentException($"Expression must be a member access expression, got: {expression}");
     }
 
-    public static IControl CreateUndefined()
+    public static Control<object?> CreateUndefined()
     {
         return new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance);
     }
@@ -1439,4 +1322,157 @@ public enum ControlFlags
     InitialValueMutable = 8,
     ErrorsMutable = 16,
     DontClearError = 32
+}
+
+public static class Control
+{
+        // Factory method for simple control creation (replaces old constructor behavior)
+    public static Control<object?> Create(object? initialValue = null, bool dontClearError = false)
+    {
+        var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
+        return new Control<object?>(initialValue, initialValue, flags);
+    }
+
+    /// <summary>
+    /// Creates a structured control from a POCO/record object.
+    /// The object's properties become child controls accessible via the Field() extension method.
+    /// </summary>
+    /// <typeparam name="T">The type of the structured object</typeparam>
+    /// <param name="initialValue">The initial value object</param>
+    /// <param name="dontClearError">If true, errors won't be cleared when value changes</param>
+    /// <returns>A control with the object's properties stored as a dictionary</returns>
+    /// <example>
+    /// <code>
+    /// record FormState(bool? Visible, bool Readonly);
+    /// var control = Control.CreateStructured(new FormState(null, false));
+    /// var visibleControl = control["Visible"]; // Access child control via indexer
+    /// </code>
+    /// </example>
+    public static IControl CreateStructured<TValue>(TValue initialValue, bool dontClearError = false)
+        where TValue : class
+    {
+        // Convert the structured object to a dictionary for internal storage
+        var dict = ObjectToDictionary(initialValue);
+        var flags = dontClearError ? ControlFlags.DontClearError : ControlFlags.None;
+        return new Control<IDictionary<string, object?>>(dict, dict, flags);
+    }
+
+    /// <summary>
+    /// Converts a POCO/record object to a dictionary for internal control storage.
+    /// Uses reflection to read all public readable properties.
+    /// </summary>
+    private static Dictionary<string, object?> ObjectToDictionary<T>(T obj) where T : class
+    {
+        if (obj == null)
+            throw new ArgumentNullException(nameof(obj));
+
+        var dict = new Dictionary<string, object?>();
+        var properties = typeof(T).GetProperties(
+            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance
+        );
+
+        foreach (var property in properties)
+        {
+            // Only include readable properties
+            if (property.CanRead)
+            {
+                var value = property.GetValue(obj);
+                dict[property.Name] = value;
+            }
+        }
+
+        return dict;
+    }
+
+    /// <summary>
+    /// Creates a typed control with full configuration options.
+    /// Use this when you need separate value and initialValue instances or custom behavior.
+    /// </summary>
+    /// <typeparam name="T">The type of value held by the control</typeparam>
+    /// <param name="value">The current value</param>
+    /// <param name="initialValue">The initial value (can be different from value)</param>
+    /// <param name="flags">Control flags for configuration</param>
+    /// <param name="behavior">Custom behavior for the control (optional)</param>
+    public static Control<T> Create<T>(
+        T value,
+        T initialValue,
+        ControlFlags flags = ControlFlags.None,
+        ControlBehavior<T>? behavior = null)
+    {
+        return new Control<T>(value, initialValue, flags, behavior);
+    }
+
+    // Generic factory method with automatic validator setup
+    public static Control<T> Create<T>(T initialValue, Func<T, string?>? validator = null)
+    {
+        // Always set DontClearError for controls with validators
+        var control = new Control<T>(initialValue, initialValue, validator == null ? ControlFlags.None : ControlFlags.DontClearError);
+
+        if (validator == null) return control;
+        control.Subscribe(
+            (ctrl, change, editor) =>
+            {
+                // No need to check change flags - subscription mask ensures we only get Value or Validate changes
+                var typedValue = control.ValueT;
+                var errorMessage = validator(typedValue);
+                editor.SetError(ctrl, "default", errorMessage);
+            },
+            ControlChange.Value | ControlChange.Validate
+        );
+
+        // Run initial validation
+        var editor = new ControlEditor();
+        var initialErrorMessage = validator(initialValue);
+        editor.SetError(control, "default", initialErrorMessage);
+        return control;
+    }
+
+    /// <summary>
+    /// Creates a computed control whose value is automatically derived from other controls.
+    /// The compute function is called initially and whenever any tracked dependencies change.
+    /// </summary>
+    /// <typeparam name="T">The type of the computed value</typeparam>
+    /// <param name="compute">Function that computes the value, receiving a ChangeTracker to track dependencies</param>
+    /// <param name="editor">ControlEditor instance to use for updates</param>
+    /// <returns>A control that automatically updates when dependencies change</returns>
+    /// <example>
+    /// <code>
+    /// var firstName = Control.Create("John");
+    /// var lastName = Control.Create("Doe");
+    /// var editor = new ControlEditor();
+    ///
+    /// var fullName = Control.CreateComputed(tracker => {
+    ///     // Track dependencies using extension methods
+    ///     return $"{firstName.Value} {lastName.Value}";
+    /// }, editor);
+    ///
+    /// // fullName.Value is "John Doe"
+    /// editor.SetValue(firstName, "Jane");
+    /// // fullName.Value automatically becomes "Jane Doe"
+    /// </code>
+    /// </example>
+    public static IControl CreateComputed<T>(
+        Func<ChangeTracker, T> compute,
+        ControlEditor editor)
+    {
+        var tracker = new ChangeTracker();
+
+        // Initial computation
+        var initialValue = compute(tracker);
+        var control = new Control<T>(initialValue, initialValue);
+
+        // Set up reactive callback
+        tracker.SetCallback(() =>
+        {
+            var newValue = compute(tracker);
+            editor.SetValue(control, newValue);
+            tracker.UpdateSubscriptions();
+        });
+
+        // Establish initial subscriptions
+        tracker.UpdateSubscriptions();
+
+        return control;
+    }
+
 }

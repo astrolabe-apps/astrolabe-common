@@ -13,7 +13,7 @@ public class ChildControlCleanupTests
     public void Field_Controls_Should_Be_Cleared_On_Type_Change()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
-        var control = Control<object?>.Create(objectData);
+        var control = Control.Create<object?>(objectData);
         var editor = new ControlEditor();
 
         // Create field children to populate _fieldControls cache
@@ -43,7 +43,7 @@ public class ChildControlCleanupTests
     public void Element_Controls_Should_Be_Cleared_On_Type_Change()
     {
         var arrayData = new[] { "item1", "item2", "item3" };
-        var control = Control<object?>.Create(arrayData);
+        var control = Control.Create<object?>(arrayData);
         var editor = new ControlEditor();
 
         // Create element children to populate _elementControls cache
@@ -73,7 +73,7 @@ public class ChildControlCleanupTests
     public void Child_Controls_Should_Not_Update_Parent_After_Type_Change()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John" };
-        var control = Control<object?>.Create(objectData);
+        var control = Control.Create<object?>(objectData);
         var editor = new ControlEditor();
 
         // Create child control
@@ -104,7 +104,7 @@ public class ChildControlCleanupTests
     public void Orphaned_Children_Should_Still_Function_Independently()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John" };
-        var control = Control<object?>.Create(objectData);
+        var control = Control.Create<object?>(objectData);
         var editor = new ControlEditor();
 
         // Create child control
@@ -131,7 +131,7 @@ public class ChildControlCleanupTests
     {
         var objectData1 = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
         var objectData2 = new Dictionary<string, object> { ["name"] = "Jane", ["city"] = "NYC" };
-        var control = Control<object?>.Create(objectData1);
+        var control = Control.Create(objectData1);
         var editor = new ControlEditor();
 
         // Create children
@@ -165,7 +165,7 @@ public class ChildControlCleanupTests
     {
         var arrayData1 = new[] { "item1", "item2", "item3" };
         var arrayData2 = new[] { "newItem1", "newItem2", "newItem3", "newItem4", "newItem5" };
-        var control = Control<object?>.Create(arrayData1);
+        var control = Control.Create<object?>(arrayData1);
         var editor = new ControlEditor();
 
         // Create element children
@@ -205,7 +205,7 @@ public class ChildControlCleanupTests
     {
         var arrayData1 = new[] { "item1", "item2", "item3", "item4" };
         var arrayData2 = new[] { "newItem1", "newItem2" };
-        var control = Control<object?>.Create(arrayData1);
+        var control = Control.Create<object?>(arrayData1);
         var editor = new ControlEditor();
 
         // Create all element children
@@ -245,7 +245,7 @@ public class ChildControlCleanupTests
     [Fact]
     public void Null_To_Collection_Should_Preserve_Existing_Children()
     {
-        var control = Control<object?>.Create((object?)null);
+        var control = Control.Create((object?)null);
         var editor = new ControlEditor();
 
         // Create child of null control
@@ -271,7 +271,7 @@ public class ChildControlCleanupTests
     public void String_Type_Transitions_Should_Clear_Children()
     {
         // String to Array
-        var control = Control<object?>.Create("hello");
+        var control = Control.Create<object?>("hello");
         var editor = new ControlEditor();
 
         // String should not allow children initially
@@ -301,7 +301,7 @@ public class ChildControlCleanupTests
     public void Mixed_Collection_Types_Should_Clear_Children()
     {
         // Test List vs Array vs Dictionary combinations
-        var control = Control<object?>.Create(new List<object> { "item1", "item2" });
+        var control = Control.Create<object?>(new List<object> { "item1", "item2" });
         var editor = new ControlEditor();
 
         // Create element children
@@ -338,7 +338,7 @@ public class ChildControlCleanupTests
     public void Type_Change_Should_Invalidate_Child_Validity_Cache()
     {
         var objectData = new Dictionary<string, object> { ["name"] = "John" };
-        var control = Control<object?>.Create(objectData);
+        var control = Control.Create<object?>(objectData);
         var editor = new ControlEditor();
 
         // Create child and add error

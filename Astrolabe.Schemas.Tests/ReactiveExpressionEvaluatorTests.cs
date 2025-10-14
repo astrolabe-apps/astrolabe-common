@@ -334,7 +334,7 @@ public class ReactiveExpressionEvaluatorTests
         var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
         var editor = new ControlEditor();
 
-        var targetControl = new Control<object?>(null, null);
+        var targetControl = Control.Create<object?>(null);
 
         // Act
         var subscription = targetControl.SetupReactiveExpression(expression, context, editor);
@@ -361,7 +361,7 @@ public class ReactiveExpressionEvaluatorTests
         var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
         var editor = new ControlEditor();
 
-        var targetControl = new Control<object?>(null, null);
+        var targetControl = Control.Create<object?>(null, null);
 
         // Act - with coercion to ensure boolean type
         var subscription = targetControl.SetupReactiveExpression(
@@ -386,7 +386,7 @@ public class ReactiveExpressionEvaluatorTests
         var dataNode = TestHelpers.CreateTestDataNode(schema);
         var context = new ExpressionEvalContext(dataNode, new TestSchemaInterface());
         var editor = new ControlEditor();
-        var targetControl = new Control<object?>(null, null);
+        var targetControl = Control.Create<object?>(null, null);
 
         // Act
         var subscription = targetControl.SetupReactiveExpression(null, context, editor);

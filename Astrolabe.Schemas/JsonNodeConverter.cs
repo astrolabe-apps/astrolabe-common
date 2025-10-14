@@ -11,7 +11,7 @@ public static class JsonNodeConverter
     public static IControl JsonNodeToControl(JsonNode? jsonNode)
     {
         var data = JsonNodeToObject(jsonNode);
-        return new Control<object?>(data, data);
+        return Control.Create(data);
     }
 
     /// <summary>

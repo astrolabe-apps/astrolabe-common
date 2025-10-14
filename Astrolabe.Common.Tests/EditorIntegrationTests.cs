@@ -9,7 +9,7 @@ public class EditorIntegrationTests
     [Fact]
     public void Listener_Should_Receive_Working_ControlEditor()
     {
-        var control = Control<object?>.Create(""); // Empty string to trigger validation error
+        var control = Control.Create(""); // Empty string to trigger validation error
         bool listenerCalled = false;
         
         // Subscribe with a listener that uses the provided editor
@@ -44,7 +44,7 @@ public class EditorIntegrationTests
     [Fact]
     public void Multiple_Listeners_Should_Share_Same_Editor_Transaction()
     {
-        var control = Control<object?>.Create("");
+        var control = Control.Create("");
         var executionOrder = new List<string>();
         
         // First listener
@@ -83,7 +83,7 @@ public class EditorIntegrationTests
     [Fact]
     public void Validate_With_Existing_Editor_Should_Reuse_Transaction()
     {
-        var control = Control<object?>.Create("");
+        var control = Control.Create("");
         var executionOrder = new List<string>();
         
         control.Subscribe((ctrl, change, editor) =>
@@ -123,7 +123,7 @@ public class EditorIntegrationTests
             { "email", "user@example.com" },
             { "confirmEmail", "different@example.com" }
         };
-        var parent = Control<object?>.Create(parentData);
+        var parent = Control.Create(parentData);
         
         // Set up cross-field validation
         parent.Subscribe((ctrl, change, editor) =>
