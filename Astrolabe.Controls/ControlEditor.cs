@@ -50,7 +50,7 @@ public class ControlEditor
             }
         });
     }
-    
+
     public void SetValue(IControl control, object? value)
     {
         RunWithMutator(control, x => x.SetValueInternal(this, value));
@@ -73,7 +73,7 @@ public class ControlEditor
 
     public void MarkAsClean(IControl control)
     {
-        SetInitialValue(control, control.Value);
+        SetInitialValue(control, control.ValueObject);
     }
 
     private void RunPendingChanges()
@@ -136,20 +136,11 @@ public class ControlEditor
     {
         if (!control.IsArray) return;
 
-        RunInTransaction(() =>
+        RunWithMutator(control, (mutate) =>
         {
-            if (control is IControlMutation)
-            {
-                // Use dynamic to call AddElementInternal on any Control<T>
-                dynamic? concreteControl = control;
-                concreteControl?.AddElementInternal(value);
-                AddToRunListenerList(control);
-
-                if (control is IControlMutation mutation)
-                {
-                    mutation.NotifyParentsOfChange();
-                }
-            }
+            mutate.AddElementInternal(value);
+            mutate.NotifyParentsOfChange();
+            return true;
         });
     }
 
@@ -157,20 +148,11 @@ public class ControlEditor
     {
         if (!control.IsArray) return;
 
-        RunInTransaction(() =>
+        RunWithMutator(control, (mutate) =>
         {
-            if (control is IControlMutation)
-            {
-                // Use dynamic to call RemoveElementInternal on any Control<T>
-                dynamic? concreteControl = control;
-                concreteControl?.RemoveElementInternal(index);
-                AddToRunListenerList(control);
-
-                if (control is IControlMutation mutation)
-                {
-                    mutation.NotifyParentsOfChange();
-                }
-            }
+            mutate.RemoveElementInternal(index);
+            mutate.NotifyParentsOfChange();
+            return true;
         });
     }
 

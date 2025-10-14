@@ -20,7 +20,7 @@ public class ControlEditorTests
         editor.SetValue(control, "new value");
 
         Assert.True(changeNotified);
-        Assert.Equal("new value", control.Value);
+        Assert.Equal("new value", control.ValueObject);
     }
 
     [Fact]
@@ -45,8 +45,8 @@ public class ControlEditorTests
 
         // Notifications fire after transaction
         Assert.Equal(2, notificationCount);
-        Assert.Equal("value1", control1.Value);
-        Assert.Equal("value2", control2.Value);
+        Assert.Equal("value1", control1.ValueObject);
+        Assert.Equal("value2", control2.ValueObject);
     }
 
     [Fact]
@@ -80,9 +80,9 @@ public class ControlEditorTests
 
         // All notifications fire together
         Assert.Equal(3, notificationCount);
-        Assert.Equal("outer2", control1.Value);
-        Assert.Equal("inner1", control2.Value);
-        Assert.Equal("inner2", control3.Value);
+        Assert.Equal("outer2", control1.ValueObject);
+        Assert.Equal("inner1", control2.ValueObject);
+        Assert.Equal("inner2", control3.ValueObject);
     }
 
     [Fact]
@@ -121,7 +121,7 @@ public class ControlEditorTests
 
         // Only one notification despite multiple changes
         Assert.Equal(1, notificationCount);
-        Assert.Equal("value3", control.Value);
+        Assert.Equal("value3", control.ValueObject);
     }
 
     [Fact]
@@ -144,7 +144,7 @@ public class ControlEditorTests
 
         // Notification should still fire despite exception
         Assert.Equal(1, notificationCount);
-        Assert.Equal("value1", control.Value);
+        Assert.Equal("value1", control.ValueObject);
     }
 
     [Fact]
@@ -165,8 +165,8 @@ public class ControlEditorTests
 
         Assert.True(initialValueChangeNotified);
         Assert.Equal(ControlChange.InitialValue, notifiedChange);
-        Assert.Equal("new initial", control.InitialValue);
-        Assert.Equal("initial", control.Value); // Value unchanged
+        Assert.Equal("new initial", control.InitialValueObject);
+        Assert.Equal("initial", control.ValueObject); // Value unchanged
     }
 
     [Fact]
@@ -277,14 +277,14 @@ public class ControlEditorTests
 
         editor.SetValue(control, "changed");
         Assert.True(control.IsDirty);
-        Assert.Equal("initial", control.InitialValue);
-        Assert.Equal("changed", control.Value);
+        Assert.Equal("initial", control.InitialValueObject);
+        Assert.Equal("changed", control.ValueObject);
 
         editor.MarkAsClean(control);
 
         Assert.False(control.IsDirty);
-        Assert.Equal("changed", control.InitialValue);
-        Assert.Equal("changed", control.Value);
+        Assert.Equal("changed", control.InitialValueObject);
+        Assert.Equal("changed", control.ValueObject);
     }
 
     [Fact]
@@ -336,8 +336,8 @@ public class ControlEditorTests
         Assert.Equal(1, initialValueNotificationCount);
         Assert.Equal(1, disabledNotificationCount);
 
-        Assert.Equal("changed", control.Value);
-        Assert.Equal("new initial", control.InitialValue);
+        Assert.Equal("changed", control.ValueObject);
+        Assert.Equal("new initial", control.InitialValueObject);
         Assert.True(control.IsDisabled);
         Assert.True(control.IsDirty); // Still dirty because value != initial
     }

@@ -33,7 +33,8 @@ public class Control<T> : IControl<T>, IControlMutation
     // Default behavior for Control<T>
     private static readonly ControlBehavior<T> DefaultBehavior = new()
     {
-        CloneWith = DefaultClone,
+        CloneWithDict = DefaultClone,
+        CloneWithArray = DefaultArrayClone,
         CreateChildField = DefaultCreateChildField,
         CreateChildElement = DefaultCreateChildElement,
         GetFieldName = DefaultGetFieldName
@@ -51,39 +52,34 @@ public class Control<T> : IControl<T>, IControlMutation
 
     public int UniqueId { get; }
 
-    public object? Value
+    public object? ValueObject
     {
         get
         {
-            if ((_flags & ControlFlags.ValueMutable) != 0)
+            if ((_flags & ControlFlags.ChildValueDirty) != 0)
             {
-                // Value was mutable (we own it), clone and freeze for external access
-                _value = DeepClone(_value);
-                _flags &= ~ControlFlags.ValueMutable;
+                ReconstructValueFromChildren();
             }
-            return _value;
+            // Return null for undefined values instead of exposing internal sentinel
+            return _value is UndefinedValue ? null : _value;
         }
     }
 
-    public object? InitialValue
+    public object? InitialValueObject
     {
         get
         {
-            if ((_flags & ControlFlags.InitialValueMutable) != 0)
-            {
-                // InitialValue was mutable (we own it), clone and freeze for external access
-                _initialValue = DeepClone(_initialValue);
-                _flags &= ~ControlFlags.InitialValueMutable;
-            }
-            return _initialValue;
+            // No reconstruction needed - InitialValue only flows top-down
+            // Return null for undefined values instead of exposing internal sentinel
+            return _initialValue is UndefinedValue ? null : _initialValue;
         }
     }
 
     // Typed property accessors for IControl<T>
-    public T ValueT => _value;
-    public T InitialValueT => _initialValue;
+    public T Value => _value;
+    public T InitialValue => _initialValue;
 
-    public bool IsDirty => !IControl.IsEqual(_value, _initialValue);
+    public bool IsDirty => !IControl.IsEqual(ValueObject, InitialValueObject);
     public bool IsDisabled => (_flags & ControlFlags.Disabled) != 0;
     public bool IsTouched => (_flags & ControlFlags.Touched) != 0;
 
@@ -105,92 +101,68 @@ public class Control<T> : IControl<T>, IControlMutation
 
     public bool HasErrors => Errors.Count > 0;
     public bool IsValid => !HasErrors && !IsAnyChildInvalid;
-    public bool IsUndefined => Value is UndefinedValue;
+    public bool IsUndefined => _value is UndefinedValue;
 
     // Type detection
-    public bool IsObject => Value is IDictionary<string, object>;
+    public bool IsObject => ValueObject is IDictionary<string, object>;
     public bool IsArray =>
-        Value is ICollection && Value is not IDictionary<string, object> && Value is not string;
-
-    // Internal access to mutable values (for parent-child updates)
-    private object? InternalValue => _value;
-    private object? InternalInitialValue => _initialValue;
-
+        ValueObject is ICollection && ValueObject is not IDictionary<string, object> && ValueObject is not string;
+    
     // Internal methods for array operations
-    internal void AddElementInternal(object? value)
+    public void AddElementInternal(object? value)
     {
         if (!IsArray)
             return;
 
-        // If value isn't mutable, we need to take ownership by cloning
-        if ((_flags & ControlFlags.ValueMutable) == 0)
+        // Ensure element controls list is created
+        if (_elementControls == null)
         {
-            _value = DeepClone(_value);
-            _flags |= ControlFlags.ValueMutable;
+            EnsureElementControlsCreated();
         }
 
-        if (InternalValue is IList list)
-        {
-            list.Add(value);
+        // Create child control for the new element
+        var newIndex = _elementControls.Count;
+        var childFlags = _flags & (ControlFlags.Disabled | ControlFlags.Touched);
+        var childControl = new Control<object?>(value, value, childFlags);
 
-            // Also add to element controls if they exist
-            if (_elementControls != null)
-            {
-                var newIndex = list.Count - 1;
-                var childControl = _behavior.CreateChildElement(this, newIndex);
-                if (childControl != null)
-                {
-                    AttachChildControl(childControl, newIndex);
-                    _elementControls.Add(childControl);
-                }
-            }
+        // Set up parent-child relationship and add to list
+        AttachChildControl(childControl, newIndex);
+        _elementControls.Add(childControl);
 
-            _subscriptions?.ApplyChange(ControlChange.Structure);
-
-            // Invalidate parent validity cache since children changed
-            InvalidateChildValidityCache();
-        }
+        // Mark parent dirty - reconstruction will build array from element controls
+        _flags |= ControlFlags.ChildValueDirty;
+        _subscriptions?.ApplyChange(ControlChange.Structure);
+        InvalidateChildValidityCache();
     }
 
-    internal void RemoveElementInternal(int index)
+    public void RemoveElementInternal(int index)
     {
-        if (!IsArray)
+        if (_elementControls == null)
+        {
+            EnsureElementControlsCreated();
+        }
+
+        if (!IsArray || _elementControls == null || index < 0 || index >= _elementControls.Count)
             return;
 
-        // If value isn't mutable, we need to take ownership by cloning
-        if ((_flags & ControlFlags.ValueMutable) == 0)
+        var removedControl = _elementControls[index];
+        if (removedControl is IControlMutation childMutation)
         {
-            _value = DeepClone(_value);
-            _flags |= ControlFlags.ValueMutable;
+            childMutation.UpdateParentLink(this, null); // Remove parent link
         }
+        _elementControls.RemoveAt(index);
 
-        if (InternalValue is System.Collections.IList list && index >= 0 && index < list.Count)
-        {
-            list.RemoveAt(index);
-
-            // Also remove from element controls if they exist
-            if (_elementControls != null && index < _elementControls.Count)
-            {
-                var removedControl = _elementControls[index];
-                if (removedControl is IControlMutation childMutation)
-                {
-                    childMutation.UpdateParentLink(this, null); // Remove parent link
-                }
-                _elementControls.RemoveAt(index);
-            }
-
-            _subscriptions?.ApplyChange(ControlChange.Structure);
-
-            // Invalidate parent validity cache since children changed
-            InvalidateChildValidityCache();
-        }
+        // Mark parent dirty - reconstruction will build array from remaining element controls
+        _flags |= ControlFlags.ChildValueDirty;
+        _subscriptions?.ApplyChange(ControlChange.Structure);
+        InvalidateChildValidityCache();
     }
 
     public int Count =>
         IsArray
-            ? ((ICollection)Value!).Count
+            ? ((ICollection)ValueObject!).Count
             : IsObject
-                ? ((IDictionary<string, object>)Value!).Count
+                ? ((IDictionary<string, object>)ValueObject!).Count
                 : 0;
 
     // Indexer access
@@ -233,7 +205,7 @@ public class Control<T> : IControl<T>, IControlMutation
     }
 
     // Collection properties
-    public IEnumerable<string> FieldNames => !IsObject ? EmptyFieldNames : ((IDictionary<string, object>)Value!).Keys;
+    public IEnumerable<string> FieldNames => !IsObject ? EmptyFieldNames : ((IDictionary<string, object>)ValueObject!).Keys;
 
     public IReadOnlyList<IControl> Elements
     {
@@ -273,6 +245,24 @@ public class Control<T> : IControl<T>, IControlMutation
 
     private Subscriptions? _subscriptions;
 
+    // Lazy reconstruction from child controls
+    private void ReconstructValueFromChildren()
+    {
+        var childControls = new Dictionary<string, IControl>();
+
+        // Collect field controls
+        if (_fieldControls != null)
+        {
+            _value = _behavior.CloneWithDict(_value, _fieldControls);
+        }
+
+        // Collect element controls
+        if (_elementControls != null)
+        {
+            _value = _behavior.CloneWithArray(_value, _elementControls);
+        }
+        _flags &= ~ControlFlags.ChildValueDirty;
+    }
 
     /// <summary>
     /// Makes an existing control computed by setting up a reactive computation that updates its value.
@@ -350,14 +340,14 @@ public class Control<T> : IControl<T>, IControlMutation
         // Set up reactive callback
         tracker.SetCallback(() =>
         {
-            var currentValue = (T)control.Value!;
+            var currentValue = (T)control.ValueObject!;
             var newValue = compute(tracker, currentValue);
             editor.SetValue(control, newValue);
             tracker.UpdateSubscriptions();
         });
 
         // Initial computation and subscription setup
-        var initialValue = compute(tracker, (T)control.Value!);
+        var initialValue = compute(tracker, (T)control.ValueObject!);
         editor.SetValue(control, initialValue);
         tracker.UpdateSubscriptions();
     }
@@ -384,9 +374,19 @@ public class Control<T> : IControl<T>, IControlMutation
         return changeFlags;
     }
 
-    // Default behavior implementations
-    private static T DefaultClone(T? original, IDictionary<string, object?> overrides)
+    private static T DefaultArrayClone(T original, IList<IControl> childControls)
     {
+        List<object?> list = [];
+        list.AddRange(childControls.Select(x => x.ValueObject));
+        return (T)(object)list;
+    }
+    
+    // Default behavior implementations
+    private static T DefaultClone(T original, IDictionary<string, IControl> childControls)
+    {
+        // Convert IControl dictionary to values dictionary
+        var overrides = childControls.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ValueObject);
+
         // Handle null - create new instance from overrides
         if (original == null)
         {
@@ -401,14 +401,7 @@ public class Control<T> : IControl<T>, IControlMutation
                 }
                 return (T)(object)newDict;
             }
-
-            // List: create empty list
-            if (typeof(T) == typeof(List<object?>) ||
-                typeof(IList).IsAssignableFrom(typeof(T)))
-            {
-                return (T)(object)new List<object?>();
-            }
-
+            
             // Records/classes: create using Activator then apply overrides
             var instance = Activator.CreateInstance<T>();
             if (instance is null)
@@ -432,18 +425,6 @@ public class Control<T> : IControl<T>, IControlMutation
                 newDict[key] = value;
             }
             return (T)(object)newDict;
-        }
-
-        if (original is IList list)
-        {
-            var newList = new List<object?>();
-            for (int i = 0; i < list.Count; i++)
-            {
-                newList.Add(overrides.TryGetValue(i.ToString(), out var value)
-                    ? value
-                    : list[i]);
-            }
-            return (T)(object)newList;
         }
 
         // Fallback: use CloneWithOverrides for records/classes (if T is a reference type)
@@ -731,7 +712,7 @@ public class Control<T> : IControl<T>, IControlMutation
         if (!IsArray)
             return;
 
-        var collection = (ICollection)Value!;
+        var collection = (ICollection)ValueObject!;
         _elementControls = new List<IControl>(collection.Count);
 
         // Use behavior to create each element control
@@ -886,104 +867,27 @@ public class Control<T> : IControl<T>, IControlMutation
 
     void IControlMutation.UpdateChildValue(object key, object? value)
     {
-        bool structureChanged = false;
+        // Just mark as dirty - reconstruction happens lazily
+        _flags |= ControlFlags.ChildValueDirty;
 
-        // Handle undefined values - remove from parent dictionary
-        if (value is UndefinedValue)
-        {
-            // If value isn't mutable, we need to take ownership by cloning
-            if ((_flags & ControlFlags.ValueMutable) == 0)
-            {
-                _value = DeepClone(_value);
-                _flags |= ControlFlags.ValueMutable;
-            }
+        // Notify subscribers that value changed
+        _subscriptions?.ApplyChange(ControlChange.Value);
 
-            if (IsObject && key is string fieldKey)
-            {
-                var dict = (IDictionary<string, object>)InternalValue!;
-                if (dict.Remove(fieldKey))
-                {
-                    structureChanged = true;
-                }
-            }
-            // Arrays can't have undefined elements - they'd just shrink instead
-
-            if (structureChanged)
-            {
-                _subscriptions?.ApplyChange(ControlChange.Structure);
-            }
-            return;
-        }
-
-        // Create parent object if it's null or undefined and we can determine the type
-        bool wasPromoted = false;
-        if (_value == null || _value is UndefinedValue)
-        {
-            if (_fieldControls != null && key is string)
-            {
-                // Field access indicates this should be an object
-                _value = (T)(object)new Dictionary<string, object>();
-                _flags |= ControlFlags.ValueMutable;
-                structureChanged = true;
-                wasPromoted = true;
-            }
-            else if (_elementControls != null && key is int)
-            {
-                // Element access indicates this should be an array, but we can't create one without knowing size
-                // This shouldn't happen in practice as array indexer returns null for null parent
-                throw new InvalidOperationException(
-                    "Cannot create array parent from null - arrays must be explicitly initialized"
-                );
-            }
-        }
-
-        // If value isn't mutable, we need to take ownership by cloning
-        if ((_flags & ControlFlags.ValueMutable) == 0)
-        {
-            _value = DeepClone(_value);
-            _flags |= ControlFlags.ValueMutable;
-        }
-
-        if (InternalValue is IDictionary<string, object> objDict && key is string stringKey)
-        {
-            if (!objDict.ContainsKey(stringKey) || !IControl.IsEqual(objDict[stringKey], value))
-            {
-                objDict[stringKey] = value!;
-                structureChanged = true;
-            }
-        }
-        else if (InternalValue is IList arrayList && key is int index)
-        {
-            if (index >= 0 && index < arrayList.Count && !IControl.IsEqual(arrayList[index], value))
-            {
-                arrayList[index] = value;
-                structureChanged = true;
-            }
-        }
-
-        if (structureChanged)
-        {
-            _subscriptions?.ApplyChange(ControlChange.Structure);
-        }
-
-        // Notify parents if this control was promoted from null/undefined to object
-        if (wasPromoted)
-        {
-            ((IControlMutation)this).NotifyParentsOfChange();
-        }
+        // Propagate up to parent
+        ((IControlMutation)this).NotifyParentsOfChange();
     }
 
     // Internal mutation interface implementation
     bool IControlMutation.SetValueInternal(ControlEditor editor, object? value)
     {
-        var oldValue = _value;
-        var changed = !IControl.IsEqual(_value, value);
+        var oldValue = ValueObject;
+        var changed = !IControl.IsEqual(oldValue, value);
 
         if (changed)
         {
             // Cast value to T - this should be safe if the value is the correct type
-            _value = (T)value!; // Direct assignment, no cloning needed for external values from ControlEditor
-            _flags &= ~ControlFlags.ValueMutable; // External value, we don't own it yet
+            _value = (T)value!; // Direct assignment
+            _flags &= ~ControlFlags.ChildValueDirty; // Clear dirty flag - we have external value
 
             // Clear errors unless DontClearError flag is set
             if ((_flags & ControlFlags.DontClearError) == 0)
@@ -1019,8 +923,7 @@ public class Control<T> : IControl<T>, IControlMutation
         if (!IControl.IsEqual(_initialValue, initialValue))
         {
             // Cast initialValue to T - this should be safe if the value is the correct type
-            _initialValue = (T)initialValue!; // Direct assignment, no cloning needed for external values
-            _flags &= ~ControlFlags.InitialValueMutable; // External value, we don't own it yet
+            _initialValue = (T)initialValue!; // Direct assignment
 
             // Propagate initial value changes to children
             PropagateInitialValueToChildren(editor, initialValue);
@@ -1179,7 +1082,7 @@ public class Control<T> : IControl<T>, IControlMutation
             // Call UpdateChildValue via IControlMutation interface
             if (parentLink.Control is IControlMutation parentMutation)
             {
-                parentMutation.UpdateChildValue(parentLink.Key, Value);
+                parentMutation.UpdateChildValue(parentLink.Key, ValueObject);
             }
         }
     }
@@ -1313,8 +1216,7 @@ public enum ControlFlags
     None = 0,
     Disabled = 1,
     Touched = 2,
-    ValueMutable = 4,
-    InitialValueMutable = 8,
+    ChildValueDirty = 4,
     ErrorsMutable = 16,
     DontClearError = 32
 }
@@ -1343,8 +1245,8 @@ public static class Control
     /// var visibleControl = control["Visible"]; // Access child control via indexer
     /// </code>
     /// </example>
-    public static IControl CreateStructured<TValue>(TValue initialValue, bool dontClearError = false)
-        where TValue : class
+    public static IControl<IDictionary<string, object?>> CreateStructured<T>(T initialValue, bool dontClearError = false)
+        where T : class
     {
         // Convert the structured object to a dictionary for internal storage
         var dict = ObjectToDictionary(initialValue);
@@ -1408,7 +1310,7 @@ public static class Control
             (ctrl, change, editor) =>
             {
                 // No need to check change flags - subscription mask ensures we only get Value or Validate changes
-                var typedValue = control.ValueT;
+                var typedValue = control.Value;
                 var errorMessage = validator(typedValue);
                 editor.SetError(ctrl, "default", errorMessage);
             },

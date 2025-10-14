@@ -340,14 +340,14 @@ public class ReactiveExpressionEvaluatorTests
         var subscription = targetControl.SetupReactiveExpression(expression, context, editor);
 
         // Assert
-        Assert.Equal("John", targetControl.Value);
+        Assert.Equal("John", targetControl.ValueObject);
 
         // Change the source value
         var childNode = parentData.GetChildForFieldRef("name");
         editor.SetValue(childNode!.Control, "Jane");
 
         // Target control should update automatically
-        Assert.Equal("Jane", targetControl.Value);
+        Assert.Equal("Jane", targetControl.ValueObject);
 
         subscription?.Dispose();
     }
@@ -372,8 +372,8 @@ public class ReactiveExpressionEvaluatorTests
         );
 
         // Assert
-        Assert.IsType<bool>(targetControl.Value);
-        Assert.True((bool)targetControl.Value!);
+        Assert.IsType<bool>(targetControl.ValueObject);
+        Assert.True((bool)targetControl.ValueObject!);
 
         subscription?.Dispose();
     }

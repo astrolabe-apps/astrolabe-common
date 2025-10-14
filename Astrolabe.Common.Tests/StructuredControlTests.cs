@@ -55,8 +55,8 @@ public class StructuredControlTests
         // Assert
         Assert.NotNull(nameControl);
         Assert.NotNull(ageControl);
-        Assert.Equal("John", nameControl!.Value);
-        Assert.Equal(30, ageControl!.Value);
+        Assert.Equal("John", nameControl!.ValueObject);
+        Assert.Equal(30, ageControl!.ValueObject);
     }
 
     [Fact]
@@ -76,9 +76,9 @@ public class StructuredControlTests
         var descriptionControl = control["Description"];
 
         // Assert
-        Assert.Null(visibleControl!.Value);
-        Assert.True((bool)readonlyControl!.Value!);
-        Assert.Equal("test", descriptionControl!.Value);
+        Assert.Null(visibleControl!.ValueObject);
+        Assert.True((bool)readonlyControl!.ValueObject!);
+        Assert.Equal("test", descriptionControl!.ValueObject);
     }
 
     [Fact]
@@ -110,8 +110,8 @@ public class StructuredControlTests
         editor.SetValue(ageControl!, 25);
 
         // Assert
-        Assert.Equal("Jane", nameControl!.Value);
-        Assert.Equal(25, ageControl!.Value);
+        Assert.Equal("Jane", nameControl!.ValueObject);
+        Assert.Equal(25, ageControl!.ValueObject);
     }
 
     [Fact]
@@ -149,7 +149,7 @@ public class StructuredControlTests
         // Act - Track name field access
         var nameControl = control["Name"];
         tracker.RecordAccess(nameControl!, ControlChange.Value);
-        _ = nameControl!.Value; // Access value to create dependency
+        _ = nameControl!.ValueObject; // Access value to create dependency
         tracker.UpdateSubscriptions();
 
         // Modify the name field
@@ -206,7 +206,7 @@ public class StructuredControlTests
 
         // Assert
         Assert.NotNull(itemsControl);
-        var value = itemsControl!.Value;
+        var value = itemsControl!.ValueObject;
         Assert.IsType<List<string>>(value);
         Assert.Equal(3, ((List<string>)value!).Count);
     }
@@ -227,8 +227,8 @@ public class StructuredControlTests
         var descriptionControl = control["Description"];
 
         // Assert
-        Assert.Null(visibleControl!.Value);
-        Assert.Null(descriptionControl!.Value);
+        Assert.Null(visibleControl!.ValueObject);
+        Assert.Null(descriptionControl!.ValueObject);
     }
 
     [Fact]
@@ -247,7 +247,7 @@ public class StructuredControlTests
 
         // Assert - Should both work and return same control
         Assert.Equal(visible1!.UniqueId, visible2!.UniqueId);
-        Assert.True((bool)visible1.Value!);
+        Assert.True((bool)visible1.ValueObject!);
     }
 
     [Fact]
@@ -272,8 +272,8 @@ public class StructuredControlTests
         var readonlyControl = control["Readonly"];
         tracker.RecordAccess(visibleControl!, ControlChange.Value);
         tracker.RecordAccess(readonlyControl!, ControlChange.Value);
-        _ = visibleControl!.Value;
-        _ = readonlyControl!.Value;
+        _ = visibleControl!.ValueObject;
+        _ = readonlyControl!.ValueObject;
         tracker.UpdateSubscriptions();
 
         // Modify visible
@@ -367,7 +367,7 @@ public class StructuredControlTests
             // Read visible through tracker
             var visibleControl = control["Visible"];
             tracker.RecordAccess(visibleControl!, ControlChange.Value);
-            var visible = visibleControl!.Value as bool?;
+            var visible = visibleControl!.ValueObject as bool?;
 
             // Compute derived value
             computedValue = visible == true;
@@ -379,7 +379,7 @@ public class StructuredControlTests
         // Initial computation
         var visibleControl = control["Visible"];
         tracker.RecordAccess(visibleControl!, ControlChange.Value);
-        _ = visibleControl!.Value;
+        _ = visibleControl!.ValueObject;
         tracker.UpdateSubscriptions();
 
         // Act - Change visible

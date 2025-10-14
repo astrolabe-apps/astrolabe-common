@@ -60,8 +60,8 @@ public class ArrayObjectControlTests
 
         Assert.NotNull(nameControl);
         Assert.NotNull(ageControl);
-        Assert.Equal("John", nameControl.Value);
-        Assert.Equal(30, ageControl.Value);
+        Assert.Equal("John", nameControl.ValueObject);
+        Assert.Equal(30, ageControl.ValueObject);
     }
 
     [Fact]
@@ -87,8 +87,8 @@ public class ArrayObjectControlTests
 
         Assert.NotNull(firstControl);
         Assert.NotNull(secondControl);
-        Assert.Equal("first", firstControl.Value);
-        Assert.Equal("second", secondControl.Value);
+        Assert.Equal("first", firstControl.ValueObject);
+        Assert.Equal("second", secondControl.ValueObject);
     }
 
     [Fact]
@@ -132,9 +132,9 @@ public class ArrayObjectControlTests
         var elements = control.Elements;
 
         Assert.Equal(3, elements.Count);
-        Assert.Equal("first", elements[0].Value);
-        Assert.Equal("second", elements[1].Value);
-        Assert.Equal("third", elements[2].Value);
+        Assert.Equal("first", elements[0].ValueObject);
+        Assert.Equal("second", elements[1].ValueObject);
+        Assert.Equal("third", elements[2].ValueObject);
     }
 
     [Fact]
@@ -153,8 +153,8 @@ public class ArrayObjectControlTests
         // External dictionary should be protected from mutation
         Assert.Equal("John", dict["Name"]);
         // But parent's value should reflect the change
-        Assert.Equal("Jane", ((IDictionary<string, object>)parent.Value!)["Name"]);
-        Assert.Equal("Jane", parent["Name"]!.Value);
+        Assert.Equal("Jane", ((IDictionary<string, object>)parent.ValueObject!)["Name"]);
+        Assert.Equal("Jane", parent["Name"]!.ValueObject);
     }
 
     [Fact]
@@ -173,8 +173,8 @@ public class ArrayObjectControlTests
         // External list should be protected from mutation
         Assert.Equal("first", list[0]);
         // But parent's value should reflect the change
-        Assert.Equal("changed", ((System.Collections.IList)parent.Value!)[0]);
-        Assert.Equal("changed", parent[0]!.Value);
+        Assert.Equal("changed", ((System.Collections.IList)parent.ValueObject!)[0]);
+        Assert.Equal("changed", parent[0]!.ValueObject);
     }
 
     [Fact]
@@ -189,8 +189,8 @@ public class ArrayObjectControlTests
         // External dictionary should be protected from mutation
         Assert.Equal("John", dict["Name"]);
         // But control's value should reflect the change
-        Assert.Equal("Jane", ((IDictionary<string, object>)control.Value!)["Name"]);
-        Assert.Equal("Jane", control["Name"]!.Value);
+        Assert.Equal("Jane", ((IDictionary<string, object>)control.ValueObject!)["Name"]);
+        Assert.Equal("Jane", control["Name"]!.ValueObject);
     }
 
     [Fact]
@@ -205,8 +205,8 @@ public class ArrayObjectControlTests
         // External list should be protected from mutation
         Assert.Equal("first", list[0]);
         // But control's value should reflect the change
-        Assert.Equal("changed", ((System.Collections.IList)control.Value!)[0]);
-        Assert.Equal("changed", control[0]!.Value);
+        Assert.Equal("changed", ((System.Collections.IList)control.ValueObject!)[0]);
+        Assert.Equal("changed", control[0]!.ValueObject);
     }
 
     [Fact]
@@ -221,10 +221,10 @@ public class ArrayObjectControlTests
         // External list should remain unchanged (protected)
         Assert.Equal(2, list.Count);
         // But control's value should reflect the change
-        Assert.Equal(3, ((System.Collections.IList)control.Value!).Count);
-        Assert.Equal("third", ((System.Collections.IList)control.Value!)[2]);
+        Assert.Equal(3, ((System.Collections.IList)control.ValueObject!).Count);
+        Assert.Equal("third", ((System.Collections.IList)control.ValueObject!)[2]);
         Assert.Equal(3, control.Elements.Count);
-        Assert.Equal("third", control.Elements[2].Value);
+        Assert.Equal("third", control.Elements[2].ValueObject);
     }
 
     [Fact]
@@ -239,9 +239,9 @@ public class ArrayObjectControlTests
         // External list should remain unchanged (protected)
         Assert.Equal(3, list.Count);
         // But control's value should reflect the change
-        Assert.Equal(2, ((System.Collections.IList)control.Value!).Count);
-        Assert.Equal("first", ((System.Collections.IList)control.Value!)[0]);
-        Assert.Equal("third", ((System.Collections.IList)control.Value!)[1]);
+        Assert.Equal(2, ((System.Collections.IList)control.ValueObject!).Count);
+        Assert.Equal("first", ((System.Collections.IList)control.ValueObject!)[0]);
+        Assert.Equal("third", ((System.Collections.IList)control.ValueObject!)[1]);
         Assert.Equal(2, control.Elements.Count);
     }
 
@@ -255,14 +255,14 @@ public class ArrayObjectControlTests
 
         var originalChild = control["Name"];
         Assert.NotNull(originalChild);
-        Assert.Equal("John", originalChild.Value);
+        Assert.Equal("John", originalChild.ValueObject);
 
         // Change entire value
         editor.SetValue(control, dict2);
 
         var newChild = control["Name"];
         Assert.NotNull(newChild);
-        Assert.Equal("Jane", newChild.Value);
+        Assert.Equal("Jane", newChild.ValueObject);
 
         // Should be the same child control instance with updated value
         Assert.Same(originalChild, newChild);
@@ -282,8 +282,8 @@ public class ArrayObjectControlTests
         editor.SetValue(child, "Jane");
 
         Assert.True(child.IsDirty);
-        Assert.Equal("John", child.InitialValue);
-        Assert.Equal("Jane", child.Value);
+        Assert.Equal("John", child.InitialValueObject);
+        Assert.Equal("Jane", child.ValueObject);
     }
 
     [Fact]
@@ -301,7 +301,7 @@ public class ArrayObjectControlTests
 
         var nameControl = personControl["Name"];
         Assert.NotNull(nameControl);
-        Assert.Equal("John", nameControl.Value);
+        Assert.Equal("John", nameControl.ValueObject);
     }
 
     [Fact]
@@ -321,7 +321,7 @@ public class ArrayObjectControlTests
 
         var firstElement = firstArray[0];
         Assert.NotNull(firstElement);
-        Assert.Equal(1, firstElement.Value);
+        Assert.Equal(1, firstElement.ValueObject);
     }
 
     [Fact]
@@ -538,17 +538,17 @@ public class ArrayObjectControlTests
 
         // Initial computation should happen
         Assert.Equal(1, computeCallCount);
-        Assert.Equal(2, computedControl.Value);
+        Assert.Equal(2, computedControl.ValueObject);
 
         // Add element - should trigger recomputation via Structure change
         editor.AddElement(arrayControl, "third");
         Assert.Equal(2, computeCallCount);
-        Assert.Equal(3, computedControl.Value);
+        Assert.Equal(3, computedControl.ValueObject);
 
         // Remove element - should trigger recomputation via Structure change
         editor.RemoveElement(arrayControl, 0);
         Assert.Equal(3, computeCallCount);
-        Assert.Equal(2, computedControl.Value);
+        Assert.Equal(2, computedControl.ValueObject);
     }
 
     [Fact]
@@ -699,8 +699,8 @@ public class ArrayObjectControlTests
         // But SHOULD fire Value notification
         Assert.Equal(1, valueChangeCount);
         Assert.Equal(2, control.Elements.Count);
-        Assert.Equal("newItem1", control.Elements[0].Value);
-        Assert.Equal("newItem2", control.Elements[1].Value);
+        Assert.Equal("newItem1", control.Elements[0].ValueObject);
+        Assert.Equal("newItem2", control.Elements[1].ValueObject);
     }
 
     [Fact]
@@ -728,21 +728,21 @@ public class ArrayObjectControlTests
 
         // Initial computation should happen
         Assert.Equal(1, computeCallCount);
-        Assert.Equal(2, computedControl.Value);
+        Assert.Equal(2, computedControl.ValueObject);
 
         // Grow array using SetValue - should trigger recomputation via Structure change
         editor.SetValue(arrayControl, new List<object> { "first", "second", "third" });
         Assert.Equal(2, computeCallCount);
-        Assert.Equal(3, computedControl.Value);
+        Assert.Equal(3, computedControl.ValueObject);
 
         // Shrink array using SetValue - should trigger recomputation via Structure change
         editor.SetValue(arrayControl, new List<object> { "first" });
         Assert.Equal(3, computeCallCount);
-        Assert.Equal(1, computedControl.Value);
+        Assert.Equal(1, computedControl.ValueObject);
 
         // Same size change - should NOT trigger recomputation (no Structure change)
         editor.SetValue(arrayControl, new List<object> { "changed" });
         Assert.Equal(3, computeCallCount); // No additional computation
-        Assert.Equal(1, computedControl.Value);
+        Assert.Equal(1, computedControl.ValueObject);
     }
 }

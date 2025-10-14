@@ -20,7 +20,7 @@ public class EditorIntegrationTests
                 listenerCalled = true;
                 
                 // Use the provided editor to set an error
-                if (string.IsNullOrEmpty(ctrl.Value as string))
+                if (string.IsNullOrEmpty(ctrl.ValueObject as string))
                 {
                     editor.SetError(ctrl, "required", "Value is required");
                 }
@@ -133,7 +133,7 @@ public class EditorIntegrationTests
                 var emailControl = ctrl["email"];
                 var confirmControl = ctrl["confirmEmail"];
                 
-                if (emailControl?.Value?.ToString() != confirmControl?.Value?.ToString())
+                if (emailControl?.ValueObject?.ToString() != confirmControl?.ValueObject?.ToString())
                 {
                     editor.SetError(confirmControl!, "match", "Emails must match");
                 }

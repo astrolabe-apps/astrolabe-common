@@ -117,7 +117,7 @@ public class ChangeTracker : IDisposable
     public object? GetValue(IControl control)
     {
         RecordAccess(control, ControlChange.Value);
-        return control.Value;
+        return control.ValueObject;
     }
 
     /// <summary>

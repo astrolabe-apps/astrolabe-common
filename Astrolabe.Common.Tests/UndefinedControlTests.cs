@@ -14,11 +14,11 @@ public class UndefinedControlTests
         });
 
         var missingChild = parentControl["missingField"];
-        
+
         Assert.NotNull(missingChild);
         Assert.True(missingChild.IsUndefined);
-        Assert.Equal(UndefinedValue.Instance, missingChild.Value);
-        Assert.Equal(UndefinedValue.Instance, missingChild.InitialValue);
+        Assert.Null(missingChild.ValueObject);
+        Assert.Null(missingChild.InitialValueObject);
     }
 
     [Fact]
@@ -41,7 +41,7 @@ public class UndefinedControlTests
         
         Assert.True(notificationFired);
         Assert.False(missingChild.IsUndefined);
-        Assert.Equal("now defined", missingChild.Value);
+        Assert.Equal("now defined", missingChild.ValueObject);
     }
 
     [Fact]
@@ -57,7 +57,7 @@ public class UndefinedControlTests
         var child = parentControl["field1"];
         
         Assert.False(child!.IsUndefined);
-        Assert.Equal("value1", child.Value);
+        Assert.Equal("value1", child.ValueObject);
         
         // Set child to undefined
         editor.SetValue(child, UndefinedValue.Instance);
@@ -65,7 +65,7 @@ public class UndefinedControlTests
         Assert.True(child.IsUndefined);
         
         // Parent dictionary should no longer contain the field
-        var parentDict = (Dictionary<string, object>)parentControl.Value!;
+        var parentDict = (Dictionary<string, object>)parentControl.ValueObject!;
         Assert.False(parentDict.ContainsKey("field1"));
         Assert.True(parentDict.ContainsKey("field2")); // Other fields unchanged
         Assert.Equal("value2", parentDict["field2"]);
@@ -95,11 +95,11 @@ public class UndefinedControlTests
         
         // field1 child should now be undefined
         Assert.True(child1.IsUndefined);
-        Assert.Equal(UndefinedValue.Instance, child1.Value);
+        Assert.Null(child1.ValueObject);
         
         // field2 child should be updated but defined
         Assert.False(child2.IsUndefined);
-        Assert.Equal("updated value2", child2.Value);
+        Assert.Equal("updated value2", child2.ValueObject);
     }
 
     [Fact]
@@ -112,17 +112,17 @@ public class UndefinedControlTests
         Assert.True(undefinedChild!.IsUndefined);
         
         // Parent dict should be empty
-        var parentDict = (Dictionary<string, object>)parentControl.Value!;
+        var parentDict = (Dictionary<string, object>)parentControl.ValueObject!;
         Assert.Empty(parentDict);
         
         // Set undefined child to a value
         editor.SetValue(undefinedChild, "new value");
         
         Assert.False(undefinedChild.IsUndefined);
-        Assert.Equal("new value", undefinedChild.Value);
+        Assert.Equal("new value", undefinedChild.ValueObject);
         
         // Refresh reference to parent dict as it may have been cloned
-        parentDict = (Dictionary<string, object>)parentControl.Value!;
+        parentDict = (Dictionary<string, object>)parentControl.ValueObject!;
         
         // Parent dict should now contain the field
         Assert.Single(parentDict);
@@ -212,8 +212,8 @@ public class UndefinedControlTests
         var grandChild = undefinedChild["childProperty"];
         Assert.NotNull(grandChild);
         Assert.True(grandChild.IsUndefined); // Child gets undefined value when parent is undefined
-        Assert.Equal(UndefinedValue.Instance, grandChild.Value);
-        Assert.Equal(UndefinedValue.Instance, grandChild.InitialValue);
+        Assert.Null(grandChild.ValueObject);
+        Assert.Null(grandChild.InitialValueObject);
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public class UndefinedControlTests
         var grandChild = undefinedChild["childProperty"];
         Assert.NotNull(grandChild);
         Assert.True(grandChild.IsUndefined); // Child of undefined parent is also undefined
-        Assert.Equal(UndefinedValue.Instance, grandChild.Value);
+        Assert.Null(grandChild.ValueObject);
 
         // Assign value to the grandchild
         editor.SetValue(grandChild, "test value");
@@ -239,13 +239,13 @@ public class UndefinedControlTests
         Assert.False(undefinedChild.IsUndefined);
         Assert.True(undefinedChild.IsObject);
 
-        var undefinedChildDict = (Dictionary<string, object>)undefinedChild.Value!;
+        var undefinedChildDict = (Dictionary<string, object>)undefinedChild.ValueObject!;
         Assert.Single(undefinedChildDict);
         Assert.True(undefinedChildDict.ContainsKey("childProperty"));
         Assert.Equal("test value", undefinedChildDict["childProperty"]);
 
         // And the top-level parent should also be updated
-        var parentDict = (Dictionary<string, object>)parentControl.Value!;
+        var parentDict = (Dictionary<string, object>)parentControl.ValueObject!;
         Assert.True(parentDict.ContainsKey("missingField"));
         Assert.Equal(undefinedChildDict, parentDict["missingField"]);
     }
@@ -259,8 +259,8 @@ public class UndefinedControlTests
         var child = parentControl["testProperty"];
         Assert.NotNull(child);
         Assert.True(child.IsUndefined); // Child of null parent is undefined
-        Assert.Equal(UndefinedValue.Instance, child.Value);
-        Assert.Equal(UndefinedValue.Instance, child.InitialValue);
+        Assert.Null(child.ValueObject);
+        Assert.Null(child.InitialValueObject);
     }
 
     [Fact]
@@ -278,9 +278,9 @@ public class UndefinedControlTests
 
         // This should promote the null parent to a real object
         Assert.True(parentControl.IsObject);
-        Assert.Null(parentControl.InitialValue); // Initial value stays null
+        Assert.Null(parentControl.InitialValueObject); // Initial value stays null
 
-        var parentDict = (Dictionary<string, object>)parentControl.Value!;
+        var parentDict = (Dictionary<string, object>)parentControl.ValueObject!;
         Assert.Single(parentDict);
         Assert.True(parentDict.ContainsKey("testProperty"));
         Assert.Equal("test value", parentDict["testProperty"]);
@@ -301,8 +301,8 @@ public class UndefinedControlTests
         Assert.NotNull(undefinedChild);
         Assert.True(nullChild.IsUndefined); // Children of null/undefined parents are undefined
         Assert.True(undefinedChild.IsUndefined);
-        Assert.Equal(UndefinedValue.Instance, nullChild.Value);
-        Assert.Equal(UndefinedValue.Instance, undefinedChild.Value);
+        Assert.Null(nullChild.ValueObject);
+        Assert.Null(undefinedChild.ValueObject);
 
         // Both should promote to objects when child values are assigned
         editor.SetValue(nullChild, "value1");
@@ -311,8 +311,8 @@ public class UndefinedControlTests
         Assert.True(nullControl.IsObject);
         Assert.True(undefinedControl.IsObject);
 
-        var nullDict = (Dictionary<string, object>)nullControl.Value!;
-        var undefinedDict = (Dictionary<string, object>)undefinedControl.Value!;
+        var nullDict = (Dictionary<string, object>)nullControl.ValueObject!;
+        var undefinedDict = (Dictionary<string, object>)undefinedControl.ValueObject!;
 
         Assert.Equal("value1", nullDict["testField"]);
         Assert.Equal("value2", undefinedDict["testField"]);

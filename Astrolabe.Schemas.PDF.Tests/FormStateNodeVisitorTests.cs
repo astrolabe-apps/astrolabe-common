@@ -292,7 +292,7 @@ public class FormStateNodeVisitorTests
         {
             if (node.Definition is DataControlDefinition dc && dc.Field == "street")
             {
-                return node.DataNode?.Control.Value?.ToString();
+                return node.DataNode?.Control.ValueObject?.ToString();
             }
             return null;
         });

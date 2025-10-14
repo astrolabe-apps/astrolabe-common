@@ -26,7 +26,7 @@ public static class ChangeTrackerExtensions
             tracker.RecordAccess(fieldControl, ControlChange.Value);
         }
         // Get the value from the control's ValueT property
-        return GetPropertyValue(control.ValueT, selector);
+        return GetPropertyValue(control.Value, selector);
     }
 
     private static T2 GetPropertyValue<T, T2>(T obj, Expression<Func<T, T2>> selector)
@@ -81,9 +81,9 @@ public static class ChangeTrackerExtensions
         {
             var fieldControl = control.Field(selector);
             tracker.RecordAccess(fieldControl, ControlChange.InitialValue);
-            return (T2)fieldControl.InitialValue!;
+            return (T2)fieldControl.InitialValueObject!;
         }
-        return GetPropertyValue(control.ValueT, selector);
+        return GetPropertyValue(control.Value, selector);
     }
 
     /// <summary>

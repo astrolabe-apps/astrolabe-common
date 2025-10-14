@@ -14,7 +14,7 @@ public class ValidatorFactoryTests
         
         Assert.False(control.HasErrors);
         Assert.False(control.Errors.ContainsKey("default"));
-        Assert.Equal("test", control.Value);
+        Assert.Equal("test", control.ValueObject);
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class ValidatorFactoryTests
         
         Assert.False(control.HasErrors);
         Assert.True(control.IsValid);
-        Assert.Equal("valid", control.Value);
+        Assert.Equal("valid", control.ValueObject);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class ValidatorFactoryTests
             value > 100 ? "Too large" : null);
         
         Assert.False(control.HasErrors);
-        Assert.Equal(42, control.Value);
+        Assert.Equal(42, control.ValueObject);
         Assert.True(control.IsValid);
     }
 
@@ -107,7 +107,7 @@ public class ValidatorFactoryTests
             value.HasValue && value < 0 ? "Must be positive" : null));
         
         Assert.False(control.HasErrors);
-        Assert.Null(control.Value);
+        Assert.Null(control.ValueObject);
         Assert.True(control.IsValid);
     }
 
@@ -118,7 +118,7 @@ public class ValidatorFactoryTests
             value?.Length > 10 ? "Too long" : null));
         
         Assert.False(control.HasErrors);
-        Assert.Null(control.Value);
+        Assert.Null(control.ValueObject);
         Assert.True(control.IsValid);
     }
 
@@ -178,7 +178,7 @@ public class ValidatorFactoryTests
         });
         
         Assert.False(control.HasErrors);
-        Assert.Equal("valid value", control.Value);
+        Assert.Equal("valid value", control.ValueObject);
         Assert.True(control.IsValid);
     }
 
@@ -191,7 +191,7 @@ public class ValidatorFactoryTests
         // Add additional manual validation and trigger it
         control.Subscribe((ctrl, change, editor) =>
         {
-            var email = ctrl.Value as string;
+            var email = ctrl.ValueObject as string;
             if (!string.IsNullOrEmpty(email) && !email.Contains('@'))
             {
                 editor.SetError(ctrl, "format", "Invalid email format");
@@ -242,7 +242,7 @@ public class ValidatorFactoryTests
         
         // Get child control and add validator
         var emailChild = parent["email"]!;
-        var validatedEmailChild = Control.Create(emailChild.Value as string ?? "", value => 
+        var validatedEmailChild = Control.Create(emailChild.ValueObject as string ?? "", value => 
             string.IsNullOrEmpty(value) ? "Email is required" : null);
         
         Assert.True(validatedEmailChild.HasErrors);
@@ -256,14 +256,14 @@ public class ValidatorFactoryTests
         var intControl = Control.Create(0, value =>
             value == 0 ? "Cannot be zero" : null);
 
-        Assert.Equal(0, intControl.Value);
+        Assert.Equal(0, intControl.ValueObject);
         Assert.Equal("Cannot be zero", intControl.Errors["default"]);
 
         // Test with default value for reference type
         var stringControl = Control.Create(null, (Func<string?, string?>)(value =>
             value == null ? "Cannot be null" : null));
         
-        Assert.Null(stringControl.Value);
+        Assert.Null(stringControl.ValueObject);
         Assert.Equal("Cannot be null", stringControl.Errors["default"]);
     }
 

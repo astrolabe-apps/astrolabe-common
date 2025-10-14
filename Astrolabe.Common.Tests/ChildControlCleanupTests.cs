@@ -79,11 +79,11 @@ public class ChildControlCleanupTests
         // Create child control
         var nameChild = control["name"];
         Assert.NotNull(nameChild);
-        Assert.Equal("John", nameChild.Value);
+        Assert.Equal("John", nameChild.ValueObject);
 
         // Verify child can update parent initially
         editor.SetValue(nameChild, "Jane");
-        Assert.Equal("Jane", ((Dictionary<string, object>)control.Value!)["name"]);
+        Assert.Equal("Jane", ((Dictionary<string, object>)control.ValueObject!)["name"]);
 
         // Change parent to array (clears children and parent links)
         var arrayData = new[] { "item1" };
@@ -95,8 +95,8 @@ public class ChildControlCleanupTests
 
         // Parent should remain unchanged
         Assert.True(control.IsArray);
-        Assert.Equal("item1", control[0]!.Value);
-        var arrayValue = (ICollection)control.Value!;
+        Assert.Equal("item1", control[0]!.ValueObject);
+        var arrayValue = (ICollection)control.ValueObject!;
         Assert.Equal(1, arrayValue.Count);
     }
 
@@ -116,11 +116,11 @@ public class ChildControlCleanupTests
         editor.SetValue(control, arrayData);
 
         // Orphaned child should still be functional
-        Assert.Equal("John", nameChild.Value);
+        Assert.Equal("John", nameChild.ValueObject);
 
         // Should be able to update orphaned child
         editor.SetValue(nameChild, "UpdatedName");
-        Assert.Equal("UpdatedName", nameChild.Value);
+        Assert.Equal("UpdatedName", nameChild.ValueObject);
 
         // Child should maintain its own state and be dirty since value changed from initial
         Assert.True(nameChild.IsDirty); // Should be dirty since value changed from "John" to "UpdatedName"
@@ -156,8 +156,9 @@ public class ChildControlCleanupTests
         Assert.Equal(ageChildId, preservedAgeChild.UniqueId);
 
         // Values should be updated appropriately
-        Assert.Equal("Jane", preservedNameChild.Value);
-        Assert.True(preservedAgeChild.Value is UndefinedValue); // Field removed
+        Assert.Equal("Jane", preservedNameChild.ValueObject);
+        Assert.True(preservedAgeChild.IsUndefined); // Field removed
+        Assert.Null(preservedAgeChild.ValueObject); // Undefined controls return null
     }
 
     [Fact]
@@ -189,15 +190,15 @@ public class ChildControlCleanupTests
         Assert.Equal(thirdElementId, control[2]!.UniqueId);
 
         // Values should be updated
-        Assert.Equal("newItem1", control[0]!.Value);
-        Assert.Equal("newItem2", control[1]!.Value);
-        Assert.Equal("newItem3", control[2]!.Value);
+        Assert.Equal("newItem1", control[0]!.ValueObject);
+        Assert.Equal("newItem2", control[1]!.ValueObject);
+        Assert.Equal("newItem3", control[2]!.ValueObject);
 
         // New elements should be accessible
         Assert.NotNull(control[3]);
         Assert.NotNull(control[4]);
-        Assert.Equal("newItem4", control[3]!.Value);
-        Assert.Equal("newItem5", control[4]!.Value);
+        Assert.Equal("newItem4", control[3]!.ValueObject);
+        Assert.Equal("newItem5", control[4]!.ValueObject);
     }
 
     [Fact]
@@ -229,8 +230,8 @@ public class ChildControlCleanupTests
         Assert.Equal(secondElementId, control[1]!.UniqueId);
 
         // Values should be updated
-        Assert.Equal("newItem1", control[0]!.Value);
-        Assert.Equal("newItem2", control[1]!.Value);
+        Assert.Equal("newItem1", control[0]!.ValueObject);
+        Assert.Equal("newItem2", control[1]!.ValueObject);
 
         // Removed elements should not be accessible
         Assert.Null(control[2]);
@@ -238,8 +239,8 @@ public class ChildControlCleanupTests
         Assert.Equal(2, control.Count);
 
         // Old element references should still be functional but orphaned
-        Assert.Equal("item3", thirdElement.Value);
-        Assert.Equal("item4", fourthElement.Value);
+        Assert.Equal("item3", thirdElement.ValueObject);
+        Assert.Equal("item4", fourthElement.ValueObject);
     }
 
     [Fact]
@@ -252,7 +253,7 @@ public class ChildControlCleanupTests
         var nameChild = control["name"];
         Assert.NotNull(nameChild);
         Assert.True(nameChild.IsUndefined); // Child of null parent is undefined
-        Assert.Equal(UndefinedValue.Instance, nameChild.Value);
+        Assert.Null(nameChild.ValueObject);
 
         var nameChildId = nameChild.UniqueId;
 
@@ -264,7 +265,7 @@ public class ChildControlCleanupTests
         var preservedChild = control["name"];
         Assert.NotNull(preservedChild);
         Assert.Equal(nameChildId, preservedChild.UniqueId);
-        Assert.Equal("John", preservedChild.Value);
+        Assert.Equal("John", preservedChild.ValueObject);
     }
 
     [Fact]
@@ -294,7 +295,7 @@ public class ChildControlCleanupTests
         // Should clear array children
         Assert.Null(control[0]);
         Assert.Null(control[1]);
-        Assert.Equal("world", control.Value);
+        Assert.Equal("world", control.ValueObject);
     }
 
     [Fact]
@@ -307,7 +308,7 @@ public class ChildControlCleanupTests
         // Create element children
         var firstElement = control[0];
         Assert.NotNull(firstElement);
-        Assert.Equal("item1", firstElement.Value);
+        Assert.Equal("item1", firstElement.ValueObject);
 
         // Change to different collection type (Dictionary)
         var dictData = new Dictionary<string, object> { ["key"] = "value" };
@@ -318,7 +319,7 @@ public class ChildControlCleanupTests
 
         // Object children should be accessible
         Assert.NotNull(control["key"]);
-        Assert.Equal("value", control["key"]!.Value);
+        Assert.Equal("value", control["key"]!.ValueObject);
 
         // Change to regular array
         var arrayData = new[] { "newItem" };
@@ -331,7 +332,7 @@ public class ChildControlCleanupTests
 
         // Array children should be accessible
         Assert.NotNull(control[0]);
-        Assert.Equal("newItem", control[0]!.Value);
+        Assert.Equal("newItem", control[0]!.ValueObject);
     }
 
     [Fact]

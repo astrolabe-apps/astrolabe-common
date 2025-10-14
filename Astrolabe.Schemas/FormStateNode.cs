@@ -74,15 +74,15 @@ public class FormStateNode : IFormStateNode
 
     public ControlDefinition Definition { get; }
     public IFormNode? Form { get; }
-    public ICollection<IFormStateNode> Children => (List<IFormStateNode>)_childrenControl.Value!;
+    public ICollection<IFormStateNode> Children => (List<IFormStateNode>)_childrenControl.ValueObject!;
     public IFormStateNode? ParentNode { get; }
     public SchemaDataNode Parent { get; }
-    public SchemaDataNode? DataNode => _stateControl.ValueT.DataNode;
+    public SchemaDataNode? DataNode => _stateControl.Value.DataNode;
     public int ChildIndex { get; }
-    public bool? Visible => _stateControl.ValueT.Visible;
-    public bool Readonly => _stateControl.ValueT.Readonly;
-    public bool Disabled => _stateControl.ValueT.Disabled;
-    public ICollection<FieldOption>? FieldOptions => _stateControl.ValueT.FieldOptions;
+    public bool? Visible => _stateControl.Value.Visible;
+    public bool Readonly => _stateControl.Value.Readonly;
+    public bool Disabled => _stateControl.Value.Disabled;
+    public ICollection<FieldOption>? FieldOptions => _stateControl.Value.FieldOptions;
 
     internal object ChildKey { get; }
 

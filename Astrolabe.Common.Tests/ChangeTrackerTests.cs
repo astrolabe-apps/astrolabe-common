@@ -13,7 +13,7 @@ public class ChangeTrackerTests
 
         tracker.RecordAccess(control, ControlChange.Value);
 
-        Assert.Equal("test", control.Value);
+        Assert.Equal("test", control.ValueObject);
     }
 
     [Fact]
@@ -28,7 +28,7 @@ public class ChangeTrackerTests
 
         // Access Value property
         tracker.RecordAccess(control, ControlChange.Value);
-        _ = control.Value;
+        _ = control.ValueObject;
 
         // Establish subscriptions
         tracker.UpdateSubscriptions();
@@ -51,7 +51,7 @@ public class ChangeTrackerTests
 
         // Access only Value, not IsDirty
         tracker.RecordAccess(control, ControlChange.Value);
-        _ = control.Value;
+        _ = control.ValueObject;
 
         tracker.UpdateSubscriptions();
 
@@ -72,13 +72,13 @@ public class ChangeTrackerTests
         tracker.SetCallback(() => {
             callbackCount++;
             tracker.RecordAccess(control, ControlChange.Value);
-            _ = control.Value;
+            _ = control.ValueObject;
             tracker.UpdateSubscriptions();
         });
 
         // Initial evaluation
         tracker.RecordAccess(control, ControlChange.Value);
-        _ = control.Value;
+        _ = control.ValueObject;
         tracker.UpdateSubscriptions();
 
         // Change value - should trigger callback and re-track
@@ -104,7 +104,7 @@ public class ChangeTrackerTests
 
         // Access multiple properties
         tracker.RecordAccess(control, ControlChange.Value | ControlChange.Dirty);
-        _ = control.Value;
+        _ = control.ValueObject;
         _ = control.IsDirty;
 
         tracker.UpdateSubscriptions();
@@ -133,8 +133,8 @@ public class ChangeTrackerTests
         // Access both controls
         tracker.RecordAccess(control1, ControlChange.Value);
         tracker.RecordAccess(control2, ControlChange.Value);
-        _ = control1.Value;
-        _ = control2.Value;
+        _ = control1.ValueObject;
+        _ = control2.ValueObject;
 
         tracker.UpdateSubscriptions();
 
@@ -160,12 +160,12 @@ public class ChangeTrackerTests
 
         // First evaluation - track control1
         tracker.RecordAccess(control1, ControlChange.Value);
-        _ = control1.Value;
+        _ = control1.ValueObject;
         tracker.UpdateSubscriptions();
 
         // Second evaluation - track only control2
         tracker.RecordAccess(control2, ControlChange.Value);
-        _ = control2.Value;
+        _ = control2.ValueObject;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();
@@ -189,7 +189,7 @@ public class ChangeTrackerTests
         tracker.SetCallback(() => callbackCount++);
 
         tracker.RecordAccess(control, ControlChange.Value);
-        _ = control.Value;
+        _ = control.ValueObject;
         tracker.UpdateSubscriptions();
 
         // Dispose tracker
@@ -210,8 +210,8 @@ public class ChangeTrackerTests
         var editor = new ControlEditor();
         editor.SetError(control, "test", "error");
 
-        Assert.Equal("value", control.Value);
-        Assert.Equal("initial", control.InitialValue);
+        Assert.Equal("value", control.ValueObject);
+        Assert.Equal("initial", control.InitialValueObject);
         Assert.True(control.IsDirty);
         Assert.True(control.IsDisabled);
         Assert.True(control.IsTouched);
@@ -231,7 +231,7 @@ public class ChangeTrackerTests
         tracker.SetCallback(() => callbackCount++);
 
         tracker.RecordAccess(control, ControlChange.Value);
-        _ = control.Value;
+        _ = control.ValueObject;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();
@@ -264,7 +264,7 @@ public class ChangeTrackerTests
         });
 
         tracker.RecordAccess(control, ControlChange.Value);
-        _ = control.Value;
+        _ = control.ValueObject;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();
@@ -289,8 +289,8 @@ public class ChangeTrackerTests
         // Track both controls
         tracker.RecordAccess(control1, ControlChange.Value);
         tracker.RecordAccess(control2, ControlChange.Value);
-        _ = control1.Value;
-        _ = control2.Value;
+        _ = control1.ValueObject;
+        _ = control2.ValueObject;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();
@@ -316,8 +316,8 @@ public class ChangeTrackerTests
 
         // Access same control's Value property multiple times
         tracker.RecordAccess(control, ControlChange.Value | ControlChange.Valid);
-        _ = control.Value;
-        _ = control.Value;
+        _ = control.ValueObject;
+        _ = control.ValueObject;
         _ = control.IsValid;
 
         tracker.UpdateSubscriptions();
@@ -343,12 +343,12 @@ public class ChangeTrackerTests
         {
             tracker.RecordAccess(firstName, ControlChange.Value);
             tracker.RecordAccess(lastName, ControlChange.Value);
-            var first = (string)firstName.Value!;
-            var last = (string)lastName.Value!;
+            var first = (string)firstName.ValueObject!;
+            var last = (string)lastName.ValueObject!;
             return $"{first} {last}";
         }, editor);
 
-        Assert.Equal("John Doe", fullName.Value);
+        Assert.Equal("John Doe", fullName.ValueObject);
     }
 
     [Fact]
@@ -362,20 +362,20 @@ public class ChangeTrackerTests
         {
             tracker.RecordAccess(firstName, ControlChange.Value);
             tracker.RecordAccess(lastName, ControlChange.Value);
-            var first = (string)firstName.Value!;
-            var last = (string)lastName.Value!;
+            var first = (string)firstName.ValueObject!;
+            var last = (string)lastName.ValueObject!;
             return $"{first} {last}";
         }, editor);
 
-        Assert.Equal("John Doe", fullName.Value);
+        Assert.Equal("John Doe", fullName.ValueObject);
 
         // Change first name
         editor.SetValue(firstName, "Jane");
-        Assert.Equal("Jane Doe", fullName.Value);
+        Assert.Equal("Jane Doe", fullName.ValueObject);
 
         // Change last name
         editor.SetValue(lastName, "Smith");
-        Assert.Equal("Jane Smith", fullName.Value);
+        Assert.Equal("Jane Smith", fullName.ValueObject);
     }
 
     [Fact]
@@ -387,18 +387,18 @@ public class ChangeTrackerTests
         var computed = Control.CreateComputed(tracker =>
         {
             tracker.RecordAccess(control, ControlChange.Value | ControlChange.Dirty | ControlChange.Touched);
-            return $"{control.Value}:{control.IsDirty}:{control.IsTouched}";
+            return $"{control.ValueObject}:{control.IsDirty}:{control.IsTouched}";
         }, editor);
 
-        Assert.Equal("test:False:False", computed.Value);
+        Assert.Equal("test:False:False", computed.ValueObject);
 
         // Change value - affects both Value and IsDirty
         editor.SetValue(control, "changed");
-        Assert.Equal("changed:True:False", computed.Value);
+        Assert.Equal("changed:True:False", computed.ValueObject);
 
         // Change touched
         editor.SetTouched(control, true);
-        Assert.Equal("changed:True:True", computed.Value);
+        Assert.Equal("changed:True:True", computed.ValueObject);
     }
 
     [Fact]
@@ -412,36 +412,36 @@ public class ChangeTrackerTests
         var displayName = Control.CreateComputed(tracker =>
         {
             tracker.RecordAccess(useFirstName, ControlChange.Value);
-            var useFirst = (bool)useFirstName.Value!;
+            var useFirst = (bool)useFirstName.ValueObject!;
             if (useFirst)
             {
                 tracker.RecordAccess(firstName, ControlChange.Value);
-                return (string)firstName.Value!;
+                return (string)firstName.ValueObject!;
             }
             else
             {
                 tracker.RecordAccess(lastName, ControlChange.Value);
-                return (string)lastName.Value!;
+                return (string)lastName.ValueObject!;
             }
         }, editor);
 
-        Assert.Equal("John", displayName.Value);
+        Assert.Equal("John", displayName.ValueObject);
 
         // Changing lastName shouldn't trigger update (not tracked)
         editor.SetValue(lastName, "Smith");
-        Assert.Equal("John", displayName.Value);
+        Assert.Equal("John", displayName.ValueObject);
 
         // Switch to using lastName
         editor.SetValue(useFirstName, false);
-        Assert.Equal("Smith", displayName.Value);
+        Assert.Equal("Smith", displayName.ValueObject);
 
         // Now changing firstName shouldn't trigger update
         editor.SetValue(firstName, "Jane");
-        Assert.Equal("Smith", displayName.Value);
+        Assert.Equal("Smith", displayName.ValueObject);
 
         // Changing lastName should trigger update now
         editor.SetValue(lastName, "Jones");
-        Assert.Equal("Jones", displayName.Value);
+        Assert.Equal("Jones", displayName.ValueObject);
     }
 
     [Fact]
@@ -455,22 +455,22 @@ public class ChangeTrackerTests
         {
             tracker.RecordAccess(firstName, ControlChange.Value);
             tracker.RecordAccess(lastName, ControlChange.Value);
-            var first = (string)firstName.Value!;
-            var last = (string)lastName.Value!;
+            var first = (string)firstName.ValueObject!;
+            var last = (string)lastName.ValueObject!;
             return $"{first} {last}";
         }, editor);
 
         var greeting = Control.CreateComputed(tracker =>
         {
             tracker.RecordAccess(fullName, ControlChange.Value);
-            var name = (string)fullName.Value!;
+            var name = (string)fullName.ValueObject!;
             return $"Hello, {name}!";
         }, editor);
 
-        Assert.Equal("Hello, John Doe!", greeting.Value);
+        Assert.Equal("Hello, John Doe!", greeting.ValueObject);
 
         editor.SetValue(firstName, "Jane");
-        Assert.Equal("Hello, Jane Doe!", greeting.Value);
+        Assert.Equal("Hello, Jane Doe!", greeting.ValueObject);
     }
 
     [Fact]
@@ -484,14 +484,14 @@ public class ChangeTrackerTests
         Control<object?>.MakeComputed(target, tracker =>
         {
             tracker.RecordAccess(firstName, ControlChange.Value);
-            var name = (string)firstName.Value!;
+            var name = (string)firstName.ValueObject!;
             return name.ToUpper();
         }, editor);
 
-        Assert.Equal("JOHN", target.Value);
+        Assert.Equal("JOHN", target.ValueObject);
 
         editor.SetValue(firstName, "Jane");
-        Assert.Equal("JANE", target.Value);
+        Assert.Equal("JANE", target.ValueObject);
     }
 
     [Fact]
@@ -507,14 +507,14 @@ public class ChangeTrackerTests
         Control<object?>.MakeComputed(visibleField!, tracker =>
         {
             tracker.RecordAccess(condition, ControlChange.Value);
-            var cond = (bool)condition.Value!;
+            var cond = (bool)condition.ValueObject!;
             return cond ? true : (bool?)null;
         }, editor);
 
-        Assert.True((bool)visibleField!.Value!);
+        Assert.True((bool)visibleField!.ValueObject!);
 
         editor.SetValue(condition, false);
-        Assert.Null(visibleField.Value);
+        Assert.Null(visibleField.ValueObject);
     }
 
     [Fact]
@@ -529,18 +529,18 @@ public class ChangeTrackerTests
         {
             tracker.RecordAccess(a, ControlChange.Value);
             tracker.RecordAccess(b, ControlChange.Value);
-            var valA = (int)a.Value!;
-            var valB = (int)b.Value!;
+            var valA = (int)a.ValueObject!;
+            var valB = (int)b.ValueObject!;
             return valA + valB;
         }, editor);
 
-        Assert.Equal(30, target.Value);
+        Assert.Equal(30, target.ValueObject);
 
         editor.SetValue(a, 15);
-        Assert.Equal(35, target.Value);
+        Assert.Equal(35, target.ValueObject);
 
         editor.SetValue(b, 25);
-        Assert.Equal(40, target.Value);
+        Assert.Equal(40, target.ValueObject);
     }
 
     [Fact]
@@ -563,7 +563,7 @@ public class ChangeTrackerTests
         Control<object?>.MakeComputed(readonlyField!, tracker =>
         {
             tracker.RecordAccess(userType, ControlChange.Value);
-            var type = (string)userType.Value!;
+            var type = (string)userType.ValueObject!;
             return type == "viewer";
         }, editor);
 
@@ -571,15 +571,15 @@ public class ChangeTrackerTests
         Control<object?>.MakeComputed(messageField!, tracker =>
         {
             tracker.RecordAccess(readonlyField!, ControlChange.Value);
-            var isReadonly = (bool)readonlyField!.Value!;
+            var isReadonly = (bool)readonlyField!.ValueObject!;
             return isReadonly ? "Read-only mode" : "Edit mode";
         }, editor);
 
-        Assert.False((bool)readonlyField!.Value!);
-        Assert.Equal("Edit mode", messageField!.Value);
+        Assert.False((bool)readonlyField!.ValueObject!);
+        Assert.Equal("Edit mode", messageField!.ValueObject);
 
         editor.SetValue(userType, "viewer");
-        Assert.True((bool)readonlyField.Value!);
-        Assert.Equal("Read-only mode", messageField.Value);
+        Assert.True((bool)readonlyField.ValueObject!);
+        Assert.Equal("Read-only mode", messageField.ValueObject);
     }
 }

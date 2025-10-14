@@ -142,7 +142,7 @@ public class ValidationTests
             {
                 validationTriggered = true;
                 // Simulate validation logic
-                if (string.IsNullOrEmpty(ctrl.Value as string))
+                if (string.IsNullOrEmpty(ctrl.ValueObject as string))
                 {
                     editor.SetError(ctrl, "required", "Value is required");
                 }
@@ -183,7 +183,7 @@ public class ValidationTests
             if ((change & ControlChange.Validate) != 0)
             {
                 validationOrder.Add("name");
-                if (string.IsNullOrEmpty(ctrl.Value as string))
+                if (string.IsNullOrEmpty(ctrl.ValueObject as string))
                 {
                     editor.SetError(ctrl, "required", "Name is required");
                 }
@@ -347,7 +347,7 @@ public class ValidationTests
         
         // Verify only one element remains
         Assert.Equal(1, arrayControl.Count);
-        Assert.Equal("item1", arrayControl[0]?.Value);
+        Assert.Equal("item1", arrayControl[0]?.ValueObject);
     }
 
     [Fact]

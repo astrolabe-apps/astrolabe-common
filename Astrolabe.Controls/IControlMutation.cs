@@ -12,6 +12,9 @@ internal interface IControlMutation
     // Error management
     bool SetErrorsInternal(ControlEditor editor, IDictionary<string, string> errors);
     bool SetErrorInternal(ControlEditor editor, string key, string? message); // null or empty message = remove
+
+    void AddElementInternal(object? value);
+    void RemoveElementInternal(int index);
     bool ClearErrorsInternal(ControlEditor editor);
 
     // Parent-child relationship management

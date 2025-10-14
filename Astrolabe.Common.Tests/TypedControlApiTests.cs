@@ -10,7 +10,7 @@ public class TypedControlApiTests
     {
         var control = Control.Create("initial");
 
-        Assert.Equal("initial", control.Value);
+        Assert.Equal("initial", control.ValueObject);
         Assert.IsAssignableFrom<IControl>(control);
     }
 
@@ -22,7 +22,7 @@ public class TypedControlApiTests
 
         editor.SetValue(control, 100);
 
-        Assert.Equal(100, control.Value);
+        Assert.Equal(100, control.ValueObject);
     }
 
     [Fact]
@@ -33,7 +33,7 @@ public class TypedControlApiTests
 
         editor.SetInitialValue(control, "initial");
 
-        Assert.Equal("initial", control.InitialValue);
+        Assert.Equal("initial", control.InitialValueObject);
         Assert.True(control.IsDirty);
     }
 
@@ -70,7 +70,7 @@ public class TypedControlApiTests
 
         editor.MarkAsClean(control);
         Assert.False(control.IsDirty);
-        Assert.Equal("changed", control.InitialValue);
+        Assert.Equal("changed", control.InitialValueObject);
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class TypedControlApiTests
         tracker.SetCallback(() => callbackCount++);
 
         tracker.RecordAccess(control, ControlChange.Value);
-        _ = control.Value;
+        _ = control.ValueObject;
         tracker.UpdateSubscriptions();
 
         var editor = new ControlEditor();

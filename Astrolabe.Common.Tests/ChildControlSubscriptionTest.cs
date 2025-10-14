@@ -31,7 +31,7 @@ public class ChildControlSubscriptionTest
         });
         
         Assert.True(childNotificationFired, "Child notification should fire when parent updates child internally");
-        Assert.Equal("changed1", childControl.Value);
+        Assert.Equal("changed1", childControl.ValueObject);
     }
 
     [Fact]
@@ -52,6 +52,6 @@ public class ChildControlSubscriptionTest
         editor.SetValue(parentControl, new List<object> { "item1", "changed_item2" });
         
         Assert.True(elementNotificationFired, "Element notification should fire when parent updates element internally");
-        Assert.Equal("changed_item2", elementControl.Value);
+        Assert.Equal("changed_item2", elementControl.ValueObject);
     }
 }

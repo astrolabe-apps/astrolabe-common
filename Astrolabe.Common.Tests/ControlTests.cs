@@ -21,8 +21,8 @@ public class ControlTests
     {
         var control = Control.Create("current", "initial", ControlFlags.Disabled);
 
-        Assert.Equal("current", control.Value);
-        Assert.Equal("initial", control.InitialValue);
+        Assert.Equal("current", control.ValueObject);
+        Assert.Equal("initial", control.InitialValueObject);
         Assert.True(control.IsDisabled);
         Assert.True(control.IsDirty); // current != initial
     }
@@ -32,8 +32,8 @@ public class ControlTests
     {
         var control = Control.Create("value");
 
-        Assert.Equal("value", control.Value);
-        Assert.Equal("value", control.InitialValue);
+        Assert.Equal("value", control.ValueObject);
+        Assert.Equal("value", control.InitialValueObject);
         Assert.False(control.IsDisabled);
         Assert.False(control.IsDirty); // value == initialValue
     }
@@ -43,7 +43,7 @@ public class ControlTests
     {
         var control = Control.Create("initial");
 
-        Assert.Equal("initial", control.Value);
+        Assert.Equal("initial", control.ValueObject);
     }
 
     [Fact]
@@ -51,7 +51,7 @@ public class ControlTests
     {
         var control = Control.Create();
 
-        Assert.Null(control.Value);
+        Assert.Null(control.ValueObject);
     }
 
     [Fact]
@@ -189,13 +189,13 @@ public class ControlTests
         var control1 = Control.Create();
         var control2 = Control.Create("test");
 
-        Assert.Null(control1.InitialValue);
-        Assert.Null(control1.Value);
-        Assert.Equal(control1.InitialValue, control1.Value);
+        Assert.Null(control1.InitialValueObject);
+        Assert.Null(control1.ValueObject);
+        Assert.Equal(control1.InitialValueObject, control1.ValueObject);
 
-        Assert.Equal("test", control2.InitialValue);
-        Assert.Equal("test", control2.Value);
-        Assert.Equal(control2.InitialValue, control2.Value);
+        Assert.Equal("test", control2.InitialValueObject);
+        Assert.Equal("test", control2.ValueObject);
+        Assert.Equal(control2.InitialValueObject, control2.ValueObject);
     }
 
     [Fact]
@@ -219,8 +219,8 @@ public class ControlTests
         editor.SetValue(control, "changed");
 
         Assert.True(control.IsDirty);
-        Assert.Equal("initial", control.InitialValue);
-        Assert.Equal("changed", control.Value);
+        Assert.Equal("initial", control.InitialValueObject);
+        Assert.Equal("changed", control.ValueObject);
     }
 
     [Fact]

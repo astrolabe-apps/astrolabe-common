@@ -21,9 +21,9 @@ public record PdfFormContext(IFormStateNode FormNode)
                     DataControlDefinition
                         when FormNode.DataNode?.Schema.Field.Type == "Date"
                             && FormNode.DataNode is { Control: var data }
-                        => data.Value?.ToString()?.DateStringToLocalDateString() ?? "No Data",
+                        => data.ValueObject?.ToString()?.DateStringToLocalDateString() ?? "No Data",
                     DataControlDefinition when FormNode.DataNode is { Control: var data }
-                        => data.Value?.ToString() ?? "Missing data",
+                        => data.ValueObject?.ToString() ?? "Missing data",
                     DisplayControlDefinition { DisplayData: TextDisplay } displayControlDefinition
                         => (displayControlDefinition.DisplayData as TextDisplay)?.Text ?? "",
                     _ => throw new ArgumentOutOfRangeException()

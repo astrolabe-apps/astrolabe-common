@@ -74,8 +74,8 @@ public class ImmutabilityAndEqualityTests
         var control = Control.Create(originalDict);
 
         // First access to Value should return a reference to the value
-        var value1 = control.Value;
-        var value2 = control.Value;
+        var value1 = control.ValueObject;
+        var value2 = control.ValueObject;
 
         // Should return the same reference (not cloned) since no mutations needed
         Assert.Same(value1, value2);
@@ -89,8 +89,8 @@ public class ImmutabilityAndEqualityTests
         var control = Control.Create(originalDict, originalDict, ControlFlags.None);
 
         // First access to InitialValue should return a reference to the value
-        var initialValue1 = control.InitialValue;
-        var initialValue2 = control.InitialValue;
+        var initialValue1 = control.InitialValueObject;
+        var initialValue2 = control.InitialValueObject;
 
         // Should return the same reference (not cloned) since no mutations needed
         Assert.Same(initialValue1, initialValue2);
@@ -105,7 +105,7 @@ public class ImmutabilityAndEqualityTests
         var editor = new ControlEditor();
 
         // Access Value first - should return original reference
-        var originalValue = control.Value;
+        var originalValue = control.ValueObject;
         Assert.Same(dict, originalValue);
 
         // Get child and modify it - this should trigger cloning
@@ -114,7 +114,7 @@ public class ImmutabilityAndEqualityTests
         editor.SetValue(child, "Jane");
 
         // Now Value should return a different (cloned) reference
-        var clonedValue = control.Value;
+        var clonedValue = control.ValueObject;
         Assert.NotSame(dict, clonedValue); // Different reference
         Assert.Equal("Jane", ((IDictionary<string, object>)clonedValue)["Name"]);
 
@@ -136,12 +136,12 @@ public class ImmutabilityAndEqualityTests
         Assert.NotNull(ageChild);
 
         // Current values
-        Assert.Equal("Jane", nameChild.Value);
-        Assert.Equal(35, ageChild.Value);
+        Assert.Equal("Jane", nameChild.ValueObject);
+        Assert.Equal(35, ageChild.ValueObject);
 
         // Initial values should come from parent's initial value
-        Assert.Equal("John", nameChild.InitialValue);
-        Assert.Equal(30, ageChild.InitialValue);
+        Assert.Equal("John", nameChild.InitialValueObject);
+        Assert.Equal(30, ageChild.InitialValueObject);
 
         // Children should be dirty
         Assert.True(nameChild.IsDirty);
@@ -159,12 +159,12 @@ public class ImmutabilityAndEqualityTests
         Assert.Equal(2, elements.Count);
 
         // Current values
-        Assert.Equal("current1", elements[0].Value);
-        Assert.Equal("current2", elements[1].Value);
+        Assert.Equal("current1", elements[0].ValueObject);
+        Assert.Equal("current2", elements[1].ValueObject);
 
         // Initial values should come from parent's initial array
-        Assert.Equal("initial1", elements[0].InitialValue);
-        Assert.Equal("initial2", elements[1].InitialValue);
+        Assert.Equal("initial1", elements[0].InitialValueObject);
+        Assert.Equal("initial2", elements[1].InitialValueObject);
 
         // Children should be dirty
         Assert.True(elements[0].IsDirty);
@@ -185,13 +185,13 @@ public class ImmutabilityAndEqualityTests
         Assert.NotNull(ageChild);
 
         // Name has initial value from parent
-        Assert.Equal("Jane", nameChild.Value);
-        Assert.Equal("John", nameChild.InitialValue);
+        Assert.Equal("Jane", nameChild.ValueObject);
+        Assert.Equal("John", nameChild.InitialValueObject);
         Assert.True(nameChild.IsDirty);
 
         // Age defaults to current value (no initial value in parent)
-        Assert.Equal(35, ageChild.Value);
-        Assert.Equal(35, ageChild.InitialValue);
+        Assert.Equal(35, ageChild.ValueObject);
+        Assert.Equal(35, ageChild.InitialValueObject);
         Assert.False(ageChild.IsDirty);
     }
 
@@ -224,8 +224,8 @@ public class ImmutabilityAndEqualityTests
         // Children should now have updated initial values and not be dirty
         Assert.False(nameChild.IsDirty);
         Assert.False(ageChild.IsDirty);
-        Assert.Equal("Jane", nameChild.InitialValue);
-        Assert.Equal(35, ageChild.InitialValue);
+        Assert.Equal("Jane", nameChild.InitialValueObject);
+        Assert.Equal(35, ageChild.InitialValueObject);
     }
 
     [Fact]
@@ -251,7 +251,7 @@ public class ImmutabilityAndEqualityTests
         // Elements should now have updated initial values and not be dirty
         Assert.False(elements[0].IsDirty);
         Assert.False(elements[1].IsDirty);
-        Assert.Equal("changed1", elements[0].InitialValue);
-        Assert.Equal("changed2", elements[1].InitialValue);
+        Assert.Equal("changed1", elements[0].InitialValueObject);
+        Assert.Equal("changed2", elements[1].InitialValueObject);
     }
 }

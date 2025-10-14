@@ -19,8 +19,8 @@ public class TypeTransitionTests
         var ageChild = control["age"];
         Assert.NotNull(nameChild);
         Assert.NotNull(ageChild);
-        Assert.Equal("John", nameChild.Value);
-        Assert.Equal(30, ageChild.Value);
+        Assert.Equal("John", nameChild.ValueObject);
+        Assert.Equal(30, ageChild.ValueObject);
 
         // Change to array
         var arrayData = new[] { "item1", "item2", "item3" };
@@ -41,9 +41,9 @@ public class TypeTransitionTests
         Assert.NotNull(control[0]);
         Assert.NotNull(control[1]);
         Assert.NotNull(control[2]);
-        Assert.Equal("item1", control[0]!.Value);
-        Assert.Equal("item2", control[1]!.Value);
-        Assert.Equal("item3", control[2]!.Value);
+        Assert.Equal("item1", control[0]!.ValueObject);
+        Assert.Equal("item2", control[1]!.ValueObject);
+        Assert.Equal("item3", control[2]!.ValueObject);
     }
 
     [Fact]
@@ -60,9 +60,9 @@ public class TypeTransitionTests
         Assert.NotNull(firstElement);
         Assert.NotNull(secondElement);
         Assert.NotNull(thirdElement);
-        Assert.Equal("item1", firstElement.Value);
-        Assert.Equal("item2", secondElement.Value);
-        Assert.Equal("item3", thirdElement.Value);
+        Assert.Equal("item1", firstElement.ValueObject);
+        Assert.Equal("item2", secondElement.ValueObject);
+        Assert.Equal("item3", thirdElement.ValueObject);
 
         // Change to object
         var objectData = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
@@ -80,8 +80,8 @@ public class TypeTransitionTests
         // Object fields should be accessible
         Assert.NotNull(control["name"]);
         Assert.NotNull(control["age"]);
-        Assert.Equal("John", control["name"]!.Value);
-        Assert.Equal(30, control["age"]!.Value);
+        Assert.Equal("John", control["name"]!.ValueObject);
+        Assert.Equal(30, control["age"]!.ValueObject);
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class TypeTransitionTests
         Assert.False(control.IsObject);
         Assert.False(control.IsArray);
         Assert.Equal(0, control.Count);
-        Assert.Equal("simple string", control.Value);
+        Assert.Equal("simple string", control.ValueObject);
 
         // Children should no longer be accessible
         // Accessing object field on primitive control should return undefined control (safe chaining)
@@ -133,7 +133,7 @@ public class TypeTransitionTests
         Assert.False(control.IsObject);
         Assert.False(control.IsArray);
         Assert.Equal(0, control.Count);
-        Assert.Equal(42, control.Value);
+        Assert.Equal(42, control.ValueObject);
 
         // Children should no longer be accessible
         var newFirstElement = control[0];
@@ -149,7 +149,7 @@ public class TypeTransitionTests
         // Initially primitive
         Assert.False(control.IsObject);
         Assert.False(control.IsArray);
-        Assert.Equal("simple string", control.Value);
+        Assert.Equal("simple string", control.ValueObject);
 
         // Change to object
         var objectData = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
@@ -162,8 +162,8 @@ public class TypeTransitionTests
 
         Assert.NotNull(control["name"]);
         Assert.NotNull(control["age"]);
-        Assert.Equal("John", control["name"]!.Value);
-        Assert.Equal(30, control["age"]!.Value);
+        Assert.Equal("John", control["name"]!.ValueObject);
+        Assert.Equal(30, control["age"]!.ValueObject);
     }
 
     [Fact]
@@ -175,7 +175,7 @@ public class TypeTransitionTests
         // Initially primitive
         Assert.False(control.IsObject);
         Assert.False(control.IsArray);
-        Assert.Equal(42, control.Value);
+        Assert.Equal(42, control.ValueObject);
 
         // Change to array
         var arrayData = new[] { "item1", "item2", "item3" };
@@ -189,9 +189,9 @@ public class TypeTransitionTests
         Assert.NotNull(control[0]);
         Assert.NotNull(control[1]);
         Assert.NotNull(control[2]);
-        Assert.Equal("item1", control[0]!.Value);
-        Assert.Equal("item2", control[1]!.Value);
-        Assert.Equal("item3", control[2]!.Value);
+        Assert.Equal("item1", control[0]!.ValueObject);
+        Assert.Equal("item2", control[1]!.ValueObject);
+        Assert.Equal("item3", control[2]!.ValueObject);
     }
 
     [Fact]
@@ -237,7 +237,7 @@ public class TypeTransitionTests
         // Should no longer be array
         Assert.False(control.IsArray);
         Assert.False(control.IsObject);
-        Assert.Equal("hello world", control.Value);
+        Assert.Equal("hello world", control.ValueObject);
 
         // Array children should no longer be accessible
         Assert.Null(control[0]);
@@ -253,11 +253,11 @@ public class TypeTransitionTests
         // Create child and verify it has parent link
         var nameChild = control["name"];
         Assert.NotNull(nameChild);
-        Assert.Equal("John", nameChild.Value);
+        Assert.Equal("John", nameChild.ValueObject);
 
         // Modify child value to verify parent link works
         editor.SetValue(nameChild, "Jane");
-        Assert.Equal("Jane", ((Dictionary<string, object>)control.Value!)["name"]);
+        Assert.Equal("Jane", ((Dictionary<string, object>)control.ValueObject!)["name"]);
 
         // Change parent to array (should clear children)
         var arrayData = new[] { "item1", "item2" };
@@ -270,8 +270,8 @@ public class TypeTransitionTests
         // Parent should still be array, not affected by the old child
         Assert.True(control.IsArray);
         Assert.Equal(2, control.Count);
-        Assert.Equal("item1", control[0]!.Value);
-        Assert.Equal("item2", control[1]!.Value);
+        Assert.Equal("item1", control[0]!.ValueObject);
+        Assert.Equal("item2", control[1]!.ValueObject);
     }
 
     [Fact]
@@ -283,7 +283,8 @@ public class TypeTransitionTests
         // Access child of null control (should create child with undefined value)
         var nameChild = control["name"];
         Assert.NotNull(nameChild);
-        Assert.True(nameChild.Value is UndefinedValue);
+        Assert.True(nameChild.IsUndefined);
+        Assert.Null(nameChild.ValueObject);
 
         // Set the control to an object
         var objectData = new Dictionary<string, object> { ["name"] = "John", ["age"] = 30 };
@@ -292,11 +293,11 @@ public class TypeTransitionTests
         // Child should be preserved and updated
         var newNameChild = control["name"];
         Assert.Same(nameChild, newNameChild); // Same instance
-        Assert.Equal("John", nameChild.Value); // Updated value
+        Assert.Equal("John", nameChild.ValueObject); // Updated value
 
         // New fields should be accessible
         Assert.NotNull(control["age"]);
-        Assert.Equal(30, control["age"]!.Value);
+        Assert.Equal(30, control["age"]!.ValueObject);
     }
 
     [Fact]
@@ -323,12 +324,13 @@ public class TypeTransitionTests
         Assert.Same(ageChild, newAgeChild); // Same instance
 
         // Values should be updated
-        Assert.Equal("Jane", nameChild.Value);
-        Assert.True(ageChild.Value is UndefinedValue); // Field no longer exists
+        Assert.Equal("Jane", nameChild.ValueObject);
+        Assert.True(ageChild.IsUndefined); // Field no longer exists
+        Assert.Null(ageChild.ValueObject); // Undefined controls return null
 
         // New field should be accessible
         Assert.NotNull(control["city"]);
-        Assert.Equal("NYC", control["city"]!.Value);
+        Assert.Equal("NYC", control["city"]!.ValueObject);
     }
 
     [Fact]
@@ -357,8 +359,8 @@ public class TypeTransitionTests
         Assert.Same(secondElement, newSecondElement); // Same instance
 
         // Values should be updated
-        Assert.Equal("newItem1", firstElement.Value);
-        Assert.Equal("newItem2", secondElement.Value);
+        Assert.Equal("newItem1", firstElement.ValueObject);
+        Assert.Equal("newItem2", secondElement.ValueObject);
 
         // Third element should no longer be accessible
         Assert.Null(control[2]);
@@ -385,8 +387,8 @@ public class TypeTransitionTests
         var hobbiesChild = userChild["hobbies"];
         var firstHobby = hobbiesChild![0];
 
-        Assert.Equal("John", nameChild!.Value);
-        Assert.Equal("reading", firstHobby!.Value);
+        Assert.Equal("John", nameChild!.ValueObject);
+        Assert.Equal("reading", firstHobby!.ValueObject);
 
         // Change the entire structure to an array
         var newArrayData = new[] { "item1", "item2" };
@@ -405,7 +407,7 @@ public class TypeTransitionTests
         // New array elements should be accessible
         Assert.NotNull(control[0]);
         Assert.NotNull(control[1]);
-        Assert.Equal("item1", control[0]!.Value);
-        Assert.Equal("item2", control[1]!.Value);
+        Assert.Equal("item1", control[0]!.ValueObject);
+        Assert.Equal("item2", control[1]!.ValueObject);
     }
 }

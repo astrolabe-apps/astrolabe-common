@@ -6,8 +6,8 @@ namespace Astrolabe.Controls;
 public interface IControl
 {
     // Properties from IControlProperties (now using object?)
-    object? Value { get; }
-    object? InitialValue { get; }
+    object? ValueObject { get; }
+    object? InitialValueObject { get; }
     bool IsDirty { get; }
     bool IsDisabled { get; }
     bool IsTouched { get; }
@@ -122,12 +122,12 @@ public interface IControl<T> : IControl
     /// <summary>
     /// Gets the current typed value of this control.
     /// </summary>
-    T ValueT { get; }
+    T Value { get; }
 
     /// <summary>
     /// Gets the initial typed value of this control.
     /// </summary>
-    T InitialValueT { get; }
+    T InitialValue { get; }
 
     /// <summary>
     /// Gets a typed child control for the specified field using an expression selector.

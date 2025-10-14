@@ -10,7 +10,7 @@ public class TypedControlTests
     {
         var control = Control.Create("hello");
 
-        Assert.Equal("hello", control.Value);
+        Assert.Equal("hello", control.ValueObject);
         Assert.IsAssignableFrom<IControl>(control);
     }
 
@@ -19,7 +19,7 @@ public class TypedControlTests
     {
         var control = Control.Create(42);
 
-        Assert.Equal(42, control.Value);
+        Assert.Equal(42, control.ValueObject);
         Assert.IsAssignableFrom<IControl>(control);
     }
 
@@ -28,7 +28,7 @@ public class TypedControlTests
     {
         var control = Control.Create(null);
 
-        Assert.Null(control.Value);
+        Assert.Null(control.ValueObject);
     }
 
     [Fact]
@@ -47,8 +47,8 @@ public class TypedControlTests
     {
         var control = Control.Create("current", "initial", ControlFlags.Touched);
 
-        Assert.Equal("current", control.Value);
-        Assert.Equal("initial", control.InitialValue);
+        Assert.Equal("current", control.ValueObject);
+        Assert.Equal("initial", control.InitialValueObject);
         Assert.True(control.IsDirty);
         Assert.True(control.IsTouched);
         Assert.False(control.IsDisabled);
@@ -80,7 +80,7 @@ public class TypedControlTests
             (ctrl, change, editor) =>
             {
                 callCount++;
-                capturedValue = (string?)ctrl.Value;
+                capturedValue = (string?)ctrl.ValueObject;
             },
             ControlChange.Value
         );
@@ -100,12 +100,12 @@ public class TypedControlTests
         var control = Control.Create(10);
         var editor = new ControlEditor();
 
-        Assert.Equal(10, control.Value);
+        Assert.Equal(10, control.ValueObject);
         Assert.False(control.IsDirty);
 
         editor.SetValue(control, 20);
 
-        Assert.Equal(20, control.Value);
+        Assert.Equal(20, control.ValueObject);
         Assert.True(control.IsDirty);
     }
 
@@ -115,7 +115,7 @@ public class TypedControlTests
         var person = new { Name = "Alice", Age = 30 };
         var control = Control.Create(person);
 
-        Assert.Equal(person, control.Value);
+        Assert.Equal(person, control.ValueObject);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class TypedControlTests
     {
         var control = Control.Create(42);
 
-        Assert.Equal(42, control.Value);
+        Assert.Equal(42, control.ValueObject);
     }
 
     [Fact]
@@ -131,7 +131,7 @@ public class TypedControlTests
     {
         var control = Control.Create(null);
 
-        Assert.Null(control.Value);
+        Assert.Null(control.ValueObject);
     }
 
     [Fact]
@@ -163,8 +163,8 @@ public class TypedControlTests
 
         Assert.NotNull(nameControl);
         Assert.NotNull(ageControl);
-        Assert.Equal("Alice", nameControl!.Value);
-        Assert.Equal(30, ageControl!.Value);
+        Assert.Equal("Alice", nameControl!.ValueObject);
+        Assert.Equal(30, ageControl!.ValueObject);
     }
 
     [Fact]
@@ -177,8 +177,8 @@ public class TypedControlTests
 
         Assert.NotNull(elem0);
         Assert.NotNull(elem1);
-        Assert.Equal("first", elem0!.Value);
-        Assert.Equal(123, elem1!.Value);
+        Assert.Equal("first", elem0!.ValueObject);
+        Assert.Equal(123, elem1!.ValueObject);
     }
 
     [Fact]
@@ -187,11 +187,11 @@ public class TypedControlTests
         var control = Control.Create("initial");
         var editor = new ControlEditor();
 
-        Assert.Equal("initial", control.InitialValue);
+        Assert.Equal("initial", control.InitialValueObject);
 
         editor.SetInitialValue(control, "new-initial");
 
-        Assert.Equal("new-initial", control.InitialValue);
+        Assert.Equal("new-initial", control.InitialValueObject);
     }
 
     [Fact]
@@ -228,7 +228,7 @@ public class TypedControlTests
             value => string.IsNullOrEmpty(value) || !value.Contains("@") ? "Invalid email" : null
         );
 
-        Assert.Equal("test@example.com", control.Value);
+        Assert.Equal("test@example.com", control.ValueObject);
         Assert.True(control.IsValid);
 
         var editor = new ControlEditor();

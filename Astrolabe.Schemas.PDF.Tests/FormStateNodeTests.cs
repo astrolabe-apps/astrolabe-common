@@ -65,7 +65,7 @@ public class FormStateNodeTests
 
         // Assert
         Assert.NotNull(firstChild.DataNode);
-        Assert.Equal("Alice", firstChild.DataNode.Control.Value);
+        Assert.Equal("Alice", firstChild.DataNode.Control.ValueObject);
         Assert.Equal(dataNode, firstChild.Parent);
     }
 
@@ -139,7 +139,7 @@ public class FormStateNodeTests
         {
             Assert.NotNull(child.DataNode);
             Assert.Equal(index, child.DataNode.ElementIndex);
-            Assert.Equal($"tag{index + 1}", child.DataNode.Control.Value);
+            Assert.Equal($"tag{index + 1}", child.DataNode.Control.ValueObject);
         }
     }
 
@@ -362,8 +362,8 @@ public class FormStateNodeTests
         Assert.NotNull(streetChild.DataNode);
         Assert.NotNull(cityChild.DataNode);
 
-        Assert.Equal("789 Oak Ave", streetChild.DataNode.Control.Value);
-        Assert.Equal("Capital City", cityChild.DataNode.Control.Value);
+        Assert.Equal("789 Oak Ave", streetChild.DataNode.Control.ValueObject);
+        Assert.Equal("Capital City", cityChild.DataNode.Control.ValueObject);
     }
 
     [Fact]
@@ -406,8 +406,8 @@ public class FormStateNodeTests
         var streetChild = groupNode.Children.First();
         var cityChild = groupNode.Children.Last();
 
-        Assert.Equal("999 Pine Rd", streetChild.DataNode?.Control.Value);
-        Assert.Equal("Metropolis", cityChild.DataNode?.Control.Value);
+        Assert.Equal("999 Pine Rd", streetChild.DataNode?.Control.ValueObject);
+        Assert.Equal("Metropolis", cityChild.DataNode?.Control.ValueObject);
     }
 
     [Fact]
@@ -481,7 +481,7 @@ public class FormStateNodeTests
         // Third child should be new
         var thirdChild = tagsControl.Children.ElementAt(2);
         Assert.NotNull(thirdChild);
-        Assert.Equal("tag3", thirdChild.DataNode?.Control.Value);
+        Assert.Equal("tag3", thirdChild.DataNode?.Control.ValueObject);
 
         // Act - Remove the middle element
         editor.RemoveElement(arrayControl, 1);

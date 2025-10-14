@@ -10,15 +10,18 @@ namespace Astrolabe.Controls;
 public record ControlBehavior<T>
 {
     /// <summary>
-    /// Clones the value with the specified property overrides.
-    /// Used when child control values change to create a new parent value.
+    /// Clones the value with the specified child controls.
+    /// Used when child control values change to create a new parent value through lazy reconstruction.
     /// </summary>
     /// <remarks>
     /// The function should handle two scenarios:
     /// 1. Creating from null - when the original value is null and a child property is set
     /// 2. Cloning non-null - when the value exists and child changes need to be merged
+    /// The function receives child controls (not just values) to allow access to metadata if needed.
     /// </remarks>
-    public required Func<T?, IDictionary<string, object?>, T> CloneWith { get; init; }
+    public required Func<T, IDictionary<string, IControl>, T> CloneWithDict { get; init; }
+
+    public required Func<T, List<IControl>, T> CloneWithArray { get; init; }
 
     /// <summary>
     /// Creates a child control for the specified field/property/key.

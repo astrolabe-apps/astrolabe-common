@@ -45,7 +45,7 @@ public static class EntityExpressionExtensions
         bool RunJsonata(string expr)
         {
             // Convert IControl to JsonNode for Jsonata evaluation
-            var jsonNode = data.Value as JsonNode ?? JsonSerializer.SerializeToNode(data.Value);
+            var jsonNode = data.ValueObject as JsonNode ?? JsonSerializer.SerializeToNode(data.ValueObject);
             var result = new JsonataQuery(expr).Eval(
                 JsonataExtensions.FromSystemTextJson(JsonDocument.Parse(jsonNode?.ToJsonString() ?? "{}")));
             if (result.Type == JTokenType.Boolean)
@@ -61,7 +61,7 @@ public static class EntityExpressionExtensions
         if (control == null)
             return value == null;
 
-        var controlValue = control.Value;
+        var controlValue = control.ValueObject;
 
         return (controlValue, value) switch
         {
