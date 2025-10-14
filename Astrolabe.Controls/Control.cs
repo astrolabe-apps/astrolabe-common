@@ -556,12 +556,7 @@ public class Control<T> : IControl<T>, IControlMutation
 
         throw new ArgumentException($"Expression must be a member access expression, got: {expression}");
     }
-
-    public static Control<object?> CreateUndefined()
-    {
-        return new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance);
-    }
-
+    
     // Immutability support - generic version for T
     private static T DeepClone(T value)
     {
@@ -1474,5 +1469,11 @@ public static class Control
 
         return control;
     }
+    
+    public static Control<object?> CreateUndefined()
+    {
+        return new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance);
+    }
+
 
 }

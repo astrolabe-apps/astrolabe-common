@@ -12,23 +12,8 @@ public class FormStateNode_VisibilityTests
     [Fact]
     public void Visible_Should_Be_True_By_Default()
     {
-        // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
-        var definition = TestHelpers.CreateDataControl(".");
-        var editor = new ControlEditor();
-
-        // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        // Arrange & Act
+        var formState = TestHelpers.CreateFormStateNode();
 
         // Assert
         // Temporary: returns true until visibility scripting is implemented
@@ -39,22 +24,10 @@ public class FormStateNode_VisibilityTests
     public void Visible_Should_Be_False_When_Definition_Hidden_Is_True()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var definition = TestHelpers.CreateDataControl(".", hidden: true);
-        var editor = new ControlEditor();
 
         // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        var formState = TestHelpers.CreateFormStateNode(definition: definition);
 
         // Assert
         Assert.False(formState.Visible);
@@ -64,22 +37,10 @@ public class FormStateNode_VisibilityTests
     public void Visible_Should_Be_True_When_Definition_Hidden_Is_False()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var definition = TestHelpers.CreateDataControl(".", hidden: false);
-        var editor = new ControlEditor();
 
         // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        var formState = TestHelpers.CreateFormStateNode(definition: definition);
 
         // Assert
         Assert.True(formState.Visible);
@@ -89,34 +50,20 @@ public class FormStateNode_VisibilityTests
     public void Visible_Should_Inherit_Parent_Visibility_When_Parent_Is_False()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("parentField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var parentDefinition = TestHelpers.CreateDataControl(".", hidden: true);
         var childDefinition = TestHelpers.CreateDataControl(".");
         var editor = new ControlEditor();
 
         // Act
-        var parentState = new FormStateNode(
+        var parentState = TestHelpers.CreateFormStateNode(
             definition: parentDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
             childKey: "parent",
-            editor: editor
-        );
+            editor: editor);
 
-        var childState = new FormStateNode(
-            definition: childDefinition,
-            form: null,
-            parent: dataNode,
+        var childState = TestHelpers.CreateChildFormStateNode(
             parentNode: parentState,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "child",
-            editor: editor
-        );
+            editor: editor,
+            definition: childDefinition);
 
         // Assert
         Assert.False(parentState.Visible);
@@ -129,34 +76,20 @@ public class FormStateNode_VisibilityTests
     public void Visible_Should_Inherit_Parent_Visibility_When_Parent_Is_Visible()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("parentField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var parentDefinition = TestHelpers.CreateDataControl("."); // hidden: null -> visible: true
         var childDefinition = TestHelpers.CreateDataControl(".", hidden: false);
         var editor = new ControlEditor();
 
         // Act
-        var parentState = new FormStateNode(
+        var parentState = TestHelpers.CreateFormStateNode(
             definition: parentDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
             childKey: "parent",
-            editor: editor
-        );
+            editor: editor);
 
-        var childState = new FormStateNode(
-            definition: childDefinition,
-            form: null,
-            parent: dataNode,
+        var childState = TestHelpers.CreateChildFormStateNode(
             parentNode: parentState,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "child",
-            editor: editor
-        );
+            editor: editor,
+            definition: childDefinition);
 
         // Assert
         // Temporary: parent returns true instead of null until visibility scripting is implemented
@@ -168,34 +101,20 @@ public class FormStateNode_VisibilityTests
     public void Visible_Should_Use_Child_Definition_When_Parent_Is_True()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("parentField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var parentDefinition = TestHelpers.CreateDataControl(".", hidden: false);
         var childDefinition = TestHelpers.CreateDataControl(".", hidden: true);
         var editor = new ControlEditor();
 
         // Act
-        var parentState = new FormStateNode(
+        var parentState = TestHelpers.CreateFormStateNode(
             definition: parentDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
             childKey: "parent",
-            editor: editor
-        );
+            editor: editor);
 
-        var childState = new FormStateNode(
-            definition: childDefinition,
-            form: null,
-            parent: dataNode,
+        var childState = TestHelpers.CreateChildFormStateNode(
             parentNode: parentState,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "child",
-            editor: editor
-        );
+            editor: editor,
+            definition: childDefinition);
 
         // Assert
         Assert.True(parentState.Visible);
@@ -207,25 +126,13 @@ public class FormStateNode_VisibilityTests
     {
         // Arrange
         var schema = TestHelpers.CreateTestSchema("testField");
-        var editor = new ControlEditor();
 
         // Create undefined control
-        var undefinedControl = Control<object?>.CreateUndefined();
+        var undefinedControl = Control.CreateUndefined();
         var undefinedDataNode = new SchemaDataNode(schema, undefinedControl, null);
 
-        var definition = TestHelpers.CreateDataControl(".");
-
         // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: undefinedDataNode,
-            parentNode: null,
-            dataNode: undefinedDataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        var formState = TestHelpers.CreateFormStateNode(dataNode: undefinedDataNode);
 
         // Assert
         Assert.False(formState.Visible); // Should be hidden when data is undefined

@@ -12,23 +12,8 @@ public class FormStateNode_FieldOptionsTests
     [Fact]
     public void FieldOptions_Should_Be_Null_When_Schema_Has_No_Options()
     {
-        // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
-        var definition = TestHelpers.CreateDataControl(".");
-        var editor = new ControlEditor();
-
-        // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        // Arrange & Act
+        var formState = TestHelpers.CreateFormStateNode();
 
         // Assert
         Assert.Null(formState.FieldOptions);
@@ -46,20 +31,9 @@ public class FormStateNode_FieldOptionsTests
         };
         var schema = TestHelpers.CreateTestSchema("testField", "string", null, options);
         var dataNode = TestHelpers.CreateTestDataNode(schema, "opt1");
-        var definition = TestHelpers.CreateDataControl(".");
-        var editor = new ControlEditor();
 
         // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        var formState = TestHelpers.CreateFormStateNode(dataNode: dataNode);
 
         // Assert
         Assert.NotNull(formState.FieldOptions);
@@ -72,23 +46,8 @@ public class FormStateNode_FieldOptionsTests
     [Fact]
     public void FieldOptions_Should_Be_Null_When_DataNode_Is_Null()
     {
-        // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
-        var definition = TestHelpers.CreateDataControl("."); // Will result in null dataNode
-        var editor = new ControlEditor();
-
-        // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: null, // Explicitly null
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        // Arrange & Act
+        var formState = TestHelpers.CreateFormStateNode(dataNode: null);
 
         // Assert
         Assert.Null(formState.FieldOptions);
@@ -106,20 +65,9 @@ public class FormStateNode_FieldOptionsTests
         };
         var schema = TestHelpers.CreateTestSchema("colorField", "string", null, options);
         var dataNode = TestHelpers.CreateTestDataNode(schema, "red");
-        var definition = TestHelpers.CreateDataControl(".");
-        var editor = new ControlEditor();
 
         // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        var formState = TestHelpers.CreateFormStateNode(dataNode: dataNode);
 
         // Assert
         Assert.NotNull(formState.FieldOptions);
@@ -142,20 +90,9 @@ public class FormStateNode_FieldOptionsTests
         var options = new List<FieldOption>(); // Empty list
         var schema = TestHelpers.CreateTestSchema("testField", "string", null, options);
         var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
-        var definition = TestHelpers.CreateDataControl(".");
-        var editor = new ControlEditor();
 
         // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        var formState = TestHelpers.CreateFormStateNode(dataNode: dataNode);
 
         // Assert - empty list remains as empty list (not null)
         Assert.NotNull(formState.FieldOptions);
@@ -174,20 +111,9 @@ public class FormStateNode_FieldOptionsTests
         };
         var schema = TestHelpers.CreateTestSchema("numberField", "number", null, options);
         var dataNode = TestHelpers.CreateTestDataNode(schema, 1);
-        var definition = TestHelpers.CreateDataControl(".");
-        var editor = new ControlEditor();
 
         // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        var formState = TestHelpers.CreateFormStateNode(dataNode: dataNode);
 
         // Assert
         Assert.NotNull(formState.FieldOptions);

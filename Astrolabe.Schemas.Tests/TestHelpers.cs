@@ -104,6 +104,77 @@ public static class TestHelpers
             Disabled = disabled
         };
     }
+
+    /// <summary>
+    /// Creates a root FormStateNode with default parameters for testing
+    /// </summary>
+    public static FormStateNode CreateFormStateNode(
+        DataControlDefinition? definition = null,
+        SchemaDataNode? dataNode = null,
+        ISchemaNode? schema = null,
+        object? value = null,
+        string childKey = "key1",
+        int childIndex = 0,
+        ControlEditor? editor = null)
+    {
+        // Use provided editor or create a new one
+        var actualEditor = editor ?? new ControlEditor();
+
+        // If dataNode not provided, create one from schema and value
+        var actualDataNode = dataNode;
+        if (actualDataNode == null)
+        {
+            var actualSchema = schema ?? CreateTestSchema("testField");
+            actualDataNode = CreateTestDataNode(actualSchema, value);
+        }
+
+        // Use provided definition or create default one
+        var actualDefinition = definition ?? CreateDataControl(".");
+
+        return new FormStateNode(
+            definition: actualDefinition,
+            form: null,
+            parent: actualDataNode,
+            parentNode: null,
+            dataNode: actualDataNode,
+            childIndex: childIndex,
+            childKey: childKey,
+            editor: actualEditor
+        );
+    }
+
+    /// <summary>
+    /// Creates a child FormStateNode with a parent node
+    /// </summary>
+    public static FormStateNode CreateChildFormStateNode(
+        FormStateNode parentNode,
+        ControlEditor editor,
+        DataControlDefinition? definition = null,
+        SchemaDataNode? dataNode = null,
+        SchemaDataNode? parent = null,
+        string childKey = "child",
+        int childIndex = 0)
+    {
+        // Use provided definition or create default one
+        var actualDefinition = definition ?? CreateDataControl(".");
+
+        // Use provided parent or use parent node's dataNode
+        var actualParent = parent ?? parentNode.Parent;
+
+        // Use provided dataNode or use parent
+        var actualDataNode = dataNode ?? actualParent;
+
+        return new FormStateNode(
+            definition: actualDefinition,
+            form: null,
+            parent: actualParent,
+            parentNode: parentNode,
+            dataNode: actualDataNode,
+            childIndex: childIndex,
+            childKey: childKey,
+            editor: editor
+        );
+    }
 }
 
 /// <summary>

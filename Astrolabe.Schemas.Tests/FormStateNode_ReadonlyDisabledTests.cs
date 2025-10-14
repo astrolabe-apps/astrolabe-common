@@ -12,23 +12,8 @@ public class FormStateNode_ReadonlyDisabledTests
     [Fact]
     public void Readonly_Should_Be_False_By_Default()
     {
-        // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
-        var definition = TestHelpers.CreateDataControl(".");
-        var editor = new ControlEditor();
-
-        // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        // Arrange & Act
+        var formState = TestHelpers.CreateFormStateNode();
 
         // Assert
         Assert.False(formState.Readonly);
@@ -37,23 +22,8 @@ public class FormStateNode_ReadonlyDisabledTests
     [Fact]
     public void Disabled_Should_Be_False_By_Default()
     {
-        // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
-        var definition = TestHelpers.CreateDataControl(".");
-        var editor = new ControlEditor();
-
-        // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        // Arrange & Act
+        var formState = TestHelpers.CreateFormStateNode();
 
         // Assert
         Assert.False(formState.Disabled);
@@ -63,22 +33,10 @@ public class FormStateNode_ReadonlyDisabledTests
     public void Readonly_Should_Be_True_When_Definition_Readonly_Is_True()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var definition = TestHelpers.CreateDataControl(".", readonly_: true);
-        var editor = new ControlEditor();
 
         // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        var formState = TestHelpers.CreateFormStateNode(definition: definition);
 
         // Assert
         Assert.True(formState.Readonly);
@@ -88,22 +46,10 @@ public class FormStateNode_ReadonlyDisabledTests
     public void Disabled_Should_Be_True_When_Definition_Disabled_Is_True()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var definition = TestHelpers.CreateDataControl(".", disabled: true);
-        var editor = new ControlEditor();
 
         // Act
-        var formState = new FormStateNode(
-            definition: definition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "key1",
-            editor: editor
-        );
+        var formState = TestHelpers.CreateFormStateNode(definition: definition);
 
         // Assert
         Assert.True(formState.Disabled);
@@ -113,34 +59,20 @@ public class FormStateNode_ReadonlyDisabledTests
     public void Readonly_Should_Inherit_From_Parent()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("parentField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var parentDefinition = TestHelpers.CreateDataControl(".", readonly_: true);
         var childDefinition = TestHelpers.CreateDataControl(".");
         var editor = new ControlEditor();
 
         // Act
-        var parentState = new FormStateNode(
+        var parentState = TestHelpers.CreateFormStateNode(
             definition: parentDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
             childKey: "parent",
-            editor: editor
-        );
+            editor: editor);
 
-        var childState = new FormStateNode(
-            definition: childDefinition,
-            form: null,
-            parent: dataNode,
+        var childState = TestHelpers.CreateChildFormStateNode(
             parentNode: parentState,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "child",
-            editor: editor
-        );
+            editor: editor,
+            definition: childDefinition);
 
         // Assert
         Assert.True(parentState.Readonly);
@@ -151,34 +83,20 @@ public class FormStateNode_ReadonlyDisabledTests
     public void Disabled_Should_Inherit_From_Parent()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("parentField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var parentDefinition = TestHelpers.CreateDataControl(".", disabled: true);
         var childDefinition = TestHelpers.CreateDataControl(".");
         var editor = new ControlEditor();
 
         // Act
-        var parentState = new FormStateNode(
+        var parentState = TestHelpers.CreateFormStateNode(
             definition: parentDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
             childKey: "parent",
-            editor: editor
-        );
+            editor: editor);
 
-        var childState = new FormStateNode(
-            definition: childDefinition,
-            form: null,
-            parent: dataNode,
+        var childState = TestHelpers.CreateChildFormStateNode(
             parentNode: parentState,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "child",
-            editor: editor
-        );
+            editor: editor,
+            definition: childDefinition);
 
         // Assert
         Assert.True(parentState.Disabled);
@@ -189,34 +107,20 @@ public class FormStateNode_ReadonlyDisabledTests
     public void Readonly_Parent_Override_Takes_Precedence_Over_Child_Definition()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("parentField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var parentDefinition = TestHelpers.CreateDataControl(".", readonly_: true);
         var childDefinition = TestHelpers.CreateDataControl(".", readonly_: false);
         var editor = new ControlEditor();
 
         // Act
-        var parentState = new FormStateNode(
+        var parentState = TestHelpers.CreateFormStateNode(
             definition: parentDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
             childKey: "parent",
-            editor: editor
-        );
+            editor: editor);
 
-        var childState = new FormStateNode(
-            definition: childDefinition,
-            form: null,
-            parent: dataNode,
+        var childState = TestHelpers.CreateChildFormStateNode(
             parentNode: parentState,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "child",
-            editor: editor
-        );
+            editor: editor,
+            definition: childDefinition);
 
         // Assert
         Assert.True(parentState.Readonly);
@@ -227,34 +131,20 @@ public class FormStateNode_ReadonlyDisabledTests
     public void Disabled_Parent_Override_Takes_Precedence_Over_Child_Definition()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("parentField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var parentDefinition = TestHelpers.CreateDataControl(".", disabled: true);
         var childDefinition = TestHelpers.CreateDataControl(".", disabled: false);
         var editor = new ControlEditor();
 
         // Act
-        var parentState = new FormStateNode(
+        var parentState = TestHelpers.CreateFormStateNode(
             definition: parentDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
             childKey: "parent",
-            editor: editor
-        );
+            editor: editor);
 
-        var childState = new FormStateNode(
-            definition: childDefinition,
-            form: null,
-            parent: dataNode,
+        var childState = TestHelpers.CreateChildFormStateNode(
             parentNode: parentState,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "child",
-            editor: editor
-        );
+            editor: editor,
+            definition: childDefinition);
 
         // Assert
         Assert.True(parentState.Disabled);
@@ -265,46 +155,22 @@ public class FormStateNode_ReadonlyDisabledTests
     public void Readonly_And_Disabled_Can_Be_True_Independently()
     {
         // Arrange
-        var schema = TestHelpers.CreateTestSchema("testField");
-        var dataNode = TestHelpers.CreateTestDataNode(schema, "test value");
         var readonlyDefinition = TestHelpers.CreateDataControl(".", readonly_: true, disabled: false);
         var disabledDefinition = TestHelpers.CreateDataControl(".", readonly_: false, disabled: true);
         var bothDefinition = TestHelpers.CreateDataControl(".", readonly_: true, disabled: true);
-        var editor = new ControlEditor();
 
         // Act
-        var readonlyState = new FormStateNode(
+        var readonlyState = TestHelpers.CreateFormStateNode(
             definition: readonlyDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "readonly",
-            editor: editor
-        );
+            childKey: "readonly");
 
-        var disabledState = new FormStateNode(
+        var disabledState = TestHelpers.CreateFormStateNode(
             definition: disabledDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "disabled",
-            editor: editor
-        );
+            childKey: "disabled");
 
-        var bothState = new FormStateNode(
+        var bothState = TestHelpers.CreateFormStateNode(
             definition: bothDefinition,
-            form: null,
-            parent: dataNode,
-            parentNode: null,
-            dataNode: dataNode,
-            childIndex: 0,
-            childKey: "both",
-            editor: editor
-        );
+            childKey: "both");
 
         // Assert
         Assert.True(readonlyState.Readonly);
