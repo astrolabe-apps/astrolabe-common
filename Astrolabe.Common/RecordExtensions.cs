@@ -19,7 +19,6 @@ public static class RecordExtensions
     /// <param name="overrides">Dictionary of property names to new values</param>
     /// <returns>A new instance with the overridden property values</returns>
     public static T CloneWithOverrides<T>(T original, IDictionary<string, object?> overrides)
-        where T : class
     {
         if (original == null)
             throw new ArgumentNullException(nameof(original));

@@ -384,20 +384,18 @@ public class Control<T> : IControl<T>, IControlMutation
     // Default behavior implementations
     private static T DefaultClone(T original, IDictionary<string, IControl> childControls)
     {
-        // Convert IControl dictionary to values dictionary
-        var overrides = childControls.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ValueObject);
-
         // Handle null - create new instance from overrides
-        if (original == null)
+        if (original == null || UndefinedValue.Instance == (object?) original)
         {
             // Dictionary: create from overrides
-            if (typeof(T) == typeof(IDictionary<string, object?>) ||
+            if (typeof(T) == typeof(IDictionary<string, object?>) || typeof(T) == typeof(object) ||
                 typeof(IDictionary<string, object?>).IsAssignableFrom(typeof(T)))
             {
                 var newDict = new Dictionary<string, object?>();
-                foreach (var (key, value) in overrides)
+                foreach (var (key, value) in childControls)
                 {
-                    newDict[key] = value;
+                    if (!value.IsUndefined)
+                        newDict[key] = value.ValueObject;
                 }
                 return (T)(object)newDict;
             }
@@ -409,9 +407,8 @@ public class Control<T> : IControl<T>, IControlMutation
             // Only call CloneWithOverrides if T is a reference type - use reflection to avoid compile-time constraint
             if (typeof(T).IsClass && !typeof(T).IsAbstract)
             {
-                var method = typeof(RecordExtensions).GetMethod(nameof(RecordExtensions.CloneWithOverrides))!;
-                var genericMethod = method.MakeGenericMethod(typeof(T));
-                return (T)genericMethod.Invoke(null, new object?[] { instance, overrides })!;
+                return RecordExtensions.CloneWithOverrides<T>(original, 
+                    childControls.ToDictionary(x => x.Key, x => x.Value.ValueObject));
             }
             return instance;
         }
@@ -420,9 +417,12 @@ public class Control<T> : IControl<T>, IControlMutation
         if (original is IDictionary<string, object?> dict)
         {
             var newDict = new Dictionary<string, object?>(dict);
-            foreach (var (key, value) in overrides)
+            foreach (var (key, value) in childControls)
             {
-                newDict[key] = value;
+                if (!value.IsUndefined)
+                    newDict[key] = value.ValueObject;
+                else newDict.Remove(key);
+
             }
             return (T)(object)newDict;
         }
@@ -430,10 +430,8 @@ public class Control<T> : IControl<T>, IControlMutation
         // Fallback: use CloneWithOverrides for records/classes (if T is a reference type)
         if (typeof(T).IsClass && !typeof(T).IsAbstract)
         {
-            // Use reflection to avoid compile-time constraint
-            var method = typeof(RecordExtensions).GetMethod(nameof(RecordExtensions.CloneWithOverrides))!;
-            var genericMethod = method.MakeGenericMethod(typeof(T));
-            return (T)genericMethod.Invoke(null, new object?[] { original, overrides })!;
+            return RecordExtensions.CloneWithOverrides<T>(original, 
+                childControls.ToDictionary(x => x.Key, x => x.Value.ValueObject));
         }
 
         // For value types or unsupported types, return the original

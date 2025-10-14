@@ -266,7 +266,7 @@ public class UndefinedControlTests
     [Fact]
     public void Null_Control_Child_Assignment_Should_Create_Parent_Object()
     {
-        var parentControl = Control.Create((object?)null);
+        var parentControl = Control.Create<IDictionary<string, object?>?>(null);
         var editor = new ControlEditor();
 
         // Access a child of the null control
@@ -280,7 +280,7 @@ public class UndefinedControlTests
         Assert.True(parentControl.IsObject);
         Assert.Null(parentControl.InitialValueObject); // Initial value stays null
 
-        var parentDict = (Dictionary<string, object>)parentControl.ValueObject!;
+        var parentDict = parentControl.Value!;
         Assert.Single(parentDict);
         Assert.True(parentDict.ContainsKey("testProperty"));
         Assert.Equal("test value", parentDict["testProperty"]);
