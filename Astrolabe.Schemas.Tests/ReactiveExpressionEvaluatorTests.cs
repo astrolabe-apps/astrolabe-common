@@ -9,24 +9,13 @@ namespace Astrolabe.Schemas.Tests;
 /// </summary>
 public class ReactiveExpressionEvaluatorTests
 {
-    // Simple schema interface implementation for testing
-    private class TestSchemaInterface : ISchemaInterface
-    {
-        public bool IsEmptyValue(SchemaField field, object? value)
-        {
-            return value == null ||
-                   (value is string s && string.IsNullOrWhiteSpace(s)) ||
-                   (value is System.Collections.ICollection c && c.Count == 0);
-        }
-    }
-
     [Fact]
     public void DataExpression_Should_Return_Field_Value()
     {
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "name", "John");
         var expression = new DataExpression("name");
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
         var editor = new ControlEditor();
 
         object? result = null;
@@ -49,7 +38,7 @@ public class ReactiveExpressionEvaluatorTests
         var schema = TestHelpers.CreateTestSchema("parent", "object");
         var dataNode = TestHelpers.CreateObjectDataNode(schema, new Dictionary<string, object?> { ["other"] = "value" });
         var expression = new DataExpression("missing");
-        var context = new ExpressionEvalContext(dataNode, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(dataNode, DefaultSchemaInterface.Instance);
 
         object? result = "not null";
         var subscription = ReactiveExpressionEvaluators.Evaluate(
@@ -70,7 +59,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "name", "John");
         var expression = new DataExpression("name");
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
         var editor = new ControlEditor();
 
         object? result = null;
@@ -98,7 +87,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "role", "admin");
         var expression = new DataMatchExpression("role", "admin");
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
 
         object? result = null;
         var subscription = ReactiveExpressionEvaluators.Evaluate(
@@ -119,7 +108,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "role", "user");
         var expression = new DataMatchExpression("role", "admin");
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
 
         object? result = null;
         var subscription = ReactiveExpressionEvaluators.Evaluate(
@@ -140,7 +129,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "role", "user");
         var expression = new DataMatchExpression("role", "admin");
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
         var editor = new ControlEditor();
 
         object? result = null;
@@ -174,7 +163,7 @@ public class ReactiveExpressionEvaluatorTests
         });
 
         var expression = new DataMatchExpression("roles", "admin");
-        var context = new ExpressionEvalContext(dataNode, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(dataNode, DefaultSchemaInterface.Instance);
 
         object? result = null;
         var subscription = ReactiveExpressionEvaluators.Evaluate(
@@ -195,7 +184,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "email", "user@example.com");
         var expression = new NotEmptyExpression("email", Empty: false);
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
 
         object? result = null;
         var subscription = ReactiveExpressionEvaluators.Evaluate(
@@ -216,7 +205,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "email", "");
         var expression = new NotEmptyExpression("email", Empty: false);
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
 
         object? result = null;
         var subscription = ReactiveExpressionEvaluators.Evaluate(
@@ -237,7 +226,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "email", null);
         var expression = new NotEmptyExpression("email", Empty: false);
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
 
         object? result = null;
         var subscription = ReactiveExpressionEvaluators.Evaluate(
@@ -258,7 +247,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "email", "");
         var expression = new NotEmptyExpression("email", Empty: false);
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
         var editor = new ControlEditor();
 
         object? result = null;
@@ -286,7 +275,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "email", "");
         var expression = new NotEmptyExpression("email", Empty: true);
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
 
         object? result = null;
         var subscription = ReactiveExpressionEvaluators.Evaluate(
@@ -308,7 +297,7 @@ public class ReactiveExpressionEvaluatorTests
         var schema = TestHelpers.CreateTestSchema("parent");
         var dataNode = TestHelpers.CreateTestDataNode(schema);
         var expression = new SimpleExpression(nameof(ExpressionType.UUID));
-        var context = new ExpressionEvalContext(dataNode, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(dataNode, DefaultSchemaInterface.Instance);
 
         object? result = null;
         var subscription = ReactiveExpressionEvaluators.Evaluate(
@@ -331,7 +320,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "name", "John");
         var expression = new DataExpression("name");
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
         var editor = new ControlEditor();
 
         var targetControl = Control.Create<object?>(null);
@@ -358,7 +347,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var (parent, child, parentData) = TestHelpers.CreateParentChildSchema("parent", "role", "admin");
         var expression = new DataMatchExpression("role", "admin");
-        var context = new ExpressionEvalContext(parentData, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(parentData, DefaultSchemaInterface.Instance);
         var editor = new ControlEditor();
 
         var targetControl = Control.Create<object?>(null, null);
@@ -384,7 +373,7 @@ public class ReactiveExpressionEvaluatorTests
         // Arrange
         var schema = TestHelpers.CreateTestSchema("parent");
         var dataNode = TestHelpers.CreateTestDataNode(schema);
-        var context = new ExpressionEvalContext(dataNode, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(dataNode, DefaultSchemaInterface.Instance);
         var editor = new ControlEditor();
         var targetControl = Control.Create<object?>(null, null);
 
@@ -411,7 +400,7 @@ public class ReactiveExpressionEvaluatorTests
 
         var firstNameExpr = new DataExpression("firstName");
         var lastNameExpr = new DataExpression("lastName");
-        var context = new ExpressionEvalContext(dataNode, new TestSchemaInterface());
+        var context = new ExpressionEvalContext(dataNode, DefaultSchemaInterface.Instance);
         var editor = new ControlEditor();
 
         object? firstNameResult = null;

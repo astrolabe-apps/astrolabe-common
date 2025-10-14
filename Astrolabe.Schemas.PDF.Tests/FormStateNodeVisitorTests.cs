@@ -2,6 +2,7 @@ using System.Text.Json;
 using Astrolabe.Controls;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
+using Astrolabe.Schemas.Tests;
 using Xunit;
 
 namespace Astrolabe.Schemas.PDF.Tests;
@@ -241,7 +242,7 @@ public class FormStateNodeVisitorTests
         var schemaNode = schemas.GetSchema(nameof(SimplePerson))!;
         var dataNode = schemaNode.WithData(jsonData);
         var editor = new ControlEditor();
-        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
+        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
 
         var nameNode = formStateTree.Children.First();
 
@@ -285,7 +286,7 @@ public class FormStateNodeVisitorTests
         var schemaNode = schemas.GetSchema(nameof(PersonWithAddress))!;
         var dataNode = schemaNode.WithData(jsonData);
         var editor = new ControlEditor();
-        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
+        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
 
         // Act - Find the street field deep in the hierarchy
         var streetValue = formStateTree.VisitFormState<string>(node =>
@@ -321,7 +322,7 @@ public class FormStateNodeVisitorTests
         var schemaNode = schemas.GetSchema(nameof(SimplePerson))!;
         var dataNode = schemaNode.WithData(jsonData);
         var editor = new ControlEditor();
-        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
+        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
 
         // Act
         var results = formStateTree.CollectFromFormState<string>(node =>
@@ -356,7 +357,7 @@ public class FormStateNodeVisitorTests
         var dataNode = schemaNode.WithData(jsonData);
 
         var editor = new ControlEditor();
-        return FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
+        return FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
     }
 
     private IFormStateNode CreateNestedTree()
@@ -383,7 +384,7 @@ public class FormStateNodeVisitorTests
         var dataNode = schemaNode.WithData(jsonData);
 
         var editor = new ControlEditor();
-        return FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
+        return FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
     }
 
     private int GetTotalNodeCount(IFormStateNode node)

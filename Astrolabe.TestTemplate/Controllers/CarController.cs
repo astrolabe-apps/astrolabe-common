@@ -137,7 +137,8 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor
+            editor,
+            DefaultSchemaInterface.Instance
         );
 
         var doc = Document.Create(dc =>

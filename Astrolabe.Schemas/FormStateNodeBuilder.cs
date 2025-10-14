@@ -14,11 +14,13 @@ public static class FormStateNodeBuilder
     /// <param name="form">The form node containing the form definition</param>
     /// <param name="data">The root schema data node containing the data</param>
     /// <param name="editor">The control editor to use for reactive updates</param>
+    /// <param name="schemaInterface">The schema interface for type-aware operations</param>
     /// <returns>The root form state node with all children built reactively</returns>
     public static IFormStateNode CreateFormStateNode(
         IFormNode form,
         SchemaDataNode data,
-        ControlEditor editor
+        ControlEditor editor,
+        ISchemaInterface schemaInterface
     )
     {
         var definition = form.Definition;
@@ -32,7 +34,8 @@ public static class FormStateNodeBuilder
             dataNode: dataNode,
             childIndex: 0,
             childKey: "ROOT",
-            editor: editor
+            editor: editor,
+            schemaInterface: schemaInterface
         );
 
         return root;

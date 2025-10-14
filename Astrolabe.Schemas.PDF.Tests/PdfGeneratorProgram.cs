@@ -2,6 +2,7 @@ using System.Text.Json;
 using Astrolabe.Controls;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
+using Astrolabe.Schemas.Tests;
 using Astrolabe.Schemas.PDF;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
@@ -85,7 +86,8 @@ public class PdfGeneratorProgram
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor
+            editor,
+            TestHelpers.CreateTestSchemaInterface()
         );
 
         var doc = Document.Create(dc =>
@@ -178,7 +180,8 @@ public class PdfGeneratorProgram
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor
+            editor,
+            TestHelpers.CreateTestSchemaInterface()
         );
 
         var doc = Document.Create(dc =>
@@ -308,7 +311,8 @@ public class PdfGeneratorProgram
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor
+            editor,
+            TestHelpers.CreateTestSchemaInterface()
         );
 
         var doc = Document.Create(dc =>
@@ -621,7 +625,8 @@ public class PdfGeneratorProgram
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor
+            editor,
+            TestHelpers.CreateTestSchemaInterface()
         );
 
         var doc = Document.Create(dc =>

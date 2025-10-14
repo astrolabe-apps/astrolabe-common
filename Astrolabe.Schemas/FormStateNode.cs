@@ -10,6 +10,7 @@ public class FormStateNode : IFormStateNode
     private readonly IControl<FormStateImpl> _stateControl;
     private readonly IControl _childrenControl;
     private readonly ControlEditor _editor;
+    private readonly ISchemaInterface _schemaInterface;
 
     // Expose state control for parent-child reactive tracking
     // Not part of IFormStateNode interface - only accessible from FormStateNode
@@ -23,16 +24,17 @@ public class FormStateNode : IFormStateNode
         SchemaDataNode? dataNode,
         int childIndex,
         object childKey,
-        ControlEditor editor
+        ControlEditor editor,
+        ISchemaInterface schemaInterface
     )
     {
-        Definition = definition;
         Form = form;
         Parent = parent;
         ParentNode = parentNode;
         ChildIndex = childIndex;
         ChildKey = childKey;
         _editor = editor;
+        _schemaInterface = schemaInterface;
 
         // Create control with initial state
         _stateControl = Control.Create(new FormStateImpl
@@ -61,6 +63,9 @@ public class FormStateNode : IFormStateNode
         // Set up reactive field options (depends on DataNode)
         InitializeFieldOptions();
 
+        // Set up reactive title evaluation (depends on DataNode)
+        InitializeTitle(definition);
+
         // Set up reactive visibility
         InitializeVisibility();
 
@@ -72,7 +77,7 @@ public class FormStateNode : IFormStateNode
         }, _editor);
     }
 
-    public ControlDefinition Definition { get; }
+    public ControlDefinition Definition => _stateControl.Value.Definition;
     public IFormNode? Form { get; }
     public ICollection<IFormStateNode> Children => (List<IFormStateNode>)_childrenControl.ValueObject!;
     public IFormStateNode? ParentNode { get; }
@@ -123,7 +128,8 @@ public class FormStateNode : IFormStateNode
                     dataNode: childDataNode,
                     childIndex: childIndex,
                     childKey: childKey,
-                    editor: _editor
+                    editor: _editor,
+                    schemaInterface: _schemaInterface
                 );
 
                 newChildren.Add(childNode);
@@ -213,6 +219,79 @@ public class FormStateNode : IFormStateNode
             // Convert to collection
             return fieldOptions.ToList();
         }, _editor);
+    }
+
+    private void InitializeTitle(ControlDefinition originalDefinition)
+    {
+        var definitionField = _stateControl.Field(x => x.Definition);
+
+        // Look for Label dynamic property in original definition
+        var labelExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.Label);
+
+        if (labelExpression != null)
+        {
+            // Reactively update the Definition with the evaluated title
+            Control<object?>.MakeComputed(definitionField, tracker =>
+            {
+                // Evaluate the expression relative to the Parent node
+                // (not the control's own DataNode, which might be null)
+                var (success, result) = TryEvaluateLabelExpression(labelExpression, Parent, tracker);
+
+                if (!success)
+                {
+                    // Field not found or evaluation failed - keep original title
+                    return originalDefinition;
+                }
+
+                // Coerce to string
+                var evaluatedTitle = DynamicPropertyHelpers.CoerceString(result);
+
+                // Create a modified definition with the evaluated title
+                return originalDefinition with { Title = evaluatedTitle };
+            }, _editor);
+        }
+        // If no dynamic title, the original definition is already set and doesn't need updates
+    }
+
+    private (bool success, object? result) TryEvaluateLabelExpression(EntityExpression expression, SchemaDataNode dataNode, ChangeTracker tracker)
+    {
+        // Handle DataExpression (field reference)
+        if (expression is DataExpression dataExpr)
+        {
+            var fieldNode = dataNode.GetChildForFieldRef(dataExpr.Field);
+            if (fieldNode == null)
+                return (false, null);  // Field not found
+            var value = tracker.GetValue(fieldNode.Control);
+            return (true, value);
+        }
+
+        // Handle DataMatchExpression (field value matching)
+        if (expression is DataMatchExpression matchExpr)
+        {
+            var fieldNode = dataNode.GetChildForFieldRef(matchExpr.Field);
+            if (fieldNode == null)
+                return (false, null);  // Field not found
+
+            var fieldValue = tracker.GetValue(fieldNode.Control);
+
+            // Check if it's an array/collection
+            if (fieldValue is System.Collections.IEnumerable enumerable && fieldValue is not string)
+            {
+                foreach (var item in enumerable)
+                {
+                    if (Equals(item, matchExpr.Value))
+                        return (true, true);
+                }
+                return (true, false);
+            }
+
+            return (true, Equals(fieldValue, matchExpr.Value));
+        }
+
+        // For other expression types, fail
+        return (false, null);
     }
 
     private void InitializeVisibility()

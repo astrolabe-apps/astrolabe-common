@@ -11,6 +11,13 @@ namespace Astrolabe.Schemas.Tests;
 public static class TestHelpers
 {
     /// <summary>
+    /// Creates a test schema interface instance
+    /// </summary>
+    public static ISchemaInterface CreateTestSchemaInterface()
+    {
+        return DefaultSchemaInterface.Instance;
+    }
+    /// <summary>
     /// Creates a simple test schema node with specified field name
     /// </summary>
     public static TestSchemaNode CreateTestSchema(string fieldName, string? type = "string", bool? collection = null, IEnumerable<FieldOption>? options = null)
@@ -109,16 +116,20 @@ public static class TestHelpers
     /// Creates a root FormStateNode with default parameters for testing
     /// </summary>
     public static FormStateNode CreateFormStateNode(
-        DataControlDefinition? definition = null,
+        ControlDefinition? definition = null,
         SchemaDataNode? dataNode = null,
         ISchemaNode? schema = null,
         object? value = null,
         string childKey = "key1",
         int childIndex = 0,
-        ControlEditor? editor = null)
+        ControlEditor? editor = null,
+        ISchemaInterface? schemaInterface = null)
     {
         // Use provided editor or create a new one
         var actualEditor = editor ?? new ControlEditor();
+
+        // Use provided schemaInterface or create a new one
+        var actualSchemaInterface = schemaInterface ?? CreateTestSchemaInterface();
 
         // If dataNode not provided, create one from schema and value
         var actualDataNode = dataNode;
@@ -139,7 +150,8 @@ public static class TestHelpers
             dataNode: actualDataNode,
             childIndex: childIndex,
             childKey: childKey,
-            editor: actualEditor
+            editor: actualEditor,
+            schemaInterface: actualSchemaInterface
         );
     }
 
@@ -149,14 +161,18 @@ public static class TestHelpers
     public static FormStateNode CreateChildFormStateNode(
         FormStateNode parentNode,
         ControlEditor editor,
-        DataControlDefinition? definition = null,
+        ControlDefinition? definition = null,
         SchemaDataNode? dataNode = null,
         SchemaDataNode? parent = null,
         string childKey = "child",
-        int childIndex = 0)
+        int childIndex = 0,
+        ISchemaInterface? schemaInterface = null)
     {
         // Use provided definition or create default one
         var actualDefinition = definition ?? CreateDataControl(".");
+
+        // Use provided schemaInterface or create a new one
+        var actualSchemaInterface = schemaInterface ?? CreateTestSchemaInterface();
 
         // Use provided parent or use parent node's dataNode
         var actualParent = parent ?? parentNode.Parent;
@@ -172,7 +188,8 @@ public static class TestHelpers
             dataNode: actualDataNode,
             childIndex: childIndex,
             childKey: childKey,
-            editor: editor
+            editor: editor,
+            schemaInterface: actualSchemaInterface
         );
     }
 }

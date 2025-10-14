@@ -12,6 +12,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Astrolabe.Schemas.PDF\Astrolabe.Schemas.PDF.csproj" />
         <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+        <ProjectReference Include="..\Astrolabe.Schemas.Tests\Astrolabe.Schemas.Tests.csproj" />
     </ItemGroup>
 
     <ItemGroup>
