@@ -67,6 +67,38 @@ public void SetValue(IControl control, object? value)
 }
 ```
 
+## 4. Value Flows Bidirectionally, InitialValue Flows Top-Down
+
+**Principle**: `Value` synchronizes bidirectionally between parents and children, but `InitialValue` only flows from parent to child.
+
+- **Value synchronization**:
+  - Parent → Child: When `SetValue` is called on a parent, changes propagate to child controls
+  - Child → Parent: When a child's value changes, the parent is marked dirty and lazily reconstructs its value from all children
+
+- **InitialValue synchronization**:
+  - Parent → Child: When `SetInitialValue` is called on a parent, it propagates to child controls
+  - Child → Parent: **Never synchronizes back up** - children's initial values don't affect parent's initial value
+
+```csharp
+var editor = new ControlEditor();
+var parent = Control.CreateStructured(new { Name = "John", Age = 30 });
+var nameControl = parent["Name"];
+
+// InitialValue flows down
+editor.SetInitialValue(parent, new { Name = "Jane", Age = 25 });
+// nameControl.InitialValue is now "Jane"
+
+// Value flows up (lazy reconstruction)
+editor.SetValue(nameControl, "Bob");
+// parent.Value will reconstruct to { Name = "Bob", Age = 30 } when accessed
+
+// InitialValue changes on child don't flow up
+editor.SetInitialValue(nameControl, "Alice");
+// parent.InitialValue is unchanged - still { Name = "Jane", Age = 25 }
+```
+
+**Rationale**: InitialValue represents the "reset point" for the form, set externally by the application. It makes no sense for child modifications to affect where the parent resets to. Only Value needs bidirectional sync to maintain structural consistency.
+
 ## Benefits of These Principles
 
 1. **Data Integrity**: Immutability prevents accidental corruption of control state
@@ -74,6 +106,7 @@ public void SetValue(IControl control, object? value)
 3. **Change Tracking**: Transaction-based modifications enable proper listener notifications
 4. **Thread Safety**: Immutable external values reduce concurrency concerns
 5. **Maintainability**: Clear separation between read and write operations
+6. **Clear Data Flow**: Unidirectional InitialValue flow simplifies mental model and avoids reconstruction complexity
 
 ## Common Patterns
 
