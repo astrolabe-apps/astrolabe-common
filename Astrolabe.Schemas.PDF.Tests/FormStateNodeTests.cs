@@ -33,7 +33,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         Assert.NotNull(formStateNode);
@@ -61,7 +61,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
         var firstChild = formStateNode.Children.First();
 
         // Assert
@@ -97,7 +97,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         Assert.Single(formStateNode.Children); // One group
@@ -126,7 +126,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         Assert.Equal(2, formStateNode.Children.Count);
@@ -185,7 +185,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var addressesControl = formStateNode.Children.First();
@@ -234,7 +234,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var root = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var root = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var groupChild = root.Children.First();
@@ -279,7 +279,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var statusControl = formStateNode.Children.First();
@@ -323,7 +323,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var statusControl = formStateNode.Children.First();
@@ -352,7 +352,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         Assert.Equal(2, formStateNode.Children.Count);
@@ -395,7 +395,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var groupNode = formStateNode.Children.First();
@@ -431,7 +431,7 @@ public class FormStateNodeTests
 
         // Act
         var editor = new ControlEditor();
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
 
         // Assert
         var children = formStateNode.Children.ToList();
@@ -457,7 +457,7 @@ public class FormStateNodeTests
         var dataNode = schemaNode.WithData(jsonData);
         var editor = new ControlEditor();
 
-        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor, TestHelpers.CreateTestSchemaInterface());
+        var formStateNode = FormStateNodeBuilder.CreateFormStateNode(formNode, dataNode, editor);
         var tagsControl = formStateNode.Children.First();
 
         // Verify initial state

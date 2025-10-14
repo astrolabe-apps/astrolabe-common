@@ -85,8 +85,7 @@ public class TailwindStyleTests
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         // Act
@@ -162,8 +161,7 @@ public class TailwindStyleTests
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         // Act
@@ -231,8 +229,7 @@ public class TailwindStyleTests
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         // Act
@@ -316,8 +313,7 @@ public class TailwindStyleTests
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         // Act
@@ -387,8 +383,7 @@ public class TailwindStyleTests
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         // Act
@@ -466,8 +461,7 @@ public class TailwindStyleTests
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         // Act

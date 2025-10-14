@@ -20,9 +20,10 @@ public static class FormStateNodeBuilder
         IFormNode form,
         SchemaDataNode data,
         ControlEditor editor,
-        ISchemaInterface schemaInterface
+        ISchemaInterface? schemaInterface = null
     )
     {
+        var actualSchemaInterface = schemaInterface ?? DefaultSchemaInterface.Instance;
         var definition = form.Definition;
         var dataNode = FormStateNodeHelpers.LookupDataNode(definition, data);
 
@@ -35,7 +36,7 @@ public static class FormStateNodeBuilder
             childIndex: 0,
             childKey: "ROOT",
             editor: editor,
-            schemaInterface: schemaInterface
+            schemaInterface: actualSchemaInterface
         );
 
         return root;

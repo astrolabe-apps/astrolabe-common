@@ -11,13 +11,6 @@ namespace Astrolabe.Schemas.Tests;
 public static class TestHelpers
 {
     /// <summary>
-    /// Creates a test schema interface instance
-    /// </summary>
-    public static ISchemaInterface CreateTestSchemaInterface()
-    {
-        return DefaultSchemaInterface.Instance;
-    }
-    /// <summary>
     /// Creates a simple test schema node with specified field name
     /// </summary>
     public static TestSchemaNode CreateTestSchema(string fieldName, string? type = "string", bool? collection = null, IEnumerable<FieldOption>? options = null)
@@ -128,8 +121,8 @@ public static class TestHelpers
         // Use provided editor or create a new one
         var actualEditor = editor ?? new ControlEditor();
 
-        // Use provided schemaInterface or create a new one
-        var actualSchemaInterface = schemaInterface ?? CreateTestSchemaInterface();
+        // Use provided schemaInterface or use default
+        var actualSchemaInterface = schemaInterface ?? DefaultSchemaInterface.Instance;
 
         // If dataNode not provided, create one from schema and value
         var actualDataNode = dataNode;
@@ -171,8 +164,8 @@ public static class TestHelpers
         // Use provided definition or create default one
         var actualDefinition = definition ?? CreateDataControl(".");
 
-        // Use provided schemaInterface or create a new one
-        var actualSchemaInterface = schemaInterface ?? CreateTestSchemaInterface();
+        // Use provided schemaInterface or use default
+        var actualSchemaInterface = schemaInterface ?? DefaultSchemaInterface.Instance;
 
         // Use provided parent or use parent node's dataNode
         var actualParent = parent ?? parentNode.Parent;

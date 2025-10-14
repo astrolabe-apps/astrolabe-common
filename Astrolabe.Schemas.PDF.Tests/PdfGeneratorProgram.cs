@@ -86,8 +86,7 @@ public class PdfGeneratorProgram
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         var doc = Document.Create(dc =>
@@ -180,8 +179,7 @@ public class PdfGeneratorProgram
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         var doc = Document.Create(dc =>
@@ -311,8 +309,7 @@ public class PdfGeneratorProgram
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         var doc = Document.Create(dc =>
@@ -625,8 +622,7 @@ public class PdfGeneratorProgram
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         var doc = Document.Create(dc =>

@@ -56,8 +56,7 @@ public class PdfGeneratorTests
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         // Act - Generate PDF
@@ -121,8 +120,7 @@ public class PdfGeneratorTests
         var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
             rootFormNode,
             rootSchemaData,
-            editor,
-            TestHelpers.CreateTestSchemaInterface()
+            editor
         );
 
         // Act
