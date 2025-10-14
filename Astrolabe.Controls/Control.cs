@@ -65,19 +65,14 @@ public class Control<T> : IControl<T>, IControlMutation
         }
     }
 
-    public object? InitialValueObject
-    {
-        get
-        {
-            // No reconstruction needed - InitialValue only flows top-down
-            // Return null for undefined values instead of exposing internal sentinel
-            return _initialValue is UndefinedValue ? null : _initialValue;
-        }
-    }
+    public object? InitialValueObject =>
+        // No reconstruction needed - InitialValue only flows top-down
+        // Return null for undefined values instead of exposing internal sentinel
+        _initialValue is UndefinedValue ? null : _initialValue;
 
     // Typed property accessors for IControl<T>
-    public T Value => _value;
-    public T InitialValue => _initialValue;
+    public T Value => (T) ValueObject!;
+    public T InitialValue => (T)InitialValueObject!;
 
     public bool IsDirty => !IControl.IsEqual(ValueObject, InitialValueObject);
     public bool IsDisabled => (_flags & ControlFlags.Disabled) != 0;

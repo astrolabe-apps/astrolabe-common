@@ -136,56 +136,6 @@ public class PdfGeneratorTests
         Assert.NotEmpty(pdfBytes);
         Assert.True(pdfBytes.Length > 100);
     }
-
-    [Fact]
-    public void Should_Throw_Exception_For_Missing_Field()
-    {
-        // Arrange
-        var schemas = new SchemaFieldsInstanceGenerator(
-            new SchemaFieldsGeneratorOptions("")
-        ).CollectDataForTypes(typeof(TestPerson));
-
-        var schemaLookup = SchemaTreeLookup.Create(
-            schemas.ToDictionary(x => x.Type.Name, x => x.Fields)
-        );
-
-        var controls = new ControlDefinition[]
-        {
-            new DataControlDefinition("name") { Title = "Name" },
-            new DataControlDefinition("nonExistentField") // This field doesn't exist
-            {
-                Title = "Missing Field"
-            }
-        };
-
-        var testData = new TestPerson("Test User", 20, "test@example.com");
-        var jsonData = JsonSerializer.SerializeToNode(testData, JsonOptions);
-
-        var rootFormNode = FormLookup.Create(_ => controls).GetForm("")!;
-        var rootSchemaNode = schemaLookup.GetSchema(nameof(TestPerson))!;
-        var rootSchemaData = rootSchemaNode.WithData(jsonData);
-
-        // Act & Assert - Should throw exception for missing field
-        var ex = Assert.Throws<Exception>(() =>
-        {
-            // Build the FormStateNode tree - this should throw for missing field
-            var editor = new ControlEditor();
-            var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
-                rootFormNode,
-                rootSchemaData,
-                editor
-            );
-
-            var doc = Document.Create(dc =>
-            {
-                var pdfContext = new PdfFormContext(formStateTree);
-                dc.Page(p => p.Content().Column(c => pdfContext.RenderContent(c.Item())));
-            });
-            doc.GeneratePdf();
-        });
-
-        Assert.Contains("Missing field", ex.Message);
-    }
 }
 
 // Test model
