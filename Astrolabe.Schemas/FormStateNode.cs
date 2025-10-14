@@ -66,6 +66,9 @@ public class FormStateNode : IFormStateNode
         // Set up reactive title evaluation (depends on DataNode)
         InitializeTitle(definition);
 
+        // Set up reactive display evaluation (depends on DataNode)
+        InitializeDisplay(definition);
+
         // Set up reactive visibility
         InitializeVisibility();
 
@@ -237,7 +240,7 @@ public class FormStateNode : IFormStateNode
             {
                 // Evaluate the expression relative to the Parent node
                 // (not the control's own DataNode, which might be null)
-                var (success, result) = TryEvaluateLabelExpression(labelExpression, Parent, tracker);
+                var (success, result) = TryEvaluateExpression(labelExpression, Parent, tracker);
 
                 if (!success)
                 {
@@ -255,7 +258,51 @@ public class FormStateNode : IFormStateNode
         // If no dynamic title, the original definition is already set and doesn't need updates
     }
 
-    private (bool success, object? result) TryEvaluateLabelExpression(EntityExpression expression, SchemaDataNode dataNode, ChangeTracker tracker)
+    private void InitializeDisplay(ControlDefinition originalDefinition)
+    {
+        var definitionField = _stateControl.Field(x => x.Definition);
+
+        // Look for Display dynamic property in original definition
+        var displayExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.Display);
+
+        if (displayExpression != null && originalDefinition is DisplayControlDefinition displayControl)
+        {
+            // Reactively update the Definition with the evaluated display
+            Control<object?>.MakeComputed(definitionField, tracker =>
+            {
+                // Evaluate the expression relative to the Parent node
+                var (success, result) = TryEvaluateExpression(displayExpression, Parent, tracker);
+
+                if (!success)
+                {
+                    // Field not found or evaluation failed - keep original display
+                    return originalDefinition;
+                }
+
+                // Coerce to string
+                var evaluatedDisplay = DynamicPropertyHelpers.CoerceString(result);
+
+                // Create a modified definition with the evaluated display
+                return displayControl.DisplayData switch
+                {
+                    TextDisplay textDisplay => displayControl with
+                    {
+                        DisplayData = textDisplay with { Text = evaluatedDisplay ?? "" }
+                    },
+                    HtmlDisplay htmlDisplay => displayControl with
+                    {
+                        DisplayData = htmlDisplay with { Html = evaluatedDisplay ?? "" }
+                    },
+                    _ => originalDefinition // For other display types, don't modify
+                };
+            }, _editor);
+        }
+        // If no dynamic display, the original definition is already set and doesn't need updates
+    }
+
+    private (bool success, object? result) TryEvaluateExpression(EntityExpression expression, SchemaDataNode dataNode, ChangeTracker tracker)
     {
         // Handle DataExpression (field reference)
         if (expression is DataExpression dataExpr)
