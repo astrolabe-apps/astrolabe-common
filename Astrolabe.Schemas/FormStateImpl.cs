@@ -21,6 +21,10 @@ public record FormStateImpl
     public ICollection<FieldOption>? FieldOptions { get; init; }
     public object? AllowedOptions { get; init; }
 
+    // Dynamic styles
+    public IDictionary<string, object?>? Style { get; init; }
+    public IDictionary<string, object?>? LayoutStyle { get; init; }
+
     // Force overrides
     public bool? ForceHidden { get; init; }
     public bool? ForceReadonly { get; init; }

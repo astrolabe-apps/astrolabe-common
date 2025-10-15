@@ -19,9 +19,9 @@ internal interface IControlMutation
 
     // Parent-child relationship management
     void UpdateParentLink(IControl parent, object? key, bool initial = false);
-    void NotifyParentsOfChange();
+    void NotifyParentsOfChange(ControlEditor editor);
 
     // Child control updates
     void InvalidateChildValidityCache(ControlEditor editor, bool hasErrors);
-    void UpdateChildValue(object key, object? value);
+    void UpdateChildValue(ControlEditor editor, object key);
 }

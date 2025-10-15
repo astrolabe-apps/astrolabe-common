@@ -139,6 +139,8 @@ public interface IControl<T> : IControl
     /// <returns>A typed control for the field</returns>
     IControl<TField> Field<TField>(Expression<Func<T, TField>> selector);
 
+    IControl<TField> SubField<T2, TField>(Expression<Func<T2, TField>> selector) where T2 : T;
+
     /// <summary>
     /// Checks if a field control has already been created for the specified field.
     /// This allows checking for control existence without creating one.

@@ -242,45 +242,6 @@ public class FormStateNode_DynamicTitleTests
     }
 
     [Fact]
-    public void DynamicTitle_WithNullDataNode_FallsBackToStaticTitle()
-    {
-        // Arrange
-        var schema = TestHelpers.CreateTestSchema("parent");
-        var parentDataNode = TestHelpers.CreateTestDataNode(schema);
-        var editor = new ControlEditor();
-
-        // Create a group control definition (no field, so no DataNode)
-        var definition = new GroupedControlsDefinition()
-        {
-            Title = "Static Group Title",
-            Dynamic =
-            [
-                new DynamicProperty(
-                    Type: nameof(DynamicPropertyType.Label),
-                    Expr: new DataExpression("someField")
-                )
-            ]
-        };
-
-        // Act - create child node with null dataNode (typical for GroupedControls without CompoundField)
-        var parentFormStateNode = TestHelpers.CreateFormStateNode(
-            dataNode: parentDataNode,
-            editor: editor
-        );
-
-        var formStateNode = TestHelpers.CreateChildFormStateNode(
-            parentNode: parentFormStateNode,
-            editor: editor,
-            definition: definition,
-            dataNode: null, // No DataNode for group
-            parent: parentDataNode
-        );
-
-        // Assert - should fall back to static title since DataNode is null
-        Assert.Equal("Static Group Title", formStateNode.Definition.Title);
-    }
-
-    [Fact]
     public void MultipleFormStateNodes_TrackTitleIndependently()
     {
         // Arrange

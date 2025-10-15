@@ -328,13 +328,8 @@ public class StructuredControlTests
     [Fact]
     public void CreateStructured_With_DontClearError_Should_Preserve_Errors()
     {
-        // Arrange
-        var control = Control.CreateStructured(
-            new SimpleData("John", 30),
-            dontClearError: true
-        );
         var editor = new ControlEditor();
-        var nameControl = control["Name"];
+        var nameControl = Control.Create("John","John", flags: ControlFlags.DontClearError);
 
         // Act
         editor.SetError(nameControl!, "test", "Error message");

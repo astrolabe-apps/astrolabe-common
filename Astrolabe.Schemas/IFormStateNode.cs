@@ -1,6 +1,6 @@
 namespace Astrolabe.Schemas;
 
-public interface IFormStateNode
+public interface IFormStateNode : IDisposable
 {
     public ControlDefinition Definition { get; }
     public IFormNode? Form { get; }
@@ -13,4 +13,6 @@ public interface IFormStateNode
     public bool Readonly { get; }
     public bool Disabled { get; }
     public ICollection<FieldOption>? FieldOptions { get; }
+    public IDictionary<string, object?>? Style { get; }
+    public IDictionary<string, object?>? LayoutStyle { get; }
 }

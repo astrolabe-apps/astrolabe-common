@@ -8,10 +8,10 @@ namespace Astrolabe.Controls;
 public class Control<T> : IControl<T>, IControlMutation
 {
     private static int NextId = 1;
-    private T _value;
-    private T _initialValue;
+    private object? _value;
+    private object? _initialValue;
     private ControlFlags _flags;
-    private readonly ControlBehavior<T> _behavior;
+    private readonly IControlBehavior _behavior;
     private Dictionary<string, string>? _errors;
     private bool? _cachedChildInvalidity;
 
@@ -30,25 +30,20 @@ public class Control<T> : IControl<T>, IControlMutation
         string
     >().AsReadOnly();
 
-    // Default behavior for Control<T>
-    private static readonly ControlBehavior<T> DefaultBehavior = new()
-    {
-        CloneWithDict = DefaultClone,
-        CloneWithArray = DefaultArrayClone,
-        CreateChildField = DefaultCreateChildField,
-        CreateChildElement = DefaultCreateChildElement,
-        GetFieldName = DefaultGetFieldName
-    };
-
     // Internal constructor - use factory methods instead
-    internal Control(T value, T initialValue, ControlFlags flags = ControlFlags.None, ControlBehavior<T>? behavior = null)
+    internal Control(object? value, object? initialValue, ControlFlags flags = ControlFlags.None, IControlBehavior? behavior = null)
     {
         _value = value;
         _initialValue = initialValue;
         _flags = flags;
-        _behavior = behavior ?? DefaultBehavior;
+        _behavior = behavior ?? DefaultControlBehavior.Instance;
         UniqueId = Interlocked.Increment(ref NextId);
     }
+
+    // Internal accessor methods for DefaultControlBehavior
+    internal object? GetValue() => _value;
+    internal object? GetInitialValue() => _initialValue;
+    internal ControlFlags GetFlags() => _flags;
 
     public int UniqueId { get; }
 
@@ -96,7 +91,7 @@ public class Control<T> : IControl<T>, IControlMutation
 
     public bool HasErrors => Errors.Count > 0;
     public bool IsValid => !HasErrors && !IsAnyChildInvalid;
-    public bool IsUndefined => _value is UndefinedValue;
+    public bool IsUndefined => ValueObject == null && _value is UndefinedValue;
 
     // Type detection
     public bool IsObject => ValueObject is IDictionary<string, object>;
@@ -216,20 +211,34 @@ public class Control<T> : IControl<T>, IControlMutation
     // Type-safe field access using expression selector
     public IControl<TField> Field<TField>(Expression<Func<T, TField>> selector)
     {
+        return SubField(selector);
+    }
+
+    public IControl<TField> SubField<T2, TField>(Expression<Func<T2, TField>> selector) where T2 : T
+    {
+        // Get field name first
         var fieldName = _behavior.GetFieldName(selector);
-        var child = this[fieldName];
 
-        // Try to cast to the typed interface
-        if (child is IControl<TField> typedControl)
-            return typedControl;
+        // Lazy initialization of field controls
+        _fieldControls ??= new Dictionary<string, IControl>();
 
-        // If cast fails (e.g., child is undefined Control<object?> but we need Control<TField>),
-        // create an undefined control of the correct type
-        if (child.IsUndefined)
-            return (IControl<TField>)(object)new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance);
+        // Check if we already have a cached control for this field
+        if (_fieldControls.TryGetValue(fieldName, out var existing))
+        {
+            // Try to cast to the typed interface
+            if (existing is IControl<TField> typedControl)
+                return typedControl;
+        }
 
-        // Fallback: create undefined control
-        return (IControl<TField>)(object)new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance);
+        // Use behavior to create typed child field with type information from selector
+        var childControl = _behavior.CreateTypedField(this, selector);
+
+        // Set up parent-child relationship
+        AttachChildControl(childControl, fieldName);
+
+        // Cache and return
+        _fieldControls[fieldName] = childControl;
+        return childControl;
     }
 
     public bool HaveField<TField>(Expression<Func<T, TField>> selector)
@@ -243,108 +252,18 @@ public class Control<T> : IControl<T>, IControlMutation
     // Lazy reconstruction from child controls
     private void ReconstructValueFromChildren()
     {
-        var childControls = new Dictionary<string, IControl>();
-
         // Collect field controls
         if (_fieldControls != null)
         {
-            _value = _behavior.CloneWithDict(_value, _fieldControls);
+            _value = _behavior.CloneWithDict<T>((T)_value!, _fieldControls);
         }
 
         // Collect element controls
         if (_elementControls != null)
         {
-            _value = _behavior.CloneWithArray(_value, _elementControls);
+            _value = _behavior.CloneWithArray<T>((T)_value!, _elementControls);
         }
         _flags &= ~ControlFlags.ChildValueDirty;
-    }
-
-    /// <summary>
-    /// Makes an existing control computed by setting up a reactive computation that updates its value.
-    /// The compute function is called initially and whenever any tracked dependencies change.
-    /// This is useful for overriding fields in structured controls with computed values.
-    /// </summary>
-    /// <typeparam name="T">The type of the control value</typeparam>
-    /// <param name="control">The control to make computed</param>
-    /// <param name="compute">Function that computes the value, receiving a ChangeTracker to track dependencies</param>
-    /// <param name="editor">ControlEditor instance to use for updates</param>
-    /// <example>
-    /// <code>
-    /// var baseCtrl = Control.CreateStructured(new FormStateBase { Visible = null, Readonly = false });
-    /// var visibleField = baseCtrl.Field(x => x.Visible);
-    /// var editor = new ControlEditor();
-    ///
-    /// // Make the Visible field computed based on other controls
-    /// Control.MakeComputed(visibleField, tracker => {
-    ///     var someCondition = (bool?)otherControl.Value;
-    ///     return someCondition ? true : null;
-    /// }, editor);
-    ///
-    /// // Now visibleField.Value is automatically computed
-    /// </code>
-    /// </example>
-    public static void MakeComputed<T>(
-        IControl control,
-        Func<ChangeTracker, T> compute,
-        ControlEditor editor)
-    {
-        var tracker = new ChangeTracker();
-
-        // Set up reactive callback
-        tracker.SetCallback(() =>
-        {
-            var newValue = compute(tracker);
-            editor.SetValue(control, newValue);
-            tracker.UpdateSubscriptions();
-        });
-
-        // Initial computation and subscription setup
-        var initialValue = compute(tracker);
-        editor.SetValue(control, initialValue);
-        tracker.UpdateSubscriptions();
-    }
-
-    /// <summary>
-    /// Makes an existing control computed by setting up a reactive computation that updates its value.
-    /// Unlike MakeComputed, this version passes the current value to the compute function,
-    /// allowing you to reuse or transform the existing value rather than creating a new one from scratch.
-    /// </summary>
-    /// <typeparam name="T">The type of the control value</typeparam>
-    /// <param name="control">The control to make computed</param>
-    /// <param name="compute">Function that computes the value, receiving a ChangeTracker and current value</param>
-    /// <param name="editor">ControlEditor instance to use for updates</param>
-    /// <example>
-    /// <code>
-    /// var listControl = Control.Create(new List&lt;Item&gt;());
-    /// var editor = new ControlEditor();
-    ///
-    /// // Reuse existing items when source changes, only add/remove as needed
-    /// Control.MakeComputedWithPrevious&lt;List&lt;Item&gt;&gt;(listControl, (tracker, currentList) => {
-    ///     var source = (List&lt;Source&gt;)sourceControl.Value;
-    ///     return UpdateList(currentList, source); // Reuses items from currentList
-    /// }, editor);
-    /// </code>
-    /// </example>
-    public static void MakeComputedWithPrevious<T>(
-        IControl control,
-        Func<ChangeTracker, T, T> compute,
-        ControlEditor editor)
-    {
-        var tracker = new ChangeTracker();
-
-        // Set up reactive callback
-        tracker.SetCallback(() =>
-        {
-            var currentValue = (T)control.ValueObject!;
-            var newValue = compute(tracker, currentValue);
-            editor.SetValue(control, newValue);
-            tracker.UpdateSubscriptions();
-        });
-
-        // Initial computation and subscription setup
-        var initialValue = compute(tracker, (T)control.ValueObject!);
-        editor.SetValue(control, initialValue);
-        tracker.UpdateSubscriptions();
     }
 
     public ISubscription Subscribe(ChangeListenerFunc listener, ControlChange mask)
@@ -367,236 +286,6 @@ public class Control<T> : IControl<T>, IControlMutation
             changeFlags |= ControlChange.Valid;
 
         return changeFlags;
-    }
-
-    private static T DefaultArrayClone(T original, IList<IControl> childControls)
-    {
-        List<object?> list = [];
-        list.AddRange(childControls.Select(x => x.ValueObject));
-        return (T)(object)list;
-    }
-    
-    // Default behavior implementations
-    private static T DefaultClone(T original, IDictionary<string, IControl> childControls)
-    {
-        // Handle null - create new instance from overrides
-        if (original == null || UndefinedValue.Instance == (object?) original)
-        {
-            // Dictionary: create from overrides
-            if (typeof(T) == typeof(IDictionary<string, object?>) || typeof(T) == typeof(object) ||
-                typeof(IDictionary<string, object?>).IsAssignableFrom(typeof(T)))
-            {
-                var newDict = new Dictionary<string, object?>();
-                foreach (var (key, value) in childControls)
-                {
-                    if (!value.IsUndefined)
-                        newDict[key] = value.ValueObject;
-                }
-                return (T)(object)newDict;
-            }
-            
-            // Records/classes: create using Activator then apply overrides
-            var instance = Activator.CreateInstance<T>();
-            if (instance is null)
-                throw new InvalidOperationException($"Cannot create instance of type {typeof(T)}");
-            // Only call CloneWithOverrides if T is a reference type - use reflection to avoid compile-time constraint
-            if (typeof(T).IsClass && !typeof(T).IsAbstract)
-            {
-                return RecordExtensions.CloneWithOverrides<T>(original, 
-                    childControls.ToDictionary(x => x.Key, x => x.Value.ValueObject));
-            }
-            return instance;
-        }
-
-        // Handle non-null - merge with overrides
-        if (original is IDictionary<string, object?> dict)
-        {
-            var newDict = new Dictionary<string, object?>(dict);
-            foreach (var (key, value) in childControls)
-            {
-                if (!value.IsUndefined)
-                    newDict[key] = value.ValueObject;
-                else newDict.Remove(key);
-
-            }
-            return (T)(object)newDict;
-        }
-
-        // Fallback: use CloneWithOverrides for records/classes (if T is a reference type)
-        if (typeof(T).IsClass && !typeof(T).IsAbstract)
-        {
-            return RecordExtensions.CloneWithOverrides<T>(original, 
-                childControls.ToDictionary(x => x.Key, x => x.Value.ValueObject));
-        }
-
-        // For value types or unsupported types, return the original
-        return original;
-    }
-
-    private static IControl DefaultCreateChildField(Control<T> parent, string fieldName)
-    {
-        var currentValue = parent._value;
-        var initialValue = parent._initialValue;
-
-        // Only inherit disabled, touched, and dontClearError flags, not all flags
-        var childFlags = parent._flags & (ControlFlags.Disabled | ControlFlags.Touched | ControlFlags.DontClearError);
-
-        if (currentValue == null)
-            return new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance, childFlags);
-
-        // Dictionary: get value for key
-        if (currentValue is IDictionary<string, object?> currentDict)
-        {
-            if (!currentDict.TryGetValue(fieldName, out var value))
-                return new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance, childFlags);
-
-            // Get initial value from parent's initial value
-            var initialDict = initialValue as IDictionary<string, object?>;
-            var childInitialValue = initialDict?.TryGetValue(fieldName, out var iv) == true
-                ? iv
-                : value;
-
-            return new Control<object?>(value, childInitialValue, childFlags);
-        }
-
-        // Records/Classes: use reflection to get property type and value
-        var propInfo = typeof(T).GetProperty(fieldName);
-        if (propInfo == null)
-            return new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance, childFlags);
-
-        var propValue = propInfo.GetValue(currentValue);
-
-        // Get initial property value from parent's initial value
-        var initialPropValue = initialValue != null
-            ? propInfo.GetValue(initialValue)
-            : propValue;
-
-        // Create Control<TProperty> using reflection with NonPublic binding flags to access internal constructor
-        var controlType = typeof(Control<>).MakeGenericType(propInfo.PropertyType);
-        var control = Activator.CreateInstance(controlType,
-            BindingFlags.Instance | BindingFlags.NonPublic,
-            null,
-            new object?[] { propValue, initialPropValue, childFlags, null },
-            null);
-        return (IControl)control!;
-    }
-
-    private static IControl? DefaultCreateChildElement(Control<T> parent, int index)
-    {
-        var currentValue = parent._value;
-        var initialValue = parent._initialValue;
-
-        if (currentValue == null)
-            return null;
-
-        // Array/List: get element at index
-        if (currentValue is IList currentList)
-        {
-            if (index < 0 || index >= currentList.Count)
-                return null;
-
-            var value = currentList[index];
-
-            // Get initial value from parent's initial array/list
-            var initialList = initialValue as IList;
-            var childInitialValue = initialList != null && index < initialList.Count
-                ? initialList[index]
-                : value;
-
-            // Only inherit disabled, touched, and dontClearError flags, not all flags
-            var childFlags = parent._flags & (ControlFlags.Disabled | ControlFlags.Touched | ControlFlags.DontClearError);
-            return new Control<object?>(value, childInitialValue, childFlags);
-        }
-
-        // Not an array/list type
-        return null;
-    }
-
-    private static string DefaultGetFieldName(Expression expression)
-    {
-        // Handle Expression<Func<T, TField>> - extract the member name
-        if (expression is LambdaExpression lambda)
-        {
-            if (lambda.Body is MemberExpression member)
-            {
-                return member.Member.Name;
-            }
-            // Handle unary expressions (e.g., boxing conversions)
-            if (lambda.Body is UnaryExpression unary && unary.Operand is MemberExpression unaryMember)
-            {
-                return unaryMember.Member.Name;
-            }
-        }
-
-        throw new ArgumentException($"Expression must be a member access expression, got: {expression}");
-    }
-    
-    // Immutability support - generic version for T
-    private static T DeepClone(T value)
-    {
-        if (value == null)
-            return value;
-
-        return value switch
-        {
-            IDictionary<string, object> dict => (T)(object)CloneDictionary(dict),
-            IList list => (T)CloneList(list),
-            _ => value // Primitive types and other objects are treated as immutable
-        };
-    }
-
-    private static Dictionary<string, object> CloneDictionary(IDictionary<string, object> original)
-    {
-        var cloned = new Dictionary<string, object>(original.Count);
-        foreach (var kvp in original)
-        {
-            cloned[kvp.Key] = DeepCloneObject(kvp.Value)!;
-        }
-        return cloned;
-    }
-
-    private static object CloneList(IList original)
-    {
-        // Check if this is a generic List<T> where T is a reference type that shouldn't be deep cloned
-        var listType = original.GetType();
-        if (listType.IsGenericType && listType.GetGenericTypeDefinition() == typeof(List<>))
-        {
-            var elementType = listType.GetGenericArguments()[0];
-
-            // If element type is a reference type (class/interface), preserve the typed list
-            // This avoids converting List<IFormStateNode> to List<object?>
-            if (!elementType.IsValueType && elementType != typeof(string))
-            {
-                // Create a new list of the same type
-                var newList = (IList)Activator.CreateInstance(listType, original.Count)!;
-                foreach (var item in original)
-                {
-                    // Don't deep clone reference type elements - treat them as immutable references
-                    newList.Add(item);
-                }
-                return newList;
-            }
-        }
-
-        // For non-generic lists or lists of value types, use the original deep clone logic
-        var cloned = new List<object?>(original.Count);
-        foreach (var item in original)
-        {
-            cloned.Add(DeepCloneObject(item));
-        }
-        return cloned;
-    }
-
-    // Non-generic helper for cloning object values
-    private static object? DeepCloneObject(object? value)
-    {
-        return value switch
-        {
-            null => null,
-            IDictionary<string, object> dict => CloneDictionary(dict),
-            IList list => CloneList(list),
-            _ => value // Primitive types and other objects are treated as immutable
-        };
     }
 
     // Child control management
@@ -858,16 +547,17 @@ public class Control<T> : IControl<T>, IControlMutation
         InvalidateChildValidityCache();
     }
 
-    void IControlMutation.UpdateChildValue(object key, object? value)
+    void IControlMutation.UpdateChildValue(ControlEditor editor, object key)
     {
         // Just mark as dirty - reconstruction happens lazily
         _flags |= ControlFlags.ChildValueDirty;
 
         // Notify subscribers that value changed
         _subscriptions?.ApplyChange(ControlChange.Value);
+        editor.AddToModifiedControls(this);
 
         // Propagate up to parent
-        ((IControlMutation)this).NotifyParentsOfChange();
+        NotifyParentsOfChange(editor);
     }
 
     // Internal mutation interface implementation
@@ -876,47 +566,44 @@ public class Control<T> : IControl<T>, IControlMutation
         var oldValue = ValueObject;
         var changed = !IControl.IsEqual(oldValue, value);
 
-        if (changed)
+        if (!changed) return false;
+        // Store as object? directly - no need to cast to T
+        _value = value;
+        _flags &= ~ControlFlags.ChildValueDirty; // Clear dirty flag - we have external value
+
+        // Clear errors unless DontClearError flag is set
+        if ((_flags & ControlFlags.DontClearError) == 0)
         {
-            // Cast value to T - this should be safe if the value is the correct type
-            _value = (T)value!; // Direct assignment
-            _flags &= ~ControlFlags.ChildValueDirty; // Clear dirty flag - we have external value
-
-            // Clear errors unless DontClearError flag is set
-            if ((_flags & ControlFlags.DontClearError) == 0)
-            {
-                ((IControlMutation)this).ClearErrorsInternal(editor);
-            }
-
-            // Handle child controls based on value type change
-            if (ShouldClearChildren(oldValue, value))
-            {
-                // Type changed (e.g., object to array) - clear all children
-                ClearAllChildControls();
-            }
-            else
-            {
-                // Same type or compatible - update existing children
-                UpdateChildControlValues(editor, value);
-            }
-
-            _subscriptions?.ApplyChange(ControlChange.Value);
-
-            // Notify parents of the change
-            ((IControlMutation)this).NotifyParentsOfChange();
-
-            return true;
+            ((IControlMutation)this).ClearErrorsInternal(editor);
         }
 
-        return false;
+        // Handle child controls based on value type change
+        if (ShouldClearChildren(oldValue, value))
+        {
+            // Type changed (e.g., object to array) - clear all children
+            ClearAllChildControls();
+        }
+        else
+        {
+            // Same type or compatible - update existing children
+            UpdateChildControlValues(editor, value);
+        }
+
+        _subscriptions?.ApplyChange(ControlChange.Value);
+
+        // Notify parents of the change
+        NotifyParentsOfChange(editor);
+
+        return true;
+
     }
 
     bool IControlMutation.SetInitialValueInternal(ControlEditor editor, object? initialValue)
     {
         if (!IControl.IsEqual(_initialValue, initialValue))
         {
-            // Cast initialValue to T - this should be safe if the value is the correct type
-            _initialValue = (T)initialValue!; // Direct assignment
+            // Store as object? directly - no need to cast to T
+            _initialValue = initialValue;
 
             // Propagate initial value changes to children
             PropagateInitialValueToChildren(editor, initialValue);
@@ -1065,7 +752,7 @@ public class Control<T> : IControl<T>, IControlMutation
         }
     }
 
-    void IControlMutation.NotifyParentsOfChange()
+    public void NotifyParentsOfChange(ControlEditor editor)
     {
         if (_parents == null)
             return;
@@ -1075,7 +762,7 @@ public class Control<T> : IControl<T>, IControlMutation
             // Call UpdateChildValue via IControlMutation interface
             if (parentLink.Control is IControlMutation parentMutation)
             {
-                parentMutation.UpdateChildValue(parentLink.Key, ValueObject);
+                parentMutation.UpdateChildValue(editor, parentLink.Key);
             }
         }
     }
@@ -1287,7 +974,7 @@ public static class Control
         T value,
         T initialValue,
         ControlFlags flags = ControlFlags.None,
-        ControlBehavior<T>? behavior = null)
+        IControlBehavior? behavior = null)
     {
         return new Control<T>(value, initialValue, flags, behavior);
     }
@@ -1365,9 +1052,9 @@ public static class Control
         return control;
     }
     
-    public static Control<object?> CreateUndefined()
+    public static Control<T> CreateUndefined<T>()
     {
-        return new Control<object?>(UndefinedValue.Instance, UndefinedValue.Instance);
+        return new Control<T>(UndefinedValue.Instance, UndefinedValue.Instance);
     }
 
 

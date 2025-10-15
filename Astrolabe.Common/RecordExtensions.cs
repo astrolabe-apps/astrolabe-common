@@ -25,7 +25,7 @@ public static class RecordExtensions
         if (overrides == null)
             throw new ArgumentNullException(nameof(overrides));
 
-        var type = typeof(T);
+        var type = original.GetType();
         var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
         // Collect all current property values
@@ -75,7 +75,7 @@ public static class RecordExtensions
 
             if (allMatched)
             {
-                var instance = (T)constructor.Invoke(args);
+                var instance = constructor.Invoke(args);
 
                 // Set any init-only or settable properties not covered by constructor
                 foreach (var prop in properties.Where(p => p.CanWrite))
@@ -90,7 +90,7 @@ public static class RecordExtensions
                     }
                 }
 
-                return instance;
+                return (T) instance;
             }
         }
 
@@ -100,7 +100,7 @@ public static class RecordExtensions
 
         if (cloneMethod != null)
         {
-            var cloned = (T)cloneMethod.Invoke(original, null)!;
+            var cloned = cloneMethod.Invoke(original, null)!;
 
             // Apply overrides to the cloned instance
             foreach (var (key, value) in overrides)
@@ -114,7 +114,7 @@ public static class RecordExtensions
                 }
             }
 
-            return cloned;
+            return (T) cloned;
         }
 
         throw new InvalidOperationException(

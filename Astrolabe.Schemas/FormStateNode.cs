@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Astrolabe.Controls;
 
 namespace Astrolabe.Schemas;
@@ -11,6 +12,7 @@ public class FormStateNode : IFormStateNode
     private readonly IControl _childrenControl;
     private readonly ControlEditor _editor;
     private readonly ISchemaInterface _schemaInterface;
+    private readonly List<IDisposable> _disposables = new();
 
     // Expose state control for parent-child reactive tracking
     // Not part of IFormStateNode interface - only accessible from FormStateNode
@@ -28,6 +30,7 @@ public class FormStateNode : IFormStateNode
         ISchemaInterface schemaInterface
     )
     {
+        _originalDefinition = definition;
         Form = form;
         Parent = parent;
         ParentNode = parentNode;
@@ -35,6 +38,7 @@ public class FormStateNode : IFormStateNode
         ChildKey = childKey;
         _editor = editor;
         _schemaInterface = schemaInterface;
+        _evalContext = new ExpressionEvalContext(Parent, _schemaInterface);
 
         // Create control with initial state
         _stateControl = Control.Create(new FormStateImpl
@@ -50,34 +54,41 @@ public class FormStateNode : IFormStateNode
             FieldOptions = null,
             AllowedOptions = null
         });
-
+        _definitionControl = _stateControl.Field(x => x.Definition);
         _childrenControl = Control.Create(new List<IFormStateNode>());
 
-        // Set up reactive DataNode (must come before visibility as visibility depends on it)
+        // Set up reactive DataNode (must come first as others depend on it)
         InitializeDataNode();
 
-        // Set up reactive readonly and disabled (independent of other properties)
-        InitializeReadonly();
-        InitializeDisabled();
+        // Set up dynamic definition fields (updates Definition properties based on expressions)
+        InitializeHiddenDynamic(definition);
+        InitializeReadonlyDynamic(definition);
+        InitializeDisabledDynamic(definition);
+        InitializeTitle(definition);
+        InitializeDisplay(definition);
+        InitializeDefaultValue(definition);
+        InitializeActionData(definition);
+        InitializeGridColumns(definition);
 
-        // Set up reactive field options (depends on DataNode)
+        // Set up dynamic state-level properties
+        InitializeStyle(definition);
+        InitializeLayoutStyle(definition);
+        InitializeAllowedOptions(definition);
+
+        // Set up reactive field options (depends on DataNode and AllowedOptions)
         InitializeFieldOptions();
 
-        // Set up reactive title evaluation (depends on DataNode)
-        InitializeTitle(definition);
-
-        // Set up reactive display evaluation (depends on DataNode)
-        InitializeDisplay(definition);
-
-        // Set up reactive visibility
+        // Set up computed state flags (build on top of Definition.Hidden/Readonly/Disabled)
+        InitializeReadonly();
+        InitializeDisabled();
         InitializeVisibility();
 
         // Set up reactive children that update when array data changes
-        Control<object?>.MakeComputedWithPrevious<List<IFormStateNode>>(_childrenControl, (tracker, currentChildren) =>
+        _editor.SetComputedWithPrevious<List<IFormStateNode>>(_childrenControl, (tracker, currentChildren) =>
         {
             var childSpecs = FormStateNodeHelpers.ResolveChildren(this, tracker);
             return UpdateChildren(currentChildren, childSpecs);
-        }, _editor);
+        });
     }
 
     public ControlDefinition Definition => _stateControl.Value.Definition;
@@ -91,6 +102,13 @@ public class FormStateNode : IFormStateNode
     public bool Readonly => _stateControl.Value.Readonly;
     public bool Disabled => _stateControl.Value.Disabled;
     public ICollection<FieldOption>? FieldOptions => _stateControl.Value.FieldOptions;
+    public IDictionary<string, object?>? Style => _stateControl.Value.Style;
+    public IDictionary<string, object?>? LayoutStyle => _stateControl.Value.LayoutStyle;
+
+    private ExpressionEvalContext _evalContext;
+    private readonly IControl<ControlDefinition> _definitionControl;
+    private readonly ControlDefinition _originalDefinition;
+
 
     internal object ChildKey { get; }
 
@@ -148,18 +166,18 @@ public class FormStateNode : IFormStateNode
     {
         var dataNodeField = _stateControl.Field(x => x.DataNode);
 
-        Control<object?>.MakeComputed(dataNodeField, tracker =>
+        _editor.SetComputed(dataNodeField, tracker =>
         {
             var definition = tracker.TrackValue(_stateControl, x => x.Definition);
             return FormStateNodeHelpers.LookupDataNode(definition, Parent);
-        }, _editor);
+        });
     }
 
     private void InitializeReadonly()
     {
         var readonlyField = _stateControl.Field(x => x.Readonly);
 
-        Control<object?>.MakeComputed(readonlyField, tracker =>
+        _editor.SetComputed(readonlyField, tracker =>
         {
             // Track parent readonly reactively if parent exists
             if (ParentNode is FormStateNode parentNode)
@@ -174,16 +192,16 @@ public class FormStateNode : IFormStateNode
             if (forceReadonly == true)
                 return true;
 
-            var definition = tracker.TrackValue(_stateControl, x => x.Definition);
-            return definition.Readonly == true;
-        }, _editor);
+            var definitionReadonly = tracker.TrackValue(_definitionControl, x => x.Readonly);
+            return definitionReadonly == true;
+        });
     }
 
     private void InitializeDisabled()
     {
         var disabledField = _stateControl.Field(x => x.Disabled);
 
-        Control<object?>.MakeComputed(disabledField, tracker =>
+        _editor.SetComputed(disabledField, tracker =>
         {
             // Track parent disabled reactively if parent exists
             if (ParentNode is FormStateNode parentNode)
@@ -200,14 +218,14 @@ public class FormStateNode : IFormStateNode
 
             var definition = tracker.TrackValue(_stateControl, x => x.Definition);
             return definition.Disabled == true;
-        }, _editor);
+        });
     }
 
     private void InitializeFieldOptions()
     {
         var fieldOptionsField = _stateControl.Field(x => x.FieldOptions);
 
-        Control<object?>.MakeComputed(fieldOptionsField, tracker =>
+        _editor.SetComputed(fieldOptionsField, tracker =>
         {
             // Track dataNode from our state
             var dn = tracker.TrackValue(_stateControl, x => x.DataNode);
@@ -215,137 +233,243 @@ public class FormStateNode : IFormStateNode
                 return null;
 
             // Get field options from the schema
-            var fieldOptions = dn.Schema.Field.Options;
+            var fieldOptions = dn.Schema.Field.Options?.ToList();
             if (fieldOptions == null)
                 return null;
 
-            // Convert to collection
-            return fieldOptions.ToList();
-        }, _editor);
+            // Check for AllowedOptions filter
+            var allowedOptions = tracker.TrackValue(_stateControl, x => x.AllowedOptions);
+            if (allowedOptions == null)
+                return fieldOptions;
+
+            // Convert allowed to array
+            var allowedArray = allowedOptions switch
+            {
+                System.Collections.IEnumerable enumerable => enumerable.Cast<object?>().ToArray(),
+                _ => new[] { allowedOptions }
+            };
+
+            if (allowedArray.Length == 0)
+                return fieldOptions;
+
+            // Filter field options by allowed values
+            return allowedArray
+                .Select(allowed =>
+                {
+                    if (allowed is FieldOption fo)
+                        return fo;
+                    return fieldOptions.FirstOrDefault(x => Equals(x.Value, allowed))
+                        ?? new FieldOption(allowed?.ToString() ?? "", allowed);
+                })
+                .Where(x => x != null)
+                .Cast<FieldOption>()
+                .ToList();
+        });
     }
 
+    private void InitializeStyle(ControlDefinition originalDefinition)
+    {
+        var styleExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.Style);
+
+        if (styleExpression == null) return;
+
+        var styleField = _stateControl.Field(x => x.Style);
+        SetupDynamic(styleField, styleExpression, DynamicPropertyHelpers.CoerceStyle);
+    }
+
+    private void InitializeLayoutStyle(ControlDefinition originalDefinition)
+    {
+        var layoutStyleExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.LayoutStyle);
+
+        if (layoutStyleExpression == null) return;
+
+        var layoutStyleField = _stateControl.Field(x => x.LayoutStyle);
+        SetupDynamic(layoutStyleField, layoutStyleExpression, DynamicPropertyHelpers.CoerceStyle);
+    }
+
+    private void InitializeAllowedOptions(ControlDefinition originalDefinition)
+    {
+        var allowedOptionsExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.AllowedOptions);
+
+        if (allowedOptionsExpression == null) return;
+
+        var allowedOptionsField = _stateControl.Field(x => x.AllowedOptions);
+        SetupDynamic(allowedOptionsField, allowedOptionsExpression, DynamicPropertyHelpers.CoerceIdentity);
+    }
+
+    private void InitializeHiddenDynamic(ControlDefinition originalDefinition)
+    {
+        var visibleExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.Visible);
+
+        var hiddenField = _definitionControl.Field(x => x.Hidden);
+        if (visibleExpression == null)
+        {
+            _editor.SetValue(hiddenField, DynamicPropertyHelpers.CoerceBool(originalDefinition.Hidden));
+            return;
+        }
+
+        // Invert because expression is "Visible" but we're setting "Hidden"
+        SetupDynamic(hiddenField, visibleExpression, result => 
+            !DynamicPropertyHelpers.CoerceBool(result));
+    }
+
+    private void InitializeReadonlyDynamic(ControlDefinition originalDefinition)
+    {
+        var readonlyExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.Readonly);
+
+        if (readonlyExpression == null) return;
+
+        var readonlyField = _definitionControl.Field(x => x.Readonly);
+        var disposable = readonlyField.SetupReactiveExpression(
+            readonlyExpression,
+            _evalContext,
+            _editor,
+            result => (bool?)DynamicPropertyHelpers.CoerceBool(result));
+        _disposables.Add(disposable);
+    }
+
+    private void InitializeDisabledDynamic(ControlDefinition originalDefinition)
+    {
+        var disabledExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.Disabled);
+
+        if (disabledExpression == null) return;
+
+        var disabledField = _definitionControl.Field(x => x.Disabled);
+        var disposable = disabledField.SetupReactiveExpression(
+            disabledExpression,
+            _evalContext,
+            _editor,
+            result => (bool?)DynamicPropertyHelpers.CoerceBool(result));
+        _disposables.Add(disposable);
+    }
+
+    private void SetupDynamic(IControl field, EntityExpression expr, Func<object?, object?>? coerce = null)
+    {
+        var disposable = field.SetupReactiveExpression(expr, _evalContext, _editor, coerce);
+        _disposables.Add(disposable);
+    }
+    
     private void InitializeTitle(ControlDefinition originalDefinition)
     {
-        var definitionField = _stateControl.Field(x => x.Definition);
-
         // Look for Label dynamic property in original definition
         var labelExpression = DynamicPropertyHelpers.FindDynamicExpression(
             originalDefinition,
             DynamicPropertyType.Label);
 
-        if (labelExpression != null)
+        if (labelExpression == null) return;
+        var titleField = _definitionControl.Field(x => x.Title);
+        SetupDynamic(titleField, labelExpression, DynamicPropertyHelpers.CoerceString);
+    }
+
+    private void InitializeDefaultValue(ControlDefinition originalDefinition)
+    {
+        var defaultValueExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.DefaultValue);
+
+        if (defaultValueExpression == null) return;
+        var defaultValueField = _definitionControl.SubField<DataControlDefinition, object?>(x => x.DefaultValue);
+
+        SetupDynamic(defaultValueField, defaultValueExpression, DynamicPropertyHelpers.CoerceIdentity);
+    }
+
+    private void InitializeActionData(ControlDefinition originalDefinition)
+    {
+        var actionDataExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.ActionData);
+
+        if (actionDataExpression == null || originalDefinition is not ActionControlDefinition) return;
+        var actionDataField = _definitionControl
+            .SubField<ActionControlDefinition, string?>(x => x.ActionData);
+        SetupDynamic(actionDataField, actionDataExpression, DynamicPropertyHelpers.CoerceString);
+    }
+
+    private void InitializeGridColumns(ControlDefinition originalDefinition)
+    {
+        var gridColumnsExpression = DynamicPropertyHelpers.FindDynamicExpression(
+            originalDefinition,
+            DynamicPropertyType.GridColumns);
+
+        if (gridColumnsExpression == null) return;
+
+        switch (originalDefinition)
         {
-            // Reactively update the Definition with the evaluated title
-            Control<object?>.MakeComputed(definitionField, tracker =>
+            // For GroupedControlsDefinition with Grid renderer
+            case GroupedControlsDefinition { GroupOptions: GridRenderer }:
             {
-                // Evaluate the expression relative to the Parent node
-                // (not the control's own DataNode, which might be null)
-                var (success, result) = TryEvaluateExpression(labelExpression, Parent, tracker);
+                var columnsField = _definitionControl
+                    .SubField<GroupedControlsDefinition, GroupRenderOptions?>(x => x.GroupOptions)
+                    .SubField<GridRenderer, int?>(x => x.Columns);
 
-                if (!success)
-                {
-                    // Field not found or evaluation failed - keep original title
-                    return originalDefinition;
-                }
+                SetupDynamic(columnsField, gridColumnsExpression, result => DynamicPropertyHelpers.CoerceInt(result));
+                break;
+            }
+            // For DataControlDefinition with DataGroupRenderOptions
+            case DataControlDefinition { RenderOptions: DataGroupRenderOptions { GroupOptions: GridRenderer } }:
+            {
+                var columnsField = _definitionControl
+                    .SubField<DataControlDefinition, RenderOptions?>(x => x.RenderOptions)
+                    .SubField<DataGroupRenderOptions, GroupRenderOptions>(x => x.GroupOptions)
+                    .SubField<GridRenderer, int?>(x => x.Columns);
 
-                // Coerce to string
-                var evaluatedTitle = DynamicPropertyHelpers.CoerceString(result);
-
-                // Create a modified definition with the evaluated title
-                return originalDefinition with { Title = evaluatedTitle };
-            }, _editor);
+                SetupDynamic(columnsField, gridColumnsExpression, result => DynamicPropertyHelpers.CoerceInt(result));
+                break;
+            }
         }
-        // If no dynamic title, the original definition is already set and doesn't need updates
     }
 
     private void InitializeDisplay(ControlDefinition originalDefinition)
     {
-        var definitionField = _stateControl.Field(x => x.Definition);
-
-        // Look for Display dynamic property in original definition
         var displayExpression = DynamicPropertyHelpers.FindDynamicExpression(
             originalDefinition,
             DynamicPropertyType.Display);
 
-        if (displayExpression != null && originalDefinition is DisplayControlDefinition displayControl)
+        if (displayExpression == null || originalDefinition is not DisplayControlDefinition displayControl)
+            return;
+
+        switch (displayControl.DisplayData)
         {
-            // Reactively update the Definition with the evaluated display
-            Control<object?>.MakeComputed(definitionField, tracker =>
+            // Handle TextDisplay
+            case TextDisplay:
             {
-                // Evaluate the expression relative to the Parent node
-                var (success, result) = TryEvaluateExpression(displayExpression, Parent, tracker);
+                var textField = _definitionControl
+                    .SubField<DisplayControlDefinition, DisplayData?>(x => x.DisplayData)
+                    .SubField<TextDisplay, string>(x => x.Text);
 
-                if (!success)
-                {
-                    // Field not found or evaluation failed - keep original display
-                    return originalDefinition;
-                }
-
-                // Coerce to string
-                var evaluatedDisplay = DynamicPropertyHelpers.CoerceString(result);
-
-                // Create a modified definition with the evaluated display
-                return displayControl.DisplayData switch
-                {
-                    TextDisplay textDisplay => displayControl with
-                    {
-                        DisplayData = textDisplay with { Text = evaluatedDisplay ?? "" }
-                    },
-                    HtmlDisplay htmlDisplay => displayControl with
-                    {
-                        DisplayData = htmlDisplay with { Html = evaluatedDisplay ?? "" }
-                    },
-                    _ => originalDefinition // For other display types, don't modify
-                };
-            }, _editor);
-        }
-        // If no dynamic display, the original definition is already set and doesn't need updates
-    }
-
-    private (bool success, object? result) TryEvaluateExpression(EntityExpression expression, SchemaDataNode dataNode, ChangeTracker tracker)
-    {
-        // Handle DataExpression (field reference)
-        if (expression is DataExpression dataExpr)
-        {
-            var fieldNode = dataNode.GetChildForFieldRef(dataExpr.Field);
-            if (fieldNode == null)
-                return (false, null);  // Field not found
-            var value = tracker.GetValue(fieldNode.Control);
-            return (true, value);
-        }
-
-        // Handle DataMatchExpression (field value matching)
-        if (expression is DataMatchExpression matchExpr)
-        {
-            var fieldNode = dataNode.GetChildForFieldRef(matchExpr.Field);
-            if (fieldNode == null)
-                return (false, null);  // Field not found
-
-            var fieldValue = tracker.GetValue(fieldNode.Control);
-
-            // Check if it's an array/collection
-            if (fieldValue is System.Collections.IEnumerable enumerable && fieldValue is not string)
-            {
-                foreach (var item in enumerable)
-                {
-                    if (Equals(item, matchExpr.Value))
-                        return (true, true);
-                }
-                return (true, false);
+                SetupDynamic(textField, displayExpression, DynamicPropertyHelpers.CoerceString);
+                break;
             }
+            // Handle HtmlDisplay
+            case HtmlDisplay:
+            {
+                var htmlField = _definitionControl
+                    .SubField<DisplayControlDefinition, DisplayData?>(x => x.DisplayData)
+                    .SubField<HtmlDisplay, string>(x => x.Html);
 
-            return (true, Equals(fieldValue, matchExpr.Value));
+                SetupDynamic(htmlField, displayExpression, DynamicPropertyHelpers.CoerceString);
+                break;
+            }
         }
-
-        // For other expression types, fail
-        return (false, null);
     }
 
     private void InitializeVisibility()
     {
         var visibleField = _stateControl.Field(x => x.Visible);
 
-        Control<object?>.MakeComputed(visibleField, tracker =>
+        _editor.SetComputed(visibleField, tracker =>
         {
             // Track forceHidden from our state
             var forceHidden = tracker.TrackValue(_stateControl, x => x.ForceHidden);
@@ -362,18 +486,31 @@ public class FormStateNode : IFormStateNode
 
             // Track dataNode and definition from our state
             var dn = tracker.TrackValue(_stateControl, x => x.DataNode);
-            var definition = tracker.TrackValue(_stateControl, x => x.Definition);
-
             if (dn != null &&
                 (!FormStateNodeHelpers.ValidDataNode(dn) ||
-                 FormStateNodeHelpers.HideDisplayOnly(dn, definition)))
+                 FormStateNodeHelpers.HideDisplayOnly(dn, _originalDefinition, _schemaInterface)))
             {
                 return false;
             }
 
-            // Temporary: return true for null Hidden until visibility scripting is implemented
-            // null means visibility hasn't been evaluated yet (async scripting), but we default to visible
-            return definition.Hidden == null ? true : !definition.Hidden;
-        }, _editor);
+            var hiddenVal = tracker.TrackValue(_definitionControl, x => x.Hidden);
+            return !hiddenVal;
+        });
+    }
+
+    public void Dispose()
+    {
+        // Dispose all tracked reactive expressions
+        foreach (var disposable in _disposables)
+        {
+            disposable?.Dispose();
+        }
+        _disposables.Clear();
+
+        // Dispose children
+        foreach (var child in Children)
+        {
+            child.Dispose();
+        }
     }
 }

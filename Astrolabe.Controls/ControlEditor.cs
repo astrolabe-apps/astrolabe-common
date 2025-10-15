@@ -139,7 +139,7 @@ public class ControlEditor
         RunWithMutator(control, (mutate) =>
         {
             mutate.AddElementInternal(value);
-            mutate.NotifyParentsOfChange();
+            mutate.NotifyParentsOfChange(this);
             return true;
         });
     }
@@ -151,7 +151,7 @@ public class ControlEditor
         RunWithMutator(control, (mutate) =>
         {
             mutate.RemoveElementInternal(index);
-            mutate.NotifyParentsOfChange();
+            mutate.NotifyParentsOfChange(this);
             return true;
         });
     }
@@ -192,5 +192,89 @@ public class ControlEditor
             }
         });
         return control.IsValid;
+    }
+
+    /// <summary>
+    /// Makes an existing control computed by setting up a reactive computation that updates its value.
+    /// The compute function is called initially and whenever any tracked dependencies change.
+    /// This is useful for overriding fields in structured controls with computed values.
+    /// </summary>
+    /// <typeparam name="T">The type of the control value</typeparam>
+    /// <param name="control">The control to make computed</param>
+    /// <param name="compute">Function that computes the value, receiving a ChangeTracker to track dependencies</param>
+    /// <example>
+    /// <code>
+    /// var baseCtrl = Control.CreateStructured(new FormStateBase { Visible = null, Readonly = false });
+    /// var visibleField = baseCtrl.Field(x => x.Visible);
+    /// var editor = new ControlEditor();
+    ///
+    /// // Make the Visible field computed based on other controls
+    /// editor.SetComputed(visibleField, tracker => {
+    ///     var someCondition = (bool?)otherControl.Value;
+    ///     return someCondition ? true : null;
+    /// });
+    ///
+    /// // Now visibleField.Value is automatically computed
+    /// </code>
+    /// </example>
+    public void SetComputed<T>(
+        IControl control,
+        Func<ChangeTracker, T> compute)
+    {
+        var tracker = new ChangeTracker();
+
+        // Set up reactive callback
+        tracker.SetCallback(() =>
+        {
+            var newValue = compute(tracker);
+            SetValue(control, newValue);
+            tracker.UpdateSubscriptions();
+        });
+
+        // Initial computation and subscription setup
+        var initialValue = compute(tracker);
+        SetValue(control, initialValue);
+        tracker.UpdateSubscriptions();
+    }
+
+    /// <summary>
+    /// Makes an existing control computed by setting up a reactive computation that updates its value.
+    /// Unlike SetComputed, this version passes the current value to the compute function,
+    /// allowing you to reuse or transform the existing value rather than creating a new one from scratch.
+    /// </summary>
+    /// <typeparam name="T">The type of the control value</typeparam>
+    /// <param name="control">The control to make computed</param>
+    /// <param name="compute">Function that computes the value, receiving a ChangeTracker and current value</param>
+    /// <example>
+    /// <code>
+    /// var listControl = Control.Create(new List&lt;Item&gt;());
+    /// var editor = new ControlEditor();
+    ///
+    /// // Reuse existing items when source changes, only add/remove as needed
+    /// editor.SetComputedWithPrevious&lt;List&lt;Item&gt;&gt;(listControl, (tracker, currentList) => {
+    ///     var source = (List&lt;Source&gt;)sourceControl.Value;
+    ///     return UpdateList(currentList, source); // Reuses items from currentList
+    /// });
+    /// </code>
+    /// </example>
+    public void SetComputedWithPrevious<T>(
+        IControl control,
+        Func<ChangeTracker, T, T> compute)
+    {
+        var tracker = new ChangeTracker();
+
+        // Set up reactive callback
+        tracker.SetCallback(() =>
+        {
+            var currentValue = (T)control.ValueObject!;
+            var newValue = compute(tracker, currentValue);
+            SetValue(control, newValue);
+            tracker.UpdateSubscriptions();
+        });
+
+        // Initial computation and subscription setup
+        var initialValue = compute(tracker, (T)control.ValueObject!);
+        SetValue(control, initialValue);
+        tracker.UpdateSubscriptions();
     }
 }

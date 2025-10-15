@@ -128,7 +128,7 @@ public class FormStateNode_VisibilityTests
         var schema = TestHelpers.CreateTestSchema("testField");
 
         // Create undefined control
-        var undefinedControl = Control.CreateUndefined();
+        var undefinedControl = Control.CreateUndefined<object?>();
         var undefinedDataNode = new SchemaDataNode(schema, undefinedControl, null);
 
         // Act

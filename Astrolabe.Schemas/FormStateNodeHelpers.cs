@@ -179,14 +179,32 @@ public static class FormStateNodeHelpers
     }
 
     /// <summary>
-    /// Checks if a display-only control should be hidden when its data is undefined.
-    /// Display-only controls are hidden when the data is undefined.
-    /// TODO: Port full logic from TypeScript hideDisplayOnly function.
+    /// Checks if a display-only control should be hidden when its data is empty.
+    /// Display-only controls are hidden when:
+    /// 1. The definition has DisplayOnly render options
+    /// 2. EmptyText is not specified (null/empty)
+    /// 3. The control's value is considered empty by the schema interface
+    /// Ported from TypeScript hideDisplayOnly in schemaDataNode.ts:177-188
     /// </summary>
-    public static bool HideDisplayOnly(SchemaDataNode node, ControlDefinition definition)
+    public static bool HideDisplayOnly(
+        SchemaDataNode node,
+        ControlDefinition definition,
+        ISchemaInterface schemaInterface)
     {
-        // For now, return false - this can be expanded later
-        // when we identify all display-only render types
-        return false;
+        var displayOptions = GetDisplayOnlyOptions(definition);
+        return displayOptions != null &&
+               string.IsNullOrEmpty(displayOptions.EmptyText) &&
+               schemaInterface.IsEmptyValue(node.Schema.Field, node.Control.ValueObject);
+    }
+
+    /// <summary>
+    /// Extracts DisplayOnlyRenderOptions from a control definition if it's a data control with display-only rendering.
+    /// Ported from TypeScript getDisplayOnlyOptions in controlDefinition.ts:726-734
+    /// </summary>
+    public static DisplayOnlyRenderOptions? GetDisplayOnlyOptions(ControlDefinition definition)
+    {
+        return definition is DataControlDefinition { RenderOptions: DisplayOnlyRenderOptions displayOptions }
+            ? displayOptions
+            : null;
     }
 }

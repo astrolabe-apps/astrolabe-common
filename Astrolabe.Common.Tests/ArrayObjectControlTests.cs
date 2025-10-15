@@ -525,15 +525,14 @@ public class ArrayObjectControlTests
         var editor = new ControlEditor();
         var computeCallCount = 0;
 
-        Control<object?>.MakeComputed(
+        editor.SetComputed(
             computedControl,
             tracker =>
             {
                 computeCallCount++;
                 var elements = tracker.TrackElements(arrayControl);
                 return elements.Count;
-            },
-            editor
+            }
         );
 
         // Initial computation should happen
@@ -715,15 +714,14 @@ public class ArrayObjectControlTests
         // Access Elements to ensure _elementControls is created
         var initialElements = arrayControl.Elements;
 
-        Control<object?>.MakeComputed(
+        editor.SetComputed(
             computedControl,
             tracker =>
             {
                 computeCallCount++;
                 var elements = tracker.TrackElements(arrayControl);
                 return elements.Count;
-            },
-            editor
+            }
         );
 
         // Initial computation should happen

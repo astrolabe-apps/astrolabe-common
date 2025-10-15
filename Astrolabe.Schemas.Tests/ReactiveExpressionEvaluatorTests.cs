@@ -366,24 +366,7 @@ public class ReactiveExpressionEvaluatorTests
 
         subscription?.Dispose();
     }
-
-    [Fact]
-    public void SetupReactiveExpression_Should_Return_Null_For_Null_Expression()
-    {
-        // Arrange
-        var schema = TestHelpers.CreateTestSchema("parent");
-        var dataNode = TestHelpers.CreateTestDataNode(schema);
-        var context = new ExpressionEvalContext(dataNode, DefaultSchemaInterface.Instance);
-        var editor = new ControlEditor();
-        var targetControl = Control.Create<object?>(null, null);
-
-        // Act
-        var subscription = targetControl.SetupReactiveExpression(null, context, editor);
-
-        // Assert
-        Assert.Null(subscription);
-    }
-
+    
     [Fact]
     public void Multiple_Expressions_Should_Track_Independently()
     {

@@ -104,16 +104,13 @@ public static class ReactiveExpressionExtensions
     /// <param name="editor">ControlEditor for applying updates to the target control</param>
     /// <param name="coerce">Optional function to coerce/transform the result value</param>
     /// <returns>IDisposable for cleanup, or null if expression was null</returns>
-    public static IDisposable? SetupReactiveExpression(
+    public static IDisposable SetupReactiveExpression(
         this IControl targetControl,
-        EntityExpression? expression,
+        EntityExpression expression,
         ExpressionEvalContext context,
         ControlEditor editor,
         Func<object?, object?>? coerce = null)
     {
-        if (expression == null)
-            return null;
-
         // Evaluate expression with callback that updates the target control
         return ReactiveExpressionEvaluators.Evaluate(
             expression,

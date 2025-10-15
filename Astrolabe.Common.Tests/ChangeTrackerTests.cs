@@ -481,12 +481,12 @@ public class ChangeTrackerTests
         var editor = new ControlEditor();
 
         // Make target computed based on firstName
-        Control<object?>.MakeComputed(target, tracker =>
+        editor.SetComputed(target, tracker =>
         {
             tracker.RecordAccess(firstName, ControlChange.Value);
             var name = (string)firstName.ValueObject!;
             return name.ToUpper();
-        }, editor);
+        });
 
         Assert.Equal("JOHN", target.ValueObject);
 
@@ -504,12 +504,12 @@ public class ChangeTrackerTests
         var visibleField = baseCtrl["Visible"];
 
         // Make the Visible field computed
-        Control<object?>.MakeComputed(visibleField!, tracker =>
+        editor.SetComputed(visibleField!, tracker =>
         {
             tracker.RecordAccess(condition, ControlChange.Value);
             var cond = (bool)condition.ValueObject!;
             return cond ? true : (bool?)null;
-        }, editor);
+        });
 
         Assert.True((bool)visibleField!.ValueObject!);
 
@@ -525,14 +525,14 @@ public class ChangeTrackerTests
         var target = Control.Create(0);
         var editor = new ControlEditor();
 
-        Control<object?>.MakeComputed(target, tracker =>
+        editor.SetComputed(target, tracker =>
         {
             tracker.RecordAccess(a, ControlChange.Value);
             tracker.RecordAccess(b, ControlChange.Value);
             var valA = (int)a.ValueObject!;
             var valB = (int)b.ValueObject!;
             return valA + valB;
-        }, editor);
+        });
 
         Assert.Equal(30, target.ValueObject);
 
@@ -560,20 +560,20 @@ public class ChangeTrackerTests
         var messageField = formState["Message"];
 
         // Make readonly computed based on user type
-        Control<object?>.MakeComputed(readonlyField!, tracker =>
+        editor.SetComputed(readonlyField!, tracker =>
         {
             tracker.RecordAccess(userType, ControlChange.Value);
             var type = (string)userType.ValueObject!;
             return type == "viewer";
-        }, editor);
+        });
 
         // Make message computed based on readonly state
-        Control<object?>.MakeComputed(messageField!, tracker =>
+        editor.SetComputed(messageField!, tracker =>
         {
             tracker.RecordAccess(readonlyField!, ControlChange.Value);
             var isReadonly = (bool)readonlyField!.ValueObject!;
             return isReadonly ? "Read-only mode" : "Edit mode";
-        }, editor);
+        });
 
         Assert.False((bool)readonlyField!.ValueObject!);
         Assert.Equal("Edit mode", messageField!.ValueObject);
