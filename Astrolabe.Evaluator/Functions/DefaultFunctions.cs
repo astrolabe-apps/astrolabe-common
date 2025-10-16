@@ -358,21 +358,21 @@ public static class DefaultFunctions
             }
         );
 
-    private static object? ExtractJsonValue(JsonNode? jsonNode)
-    {
-        return jsonNode switch
+    private static object? ExtractJsonValue(JsonNode? jsonNode) =>
+        jsonNode switch
         {
             null => null,
-            JsonValue jv => jv.GetValue<object>(),
+            JsonValue jv when jv.TryGetValue<string>(out var s) => s,
+            JsonValue jv when jv.TryGetValue<double>(out var d) => d,
+            JsonValue jv when jv.TryGetValue<bool>(out var b) => b,
             JsonObject jo => new ObjectValue(jo),
             JsonArray ja => new ArrayValue(
                 ja.Select(x => new ValueExpr(ExtractJsonValue(x))).ToList()
             ),
             _ => jsonNode.ToString(),
         };
-    }
 
-    public static JsonNode? ToJsonNode(object? objValue)
+    private static JsonNode? ToJsonNode(object? objValue)
     {
         return objValue switch
         {
