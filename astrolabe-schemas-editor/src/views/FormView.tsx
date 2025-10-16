@@ -5,6 +5,8 @@ import {
   useControl,
   useControlEffect,
   useDebounced,
+  withChildren,
+  getControlPath,
 } from "@react-typed-forms/core";
 import { createPreviewNode, FormControlPreview } from "../FormControlPreview";
 import {
@@ -15,11 +17,72 @@ import {
   NewControlRenderer,
   defaultSchemaInterface,
 } from "@react-typed-forms/schemas";
-import React, { Fragment, useMemo } from "react";
+import React, { Fragment, useMemo, useEffect, useRef } from "react";
 import { FormPreview } from "../FormPreview";
 import clsx from "clsx";
 import { JsonEditor } from "../JsonEditor";
 import { EditableForm, PreviewData, ViewContext } from "../types";
+import { useFormUndoRedo } from "../hooks/useFormUndoRedo";
+
+// Toggle to enable/disable dirty state debugging
+const DEBUG_DIRTY_STATE = false;
+
+// Helper function to traverse control tree and find dirty controls
+function findDirtyControls(
+  control: Control<any>,
+  rootControl: Control<any>,
+): string[] {
+  const dirtyPaths: string[] = [];
+
+  if (!control) return dirtyPaths;
+
+  // Check if this control itself is dirty
+  if (control.current.dirty) {
+    const path = getControlPath(control, rootControl);
+    dirtyPaths.push(
+      `${path.join(".")} (dirty: true, value: ${JSON.stringify(control.current.value)} ${JSON.stringify(control.current.initialValue)})`,
+    );
+  }
+
+  // Traverse all children recursively
+  withChildren(control, (child) => {
+    const childPaths = findDirtyControls(child, rootControl);
+    dirtyPaths.push(...childPaths);
+  });
+
+  return dirtyPaths;
+}
+
+// Debug function to log dirty controls - only runs when DEBUG_DIRTY_STATE is true
+function debugDirtyState(
+  control: Control<EditableForm>,
+  name: string | undefined,
+) {
+  if (!DEBUG_DIRTY_STATE) return;
+
+  console.debug(`[FormView] Form marked as dirty for: ${name}`);
+  console.debug(
+    `[FormView] formTree.control.dirty: ${control.fields.formTree.value?.control.dirty}`,
+  );
+  console.debug(`[FormView] config.dirty: ${control.fields.config.dirty}`);
+
+  // Traverse and log all dirty controls
+  if (control.fields.formTree.value?.control) {
+    const formTreeControl = control.fields.formTree.value.control;
+    const dirtyPaths = findDirtyControls(formTreeControl, formTreeControl);
+    if (dirtyPaths.length > 0) {
+      console.debug(`[FormView] Dirty controls in formTree:`, dirtyPaths);
+    }
+  }
+
+  if (control.fields.config.dirty) {
+    const configControl = control.fields.config;
+    const configDirtyPaths = findDirtyControls(configControl, configControl);
+    if (configDirtyPaths.length > 0) {
+      console.debug(`[FormView] Dirty controls in config:`, configDirtyPaths);
+    }
+  }
+}
 
 export function FormView(props: { formId: string; context: ViewContext }) {
   const { formId, context } = props;
@@ -43,6 +106,10 @@ export function FormView(props: { formId: string; context: ViewContext }) {
         control.fields.name.value,
       ] as const,
     ([unsaved, name]) => {
+      if (unsaved) {
+        debugDirtyState(control.as(), name);
+      }
+
       if (name) {
         context.updateTabTitle("form:" + formId, unsaved ? name + " *" : name);
       }
@@ -100,12 +167,66 @@ function RenderFormDesign({
       formRenderer,
     );
   }, []);
+
+  // Undo/Redo functionality
+  const { undo, redo, canUndo, canRedo } = useFormUndoRedo(c);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard shortcuts for undo/redo
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Cmd on Mac, Ctrl on Windows/Linux
+      const isMod = e.metaKey || e.ctrlKey;
+
+      if (!isMod) return;
+
+      // Undo: Ctrl+Z or Cmd+Z
+      if (e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+        return;
+      }
+
+      // Redo: Ctrl+Y or Cmd+Shift+Z
+      if (e.key === "y" || (e.key === "z" && e.shiftKey)) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+    };
+
+    const container = containerRef.current;
+    if (container) {
+      // Attach to container so it only works when this form is active
+      container.addEventListener("keydown", handleKeyDown);
+      return () => container.removeEventListener("keydown", handleKeyDown);
+    }
+  }, [undo, redo]);
+
   return (
-    <div className="flex flex-col h-full">
+    <div ref={containerRef} className="flex flex-col h-full" tabIndex={-1}>
       <div className="px-4 py-2">
         <div className="flex gap-2 items-center">
           {checkbox(preview.fields.showing, "Preview Mode")}
           {button(save, "Save")}
+          <div className="flex gap-1">
+            <button
+              onClick={undo}
+              disabled={!canUndo.value}
+              className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Undo (Ctrl+Z)"
+            >
+              <i className="fa fa-undo" />
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo.value}
+              className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Redo (Ctrl+Y)"
+            >
+              <i className="fa fa-redo" />
+            </button>
+          </div>
         </div>
       </div>
       {renderContent()}

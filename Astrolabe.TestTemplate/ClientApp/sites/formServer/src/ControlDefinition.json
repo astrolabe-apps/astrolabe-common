@@ -243,7 +243,10 @@
                       "type": "Standard"
                     }
                   }
-                ]
+                ],
+                "renderOptions": {
+                  "type": "Standard"
+                }
               },
               {
                 "type": "Data",
@@ -594,7 +597,7 @@
             "renderOptions": {
               "type": "Standard"
             },
-            "defaultValue": {}
+            "defaultValue": null
           }
         ],
         "groupOptions": {
@@ -941,7 +944,7 @@
                 "renderOptions": {
                   "type": "Standard"
                 },
-                "defaultValue": {}
+                "defaultValue": null
               },
               {
                 "type": "Data",
@@ -967,7 +970,7 @@
                 "renderOptions": {
                   "type": "Standard"
                 },
-                "defaultValue": {}
+                "defaultValue": null
               }
             ],
             "renderOptions": {
@@ -1131,7 +1134,7 @@
                   "type": "Standard"
                 },
                 "id": "Expression",
-                "defaultValue": {}
+                "defaultValue": null
               }
             ],
             "renderOptions": {

@@ -8,3 +8,4 @@ export * from "./renderer/ClassSelectionRenderer";
 export * from "./types";
 export * from "./JsonEditor";
 export * from "./FormControlPreview";
+export * from "./hooks/useFormUndoRedo";
