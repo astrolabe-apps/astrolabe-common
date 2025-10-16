@@ -140,14 +140,11 @@ export function useFormUndoRedo(
     });
 
     if (state.isRestoring) {
-      console.debug('[Undo/Redo] Change detected during restore - clearing redo stack');
-      // Clear redo stack immediately, but don't capture yet
-      undoRedoStateControl.value = {
-        ...state,
-        future: [],  // Clear redo stack
-        isRestoring: state.isRestoring,
-      };
-      return; // Still skip the capture
+      console.debug('[Undo/Redo] Change detected during restore, ignoring.');
+      // A change was detected while a snapshot was being restored.
+      // This is expected, as `restoreSnapshot` modifies the form.
+      // We must ignore this change to prevent the redo stack from being cleared.
+      return;
     }
 
     const snapshot = captureSnapshot(editableForm);
