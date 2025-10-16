@@ -321,7 +321,56 @@ public static class DefaultFunctions
             })
         },
         { "this", new FunctionHandler((e, c) => e.WithValue(e.Current)) },
+        { "keys", KeysOrValuesFunctionHandler("keys") },
+        { "values", KeysOrValuesFunctionHandler("values") },
     };
+
+    private static FunctionHandler KeysOrValuesFunctionHandler(string type) =>
+        new FunctionHandler(
+            (e, c) =>
+            {
+                if (c.Args.Count != 1)
+                {
+                    return e.WithError($"{type} expects 1 argument").WithNull();
+                }
+
+                var (nextEnv, objVal) = e.Evaluate(c.Args[0]);
+
+                return objVal.Value switch
+                {
+                    ObjectValue ov => nextEnv.WithValue(
+                        new ValueExpr(
+                            new ArrayValue(
+                                ((JsonObject)ov.Object)
+                                    .Select(x => new ValueExpr(
+                                        type == "keys" ? x.Key : ExtractJsonValue(x.Value)
+                                    ))
+                                    .ToList()
+                            ),
+                            objVal.Path,
+                            objVal.Deps
+                        )
+                    ),
+                    _ => nextEnv
+                        .WithError($"{type} expects an object: " + objVal.Print())
+                        .WithNull(),
+                };
+            }
+        );
+
+    private static object? ExtractJsonValue(JsonNode? jsonNode)
+    {
+        return jsonNode switch
+        {
+            null => null,
+            JsonValue jv => jv.GetValue<object>(),
+            JsonObject jo => new ObjectValue(jo),
+            JsonArray ja => new ArrayValue(
+                ja.Select(x => new ValueExpr(ExtractJsonValue(x))).ToList()
+            ),
+            _ => jsonNode.ToString(),
+        };
+    }
 
     public static JsonNode? ToJsonNode(object? objValue)
     {

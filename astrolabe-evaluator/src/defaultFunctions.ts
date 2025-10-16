@@ -381,6 +381,45 @@ const condFunction = functionValue(
     ),
 );
 
+export const keysOrValuesFunction = (type: string) =>
+  functionValue(
+    (env: EvalEnv, call: CallExpr) => {
+      if (call.args.length !== 1) {
+        return [env.withError(`${type} expects 1 argument`), NullExpr];
+      }
+
+      const [objExpr] = call.args;
+      const [nextEnv, objVal] = env.evaluate(objExpr);
+
+      if (objVal.value == null) {
+        return [nextEnv, NullExpr];
+      }
+
+      if (typeof objVal.value === "object" && !Array.isArray(objVal.value)) {
+        const data =
+          type === "keys"
+            ? Object.keys(objVal.value).map((val) => valueExpr(val))
+            : Object.values(objVal.value).map((val) =>
+                Array.isArray(val)
+                  ? valueExpr(val.map((x) => valueExpr(x)))
+                  : valueExpr(val),
+              );
+        return [nextEnv, valueExprWithDeps(data, [objVal])];
+      }
+
+      return [
+        nextEnv.withError(
+          `${type} can only be called on an object but was called on: ` +
+            (Array.isArray(objVal.value) ? "array" : typeof objVal.value),
+        ),
+        NullExpr,
+      ];
+    },
+    (env: CheckEnv, call: CallExpr) => {
+      return checkValue(env, arrayType([AnyType]));
+    },
+  );
+
 export const defaultFunctions = {
   "?": condFunction,
   "!": evalFunction((a) => !a[0], constGetType(BooleanType)),
@@ -482,6 +521,8 @@ export const defaultFunctions = {
     (e) => [e, e.current],
     (e, _) => checkValue(e, e.dataType),
   ),
+  keys: keysOrValuesFunction("keys"),
+  values: keysOrValuesFunction("values"),
 };
 
 export function addDefaults(evalEnv: EvalEnv) {
