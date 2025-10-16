@@ -2,34 +2,20 @@
   "controls": [
     {
       "title": "Basic Group Section",
-      "required": false,
-      "readonly": false,
-      "disabled": false,
-      "displayData": {},
       "type": "Group",
-      "renderOptions": {
-        "type": "Standard"
-      },
       "children": [
         {
           "type": "Data",
           "title": "Basic Text Data Field",
           "children": null,
           "field": "string",
-          "required": false,
           "renderOptions": {
             "type": "Standard"
-          },
-          "readonly": false,
-          "disabled": false,
-          "displayData": {}
+          }
         },
         {
           "type": "Display",
           "title": "Basic Text Display",
-          "required": false,
-          "readonly": false,
-          "disabled": false,
           "displayData": {
             "type": "Text",
             "text": "This is a text display"
@@ -39,22 +25,14 @@
         {
           "type": "Display",
           "title": "Text Display as HTML",
-          "required": false,
-          "readonly": false,
-          "disabled": false,
           "displayData": {
             "type": "Html",
-            "html": "<b>This is bold text</b>"
+            "html": "\u003Cb\u003EThis is bold text\u003C/b\u003E"
           }
         },
         {
           "type": "Action",
           "title": "Basic Action - Button",
-          "required": false,
-          "defaultValue": null,
-          "readonly": false,
-          "disabled": false,
-          "displayData": {},
           "actionId": "action-id",
           "icon": {
             "library": "FontAwesome",
@@ -69,12 +47,9 @@
           "type": "Data",
           "title": "Basic Data Field hidden title",
           "field": "string",
-          "required": false,
           "renderOptions": {
             "type": "Standard"
           },
-          "readonly": false,
-          "disabled": false,
           "children": null,
           "hideTitle": true
         },
@@ -86,14 +61,10 @@
             "type": "Standard"
           },
           "children": null,
-          "required": false,
-          "readonly": false,
-          "disabled": false,
           "adornments": [
             {
               "type": "Tooltip",
-              "tooltip": "This is tooltip content",
-              "expression": {}
+              "tooltip": "This is tooltip content"
             }
           ]
         },
@@ -114,16 +85,11 @@
             "type": "Standard"
           },
           "children": null,
-          "required": false,
-          "readonly": false,
-          "disabled": false,
           "adornments": [
             {
               "type": "Accordion",
-              "icon": {},
               "title": "Accordion Title",
-              "defaultExpanded": true,
-              "expression": {}
+              "defaultExpanded": true
             }
           ]
         },
@@ -134,10 +100,7 @@
           "renderOptions": {
             "type": "Standard"
           },
-          "children": null,
-          "required": false,
-          "readonly": false,
-          "disabled": false
+          "children": null
         },
         {
           "type": "Display",
@@ -152,23 +115,10 @@
               }
             }
           ],
-          "required": false,
-          "renderOptions": {
-            "type": "Standard"
-          },
-          "defaultValue": null,
-          "readonly": false,
-          "disabled": false,
           "displayData": {
             "type": "Text",
-            "iconClass": "fill-blue-500",
-            "icon": {
-              "library": "Material",
-              "name": "exclamation-circle"
-            },
             "text": "This is text only visible if the boolean is true"
-          },
-          "icon": {}
+          }
         },
         {
           "type": "Data",
@@ -186,10 +136,7 @@
           "renderOptions": {
             "type": "Standard"
           },
-          "children": null,
-          "required": false,
-          "readonly": false,
-          "disabled": false
+          "children": null
         },
         {
           "type": "Data",
@@ -227,22 +174,15 @@
           "renderOptions": {
             "type": "Standard"
           },
-          "children": null,
-          "required": false,
-          "readonly": false,
-          "disabled": false
+          "children": null
         },
         {
           "type": "Data",
           "title": "Select Radio Buttons",
           "field": "selectString",
-          "required": false,
           "renderOptions": {
             "type": "Radio"
-          },
-          "readonly": false,
-          "disabled": false,
-          "displayData": {}
+          }
         },
         {
           "type": "Data",
@@ -251,10 +191,7 @@
           "renderOptions": {
             "type": "HtmlEditor"
           },
-          "children": null,
-          "required": false,
-          "readonly": false,
-          "disabled": false
+          "children": null
         },
         {
           "type": "Data",
@@ -273,9 +210,6 @@
             "type": "Standard"
           },
           "children": null,
-          "required": false,
-          "readonly": false,
-          "disabled": false,
           "id": "this-is-an-id"
         },
         {
@@ -285,23 +219,11 @@
           "renderOptions": {
             "type": "Standard"
           },
-          "children": null,
-          "required": false,
-          "readonly": false,
-          "disabled": false
+          "children": null
         },
         {
           "type": "Display",
           "title": "Text Content with CSS styling classes",
-          "field": "textContent",
-          "renderOptions": {
-            "type": "DisplayOnly",
-            "iconMappings": []
-          },
-          "children": [],
-          "required": false,
-          "readonly": false,
-          "disabled": false,
           "textClass": "border-blue-500 border",
           "labelClass": "text-blue-500",
           "layoutClass": "border-red-500 border p-2",
@@ -309,9 +231,6 @@
           "displayData": {
             "type": "Text",
             "text": "No title"
-          },
-          "groupOptions": {
-            "type": "Standard"
           }
         },
         {
@@ -346,7 +265,10 @@
               },
               "children": null
             }
-          ]
+          ],
+          "renderOptions": {
+            "type": "Standard"
+          }
         },
         {
           "type": "Data",
@@ -361,9 +283,7 @@
                 "type": "Standard"
               },
               "children": null,
-              "required": true,
-              "readonly": false,
-              "disabled": false
+              "required": true
             },
             {
               "type": "Data",
@@ -372,10 +292,7 @@
               "renderOptions": {
                 "type": "Standard"
               },
-              "children": null,
-              "required": false,
-              "readonly": false,
-              "disabled": false
+              "children": null
             },
             {
               "type": "Data",
@@ -385,9 +302,6 @@
                 "type": "Standard"
               },
               "children": null,
-              "required": false,
-              "readonly": false,
-              "disabled": false,
               "validators": [
                 {
                   "type": "Jsonata",
@@ -403,15 +317,9 @@
                 "type": "Standard"
               },
               "children": null,
-              "required": false,
-              "readonly": false,
-              "disabled": false,
               "defaultValue": "Australia"
             }
           ],
-          "required": false,
-          "readonly": false,
-          "disabled": false,
           "renderOptions": {
             "type": "Standard"
           }
@@ -423,10 +331,7 @@
           "renderOptions": {
             "type": "Standard"
           },
-          "children": null,
-          "required": false,
-          "readonly": false,
-          "disabled": false
+          "children": null
         },
         {
           "type": "Group",
@@ -435,25 +340,15 @@
             {
               "type": "Data",
               "field": "textContent",
-              "required": false,
               "renderOptions": {
                 "type": "Synchronised",
                 "fieldToSync": "string",
                 "syncType": "Snake"
               },
-              "readonly": false,
-              "disabled": false,
-              "displayData": {
-                "type": "Text"
-              },
-              "title": "Synchronised Field (syncing \"string\")"
+              "title": "Synchronised Field (syncing \u0022string\u0022)"
             },
             {
               "title": "Icon List",
-              "required": false,
-              "readonly": false,
-              "disabled": false,
-              "displayData": {},
               "type": "Data",
               "renderOptions": {
                 "type": "IconList",
@@ -473,7 +368,6 @@
             {
               "type": "Group",
               "title": "Group Element (Image)",
-              "field": "imageContent",
               "children": [
                 {
                   "type": "Data",
@@ -482,10 +376,7 @@
                   "renderOptions": {
                     "type": "Standard"
                   },
-                  "children": null,
-                  "required": false,
-                  "readonly": false,
-                  "disabled": false
+                  "children": null
                 },
                 {
                   "type": "Data",
@@ -495,33 +386,17 @@
                     "type": "Standard"
                   },
                   "children": null,
-                  "required": false,
-                  "readonly": false,
-                  "disabled": false,
-                  "groupOptions": {
-                    "type": "Standard"
-                  },
                   "hideTitle": false
                 }
               ],
-              "required": false,
-              "readonly": false,
-              "disabled": false,
-              "renderOptions": {
-                "type": "Standard"
-              },
               "groupOptions": {
                 "type": "GroupElement"
               }
             }
           ],
-          "required": false,
-          "readonly": false,
-          "disabled": false,
           "groupOptions": {
             "type": "Standard"
-          },
-          "displayData": {}
+          }
         }
       ],
       "groupOptions": {

@@ -5,6 +5,8 @@ import {
   useControl,
   useControlEffect,
   useDebounced,
+  withChildren,
+  getControlPath,
 } from "@react-typed-forms/core";
 import { createPreviewNode, FormControlPreview } from "../FormControlPreview";
 import {
@@ -21,6 +23,66 @@ import clsx from "clsx";
 import { JsonEditor } from "../JsonEditor";
 import { EditableForm, PreviewData, ViewContext } from "../types";
 import { useFormUndoRedo } from "../hooks/useFormUndoRedo";
+
+// Toggle to enable/disable dirty state debugging
+const DEBUG_DIRTY_STATE = false;
+
+// Helper function to traverse control tree and find dirty controls
+function findDirtyControls(
+  control: Control<any>,
+  rootControl: Control<any>,
+): string[] {
+  const dirtyPaths: string[] = [];
+
+  if (!control) return dirtyPaths;
+
+  // Check if this control itself is dirty
+  if (control.current.dirty) {
+    const path = getControlPath(control, rootControl);
+    dirtyPaths.push(
+      `${path.join(".")} (dirty: true, value: ${JSON.stringify(control.current.value)} ${JSON.stringify(control.current.initialValue)})`,
+    );
+  }
+
+  // Traverse all children recursively
+  withChildren(control, (child) => {
+    const childPaths = findDirtyControls(child, rootControl);
+    dirtyPaths.push(...childPaths);
+  });
+
+  return dirtyPaths;
+}
+
+// Debug function to log dirty controls - only runs when DEBUG_DIRTY_STATE is true
+function debugDirtyState(
+  control: Control<EditableForm>,
+  name: string | undefined,
+) {
+  if (!DEBUG_DIRTY_STATE) return;
+
+  console.debug(`[FormView] Form marked as dirty for: ${name}`);
+  console.debug(
+    `[FormView] formTree.control.dirty: ${control.fields.formTree.value?.control.dirty}`,
+  );
+  console.debug(`[FormView] config.dirty: ${control.fields.config.dirty}`);
+
+  // Traverse and log all dirty controls
+  if (control.fields.formTree.value?.control) {
+    const formTreeControl = control.fields.formTree.value.control;
+    const dirtyPaths = findDirtyControls(formTreeControl, formTreeControl);
+    if (dirtyPaths.length > 0) {
+      console.debug(`[FormView] Dirty controls in formTree:`, dirtyPaths);
+    }
+  }
+
+  if (control.fields.config.dirty) {
+    const configControl = control.fields.config;
+    const configDirtyPaths = findDirtyControls(configControl, configControl);
+    if (configDirtyPaths.length > 0) {
+      console.debug(`[FormView] Dirty controls in config:`, configDirtyPaths);
+    }
+  }
+}
 
 export function FormView(props: { formId: string; context: ViewContext }) {
   const { formId, context } = props;
@@ -44,11 +106,15 @@ export function FormView(props: { formId: string; context: ViewContext }) {
         control.fields.name.value,
       ] as const,
     ([unsaved, name]) => {
+      if (unsaved) {
+        debugDirtyState(control.as(), name);
+      }
+
       if (name) {
         context.updateTabTitle("form:" + formId, unsaved ? name + " *" : name);
       }
     },
-    true
+    true,
   );
   return (
     <RenderOptional
@@ -98,7 +164,7 @@ function RenderFormDesign({
       defaultSchemaInterface,
       rootNode,
       createSchemaDataNode(schema.rootNode, newControl({})),
-      formRenderer
+      formRenderer,
     );
   }, []);
 
@@ -116,7 +182,6 @@ function RenderFormDesign({
 
       // Undo: Ctrl+Z or Cmd+Z
       if (e.key === "z" && !e.shiftKey) {
-        console.debug('[FormView] Undo keyboard shortcut triggered');
         e.preventDefault();
         undo();
         return;
@@ -124,7 +189,6 @@ function RenderFormDesign({
 
       // Redo: Ctrl+Y or Cmd+Shift+Z
       if (e.key === "y" || (e.key === "z" && e.shiftKey)) {
-        console.debug('[FormView] Redo keyboard shortcut triggered');
         e.preventDefault();
         redo();
         return;
@@ -147,10 +211,7 @@ function RenderFormDesign({
           {button(save, "Save")}
           <div className="flex gap-1">
             <button
-              onClick={() => {
-                console.debug('[FormView] Undo button clicked');
-                undo();
-              }}
+              onClick={undo}
               disabled={!canUndo.value}
               className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Undo (Ctrl+Z)"
@@ -158,10 +219,7 @@ function RenderFormDesign({
               <i className="fa fa-undo" />
             </button>
             <button
-              onClick={() => {
-                console.debug('[FormView] Redo button clicked');
-                redo();
-              }}
+              onClick={redo}
               disabled={!canRedo.value}
               className="px-2 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Redo (Ctrl+Y)"
@@ -185,7 +243,7 @@ function RenderFormDesign({
       const rootDefs = tree.getRootDefinitions();
       rootDefs.value = addMissingControlsForSchema(
         schema.rootNode,
-        rootDefs.value
+        rootDefs.value,
       );
     }
   }
@@ -248,11 +306,11 @@ function RenderFormDesign({
 
 function FormJsonView({ root }: { root: Control<ControlDefinition[]> }) {
   const jsonControl = useControl(() =>
-    JSON.stringify(root.current.value, null, 2)
+    JSON.stringify(root.current.value, null, 2),
   );
   useControlEffect(
     () => root.value,
-    (x) => (jsonControl.value = JSON.stringify(x, null, 2))
+    (x) => (jsonControl.value = JSON.stringify(x, null, 2)),
   );
   useControlEffect(() => jsonControl.value, useDebounced(updateControls, 300));
   return <JsonEditor className="h-64 m-4 border" control={jsonControl} />;

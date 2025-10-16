@@ -1,11 +1,18 @@
-import { Control, ensureMetaValue, groupedChanges, newControl, useComputed, useControl, useControlEffect, useDebounced } from "@react-typed-forms/core";
+import {
+  Control,
+  ensureMetaValue,
+  groupedChanges,
+  newControl,
+  useComputed,
+  useControlEffect,
+} from "@react-typed-forms/core";
 import { ControlDefinition, SchemaField } from "@react-typed-forms/schemas";
 import { EditableForm } from "../types";
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect } from "react";
 
 // Constants
-const UNDO_REDO_DEBOUNCE_MS = 300;
-const UNDO_REDO_MAX_STACK_SIZE = 50;
+const UNDO_REDO_DEBOUNCE_MS = 2000;
+const UNDO_REDO_MAX_STACK_SIZE = 100;
 
 // Snapshot types
 interface FormSnapshot {
@@ -21,6 +28,8 @@ interface UndoRedoState {
   future: FormSnapshot[];
   /** Shared across all hook instances */
   isRestoring: boolean;
+  /** Timestamp of when the last capture occurred */
+  lastCaptureTimestamp: number;
 }
 
 // Hook return type
@@ -38,21 +47,12 @@ function captureSnapshot(editableForm: Control<EditableForm>): FormSnapshot {
   const formTree = editableForm.fields.formTree.value;
   const rootDefs = formTree.getRootDefinitions();
 
-  const snapshot = {
+  return {
     formTreeValue: rootDefs.value,
     configValue: editableForm.fields.config.value,
     formSchemaValue: editableForm.fields.formSchema.value,
     timestamp: Date.now(),
   };
-
-  console.debug('[Undo/Redo] Captured snapshot:', {
-    timestamp: snapshot.timestamp,
-    formTreeLength: snapshot.formTreeValue.length,
-    configKeys: Object.keys(snapshot.configValue || {}),
-    formSchemaLength: snapshot.formSchemaValue.length,
-  });
-
-  return snapshot;
 }
 
 /**
@@ -61,15 +61,8 @@ function captureSnapshot(editableForm: Control<EditableForm>): FormSnapshot {
  */
 function restoreSnapshot(
   editableForm: Control<EditableForm>,
-  snapshot: FormSnapshot
+  snapshot: FormSnapshot,
 ): void {
-  console.debug('[Undo/Redo] Restoring snapshot:', {
-    timestamp: snapshot.timestamp,
-    formTreeLength: snapshot.formTreeValue.length,
-    configKeys: Object.keys(snapshot.configValue || {}),
-    formSchemaLength: snapshot.formSchemaValue.length,
-  });
-
   groupedChanges(() => {
     const formTree = editableForm.fields.formTree.value;
     const rootDefs = formTree.getRootDefinitions();
@@ -80,8 +73,6 @@ function restoreSnapshot(
     editableForm.fields.config.value = snapshot.configValue;
     editableForm.fields.formSchema.value = snapshot.formSchemaValue;
   });
-
-  console.debug('[Undo/Redo] Snapshot restored successfully');
 }
 
 /**
@@ -94,10 +85,8 @@ function restoreSnapshot(
  * @returns Undo/redo functions and reactive state flags
  */
 export function useFormUndoRedo(
-  editableForm: Control<EditableForm>
+  editableForm: Control<EditableForm>,
 ): UseFormUndoRedoReturn {
-  console.debug('[Undo/Redo] Hook initialized');
-
   // CRITICAL: Store undo/redo state IN the editableForm itself as a Control
   // FormView can be unmounted when tab is not visible
   // State must persist across mount/unmount cycles
@@ -105,21 +94,15 @@ export function useFormUndoRedo(
     editableForm,
     "undoRedoState",
     () => {
-      console.debug('[Undo/Redo] Creating new undo/redo state control');
       return newControl<UndoRedoState>({
         past: [],
         present: captureSnapshot(editableForm),
         future: [],
         isRestoring: false,
+        lastCaptureTimestamp: Date.now(),
       });
-    }
+    },
   );
-
-  console.debug('[Undo/Redo] Current state:', {
-    pastLength: undoRedoStateControl.value.past.length,
-    presentTimestamp: undoRedoStateControl.value.present.timestamp,
-    futureLength: undoRedoStateControl.value.future.length,
-  });
 
   // Timeout ref for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -132,78 +115,64 @@ export function useFormUndoRedo(
     };
   }, []);
 
-  // Debounced snapshot capture
-  const debouncedCapture = useDebounced(() => {
-    const state = undoRedoStateControl.value;
-    console.debug('[Undo/Redo] Debounced capture triggered', {
-      isRestoring: state.isRestoring,
-    });
-
-    if (state.isRestoring) {
-      console.debug('[Undo/Redo] Change detected during restore, ignoring.');
-      // A change was detected while a snapshot was being restored.
-      // This is expected, as `restoreSnapshot` modifies the form.
-      // We must ignore this change to prevent the redo stack from being cleared.
-      return;
-    }
-
-    const snapshot = captureSnapshot(editableForm);
-
-    const newPast = [...state.past, state.present];
-
-    // Enforce max stack size (FIFO)
-    if (newPast.length > UNDO_REDO_MAX_STACK_SIZE) {
-      newPast.shift(); // Remove oldest
-      console.debug('[Undo/Redo] Removed oldest snapshot to enforce max stack size');
-    }
-
-    console.debug('[Undo/Redo] Updating undo/redo state:', {
-      pastLength: newPast.length,
-      presentTimestamp: snapshot.timestamp,
-      futureLength: 0, // Always cleared on new change
-      clearingFutureStack: state.future.length > 0,
-    });
-
-    undoRedoStateControl.value = {
-      past: newPast,
-      present: snapshot,
-      future: [], // Clear redo stack on new change
-      isRestoring: state.isRestoring, // Preserve isRestoring flag
-    };
-
-    console.debug('[Undo/Redo] State updated - redo stack cleared due to new change');
-  }, UNDO_REDO_DEBOUNCE_MS);
-
-  // Watch for changes to any of the three data sources
+  // Immediate snapshot capture with smart merging
+  // Changes within UNDO_REDO_DEBOUNCE_MS merge into current snapshot
+  // Changes after that period create a new undo point
   useControlEffect(
+    () => ({
+      tree: editableForm.fields.formTree.value.getRootDefinitions().value,
+      config: editableForm.fields.config.value,
+      schema: editableForm.fields.formSchema.value,
+    }),
     () => {
-      const data = {
-        tree: editableForm.fields.formTree.value.getRootDefinitions().value,
-        config: editableForm.fields.config.value,
-        schema: editableForm.fields.formSchema.value,
-      };
-      console.debug('[Undo/Redo] Change detected:', {
-        treeLength: data.tree.length,
-        configKeys: Object.keys(data.config || {}),
-        schemaLength: data.schema.length,
-      });
-      return data;
+      const state = undoRedoStateControl.value;
+
+      if (state.isRestoring) {
+        // A change was detected while a snapshot was being restored.
+        // This is expected, as `restoreSnapshot` modifies the form.
+        // We must ignore this change to prevent the redo stack from being cleared.
+        return;
+      }
+
+      const now = Date.now();
+      const timeSinceLastCapture = now - state.lastCaptureTimestamp;
+      const snapshot = captureSnapshot(editableForm);
+
+      // Decide whether to merge with current snapshot or create new undo point
+      if (timeSinceLastCapture <= UNDO_REDO_DEBOUNCE_MS) {
+        // Within debounce period - merge by updating present snapshot only
+        // This makes undo immediately available and merges rapid changes
+        undoRedoStateControl.value = {
+          ...state,
+          present: snapshot,
+          future: [], // Clear redo stack on any change
+          lastCaptureTimestamp: now,
+        };
+      } else {
+        // Outside debounce period - create new undo point
+        const newPast = [...state.past, state.present];
+
+        // Enforce max stack size (FIFO)
+        if (newPast.length > UNDO_REDO_MAX_STACK_SIZE) {
+          newPast.shift(); // Remove oldest
+        }
+
+        undoRedoStateControl.value = {
+          past: newPast,
+          present: snapshot,
+          future: [], // Clear redo stack on new change
+          isRestoring: state.isRestoring,
+          lastCaptureTimestamp: now,
+        };
+      }
     },
-    debouncedCapture
   );
 
   // Undo operation
   const undo = () => {
     const state = undoRedoStateControl.value;
 
-    console.debug('[Undo/Redo] Undo called:', {
-      pastLength: state.past.length,
-      presentTimestamp: state.present.timestamp,
-      futureLength: state.future.length,
-    });
-
     if (state.past.length === 0) {
-      console.debug('[Undo/Redo] Cannot undo - no past states');
       return;
     }
 
@@ -212,41 +181,31 @@ export function useFormUndoRedo(
       ...state,
       isRestoring: true,
     };
-    console.debug('[Undo/Redo] Set isRestoring to true');
 
     const previous = state.past[state.past.length - 1];
     const newPast = state.past.slice(0, -1);
-
-    console.debug('[Undo/Redo] Moving to previous state:', {
-      previousTimestamp: previous.timestamp,
-      newPastLength: newPast.length,
-      addingToFuture: state.present.timestamp,
-      newFutureLength: state.future.length + 1,
-    });
 
     undoRedoStateControl.value = {
       past: newPast,
       present: previous,
       future: [state.present, ...state.future],
       isRestoring: true, // Keep flag true during restoration
+      lastCaptureTimestamp: Date.now(), // Reset timestamp so next change is fresh
     };
 
-    console.debug('[Undo/Redo] State updated, restoring snapshot');
     restoreSnapshot(editableForm, previous);
 
     // Clear previous timeout if exists
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    // Use setTimeout with delay > debounce time to prevent capturing during undo
-    // The debounce is 300ms, so we need to wait at least that long plus a buffer
+    // Use setTimeout to clear isRestoring flag after restoration completes
     timeoutRef.current = setTimeout(() => {
       const currentState = undoRedoStateControl.value;
       undoRedoStateControl.value = {
         ...currentState,
         isRestoring: false,
       };
-      console.debug('[Undo/Redo] Set isRestoring to false (after timeout)');
     }, UNDO_REDO_DEBOUNCE_MS + 50);
   };
 
@@ -254,15 +213,7 @@ export function useFormUndoRedo(
   const redo = () => {
     const state = undoRedoStateControl.value;
 
-    console.debug('[Undo/Redo] Redo called:', {
-      pastLength: state.past.length,
-      presentTimestamp: state.present.timestamp,
-      futureLength: state.future.length,
-      futureTimestamps: state.future.map(s => s.timestamp),
-    });
-
     if (state.future.length === 0) {
-      console.debug('[Undo/Redo] Cannot redo - no future states');
       return;
     }
 
@@ -271,58 +222,40 @@ export function useFormUndoRedo(
       ...state,
       isRestoring: true,
     };
-    console.debug('[Undo/Redo] Set isRestoring to true');
 
     const next = state.future[0];
     const newFuture = state.future.slice(1);
-
-    console.debug('[Undo/Redo] Moving to next state:', {
-      nextTimestamp: next.timestamp,
-      addingToPast: state.present.timestamp,
-      newPastLength: state.past.length + 1,
-      newFutureLength: newFuture.length,
-    });
 
     undoRedoStateControl.value = {
       past: [...state.past, state.present],
       present: next,
       future: newFuture,
       isRestoring: true, // Keep flag true during restoration
+      lastCaptureTimestamp: Date.now(), // Reset timestamp so next change is fresh
     };
 
-    console.debug('[Undo/Redo] State updated, restoring snapshot');
     restoreSnapshot(editableForm, next);
 
     // Clear previous timeout if exists
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    // Use setTimeout with delay > debounce time to prevent capturing during redo
-    // The debounce is 300ms, so we need to wait at least that long plus a buffer
+    // Use setTimeout to clear isRestoring flag after restoration completes
     timeoutRef.current = setTimeout(() => {
       const currentState = undoRedoStateControl.value;
       undoRedoStateControl.value = {
         ...currentState,
         isRestoring: false,
       };
-      console.debug('[Undo/Redo] Set isRestoring to false (after timeout)');
     }, UNDO_REDO_DEBOUNCE_MS + 50);
   };
 
   // Reactive computed values for button state
-  const canUndo = useComputed(() => {
-    const canUndoValue = undoRedoStateControl.value.past.length > 0;
-    console.debug('[Undo/Redo] canUndo computed:', {
-      canUndo: canUndoValue,
-      pastLength: undoRedoStateControl.value.past.length,
-    });
-    return canUndoValue;
-  });
+  const canUndo = useComputed(() => undoRedoStateControl.value.past.length > 0);
 
-  const canRedo = useComputed(() => {
-    const canRedoValue = undoRedoStateControl.value.future.length > 0;
-    return canRedoValue;
-  });
+  const canRedo = useComputed(
+    () => undoRedoStateControl.value.future.length > 0,
+  );
 
   return {
     undo,

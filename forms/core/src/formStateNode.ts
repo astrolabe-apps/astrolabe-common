@@ -675,12 +675,13 @@ function initFormState(
   createSyncEffect(() => {
     const dn = dataNode.value?.control;
     if (dn && isDataControl(definition)) {
-      if (definition.hidden) {
+      if (impl.visible == false) {
         if (impl.clearHidden && !definition.dontClearHidden) {
           // console.log("Clearing hidden");
           dn.value = undefined;
         }
       } else if (
+        impl.visible &&
         dn.value === undefined &&
         definition.defaultValue != null &&
         !definition.adornments?.some(
@@ -705,7 +706,6 @@ function initFormState(
         //       : defaultValueForField(field, required)
         //     : undefined)
         // );
-
         dn.value = definition.defaultValue;
       }
     }
