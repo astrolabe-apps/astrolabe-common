@@ -342,9 +342,11 @@ public static class DefaultFunctions
                         new ValueExpr(
                             new ArrayValue(
                                 ((JsonObject)ov.Object)
-                                    .Select(x => new ValueExpr(
-                                        type == "keys" ? x.Key : ExtractJsonValue(x.Value)
-                                    ))
+                                    .Select(x =>
+                                        type == "keys"
+                                            ? new ValueExpr(x.Key)
+                                            : JsonDataLookup.ToValue(null, x.Value)
+                                    )
                                     .ToList()
                             ),
                             objVal.Path,
@@ -357,20 +359,6 @@ public static class DefaultFunctions
                 };
             }
         );
-
-    private static object? ExtractJsonValue(JsonNode? jsonNode) =>
-        jsonNode switch
-        {
-            null => null,
-            JsonValue jv when jv.TryGetValue<string>(out var s) => s,
-            JsonValue jv when jv.TryGetValue<double>(out var d) => d,
-            JsonValue jv when jv.TryGetValue<bool>(out var b) => b,
-            JsonObject jo => new ObjectValue(jo),
-            JsonArray ja => new ArrayValue(
-                ja.Select(x => new ValueExpr(ExtractJsonValue(x))).ToList()
-            ),
-            _ => jsonNode.ToString(),
-        };
 
     private static JsonNode? ToJsonNode(object? objValue)
     {
