@@ -21,6 +21,13 @@ Implement a fully functional validation system that:
 5. Handles required field validation
 6. Supports multiple validators with proper error priority
 
+**Implementation Scope:**
+The initial implementation will include these core validators:
+- ✅ Required field validation
+- ✅ Length validation (with array auto-expansion)
+- ✅ Date validation (NotBefore/NotAfter)
+- ⏭️ **JSONata expression validation** - Deferred to Phase 3 (infrastructure in place, implementation straightforward)
+
 ---
 
 ## 🎉 Key Research Findings
@@ -57,6 +64,8 @@ After comprehensive codebase analysis, **most infrastructure already exists**:
 The TypeScript implementation has these key components:
 
 **A. Validator Evaluation Context (`ValidationEvalContext`)**
+
+**TypeScript version:**
 ```typescript
 interface ValidationEvalContext {
   addSync(validate: (value: unknown) => string | undefined | null): void;
@@ -65,10 +74,29 @@ interface ValidationEvalContext {
   parentData: SchemaDataNode;
   data: SchemaDataNode;
   schemaInterface: SchemaInterface;
-  variables?: VariablesFunc;
-  runAsync(af: () => void): void;
+  variables?: VariablesFunc; // Function for dynamic variable resolution
 }
 ```
+
+**C# version (with reactive improvements):**
+```csharp
+interface IValidationEvalContext {
+  // Validators receive ChangeTracker to enable reactive dependencies
+  void AddSync(Func<object?, ChangeTracker, string?> validate);
+  IControl<bool> ValidationEnabled { get; }
+  SchemaDataNode ParentData { get; }
+  SchemaDataNode Data { get; }
+  ISchemaInterface SchemaInterface { get; }
+  // Variables as dictionary of controls (more idiomatic for C#)
+  IDictionary<string, IControl>? Variables { get; }
+}
+```
+
+**Key C# Differences:**
+- ✅ `AddSync` receives `ChangeTracker` - validators can track dependencies reactively
+- ✅ `Variables` is `IDictionary<string, IControl>` - simpler, more idiomatic
+- ✅ No `runAsync` - all validation is synchronous
+- ✅ No `addCleanup` - cleanup handled by DisposableScope pattern at higher level
 
 **B. Validator Evaluators**
 - Type: `ValidatorEval<T> = (validation: T, context: ValidationEvalContext) => void`
@@ -102,14 +130,14 @@ namespace Astrolabe.Schemas.Validation;
 
 public interface IValidationEvalContext
 {
-    void AddSync(Func<object?, string?> validate);
-    void AddCleanup(Action cleanup);
+    // Validators receive ChangeTracker to track reactive dependencies
+    void AddSync(Func<object?, ChangeTracker, string?> validate);
     IControl<bool> ValidationEnabled { get; }
     SchemaDataNode ParentData { get; }
     SchemaDataNode Data { get; }
     ISchemaInterface SchemaInterface { get; }
-    Func<Action<object?>, IDictionary<string, object?>>? Variables { get; }
-    void RunAsync(Action asyncFunc);
+    // Variables as dictionary of controls for reactive tracking
+    IDictionary<string, IControl>? Variables { get; }
 }
 ```
 
@@ -117,22 +145,20 @@ public interface IValidationEvalContext
 ```csharp
 public class ValidationEvalContext : IValidationEvalContext
 {
-    private readonly List<Func<object?, string?>> _syncValidators = new();
-    private readonly List<Action> _cleanups = new();
+    private readonly List<Func<object?, ChangeTracker, string?>> _syncValidators = new();
 
-    public void AddSync(Func<object?, string?> validate) => _syncValidators.Add(validate);
-    public void AddCleanup(Action cleanup) => _cleanups.Add(cleanup);
+    public void AddSync(Func<object?, ChangeTracker, string?> validate) => _syncValidators.Add(validate);
     public IControl<bool> ValidationEnabled { get; init; }
     public SchemaDataNode ParentData { get; init; }
     public SchemaDataNode Data { get; init; }
     public ISchemaInterface SchemaInterface { get; init; }
-    public Func<Action<object?>, IDictionary<string, object?>>? Variables { get; init; }
-    public void RunAsync(Action asyncFunc) { /* Implementation */ }
+    public IDictionary<string, IControl>? Variables { get; init; }
 
-    public IEnumerable<Func<object?, string?>> GetSyncValidators() => _syncValidators;
-    public void Cleanup() => _cleanups.ForEach(c => c());
+    public IEnumerable<Func<object?, ChangeTracker, string?>> GetSyncValidators() => _syncValidators;
 }
 ```
+
+**Note:** No cleanup methods needed - cleanup handled by DisposableScope pattern in the validation setup code (Phase 4).
 
 #### 1.2 Create Validator Evaluator Delegate Type
 **File:** `Astrolabe.Schemas/Validation/ValidatorEval.cs`
@@ -163,6 +189,75 @@ public interface IControl
 }
 ```
 
+#### 1.4 Setting DontClearError Flag on Controls
+**Location:** `Astrolabe.Schemas/FormStateNode.cs` or validation setup code
+
+**IMPORTANT:** Controls with validators should have the `DontClearError` flag set to prevent
+validation errors from being cleared when the control value changes. This ensures the validation
+system has full responsibility for managing errors.
+
+**Current State:**
+- ✅ `ControlFlags.DontClearError` flag already exists (Control.cs:901)
+- ✅ Flag is checked in `SetValueInternal` to prevent clearing errors (Control.cs:575-578)
+- ❌ No public method to set this flag on an existing control
+
+**Required Addition to ControlEditor:**
+```csharp
+// Add to ControlEditor.cs
+public void SetDontClearError(IControl control, bool dontClearError)
+{
+    RunWithMutator(control, mutator =>
+    {
+        // Access internal flags through IControlMutation
+        // This will need an internal method added to IControlMutation
+        mutator.SetFlagsInternal(ControlFlags.DontClearError, dontClearError);
+        return false; // No listeners needed
+    });
+}
+```
+
+**Required Addition to IControlMutation:**
+```csharp
+// Add to IControlMutation.cs
+void SetFlagsInternal(ControlFlags flags, bool enabled);
+```
+
+**Implementation in Control:**
+```csharp
+// Add to Control.cs
+void IControlMutation.SetFlagsInternal(ControlFlags flags, bool enabled)
+{
+    if (enabled)
+        _flags |= flags;
+    else
+        _flags &= ~flags;
+}
+```
+
+**Usage in Validation Setup:**
+```csharp
+// In InitializeValidation() method
+private void InitializeValidation(ControlDefinition originalDefinition)
+{
+    if (originalDefinition is not DataControlDefinition dcd) return;
+
+    // Get the control from dataNode
+    var control = _dataNodeControl.Value?.Control;
+    if (control != null)
+    {
+        // Set DontClearError flag so validation owns error management
+        _editor.SetDontClearError(control, true);
+    }
+
+    // ... rest of validation setup
+}
+```
+
+**Why This Is Needed:**
+- Validation system sets errors via subscriptions
+- Without this flag, `SetValue()` would clear validation errors
+- Validation should be sole owner of error state
+
 ---
 
 ### Phase 2: Validator Implementations
@@ -175,7 +270,8 @@ public static class LengthValidatorEval
 {
     public static void Evaluate(LengthValidator lv, IValidationEvalContext context)
     {
-        context.AddSync(value =>
+        // Validator receives ChangeTracker but doesn't need it for length validation
+        context.AddSync((value, tracker) =>
         {
             var field = context.Data.Schema.Field;
             var control = context.Data.Control;
@@ -267,33 +363,45 @@ public static class DateValidatorEval
 #### 2.3 Jsonata Validator
 **File:** `Astrolabe.Schemas/Validation/Validators/JsonataValidatorEval.cs`
 
+**NOTE:** In C#, Jsonata validators are evaluated synchronously during validation,
+unlike TypeScript which uses reactive subscriptions. This is simpler and more performant.
+
 ```csharp
 public static class JsonataValidatorEval
 {
     public static void Evaluate(JsonataValidator jv, IValidationEvalContext context)
     {
-        // Create reactive computation for jsonata evaluation
-        var errorComputed = ControlEditor.MakeComputed<string?>(
-            () => null,
-            context.Data.Control
-        );
-
-        // Evaluate jsonata expression reactively
-        EntityExpressionExtensions.EvaluateJsonata(
-            jv.Expression,
-            new ExpressionEvalContext
+        // Add synchronous jsonata validator
+        context.AddSync(value =>
+        {
+            try
             {
-                DataNode = context.ParentData,
-                SchemaInterface = context.SchemaInterface,
-                Variables = context.Variables,
-                OnResult = result =>
-                {
-                    // Set jsonata-specific error
-                    context.Data.Control.SetError("jsonata", result?.ToString());
-                },
-                RunAsync = context.RunAsync
+                // Evaluate jsonata expression synchronously
+                var jsonNode = context.ParentData.ValueObject as JsonNode ??
+                    JsonSerializer.SerializeToNode(context.ParentData.ValueObject);
+
+                var result = new JsonataQuery(jv.Expression).Eval(
+                    JsonataExtensions.FromSystemTextJson(
+                        JsonDocument.Parse(jsonNode?.ToJsonString() ?? "{}")));
+
+                // If result is a string, return it as the error message
+                // If result is false/null, no error
+                // If result is true, return a default error message
+                if (result.Type == JTokenType.String)
+                    return (string)result;
+                if (result.Type == JTokenType.Boolean && (bool)result == false)
+                    return null;
+                if (result.Type == JTokenType.Boolean && (bool)result == true)
+                    return "Validation failed";
+
+                return null;
             }
-        );
+            catch (Exception ex)
+            {
+                // Return jsonata error as validation message
+                return $"Validation error: {ex.Message}";
+            }
+        });
     }
 }
 ```
@@ -398,75 +506,157 @@ public static class ValidationFactory
 
 ### Phase 4: Integration with FormStateNode
 
-#### 4.1 Add Validation Setup to FormStateNode
-**File:** `Astrolabe.Schemas/FormStateNodeBuilder.cs` (or equivalent)
+#### 4.1 Add InitializeValidation Method to FormStateNode
+**File:** `Astrolabe.Schemas/FormStateNode.cs`
+
+Add this method to the FormStateNode class, following the pattern of other Initialize* methods:
 
 ```csharp
-public static class ValidationSetup
+private void InitializeValidation(ControlDefinition originalDefinition)
 {
-    public static void SetupValidation(
-        IControl scope,
-        Func<Action<object?>, IDictionary<string, object?>>? variables,
-        ControlDefinition definition,
-        IControl<SchemaDataNode?> dataNode,
-        ISchemaInterface schemaInterface,
-        SchemaDataNode parent,
-        IControl<bool?> visible,
-        Action<Action> runAsync)
+    // Only validate DataControlDefinitions with validators
+    if (originalDefinition is not DataControlDefinition dcd) return;
+    if (DataNode == null) return;
+
+    // Check if there are any validators to set up (required or explicit validators)
+    var hasValidators = dcd.Required == true || (dcd.Validators?.Count > 0);
+    if (!hasValidators) return;
+
+    // Create a computed control for validation enabled state (tracks visibility)
+    var validationEnabledControl = Control.Create(false);
+    _editor.SetComputed(validationEnabledControl, tracker =>
     {
-        var validationEnabled = ControlEditor.MakeComputed(
-            () => visible.Value == true,
-            scope
-        );
+        var visible = tracker.TrackValue(_stateControl, x => x.Visible);
+        return visible == true;
+    });
 
-        var validatorsScope = new DisposableScope();
+    // Create validation context
+    var context = new ValidationEvalContext
+    {
+        Data = DataNode,
+        ParentData = Parent,
+        ValidationEnabled = validationEnabledControl,
+        SchemaInterface = _schemaInterface,
+        Variables = null // Can be extended later for advanced scenarios
+    };
 
-        ControlEditor.OnChange(dataNode, dn =>
+    // Create all validators (Required, Length, Date - JSONata deferred to v1.1)
+    ValidationFactory.CreateValidators(originalDefinition, context);
+
+    // Get the list of sync validators from context
+    var syncValidators = context.GetSyncValidators().ToList();
+    if (syncValidators.Count == 0) return;
+
+    // Setup reactive validation using ChangeTracker.Evaluate
+    var validationDisposable = ChangeTracker.Evaluate(
+        tracker =>
         {
-            validatorsScope.Dispose();
+            // Track control value changes AND explicit validation triggers
+            tracker.RecordAccess(DataNode.Control, ControlChange.Value | ControlChange.Validate);
 
-            if (dn == null) return;
+            // Track validation enabled state
+            var validationEnabled = tracker.GetValue(validationEnabledControl) as bool? == true;
 
-            var context = new ValidationEvalContext
+            // Clear error if validation is disabled
+            if (!validationEnabled)
+                return (string?)null;
+
+            // Run validators in order, first error wins
+            var value = DataNode.Control.ValueObject;
+            foreach (var validator in syncValidators)
             {
-                Data = dn,
-                ParentData = parent,
-                ValidationEnabled = validationEnabled,
-                SchemaInterface = schemaInterface,
-                Variables = variables,
-                RunAsync = runAsync
-            };
+                var error = validator(value, tracker);
+                if (error != null)
+                    return error;
+            }
 
-            // Create validators
-            ValidationFactory.CreateValidators(definition, context);
+            return (string?)null;
+        },
+        error =>
+        {
+            // Set or clear error on the control
+            _editor.SetError(DataNode.Control, "default", error);
+        }
+    );
 
-            // Setup sync validation effect
-            ControlEditor.OnChange(dn.Control, value =>
-            {
-                if (!validationEnabled.Value)
-                {
-                    dn.Control.SetError("default", null);
-                    return;
-                }
-
-                string? error = null;
-                foreach (var validator in context.GetSyncValidators())
-                {
-                    error = validator(value);
-                    if (error != null) break;
-                }
-
-                dn.Control.SetError("default", error);
-            }, validatorsScope);
-        }, scope);
-    }
+    // Add to disposables for cleanup
+    _disposables.Add(validationDisposable);
+    _disposables.Add(validationEnabledControl);
 }
 ```
 
-#### 4.2 Integrate into FormStateNode Initialization
-**Location:** Where FormStateNode is created/initialized
+#### 4.2 Integrate into FormStateNode Constructor
+**Location:** `Astrolabe.Schemas/FormStateNode.cs` constructor
 
-Add call to `ValidationSetup.SetupValidation()` during form state node initialization, similar to how it's done in TypeScript's `initFormState()` function (line 664 of formStateNode.ts).
+Add the validation initialization call after `InitializeVisibility()` (around line 87):
+
+```csharp
+public FormStateNode(
+    ControlDefinition definition,
+    IFormNode? form,
+    SchemaDataNode parent,
+    IFormStateNode? parentNode,
+    int childIndex,
+    object childKey,
+    ControlEditor editor,
+    ISchemaInterface schemaInterface
+)
+{
+    _originalDefinition = definition;
+    Form = form;
+    Parent = parent;
+    ParentNode = parentNode;
+    ChildIndex = childIndex;
+    ChildKey = childKey;
+    _editor = editor;
+    _schemaInterface = schemaInterface;
+    _evalContext = new ExpressionEvalContext(Parent, _schemaInterface);
+
+    DataNode = FormStateNodeHelpers.LookupDataNode(definition, parent);
+    _stateControl = Control.Create(new FormStateImpl { /* ... */ });
+    _definitionControl = _stateControl.Field(x => x.Definition);
+    _childrenControl = Control.Create(new List<IFormStateNode>());
+
+    // Initialize dynamic definition fields
+    InitializeHiddenDynamic(definition);
+    InitializeReadonlyDynamic(definition);
+    InitializeDisabledDynamic(definition);
+    InitializeTitle(definition);
+    InitializeDisplay(definition);
+    InitializeDefaultValue(definition);
+    InitializeActionData(definition);
+    InitializeGridColumns(definition);
+
+    // Initialize state-level properties
+    InitializeStyle(definition);
+    InitializeLayoutStyle(definition);
+    InitializeAllowedOptions(definition);
+    InitializeFieldOptions();
+
+    // Initialize computed state flags
+    InitializeReadonly();
+    InitializeDisabled();
+    InitializeVisibility();
+
+    // ✅ ADD VALIDATION INITIALIZATION HERE
+    InitializeValidation(definition);
+
+    // Initialize reactive children
+    _editor.SetComputedWithPrevious<List<IFormStateNode>>(_childrenControl,
+        (tracker, currentChildren) =>
+        {
+            var childSpecs = FormStateNodeHelpers.ResolveChildren(this, tracker);
+            return UpdateChildren(currentChildren, childSpecs);
+        });
+}
+```
+
+**Key Integration Notes:**
+- Validation setup happens **after** visibility is initialized (validation needs to track visibility)
+- Validation setup happens **before** children are initialized (parent validation should be set up first)
+- Follows the existing `Initialize*()` pattern used throughout FormStateNode
+- Uses `_disposables` list for proper cleanup
+- Only sets up validation if DataNode exists and has validators
 
 ---
 
@@ -1029,11 +1219,13 @@ Based on research findings, the implementation approach is **SIMPLIFIED**:
 | Phase | Original | Updated | Reason |
 |-------|----------|---------|--------|
 | Sprint 1: Foundation | 2-3 weeks | **1-2 weeks** | No Control changes needed |
-| Sprint 2: Validators | 2 weeks | **1-2 weeks** | Jsonata already integrated |
+| Sprint 2: Core Validators | 2 weeks | **1 week** | 3 validators (JSONata deferred) |
 | Sprint 3: Integration | 2-3 weeks | **1 week** | Simple constructor addition |
+| Sprint 3.5: JSONata (Optional) | N/A | **1-2 days** | Can be v1.1 release |
 | Sprint 4: Polish | 1-2 weeks | **1 week** | ISchemaInterface extension only |
 | Sprint 5: Documentation | 1 week | **1 week** | Unchanged |
-| **Total** | **8-11 weeks** | **5-7 weeks** | 37% faster |
+| **Total (v1.0)** | **8-11 weeks** | **4-5 weeks** | Faster, focused scope |
+| **Total (with JSONata)** | **8-11 weeks** | **5-7 weeks** | 37% faster |
 
 ### Risk Mitigation Updates:
 
@@ -1062,17 +1254,20 @@ Based on research findings, the implementation approach is **SIMPLIFIED**:
 - All infrastructure already in place
 
 ### Sprint 2: Core Validators (1-2 weeks) ✅ SIMPLIFIED
+**Initial implementation focuses on core validators only**
+
 - [ ] Implement `RequiredValidatorEval` (sync validator)
 - [ ] Implement `LengthValidatorEval` with array auto-expansion (sync validator)
 - [ ] Implement `DateValidatorEval` (sync validator)
-- [ ] Implement `JsonataValidatorEval` using existing Jsonata.Net.Native integration
 - [ ] Unit tests for all validators
 - [ ] Validator factory (`ValidationFactory.CreateValidators()`)
 
 **Key Simplifications:**
-- Jsonata library already integrated and working
-- No async/await needed - use reactive subscriptions
-- Pattern already established by expression evaluators
+- ✅ No async/await needed - use reactive subscriptions
+- ✅ Pattern already established by expression evaluators
+- ✅ JSONata deferred to later phase - focus on proving core validation pattern works first
+
+**Note:** JsonataValidator implementation is deferred to Sprint 3.5/Phase 3 after core system is validated
 
 ### Sprint 3: FormStateNode Integration (1 week) ✅ SIMPLIFIED
 - [ ] Add `InitializeValidation()` method to FormStateNode constructor
@@ -1086,6 +1281,20 @@ Based on research findings, the implementation approach is **SIMPLIFIED**:
 - Single constructor addition (follows existing `Initialize*()` pattern)
 - No new lifecycle management needed
 - Reactive pattern already established in FormStateNode
+
+### Sprint 3.5: JSONata Validator (Optional - 1-2 days)
+**This sprint can be done after initial release if needed**
+
+- [ ] Implement `JsonataValidatorEval` using existing Jsonata.Net.Native integration
+- [ ] Unit tests for JSONata validator
+- [ ] Integration tests with other validators
+- [ ] Update validator registry to include JSONata
+
+**Key Notes:**
+- ✅ Jsonata.Net.Native v2.4.2 already integrated
+- ✅ Pattern established by core validators
+- ✅ Can be added without breaking changes
+- ⏭️ Optional for initial release
 
 ### Sprint 4: ISchemaInterface Extensions (1 week)
 - [ ] Extend `ISchemaInterface` with validation methods:
@@ -1103,11 +1312,12 @@ Based on research findings, the implementation approach is **SIMPLIFIED**:
 
 ### Sprint 5: Documentation & Examples (1 week)
 - [ ] API documentation for validators
-- [ ] Usage examples (required, length, date, jsonata validators)
-- [ ] Custom validator registration example
+- [ ] Usage examples (required, length, date validators)
+- [ ] Custom validator registration example (shows how to add JSONata or other validators)
 - [ ] Localization example (ISchemaInterface override)
 - [ ] Testing guide
 - [ ] Performance notes (already optimized)
+- [ ] Future enhancements section (JSONata, async validators, etc.)
 
 **Total Estimated Time:** 5-7 weeks (37% reduction from original 8-11 weeks)
 
@@ -1115,7 +1325,8 @@ Based on research findings, the implementation approach is **SIMPLIFIED**:
 
 ## Success Criteria
 
-1. ✅ All validator types (Required, Length, Date, Jsonata) implemented and tested
+### Initial Release (v1.0)
+1. ✅ Core validator types (Required, Length, Date) implemented and tested
 2. ✅ Validation errors properly set on controls and propagated to UI
 3. ✅ Validation respects visibility (hidden controls don't validate)
 4. ✅ Multiple validators can be combined with proper error priority
@@ -1123,7 +1334,10 @@ Based on research findings, the implementation approach is **SIMPLIFIED**:
 6. ✅ Test coverage >80% for validation code
 7. ✅ Performance: Validation adds <10ms overhead per field change
 8. ✅ Documentation complete with examples
-9. ✅ Feature parity with TypeScript implementation
+9. ✅ Validator registry extensible for custom validators
+
+### Future Enhancement (v1.1+)
+10. ⏭️ JSONata expression validator (deferred - straightforward addition using existing infrastructure)
 
 ---
 
@@ -1193,14 +1407,17 @@ Based on research findings, the implementation approach is **SIMPLIFIED**:
    - Add test helpers for validation
 
 ### Phase 2: Core Validators (Week 3-4)
-**Priority: Implement validators in order of simplicity**
+**Priority: Implement core validators to prove the pattern**
+
+**Three core validator types will be implemented in this phase:**
 
 1. **RequiredValidator** (simplest - only uses IsEmptyValue)
 2. **LengthValidator** (medium - uses ControlLength, includes array auto-expansion)
 3. **DateValidator** (medium - uses ParseToMillis)
-4. **JsonataValidator** (complex - uses reactive expressions)
 
-Each with comprehensive unit tests.
+**Note:** JSONata validation is deferred to Phase 3.5 (after FormStateNode integration is complete and tested). This allows us to validate the core pattern first before adding the more complex JSONata support. The Jsonata.Net.Native v2.4.2 library is already integrated, making future implementation straightforward.
+
+Each validator will include comprehensive unit tests.
 
 ### Phase 3: Integration (Week 5)
 **Priority: Single FormStateNode change**
@@ -1209,6 +1426,16 @@ Each with comprehensive unit tests.
 2. Create validation integration tests
 3. Test visibility integration
 4. Test multiple validators
+
+### Phase 3.5: JSONata Validator (Optional - Can be deferred to v1.1)
+**Priority: Optional enhancement after core validation proven**
+
+1. **JsonataValidator** (uses Jsonata.Net.Native library - already integrated)
+2. Unit tests for JSONata validation
+3. Integration tests with core validators
+4. Update documentation with JSONata examples
+
+**Decision Point:** This phase can be skipped for initial v1.0 release and added in v1.1
 
 ### Phase 4: Polish & Document (Week 6-7)
 **Priority: Production readiness**
@@ -1226,7 +1453,16 @@ Each with comprehensive unit tests.
 - [ ] RequiredValidator working
 - [ ] Basic unit tests passing
 
-This proves the pattern works before investing in complex validators.
+This proves the pattern works before implementing the remaining validators (Length and Date).
+
+### Phase 2 Completion Milestone:
+**Target: End of Week 4**
+- [ ] Three core validator types implemented (Required, Length, Date)
+- [ ] Comprehensive unit tests for all validators
+- [ ] ValidationFactory complete
+- [ ] Ready for FormStateNode integration
+
+**Note:** JSONata validation is intentionally deferred to Phase 3.5 to focus on proving the core pattern first.
 
 ---
 
@@ -1245,12 +1481,13 @@ Copy this to track progress:
 - [ ] DefaultSchemaInterface implementation
 - [ ] Test infrastructure setup
 
-## Sprint 2: Validators
+## Sprint 2: Core Validators (Initial Release)
 - [ ] RequiredValidatorEval + tests
 - [ ] LengthValidatorEval + tests (with auto-expansion)
 - [ ] DateValidatorEval + tests
-- [ ] JsonataValidatorEval + tests
 - [ ] Multi-validator integration tests
+
+**Note:** JSONata validator is intentionally deferred to Sprint 3.5 (optional for v1.0).
 
 ## Sprint 3: FormStateNode Integration
 - [ ] InitializeValidation() method
@@ -1260,6 +1497,13 @@ Copy this to track progress:
 - [ ] Visibility integration tests
 - [ ] Full end-to-end tests
 
+## Sprint 3.5: JSONata Validator (Optional - can be v1.1)
+- [ ] JsonataValidatorEval + tests (using Jsonata.Net.Native v2.4.2)
+- [ ] Integration with validator registry
+- [ ] Documentation updates
+
+**Note:** This sprint is optional for v1.0 release. Can be deferred to v1.1.
+
 ## Sprint 4: Polish
 - [ ] Edge case handling
 - [ ] XML documentation
@@ -1268,8 +1512,9 @@ Copy this to track progress:
 
 ## Sprint 5: Documentation
 - [ ] API documentation
-- [ ] Usage examples (4 validator types)
-- [ ] Custom validator example
+- [ ] Usage examples (3 core validator types: Required, Length, Date)
+- [ ] Custom validator registration example (extensibility pattern)
 - [ ] Localization guide
 - [ ] Migration guide
+- [ ] Future enhancements section (JSONata, async validators)
 ```

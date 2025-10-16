@@ -25,14 +25,12 @@ public static class FormStateNodeBuilder
     {
         var actualSchemaInterface = schemaInterface ?? DefaultSchemaInterface.Instance;
         var definition = form.Definition;
-        var dataNode = FormStateNodeHelpers.LookupDataNode(definition, data);
 
         var root = new FormStateNode(
             definition: definition,
             form: form,
             parent: data,
             parentNode: null,
-            dataNode: dataNode,
             childIndex: 0,
             childKey: "ROOT",
             editor: editor,

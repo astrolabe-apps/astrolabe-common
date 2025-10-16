@@ -324,7 +324,6 @@ public class FormStateNode_DynamicVisibilityTests
             parentNode: parentNode,
             editor: editor,
             definition: childDefinition,
-            dataNode: dataNode,
             parent: dataNode
         );
 
@@ -373,7 +372,6 @@ public class FormStateNode_DynamicVisibilityTests
             parentNode: parentNode,
             editor: editor,
             definition: childDefinition,
-            dataNode: dataNode,
             parent: dataNode
         );
 

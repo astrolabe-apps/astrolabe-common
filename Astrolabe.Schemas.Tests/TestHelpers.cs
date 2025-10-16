@@ -140,7 +140,6 @@ public static class TestHelpers
             form: null,
             parent: actualDataNode,
             parentNode: null,
-            dataNode: actualDataNode,
             childIndex: childIndex,
             childKey: childKey,
             editor: actualEditor,
@@ -155,7 +154,6 @@ public static class TestHelpers
         FormStateNode parentNode,
         ControlEditor editor,
         ControlDefinition? definition = null,
-        SchemaDataNode? dataNode = null,
         SchemaDataNode? parent = null,
         string childKey = "child",
         int childIndex = 0,
@@ -170,15 +168,12 @@ public static class TestHelpers
         // Use provided parent or use parent node's dataNode
         var actualParent = parent ?? parentNode.Parent;
 
-        // Use provided dataNode or use parent
-        var actualDataNode = dataNode ?? actualParent;
 
         return new FormStateNode(
             definition: actualDefinition,
             form: null,
             parent: actualParent,
             parentNode: parentNode,
-            dataNode: actualDataNode,
             childIndex: childIndex,
             childKey: childKey,
             editor: editor,

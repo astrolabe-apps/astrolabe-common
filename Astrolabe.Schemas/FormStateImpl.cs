@@ -11,9 +11,6 @@ public record FormStateImpl
     public bool Readonly { get; init; }
     public bool Disabled { get; init; }
 
-    // Data binding
-    public SchemaDataNode? DataNode { get; init; }
-
     // Control definition
     public ControlDefinition Definition { get; init; } = null!;
 

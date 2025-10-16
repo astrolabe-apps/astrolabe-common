@@ -18,12 +18,14 @@ public class FormStateNode : IFormStateNode
     // Not part of IFormStateNode interface - only accessible from FormStateNode
     internal IControl<FormStateImpl> State => _stateControl;
 
+    // DataNode is calculated once from the initial definition and does not change
+    public SchemaDataNode? DataNode { get; }
+
     public FormStateNode(
         ControlDefinition definition,
         IFormNode? form,
         SchemaDataNode parent,
         IFormStateNode? parentNode,
-        SchemaDataNode? dataNode,
         int childIndex,
         object childKey,
         ControlEditor editor,
@@ -40,6 +42,9 @@ public class FormStateNode : IFormStateNode
         _schemaInterface = schemaInterface;
         _evalContext = new ExpressionEvalContext(Parent, _schemaInterface);
 
+        // Calculate DataNode once from the definition - it won't change
+        DataNode = FormStateNodeHelpers.LookupDataNode(definition, parent);
+
         // Create control with initial state
         _stateControl = Control.Create(new FormStateImpl
         {
@@ -49,16 +54,12 @@ public class FormStateNode : IFormStateNode
             ForceHidden = false,
             ForceReadonly = null,
             ForceDisabled = null,
-            DataNode = dataNode,
             Definition = definition,
             FieldOptions = null,
             AllowedOptions = null
         });
         _definitionControl = _stateControl.Field(x => x.Definition);
         _childrenControl = Control.Create(new List<IFormStateNode>());
-
-        // Set up reactive DataNode (must come first as others depend on it)
-        InitializeDataNode();
 
         // Set up dynamic definition fields (updates Definition properties based on expressions)
         InitializeHiddenDynamic(definition);
@@ -96,7 +97,6 @@ public class FormStateNode : IFormStateNode
     public ICollection<IFormStateNode> Children => (List<IFormStateNode>)_childrenControl.ValueObject!;
     public IFormStateNode? ParentNode { get; }
     public SchemaDataNode Parent { get; }
-    public SchemaDataNode? DataNode => _stateControl.Value.DataNode;
     public int ChildIndex { get; }
     public bool? Visible => _stateControl.Value.Visible;
     public bool Readonly => _stateControl.Value.Readonly;
@@ -139,14 +139,12 @@ public class FormStateNode : IFormStateNode
                 // Create new child
                 var definition = spec.Definition ?? GroupedControlsDefinition.Default;
                 var parent = spec.Parent ?? Parent;
-                var childDataNode = FormStateNodeHelpers.LookupDataNode(definition, parent);
 
                 var childNode = new FormStateNode(
                     definition: definition,
                     form: spec.Node,
                     parent: parent,
                     parentNode: this,
-                    dataNode: childDataNode,
                     childIndex: childIndex,
                     childKey: childKey,
                     editor: _editor,
@@ -160,17 +158,6 @@ public class FormStateNode : IFormStateNode
         }
 
         return newChildren;
-    }
-
-    private void InitializeDataNode()
-    {
-        var dataNodeField = _stateControl.Field(x => x.DataNode);
-
-        _editor.SetComputed(dataNodeField, tracker =>
-        {
-            var definition = tracker.TrackValue(_stateControl, x => x.Definition);
-            return FormStateNodeHelpers.LookupDataNode(definition, Parent);
-        });
     }
 
     private void InitializeReadonly()
@@ -227,13 +214,12 @@ public class FormStateNode : IFormStateNode
 
         _editor.SetComputed(fieldOptionsField, tracker =>
         {
-            // Track dataNode from our state
-            var dn = tracker.TrackValue(_stateControl, x => x.DataNode);
-            if (dn == null)
+            // DataNode is now a plain property - no need to track it
+            if (DataNode == null)
                 return null;
 
             // Get field options from the schema
-            var fieldOptions = dn.Schema.Field.Options?.ToList();
+            var fieldOptions = DataNode.Schema.Field.Options?.ToList();
             if (fieldOptions == null)
                 return null;
 
@@ -484,11 +470,10 @@ public class FormStateNode : IFormStateNode
                     return parentVisible;
             }
 
-            // Track dataNode and definition from our state
-            var dn = tracker.TrackValue(_stateControl, x => x.DataNode);
-            if (dn != null &&
-                (!FormStateNodeHelpers.ValidDataNode(dn) ||
-                 FormStateNodeHelpers.HideDisplayOnly(dn, _originalDefinition, _schemaInterface)))
+            // DataNode is now a plain property - no need to track it
+            if (DataNode != null &&
+                (!FormStateNodeHelpers.ValidDataNode(DataNode) ||
+                 FormStateNodeHelpers.HideDisplayOnly(DataNode, _originalDefinition, _schemaInterface)))
             {
                 return false;
             }
