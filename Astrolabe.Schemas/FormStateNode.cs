@@ -84,6 +84,9 @@ public class FormStateNode : IFormStateNode
         InitializeDisabled();
         InitializeVisibility();
 
+        // Set up validation (after visibility is initialized)
+        InitializeValidation(definition);
+
         // Set up reactive children that update when array data changes
         _editor.SetComputedWithPrevious<List<IFormStateNode>>(_childrenControl, (tracker, currentChildren) =>
         {
@@ -481,6 +484,77 @@ public class FormStateNode : IFormStateNode
             var hiddenVal = tracker.TrackValue(_definitionControl, x => x.Hidden);
             return !hiddenVal;
         });
+    }
+
+    private void InitializeValidation(ControlDefinition originalDefinition)
+    {
+        // Only validate DataControlDefinitions with validators
+        if (originalDefinition is not DataControlDefinition dcd) return;
+        if (DataNode == null) return;
+
+        // Check if there are any validators to set up (required or explicit validators)
+        var hasValidators = dcd.Required == true || dcd.Validators?.Any() == true;
+        if (!hasValidators) return;
+
+        // Create a computed control for validation enabled state (tracks visibility)
+        var validationEnabledControl = Control.Create(false);
+        _editor.SetComputed(validationEnabledControl, tracker =>
+        {
+            var visible = tracker.TrackValue(_stateControl, x => x.Visible);
+            return visible == true;
+        });
+
+        // Create validation context
+        var context = new Validation.ValidationEvalContext
+        {
+            Data = DataNode,
+            ParentData = Parent,
+            ValidationEnabled = validationEnabledControl,
+            SchemaInterface = _schemaInterface,
+            Variables = null // Can be extended later for advanced scenarios
+        };
+
+        // Create all validators (Required, Length, Date - JSONata deferred to v1.1)
+        Validation.ValidationFactory.CreateValidators(originalDefinition, context);
+
+        // Get the list of sync validators from context
+        var syncValidators = context.GetSyncValidators().ToList();
+        if (syncValidators.Count == 0) return;
+
+        // Setup reactive validation using ChangeTracker.Evaluate
+        var validationDisposable = ChangeTracker.Evaluate(
+            tracker =>
+            {
+                // Track control value changes AND explicit validation triggers
+                tracker.RecordAccess(DataNode.Control, ControlChange.Value | ControlChange.Validate);
+
+                // Track validation enabled state
+                var validationEnabled = (bool)(tracker.GetValue(validationEnabledControl) ?? false);
+
+                // Clear error if validation is disabled
+                if (!validationEnabled)
+                    return (string?)null;
+
+                // Run validators in order, first error wins
+                var value = DataNode.Control.ValueObject;
+                foreach (var validator in syncValidators)
+                {
+                    var error = validator(value, tracker);
+                    if (error != null)
+                        return error;
+                }
+
+                return (string?)null;
+            },
+            error =>
+            {
+                // Set or clear error on the control
+                _editor.SetError(DataNode.Control, "default", error);
+            }
+        );
+
+        // Add to disposables for cleanup
+        _disposables.Add(validationDisposable);
     }
 
     public void Dispose()
