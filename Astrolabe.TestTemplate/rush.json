@@ -538,6 +538,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/schemas-rechart",
+      "projectFolder": "../schemas-rechart",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@astroapps/schemas-quickstream",
       "projectFolder": "../astrolabe-schemas-quickstream"
     },

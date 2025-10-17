@@ -15,6 +15,7 @@
 		"@react-typed-forms/core": "workspace:*",
 		"file-saver": "~2.0.5",
 		"codemirror": "^6.0.1",
+        "@astroapps/schemas-rechart": "workspace:*",
 		"@astroapps/codemirror-evaluator": "workspace:*",
 		"@astroapps/forms-core": "workspace:*",
 		"@react-typed-forms/schemas": "workspace:*",

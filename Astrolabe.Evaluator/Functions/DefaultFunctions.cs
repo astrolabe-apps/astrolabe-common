@@ -142,6 +142,43 @@ public static class DefaultFunctions
         );
     }
 
+    public static FunctionHandler ShortCircuitBoolOp(
+        bool initialValue,
+        Func<bool, bool> shouldShortCircuit
+    )
+    {
+        return new FunctionHandler(
+            (env, call) =>
+            {
+                var currentEnv = env;
+                bool? result = initialValue;
+                var evaluatedArgs = new List<ValueExpr>();
+
+                foreach (var arg in call.Args)
+                {
+                    var (nextEnv, argValue) = currentEnv.Evaluate(arg);
+                    currentEnv = nextEnv;
+                    evaluatedArgs.Add(argValue);
+
+                    if (argValue.Value is not bool boolVal)
+                    {
+                        result = null;
+                        break;
+                    }
+
+                    result = boolVal;
+
+                    if (shouldShortCircuit(boolVal))
+                    {
+                        break;
+                    }
+                }
+
+                return currentEnv.WithValue(ValueExpr.WithDeps(result, evaluatedArgs));
+            }
+        );
+    }
+
     public static readonly Dictionary<string, FunctionHandler> FunctionHandlers = new()
     {
         { "+", NumberOp((d1, d2) => d1 + d2, (l1, l2) => l1 + l2) },
@@ -155,30 +192,8 @@ public static class DefaultFunctions
         { "<=", ComparisonFunc(x => x <= 0) },
         { ">", ComparisonFunc(x => x > 0) },
         { ">=", ComparisonFunc(x => x >= 0) },
-        {
-            "and",
-            ArrayAggOp(
-                (bool?)true,
-                (acc, v) =>
-                    (acc, v) switch
-                    {
-                        ({ } a, bool b) => a && b,
-                        _ => null,
-                    }
-            )
-        },
-        {
-            "or",
-            ArrayAggOp(
-                (bool?)false,
-                (acc, v) =>
-                    (acc, v) switch
-                    {
-                        ({ } a, bool b) => a || b,
-                        _ => null,
-                    }
-            )
-        },
+        { "and", ShortCircuitBoolOp(true, b => !b) },
+        { "or", ShortCircuitBoolOp(false, b => b) },
         { "!", UnaryNullOp(a => a is bool b ? !b : null) },
         { "?", IfElseOp },
         {

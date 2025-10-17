@@ -175,6 +175,44 @@ function aggFunction<A>(
   return arrayFunc((v) => valueExprWithDeps(performOp(v), v));
 }
 
+function shortCircuitBoolOp(
+  initialValue: boolean,
+  shouldShortCircuit: (value: boolean) => boolean,
+): ValueExpr {
+  return functionValue(
+    (env, call) => {
+      let currentEnv = env;
+      let result: boolean | null = initialValue;
+      const evaluatedArgs: ValueExpr[] = [];
+
+      for (const arg of call.args) {
+        const [nextEnv, argValue] = currentEnv.evaluate(arg);
+        currentEnv = nextEnv;
+        evaluatedArgs.push(argValue);
+
+        if (argValue.value == null) {
+          result = null;
+          break;
+        }
+
+        if (typeof argValue.value !== "boolean") {
+          result = null;
+          break;
+        }
+
+        result = argValue.value;
+
+        if (shouldShortCircuit(argValue.value)) {
+          break;
+        }
+      }
+
+      return [currentEnv, valueExprWithDeps(result, evaluatedArgs)];
+    },
+    constGetType(BooleanType),
+  );
+}
+
 export const whichFunction: ValueExpr = functionValue(
   (e, call) => {
     const [c, ...args] = call.args;
@@ -423,14 +461,8 @@ export const keysOrValuesFunction = (type: string) =>
 export const defaultFunctions = {
   "?": condFunction,
   "!": evalFunction((a) => !a[0], constGetType(BooleanType)),
-  and: aggFunction(
-    () => true,
-    (acc, b) => acc && (b as boolean),
-  ),
-  or: aggFunction(
-    () => false,
-    (acc, b) => acc || (b as boolean),
-  ),
+  and: shortCircuitBoolOp(true, (value) => value === false),
+  or: shortCircuitBoolOp(false, (value) => value === true),
   "+": binFunction((a, b) => a + b, constGetType(NumberType)),
   "-": binFunction((a, b) => a - b, constGetType(NumberType)),
   "*": binFunction((a, b) => a * b, constGetType(NumberType)),

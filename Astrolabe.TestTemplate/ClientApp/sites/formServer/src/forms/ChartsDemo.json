@@ -1,0 +1,95 @@
+{
+  "controls": [
+    {
+      "type": "Group",
+      "title": "Chart Examples",
+      "groupOptions": {
+        "type": "Standard"
+      },
+      "children": [
+        {
+          "type": "Data",
+          "field": "salesChart",
+          "title": "Monthly Sales (Bar Chart)",
+          "renderOptions": {
+            "type": "Recharts",
+            "chartType": "Bar",
+            "width": 800,
+            "height": 400,
+            "showLegend": true,
+            "showGrid": true,
+            "primaryColor": "#3b82f6",
+            "secondaryColor": "#10b981",
+            "xAxisLabel": "Month",
+            "yAxisLabel": "Revenue ($)",
+            "animationDuration": 500
+          }
+        },
+        {
+          "type": "Data",
+          "field": "performanceChart",
+          "title": "Performance Metrics (Line Chart)",
+          "renderOptions": {
+            "type": "Recharts",
+            "chartType": "Line",
+            "width": 800,
+            "height": 400,
+            "showLegend": true,
+            "showGrid": true,
+            "primaryColor": "#8b5cf6",
+            "secondaryColor": "#f59e0b",
+            "xAxisLabel": "Quarter",
+            "yAxisLabel": "Score",
+            "animationDuration": 500
+          }
+        }
+      ]
+    }
+  ],
+  "config": null,
+  "fields": [
+    {
+      "field": "salesChart",
+      "schema": "ChartData",
+      "defaultValue": {
+        "labels": ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+        "datasets": [
+          {
+            "label": "Revenue",
+            "data": [65000, 59000, 80000, 81000, 56000, 72000],
+            "color": "#3b82f6"
+          },
+          {
+            "label": "Expenses",
+            "data": [28000, 48000, 40000, 45000, 42000, 35000],
+            "color": "#10b981"
+          }
+        ]
+      }
+    },
+    {
+      "field": "performanceChart",
+      "schema": "ChartData",
+      "defaultValue": {
+        "labels": ["Q1", "Q2", "Q3", "Q4"],
+        "datasets": [
+          {
+            "label": "Customer Satisfaction",
+            "data": [85, 88, 92, 95],
+            "color": "#8b5cf6"
+          },
+          {
+            "label": "Product Quality",
+            "data": [78, 82, 85, 89],
+            "color": "#f59e0b"
+          },
+          {
+            "label": "Service Response",
+            "data": [90, 87, 93, 94],
+            "color": "#ef4444"
+          }
+        ]
+      }
+    }
+  ]
+}

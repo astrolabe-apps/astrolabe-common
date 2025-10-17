@@ -71,6 +71,7 @@ import { SignatureExtension } from "@astroapps/schemas-signature";
 import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
+import { RechartsExtension } from "@astroapps/schemas-rechart";
 import { SchemaMap } from "../schemas";
 import { Button } from "@astrolabe/ui/Button";
 import { SchemaFields as AllControlsSchema } from "../setup/allControls";
@@ -90,6 +91,7 @@ const Extensions = [
   PagerExtension,
   FieldSelectionExtension,
   SignatureExtension,
+  RechartsExtension,
   createIconLibraryExtension("Custom Icon Library", "custom"),
 ];
 

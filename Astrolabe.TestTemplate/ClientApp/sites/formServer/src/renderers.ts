@@ -11,6 +11,7 @@ import {
 } from "@react-typed-forms/schemas-html";
 import { createQuickstreamCC } from "@astroapps/schemas-quickstream";
 import { createSignatureRenderer } from "@astroapps/schemas-signature";
+import { createRechartsRenderer } from "@astroapps/schemas-rechart";
 
 export function createStdFormRenderer(container: HTMLElement | null) {
   return createFormRenderer(
@@ -26,6 +27,7 @@ export function createStdFormRenderer(container: HTMLElement | null) {
         removeText: "Delete",
       }),
       createSignatureRenderer({}),
+      createRechartsRenderer(),
       DataGridGroupRenderer,
       createDatePickerRenderer(undefined, {
         portalContainer: container ? container : undefined,

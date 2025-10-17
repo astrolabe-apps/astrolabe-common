@@ -172,9 +172,83 @@ export function toCarSearchPageForm(v: CarSearchPage): CarSearchPageForm {
   return applyDefaultValues(v, CarSearchPageSchema);
 }
 
+export interface ChartDatasetForm {
+  label: string;
+  data: number[];
+  color?: string | null;
+}
+
+export const ChartDatasetSchema = buildSchema<ChartDatasetForm>({
+  label: makeScalarField({
+    type: FieldType.String,
+    notNullable: true,
+    required: true,
+    displayName: "Label",
+  }),
+  data: makeScalarField({
+    type: FieldType.Double,
+    collection: true,
+    notNullable: true,
+    required: true,
+    displayName: "Data",
+  }),
+  color: makeScalarField({
+    type: FieldType.String,
+    displayName: "Color",
+  }),
+});
+
+export interface ChartDataForm {
+  labels: string[];
+  datasets: ChartDatasetForm[];
+}
+
+export const ChartDataSchema = buildSchema<ChartDataForm>({
+  labels: makeScalarField({
+    type: FieldType.String,
+    collection: true,
+    notNullable: true,
+    required: true,
+    displayName: "Labels",
+  }),
+  datasets: makeCompoundField({
+    children: ChartDatasetSchema,
+    schemaRef: "ChartDataset",
+    collection: true,
+    notNullable: true,
+    displayName: "Datasets",
+  }),
+});
+
+export interface ChartsDemoForm {
+  salesChart: ChartDataForm;
+  performanceChart: ChartDataForm;
+}
+
+export const ChartsDemoSchema = buildSchema<ChartsDemoForm>({
+  salesChart: makeCompoundField({
+    children: ChartDataSchema,
+    schemaRef: "ChartData",
+    notNullable: true,
+    displayName: "Sales Chart",
+  }),
+  performanceChart: makeCompoundField({
+    children: ChartDataSchema,
+    schemaRef: "ChartData",
+    notNullable: true,
+    displayName: "Performance Chart",
+  }),
+});
+
+export const defaultChartsDemoForm: ChartsDemoForm =
+  defaultValueForFields(ChartsDemoSchema);
+
 export const SchemaMap = {
   SearchOptions: SearchOptionsSchema,
   CarInfo: CarInfoSchema,
   CarInfoSearchResults: CarInfoSearchResultsSchema,
   CarSearchPage: CarSearchPageSchema,
+  ChartDataset: ChartDatasetSchema,
+  ChartData: ChartDataSchema,
+  ChartsDemo: ChartsDemoSchema,
 };

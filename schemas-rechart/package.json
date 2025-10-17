@@ -1,0 +1,53 @@
+{
+  "name": "@astroapps/schemas-rechart",
+  "version": "0.0.1",
+  "description": "Recharts renderer for @react-typed-forms/schemas",
+  "type": "module",
+  "main": "lib/index.cjs",
+  "module": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    "types": "./lib/index.d.ts",
+    "require": "./lib/index.cjs",
+    "default": "./lib/index.js"
+  },
+  "author": "Astrolabe Enterprises",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
+  },
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
+  },
+  "dependencies": {
+    "clsx": "^2",
+    "recharts": "^2.12.0"
+  },
+  "peerDependencies": {
+    "react": "^18.2.0 || ^19",
+    "@react-typed-forms/core": "^4.0.0",
+    "@react-typed-forms/schemas": "^16.0.0"
+  },
+  "devDependencies": {
+    "react": "^18.2.0",
+    "@react-typed-forms/core": "^4.4.0",
+    "@react-typed-forms/schemas": "^16.0.0",
+    "@react-typed-forms/transform": "^0.2.0",
+    "@babel/core": "^7.23.7",
+    "@babel/cli": "^7.23.4",
+    "@babel/preset-env": "^7.23.8",
+    "@babel/preset-react": "^7.23.3",
+    "@babel/preset-typescript": "^7.23.3",
+    "microbundle": "^0.15.1",
+    "rimraf": "^5.0.5",
+    "typescript": "^5.6.2",
+    "@types/react": "^18.2.37",
+    "prettier": "^3.0.3"
+  }
+}
