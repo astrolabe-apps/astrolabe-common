@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Version>2.18.1</Version>
+        <Version>2.18.2</Version>
         <Authors>doolse</Authors>
         <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>This is a simple expression language similar to JSONata.</Description>
