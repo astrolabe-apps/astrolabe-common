@@ -371,6 +371,16 @@ public static class ValueExtensions
         };
     }
 
+    public static long AsLong(this ValueExpr v)
+    {
+        return v.Value switch
+        {
+            double d => (long)d,
+            long l => l,
+            int i => i
+        };
+    }
+
     public static double AsDouble(this ValueExpr v)
     {
         return ValueExpr.AsDouble(v.Value);

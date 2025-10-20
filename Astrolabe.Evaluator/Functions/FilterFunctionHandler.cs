@@ -3,8 +3,7 @@ namespace Astrolabe.Evaluator.Functions;
 public static class FilterFunctionHandler
 {
     public static readonly FunctionHandler Instance =
-        new(
-            (e, call) =>
+        new((e, call) =>
             {
                 return call.Args switch
                 {
@@ -50,20 +49,20 @@ public static class FilterFunctionHandler
                         right
                     );
                     if (firstFilter.Value.MaybeDouble() is not { } indLong)
+                    {
+                        var initialList = firstFilter.Map<IEnumerable<ValueExpr>>(x =>
+                            x.IsTrue() ? [indexed[0].Item1] : []
+                        );
                         return indexed
                             .Skip(1)
                             .Aggregate(
-                                firstFilter.Map<IEnumerable<ValueExpr>>(x =>
-                                    x.IsTrue() ? [indexed[0].Item1] : []
-                                ),
+                                initialList,
                                 (acc, v) =>
-                                    acc
-                                        .Env.EvaluateWith(v.Item1, v.Item2, right)
-                                        .Map(result =>
-                                            result.IsTrue() ? acc.Value.Append(v.Item1) : acc.Value
-                                        )
+                                    acc.Env.EvaluateWith(v.Item1, v.Item2, right)
+                                        .Map(result => result.IsTrue() ? acc.Value.Append(v.Item1) : acc.Value)
                             )
                             .Map(x => new ValueExpr(new ArrayValue(x)));
+                    }
 
                     var ind = (int)indLong;
                     return firstFilter.Map(x =>
