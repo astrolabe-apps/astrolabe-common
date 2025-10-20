@@ -181,6 +181,25 @@ describe("Dependency Aggregation Tests", () => {
     // Should track elements evaluated up to and including the match
     expect(deps.some((d) => d.startsWith("items"))).toBe(true);
   });
+
+  test("Elem with dynamic index tracks both element and index dependencies", () => {
+    const data = { items: [10, 20, 30], indexVar: 1 };
+    const env = basicEnv(data);
+
+    // Dynamic index - should track both the element AND the index variable
+    const expr = parseEval("$elem(items, indexVar)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(20);
+
+    const deps = getDeps(result);
+    // Should track the specific element accessed (CURRENTLY FAILS - tracks "items" instead of "items.1")
+    expect(deps).toContain("items.1");
+    // Should ALSO track the index variable since it determines which element (THIS WORKS)
+    expect(deps).toContain("indexVar");
+    // Should NOT track the whole array
+    expect(deps).not.toContain("items");
+  });
 });
 
 describe("Pipeline Tests - Dependencies Flow Through Transformations", () => {

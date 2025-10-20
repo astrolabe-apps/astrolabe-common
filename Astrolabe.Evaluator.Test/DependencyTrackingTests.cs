@@ -192,6 +192,30 @@ public class DependencyTrackingTests
     }
 
     [Fact]
+    public void Elem_With_Dynamic_Index_Tracks_Both_Element_And_Index_Dependencies()
+    {
+        var data = new JsonObject {
+            ["items"] = new JsonArray(10, 20, 30),
+            ["indexVar"] = 1
+        };
+        var env = CreateEnvWithData(data);
+
+        // Dynamic index - should track both the element AND the index variable
+        var expr = new CallExpr("elem", [new PropertyExpr("items"), new PropertyExpr("indexVar")]);
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(20, result.AsInt());
+
+        var deps = GetDeps(result);
+        // Should track the specific element accessed (THIS WORKS in C#)
+        Assert.Contains("items[1]", deps);
+        // Should ALSO track the index variable since it determines which element (CURRENTLY FAILS in C#)
+        Assert.Contains("indexVar", deps);
+        // Should NOT track the whole array
+        Assert.DoesNotContain("items", deps);
+    }
+
+    [Fact]
     public void First_Tracks_Dependencies_From_Evaluated_Elements()
     {
         var data = new JsonObject { ["items"] = new JsonArray(1, 5, 3, 8, 2) };
