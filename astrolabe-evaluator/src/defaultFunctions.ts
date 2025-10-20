@@ -466,7 +466,10 @@ export const keysOrValuesFunction = (type: string) =>
 
 export const defaultFunctions = {
   "?": condFunction,
-  "!": evalFunction((a) => !a[0], constGetType(BooleanType)),
+  "!": evalFunction((a) => {
+    const val = a[0];
+    return typeof val === "boolean" ? !val : null;
+  }, constGetType(BooleanType)),
   and: aggFunction(
     () => true,
     (acc, b) => acc && (b as boolean),
