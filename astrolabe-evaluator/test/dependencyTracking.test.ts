@@ -208,8 +208,8 @@ describe("Dependency Aggregation Tests", () => {
     const data = { items: [10, 20, 30], offset: 2 };
     const env = basicEnv(data);
 
-    // Array access with dynamic index: items[offset]
-    const expr = parseEval("items[offset]");
+    // Array access with dynamic index using let expression: let $idx := offset in items[$idx]
+    const expr = parseEval("let $idx := offset in items[$idx]");
     const [_, result] = env.evaluate(expr);
 
     expect(result.value).toBe(30);
@@ -227,9 +227,9 @@ describe("Dependency Aggregation Tests", () => {
     const data = { values: [100, 200, 300, 400], baseIndex: 1, indexOffset: 1 };
     const env = basicEnv(data);
 
-    // Array access with computed index: values[baseIndex + indexOffset]
+    // Array access with computed index using let expression: let $idx := baseIndex + indexOffset in values[$idx]
     // Should access values[2] = 300
-    const expr = parseEval("values[baseIndex + indexOffset]");
+    const expr = parseEval("let $idx := baseIndex + indexOffset in values[$idx]");
     const [_, result] = env.evaluate(expr);
 
     expect(result.value).toBe(300);

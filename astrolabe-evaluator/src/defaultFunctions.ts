@@ -321,7 +321,11 @@ const filterFunction = functionValue(
         right,
       );
       if (typeof firstFilter === "number") {
-        return [firstEnv, value[firstFilter] ?? NullExpr];
+        const [_, indexResult] = evaluateWith(leftEnv, empty ? NullExpr : value[0], empty ? null : 0, right);
+        const element = value[firstFilter];
+        if (!element) return [firstEnv, NullExpr];
+        // Preserve dependencies from BOTH the index expression AND the element
+        return [firstEnv, valueExprWithDeps(element.value, [indexResult, element])];
       }
       const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
       const outEnv = value.reduce(

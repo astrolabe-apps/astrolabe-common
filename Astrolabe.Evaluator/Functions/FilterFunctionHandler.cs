@@ -65,9 +65,14 @@ public static class FilterFunctionHandler
                     }
 
                     var ind = (int)indLong;
-                    return firstFilter.Map(x =>
-                        ind < indexed.Count ? indexed[ind].Item1 : ValueExpr.Null
-                    );
+                    return firstFilter.Map(indexResult =>
+                    {
+                        if (ind >= indexed.Count)
+                            return ValueExpr.Null;
+                        var element = indexed[ind].Item1;
+                        // Preserve dependencies from BOTH the index expression AND the element
+                        return ValueExpr.WithDeps(element.Value, [indexResult, element]);
+                    });
                 }
             }
         );

@@ -228,8 +228,13 @@ public class DependencyTrackingTests
         };
         var env = CreateEnvWithData(data);
 
-        // Array access with dynamic index: items[offset]
-        var expr = new CallExpr("[", [new PropertyExpr("items"), new PropertyExpr("offset")]);
+        // Array access with dynamic index using let expression to evaluate offset in global scope
+        // let $idx = offset in items[$idx]
+        var indexVar = new VarExpr("idx");
+        var expr = new LetExpr(
+            [(indexVar, new PropertyExpr("offset"))],
+            new CallExpr("[", [new PropertyExpr("items"), indexVar])
+        );
         var (_, result) = env.Evaluate(expr);
 
         Assert.Equal(30, result.AsInt());
@@ -253,10 +258,14 @@ public class DependencyTrackingTests
         };
         var env = CreateEnvWithData(data);
 
-        // Array access with computed index: values[baseIndex + indexOffset]
+        // Array access with computed index using let expression: let $idx = baseIndex + indexOffset in values[$idx]
         // Should access values[2] = 300
+        var indexVar = new VarExpr("idx");
         var indexExpr = new CallExpr("+", [new PropertyExpr("baseIndex"), new PropertyExpr("indexOffset")]);
-        var expr = new CallExpr("[", [new PropertyExpr("values"), indexExpr]);
+        var expr = new LetExpr(
+            [(indexVar, indexExpr)],
+            new CallExpr("[", [new PropertyExpr("values"), indexVar])
+        );
         var (_, result) = env.Evaluate(expr);
 
         Assert.Equal(300, result.AsInt());
