@@ -353,6 +353,46 @@ public class DefaultFunctionsTests
         Assert.Null(result);
     }
 
+    [Fact]
+    public void And_FunctionCallSyntax_BothTrue()
+    {
+        var data = new JsonObject { ["a"] = true, ["b"] = true };
+        var result = EvalExpr("$and(a, b)", data);
+        Assert.True((bool)result!);
+    }
+
+    [Fact]
+    public void And_FunctionCallSyntax_OneFalse()
+    {
+        var data = new JsonObject { ["a"] = true, ["b"] = false };
+        var result = EvalExpr("$and(a, b)", data);
+        Assert.False((bool)result!);
+    }
+
+    [Fact]
+    public void Or_FunctionCallSyntax_BothTrue()
+    {
+        var data = new JsonObject { ["a"] = true, ["b"] = true };
+        var result = EvalExpr("$or(a, b)", data);
+        Assert.True((bool)result!);
+    }
+
+    [Fact]
+    public void Or_FunctionCallSyntax_OneTrue()
+    {
+        var data = new JsonObject { ["a"] = false, ["b"] = true };
+        var result = EvalExpr("$or(a, b)", data);
+        Assert.True((bool)result!);
+    }
+
+    [Fact]
+    public void Or_FunctionCallSyntax_BothFalse()
+    {
+        var data = new JsonObject { ["a"] = false, ["b"] = false };
+        var result = EvalExpr("$or(a, b)", data);
+        Assert.False((bool)result!);
+    }
+
     #endregion
 
     #region Conditional and Null Handling

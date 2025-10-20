@@ -27,7 +27,7 @@ expr
     ; 
     
 primaryExpr
-    : functionCall 
+    : functionCall
     | arrayLiteral
     | objectLiteral
     | lambdaExpr
@@ -40,7 +40,7 @@ primaryExpr
     | 'false'
     | 'true'
     | 'null'
-    | Identifier
+    | identifierName
     ;
 
 objectField
@@ -71,8 +71,19 @@ lambdaExpr
     : variableReference '=>' expr
     ;
 
+identifierName
+    : Identifier
+    | 'and'
+    | 'or'
+    | 'true'
+    | 'false'
+    | 'null'
+    | 'let'
+    | 'in'
+    ;
+
 variableReference
-    : '$' Identifier
+    : '$' identifierName
     ;
 
 templateStringLiteral
