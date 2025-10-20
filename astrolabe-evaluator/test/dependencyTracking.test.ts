@@ -16,9 +16,12 @@ import type { ValueExpr, Path } from "../src/ast";
  *    - Array transformations (map, filter) preserve dependencies IN individual elements
  *    - Consumption functions (sum, first, elem) aggregate dependencies from accessed elements
  *
- * 3. Known Bugs Documented:
- *    - Conditional operator (?) currently tracks BOTH branches (should only track taken branch)
+ * 3. Known Limitations and Bugs:
+ *    - Conditional operator (?) missing condition dependencies in result
  *    - which() doesn't track the returned value dependency
+ *    - elem() with dynamic index tracks index but not specific element (tracks whole array)
+ *    - LIMITATION: array[propertyExpr] fails - property lookup relative to elements, not global scope
+ *      Workaround: Use $elem(array, variable) instead of array[variable]
  */
 
 function pathToString(path: Path): string {
@@ -199,6 +202,46 @@ describe("Dependency Aggregation Tests", () => {
     expect(deps).toContain("indexVar");
     // Should NOT track the whole array
     expect(deps).not.toContain("items");
+  });
+
+  test("Array access with dynamic index tracks both element and index dependencies", () => {
+    const data = { items: [10, 20, 30], offset: 2 };
+    const env = basicEnv(data);
+
+    // Array access with dynamic index: items[offset]
+    const expr = parseEval("items[offset]");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(30);
+
+    const deps = getDeps(result);
+    // Should track the specific element accessed
+    expect(deps).toContain("items.2");
+    // Should ALSO track the index variable since it determines which element
+    expect(deps).toContain("offset");
+    // Should NOT track the whole array
+    expect(deps).not.toContain("items");
+  });
+
+  test("Array access with computed index tracks all dependencies", () => {
+    const data = { values: [100, 200, 300, 400], baseIndex: 1, indexOffset: 1 };
+    const env = basicEnv(data);
+
+    // Array access with computed index: values[baseIndex + indexOffset]
+    // Should access values[2] = 300
+    const expr = parseEval("values[baseIndex + indexOffset]");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(300);
+
+    const deps = getDeps(result);
+    // Should track the specific element accessed
+    expect(deps).toContain("values.2");
+    // Should track both variables used in the index computation
+    expect(deps).toContain("baseIndex");
+    expect(deps).toContain("indexOffset");
+    // Should NOT track the whole array
+    expect(deps).not.toContain("values");
   });
 });
 

@@ -15,9 +15,13 @@ namespace Astrolabe.Evaluator.Test;
 ///    - Array transformations (map, filter) preserve dependencies IN individual elements
 ///    - Consumption functions (sum, first, elem) aggregate dependencies from accessed elements
 ///
-/// 3. Known Bugs Documented:
+/// 3. Known Limitations and Bugs:
 ///    - Conditional operator (?) currently tracks BOTH branches (should only track taken branch)
 ///    - which() doesn't track the returned value dependency
+///    - elem() with dynamic index doesn't track the index variable dependency
+///    - LIMITATION: array[propertyExpr] fails because property lookup is relative to array elements, not global scope.
+///      When evaluating items[offset], it looks for 'offset' property on each element instead of global data.
+///      Workaround: Use $elem(array, variable) instead of array[variable]
 /// </summary>
 public class DependencyTrackingTests
 {
@@ -213,6 +217,58 @@ public class DependencyTrackingTests
         Assert.Contains("indexVar", deps);
         // Should NOT track the whole array
         Assert.DoesNotContain("items", deps);
+    }
+
+    [Fact]
+    public void Array_Access_With_Dynamic_Index_Tracks_Both_Element_And_Index_Dependencies()
+    {
+        var data = new JsonObject {
+            ["items"] = new JsonArray(10, 20, 30),
+            ["offset"] = 2
+        };
+        var env = CreateEnvWithData(data);
+
+        // Array access with dynamic index: items[offset]
+        var expr = new CallExpr("[", [new PropertyExpr("items"), new PropertyExpr("offset")]);
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(30, result.AsInt());
+
+        var deps = GetDeps(result);
+        // Should track the specific element accessed
+        Assert.Contains("items[2]", deps);
+        // Should ALSO track the index variable since it determines which element
+        Assert.Contains("offset", deps);
+        // Should NOT track the whole array
+        Assert.DoesNotContain("items", deps);
+    }
+
+    [Fact]
+    public void Array_Access_With_Computed_Index_Tracks_All_Dependencies()
+    {
+        var data = new JsonObject {
+            ["values"] = new JsonArray(100, 200, 300, 400),
+            ["baseIndex"] = 1,
+            ["indexOffset"] = 1
+        };
+        var env = CreateEnvWithData(data);
+
+        // Array access with computed index: values[baseIndex + indexOffset]
+        // Should access values[2] = 300
+        var indexExpr = new CallExpr("+", [new PropertyExpr("baseIndex"), new PropertyExpr("indexOffset")]);
+        var expr = new CallExpr("[", [new PropertyExpr("values"), indexExpr]);
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(300, result.AsInt());
+
+        var deps = GetDeps(result);
+        // Should track the specific element accessed
+        Assert.Contains("values[2]", deps);
+        // Should track both variables used in the index computation
+        Assert.Contains("baseIndex", deps);
+        Assert.Contains("indexOffset", deps);
+        // Should NOT track the whole array
+        Assert.DoesNotContain("values", deps);
     }
 
     [Fact]
