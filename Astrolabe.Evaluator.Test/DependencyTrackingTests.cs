@@ -190,9 +190,9 @@ public class DependencyTrackingTests
         Assert.Equal(20, result.AsInt());
 
         var deps = GetDeps(result);
-        // Should track the specific element accessed (THIS WORKS in C#)
+        // Should track the specific element accessed
         Assert.Contains("items[1]", deps);
-        // Should ALSO track the index variable since it determines which element (CURRENTLY FAILS in C#)
+        // Should ALSO track the index variable since it determines which element
         Assert.Contains("indexVar", deps);
         // Should NOT track the whole array
         Assert.DoesNotContain("items", deps);
@@ -545,10 +545,8 @@ public class DependencyTrackingTests
 
         var deps = GetDeps(result);
         Assert.Contains("status", deps);
-        // BUG: which() doesn't track the returned value dependency
-        // It should track pendingMsg but currently only tracks status
-        // See DefaultFunctions.cs:414 - should be WithDeps(x.Value, [condValue, compValue, x])
-        Assert.Contains("pendingMsg", deps); // Currently FAILS - which() bug
+        // Should track both the condition and the matched value expression
+        Assert.Contains("pendingMsg", deps);
     }
 
     #endregion

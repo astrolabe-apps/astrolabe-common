@@ -16,10 +16,7 @@ import type { ValueExpr, Path } from "../src/ast";
  *    - Array transformations (map, filter) preserve dependencies IN individual elements
  *    - Consumption functions (sum, first, elem) aggregate dependencies from accessed elements
  *
- * 3. Known Limitations and Bugs:
- *    - Conditional operator (?) missing condition dependencies in result
- *    - which() doesn't track the returned value dependency
- *    - elem() with dynamic index tracks index but not specific element (tracks whole array)
+ * 3. Known Limitations:
  *    - LIMITATION: array[propertyExpr] fails - property lookup relative to elements, not global scope
  *      Workaround: Use $elem(array, variable) instead of array[variable]
  */
@@ -196,9 +193,9 @@ describe("Dependency Aggregation Tests", () => {
     expect(result.value).toBe(20);
 
     const deps = getDeps(result);
-    // Should track the specific element accessed (CURRENTLY FAILS - tracks "items" instead of "items.1")
+    // Should track the specific element accessed
     expect(deps).toContain("items.1");
-    // Should ALSO track the index variable since it determines which element (THIS WORKS)
+    // Should ALSO track the index variable since it determines which element
     expect(deps).toContain("indexVar");
     // Should NOT track the whole array
     expect(deps).not.toContain("items");
@@ -371,7 +368,6 @@ describe("Conditional Operator Tests", () => {
     // Should ONLY track the condition and the taken branch
     expect(deps).toContain("cond");
     expect(deps).toContain("thenVal");
-    // BUG: Currently tracks elseVal even though it wasn't taken!
     expect(deps).not.toContain("elseVal"); // Should NOT track the untaken branch
   });
 
@@ -390,7 +386,6 @@ describe("Conditional Operator Tests", () => {
     expect(deps).toContain("minAge");
     // Should track the taken branch (adult)
     expect(deps).toContain("adult");
-    // BUG: Currently tracks minor even though else branch wasn't taken!
     expect(deps).not.toContain("minor"); // Should NOT track untaken branch
   });
 });
@@ -456,8 +451,7 @@ describe("Utility Functions Tests", () => {
 
     const deps = getDeps(result);
     expect(deps).toContain("status");
-    // BUG: which() doesn't track the returned value dependency
-    // It should track pendingMsg but currently only tracks status
-    expect(deps).toContain("pendingMsg"); // Currently FAILS - which() bug
+    // Should track both the condition and the matched value expression
+    expect(deps).toContain("pendingMsg");
   });
 });
