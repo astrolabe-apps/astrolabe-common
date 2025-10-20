@@ -189,7 +189,7 @@ export const whichFunction: ValueExpr = functionValue(
       const cva = Array.isArray(cv) ? cv.map((x) => x.value) : [cv];
       if (cva.find((x) => nextEnv.state.compare(x, cond.value) === 0)) {
         return mapEnv(nextEnv.evaluate(value), (v) =>
-          valueExprWithDeps(v.value, [cond, compValue]),
+          valueExprWithDeps(v.value, [cond, compValue, v]),
         );
       }
     }
@@ -373,15 +373,55 @@ const filterFunction = functionValue(
 
 const condFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
-    return mapEnv(
-      mapAllEnv(env, call.args, doEvaluate),
-      ([{ value: c }, e1, e2]) =>
-        c === true ? e1 : c === false ? e2 : NullExpr,
-    );
+    if (call.args.length !== 3) {
+      return [env.withError("Conditional expects 3 arguments"), NullExpr];
+    }
+    const [condExpr, thenExpr, elseExpr] = call.args;
+    const [env1, condVal] = env.evaluate(condExpr);
+
+    if (condVal.value === true) {
+      return mapEnv(env1.evaluate(thenExpr), (thenVal) =>
+        valueExprWithDeps(thenVal.value, [condVal, thenVal]),
+      );
+    } else if (condVal.value === false) {
+      return mapEnv(env1.evaluate(elseExpr), (elseVal) =>
+        valueExprWithDeps(elseVal.value, [condVal, elseVal]),
+      );
+    } else {
+      return [env1, valueExprWithDeps(null, [condVal])];
+    }
   },
   (e, call) =>
     mapCallArgs(call, e, (args) =>
       args.length == 3 ? unionType(args[1], args[2]) : AnyType,
+    ),
+);
+
+const elemFunction = functionValue(
+  (env, call) => {
+    if (call.args.length !== 2) {
+      return [env.withError("elem expects 2 arguments"), NullExpr];
+    }
+    const [arrayExpr, indexExpr] = call.args;
+    const [env1, arrayVal] = env.evaluate(arrayExpr);
+    const [env2, indexVal] = env1.evaluate(indexExpr);
+
+    if (!Array.isArray(arrayVal.value)) {
+      return [env2, NullExpr];
+    }
+
+    const index = indexVal.value as number;
+    const elem = (arrayVal.value as ValueExpr[])?.[index];
+    if (elem == null) {
+      return [env2, NullExpr];
+    }
+
+    // Preserve dependencies from both the index and the element
+    return [env2, valueExprWithDeps(elem.value, [indexVal, elem])];
+  },
+  (e, call) =>
+    mapCallArgs(call, e, (args) =>
+      isArrayType(args[0]) ? getElementType(args[0]) : AnyType,
     ),
 );
 
@@ -501,16 +541,7 @@ export const defaultFunctions = {
   ),
   which: whichFunction,
   object: objectFunction,
-  elem: evalFunction(
-    (args) => {
-      const elem = (args[0] as ValueExpr[])?.[args[1] as number];
-      return elem == null ? null : elem.value;
-    },
-    (e, call) =>
-      mapCallArgs(call, e, (args) =>
-        isArrayType(args[0]) ? getElementType(args[0]) : AnyType,
-      ),
-  ),
+  elem: elemFunction,
   fixed: evalFunction(
     ([num, digits]) =>
       typeof num === "number" && typeof digits === "number"
