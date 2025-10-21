@@ -650,4 +650,245 @@ public class DependencyTrackingTests
     }
 
     #endregion
+
+    #region Array Element Access Path Preservation Tests
+
+    [Fact]
+    public void Constant_Index_Access_Preserves_Path_Not_Deps()
+    {
+        var data = new JsonObject { ["array"] = new JsonArray { 1, 2, 3 } };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("array[0]");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(1, result.Value);
+
+        // Should have path to the element
+        Assert.NotNull(result.Path);
+        Assert.Equal("array[0]", result.Path.ToPathString());
+
+        // Should NOT have dependencies (it's direct data access)
+        Assert.Null(result.Deps);
+    }
+
+    [Fact]
+    public void Elem_With_Constant_Index_Preserves_Path()
+    {
+        var data = new JsonObject { ["items"] = new JsonArray { 10, 20, 30 } };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("$elem(items, 1)");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(20, result.Value);
+
+        // Should have path to the element
+        Assert.NotNull(result.Path);
+        Assert.Equal("items[1]", result.Path.ToPathString());
+
+        // Should NOT have dependencies
+        Assert.Null(result.Deps);
+    }
+
+    [Fact]
+    public void Dynamic_Index_Adds_Index_Dependencies_While_Preserving_Path()
+    {
+        var data = new JsonObject { ["array"] = new JsonArray { 10, 20, 30 }, ["idx"] = 1 };
+        var env = CreateEnvWithData(data);
+
+        // Use $elem for dynamic index (array[idx] doesn't work due to scoping limitation)
+        var expr = ExprParser.Parse("$elem(array, idx)");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(20, result.Value);
+
+        // Should have path to the actual element accessed
+        Assert.NotNull(result.Path);
+        Assert.Equal("array[1]", result.Path.ToPathString());
+
+        // Should have dependency on idx variable
+        var deps = GetDeps(result);
+        Assert.Contains("idx", deps);
+    }
+
+    [Fact]
+    public void Elem_With_Dynamic_Index_Adds_Dependencies()
+    {
+        var data = new JsonObject
+        {
+            ["values"] = new JsonArray { 100, 200, 300 },
+            ["position"] = 2
+        };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("$elem(values, position)");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(300, result.Value);
+
+        // Should have path to the actual element
+        Assert.Equal("values[2]", result.Path?.ToPathString());
+
+        // Should track dependency on position variable
+        var deps = GetDeps(result);
+        Assert.Contains("position", deps);
+    }
+
+    [Fact]
+    public void Computed_Index_Expression_Adds_All_Dependencies()
+    {
+        var data = new JsonObject
+        {
+            ["nums"] = new JsonArray { 1, 2, 3, 4, 5 },
+            ["offset"] = 1,
+            ["base"] = 2
+        };
+        var env = CreateEnvWithData(data);
+
+        // Use $elem for computed index
+        var expr = ExprParser.Parse("$elem(nums, base + offset)");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(4, result.Value); // nums[3]
+
+        // Should have path to element
+        Assert.Equal("nums[3]", result.Path?.ToPathString());
+
+        // Should track both offset and base
+        var deps = GetDeps(result);
+        Assert.Contains("offset", deps);
+        Assert.Contains("base", deps);
+    }
+
+    #endregion
+
+    #region Object Filter with Dynamic Keys Tests
+
+    [Fact]
+    public void Constant_Key_Access_Preserves_Path_Not_Deps()
+    {
+        var data = new JsonObject
+        {
+            ["obj"] = new JsonObject { ["x"] = 10, ["y"] = 20, ["z"] = 30 }
+        };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("obj[\"x\"]");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(10, result.Value);
+
+        // Should have path to the property
+        Assert.NotNull(result.Path);
+        Assert.Equal("obj.x", result.Path.ToPathString());
+
+        // Should NOT have dependencies (it's direct data access)
+        Assert.Null(result.Deps);
+    }
+
+    [Fact]
+    public void Dynamic_Key_With_Variable_Tracks_Key_Dependency()
+    {
+        var data = new JsonObject
+        {
+            ["user"] = new JsonObject { ["name"] = "Alice", ["age"] = 30 },
+            ["field"] = "name"
+        };
+        var env = CreateEnvWithData(data);
+
+        // Access object property using variable key
+        var expr = ExprParser.Parse("user[field]");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal("Alice", result.Value);
+
+        // Should have path to the actual property accessed
+        Assert.NotNull(result.Path);
+        Assert.Equal("user.name", result.Path.ToPathString());
+
+        // Should have dependency on field variable
+        var deps = GetDeps(result);
+        Assert.Contains("field", deps);
+    }
+
+    [Fact]
+    public void Dynamic_Key_With_Computed_Expression_Tracks_All_Dependencies()
+    {
+        var data = new JsonObject
+        {
+            ["config"] = new JsonObject
+            {
+                ["setting_a"] = "value1",
+                ["setting_b"] = "value2"
+            },
+            ["prefix"] = "setting",
+            ["suffix"] = "_a"
+        };
+        var env = CreateEnvWithData(data);
+
+        // Access property with computed key: prefix + suffix
+        var expr = ExprParser.Parse("config[$string(prefix, suffix)]");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal("value1", result.Value);
+
+        // Should have path to the actual property
+        Assert.Equal("config.setting_a", result.Path?.ToPathString());
+
+        // Should track both prefix and suffix
+        var deps = GetDeps(result);
+        Assert.Contains("prefix", deps);
+        Assert.Contains("suffix", deps);
+    }
+
+    [Fact]
+    public void Nested_Object_Access_With_Dynamic_Key_Tracks_Dependencies()
+    {
+        var data = new JsonObject
+        {
+            ["company"] = new JsonObject
+            {
+                ["employees"] = new JsonObject
+                {
+                    ["alice"] = new JsonObject { ["role"] = "manager" },
+                    ["bob"] = new JsonObject { ["role"] = "developer" }
+                }
+            },
+            ["employeeName"] = "alice"
+        };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("company.employees[employeeName].role");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal("manager", result.Value);
+
+        // Should have path to the final property
+        Assert.Equal("company.employees.alice.role", result.Path?.ToPathString());
+
+        // Should track employeeName dependency
+        var deps = GetDeps(result);
+        Assert.Contains("employeeName", deps);
+    }
+
+    [Fact]
+    public void Object_Filter_With_Constant_Key_In_Constructed_Object()
+    {
+        var data = new JsonObject { ["a"] = 5, ["b"] = 10 };
+        var env = CreateEnvWithData(data);
+
+        // Create object and access with constant key
+        var expr = ExprParser.Parse("let $obj := $object(\"sum\", a + b) in $obj[\"sum\"]");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(15L, result.Value);
+
+        var deps = GetDeps(result);
+        // Should track dependencies from the original computation, no key dependency
+        Assert.Contains("a", deps);
+        Assert.Contains("b", deps);
+    }
+    
+    #endregion
 }

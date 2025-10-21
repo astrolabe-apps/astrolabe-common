@@ -168,8 +168,22 @@ public static class DefaultFunctions
                         && av.Values.ToList() is var vl
                         && vl.Count > ind
                     =>
-                    // Preserve dependencies from BOTH the index AND the element
-                    env2.WithValue(ValueExpr.WithDeps(vl[ind].Value, [indexVal, vl[ind]])),
+                    // Check if index or array has dependencies
+                    ((indexVal.Deps == null || !indexVal.Deps.Any()) && indexVal.Path == null)
+                        ? (arrayVal.Deps == null || !arrayVal.Deps.Any())
+                            ? env2.WithValue(vl[ind])  // Neither index nor array has deps
+                            : env2.WithValue(
+                                vl[ind] with
+                                {
+                                    Deps = DependencyHelpers.CombinePathsAndDeps(indexVal, vl[ind], arrayVal)
+                                }
+                            )
+                        : env2.WithValue(
+                            vl[ind] with
+                            {
+                                Deps = DependencyHelpers.CombinePathsAndDeps(indexVal, vl[ind], arrayVal)
+                            }
+                        ),
                 _ => env2.WithValue(ValueExpr.WithDeps(null, [arrayVal, indexVal])),
             };
         }

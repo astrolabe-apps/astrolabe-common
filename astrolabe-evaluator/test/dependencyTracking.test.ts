@@ -128,7 +128,9 @@ describe("Lazy Dependency Model Tests", () => {
     expect(elements.length).toBe(3);
 
     // Each filtered element preserves its source dependency
-    const allDeps = elements.flatMap((e) => getDeps(e)).filter((v, i, a) => i === 0 || v !== a[i - 1]);
+    const allDeps = elements
+      .flatMap((e) => getDeps(e))
+      .filter((v, i, a) => i === 0 || v !== a[i - 1]);
     expect(allDeps).toContain("nums.2"); // element 3
     expect(allDeps).toContain("nums.3"); // element 4
     expect(allDeps).toContain("nums.4"); // element 5
@@ -226,7 +228,9 @@ describe("Dependency Aggregation Tests", () => {
 
     // Array access with computed index using let expression: let $idx := baseIndex + indexOffset in values[$idx]
     // Should access values[2] = 300
-    const expr = parseEval("let $idx := baseIndex + indexOffset in values[$idx]");
+    const expr = parseEval(
+      "let $idx := baseIndex + indexOffset in values[$idx]",
+    );
     const [_, result] = env.evaluate(expr);
 
     expect(result.value).toBe(300);
@@ -535,5 +539,244 @@ describe("Object Property Dependency Tracking Tests", () => {
     expect(deps).toContain("obj.x");
     expect(deps).toContain("obj.y");
     expect(deps).toContain("obj.z");
+  });
+});
+
+describe("Array Element Access Path Preservation Tests", () => {
+  test("Constant index access preserves path, not deps", () => {
+    const data = { array: [1, 2, 3] };
+    const env = basicEnv(data);
+
+    const expr = parseEval("array[0]");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(1);
+
+    // Should have path to the element
+    expect(result.path).toBeDefined();
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("array.0");
+
+    // Should NOT have dependencies (it's direct data access)
+    expect(result.deps).toBeUndefined();
+  });
+
+  test("$elem with constant index preserves path", () => {
+    const data = { items: [10, 20, 30] };
+    const env = basicEnv(data);
+
+    const expr = parseEval("$elem(items, 1)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(20);
+
+    // Should have path to the element
+    expect(result.path).toBeDefined();
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("items.1");
+
+    // Should NOT have dependencies
+    expect(result.deps).toBeUndefined();
+  });
+
+  test("Dynamic index adds index dependencies while preserving path", () => {
+    const data = { array: [10, 20, 30], idx: 1 };
+    const env = basicEnv(data);
+
+    // Use $elem for dynamic index (array[idx] doesn't work due to scoping limitation)
+    const expr = parseEval("$elem(array, idx)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(20);
+
+    // Should have path to the actual element accessed
+    expect(result.path).toBeDefined();
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("array.1");
+
+    // Should have dependency on idx variable
+    const deps = getDeps(result);
+    expect(deps).toContain("idx");
+  });
+
+  test("$elem with dynamic index adds dependencies", () => {
+    const data = { values: [100, 200, 300], position: 2 };
+    const env = basicEnv(data);
+
+    const expr = parseEval("$elem(values, position)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(300);
+
+    // Should have path to the actual element
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("values.2");
+
+    // Should track dependency on position variable
+    const deps = getDeps(result);
+    expect(deps).toContain("position");
+  });
+
+  test("Computed index expression adds all dependencies", () => {
+    const data = { nums: [1, 2, 3, 4, 5], offset: 1, base: 2 };
+    const env = basicEnv(data);
+
+    // Use $elem for computed index
+    const expr = parseEval("$elem(nums, base + offset)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(4); // nums[3]
+
+    // Should have path to element
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("nums.3");
+
+    // Should track both offset and base
+    const deps = getDeps(result);
+    expect(deps).toContain("offset");
+    expect(deps).toContain("base");
+  });
+});
+
+describe("Object Filter with Dynamic Keys Tests", () => {
+  test("Constant key access preserves path, not deps", () => {
+    const data = { obj: { x: 10, y: 20, z: 30 } };
+    const env = basicEnv(data);
+
+    const expr = parseEval('obj["x"]');
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(10);
+
+    // Should have path to the property
+    expect(result.path).toBeDefined();
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("obj.x");
+
+    // Should NOT have dependencies (it's direct data access)
+    expect(result.deps).toBeUndefined();
+  });
+
+  test("Dynamic key with variable tracks key dependency", () => {
+    const data = { user: { name: "Alice", age: 30 }, field: "name" };
+    const env = basicEnv(data);
+
+    // Access object property using variable key
+    const expr = parseEval("user[field]");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe("Alice");
+
+    // Should have path to the actual property accessed
+    expect(result.path).toBeDefined();
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("user.name");
+
+    // Should have dependency on field variable
+    const deps = getDeps(result);
+    expect(deps).toContain("field");
+  });
+
+  test("Dynamic key with computed expression tracks all dependencies", () => {
+    const data = {
+      config: { setting_a: "value1", setting_b: "value2" },
+      prefix: "setting",
+      suffix: "_a",
+    };
+    const env = basicEnv(data);
+
+    // Access property with computed key: prefix + suffix
+    const expr = parseEval("config[$string(prefix, suffix)]");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe("value1");
+
+    // Should have path to the actual property
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("config.setting_a");
+
+    // Should track both prefix and suffix
+    const deps = getDeps(result);
+    expect(deps).toContain("prefix");
+    expect(deps).toContain("suffix");
+  });
+
+  test("Nested object access with dynamic key tracks dependencies", () => {
+    const data = {
+      company: {
+        employees: { alice: { role: "manager" }, bob: { role: "developer" } },
+      },
+      employeeName: "alice",
+    };
+    const env = basicEnv(data);
+
+    const expr = parseEval("company.employees[employeeName].role");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe("manager");
+
+    // Should have path to the final property
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("company.employees.alice.role");
+
+    // Should track employeeName dependency
+    const deps = getDeps(result);
+    expect(deps).toContain("employeeName");
+  });
+
+  test("Object filter with constant key in constructed object", () => {
+    const data = { a: 5, b: 10 };
+    const env = basicEnv(data);
+
+    // Create object and access with constant key
+    const expr = parseEval('let $obj := $object("sum", a + b) in $obj["sum"]');
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(15);
+
+    const deps = getDeps(result);
+    // Should track dependencies from the original computation, no key dependency
+    expect(deps).toContain("a");
+    expect(deps).toContain("b");
+  });
+
+  test("Dynamic key from computed sum tracks array dependencies through lookup", () => {
+    const data = { array: [1, 2, 3] };
+    const env = basicEnv(data);
+
+    // Compute key from array sum, use it to lookup in literal object
+    const expr = parseEval(
+      'let $table := $object("6", [1.5, 1.5, 1.5]), $key := $fixed($sum(array), 0) in $table[$key]'
+    );
+    const [_, result] = env.evaluate(expr);
+
+    expect(Array.isArray(result.value)).toBe(true);
+    const resultArray = result.value as ValueExpr[];
+    expect(resultArray[0].value).toBe(1.5);
+
+    // Should track array dependencies because key depends on array
+    const deps = getDeps(result);
+    expect(deps).toContain("array.0");
+    expect(deps).toContain("array.1");
+    expect(deps).toContain("array.2");
+  });
+
+  test("Dynamic key from computed sum tracks array dependencies through nested access", () => {
+    const data = { array: [1, 2, 3] };
+    const env = basicEnv(data);
+
+    // Compute key from array sum, use it to lookup and then access element
+    const expr = parseEval(
+      'let $table := $object("6", [1.5, 1.5, 1.5]), $key := $fixed($sum(array), 0) in $table[$key][0]'
+    );
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(1.5);
+
+    // Should track array dependencies even through nested access
+    const deps = getDeps(result);
+    expect(deps).toContain("array.0");
+    expect(deps).toContain("array.1");
+    expect(deps).toContain("array.2");
   });
 });

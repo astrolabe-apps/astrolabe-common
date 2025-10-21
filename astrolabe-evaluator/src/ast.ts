@@ -404,7 +404,15 @@ export function emptyEnvState(root: unknown): EvalEnvState {
         const objValue = value as Record<string, ValueExpr>;
         const propValue = objValue[property];
         if (propValue) {
-          return { ...propValue, path: propPath };
+          // Preserve dependencies from parent object when accessing properties
+          const combinedDeps: Path[] = [];
+          if (object.deps) combinedDeps.push(...object.deps);
+          if (propValue.deps) combinedDeps.push(...propValue.deps);
+          return {
+            ...propValue,
+            path: propPath,
+            deps: combinedDeps.length > 0 ? combinedDeps : undefined
+          };
         }
       }
       return valueExpr(null, propPath);

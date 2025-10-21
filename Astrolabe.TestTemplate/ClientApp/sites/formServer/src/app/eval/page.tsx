@@ -167,11 +167,14 @@ class TrackDataEnv extends BasicEvalEnv {
 }
 
 function toValueDeps({ value, path, deps }: ValueExpr): unknown {
-  if (Array.isArray(value)) {
-    return value.map(toValueDeps);
-  }
   let converted: unknown = value;
-  if (typeof value === "object" && value != null && !Array.isArray(value)) {
+  if (Array.isArray(value)) {
+    converted = value.map(toValueDeps);
+  } else if (
+    typeof value === "object" &&
+    value != null &&
+    !Array.isArray(value)
+  ) {
     const objValue = value as Record<string, ValueExpr>;
     const result: Record<string, unknown> = {};
     for (const key in objValue) {

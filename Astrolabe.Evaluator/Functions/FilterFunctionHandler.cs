@@ -13,7 +13,7 @@ public static class FilterFunctionHandler
                         {
                             ArrayValue av
                                 when av.Values.Select((x, i) => (x, i)).ToList() is var indexed
-                                => FilterArray(nextEnv, indexed, right),
+                                => FilterArray(nextEnv, leftValue, indexed, right),
                             null => leftEval,
                             ObjectValue _ => FilterObject(nextEnv, leftValue, right),
                             _ => nextEnv.WithError("Can't filter: " + leftValue.Print()).WithNull()
@@ -26,18 +26,33 @@ public static class FilterFunctionHandler
                     EvalExpr right
                 )
                 {
-                    var (env, firstFilterValue) = nextEnv.EvaluateWith(leftValue, null, right);
-                    if (!firstFilterValue.IsString())
-                        return env.WithError("Object filter must be string").WithNull();
-                    return env.EvaluateWith(
+                    // Evaluate key expression in root context (not current object context)
+                    var rootEnv = nextEnv.WithCurrent(nextEnv.Data.Root);
+                    var (keyEnv, keyResult) = rootEnv.Evaluate(right);
+                    if (!keyResult.IsString())
+                        return keyEnv.WithError("Object filter must be string").WithNull();
+
+                    var (propEnv, propValue) = keyEnv.EvaluateWith(
                         leftValue,
                         null,
-                        new PropertyExpr(firstFilterValue.AsString())
+                        new PropertyExpr(keyResult.AsString())
                     );
+
+                    // Check if key or object has dependencies
+                    var keyHasDeps = (keyResult.Deps != null && keyResult.Deps.Any()) || keyResult.Path != null;
+                    var objectHasDeps = leftValue.Deps != null && leftValue.Deps.Any();
+
+                    // If neither key nor object has deps, return property value as-is
+                    if (!keyHasDeps && !objectHasDeps)
+                        return propEnv.WithValue(propValue);
+
+                    // Key is dynamic OR object has deps - preserve property but add dependencies
+                    return propEnv.WithValue(propValue with { Deps = DependencyHelpers.CombinePathsAndDeps(keyResult, propValue, leftValue) });
                 }
 
                 EnvironmentValue<ValueExpr> FilterArray(
                     EvalEnvironment nextEnv,
+                    ValueExpr arrayValue,
                     List<(ValueExpr, int)> indexed,
                     EvalExpr right
                 )
@@ -70,8 +85,17 @@ public static class FilterFunctionHandler
                         if (ind >= indexed.Count)
                             return ValueExpr.Null;
                         var element = indexed[ind].Item1;
-                        // Preserve dependencies from BOTH the index expression AND the element
-                        return ValueExpr.WithDeps(element.Value, [indexResult, element]);
+
+                        // Check if index or array has dependencies
+                        var indexHasDeps = (indexResult.Deps != null && indexResult.Deps.Any()) || indexResult.Path != null;
+                        var arrayHasDeps = arrayValue.Deps != null && arrayValue.Deps.Any();
+
+                        // If neither index nor array has deps, return element as-is
+                        if (!indexHasDeps && !arrayHasDeps)
+                            return element;
+
+                        // Index is dynamic OR array has deps - preserve element but add dependencies
+                        return element with { Deps = DependencyHelpers.CombinePathsAndDeps(indexResult, element, arrayValue) };
                     });
                 }
             }

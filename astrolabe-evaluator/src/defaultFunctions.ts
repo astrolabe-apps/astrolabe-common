@@ -21,6 +21,7 @@ import {
   NullExpr,
   NumberType,
   objectType,
+  Path,
   propertyExpr,
   StringType,
   toNative,
@@ -321,11 +322,34 @@ const filterFunction = functionValue(
         right,
       );
       if (typeof firstFilter === "number") {
-        const [_, indexResult] = evaluateWith(leftEnv, empty ? NullExpr : value[0], empty ? null : 0, right);
+        const [_, indexResult] = evaluateWith(
+          leftEnv,
+          empty ? NullExpr : value[0],
+          empty ? null : 0,
+          right,
+        );
         const element = value[firstFilter];
         if (!element) return [firstEnv, NullExpr];
-        // Preserve dependencies from BOTH the index expression AND the element
-        return [firstEnv, valueExprWithDeps(element.value, [indexResult, element])];
+
+        // Check if index or array has dependencies
+        const indexHasDeps =
+          (indexResult.deps && indexResult.deps.length > 0) ||
+          indexResult.path != null;
+        const arrayHasDeps = leftVal.deps && leftVal.deps.length > 0;
+
+        // If neither index nor array has deps, return element as-is
+        if (!indexHasDeps && !arrayHasDeps) {
+          return [firstEnv, element];
+        }
+
+        // Index is dynamic OR array has deps - preserve element but add dependencies
+        const combinedDeps: Path[] = [];
+        if (indexResult.path) combinedDeps.push(indexResult.path);
+        if (indexResult.deps) combinedDeps.push(...indexResult.deps);
+        if (leftVal.deps) combinedDeps.push(...leftVal.deps);
+        if (element.deps) combinedDeps.push(...element.deps);
+
+        return [firstEnv, { ...element, deps: combinedDeps }];
       }
       const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
       const outEnv = value.reduce(
@@ -339,19 +363,43 @@ const filterFunction = functionValue(
       );
       return [outEnv, valueExpr(accArray)];
     }
-    if (leftVal == null) {
+    if (value == null) {
       return [leftEnv, NullExpr];
     }
-    if (typeof leftVal === "object") {
-      const [firstEnv, { value: firstFilter }] = evaluateWith(
-        leftEnv,
-        leftVal,
-        null,
-        right,
-      );
-      if (typeof firstFilter === "string")
-        return evaluateWith(firstEnv, leftVal, null, propertyExpr(firstFilter));
-      return [firstEnv, valueExpr(null)];
+    if (typeof value === "object" && value != null && !Array.isArray(value)) {
+      // Evaluate key expression in root context (not current object context)
+      const rootEnv = leftEnv.withCurrent(leftEnv.data.root);
+      const [keyEnv, keyResult] = rootEnv.evaluate(right);
+      const { value: firstFilter } = keyResult;
+      if (typeof firstFilter === "string") {
+        const [propEnv, propValue] = evaluateWith(
+          keyEnv,
+          leftVal,
+          null,
+          propertyExpr(firstFilter),
+        );
+
+        // Check if key or object has dependencies
+        const keyHasDeps =
+          (keyResult.deps && keyResult.deps.length > 0) ||
+          keyResult.path != null;
+        const objectHasDeps = leftVal.deps && leftVal.deps.length > 0;
+
+        // If neither key nor object has deps, return property value as-is
+        if (!keyHasDeps && !objectHasDeps) {
+          return [propEnv, propValue];
+        }
+
+        // Key is dynamic OR object has deps - preserve property but add dependencies
+        const combinedDeps: Path[] = [];
+        if (keyResult.path) combinedDeps.push(keyResult.path);
+        if (keyResult.deps) combinedDeps.push(...keyResult.deps);
+        if (leftVal.deps) combinedDeps.push(...leftVal.deps);
+        if (propValue.deps) combinedDeps.push(...propValue.deps);
+
+        return [propEnv, { ...propValue, deps: combinedDeps }];
+      }
+      return [keyEnv, valueExpr(null)];
     }
     return [
       leftEnv.withError("Can't filter value: " + printExpr(leftVal)),
@@ -416,8 +464,24 @@ const elemFunction = functionValue(
       return [env2, NullExpr];
     }
 
-    // Preserve dependencies from both the index and the element
-    return [env2, valueExprWithDeps(elem.value, [indexVal, elem])];
+    // Check if index or array has dependencies
+    const indexHasDeps =
+      (indexVal.deps && indexVal.deps.length > 0) || indexVal.path != null;
+    const arrayHasDeps = arrayVal.deps && arrayVal.deps.length > 0;
+
+    // If neither index nor array has deps, return element as-is
+    if (!indexHasDeps && !arrayHasDeps) {
+      return [env2, elem];
+    }
+
+    // Index is dynamic OR array has deps - preserve element but add dependencies
+    const combinedDeps: Path[] = [];
+    if (indexVal.path) combinedDeps.push(indexVal.path);
+    if (indexVal.deps) combinedDeps.push(...indexVal.deps);
+    if (arrayVal.deps) combinedDeps.push(...arrayVal.deps);
+    if (elem.deps) combinedDeps.push(...elem.deps);
+
+    return [env2, { ...elem, deps: combinedDeps }];
   },
   (e, call) =>
     mapCallArgs(call, e, (args) =>

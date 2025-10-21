@@ -12,15 +12,19 @@ public static class JsonDataLookup
             (e, property) =>
             {
                 var childPath = e.Path != null ? new FieldPath(property, e.Path) : null;
-                return e.Value switch
+                if (e.Value is ObjectValue { Properties: var props } && props.TryGetValue(property, out var propValue))
                 {
-                    ObjectValue { Properties: var props }
-                        when props.TryGetValue(property, out var propValue) => propValue with
-                        {
-                            Path = childPath
-                        },
-                    _ => new ValueExpr(null, childPath),
-                };
+                    // Preserve dependencies from parent object when accessing properties
+                    var combinedDeps = new List<DataPath>();
+                    if (e.Deps != null) combinedDeps.AddRange(e.Deps);
+                    if (propValue.Deps != null) combinedDeps.AddRange(propValue.Deps);
+                    return propValue with
+                    {
+                        Path = childPath,
+                        Deps = combinedDeps.Count > 0 ? combinedDeps : null
+                    };
+                }
+                return new ValueExpr(null, childPath);
             }
         );
     }
