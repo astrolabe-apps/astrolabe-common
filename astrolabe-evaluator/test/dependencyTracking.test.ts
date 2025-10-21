@@ -744,11 +744,11 @@ describe("Object Filter with Dynamic Keys Tests", () => {
   });
 
   test("Dynamic key with variable tracks key dependency", () => {
-    const data = { user: { name: "Alice", age: 30 }, field: "name" };
+    const data = { user: { name: "Alice", age: 30, fieldToAccess: "name" } };
     const env = basicEnv(data);
 
-    // Access object property using variable key
-    const expr = parseEval("user[field]");
+    // Access object property using variable key from within the object context
+    const expr = parseEval("user[fieldToAccess]");
     const [_, result] = env.evaluate(expr);
 
     expect(result.value).toBe("Alice");
@@ -758,20 +758,18 @@ describe("Object Filter with Dynamic Keys Tests", () => {
     const pathStr = result.path ? pathToString(result.path) : "";
     expect(pathStr).toBe("user.name");
 
-    // Should have dependency on field variable
+    // Should have dependency on fieldToAccess variable
     const deps = getDeps(result);
-    expect(deps).toContain("field");
+    expect(deps).toContain("user.fieldToAccess");
   });
 
   test("Dynamic key with computed expression tracks all dependencies", () => {
     const data = {
-      config: { setting_a: "value1", setting_b: "value2" },
-      prefix: "setting",
-      suffix: "_a",
+      config: { setting_a: "value1", setting_b: "value2", prefix: "setting", suffix: "_a" },
     };
     const env = basicEnv(data);
 
-    // Access property with computed key: prefix + suffix
+    // Access property with computed key: prefix + suffix (from within object context)
     const expr = parseEval("config[$string(prefix, suffix)]");
     const [_, result] = env.evaluate(expr);
 
@@ -783,20 +781,19 @@ describe("Object Filter with Dynamic Keys Tests", () => {
 
     // Should track both prefix and suffix
     const deps = getDeps(result);
-    expect(deps).toContain("prefix");
-    expect(deps).toContain("suffix");
+    expect(deps).toContain("config.prefix");
+    expect(deps).toContain("config.suffix");
   });
 
   test("Nested object access with dynamic key tracks dependencies", () => {
     const data = {
       company: {
-        employees: { alice: { role: "manager" }, bob: { role: "developer" } },
+        employees: { alice: { role: "manager" }, bob: { role: "developer" }, selectedName: "alice" },
       },
-      employeeName: "alice",
     };
     const env = basicEnv(data);
 
-    const expr = parseEval("company.employees[employeeName].role");
+    const expr = parseEval("company.employees[selectedName].role");
     const [_, result] = env.evaluate(expr);
 
     expect(result.value).toBe("manager");
@@ -805,9 +802,9 @@ describe("Object Filter with Dynamic Keys Tests", () => {
     const pathStr = result.path ? pathToString(result.path) : "";
     expect(pathStr).toBe("company.employees.alice.role");
 
-    // Should track employeeName dependency
+    // Should track selectedName dependency
     const deps = getDeps(result);
-    expect(deps).toContain("employeeName");
+    expect(deps).toContain("company.employees.selectedName");
   });
 
   test("Object filter with constant key in constructed object", () => {

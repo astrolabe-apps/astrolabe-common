@@ -366,10 +366,9 @@ const filterFunction = functionValue(
     if (value == null) {
       return [leftEnv, NullExpr];
     }
-    if (typeof value === "object" && value != null && !Array.isArray(value)) {
-      // Evaluate key expression in root context (not current object context)
-      const rootEnv = leftEnv.withCurrent(leftEnv.data.root);
-      const [keyEnv, keyResult] = rootEnv.evaluate(right);
+    if (typeof value === "object") {
+      // Evaluate key expression with the object as current context
+      const [keyEnv, keyResult] = evaluateWith(leftEnv, leftVal, null, right);
       const { value: firstFilter } = keyResult;
       if (typeof firstFilter === "string") {
         const [propEnv, propValue] = evaluateWith(
@@ -570,13 +569,15 @@ function shortCircuitBooleanOp(
 
 // Short-circuiting AND operator - stops on false, returns true if all true
 const andFunction = functionValue(
-  (env: EvalEnv, call: CallExpr) => shortCircuitBooleanOp(env, call, false, true),
+  (env: EvalEnv, call: CallExpr) =>
+    shortCircuitBooleanOp(env, call, false, true),
   constGetType(BooleanType),
 );
 
 // Short-circuiting OR operator - stops on true, returns false if all false
 const orFunction = functionValue(
-  (env: EvalEnv, call: CallExpr) => shortCircuitBooleanOp(env, call, true, false),
+  (env: EvalEnv, call: CallExpr) =>
+    shortCircuitBooleanOp(env, call, true, false),
   constGetType(BooleanType),
 );
 

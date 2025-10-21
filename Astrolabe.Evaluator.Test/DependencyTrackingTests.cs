@@ -910,13 +910,12 @@ public class DependencyTrackingTests
     {
         var data = new JsonObject
         {
-            ["user"] = new JsonObject { ["name"] = "Alice", ["age"] = 30 },
-            ["field"] = "name"
+            ["user"] = new JsonObject { ["name"] = "Alice", ["age"] = 30, ["fieldToAccess"] = "name" }
         };
         var env = CreateEnvWithData(data);
 
-        // Access object property using variable key
-        var expr = ExprParser.Parse("user[field]");
+        // Access object property using variable key from within the object context
+        var expr = ExprParser.Parse("user[fieldToAccess]");
         var (_, result) = env.Evaluate(expr);
 
         Assert.Equal("Alice", result.Value);
@@ -925,9 +924,9 @@ public class DependencyTrackingTests
         Assert.NotNull(result.Path);
         Assert.Equal("user.name", result.Path.ToPathString());
 
-        // Should have dependency on field variable
+        // Should have dependency on fieldToAccess variable
         var deps = GetDeps(result);
-        Assert.Contains("field", deps);
+        Assert.Contains("user.fieldToAccess", deps);
     }
 
     [Fact]
@@ -938,14 +937,14 @@ public class DependencyTrackingTests
             ["config"] = new JsonObject
             {
                 ["setting_a"] = "value1",
-                ["setting_b"] = "value2"
-            },
-            ["prefix"] = "setting",
-            ["suffix"] = "_a"
+                ["setting_b"] = "value2",
+                ["prefix"] = "setting",
+                ["suffix"] = "_a"
+            }
         };
         var env = CreateEnvWithData(data);
 
-        // Access property with computed key: prefix + suffix
+        // Access property with computed key: prefix + suffix (from within object context)
         var expr = ExprParser.Parse("config[$string(prefix, suffix)]");
         var (_, result) = env.Evaluate(expr);
 
@@ -956,8 +955,8 @@ public class DependencyTrackingTests
 
         // Should track both prefix and suffix
         var deps = GetDeps(result);
-        Assert.Contains("prefix", deps);
-        Assert.Contains("suffix", deps);
+        Assert.Contains("config.prefix", deps);
+        Assert.Contains("config.suffix", deps);
     }
 
     [Fact]
@@ -970,14 +969,14 @@ public class DependencyTrackingTests
                 ["employees"] = new JsonObject
                 {
                     ["alice"] = new JsonObject { ["role"] = "manager" },
-                    ["bob"] = new JsonObject { ["role"] = "developer" }
+                    ["bob"] = new JsonObject { ["role"] = "developer" },
+                    ["selectedName"] = "alice"
                 }
-            },
-            ["employeeName"] = "alice"
+            }
         };
         var env = CreateEnvWithData(data);
 
-        var expr = ExprParser.Parse("company.employees[employeeName].role");
+        var expr = ExprParser.Parse("company.employees[selectedName].role");
         var (_, result) = env.Evaluate(expr);
 
         Assert.Equal("manager", result.Value);
@@ -985,9 +984,9 @@ public class DependencyTrackingTests
         // Should have path to the final property
         Assert.Equal("company.employees.alice.role", result.Path?.ToPathString());
 
-        // Should track employeeName dependency
+        // Should track selectedName dependency
         var deps = GetDeps(result);
-        Assert.Contains("employeeName", deps);
+        Assert.Contains("company.employees.selectedName", deps);
     }
 
     [Fact]

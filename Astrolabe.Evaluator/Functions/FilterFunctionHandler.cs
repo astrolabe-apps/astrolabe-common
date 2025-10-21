@@ -26,9 +26,8 @@ public static class FilterFunctionHandler
                     EvalExpr right
                 )
                 {
-                    // Evaluate key expression in root context (not current object context)
-                    var rootEnv = nextEnv.WithCurrent(nextEnv.Data.Root);
-                    var (keyEnv, keyResult) = rootEnv.Evaluate(right);
+                    // Evaluate key expression with the object as current context
+                    var (keyEnv, keyResult) = nextEnv.EvaluateWith(leftValue, null, right);
                     if (!keyResult.IsString())
                         return keyEnv.WithError("Object filter must be string").WithNull();
 
