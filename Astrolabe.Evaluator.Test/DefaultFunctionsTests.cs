@@ -937,9 +937,8 @@ public class DefaultFunctionsTests
     {
         var result = EvalExpr("$object(\"name\", \"John\", \"age\", 30)");
         var obj = (ObjectValue)result!;
-        var json = (JsonObject)obj.Object;
-        Assert.Equal("John", json["name"]!.GetValue<string>());
-        Assert.Equal(30, (int)json["age"]!.GetValue<double>());
+        Assert.Equal("John", obj.Properties["name"].Value);
+        Assert.Equal(30.0, obj.Properties["age"].Value);
     }
 
     [Fact]
@@ -947,8 +946,7 @@ public class DefaultFunctionsTests
     {
         var result = EvalExpr("$object()");
         var obj = (ObjectValue)result!;
-        var json = (JsonObject)obj.Object;
-        Assert.Empty(json);
+        Assert.Empty(obj.Properties);
     }
 
     [Fact]
@@ -956,10 +954,9 @@ public class DefaultFunctionsTests
     {
         var result = EvalExpr("$object(\"str\", \"hello\", \"num\", 42, \"bool\", true)");
         var obj = (ObjectValue)result!;
-        var json = (JsonObject)obj.Object;
-        Assert.Equal("hello", json["str"]!.GetValue<string>());
-        Assert.Equal(42, (int)json["num"]!.GetValue<double>());
-        Assert.True(json["bool"]!.GetValue<bool>());
+        Assert.Equal("hello", obj.Properties["str"].Value);
+        Assert.Equal(42.0, obj.Properties["num"].Value);
+        Assert.True((bool)obj.Properties["bool"].Value!);
     }
 
     [Fact]

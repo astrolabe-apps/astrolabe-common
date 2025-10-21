@@ -455,3 +455,85 @@ describe("Utility Functions Tests", () => {
     expect(deps).toContain("pendingMsg");
   });
 });
+
+describe("Object Property Dependency Tracking Tests", () => {
+  test("Object property access tracks dependencies", () => {
+    const data = { user: { name: "John", age: 30 } };
+    const env = basicEnv(data);
+
+    const expr = parseEval("user.name");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe("John");
+
+    const deps = getDeps(result);
+    // Should track the specific property accessed
+    expect(deps).toContain("user.name");
+  });
+
+  test("Nested object property access tracks dependencies", () => {
+    const data = {
+      company: {
+        department: {
+          manager: { name: "Alice", level: 5 },
+        },
+      },
+    };
+    const env = basicEnv(data);
+
+    const expr = parseEval("company.department.manager.name");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe("Alice");
+
+    const deps = getDeps(result);
+    // Should track the full path
+    expect(deps).toContain("company.department.manager.name");
+  });
+
+  test("Object created with $object tracks property dependencies", () => {
+    const data = { x: 10, y: 20 };
+    const env = basicEnv(data);
+
+    // Create an object with computed properties
+    const expr = parseEval('$object("sum", x + y, "product", x * y)');
+    const [_, result] = env.evaluate(expr);
+
+    const deps = getDeps(result);
+    // Should track dependencies from the computed property values
+    expect(deps).toContain("x");
+    expect(deps).toContain("y");
+  });
+
+  test("Accessing property from constructed object preserves dependencies", () => {
+    const data = { a: 5, b: 10 };
+    const env = basicEnv(data);
+
+    // Create object and access property
+    const expr = parseEval('let $obj := $object("val", a + b) in $obj.val');
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(15);
+
+    const deps = getDeps(result);
+    // Should track dependencies from the original computation
+    expect(deps).toContain("a");
+    expect(deps).toContain("b");
+  });
+
+  test("$values tracks dependencies from object properties", () => {
+    const data = { obj: { x: 10, y: 20, z: 30 } };
+    const env = basicEnv(data);
+
+    const expr = parseEval("$sum($values(obj))");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(60);
+
+    const deps = getDeps(result);
+    // Should track all property dependencies
+    expect(deps).toContain("obj.x");
+    expect(deps).toContain("obj.y");
+    expect(deps).toContain("obj.z");
+  });
+});

@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";
 import type { ValueExpr } from "../src/ast";
+import { toNative } from "../src/ast";
 
 /**
  * Comprehensive tests for all default functions in the TypeScript evaluator.
@@ -15,12 +16,22 @@ function evalExpr(expr: string, data: unknown = {}): unknown {
   return result.value;
 }
 
+function evalExprNative(expr: string, data: unknown = {}): unknown {
+  const env = basicEnv(data);
+  const parsed = parseEval(expr);
+  const [_, result] = env.evaluate(parsed);
+  return toNative(result);
+}
+
 function evalToArray(expr: string, data: unknown = {}): unknown[] {
-  const result = evalExpr(expr, data);
-  if (!Array.isArray(result)) {
+  const env = basicEnv(data);
+  const parsed = parseEval(expr);
+  const [_, result] = env.evaluate(parsed);
+  const nativeResult = toNative(result);
+  if (!Array.isArray(nativeResult)) {
     throw new Error("Expected array result");
   }
-  return (result as ValueExpr[]).map((v) => v.value);
+  return nativeResult as unknown[];
 }
 
 describe("Mathematical Operations", () => {
@@ -569,17 +580,17 @@ describe("String Functions", () => {
 
 describe("Object Functions", () => {
   test("Object - create from pairs", () => {
-    const result = evalExpr('$object("name", "John", "age", 30)');
+    const result = evalExprNative('$object("name", "John", "age", 30)');
     expect(result).toEqual({ name: "John", age: 30 });
   });
 
   test("Object - empty object", () => {
-    const result = evalExpr("$object()");
+    const result = evalExprNative("$object()");
     expect(result).toEqual({});
   });
 
   test("Object - with various types", () => {
-    const result = evalExpr('$object("str", "hello", "num", 42, "bool", true)');
+    const result = evalExprNative('$object("str", "hello", "num", 42, "bool", true)');
     expect(result).toEqual({ str: "hello", num: 42, bool: true });
   });
 

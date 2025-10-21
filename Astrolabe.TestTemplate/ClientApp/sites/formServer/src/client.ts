@@ -512,11 +512,16 @@ export class EvalClient {
     }
 
     /**
+     * @param includeDeps (optional) 
      * @param body (optional) 
      * @return OK
      */
-    eval(body: EvalData | undefined): Promise<EvalResult> {
-        let url_ = this.baseUrl + "/api/Eval";
+    eval(includeDeps: boolean | undefined, body: EvalData | undefined): Promise<EvalResult> {
+        let url_ = this.baseUrl + "/api/Eval?";
+        if (includeDeps === null)
+            throw new Error("The parameter 'includeDeps' cannot be null.");
+        else if (includeDeps !== undefined)
+            url_ += "includeDeps=" + encodeURIComponent("" + includeDeps) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -726,6 +731,24 @@ export interface AccordionAdornment extends ControlAdornment {
     [key: string]: any;
 }
 
+export interface GroupRenderOptions {
+    type: string;
+    hideTitle: boolean | null;
+    childStyleClass: string | null;
+    childLayoutClass: string | null;
+    childLabelClass: string | null;
+    displayOnly: boolean | null;
+
+    [key: string]: any;
+}
+
+export interface AccordionRenderer extends GroupRenderOptions {
+    defaultExpanded: boolean | null;
+    expandStateField: string | null;
+
+    [key: string]: any;
+}
+
 export interface ControlDefinition {
     type: string;
     title: string | null;
@@ -871,6 +894,7 @@ export interface DataControlDefinition extends ControlDefinition {
     renderOptions: RenderOptions | null;
     defaultValue: any | null;
     dontClearHidden: boolean | null;
+    requiredErrorText: string | null;
     validators: SchemaValidator[] | null;
 
     [key: string]: any;
@@ -928,17 +952,11 @@ export interface DateValidator extends SchemaValidator {
     [key: string]: any;
 }
 
-export interface GroupRenderOptions {
-    type: string;
-    hideTitle: boolean | null;
-    childStyleClass: string | null;
-    childLayoutClass: string | null;
-    childLabelClass: string | null;
-    displayOnly: boolean | null;
-}
-
 export interface DialogRenderOptions extends GroupRenderOptions {
     title: string | null;
+    portalHost: string | null;
+
+    [key: string]: any;
 }
 
 export interface DisplayControlDefinition extends ControlDefinition {
@@ -971,22 +989,29 @@ export interface EvalData {
 }
 
 export interface EvalResult {
-    result: ValueWithDeps;
+    result: any | null;
     errors: string[];
 }
 
 export interface FlexRenderer extends GroupRenderOptions {
     direction: string | null;
     gap: string | null;
+
+    [key: string]: any;
 }
 
 export interface GridRenderer extends GroupRenderOptions {
     columns: number | null;
     rowClass: string | null;
+    cellClass: string | null;
+
+    [key: string]: any;
 }
 
 export interface GroupElementRenderer extends GroupRenderOptions {
     value: any;
+
+    [key: string]: any;
 }
 
 export interface GroupedControlsDefinition extends ControlDefinition {
@@ -1113,6 +1138,7 @@ export interface RadioButtonRenderOptions extends RenderOptions {
 
 export interface ScrollListRenderOptions extends RenderOptions {
     bottomActionId: string | null;
+    refreshActionId: string | null;
 
     [key: string]: any;
 }
@@ -1127,6 +1153,8 @@ export interface SearchOptions {
 
 export interface SelectChildRenderer extends GroupRenderOptions {
     childIndexExpression: EntityExpression;
+
+    [key: string]: any;
 }
 
 export interface SetFieldAdornment extends ControlAdornment {
@@ -1148,6 +1176,8 @@ export interface SimpleExpression extends EntityExpression {
 }
 
 export interface SimpleGroupRenderOptions extends GroupRenderOptions {
+
+    [key: string]: any;
 }
 
 export interface SimpleRenderOptions extends RenderOptions {
@@ -1175,6 +1205,8 @@ export interface SynchronisedRenderOptions extends RenderOptions {
 
 export interface TabsRenderOptions extends GroupRenderOptions {
     contentClass: string | null;
+
+    [key: string]: any;
 }
 
 export interface TextDisplay extends DisplayData {
@@ -1207,12 +1239,6 @@ export interface UserSelectionRenderOptions extends RenderOptions {
     noUsers: boolean;
 
     [key: string]: any;
-}
-
-export interface ValueWithDeps {
-    value: any | null;
-    path: string | null;
-    deps: string[] | null;
 }
 
 export interface FileResponse {

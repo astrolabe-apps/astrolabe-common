@@ -550,4 +550,104 @@ public class DependencyTrackingTests
     }
 
     #endregion
+
+    #region Object Property Dependency Tracking Tests
+
+    [Fact]
+    public void Object_Property_Access_Tracks_Dependencies()
+    {
+        var data = new JsonObject { ["user"] = new JsonObject { ["name"] = "John", ["age"] = 30 } };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("user.name");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal("John", result.Value);
+
+        var deps = GetDeps(result);
+        // Should track the specific property accessed
+        Assert.Contains("user.name", deps);
+    }
+
+    [Fact]
+    public void Nested_Object_Property_Access_Tracks_Dependencies()
+    {
+        var data = new JsonObject
+        {
+            ["company"] = new JsonObject
+            {
+                ["department"] = new JsonObject
+                {
+                    ["manager"] = new JsonObject { ["name"] = "Alice", ["level"] = 5 }
+                }
+            }
+        };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("company.department.manager.name");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal("Alice", result.Value);
+
+        var deps = GetDeps(result);
+        // Should track the full path
+        Assert.Contains("company.department.manager.name", deps);
+    }
+
+    [Fact]
+    public void Object_Created_With_Function_Tracks_Property_Dependencies()
+    {
+        var data = new JsonObject { ["x"] = 10, ["y"] = 20 };
+        var env = CreateEnvWithData(data);
+
+        // Create an object with computed properties
+        var expr = ExprParser.Parse("$object(\"sum\", x + y, \"product\", x * y)");
+        var (_, result) = env.Evaluate(expr);
+
+        var deps = GetDeps(result);
+        // Should track dependencies from the computed property values
+        Assert.Contains("x", deps);
+        Assert.Contains("y", deps);
+    }
+
+    [Fact]
+    public void Accessing_Property_From_Constructed_Object_Preserves_Dependencies()
+    {
+        var data = new JsonObject { ["a"] = 5, ["b"] = 10 };
+        var env = CreateEnvWithData(data);
+
+        // Create object and access property
+        var expr = ExprParser.Parse("let $obj := $object(\"val\", a + b) in $obj.val");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(15L, result.Value);
+
+        var deps = GetDeps(result);
+        // Should track dependencies from the original computation
+        Assert.Contains("a", deps);
+        Assert.Contains("b", deps);
+    }
+
+    [Fact]
+    public void Values_Function_Tracks_Dependencies_From_Object_Properties()
+    {
+        var data = new JsonObject
+        {
+            ["obj"] = new JsonObject { ["x"] = 10, ["y"] = 20, ["z"] = 30 }
+        };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("$sum($values(obj))");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(60.0, result.Value);
+
+        var deps = GetDeps(result);
+        // Should track all property dependencies
+        Assert.Contains("obj.x", deps);
+        Assert.Contains("obj.y", deps);
+        Assert.Contains("obj.z", deps);
+    }
+
+    #endregion
 }

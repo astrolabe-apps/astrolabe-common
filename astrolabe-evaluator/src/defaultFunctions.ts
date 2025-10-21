@@ -66,10 +66,10 @@ const flatFunction = functionValue(
 export const objectFunction = functionValue(
   (e, call) => {
     return mapEnv(evaluateAll(e, call.args), (args) => {
-      const outObj: Record<string, unknown> = {};
+      const outObj: Record<string, ValueExpr> = {};
       let i = 0;
       while (i < args.length - 1) {
-        outObj[toNative(args[i++]) as string] = toNative(args[i++]);
+        outObj[toNative(args[i++]) as string] = args[i++];
       }
       return valueExprWithDeps(outObj, args);
     });
@@ -440,14 +440,11 @@ export const keysOrValuesFunction = (type: string) =>
       }
 
       if (typeof objVal.value === "object" && !Array.isArray(objVal.value)) {
+        const objValue = objVal.value as Record<string, ValueExpr>;
         const data =
           type === "keys"
-            ? Object.keys(objVal.value).map((val) => valueExpr(val))
-            : Object.values(objVal.value).map((val) =>
-                Array.isArray(val)
-                  ? valueExpr(val.map((x) => valueExpr(x)))
-                  : valueExpr(val),
-              );
+            ? Object.keys(objValue).map((val) => valueExpr(val))
+            : Object.values(objValue);
         return [nextEnv, valueExprWithDeps(data, [objVal])];
       }
 

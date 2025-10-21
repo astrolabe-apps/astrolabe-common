@@ -225,7 +225,7 @@ public record ValueExpr(object? Value, DataPath? Path = null, IEnumerable<DataPa
         return v switch
         {
             ArrayValue av => av.Values.Select(x => x.ToNative()),
-            ObjectValue ov => ov.Object,
+            ObjectValue ov => ov.Properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToNative()),
             _ => v
         };
     }
@@ -303,7 +303,7 @@ public record VarExpr(string Name) : EvalExpr
 
 public record ArrayValue(IEnumerable<ValueExpr> Values);
 
-public record ObjectValue(object Object);
+public record ObjectValue(IDictionary<string, ValueExpr> Properties);
 
 public static class ValueExtensions
 {

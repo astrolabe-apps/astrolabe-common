@@ -210,7 +210,7 @@ export interface ValueExpr {
     | string
     | number
     | boolean
-    | Record<string, unknown>
+    | Record<string, ValueExpr>
     | ValueExpr[]
     | null
     | undefined;
@@ -378,6 +378,17 @@ export function toValue(path: Path | undefined, value: unknown): ValueExpr {
       path,
     );
   }
+  if (typeof value === "object" && value != null) {
+    const objValue = value as Record<string, unknown>;
+    const converted: Record<string, ValueExpr> = {};
+    for (const key in objValue) {
+      converted[key] = toValue(
+        path != null ? segmentPath(key, path) : undefined,
+        objValue[key],
+      );
+    }
+    return valueExpr(converted, path);
+  }
   return valueExpr(value, path);
 }
 
@@ -389,11 +400,12 @@ export function emptyEnvState(root: unknown): EvalEnvState {
         ? segmentPath(property, object.path)
         : undefined;
       const value = object.value;
-      if (typeof value === "object" && value != null) {
-        return toValue(
-          propPath,
-          (value as Record<string, unknown>)[property] ?? null,
-        );
+      if (typeof value === "object" && value != null && !Array.isArray(value)) {
+        const objValue = value as Record<string, ValueExpr>;
+        const propValue = objValue[property];
+        if (propValue) {
+          return { ...propValue, path: propPath };
+        }
       }
       return valueExpr(null, propPath);
     },
@@ -418,6 +430,18 @@ function flattenExpr(expressions: EvalExpr[]): EvalExpr[] {
 export function toNative(value: ValueExpr): unknown {
   if (Array.isArray(value.value)) {
     return value.value.map(toNative);
+  }
+  if (
+    typeof value.value === "object" &&
+    value.value != null &&
+    !Array.isArray(value.value)
+  ) {
+    const objValue = value.value as Record<string, ValueExpr>;
+    const result: Record<string, unknown> = {};
+    for (const key in objValue) {
+      result[key] = toNative(objValue[key]);
+    }
+    return result;
   }
   return value.value;
 }

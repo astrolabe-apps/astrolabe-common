@@ -191,11 +191,11 @@ public static class DefaultFunctions
                     ObjectValue ov => nextEnv.WithValue(
                         new ValueExpr(
                             new ArrayValue(
-                                ((JsonObject)ov.Object)
+                                ov.Properties
                                     .Select(x =>
                                         type == "keys"
                                             ? new ValueExpr(x.Key)
-                                            : JsonDataLookup.ToValue(null, x.Value)
+                                            : x.Value
                                     )
                                     .ToList()
                             ),
@@ -214,7 +214,11 @@ public static class DefaultFunctions
     {
         return objValue switch
         {
-            ObjectValue ov => ((JsonObject)ov.Object).DeepClone(),
+            ObjectValue ov => new JsonObject(
+                ov.Properties.Select(kvp =>
+                    new KeyValuePair<string, JsonNode?>(kvp.Key, ToJsonNode(kvp.Value.Value))
+                )
+            ),
             ArrayValue av => new JsonArray(av.Values.Select(x => ToJsonNode(x.Value)).ToArray()),
             _ => JsonValue.Create(objValue),
         };
@@ -421,17 +425,17 @@ public static class DefaultFunctions
         },
         {
             "object",
-            FunctionHandler.DefaultEval(args =>
+            FunctionHandler.DefaultEvalArgs((e, args) =>
             {
                 var i = 0;
-                var obj = new JsonObject();
+                var obj = new Dictionary<string, ValueExpr>();
                 while (i < args.Count - 1)
                 {
-                    var name = (string)args[i++]!;
-                    var value = ToJsonNode(args[i++]);
+                    var name = (string)args[i++].Value!;
+                    var value = args[i++];
                     obj[name] = value;
                 }
-                return new ObjectValue(obj);
+                return ValueExpr.WithDeps(new ObjectValue(obj), args);
             })
         },
         { "this", new FunctionHandler((e, c) => e.WithValue(e.Current)) },

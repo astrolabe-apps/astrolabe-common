@@ -11,6 +11,7 @@ import {
   nativeType,
   parseEval,
   printPath,
+  toNative,
   ValueExpr,
 } from "@astroapps/evaluator";
 import {
@@ -22,7 +23,7 @@ import {
 import React, { useCallback } from "react";
 import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client";
-import { EvalClient, EvalResult, ValueWithDeps } from "../../client";
+import { EvalClient, EvalResult } from "../../client";
 import { basicSetup, EditorView } from "codemirror";
 import { Evaluator } from "@astroapps/codemirror-evaluator";
 import { autocompletion } from "@codemirror/autocomplete";
@@ -32,6 +33,7 @@ import { JsonEditor } from "@astroapps/schemas-editor";
 export default function EvalPage() {
   const client = useApiClient(EvalClient);
   const serverMode = useControl(false);
+  const showDeps = useControl(false);
   const input = useControl("");
   const data = useControl(sample);
   const dataText = useControl(() => JSON.stringify(sample, null, 2));
@@ -48,12 +50,14 @@ export default function EvalPage() {
     },
   );
   useControlEffect(
-    () => [input.value, data.value, serverMode.value] as const,
-    useDebounced(async ([v, dv, sm]: [string, any, any]) => {
+    () => [input.value, data.value, serverMode.value, showDeps.value] as const,
+    useDebounced(async ([v, dv, sm, showDeps]: [string, any, any, boolean]) => {
       try {
         if (sm) {
           try {
-            setEvalResult(await client.eval({ expression: v, data: dv }));
+            setEvalResult(
+              await client.eval(showDeps, { expression: v, data: dv }),
+            );
           } catch (e) {
             setOutput(e);
           }
@@ -64,7 +68,7 @@ export default function EvalPage() {
           try {
             const [outEnv, value] = env.evaluate(exprTree);
             setEvalResult({
-              result: toValueDeps(value),
+              result: showDeps ? toValueDeps(value) : toNative(value),
               errors: outEnv.errors,
             });
           } catch (e) {
@@ -83,7 +87,10 @@ export default function EvalPage() {
       <div className="grow flex">
         <div className="basis-1/2 flex flex-col h-screen">
           <div>
-            <Fcheckbox control={serverMode} /> Server Mode
+            <div className="flex gap-2 items-center">
+              <Fcheckbox control={serverMode} /> Server Mode
+              <Fcheckbox control={showDeps} /> Show Deps
+            </div>
           </div>
           <div className="basis-1/2 overflow-y-scroll">
             <div ref={editorRef} />
@@ -159,11 +166,22 @@ class TrackDataEnv extends BasicEvalEnv {
   }
 }
 
-function toValueDeps({ value, path, deps }: ValueExpr): ValueWithDeps {
-  const val = Array.isArray(value) ? value.map(toValueDeps) : value;
+function toValueDeps({ value, path, deps }: ValueExpr): unknown {
+  if (Array.isArray(value)) {
+    return value.map(toValueDeps);
+  }
+  let converted: unknown = value;
+  if (typeof value === "object" && value != null && !Array.isArray(value)) {
+    const objValue = value as Record<string, ValueExpr>;
+    const result: Record<string, unknown> = {};
+    for (const key in objValue) {
+      result[key] = toValueDeps(objValue[key]);
+    }
+    converted = result;
+  }
   return {
-    value: val,
-    path: path ? printPath(path) : null,
-    deps: deps?.map(printPath) ?? null,
+    value: converted,
+    path: path ? printPath(path) : undefined,
+    deps: deps?.map(printPath),
   };
 }
