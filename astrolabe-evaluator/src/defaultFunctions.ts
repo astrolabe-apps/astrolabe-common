@@ -525,20 +525,69 @@ export const keysOrValuesFunction = (type: string) =>
     },
   );
 
+/**
+ * Helper for short-circuiting boolean operators (AND/OR).
+ * Evaluates arguments sequentially until short-circuit condition is met.
+ *
+ * @param env - The evaluation environment
+ * @param call - The function call expression
+ * @param shortCircuitValue - The value that triggers short-circuiting (false for AND, true for OR)
+ * @param defaultResult - The result when all args evaluated without short-circuit (true for AND, false for OR)
+ */
+function shortCircuitBooleanOp(
+  env: EvalEnv,
+  call: CallExpr,
+  shortCircuitValue: boolean,
+  defaultResult: boolean,
+): EnvValue<ValueExpr> {
+  const deps: ValueExpr[] = [];
+  let currentEnv = env;
+
+  for (const arg of call.args) {
+    const [nextEnv, argResult] = currentEnv.evaluate(arg);
+    currentEnv = nextEnv;
+    deps.push(argResult);
+
+    // Short-circuit: if we hit the short-circuit value, stop evaluating
+    if (argResult.value === shortCircuitValue) {
+      return [currentEnv, valueExprWithDeps(shortCircuitValue, deps)];
+    }
+
+    // If null, return null
+    if (argResult.value == null) {
+      return [currentEnv, valueExprWithDeps(null, deps)];
+    }
+
+    // If not a valid boolean, return null
+    if (argResult.value !== !shortCircuitValue) {
+      return [currentEnv, valueExprWithDeps(null, deps)];
+    }
+  }
+
+  // All arguments evaluated without short-circuiting
+  return [currentEnv, valueExprWithDeps(defaultResult, deps)];
+}
+
+// Short-circuiting AND operator - stops on false, returns true if all true
+const andFunction = functionValue(
+  (env: EvalEnv, call: CallExpr) => shortCircuitBooleanOp(env, call, false, true),
+  constGetType(BooleanType),
+);
+
+// Short-circuiting OR operator - stops on true, returns false if all false
+const orFunction = functionValue(
+  (env: EvalEnv, call: CallExpr) => shortCircuitBooleanOp(env, call, true, false),
+  constGetType(BooleanType),
+);
+
 export const defaultFunctions = {
   "?": condFunction,
   "!": evalFunction((a) => {
     const val = a[0];
     return typeof val === "boolean" ? !val : null;
   }, constGetType(BooleanType)),
-  and: aggFunction(
-    () => true,
-    (acc, b) => acc && (b as boolean),
-  ),
-  or: aggFunction(
-    () => false,
-    (acc, b) => acc || (b as boolean),
-  ),
+  and: andFunction,
+  or: orFunction,
   "+": binFunction((a, b) => a + b, constGetType(NumberType)),
   "-": binFunction((a, b) => a - b, constGetType(NumberType)),
   "*": binFunction((a, b) => a * b, constGetType(NumberType)),

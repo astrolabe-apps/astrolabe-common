@@ -424,6 +424,124 @@ public class DependencyTrackingTests
         var deps = GetDeps(result);
         // Short-circuited on cond1, so only it is tracked
         Assert.Contains("cond1", deps);
+        // cond2 should NOT be tracked since it was never evaluated
+        Assert.DoesNotContain("cond2", deps);
+    }
+
+    [Fact]
+    public void Boolean_Or_Short_Circuits_And_Tracks_Only_Evaluated()
+    {
+        var data = new JsonObject { ["cond1"] = true, ["cond2"] = false };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("cond1 or cond2");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.True(result.IsTrue());
+
+        var deps = GetDeps(result);
+        // Short-circuited on cond1, so only it is tracked
+        Assert.Contains("cond1", deps);
+        // cond2 should NOT be tracked since it was never evaluated
+        Assert.DoesNotContain("cond2", deps);
+    }
+
+    [Fact]
+    public void Boolean_And_With_Multiple_Params_Short_Circuits_On_First_False()
+    {
+        var data = new JsonObject
+        {
+            ["cond1"] = true,
+            ["cond2"] = false,
+            ["cond3"] = true,
+            ["cond4"] = true
+        };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("cond1 and cond2 and cond3 and cond4");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.True(result.IsFalse());
+
+        var deps = GetDeps(result);
+        // Should track cond1 and cond2 (where it stopped)
+        Assert.Contains("cond1", deps);
+        Assert.Contains("cond2", deps);
+        // Should NOT track cond3 or cond4 (never evaluated)
+        Assert.DoesNotContain("cond3", deps);
+        Assert.DoesNotContain("cond4", deps);
+    }
+
+    [Fact]
+    public void Boolean_Or_With_Multiple_Params_Short_Circuits_On_First_True()
+    {
+        var data = new JsonObject
+        {
+            ["cond1"] = false,
+            ["cond2"] = true,
+            ["cond3"] = false,
+            ["cond4"] = false
+        };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("cond1 or cond2 or cond3 or cond4");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.True(result.IsTrue());
+
+        var deps = GetDeps(result);
+        // Should track cond1 and cond2 (where it stopped)
+        Assert.Contains("cond1", deps);
+        Assert.Contains("cond2", deps);
+        // Should NOT track cond3 or cond4 (never evaluated)
+        Assert.DoesNotContain("cond3", deps);
+        Assert.DoesNotContain("cond4", deps);
+    }
+
+    [Fact]
+    public void Boolean_And_With_Multiple_Params_Evaluates_All_When_All_True()
+    {
+        var data = new JsonObject
+        {
+            ["cond1"] = true,
+            ["cond2"] = true,
+            ["cond3"] = true
+        };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("cond1 and cond2 and cond3");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.True(result.IsTrue());
+
+        var deps = GetDeps(result);
+        // Should track all since all were evaluated
+        Assert.Contains("cond1", deps);
+        Assert.Contains("cond2", deps);
+        Assert.Contains("cond3", deps);
+    }
+
+    [Fact]
+    public void Boolean_Or_With_Multiple_Params_Evaluates_All_When_All_False()
+    {
+        var data = new JsonObject
+        {
+            ["cond1"] = false,
+            ["cond2"] = false,
+            ["cond3"] = false
+        };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("cond1 or cond2 or cond3");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.True(result.IsFalse());
+
+        var deps = GetDeps(result);
+        // Should track all since all were evaluated
+        Assert.Contains("cond1", deps);
+        Assert.Contains("cond2", deps);
+        Assert.Contains("cond3", deps);
     }
 
     #endregion

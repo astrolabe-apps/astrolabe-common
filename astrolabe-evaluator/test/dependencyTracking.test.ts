@@ -355,6 +355,92 @@ describe("Basic Operation Tests", () => {
     const deps = getDeps(result);
     // Short-circuited on cond1, so only it is tracked
     expect(deps).toContain("cond1");
+    // cond2 should NOT be tracked since it was never evaluated
+    expect(deps).not.toContain("cond2");
+  });
+
+  test("Boolean OR short-circuits and tracks only evaluated", () => {
+    const data = { cond1: true, cond2: false };
+    const env = basicEnv(data);
+
+    const expr = parseEval("$or(cond1, cond2)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(true);
+
+    const deps = getDeps(result);
+    // Short-circuited on cond1, so only it is tracked
+    expect(deps).toContain("cond1");
+    // cond2 should NOT be tracked since it was never evaluated
+    expect(deps).not.toContain("cond2");
+  });
+
+  test("Boolean AND with 3+ params short-circuits on first false", () => {
+    const data = { cond1: true, cond2: false, cond3: true, cond4: true };
+    const env = basicEnv(data);
+
+    const expr = parseEval("$and(cond1, cond2, cond3, cond4)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(false);
+
+    const deps = getDeps(result);
+    // Should track cond1 and cond2 (where it stopped)
+    expect(deps).toContain("cond1");
+    expect(deps).toContain("cond2");
+    // Should NOT track cond3 or cond4 (never evaluated)
+    expect(deps).not.toContain("cond3");
+    expect(deps).not.toContain("cond4");
+  });
+
+  test("Boolean OR with 3+ params short-circuits on first true", () => {
+    const data = { cond1: false, cond2: true, cond3: false, cond4: false };
+    const env = basicEnv(data);
+
+    const expr = parseEval("$or(cond1, cond2, cond3, cond4)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(true);
+
+    const deps = getDeps(result);
+    // Should track cond1 and cond2 (where it stopped)
+    expect(deps).toContain("cond1");
+    expect(deps).toContain("cond2");
+    // Should NOT track cond3 or cond4 (never evaluated)
+    expect(deps).not.toContain("cond3");
+    expect(deps).not.toContain("cond4");
+  });
+
+  test("Boolean AND with 3+ params evaluates all when all true", () => {
+    const data = { cond1: true, cond2: true, cond3: true };
+    const env = basicEnv(data);
+
+    const expr = parseEval("$and(cond1, cond2, cond3)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(true);
+
+    const deps = getDeps(result);
+    // Should track all since all were evaluated
+    expect(deps).toContain("cond1");
+    expect(deps).toContain("cond2");
+    expect(deps).toContain("cond3");
+  });
+
+  test("Boolean OR with 3+ params evaluates all when all false", () => {
+    const data = { cond1: false, cond2: false, cond3: false };
+    const env = basicEnv(data);
+
+    const expr = parseEval("$or(cond1, cond2, cond3)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(false);
+
+    const deps = getDeps(result);
+    // Should track all since all were evaluated
+    expect(deps).toContain("cond1");
+    expect(deps).toContain("cond2");
+    expect(deps).toContain("cond3");
   });
 });
 

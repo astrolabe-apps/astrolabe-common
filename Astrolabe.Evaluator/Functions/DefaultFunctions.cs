@@ -150,6 +150,52 @@ public static class DefaultFunctions
                 )
         );
     }
+
+    /// <summary>
+    /// Helper for short-circuiting boolean operators (AND/OR).
+    /// Evaluates arguments sequentially until short-circuit condition is met.
+    /// </summary>
+    /// <param name="env">The evaluation environment</param>
+    /// <param name="call">The function call expression</param>
+    /// <param name="shortCircuitValue">The value that triggers short-circuiting (false for AND, true for OR)</param>
+    /// <param name="defaultResult">The result when all args evaluated without short-circuit (true for AND, false for OR)</param>
+    private static EnvironmentValue<ValueExpr> ShortCircuitBooleanOp(
+        EvalEnvironment env,
+        CallExpr call,
+        bool shortCircuitValue,
+        bool defaultResult)
+    {
+        var deps = new List<ValueExpr>();
+        var currentEnv = env;
+
+        foreach (var arg in call.Args)
+        {
+            var (nextEnv, argResult) = currentEnv.Evaluate(arg);
+            currentEnv = nextEnv;
+            deps.Add(argResult);
+
+            // Short-circuit: if we hit the short-circuit value, stop evaluating
+            if (argResult.Value is bool b && b == shortCircuitValue)
+            {
+                return currentEnv.WithValue(ValueExpr.WithDeps(shortCircuitValue, deps));
+            }
+
+            // If null, return null
+            if (argResult.Value is null)
+            {
+                return currentEnv.WithValue(ValueExpr.WithDeps(null, deps));
+            }
+
+            // If not a valid boolean, return null
+            if (argResult.Value is not bool || (bool)argResult.Value != !shortCircuitValue)
+            {
+                return currentEnv.WithValue(ValueExpr.WithDeps(null, deps));
+            }
+        }
+
+        // All arguments evaluated without short-circuiting
+        return currentEnv.WithValue(ValueExpr.WithDeps(defaultResult, deps));
+    }
     
     private static readonly FunctionHandler ElemFunctionHandler = new FunctionHandler(
         (env, call) =>
@@ -300,30 +346,12 @@ public static class DefaultFunctions
         { "<=", ComparisonFunc(x => x <= 0) },
         { ">", ComparisonFunc(x => x > 0) },
         { ">=", ComparisonFunc(x => x >= 0) },
-        {
-            "and",
-            ArrayAggOp(
-                (bool?)true,
-                (acc, v) =>
-                    (acc, v) switch
-                    {
-                        ({ } a, bool b) => a && b,
-                        _ => null,
-                    }
-            )
-        },
-        {
-            "or",
-            ArrayAggOp(
-                (bool?)false,
-                (acc, v) =>
-                    (acc, v) switch
-                    {
-                        ({ } a, bool b) => a || b,
-                        _ => null,
-                    }
-            )
-        },
+        // Short-circuiting AND operator - stops on false, returns true if all true
+        { "and", new FunctionHandler((env, call) =>
+            ShortCircuitBooleanOp(env, call, shortCircuitValue: false, defaultResult: true)) },
+        // Short-circuiting OR operator - stops on true, returns false if all false
+        { "or", new FunctionHandler((env, call) =>
+            ShortCircuitBooleanOp(env, call, shortCircuitValue: true, defaultResult: false)) },
         { "!", UnaryNullOp(a => a is bool b ? !b : null) },
         { "?", IfElseOp },
         {
