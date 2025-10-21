@@ -47,7 +47,8 @@ public static class FilterFunctionHandler
                         return propEnv.WithValue(propValue);
 
                     // Key is dynamic OR object has deps - preserve property but add dependencies
-                    return propEnv.WithValue(propValue with { Deps = DependencyHelpers.CombinePathsAndDeps(keyResult, propValue, leftValue) });
+                    var additionalDeps = DependencyHelpers.CombinePathsAndDeps(keyResult, ValueExpr.Null, leftValue);
+                    return propEnv.WithValue(ValueExpr.AddDepsRecursively(propValue, additionalDeps));
                 }
 
                 EnvironmentValue<ValueExpr> FilterArray(
@@ -95,7 +96,8 @@ public static class FilterFunctionHandler
                             return element;
 
                         // Index is dynamic OR array has deps - preserve element but add dependencies
-                        return element with { Deps = DependencyHelpers.CombinePathsAndDeps(indexResult, element, arrayValue) };
+                        var additionalDeps = DependencyHelpers.CombinePathsAndDeps(indexResult, ValueExpr.Null, arrayValue);
+                        return ValueExpr.AddDepsRecursively(element, additionalDeps);
                     });
                 }
             }

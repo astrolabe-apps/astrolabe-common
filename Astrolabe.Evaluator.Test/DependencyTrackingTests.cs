@@ -889,6 +889,123 @@ public class DependencyTrackingTests
         Assert.Contains("a", deps);
         Assert.Contains("b", deps);
     }
-    
+
+    #endregion
+
+    #region FlatMap Dependency Tracking Tests
+
+    [Fact]
+    public void FlatMap_Preserves_Dependencies_In_Individual_Elements()
+    {
+        var data = new JsonObject
+        {
+            ["items"] = new JsonArray(
+                new JsonObject { ["values"] = new JsonArray(1, 2) },
+                new JsonObject { ["values"] = new JsonArray(3, 4) }
+            )
+        };
+        var env = CreateEnvWithData(data);
+
+        // Flatmap items to their values arrays
+        var expr = ExprParser.Parse("items . values");
+
+        var (_, result) = env.Evaluate(expr);
+        var elements = ((ArrayValue)result.Value!).Values.ToList();
+
+        // Should produce [1, 2, 3, 4]
+        Assert.Equal(4, elements.Count);
+
+        // Each ELEMENT should have dependencies tracking its source
+        var allDeps = elements.SelectMany(e => GetDeps(e)).ToList();
+
+        // Element 0 (value 1) should track items[0].values[0]
+        Assert.Contains("items[0].values[0]", allDeps);
+        // Element 1 (value 2) should track items[0].values[1]
+        Assert.Contains("items[0].values[1]", allDeps);
+        // Element 2 (value 3) should track items[1].values[0]
+        Assert.Contains("items[1].values[0]", allDeps);
+        // Element 3 (value 4) should track items[1].values[1]
+        Assert.Contains("items[1].values[1]", allDeps);
+    }
+
+    [Fact]
+    public void FlatMap_Then_Sum_Aggregates_Dependencies_Correctly()
+    {
+        var data = new JsonObject
+        {
+            ["groups"] = new JsonArray(
+                new JsonObject { ["nums"] = new JsonArray(1, 2) },
+                new JsonObject { ["nums"] = new JsonArray(3, 4, 5) }
+            )
+        };
+        var env = CreateEnvWithData(data);
+
+        // Flatmap to get all numbers then sum
+        var expr = ExprParser.Parse("$sum(groups . nums)");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(15d, result.Value); // 1+2+3+4+5 = 15
+
+        var deps = GetDeps(result);
+        // Should track all individual elements
+        Assert.Contains("groups[0].nums[0]", deps);
+        Assert.Contains("groups[0].nums[1]", deps);
+        Assert.Contains("groups[1].nums[0]", deps);
+        Assert.Contains("groups[1].nums[1]", deps);
+        Assert.Contains("groups[1].nums[2]", deps);
+    }
+
+    [Fact]
+    public void FlatMap_With_Table_Lookup_Preserves_Dependencies_In_Returned_Array_Elements()
+    {
+        var data = new JsonObject
+        {
+            ["items"] = new JsonArray(
+                new JsonObject { ["width"] = 2.5 },
+                new JsonObject { ["width"] = 3.5 }
+            )
+        };
+        var env = CreateEnvWithData(data);
+
+        // Simpler version of the real scenario:
+        // For each item, lookup based on width and return array from table
+        var expr = ExprParser.Parse(@"
+            let $table := $object(
+                ""2.4"", [10, 20, 30],
+                ""3.4"", [40, 50, 60]
+            )
+            in items.(
+                let $key := $this().width < 3.0 ? ""2.4"" : ""3.4""
+                in $table[$key]
+            )
+        ");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.IsType<ArrayValue>(result.Value);
+        var elements = ((ArrayValue)result.Value!).Values.ToList();
+
+        // Should have 6 elements total (3 from each of 2 items)
+        Assert.Equal(6, elements.Count);
+
+        // Each element should have dependencies from the key computation (which depends on width)
+        var allDeps = elements.SelectMany(e => GetDeps(e)).ToList();
+
+        // First 3 elements came from items[0], so should depend on items[0].width
+        var firstThreeDeps = elements.Take(3)
+            .SelectMany(e => GetDeps(e))
+            .Where(d => d.Contains("items[0]"))
+            .ToList();
+        Assert.True(firstThreeDeps.Count > 0, "Expected dependencies from items[0]");
+        Assert.Contains("items[0].width", firstThreeDeps);
+
+        // Last 3 elements came from items[1], so should depend on items[1].width
+        var lastThreeDeps = elements.Skip(3).Take(3)
+            .SelectMany(e => GetDeps(e))
+            .Where(d => d.Contains("items[1]"))
+            .ToList();
+        Assert.True(lastThreeDeps.Count > 0, "Expected dependencies from items[1]");
+        Assert.Contains("items[1].width", lastThreeDeps);
+    }
+
     #endregion
 }

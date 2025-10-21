@@ -36,7 +36,7 @@ import {
   evaluateWith,
   evaluateWithValue,
 } from "./evaluate";
-import { allElems, valuesToString } from "./values";
+import { allElems, valuesToString, addDepsRecursively } from "./values";
 import { printExpr } from "./printExpr";
 import {
   checkAll,
@@ -343,13 +343,13 @@ const filterFunction = functionValue(
         }
 
         // Index is dynamic OR array has deps - preserve element but add dependencies
-        const combinedDeps: Path[] = [];
-        if (indexResult.path) combinedDeps.push(indexResult.path);
-        if (indexResult.deps) combinedDeps.push(...indexResult.deps);
-        if (leftVal.deps) combinedDeps.push(...leftVal.deps);
-        if (element.deps) combinedDeps.push(...element.deps);
+        const additionalDeps: Path[] = [];
+        if (indexResult.path) additionalDeps.push(indexResult.path);
+        if (indexResult.deps) additionalDeps.push(...indexResult.deps);
+        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
 
-        return [firstEnv, { ...element, deps: combinedDeps }];
+        // Use addDepsRecursively to ensure nested array elements also get the dependencies
+        return [firstEnv, addDepsRecursively(element, additionalDeps)];
       }
       const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
       const outEnv = value.reduce(
@@ -391,13 +391,13 @@ const filterFunction = functionValue(
         }
 
         // Key is dynamic OR object has deps - preserve property but add dependencies
-        const combinedDeps: Path[] = [];
-        if (keyResult.path) combinedDeps.push(keyResult.path);
-        if (keyResult.deps) combinedDeps.push(...keyResult.deps);
-        if (leftVal.deps) combinedDeps.push(...leftVal.deps);
-        if (propValue.deps) combinedDeps.push(...propValue.deps);
+        const additionalDeps: Path[] = [];
+        if (keyResult.path) additionalDeps.push(keyResult.path);
+        if (keyResult.deps) additionalDeps.push(...keyResult.deps);
+        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
 
-        return [propEnv, { ...propValue, deps: combinedDeps }];
+        // Use addDepsRecursively to ensure nested array elements also get the dependencies
+        return [propEnv, addDepsRecursively(propValue, additionalDeps)];
       }
       return [keyEnv, valueExpr(null)];
     }

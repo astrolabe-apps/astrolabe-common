@@ -780,3 +780,107 @@ describe("Object Filter with Dynamic Keys Tests", () => {
     expect(deps).toContain("array.2");
   });
 });
+
+describe("FlatMap Dependency Tracking Tests", () => {
+  test("FlatMap preserves dependencies in individual elements", () => {
+    const data = {
+      items: [
+        { values: [1, 2] },
+        { values: [3, 4] },
+      ],
+    };
+    const env = basicEnv(data);
+
+    // Flatmap items to their values arrays
+    const expr = parseEval("items . values");
+    const [_, result] = env.evaluate(expr);
+
+    expect(Array.isArray(result.value)).toBe(true);
+    const elements = result.value as ValueExpr[];
+
+    // Should produce [1, 2, 3, 4]
+    expect(elements.length).toBe(4);
+
+    // Each ELEMENT should have dependencies tracking its source
+    const allDeps = elements.flatMap((e) => getDeps(e));
+
+    // Element 0 (value 1) should track items.0.values.0
+    expect(allDeps).toContain("items.0.values.0");
+    // Element 1 (value 2) should track items.0.values.1
+    expect(allDeps).toContain("items.0.values.1");
+    // Element 2 (value 3) should track items.1.values.0
+    expect(allDeps).toContain("items.1.values.0");
+    // Element 3 (value 4) should track items.1.values.1
+    expect(allDeps).toContain("items.1.values.1");
+  });
+
+  test("FlatMap then sum aggregates dependencies correctly", () => {
+    const data = {
+      groups: [
+        { nums: [1, 2] },
+        { nums: [3, 4, 5] },
+      ],
+    };
+    const env = basicEnv(data);
+
+    // Flatmap to get all numbers then sum
+    const expr = parseEval("$sum(groups . nums)");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(15); // 1+2+3+4+5 = 15
+
+    const deps = getDeps(result);
+    // Should track all individual elements
+    expect(deps).toContain("groups.0.nums.0");
+    expect(deps).toContain("groups.0.nums.1");
+    expect(deps).toContain("groups.1.nums.0");
+    expect(deps).toContain("groups.1.nums.1");
+    expect(deps).toContain("groups.1.nums.2");
+  });
+
+  test("FlatMap with table lookup preserves dependencies in returned array elements", () => {
+    const data = {
+      items: [{ width: 2.5 }, { width: 3.5 }],
+    };
+    const env = basicEnv(data);
+
+    // Simpler version of the real scenario:
+    // For each item, lookup based on width and return array from table
+    const expr = parseEval(`
+      let $table := $object(
+        "2.4", [10, 20, 30],
+        "3.4", [40, 50, 60]
+      )
+      in items.(
+        let $key := $this().width < 3.0 ? "2.4" : "3.4"
+        in $table[$key]
+      )
+    `);
+    const [_, result] = env.evaluate(expr);
+
+    expect(Array.isArray(result.value)).toBe(true);
+    const elements = result.value as ValueExpr[];
+
+    // Should have 6 elements total (3 from each of 2 items)
+    expect(elements.length).toBe(6);
+
+    // Each element should have dependencies from the key computation (which depends on width)
+    const allDeps = elements.flatMap((e) => getDeps(e));
+
+    // First 3 elements came from items[0], so should depend on items.0.width
+    const firstThreeDeps = elements
+      .slice(0, 3)
+      .flatMap((e) => getDeps(e))
+      .filter((d) => d.includes("items.0"));
+    expect(firstThreeDeps.length).toBeGreaterThan(0);
+    expect(firstThreeDeps.some((d) => d === "items.0.width")).toBe(true);
+
+    // Last 3 elements came from items[1], so should depend on items.1.width
+    const lastThreeDeps = elements
+      .slice(3, 6)
+      .flatMap((e) => getDeps(e))
+      .filter((d) => d.includes("items.1"));
+    expect(lastThreeDeps.length).toBeGreaterThan(0);
+    expect(lastThreeDeps.some((d) => d === "items.1.width")).toBe(true);
+  });
+});

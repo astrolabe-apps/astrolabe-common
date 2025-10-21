@@ -238,6 +238,29 @@ public record ValueExpr(object? Value, DataPath? Path = null, IEnumerable<DataPa
             _ => [this]
         };
     }
+
+    /// <summary>
+    /// Recursively adds dependencies to this ValueExpr and all nested array elements.
+    /// This ensures that when flatmap flattens nested arrays, the dependencies are preserved.
+    /// </summary>
+    public static ValueExpr AddDepsRecursively(ValueExpr valueExpr, IEnumerable<DataPath> additionalDeps)
+    {
+        var depsList = additionalDeps.ToList();
+        if (depsList.Count == 0)
+            return valueExpr;
+
+        var combinedDeps = (valueExpr.Deps ?? []).Concat(depsList).ToList();
+
+        if (valueExpr.Value is not ArrayValue av)
+        {
+            // Not an array, just add deps to this value
+            return valueExpr with { Deps = combinedDeps };
+        }
+
+        // It's an array - recursively add deps to each element
+        var newElements = av.Values.Select(elem => AddDepsRecursively(elem, depsList)).ToList();
+        return valueExpr with { Value = new ArrayValue(newElements), Deps = combinedDeps };
+    }
 }
 
 public record ArrayExpr(IEnumerable<EvalExpr> Values) : EvalExpr
