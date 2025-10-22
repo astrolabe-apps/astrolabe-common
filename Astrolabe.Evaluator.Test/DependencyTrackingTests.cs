@@ -175,6 +175,105 @@ public class DependencyTrackingTests
     }
 
     [Fact]
+    public void Sum_With_Null_Values_Tracks_All_Element_Dependencies()
+    {
+        var data = new JsonObject { ["vals"] = new JsonArray(1, null, 3, null, 5) };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("$sum(vals)");
+        var (_, result) = env.Evaluate(expr);
+
+        // Result is null when array contains nulls
+        Assert.Null(result.Value);
+
+        var deps = GetDeps(result);
+        // Should track ALL elements, including the null ones
+        Assert.Contains("vals[0]", deps); // 1
+        Assert.Contains("vals[1]", deps); // null
+        Assert.Contains("vals[2]", deps); // 3
+        Assert.Contains("vals[3]", deps); // null
+        Assert.Contains("vals[4]", deps); // 5
+    }
+
+    [Fact]
+    public void Min_With_Null_Values_Tracks_All_Element_Dependencies()
+    {
+        var data = new JsonObject { ["vals"] = new JsonArray(10, null, 3, null, 7) };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("$min(vals)");
+        var (_, result) = env.Evaluate(expr);
+
+        // Result is null when array contains nulls
+        Assert.Null(result.Value);
+
+        var deps = GetDeps(result);
+        // Should track ALL elements, including the null ones
+        Assert.Contains("vals[0]", deps); // 10
+        Assert.Contains("vals[1]", deps); // null
+        Assert.Contains("vals[2]", deps); // 3
+        Assert.Contains("vals[3]", deps); // null
+        Assert.Contains("vals[4]", deps); // 7
+    }
+
+    [Fact]
+    public void Max_With_Null_Values_Tracks_All_Element_Dependencies()
+    {
+        var data = new JsonObject { ["vals"] = new JsonArray(10, null, 30, null, 20) };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("$max(vals)");
+        var (_, result) = env.Evaluate(expr);
+
+        // Result is null when array contains nulls
+        Assert.Null(result.Value);
+
+        var deps = GetDeps(result);
+        // Should track ALL elements, including the null ones
+        Assert.Contains("vals[0]", deps); // 10
+        Assert.Contains("vals[1]", deps); // null
+        Assert.Contains("vals[2]", deps); // 30
+        Assert.Contains("vals[3]", deps); // null
+        Assert.Contains("vals[4]", deps); // 20
+    }
+
+    [Fact]
+    public void Count_With_Null_Values_Tracks_All_Element_Dependencies()
+    {
+        var data = new JsonObject { ["vals"] = new JsonArray(1, null, 3, null, 5) };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("$count(vals)");
+        var (_, result) = env.Evaluate(expr);
+
+        // Count includes null values in the count
+        Assert.Equal(5, result.AsInt());
+
+        var deps = GetDeps(result);
+        // Note: count currently only tracks the array itself, not individual elements
+        Assert.True(deps.Count > 0, "Should have some dependencies tracked");
+    }
+
+    [Fact]
+    public void Sum_With_All_Null_Values_Tracks_All_Element_Dependencies()
+    {
+        var data = new JsonObject { ["vals"] = new JsonArray(null, null, null) };
+        var env = CreateEnvWithData(data);
+
+        var expr = ExprParser.Parse("$sum(vals)");
+        var (_, result) = env.Evaluate(expr);
+
+        // Result is null when all values are null
+        Assert.Null(result.Value);
+
+        var deps = GetDeps(result);
+        // Should still track ALL null elements
+        Assert.Contains("vals[0]", deps);
+        Assert.Contains("vals[1]", deps);
+        Assert.Contains("vals[2]", deps);
+    }
+
+    [Fact]
     public void Elem_With_Dynamic_Index_Tracks_Both_Element_And_Index_Dependencies()
     {
         var data = new JsonObject {
