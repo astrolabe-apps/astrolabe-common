@@ -315,19 +315,30 @@ const filterFunction = functionValue(
     if (!right) return [leftEnv.withError("No filter expression"), NullExpr];
     if (Array.isArray(value)) {
       const empty = value.length === 0;
-      const [firstEnv, { value: firstFilter }] = evaluateWith(
+      const [firstEnv, indexResult] = evaluateWith(
         leftEnv,
         empty ? NullExpr : value[0],
         empty ? null : 0,
         right,
       );
+      const { value: firstFilter } = indexResult;
+
+      // Handle null index - return null with preserved dependencies
+      if (firstFilter === null) {
+        const additionalDeps: Path[] = [];
+        if (indexResult.path) additionalDeps.push(indexResult.path);
+        if (indexResult.deps) additionalDeps.push(...indexResult.deps);
+        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+
+        return [
+          firstEnv,
+          additionalDeps.length > 0
+            ? { type: "value" as const, value: null, deps: additionalDeps }
+            : NullExpr,
+        ];
+      }
+
       if (typeof firstFilter === "number") {
-        const [_, indexResult] = evaluateWith(
-          leftEnv,
-          empty ? NullExpr : value[0],
-          empty ? null : 0,
-          right,
-        );
         const element = value[firstFilter];
         if (!element) return [firstEnv, NullExpr];
 
@@ -370,6 +381,22 @@ const filterFunction = functionValue(
       // Evaluate key expression with the object as current context
       const [keyEnv, keyResult] = evaluateWith(leftEnv, leftVal, null, right);
       const { value: firstFilter } = keyResult;
+
+      // Handle null key - return null with preserved dependencies
+      if (firstFilter === null) {
+        const additionalDeps: Path[] = [];
+        if (keyResult.path) additionalDeps.push(keyResult.path);
+        if (keyResult.deps) additionalDeps.push(...keyResult.deps);
+        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+
+        return [
+          keyEnv,
+          additionalDeps.length > 0
+            ? { type: "value" as const, value: null, deps: additionalDeps }
+            : NullExpr,
+        ];
+      }
+
       if (typeof firstFilter === "string") {
         const [propEnv, propValue] = evaluateWith(
           keyEnv,
@@ -601,7 +628,20 @@ export const defaultFunctions = {
   "=": compareFunction((x) => x === 0),
   "!=": compareFunction((x) => x !== 0),
   "??": evalFunctionExpr(
-    (x) => (x.length == 2 ? (x[0].value == null ? x[1] : x[0]) : NullExpr),
+    (x) => {
+      if (x.length !== 2) return NullExpr;
+      // If first arg is not null, return it
+      if (x[0].value != null) return x[0];
+      // First arg is null, return second arg but preserve dependencies from first arg
+      const combinedDeps: Path[] = [];
+      if (x[0].path) combinedDeps.push(x[0].path);
+      if (x[0].deps) combinedDeps.push(...x[0].deps);
+      if (x[1].path) combinedDeps.push(x[1].path);
+      if (x[1].deps) combinedDeps.push(...x[1].deps);
+      return combinedDeps.length > 0
+        ? { ...x[1], deps: combinedDeps }
+        : x[1];
+    },
     (e, call) =>
       mapCallArgs(call, e, (args) =>
         args.length == 2 ? unionType(args[0], args[1]) : AnyType,

@@ -28,6 +28,14 @@ public static class FilterFunctionHandler
                 {
                     // Evaluate key expression with the object as current context
                     var (keyEnv, keyResult) = nextEnv.EvaluateWith(leftValue, null, right);
+
+                    // Handle null key - return null with preserved dependencies
+                    if (keyResult.Value == null)
+                    {
+                        var nullDeps = DependencyHelpers.CombinePathsAndDeps(keyResult, ValueExpr.Null, leftValue);
+                        return keyEnv.WithValue(new ValueExpr(null, null, nullDeps));
+                    }
+
                     if (!keyResult.IsString())
                         return keyEnv.WithError("Object filter must be string").WithNull();
 
@@ -63,6 +71,14 @@ public static class FilterFunctionHandler
                         empty ? null : 0,
                         right
                     );
+
+                    // Handle null index - return null with preserved dependencies
+                    if (firstFilter.Value.Value == null)
+                    {
+                        var nullDeps = DependencyHelpers.CombinePathsAndDeps(firstFilter.Value, ValueExpr.Null, arrayValue);
+                        return firstFilter.Env.WithValue(new ValueExpr(null, null, nullDeps));
+                    }
+
                     if (firstFilter.Value.MaybeDouble() is not { } indLong)
                     {
                         var initialList = firstFilter.Map<IEnumerable<ValueExpr>>(x =>

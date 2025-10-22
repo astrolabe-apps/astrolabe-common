@@ -609,6 +609,26 @@ describe("Utility Functions Tests", () => {
     expect(deps).toContain("value");
   });
 
+  test("Null coalesce tracks dependencies from null first argument", () => {
+    const data = { array: [1, null, 2], fallback: 10 };
+    const env = basicEnv(data);
+
+    // $min(array) returns null, so should use fallback
+    // BUT should also preserve dependencies from evaluating $min(array)
+    const expr = parseEval("$min(array) ?? fallback");
+    const [_, result] = env.evaluate(expr);
+
+    expect(result.value).toBe(10);
+
+    const deps = getDeps(result);
+    // Should track all elements from $min(array) even though result came from fallback
+    expect(deps).toContain("array.0");
+    expect(deps).toContain("array.1");
+    expect(deps).toContain("array.2");
+    // Should also track the fallback value
+    expect(deps).toContain("fallback");
+  });
+
   test("Which tracks dependencies", () => {
     const data = {
       status: "pending",
@@ -946,6 +966,76 @@ describe("Object Filter with Dynamic Keys Tests", () => {
     expect(deps).toContain("array.0");
     expect(deps).toContain("array.1");
     expect(deps).toContain("array.2");
+  });
+});
+
+describe("Null Index/Key Handling Tests", () => {
+  test("Array access with null index from aggregation preserves dependencies", () => {
+    const data = { array: [1, null, 2], lookup: [0, 1] };
+    const env = basicEnv(data);
+
+    // When $min(array) returns null, lookup[$idx] should return null with preserved deps
+    const expr = parseEval("let $idx := $min(array) in lookup[$idx]");
+    const [_, result] = env.evaluate(expr);
+
+    // Result should be null
+    expect(result.value).toBe(null);
+
+    const deps = getDeps(result);
+    // Should track all elements from $min(array)
+    expect(deps).toContain("array.0");
+    expect(deps).toContain("array.1");
+    expect(deps).toContain("array.2");
+  });
+
+  test("Object access with null key from aggregation preserves dependencies", () => {
+    const data = { array: [1, null, 2], obj: { a: 10, b: 20 } };
+    const env = basicEnv(data);
+
+    // When $min(array) returns null, obj[$key] should return null with preserved deps
+    const expr = parseEval('let $key := $min(array) in obj[$key]');
+    const [_, result] = env.evaluate(expr);
+
+    // Result should be null
+    expect(result.value).toBe(null);
+
+    const deps = getDeps(result);
+    // Should track all elements from $min(array)
+    expect(deps).toContain("array.0");
+    expect(deps).toContain("array.1");
+    expect(deps).toContain("array.2");
+  });
+
+  test("Array access with direct null variable preserves dependencies", () => {
+    const data = { lookup: [0, 1], idx: null };
+    const env = basicEnv(data);
+
+    // Use let expression to access idx in global scope
+    const expr = parseEval("let $i := idx in lookup[$i]");
+    const [_, result] = env.evaluate(expr);
+
+    // Result should be null
+    expect(result.value).toBe(null);
+
+    const deps = getDeps(result);
+    // Should track the idx variable
+    expect(deps).toContain("idx");
+  });
+
+  test("Object access with direct null variable preserves dependencies", () => {
+    const data = { obj: { a: 10, b: 20 }, key: null };
+    const env = basicEnv(data);
+
+    // Use let expression to access key in global scope
+    const expr = parseEval("let $k := key in obj[$k]");
+    const [_, result] = env.evaluate(expr);
+
+    // Result should be null
+    expect(result.value).toBe(null);
+
+    const deps = getDeps(result);
+    // Should track the key variable
+    expect(deps).toContain("key");
   });
 });
 

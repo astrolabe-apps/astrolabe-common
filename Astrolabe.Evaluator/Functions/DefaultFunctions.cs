@@ -360,7 +360,12 @@ public static class DefaultFunctions
                 (e, x) =>
                     x switch
                     {
-                        [var v, var o] => v.IsNull() ? o : v,
+                        [var v, var o] when !v.IsNull() => v,
+                        [var v, var o] => new ValueExpr(
+                            o.Value,
+                            o.Path,
+                            DependencyHelpers.CombinePathsAndDeps(v, o)
+                        ),
                         _ => ValueExpr.Null,
                     }
             )

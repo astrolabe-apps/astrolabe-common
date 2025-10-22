@@ -744,6 +744,32 @@ public class DependencyTrackingTests
     }
 
     [Fact]
+    public void NullCoalesce_Tracks_Dependencies_From_Null_First_Argument()
+    {
+        var data = new JsonObject
+        {
+            ["array"] = new JsonArray(1, null, 2),
+            ["fallback"] = 10
+        };
+        var env = CreateEnvWithData(data);
+
+        // $min(array) returns null, so should use fallback
+        // BUT should also preserve dependencies from evaluating $min(array)
+        var expr = ExprParser.Parse("$min(array) ?? fallback");
+        var (_, result) = env.Evaluate(expr);
+
+        Assert.Equal(10, result.AsInt());
+
+        var deps = GetDeps(result);
+        // Should track all elements from $min(array) even though result came from fallback
+        Assert.Contains("array[0]", deps);
+        Assert.Contains("array[1]", deps);
+        Assert.Contains("array[2]", deps);
+        // Should also track the fallback value
+        Assert.Contains("fallback", deps);
+    }
+
+    [Fact]
     public void Which_Tracks_Dependencies()
     {
         var data = new JsonObject
@@ -1104,6 +1130,102 @@ public class DependencyTrackingTests
         // Should track dependencies from the original computation, no key dependency
         Assert.Contains("a", deps);
         Assert.Contains("b", deps);
+    }
+
+    #endregion
+
+    #region Null Index/Key Handling Tests
+
+    [Fact]
+    public void Array_Access_With_Null_Index_From_Aggregation_Preserves_Dependencies()
+    {
+        var data = new JsonObject
+        {
+            ["array"] = new JsonArray(1, null, 2),
+            ["lookup"] = new JsonArray(0, 1)
+        };
+        var env = CreateEnvWithData(data);
+
+        // When $min(array) returns null, lookup[$idx] should return null with preserved deps
+        var expr = ExprParser.Parse("let $idx := $min(array) in lookup[$idx]");
+        var (_, result) = env.Evaluate(expr);
+
+        // Result should be null
+        Assert.Null(result.Value);
+
+        var deps = GetDeps(result);
+        // Should track all elements from $min(array)
+        Assert.Contains("array[0]", deps);
+        Assert.Contains("array[1]", deps);
+        Assert.Contains("array[2]", deps);
+    }
+
+    [Fact]
+    public void Object_Access_With_Null_Key_From_Aggregation_Preserves_Dependencies()
+    {
+        var data = new JsonObject
+        {
+            ["array"] = new JsonArray(1, null, 2),
+            ["obj"] = new JsonObject { ["a"] = 10, ["b"] = 20 }
+        };
+        var env = CreateEnvWithData(data);
+
+        // When $min(array) returns null, obj[$key] should return null with preserved deps
+        var expr = ExprParser.Parse("let $key := $min(array) in obj[$key]");
+        var (_, result) = env.Evaluate(expr);
+
+        // Result should be null
+        Assert.Null(result.Value);
+
+        var deps = GetDeps(result);
+        // Should track all elements from $min(array)
+        Assert.Contains("array[0]", deps);
+        Assert.Contains("array[1]", deps);
+        Assert.Contains("array[2]", deps);
+    }
+
+    [Fact]
+    public void Array_Access_With_Direct_Null_Variable_Preserves_Dependencies()
+    {
+        var data = new JsonObject
+        {
+            ["lookup"] = new JsonArray(0, 1),
+            ["idx"] = null
+        };
+        var env = CreateEnvWithData(data);
+
+        // Use let expression to access idx in global scope
+        var expr = ExprParser.Parse("let $i := idx in lookup[$i]");
+        var (_, result) = env.Evaluate(expr);
+
+        // Result should be null
+        Assert.Null(result.Value);
+
+        var deps = GetDeps(result);
+        // Should track the idx variable
+        Assert.Contains("idx", deps);
+    }
+
+    [Fact]
+    public void Object_Access_With_Direct_Null_Variable_Preserves_Dependencies()
+    {
+        var data = new JsonObject
+        {
+            ["obj"] = new JsonObject { ["a"] = 10, ["b"] = 20 },
+            ["key"] = null
+        };
+        var env = CreateEnvWithData(data);
+
+        // Use let expression to access key in global scope
+        var expr = ExprParser.Parse("let $k := key in obj[$k]");
+        var (_, result) = env.Evaluate(expr);
+
+        // Result should be null
+        Assert.Null(result.Value);
+
+        var deps = GetDeps(result);
+        // Should track the key variable
+        Assert.Contains("key", deps);
     }
 
     #endregion
