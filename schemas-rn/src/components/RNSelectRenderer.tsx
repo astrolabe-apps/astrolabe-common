@@ -101,6 +101,7 @@ export function RNSelectRenderer({
   });
 
   const selectContentWidth = useControl(100); // Min width 100 px
+  const selectContentWidthValue = selectContentWidth.value;
 
   return (
     <Select
@@ -131,7 +132,7 @@ export function RNSelectRenderer({
       <SelectContent
         insets={contentInsets}
         className={"bg-white"}
-        style={{ width: selectContentWidth.value }}
+        style={{ width: selectContentWidthValue }}
         portalHost={Platform.select({ ios: portalHost })}
       >
         <ScrollView className={"max-h-64"}>
