@@ -52,6 +52,14 @@ DOT
     : '.'
     ;
 
+LineComment
+    : '//' ~[\r\n]* -> skip
+    ;
+
+BlockComment
+    : '/*' .*? '*/' -> skip
+    ;
+
 DIV: '/';
 
 MOD: '%';

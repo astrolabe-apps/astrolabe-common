@@ -88,7 +88,7 @@ Interpolation { InterpolationStart expression "}" }
 
 
 
-@skip { space }
+@skip { space | LineComment | BlockComment }
 
 
 @skip {} {
@@ -102,6 +102,16 @@ Interpolation { InterpolationStart expression "}" }
 call<expr> { Call { expr } }
 
 @tokens {
+  LineComment { "//" ![\n]* }
+
+  BlockComment { "/*" blockCommentRest }
+
+  blockCommentRest { ![*] blockCommentRest | "*" blockCommentAfterStar }
+
+  blockCommentAfterStar { "/" | ![/*] blockCommentRest | "*" blockCommentAfterStar }
+
+  @precedence { LineComment, BlockComment, "/" }
+
   hex { @digit | $[a-fA-F] }
 
   Number {

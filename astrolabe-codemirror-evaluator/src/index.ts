@@ -33,12 +33,14 @@ export const EvalLanguage = LRLanguage.define({
         ConstantLiteral: t.bool,
         String: t.string,
         Number: t.number,
+        LineComment: t.lineComment,
+        BlockComment: t.blockComment,
         "( )": t.paren,
       }),
     ],
   }),
   languageData: {
-    commentTokens: { line: ";" },
+    commentTokens: { line: "//", block: { open: "/*", close: "*/" } },
   },
 });
 

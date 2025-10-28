@@ -39,3 +39,27 @@ Program(Application(
   Application(Identifier, Boolean, Application(
     Identifier, Application(Identifier, String, String, String)))
   Application(Identifier, String)))
+
+# Line Comments
+
+a + b // this is a line comment
+
+==>
+
+Program(BinaryExpression(Identifier, Call, Identifier), LineComment)
+
+# Block Comments
+
+a /* block comment */ + b
+
+==>
+
+Program(BinaryExpression(Identifier, BlockComment, Call, Identifier))
+
+# Mixed Comments
+
+/* start */ a + b // end
+
+==>
+
+Program(BlockComment, BinaryExpression(Identifier, Call, Identifier), LineComment)
