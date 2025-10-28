@@ -21,6 +21,7 @@ import {
   NullExpr,
   NumberType,
   objectType,
+  Path,
   propertyExpr,
   StringType,
   toNative,
@@ -35,7 +36,7 @@ import {
   evaluateWith,
   evaluateWithValue,
 } from "./evaluate";
-import { allElems, valuesToString } from "./values";
+import { allElems, valuesToString, addDepsRecursively } from "./values";
 import { printExpr } from "./printExpr";
 import {
   checkAll,
@@ -66,10 +67,10 @@ const flatFunction = functionValue(
 export const objectFunction = functionValue(
   (e, call) => {
     return mapEnv(evaluateAll(e, call.args), (args) => {
-      const outObj: Record<string, unknown> = {};
+      const outObj: Record<string, ValueExpr> = {};
       let i = 0;
       while (i < args.length - 1) {
-        outObj[toNative(args[i++]) as string] = toNative(args[i++]);
+        outObj[toNative(args[i++]) as string] = args[i++];
       }
       return valueExprWithDeps(outObj, args);
     });
@@ -175,44 +176,6 @@ function aggFunction<A>(
   return arrayFunc((v) => valueExprWithDeps(performOp(v), v));
 }
 
-function shortCircuitBoolOp(
-  initialValue: boolean,
-  shouldShortCircuit: (value: boolean) => boolean,
-): ValueExpr {
-  return functionValue(
-    (env, call) => {
-      let currentEnv = env;
-      let result: boolean | null = initialValue;
-      const evaluatedArgs: ValueExpr[] = [];
-
-      for (const arg of call.args) {
-        const [nextEnv, argValue] = currentEnv.evaluate(arg);
-        currentEnv = nextEnv;
-        evaluatedArgs.push(argValue);
-
-        if (argValue.value == null) {
-          result = null;
-          break;
-        }
-
-        if (typeof argValue.value !== "boolean") {
-          result = null;
-          break;
-        }
-
-        result = argValue.value;
-
-        if (shouldShortCircuit(argValue.value)) {
-          break;
-        }
-      }
-
-      return [currentEnv, valueExprWithDeps(result, evaluatedArgs)];
-    },
-    constGetType(BooleanType),
-  );
-}
-
 export const whichFunction: ValueExpr = functionValue(
   (e, call) => {
     const [c, ...args] = call.args;
@@ -227,7 +190,7 @@ export const whichFunction: ValueExpr = functionValue(
       const cva = Array.isArray(cv) ? cv.map((x) => x.value) : [cv];
       if (cva.find((x) => nextEnv.state.compare(x, cond.value) === 0)) {
         return mapEnv(nextEnv.evaluate(value), (v) =>
-          valueExprWithDeps(v.value, [cond, compValue]),
+          valueExprWithDeps(v.value, [cond, compValue, v]),
         );
       }
     }
@@ -352,14 +315,52 @@ const filterFunction = functionValue(
     if (!right) return [leftEnv.withError("No filter expression"), NullExpr];
     if (Array.isArray(value)) {
       const empty = value.length === 0;
-      const [firstEnv, { value: firstFilter }] = evaluateWith(
+      const [firstEnv, indexResult] = evaluateWith(
         leftEnv,
         empty ? NullExpr : value[0],
         empty ? null : 0,
         right,
       );
+      const { value: firstFilter } = indexResult;
+
+      // Handle null index - return null with preserved dependencies
+      if (firstFilter === null) {
+        const additionalDeps: Path[] = [];
+        if (indexResult.path) additionalDeps.push(indexResult.path);
+        if (indexResult.deps) additionalDeps.push(...indexResult.deps);
+        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+
+        return [
+          firstEnv,
+          additionalDeps.length > 0
+            ? { type: "value" as const, value: null, deps: additionalDeps }
+            : NullExpr,
+        ];
+      }
+
       if (typeof firstFilter === "number") {
-        return [firstEnv, value[firstFilter] ?? NullExpr];
+        const element = value[firstFilter];
+        if (!element) return [firstEnv, NullExpr];
+
+        // Check if index or array has dependencies
+        const indexHasDeps =
+          (indexResult.deps && indexResult.deps.length > 0) ||
+          indexResult.path != null;
+        const arrayHasDeps = leftVal.deps && leftVal.deps.length > 0;
+
+        // If neither index nor array has deps, return element as-is
+        if (!indexHasDeps && !arrayHasDeps) {
+          return [firstEnv, element];
+        }
+
+        // Index is dynamic OR array has deps - preserve element but add dependencies
+        const additionalDeps: Path[] = [];
+        if (indexResult.path) additionalDeps.push(indexResult.path);
+        if (indexResult.deps) additionalDeps.push(...indexResult.deps);
+        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+
+        // Use addDepsRecursively to ensure nested array elements also get the dependencies
+        return [firstEnv, addDepsRecursively(element, additionalDeps)];
       }
       const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
       const outEnv = value.reduce(
@@ -373,19 +374,58 @@ const filterFunction = functionValue(
       );
       return [outEnv, valueExpr(accArray)];
     }
-    if (leftVal == null) {
+    if (value == null) {
       return [leftEnv, NullExpr];
     }
-    if (typeof leftVal === "object") {
-      const [firstEnv, { value: firstFilter }] = evaluateWith(
-        leftEnv,
-        leftVal,
-        null,
-        right,
-      );
-      if (typeof firstFilter === "string")
-        return evaluateWith(firstEnv, leftVal, null, propertyExpr(firstFilter));
-      return [firstEnv, valueExpr(null)];
+    if (typeof value === "object") {
+      // Evaluate key expression with the object as current context
+      const [keyEnv, keyResult] = evaluateWith(leftEnv, leftVal, null, right);
+      const { value: firstFilter } = keyResult;
+
+      // Handle null key - return null with preserved dependencies
+      if (firstFilter === null) {
+        const additionalDeps: Path[] = [];
+        if (keyResult.path) additionalDeps.push(keyResult.path);
+        if (keyResult.deps) additionalDeps.push(...keyResult.deps);
+        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+
+        return [
+          keyEnv,
+          additionalDeps.length > 0
+            ? { type: "value" as const, value: null, deps: additionalDeps }
+            : NullExpr,
+        ];
+      }
+
+      if (typeof firstFilter === "string") {
+        const [propEnv, propValue] = evaluateWith(
+          keyEnv,
+          leftVal,
+          null,
+          propertyExpr(firstFilter),
+        );
+
+        // Check if key or object has dependencies
+        const keyHasDeps =
+          (keyResult.deps && keyResult.deps.length > 0) ||
+          keyResult.path != null;
+        const objectHasDeps = leftVal.deps && leftVal.deps.length > 0;
+
+        // If neither key nor object has deps, return property value as-is
+        if (!keyHasDeps && !objectHasDeps) {
+          return [propEnv, propValue];
+        }
+
+        // Key is dynamic OR object has deps - preserve property but add dependencies
+        const additionalDeps: Path[] = [];
+        if (keyResult.path) additionalDeps.push(keyResult.path);
+        if (keyResult.deps) additionalDeps.push(...keyResult.deps);
+        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+
+        // Use addDepsRecursively to ensure nested array elements also get the dependencies
+        return [propEnv, addDepsRecursively(propValue, additionalDeps)];
+      }
+      return [keyEnv, valueExpr(null)];
     }
     return [
       leftEnv.withError("Can't filter value: " + printExpr(leftVal)),
@@ -407,15 +447,71 @@ const filterFunction = functionValue(
 
 const condFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
-    return mapEnv(
-      mapAllEnv(env, call.args, doEvaluate),
-      ([{ value: c }, e1, e2]) =>
-        c === true ? e1 : c === false ? e2 : NullExpr,
-    );
+    if (call.args.length !== 3) {
+      return [env.withError("Conditional expects 3 arguments"), NullExpr];
+    }
+    const [condExpr, thenExpr, elseExpr] = call.args;
+    const [env1, condVal] = env.evaluate(condExpr);
+
+    if (condVal.value === true) {
+      return mapEnv(env1.evaluate(thenExpr), (thenVal) =>
+        valueExprWithDeps(thenVal.value, [condVal, thenVal]),
+      );
+    } else if (condVal.value === false) {
+      return mapEnv(env1.evaluate(elseExpr), (elseVal) =>
+        valueExprWithDeps(elseVal.value, [condVal, elseVal]),
+      );
+    } else {
+      return [env1, valueExprWithDeps(null, [condVal])];
+    }
   },
   (e, call) =>
     mapCallArgs(call, e, (args) =>
       args.length == 3 ? unionType(args[1], args[2]) : AnyType,
+    ),
+);
+
+const elemFunction = functionValue(
+  (env, call) => {
+    if (call.args.length !== 2) {
+      return [env.withError("elem expects 2 arguments"), NullExpr];
+    }
+    const [arrayExpr, indexExpr] = call.args;
+    const [env1, arrayVal] = env.evaluate(arrayExpr);
+    const [env2, indexVal] = env1.evaluate(indexExpr);
+
+    if (!Array.isArray(arrayVal.value)) {
+      return [env2, NullExpr];
+    }
+
+    const index = indexVal.value as number;
+    const elem = (arrayVal.value as ValueExpr[])?.[index];
+    if (elem == null) {
+      return [env2, NullExpr];
+    }
+
+    // Check if index or array has dependencies
+    const indexHasDeps =
+      (indexVal.deps && indexVal.deps.length > 0) || indexVal.path != null;
+    const arrayHasDeps = arrayVal.deps && arrayVal.deps.length > 0;
+
+    // If neither index nor array has deps, return element as-is
+    if (!indexHasDeps && !arrayHasDeps) {
+      return [env2, elem];
+    }
+
+    // Index is dynamic OR array has deps - preserve element but add dependencies
+    const combinedDeps: Path[] = [];
+    if (indexVal.path) combinedDeps.push(indexVal.path);
+    if (indexVal.deps) combinedDeps.push(...indexVal.deps);
+    if (arrayVal.deps) combinedDeps.push(...arrayVal.deps);
+    if (elem.deps) combinedDeps.push(...elem.deps);
+
+    return [env2, { ...elem, deps: combinedDeps }];
+  },
+  (e, call) =>
+    mapCallArgs(call, e, (args) =>
+      isArrayType(args[0]) ? getElementType(args[0]) : AnyType,
     ),
 );
 
@@ -434,14 +530,11 @@ export const keysOrValuesFunction = (type: string) =>
       }
 
       if (typeof objVal.value === "object" && !Array.isArray(objVal.value)) {
+        const objValue = objVal.value as Record<string, ValueExpr>;
         const data =
           type === "keys"
-            ? Object.keys(objVal.value).map((val) => valueExpr(val))
-            : Object.values(objVal.value).map((val) =>
-                Array.isArray(val)
-                  ? valueExpr(val.map((x) => valueExpr(x)))
-                  : valueExpr(val),
-              );
+            ? Object.keys(objValue).map((val) => valueExpr(val))
+            : Object.values(objValue);
         return [nextEnv, valueExprWithDeps(data, [objVal])];
       }
 
@@ -458,11 +551,71 @@ export const keysOrValuesFunction = (type: string) =>
     },
   );
 
+/**
+ * Helper for short-circuiting boolean operators (AND/OR).
+ * Evaluates arguments sequentially until short-circuit condition is met.
+ *
+ * @param env - The evaluation environment
+ * @param call - The function call expression
+ * @param shortCircuitValue - The value that triggers short-circuiting (false for AND, true for OR)
+ * @param defaultResult - The result when all args evaluated without short-circuit (true for AND, false for OR)
+ */
+function shortCircuitBooleanOp(
+  env: EvalEnv,
+  call: CallExpr,
+  shortCircuitValue: boolean,
+  defaultResult: boolean,
+): EnvValue<ValueExpr> {
+  const deps: ValueExpr[] = [];
+  let currentEnv = env;
+
+  for (const arg of call.args) {
+    const [nextEnv, argResult] = currentEnv.evaluate(arg);
+    currentEnv = nextEnv;
+    deps.push(argResult);
+
+    // Short-circuit: if we hit the short-circuit value, stop evaluating
+    if (argResult.value === shortCircuitValue) {
+      return [currentEnv, valueExprWithDeps(shortCircuitValue, deps)];
+    }
+
+    // If null, return null
+    if (argResult.value == null) {
+      return [currentEnv, valueExprWithDeps(null, deps)];
+    }
+
+    // If not a valid boolean, return null
+    if (argResult.value !== !shortCircuitValue) {
+      return [currentEnv, valueExprWithDeps(null, deps)];
+    }
+  }
+
+  // All arguments evaluated without short-circuiting
+  return [currentEnv, valueExprWithDeps(defaultResult, deps)];
+}
+
+// Short-circuiting AND operator - stops on false, returns true if all true
+const andFunction = functionValue(
+  (env: EvalEnv, call: CallExpr) =>
+    shortCircuitBooleanOp(env, call, false, true),
+  constGetType(BooleanType),
+);
+
+// Short-circuiting OR operator - stops on true, returns false if all false
+const orFunction = functionValue(
+  (env: EvalEnv, call: CallExpr) =>
+    shortCircuitBooleanOp(env, call, true, false),
+  constGetType(BooleanType),
+);
+
 export const defaultFunctions = {
   "?": condFunction,
-  "!": evalFunction((a) => !a[0], constGetType(BooleanType)),
-  and: shortCircuitBoolOp(true, (value) => value === false),
-  or: shortCircuitBoolOp(false, (value) => value === true),
+  "!": evalFunction((a) => {
+    const val = a[0];
+    return typeof val === "boolean" ? !val : null;
+  }, constGetType(BooleanType)),
+  and: andFunction,
+  or: orFunction,
   "+": binFunction((a, b) => a + b, constGetType(NumberType)),
   "-": binFunction((a, b) => a - b, constGetType(NumberType)),
   "*": binFunction((a, b) => a * b, constGetType(NumberType)),
@@ -475,7 +628,20 @@ export const defaultFunctions = {
   "=": compareFunction((x) => x === 0),
   "!=": compareFunction((x) => x !== 0),
   "??": evalFunctionExpr(
-    (x) => (x.length == 2 ? (x[0].value == null ? x[1] : x[0]) : NullExpr),
+    (x) => {
+      if (x.length !== 2) return NullExpr;
+      // If first arg is not null, return it
+      if (x[0].value != null) return x[0];
+      // First arg is null, return second arg but preserve dependencies from first arg
+      const combinedDeps: Path[] = [];
+      if (x[0].path) combinedDeps.push(x[0].path);
+      if (x[0].deps) combinedDeps.push(...x[0].deps);
+      if (x[1].path) combinedDeps.push(x[1].path);
+      if (x[1].deps) combinedDeps.push(...x[1].deps);
+      return combinedDeps.length > 0
+        ? { ...x[1], deps: combinedDeps }
+        : x[1];
+    },
     (e, call) =>
       mapCallArgs(call, e, (args) =>
         args.length == 2 ? unionType(args[0], args[1]) : AnyType,
@@ -529,16 +695,7 @@ export const defaultFunctions = {
   ),
   which: whichFunction,
   object: objectFunction,
-  elem: evalFunction(
-    (args) => {
-      const elem = (args[0] as ValueExpr[])?.[args[1] as number];
-      return elem == null ? null : elem.value;
-    },
-    (e, call) =>
-      mapCallArgs(call, e, (args) =>
-        isArrayType(args[0]) ? getElementType(args[0]) : AnyType,
-      ),
-  ),
+  elem: elemFunction,
   fixed: evalFunction(
     ([num, digits]) =>
       typeof num === "number" && typeof digits === "number"

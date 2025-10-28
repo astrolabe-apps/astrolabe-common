@@ -47,6 +47,9 @@ public class EvalEnvironment(EvalEnvironmentState state)
             (v1, v2) switch
             {
                 (long l1, long l2) => l1.CompareTo(l2),
+                (int i1, int i2) => i1.CompareTo(i2),
+                (long l1, int i2) => l1.CompareTo(i2),
+                (int i1, long l2) => -l2.CompareTo(i1),
                 (_, double d2) => NumberCompare(ValueExpr.AsDouble(v1), d2),
                 (double d1, _) => NumberCompare(d1, ValueExpr.AsDouble(v2)),
                 (string s1, string s2) => string.Compare(s1, s2, StringComparison.InvariantCulture),

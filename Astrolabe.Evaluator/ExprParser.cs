@@ -59,7 +59,9 @@ public class ExprParser
             AstroExprParser.VariableReferenceContext context
         )
         {
-            return new VarExpr(context.Identifier().GetText());
+            // Grammar is: variableReference : '$' identifierName ;
+            // So the identifierName part does NOT include the $
+            return new VarExpr(context.identifierName().GetText());
         }
 
         public override EvalExpr VisitLetExpr(AstroExprParser.LetExprContext context)
@@ -178,9 +180,10 @@ public class ExprParser
 
         public override EvalExpr VisitFunctionCall(AstroExprParser.FunctionCallContext context)
         {
-            var variableString = context.variableReference().Identifier().GetText();
+            // Get the function name from the variable reference (already has $ stripped by grammar)
+            var functionName = context.variableReference().identifierName().GetText();
             var args = context.expr().Select(Visit).ToList();
-            return new CallExpr(variableString, args);
+            return new CallExpr(functionName, args);
         }
     }
 

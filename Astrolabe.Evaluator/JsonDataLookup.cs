@@ -12,15 +12,19 @@ public static class JsonDataLookup
             (e, property) =>
             {
                 var childPath = e.Path != null ? new FieldPath(property, e.Path) : null;
-                return e.Value switch
+                if (e.Value is ObjectValue { Properties: var props } && props.TryGetValue(property, out var propValue))
                 {
-                    ObjectValue { Object: JsonObject jObj }
-                        when jObj.TryGetPropertyValue(property, out var prop) => ToValue(
-                        childPath,
-                        prop
-                    ),
-                    _ => new ValueExpr(null, childPath),
-                };
+                    // Preserve dependencies from parent object when accessing properties
+                    var combinedDeps = new List<DataPath>();
+                    if (e.Deps != null) combinedDeps.AddRange(e.Deps);
+                    if (propValue.Deps != null) combinedDeps.AddRange(propValue.Deps);
+                    return propValue with
+                    {
+                        Path = childPath,
+                        Deps = combinedDeps.Count > 0 ? combinedDeps : null
+                    };
+                }
+                return new ValueExpr(null, childPath);
             }
         );
     }
@@ -34,7 +38,12 @@ public static class JsonDataLookup
                 JsonArray ja => new ArrayValue(
                     ja.Select((x, i) => ToValue(p != null ? new IndexPath(i, p) : null, x))
                 ),
-                JsonObject obj => new ObjectValue(obj),
+                JsonObject obj => new ObjectValue(
+                    obj.ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => ToValue(p != null ? new FieldPath(kvp.Key, p) : null, kvp.Value)
+                    )
+                ),
                 JsonValue v => v.GetValue<object>() switch
                 {
                     JsonElement e => e.ValueKind switch

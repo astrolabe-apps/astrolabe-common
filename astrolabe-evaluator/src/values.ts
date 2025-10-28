@@ -1,9 +1,38 @@
-import { ValueExpr, valueExprWithDeps } from "./ast";
+import { ValueExpr, valueExprWithDeps, Path } from "./ast";
 import { printPath } from "./printExpr";
 
 export function allElems(v: ValueExpr): ValueExpr[] {
   if (Array.isArray(v.value)) return v.value.flatMap(allElems);
   return [v];
+}
+
+/**
+ * Recursively adds dependencies to a ValueExpr and all nested array elements.
+ * This ensures that when flatmap flattens nested arrays, the dependencies are preserved.
+ */
+export function addDepsRecursively(
+  valueExpr: ValueExpr,
+  additionalDeps: Path[],
+): ValueExpr {
+  if (additionalDeps.length === 0) {
+    return valueExpr;
+  }
+
+  const combinedDeps = [
+    ...(valueExpr.deps || []),
+    ...additionalDeps,
+  ];
+
+  if (!Array.isArray(valueExpr.value)) {
+    // Not an array, just add deps to this value
+    return { ...valueExpr, deps: combinedDeps };
+  }
+
+  // It's an array - recursively add deps to each element
+  const newElements = valueExpr.value.map((elem) =>
+    addDepsRecursively(elem, additionalDeps),
+  );
+  return { ...valueExpr, value: newElements, deps: combinedDeps };
 }
 
 export function asArray(v: unknown): unknown[] {

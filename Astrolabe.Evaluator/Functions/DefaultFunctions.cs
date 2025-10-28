@@ -100,12 +100,21 @@ public static class DefaultFunctions
         return BinNullOp((e, v1, v2) => toResult(e.Compare(v1, v2)));
     }
 
-    private static readonly FunctionHandler IfElseOp = FunctionHandler.DefaultEval(args =>
-        args switch
+    private static readonly FunctionHandler IfElseOp = new FunctionHandler(
+        (env, call) =>
         {
-            [bool b, var thenVal, var elseVal] => b ? thenVal : elseVal,
-            [null, _, _] => null,
-            _ => throw new ArgumentException("Bad conditional: " + args),
+            if (call.Args.Count != 3)
+            {
+                return env.WithError("Conditional expects 3 arguments").WithNull();
+            }
+            var (env1, condVal) = env.Evaluate(call.Args[0]);
+            return condVal.Value switch
+            {
+                true => env1.Evaluate(call.Args[1]).Map(thenVal => ValueExpr.WithDeps(thenVal.Value, [condVal, thenVal])),
+                false => env1.Evaluate(call.Args[2]).Map(elseVal => ValueExpr.WithDeps(elseVal.Value, [condVal, elseVal])),
+                null => env1.WithValue(ValueExpr.WithDeps(null, [condVal])),
+                _ => env1.WithError("Conditional expects boolean condition").WithNull(),
+            };
         }
     );
 
@@ -142,44 +151,189 @@ public static class DefaultFunctions
         );
     }
 
-    public static FunctionHandler ShortCircuitBoolOp(
-        bool initialValue,
-        Func<bool, bool> shouldShortCircuit
-    )
+    /// <summary>
+    /// Helper for short-circuiting boolean operators (AND/OR).
+    /// Evaluates arguments sequentially until short-circuit condition is met.
+    /// </summary>
+    /// <param name="env">The evaluation environment</param>
+    /// <param name="call">The function call expression</param>
+    /// <param name="shortCircuitValue">The value that triggers short-circuiting (false for AND, true for OR)</param>
+    /// <param name="defaultResult">The result when all args evaluated without short-circuit (true for AND, false for OR)</param>
+    private static EnvironmentValue<ValueExpr> ShortCircuitBooleanOp(
+        EvalEnvironment env,
+        CallExpr call,
+        bool shortCircuitValue,
+        bool defaultResult)
     {
-        return new FunctionHandler(
-            (env, call) =>
+        var deps = new List<ValueExpr>();
+        var currentEnv = env;
+
+        foreach (var arg in call.Args)
+        {
+            var (nextEnv, argResult) = currentEnv.Evaluate(arg);
+            currentEnv = nextEnv;
+            deps.Add(argResult);
+
+            // Short-circuit: if we hit the short-circuit value, stop evaluating
+            if (argResult.Value is bool b && b == shortCircuitValue)
             {
-                var currentEnv = env;
-                bool? result = initialValue;
-                var evaluatedArgs = new List<ValueExpr>();
+                return currentEnv.WithValue(ValueExpr.WithDeps(shortCircuitValue, deps));
+            }
 
-                foreach (var arg in call.Args)
+            // If null, return null
+            if (argResult.Value is null)
+            {
+                return currentEnv.WithValue(ValueExpr.WithDeps(null, deps));
+            }
+
+            // If not a valid boolean, return null
+            if (argResult.Value is not bool || (bool)argResult.Value != !shortCircuitValue)
+            {
+                return currentEnv.WithValue(ValueExpr.WithDeps(null, deps));
+            }
+        }
+
+        // All arguments evaluated without short-circuiting
+        return currentEnv.WithValue(ValueExpr.WithDeps(defaultResult, deps));
+    }
+    
+    private static readonly FunctionHandler ElemFunctionHandler = new FunctionHandler(
+        (env, call) =>
+        {
+            if (call.Args.Count != 2)
+            {
+                return env.WithError("elem expects 2 arguments").WithNull();
+            }
+            var (env1, arrayVal) = env.Evaluate(call.Args[0]);
+            var (env2, indexVal) = env1.Evaluate(call.Args[1]);
+
+            return (arrayVal.Value, indexVal.Value) switch
+            {
+                (ArrayValue av, var indO)
+                    when ValueExpr.MaybeIndex(indO) is { } ind
+                        && av.Values.ToList() is var vl
+                        && vl.Count > ind
+                    =>
+                    // Check if index or array has dependencies
+                    ((indexVal.Deps == null || !indexVal.Deps.Any()) && indexVal.Path == null)
+                        ? (arrayVal.Deps == null || !arrayVal.Deps.Any())
+                            ? env2.WithValue(vl[ind])  // Neither index nor array has deps
+                            : env2.WithValue(
+                                vl[ind] with
+                                {
+                                    Deps = DependencyHelpers.CombinePathsAndDeps(indexVal, vl[ind], arrayVal)
+                                }
+                            )
+                        : env2.WithValue(
+                            vl[ind] with
+                            {
+                                Deps = DependencyHelpers.CombinePathsAndDeps(indexVal, vl[ind], arrayVal)
+                            }
+                        ),
+                _ => env2.WithValue(ValueExpr.WithDeps(null, [arrayVal, indexVal])),
+            };
+        }
+    );
+
+    private static FunctionHandler KeysOrValuesFunctionHandler(string type) =>
+        new FunctionHandler(
+            (e, c) =>
+            {
+                if (c.Args.Count != 1)
                 {
-                    var (nextEnv, argValue) = currentEnv.Evaluate(arg);
-                    currentEnv = nextEnv;
-                    evaluatedArgs.Add(argValue);
-
-                    if (argValue.Value is not bool boolVal)
-                    {
-                        result = null;
-                        break;
-                    }
-
-                    result = boolVal;
-
-                    if (shouldShortCircuit(boolVal))
-                    {
-                        break;
-                    }
+                    return e.WithError($"{type} expects 1 argument").WithNull();
                 }
 
-                return currentEnv.WithValue(ValueExpr.WithDeps(result, evaluatedArgs));
+                var (nextEnv, objVal) = e.Evaluate(c.Args[0]);
+
+                return objVal.Value switch
+                {
+                    ObjectValue ov => nextEnv.WithValue(
+                        new ValueExpr(
+                            new ArrayValue(
+                                ov.Properties
+                                    .Select(x =>
+                                        type == "keys"
+                                            ? new ValueExpr(x.Key)
+                                            : x.Value
+                                    )
+                                    .ToList()
+                            ),
+                            objVal.Path,
+                            objVal.Deps
+                        )
+                    ),
+                    _ => nextEnv
+                        .WithError($"{type} expects an object: " + objVal.Print())
+                        .WithNull(),
+                };
             }
+        );
+
+    private static JsonNode? ToJsonNode(object? objValue)
+    {
+        return objValue switch
+        {
+            ObjectValue ov => new JsonObject(
+                ov.Properties.Select(kvp =>
+                    new KeyValuePair<string, JsonNode?>(kvp.Key, ToJsonNode(kvp.Value.Value))
+                )
+            ),
+            ArrayValue av => new JsonArray(av.Values.Select(x => ToJsonNode(x.Value)).ToArray()),
+            _ => JsonValue.Create(objValue),
+        };
+    }
+
+    public static EvalEnvironment AddDefaultFunctions(this EvalEnvironment eval)
+    {
+        return eval.WithVariables(
+            FunctionHandlers
+                .Select(x => new KeyValuePair<string, EvalExpr>(x.Key, new ValueExpr(x.Value)))
+                .ToList()
         );
     }
 
-    public static readonly Dictionary<string, FunctionHandler> FunctionHandlers = new()
+    public static EnvironmentValue<ValueExpr> WhichFunction(EvalEnvironment env, CallExpr call)
+    {
+        return call.Args.ToList() switch
+        {
+            [var cond, .. var others] when env.Evaluate(cond) is var (nextEnv, condValue) =>
+                FindWhich(nextEnv, condValue, others),
+        };
+
+        EnvironmentValue<ValueExpr> FindWhich(
+            EvalEnvironment curEnv,
+            ValueExpr condValue,
+            List<EvalExpr> others
+        )
+        {
+            if (condValue.IsNull())
+                return curEnv.WithNull();
+            var condCompare = condValue.Value;
+            var i = 0;
+            while (i < others.Count - 1)
+            {
+                var compare = others[i++];
+                var value = others[i++];
+                var (nextEnv, compValue) = curEnv.Evaluate(compare);
+
+                if (
+                    compValue
+                        .ToArray()
+                        .Values.Any(x => curEnv.Compare(x.Value, condValue.Value) == 0)
+                )
+                {
+                    return nextEnv
+                        .Evaluate(value)
+                        .Map(x => ValueExpr.WithDeps(x.Value, [condValue, compValue, x]));
+                }
+                curEnv = nextEnv;
+            }
+            return curEnv.WithValue(ValueExpr.WithDeps(null, [condValue]));
+        }
+    }
+    
+        public static readonly Dictionary<string, FunctionHandler> FunctionHandlers = new()
     {
         { "+", NumberOp((d1, d2) => d1 + d2, (l1, l2) => l1 + l2) },
         { "-", NumberOp((d1, d2) => d1 - d2, (l1, l2) => l1 - l2) },
@@ -192,8 +346,12 @@ public static class DefaultFunctions
         { "<=", ComparisonFunc(x => x <= 0) },
         { ">", ComparisonFunc(x => x > 0) },
         { ">=", ComparisonFunc(x => x >= 0) },
-        { "and", ShortCircuitBoolOp(true, b => !b) },
-        { "or", ShortCircuitBoolOp(false, b => b) },
+        // Short-circuiting AND operator - stops on false, returns true if all true
+        { "and", new FunctionHandler((env, call) =>
+            ShortCircuitBooleanOp(env, call, shortCircuitValue: false, defaultResult: true)) },
+        // Short-circuiting OR operator - stops on true, returns false if all false
+        { "or", new FunctionHandler((env, call) =>
+            ShortCircuitBooleanOp(env, call, shortCircuitValue: true, defaultResult: false)) },
         { "!", UnaryNullOp(a => a is bool b ? !b : null) },
         { "?", IfElseOp },
         {
@@ -202,7 +360,12 @@ public static class DefaultFunctions
                 (e, x) =>
                     x switch
                     {
-                        [var v, var o] => v.IsNull() ? o : v,
+                        [var v, var o] when !v.IsNull() => v,
+                        [var v, var o] => new ValueExpr(
+                            o.Value,
+                            o.Path,
+                            DependencyHelpers.CombinePathsAndDeps(v, o)
+                        ),
                         _ => ValueExpr.Null,
                     }
             )
@@ -244,20 +407,7 @@ public static class DefaultFunctions
         { "lower", StringOp(x => x.ToLower()) },
         { "upper", StringOp(x => x.ToUpper()) },
         { "which", new FunctionHandler(WhichFunction) },
-        {
-            "elem",
-            FunctionHandler.DefaultEvalArgs(
-                (_, args) =>
-                    args switch
-                    {
-                        [{ Value: ArrayValue av }, { Value: var indO }]
-                            when ValueExpr.MaybeIndex(indO) is { } ind
-                                && av.Values.ToList() is var vl
-                                && vl.Count > ind => vl[ind],
-                        _ => ValueExpr.WithDeps(null, args),
-                    }
-            )
-        },
+        { "elem", ElemFunctionHandler },
         {
             "first",
             FirstFunctionHandler.Create(
@@ -322,17 +472,17 @@ public static class DefaultFunctions
         },
         {
             "object",
-            FunctionHandler.DefaultEval(args =>
+            FunctionHandler.DefaultEvalArgs((e, args) =>
             {
                 var i = 0;
-                var obj = new JsonObject();
+                var obj = new Dictionary<string, ValueExpr>();
                 while (i < args.Count - 1)
                 {
-                    var name = (string)args[i++]!;
-                    var value = ToJsonNode(args[i++]);
+                    var name = (string)args[i++].Value!;
+                    var value = args[i++];
                     obj[name] = value;
                 }
-                return new ObjectValue(obj);
+                return ValueExpr.WithDeps(new ObjectValue(obj), args);
             })
         },
         { "this", new FunctionHandler((e, c) => e.WithValue(e.Current)) },
@@ -340,97 +490,4 @@ public static class DefaultFunctions
         { "values", KeysOrValuesFunctionHandler("values") },
     };
 
-    private static FunctionHandler KeysOrValuesFunctionHandler(string type) =>
-        new FunctionHandler(
-            (e, c) =>
-            {
-                if (c.Args.Count != 1)
-                {
-                    return e.WithError($"{type} expects 1 argument").WithNull();
-                }
-
-                var (nextEnv, objVal) = e.Evaluate(c.Args[0]);
-
-                return objVal.Value switch
-                {
-                    ObjectValue ov => nextEnv.WithValue(
-                        new ValueExpr(
-                            new ArrayValue(
-                                ((JsonObject)ov.Object)
-                                    .Select(x =>
-                                        type == "keys"
-                                            ? new ValueExpr(x.Key)
-                                            : JsonDataLookup.ToValue(null, x.Value)
-                                    )
-                                    .ToList()
-                            ),
-                            objVal.Path,
-                            objVal.Deps
-                        )
-                    ),
-                    _ => nextEnv
-                        .WithError($"{type} expects an object: " + objVal.Print())
-                        .WithNull(),
-                };
-            }
-        );
-
-    private static JsonNode? ToJsonNode(object? objValue)
-    {
-        return objValue switch
-        {
-            ObjectValue ov => ((JsonObject)ov.Object).DeepClone(),
-            ArrayValue av => new JsonArray(av.Values.Select(x => ToJsonNode(x.Value)).ToArray()),
-            _ => JsonValue.Create(objValue),
-        };
-    }
-
-    public static EvalEnvironment AddDefaultFunctions(this EvalEnvironment eval)
-    {
-        return eval.WithVariables(
-            FunctionHandlers
-                .Select(x => new KeyValuePair<string, EvalExpr>(x.Key, new ValueExpr(x.Value)))
-                .ToList()
-        );
-    }
-
-    public static EnvironmentValue<ValueExpr> WhichFunction(EvalEnvironment env, CallExpr call)
-    {
-        return call.Args.ToList() switch
-        {
-            [var cond, .. var others] when env.Evaluate(cond) is var (nextEnv, condValue) =>
-                FindWhich(nextEnv, condValue, others),
-        };
-
-        EnvironmentValue<ValueExpr> FindWhich(
-            EvalEnvironment curEnv,
-            ValueExpr condValue,
-            List<EvalExpr> others
-        )
-        {
-            if (condValue.IsNull())
-                return curEnv.WithNull();
-            var condCompare = condValue.Value;
-            var i = 0;
-            while (i < others.Count - 1)
-            {
-                var compare = others[i++];
-                var value = others[i++];
-                var (nextEnv, compValue) = curEnv.Evaluate(compare);
-
-                if (
-                    compValue
-                        .ToArray()
-                        .Values.Any(x => curEnv.Compare(x.Value, condValue.Value) == 0)
-                )
-                {
-                    return nextEnv
-                        .Evaluate(value)
-                        .Map(x => ValueExpr.WithDeps(x.Value, [condValue, compValue]));
-                }
-                curEnv = nextEnv;
-            }
-            return curEnv.WithValue(ValueExpr.WithDeps(null, [condValue]));
-        }
-    }
 }

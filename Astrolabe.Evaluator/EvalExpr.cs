@@ -225,7 +225,7 @@ public record ValueExpr(object? Value, DataPath? Path = null, IEnumerable<DataPa
         return v switch
         {
             ArrayValue av => av.Values.Select(x => x.ToNative()),
-            ObjectValue ov => ov.Object,
+            ObjectValue ov => ov.Properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToNative()),
             _ => v
         };
     }
@@ -237,6 +237,29 @@ public record ValueExpr(object? Value, DataPath? Path = null, IEnumerable<DataPa
             ArrayValue av => av.Values.SelectMany(x => x.AllValues()),
             _ => [this]
         };
+    }
+
+    /// <summary>
+    /// Recursively adds dependencies to this ValueExpr and all nested array elements.
+    /// This ensures that when flatmap flattens nested arrays, the dependencies are preserved.
+    /// </summary>
+    public static ValueExpr AddDepsRecursively(ValueExpr valueExpr, IEnumerable<DataPath> additionalDeps)
+    {
+        var depsList = additionalDeps.ToList();
+        if (depsList.Count == 0)
+            return valueExpr;
+
+        var combinedDeps = (valueExpr.Deps ?? []).Concat(depsList).ToList();
+
+        if (valueExpr.Value is not ArrayValue av)
+        {
+            // Not an array, just add deps to this value
+            return valueExpr with { Deps = combinedDeps };
+        }
+
+        // It's an array - recursively add deps to each element
+        var newElements = av.Values.Select(elem => AddDepsRecursively(elem, depsList)).ToList();
+        return valueExpr with { Value = new ArrayValue(newElements), Deps = combinedDeps };
     }
 }
 
@@ -303,7 +326,7 @@ public record VarExpr(string Name) : EvalExpr
 
 public record ArrayValue(IEnumerable<ValueExpr> Values);
 
-public record ObjectValue(object Object);
+public record ObjectValue(IDictionary<string, ValueExpr> Properties);
 
 public static class ValueExtensions
 {
@@ -367,6 +390,16 @@ public static class ValueExtensions
         {
             double d => (int)d,
             long l => (int)l,
+            int i => i
+        };
+    }
+
+    public static long AsLong(this ValueExpr v)
+    {
+        return v.Value switch
+        {
+            double d => (long)d,
+            long l => l,
             int i => i
         };
     }
