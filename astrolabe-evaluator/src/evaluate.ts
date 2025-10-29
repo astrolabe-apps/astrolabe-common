@@ -5,6 +5,7 @@ import {
   EvalEnvState,
   EvalExpr,
   FunctionValue,
+  lookupVar,
   mapAllEnv,
   mapEnv,
   Path,
@@ -126,18 +127,49 @@ export class BasicEvalEnv extends EvalEnv {
   }
 
   getVariable(name: string): ValueExpr | undefined {
-    return this.state.vars[name];
+    return lookupVar(this.state, name);
   }
 
   withVariables(vars: [string, EvalExpr][]): EvalEnv {
-    return vars.reduce((e, v) => e.withVariable(v[0], v[1]), this as EvalEnv);
+    // Optimize: Create a single child scope with all variables
+    // instead of nested scopes (one per variable)
+    if (vars.length === 0) {
+      return this;
+    }
+
+    if (vars.length === 1) {
+      // Single variable - use existing withVariable
+      return this.withVariable(vars[0][0], vars[0][1]);
+    }
+
+    // Evaluate all variables sequentially, threading environment
+    let currentEnv = this as EvalEnv;
+    const evaluatedVars: Record<string, ValueExpr> = {};
+
+    for (const [name, expr] of vars) {
+      const [nextEnv, value] = currentEnv.evaluate(expr);
+      evaluatedVars[name] = value;
+      currentEnv = nextEnv;  // Thread for sequential evaluation
+    }
+
+    // Create single child scope with all variables
+    return this.newEnv({
+      ...currentEnv.state,
+      localVars: evaluatedVars,    // All variables in ONE scope
+      parent: this.state             // Parent is original scope
+    });
   }
 
   withVariable(name: string, expr: EvalExpr): EvalEnv {
     const [nextEnv, value] = this.evaluate(expr);
-    const outVars = { ...nextEnv.state.vars };
-    outVars[name] = value;
-    return this.newEnv({ ...nextEnv.state, vars: outVars });
+    // Create a new child scope with this single variable
+    // The new scope has empty localVars except for this variable
+    // and points to the current scope as parent
+    return this.newEnv({
+      ...nextEnv.state,
+      localVars: { [name]: value },
+      parent: nextEnv.state  // Current state becomes parent
+    });
   }
 
   withCurrent(current: ValueExpr): EvalEnv {

@@ -10,7 +10,8 @@ public record EvalEnvironmentState(
     EvalData Data,
     ValueExpr Current,
     Func<object?, object?, int> Compare,
-    ImmutableDictionary<string, EvalExpr> Variables,
+    ImmutableDictionary<string, EvalExpr> LocalVariables,
+    EvalEnvironmentState? Parent,
     IEnumerable<EvalError> Errors
 )
 {
@@ -21,8 +22,23 @@ public record EvalEnvironmentState(
             data.Root,
             EvalEnvironment.DefaultComparison,
             ImmutableDictionary<string, EvalExpr>.Empty,
+            null,
             []
         );
+    }
+
+    /// <summary>
+    /// Look up a variable in the scope chain.
+    /// Walks from current scope up through parents until found.
+    /// O(depth) complexity where depth is typically 2-5 scopes.
+    /// </summary>
+    public EvalExpr? LookupVariable(string name)
+    {
+        if (LocalVariables.TryGetValue(name, out var value))
+        {
+            return value;
+        }
+        return Parent?.LookupVariable(name);
     }
 }
 
@@ -81,7 +97,7 @@ public class EvalEnvironment(EvalEnvironmentState state)
 
     public EvalExpr? GetVariable(string name)
     {
-        return CollectionExtensions.GetValueOrDefault(state.Variables, name);
+        return state.LookupVariable(name);
     }
 
     protected virtual EvalEnvironment NewEnv(EvalEnvironmentState newState)
@@ -91,18 +107,55 @@ public class EvalEnvironment(EvalEnvironmentState state)
 
     public EvalEnvironment RemoveVariable(string name)
     {
-        return NewEnv(state with { Variables = state.Variables.Remove(name) });
+        return NewEnv(state with { LocalVariables = state.LocalVariables.Remove(name) });
     }
 
     public virtual EvalEnvironment WithVariable(string name, EvalExpr value)
     {
         var (e, varValue) = Evaluate(value);
-        return e.NewEnv(e.State with { Variables = state.Variables.SetItem(name, varValue) });
+        // Create a new child scope with this single variable
+        // The new scope has only this variable in LocalVariables
+        // and points to the current scope as parent
+        return e.NewEnv(e.State with
+        {
+            LocalVariables = ImmutableDictionary<string, EvalExpr>.Empty.Add(name, varValue),
+            Parent = e.State
+        });
     }
 
     public virtual EvalEnvironment WithVariables(ICollection<KeyValuePair<string, EvalExpr>> vars)
     {
-        return vars.Aggregate(this, (e, v) => e.WithVariable(v.Key, v.Value));
+        // Optimize: Create a single child scope with all variables
+        // instead of nested scopes (one per variable)
+        if (vars.Count == 0)
+        {
+            return this;
+        }
+
+        if (vars.Count == 1)
+        {
+            // Single variable - use existing WithVariable
+            var single = vars.First();
+            return WithVariable(single.Key, single.Value);
+        }
+
+        // Evaluate all variables sequentially, threading environment
+        var currentEnv = this;
+        var evaluatedVars = ImmutableDictionary<string, EvalExpr>.Empty.ToBuilder();
+
+        foreach (var (name, expr) in vars)
+        {
+            var (nextEnv, value) = currentEnv.Evaluate(expr);
+            evaluatedVars.Add(name, value);
+            currentEnv = nextEnv;  // Thread for sequential evaluation
+        }
+
+        // Create single child scope with all variables
+        return NewEnv(currentEnv.State with
+        {
+            LocalVariables = evaluatedVars.ToImmutable(),  // All variables in ONE scope
+            Parent = this.State                             // Parent is original scope
+        });
     }
 
     public EvalEnvironment WithCurrent(ValueExpr current)

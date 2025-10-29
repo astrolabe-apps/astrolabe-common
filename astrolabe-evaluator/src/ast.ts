@@ -160,9 +160,25 @@ export type EnvValue<T> = [EvalEnv, T];
 export interface EvalEnvState {
   data: EvalData;
   current: ValueExpr;
-  vars: Record<string, ValueExpr>;
+  localVars: Record<string, ValueExpr>;
+  parent?: EvalEnvState;
   errors: string[];
   compare: (v1: unknown, v2: unknown) => number;
+}
+
+/**
+ * Look up a variable in the scope chain.
+ * Walks from current scope up through parents until found.
+ * O(depth) complexity where depth is typically 2-5 scopes.
+ */
+export function lookupVar(
+  state: EvalEnvState,
+  name: string,
+): ValueExpr | undefined {
+  if (name in state.localVars) {
+    return state.localVars[name];
+  }
+  return state.parent ? lookupVar(state.parent, name) : undefined;
 }
 
 export interface EvalData {
@@ -460,7 +476,8 @@ export function emptyEnvState(root: unknown): EvalEnvState {
   return {
     data,
     current: data.root,
-    vars: {},
+    localVars: {},
+    parent: undefined,
     errors: [],
     compare: compareSignificantDigits(5),
   };
