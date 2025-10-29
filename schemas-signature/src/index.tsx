@@ -124,7 +124,7 @@ function SignatureRenderer({
             {api.paths.map((path, i) => (
               <path
                 className={clsx(
-                  control.disabled ? disabledSegmentPath : segmentPath,
+                  control.disabled ? disabledSegmentPath : segmentPath
                 )}
                 key={i}
                 {...api.getSegmentPathProps({ path })}
@@ -140,6 +140,7 @@ function SignatureRenderer({
           <Button
             className={clsx(clearButtonClass)}
             {...api.getClearTriggerProps()}
+            aria-expanded={undefined}
             onClick={() => {
               api.getClearTriggerProps().onClick?.(null as any);
               if (options?.onClear) {
@@ -168,7 +169,7 @@ function SignatureRenderer({
  * @see https://zagjs.com/components/react/signature-pad
  */
 export function createSignatureRenderer(
-  options: Omit<signaturePad.Props, "id"> & SignatureRendererOptions,
+  options: Omit<signaturePad.Props, "id"> & SignatureRendererOptions
 ) {
   return createDataRenderer(
     (props, renderer) => (
@@ -183,12 +184,12 @@ export function createSignatureRenderer(
     {
       renderType: "Signature",
       collection: true,
-    },
+    }
   );
 }
 
 export function isSignatureRenderer(
-  options: RenderOptions,
+  options: RenderOptions
 ): options is SignatureRenderOptions {
   return options.type === "Signature";
 }
