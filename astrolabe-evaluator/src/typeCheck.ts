@@ -54,11 +54,11 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EvalType> {
       return { env, value: env.vars[expr.variable] || "any" };
     case "let":
       return typeCheck(
-        expr.variables.reduce((env, [name, value]) => {
+        expr.variables.reduce((env, [varExpr, value]) => {
           const { value: v } = typeCheck(env, value);
           return {
             ...env,
-            vars: { ...env.vars, [name]: v },
+            vars: { ...env.vars, [varExpr.variable]: v },
           };
         }, env),
         expr.expr,

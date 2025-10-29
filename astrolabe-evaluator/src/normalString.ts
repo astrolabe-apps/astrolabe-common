@@ -1,4 +1,4 @@
-import { EvalExpr } from "./ast";
+import { EvalExpr, VarExpr, varExpr } from "./ast";
 
 // Typescript port of NormalString.cs from Astrolabe.Evaluator
 class ParseResult<T> {
@@ -80,11 +80,11 @@ function parseNum(source: string, fp: boolean): ParseResult<EvalExpr> {
   return new ParseResult(remaining, { type: "value", value });
 }
 
-function parseAssignment(source: string): ParseResult<[string, EvalExpr]> {
+function parseAssignment(source: string): ParseResult<[VarExpr, EvalExpr]> {
   const nameResult = unescape(source, CommaLet);
   const varName = nameResult.result;
   const exprResult = parse(nameResult.remaining);
-  return exprResult.map((x) => [varName, x]);
+  return exprResult.map((x) => [varExpr(varName), x]);
 }
 
 function parseWhile<T>(
@@ -200,8 +200,8 @@ export function toNormalString(expr: EvalExpr): string {
         "=" +
         expr.variables
           .map(
-            ([name, val]) =>
-              "," + escape(name, Commas) + "," + toNormalString(val),
+            ([varExpr, val]) =>
+              "," + escape(varExpr.variable, Commas) + "," + toNormalString(val),
           )
           .join("") +
         "=" +

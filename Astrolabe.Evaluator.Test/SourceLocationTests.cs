@@ -270,15 +270,15 @@ public class SourceLocationTests
         Assert.Equal(6, call.Location.End);
     }
 
-    [Fact(Skip = "Let expression parsing has pre-existing issues with multi-line")]
+    [Fact]
     public void LetExpression_HasCorrectLocation()
     {
-        var input = "let $x = 1 in $x + 2";
+        var input = "let $x := 1 in $x + 2";
         var parsed = ExprParser.Parse(input);
         var letExpr = Assert.IsType<LetExpr>(parsed);
         Assert.NotNull(letExpr.Location);
         Assert.Equal(0, letExpr.Location.Start);
-        Assert.Equal(20, letExpr.Location.End);
+        Assert.Equal(21, letExpr.Location.End);
     }
 
     [Fact]
@@ -352,10 +352,10 @@ public class SourceLocationTests
         Assert.Equal("myfile.expr", rightArg.Location.SourceFile);
     }
 
-    [Fact(Skip = "Let expression parsing has pre-existing issues with multi-line")]
+    [Fact]
     public void SourceFile_PropagatesToDeeplyNestedExpressions()
     {
-        var input = "let $x = 1 in $x + 2";
+        var input = "let $x := 1 in $x + 2";
         var parsed = ExprParser.Parse(input, sourceFile: "nested.expr");
         var letExpr = Assert.IsType<LetExpr>(parsed);
         Assert.NotNull(letExpr.Location);
@@ -382,15 +382,15 @@ public class SourceLocationTests
         Assert.Equal(5, call.Location.End);
     }
 
-    [Fact(Skip = "Let expression parsing has pre-existing issues with multi-line")]
+    [Fact]
     public void MultiLineWithComplexNesting_HasCorrectSpan()
     {
-        var input = "let $x = 1\nin $x + 2";
+        var input = "let $x := 1\nin $x + 2";
         var parsed = ExprParser.Parse(input);
         var letExpr = Assert.IsType<LetExpr>(parsed);
         Assert.NotNull(letExpr.Location);
         Assert.Equal(0, letExpr.Location.Start);
-        Assert.Equal(20, letExpr.Location.End);
+        Assert.Equal(21, letExpr.Location.End);
     }
 
     #endregion

@@ -197,11 +197,11 @@ describe("Nested Expressions", () => {
   });
 
   test("Let expression has correct location", () => {
-    const input = "let $x = 1 in $x + 2";
+    const input = "let $x := 1 in $x + 2";
     const parsed = parseEval(input) as LetExpr;
     expect(parsed.location).toBeDefined();
     expect(parsed.location?.start).toBe(0);
-    expect(parsed.location?.end).toBe(20);
+    expect(parsed.location?.end).toBe(21);
   });
 
   test("Lambda expression has correct location", () => {
@@ -254,7 +254,7 @@ describe("Source File", () => {
   });
 
   test("SourceFile propagates to deeply nested expressions", () => {
-    const input = "let $x = 1 in $x + 2";
+    const input = "let $x := 1 in $x + 2";
     const parsed = parseEval(input, "nested.expr") as LetExpr;
     expect(parsed.location?.sourceFile).toBe("nested.expr");
 
@@ -274,12 +274,108 @@ describe("Multi-line Expressions", () => {
   });
 
   test("Multi-line with complex nesting", () => {
-    const input = `let $x = 1
+    const input = `let $x := 1
 in $x + 2`;
     const parsed = parseEval(input) as LetExpr;
     expect(parsed.location).toBeDefined();
     expect(parsed.location?.start).toBe(0);
-    expect(parsed.location?.end).toBe(20);
+    expect(parsed.location?.end).toBe(21);
+  });
+});
+
+describe("Let Expression Variable Locations", () => {
+  test("Single variable declaration has location", () => {
+    const input = "let $x := 1 in $x + 2";
+    const parsed = parseEval(input) as LetExpr;
+
+    // Verify the LetExpr has a location
+    expect(parsed.location).toBeDefined();
+    expect(parsed.location?.start).toBe(0);
+    expect(parsed.location?.end).toBe(21);
+
+    // Verify the variable name VarExpr has a location
+    const varExpr = parsed.variables[0][0];
+    expect(varExpr.type).toBe("var");
+    expect(varExpr.variable).toBe("x");
+    expect(varExpr.location).toBeDefined();
+    expect(varExpr.location?.start).toBe(4); // Position of "$x"
+    expect(varExpr.location?.end).toBe(6);
+  });
+
+  test("Multiple variable declarations have distinct locations", () => {
+    const input = "let $x := 1, $y := 2 in $x + $y";
+    const parsed = parseEval(input) as LetExpr;
+
+    // Verify we have two variables
+    expect(parsed.variables.length).toBe(2);
+
+    // First variable: $x
+    const firstVar = parsed.variables[0][0];
+    expect(firstVar.variable).toBe("x");
+    expect(firstVar.location).toBeDefined();
+    expect(firstVar.location?.start).toBe(4); // Position of "$x"
+    expect(firstVar.location?.end).toBe(6);
+
+    // Second variable: $y
+    const secondVar = parsed.variables[1][0];
+    expect(secondVar.variable).toBe("y");
+    expect(secondVar.location).toBeDefined();
+    expect(secondVar.location?.start).toBe(13); // Position of "$y"
+    expect(secondVar.location?.end).toBe(15);
+  });
+
+  test("Variable declaration and reference have different locations", () => {
+    const input = "let $x := 1 in $x + 2";
+    const parsed = parseEval(input) as LetExpr;
+
+    // Variable declaration location
+    const declaredVar = parsed.variables[0][0];
+    expect(declaredVar.location?.start).toBe(4); // "let $x"
+    expect(declaredVar.location?.end).toBe(6);
+
+    // Variable reference in the body
+    const bodyExpr = parsed.expr as CallExpr;
+    const varReference = bodyExpr.args[0] as VarExpr;
+    expect(varReference.type).toBe("var");
+    expect(varReference.variable).toBe("x");
+    expect(varReference.location).toBeDefined();
+    expect(varReference.location?.start).toBe(15); // "in $x"
+    expect(varReference.location?.end).toBe(17);
+
+    // Locations should be different
+    expect(declaredVar.location?.start).not.toBe(varReference.location?.start);
+  });
+
+  test("Variable in nested let expressions have correct locations", () => {
+    const input = "let $x := 1 in let $y := 2 in $y";
+    const parsed = parseEval(input) as LetExpr;
+
+    // Outer variable: $x
+    const outerVar = parsed.variables[0][0];
+    expect(outerVar.variable).toBe("x");
+    expect(outerVar.location?.start).toBe(4);
+    expect(outerVar.location?.end).toBe(6);
+
+    // Inner let expression
+    const innerLet = parsed.expr as LetExpr;
+    const innerVar = innerLet.variables[0][0];
+    expect(innerVar.variable).toBe("y");
+    expect(innerVar.location).toBeDefined();
+    expect(innerVar.location?.start).toBe(19); // Position of "$y" in inner let
+    expect(innerVar.location?.end).toBe(21);
+  });
+
+  test("Variable with source file preserves sourceFile in VarExpr", () => {
+    const input = "let $x := 1 in $x";
+    const parsed = parseEval(input, "test.expr") as LetExpr;
+
+    // Variable declaration should have source file
+    const varExpr = parsed.variables[0][0];
+    expect(varExpr.location?.sourceFile).toBe("test.expr");
+
+    // Variable reference should also have source file
+    const varRef = parsed.expr as VarExpr;
+    expect(varRef.location?.sourceFile).toBe("test.expr");
   });
 });
 

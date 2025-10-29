@@ -93,8 +93,26 @@ public class ExprParser
         {
             var assignments = context
                 .variableAssign()
-                .Select(x => ((VarExpr)Visit(x.variableReference()), Visit(x.expr())!));
-            return new LetExpr(assignments, Visit(context.expr()), GetLocation(context));
+                .Select(x =>
+                {
+                    var varRef = x.variableReference();
+                    var exprContext = x.expr();
+                    if (varRef == null || exprContext == null)
+                    {
+                        throw new InvalidOperationException(
+                            $"Invalid variable assignment: variableReference={varRef != null}, expr={exprContext != null}"
+                        );
+                    }
+                    return ((VarExpr)Visit(varRef), Visit(exprContext)!);
+                });
+
+            var bodyExpr = context.expr();
+            if (bodyExpr == null)
+            {
+                throw new InvalidOperationException("Let expression missing body expression after 'in'");
+            }
+
+            return new LetExpr(assignments, Visit(bodyExpr), GetLocation(context));
         }
 
         public override EvalExpr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)

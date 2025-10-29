@@ -217,7 +217,7 @@ export interface VarExpr {
 
 export interface LetExpr {
   type: "let";
-  variables: [string, EvalExpr][];
+  variables: [VarExpr, EvalExpr][];
   expr: EvalExpr;
   location?: SourceLocation;
 }
@@ -280,7 +280,7 @@ export function varExpr(
   return { type: "var", variable, location };
 }
 
-export type VarAssign = [string, EvalExpr];
+export type VarAssign = [VarExpr, EvalExpr];
 export function letExpr(
   variables: VarAssign[],
   expr: EvalExpr,

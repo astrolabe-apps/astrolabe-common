@@ -49,7 +49,7 @@ export function convertTree(
         return letExpr(
           assignments.map((a) => {
             const [assign, expr] = a.getChildren("Expression");
-            return [(visit(assign) as VarExpr).variable, visit(expr)];
+            return [visit(assign) as VarExpr, visit(expr)];
           }),
           visit(node.getChild("Expression")),
           getLocation(node),

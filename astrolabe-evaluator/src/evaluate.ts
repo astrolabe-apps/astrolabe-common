@@ -57,7 +57,9 @@ export function defaultEvaluate(
         ];
       return env.evaluate(varExpr);
     case "let":
-      return env.withVariables(expr.variables).evaluate(expr.expr);
+      return env
+        .withVariables(expr.variables.map(([v, e]) => [v.variable, e]))
+        .evaluate(expr.expr);
     case "value":
       return [env, expr];
     case "call":
