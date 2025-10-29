@@ -8,22 +8,32 @@ import {
   lambdaExpr,
   letExpr,
   propertyExpr,
+  SourceLocation,
   ValueExpr,
   valueExpr,
   VarExpr,
   varExpr,
 } from "./ast";
 
-export function parseEval(input: string) {
+export function parseEval(input: string, sourceFile?: string) {
   const parseTree = parser.parse(input);
-  return convertTree(parseTree, (node) => input.substring(node.from, node.to));
+  return convertTree(
+    parseTree,
+    (node) => input.substring(node.from, node.to),
+    sourceFile,
+  );
 }
 
 export function convertTree(
   parseTree: Tree,
   getNodeText: (n: { from: number; to: number }) => string,
+  sourceFile?: string,
 ): EvalExpr {
   return visit(parseTree.topNode);
+
+  function getLocation(node: SyntaxNode): SourceLocation {
+    return { start: node.from, end: node.to, sourceFile };
+  }
 
   function visit(node: SyntaxNode | null): EvalExpr {
     if (node == null) return valueExpr(null);
@@ -33,7 +43,7 @@ export function convertTree(
       case "EvalProgram":
         return visit(node.getChild("Expression"));
       case "Reference":
-        return varExpr(getNodeText(node).substring(1));
+        return varExpr(getNodeText(node).substring(1), getLocation(node));
       case "LetExpression":
         const assignments = node.getChildren("VariableAssignment");
         return letExpr(
@@ -42,24 +52,28 @@ export function convertTree(
             return [(visit(assign) as VarExpr).variable, visit(expr)];
           }),
           visit(node.getChild("Expression")),
+          getLocation(node),
         );
       case "Lambda":
         const [v, e] = node.getChildren("Expression").map(visit);
-        return lambdaExpr((v as VarExpr).variable, e);
+        return lambdaExpr((v as VarExpr).variable, e, getLocation(node));
       case "ConstantLiteral":
         const constText = getNodeText(node);
         return valueExpr(
           constText === "true" ? true : constText === "false" ? false : null,
+          undefined,
+          getLocation(node),
         );
       case "UnaryExpression":
         const expr = visit(node.getChild("Expression"));
+        const loc = getLocation(node);
         switch (getNodeText(node).charAt(0)) {
           case "!":
-            return callExpr("!", [expr]);
+            return callExpr("!", [expr], loc);
           case "+":
             return expr;
           case "-":
-            return callExpr("-", [valueExpr(0), expr]);
+            return callExpr("-", [valueExpr(0), expr], loc);
         }
         throw new Error("Unknown unary: " + getNodeText(node));
       case "CallExpression":
@@ -68,12 +82,13 @@ export function convertTree(
           .getChild("ArgList")!
           .getChildren("Expression")
           .map(visit);
-        return callExpr((func as VarExpr).variable, args);
+        return callExpr((func as VarExpr).variable, args, getLocation(node));
       case "Number":
-        return valueExpr(parseFloat(getNodeText(node)));
+        return valueExpr(parseFloat(getNodeText(node)), undefined, getLocation(node));
       case "String":
         return unescapeString(
           getNodeText({ from: node.from + 1, to: node.to - 1 }),
+          getLocation(node),
         );
       case "TemplateString":
         const parts = [];
@@ -98,41 +113,47 @@ export function convertTree(
             unescapeString(getNodeText({ from: textOffset, to: node.to - 1 })),
           );
         }
-        if (parts.length === 0) return valueExpr("");
+        const templateLoc = getLocation(node);
+        if (parts.length === 0) return valueExpr("", undefined, templateLoc);
 
         // If there's only one part, return it directly
         if (parts.length === 1 && isStringExpr(parts[0])) return parts[0];
 
         // Otherwise, concatenate all parts using string conversion
-        return callExpr("string", parts);
+        return callExpr("string", parts, templateLoc);
 
       case "Identifier":
-        return propertyExpr(getNodeText(node));
+        return propertyExpr(getNodeText(node), getLocation(node));
       case "ArrayExpression":
-        return arrayExpr(node.getChildren("Expression").map(visit));
+        return arrayExpr(node.getChildren("Expression").map(visit), getLocation(node));
       case "ObjectExpression":
         return callExpr(
           "object",
           node
             .getChildren("FieldExpression")
             .flatMap((x) => x.getChildren("Expression").map(visit)),
+          getLocation(node),
         );
       case "BinaryExpression":
         const callNode = node.getChild("Call")!;
         return callExpr(
           getNodeText(callNode),
           node.getChildren("Expression").map(visit),
+          getLocation(node),
         );
       case "ConditionalExpression":
-        return callExpr("?", node.getChildren("Expression").map(visit));
+        return callExpr("?", node.getChildren("Expression").map(visit), getLocation(node));
       default:
         throw "Don't know what to do with:" + nodeName;
     }
   }
 }
 
-function unescapeString(str: string): ValueExpr {
-  return valueExpr(unescapeJsString(str));
+function unescapeString(
+  str: string,
+  location?: SourceLocation,
+): ValueExpr {
+  return valueExpr(unescapeJsString(str), undefined, location);
 }
 
 /**

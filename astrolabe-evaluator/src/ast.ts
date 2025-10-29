@@ -1,3 +1,9 @@
+export interface SourceLocation {
+  start: number;
+  end: number;
+  sourceFile?: string;
+}
+
 export interface PrimitiveType {
   type: "number" | "string" | "boolean" | "null" | "any" | "never";
   constant?: unknown;
@@ -134,10 +140,14 @@ export type Path = EmptyPath | SegmentPath;
 
 export const EmptyPath: EmptyPath = { segment: null };
 
-export function propertyExpr(property: string): PropertyExpr {
+export function propertyExpr(
+  property: string,
+  location?: SourceLocation,
+): PropertyExpr {
   return {
     type: "property",
     property,
+    location,
   };
 }
 
@@ -186,22 +196,26 @@ export type EvalExpr =
 export interface VarExpr {
   type: "var";
   variable: string;
+  location?: SourceLocation;
 }
 
 export interface LetExpr {
   type: "let";
   variables: [string, EvalExpr][];
   expr: EvalExpr;
+  location?: SourceLocation;
 }
 export interface ArrayExpr {
   type: "array";
   values: EvalExpr[];
+  location?: SourceLocation;
 }
 
 export interface CallExpr {
   type: "call";
   function: string;
   args: EvalExpr[];
+  location?: SourceLocation;
 }
 
 export interface ValueExpr {
@@ -217,17 +231,20 @@ export interface ValueExpr {
   function?: FunctionValue;
   path?: Path;
   deps?: Path[];
+  location?: SourceLocation;
 }
 
 export interface PropertyExpr {
   type: "property";
   property: string;
+  location?: SourceLocation;
 }
 
 export interface LambdaExpr {
   type: "lambda";
   variable: string;
   expr: EvalExpr;
+  location?: SourceLocation;
 }
 
 export interface FunctionValue {
@@ -240,17 +257,28 @@ export function concatPath(path1: Path, path2: Path): Path {
   return { ...path2, parent: concatPath(path1, path2.parent!) };
 }
 
-export function varExpr(variable: string): VarExpr {
-  return { type: "var", variable };
+export function varExpr(
+  variable: string,
+  location?: SourceLocation,
+): VarExpr {
+  return { type: "var", variable, location };
 }
 
 export type VarAssign = [string, EvalExpr];
-export function letExpr(variables: VarAssign[], expr: EvalExpr): LetExpr {
-  return { type: "let", variables, expr };
+export function letExpr(
+  variables: VarAssign[],
+  expr: EvalExpr,
+  location?: SourceLocation,
+): LetExpr {
+  return { type: "let", variables, expr, location };
 }
 
-export function valueExpr(value: any, path?: Path): ValueExpr {
-  return { type: "value", value, path };
+export function valueExpr(
+  value: any,
+  path?: Path,
+  location?: SourceLocation,
+): ValueExpr {
+  return { type: "value", value, path, location };
 }
 
 export function isStringExpr(expr: EvalExpr): expr is ValueExpr {
@@ -269,16 +297,27 @@ export function valueExprWithDeps(value: any, deps: ValueExpr[]): ValueExpr {
 
 export const NullExpr = valueExpr(null);
 
-export function lambdaExpr(variable: string, expr: EvalExpr): LambdaExpr {
-  return { type: "lambda", variable, expr };
+export function lambdaExpr(
+  variable: string,
+  expr: EvalExpr,
+  location?: SourceLocation,
+): LambdaExpr {
+  return { type: "lambda", variable, expr, location };
 }
 
-export function arrayExpr(values: EvalExpr[]): ArrayExpr {
-  return { type: "array", values };
+export function arrayExpr(
+  values: EvalExpr[],
+  location?: SourceLocation,
+): ArrayExpr {
+  return { type: "array", values, location };
 }
 
-export function callExpr(name: string, args: EvalExpr[]): CallExpr {
-  return { type: "call", function: name, args };
+export function callExpr(
+  name: string,
+  args: EvalExpr[],
+  location?: SourceLocation,
+): CallExpr {
+  return { type: "call", function: name, args, location };
 }
 
 export function functionValue(

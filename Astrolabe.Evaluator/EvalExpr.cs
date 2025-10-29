@@ -4,6 +4,8 @@ using Astrolabe.Annotation;
 
 namespace Astrolabe.Evaluator;
 
+public record SourceLocation(int Start, int End, string? SourceFile = null);
+
 [JsonString]
 public enum InbuiltFunction
 {
@@ -49,7 +51,11 @@ public static class InbuiltFunctions
 
 public interface EvalExpr;
 
-public record LetExpr(IEnumerable<(VarExpr, EvalExpr)> Vars, EvalExpr In) : EvalExpr
+public record LetExpr(
+    IEnumerable<(VarExpr, EvalExpr)> Vars,
+    EvalExpr In,
+    SourceLocation? Location = null
+) : EvalExpr
 {
     public static LetExpr AddVar(LetExpr? letExpr, VarExpr varExpr, EvalExpr expr)
     {
@@ -60,9 +66,10 @@ public record LetExpr(IEnumerable<(VarExpr, EvalExpr)> Vars, EvalExpr In) : Eval
     }
 }
 
-public record PropertyExpr(string Property) : EvalExpr;
+public record PropertyExpr(string Property, SourceLocation? Location = null) : EvalExpr;
 
-public record LambdaExpr(string Variable, EvalExpr Value) : EvalExpr;
+public record LambdaExpr(string Variable, EvalExpr Value, SourceLocation? Location = null)
+    : EvalExpr;
 
 public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, CallExpr callExpr);
 
@@ -103,8 +110,12 @@ public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
     }
 }
 
-public record ValueExpr(object? Value, DataPath? Path = null, IEnumerable<DataPath>? Deps = null)
-    : EvalExpr
+public record ValueExpr(
+    object? Value,
+    DataPath? Path = null,
+    IEnumerable<DataPath>? Deps = null,
+    SourceLocation? Location = null
+) : EvalExpr
 {
     public static readonly ValueExpr Null = new((object?)null);
 
@@ -263,7 +274,7 @@ public record ValueExpr(object? Value, DataPath? Path = null, IEnumerable<DataPa
     }
 }
 
-public record ArrayExpr(IEnumerable<EvalExpr> Values) : EvalExpr
+public record ArrayExpr(IEnumerable<EvalExpr> Values, SourceLocation? Location = null) : EvalExpr
 {
     public override string ToString()
     {
@@ -271,7 +282,8 @@ public record ArrayExpr(IEnumerable<EvalExpr> Values) : EvalExpr
     }
 }
 
-public record CallExpr(string Function, IList<EvalExpr> Args) : EvalExpr
+public record CallExpr(string Function, IList<EvalExpr> Args, SourceLocation? Location = null)
+    : EvalExpr
 {
     public override string ToString()
     {
@@ -299,7 +311,7 @@ public record CallExpr(string Function, IList<EvalExpr> Args) : EvalExpr
     }
 }
 
-public record VarExpr(string Name) : EvalExpr
+public record VarExpr(string Name, SourceLocation? Location = null) : EvalExpr
 {
     private static int _indexCount;
 

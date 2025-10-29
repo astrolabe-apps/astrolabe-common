@@ -8,7 +8,11 @@ namespace Astrolabe.Evaluator;
 
 public class ExprParser
 {
-    public static EvalExpr Parse(string expression, bool allowSyntaxErrors = true)
+    public static EvalExpr Parse(
+        string expression,
+        bool allowSyntaxErrors = true,
+        string? sourceFile = null
+    )
     {
         var inputStream = new AntlrInputStream(expression);
         var exprLexer = new AstroExprLexer(inputStream);
@@ -18,7 +22,7 @@ public class ExprParser
         exprParser.RemoveErrorListeners();
         exprParser.AddErrorListener(errors);
         var exprContext = exprParser.main();
-        var visitor = new AstroExprVisitor();
+        var visitor = new AstroExprVisitor(sourceFile);
         var result = visitor.Visit(exprContext);
         if (!allowSyntaxErrors && errors.Errors.Count > 0)
         {
@@ -50,6 +54,27 @@ public class ExprParser
 
     public class AstroExprVisitor : AstroExprParserBaseVisitor<EvalExpr>
     {
+        private readonly string? _sourceFile;
+
+        public AstroExprVisitor(string? sourceFile = null)
+        {
+            _sourceFile = sourceFile;
+        }
+
+        private SourceLocation GetLocation(ParserRuleContext context)
+        {
+            return new SourceLocation(
+                context.Start.StartIndex,
+                (context.Stop?.StopIndex ?? context.Start.StopIndex) + 1,
+                _sourceFile
+            );
+        }
+
+        private SourceLocation GetLocation(IToken token)
+        {
+            return new SourceLocation(token.StartIndex, token.StopIndex + 1, _sourceFile);
+        }
+
         public override EvalExpr VisitMain(AstroExprParser.MainContext context)
         {
             return Visit(context.expr());
@@ -61,7 +86,7 @@ public class ExprParser
         {
             // Grammar is: variableReference : '$' identifierName ;
             // So the identifierName part does NOT include the $
-            return new VarExpr(context.identifierName().GetText());
+            return new VarExpr(context.identifierName().GetText(), GetLocation(context));
         }
 
         public override EvalExpr VisitLetExpr(AstroExprParser.LetExprContext context)
@@ -69,14 +94,15 @@ public class ExprParser
             var assignments = context
                 .variableAssign()
                 .Select(x => ((VarExpr)Visit(x.variableReference()), Visit(x.expr())!));
-            return new LetExpr(assignments, Visit(context.expr()));
+            return new LetExpr(assignments, Visit(context.expr()), GetLocation(context));
         }
 
         public override EvalExpr VisitLambdaExpr(AstroExprParser.LambdaExprContext context)
         {
             return new LambdaExpr(
                 Visit(context.variableReference()).AsVar().Name,
-                Visit(context.expr())
+                Visit(context.expr()),
+                GetLocation(context)
             );
         }
 
@@ -84,7 +110,8 @@ public class ExprParser
         {
             return new CallExpr(
                 context.GetChild(1).GetText(),
-                [Visit(context.expr(0)), Visit(context.expr(1))]
+                [Visit(context.expr(0)), Visit(context.expr(1))],
+                GetLocation(context)
             );
         }
 
@@ -92,14 +119,15 @@ public class ExprParser
         {
             return new CallExpr(
                 "?",
-                [Visit(context.expr(0)), Visit(context.expr(1)), Visit(context.expr(2))]
+                [Visit(context.expr(0)), Visit(context.expr(1)), Visit(context.expr(2))],
+                GetLocation(context)
             );
         }
 
         public override EvalExpr VisitArrayLiteral(AstroExprParser.ArrayLiteralContext context)
         {
             var elems = context.expr().Select(x => Visit(x));
-            return new ArrayExpr(elems);
+            return new ArrayExpr(elems, GetLocation(context));
         }
 
         public override EvalExpr VisitObjectLiteral(AstroExprParser.ObjectLiteralContext context)
@@ -108,7 +136,7 @@ public class ExprParser
             var objectArgs = fields.SelectMany(x =>
                 x.expr().Length == 2 ? new[] { Visit(x.expr(0)), Visit(x.expr(1)) } : []
             );
-            return new CallExpr("object", objectArgs.ToList());
+            return new CallExpr("object", objectArgs.ToList(), GetLocation(context));
         }
 
         public override EvalExpr VisitTemplateStringLiteral(AstroExprParser.TemplateStringLiteralContext context)
@@ -130,11 +158,12 @@ public class ExprParser
                 }
             }
             FinishString();
+            var location = GetLocation(context);
             return args.Count switch
             {
-                0 => new ValueExpr(""),
+                0 => new ValueExpr("", null, null, location),
                 1 when args[0].IsString() => args[0],
-                _ => new CallExpr("string", args)
+                _ => new CallExpr("string", args, location)
             };
 
             void FinishString()
@@ -148,15 +177,16 @@ public class ExprParser
 
         public override EvalExpr VisitTerminal(ITerminalNode node)
         {
+            var location = GetLocation(node.Symbol);
             return node.Symbol.Type switch
             {
-                AstroExprParser.Identifier => new PropertyExpr(node.GetText()),
-                AstroExprParser.Number => new ValueExpr(double.Parse(node.GetText())),
-                AstroExprParser.False => ValueExpr.False,
-                AstroExprParser.True => ValueExpr.True,
-                AstroExprParser.Null => ValueExpr.Null,
+                AstroExprParser.Identifier => new PropertyExpr(node.GetText(), location),
+                AstroExprParser.Number => new ValueExpr(double.Parse(node.GetText()), null, null, location),
+                AstroExprParser.False => new ValueExpr(false, null, null, location),
+                AstroExprParser.True => new ValueExpr(true, null, null, location),
+                AstroExprParser.Null => new ValueExpr(null, null, null, location),
                 AstroExprParser.StringLiteral when node.GetText() is var text
-                    => StringValue(text.Substring(1, text.Length - 2)),
+                    => StringValue(text.Substring(1, text.Length - 2), location),
                 _ => throw new NotImplementedException()
             };
         }
@@ -164,12 +194,13 @@ public class ExprParser
         public override EvalExpr VisitUnaryOp(AstroExprParser.UnaryOpContext context)
         {
             var expr = context.expr();
+            var location = GetLocation(context);
             return context.NOT() != null
-                ? new CallExpr("!", [Visit(expr)])
+                ? new CallExpr("!", [Visit(expr)], location)
                 : context.PLUS() != null
                     ? Visit(expr)
                     : context.MINUS() != null
-                        ? new CallExpr("-", [new ValueExpr(0), Visit(expr)])
+                        ? new CallExpr("-", [new ValueExpr(0), Visit(expr)], location)
                         : base.VisitUnaryOp(context);
         }
 
@@ -183,12 +214,12 @@ public class ExprParser
             // Get the function name from the variable reference (already has $ stripped by grammar)
             var functionName = context.variableReference().identifierName().GetText();
             var args = context.expr().Select(Visit).ToList();
-            return new CallExpr(functionName, args);
+            return new CallExpr(functionName, args, GetLocation(context));
         }
     }
 
-    public static ValueExpr StringValue(string escaped)
+    public static ValueExpr StringValue(string escaped, SourceLocation? location = null)
     {
-        return new ValueExpr(StringUnescape.UnescapeJsString(escaped));
+        return new ValueExpr(StringUnescape.UnescapeJsString(escaped), null, null, location);
     }
 }
