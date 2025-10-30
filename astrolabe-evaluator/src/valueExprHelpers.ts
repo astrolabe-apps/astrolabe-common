@@ -1,0 +1,84 @@
+import { Path, ValueExpr, ValueExprValue } from "./ast";
+import {
+  ComputedValueExpr,
+  ControlBackedValueExpr,
+} from "./reactiveValueExpr";
+
+/**
+ * Create a new ValueExpr with a different value.
+ * Always returns a plain object (breaks reactivity).
+ * Use this when the value is fundamentally different from the source.
+ */
+export function withValue(
+  expr: ValueExpr,
+  newValue: ValueExprValue,
+): ValueExpr {
+  return {
+    type: "value",
+    value: newValue,
+    path: expr.path,
+    location: expr.location,
+    // Note: Does NOT preserve deps or function - new value breaks reactivity
+  };
+}
+
+/**
+ * Create a new ValueExpr with a different path.
+ * Preserves reactivity if the source is reactive.
+ */
+export function withPath(expr: ValueExpr, path: Path | undefined): ValueExpr {
+  if (expr instanceof ComputedValueExpr) {
+    return new ComputedValueExpr(
+      expr.getControl(),
+      path,
+      expr.location,
+      expr.function,
+      expr.deps,
+    );
+  } else if (expr instanceof ControlBackedValueExpr) {
+    return new ControlBackedValueExpr(
+      expr.getControl(),
+      path,
+      expr.location,
+      expr.function,
+      expr.deps,
+    );
+  }
+  // Static: Create new POJO
+  return {
+    ...expr,
+    path,
+  };
+}
+
+/**
+ * Create a new ValueExpr with different dependencies.
+ * Preserves reactivity if the source is reactive.
+ */
+export function withDeps(
+  expr: ValueExpr,
+  deps: Path[] | undefined,
+): ValueExpr {
+  if (expr instanceof ComputedValueExpr) {
+    return new ComputedValueExpr(
+      expr.getControl(),
+      expr.path,
+      expr.location,
+      expr.function,
+      deps,
+    );
+  } else if (expr instanceof ControlBackedValueExpr) {
+    return new ControlBackedValueExpr(
+      expr.getControl(),
+      expr.path,
+      expr.location,
+      expr.function,
+      deps,
+    );
+  }
+  // Static: Create new POJO
+  return {
+    ...expr,
+    deps,
+  };
+}

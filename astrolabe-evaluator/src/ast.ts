@@ -198,6 +198,12 @@ export abstract class EvalEnv {
   abstract withCurrent(path: ValueExpr): EvalEnv;
   abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
   abstract withError(error: string): EvalEnv;
+  abstract computeValueExpr(
+    computeFn: () => ValueExprValue,
+    path?: Path,
+    location?: SourceLocation,
+    deps?: ValueExpr[],
+  ): ValueExpr;
 }
 
 export type EvalExpr =
@@ -234,16 +240,18 @@ export interface CallExpr {
   location?: SourceLocation;
 }
 
+export type ValueExprValue =
+  | string
+  | number
+  | boolean
+  | Record<string, ValueExpr>
+  | ValueExpr[]
+  | null
+  | undefined;
+
 export interface ValueExpr {
   type: "value";
-  value?:
-    | string
-    | number
-    | boolean
-    | Record<string, ValueExpr>
-    | ValueExpr[]
-    | null
-    | undefined;
+  value?: ValueExprValue;
   function?: FunctionValue;
   path?: Path;
   deps?: Path[];

@@ -1,6 +1,9 @@
 export { parser } from "./parser";
 export * from "./ast";
 export * from "./evaluate";
+export * from "./reactiveEvaluate";
+export * from "./reactiveValueExpr";
+export * from "./valueExprHelpers";
 export * from "./parseEval";
 export * from "./printExpr";
 export * from "./defaultFunctions";

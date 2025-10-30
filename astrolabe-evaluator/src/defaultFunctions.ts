@@ -27,7 +27,7 @@ import {
   toNative,
   valueExpr,
   ValueExpr,
-  valueExprWithDeps,
+  ValueExprValue,
 } from "./ast";
 import {
   BasicEvalEnv,
@@ -38,6 +38,7 @@ import {
 } from "./evaluate";
 import { allElems, valuesToString, addDepsRecursively } from "./values";
 import { printExpr } from "./printExpr";
+import { withDeps } from "./valueExprHelpers";
 import {
   checkAll,
   getElementType,
@@ -51,7 +52,7 @@ import {
 function stringFunction(after: (s: string) => string) {
   return functionValue(
     (e, { args }) =>
-      mapEnv(evaluateAll(e, args), (x) => valuesToString(x, after)),
+      mapEnv(evaluateAll(e, args), (x) => valuesToString(e, x, after)),
     constGetType(StringType),
   );
 }
@@ -59,7 +60,14 @@ function stringFunction(after: (s: string) => string) {
 const flatFunction = functionValue(
   (e, call) => {
     const allArgs = mapAllEnv(e, call.args, doEvaluate);
-    return mapEnv(allArgs, (x) => valueExpr(x.flatMap(allElems)));
+    return mapEnv(allArgs, (x) =>
+      e.computeValueExpr(
+        () => x.flatMap(allElems),
+        undefined,
+        call.location,
+        x,
+      ),
+    );
   },
   constGetType(arrayType([])),
 );
@@ -67,12 +75,19 @@ const flatFunction = functionValue(
 export const objectFunction = functionValue(
   (e, call) => {
     return mapEnv(evaluateAll(e, call.args), (args) => {
-      const outObj: Record<string, ValueExpr> = {};
-      let i = 0;
-      while (i < args.length - 1) {
-        outObj[toNative(args[i++]) as string] = args[i++];
-      }
-      return valueExprWithDeps(outObj, args);
+      return e.computeValueExpr(
+        () => {
+          const outObj: Record<string, ValueExpr> = {};
+          let i = 0;
+          while (i < args.length - 1) {
+            outObj[toNative(args[i++]) as string] = args[i++];
+          }
+          return outObj;
+        },
+        undefined,
+        call.location,
+        args,
+      );
     });
   },
   (e, call) => {
@@ -93,17 +108,24 @@ export const objectFunction = functionValue(
 );
 
 export function binFunction(
-  func: (a: any, b: any, e: EvalEnv) => unknown,
+  func: (a: any, b: any, e: EvalEnv) => ValueExprValue,
   returnType: GetReturnType,
   name?: string,
 ): ValueExpr {
   return binEvalFunction(name ?? "_", returnType, (aE, bE, env) => {
     const [nextEnv, [a, b]] = evaluateAll(env, [aE, bE]);
-    if (a.value == null || b.value == null)
-      return [nextEnv, valueExprWithDeps(null, [a, b])];
+    // Move null check inside computeValueExpr for reactivity
     return [
       nextEnv,
-      valueExprWithDeps(func(a.value, b.value, nextEnv), [a, b]),
+      nextEnv.computeValueExpr(
+        () => {
+          if (a.value == null || b.value == null) return null;
+          return func(a.value, b.value, nextEnv);
+        },
+        undefined,
+        undefined,
+        [a, b],
+      ),
     ];
   });
 }
@@ -132,8 +154,16 @@ export function evalFunction(
   run: (args: unknown[]) => unknown,
   returnType: GetReturnType,
 ): ValueExpr {
-  return evalFunctionExpr(
-    (a) => valueExprWithDeps(run(a.map((x) => x.value)), a),
+  return functionValue(
+    (e, call) =>
+      mapEnv(evaluateAll(e, call.args), (args) =>
+        e.computeValueExpr(
+          () => run(args.map((x) => x.value)) as ValueExprValue,
+          undefined,
+          call.location,
+          args,
+        ),
+      ),
     returnType,
   );
 }
@@ -163,17 +193,38 @@ function arrayFunc(
   );
 }
 
-function aggFunction<A>(
+function aggFunction<A extends ValueExprValue>(
   init: (v: ValueExpr[]) => A | null,
   op: (acc: A, x: unknown) => A,
 ): ValueExpr {
-  function performOp(v: ValueExpr[]): unknown {
+  function performOp(v: ValueExpr[]): ValueExprValue {
     return v.reduce(
       (a, { value: b }) => (a != null && b != null ? op(a as A, b) : null),
       init(v),
     );
   }
-  return arrayFunc((v) => valueExprWithDeps(performOp(v), v));
+  return functionValue(
+    (e, call) => {
+      let [ne, v] = mapAllEnv(e, call.args, doEvaluate);
+      // Move array extraction inside computeValueExpr for reactivity
+      return [
+        ne,
+        ne.computeValueExpr(
+          () => {
+            if (v.length == 1 && Array.isArray(v[0].value)) {
+              const arr = v[0].value;
+              return performOp(arr);
+            }
+            return performOp(v);
+          },
+          undefined,
+          call.location,
+          v,
+        ),
+      ];
+    },
+    constGetType(arrayType([])),
+  );
 }
 
 export const whichFunction: ValueExpr = functionValue(
@@ -190,11 +241,18 @@ export const whichFunction: ValueExpr = functionValue(
       const cva = Array.isArray(cv) ? cv.map((x) => x.value) : [cv];
       if (cva.find((x) => nextEnv.state.compare(x, cond.value) === 0)) {
         return mapEnv(nextEnv.evaluate(value), (v) =>
-          valueExprWithDeps(v.value, [cond, compValue, v]),
+          nextEnv.computeValueExpr(() => v.value, undefined, call.location, [
+            cond,
+            compValue,
+            v,
+          ]),
         );
       }
     }
-    return [env, valueExprWithDeps(null, [cond])];
+    return [
+      env,
+      env.computeValueExpr(() => null, undefined, call.location, [cond]),
+    ];
   },
   (e, call) => {
     return mapCallArgs(call, e, (argTypes) => {
@@ -204,27 +262,25 @@ export const whichFunction: ValueExpr = functionValue(
   },
 );
 
-const mapFunction = binEvalFunction(
-  "map",
-  constGetType(AnyType),
-  (left, right, env) => {
-    const [leftEnv, leftVal] = env.evaluate(left);
-    if (!right) return [leftEnv.withError("No map expression"), NullExpr];
-    const { value } = leftVal;
-    if (Array.isArray(value)) {
-      return mapEnv(
-        mapAllEnv(leftEnv, value, (e, elem) =>
-          evaluateWithValue(e, elem, elem, right),
-        ),
-        (vals) => ({ ...leftVal, value: vals }),
-      );
-    }
-    return [
-      leftEnv.withError("Can't map value: " + printExpr(leftVal)),
-      NullExpr,
-    ];
-  },
-);
+const mapFunction = functionValue((env, call) => {
+  const [left, right] = call.args;
+  const [leftEnv, leftVal] = env.evaluate(left);
+  if (!right) return [leftEnv.withError("No map expression"), NullExpr];
+  const { value } = leftVal;
+  if (Array.isArray(value)) {
+    return mapEnv(
+      mapAllEnv(leftEnv, value, (e, elem) =>
+        evaluateWithValue(e, elem, elem, right),
+      ),
+      (vals) =>
+        leftEnv.computeValueExpr(() => vals, leftVal.path, call.location),
+    );
+  }
+  return [
+    leftEnv.withError("Can't map value: " + printExpr(leftVal)),
+    NullExpr,
+  ];
+}, constGetType(AnyType));
 
 const flatmapFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
@@ -237,7 +293,12 @@ const flatmapFunction = functionValue(
         mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
           evaluateWith(e, elem, i, right),
         ),
-        (vals) => ({ ...leftVal, value: vals.flatMap(allElems) }),
+        (vals) =>
+          leftEnv.computeValueExpr(
+            () => vals.flatMap(allElems),
+            leftVal.path,
+            call.location,
+          ),
       );
     }
     if (typeof value === "object") {
@@ -270,6 +331,7 @@ function firstFunction(
     values: ValueExpr[],
     result: ValueExpr,
     env: EvalEnv,
+    leftVal: ValueExpr,
   ) => ValueExpr | undefined,
   finished: ValueExpr = NullExpr,
 ): ValueExpr {
@@ -286,7 +348,7 @@ function firstFunction(
         for (let i = 0; i < value.length; i++) {
           const [nextEnv, v] = evaluateWith(curEnv, value[i], i, right);
           curEnv = nextEnv;
-          const res = callback(i, value, v, curEnv);
+          const res = callback(i, value, v, curEnv, leftVal);
           if (res) {
             return [curEnv, res];
           }
@@ -325,16 +387,12 @@ const filterFunction = functionValue(
 
       // Handle null index - return null with preserved dependencies
       if (firstFilter === null) {
-        const additionalDeps: Path[] = [];
-        if (indexResult.path) additionalDeps.push(indexResult.path);
-        if (indexResult.deps) additionalDeps.push(...indexResult.deps);
-        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
-
         return [
           firstEnv,
-          additionalDeps.length > 0
-            ? { type: "value" as const, value: null, deps: additionalDeps }
-            : NullExpr,
+          firstEnv.computeValueExpr(() => null, undefined, call.location, [
+            leftVal,
+            indexResult,
+          ]),
         ];
       }
 
@@ -372,7 +430,10 @@ const filterFunction = functionValue(
               }),
         firstEnv,
       );
-      return [outEnv, valueExpr(accArray)];
+      return [
+        outEnv,
+        outEnv.computeValueExpr(() => accArray, undefined, call.location),
+      ];
     }
     if (value == null) {
       return [leftEnv, NullExpr];
@@ -384,16 +445,12 @@ const filterFunction = functionValue(
 
       // Handle null key - return null with preserved dependencies
       if (firstFilter === null) {
-        const additionalDeps: Path[] = [];
-        if (keyResult.path) additionalDeps.push(keyResult.path);
-        if (keyResult.deps) additionalDeps.push(...keyResult.deps);
-        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
-
         return [
           keyEnv,
-          additionalDeps.length > 0
-            ? { type: "value" as const, value: null, deps: additionalDeps }
-            : NullExpr,
+          keyEnv.computeValueExpr(() => null, undefined, call.location, [
+            leftVal,
+            keyResult,
+          ]),
         ];
       }
 
@@ -425,7 +482,13 @@ const filterFunction = functionValue(
         // Use addDepsRecursively to ensure nested array elements also get the dependencies
         return [propEnv, addDepsRecursively(propValue, additionalDeps)];
       }
-      return [keyEnv, valueExpr(null)];
+      return [
+        keyEnv,
+        keyEnv.computeValueExpr(() => null, undefined, call.location, [
+          leftVal,
+          keyResult,
+        ]),
+      ];
     }
     return [
       leftEnv.withError("Can't filter value: " + printExpr(leftVal)),
@@ -451,19 +514,30 @@ const condFunction = functionValue(
       return [env.withError("Conditional expects 3 arguments"), NullExpr];
     }
     const [condExpr, thenExpr, elseExpr] = call.args;
-    const [env1, condVal] = env.evaluate(condExpr);
 
-    if (condVal.value === true) {
-      return mapEnv(env1.evaluate(thenExpr), (thenVal) =>
-        valueExprWithDeps(thenVal.value, [condVal, thenVal]),
-      );
-    } else if (condVal.value === false) {
-      return mapEnv(env1.evaluate(elseExpr), (elseVal) =>
-        valueExprWithDeps(elseVal.value, [condVal, elseVal]),
-      );
-    } else {
-      return [env1, valueExprWithDeps(null, [condVal])];
-    }
+    // Evaluate all three expressions to track all dependencies
+    const [env1, condVal] = env.evaluate(condExpr);
+    const [env2, thenVal] = env1.evaluate(thenExpr);
+    const [env3, elseVal] = env2.evaluate(elseExpr);
+
+    // Selection happens inside computeValueExpr for reactivity
+    return [
+      env3,
+      env3.computeValueExpr(
+        () => {
+          if (condVal.value === true) {
+            return thenVal.value;
+          } else if (condVal.value === false) {
+            return elseVal.value;
+          } else {
+            return null;
+          }
+        },
+        undefined,
+        call.location,
+        [condVal, thenVal, elseVal],
+      ),
+    ];
   },
   (e, call) =>
     mapCallArgs(call, e, (args) =>
@@ -507,7 +581,7 @@ const elemFunction = functionValue(
     if (arrayVal.deps) combinedDeps.push(...arrayVal.deps);
     if (elem.deps) combinedDeps.push(...elem.deps);
 
-    return [env2, { ...elem, deps: combinedDeps }];
+    return [env2, withDeps(elem, combinedDeps)];
   },
   (e, call) =>
     mapCallArgs(call, e, (args) =>
@@ -531,11 +605,21 @@ export const keysOrValuesFunction = (type: string) =>
 
       if (typeof objVal.value === "object" && !Array.isArray(objVal.value)) {
         const objValue = objVal.value as Record<string, ValueExpr>;
-        const data =
-          type === "keys"
-            ? Object.keys(objValue).map((val) => valueExpr(val))
-            : Object.values(objValue);
-        return [nextEnv, valueExprWithDeps(data, [objVal])];
+        return [
+          nextEnv,
+          nextEnv.computeValueExpr(
+            () => {
+              const data =
+                type === "keys"
+                  ? Object.keys(objValue).map((val) => valueExpr(val))
+                  : Object.values(objValue);
+              return data;
+            },
+            undefined,
+            call.location,
+            [objVal],
+          ),
+        ];
       }
 
       return [
@@ -552,13 +636,14 @@ export const keysOrValuesFunction = (type: string) =>
   );
 
 /**
- * Helper for short-circuiting boolean operators (AND/OR).
- * Evaluates arguments sequentially until short-circuit condition is met.
+ * Helper for boolean operators (AND/OR) with full reactive evaluation.
+ * Evaluates ALL arguments to track dependencies, then computes result reactively.
+ * Note: This sacrifices short-circuit optimization for full reactivity.
  *
  * @param env - The evaluation environment
  * @param call - The function call expression
- * @param shortCircuitValue - The value that triggers short-circuiting (false for AND, true for OR)
- * @param defaultResult - The result when all args evaluated without short-circuit (true for AND, false for OR)
+ * @param shortCircuitValue - The value that triggers short-circuit (false for AND, true for OR)
+ * @param defaultResult - The result when all args match expected value (true for AND, false for OR)
  */
 function shortCircuitBooleanOp(
   env: EvalEnv,
@@ -566,32 +651,40 @@ function shortCircuitBooleanOp(
   shortCircuitValue: boolean,
   defaultResult: boolean,
 ): EnvValue<ValueExpr> {
-  const deps: ValueExpr[] = [];
-  let currentEnv = env;
+  // Evaluate ALL arguments to track all dependencies
+  const [finalEnv, evaluatedArgs] = mapAllEnv(env, call.args, doEvaluate);
 
-  for (const arg of call.args) {
-    const [nextEnv, argResult] = currentEnv.evaluate(arg);
-    currentEnv = nextEnv;
-    deps.push(argResult);
+  // Compute result inside computeValueExpr for reactivity
+  return [
+    finalEnv,
+    finalEnv.computeValueExpr(
+      () => {
+        // Check each argument's value
+        for (const argResult of evaluatedArgs) {
+          // If we hit the short-circuit value, return it
+          if (argResult.value === shortCircuitValue) {
+            return shortCircuitValue;
+          }
 
-    // Short-circuit: if we hit the short-circuit value, stop evaluating
-    if (argResult.value === shortCircuitValue) {
-      return [currentEnv, valueExprWithDeps(shortCircuitValue, deps)];
-    }
+          // If null, return null
+          if (argResult.value == null) {
+            return null;
+          }
 
-    // If null, return null
-    if (argResult.value == null) {
-      return [currentEnv, valueExprWithDeps(null, deps)];
-    }
+          // If not a valid boolean, return null
+          if (argResult.value !== !shortCircuitValue) {
+            return null;
+          }
+        }
 
-    // If not a valid boolean, return null
-    if (argResult.value !== !shortCircuitValue) {
-      return [currentEnv, valueExprWithDeps(null, deps)];
-    }
-  }
-
-  // All arguments evaluated without short-circuiting
-  return [currentEnv, valueExprWithDeps(defaultResult, deps)];
+        // All arguments evaluated without short-circuiting
+        return defaultResult;
+      },
+      undefined,
+      call.location,
+      evaluatedArgs,
+    ),
+  ];
 }
 
 // Short-circuiting AND operator - stops on false, returns true if all true
@@ -627,20 +720,18 @@ export const defaultFunctions = {
   ">=": compareFunction((x) => x >= 0),
   "=": compareFunction((x) => x === 0),
   "!=": compareFunction((x) => x !== 0),
-  "??": evalFunctionExpr(
-    (x) => {
-      if (x.length !== 2) return NullExpr;
-      // If first arg is not null, return it
-      if (x[0].value != null) return x[0];
-      // First arg is null, return second arg but preserve dependencies from first arg
-      const combinedDeps: Path[] = [];
-      if (x[0].path) combinedDeps.push(x[0].path);
-      if (x[0].deps) combinedDeps.push(...x[0].deps);
-      if (x[1].path) combinedDeps.push(x[1].path);
-      if (x[1].deps) combinedDeps.push(...x[1].deps);
-      return combinedDeps.length > 0
-        ? { ...x[1], deps: combinedDeps }
-        : x[1];
+  "??": functionValue(
+    (env, call) => {
+      return mapEnv(evaluateAll(env, call.args), (x) => {
+        if (x.length !== 2) return NullExpr;
+        // Selection happens inside computeValueExpr for reactivity
+        return env.computeValueExpr(
+          () => (x[0].value != null ? x[0].value : x[1].value),
+          x[0].value != null ? x[0].path : x[1].path,
+          call.location,
+          x,
+        );
+      });
     },
     (e, call) =>
       mapCallArgs(call, e, (args) =>
@@ -651,36 +742,164 @@ export const defaultFunctions = {
   string: stringFunction((x) => x),
   lower: stringFunction((x) => x.toLowerCase()),
   upper: stringFunction((x) => x.toUpperCase()),
-  first: firstFunction("first", (x, v, r) =>
+  first: firstFunction("first", (x, v, r, _env, leftVal) =>
     r.value === true ? v[x] : undefined,
   ),
-  firstIndex: firstFunction("firstIndex", (x, _, r) =>
-    r.value === true ? valueExpr(x) : undefined,
+  firstIndex: firstFunction("firstIndex", (x, _, r, env, leftVal) =>
+    r.value === true
+      ? env.computeValueExpr(() => x, undefined, undefined, [leftVal])
+      : undefined,
   ),
-  any: firstFunction(
-    "any",
-    (_, __, r) => (r.value === true ? valueExpr(true) : undefined),
-    valueExpr(false),
+  any: functionValue(
+    (env, call) => {
+      const [left, right] = call.args;
+      const [leftEnv, leftVal] = env.evaluate(left);
+      const { value } = leftVal;
+      if (value == null) {
+        return [leftEnv, NullExpr];
+      }
+      if (Array.isArray(value)) {
+        let curEnv = leftEnv;
+        for (let i = 0; i < value.length; i++) {
+          const [nextEnv, v] = evaluateWith(curEnv, value[i], i, right);
+          curEnv = nextEnv;
+          if (v.value === true) {
+            return [
+              curEnv,
+              curEnv.computeValueExpr(() => true, undefined, call.location, [
+                leftVal,
+              ]),
+            ];
+          }
+        }
+        return [
+          curEnv,
+          curEnv.computeValueExpr(() => false, undefined, call.location, [
+            leftVal,
+          ]),
+        ];
+      }
+      return [
+        leftEnv.withError(`any only works on arrays: ${printExpr(leftVal)}`),
+        NullExpr,
+      ];
+    },
+    (e, call) =>
+      mapCallArgs(call, e, (args) =>
+        isArrayType(args[0]) ? BooleanType : AnyType,
+      ),
   ),
-  all: firstFunction(
-    "all",
-    (_, __, r) => (r.value !== true ? valueExpr(false) : undefined),
-    valueExpr(true),
+  all: functionValue(
+    (env, call) => {
+      const [left, right] = call.args;
+      const [leftEnv, leftVal] = env.evaluate(left);
+      const { value } = leftVal;
+      if (value == null) {
+        return [leftEnv, NullExpr];
+      }
+      if (Array.isArray(value)) {
+        let curEnv = leftEnv;
+        for (let i = 0; i < value.length; i++) {
+          const [nextEnv, v] = evaluateWith(curEnv, value[i], i, right);
+          curEnv = nextEnv;
+          if (v.value !== true) {
+            return [
+              curEnv,
+              curEnv.computeValueExpr(() => false, undefined, call.location, [
+                leftVal,
+              ]),
+            ];
+          }
+        }
+        return [
+          curEnv,
+          curEnv.computeValueExpr(() => true, undefined, call.location, [
+            leftVal,
+          ]),
+        ];
+      }
+      return [
+        leftEnv.withError(`all only works on arrays: ${printExpr(leftVal)}`),
+        NullExpr,
+      ];
+    },
+    (e, call) =>
+      mapCallArgs(call, e, (args) =>
+        isArrayType(args[0]) ? BooleanType : AnyType,
+      ),
   ),
-  contains: firstFunction(
-    "contains",
-    (i, v, r, env) =>
-      env.compare(v[i].value, r.value) === 0 ? valueExpr(true) : undefined,
-    valueExpr(false),
+  contains: functionValue(
+    (env, call) => {
+      const [left, right] = call.args;
+      const [leftEnv, leftVal] = env.evaluate(left);
+      const { value } = leftVal;
+      if (value == null) {
+        return [leftEnv, NullExpr];
+      }
+      if (Array.isArray(value)) {
+        let curEnv = leftEnv;
+        for (let i = 0; i < value.length; i++) {
+          const [nextEnv, v] = evaluateWith(curEnv, value[i], i, right);
+          curEnv = nextEnv;
+          if (curEnv.compare(value[i].value, v.value) === 0) {
+            return [
+              curEnv,
+              curEnv.computeValueExpr(() => true, undefined, call.location, [
+                leftVal,
+              ]),
+            ];
+          }
+        }
+        return [
+          curEnv,
+          curEnv.computeValueExpr(() => false, undefined, call.location, [
+            leftVal,
+          ]),
+        ];
+      }
+      return [
+        leftEnv.withError(
+          `contains only works on arrays: ${printExpr(leftVal)}`,
+        ),
+        NullExpr,
+      ];
+    },
+    (e, call) =>
+      mapCallArgs(call, e, (args) =>
+        isArrayType(args[0]) ? BooleanType : AnyType,
+      ),
   ),
-  indexOf: firstFunction("indexOf", (i, v, r, env) =>
-    env.compare(v[i].value, r.value) === 0 ? valueExpr(i) : undefined,
+  indexOf: firstFunction("indexOf", (i, v, r, env, leftVal) =>
+    env.compare(v[i].value, r.value) === 0
+      ? env.computeValueExpr(() => i, undefined, undefined, [leftVal])
+      : undefined,
   ),
-  sum: aggFunction(
+  sum: aggFunction<number>(
     () => 0,
     (acc, b) => acc + (b as number),
   ),
-  count: arrayFunc((acc, v) => valueExprWithDeps(acc.length, v ? [v] : [])),
+  count: functionValue(
+    (e, call) => {
+      let [ne, v] = mapAllEnv(e, call.args, doEvaluate);
+      // Move array extraction inside computeValueExpr for reactivity
+      return [
+        ne,
+        ne.computeValueExpr(
+          () => {
+            if (v.length == 1 && Array.isArray(v[0].value)) {
+              const arr = v[0].value as ValueExpr[];
+              return arr.length;
+            }
+            return v.length;
+          },
+          undefined,
+          call.location,
+          v,
+        ),
+      ];
+    },
+    constGetType(arrayType([])),
+  ),
   min: aggFunction(
     (v) => v[0]?.value as number,
     (a, b) => Math.min(a, b as number),

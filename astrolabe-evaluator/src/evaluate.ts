@@ -10,8 +10,10 @@ import {
   mapEnv,
   Path,
   segmentPath,
+  SourceLocation,
   valueExpr,
   ValueExpr,
+  ValueExprValue,
 } from "./ast";
 
 export function evaluateWith(
@@ -126,6 +128,27 @@ export class BasicEvalEnv extends EvalEnv {
       ...this.state,
       errors: [...this.state.errors, error],
     });
+  }
+
+  computeValueExpr(
+    computeFn: () => ValueExprValue,
+    path?: Path,
+    location?: SourceLocation,
+    deps?: ValueExpr[],
+  ): ValueExpr {
+    // Static evaluation: Execute immediately, return POJO
+    const result = computeFn();
+    const extractedDeps = deps?.flatMap(({ path, deps }) => [
+      ...(deps ?? []),
+      ...(path ? [path] : []),
+    ]);
+    return {
+      type: "value",
+      value: result,
+      path,
+      location,
+      deps: extractedDeps && extractedDeps.length > 0 ? extractedDeps : undefined,
+    };
   }
 
   getVariable(name: string): ValueExpr | undefined {
