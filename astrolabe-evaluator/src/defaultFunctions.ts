@@ -62,10 +62,8 @@ const flatFunction = functionValue(
     const allArgs = mapAllEnv(e, call.args, doEvaluate);
     return mapEnv(allArgs, (x) =>
       e.computeValueExpr(
-        () => x.flatMap(allElems),
-        undefined,
+        () => [x.flatMap(allElems), x],
         call.location,
-        x,
       ),
     );
   },
@@ -82,11 +80,9 @@ export const objectFunction = functionValue(
           while (i < args.length - 1) {
             outObj[toNative(args[i++]) as string] = args[i++];
           }
-          return outObj;
+          return [outObj, args];
         },
-        undefined,
         call.location,
-        args,
       );
     });
   },
@@ -119,12 +115,10 @@ export function binFunction(
       nextEnv,
       nextEnv.computeValueExpr(
         () => {
-          if (a.value == null || b.value == null) return null;
-          return func(a.value, b.value, nextEnv);
+          if (a.value == null || b.value == null) return [null, [a, b]];
+          return [func(a.value, b.value, nextEnv), [a, b]];
         },
         undefined,
-        undefined,
-        [a, b],
       ),
     ];
   });
@@ -158,10 +152,8 @@ export function evalFunction(
     (e, call) =>
       mapEnv(evaluateAll(e, call.args), (args) =>
         e.computeValueExpr(
-          () => run(args.map((x) => x.value)) as ValueExprValue,
-          undefined,
+          () => [run(args.map((x) => x.value)) as ValueExprValue, args],
           call.location,
-          args,
         ),
       ),
     returnType,
@@ -212,14 +204,13 @@ function aggFunction<A extends ValueExprValue>(
         ne.computeValueExpr(
           () => {
             if (v.length == 1 && Array.isArray(v[0].value)) {
-              const arr = v[0].value;
-              return performOp(arr);
+              const arr = v[0].value as ValueExpr[];
+              // Return individual array elements as deps, not the whole array
+              return [performOp(arr), arr];
             }
-            return performOp(v);
+            return [performOp(v), v];
           },
-          undefined,
           call.location,
-          v,
         ),
       ];
     },
@@ -241,17 +232,13 @@ export const whichFunction: ValueExpr = functionValue(
       const cva = Array.isArray(cv) ? cv.map((x) => x.value) : [cv];
       if (cva.find((x) => nextEnv.state.compare(x, cond.value) === 0)) {
         return mapEnv(nextEnv.evaluate(value), (v) =>
-          nextEnv.computeValueExpr(() => v.value, undefined, call.location, [
-            cond,
-            compValue,
-            v,
-          ]),
+          nextEnv.computeValueExpr(() => [v.value, [cond, compValue, v]], call.location),
         );
       }
     }
     return [
       env,
-      env.computeValueExpr(() => null, undefined, call.location, [cond]),
+      env.computeValueExpr(() => [null, [cond]], call.location),
     ];
   },
   (e, call) => {
@@ -273,7 +260,7 @@ const mapFunction = functionValue((env, call) => {
         evaluateWithValue(e, elem, elem, right),
       ),
       (vals) =>
-        leftEnv.computeValueExpr(() => vals, leftVal.path, call.location),
+        leftEnv.computeValueExpr(() => [vals, []], call.location),
     );
   }
   return [
@@ -295,8 +282,7 @@ const flatmapFunction = functionValue(
         ),
         (vals) =>
           leftEnv.computeValueExpr(
-            () => vals.flatMap(allElems),
-            leftVal.path,
+            () => [vals.flatMap(allElems), []],
             call.location,
           ),
       );
@@ -389,10 +375,7 @@ const filterFunction = functionValue(
       if (firstFilter === null) {
         return [
           firstEnv,
-          firstEnv.computeValueExpr(() => null, undefined, call.location, [
-            leftVal,
-            indexResult,
-          ]),
+          firstEnv.computeValueExpr(() => [null, [leftVal, indexResult]], call.location),
         ];
       }
 
@@ -432,7 +415,7 @@ const filterFunction = functionValue(
       );
       return [
         outEnv,
-        outEnv.computeValueExpr(() => accArray, undefined, call.location),
+        outEnv.computeValueExpr(() => [accArray, []], call.location),
       ];
     }
     if (value == null) {
@@ -447,10 +430,7 @@ const filterFunction = functionValue(
       if (firstFilter === null) {
         return [
           keyEnv,
-          keyEnv.computeValueExpr(() => null, undefined, call.location, [
-            leftVal,
-            keyResult,
-          ]),
+          keyEnv.computeValueExpr(() => [null, [leftVal, keyResult]], call.location),
         ];
       }
 
@@ -484,10 +464,7 @@ const filterFunction = functionValue(
       }
       return [
         keyEnv,
-        keyEnv.computeValueExpr(() => null, undefined, call.location, [
-          leftVal,
-          keyResult,
-        ]),
+        keyEnv.computeValueExpr(() => [null, [leftVal, keyResult]], call.location),
       ];
     }
     return [
@@ -515,27 +492,28 @@ const condFunction = functionValue(
     }
     const [condExpr, thenExpr, elseExpr] = call.args;
 
-    // Evaluate all three expressions to track all dependencies
+    // Evaluate condition first
     const [env1, condVal] = env.evaluate(condExpr);
-    const [env2, thenVal] = env1.evaluate(thenExpr);
-    const [env3, elseVal] = env2.evaluate(elseExpr);
 
-    // Selection happens inside computeValueExpr for reactivity
+    // Branch-specific evaluation and dependency tracking
     return [
-      env3,
-      env3.computeValueExpr(
+      env1,
+      env1.computeValueExpr(
         () => {
           if (condVal.value === true) {
-            return thenVal.value;
+            // Evaluate and track only the taken branch
+            const [_, thenVal] = env1.evaluate(thenExpr);
+            return [thenVal.value, [condVal, thenVal]];
           } else if (condVal.value === false) {
-            return elseVal.value;
+            // Evaluate and track only the taken branch
+            const [_, elseVal] = env1.evaluate(elseExpr);
+            return [elseVal.value, [condVal, elseVal]];
           } else {
-            return null;
+            // Null condition - only track the condition itself
+            return [null, [condVal]];
           }
         },
-        undefined,
         call.location,
-        [condVal, thenVal, elseVal],
       ),
     ];
   },
@@ -613,11 +591,11 @@ export const keysOrValuesFunction = (type: string) =>
                 type === "keys"
                   ? Object.keys(objValue).map((val) => valueExpr(val))
                   : Object.values(objValue);
-              return data;
+              // For values, track individual property deps; for keys, track the object
+              const deps = type === "keys" ? [objVal] : Object.values(objValue);
+              return [data, deps];
             },
-            undefined,
             call.location,
-            [objVal],
           ),
         ];
       }
@@ -636,9 +614,9 @@ export const keysOrValuesFunction = (type: string) =>
   );
 
 /**
- * Helper for boolean operators (AND/OR) with full reactive evaluation.
- * Evaluates ALL arguments to track dependencies, then computes result reactively.
- * Note: This sacrifices short-circuit optimization for full reactivity.
+ * Helper for boolean operators (AND/OR) with true short-circuit evaluation.
+ * Evaluates arguments lazily inside computeFn, stopping at the first short-circuit value.
+ * Only tracks dependencies from evaluated arguments.
  *
  * @param env - The evaluation environment
  * @param call - The function call expression
@@ -651,38 +629,38 @@ function shortCircuitBooleanOp(
   shortCircuitValue: boolean,
   defaultResult: boolean,
 ): EnvValue<ValueExpr> {
-  // Evaluate ALL arguments to track all dependencies
-  const [finalEnv, evaluatedArgs] = mapAllEnv(env, call.args, doEvaluate);
-
-  // Compute result inside computeValueExpr for reactivity
+  // Lazy evaluation happens inside computeValueExpr for true short-circuit
   return [
-    finalEnv,
-    finalEnv.computeValueExpr(
+    env,
+    env.computeValueExpr(
       () => {
-        // Check each argument's value
-        for (const argResult of evaluatedArgs) {
-          // If we hit the short-circuit value, return it
+        const evaluatedDeps: ValueExpr[] = [];
+
+        // Evaluate arguments one by one until short-circuit
+        for (const arg of call.args) {
+          const [_, argResult] = env.evaluate(arg);
+          evaluatedDeps.push(argResult);
+
+          // If we hit the short-circuit value, return immediately with deps so far
           if (argResult.value === shortCircuitValue) {
-            return shortCircuitValue;
+            return [shortCircuitValue, evaluatedDeps];
           }
 
-          // If null, return null
+          // If null, return null with deps so far
           if (argResult.value == null) {
-            return null;
+            return [null, evaluatedDeps];
           }
 
-          // If not a valid boolean, return null
+          // If not a valid boolean, return null with deps so far
           if (argResult.value !== !shortCircuitValue) {
-            return null;
+            return [null, evaluatedDeps];
           }
         }
 
         // All arguments evaluated without short-circuiting
-        return defaultResult;
+        return [defaultResult, evaluatedDeps];
       },
-      undefined,
       call.location,
-      evaluatedArgs,
     ),
   ];
 }
@@ -726,10 +704,8 @@ export const defaultFunctions = {
         if (x.length !== 2) return NullExpr;
         // Selection happens inside computeValueExpr for reactivity
         return env.computeValueExpr(
-          () => (x[0].value != null ? x[0].value : x[1].value),
-          x[0].value != null ? x[0].path : x[1].path,
+          () => [(x[0].value != null ? x[0].value : x[1].value), x],
           call.location,
-          x,
         );
       });
     },
@@ -747,7 +723,7 @@ export const defaultFunctions = {
   ),
   firstIndex: firstFunction("firstIndex", (x, _, r, env, leftVal) =>
     r.value === true
-      ? env.computeValueExpr(() => x, undefined, undefined, [leftVal])
+      ? env.computeValueExpr(() => [x, [leftVal]], undefined)
       : undefined,
   ),
   any: functionValue(
@@ -766,17 +742,13 @@ export const defaultFunctions = {
           if (v.value === true) {
             return [
               curEnv,
-              curEnv.computeValueExpr(() => true, undefined, call.location, [
-                leftVal,
-              ]),
+              curEnv.computeValueExpr(() => [true, [leftVal]], call.location),
             ];
           }
         }
         return [
           curEnv,
-          curEnv.computeValueExpr(() => false, undefined, call.location, [
-            leftVal,
-          ]),
+          curEnv.computeValueExpr(() => [false, [leftVal]], call.location),
         ];
       }
       return [
@@ -805,17 +777,13 @@ export const defaultFunctions = {
           if (v.value !== true) {
             return [
               curEnv,
-              curEnv.computeValueExpr(() => false, undefined, call.location, [
-                leftVal,
-              ]),
+              curEnv.computeValueExpr(() => [false, [leftVal]], call.location),
             ];
           }
         }
         return [
           curEnv,
-          curEnv.computeValueExpr(() => true, undefined, call.location, [
-            leftVal,
-          ]),
+          curEnv.computeValueExpr(() => [true, [leftVal]], call.location),
         ];
       }
       return [
@@ -844,17 +812,13 @@ export const defaultFunctions = {
           if (curEnv.compare(value[i].value, v.value) === 0) {
             return [
               curEnv,
-              curEnv.computeValueExpr(() => true, undefined, call.location, [
-                leftVal,
-              ]),
+              curEnv.computeValueExpr(() => [true, [leftVal]], call.location),
             ];
           }
         }
         return [
           curEnv,
-          curEnv.computeValueExpr(() => false, undefined, call.location, [
-            leftVal,
-          ]),
+          curEnv.computeValueExpr(() => [false, [leftVal]], call.location),
         ];
       }
       return [
@@ -871,7 +835,7 @@ export const defaultFunctions = {
   ),
   indexOf: firstFunction("indexOf", (i, v, r, env, leftVal) =>
     env.compare(v[i].value, r.value) === 0
-      ? env.computeValueExpr(() => i, undefined, undefined, [leftVal])
+      ? env.computeValueExpr(() => [i, [leftVal]], undefined)
       : undefined,
   ),
   sum: aggFunction<number>(
@@ -888,13 +852,12 @@ export const defaultFunctions = {
           () => {
             if (v.length == 1 && Array.isArray(v[0].value)) {
               const arr = v[0].value as ValueExpr[];
-              return arr.length;
+              // Return individual array elements as deps, not the whole array
+              return [arr.length, arr];
             }
-            return v.length;
+            return [v.length, v];
           },
-          undefined,
           call.location,
-          v,
         ),
       ];
     },

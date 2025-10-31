@@ -199,10 +199,8 @@ export abstract class EvalEnv {
   abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
   abstract withError(error: string): EvalEnv;
   abstract computeValueExpr(
-    computeFn: () => ValueExprValue,
-    path?: Path,
+    computeFn: () => [ValueExprValue, ValueExpr[]],
     location?: SourceLocation,
-    deps?: ValueExpr[],
   ): ValueExpr;
 }
 

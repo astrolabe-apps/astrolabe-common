@@ -131,23 +131,21 @@ export class BasicEvalEnv extends EvalEnv {
   }
 
   computeValueExpr(
-    computeFn: () => ValueExprValue,
-    path?: Path,
+    computeFn: () => [ValueExprValue, ValueExpr[]],
     location?: SourceLocation,
-    deps?: ValueExpr[],
   ): ValueExpr {
     // Static evaluation: Execute immediately, return POJO
-    const result = computeFn();
-    const extractedDeps = deps?.flatMap(({ path, deps }) => [
+    const [result, depsArray] = computeFn();
+    const extractedDeps = depsArray.flatMap(({ path, deps }) => [
       ...(deps ?? []),
       ...(path ? [path] : []),
     ]);
     return {
       type: "value",
       value: result,
-      path,
+      path: undefined,
       location,
-      deps: extractedDeps && extractedDeps.length > 0 ? extractedDeps : undefined,
+      deps: extractedDeps.length > 0 ? extractedDeps : undefined,
     };
   }
 

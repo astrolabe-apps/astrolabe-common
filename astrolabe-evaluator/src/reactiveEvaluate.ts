@@ -25,21 +25,29 @@ import { addDefaults } from "./defaultFunctions";
  */
 export class ReactiveEvalEnv extends BasicEvalEnv {
   computeValueExpr(
-    computeFn: () => ValueExprValue,
-    path?: Path,
+    computeFn: () => [ValueExprValue, ValueExpr[]],
     location?: SourceLocation,
-    deps?: ValueExpr[],
   ): ValueExpr {
     // Reactive evaluation: Create reactive ComputedValueExpr
-    const extractedDeps = deps?.flatMap(({ path, deps }) => [
+    // Call computeFn once to extract dependencies
+    const [_, depsArray] = computeFn();
+    const extractedDeps = depsArray.flatMap(({ path, deps }) => [
       ...(deps ?? []),
       ...(path ? [path] : []),
     ]);
+
+    // Create a reactive compute function that extracts just the value
+    // This will be called each time the control is read, providing reactivity
+    const valueGetter = () => {
+      const [value, _] = computeFn();
+      return value;
+    };
+
     return createComputedValueExpr(
-      computeFn,
-      path,
+      valueGetter,
+      undefined, // path is not needed for computed values
       location,
-      extractedDeps && extractedDeps.length > 0 ? extractedDeps : undefined,
+      extractedDeps.length > 0 ? extractedDeps : undefined,
     );
   }
 

@@ -55,11 +55,9 @@ export function valuesToString(
   return env.computeValueExpr(
     () => {
       const allVals = value.map((v) => toString(env, v));
-      return after(allVals.map((x) => x.value).join(""));
+      return [after(allVals.map((x) => x.value).join("")), value];
     },
     undefined,
-    undefined,
-    value,
   );
 }
 
