@@ -463,7 +463,7 @@ export function emptyEnvState(root: unknown): EvalEnvState {
         const propValue = objValue[property];
         if (propValue) {
           // Preserve dependencies from parent object when accessing properties
-          const combinedDeps: Path[] = [];
+          const combinedDeps: ValueExpr[] = [];
           if (object.deps) combinedDeps.push(...object.deps);
           if (propValue.deps) combinedDeps.push(...propValue.deps);
           return {
