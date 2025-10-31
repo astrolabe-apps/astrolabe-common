@@ -359,7 +359,7 @@ describe("Reactive Environment", () => {
     });
   });
 
-  describe("Conditional re-evaluation (SHOULD FAIL - condition changes not tracked)", () => {
+  describe("Conditional re-evaluation", () => {
     test("conditional should re-evaluate when condition changes from true to false", () => {
       const dataControl = newControl({ flag: true, x: 100, y: 200 });
       const env = reactiveEnv(dataControl);
@@ -371,7 +371,7 @@ describe("Reactive Environment", () => {
 
       // Change the condition to false - should switch to y branch
       dataControl.value = { flag: false, x: 100, y: 200 };
-      expect(result.value).toBe(200); // SHOULD FAIL: currently stays 100
+      expect(result.value).toBe(200); // Switches to y branch
     });
 
     test("conditional should re-evaluate when comparison condition changes", () => {
@@ -385,7 +385,7 @@ describe("Reactive Environment", () => {
 
       // Change comparison to make condition false
       dataControl.value = { a: 3, b: 5, x: 100, y: 200 };
-      expect(result.value).toBe(200); // SHOULD FAIL: condition changed to false
+      expect(result.value).toBe(200); // Condition changed to false, switches to y branch
     });
 
     test("nested conditionals should re-evaluate when outer condition changes", () => {
@@ -405,7 +405,7 @@ describe("Reactive Environment", () => {
 
       // Change outer condition to false
       dataControl.value = { outer: false, inner: true, a: 10, b: 20, c: 30 };
-      expect(result.value).toBe(30); // SHOULD FAIL: outer changed to false, should return c
+      expect(result.value).toBe(30); // Outer changed to false, returns c
     });
 
     test("null coalescing should re-evaluate when value becomes non-null", () => {
@@ -419,7 +419,7 @@ describe("Reactive Environment", () => {
 
       // Change value to non-null - should use value instead of default
       dataControl.value = { value: "actual", default: "fallback" };
-      expect(result.value).toBe("actual"); // SHOULD FAIL: currently stays "fallback"
+      expect(result.value).toBe("actual"); // Uses actual value instead of fallback
     });
 
     test("AND operation should re-evaluate when left side becomes false", () => {
@@ -433,7 +433,7 @@ describe("Reactive Environment", () => {
 
       // Change left side to false
       dataControl.value = { a: false, b: true, x: 10, y: 20 };
-      expect(result.value).toBe(false); // SHOULD FAIL: a is now false
+      expect(result.value).toBe(false); // Short-circuits on false left side
     });
 
     test("OR operation should re-evaluate when both sides change", () => {
@@ -447,11 +447,11 @@ describe("Reactive Environment", () => {
 
       // Change right side to true
       dataControl.value = { a: false, b: true };
-      expect(result.value).toBe(true); // SHOULD FAIL: b is now true
+      expect(result.value).toBe(true); // Re-evaluates and finds b is now true
     });
   });
 
-  describe("Function re-evaluation (SHOULD FAIL - functions don't re-evaluate)", () => {
+  describe("Function re-evaluation", () => {
     test("$lower function should re-evaluate when input changes", () => {
       const dataControl = newControl({ text: "HELLO" });
       const env = reactiveEnv(dataControl);
@@ -463,7 +463,7 @@ describe("Reactive Environment", () => {
 
       // Change text value
       dataControl.value = { text: "WORLD" };
-      expect(result.value).toBe("world"); // SHOULD FAIL: currently stays "hello"
+      expect(result.value).toBe("world"); // Re-evaluates with new input
     });
 
     test("$upper function should re-evaluate when input changes", () => {
@@ -477,7 +477,7 @@ describe("Reactive Environment", () => {
 
       // Change text value
       dataControl.value = { text: "world" };
-      expect(result.value).toBe("WORLD"); // SHOULD FAIL: currently stays "HELLO"
+      expect(result.value).toBe("WORLD"); // Re-evaluates with new input
     });
 
     test("$sum function should re-evaluate when array changes", () => {
@@ -491,7 +491,7 @@ describe("Reactive Environment", () => {
 
       // Change array
       dataControl.value = { numbers: [5, 10, 15] };
-      expect(result.value).toBe(30); // SHOULD FAIL: currently stays 10
+      expect(result.value).toBe(30); // Re-evaluates with new array
     });
 
     test("$count function should re-evaluate when array changes", () => {
@@ -505,7 +505,7 @@ describe("Reactive Environment", () => {
 
       // Change array length
       dataControl.value = { items: [1, 2, 3, 4, 5] };
-      expect(result.value).toBe(5); // SHOULD FAIL: currently stays 3
+      expect(result.value).toBe(5); // Re-evaluates with new array length
     });
 
     test("nested function calls should re-evaluate", () => {
@@ -519,7 +519,7 @@ describe("Reactive Environment", () => {
 
       // Change text
       dataControl.value = { text: "goodbye universe" };
-      expect(result.value).toBe("GOODBYE UNIVERSE"); // SHOULD FAIL: currently stays "HELLO WORLD"
+      expect(result.value).toBe("GOODBYE UNIVERSE"); // Nested functions re-evaluate
     });
 
     test("function in conditional branch should re-evaluate", () => {
@@ -533,7 +533,7 @@ describe("Reactive Environment", () => {
 
       // Change text value in active branch
       dataControl.value = { flag: true, text: "world" };
-      expect(result.value).toBe("WORLD"); // SHOULD FAIL: currently stays "HELLO"
+      expect(result.value).toBe("WORLD"); // Function in active branch re-evaluates
     });
   });
 });
