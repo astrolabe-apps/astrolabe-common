@@ -8,11 +8,19 @@ abstract class ReactiveValueExprBase implements ValueExpr {
 
   abstract get value(): ValueExprValue;
 
+  protected _staticDeps?: ValueExpr[];
+
+  get deps(): ValueExpr[] | undefined {
+    return this._staticDeps;
+  }
+
   constructor(
     public path?: Path,
     public location?: SourceLocation,
-    public deps?: Path[],
-  ) {}
+    deps?: ValueExpr[],
+  ) {
+    this._staticDeps = deps;
+  }
 
   static isReactive(expr: ValueExpr): expr is ReactiveValueExprBase {
     return expr instanceof ReactiveValueExprBase;
@@ -21,23 +29,27 @@ abstract class ReactiveValueExprBase implements ValueExpr {
 
 // 1. Computed reactive values (from compute function)
 export class ComputedValueExpr extends ReactiveValueExprBase {
-  private _control: Control<ValueExprValue>;
+  private _control: Control<[ValueExprValue, ValueExpr[]]>;
 
   get value(): ValueExprValue {
-    return this._control.value;
+    return this._control.value[0];
+  }
+
+  override get deps(): ValueExpr[] | undefined {
+    const depsArray = this._control.value[1];
+    return depsArray.length > 0 ? depsArray : undefined;
   }
 
   constructor(
-    control: Control<ValueExprValue>,
+    control: Control<[ValueExprValue, ValueExpr[]]>,
     path?: Path,
     location?: SourceLocation,
-    deps?: Path[],
   ) {
-    super(path, location, deps);
+    super(path, location, undefined);
     this._control = control;
   }
 
-  getControl(): Control<ValueExprValue> {
+  getControl(): Control<[ValueExprValue, ValueExpr[]]> {
     return this._control;
   }
 }
@@ -55,7 +67,7 @@ export class ControlBackedValueExpr extends ReactiveValueExprBase {
     control: Control<any>,
     path?: Path,
     location?: SourceLocation,
-    deps?: Path[],
+    deps?: ValueExpr[],
   ) {
     super(path, location, deps);
     this._control = control;
@@ -149,14 +161,13 @@ function shapeAsValueExprValue(
 
 // Factory: Create computed reactive value
 export function computeValueExpr(
-  computeFn: () => ValueExprValue,
+  computeFn: () => [ValueExprValue, ValueExpr[]],
   path?: Path,
   location?: SourceLocation,
-  deps?: Path[],
 ): ValueExpr {
-  const control = newControl<ValueExprValue>(null);
+  const control = newControl<[ValueExprValue, ValueExpr[]]>([null, []]);
   updateComputedValue(control, computeFn);
-  return new ComputedValueExpr(control, path, location, deps);
+  return new ComputedValueExpr(control, path, location);
 }
 
 // Factory: Wrap existing Control as reactive ValueExpr

@@ -29,25 +29,11 @@ export class ReactiveEvalEnv extends BasicEvalEnv {
     location?: SourceLocation,
   ): ValueExpr {
     // Reactive evaluation: Create reactive ComputedValueExpr
-    // Call computeFn once to extract dependencies
-    const [_, depsArray] = computeFn();
-    const extractedDeps = depsArray.flatMap(({ path, deps }) => [
-      ...(deps ?? []),
-      ...(path ? [path] : []),
-    ]);
-
-    // Create a reactive compute function that extracts just the value
-    // This will be called each time the control is read, providing reactivity
-    const valueGetter = () => {
-      const [value, _] = computeFn();
-      return value;
-    };
-
+    // The computeFn already returns [value, deps] tuple, so we can pass it directly
     return createComputedValueExpr(
-      valueGetter,
+      computeFn,
       undefined, // path is not needed for computed values
       location,
-      extractedDeps.length > 0 ? extractedDeps : undefined,
     );
   }
 
@@ -76,7 +62,7 @@ export function reactiveEnvState(rootControl: Control<any>): EvalEnvState {
         const propValue = objValue[property];
         if (propValue) {
           // Preserve dependencies from parent object when accessing properties
-          const combinedDeps: Path[] = [];
+          const combinedDeps: ValueExpr[] = [];
           if (object.deps) combinedDeps.push(...object.deps);
           if (propValue.deps) combinedDeps.push(...propValue.deps);
 

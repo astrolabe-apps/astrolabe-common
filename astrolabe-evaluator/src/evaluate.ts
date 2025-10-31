@@ -136,16 +136,12 @@ export class BasicEvalEnv extends EvalEnv {
   ): ValueExpr {
     // Static evaluation: Execute immediately, return POJO
     const [result, depsArray] = computeFn();
-    const extractedDeps = depsArray.flatMap(({ path, deps }) => [
-      ...(deps ?? []),
-      ...(path ? [path] : []),
-    ]);
     return {
       type: "value",
       value: result,
       path: undefined,
       location,
-      deps: extractedDeps.length > 0 ? extractedDeps : undefined,
+      deps: depsArray.length > 0 ? depsArray : undefined,
     };
   }
 

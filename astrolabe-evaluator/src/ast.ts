@@ -252,7 +252,7 @@ export interface ValueExpr {
   value?: ValueExprValue;
   function?: FunctionValue;
   path?: Path;
-  deps?: Path[];
+  deps?: ValueExpr[];
   location?: SourceLocation;
 }
 
@@ -310,10 +310,7 @@ export function valueExprWithDeps(value: any, deps: ValueExpr[]): ValueExpr {
   return {
     type: "value",
     value,
-    deps: deps.flatMap(({ path, deps }) => [
-      ...(deps ?? []),
-      ...(path ? [path] : []),
-    ]),
+    deps: deps.length > 0 ? deps : undefined,
   };
 }
 

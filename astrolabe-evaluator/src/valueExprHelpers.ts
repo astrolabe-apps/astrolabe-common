@@ -29,7 +29,6 @@ export function withPath(expr: ValueExpr, path: Path | undefined): ValueExpr {
       expr.getControl(),
       path,
       expr.location,
-      expr.deps,
     );
   } else if (expr instanceof ControlBackedValueExpr) {
     return new ControlBackedValueExpr(
@@ -49,15 +48,13 @@ export function withPath(expr: ValueExpr, path: Path | undefined): ValueExpr {
 /**
  * Create a new ValueExpr with different dependencies.
  * Preserves reactivity if the source is reactive.
+ * Note: ComputedValueExpr gets deps from its Control, so this only works for static/ControlBacked.
  */
-export function withDeps(expr: ValueExpr, deps: Path[] | undefined): ValueExpr {
+export function withDeps(expr: ValueExpr, deps: ValueExpr[] | undefined): ValueExpr {
   if (expr instanceof ComputedValueExpr) {
-    return new ComputedValueExpr(
-      expr.getControl(),
-      expr.path,
-      expr.location,
-      deps,
-    );
+    // ComputedValueExpr deps come from the Control, can't override them
+    // Return the expr as-is
+    return expr;
   } else if (expr instanceof ControlBackedValueExpr) {
     return new ControlBackedValueExpr(
       expr.getControl(),
