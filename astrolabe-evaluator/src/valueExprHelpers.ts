@@ -1,8 +1,5 @@
 import { Path, ValueExpr, ValueExprValue } from "./ast";
-import {
-  ComputedValueExpr,
-  ControlBackedValueExpr,
-} from "./reactiveValueExpr";
+import { ComputedValueExpr, ControlBackedValueExpr } from "./reactiveValueExpr";
 
 /**
  * Create a new ValueExpr with a different value.
@@ -32,7 +29,6 @@ export function withPath(expr: ValueExpr, path: Path | undefined): ValueExpr {
       expr.getControl(),
       path,
       expr.location,
-      expr.function,
       expr.deps,
     );
   } else if (expr instanceof ControlBackedValueExpr) {
@@ -40,7 +36,6 @@ export function withPath(expr: ValueExpr, path: Path | undefined): ValueExpr {
       expr.getControl(),
       path,
       expr.location,
-      expr.function,
       expr.deps,
     );
   }
@@ -55,16 +50,12 @@ export function withPath(expr: ValueExpr, path: Path | undefined): ValueExpr {
  * Create a new ValueExpr with different dependencies.
  * Preserves reactivity if the source is reactive.
  */
-export function withDeps(
-  expr: ValueExpr,
-  deps: Path[] | undefined,
-): ValueExpr {
+export function withDeps(expr: ValueExpr, deps: Path[] | undefined): ValueExpr {
   if (expr instanceof ComputedValueExpr) {
     return new ComputedValueExpr(
       expr.getControl(),
       expr.path,
       expr.location,
-      expr.function,
       deps,
     );
   } else if (expr instanceof ControlBackedValueExpr) {
@@ -72,7 +63,6 @@ export function withDeps(
       expr.getControl(),
       expr.path,
       expr.location,
-      expr.function,
       deps,
     );
   }
