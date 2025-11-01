@@ -536,4 +536,49 @@ describe("Reactive Environment", () => {
       expect(result.value).toBe("WORLD"); // Function in active branch re-evaluates
     });
   });
+
+  describe("Dynamic key access", () => {
+    test("object access with dynamic key from within object updates when key changes", () => {
+      const dataControl = newControl({
+        data: { name: "Alice", age: 30, city: "NYC", selectedField: "name" }
+      });
+      const env = reactiveEnv(dataControl);
+
+      const expr = parseEval("data[selectedField]");
+      const [_, result] = env.evaluate(expr);
+
+      expect(result.value).toBe("Alice");
+      expect(ReactiveValueExprBase.isReactive(result)).toBe(true);
+
+      // Change the key to access a different field
+      dataControl.value = {
+        data: { name: "Alice", age: 30, city: "NYC", selectedField: "age" }
+      };
+      expect(result.value).toBe(30); // Should reactively switch to age field
+
+      // Change the key again
+      dataControl.value = {
+        data: { name: "Alice", age: 30, city: "NYC", selectedField: "city" }
+      };
+      expect(result.value).toBe("NYC"); // Should reactively switch to city field
+    });
+
+    test("object access with dynamic key updates when both key and value change", () => {
+      const dataControl = newControl({
+        user: { name: "Alice", age: 30, fieldToAccess: "name" }
+      });
+      const env = reactiveEnv(dataControl);
+
+      const expr = parseEval("user[fieldToAccess]");
+      const [_, result] = env.evaluate(expr);
+
+      expect(result.value).toBe("Alice");
+
+      // Change both the data and the key
+      dataControl.value = {
+        user: { name: "Bob", age: 25, fieldToAccess: "age" }
+      };
+      expect(result.value).toBe(25); // Should access the new age field
+    });
+  });
 });
