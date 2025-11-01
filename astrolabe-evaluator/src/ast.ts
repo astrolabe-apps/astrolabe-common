@@ -198,10 +198,6 @@ export abstract class EvalEnv {
   abstract withCurrent(path: ValueExpr): EvalEnv;
   abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
   abstract withError(error: string): EvalEnv;
-  abstract computeValueExpr(
-    computeFn: () => [ValueExprValue, ValueExpr[]],
-    location?: SourceLocation,
-  ): ValueExpr;
 }
 
 export type EvalExpr =
@@ -238,21 +234,19 @@ export interface CallExpr {
   location?: SourceLocation;
 }
 
-export type ValueExprValue =
-  | string
-  | number
-  | boolean
-  | Record<string, ValueExpr>
-  | ValueExpr[]
-  | null
-  | undefined;
-
 export interface ValueExpr {
   type: "value";
-  value?: ValueExprValue;
+  value?:
+    | string
+    | number
+    | boolean
+    | Record<string, ValueExpr>
+    | ValueExpr[]
+    | null
+    | undefined;
   function?: FunctionValue;
   path?: Path;
-  deps?: ValueExpr[];
+  deps?: Path[];
   location?: SourceLocation;
 }
 
@@ -310,7 +304,10 @@ export function valueExprWithDeps(value: any, deps: ValueExpr[]): ValueExpr {
   return {
     type: "value",
     value,
-    deps: deps.length > 0 ? deps : undefined,
+    deps: deps.flatMap(({ path, deps }) => [
+      ...(deps ?? []),
+      ...(path ? [path] : []),
+    ]),
   };
 }
 
@@ -463,7 +460,7 @@ export function emptyEnvState(root: unknown): EvalEnvState {
         const propValue = objValue[property];
         if (propValue) {
           // Preserve dependencies from parent object when accessing properties
-          const combinedDeps: ValueExpr[] = [];
+          const combinedDeps: Path[] = [];
           if (object.deps) combinedDeps.push(...object.deps);
           if (propValue.deps) combinedDeps.push(...propValue.deps);
           return {

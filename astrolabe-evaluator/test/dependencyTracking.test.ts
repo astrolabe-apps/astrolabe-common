@@ -33,21 +33,8 @@ function pathToString(path: Path): string {
 
 function getDeps(result: ValueExpr): string[] {
   const paths: Path[] = [];
-  const visited = new Set<ValueExpr>();
-
-  function extractPaths(expr: ValueExpr) {
-    if (visited.has(expr)) return;
-    visited.add(expr);
-
-    if (expr.path) paths.push(expr.path);
-    if (expr.deps) {
-      for (const dep of expr.deps) {
-        extractPaths(dep);
-      }
-    }
-  }
-
-  extractPaths(result);
+  if (result.path) paths.push(result.path);
+  if (result.deps) paths.push(...result.deps);
   return paths
     .map((p) => pathToString(p))
     .sort()

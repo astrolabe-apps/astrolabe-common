@@ -1,6 +1,5 @@
-import { ValueExpr, Path, EvalEnv } from "./ast";
+import { ValueExpr, valueExprWithDeps, Path } from "./ast";
 import { printPath } from "./printExpr";
-import { withValue, withDeps } from "./valueExprHelpers";
 
 export function allElems(v: ValueExpr): ValueExpr[] {
   if (Array.isArray(v.value)) return v.value.flatMap(allElems);
@@ -13,7 +12,7 @@ export function allElems(v: ValueExpr): ValueExpr[] {
  */
 export function addDepsRecursively(
   valueExpr: ValueExpr,
-  additionalDeps: ValueExpr[],
+  additionalDeps: Path[],
 ): ValueExpr {
   if (additionalDeps.length === 0) {
     return valueExpr;
@@ -26,21 +25,14 @@ export function addDepsRecursively(
 
   if (!Array.isArray(valueExpr.value)) {
     // Not an array, just add deps to this value
-    return withDeps(valueExpr, combinedDeps);
+    return { ...valueExpr, deps: combinedDeps };
   }
 
   // It's an array - recursively add deps to each element
   const newElements = valueExpr.value.map((elem) =>
     addDepsRecursively(elem, additionalDeps),
   );
-  // Creating new value with transformed array - breaks reactivity intentionally
-  return {
-    type: "value",
-    value: newElements,
-    deps: combinedDeps,
-    path: valueExpr.path,
-    location: valueExpr.location,
-  };
+  return { ...valueExpr, value: newElements, deps: combinedDeps };
 }
 
 export function asArray(v: unknown): unknown[] {
@@ -48,27 +40,24 @@ export function asArray(v: unknown): unknown[] {
 }
 
 export function valuesToString(
-  env: EvalEnv,
   value: ValueExpr[],
   after: (s: string) => string,
 ): ValueExpr {
-  return env.computeValueExpr(
-    () => {
-      const allVals = value.map((v) => toString(env, v));
-      return [after(allVals.map((x) => x.value).join("")), value];
-    },
-    undefined,
+  const allVals = value.map(toString);
+  return valueExprWithDeps(
+    after(allVals.map((x) => x.value).join("")),
+    allVals,
   );
 }
 
-export function toString(env: EvalEnv, value: ValueExpr): ValueExpr {
+export function toString(value: ValueExpr): ValueExpr {
   const v = value.value;
   if (typeof v === "object") {
-    if (Array.isArray(v)) return valuesToString(env, v, (x) => x);
-    if (v == null) return withValue(value, "null");
-    return withValue(value, JSON.stringify(v));
+    if (Array.isArray(v)) return valuesToString(v, (x) => x);
+    if (v == null) return { ...value, value: "null" };
+    return { ...value, value: JSON.stringify(v) };
   }
-  return withValue(value, singleString());
+  return { ...value, value: singleString() };
   function singleString() {
     switch (typeof v) {
       case "string":
