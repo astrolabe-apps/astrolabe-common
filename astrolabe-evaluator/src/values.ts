@@ -12,7 +12,7 @@ export function allElems(v: ValueExpr): ValueExpr[] {
  */
 export function addDepsRecursively(
   valueExpr: ValueExpr,
-  additionalDeps: Path[],
+  additionalDeps: ValueExpr[],
 ): ValueExpr {
   if (additionalDeps.length === 0) {
     return valueExpr;

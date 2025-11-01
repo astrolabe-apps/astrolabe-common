@@ -246,7 +246,7 @@ export interface ValueExpr {
     | undefined;
   function?: FunctionValue;
   path?: Path;
-  deps?: Path[];
+  deps?: ValueExpr[];
   location?: SourceLocation;
 }
 
@@ -304,11 +304,36 @@ export function valueExprWithDeps(value: any, deps: ValueExpr[]): ValueExpr {
   return {
     type: "value",
     value,
-    deps: deps.flatMap(({ path, deps }) => [
-      ...(deps ?? []),
-      ...(path ? [path] : []),
-    ]),
+    deps: deps.length > 0 ? deps : undefined,
   };
+}
+
+/**
+ * Recursively extract all paths from a ValueExpr and its dependencies.
+ * This replaces the old eager flattening with lazy extraction.
+ *
+ * @param expr The ValueExpr to extract paths from
+ * @returns Array of all paths referenced by this expr and its dependencies
+ */
+export function extractAllPaths(expr: ValueExpr): Path[] {
+  const paths: Path[] = [];
+  const seen = new Set<ValueExpr>(); // Avoid infinite loops
+
+  function extract(ve: ValueExpr) {
+    if (seen.has(ve)) return;
+    seen.add(ve);
+
+    if (ve.path) paths.push(ve.path);
+    if (ve.deps) {
+      // Recursively extract paths from all dependency ValueExprs
+      for (const dep of ve.deps) {
+        extract(dep);
+      }
+    }
+  }
+
+  extract(expr);
+  return paths;
 }
 
 export const NullExpr = valueExpr(null);
@@ -460,9 +485,10 @@ export function emptyEnvState(root: unknown): EvalEnvState {
         const propValue = objValue[property];
         if (propValue) {
           // Preserve dependencies from parent object when accessing properties
-          const combinedDeps: Path[] = [];
-          if (object.deps) combinedDeps.push(...object.deps);
-          if (propValue.deps) combinedDeps.push(...propValue.deps);
+          const combinedDeps: ValueExpr[] = [
+            ...(object.deps || []),
+            ...(propValue.deps || []),
+          ];
           return {
             ...propValue,
             path: propPath,

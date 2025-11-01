@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { basicEnv } from "../src/defaultFunctions";
-import { valueExpr } from "../src/ast";
+import { valueExpr, extractAllPaths } from "../src/ast";
 import { parseEval } from "../src/parseEval";
 import type { ValueExpr, Path } from "../src/ast";
 
@@ -32,10 +32,7 @@ function pathToString(path: Path): string {
 }
 
 function getDeps(result: ValueExpr): string[] {
-  const paths: Path[] = [];
-  if (result.path) paths.push(result.path);
-  if (result.deps) paths.push(...result.deps);
-  return paths
+  return extractAllPaths(result)
     .map((p) => pathToString(p))
     .sort()
     .filter((v, i, a) => i === 0 || v !== a[i - 1]); // distinct

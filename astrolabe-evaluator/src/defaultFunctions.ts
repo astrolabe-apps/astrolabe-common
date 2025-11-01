@@ -325,10 +325,10 @@ const filterFunction = functionValue(
 
       // Handle null index - return null with preserved dependencies
       if (firstFilter === null) {
-        const additionalDeps: Path[] = [];
-        if (indexResult.path) additionalDeps.push(indexResult.path);
-        if (indexResult.deps) additionalDeps.push(...indexResult.deps);
-        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+        const additionalDeps: ValueExpr[] = [
+          indexResult,
+          ...(leftVal.deps || []),
+        ];
 
         return [
           firstEnv,
@@ -354,10 +354,10 @@ const filterFunction = functionValue(
         }
 
         // Index is dynamic OR array has deps - preserve element but add dependencies
-        const additionalDeps: Path[] = [];
-        if (indexResult.path) additionalDeps.push(indexResult.path);
-        if (indexResult.deps) additionalDeps.push(...indexResult.deps);
-        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+        const additionalDeps: ValueExpr[] = [
+          indexResult,
+          ...(leftVal.deps || []),
+        ];
 
         // Use addDepsRecursively to ensure nested array elements also get the dependencies
         return [firstEnv, addDepsRecursively(element, additionalDeps)];
@@ -384,10 +384,10 @@ const filterFunction = functionValue(
 
       // Handle null key - return null with preserved dependencies
       if (firstFilter === null) {
-        const additionalDeps: Path[] = [];
-        if (keyResult.path) additionalDeps.push(keyResult.path);
-        if (keyResult.deps) additionalDeps.push(...keyResult.deps);
-        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+        const additionalDeps: ValueExpr[] = [
+          keyResult,
+          ...(leftVal.deps || []),
+        ];
 
         return [
           keyEnv,
@@ -417,10 +417,10 @@ const filterFunction = functionValue(
         }
 
         // Key is dynamic OR object has deps - preserve property but add dependencies
-        const additionalDeps: Path[] = [];
-        if (keyResult.path) additionalDeps.push(keyResult.path);
-        if (keyResult.deps) additionalDeps.push(...keyResult.deps);
-        if (leftVal.deps) additionalDeps.push(...leftVal.deps);
+        const additionalDeps: ValueExpr[] = [
+          keyResult,
+          ...(leftVal.deps || []),
+        ];
 
         // Use addDepsRecursively to ensure nested array elements also get the dependencies
         return [propEnv, addDepsRecursively(propValue, additionalDeps)];
@@ -501,11 +501,11 @@ const elemFunction = functionValue(
     }
 
     // Index is dynamic OR array has deps - preserve element but add dependencies
-    const combinedDeps: Path[] = [];
-    if (indexVal.path) combinedDeps.push(indexVal.path);
-    if (indexVal.deps) combinedDeps.push(...indexVal.deps);
-    if (arrayVal.deps) combinedDeps.push(...arrayVal.deps);
-    if (elem.deps) combinedDeps.push(...elem.deps);
+    const combinedDeps: ValueExpr[] = [
+      indexVal,
+      ...(arrayVal.deps || []),
+      ...(elem.deps || []),
+    ];
 
     return [env2, { ...elem, deps: combinedDeps }];
   },
@@ -633,14 +633,11 @@ export const defaultFunctions = {
       // If first arg is not null, return it
       if (x[0].value != null) return x[0];
       // First arg is null, return second arg but preserve dependencies from first arg
-      const combinedDeps: Path[] = [];
-      if (x[0].path) combinedDeps.push(x[0].path);
-      if (x[0].deps) combinedDeps.push(...x[0].deps);
-      if (x[1].path) combinedDeps.push(x[1].path);
-      if (x[1].deps) combinedDeps.push(...x[1].deps);
-      return combinedDeps.length > 0
-        ? { ...x[1], deps: combinedDeps }
-        : x[1];
+      const combinedDeps: ValueExpr[] = [
+        x[0],
+        x[1],
+      ];
+      return { ...x[1], deps: combinedDeps };
     },
     (e, call) =>
       mapCallArgs(call, e, (args) =>
