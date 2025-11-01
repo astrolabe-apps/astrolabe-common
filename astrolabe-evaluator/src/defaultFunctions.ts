@@ -395,9 +395,12 @@ const filterFunction = functionValue(
         }
 
         // Index is dynamic OR array has deps - preserve element but add dependencies
-        const additionalDeps: Path[] = [];
-        if (indexResult.path) additionalDeps.push(indexResult.path);
-        if (indexResult.deps) additionalDeps.push(...indexResult.deps);
+        const additionalDeps: ValueExpr[] = [];
+        // Add the index result as a dependency (captures both path and deps)
+        if (indexResult.path || (indexResult.deps && indexResult.deps.length > 0)) {
+          additionalDeps.push(indexResult);
+        }
+        // Add array's dependencies
         if (leftVal.deps) additionalDeps.push(...leftVal.deps);
 
         // Use addDepsRecursively to ensure nested array elements also get the dependencies
@@ -454,9 +457,12 @@ const filterFunction = functionValue(
         }
 
         // Key is dynamic OR object has deps - preserve property but add dependencies
-        const additionalDeps: Path[] = [];
-        if (keyResult.path) additionalDeps.push(keyResult.path);
-        if (keyResult.deps) additionalDeps.push(...keyResult.deps);
+        const additionalDeps: ValueExpr[] = [];
+        // Add the key result as a dependency (captures both path and deps)
+        if (keyResult.path || (keyResult.deps && keyResult.deps.length > 0)) {
+          additionalDeps.push(keyResult);
+        }
+        // Add object's dependencies
         if (leftVal.deps) additionalDeps.push(...leftVal.deps);
 
         // Use addDepsRecursively to ensure nested array elements also get the dependencies
@@ -553,10 +559,14 @@ const elemFunction = functionValue(
     }
 
     // Index is dynamic OR array has deps - preserve element but add dependencies
-    const combinedDeps: Path[] = [];
-    if (indexVal.path) combinedDeps.push(indexVal.path);
-    if (indexVal.deps) combinedDeps.push(...indexVal.deps);
+    const combinedDeps: ValueExpr[] = [];
+    // Add the index value as a dependency (captures both path and deps)
+    if (indexVal.path || (indexVal.deps && indexVal.deps.length > 0)) {
+      combinedDeps.push(indexVal);
+    }
+    // Add array's dependencies
     if (arrayVal.deps) combinedDeps.push(...arrayVal.deps);
+    // Add element's own dependencies
     if (elem.deps) combinedDeps.push(...elem.deps);
 
     return [env2, withDeps(elem, combinedDeps)];
