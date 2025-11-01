@@ -113,7 +113,7 @@ public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
 public record ValueExpr(
     object? Value,
     DataPath? Path = null,
-    IEnumerable<DataPath>? Deps = null,
+    IEnumerable<ValueExpr>? Deps = null,
     SourceLocation? Location = null
 ) : EvalExpr
 {
@@ -129,13 +129,40 @@ public record ValueExpr(
 
     public static ValueExpr WithDeps(object? value, IEnumerable<ValueExpr> others)
     {
+        var othersList = others.ToList();
         return new ValueExpr(
             value,
             null,
-            others.SelectMany(x =>
-                ((IEnumerable<DataPath>)(x.Path != null ? [x.Path] : [])).Concat(x.Deps ?? [])
-            )
+            othersList.Count > 0 ? othersList : null
         );
+    }
+
+    /// <summary>
+    /// Recursively extract all paths from a ValueExpr and its dependencies.
+    /// Lazily extracts paths when needed instead of storing them upfront.
+    /// </summary>
+    public static IEnumerable<DataPath> ExtractAllPaths(ValueExpr expr)
+    {
+        var paths = new List<DataPath>();
+        var seen = new HashSet<ValueExpr>();
+
+        void Extract(ValueExpr ve)
+        {
+            if (!seen.Add(ve)) return;  // Already seen, avoid cycles
+
+            if (ve.Path != null) paths.Add(ve.Path);
+            if (ve.Deps != null)
+            {
+                // Recursively extract paths from all dependency ValueExprs
+                foreach (var dep in ve.Deps)
+                {
+                    Extract(dep);
+                }
+            }
+        }
+
+        Extract(expr);
+        return paths;
     }
 
     public static double AsDouble(object? v)
@@ -241,37 +268,21 @@ public record ValueExpr(
         };
     }
 
-    public IEnumerable<ValueExpr> AllValues()
+    /// <summary>
+    /// Extract all elements from nested arrays, adding parent deps at extraction time.
+    /// This implements lazy deps propagation - children get parent deps when extracted.
+    /// </summary>
+    public IEnumerable<ValueExpr> AllValues(ValueExpr? parent = null)
     {
         return Value switch
         {
-            ArrayValue av => av.Values.SelectMany(x => x.AllValues()),
-            _ => [this]
+            ArrayValue av => av.Values.SelectMany(child => child.AllValues(this)),
+            _ => parent?.Deps is { } parentDeps && parentDeps.Any()
+                ? [this with { Deps = (Deps ?? Enumerable.Empty<ValueExpr>()).Concat([parent]) }]
+                : [this]
         };
     }
 
-    /// <summary>
-    /// Recursively adds dependencies to this ValueExpr and all nested array elements.
-    /// This ensures that when flatmap flattens nested arrays, the dependencies are preserved.
-    /// </summary>
-    public static ValueExpr AddDepsRecursively(ValueExpr valueExpr, IEnumerable<DataPath> additionalDeps)
-    {
-        var depsList = additionalDeps.ToList();
-        if (depsList.Count == 0)
-            return valueExpr;
-
-        var combinedDeps = (valueExpr.Deps ?? []).Concat(depsList).ToList();
-
-        if (valueExpr.Value is not ArrayValue av)
-        {
-            // Not an array, just add deps to this value
-            return valueExpr with { Deps = combinedDeps };
-        }
-
-        // It's an array - recursively add deps to each element
-        var newElements = av.Values.Select(elem => AddDepsRecursively(elem, depsList)).ToList();
-        return valueExpr with { Value = new ArrayValue(newElements), Deps = combinedDeps };
-    }
 }
 
 public record ArrayExpr(IEnumerable<EvalExpr> Values, SourceLocation? Location = null) : EvalExpr

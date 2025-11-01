@@ -32,7 +32,7 @@ public static class FilterFunctionHandler
                     // Handle null key - return null with preserved dependencies
                     if (keyResult.Value == null)
                     {
-                        var nullDeps = DependencyHelpers.CombinePathsAndDeps(keyResult, ValueExpr.Null, leftValue);
+                        var nullDeps = DependencyHelpers.CombineDeps(keyResult, ValueExpr.Null, leftValue);
                         return keyEnv.WithValue(new ValueExpr(null, null, nullDeps));
                     }
 
@@ -53,9 +53,14 @@ public static class FilterFunctionHandler
                     if (!keyHasDeps && !objectHasDeps)
                         return propEnv.WithValue(propValue);
 
-                    // Key is dynamic OR object has deps - preserve property but add dependencies
-                    var additionalDeps = DependencyHelpers.CombinePathsAndDeps(keyResult, ValueExpr.Null, leftValue);
-                    return propEnv.WithValue(ValueExpr.AddDepsRecursively(propValue, additionalDeps));
+                    // Key is dynamic OR object has deps
+                    // Add parent reference - if propValue is array, children get deps when extracted via AllValues
+                    var parentWithDeps = new ValueExpr(
+                        null,
+                        propValue.Path,
+                        new[] { keyResult }.Concat(leftValue.Deps ?? Enumerable.Empty<ValueExpr>())
+                    );
+                    return propEnv.WithValue(propValue with { Deps = (propValue.Deps ?? Enumerable.Empty<ValueExpr>()).Concat([parentWithDeps]) });
                 }
 
                 EnvironmentValue<ValueExpr> FilterArray(
@@ -75,7 +80,7 @@ public static class FilterFunctionHandler
                     // Handle null index - return null with preserved dependencies
                     if (firstFilter.Value.Value == null)
                     {
-                        var nullDeps = DependencyHelpers.CombinePathsAndDeps(firstFilter.Value, ValueExpr.Null, arrayValue);
+                        var nullDeps = DependencyHelpers.CombineDeps(firstFilter.Value, ValueExpr.Null, arrayValue);
                         return firstFilter.Env.WithValue(new ValueExpr(null, null, nullDeps));
                     }
 
@@ -110,9 +115,14 @@ public static class FilterFunctionHandler
                         if (!indexHasDeps && !arrayHasDeps)
                             return element;
 
-                        // Index is dynamic OR array has deps - preserve element but add dependencies
-                        var additionalDeps = DependencyHelpers.CombinePathsAndDeps(indexResult, ValueExpr.Null, arrayValue);
-                        return ValueExpr.AddDepsRecursively(element, additionalDeps);
+                        // Index is dynamic OR array has deps
+                        // Add parent reference - if element is array, children get deps when extracted via AllValues
+                        var parentWithDeps = new ValueExpr(
+                            null,
+                            element.Path,
+                            new[] { indexResult }.Concat(arrayValue.Deps ?? Enumerable.Empty<ValueExpr>())
+                        );
+                        return element with { Deps = (element.Deps ?? Enumerable.Empty<ValueExpr>()).Concat([parentWithDeps]) };
                     });
                 }
             }

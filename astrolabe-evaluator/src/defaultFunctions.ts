@@ -36,7 +36,7 @@ import {
   evaluateWith,
   evaluateWithValue,
 } from "./evaluate";
-import { allElems, valuesToString, addDepsRecursively } from "./values";
+import { allElems, valuesToString } from "./values";
 import { printExpr } from "./printExpr";
 import {
   checkAll,
@@ -59,7 +59,7 @@ function stringFunction(after: (s: string) => string) {
 const flatFunction = functionValue(
   (e, call) => {
     const allArgs = mapAllEnv(e, call.args, doEvaluate);
-    return mapEnv(allArgs, (x) => valueExpr(x.flatMap(allElems)));
+    return mapEnv(allArgs, (x) => valueExpr(x.flatMap(v => allElems(v))));
   },
   constGetType(arrayType([])),
 );
@@ -237,7 +237,7 @@ const flatmapFunction = functionValue(
         mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
           evaluateWith(e, elem, i, right),
         ),
-        (vals) => ({ ...leftVal, value: vals.flatMap(allElems) }),
+        (vals) => ({ ...leftVal, value: vals.flatMap(v => allElems(v)) }),
       );
     }
     if (typeof value === "object") {
@@ -353,14 +353,15 @@ const filterFunction = functionValue(
           return [firstEnv, element];
         }
 
-        // Index is dynamic OR array has deps - preserve element but add dependencies
-        const additionalDeps: ValueExpr[] = [
-          indexResult,
-          ...(leftVal.deps || []),
-        ];
+        // Index is dynamic OR array has deps
+        // Add parent reference - if element is array, children get deps when extracted via allElems
+        const parentWithDeps: ValueExpr = {
+          type: "value",
+          deps: [indexResult, ...(leftVal.deps || [])],
+          path: element.path,
+        };
 
-        // Use addDepsRecursively to ensure nested array elements also get the dependencies
-        return [firstEnv, addDepsRecursively(element, additionalDeps)];
+        return [firstEnv, { ...element, deps: [...(element.deps || []), parentWithDeps] }];
       }
       const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
       const outEnv = value.reduce(
@@ -416,14 +417,15 @@ const filterFunction = functionValue(
           return [propEnv, propValue];
         }
 
-        // Key is dynamic OR object has deps - preserve property but add dependencies
-        const additionalDeps: ValueExpr[] = [
-          keyResult,
-          ...(leftVal.deps || []),
-        ];
+        // Key is dynamic OR object has deps
+        // Add parent reference - if propValue is array, children get deps when extracted via allElems
+        const parentWithDeps: ValueExpr = {
+          type: "value",
+          deps: [keyResult, ...(leftVal.deps || [])],
+          path: propValue.path,
+        };
 
-        // Use addDepsRecursively to ensure nested array elements also get the dependencies
-        return [propEnv, addDepsRecursively(propValue, additionalDeps)];
+        return [propEnv, { ...propValue, deps: [...(propValue.deps || []), parentWithDeps] }];
       }
       return [keyEnv, valueExpr(null)];
     }

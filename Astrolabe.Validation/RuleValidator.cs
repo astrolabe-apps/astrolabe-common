@@ -169,7 +169,7 @@ public static class RuleValidator
                             x.Failures,
                             results.Env.Errors,
                             x.Message.AsString(),
-                            argValues[1].Deps ?? [],
+                            ValueExpr.ExtractAllPaths(argValues[1]),
                             x.Properties
                         )
                     )

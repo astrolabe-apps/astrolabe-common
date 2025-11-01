@@ -221,13 +221,13 @@ public static class DefaultFunctions
                             : env2.WithValue(
                                 vl[ind] with
                                 {
-                                    Deps = DependencyHelpers.CombinePathsAndDeps(indexVal, vl[ind], arrayVal)
+                                    Deps = DependencyHelpers.CombineDeps(indexVal, vl[ind], arrayVal)
                                 }
                             )
                         : env2.WithValue(
                             vl[ind] with
                             {
-                                Deps = DependencyHelpers.CombinePathsAndDeps(indexVal, vl[ind], arrayVal)
+                                Deps = DependencyHelpers.CombineDeps(indexVal, vl[ind], arrayVal)
                             }
                         ),
                 _ => env2.WithValue(ValueExpr.WithDeps(null, [arrayVal, indexVal])),
@@ -364,7 +364,7 @@ public static class DefaultFunctions
                         [var v, var o] => new ValueExpr(
                             o.Value,
                             o.Path,
-                            DependencyHelpers.CombinePathsAndDeps(v, o)
+                            new[] { v, o }
                         ),
                         _ => ValueExpr.Null,
                     }

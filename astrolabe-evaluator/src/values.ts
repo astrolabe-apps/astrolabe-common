@@ -1,38 +1,26 @@
 import { ValueExpr, valueExprWithDeps, Path } from "./ast";
 import { printPath } from "./printExpr";
 
-export function allElems(v: ValueExpr): ValueExpr[] {
-  if (Array.isArray(v.value)) return v.value.flatMap(allElems);
-  return [v];
-}
-
 /**
- * Recursively adds dependencies to a ValueExpr and all nested array elements.
- * This ensures that when flatmap flattens nested arrays, the dependencies are preserved.
+ * Extract all elements from nested arrays, adding parent deps at extraction time.
+ * This implements lazy deps propagation - children get parent deps when extracted,
+ * not when the parent is created.
+ *
+ * @param v The ValueExpr to extract elements from
+ * @param parent Optional parent ValueExpr - if it has deps, they'll be added to extracted children
  */
-export function addDepsRecursively(
-  valueExpr: ValueExpr,
-  additionalDeps: ValueExpr[],
-): ValueExpr {
-  if (additionalDeps.length === 0) {
-    return valueExpr;
+export function allElems(v: ValueExpr, parent?: ValueExpr): ValueExpr[] {
+  if (Array.isArray(v.value)) {
+    // Recurse into nested arrays, passing v as the parent
+    return v.value.flatMap(child => allElems(child, v));
   }
 
-  const combinedDeps = [
-    ...(valueExpr.deps || []),
-    ...additionalDeps,
-  ];
-
-  if (!Array.isArray(valueExpr.value)) {
-    // Not an array, just add deps to this value
-    return { ...valueExpr, deps: combinedDeps };
+  // Leaf element - add parent as dep if parent has deps
+  if (parent?.deps && parent.deps.length > 0) {
+    return [{ ...v, deps: [...(v.deps || []), parent] }];
   }
 
-  // It's an array - recursively add deps to each element
-  const newElements = valueExpr.value.map((elem) =>
-    addDepsRecursively(elem, additionalDeps),
-  );
-  return { ...valueExpr, value: newElements, deps: combinedDeps };
+  return [v];
 }
 
 export function asArray(v: unknown): unknown[] {

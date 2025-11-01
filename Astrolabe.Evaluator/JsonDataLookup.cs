@@ -15,7 +15,7 @@ public static class JsonDataLookup
                 if (e.Value is ObjectValue { Properties: var props } && props.TryGetValue(property, out var propValue))
                 {
                     // Preserve dependencies from parent object when accessing properties
-                    var combinedDeps = new List<DataPath>();
+                    var combinedDeps = new List<ValueExpr>();
                     if (e.Deps != null) combinedDeps.AddRange(e.Deps);
                     if (propValue.Deps != null) combinedDeps.AddRange(propValue.Deps);
                     return propValue with

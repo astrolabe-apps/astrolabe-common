@@ -30,10 +30,11 @@ public class DependencyTrackingTests
 
     private static List<string> GetDeps(ValueExpr result)
     {
-        var paths = new List<string>();
-        if (result.Path != null) paths.Add(result.Path.ToPathString());
-        if (result.Deps != null) paths.AddRange(result.Deps.Select(d => d.ToPathString()));
-        return paths.Distinct().OrderBy(x => x).ToList();
+        return ValueExpr.ExtractAllPaths(result)
+            .Select(d => d.ToPathString())
+            .Distinct()
+            .OrderBy(x => x)
+            .ToList();
     }
 
     #region Parameter Binding Tests
