@@ -45,6 +45,7 @@ export function RNCheckButtons(props: CheckButtonsProps) {
                 selOrUnsel,
               )}
               onClick={() => !readonly && setChecked(control, o, !checked)}
+              notWrapInText
             >
               <Div className={classes.entryClass}>
                 <Input
@@ -59,7 +60,11 @@ export function RNCheckButtons(props: CheckButtonsProps) {
                     !readonly && setChecked(control, o, x);
                   }}
                 />
-                <Label className={classes.labelClass} htmlFor={name + "_" + i}>
+                <Label
+                  className={classes.labelClass}
+                  textClass={classes.labelClass}
+                  htmlFor={name + "_" + i}
+                >
                   {o.name}
                 </Label>
               </Div>
