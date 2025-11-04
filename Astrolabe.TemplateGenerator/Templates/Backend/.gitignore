@@ -1,0 +1,15 @@
+.vs
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+/tmp/publish
+publish/
+.idea
+__AppName__.sln.DotSettings.user
+*.cobertura.xml
+__AppName__/coverage/report
+__AppName__.UnitTest/coverage/report
+.sonarqube/
+.appsettings.Development.json
