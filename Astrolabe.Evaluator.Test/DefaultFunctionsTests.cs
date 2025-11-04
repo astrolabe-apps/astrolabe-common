@@ -1127,4 +1127,47 @@ public class DefaultFunctionsTests
     }
 
     #endregion
+
+    #region Let Expression Variable References
+
+    [Fact]
+    public void LetExpression_VariableCanReferencePreviousVariable()
+    {
+        var result = EvalExpr("let $x := 5, $y := $x + 10 in $y");
+        Assert.Equal(15.0, result);
+    }
+
+    [Fact]
+    public void LetExpression_MultipleChainedVariableReferences()
+    {
+        var result = EvalExpr("let $a := 2, $b := $a * 3, $c := $b + 1 in $c");
+        Assert.Equal(7.0, result); // 2 * 3 + 1 = 7
+    }
+
+    [Fact]
+    public void LetExpression_VariableReferencesWithDataAccess()
+    {
+        var data = new JsonObject { ["value"] = 10 };
+        var result = EvalExpr("let $x := value, $y := $x * 2 in $y", data);
+        Assert.Equal(20.0, result);
+    }
+
+    [Fact]
+    public void LetExpression_ComplexExpressionWithVariableReferences()
+    {
+        var data = new JsonObject { ["a"] = 10, ["b"] = 20, ["multiplier"] = 3 };
+        var result = EvalExpr("let $sum := a + b, $avg := $sum / 2, $result := $avg * multiplier in $result", data);
+        Assert.Equal(45.0, result); // ((10 + 20) / 2) * 3 = 45
+    }
+
+    [Fact]
+    public void LetExpression_VariableReferenceInArrayContext()
+    {
+        var result = EvalExpr("let $base := 5, $arr := $array($base, $base * 2, $base * 3) in $arr");
+        var array = Assert.IsType<ArrayValue>(result);
+        var values = array.Values.Select(v => v.AsLong()).ToList();
+        Assert.Equal(new[] { 5L, 10L, 15L }, values);
+    }
+
+    #endregion
 }

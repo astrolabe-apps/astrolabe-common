@@ -8,6 +8,7 @@ import {
   EnvValue,
   EvalEnvState,
   EvalExpr,
+  extractAllPaths,
   nativeType,
   parseEval,
   printPath,
@@ -185,6 +186,6 @@ function toValueDeps({ value, path, deps }: ValueExpr): unknown {
   return {
     value: converted,
     path: path ? printPath(path) : undefined,
-    deps: deps?.map(printPath),
+    deps: deps?.flatMap(extractAllPaths).map(printPath),
   };
 }

@@ -688,3 +688,35 @@ describe("Control Flow and Utility Functions", () => {
     expect(result).toBe(true);
   });
 });
+
+describe("Let Expression Variable References", () => {
+  test("Variable can reference another variable declared before it", () => {
+    const result = evalExpr("let $x := 5, $y := $x + 10 in $y");
+    expect(result).toBe(15);
+  });
+
+  test("Multiple chained variable references", () => {
+    const result = evalExpr("let $a := 2, $b := $a * 3, $c := $b + 1 in $c");
+    expect(result).toBe(7); // 2 * 3 + 1 = 7
+  });
+
+  test("Variable references with data access", () => {
+    const result = evalExpr("let $x := value, $y := $x * 2 in $y", { value: 10 });
+    expect(result).toBe(20);
+  });
+
+  test("Complex expression with variable references", () => {
+    const result = evalExpr(
+      "let $sum := a + b, $avg := $sum / 2, $result := $avg * multiplier in $result",
+      { a: 10, b: 20, multiplier: 3 }
+    );
+    expect(result).toBe(45); // ((10 + 20) / 2) * 3 = 45
+  });
+
+  test("Variable reference in array context", () => {
+    const result = evalToArray(
+      "let $base := 5, $arr := $array($base, $base * 2, $base * 3) in $arr"
+    );
+    expect(result).toEqual([5, 10, 15]);
+  });
+});
