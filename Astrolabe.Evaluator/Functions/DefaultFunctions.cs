@@ -482,7 +482,7 @@ public static class DefaultFunctions
                     var value = args[i++];
                     obj[name] = value;
                 }
-                return ValueExpr.WithDeps(new ObjectValue(obj), args);
+                return new ValueExpr(new ObjectValue(obj));
             })
         },
         { "this", new FunctionHandler((e, c) => e.WithValue(e.Current)) },

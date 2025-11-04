@@ -72,7 +72,7 @@ export const objectFunction = functionValue(
       while (i < args.length - 1) {
         outObj[toNative(args[i++]) as string] = args[i++];
       }
-      return valueExprWithDeps(outObj, args);
+      return valueExpr(outObj);
     });
   },
   (e, call) => {

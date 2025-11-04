@@ -683,20 +683,6 @@ describe("Object Property Dependency Tracking Tests", () => {
     expect(deps).toContain("company.department.manager.name");
   });
 
-  test("Object created with $object tracks property dependencies", () => {
-    const data = { x: 10, y: 20 };
-    const env = basicEnv(data);
-
-    // Create an object with computed properties
-    const expr = parseEval('$object("sum", x + y, "product", x * y)');
-    const [_, result] = env.evaluate(expr);
-
-    const deps = getDeps(result);
-    // Should track dependencies from the computed property values
-    expect(deps).toContain("x");
-    expect(deps).toContain("y");
-  });
-
   test("Accessing property from constructed object preserves dependencies", () => {
     const data = { a: 5, b: 10 };
     const env = basicEnv(data);
