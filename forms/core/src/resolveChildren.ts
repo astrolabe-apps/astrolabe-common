@@ -104,7 +104,7 @@ export function resolveArrayChildren(
   const childCount = childNodes.length;
   const singleChild = childCount === 1 ? childNodes[0] : null;
   return data.control.as<any[]>().elements.map((x, i) => ({
-    childKey: x.uniqueId,
+    childKey: x.uniqueId + "/" + i,
     create: () => ({
       definition: !childCount
         ? ({

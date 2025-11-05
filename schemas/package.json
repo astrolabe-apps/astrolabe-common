@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas",
-  "version": "17.0.0",
+  "version": "17.0.1",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -34,7 +34,7 @@
     "clsx": "^1 || ^2",
     "uuid": "^10.0.0",
     "jsonata": "^2.0.4",
-    "@astroapps/forms-core": "^2.0.0"
+    "@astroapps/forms-core": "^2.0.1"
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19",
