@@ -12,9 +12,15 @@ import {
   nativeType,
   parseEval,
   printPath,
+  printExpr,
   toNative,
   ValueExpr,
+  toValue,
 } from "@astroapps/evaluator";
+import {
+  PartialEvalEnvironment,
+  partialEvaluate,
+} from "@astroapps/evaluator/src/partialEvaluator";
 import {
   Fcheckbox,
   useControl,
@@ -68,6 +74,7 @@ export default function EvalPage() {
   const client = useApiClient(EvalClient);
   const serverMode = useControl(false);
   const showDeps = useControl(false);
+  const partialEvalMode = useControl(false);
   const input = useControl("");
   const data = useControl(sample);
   const dataText = useControl(() => JSON.stringify(sample, null, 2));
@@ -85,36 +92,77 @@ export default function EvalPage() {
     },
   );
   useControlEffect(
-    () => [input.value, data.value, serverMode.value, showDeps.value] as const,
-    useDebounced(async ([v, dv, sm, showDeps]: [string, any, any, boolean]) => {
-      try {
-        if (sm) {
-          try {
-            setEvalResult(
-              await client.eval(showDeps, { expression: v, data: dv }),
-            );
-          } catch (e) {
-            setOutput(e);
+    () =>
+      [
+        input.value,
+        data.value,
+        serverMode.value,
+        showDeps.value,
+        partialEvalMode.value,
+      ] as const,
+    useDebounced(
+      async ([v, dv, sm, showDeps, partialMode]: [
+        string,
+        any,
+        any,
+        boolean,
+        boolean,
+      ]) => {
+        try {
+          if (sm) {
+            try {
+              setEvalResult(
+                await client.eval(showDeps, partialMode, {
+                  expression: v,
+                  data: dv,
+                }),
+              );
+            } catch (e) {
+              setOutput(e);
+            }
+          } else if (partialMode) {
+            // Partial evaluation mode - treat data fields as variables
+            try {
+              const exprTree = parseEval(v);
+              // Create variables from data fields instead of data context
+              const variables: [string, EvalExpr][] = Object.entries(dv).map(
+                (x) => [x[0], toValue(undefined, x[1])],
+              );
+              const env = addDefaults(
+                new PartialEvalEnvironment(
+                  emptyEnvState(undefined),
+                ).withVariables(variables),
+              ) as PartialEvalEnvironment;
+              const partialResult = partialEvaluate(env, exprTree);
+              setOutput({
+                result: printExpr(partialResult),
+                errors: env.errors,
+              });
+            } catch (e) {
+              console.error(e);
+              setOutput(e);
+            }
+          } else {
+            const exprTree = parseEval(v);
+            const emptyState = emptyEnvState(dv);
+            const env = addDefaults(new TrackDataEnv(emptyState));
+            try {
+              const [outEnv, value] = env.evaluate(exprTree);
+              setEvalResult({
+                result: showDeps ? toValueDeps(value) : toNative(value),
+                errors: outEnv.errors,
+              });
+            } catch (e) {
+              console.error(e);
+              setOutput(e);
+            }
           }
-        } else {
-          const exprTree = parseEval(v);
-          const emptyState = emptyEnvState(dv);
-          const env = addDefaults(new TrackDataEnv(emptyState));
-          try {
-            const [outEnv, value] = env.evaluate(exprTree);
-            setEvalResult({
-              result: showDeps ? toValueDeps(value) : toNative(value),
-              errors: outEnv.errors,
-            });
-          } catch (e) {
-            console.error(e);
-            setOutput(e);
-          }
+        } catch (e) {
+          console.error(e);
         }
-      } catch (e) {
-        console.error(e);
-      }
-    }, 1000),
+      },
+      1000,
+    ),
   );
   const editorRef = useCallback(setupEditor, [editor]);
 
@@ -128,6 +176,7 @@ export default function EvalPage() {
               <div className="flex gap-2 items-center">
                 <Fcheckbox control={serverMode} /> Server Mode
                 <Fcheckbox control={showDeps} /> Show Deps
+                <Fcheckbox control={partialEvalMode} /> Partial Eval
               </div>
             </div>
             <div className="flex-1 overflow-y-scroll">
