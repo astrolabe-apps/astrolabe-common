@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-rechart",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Recharts renderer for @react-typed-forms/schemas",
   "type": "module",
   "main": "lib/index.cjs",
@@ -37,7 +37,7 @@
   "devDependencies": {
     "react": "^18.2.0",
     "@react-typed-forms/core": "^4.4.0",
-    "@react-typed-forms/schemas": "^16.0.0",
+    "@react-typed-forms/schemas": "^17.0.0",
     "@react-typed-forms/transform": "^0.2.0",
     "@babel/core": "^7.23.7",
     "@babel/cli": "^7.23.4",

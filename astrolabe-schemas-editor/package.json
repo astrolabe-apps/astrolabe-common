@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-editor",
-  "version": "17.1.0",
+  "version": "18.0.0",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
@@ -28,8 +28,8 @@
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^16.1.0",
-    "@react-typed-forms/schemas-html": "^4.1.0",
+    "@react-typed-forms/schemas": "^17.0.0",
+    "@react-typed-forms/schemas-html": "^5.0.0",
     "@astroapps/client": "^2.0.0",
     "react": "^18.2.0 || ^19",
     "@dnd-kit/core": "^6.0.5"
@@ -42,7 +42,7 @@
     "react-arborist": "^3.4.3",
     "use-resize-observer": "~9.1.0",
     "react-hook-inview": "^4.5.1",
-    "@astroapps/schemas-datagrid": "^7.0.0",
+    "@astroapps/schemas-datagrid": "^8.0.0",
     "@astroapps/datagrid": "^1.2.0",
     "codemirror": "^6.0.1",
     "@codemirror/lang-json": "^6.0.1",
@@ -51,8 +51,8 @@
   },
   "devDependencies": {
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^16.1.0",
-    "@react-typed-forms/schemas-html": "^4.1.0",
+    "@react-typed-forms/schemas": "^17.0.0",
+    "@react-typed-forms/schemas-html": "^5.0.0",
     "@astroapps/searchstate": "^2.0.0",
     "@radix-ui/react-popover": "^1.0.7",
     "@astroapps/client": "^2.0.2",

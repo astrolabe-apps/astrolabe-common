@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-datagrid",
-  "version": "7.1.1",
+  "version": "8.0.0",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -31,7 +31,7 @@
   "peerDependencies": {
     "react": "^18.2.0 || ^19",
     "@react-typed-forms/core": "^4.0.0",
-    "@react-typed-forms/schemas": "^16.0.0",
+    "@react-typed-forms/schemas": "^17.0.0",
     "@radix-ui/react-popover": "^1.0.7",
     "@astroapps/datagrid": "^1.2.0",
     "@astroapps/searchstate": "^2.0.0"
@@ -42,7 +42,7 @@
     "@astroapps/datagrid": "^1.2.0",
     "@astroapps/searchstate": "^2.0.0",
     "@react-typed-forms/core": "^4.4.0",
-    "@react-typed-forms/schemas": "^16.0.0",
+    "@react-typed-forms/schemas": "^17.0.0",
     "@react-typed-forms/transform": "^0.2.0",
     "@babel/core": "^7.23.7",
     "@babel/cli": "^7.23.4",
