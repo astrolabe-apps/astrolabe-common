@@ -21,7 +21,7 @@ import {
   useControlEffect,
   useDebounced,
 } from "@react-typed-forms/core";
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client";
 import { EvalClient, EvalResult } from "../../client";
@@ -30,6 +30,39 @@ import { Evaluator } from "@astroapps/codemirror-evaluator";
 import { autocompletion } from "@codemirror/autocomplete";
 import { evalCompletions } from "@astroapps/codemirror-evaluator";
 import { JsonEditor } from "@astroapps/schemas-editor";
+import { Layout, Model, TabNode, IJsonModel } from "flexlayout-react";
+import "flexlayout-react/style/light.css";
+
+const layoutModel: IJsonModel = {
+  global: {
+    tabEnableClose: false,
+  },
+  layout: {
+    type: "row",
+    weight: 100,
+    children: [
+      {
+        type: "row",
+        weight: 1,
+        children: [
+          {
+            type: "tabset",
+            children: [{ type: "tab", id: "editor", name: "Editor" }],
+          },
+          {
+            type: "tabset",
+            children: [{ type: "tab", id: "output", name: "Output" }],
+          },
+        ],
+      },
+      {
+        type: "tabset",
+        weight: 1,
+        children: [{ type: "tab", id: "data", name: "Data" }],
+      },
+    ],
+  },
+};
 
 export default function EvalPage() {
   const client = useApiClient(EvalClient);
@@ -40,6 +73,7 @@ export default function EvalPage() {
   const dataText = useControl(() => JSON.stringify(sample, null, 2));
   const outputJson = useControl<string>("");
   const editor = useControl<EditorView>();
+  const [model] = useState(() => Model.fromJson(layoutModel));
   useControlEffect(
     () => dataText.value,
     (v) => {
@@ -83,29 +117,44 @@ export default function EvalPage() {
     }, 1000),
   );
   const editorRef = useCallback(setupEditor, [editor]);
-  return (
-    <div className="h-screen flex flex-col">
-      <div className="grow flex">
-        <div className="basis-1/2 flex flex-col h-screen">
-          <div>
-            <div className="flex gap-2 items-center">
-              <Fcheckbox control={serverMode} /> Server Mode
-              <Fcheckbox control={showDeps} /> Show Deps
+
+  function renderTab(node: TabNode) {
+    const id = node.getId();
+    switch (id) {
+      case "editor":
+        return (
+          <div className="flex flex-col h-full">
+            <div className="p-2">
+              <div className="flex gap-2 items-center">
+                <Fcheckbox control={serverMode} /> Server Mode
+                <Fcheckbox control={showDeps} /> Show Deps
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-scroll">
+              <div ref={editorRef} />
             </div>
           </div>
-          <div className="basis-1/2 overflow-y-scroll">
-            <div ref={editorRef} />
-          </div>
-          <div className="basis-1/2 overflow-y-scroll">
+        );
+      case "output":
+        return (
+          <div className="h-full overflow-y-scroll">
             <JsonEditor control={outputJson} />
           </div>
-        </div>
-        <div className="basis-1/2 flex flex-col">
-          <div className="basis-1 grow overflow-y-scroll">
+        );
+      case "data":
+        return (
+          <div className="h-full overflow-y-scroll">
             <JsonEditor control={dataText} />
           </div>
-        </div>
-      </div>
+        );
+      default:
+        return <div>Unknown panel</div>;
+    }
+  }
+
+  return (
+    <div className="h-screen flex flex-col">
+      <Layout model={model} factory={renderTab} />
     </div>
   );
 
