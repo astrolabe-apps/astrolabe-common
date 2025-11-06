@@ -198,6 +198,10 @@ export abstract class EvalEnv {
   abstract withCurrent(path: ValueExpr): EvalEnv;
   abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
   abstract withError(error: string): EvalEnv;
+
+  evaluateExpr(expr: EvalExpr): EnvValue<EvalExpr> {
+    return this.evaluate(expr);
+  }
 }
 
 export type EvalExpr =
@@ -264,7 +268,7 @@ export interface LambdaExpr {
 }
 
 export interface FunctionValue {
-  eval: (env: EvalEnv, args: CallExpr) => EnvValue<ValueExpr>;
+  eval: (env: EvalEnv, args: CallExpr) => EnvValue<EvalExpr>;
   getType: (env: CheckEnv, args: CallExpr) => CheckValue<EvalType>;
 }
 
@@ -362,7 +366,7 @@ export function callExpr(
 }
 
 export function functionValue(
-  evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<ValueExpr>,
+  evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<EvalExpr>,
   getType: (e: CheckEnv, call: CallExpr) => CheckValue<EvalType>,
 ): ValueExpr {
   return {

@@ -73,10 +73,10 @@ public record LambdaExpr(string Variable, EvalExpr Value, SourceLocation? Locati
 
 public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, CallExpr callExpr);
 
-public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
+public record FunctionHandler(CallHandler<EvalExpr> Evaluate)
 {
     public static FunctionHandler DefaultEvalArgs(
-        Func<EvalEnvironment, List<ValueExpr>, ValueExpr> eval
+        Func<EvalEnvironment, List<ValueExpr>, EvalExpr> eval
     ) =>
         new(
             (e, call) =>
@@ -94,7 +94,7 @@ public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
 
     public static FunctionHandler BinFunctionHandler(
         string name,
-        Func<EvalEnvironment, EvalExpr, EvalExpr, EnvironmentValue<ValueExpr>> handle
+        Func<EvalEnvironment, EvalExpr, EvalExpr, EnvironmentValue<EvalExpr>> handle
     )
     {
         return new FunctionHandler(

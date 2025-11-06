@@ -91,7 +91,7 @@ public static class RuleValidator
                     var argValuesValue = args.ToList();
                     var result = handler.Evaluate(env, call.WithArgs(argValuesValue));
                     var resultValue = result.Value;
-                    if (resultValue.IsFalse())
+                    if (resultValue is ValueExpr v && v.IsFalse())
                     {
                         return result
                             .Env.UpdateValidatorState(v =>

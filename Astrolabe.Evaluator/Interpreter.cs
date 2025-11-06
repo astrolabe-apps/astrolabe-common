@@ -65,7 +65,7 @@ public static class Interpreter
             ValueExpr v => environment.WithValue(v),
             CallExpr { Function: var func, Args: var args } callExpr
                 when environment.GetVariable(func) is ValueExpr { Value: FunctionHandler handler }
-                => handler.Evaluate(environment, callExpr),
+                => handler.Evaluate(environment, callExpr).Map(result => (ValueExpr)result),
             CallExpr ce
                 => environment.WithError("No function $" + ce.Function + " declared").WithNull(),
             PropertyExpr { Property: var dp } => environment.Evaluate(environment.GetProperty(dp)),

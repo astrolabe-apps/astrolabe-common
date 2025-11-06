@@ -32,38 +32,69 @@ public static class DefaultFunctions
 
     public static FunctionHandler UnaryNullOp(Func<object, object?> evaluate)
     {
-        return FunctionHandler.DefaultEval(args =>
-            args switch
-            {
-                [{ } v1] => evaluate(v1),
-                [_] => null,
-                _ => throw new ArgumentException("Wrong number of args:" + args),
-            }
-        );
+        return new FunctionHandler((env, call) =>
+        {
+            if (call.Args.Count != 1)
+                return env.WithError("Wrong number of args").WithNull();
+
+            var (env1, arg) = env.EvaluateExpr(call.Args[0]);
+
+            // If arg is ValueExpr with null, return null immediately
+            if (arg is ValueExpr v && v.Value == null)
+                return env1.WithValue(ValueExpr.WithDeps(null, [v]));
+
+            // Check if arg is fully evaluated ValueExpr
+            if (arg is not ValueExpr val)
+                return env1.WithValue(new CallExpr(call.Function, new[] { arg }));
+
+            // Perform operation
+            return env1.WithValue(ValueExpr.WithDeps(evaluate(val.Value!), [val]));
+        });
     }
 
     public static FunctionHandler BinOp(Func<object?, object?, object?> evaluate)
     {
-        return FunctionHandler.DefaultEval(args =>
-            args switch
-            {
-                [var v1, var v2] => evaluate(v1, v2),
-                _ => throw new ArgumentException("Wrong number of args:" + args),
-            }
-        );
+        return new FunctionHandler((env, call) =>
+        {
+            if (call.Args.Count != 2)
+                return env.WithError("Wrong number of args").WithNull();
+
+            var (env1, arg1) = env.EvaluateExpr(call.Args[0]);
+            var (env2, arg2) = env1.EvaluateExpr(call.Args[1]);
+
+            // Check if both are ValueExpr
+            if (arg1 is not ValueExpr val1 || arg2 is not ValueExpr val2)
+                return env2.WithValue(new CallExpr(call.Function, new[] { arg1, arg2 }));
+
+            // Perform operation
+            return env2.WithValue(ValueExpr.WithDeps(evaluate(val1.Value, val2.Value), [val1, val2]));
+        });
     }
 
     public static FunctionHandler BinNullOp(Func<EvalEnvironment, object, object, object?> evaluate)
     {
-        return FunctionHandler.DefaultEval(
-            (e, args) =>
-                args switch
-                {
-                    [{ } v1, { } v2] => evaluate(e, v1, v2),
-                    [_, _] => null,
-                    _ => throw new ArgumentException("Wrong number of args:" + args),
-                }
-        );
+        return new FunctionHandler((env, call) =>
+        {
+            if (call.Args.Count != 2)
+                return env.WithError("Wrong number of args").WithNull();
+
+            // Use EvaluateExpr to support partial evaluation
+            var (env1, arg1) = env.EvaluateExpr(call.Args[0]);
+            var (env2, arg2) = env1.EvaluateExpr(call.Args[1]);
+
+            // If either arg is ValueExpr with null, can return null immediately
+            if (arg1 is ValueExpr v1 && v1.Value == null)
+                return env2.WithValue(ValueExpr.WithDeps(null, [v1, arg2 is ValueExpr v2 ? v2 : ValueExpr.Null]));
+            if (arg2 is ValueExpr v2b && v2b.Value == null)
+                return env2.WithValue(ValueExpr.WithDeps(null, [arg1 is ValueExpr v1b ? v1b : ValueExpr.Null, v2b]));
+
+            // Check if both are ValueExpr with non-null values
+            if (arg1 is not ValueExpr val1 || arg2 is not ValueExpr val2)
+                return env2.WithValue(new CallExpr(call.Function, new[] { arg1, arg2 })); // Return CallExpr with partially evaluated args
+
+            // Both are non-null ValueExpr, perform operation
+            return env2.WithValue(ValueExpr.WithDeps(evaluate(env2, val1.Value!, val2.Value!), [val1, val2]));
+        });
     }
 
     public static FunctionHandler BoolOp(Func<bool, bool, bool> func)
@@ -122,22 +153,37 @@ public static class DefaultFunctions
 
     private static FunctionHandler StringOp(Func<string, string> after)
     {
-        return FunctionHandler.DefaultEvalArgs((_, args) => ExprValuesToString(args, after));
+        return new FunctionHandler((env, call) =>
+        {
+            var (nextEnv, evalArgs) = env.EvalSelect(call.Args, (e, x) => e.EvaluateExpr(x));
+
+            // Check if all args are ValueExpr
+            if (evalArgs.Any(arg => arg is not ValueExpr))
+                return nextEnv.WithValue(new CallExpr(call.Function, evalArgs.ToList()));
+
+            var args = evalArgs.Cast<ValueExpr>().ToList();
+            return nextEnv.WithValue(ExprValuesToString(args, after));
+        });
     }
 
     public static FunctionHandler ArrayOp(Func<List<ValueExpr>, ValueExpr?, ValueExpr> arrayFunc)
     {
-        return FunctionHandler.DefaultEvalArgs(
-            (_, args) =>
-                args switch
-                {
-                    [{ Value: ArrayValue av } singleArg] => arrayFunc(
-                        av.Values.ToList(),
-                        singleArg
-                    ),
-                    _ => arrayFunc(args, null),
-                }
-        );
+        return new FunctionHandler((env, call) =>
+        {
+            var (nextEnv, evalArgs) = env.EvalSelect(call.Args, (e, x) => e.EvaluateExpr(x));
+
+            // Check if all args are ValueExpr
+            if (evalArgs.Any(arg => arg is not ValueExpr))
+                return nextEnv.WithValue(new CallExpr(call.Function, evalArgs.ToList()));
+
+            var args = evalArgs.Cast<ValueExpr>().ToList();
+            var result = args switch
+            {
+                [{ Value: ArrayValue av } singleArg] => arrayFunc(av.Values.ToList(), singleArg),
+                _ => arrayFunc(args, null),
+            };
+            return nextEnv.WithValue(result);
+        });
     }
 
     public static FunctionHandler ArrayAggOp<T>(T init, Func<T, object?, T> arrayFunc)
@@ -368,15 +414,25 @@ public static class DefaultFunctions
         { "?", IfElseOp },
         {
             "??",
-            FunctionHandler.DefaultEvalArgs(
-                (e, x) =>
-                    x switch
-                    {
-                        [var v, var o] when !v.IsNull() => v,
-                        [var v, var o] => new ValueExpr(o.Value, o.Path, new[] { v, o }),
-                        _ => ValueExpr.Null,
-                    }
-            )
+            new FunctionHandler((env, call) =>
+            {
+                if (call.Args.Count != 2)
+                    return env.WithError("?? expects 2 arguments").WithNull();
+
+                var (env1, arg1) = env.EvaluateExpr(call.Args[0]);
+                var (env2, arg2) = env1.EvaluateExpr(call.Args[1]);
+
+                // If either arg is not ValueExpr, return partial expression
+                if (arg1 is not ValueExpr v1 || arg2 is not ValueExpr v2)
+                    return env2.WithValue(new CallExpr("??", new[] { arg1, arg2 }));
+
+                // If first value is not null, return it
+                if (!v1.IsNull())
+                    return env2.WithValue(v1);
+
+                // Return second value with dependencies
+                return env2.WithValue(new ValueExpr(v2.Value, v2.Path, new[] { v1, v2 }));
+            })
         },
         { "sum", ArrayAggOp(0d, (acc, v) => acc + ValueExpr.AsDouble(v)) },
         {
@@ -396,20 +452,40 @@ public static class DefaultFunctions
         { "count", ArrayOp((args, o) => ValueExpr.WithDeps(args.Count, o != null ? [o] : [])) },
         {
             "array",
-            FunctionHandler.DefaultEval(args => new ArrayValue(
-                args.SelectMany(x => new ValueExpr(x).AllValues())
-            ))
+            new FunctionHandler((env, call) =>
+            {
+                var (nextEnv, evalArgs) = env.EvalSelect(call.Args, (e, x) => e.EvaluateExpr(x));
+
+                // Check if all args are ValueExpr
+                if (evalArgs.Any(arg => arg is not ValueExpr))
+                    return nextEnv.WithValue(new CallExpr("array", evalArgs.ToList()));
+
+                var args = evalArgs.Cast<ValueExpr>().ToList();
+                return nextEnv.WithValue(new ValueExpr(new ArrayValue(
+                    args.SelectMany(x => x.AllValues())
+                )));
+            })
         },
         {
             "notEmpty",
-            FunctionHandler.DefaultEval(x =>
-                x[0] switch
+            new FunctionHandler((env, call) =>
+            {
+                if (call.Args.Count != 1)
+                    return env.WithError("notEmpty expects 1 argument").WithNull();
+
+                var (env1, arg) = env.EvaluateExpr(call.Args[0]);
+
+                if (arg is not ValueExpr v)
+                    return env1.WithValue(new CallExpr("notEmpty", new[] { arg }));
+
+                var result = v.Value switch
                 {
                     string s => !string.IsNullOrWhiteSpace(s),
                     null => false,
                     _ => true,
-                }
-            )
+                };
+                return env1.WithValue(ValueExpr.WithDeps(result, [v]));
+            })
         },
         { "string", StringOp(x => x) },
         { "lower", StringOp(x => x.ToLower()) },
@@ -466,34 +542,48 @@ public static class DefaultFunctions
         { ".", FlatMapFunctionHandler.Instance },
         {
             "fixed",
-            FunctionHandler.DefaultEval(a =>
-                a switch
+            new FunctionHandler((env, call) =>
+            {
+                if (call.Args.Count != 2)
+                    return env.WithError("fixed expects 2 arguments").WithNull();
+
+                var (env1, arg1) = env.EvaluateExpr(call.Args[0]);
+                var (env2, arg2) = env1.EvaluateExpr(call.Args[1]);
+
+                if (arg1 is not ValueExpr v1 || arg2 is not ValueExpr v2)
+                    return env2.WithValue(new CallExpr("fixed", new[] { arg1, arg2 }));
+
+                var result = (v1.Value, v2.Value) switch
                 {
-                    [var numV, var digitsV]
+                    var (numV, digitsV)
                         when ValueExpr.MaybeDouble(numV) is { } num
-                            && ValueExpr.MaybeDouble(digitsV) is { } digits => num.ToString(
-                        "F" + (int)digits
-                    ),
+                            && ValueExpr.MaybeDouble(digitsV) is { } digits => num.ToString("F" + (int)digits),
                     _ => null,
-                }
-            )
+                };
+                return env2.WithValue(ValueExpr.WithDeps(result, [v1, v2]));
+            })
         },
         {
             "object",
-            FunctionHandler.DefaultEvalArgs(
-                (e, args) =>
+            new FunctionHandler((env, call) =>
+            {
+                var (nextEnv, evalArgs) = env.EvalSelect(call.Args, (e, x) => e.EvaluateExpr(x));
+
+                // Check if all args are ValueExpr
+                if (evalArgs.Any(arg => arg is not ValueExpr))
+                    return nextEnv.WithValue(new CallExpr("object", evalArgs.ToList()));
+
+                var args = evalArgs.Cast<ValueExpr>().ToList();
+                var i = 0;
+                var obj = new Dictionary<string, ValueExpr>();
+                while (i < args.Count - 1)
                 {
-                    var i = 0;
-                    var obj = new Dictionary<string, ValueExpr>();
-                    while (i < args.Count - 1)
-                    {
-                        var name = (string)args[i++].Value!;
-                        var value = args[i++];
-                        obj[name] = value;
-                    }
-                    return new ValueExpr(new ObjectValue(obj));
+                    var name = (string)args[i++].Value!;
+                    var value = args[i++];
+                    obj[name] = value;
                 }
-            )
+                return nextEnv.WithValue(new ValueExpr(new ObjectValue(obj)));
+            })
         },
         { "this", new FunctionHandler((e, c) => e.WithValue(e.Current)) },
         { "keys", KeysOrValuesFunctionHandler("keys") },

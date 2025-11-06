@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace Astrolabe.Evaluator;
 
 /// <summary>
@@ -10,10 +12,10 @@ public class PartialEvalEnvironment : EvalEnvironment
         : base(state) { }
 
     /// <summary>
-    /// Override Evaluate to accept ValueExpr and CallExpr with all ValueExpr arguments.
-    /// This allows calling function handlers during partial evaluation.
+    /// Override EvaluateExpr - main implementation for partial evaluation.
+    /// Accepts ValueExpr and CallExpr with all ValueExpr arguments.
     /// </summary>
-    public override EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
+    public override EnvironmentValue<EvalExpr> EvaluateExpr(EvalExpr evalExpr)
     {
         switch (evalExpr)
         {
@@ -22,14 +24,25 @@ public class PartialEvalEnvironment : EvalEnvironment
 
             case CallExpr ce when ce.Args.All(arg => arg is ValueExpr):
                 // All arguments are ValueExpr - can call function handler
-                return this.DefaultEvaluate(ce);
+                return this.DefaultEvaluate(ce).Map<EvalExpr>(x => x);
 
             default:
                 throw new InvalidOperationException(
-                    "PartialEvalEnvironment.Evaluate only accepts ValueExpr or CallExpr with all ValueExpr arguments. " +
+                    "PartialEvalEnvironment.EvaluateExpr only accepts ValueExpr or CallExpr with all ValueExpr arguments. " +
                     "Use PartialEvaluator methods for partial evaluation."
                 );
         }
+    }
+
+    /// <summary>
+    /// Override Evaluate() to throw error - partial eval should use EvaluateExpr.
+    /// </summary>
+    public override EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
+    {
+        throw new InvalidOperationException(
+            "Use EvaluateExpr() for partial evaluation. " +
+            "Evaluate() is only for standard full evaluation."
+        );
     }
 
     /// <summary>
@@ -87,6 +100,34 @@ public class PartialEvalEnvironment : EvalEnvironment
             State with
             {
                 LocalVariables = State.LocalVariables.Add(name, value),
+                Parent = State
+            }
+        );
+    }
+
+    /// <summary>
+    /// Override WithVariables to not evaluate variable values.
+    /// In partial evaluation, we want to keep the raw EvalExpr.
+    /// </summary>
+    public override EvalEnvironment WithVariables(ICollection<KeyValuePair<string, EvalExpr>> vars)
+    {
+        if (vars.Count == 0)
+        {
+            return this;
+        }
+
+        if (vars.Count == 1)
+        {
+            var single = vars.First();
+            return WithVariable(single.Key, single.Value);
+        }
+
+        // Don't evaluate - just add all values as-is
+        var newVars = vars.ToImmutableDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        return NewEnv(
+            State with
+            {
+                LocalVariables = newVars,
                 Parent = State
             }
         );

@@ -25,10 +25,10 @@ export class PartialEvalEnvironment extends EvalEnv {
   }
 
   /**
-   * Override evaluate to only accept fully-evaluated ValueExpr and CallExpr with all ValueExpr arguments.
-   * This allows calling function handlers during partial evaluation.
+   * Override evaluateExpr - main implementation for partial evaluation.
+   * Accepts ValueExpr and CallExpr with all ValueExpr arguments.
    */
-  evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
+  evaluateExpr(expr: EvalExpr): EnvValue<EvalExpr> {
     if (expr.type === "value") {
       return [this, expr];
     }
@@ -41,7 +41,8 @@ export class PartialEvalEnvironment extends EvalEnv {
       const funcValue = this.getVariable(expr.function);
       if (funcValue && funcValue.function) {
         // All arguments are ValueExpr - can call function handler
-        return defaultEvaluate(this, expr);
+        const [env, result] = defaultEvaluate(this, expr);
+        return [env, result]; // result is already ValueExpr, just typed as EvalExpr
       }
       // Function doesn't exist - throw error
       throw new Error(
@@ -50,8 +51,18 @@ export class PartialEvalEnvironment extends EvalEnv {
     }
 
     throw new Error(
-      "PartialEvalEnvironment.evaluate only accepts ValueExpr or CallExpr with all ValueExpr arguments. " +
+      "PartialEvalEnvironment.evaluateExpr only accepts ValueExpr or CallExpr with all ValueExpr arguments. " +
         "Use partialEvaluate function for partial evaluation.",
+    );
+  }
+
+  /**
+   * Override evaluate() to throw error - partial eval should use evaluateExpr.
+   */
+  evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
+    throw new Error(
+      "Use evaluateExpr() for partial evaluation. " +
+        "evaluate() is only for standard full evaluation.",
     );
   }
 
@@ -306,7 +317,7 @@ function partialEvaluateFlatMap(
           args: [left, partialRight],
           location: ce.location,
         };
-        const [, result] = env.evaluate(reconstructed);
+        const [, result] = env.evaluateExpr(reconstructed);
         return result;
       } catch {
         // Fall through to return CallExpr
@@ -389,7 +400,7 @@ function partialEvaluateCall(
       };
 
       try {
-        const [, result] = env.evaluate(reconstructed);
+        const [, result] = env.evaluateExpr(reconstructed);
         return result;
       } catch (e) {
         // Evaluation failed - keep as call expression

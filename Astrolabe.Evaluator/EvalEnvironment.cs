@@ -180,6 +180,11 @@ public class EvalEnvironment(EvalEnvironmentState state)
         return this.DefaultEvaluate(evalExpr);
     }
 
+    public virtual EnvironmentValue<EvalExpr> EvaluateExpr(EvalExpr evalExpr)
+    {
+        return this.Evaluate(evalExpr);
+    }
+
     public int Compare(object? v1, object? v2)
     {
         return State.Compare(v1, v2);

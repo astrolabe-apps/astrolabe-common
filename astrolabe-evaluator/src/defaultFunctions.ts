@@ -49,30 +49,47 @@ import {
 
 function stringFunction(after: (s: string) => string) {
   return functionValue(
-    (e, { args }) =>
-      mapEnv(evaluateAll(e, args), (x) => valuesToString(x, after)),
+    (e, { args }) => {
+      const [nextEnv, evalArgs] = mapAllEnv(e, args, (env, arg) => env.evaluateExpr(arg));
+
+      // Check if all args are ValueExpr
+      if (evalArgs.some(arg => arg.type !== 'value'))
+        return [nextEnv, { type: 'call', function: 'string', args: evalArgs }];
+
+      return [nextEnv, valuesToString(evalArgs as ValueExpr[], after)];
+    },
     constGetType(StringType),
   );
 }
 
 const flatFunction = functionValue(
   (e, call) => {
-    const allArgs = mapAllEnv(e, call.args, doEvaluate);
-    return mapEnv(allArgs, (x) => valueExpr(x.flatMap((v) => allElems(v))));
+    const [nextEnv, evalArgs] = mapAllEnv(e, call.args, (env, arg) => env.evaluateExpr(arg));
+
+    // Check if all args are ValueExpr
+    if (evalArgs.some(arg => arg.type !== 'value'))
+      return [nextEnv, { type: 'call', function: 'array', args: evalArgs }];
+
+    return [nextEnv, valueExpr((evalArgs as ValueExpr[]).flatMap((v) => allElems(v)))];
   },
   constGetType(arrayType([])),
 );
 
 export const objectFunction = functionValue(
   (e, call) => {
-    return mapEnv(evaluateAll(e, call.args), (args) => {
-      const outObj: Record<string, ValueExpr> = {};
-      let i = 0;
-      while (i < args.length - 1) {
-        outObj[toNative(args[i++]) as string] = args[i++];
-      }
-      return valueExpr(outObj);
-    });
+    const [nextEnv, evalArgs] = mapAllEnv(e, call.args, (env, arg) => env.evaluateExpr(arg));
+
+    // Check if all args are ValueExpr
+    if (evalArgs.some(arg => arg.type !== 'value'))
+      return [nextEnv, { type: 'call', function: 'object', args: evalArgs }];
+
+    const args = evalArgs as ValueExpr[];
+    const outObj: Record<string, ValueExpr> = {};
+    let i = 0;
+    while (i < args.length - 1) {
+      outObj[toNative(args[i++]) as string] = args[i++];
+    }
+    return [nextEnv, valueExpr(outObj)];
   },
   (e, call) => {
     const allChecked = checkAll(e, call.args, (e, x) => typeCheck(e, x));
@@ -97,20 +114,26 @@ export function binFunction(
   name?: string,
 ): ValueExpr {
   return binEvalFunction(name ?? "_", returnType, (aE, bE, env) => {
-    const [nextEnv, [a, b]] = evaluateAll(env, [aE, bE]);
-    if (a.value == null || b.value == null)
-      return [nextEnv, valueExprWithDeps(null, [a, b])];
-    return [
-      nextEnv,
-      valueExprWithDeps(func(a.value, b.value, nextEnv), [a, b]),
-    ];
+    const [env1, arg1] = env.evaluateExpr(aE);
+    const [env2, arg2] = env1.evaluateExpr(bE);
+
+    // If either arg is not ValueExpr, return partial expression
+    if (arg1.type !== 'value' || arg2.type !== 'value')
+      return [env2, { type: 'call', function: name ?? '_', args: [arg1, arg2] }];
+
+    // If either value is null, return null with deps
+    if (arg1.value == null || arg2.value == null)
+      return [env2, valueExprWithDeps(null, [arg1, arg2])];
+
+    // Perform operation
+    return [env2, valueExprWithDeps(func(arg1.value, arg2.value, env2), [arg1, arg2])];
   });
 }
 
 export function binEvalFunction(
   name: string,
   returnType: GetReturnType,
-  func: (a: EvalExpr, b: EvalExpr, e: EvalEnv) => EnvValue<ValueExpr>,
+  func: (a: EvalExpr, b: EvalExpr, e: EvalEnv) => EnvValue<EvalExpr>,
 ): ValueExpr {
   return functionValue((env, call) => {
     if (call.args.length != 2)
@@ -142,7 +165,15 @@ export function evalFunctionExpr(
   returnType: GetReturnType,
 ): ValueExpr {
   return functionValue(
-    (e, call) => mapEnv(evaluateAll(e, call.args), run),
+    (e, call) => {
+      const [nextEnv, evalArgs] = mapAllEnv(e, call.args, (env, arg) => env.evaluateExpr(arg));
+
+      // Check if all args are ValueExpr
+      if (evalArgs.some(arg => arg.type !== 'value'))
+        return [nextEnv, { type: 'call', function: '_evalFunc', args: evalArgs }];
+
+      return [nextEnv, run(evalArgs as ValueExpr[])];
+    },
     returnType,
   );
 }
@@ -152,7 +183,13 @@ function arrayFunc(
 ) {
   return functionValue(
     (e, call) => {
-      let [ne, v] = mapAllEnv(e, call.args, doEvaluate);
+      const [ne, evalArgs] = mapAllEnv(e, call.args, (env, arg) => env.evaluateExpr(arg));
+
+      // Check if all args are ValueExpr
+      if (evalArgs.some(arg => arg.type !== 'value'))
+        return [ne, { type: 'call', function: '_arrayFunc', args: evalArgs }];
+
+      const v = evalArgs as ValueExpr[];
       if (v.length == 1 && Array.isArray(v[0].value)) {
         return [ne, toValue(v[0].value as ValueExpr[], v[0])];
       }

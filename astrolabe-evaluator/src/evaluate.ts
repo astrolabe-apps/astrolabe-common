@@ -69,7 +69,8 @@ export function defaultEvaluate(
           env.withError("Function $" + expr.function + " not declared"),
           valueExpr(null),
         ];
-      return funcCall.function!.eval(env, expr);
+      const [nextEnv, result] = funcCall.function!.eval(env, expr);
+      return [nextEnv, result as ValueExpr];
     case "property":
       return env.evaluate(
         env.state.data.getProperty(env.current, expr.property),
