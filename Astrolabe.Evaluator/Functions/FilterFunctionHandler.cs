@@ -27,7 +27,8 @@ public static class FilterFunctionHandler
                 )
                 {
                     // Evaluate key expression with the object as current context
-                    var (keyEnv, keyResult) = nextEnv.EvaluateWith(leftValue, null, right);
+                    var (keyEnv, keyResultExpr) = nextEnv.EvaluateWith(leftValue, null, right);
+                    var keyResult = (ValueExpr)keyResultExpr;
 
                     // Handle null key - return null with preserved dependencies
                     if (keyResult.Value == null)
@@ -39,11 +40,12 @@ public static class FilterFunctionHandler
                     if (!keyResult.IsString())
                         return keyEnv.WithError("Object filter must be string").WithNull();
 
-                    var (propEnv, propValue) = keyEnv.EvaluateWith(
+                    var (propEnv, propValueExpr) = keyEnv.EvaluateWith(
                         leftValue,
                         null,
                         new PropertyExpr(keyResult.AsString())
                     );
+                    var propValue = (ValueExpr)propValueExpr;
 
                     // Check if key or object has dependencies
                     var keyHasDeps = (keyResult.Deps != null && keyResult.Deps.Any()) || keyResult.Path != null;
@@ -71,59 +73,59 @@ public static class FilterFunctionHandler
                 )
                 {
                     var empty = indexed.Count == 0;
-                    var firstFilter = nextEnv.EvaluateWith(
+                    var (firstFilterEnv, firstFilterExpr) = nextEnv.EvaluateWith(
                         empty ? ValueExpr.Null : indexed[0].Item1,
                         empty ? null : 0,
                         right
                     );
+                    var firstFilterValue = (ValueExpr)firstFilterExpr;
 
                     // Handle null index - return null with preserved dependencies
-                    if (firstFilter.Value.Value == null)
+                    if (firstFilterValue.Value == null)
                     {
-                        var nullDeps = DependencyHelpers.CombineDeps(firstFilter.Value, ValueExpr.Null, arrayValue);
-                        return firstFilter.Env.WithValue(new ValueExpr(null, null, nullDeps));
+                        var nullDeps = DependencyHelpers.CombineDeps(firstFilterValue, ValueExpr.Null, arrayValue);
+                        return firstFilterEnv.WithValue(new ValueExpr(null, null, nullDeps));
                     }
 
-                    if (firstFilter.Value.MaybeDouble() is not { } indLong)
+                    if (firstFilterValue.MaybeDouble() is not { } indLong)
                     {
-                        var initialList = firstFilter.Map<IEnumerable<ValueExpr>>(x =>
-                            x.IsTrue() ? [indexed[0].Item1] : []
-                        );
-                        return indexed
+                        var initialList = (firstFilterValue.IsTrue() ? [indexed[0].Item1] : Enumerable.Empty<ValueExpr>());
+                        var (finalEnv, finalList) = indexed
                             .Skip(1)
                             .Aggregate(
-                                initialList,
+                                (firstFilterEnv, initialList),
                                 (acc, v) =>
-                                    acc.Env.EvaluateWith(v.Item1, v.Item2, right)
-                                        .Map(result => result.IsTrue() ? acc.Value.Append(v.Item1) : acc.Value)
-                            )
-                            .Map(x => new ValueExpr(new ArrayValue(x)));
+                                {
+                                    var (resultEnv, resultExpr) = acc.Item1.EvaluateWith(v.Item1, v.Item2, right);
+                                    var result = (ValueExpr)resultExpr;
+                                    return (resultEnv, result.IsTrue() ? acc.Item2.Append(v.Item1) : acc.Item2);
+                                }
+                            );
+                        return finalEnv.WithValue(new ValueExpr(new ArrayValue(finalList)));
                     }
 
                     var ind = (int)indLong;
-                    return firstFilter.Map(indexResult =>
-                    {
-                        if (ind >= indexed.Count)
-                            return ValueExpr.Null;
-                        var element = indexed[ind].Item1;
+                    if (ind >= indexed.Count)
+                        return firstFilterEnv.WithValue(ValueExpr.Null);
 
-                        // Check if index or array has dependencies
-                        var indexHasDeps = (indexResult.Deps != null && indexResult.Deps.Any()) || indexResult.Path != null;
-                        var arrayHasDeps = arrayValue.Deps != null && arrayValue.Deps.Any();
+                    var element = indexed[ind].Item1;
 
-                        // If neither index nor array has deps, return element as-is
-                        if (!indexHasDeps && !arrayHasDeps)
-                            return element;
+                    // Check if index or array has dependencies
+                    var indexHasDeps = (firstFilterValue.Deps != null && firstFilterValue.Deps.Any()) || firstFilterValue.Path != null;
+                    var arrayHasDeps = arrayValue.Deps != null && arrayValue.Deps.Any();
 
-                        // Index is dynamic OR array has deps
-                        // Add parent reference - if element is array, children get deps when extracted via AllValues
-                        var parentWithDeps = new ValueExpr(
-                            null,
-                            element.Path,
-                            new[] { indexResult }.Concat(arrayValue.Deps ?? Enumerable.Empty<ValueExpr>())
-                        );
-                        return element with { Deps = (element.Deps ?? Enumerable.Empty<ValueExpr>()).Concat([parentWithDeps]) };
-                    });
+                    // If neither index nor array has deps, return element as-is
+                    if (!indexHasDeps && !arrayHasDeps)
+                        return firstFilterEnv.WithValue(element);
+
+                    // Index is dynamic OR array has deps
+                    // Add parent reference - if element is array, children get deps when extracted via AllValues
+                    var parentWithDeps = new ValueExpr(
+                        null,
+                        element.Path,
+                        new[] { firstFilterValue }.Concat(arrayValue.Deps ?? Enumerable.Empty<ValueExpr>())
+                    );
+                    return firstFilterEnv.WithValue(element with { Deps = (element.Deps ?? Enumerable.Empty<ValueExpr>()).Concat([parentWithDeps]) });
                 }
             }
         );

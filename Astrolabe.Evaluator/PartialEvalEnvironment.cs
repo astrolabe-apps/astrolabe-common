@@ -13,7 +13,7 @@ public class PartialEvalEnvironment : EvalEnvironment
 
     /// <summary>
     /// Override EvaluateExpr - main implementation for partial evaluation.
-    /// Accepts ValueExpr and CallExpr with all ValueExpr arguments.
+    /// Handles all expression types, returning partially-evaluated results.
     /// </summary>
     public override EnvironmentValue<EvalExpr> EvaluateExpr(EvalExpr evalExpr)
     {
@@ -22,16 +22,149 @@ public class PartialEvalEnvironment : EvalEnvironment
             case ValueExpr ve:
                 return this.WithValue(ve);
 
-            case CallExpr ce when ce.Args.All(arg => arg is ValueExpr):
-                // All arguments are ValueExpr - can call function handler
-                return this.DefaultEvaluate(ce).Map<EvalExpr>(x => x);
+            case VarExpr ve:
+                // Try to substitute with compile-time value if known
+                var varValue = GetVariable(ve.Name);
+                return varValue != null
+                    ? EvaluateExpr(varValue)  // Recursively evaluate
+                    : this.WithValue(ve);      // Keep as runtime variable
+
+            case PropertyExpr pe:
+                // Only evaluate if we have data context
+                return HasDataContext()
+                    ? this.WithValue(GetProperty(pe.Property))
+                    : this.WithValue(pe);  // Keep as runtime property
+
+            case CallExpr ce:
+                // If function exists, call handler directly; else return CallExpr unchanged
+                if (GetVariable(ce.Function) is ValueExpr { Value: FunctionHandler handler })
+                    return handler.Evaluate(this, ce);
+                return this.WithValue(ce);  // Unknown function - keep as partial CallExpr
+
+            case LetExpr le:
+                // Evaluate all bindings and add to environment
+                var newEnv = this;
+                var bindings = new Dictionary<string, EvalExpr>();
+
+                foreach (var (varExpr, binding) in le.Vars)
+                {
+                    var (nextEnv, evaluated) = newEnv.EvaluateExpr(binding);
+                    bindings[varExpr.Name] = evaluated;
+                    newEnv = (PartialEvalEnvironment)nextEnv.WithVariable(varExpr.Name, evaluated);
+                }
+
+                // Evaluate body with extended environment
+                var (finalEnv, body) = newEnv.EvaluateExpr(le.In);
+
+                // Collect free variables in the result
+                var freeVars = CollectFreeVars(body);
+                var neededBindings = bindings
+                    .Where(kvp => freeVars.Contains(kvp.Key) && kvp.Value is not ValueExpr)
+                    .Select(kvp => (new VarExpr(kvp.Key), kvp.Value))
+                    .ToList();
+
+                // Return body alone if no partial bindings needed, else wrap in LetExpr
+                return neededBindings.Count == 0
+                    ? finalEnv.WithValue(body)
+                    : finalEnv.WithValue<EvalExpr>(new LetExpr(neededBindings, body));
+
+            case ArrayExpr ae:
+                // Evaluate all elements
+                var (envAfterArray, elements) = this.EvalSelect(ae.Values, (e, x) => e.EvaluateExpr(x));
+
+                // If all elements are ValueExpr, return a ValueExpr array
+                if (elements.All(e => e is ValueExpr))
+                    return envAfterArray.WithValue(new ValueExpr(new ArrayValue(elements.Cast<ValueExpr>())));
+
+                // Otherwise keep as ArrayExpr
+                return envAfterArray.WithValue(new ArrayExpr(elements));
+
+            case LambdaExpr le:
+                // Keep lambda as-is (parameters are unknown at compile-time)
+                return this.WithValue(le);
 
             default:
                 throw new InvalidOperationException(
-                    "PartialEvalEnvironment.EvaluateExpr only accepts ValueExpr or CallExpr with all ValueExpr arguments. " +
-                    "Use PartialEvaluator methods for partial evaluation."
+                    $"PartialEvalEnvironment.EvaluateExpr cannot handle expression type: {evalExpr.GetType().Name}"
                 );
         }
+    }
+
+    /// <summary>
+    /// Collect free variables in an expression (variables not bound by lambda/let in that expression).
+    /// Handles scoping correctly - lambda and let bindings shadow outer variables.
+    /// </summary>
+    private static HashSet<string> CollectFreeVars(EvalExpr expr, HashSet<string>? boundVars = null)
+    {
+        boundVars ??= new HashSet<string>();
+        var freeVars = new HashSet<string>();
+
+        void Collect(EvalExpr e, HashSet<string> bound)
+        {
+            switch (e)
+            {
+                case VarExpr ve when !bound.Contains(ve.Name):
+                    freeVars.Add(ve.Name);
+                    break;
+
+                case LambdaExpr le:
+                    // Lambda parameter shadows outer variables
+                    var innerBound = new HashSet<string>(bound) { le.Variable };
+                    Collect(le.Value, innerBound);
+                    break;
+
+                case LetExpr le:
+                    // Let bindings shadow outer variables
+                    var letBound = new HashSet<string>(bound);
+                    foreach (var (v, _) in le.Vars)
+                        letBound.Add(v.Name);
+
+                    // Binding expressions see outer scope
+                    foreach (var (_, binding) in le.Vars)
+                        Collect(binding, bound);
+
+                    // Body sees let-bound variables
+                    Collect(le.In, letBound);
+                    break;
+
+                case CallExpr ce:
+                    foreach (var arg in ce.Args)
+                        Collect(arg, bound);
+                    break;
+
+                case ArrayExpr ae:
+                    foreach (var val in ae.Values)
+                        Collect(val, bound);
+                    break;
+
+                case ValueExpr ve when ve.Value is ArrayValue av:
+                    foreach (var val in av.Values)
+                        Collect(val, bound);
+                    break;
+
+                case ValueExpr ve when ve.Value is ObjectValue ov:
+                    foreach (var kvp in ov.Properties)
+                        Collect(kvp.Value, bound);
+                    break;
+
+                case PropertyExpr:
+                case ValueExpr:
+                    // No variables to collect
+                    break;
+            }
+        }
+
+        Collect(expr, boundVars);
+        return freeVars;
+    }
+
+    /// <summary>
+    /// Convenience method for partial evaluation - evaluates and returns just the result.
+    /// </summary>
+    public EvalExpr PartialEvaluate(EvalExpr expr)
+    {
+        var (_, result) = this.EvaluateExpr(expr);
+        return result;
     }
 
     /// <summary>

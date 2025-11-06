@@ -19,7 +19,7 @@ export function evaluateWith(
   value: ValueExpr,
   ind: number | null,
   expr: EvalExpr,
-): EnvValue<ValueExpr> {
+): EnvValue<EvalExpr> {
   return evaluateWithValue(env, value, valueExpr(ind), expr);
 }
 export function evaluateWithValue(
@@ -27,11 +27,10 @@ export function evaluateWithValue(
   value: ValueExpr,
   bindValue: ValueExpr,
   expr: EvalExpr,
-): EnvValue<ValueExpr> {
+): EnvValue<EvalExpr> {
   const [e, toEval] = checkLambda();
-  return alterEnv(e.withCurrent(value).evaluate(toEval), (e) =>
-    e.withCurrent(env.current),
-  );
+  const [evalEnv, result] = e.withCurrent(value).evaluateExpr(toEval);
+  return [evalEnv.withCurrent(env.current), result];
 
   function checkLambda(): EnvValue<EvalExpr> {
     switch (expr.type) {

@@ -138,14 +138,19 @@ public static class DefaultFunctions
             {
                 return env.WithError("Conditional expects 3 arguments").WithNull();
             }
-            var (env1, condVal) = env.Evaluate(call.Args[0]);
+            var (env1, condResult) = env.EvaluateExpr(call.Args[0]);
+
+            // If condition is not fully evaluated, return partial CallExpr
+            if (condResult is not ValueExpr condVal)
+                return env1.WithValue<EvalExpr>(new CallExpr("?", [condResult, call.Args[1], call.Args[2]]));
+
             return condVal.Value switch
             {
-                true => env1.Evaluate(call.Args[1])
-                    .Map(thenVal => ValueExpr.WithDeps(thenVal.Value, [condVal, thenVal])),
-                false => env1.Evaluate(call.Args[2])
-                    .Map(elseVal => ValueExpr.WithDeps(elseVal.Value, [condVal, elseVal])),
-                null => env1.WithValue(ValueExpr.WithDeps(null, [condVal])),
+                true => env1.EvaluateExpr(call.Args[1])
+                    .Map<EvalExpr>(thenVal => ValueExpr.WithDeps(thenVal is ValueExpr tv ? tv.Value : null, [condVal, thenVal as ValueExpr ?? condVal])),
+                false => env1.EvaluateExpr(call.Args[2])
+                    .Map<EvalExpr>(elseVal => ValueExpr.WithDeps(elseVal is ValueExpr ev ? ev.Value : null, [condVal, elseVal as ValueExpr ?? condVal])),
+                null => env1.WithValue<EvalExpr>(ValueExpr.WithDeps(null, [condVal])),
                 _ => env1.WithError("Conditional expects boolean condition").WithNull(),
             };
         }

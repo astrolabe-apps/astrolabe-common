@@ -9,7 +9,7 @@ public static class Interpreter
         return envExpr.Env.Evaluate(envExpr.Value);
     }
 
-    public static EvaluatedExprValue EvaluateWith(
+    public static EnvironmentValue<EvalExpr> EvaluateWith(
         this EvalEnvironment environment,
         ValueExpr baseValue,
         int? index,
@@ -19,7 +19,7 @@ public static class Interpreter
         return environment.EvaluateWithValue(baseValue, ValueExpr.From(index), expr);
     }
 
-    public static EvaluatedExprValue EvaluateWithValue(
+    public static EnvironmentValue<EvalExpr> EvaluateWithValue(
         this EvalEnvironment environment,
         ValueExpr baseValue,
         ValueExpr bindValue,
@@ -34,7 +34,7 @@ public static class Interpreter
                     .WithValue(valExpr),
             _ => environment.WithValue(expr)
         };
-        return e.WithCurrent(baseValue).Evaluate(toEval).WithCurrent(e.Current);
+        return e.WithCurrent(baseValue).EvaluateExpr(toEval).WithCurrent(e.Current);
     }
 
     public static EvaluatedExprValue DefaultEvaluate(

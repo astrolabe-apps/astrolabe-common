@@ -252,7 +252,14 @@ const mapFunction = binEvalFunction(
         mapAllEnv(leftEnv, value, (e, elem) =>
           evaluateWithValue(e, elem, elem, right),
         ),
-        (vals) => ({ ...leftVal, value: vals }),
+        (results: EvalExpr[]) => {
+          // If all results are ValueExpr, create a ValueExpr array
+          if (results.every((r) => r.type === "value")) {
+            return { ...leftVal, value: results as ValueExpr[] };
+          }
+          // Otherwise return ArrayExpr
+          return { type: "array" as const, values: results };
+        },
       );
     }
     return [
@@ -261,6 +268,17 @@ const mapFunction = binEvalFunction(
     ];
   },
 );
+
+// Helper to flatten EvalExpr arrays (similar to allElems but for partial evaluation)
+function allElemsExpr(expr: EvalExpr): EvalExpr[] {
+  if (expr.type === "value" && Array.isArray(expr.value)) {
+    return expr.value; // Return the ValueExpr array elements
+  }
+  if (expr.type === "value" && expr.value === null) {
+    return []; // Null flattens to empty array
+  }
+  return [expr]; // Non-array expressions remain as single elements
+}
 
 const flatmapFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
@@ -273,7 +291,19 @@ const flatmapFunction = functionValue(
         mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
           evaluateWith(e, elem, i, right),
         ),
-        (vals) => ({ ...leftVal, value: vals.flatMap((v) => allElems(v)) }),
+        (results: EvalExpr[]) => {
+          // If all results are ValueExpr, create a flattened ValueExpr array
+          if (results.every((r) => r.type === "value")) {
+            const valueExprs = results as ValueExpr[];
+            return valueExpr(valueExprs.flatMap((v) => allElems(v)));
+          }
+          // Otherwise, we have partial results - flatten what we can
+          const flattened = results.flatMap(allElemsExpr);
+          if (flattened.every((r) => r.type === "value")) {
+            return valueExpr(flattened as ValueExpr[]);
+          }
+          return { type: "array" as const, values: flattened };
+        },
       );
     }
     if (typeof value === "object") {
@@ -320,7 +350,8 @@ function firstFunction(
       if (Array.isArray(value)) {
         let curEnv = leftEnv;
         for (let i = 0; i < value.length; i++) {
-          const [nextEnv, v] = evaluateWith(curEnv, value[i], i, right);
+          const [nextEnv, vExpr] = evaluateWith(curEnv, value[i], i, right);
+          const v = vExpr as ValueExpr;
           curEnv = nextEnv;
           const res = callback(i, value, v, curEnv);
           if (res) {
@@ -351,12 +382,13 @@ const filterFunction = functionValue(
     if (!right) return [leftEnv.withError("No filter expression"), NullExpr];
     if (Array.isArray(value)) {
       const empty = value.length === 0;
-      const [firstEnv, indexResult] = evaluateWith(
+      const [firstEnv, indexResultExpr] = evaluateWith(
         leftEnv,
         empty ? NullExpr : value[0],
         empty ? null : 0,
         right,
       );
+      const indexResult = indexResultExpr as ValueExpr;
       const { value: firstFilter } = indexResult;
 
       // Handle null index - return null with preserved dependencies
@@ -407,8 +439,9 @@ const filterFunction = functionValue(
         (e, x: ValueExpr, ind) =>
           ind === 0
             ? e
-            : envEffect(evaluateWith(e, x, ind, right), ({ value }) => {
-                if (value === true) accArray.push(x);
+            : envEffect(evaluateWith(e, x, ind, right), (resultExpr) => {
+                const result = resultExpr as ValueExpr;
+                if (result.value === true) accArray.push(x);
               }),
         firstEnv,
       );
@@ -419,7 +452,8 @@ const filterFunction = functionValue(
     }
     if (typeof value === "object") {
       // Evaluate key expression with the object as current context
-      const [keyEnv, keyResult] = evaluateWith(leftEnv, leftVal, null, right);
+      const [keyEnv, keyResultExpr] = evaluateWith(leftEnv, leftVal, null, right);
+      const keyResult = keyResultExpr as ValueExpr;
       const { value: firstFilter } = keyResult;
 
       // Handle null key - return null with preserved dependencies
@@ -438,12 +472,13 @@ const filterFunction = functionValue(
       }
 
       if (typeof firstFilter === "string") {
-        const [propEnv, propValue] = evaluateWith(
+        const [propEnv, propValueExpr] = evaluateWith(
           keyEnv,
           leftVal,
           null,
           propertyExpr(firstFilter),
         );
+        const propValue = propValueExpr as ValueExpr;
 
         // Check if key or object has dependencies
         const keyHasDeps =

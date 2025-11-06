@@ -34,7 +34,8 @@ public class FirstFunctionHandler
                     var curEnv = leftEnv;
                     for (var i = 0; i < values.Count; i++)
                     {
-                        var (nextEnv, result) = curEnv.EvaluateWith(values[i], i, right);
+                        var (nextEnv, resultExpr) = curEnv.EvaluateWith(values[i], i, right);
+                        var result = (ValueExpr)resultExpr;
                         curEnv = nextEnv;
                         var valueResult = callback(i, values, result, curEnv);
                         if (valueResult != null)
