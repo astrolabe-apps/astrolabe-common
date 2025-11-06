@@ -26,35 +26,27 @@ public class EvalController : ControllerBase
                 kvp => kvp.Key, EvalExpr (kvp) => JsonDataLookup.ToValue(null, JsonSerializer.SerializeToNode(kvp.Value))
             );
 
-            var state = new EvalEnvironmentState(
-                Data: new EvaluatorData(ValueExpr.Undefined, (_, __) => ValueExpr.Undefined),
-                Current: ValueExpr.Undefined,
-                Compare: EvalEnvironment.DefaultComparison,
-                LocalVariables: variables.ToImmutableDictionary(),
-                Parent: null,
-                Errors: ImmutableList<EvalError>.Empty
-            );
+            var state = EvalEnvironmentState.EmptyState(
+                new EvaluatorData(ValueExpr.Undefined, (_, __) => ValueExpr.Undefined)) with {} ;
 
-            var env = new PartialEvalEnvironment(state).AddDefaultFunctions() as PartialEvalEnvironment;
-            var partialResult = env!.PartialEvaluate(evalExpr);
+            var env = (PartialEvalEnvironment) new PartialEvalEnvironment(state).AddDefaultFunctions().WithVariables(variables);
+            var partialResult = env.PartialEvaluate(evalExpr);
 
             return new EvalResult(
                 partialResult.Print(),
                 env.State.Errors.Select(x => x.Message)
             );
         }
-        else
-        {
-            // Normal evaluation mode
-            var valEnv = RuleValidator.FromData(
-                JsonDataLookup.FromObject(JsonSerializer.SerializeToNode(evalData.Data))
-            );
-            var result = valEnv.Evaluate(evalExpr);
-            return new EvalResult(
-                includeDeps ? ToValueWithDeps(result.Value) : ToValueWithoutDeps(result.Value),
-                result.Env.Errors.Select(x => x.Message)
-            );
-        }
+
+        // Normal evaluation mode
+        var valEnv = RuleValidator.FromData(
+            JsonDataLookup.FromObject(JsonSerializer.SerializeToNode(evalData.Data))
+        );
+        var result = valEnv.Evaluate(evalExpr);
+        return new EvalResult(
+            includeDeps ? ToValueWithDeps(result.Value) : ToValueWithoutDeps(result.Value),
+            result.Env.Errors.Select(x => x.Message)
+        );
     }
 
     public static object? ToValueWithoutDeps(ValueExpr expr)
