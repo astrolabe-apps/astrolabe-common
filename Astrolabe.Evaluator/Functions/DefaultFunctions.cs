@@ -509,18 +509,16 @@ public static class DefaultFunctions
                     }
 
                     var merged = new Dictionary<string, ValueExpr>();
-                    var deps = new List<ValueExpr>();
                     var currentEnv = env;
 
                     foreach (var arg in call.Args)
                     {
                         var (nextEnv, argVal) = currentEnv.Evaluate(arg);
                         currentEnv = nextEnv;
-                        deps.Add(argVal);
 
                         if (argVal.IsNull())
                         {
-                            return currentEnv.WithValue(ValueExpr.WithDeps(null, deps));
+                            return currentEnv.WithNull();
                         }
 
                         if (argVal.Value is ObjectValue ov)
@@ -532,7 +530,7 @@ public static class DefaultFunctions
                         }
                     }
 
-                    return currentEnv.WithValue(ValueExpr.WithDeps(new ObjectValue(merged), deps));
+                    return currentEnv.WithValue(new ValueExpr(new ObjectValue(merged)));
                 }
             )
         },

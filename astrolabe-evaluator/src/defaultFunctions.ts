@@ -720,26 +720,24 @@ export const defaultFunctions = {
       }
 
       const merged: Record<string, ValueExpr> = {};
-      const deps: ValueExpr[] = [];
       let currentEnv = env;
 
       for (const arg of call.args) {
         const [nextEnv, argVal] = currentEnv.evaluate(arg);
         currentEnv = nextEnv;
-        deps.push(argVal);
 
         if (argVal.value == null) {
-          return [currentEnv, valueExprWithDeps(null, deps)];
+          return [currentEnv, NullExpr];
         }
 
         if (typeof argVal.value === "object" && !Array.isArray(argVal.value)) {
-          Object.assign(merged, argVal.value as Record<string, ValueExpr>);
+          Object.assign(merged, argVal.value);
         }
       }
 
-      return [currentEnv, valueExprWithDeps(merged, deps)];
+      return [currentEnv, valueExpr(merged)];
     },
-    (e, call) => checkValue(e, objectType({})),
+    (e) => checkValue(e, objectType({})),
   ),
 };
 
