@@ -1,7 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";
-import type { ValueExpr } from "../src/ast";
 import { toNative } from "../src/ast";
 
 /**
@@ -372,12 +371,16 @@ describe("Array Aggregate Functions", () => {
   });
 
   test("Contains - with match", () => {
-    const result = evalExpr("$contains(items, $i => 3)", { items: [1, 2, 3, 4, 5] });
+    const result = evalExpr("$contains(items, $i => 3)", {
+      items: [1, 2, 3, 4, 5],
+    });
     expect(result).toBe(true);
   });
 
   test("Contains - no match", () => {
-    const result = evalExpr("$contains(items, $i => 10)", { items: [1, 2, 3, 4, 5] });
+    const result = evalExpr("$contains(items, $i => 10)", {
+      items: [1, 2, 3, 4, 5],
+    });
     expect(result).toBe(false);
   });
 
@@ -396,7 +399,12 @@ describe("Array Access and Transform Functions", () => {
   });
 
   test("Array - flatten nested arrays", () => {
-    const result = evalToArray("$array(arr)", { arr: [[1, 2], [3, 4]] });
+    const result = evalToArray("$array(arr)", {
+      arr: [
+        [1, 2],
+        [3, 4],
+      ],
+    });
     expect(result).toEqual([1, 2, 3, 4]);
   });
 
@@ -456,7 +464,9 @@ describe("Array Access and Transform Functions", () => {
   });
 
   test("IndexOf - value not found returns null", () => {
-    const result = evalExpr("$indexOf(items, $i => 99)", { items: [10, 20, 30] });
+    const result = evalExpr("$indexOf(items, $i => 99)", {
+      items: [10, 20, 30],
+    });
     expect(result).toBeNull();
   });
 
@@ -482,7 +492,9 @@ describe("Array Access and Transform Functions", () => {
 
 describe("Array Mapping Functions", () => {
   test("Map - transform values", () => {
-    const result = evalToArray("$map(nums, $x => $x * 2)", { nums: [1, 2, 3, 4] });
+    const result = evalToArray("$map(nums, $x => $x * 2)", {
+      nums: [1, 2, 3, 4],
+    });
     expect(result).toEqual([2, 4, 6, 8]);
   });
 
@@ -590,7 +602,9 @@ describe("Object Functions", () => {
   });
 
   test("Object - with various types", () => {
-    const result = evalExprNative('$object("str", "hello", "num", 42, "bool", true)');
+    const result = evalExprNative(
+      '$object("str", "hello", "num", 42, "bool", true)',
+    );
     expect(result).toEqual({ str: "hello", num: 42, bool: true });
   });
 
@@ -607,7 +621,9 @@ describe("Object Functions", () => {
   });
 
   test("Values - get object values", () => {
-    const result = evalToArray("$values(obj)", { obj: { a: 10, b: 20, c: 30 } });
+    const result = evalToArray("$values(obj)", {
+      obj: { a: 10, b: 20, c: 30 },
+    });
     expect(result.sort()).toEqual([10, 20, 30]);
   });
 
@@ -615,33 +631,119 @@ describe("Object Functions", () => {
     const result = evalToArray("$values(obj)", { obj: {} });
     expect(result).toEqual([]);
   });
+
+  test("Merge - single object returns object", () => {
+    const data = {
+      obj: { a: 1, b: "test" },
+    };
+    const result = evalExprNative("$merge(obj)", data);
+    expect(result).toEqual({ a: 1, b: "test" });
+  });
+
+  test("Merge - multiple objects merges all", () => {
+    const data = {
+      obj1: { a: 1 },
+      obj2: { b: 2 },
+    };
+    const result = evalExprNative("$merge(obj1, obj2)", data);
+    expect(result).toEqual({ a: 1, b: 2 });
+  });
+
+  test("Merge - overlapping keys later value wins", () => {
+    const data = {
+      obj1: { a: 1 },
+      obj2: { a: 2 },
+    };
+    const result = evalExprNative("$merge(obj1, obj2)", data);
+    expect(result).toEqual({ a: 2 });
+  });
+
+  test("Merge - null argument returns null", () => {
+    const data = {
+      obj: { a: 1 },
+    };
+    const result = evalExpr("$merge(obj, null)", data);
+    expect(result).toBeNull();
+  });
+
+  test("Merge - null as first argument returns null", () => {
+    const data = {
+      obj: { a: 1 },
+    };
+    const result = evalExpr("$merge(null, obj)", data);
+    expect(result).toBeNull();
+  });
+
+  test("Merge - no arguments returns error", () => {
+    const env = basicEnv({});
+    const parsed = parseEval("$merge()");
+    const [nextEnv, result] = env.evaluate(parsed);
+    expect(result.value).toBeNull();
+    expect(nextEnv.errors.length).toBeGreaterThan(0);
+  });
+
+  test("Merge - skips non-object arguments", () => {
+    const data = {
+      obj: { a: 1 },
+    };
+    const result = evalExprNative('$merge(obj, "not an object", 42)', data);
+    expect(result).toEqual({ a: 1 });
+  });
+
+  test("Merge - three objects", () => {
+    const data = {
+      obj1: { a: 1 },
+      obj2: { b: 2 },
+      obj3: { c: 3 },
+    };
+    const result = evalExprNative("$merge(obj1, obj2, obj3)", data);
+    expect(result).toEqual({ a: 1, b: 2, c: 3 });
+  });
+
+  test("Merge - with complex values", () => {
+    const data = {
+      obj1: { arr: [1, 2, 3] },
+      obj2: { nested: { x: 10 } },
+    };
+    const result = evalExprNative("$merge(obj1, obj2)", data);
+    expect(result).toEqual({ arr: [1, 2, 3], nested: { x: 10 } });
+  });
 });
 
 describe("Control Flow and Utility Functions", () => {
   test("Which - matches first case", () => {
-    const result = evalExpr('$which(status, "pending", msg1, "complete", msg2)', {
-      status: "pending",
-      msg1: "Waiting",
-      msg2: "Done",
-    });
+    const result = evalExpr(
+      '$which(status, "pending", msg1, "complete", msg2)',
+      {
+        status: "pending",
+        msg1: "Waiting",
+        msg2: "Done",
+      },
+    );
     expect(result).toBe("Waiting");
   });
 
   test("Which - matches second case", () => {
-    const result = evalExpr('$which(status, "pending", msg1, "complete", msg2)', {
-      status: "complete",
-      msg1: "Waiting",
-      msg2: "Done",
-    });
+    const result = evalExpr(
+      '$which(status, "pending", msg1, "complete", msg2)',
+      {
+        status: "complete",
+        msg1: "Waiting",
+        msg2: "Done",
+      },
+    );
     expect(result).toBe("Done");
   });
 
   test("Which - no match returns null", () => {
-    const result = evalExpr('$which(status, "pending", msg1, "complete", msg2)', {
-      status: "unknown",
-      msg1: "Waiting",
-      msg2: "Done",
-    });
+    const result = evalExpr(
+      '$which(status, "pending", msg1, "complete", msg2)',
+      {
+        status: "unknown",
+        msg1: "Waiting",
+        msg2: "Done",
+      },
+    );
     expect(result).toBeNull();
   });
 
@@ -654,12 +756,16 @@ describe("Control Flow and Utility Functions", () => {
   });
 
   test("This - in map context", () => {
-    const result = evalToArray("$map(nums, $x => $this())", { nums: [1, 2, 3] });
+    const result = evalToArray("$map(nums, $x => $this())", {
+      nums: [1, 2, 3],
+    });
     expect(result).toEqual([1, 2, 3]);
   });
 
   test("This - in filter context", () => {
-    const result = evalToArray("nums[$i => $this() > 2]", { nums: [1, 2, 3, 4, 5] });
+    const result = evalToArray("nums[$i => $this() > 2]", {
+      nums: [1, 2, 3, 4, 5],
+    });
     expect(result).toEqual([3, 4, 5]);
   });
 
@@ -701,21 +807,23 @@ describe("Let Expression Variable References", () => {
   });
 
   test("Variable references with data access", () => {
-    const result = evalExpr("let $x := value, $y := $x * 2 in $y", { value: 10 });
+    const result = evalExpr("let $x := value, $y := $x * 2 in $y", {
+      value: 10,
+    });
     expect(result).toBe(20);
   });
 
   test("Complex expression with variable references", () => {
     const result = evalExpr(
       "let $sum := a + b, $avg := $sum / 2, $result := $avg * multiplier in $result",
-      { a: 10, b: 20, multiplier: 3 }
+      { a: 10, b: 20, multiplier: 3 },
     );
     expect(result).toBe(45); // ((10 + 20) / 2) * 3 = 45
   });
 
   test("Variable reference in array context", () => {
     const result = evalToArray(
-      "let $base := 5, $arr := $array($base, $base * 2, $base * 3) in $arr"
+      "let $base := 5, $arr := $array($base, $base * 2, $base * 3) in $arr",
     );
     expect(result).toEqual([5, 10, 15]);
   });
