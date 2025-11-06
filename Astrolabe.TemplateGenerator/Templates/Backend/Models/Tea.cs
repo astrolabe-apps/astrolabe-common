@@ -23,7 +23,7 @@ public enum TeaType
     Herbal,
     Rooibos,
     Purple,
-    Peppermint
+    Peppermint,
 }
 
 [JsonString]
@@ -32,10 +32,5 @@ public enum MilkAmount
     None,
     Splash,
     Normal,
-    Extra
-}
-
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
-{
-    public DbSet<Tea> Teas { get; set; }
+    Extra,
 }

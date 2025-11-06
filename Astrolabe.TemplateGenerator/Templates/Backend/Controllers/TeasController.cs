@@ -1,3 +1,6 @@
+using __AppName__.Data.EF;
+using __AppName__.Exceptions;
+using __AppName__.Forms;
 using __AppName__.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,37 +12,32 @@ namespace __AppName__.Controllers;
 public class TeasController(AppDbContext dbContext) : ControllerBase
 {
     [HttpGet]
-    public async Task<IEnumerable<TeaDto>> GetAll()
+    public async Task<List<TeaInfo>> GetAll()
     {
-        return await dbContext.Teas.Select(t => new TeaDto(
-            t.Id,
-            t.Type,
-            t.NumberOfSugars,
-            t.MilkAmount,
-            t.IncludeSpoon,
-            t.BrewNotes
-        )).ToListAsync();
+        return await dbContext
+            .Teas.Select(t => new TeaInfo(t.Id, t.Type, t.NumberOfSugars, t.MilkAmount))
+            .ToListAsync();
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<TeaDto>> Get(Guid id)
+    public async Task<TeaView> Get(Guid id)
     {
         var tea = await dbContext.Teas.FindAsync(id);
-        if (tea == null)
-            return NotFound();
+        NotFoundException.ThrowIfNull(tea, $"Tea with ID {id} not found.");
 
-        return new TeaDto(
-            tea.Id,
-            tea.Type,
-            tea.NumberOfSugars,
-            tea.MilkAmount,
-            tea.IncludeSpoon,
-            tea.BrewNotes
-        );
+        return new TeaView
+        {
+            Id = tea.Id,
+            Type = tea.Type,
+            NumberOfSugars = tea.NumberOfSugars,
+            MilkAmount = tea.MilkAmount,
+            IncludeSpoon = tea.IncludeSpoon,
+            BrewNotes = tea.BrewNotes,
+        };
     }
 
     [HttpPost]
-    public async Task<ActionResult<Guid>> Create([FromBody] TeaEdit edit)
+    public async Task<TeaView> Create([FromBody] TeaEdit edit)
     {
         var tea = new Tea
         {
@@ -48,21 +46,28 @@ public class TeasController(AppDbContext dbContext) : ControllerBase
             NumberOfSugars = edit.NumberOfSugars,
             MilkAmount = edit.MilkAmount,
             IncludeSpoon = edit.IncludeSpoon,
-            BrewNotes = edit.BrewNotes
+            BrewNotes = edit.BrewNotes,
         };
 
         dbContext.Teas.Add(tea);
         await dbContext.SaveChangesAsync();
 
-        return tea.Id;
+        return new TeaView
+        {
+            Id = tea.Id,
+            Type = tea.Type,
+            NumberOfSugars = tea.NumberOfSugars,
+            MilkAmount = tea.MilkAmount,
+            IncludeSpoon = tea.IncludeSpoon,
+            BrewNotes = tea.BrewNotes,
+        };
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult> Update(Guid id, [FromBody] TeaEdit edit)
+    public async Task<TeaView> Update(Guid id, [FromBody] TeaEdit edit)
     {
         var tea = await dbContext.Teas.FindAsync(id);
-        if (tea == null)
-            return NotFound();
+        NotFoundException.ThrowIfNull(tea, $"Tea with ID {id} not found.");
 
         tea.Type = edit.Type;
         tea.NumberOfSugars = edit.NumberOfSugars;
@@ -72,36 +77,24 @@ public class TeasController(AppDbContext dbContext) : ControllerBase
 
         await dbContext.SaveChangesAsync();
 
-        return NoContent();
+        return new TeaView
+        {
+            Id = tea.Id,
+            Type = tea.Type,
+            NumberOfSugars = tea.NumberOfSugars,
+            MilkAmount = tea.MilkAmount,
+            IncludeSpoon = tea.IncludeSpoon,
+            BrewNotes = tea.BrewNotes,
+        };
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<ActionResult> Delete(Guid id)
+    public async Task Delete(Guid id)
     {
         var tea = await dbContext.Teas.FindAsync(id);
-        if (tea == null)
-            return NotFound();
+        NotFoundException.ThrowIfNull(tea, $"Tea with ID {id} not found.");
 
         dbContext.Teas.Remove(tea);
         await dbContext.SaveChangesAsync();
-
-        return NoContent();
     }
 }
-
-public record TeaDto(
-    Guid Id,
-    TeaType Type,
-    int NumberOfSugars,
-    MilkAmount MilkAmount,
-    bool IncludeSpoon,
-    string? BrewNotes
-);
-
-public record TeaEdit(
-    TeaType Type,
-    int NumberOfSugars,
-    MilkAmount MilkAmount,
-    bool IncludeSpoon,
-    string? BrewNotes
-);

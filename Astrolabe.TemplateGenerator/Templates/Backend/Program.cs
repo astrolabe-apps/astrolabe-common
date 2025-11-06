@@ -1,12 +1,20 @@
 using System.Reflection;
 using Astrolabe.JSON.Extensions;
+using __AppName__.Data.EF;
+using __AppName__.Exceptions;
 using __AppName__.Models;
+using __AppName__.Services;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddSingleton<FormService>();
+
+// Add exception handling
+builder.Services.AddExceptionHandler<ExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 // Add services to the container.
 builder
@@ -39,6 +47,8 @@ builder.Services.AddDbContext<AppDbContext>(op =>
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

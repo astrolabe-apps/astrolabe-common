@@ -19,6 +19,7 @@
     <PackageReference Include="Astrolabe.Validation" Version="*" />
     <PackageReference Include="Astrolabe.Web.Common" Version="*" />
     <PackageReference Include="Astrolabe.CodeGen" Version="*" />
+    <PackageReference Include="Astrolabe.SearchState" Version="*" />
   </ItemGroup>
 
   <ItemGroup>

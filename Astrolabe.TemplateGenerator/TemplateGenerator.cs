@@ -33,8 +33,9 @@ public class TemplateGenerator
     public async Task InitializeRush()
     {
         // Rush.json is already copied by CreateFrontend
-        // Use pnpm dlx to download and run rush
-        await RunCommand("pnpm", "dlx @microsoft/rush@5.153.2 update", ClientAppPath);
+        // Use npx to run rush update which installs all dependencies
+        // Add --bypass-policy to skip policy checks that might hang
+        await RunCommand("npx", "@microsoft/rush@5.153.2 update --bypass-policy", ClientAppPath);
     }
 
     public async Task BuildBackend()
@@ -72,9 +73,8 @@ public class TemplateGenerator
 
     public async Task InstallFrontendDependencies()
     {
-        // Already done in InitializeRush
-        // This could run "npx rush install" if needed
-        await Task.CompletedTask;
+        // Ensure all dependencies are installed - run rush update again to be safe
+        await RunCommand("npx", "@microsoft/rush@5.153.2 update --bypass-policy", ClientAppPath);
     }
 
     private async Task CopyAndProcessDirectory(string sourceDir, string targetDir)

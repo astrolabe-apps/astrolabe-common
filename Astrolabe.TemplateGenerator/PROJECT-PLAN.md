@@ -49,64 +49,95 @@ Astrolabe.TemplateGenerator/
 
 ---
 
+## ✅ Completed Tasks
+
+### Backend Template - Phase 1 Core Functionality
+- ✅ Complete .NET project structure with Program.cs, controllers, models
+- ✅ Swagger/OpenAPI configuration with proper operation IDs and server URL
+- ✅ DbContext setup (AppDbContext with EF Core)
+- ✅ EF Core migrations setup with auto-migration on startup
+- ✅ SQL Server database provider configured
+- ✅ `/api/CodeGen/Schemas` endpoint - generates TypeScript schema definitions
+- ✅ `/api/CodeGen/Forms` endpoint - generates form definitions from .NET models
+- ✅ `/api/CodeGen/SchemasSchemas` endpoint - generates editor schemas
+- ✅ FormService for form definition management with JSON file persistence
+- ✅ Sample Tea entity model (TeaType enum, MilkAmount enum)
+- ✅ Complete TeasController with all CRUD endpoints following BEST-PRACTICES.md:
+  - ✅ GET /api/teas (returns List<TeaInfo>)
+  - ✅ GET /api/teas/{id} (returns TeaView)
+  - ✅ POST /api/teas (accepts TeaEdit, returns TeaView)
+  - ✅ PUT /api/teas/{id} (accepts TeaEdit, returns TeaView)
+  - ✅ DELETE /api/teas/{id}
+- ✅ DTOs following BEST-PRACTICES naming conventions:
+  - ✅ TeaEdit - for POST/PUT operations with editable fields
+  - ✅ TeaInfo - lightweight record for list views
+  - ✅ TeaView - extends TeaEdit with Id for detailed GET operations
+- ✅ AppForms implementation following BEST-PRACTICES pattern:
+  - ✅ TeaEditorForm - specific form class with Tea property containing TeaEdit
+  - ✅ TeaSearchForm - for search/list page with filters and results
+- ✅ Exception-based error handling (NotFoundException.ThrowIfNull pattern)
+- ✅ JSON serialization with standard options
+
+### Frontend Template - Phase 1 Core Functionality
+- ✅ Rush monorepo structure with pnpm workspaces
+- ✅ Next.js 16 site template with App Router
+- ✅ Tailwind CSS + PostCSS configuration
+- ✅ TypeScript configuration across all packages
+- ✅ astrolabe-ui package with basic Button component and mkIcon helper
+- ✅ client-common package with:
+  - ✅ NSwag API client generation script
+  - ✅ Schema generation integration (gencode script)
+  - ✅ Form definitions generation
+  - ✅ Editor schemas generation (geneditorschemas script)
+- ✅ Custom form renderer (renderers.ts)
+- ✅ Routes configuration system (routes.tsx)
+- ✅ Complete Tea CRUD page (/tea) with:
+  - ✅ List view with cards
+  - ✅ Create form
+  - ✅ Edit form
+  - ✅ Delete with confirmation
+  - ✅ Client-side data fetching using generated TeasClient
+  - ✅ Form rendering using @astroapps/controls
+  - ✅ useControl for state management
+- ✅ Schema editor page (/editor) using @astroapps/schemas-editor
+
+---
+
 ## 🚧 In Progress / Remaining Tasks
 
 ### 1. Backend Template Enhancement
 
-#### 1.1 Basic Backend Structure
+#### 1.1 ~~Basic Backend Structure~~ ✅ COMPLETED
 
-- [ ] Add complete .NET project structure
-  - [ ] Program.cs with minimal configuration
-  - [ ] Controllers folder with sample controller
-  - [ ] Models/Entities folder
-  - [ ] DbContext setup (if using EF Core)
-  - [ ] Swagger/OpenAPI configuration
+#### 1.2 ~~Code Generation Endpoints~~ ✅ COMPLETED
 
-#### 1.2 Code Generation Endpoints
+#### 1.3 Database Setup - MOSTLY COMPLETED ⚠️
 
-- [ ] Implement `/api/CodeGen/Schemas` endpoint
-
-  - Generate TypeScript schema definitions from .NET types
-  - Export schema metadata for forms
-
-- [ ] Implement `/api/CodeGen/Forms` endpoint
-  - Generate form definitions from .NET models
-  - Export validation rules and field configurations
-
-#### 1.3 Database Setup
-
-- [ ] Add EF Core migrations setup
-- [ ] Create initial migration
+- ✅ Add EF Core migrations setup
+- ✅ Configure database provider (SQL Server)
 - [ ] Add seed data configuration
-- [ ] Configure database provider (SQL Server/PostgreSQL/SQLite)
+- [ ] Document how to create additional migrations
 
 ### 2. CRUD Functionality
 
-#### 2.1 Backend CRUD
+#### 2.1 ~~Backend CRUD~~ ✅ COMPLETED
+- ✅ Example Tea entity model with full CRUD
+- ✅ All CRUD endpoints following best practices
+- ✅ DTOs and AppForms properly implemented
+- [ ] Create generic CRUD base controller (optional enhancement)
+- [ ] Implement repository pattern (optional enhancement)
+- [ ] Add pagination to GET /api/teas endpoint
 
-- [ ] Create generic CRUD base controller
-- [ ] Implement repository pattern (optional)
-- [ ] Add example entity model
-- [ ] Create CRUD endpoints for example entity:
-  - GET /api/{entity} (list with pagination)
-  - GET /api/{entity}/{id} (single)
-  - POST /api/{entity} (create)
-  - PUT /api/{entity}/{id} (update)
-  - DELETE /api/{entity}/{id} (delete)
+#### 2.2 Frontend CRUD - MOSTLY COMPLETED ⚠️
 
-#### 2.2 Frontend CRUD
-
-- [ ] Add example CRUD pages in site:
-
-  - List view with data grid
-  - Detail/Edit form
-  - Create form
-  - Delete confirmation
-
-- [ ] Implement client-side data fetching
-- [ ] Add form validation using @react-typed-forms
+- ✅ Example CRUD page with list, create, edit, delete
+- ✅ Client-side data fetching
+- ✅ Form rendering using @react-typed-forms
+- [ ] Replace card-based list view with data grid
 - [ ] Add error handling and loading states
+- [ ] Add form validation display
 - [ ] Implement optimistic updates
+- [ ] Add toast notifications for success/error
 
 ### 3. Authentication & Authorization
 
@@ -161,15 +192,17 @@ Setting up our own ShadCN registry.
 
 ### 5. API Client Generation
 
-#### 5.1 Client-Common Setup
+#### 5.1 Client-Common Setup - MOSTLY COMPLETED ⚠️
 
-- [ ] Verify NSwag configuration
+- ✅ NSwag configuration with proper settings
+- ✅ TypeScript types generation from Swagger
+- ✅ Schema generation endpoint integration
+- ✅ Forms generation endpoint integration
+- ✅ Editor schemas generation
 - [ ] Add retry logic
 - [ ] Add request interceptors
 - [ ] Add response error handling
-- [ ] Add TypeScript types generation
-- [ ] Test schema generation endpoint
-- [ ] Test forms generation endpoint
+- [ ] Add base URL configuration from environment
 
 ### 6. Build & Deployment
 
@@ -256,32 +289,40 @@ Setting up our own ShadCN registry.
 - [ ] Add code splitting
 - [ ] Add service worker (optional - PWA)
 
-#### 10.3 Developer Experience
+#### 10.3 Developer Experience - PARTIALLY COMPLETED ⚠️
 
-- [ ] Add hot reload for backend (dotnet watch)
-- [ ] Ensure hot reload works for frontend
-- [ ] Add code formatting (Prettier)
+- ✅ Hot reload for backend (via dotnet run/watch)
+- ✅ Hot reload for frontend (Next.js dev server)
+- ✅ Code formatting (Prettier configured in client-common)
 - [ ] Add linting (ESLint)
 - [ ] Add git hooks (Husky - optional)
+- [ ] Add .gitignore files to template
 
 ---
 
 ## 🎯 Priority Order
 
-### Phase 1: Core Functionality (Highest Priority)
+### ~~Phase 1: Core Functionality~~ ✅ MOSTLY COMPLETED
 
-1. Complete basic backend structure (1.1)
-2. Implement code generation endpoints (1.2)
-3. Add backend CRUD functionality (2.1)
-4. Complete API client generation (5.1)
-5. Add frontend CRUD pages (2.2)
+1. ✅ Complete basic backend structure (1.1)
+2. ✅ Implement code generation endpoints (1.2)
+3. ✅ Add backend CRUD functionality (2.1)
+4. ✅ Complete API client generation (5.1)
+5. ✅ Add frontend CRUD pages (2.2)
 
-### Phase 2: Essential Features
+**Remaining Phase 1 Tasks:**
+- Fix form editor (currently broken)
+- Add error handling and loading states to Tea page
+- Add toast notifications
+- Update Tea page to use TeaInfo instead of TeaDto
+- Add base URL configuration from environment
+
+### Phase 2: Essential Features - IN PROGRESS 🚧
 
 1. Add authentication (3.1, 3.2)
 2. Complete UI components (4.1)
 3. Add layouts and navigation (4.2)
-4. Add data grid (4.3)
+4. Add data grid (4.3) - Replace card-based list with proper data grid
 
 ### Phase 3: Polish & Enhancement
 
@@ -303,8 +344,12 @@ Setting up our own ShadCN registry.
 
 ### Known Issues
 
+- **Form editor is currently broken** - needs investigation and fix
 - Turbopack has Windows path resolution issues - using webpack mode instead
 - Peer dependency warnings for some packages (non-critical)
+- Tea page uses TeaDto instead of TeaInfo (should be updated)
+- No error handling or loading states in Tea CRUD page
+- Hard-coded API URL in Tea page (should use environment variable)
 
 ### Design Decisions
 
@@ -313,11 +358,22 @@ Setting up our own ShadCN registry.
 3. **pnpm over npm/yarn**: Faster, more efficient disk usage
 4. **Next.js 16**: Latest stable with App Router
 5. **@react-typed-forms**: Type-safe forms with schema generation
+6. **BEST-PRACTICES.md compliance**: All DTOs follow Edit/Info/View naming pattern, AppForms pattern for forms, exception-based error handling
+
+### Recent Completions (Latest Session)
+
+- Implemented all Tea DTOs following BEST-PRACTICES.md (TeaEdit, TeaInfo, TeaView)
+- Created AppForms (TeaEditorForm, TeaSearchForm)
+- Updated TeasController to use exception-throwing pattern
+- Removed ActionResult wrappers, now using clean return types
+- Added proper namespace organization
 
 ### Future Considerations
 
 - Consider adding mobile app template (React Native/Expo)
-- Authentication
+- MSAL authentication integration (following BEST-PRACTICES.md patterns)
+- Generic CRUD base controller/service pattern
+- Repository pattern implementation
 
 ---
 
