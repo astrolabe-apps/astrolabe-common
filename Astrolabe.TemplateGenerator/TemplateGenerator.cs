@@ -53,12 +53,11 @@ public class TemplateGenerator
             // Wait for backend to be ready
             await WaitForBackendReady();
 
-            // Install npm packages for client-common first
+            // Run the code generation scripts in client-common
+            // Note: Dependencies are already installed by InitializeRush()
             var clientCommonPath = Path.Combine(ClientAppPath, "client-common");
-            await RunCommand("rush", "install", clientCommonPath);
-
-            // Run the code generation script in client-common
             await RunCommand("npm", "run gencode", clientCommonPath);
+            await RunCommand("npm", "run geneditorschemas", clientCommonPath);
         }
         finally
         {

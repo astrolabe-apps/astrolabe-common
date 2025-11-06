@@ -1,15 +1,47 @@
-.vs
+## .NET and Visual Studio
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
 bin/
 obj/
-/packages/
+publish/
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+
+# Rider
+.idea/
 riderModule.iml
 /_ReSharper.Caches/
-/tmp/publish
-publish/
-.idea
-__AppName__.sln.DotSettings.user
+
+# NuGet
+/packages/
+*.nupkg
+*.snupkg
+
+# Test coverage
 *.cobertura.xml
-__AppName__/coverage/report
-__AppName__.UnitTest/coverage/report
+coverage/
 .sonarqube/
-.appsettings.Development.json
+
+# Environment files
+.env
+.env.local
+.env.*.local
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+
+# Temp/publish
+/tmp/publish

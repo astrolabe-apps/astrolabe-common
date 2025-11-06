@@ -10,7 +10,7 @@
       "projectFolder": "client-common"
     },
     {
-      "packageName": "@astrolabe/ui",
+      "packageName": "@__AppName__/ui",
       "projectFolder": "astrolabe-ui"
     },
     {

@@ -4,13 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev -p __SpaPort__ --turbopack=false",
+    "dev": "next dev -p __SpaPort__",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-		"@astrolabe/ui": "workspace:*",
+		"@__AppName__/ui": "workspace:*",
     "@astroapps/client": "^2.5.2",
     "@astroapps/client-nextjs": "^2.1.0",
     "@astroapps/controls": "^1.3.3",

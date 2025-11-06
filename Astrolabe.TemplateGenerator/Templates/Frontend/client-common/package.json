@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "gencode": "nswag openapi2tsclient /input:http://localhost:__HttpPort__/swagger/v1/swagger.json /output:client.ts /NullValue:Null /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string /TypeScriptVersion:4.9 && curl http://localhost:__HttpPort__/api/CodeGen/Schemas > schemas.ts && curl http://localhost:__HttpPort__/api/CodeGen/Forms > formdefs.ts && prettier -w client.ts schemas.ts formdefs.ts"
+    "gencode": "nswag openapi2tsclient /input:http://localhost:__HttpPort__/swagger/v1/swagger.json /output:client.ts /NullValue:Null /MarkOptionalProperties:false /Template:Fetch /TypeStyle:Interface /DateTimeType:string /TypeScriptVersion:4.9 && curl http://localhost:__HttpPort__/api/CodeGen/Schemas > schemas.ts && curl http://localhost:__HttpPort__/api/CodeGen/Forms > formdefs.ts && prettier -w client.ts schemas.ts formdefs.ts",
+    "geneditorschemas": "curl http://localhost:__HttpPort__/api/CodeGen/SchemasSchemas > editorSchemas.ts && prettier -w editorSchemas.ts"
   },
   "devDependencies": {
     "nswag": "^14.0.7",
