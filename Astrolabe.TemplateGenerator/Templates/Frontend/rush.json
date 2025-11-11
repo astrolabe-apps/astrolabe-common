@@ -6,11 +6,11 @@
   "projectFolderMaxDepth": 5,
   "projects": [
     {
-      "packageName": "@__AppName__/client-common",
+      "packageName": "client-common",
       "projectFolder": "client-common"
     },
     {
-      "packageName": "@__AppName__/ui",
+      "packageName": "@astrolabe/ui",
       "projectFolder": "astrolabe-ui"
     },
     {

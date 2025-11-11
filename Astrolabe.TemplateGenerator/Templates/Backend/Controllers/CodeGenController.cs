@@ -1,13 +1,9 @@
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Astrolabe.CodeGen.Typescript;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
-using Astrolabe.Web.Common;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using __AppName__.Forms;
 using __AppName__.Services;
 
@@ -17,23 +13,23 @@ namespace __AppName__.Controllers;
 [Route("api/[controller]")]
 public class CodeGenController : ControllerBase
 {
-    [HttpGet("Schemas")]
+    private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
+
+    [HttpGet("schemas")]
     public string GetSchemas()
     {
+        var schemaTypes = AppForms.Forms.Select(x => x.GetSchema());
         var gen = new SchemaFieldsGenerator(
             new SchemaFieldsGeneratorOptions(EditorTsImporter.MakeImporter("../client-common"))
         );
-        var allGenSchemas = gen.CollectDataForTypes(typeof(SchemaField), typeof(ControlDefinition))
-            .ToList();
-        var file = TsFile.FromDeclarations(
-            GeneratedSchema.ToDeclarations(allGenSchemas, "ControlDefinitionSchemaMap").ToList()
-        );
-        return file.ToSource();
+        var decls = gen.CollectDataForTypes(schemaTypes.ToArray());
+        return TsFile
+            .FromDeclarations(GeneratedSchema.ToDeclarations(decls.ToList(), "SchemaMap").ToList())
+            .ToSource();
     }
 
-    [AllowAnonymous]
     [HttpGet("forms")]
-    public async Task<string> GetForms([FromServices] IHostEnvironment hostEnvironment)
+    public async Task<string> GetForms([FromServices] IWebHostEnvironment hostEnvironment)
     {
         var formDefsDir = Path.Combine(hostEnvironment.ContentRootPath, FormService.FormDefDir);
         Directory.CreateDirectory(formDefsDir);
@@ -45,9 +41,9 @@ public class CodeGenController : ControllerBase
             {
                 await System.IO.File.WriteAllTextAsync(
                     jsonFile,
-                    JsonConvert.SerializeObject(
+                    JsonSerializer.Serialize(
                         new { controls = Enumerable.Empty<object>(), config = new { } },
-                        Formatting.Indented
+                        Indented
                     )
                 );
             }
@@ -70,5 +66,20 @@ public class CodeGenController : ControllerBase
             GeneratedSchema.ToDeclarations(allGenSchemas, "ControlDefinitionSchemaMap").ToList()
         );
         return file.ToSource();
+    }
+
+    [HttpPost("{form}")]
+    public async Task SaveForm(
+        string form,
+        [FromBody] JsonElement body,
+        [FromServices] IWebHostEnvironment environment
+    )
+    {
+        var path = Path.Join(
+            environment.ContentRootPath,
+            FormService.FormDefDir,
+            form + ".json"
+        );
+        await System.IO.File.WriteAllTextAsync(path, JsonSerializer.Serialize(body, Indented));
     }
 }

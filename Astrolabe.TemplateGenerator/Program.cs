@@ -22,30 +22,72 @@ class Program
         var generator = new TemplateGenerator(config);
 
         await AnsiConsole
-            .Status()
-            .Start(
-                "Generating project structure...",
-                async ctx =>
+            .Progress()
+            .AutoClear(false)
+            .HideCompleted(false)
+            .Columns(
+                new TaskDescriptionColumn(),
+                new ProgressBarColumn(),
+                new PercentageColumn(),
+                new SpinnerColumn()
+            )
+            .StartAsync(async ctx =>
+            {
+                // Define the total number of steps (7 or 6 depending on demo data)
+                var totalSteps = config.IncludeDemoData ? 7 : 6;
+                var overallTask = ctx.AddTask(
+                    "[bold blue]Generating project[/]",
+                    maxValue: totalSteps
+                );
+
+                // Step 1: Create backend
+                overallTask.Description =
+                    "[bold blue]Generating project[/] - [green]Creating backend project[/]";
+                await generator.CreateBackend();
+                overallTask.Increment(1);
+
+                // Step 2: Create frontend
+                overallTask.Description =
+                    "[bold blue]Generating project[/] - [green]Creating frontend structure[/]";
+                await generator.CreateFrontend();
+                overallTask.Increment(1);
+
+                // Step 3: Initialize Rush
+                overallTask.Description =
+                    "[bold blue]Generating project[/] - [green]Initializing Rush[/]";
+                await generator.InitializeRush();
+                overallTask.Increment(1);
+
+                // Step 4: Build backend
+                overallTask.Description =
+                    "[bold blue]Generating project[/] - [green]Building backend[/]";
+                await generator.BuildBackend();
+                overallTask.Increment(1);
+
+                // Step 5: Generate TypeScript client
+                overallTask.Description =
+                    "[bold blue]Generating project[/] - [green]Generating TypeScript client[/]";
+                await generator.GenerateTypeScriptClient();
+                overallTask.Increment(1);
+
+                // Step 6: Seed database (conditional)
+                if (config.IncludeDemoData)
                 {
-                    ctx.Status("Creating backend project...");
-                    await generator.CreateBackend();
-
-                    ctx.Status("Creating frontend structure...");
-                    await generator.CreateFrontend();
-
-                    ctx.Status("Initializing Rush...");
-                    await generator.InitializeRush();
-
-                    ctx.Status("Building backend...");
-                    await generator.BuildBackend();
-
-                    ctx.Status("Starting backend and generating TypeScript client...");
-                    await generator.GenerateTypeScriptClient();
-
-                    ctx.Status("Installing frontend dependencies...");
-                    await generator.InstallFrontendDependencies();
+                    overallTask.Description =
+                        "[bold blue]Generating project[/] - [green]Seeding database with sample data[/]";
+                    await generator.SeedDatabase();
+                    overallTask.Increment(1);
                 }
-            );
+
+                // Step 7: Install frontend dependencies
+                overallTask.Description =
+                    "[bold blue]Generating project[/] - [green]Installing frontend dependencies[/]";
+                await generator.InstallFrontendDependencies();
+                overallTask.Increment(1);
+
+                overallTask.Description = "[bold blue]Generating project[/] - [green]Complete![/]";
+                overallTask.StopTask();
+            });
 
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine("[bold green]✓[/] Application created successfully!");
@@ -59,14 +101,14 @@ class Program
             $"  3. dotnet run (backend will start on https://localhost:{config.HttpsPort})"
         );
         AnsiConsole.MarkupLine(
-            $"  4. In another terminal: cd ClientApp/sites/{config.SiteName} && npm run dev"
+            $"  4. In another terminal: cd ClientApp/sites/{config.SiteName} && rushx dev"
         );
         AnsiConsole.MarkupLine($"  5. Open https://localhost:{config.HttpsPort}");
 
         return 0;
     }
 
-    static async Task<AppConfiguration> GatherConfiguration()
+    static Task<AppConfiguration> GatherConfiguration()
     {
         var appName = AnsiConsole.Ask<string>("[blue]Application name:[/]");
 
@@ -86,14 +128,22 @@ class Program
             $"Server=localhost;Database={appName}Db;User=sa;Password=databasePassword1234;MultipleActiveResultSets=true;TrustServerCertificate=true;"
         );
 
-        return new AppConfiguration(
-            appName,
-            description,
-            httpPort,
-            httpsPort,
-            spaPort,
-            siteName,
-            connectionString
+        var includeDemoData = AnsiConsole.Confirm(
+            "[blue]Include demo data (Tea model/controller/endpoints)?[/]",
+            defaultValue: true
+        );
+
+        return Task.FromResult(
+            new AppConfiguration(
+                appName,
+                description,
+                httpPort,
+                httpsPort,
+                spaPort,
+                siteName,
+                connectionString,
+                includeDemoData
+            )
         );
     }
 }
@@ -105,5 +155,6 @@ public record AppConfiguration(
     int HttpsPort,
     int SpaPort,
     string SiteName,
-    string ConnectionString
+    string ConnectionString,
+    bool IncludeDemoData
 );

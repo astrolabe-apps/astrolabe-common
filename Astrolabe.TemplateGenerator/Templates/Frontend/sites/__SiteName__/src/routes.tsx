@@ -1,5 +1,11 @@
 export default {
   "": {
-    label: "Home"
-},
+    label: "Home",
+  },
+  tea: {
+    label: "Tea Manager",
+  },
+  editor: {
+    label: "Schema Editor",
+  },
 }
