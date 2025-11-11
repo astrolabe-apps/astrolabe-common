@@ -292,7 +292,12 @@ public class DefaultFunctionsTests
     [Fact]
     public void And_MultipleValues()
     {
-        var data = new JsonObject { ["a"] = true, ["b"] = true, ["c"] = true };
+        var data = new JsonObject
+        {
+            ["a"] = true,
+            ["b"] = true,
+            ["c"] = true,
+        };
         var result = EvalExpr("a and b and c", data);
         Assert.True((bool)result!);
     }
@@ -400,7 +405,12 @@ public class DefaultFunctionsTests
     [Fact]
     public void Conditional_TrueCondition()
     {
-        var data = new JsonObject { ["cond"] = true, ["a"] = "yes", ["b"] = "no" };
+        var data = new JsonObject
+        {
+            ["cond"] = true,
+            ["a"] = "yes",
+            ["b"] = "no",
+        };
         var result = EvalExpr("cond ? a : b", data);
         Assert.Equal("yes", result);
     }
@@ -408,7 +418,12 @@ public class DefaultFunctionsTests
     [Fact]
     public void Conditional_FalseCondition()
     {
-        var data = new JsonObject { ["cond"] = false, ["a"] = "yes", ["b"] = "no" };
+        var data = new JsonObject
+        {
+            ["cond"] = false,
+            ["a"] = "yes",
+            ["b"] = "no",
+        };
         var result = EvalExpr("cond ? a : b", data);
         Assert.Equal("no", result);
     }
@@ -639,7 +654,10 @@ public class DefaultFunctionsTests
     [Fact]
     public void Array_FlattenNestedArrays()
     {
-        var data = new JsonObject { ["arr"] = new JsonArray(new JsonArray(1, 2), new JsonArray(3, 4)) };
+        var data = new JsonObject
+        {
+            ["arr"] = new JsonArray(new JsonArray(1, 2), new JsonArray(3, 4)),
+        };
         var result = EvalExpr("$array(arr)", data);
         var array = (ArrayValue)result!;
         var values = array.Values.Select(v => v.AsLong()).ToList();
@@ -787,7 +805,7 @@ public class DefaultFunctionsTests
                 new JsonObject { ["value"] = 10 },
                 new JsonObject { ["value"] = 20 },
                 new JsonObject { ["value"] = 30 }
-            )
+            ),
         };
         var result = EvalExpr("$map(items, $x => $x[\"value\"])", data);
         var array = (ArrayValue)result!;
@@ -803,7 +821,7 @@ public class DefaultFunctionsTests
             ["items"] = new JsonArray(
                 new JsonObject { ["values"] = new JsonArray(1, 2) },
                 new JsonObject { ["values"] = new JsonArray(3, 4) }
-            )
+            ),
         };
         var result = EvalExpr("items . values", data);
         var array = (ArrayValue)result!;
@@ -820,7 +838,7 @@ public class DefaultFunctionsTests
                 new JsonObject { ["values"] = new JsonArray(1, 2) },
                 new JsonObject { ["values"] = new JsonArray() },
                 new JsonObject { ["values"] = new JsonArray(3) }
-            )
+            ),
         };
         var result = EvalExpr("items . values", data);
         var array = (ArrayValue)result!;
@@ -964,7 +982,12 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject
         {
-            ["obj"] = new JsonObject { ["name"] = "John", ["age"] = 30, ["city"] = "NYC" }
+            ["obj"] = new JsonObject
+            {
+                ["name"] = "John",
+                ["age"] = 30,
+                ["city"] = "NYC",
+            },
         };
         var result = EvalExpr("$keys(obj)", data);
         var array = (ArrayValue)result!;
@@ -986,7 +1009,12 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject
         {
-            ["obj"] = new JsonObject { ["a"] = 10, ["b"] = 20, ["c"] = 30 }
+            ["obj"] = new JsonObject
+            {
+                ["a"] = 10,
+                ["b"] = 20,
+                ["c"] = 30,
+            },
         };
         var result = EvalExpr("$values(obj)", data);
         var array = (ArrayValue)result!;
@@ -1014,7 +1042,7 @@ public class DefaultFunctionsTests
         {
             ["status"] = "pending",
             ["msg1"] = "Waiting",
-            ["msg2"] = "Done"
+            ["msg2"] = "Done",
         };
         var result = EvalExpr("$which(status, \"pending\", msg1, \"complete\", msg2)", data);
         Assert.Equal("Waiting", result);
@@ -1027,7 +1055,7 @@ public class DefaultFunctionsTests
         {
             ["status"] = "complete",
             ["msg1"] = "Waiting",
-            ["msg2"] = "Done"
+            ["msg2"] = "Done",
         };
         var result = EvalExpr("$which(status, \"pending\", msg1, \"complete\", msg2)", data);
         Assert.Equal("Done", result);
@@ -1040,7 +1068,7 @@ public class DefaultFunctionsTests
         {
             ["status"] = "unknown",
             ["msg1"] = "Waiting",
-            ["msg2"] = "Done"
+            ["msg2"] = "Done",
         };
         var result = EvalExpr("$which(status, \"pending\", msg1, \"complete\", msg2)", data);
         Assert.Null(result);
@@ -1049,11 +1077,7 @@ public class DefaultFunctionsTests
     [Fact]
     public void Which_WithArrayOfMatches()
     {
-        var data = new JsonObject
-        {
-            ["status"] = "active",
-            ["msg"] = "Running"
-        };
+        var data = new JsonObject { ["status"] = "active", ["msg"] = "Running" };
         var result = EvalExpr("$which(status, [\"active\", \"running\"], msg)", data);
         Assert.Equal("Running", result);
     }
@@ -1124,6 +1148,171 @@ public class DefaultFunctionsTests
         var data = new JsonObject { ["flag"] = false };
         var result = EvalExpr("$notEmpty(flag)", data);
         Assert.True((bool)result!);
+    }
+
+    #endregion
+
+    #region Let Expression Variable References
+
+    [Fact]
+    public void LetExpression_VariableCanReferencePreviousVariable()
+    {
+        var result = EvalExpr("let $x := 5, $y := $x + 10 in $y");
+        Assert.Equal(15.0, result);
+    }
+
+    [Fact]
+    public void LetExpression_MultipleChainedVariableReferences()
+    {
+        var result = EvalExpr("let $a := 2, $b := $a * 3, $c := $b + 1 in $c");
+        Assert.Equal(7.0, result); // 2 * 3 + 1 = 7
+    }
+
+    [Fact]
+    public void LetExpression_VariableReferencesWithDataAccess()
+    {
+        var data = new JsonObject { ["value"] = 10 };
+        var result = EvalExpr("let $x := value, $y := $x * 2 in $y", data);
+        Assert.Equal(20.0, result);
+    }
+
+    [Fact]
+    public void LetExpression_ComplexExpressionWithVariableReferences()
+    {
+        var data = new JsonObject
+        {
+            ["a"] = 10,
+            ["b"] = 20,
+            ["multiplier"] = 3,
+        };
+        var result = EvalExpr(
+            "let $sum := a + b, $avg := $sum / 2, $result := $avg * multiplier in $result",
+            data
+        );
+        Assert.Equal(45.0, result); // ((10 + 20) / 2) * 3 = 45
+    }
+
+    [Fact]
+    public void LetExpression_VariableReferenceInArrayContext()
+    {
+        var result = EvalExpr(
+            "let $base := 5, $arr := $array($base, $base * 2, $base * 3) in $arr"
+        );
+        var array = Assert.IsType<ArrayValue>(result);
+        var values = array.Values.Select(v => v.AsLong()).ToList();
+        Assert.Equal(new[] { 5L, 10L, 15L }, values);
+    }
+
+    #endregion
+
+    #region Merge Function
+
+    [Fact]
+    public void Merge_SingleObject_ReturnsObject()
+    {
+        var data = new JsonObject
+        {
+            ["obj"] = new JsonObject { ["a"] = 1, ["b"] = "test" },
+        };
+        var result = EvalExpr("$merge(obj)", data);
+        var merged = (ObjectValue)result!;
+        Assert.Equal(2, merged.Properties.Count);
+        Assert.Equal(1, merged.Properties["a"].Value);
+        Assert.Equal("test", merged.Properties["b"].Value);
+    }
+
+    [Fact]
+    public void Merge_MultipleObjects_MergesAll()
+    {
+        var data = new JsonObject
+        {
+            ["obj1"] = new JsonObject { ["a"] = 1 },
+            ["obj2"] = new JsonObject { ["b"] = 2 },
+        };
+        var result = EvalExpr("$merge(obj1, obj2)", data);
+        var merged = (ObjectValue)result!;
+        Assert.Equal(2, merged.Properties.Count);
+        Assert.Equal(1, merged.Properties["a"].Value);
+        Assert.Equal(2, merged.Properties["b"].Value);
+    }
+
+    [Fact]
+    public void Merge_OverlappingKeys_LaterValueWins()
+    {
+        var data = new JsonObject
+        {
+            ["obj1"] = new JsonObject { ["a"] = 1 },
+            ["obj2"] = new JsonObject { ["a"] = 2 },
+        };
+        var result = EvalExpr("$merge(obj1, obj2)", data);
+        var merged = (ObjectValue)result!;
+        Assert.Equal(2, merged.Properties["a"].Value);
+    }
+
+    [Fact]
+    public void Merge_NullArgument_ReturnsNull()
+    {
+        var data = new JsonObject { ["obj"] = new JsonObject { ["a"] = 1 } };
+        var result = EvalExpr("$merge(obj, null)", data);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Merge_NullAsFirstArgument_ReturnsNull()
+    {
+        var data = new JsonObject { ["obj"] = new JsonObject { ["a"] = 1 } };
+        var result = EvalExpr("$merge(null, obj)", data);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Merge_NoArguments_ReturnsError()
+    {
+        var env = CreateEnvWithData(null);
+        var parsed = ExprParser.Parse("$merge()");
+        var (nextEnv, result) = env.Evaluate(parsed);
+        Assert.Null(result.Value);
+        Assert.NotEmpty(nextEnv.Errors);
+    }
+
+    [Fact]
+    public void Merge_SkipsNonObjectArguments()
+    {
+        var data = new JsonObject { ["obj"] = new JsonObject { ["a"] = 1 } };
+        var result = EvalExpr("$merge(obj, \"not an object\", 42)", data);
+        var merged = (ObjectValue)result!;
+        Assert.Single(merged.Properties);
+        Assert.Equal(1, merged.Properties["a"].Value);
+    }
+
+    [Fact]
+    public void Merge_ThreeObjects()
+    {
+        var data = new JsonObject
+        {
+            ["obj1"] = new JsonObject { ["a"] = 1 },
+            ["obj2"] = new JsonObject { ["b"] = 2 },
+            ["obj3"] = new JsonObject { ["c"] = 3 },
+        };
+        var result = EvalExpr("$merge(obj1, obj2, obj3)", data);
+        var merged = (ObjectValue)result!;
+        Assert.Equal(3, merged.Properties.Count);
+        Assert.Equal(1, merged.Properties["a"].Value);
+        Assert.Equal(2, merged.Properties["b"].Value);
+        Assert.Equal(3, merged.Properties["c"].Value);
+    }
+
+    [Fact]
+    public void Merge_WithComplexValues()
+    {
+        var data = new JsonObject
+        {
+            ["obj1"] = new JsonObject { ["arr"] = new JsonArray(1, 2, 3) },
+            ["obj2"] = new JsonObject { ["nested"] = new JsonObject { ["x"] = 10 } },
+        };
+        var result = EvalExpr("$merge(obj1, obj2)", data);
+        var merged = (ObjectValue)result!;
+        Assert.Equal(2, merged.Properties.Count);
     }
 
     #endregion

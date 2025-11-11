@@ -839,22 +839,6 @@ public class DependencyTrackingTests
     }
 
     [Fact]
-    public void Object_Created_With_Function_Tracks_Property_Dependencies()
-    {
-        var data = new JsonObject { ["x"] = 10, ["y"] = 20 };
-        var env = CreateEnvWithData(data);
-
-        // Create an object with computed properties
-        var expr = ExprParser.Parse("$object(\"sum\", x + y, \"product\", x * y)");
-        var (_, result) = env.Evaluate(expr);
-
-        var deps = GetDeps(result);
-        // Should track dependencies from the computed property values
-        Assert.Contains("x", deps);
-        Assert.Contains("y", deps);
-    }
-
-    [Fact]
     public void Accessing_Property_From_Constructed_Object_Preserves_Dependencies()
     {
         var data = new JsonObject { ["a"] = 5, ["b"] = 10 };

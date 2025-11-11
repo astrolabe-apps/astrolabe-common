@@ -139,23 +139,25 @@ public class EvalEnvironment(EvalEnvironmentState state)
             return WithVariable(single.Key, single.Value);
         }
 
-        // Evaluate all variables sequentially, threading environment
+        // Evaluate all variables sequentially, making each available to the next
         var currentEnv = this;
         var evaluatedVars = ImmutableDictionary<string, EvalExpr>.Empty.ToBuilder();
 
         foreach (var (name, expr) in vars)
         {
             var (nextEnv, value) = currentEnv.Evaluate(expr);
-            evaluatedVars.Add(name, value);
-            currentEnv = nextEnv;  // Thread for sequential evaluation
+            evaluatedVars[name] = value;
+            // Create environment with all variables evaluated so far
+            // This allows subsequent variables to reference earlier ones
+            currentEnv = NewEnv(nextEnv.State with
+            {
+                LocalVariables = evaluatedVars.ToImmutable(),
+                Parent = this.State
+            });
         }
 
-        // Create single child scope with all variables
-        return NewEnv(currentEnv.State with
-        {
-            LocalVariables = evaluatedVars.ToImmutable(),  // All variables in ONE scope
-            Parent = this.State                             // Parent is original scope
-        });
+        // Return the final environment that already has all variables
+        return currentEnv;
     }
 
     public EvalEnvironment WithCurrent(ValueExpr current)

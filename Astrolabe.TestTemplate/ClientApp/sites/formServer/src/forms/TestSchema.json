@@ -5,68 +5,23 @@
       "title": "New",
       "children": [
         {
-          "type": "Display",
-          "title": "New",
-          "displayData": {
-            "type": "Text",
-            "text": "Col1"
-          }
-        },
-        {
-          "type": "Display",
-          "displayData": {
-            "type": "Text",
-            "text": "Col2"
-          }
-        },
-        {
-          "type": "Display",
-          "displayData": {
-            "type": "Text",
-            "text": "Col3"
-          }
-        },
-        {
-          "type": "Display",
+          "type": "Group",
           "title": "New",
           "dynamic": [
             {
-              "type": "Display",
+              "type": "Label",
               "expr": {
                 "type": "Jsonata",
-                "expression": "$breakpoint"
+                "expression": "\u0022Index \u0022 \u0026 $i"
               }
             }
-          ],
-          "displayData": {
-            "type": "Text",
-            "text": "BREAKPOINT"
-          }
-        },
-        {
-          "type": "Display",
-          "displayData": {
-            "type": "Html",
-            "html": "\u003Cb\u003EBOLD\u003C/b\u003E"
-          }
+          ]
         }
       ],
-      "dynamic": [
-        {
-          "type": "GridColumns",
-          "expr": {
-            "type": "Jsonata",
-            "expression": "$breakpoint = \u0027desktop\u0027 ? 4 : 1"
-          }
-        }
-      ],
+      "field": "stuff",
       "renderOptions": {
-        "type": "Group",
-        "groupOptions": {
-          "type": "Grid"
-        }
-      },
-      "field": "nested"
+        "type": "Standard"
+      }
     }
   ],
   "config": null

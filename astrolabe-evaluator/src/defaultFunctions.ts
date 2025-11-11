@@ -21,7 +21,6 @@ import {
   NullExpr,
   NumberType,
   objectType,
-  Path,
   propertyExpr,
   StringType,
   toNative,
@@ -59,7 +58,7 @@ function stringFunction(after: (s: string) => string) {
 const flatFunction = functionValue(
   (e, call) => {
     const allArgs = mapAllEnv(e, call.args, doEvaluate);
-    return mapEnv(allArgs, (x) => valueExpr(x.flatMap(v => allElems(v))));
+    return mapEnv(allArgs, (x) => valueExpr(x.flatMap((v) => allElems(v))));
   },
   constGetType(arrayType([])),
 );
@@ -72,7 +71,7 @@ export const objectFunction = functionValue(
       while (i < args.length - 1) {
         outObj[toNative(args[i++]) as string] = args[i++];
       }
-      return valueExprWithDeps(outObj, args);
+      return valueExpr(outObj);
     });
   },
   (e, call) => {
@@ -237,7 +236,7 @@ const flatmapFunction = functionValue(
         mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
           evaluateWith(e, elem, i, right),
         ),
-        (vals) => ({ ...leftVal, value: vals.flatMap(v => allElems(v)) }),
+        (vals) => ({ ...leftVal, value: vals.flatMap((v) => allElems(v)) }),
       );
     }
     if (typeof value === "object") {
@@ -361,7 +360,10 @@ const filterFunction = functionValue(
           path: element.path,
         };
 
-        return [firstEnv, { ...element, deps: [...(element.deps || []), parentWithDeps] }];
+        return [
+          firstEnv,
+          { ...element, deps: [...(element.deps || []), parentWithDeps] },
+        ];
       }
       const accArray: ValueExpr[] = firstFilter === true ? [value[0]] : [];
       const outEnv = value.reduce(
@@ -425,7 +427,10 @@ const filterFunction = functionValue(
           path: propValue.path,
         };
 
-        return [propEnv, { ...propValue, deps: [...(propValue.deps || []), parentWithDeps] }];
+        return [
+          propEnv,
+          { ...propValue, deps: [...(propValue.deps || []), parentWithDeps] },
+        ];
       }
       return [keyEnv, valueExpr(null)];
     }
@@ -635,10 +640,7 @@ export const defaultFunctions = {
       // If first arg is not null, return it
       if (x[0].value != null) return x[0];
       // First arg is null, return second arg but preserve dependencies from first arg
-      const combinedDeps: ValueExpr[] = [
-        x[0],
-        x[1],
-      ];
+      const combinedDeps: ValueExpr[] = [x[0], x[1]];
       return { ...x[1], deps: combinedDeps };
     },
     (e, call) =>
@@ -711,6 +713,32 @@ export const defaultFunctions = {
   ),
   keys: keysOrValuesFunction("keys"),
   values: keysOrValuesFunction("values"),
+  merge: functionValue(
+    (env, call) => {
+      if (call.args.length === 0) {
+        return [env.withError("merge expects at least 1 argument"), NullExpr];
+      }
+
+      const merged: Record<string, ValueExpr> = {};
+      let currentEnv = env;
+
+      for (const arg of call.args) {
+        const [nextEnv, argVal] = currentEnv.evaluate(arg);
+        currentEnv = nextEnv;
+
+        if (argVal.value == null) {
+          return [currentEnv, NullExpr];
+        }
+
+        if (typeof argVal.value === "object" && !Array.isArray(argVal.value)) {
+          Object.assign(merged, argVal.value);
+        }
+      }
+
+      return [currentEnv, valueExpr(merged)];
+    },
+    (e) => checkValue(e, objectType({})),
+  ),
 };
 
 export function addDefaults(evalEnv: EvalEnv) {

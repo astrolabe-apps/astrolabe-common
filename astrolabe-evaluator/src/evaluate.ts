@@ -144,22 +144,24 @@ export class BasicEvalEnv extends EvalEnv {
       return this.withVariable(vars[0][0], vars[0][1]);
     }
 
-    // Evaluate all variables sequentially, threading environment
+    // Evaluate all variables sequentially, making each available to the next
     let currentEnv = this as EvalEnv;
     const evaluatedVars: Record<string, ValueExpr> = {};
 
     for (const [name, expr] of vars) {
       const [nextEnv, value] = currentEnv.evaluate(expr);
       evaluatedVars[name] = value;
-      currentEnv = nextEnv;  // Thread for sequential evaluation
+      // Create environment with all variables evaluated so far
+      // This allows subsequent variables to reference earlier ones
+      currentEnv = this.newEnv({
+        ...nextEnv.state,
+        localVars: { ...evaluatedVars },
+        parent: this.state
+      });
     }
 
-    // Create single child scope with all variables
-    return this.newEnv({
-      ...currentEnv.state,
-      localVars: evaluatedVars,    // All variables in ONE scope
-      parent: this.state             // Parent is original scope
-    });
+    // Return the final environment that already has all variables
+    return currentEnv;
   }
 
   withVariable(name: string, expr: EvalExpr): EvalEnv {

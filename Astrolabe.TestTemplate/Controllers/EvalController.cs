@@ -47,7 +47,7 @@ public class EvalController : ControllerBase
         return new ValueWithDeps(
             value,
             expr.Path?.ToPathString(),
-            expr.Deps?.Select(x => x.ToPathString())
+            expr.Deps?.SelectMany(ValueExpr.ExtractAllPaths).Select(x => x.ToPathString())
         );
     }
 }

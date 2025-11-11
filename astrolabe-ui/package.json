@@ -5,8 +5,8 @@
 	"peerDependencies": {
 		"react": "^18 || ^19",
 		"react-dom": "^18 || ^19",
-		"@react-typed-forms/core": "^4.4.0",
-		"@react-typed-forms/schemas": "^16.0.0",
+		"@react-typed-forms/core": "^4.5.0",
+		"@react-typed-forms/schemas": "^17.0.0",
 		"@astroapps/client": "^2.0.0",
 		"@astroapps/client-localusers": "^1.0.0",
 		"@astroapps/datagrid": "^1.0.8"
@@ -37,8 +37,8 @@
 	"devDependencies": {
 		"react": "^18.2.0 || ^19",
 		"react-dom": "^18 || ^19",
-		"@react-typed-forms/core": "^4.4.0",
-		"@react-typed-forms/schemas": "^16.0.0",
+		"@react-typed-forms/core": "^4.5.0",
+		"@react-typed-forms/schemas": "^17.0.0",
 		"@astroapps/client": "^2.0.0",
 		"@astroapps/client-localusers": "^1.0.0",
 		"@astroapps/datagrid": "^1.0.8",
