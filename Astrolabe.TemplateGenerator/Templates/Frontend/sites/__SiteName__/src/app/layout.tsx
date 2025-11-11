@@ -14,6 +14,7 @@ export default function RootLayout({
   const security = useControlTokenSecurity();
   return (
     <html lang="en">
+      <head></head>
       <AppContextProvider value={{ navigation, security }}>
         <body className="h-screen">{children}</body>
       </AppContextProvider>
