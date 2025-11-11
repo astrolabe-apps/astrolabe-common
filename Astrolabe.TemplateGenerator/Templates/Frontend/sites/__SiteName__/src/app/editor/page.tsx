@@ -18,7 +18,7 @@ import {
   createSchemaLookup,
 } from "@react-typed-forms/schemas";
 import { CodeGenClient } from "client-common";
-import { useRef } from "react";
+import { useMemo, useState } from "react";
 
 export type FormType = keyof typeof FormDefinitions;
 
@@ -40,7 +40,12 @@ const schemas = createSchemaLookup(SchemaMap);
 export default function EditorPage() {
   const client = useApiClient(CodeGenClient);
   const query = useQueryControl();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [container, setContainer] = useState<HTMLElement | null>(null);
+
+  const StdFormRenderer = useMemo(
+    () => createStdFormRenderer(container),
+    [container],
+  );
 
   if (!query.fields.isReady.value) return <></>;
   const currentForm = useSyncParam(
@@ -54,14 +59,15 @@ export default function EditorPage() {
   );
 
   return (
-    <div className="h-screen" ref={containerRef}>
+    <div className="h-screen">
+      <div id="dialog_container" ref={setContainer} />
       <BasicFormEditor<FormType>
         selectedForm={currentForm}
         formTypes={Object.entries(FormDefinitions).map(([key, value]) => ({
           id: key,
           name: (value as any).name,
         }))}
-        formRenderer={createStdFormRenderer(containerRef.current)}
+        formRenderer={StdFormRenderer}
         loadSchema={readOnlySchemas(SchemaMap)}
         loadForm={async (formType: FormType) => {
           return FormDefinitions[formType];
