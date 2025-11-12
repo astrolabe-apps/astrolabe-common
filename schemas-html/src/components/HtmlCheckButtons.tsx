@@ -53,7 +53,8 @@ export function HtmlCheckButtons(props: CheckButtonsProps) {
                   disabled={disabled}
                   checked={checked}
                   onChange={(x) => {
-                    !readonly && setChecked(control, o, x.target.checked);
+                    !(readonly || disabled) &&
+                      setChecked(control, o, x.target.checked);
                   }}
                 />
                 <label className={classes.labelClass} htmlFor={name + "_" + i}>

@@ -44,7 +44,9 @@ export function RNCheckButtons(props: CheckButtonsProps) {
                 ),
                 selOrUnsel,
               )}
-              onClick={() => !readonly && setChecked(control, o, !checked)}
+              onClick={() =>
+                !(readonly || disabled) && setChecked(control, o, !checked)
+              }
               notWrapInText
             >
               <Div className={classes.entryClass}>
