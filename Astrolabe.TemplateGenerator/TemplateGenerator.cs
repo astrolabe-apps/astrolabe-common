@@ -185,14 +185,31 @@ public class TemplateGenerator
 
     private string ProcessTemplateContent(string content)
     {
+        var namespaceAppName = SanitizeForNamespace(_config.AppName);
+
         return content
-            .Replace("__AppName__", _config.AppName)
+            .Replace("__AppName__", namespaceAppName)
             .Replace("__Description__", _config.Description)
             .Replace("__HttpPort__", _config.HttpPort.ToString())
             .Replace("__HttpsPort__", _config.HttpsPort.ToString())
             .Replace("__SpaPort__", _config.SpaPort.ToString())
             .Replace("__SiteName__", _config.SiteName)
             .Replace("__ConnectionString__", _config.ConnectionString);
+    }
+
+    private static string SanitizeForNamespace(string name)
+    {
+        // Replace hyphens and other invalid characters with underscores
+        // C# namespace identifiers can only contain letters, digits, and underscores
+        var result = System.Text.RegularExpressions.Regex.Replace(name, @"[^a-zA-Z0-9_]", "_");
+
+        // Ensure it doesn't start with a digit
+        if (char.IsDigit(result[0]))
+        {
+            result = "_" + result;
+        }
+
+        return result;
     }
 
     private string RemoveTeaContent(string content, string fileName)
@@ -308,10 +325,38 @@ export default function Home() {
             Arguments = "run",
             WorkingDirectory = ProjectPath,
             UseShellExecute = false,
-            CreateNoWindow = true,
+            CreateNoWindow = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
         };
 
-        return Process.Start(processStartInfo);
+        var process = Process.Start(processStartInfo);
+
+        if (process != null)
+        {
+            // Log output in background
+            Task.Run(async () =>
+            {
+                while (!process.StandardOutput.EndOfStream)
+                {
+                    var line = await process.StandardOutput.ReadLineAsync();
+                    if (line != null)
+                        Console.WriteLine($"[Backend] {line}");
+                }
+            });
+
+            Task.Run(async () =>
+            {
+                while (!process.StandardError.EndOfStream)
+                {
+                    var line = await process.StandardError.ReadLineAsync();
+                    if (line != null)
+                        Console.Error.WriteLine($"[Backend Error] {line}");
+                }
+            });
+        }
+
+        return process;
     }
 
     private async Task WaitForBackendReady()
