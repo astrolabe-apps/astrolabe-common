@@ -1,5 +1,6 @@
 using __AppName__.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace __AppName__.Data.EF;
 
@@ -10,4 +11,18 @@ public class AppDbContext : DbContext
     }
 
     public DbSet<Tea> Teas { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Configure Tea entity to use string conversion for enums
+        modelBuilder.Entity<Tea>()
+            .Property(t => t.Type)
+            .HasConversion<string>();
+
+        modelBuilder.Entity<Tea>()
+            .Property(t => t.MilkAmount)
+            .HasConversion<string>();
+    }
 }

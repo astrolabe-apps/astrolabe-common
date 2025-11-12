@@ -24,26 +24,28 @@ namespace __AppName__.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("NumberOfSugars")
-                        .HasColumnType("int");
-
-                    b.Property<string>("MilkAmount")
-                        .IsRequired()
+                    b.Property<string>("BrewNotes")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IncludeSpoon")
                         .HasColumnType("bit");
 
-                    b.Property<string>("BrewNotes")
+                    b.Property<string>("MilkAmount")
+                        .IsRequired()
+                        .HasConversion<string>()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("NumberOfSugars")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasConversion<string>()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Teas");
+                    b.ToTable("Teas", (string)null);
                 });
 #pragma warning restore 612, 618
         }
