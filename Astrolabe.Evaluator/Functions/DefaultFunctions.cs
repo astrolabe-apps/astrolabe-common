@@ -534,5 +534,25 @@ public static class DefaultFunctions
                 }
             )
         },
+        {
+            "floor",
+            FunctionHandler.DefaultEval(a =>
+                a switch
+                {
+                    [var numV] when ValueExpr.MaybeDouble(numV) is { } num => Math.Floor(num),
+                    _ => null,
+                }
+            )
+        },
+        {
+            "ceil",
+            FunctionHandler.DefaultEval(a =>
+                a switch
+                {
+                    [var numV] when ValueExpr.MaybeDouble(numV) is { } num => Math.Ceiling(num),
+                    _ => null,
+                }
+            )
+        },
     };
 }

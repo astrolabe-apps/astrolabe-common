@@ -739,6 +739,16 @@ export const defaultFunctions = {
     },
     (e) => checkValue(e, objectType({})),
   ),
+  floor: evalFunction((args) => {
+    if (args.length != 1) return null;
+    const [num] = args;
+    return typeof num === "number" ? Math.floor(num) : null;
+  }, constGetType(NumberType)),
+  ceil: evalFunction((args) => {
+    if (args.length != 1) return null;
+    const [num] = args;
+    return typeof num === "number" ? Math.ceil(num) : null;
+  }, constGetType(NumberType)),
 };
 
 export function addDefaults(evalEnv: EvalEnv) {

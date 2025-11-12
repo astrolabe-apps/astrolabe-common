@@ -123,6 +123,106 @@ public class DefaultFunctionsTests
 
     #endregion
 
+    #region Mathematical Rounding Functions
+
+    [Fact]
+    public void Floor_WithPositiveDouble()
+    {
+        var data = new JsonObject { ["num"] = 3.7 };
+        var result = EvalExpr("$floor(num)", data);
+        Assert.Equal(3.0, result);
+    }
+
+    [Fact]
+    public void Floor_WithNegativeDouble()
+    {
+        var data = new JsonObject { ["num"] = -3.7 };
+        var result = EvalExpr("$floor(num)", data);
+        Assert.Equal(-4.0, result);
+    }
+
+    [Fact]
+    public void Floor_WithInteger()
+    {
+        var data = new JsonObject { ["num"] = 5 };
+        var result = EvalExpr("$floor(num)", data);
+        Assert.Equal(5.0, result);
+    }
+
+    [Fact]
+    public void Floor_WithZero()
+    {
+        var data = new JsonObject { ["num"] = 0.0 };
+        var result = EvalExpr("$floor(num)", data);
+        Assert.Equal(0.0, result);
+    }
+
+    [Fact]
+    public void Floor_WithMultipleArgs_ReturnsNull()
+    {
+        var data = new JsonObject { ["a"] = 5.7, ["b"] = 3.2 };
+        var result = EvalExpr("$floor(a, b)", data);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Floor_WithNull_ReturnsNull()
+    {
+        var data = new JsonObject();
+        var result = EvalExpr("$floor(missing)", data);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Ceil_WithPositiveDouble()
+    {
+        var data = new JsonObject { ["num"] = 3.2 };
+        var result = EvalExpr("$ceil(num)", data);
+        Assert.Equal(4.0, result);
+    }
+
+    [Fact]
+    public void Ceil_WithNegativeDouble()
+    {
+        var data = new JsonObject { ["num"] = -3.2 };
+        var result = EvalExpr("$ceil(num)", data);
+        Assert.Equal(-3.0, result);
+    }
+
+    [Fact]
+    public void Ceil_WithInteger()
+    {
+        var data = new JsonObject { ["num"] = 5 };
+        var result = EvalExpr("$ceil(num)", data);
+        Assert.Equal(5.0, result);
+    }
+
+    [Fact]
+    public void Ceil_WithZero()
+    {
+        var data = new JsonObject { ["num"] = 0.0 };
+        var result = EvalExpr("$ceil(num)", data);
+        Assert.Equal(0.0, result);
+    }
+
+    [Fact]
+    public void Ceil_WithMultipleArgs_ReturnsNull()
+    {
+        var data = new JsonObject { ["a"] = 5.3, ["b"] = 2.8 };
+        var result = EvalExpr("$ceil(a, b)", data);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Ceil_WithNull_ReturnsNull()
+    {
+        var data = new JsonObject();
+        var result = EvalExpr("$ceil(missing)", data);
+        Assert.Null(result);
+    }
+
+    #endregion
+
     #region Comparison Operations
 
     [Fact]
