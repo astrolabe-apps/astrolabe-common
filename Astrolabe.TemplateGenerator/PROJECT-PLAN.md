@@ -39,8 +39,9 @@ Astrolabe.TemplateGenerator/
 
 **Implemented Variables:**
 
-- `__AppName__` - Application name (e.g., "tea1")
-- `__SiteName__` - Site name (e.g., "tea1-site")
+- `__ProjectName__` - Application name (e.g., "TeaTime")
+- `__SolutionName__` - Solution name (e.g., "Tea")
+- `__SiteName__` - Site name (e.g., "tea-ordering-site")
 - `__Description__` - Project description
 - `__HttpPort__` - Backend HTTP port (default: 5000)
 - `__HttpsPort__` - Backend HTTPS port (default: 5001)
@@ -52,6 +53,7 @@ Astrolabe.TemplateGenerator/
 ## ✅ Completed Tasks
 
 ### Backend Template - Phase 1 Core Functionality
+
 - ✅ Complete .NET project structure with Program.cs, controllers, models
 - ✅ Swagger/OpenAPI configuration with proper operation IDs and server URL
 - ✅ DbContext setup (AppDbContext with EF Core)
@@ -79,6 +81,7 @@ Astrolabe.TemplateGenerator/
 - ✅ JSON serialization with standard options
 
 ### Frontend Template - Phase 1 Core Functionality
+
 - ✅ Rush monorepo structure with pnpm workspaces
 - ✅ Next.js 16 site template with App Router
 - ✅ Tailwind CSS + PostCSS configuration
@@ -121,6 +124,7 @@ Astrolabe.TemplateGenerator/
 ### 2. CRUD Functionality
 
 #### 2.1 ~~Backend CRUD~~ ✅ COMPLETED
+
 - ✅ Example Tea entity model with full CRUD
 - ✅ All CRUD endpoints following best practices
 - ✅ DTOs and AppForms properly implemented
@@ -311,6 +315,7 @@ Setting up our own ShadCN registry.
 5. ✅ Add frontend CRUD pages (2.2)
 
 **Remaining Phase 1 Tasks:**
+
 - Fix form editor (currently broken)
 - Add error handling and loading states to Tea page
 - Add toast notifications

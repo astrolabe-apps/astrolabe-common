@@ -16,7 +16,7 @@ class Program
         var config = await GatherConfiguration();
 
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine($"[bold green]Creating application:[/] [blue]{config.AppName}[/]");
+        AnsiConsole.MarkupLine($"[bold green]Creating solution:[/] [blue]{config.SolutionName}[/] with project [blue]{config.ProjectName}[/]");
         AnsiConsole.WriteLine();
 
         var generator = new TemplateGenerator(config);
@@ -93,7 +93,7 @@ class Program
         AnsiConsole.MarkupLine("[bold green]✓[/] Application created successfully!");
         AnsiConsole.WriteLine();
         AnsiConsole.MarkupLine($"[bold]Next steps:[/]");
-        AnsiConsole.MarkupLine($"  1. cd {config.AppName}");
+        AnsiConsole.MarkupLine($"  1. cd {config.SolutionName}/{config.ProjectName}");
         AnsiConsole.MarkupLine(
             $"  2. Update connection string in appsettings.Development.json if needed"
         );
@@ -110,7 +110,12 @@ class Program
 
     static Task<AppConfiguration> GatherConfiguration()
     {
-        var appName = AnsiConsole.Ask<string>("[blue]Application name:[/]");
+        var projectName = AnsiConsole.Ask<string>("[blue]Project name:[/]");
+
+        var solutionName = AnsiConsole.Ask(
+            "[blue]Solution name:[/]",
+            projectName
+        );
 
         var description = AnsiConsole.Ask("[blue]Description:[/]", "An Astrolabe application");
 
@@ -120,12 +125,12 @@ class Program
 
         var siteName = AnsiConsole.Ask(
             "[blue]Initial site name:[/]",
-            $"{appName.ToLowerInvariant()}-site"
+            $"{projectName.ToLowerInvariant()}-site"
         );
 
         var connectionString = AnsiConsole.Ask(
             "[blue]Database connection string:[/]",
-            $"Server=localhost;Database={appName}Db;User=sa;Password=databasePassword1234;MultipleActiveResultSets=true;TrustServerCertificate=true;"
+            $"Server=localhost;Database={projectName}Db;User=sa;Password=databasePassword1234;MultipleActiveResultSets=true;TrustServerCertificate=true;"
         );
 
         var includeDemoData = AnsiConsole.Confirm(
@@ -135,7 +140,8 @@ class Program
 
         return Task.FromResult(
             new AppConfiguration(
-                appName,
+                solutionName,
+                projectName,
                 description,
                 httpPort,
                 httpsPort,
@@ -149,7 +155,8 @@ class Program
 }
 
 public record AppConfiguration(
-    string AppName,
+    string SolutionName,
+    string ProjectName,
     string Description,
     int HttpPort,
     int HttpsPort,

@@ -9,9 +9,9 @@
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build",
-      "program": "${workspaceFolder}/Source/__AppName__/bin/Debug/net8.0/__AppName__.dll",
+      "program": "${workspaceFolder}/Source/__ProjectName__/bin/Debug/net8.0/__ProjectName__.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/Source/__AppName__",
+      "cwd": "${workspaceFolder}/Source/__ProjectName__",
       "stopAtEntry": false,
       "serverReadyAction": {
         "action": "openExternally",
@@ -21,7 +21,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
       "sourceFileMap": {
-        "/Views": "${workspaceFolder}/Source/__AppName__/Views"
+        "/Views": "${workspaceFolder}/Source/__ProjectName__/Views"
       }
     },
     {

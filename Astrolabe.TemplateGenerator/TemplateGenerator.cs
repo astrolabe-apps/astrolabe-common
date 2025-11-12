@@ -7,7 +7,8 @@ public class TemplateGenerator
 {
     private readonly AppConfiguration _config;
     private readonly string _templateRoot;
-    private string ProjectPath => Path.Combine(Environment.CurrentDirectory, _config.AppName);
+    private string SolutionPath => Path.Combine(Environment.CurrentDirectory, _config.SolutionName);
+    private string ProjectPath => Path.Combine(SolutionPath, _config.ProjectName);
     private string ClientAppPath => Path.Combine(ProjectPath, "ClientApp");
 
     public TemplateGenerator(AppConfiguration config)
@@ -18,16 +19,23 @@ public class TemplateGenerator
 
     public async Task CreateBackend()
     {
+        // Create solution directory structure
+        Directory.CreateDirectory(SolutionPath);
         Directory.CreateDirectory(ProjectPath);
 
-        // Copy and process backend template files
-        await CopyAndProcessDirectory(Path.Combine(_templateRoot, "Backend"), ProjectPath);
+        // Copy solution-level files (Root template)
+        await CopyAndProcessDirectory(Path.Combine(_templateRoot, "Root"), SolutionPath);
+
+        // Copy and process backend template files to project directory
+        var backendTemplate = _config.IncludeDemoData ? "Demo" : "Skeleton";
+        await CopyAndProcessDirectory(Path.Combine(_templateRoot, backendTemplate, "Backend"), ProjectPath);
     }
 
     public async Task CreateFrontend()
     {
         // Copy and process frontend template files
-        await CopyAndProcessDirectory(Path.Combine(_templateRoot, "Frontend"), ClientAppPath);
+        var frontendTemplate = _config.IncludeDemoData ? "Demo" : "Skeleton";
+        await CopyAndProcessDirectory(Path.Combine(_templateRoot, frontendTemplate, "Frontend"), ClientAppPath);
     }
 
     public async Task InitializeRush()
@@ -110,10 +118,6 @@ public class TemplateGenerator
 
         foreach (var file in Directory.GetFiles(sourceDir))
         {
-            // Skip demo data files if not included
-            if (!_config.IncludeDemoData && IsTeaDemoFile(file))
-                continue;
-
             var fileName = Path.GetFileName(file);
             var targetPath = Path.Combine(targetDir, ProcessFileName(fileName));
             await CopyAndProcessFile(file, targetPath);
@@ -122,73 +126,32 @@ public class TemplateGenerator
         foreach (var dir in Directory.GetDirectories(sourceDir))
         {
             var dirName = Path.GetFileName(dir);
-
-            // Skip tea directory entirely if not included
-            if (
-                !_config.IncludeDemoData
-                && dirName.Equals("tea", StringComparison.OrdinalIgnoreCase)
-            )
-                continue;
-
             await CopyAndProcessDirectory(dir, Path.Combine(targetDir, ProcessFileName(dirName)));
         }
-    }
-
-    private bool IsTeaDemoFile(string filePath)
-    {
-        var fileName = Path.GetFileName(filePath);
-        var fileNameLower = fileName.ToLowerInvariant();
-
-        // Check if file name contains "tea" (case insensitive)
-        if (fileNameLower.Contains("tea"))
-            return true;
-
-        // DbSeeder is only needed for demo data
-        if (fileName == "DbSeeder.cs")
-            return true;
-
-        // Read file content to check if it's Tea-related
-        // (Some files might reference Tea without having it in the filename)
-        var content = File.ReadAllText(filePath);
-
-        // Check specific file patterns that are Tea-related
-        return fileName == "TeasController.cs"
-            || fileName == "Tea.cs"
-            || (fileName == "AppForms.cs" && content.Contains("TeaEditorForm"))
-            || (fileName == "AppDbContext.cs" && content.Contains("DbSet<Tea>"));
     }
 
     private async Task CopyAndProcessFile(string sourcePath, string targetPath)
     {
         var content = await File.ReadAllTextAsync(sourcePath);
         var processed = ProcessTemplateContent(content);
-
-        // Remove Tea-specific content if demo data is not included
-        if (!_config.IncludeDemoData)
-        {
-            processed = RemoveTeaContent(processed, Path.GetFileName(sourcePath));
-
-            // Skip writing file if content is empty (e.g., migrations that should not be copied)
-            if (string.IsNullOrWhiteSpace(processed))
-                return;
-        }
-
         await File.WriteAllTextAsync(targetPath, processed);
     }
 
     private string ProcessFileName(string fileName)
     {
         return fileName
-            .Replace("__AppName__", _config.AppName)
+            .Replace("__SolutionName__", _config.SolutionName)
+            .Replace("__ProjectName__", _config.ProjectName)
             .Replace("__SiteName__", _config.SiteName);
     }
 
     private string ProcessTemplateContent(string content)
     {
-        var namespaceAppName = SanitizeForNamespace(_config.AppName);
+        var namespaceProjectName = SanitizeForNamespace(_config.ProjectName);
 
         return content
-            .Replace("__AppName__", namespaceAppName)
+            .Replace("__SolutionName__", _config.SolutionName)
+            .Replace("__ProjectName__", namespaceProjectName)
             .Replace("__Description__", _config.Description)
             .Replace("__HttpPort__", _config.HttpPort.ToString())
             .Replace("__HttpsPort__", _config.HttpsPort.ToString())
@@ -210,111 +173,6 @@ public class TemplateGenerator
         }
 
         return result;
-    }
-
-    private string RemoveTeaContent(string content, string fileName)
-    {
-        // Handle specific files that need Tea content removed
-        switch (fileName)
-        {
-            case "AppForms.cs":
-                // Remove Tea form definitions, leaving an empty array
-                return @"using __AppName__.Controllers;
-using __AppName__.Data;
-using __AppName__.Services;
-using Astrolabe.Schemas.CodeGen;
-
-namespace __AppName__.Forms;
-
-public class AppForms : FormBuilder<object?>
-{
-    public static readonly FormDefinition<object?>[] Forms =
-    [
-        // Add your form definitions here
-    ];
-}
-".Replace("__AppName__", _config.AppName);
-
-            case "AppDbContext.cs":
-                // Remove Tea DbSet, leaving an empty DbContext
-                return @"using Microsoft.EntityFrameworkCore;
-
-namespace __AppName__.Data.EF;
-
-public class AppDbContext : DbContext
-{
-    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
-    {
-    }
-
-    // Add your DbSet properties here
-}
-".Replace("__AppName__", _config.AppName);
-
-            case "routes.tsx":
-                // Remove tea route
-                return @"export default {
-  """": {
-    label: ""Home"",
-  },
-  editor: {
-    label: ""Schema Editor"",
-  },
-}";
-
-            case "page.tsx":
-                // Check if this is the home page that links to tea
-                if (content.Contains("Tea Manager"))
-                {
-                    // Remove the Tea Manager link card
-                    return @"""use client"";
-
-import Link from ""next/link"";
-
-export default function Home() {
-  return (
-    <main className=""flex min-h-screen flex-col items-center justify-center p-24"">
-      <div className=""z-10 max-w-5xl w-full items-center justify-between font-mono text-sm"">
-        <h1 className=""text-4xl font-bold mb-8"">Welcome to __AppName__</h1>
-        <p className=""mb-8"">__Description__</p>
-
-        <div className=""grid grid-cols-1 md:grid-cols-2 gap-4"">
-          <Link
-            href=""/editor""
-            className=""block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100""
-          >
-            <h2 className=""text-2xl font-semibold mb-2"">Schema Editor →</h2>
-            <p className=""text-gray-700"">
-              Edit and manage your form schemas
-            </p>
-          </Link>
-        </div>
-      </div>
-    </main>
-  );
-}
-".Replace("__AppName__", _config.AppName).Replace("__Description__", _config.Description);
-                }
-                break;
-
-            case "20250101000000_InitialCreate.cs":
-            case "AppDbContextModelSnapshot.cs":
-                // Skip migrations that reference Tea - don't copy them at all
-                return string.Empty;
-
-            case "Program.cs":
-                // Remove DbSeeder call if demo data is not included
-                if (content.Contains("DbSeeder.SeedAsync"))
-                {
-                    return content.Replace(
-                        "\n        // Seed database with initial data\n        await __AppName__.Data.DbSeeder.SeedAsync(db);",
-                        ""
-                    );
-                }
-                break;
-        }
-
-        return content;
     }
 
     private Process? StartBackendProcess()

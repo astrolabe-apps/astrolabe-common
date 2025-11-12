@@ -7,7 +7,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/Source/__AppName__/__AppName__.csproj",
+        "${workspaceFolder}/Source/__ProjectName__/__ProjectName__.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary;ForceNoAlign"
       ],
@@ -23,7 +23,7 @@
       "type": "process",
       "args": [
         "publish",
-        "${workspaceFolder}/Source/__AppName__/__AppName__.csproj",
+        "${workspaceFolder}/Source/__ProjectName__/__ProjectName__.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary;ForceNoAlign"
       ],
@@ -37,7 +37,7 @@
         "watch",
         "run",
         "--project",
-        "${workspaceFolder}/Source/__AppName__/__AppName__.csproj"
+        "${workspaceFolder}/Source/__ProjectName__/__ProjectName__.csproj"
       ],
       "problemMatcher": "$msCompile"
     }
