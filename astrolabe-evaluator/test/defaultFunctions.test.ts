@@ -828,3 +828,65 @@ describe("Let Expression Variable References", () => {
     expect(result).toEqual([5, 10, 15]);
   });
 });
+
+describe("Math Rounding Functions", () => {
+  test("Floor - positive double", () => {
+    const result = evalExpr("$floor(num)", { num: 3.7 });
+    expect(result).toBe(3);
+  });
+
+  test("Floor - negative double", () => {
+    const result = evalExpr("$floor(num)", { num: -3.7 });
+    expect(result).toBe(-4);
+  });
+
+  test("Floor - integer unchanged", () => {
+    const result = evalExpr("$floor(num)", { num: 5 });
+    expect(result).toBe(5);
+  });
+
+  test("Floor - zero", () => {
+    const result = evalExpr("$floor(num)", { num: 0.0 });
+    expect(result).toBe(0);
+  });
+
+  test("Floor - multiple returns null", () => {
+    const result = evalExpr("$floor(num1, num2)", { num1: 2.2, num2: 3.3 });
+    expect(result).toBeNull();
+  });
+
+  test("Floor - null returns null", () => {
+    const result = evalExpr("$floor(missing)", { num: null });
+    expect(result).toBeNull();
+  });
+
+  test("Ceil - positive double", () => {
+    const result = evalExpr("$ceil(num)", { num: 3.2 });
+    expect(result).toBe(4);
+  });
+
+  test("Ceil - negative double", () => {
+    const result = evalExpr("$ceil(num)", { num: -3.2 });
+    expect(result).toBe(-3);
+  });
+
+  test("Ceil - integer unchanged", () => {
+    const result = evalExpr("$ceil(num)", { num: 5 });
+    expect(result).toBe(5);
+  });
+
+  test("Ceil - zero", () => {
+    const result = evalExpr("$ceil(num)", { num: 0.0 });
+    expect(result).toBe(0);
+  });
+
+  test("Ceil - multiple returns null", () => {
+    const result = evalExpr("$ceil(num1, num2)", { num1: 2.2, num2: 3.3 });
+    expect(result).toBeNull();
+  });
+
+  test("Ceil - null returns null", () => {
+    const result = evalExpr("$ceil(missing)", {});
+    expect(result).toBeNull();
+  });
+});
