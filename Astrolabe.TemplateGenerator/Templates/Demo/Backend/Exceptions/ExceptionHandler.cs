@@ -30,17 +30,16 @@ public class ExceptionHandler : IExceptionHandler
             ArgumentException => (HttpStatusCode.BadRequest, exception.Message),
             InvalidOperationException => (HttpStatusCode.Conflict, exception.Message),
             UnauthorizedAccessException => (HttpStatusCode.Forbidden, exception.Message),
-            _ => (HttpStatusCode.InternalServerError, "An error occurred while processing your request.")
+            _ => (
+                HttpStatusCode.InternalServerError,
+                "An error occurred while processing your request."
+            ),
         };
 
         httpContext.Response.StatusCode = (int)statusCode;
         httpContext.Response.ContentType = "application/json";
 
-        var response = new
-        {
-            error = message,
-            statusCode = (int)statusCode
-        };
+        var response = new { error = message, statusCode = (int)statusCode };
 
         await httpContext.Response.WriteAsync(
             JsonSerializer.Serialize(response),

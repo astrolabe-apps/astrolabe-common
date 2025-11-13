@@ -2,6 +2,8 @@ using __ProjectName__.Data.EF;
 using __ProjectName__.Exceptions;
 using __ProjectName__.Forms;
 using __ProjectName__.Models;
+using __ProjectName__.Services;
+using Astrolabe.SearchState;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,7 +11,7 @@ namespace __ProjectName__.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TeasController(AppDbContext dbContext) : ControllerBase
+public class TeasController(AppDbContext dbContext, TeaService teaService) : ControllerBase
 {
     [HttpGet]
     public async Task<List<TeaInfo>> GetAll()
@@ -17,6 +19,21 @@ public class TeasController(AppDbContext dbContext) : ControllerBase
         return await dbContext
             .Teas.Select(t => new TeaInfo(t.Id, t.Type, t.NumberOfSugars, t.MilkAmount))
             .ToListAsync();
+    }
+
+    [HttpPost("search")]
+    public async Task<SearchResults<TeaInfo>> Search(
+        [FromBody] SearchOptions options,
+        [FromQuery] bool includeTotal = false
+    )
+    {
+        return await teaService.Search(options, includeTotal);
+    }
+
+    [HttpGet("filter-options")]
+    public async Task<Dictionary<string, IEnumerable<FieldOption>>> GetFilterOptions()
+    {
+        return await teaService.GetFilterOptions();
     }
 
     [HttpGet("{id:guid}")]

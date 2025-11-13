@@ -26,7 +26,7 @@ public static class DbSeeder
                 NumberOfSugars = 0,
                 MilkAmount = MilkAmount.None,
                 IncludeSpoon = false,
-                BrewNotes = "Refreshing peppermint, no sugar"
+                BrewNotes = "Refreshing peppermint, no sugar",
             },
             new()
             {
@@ -35,7 +35,7 @@ public static class DbSeeder
                 NumberOfSugars = 1,
                 MilkAmount = MilkAmount.None,
                 IncludeSpoon = true,
-                BrewNotes = "Peppermint with a touch of sweetness"
+                BrewNotes = "Peppermint with a touch of sweetness",
             },
             new()
             {
@@ -44,7 +44,7 @@ public static class DbSeeder
                 NumberOfSugars = 0,
                 MilkAmount = MilkAmount.None,
                 IncludeSpoon = true,
-                BrewNotes = "Rooibos with spoon for stirring"
+                BrewNotes = "Rooibos with spoon for stirring",
             },
             new()
             {
@@ -53,7 +53,7 @@ public static class DbSeeder
                 NumberOfSugars = 0,
                 MilkAmount = MilkAmount.Splash,
                 IncludeSpoon = false,
-                BrewNotes = "Purple tea with a splash of milk"
+                BrewNotes = "Purple tea with a splash of milk",
             },
             new()
             {
@@ -62,7 +62,7 @@ public static class DbSeeder
                 NumberOfSugars = 0,
                 MilkAmount = MilkAmount.Normal,
                 IncludeSpoon = false,
-                BrewNotes = "Purple tea with milk"
+                BrewNotes = "Purple tea with milk",
             },
             new()
             {
@@ -71,8 +71,8 @@ public static class DbSeeder
                 NumberOfSugars = 2,
                 MilkAmount = MilkAmount.Normal,
                 IncludeSpoon = true,
-                BrewNotes = "Purple tea with milk and sugar"
-            }
+                BrewNotes = "Purple tea with milk and sugar",
+            },
         };
 
         context.Teas.AddRange(teas);

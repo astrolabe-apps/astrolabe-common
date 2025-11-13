@@ -28,14 +28,20 @@ public class TemplateGenerator
 
         // Copy and process backend template files to project directory
         var backendTemplate = _config.IncludeDemoData ? "Demo" : "Skeleton";
-        await CopyAndProcessDirectory(Path.Combine(_templateRoot, backendTemplate, "Backend"), ProjectPath);
+        await CopyAndProcessDirectory(
+            Path.Combine(_templateRoot, backendTemplate, "Backend"),
+            ProjectPath
+        );
     }
 
     public async Task CreateFrontend()
     {
         // Copy and process frontend template files
         var frontendTemplate = _config.IncludeDemoData ? "Demo" : "Skeleton";
-        await CopyAndProcessDirectory(Path.Combine(_templateRoot, frontendTemplate, "Frontend"), ClientAppPath);
+        await CopyAndProcessDirectory(
+            Path.Combine(_templateRoot, frontendTemplate, "Frontend"),
+            ClientAppPath
+        );
     }
 
     public async Task InitializeRush()
@@ -152,6 +158,7 @@ public class TemplateGenerator
         return content
             .Replace("__SolutionName__", _config.SolutionName)
             .Replace("__ProjectName__", namespaceProjectName)
+            .Replace("__Namespace__", namespaceProjectName)
             .Replace("__Description__", _config.Description)
             .Replace("__HttpPort__", _config.HttpPort.ToString())
             .Replace("__HttpsPort__", _config.HttpsPort.ToString())

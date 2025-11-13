@@ -1,11 +1,11 @@
 using System.IO;
 using System.Text.Json;
+using __ProjectName__.Forms;
+using __ProjectName__.Services;
 using Astrolabe.CodeGen.Typescript;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.CodeGen;
 using Microsoft.AspNetCore.Mvc;
-using __ProjectName__.Forms;
-using __ProjectName__.Services;
 
 namespace __ProjectName__.Controllers;
 
@@ -75,11 +75,7 @@ public class CodeGenController : ControllerBase
         [FromServices] IWebHostEnvironment environment
     )
     {
-        var path = Path.Join(
-            environment.ContentRootPath,
-            FormService.FormDefDir,
-            form + ".json"
-        );
+        var path = Path.Join(environment.ContentRootPath, FormService.FormDefDir, form + ".json");
         await System.IO.File.WriteAllTextAsync(path, JsonSerializer.Serialize(body, Indented));
     }
 }

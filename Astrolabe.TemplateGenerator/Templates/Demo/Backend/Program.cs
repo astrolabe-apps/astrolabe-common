@@ -1,9 +1,9 @@
 using System.Reflection;
-using Astrolabe.JSON.Extensions;
 using __ProjectName__.Data.EF;
 using __ProjectName__.Exceptions;
 using __ProjectName__.Models;
 using __ProjectName__.Services;
+using Astrolabe.JSON.Extensions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -11,6 +11,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<FormService>();
+builder.Services.AddScoped<TeaService>();
 
 // Add exception handling
 builder.Services.AddExceptionHandler<ExceptionHandler>();
@@ -68,11 +69,11 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var allowDropDb = args.Contains("--allow-drop-db");
-    
+
     try
     {
         Console.WriteLine("Ensuring database exists...");
-        
+
         // Always apply pending migrations
         Console.WriteLine("Checking for pending migrations...");
         var pendingMigrations = (await db.Database.GetPendingMigrationsAsync()).ToList();

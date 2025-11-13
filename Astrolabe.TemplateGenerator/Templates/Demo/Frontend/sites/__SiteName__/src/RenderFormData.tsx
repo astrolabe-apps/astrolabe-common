@@ -1,4 +1,4 @@
-import { Control, RenderArrayElements } from "@react-typed-forms/core";
+import { Control } from "@react-typed-forms/core";
 import {
   RenderForm,
   createFormTree,
@@ -26,18 +26,15 @@ export function RenderFormData<T>({
   const formTree = useMemo(() => createFormTree(controls), [controls]);
   const dataNode = useMemo(
     () => createSchemaDataNode(schemaTree.rootNode, data),
-    [schemaTree, data]
+    [schemaTree, data],
   );
 
   return (
-    <RenderArrayElements array={controls}>
-      {() => (
-        <RenderForm
-          data={dataNode}
-          form={formTree.rootNode}
-          renderer={renderer}
-        />
-      )}
-    </RenderArrayElements>
+    <RenderForm
+      key={`${JSON.stringify(controls)}-${JSON.stringify(schema)}`}
+      data={dataNode}
+      form={formTree.rootNode}
+      renderer={renderer}
+    />
   );
 }

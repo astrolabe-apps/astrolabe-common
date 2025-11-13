@@ -6,19 +6,17 @@ namespace __ProjectName__.Exceptions;
 /// </summary>
 public class NotFoundException : Exception
 {
-    public NotFoundException(string message) : base(message)
-    {
-    }
+    public NotFoundException(string message)
+        : base(message) { }
 
     public NotFoundException(string message, Exception innerException)
-        : base(message, innerException)
-    {
-    }
+        : base(message, innerException) { }
 
     /// <summary>
     /// Helper method to throw NotFoundException if the value is null
     /// </summary>
-    public static void ThrowIfNull<T>(T? value, string? message = null) where T : class
+    public static void ThrowIfNull<T>(T? value, string? message = null)
+        where T : class
     {
         if (value == null)
         {

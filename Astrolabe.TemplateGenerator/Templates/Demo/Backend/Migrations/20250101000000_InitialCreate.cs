@@ -1,6 +1,6 @@
+using __ProjectName__.Data.EF;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using __ProjectName__.Data.EF;
 
 #nullable disable
 
@@ -23,19 +23,19 @@ namespace __ProjectName__.Migrations
                     NumberOfSugars = table.Column<int>(type: "int", nullable: false),
                     MilkAmount = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IncludeSpoon = table.Column<bool>(type: "bit", nullable: false),
-                    BrewNotes = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    BrewNotes = table.Column<string>(type: "nvarchar(max)", nullable: true),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Teas", x => x.Id);
-                });
+                }
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Teas");
+            migrationBuilder.DropTable(name: "Teas");
         }
     }
 }

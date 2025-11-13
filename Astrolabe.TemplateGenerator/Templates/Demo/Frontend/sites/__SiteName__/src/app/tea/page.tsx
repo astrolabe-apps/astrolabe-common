@@ -1,48 +1,88 @@
 "use client";
 
+import { useControl, useControlEffect } from "@react-typed-forms/core";
 import {
-  Control,
-  Fcheckbox,
-  Finput,
-  Fselect,
-  useControl,
-  useControlEffect,
-} from "@react-typed-forms/core";
-import { useApiClient } from "@astroapps/client";
+  useApiClient,
+  useQueryControl,
+  useSyncParam,
+  makeOptStringParam,
+} from "@astroapps/client";
 import { Button } from "@astrolabe/ui";
 import {
   TeasClient,
   TeaInfo,
-  TeaEdit,
   TeaType,
   MilkAmount,
-} from "client-common";
-import { useState } from "react";
+} from "client-common/client";
+import { useMemo, useState } from "react";
+import { RenderFormData } from "@/RenderFormData";
+import { createStdFormRenderer } from "@/renderers";
+import {
+  TeaEditorForm,
+  TeaViewPageForm,
+} from "client-common/formdefs";
+import {
+  TeaEditorFormSchema,
+  TeaViewPageFormSchema,
+  defaultTeaEditorForm,
+  TeaEditorForm as TeaEditorFormType,
+  TeaViewPageForm as TeaViewPageFormType,
+} from "client-common/schemas";
+import { TeaCard } from "./TeaCard";
 
 export default function TeaPage() {
-  // State management with useControl (following BEST-PRACTICES.md)
   const client = useApiClient(TeasClient);
+  const queryControl = useQueryControl();
+  const selectedTeaId = useSyncParam(queryControl, "id", makeOptStringParam());
+
   const searchTerm = useControl("");
   const filterByType = useControl<TeaType | null>(null);
   const teaList = useControl<TeaInfo[]>([]);
-  const editorForm = useControl<TeaEdit>({
-    type: TeaType.Black,
-    numberOfSugars: 0,
-    milkAmount: MilkAmount.None,
-    includeSpoon: false,
-    brewNotes: null,
-  });
-  const editingTeaId = useControl<string | null>(null);
-  const isEditing = useControl(false);
+
+  // Form controls for editing and viewing
+  const editorFormData = useControl<TeaEditorFormType>(defaultTeaEditorForm);
+  const viewFormData = useControl<TeaViewPageFormType | null>(null);
+
+  const [isEditing, setIsEditing] = useState(false);
+
+  // Create renderer
+  const renderer = useMemo(() => createStdFormRenderer(), []);
 
   // Load teas on mount and when search changes
   useControlEffect(
     () => searchTerm.value,
     async () => {
       await loadTeas();
-      console.log(TeaType);
     },
     true // Run on mount
+  );
+
+  // Load tea details when a tea is selected for viewing (not editing)
+  useControlEffect(
+    () => [selectedTeaId.value, isEditing] as const,
+    async ([id, editing]) => {
+      if (!id || editing) {
+        viewFormData.value = null;
+        return;
+      }
+      try {
+        const tea = await client.get(id);
+        viewFormData.value = {
+          tea: {
+            id: tea.id,
+            type: tea.type,
+            numberOfSugars: tea.numberOfSugars,
+            milkAmount: tea.milkAmount,
+            includeSpoon: tea.includeSpoon,
+            brewNotes: tea.brewNotes ?? null,
+          },
+          teaId: id,
+        };
+      } catch (e) {
+        console.error("Failed to load tea for viewing:", e);
+      }
+    },
+    true
   );
 
   // Helper functions
@@ -72,34 +112,34 @@ export default function TeaPage() {
       teaList.value = filtered;
     } catch (e) {
       console.error("Failed to load teas:", e);
-      // Global error handler will show user-facing error
     }
   }
 
   async function handleCreate() {
-    editorForm.value = {
-      type: TeaType.Black,
-      numberOfSugars: 0,
-      milkAmount: MilkAmount.None,
-      includeSpoon: false,
-      brewNotes: null,
+    editorFormData.value = {
+      ...defaultTeaEditorForm,
+      teaId: null,
     };
-    editingTeaId.value = null;
-    isEditing.value = true;
+    selectedTeaId.value = null;
+    setIsEditing(true);
   }
 
   async function handleEdit(id: string) {
     try {
-      const teaView = await client.get(id);
-      editorForm.value = {
-        type: teaView.type,
-        numberOfSugars: teaView.numberOfSugars,
-        milkAmount: teaView.milkAmount,
-        includeSpoon: teaView.includeSpoon,
-        brewNotes: teaView.brewNotes,
+      const tea = await client.get(id);
+      editorFormData.value = {
+        tea: {
+          type: tea.type,
+          numberOfSugars: tea.numberOfSugars,
+          milkAmount: tea.milkAmount,
+          includeSpoon: tea.includeSpoon,
+          brewNotes: tea.brewNotes ?? null,
+          id: "", // TeaEdit doesn't have id, but schema requires it
+        },
+        teaId: id,
       };
-      editingTeaId.value = id;
-      isEditing.value = true;
+      selectedTeaId.value = id;
+      setIsEditing(true);
     } catch (e) {
       console.error("Failed to load tea for editing:", e);
     }
@@ -107,19 +147,31 @@ export default function TeaPage() {
 
   async function handleSave() {
     try {
-      const teaEdit = editorForm.value;
-      const teaId = editingTeaId.value;
+      const teaData = editorFormData.value.tea;
+      const teaId = editorFormData.value.teaId;
 
       if (teaId) {
         // Update existing
-        await client.update(teaId, teaEdit);
+        await client.update(teaId, {
+          type: teaData.type,
+          numberOfSugars: teaData.numberOfSugars,
+          milkAmount: teaData.milkAmount,
+          includeSpoon: teaData.includeSpoon,
+          brewNotes: teaData.brewNotes,
+        });
       } else {
         // Create new
-        await client.create(teaEdit);
+        const created = await client.create({
+          type: teaData.type,
+          numberOfSugars: teaData.numberOfSugars,
+          milkAmount: teaData.milkAmount,
+          includeSpoon: teaData.includeSpoon,
+          brewNotes: teaData.brewNotes,
+        });
+        selectedTeaId.value = created.id;
       }
 
-      isEditing.value = false;
-      editingTeaId.value = null;
+      setIsEditing(false);
       await loadTeas(); // Refresh list
     } catch (e) {
       console.error("Failed to save tea:", e);
@@ -127,8 +179,10 @@ export default function TeaPage() {
   }
 
   function handleCancel() {
-    isEditing.value = false;
-    editingTeaId.value = null;
+    setIsEditing(false);
+    if (!editorFormData.value.teaId) {
+      selectedTeaId.value = null;
+    }
   }
 
   async function handleDelete(id: string) {
@@ -138,11 +192,22 @@ export default function TeaPage() {
 
     try {
       await client.delete(id);
+      if (selectedTeaId.value === id) {
+        selectedTeaId.value = null;
+        setIsEditing(false);
+      }
       await loadTeas(); // Refresh list
     } catch (e) {
       console.error("Failed to delete tea:", e);
     }
   }
+
+  function handleView(id: string) {
+    selectedTeaId.value = id;
+    setIsEditing(false);
+  }
+
+  if (!queryControl.fields.isReady.value) return <></>;
 
   return (
     <div className="container mx-auto p-8">
@@ -160,187 +225,114 @@ export default function TeaPage() {
           <input
             type="text"
             placeholder="Search teas..."
+            aria-label="Search teas"
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             value={searchTerm.value}
             onChange={(e) => (searchTerm.value = e.target.value)}
           />
-          <Fselect
+          <select
+            aria-label="Filter by tea type"
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-            control={filterByType as Control<string>}
-            value={filterByType.value as string}
+            value={filterByType.value ?? ""}
+            onChange={(e) =>
+              (filterByType.value = e.target.value ? (e.target.value as TeaType) : null)
+            }
           >
             <option value="">All Types</option>
-            {Object.keys(TeaType).map((key) => (
-              <option key={key} value={key}>
-                {TeaType[key as TeaType]}
-              </option>
-            ))}
-          </Fselect>
+            {Object.keys(TeaType)
+              .filter((key) => isNaN(Number(key)))
+              .map((key) => (
+                <option key={key} value={key}>
+                  {key}
+                </option>
+              ))}
+          </select>
         </div>
       </div>
 
-      {/* Editor Section (Create/Edit) */}
-      {isEditing.value && (
-        <div className="mb-8 p-6 bg-white shadow-lg rounded-lg border border-gray-200">
-          <h2 className="text-2xl font-semibold mb-6">
-            {editingTeaId.value ? "Edit Tea" : "Create New Tea"}
-          </h2>
-
-          <div className="space-y-4">
-            {/* Tea Type */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tea Type
-              </label>
-              <Fselect
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                value={editorForm.fields.type.value}
-                control={editorForm.fields.type}
-              >
-                {Object.keys(TeaType).map((key) => (
-                  <option key={key} value={key}>
-                    {TeaType[key as TeaType]}
-                  </option>
-                ))}
-              </Fselect>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Tea List Section */}
+        <div className="lg:col-span-1">
+          {teaList.value.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg">No teas found.</p>
+              <p className="mt-2">Click &quot;Add New Tea&quot; to get started!</p>
             </div>
+          ) : (
+            <div className="space-y-4">
+              {teaList.value.map((tea) => (
+                <TeaCard
+                  key={tea.id}
+                  tea={tea}
+                  isSelected={selectedTeaId.value === tea.id}
+                  onView={handleView}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
-            {/* Number of Sugars */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Number of Sugars
-              </label>
-              <Finput
-                type="number"
-                min="0"
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                value={editorForm.fields.numberOfSugars.value}
-                control={editorForm.fields.numberOfSugars}
+        {/* Detail/Editor Section */}
+        <div className="lg:col-span-2">
+          {isEditing ? (
+            <div className="p-6 bg-white shadow-lg rounded-lg border border-gray-200">
+              <h2 className="text-2xl font-semibold mb-6">
+                {editorFormData.value.teaId ? "Edit Tea" : "Create New Tea"}
+              </h2>
+
+              <RenderFormData
+                data={editorFormData}
+                controls={TeaEditorForm.controls}
+                schema={TeaEditorFormSchema}
+                renderer={renderer}
+              />
+
+              <div className="mt-6 flex gap-2 pt-6 border-t">
+                <Button onClick={handleSave} variant="primary">
+                  {editorFormData.value.teaId ? "Update Tea" : "Create Tea"}
+                </Button>
+                <Button onClick={handleCancel} variant="gray">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : viewFormData.value ? (
+            <div className="p-6 bg-white shadow-lg rounded-lg border border-gray-200">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl font-semibold">Tea Details</h2>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handleEdit(selectedTeaId.value!)}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    onClick={() => handleDelete(selectedTeaId.value!)}
+                    variant="danger"
+                    size="sm"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </div>
+
+              <RenderFormData
+                data={viewFormData}
+                controls={TeaViewPageForm.controls}
+                schema={TeaViewPageFormSchema}
+                renderer={renderer}
               />
             </div>
-
-            {/* Milk Amount */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Milk Amount
-              </label>
-              <Fselect
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                value={editorForm.fields.milkAmount.value}
-                control={editorForm.fields.milkAmount}
-              >
-                {Object.keys(MilkAmount).map((key) => (
-                  <option key={key} value={key}>
-                    {MilkAmount[key as MilkAmount]}
-                  </option>
-                ))}
-              </Fselect>
+          ) : (
+            <div className="p-6 bg-gray-50 shadow-lg rounded-lg border border-gray-200 text-center text-gray-500">
+              <p className="text-lg">Select a tea from the list to view details</p>
             </div>
-
-            {/* Include Spoon */}
-            <div className="flex items-center">
-              <Fcheckbox
-                type="checkbox"
-                id="includeSpoon"
-                className="w-4 h-4 text-primary-500 border-gray-300 rounded focus:ring-primary-500"
-                checked={editorForm.fields.includeSpoon.value}
-                control={editorForm.fields.includeSpoon as Control<boolean>}
-              />
-              <label
-                htmlFor="includeSpoon"
-                className="ml-2 text-sm font-medium text-gray-700"
-              >
-                Include Spoon
-              </label>
-            </div>
-
-            {/* Brew Notes */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Brew Notes
-              </label>
-              <textarea
-                rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                value={editorForm.fields.brewNotes.value ?? ""}
-                onChange={(e) =>
-                  (editorForm.fields.brewNotes.value = e.target.value || null)
-                }
-                placeholder="Optional brewing instructions or notes..."
-              />
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="mt-6 flex gap-2">
-            <Button onClick={handleSave} variant="primary">
-              {editingTeaId.value ? "Update Tea" : "Create Tea"}
-            </Button>
-            <Button onClick={handleCancel} variant="gray">
-              Cancel
-            </Button>
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Tea List Section */}
-      {teaList.value.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          <p className="text-lg">No teas found.</p>
-          <p className="mt-2">Click &quot;Add New Tea&quot; to get started!</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {teaList.value.map((tea) => (
-            <TeaCard
-              key={tea.id}
-              tea={tea}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Tea Card Component
-interface TeaCardProps {
-  tea: TeaInfo;
-  onEdit: (id: string) => void;
-  onDelete: (id: string) => void;
-}
-
-function TeaCard({ tea, onEdit, onDelete }: TeaCardProps) {
-  return (
-    <div className="p-6 bg-white shadow-md rounded-lg border border-gray-200 hover:shadow-lg transition-shadow">
-      {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <h3 className="text-xl font-semibold text-gray-800">
-          {TeaType[tea.type]} Tea
-        </h3>
-        <span className="px-3 py-1 text-xs font-medium bg-primary-100 text-primary-800 rounded-full">
-          {MilkAmount[tea.milkAmount]}
-        </span>
-      </div>
-
-      {/* Details */}
-      <div className="space-y-2 mb-6">
-        <div className="flex items-center text-gray-600">
-          <span className="font-medium mr-2">Sugars:</span>
-          <span>{tea.numberOfSugars}</span>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-2">
-        <Button onClick={() => onEdit(tea.id)} variant="outline" size="sm">
-          Edit
-        </Button>
-        <Button onClick={() => onDelete(tea.id)} variant="danger" size="sm">
-          Delete
-        </Button>
       </div>
     </div>
   );
