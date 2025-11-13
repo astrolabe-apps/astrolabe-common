@@ -4,13 +4,13 @@ import { useControl } from "@react-typed-forms/core";
 import { createStdFormRenderer } from "@/renderers";
 import { TeaSearchForm } from "client-common/formdefs";
 import { TeaSearchFormSchema, TeaSearchForm as TeaSearchFormType } from "client-common/schemas";
-import { useApiClient, useQueryControl } from "@astroapps/client";
+import { useApiClient, useQueryControl, useNavigationService } from "@astroapps/client";
 import { TeasClient } from "client-common/client";
 import { useMemo } from "react";
-import Link from "next/link";
 import { RenderFormData } from "@/RenderFormData";
 
 export default function SearchPage() {
+  const { Link } = useNavigationService();
   const client = useApiClient(TeasClient);
   const queryControl = useQueryControl();
 

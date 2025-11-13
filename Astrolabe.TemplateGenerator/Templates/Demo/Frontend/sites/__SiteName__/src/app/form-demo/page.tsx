@@ -13,13 +13,14 @@ import {
   useQueryControl,
   useSyncParam,
   makeOptStringParam,
+  useNavigationService,
 } from "@astroapps/client";
 import { TeasClient } from "client-common/client";
 import { useMemo } from "react";
-import Link from "next/link";
 import { RenderFormData } from "@/RenderFormData";
 
 export default function FormDemoPage() {
+  const { Link } = useNavigationService();
   const client = useApiClient(TeasClient);
   const queryControl = useQueryControl();
   const teaId = useSyncParam(queryControl, "id", makeOptStringParam());
