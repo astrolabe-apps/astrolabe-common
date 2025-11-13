@@ -16,7 +16,9 @@ class Program
         var config = await GatherConfiguration();
 
         AnsiConsole.WriteLine();
-        AnsiConsole.MarkupLine($"[bold green]Creating solution:[/] [blue]{config.SolutionName}[/] with project [blue]{config.ProjectName}[/]");
+        AnsiConsole.MarkupLine(
+            $"[bold green]Creating solution:[/] [blue]{config.SolutionName}[/] with project [blue]{config.ProjectName}[/]"
+        );
         AnsiConsole.WriteLine();
 
         var generator = new TemplateGenerator(config);
@@ -110,12 +112,11 @@ class Program
 
     static Task<AppConfiguration> GatherConfiguration()
     {
-        var projectName = AnsiConsole.Ask<string>("[blue]Project name:[/]");
+        var projectNameInput = AnsiConsole.Ask<string>("[blue]Project name:[/]");
+        var projectName = ToPascalCase(projectNameInput);
 
-        var solutionName = AnsiConsole.Ask(
-            "[blue]Solution name:[/]",
-            projectName
-        );
+        var solutionNameInput = AnsiConsole.Ask("[blue]Solution name:[/]", projectNameInput);
+        var solutionName = ToPascalCase(solutionNameInput);
 
         var description = AnsiConsole.Ask("[blue]Description:[/]", "An Astrolabe application");
 
@@ -151,6 +152,25 @@ class Program
                 includeDemoData
             )
         );
+    }
+
+    private static readonly char[] WordSeparators = [' ', '-', '_'];
+
+    static string ToPascalCase(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return input;
+
+        // Split on spaces, hyphens, underscores
+        var words = input.Split(WordSeparators, StringSplitOptions.RemoveEmptyEntries);
+
+        // Capitalize first letter of each word, lowercase the rest
+        var pascalCased = string.Join(
+            "",
+            words.Select(word => char.ToUpper(word[0]) + word[1..].ToLower())
+        );
+
+        return pascalCased;
     }
 }
 

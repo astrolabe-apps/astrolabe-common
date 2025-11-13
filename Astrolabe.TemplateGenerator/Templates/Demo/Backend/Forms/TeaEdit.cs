@@ -28,7 +28,7 @@ public class TeaEditorForm
     public Guid? TeaId { get; set; }
 }
 
-public class TeaViewForm
+public class TeaViewPageForm
 {
     public TeaView Tea { get; set; } = new();
     public Guid? TeaId { get; set; }

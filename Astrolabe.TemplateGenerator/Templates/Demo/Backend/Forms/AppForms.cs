@@ -11,7 +11,7 @@ public class AppForms : FormBuilder<object?>
     [
         // Tea Editor Form - for creating/editing tea orders
         Form<TeaEditorForm>("TeaEditorForm", "Tea Editor", null),
-        Form<TeaViewForm>("TeaView", "Tea View", null),
+        Form<TeaViewPageForm>("TeaViewPageForm", "Tea View", null),
         // Tea Search Form - for searching and listing teas
         Form<TeaSearchForm>("TeaSearchForm", "Tea Search", null),
     ];
