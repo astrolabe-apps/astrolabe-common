@@ -26,9 +26,9 @@ export default function Home() {
             href="/editor"
             className="block p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100"
           >
-            <h2 className="text-2xl font-semibold mb-2">Schema Editor →</h2>
+            <h2 className="text-2xl font-semibold mb-2">Form Editor →</h2>
             <p className="text-gray-700">
-              Edit and manage your form schemas
+              Edit and manage your forms
             </p>
           </Link>
 
@@ -38,7 +38,7 @@ export default function Home() {
           >
             <h2 className="text-2xl font-semibold mb-2">Tea Form Demo →</h2>
             <p className="text-gray-700">
-              Create and edit teas using schema-driven forms
+              Create and edit teas using schemas
             </p>
           </Link>
 
