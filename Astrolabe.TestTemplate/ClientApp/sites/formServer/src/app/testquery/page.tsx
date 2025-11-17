@@ -1,30 +1,23 @@
 "use client";
 
-import { StringParam, useQueryControl, useSyncParam } from "@astroapps/client";
-import { Finput, useControlEffect } from "@react-typed-forms/core";
-import { useRouter } from "next/navigation";
+import {
+  StringParam,
+  useNavigationService,
+  useQueryControl,
+  useSyncParam,
+} from "@astroapps/client";
+import { Finput } from "@react-typed-forms/core";
+import { useEffect } from "react";
 
 export default function TestQueryPage() {
   const qc = useQueryControl();
   const test = useSyncParam(qc, "test", StringParam);
   const derp = useSyncParam(qc, "derp", StringParam);
-  const router = useRouter();
+  const router = useNavigationService();
 
-  useControlEffect(
-    () => [test.value, qc.fields.isReady.value] as const,
-    ([t, isReady]) => {
-      if (isReady) {
-        if (!t) {
-          console.log("Redirecting to /checkAdorn with test:", t);
-          router.push("/checkAdorn");
-        } else {
-          console.log("Got a param:", t);
-          //redirectToBlah();
-        }
-      }
-    },
-    true,
-  );
+  useEffect(() => {
+    setTimeout(() => router.push("/checkAdorn"), 5000);
+  }, []);
 
   return (
     <>
@@ -33,9 +26,4 @@ export default function TestQueryPage() {
       <Finput control={derp} />
     </>
   );
-  async function redirectToBlah() {
-    console.log("Redirecting to /eval with test:", test.value);
-    router.push("/eval");
-    return;
-  }
 }
