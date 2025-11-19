@@ -158,9 +158,9 @@ export function segmentPath(segment: string | number, parent?: Path) {
 export type EnvValue<T> = [EvalEnv, T];
 
 export interface EvalEnvState {
-  data: EvalData;
-  current: ValueExpr;
-  localVars: Record<string, ValueExpr>;
+  data: EvalData | undefined;
+  current: ValueExpr | undefined;
+  localVars: Record<string, EvalExpr>;
   parent?: EvalEnvState;
   errors: string[];
   compare: (v1: unknown, v2: unknown) => number;
@@ -174,8 +174,8 @@ export interface EvalEnvState {
 export function lookupVar(
   state: EvalEnvState,
   name: string,
-): ValueExpr | undefined {
-  if (name in state.localVars) {
+): EvalExpr | undefined {
+  if (state.localVars && name in state.localVars) {
     return state.localVars[name];
   }
   return state.parent ? lookupVar(state.parent, name) : undefined;
@@ -187,16 +187,17 @@ export interface EvalData {
 }
 
 export abstract class EvalEnv {
-  abstract data: EvalData;
-  abstract current: ValueExpr;
+  abstract data: EvalData | undefined;
+  abstract current: ValueExpr | undefined;
   abstract errors: string[];
   abstract state: EvalEnvState;
-  abstract getVariable(name: string): ValueExpr | undefined;
+  abstract getVariable(name: string): EvalExpr | undefined;
   abstract compare(v1: unknown, v2: unknown): number;
   abstract withVariables(vars: [string, EvalExpr][]): EvalEnv;
   abstract withVariable(name: string, expr: EvalExpr): EvalEnv;
   abstract withCurrent(path: ValueExpr): EvalEnv;
   abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
+  abstract evaluatePartial(expr: EvalExpr): EnvValue<EvalExpr>;
   abstract withError(error: string): EvalEnv;
 }
 
@@ -264,7 +265,7 @@ export interface LambdaExpr {
 }
 
 export interface FunctionValue {
-  eval: (env: EvalEnv, args: CallExpr) => EnvValue<ValueExpr>;
+  eval: (env: EvalEnv, args: CallExpr) => EnvValue<EvalExpr>;
   getType: (env: CheckEnv, args: CallExpr) => CheckValue<EvalType>;
 }
 
@@ -362,7 +363,7 @@ export function callExpr(
 }
 
 export function functionValue(
-  evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<ValueExpr>,
+  evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<EvalExpr>,
   getType: (e: CheckEnv, call: CallExpr) => CheckValue<EvalType>,
 ): ValueExpr {
   return {

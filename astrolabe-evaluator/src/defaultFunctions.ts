@@ -2,6 +2,7 @@ import {
   AnyType,
   arrayType,
   BooleanType,
+  callExpr,
   CallExpr,
   CheckEnv,
   checkValue,
@@ -31,6 +32,7 @@ import {
 import {
   BasicEvalEnv,
   doEvaluate,
+  doPartialEvaluate,
   evaluateAll,
   evaluateWith,
   evaluateWithValue,
@@ -57,22 +59,40 @@ function stringFunction(after: (s: string) => string) {
 
 const flatFunction = functionValue(
   (e, call) => {
-    const allArgs = mapAllEnv(e, call.args, doEvaluate);
-    return mapEnv(allArgs, (x) => valueExpr(x.flatMap((v) => allElems(v))));
+    const [ne, partials] = mapAllEnv(e, call.args, doPartialEvaluate);
+
+    // Check if all arguments are fully evaluated
+    const allFullyEvaluated = partials.every(p => p.type === "value");
+    if (!allFullyEvaluated) {
+      // At least one argument is symbolic - return symbolic call
+      return [ne, { ...call, args: partials }];
+    }
+
+    // All arguments are ValueExpr - proceed with concrete evaluation
+    return [ne, valueExpr((partials as ValueExpr[]).flatMap((v) => allElems(v)))];
   },
   constGetType(arrayType([])),
 );
 
 export const objectFunction = functionValue(
   (e, call) => {
-    return mapEnv(evaluateAll(e, call.args), (args) => {
-      const outObj: Record<string, ValueExpr> = {};
-      let i = 0;
-      while (i < args.length - 1) {
-        outObj[toNative(args[i++]) as string] = args[i++];
-      }
-      return valueExpr(outObj);
-    });
+    const [ne, partials] = mapAllEnv(e, call.args, doPartialEvaluate);
+
+    // Check if all arguments are fully evaluated
+    const allFullyEvaluated = partials.every(p => p.type === "value");
+    if (!allFullyEvaluated) {
+      // At least one argument is symbolic - return symbolic call
+      return [ne, { ...call, args: partials }];
+    }
+
+    // All arguments are ValueExpr - proceed with object construction
+    const args = partials as ValueExpr[];
+    const outObj: Record<string, ValueExpr> = {};
+    let i = 0;
+    while (i < args.length - 1) {
+      outObj[toNative(args[i++]) as string] = args[i++];
+    }
+    return [ne, valueExpr(outObj)];
   },
   (e, call) => {
     const allChecked = checkAll(e, call.args, (e, x) => typeCheck(e, x));
@@ -97,20 +117,29 @@ export function binFunction(
   name?: string,
 ): ValueExpr {
   return binEvalFunction(name ?? "_", returnType, (aE, bE, env) => {
-    const [nextEnv, [a, b]] = evaluateAll(env, [aE, bE]);
-    if (a.value == null || b.value == null)
-      return [nextEnv, valueExprWithDeps(null, [a, b])];
-    return [
-      nextEnv,
-      valueExprWithDeps(func(a.value, b.value, nextEnv), [a, b]),
-    ];
+    // Partially evaluate both operands
+    const [env1, a] = env.evaluatePartial(aE);
+    const [env2, b] = env1.evaluatePartial(bE);
+
+    // Check if both operands are fully evaluated
+    if (a.type === "value" && b.type === "value") {
+      if (a.value == null || b.value == null)
+        return [env2, valueExprWithDeps(null, [a, b])];
+      return [
+        env2,
+        valueExprWithDeps(func(a.value, b.value, env2), [a, b]),
+      ];
+    }
+
+    // At least one operand is symbolic - return CallExpr
+    return [env2, { type: "call", function: name ?? "_", args: [a, b] }];
   });
 }
 
 export function binEvalFunction(
   name: string,
   returnType: GetReturnType,
-  func: (a: EvalExpr, b: EvalExpr, e: EvalEnv) => EnvValue<ValueExpr>,
+  func: (a: EvalExpr, b: EvalExpr, e: EvalEnv) => EnvValue<EvalExpr>,
 ): ValueExpr {
   return functionValue((env, call) => {
     if (call.args.length != 2)
@@ -152,7 +181,17 @@ function arrayFunc(
 ) {
   return functionValue(
     (e, call) => {
-      let [ne, v] = mapAllEnv(e, call.args, doEvaluate);
+      let [ne, partials] = mapAllEnv(e, call.args, doPartialEvaluate);
+
+      // Check if all arguments are fully evaluated
+      const allFullyEvaluated = partials.every(p => p.type === "value");
+      if (!allFullyEvaluated) {
+        // At least one argument is symbolic - return symbolic call
+        return [ne, { ...call, args: partials }];
+      }
+
+      // All arguments are ValueExpr - proceed with concrete evaluation
+      const v = partials as ValueExpr[];
       if (v.length == 1 && Array.isArray(v[0].value)) {
         return [ne, toValue(v[0].value as ValueExpr[], v[0])];
       }
@@ -178,19 +217,40 @@ function aggFunction<A>(
 export const whichFunction: ValueExpr = functionValue(
   (e, call) => {
     const [c, ...args] = call.args;
-    let [env, cond] = e.evaluate(c);
+    let [env, condPartial] = e.evaluatePartial(c);
+
+    // If condition is symbolic, return symbolic call
+    if (condPartial.type !== "value") {
+      return [env, { ...call, args: [condPartial, ...args] }];
+    }
+
+    const cond = condPartial as ValueExpr;
     let i = 0;
     while (i < args.length - 1) {
       const compare = args[i++];
       const value = args[i++];
-      const [nextEnv, compValue] = env.evaluate(compare);
+      const [nextEnv, compPartial] = env.evaluatePartial(compare);
       env = nextEnv;
+
+      // If comparison value is symbolic, we can't determine the branch
+      if (compPartial.type !== "value") {
+        // Return symbolic call with partially evaluated args
+        const partialArgs: EvalExpr[] = [condPartial];
+        for (let j = 0; j < i - 2; j++) partialArgs.push(args[j]);
+        partialArgs.push(compPartial);
+        for (let j = i; j < args.length; j++) partialArgs.push(args[j]);
+        return [env, { ...call, args: partialArgs }];
+      }
+
+      const compValue = compPartial as ValueExpr;
       const cv = compValue.value;
       const cva = Array.isArray(cv) ? cv.map((x) => x.value) : [cv];
       if (cva.find((x) => nextEnv.state.compare(x, cond.value) === 0)) {
-        return mapEnv(nextEnv.evaluate(value), (v) =>
-          valueExprWithDeps(v.value, [cond, compValue, v]),
-        );
+        const [valueEnv, valuePartial] = nextEnv.evaluatePartial(value);
+        if (valuePartial.type !== "value") {
+          return [valueEnv, valuePartial];
+        }
+        return [valueEnv, valueExprWithDeps((valuePartial as ValueExpr).value, [cond, compValue, valuePartial as ValueExpr])];
       }
     }
     return [env, valueExprWithDeps(null, [cond])];
@@ -207,47 +267,73 @@ const mapFunction = binEvalFunction(
   "map",
   constGetType(AnyType),
   (left, right, env) => {
-    const [leftEnv, leftVal] = env.evaluate(left);
+    const [leftEnv, leftPartial] = env.evaluatePartial(left);
     if (!right) return [leftEnv.withError("No map expression"), NullExpr];
-    const { value } = leftVal;
-    if (Array.isArray(value)) {
-      return mapEnv(
-        mapAllEnv(leftEnv, value, (e, elem) =>
-          evaluateWithValue(e, elem, elem, right),
-        ),
-        (vals) => ({ ...leftVal, value: vals }),
-      );
+
+    // Check if we got a fully evaluated array
+    if (leftPartial.type === "value") {
+      const { value } = leftPartial;
+      if (Array.isArray(value)) {
+        // Map over the array, using partial evaluation for each element
+        const [envAfter, partialResults] = mapAllEnv(leftEnv, value, (e, elem: ValueExpr) => {
+          // Partially evaluate the right side with current element bound
+          const [e2, toEval] = right.type === "lambda"
+            ? [e.withVariables([[right.variable, elem]]), right.expr]
+            : [e, right];
+          return e2.withCurrent(elem).evaluatePartial(toEval);
+        });
+
+        // Check if all results are fully evaluated
+        const allFullyEvaluated = partialResults.every(r => r.type === "value");
+        if (allFullyEvaluated) {
+          // All elements evaluated - return concrete array
+          return [envAfter, { ...leftPartial, value: partialResults as ValueExpr[] }];
+        }
+
+        // At least one element is symbolic - return symbolic array
+        return [envAfter, { type: "array", values: partialResults }];
+      }
+      return [
+        leftEnv.withError("Can't map value: " + printExpr(leftPartial)),
+        NullExpr,
+      ];
     }
-    return [
-      leftEnv.withError("Can't map value: " + printExpr(leftVal)),
-      NullExpr,
-    ];
+
+    // Left side is symbolic - return symbolic map call
+    return [leftEnv, callExpr("map", [leftPartial, right])];
   },
 );
 
 const flatmapFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
     const [left, right] = call.args;
-    const [leftEnv, leftVal] = env.evaluate(left);
+    const [leftEnv, leftPartial] = env.evaluatePartial(left);
     if (!right) return [leftEnv.withError("No map expression"), NullExpr];
-    const { value } = leftVal;
-    if (Array.isArray(value)) {
-      return mapEnv(
-        mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
-          evaluateWith(e, elem, i, right),
-        ),
-        (vals) => ({ ...leftVal, value: vals.flatMap((v) => allElems(v)) }),
-      );
+
+    // Check if we got a fully evaluated value
+    if (leftPartial.type === "value") {
+      const { value } = leftPartial;
+      if (Array.isArray(value)) {
+        return mapEnv(
+          mapAllEnv(leftEnv, value, (e, elem: ValueExpr, i) =>
+            evaluateWith(e, elem, i, right),
+          ),
+          (vals) => ({ ...leftPartial, value: vals.flatMap((v) => allElems(v)) }),
+        );
+      }
+      if (typeof value === "object") {
+        if (value == null) return [leftEnv, NullExpr];
+        return evaluateWith(leftEnv, leftPartial, null, right);
+      } else {
+        return [
+          leftEnv.withError("Can't map value: " + printExpr(leftPartial)),
+          NullExpr,
+        ];
+      }
     }
-    if (typeof value === "object") {
-      if (value == null) return [leftEnv, NullExpr];
-      return evaluateWith(leftEnv, leftVal, null, right);
-    } else {
-      return [
-        leftEnv.withError("Can't map value: " + printExpr(leftVal)),
-        NullExpr,
-      ];
-    }
+
+    // Left side is symbolic (ArrayExpr, VarExpr, etc.) - return symbolic flatmap
+    return [leftEnv, { ...call, args: [leftPartial, right] }];
   },
   (env, call) => {
     const [left, right] = call.args;
@@ -275,8 +361,15 @@ function firstFunction(
   return functionValue(
     (env, call) => {
       const [left, right] = call.args;
-      const [leftEnv, leftVal] = env.evaluate(left);
-      const { value } = leftVal;
+      const [leftEnv, leftPartial] = env.evaluatePartial(left);
+
+      // Check if we got a fully evaluated value
+      if (leftPartial.type !== "value") {
+        // Left side is symbolic - return symbolic call
+        return [leftEnv, { ...call, args: [leftPartial, right] }];
+      }
+
+      const { value } = leftPartial;
       if (value == null) {
         return [leftEnv, NullExpr];
       }
@@ -294,7 +387,7 @@ function firstFunction(
       }
       return [
         leftEnv.withError(
-          `$${name} only works on arrays: ${printExpr(leftVal)}`,
+          `$${name} only works on arrays: ${printExpr(leftPartial)}`,
         ),
         NullExpr,
       ];
@@ -309,9 +402,16 @@ function firstFunction(
 const filterFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
     const [left, right] = call.args;
-    const [leftEnv, leftVal] = env.evaluate(left);
-    const { value } = leftVal;
+    const [leftEnv, leftPartial] = env.evaluatePartial(left);
     if (!right) return [leftEnv.withError("No filter expression"), NullExpr];
+
+    // Check if we got a fully evaluated value
+    if (leftPartial.type !== "value") {
+      // Left side is symbolic - return symbolic filter call
+      return [leftEnv, { ...call, args: [leftPartial, right] }];
+    }
+
+    const { value } = leftPartial;
     if (Array.isArray(value)) {
       const empty = value.length === 0;
       const [firstEnv, indexResult] = evaluateWith(
@@ -326,7 +426,7 @@ const filterFunction = functionValue(
       if (firstFilter === null) {
         const additionalDeps: ValueExpr[] = [
           indexResult,
-          ...(leftVal.deps || []),
+          ...(leftPartial.deps || []),
         ];
 
         return [
@@ -345,7 +445,7 @@ const filterFunction = functionValue(
         const indexHasDeps =
           (indexResult.deps && indexResult.deps.length > 0) ||
           indexResult.path != null;
-        const arrayHasDeps = leftVal.deps && leftVal.deps.length > 0;
+        const arrayHasDeps = leftPartial.deps && leftPartial.deps.length > 0;
 
         // If neither index nor array has deps, return element as-is
         if (!indexHasDeps && !arrayHasDeps) {
@@ -356,7 +456,7 @@ const filterFunction = functionValue(
         // Add parent reference - if element is array, children get deps when extracted via allElems
         const parentWithDeps: ValueExpr = {
           type: "value",
-          deps: [indexResult, ...(leftVal.deps || [])],
+          deps: [indexResult, ...(leftPartial.deps || [])],
           path: element.path,
         };
 
@@ -382,14 +482,14 @@ const filterFunction = functionValue(
     }
     if (typeof value === "object") {
       // Evaluate key expression with the object as current context
-      const [keyEnv, keyResult] = evaluateWith(leftEnv, leftVal, null, right);
+      const [keyEnv, keyResult] = evaluateWith(leftEnv, leftPartial, null, right);
       const { value: firstFilter } = keyResult;
 
       // Handle null key - return null with preserved dependencies
       if (firstFilter === null) {
         const additionalDeps: ValueExpr[] = [
           keyResult,
-          ...(leftVal.deps || []),
+          ...(leftPartial.deps || []),
         ];
 
         return [
@@ -403,7 +503,7 @@ const filterFunction = functionValue(
       if (typeof firstFilter === "string") {
         const [propEnv, propValue] = evaluateWith(
           keyEnv,
-          leftVal,
+          leftPartial,
           null,
           propertyExpr(firstFilter),
         );
@@ -412,7 +512,7 @@ const filterFunction = functionValue(
         const keyHasDeps =
           (keyResult.deps && keyResult.deps.length > 0) ||
           keyResult.path != null;
-        const objectHasDeps = leftVal.deps && leftVal.deps.length > 0;
+        const objectHasDeps = leftPartial.deps && leftPartial.deps.length > 0;
 
         // If neither key nor object has deps, return property value as-is
         if (!keyHasDeps && !objectHasDeps) {
@@ -423,7 +523,7 @@ const filterFunction = functionValue(
         // Add parent reference - if propValue is array, children get deps when extracted via allElems
         const parentWithDeps: ValueExpr = {
           type: "value",
-          deps: [keyResult, ...(leftVal.deps || [])],
+          deps: [keyResult, ...(leftPartial.deps || [])],
           path: propValue.path,
         };
 
@@ -435,7 +535,7 @@ const filterFunction = functionValue(
       return [keyEnv, valueExpr(null)];
     }
     return [
-      leftEnv.withError("Can't filter value: " + printExpr(leftVal)),
+      leftEnv.withError("Can't filter value: " + printExpr(leftPartial)),
       NullExpr,
     ];
   },
@@ -458,19 +558,33 @@ const condFunction = functionValue(
       return [env.withError("Conditional expects 3 arguments"), NullExpr];
     }
     const [condExpr, thenExpr, elseExpr] = call.args;
-    const [env1, condVal] = env.evaluate(condExpr);
+    const [env1, condVal] = env.evaluatePartial(condExpr);
 
-    if (condVal.value === true) {
-      return mapEnv(env1.evaluate(thenExpr), (thenVal) =>
-        valueExprWithDeps(thenVal.value, [condVal, thenVal]),
-      );
-    } else if (condVal.value === false) {
-      return mapEnv(env1.evaluate(elseExpr), (elseVal) =>
-        valueExprWithDeps(elseVal.value, [condVal, elseVal]),
-      );
-    } else {
-      return [env1, valueExprWithDeps(null, [condVal])];
+    // Only evaluate branches if condition is fully evaluated
+    if (condVal.type === "value") {
+      if (condVal.value === true) {
+        const [env2, thenVal] = env1.evaluatePartial(thenExpr);
+        // If result is a value, extract it; otherwise keep it as an expression
+        return [env2, thenVal.type === "value"
+          ? valueExprWithDeps(thenVal.value, [condVal, thenVal])
+          : thenVal
+        ];
+      } else if (condVal.value === false) {
+        const [env2, elseVal] = env1.evaluatePartial(elseExpr);
+        return [env2, elseVal.type === "value"
+          ? valueExprWithDeps(elseVal.value, [condVal, elseVal])
+          : elseVal
+        ];
+      } else {
+        // Condition evaluated to something other than true/false
+        return [env1, valueExprWithDeps(null, [condVal])];
+      }
     }
+
+    // Condition is unknown - partially evaluate both branches
+    const [env2, thenVal] = env1.evaluatePartial(thenExpr);
+    const [env3, elseVal] = env2.evaluatePartial(elseExpr);
+    return [env3, { ...call, args: [condVal, thenVal, elseVal] }];
   },
   (e, call) =>
     mapCallArgs(call, e, (args) =>
@@ -484,23 +598,29 @@ const elemFunction = functionValue(
       return [env.withError("elem expects 2 arguments"), NullExpr];
     }
     const [arrayExpr, indexExpr] = call.args;
-    const [env1, arrayVal] = env.evaluate(arrayExpr);
-    const [env2, indexVal] = env1.evaluate(indexExpr);
+    const [env1, arrayPartial] = env.evaluatePartial(arrayExpr);
+    const [env2, indexPartial] = env1.evaluatePartial(indexExpr);
 
-    if (!Array.isArray(arrayVal.value)) {
+    // Check if both array and index are fully evaluated
+    if (arrayPartial.type !== "value" || indexPartial.type !== "value") {
+      // Return symbolic elem call
+      return [env2, callExpr("elem", [arrayPartial, indexPartial])];
+    }
+
+    if (!Array.isArray(arrayPartial.value)) {
       return [env2, NullExpr];
     }
 
-    const index = indexVal.value as number;
-    const elem = (arrayVal.value as ValueExpr[])?.[index];
+    const index = indexPartial.value as number;
+    const elem = (arrayPartial.value as ValueExpr[])?.[index];
     if (elem == null) {
       return [env2, NullExpr];
     }
 
     // Check if index or array has dependencies
     const indexHasDeps =
-      (indexVal.deps && indexVal.deps.length > 0) || indexVal.path != null;
-    const arrayHasDeps = arrayVal.deps && arrayVal.deps.length > 0;
+      (indexPartial.deps && indexPartial.deps.length > 0) || indexPartial.path != null;
+    const arrayHasDeps = arrayPartial.deps && arrayPartial.deps.length > 0;
 
     // If neither index nor array has deps, return element as-is
     if (!indexHasDeps && !arrayHasDeps) {
@@ -509,8 +629,8 @@ const elemFunction = functionValue(
 
     // Index is dynamic OR array has deps - preserve element but add dependencies
     const combinedDeps: ValueExpr[] = [
-      indexVal,
-      ...(arrayVal.deps || []),
+      indexPartial,
+      ...(arrayPartial.deps || []),
       ...(elem.deps || []),
     ];
 
@@ -530,8 +650,14 @@ export const keysOrValuesFunction = (type: string) =>
       }
 
       const [objExpr] = call.args;
-      const [nextEnv, objVal] = env.evaluate(objExpr);
+      const [nextEnv, objPartial] = env.evaluatePartial(objExpr);
 
+      // If object is symbolic, return symbolic call
+      if (objPartial.type !== "value") {
+        return [nextEnv, { ...call, args: [objPartial] }];
+      }
+
+      const objVal = objPartial as ValueExpr;
       if (objVal.value == null) {
         return [nextEnv, NullExpr];
       }
@@ -572,13 +698,23 @@ function shortCircuitBooleanOp(
   call: CallExpr,
   shortCircuitValue: boolean,
   defaultResult: boolean,
-): EnvValue<ValueExpr> {
+): EnvValue<EvalExpr> {
   const deps: ValueExpr[] = [];
+  const partialArgs: EvalExpr[] = [];
   let currentEnv = env;
 
   for (const arg of call.args) {
-    const [nextEnv, argResult] = currentEnv.evaluate(arg);
+    const [nextEnv, argPartial] = currentEnv.evaluatePartial(arg);
     currentEnv = nextEnv;
+
+    // If we encounter a symbolic value, return symbolic call
+    if (argPartial.type !== "value") {
+      // Include all evaluated args plus this symbolic one and remaining args
+      partialArgs.push(...deps, argPartial, ...call.args.slice(partialArgs.length + deps.length + 1));
+      return [currentEnv, { ...call, args: partialArgs }];
+    }
+
+    const argResult = argPartial as ValueExpr;
     deps.push(argResult);
 
     // Short-circuit: if we hit the short-circuit value, stop evaluating
@@ -623,11 +759,11 @@ export const defaultFunctions = {
   }, constGetType(BooleanType)),
   and: andFunction,
   or: orFunction,
-  "+": binFunction((a, b) => a + b, constGetType(NumberType)),
-  "-": binFunction((a, b) => a - b, constGetType(NumberType)),
-  "*": binFunction((a, b) => a * b, constGetType(NumberType)),
-  "/": binFunction((a, b) => a / b, constGetType(NumberType)),
-  "%": binFunction((a, b) => a % b, constGetType(NumberType)),
+  "+": binFunction((a, b) => a + b, constGetType(NumberType), "+"),
+  "-": binFunction((a, b) => a - b, constGetType(NumberType), "-"),
+  "*": binFunction((a, b) => a * b, constGetType(NumberType), "*"),
+  "/": binFunction((a, b) => a / b, constGetType(NumberType), "/"),
+  "%": binFunction((a, b) => a % b, constGetType(NumberType), "%"),
   ">": compareFunction((x) => x > 0),
   "<": compareFunction((x) => x < 0),
   "<=": compareFunction((x) => x <= 0),
@@ -708,7 +844,13 @@ export const defaultFunctions = {
   map: mapFunction,
   "[": filterFunction,
   this: functionValue(
-    (e) => [e, e.current],
+    (e, call) => {
+      if (e.current === undefined) {
+        // No current value - return symbolic
+        return [e, call];
+      }
+      return [e, e.current];
+    },
     (e, _) => checkValue(e, e.dataType),
   ),
   keys: keysOrValuesFunction("keys"),
@@ -720,12 +862,21 @@ export const defaultFunctions = {
       }
 
       const merged: Record<string, ValueExpr> = {};
+      const partialArgs: EvalExpr[] = [];
       let currentEnv = env;
 
       for (const arg of call.args) {
-        const [nextEnv, argVal] = currentEnv.evaluate(arg);
+        const [nextEnv, argPartial] = currentEnv.evaluatePartial(arg);
         currentEnv = nextEnv;
 
+        // If we encounter a symbolic value, return symbolic call
+        if (argPartial.type !== "value") {
+          // Include all evaluated args plus this symbolic one and remaining args
+          partialArgs.push(...call.args.slice(0, partialArgs.length), argPartial, ...call.args.slice(partialArgs.length + 1));
+          return [currentEnv, { ...call, args: partialArgs }];
+        }
+
+        const argVal = argPartial as ValueExpr;
         if (argVal.value == null) {
           return [currentEnv, NullExpr];
         }
