@@ -274,8 +274,8 @@ describe("Partial Evaluation", () => {
       );
       const [_, result] = env.evaluatePartial(expr);
 
-      // All variables get inlined/substituted during evaluation
-      expect(printExpr(result)).toBe("$unknownA * 2 + 10");
+      // Simple values and VarExprs are inlined, but CallExpr bindings are kept
+      expect(printExpr(result)).toBe("let $c := $unknownA * 2 in $c + 10");
     });
   });
 
@@ -421,9 +421,9 @@ describe("Partial Evaluation", () => {
 
       const [_, result] = env.evaluatePartial(expr);
 
-      // Should simplify tax and discount calculations (all variables get inlined)
+      // Should simplify tax and discount calculations, but keep CallExpr bindings
       const printed = printExpr(result);
-      expect(printed).toBe("$userInputPrice * 0.9 * 1.08");
+      expect(printed).toBe("let $discountedPrice := $userInputPrice * 0.9, $total := $discountedPrice * 1.08 in $total");
     });
 
     test("conditional with side computations", () => {
@@ -485,8 +485,8 @@ describe("Partial Evaluation", () => {
       );
       const [_, result] = env.evaluatePartial(expr);
 
-      // Should return symbolic flatmap since array contains unknown
-      expect(result.type).toBe("call");
+      // Should keep ArrayExpr binding since array contains symbolic element
+      expect(result.type).toBe("let");
       expect(printExpr(result)).toContain("*");
     });
 

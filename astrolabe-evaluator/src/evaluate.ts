@@ -69,24 +69,31 @@ export function defaultPartialEvaluate(
     case "let": {
       // Partially evaluate all bindings
       let currentEnv = env;
-      const partialBindings: [VarExpr, EvalExpr][] = [];
+      const keptBindings: [VarExpr, EvalExpr][] = [];
 
       for (const [varExpr, bindingExpr] of expr.variables) {
         const [nextEnv, partialBinding] = currentEnv.evaluatePartial(bindingExpr);
-        partialBindings.push([varExpr, partialBinding]);
-        currentEnv = currentEnv.withVariable(varExpr.variable, partialBinding);
+
+        // Only add inlinable bindings to environment
+        // Complex expressions (CallExpr, ArrayExpr, PropertyExpr) are kept as let bindings
+        if (isInlinableExpr(partialBinding)) {
+          currentEnv = nextEnv.withVariable(varExpr.variable, partialBinding);
+        } else {
+          keptBindings.push([varExpr, partialBinding]);
+          currentEnv = nextEnv;
+        }
       }
 
-      // Evaluate body with bindings in scope
+      // Evaluate body with only inlinable bindings in scope
       const [bodyEnv, bodyResult] = currentEnv.evaluatePartial(expr.expr);
 
-      // If body is fully evaluated, return it directly (let disappears)
-      if (bodyResult.type === "value") {
+      // If body is fully evaluated and no bindings need to be kept, return it directly
+      if (bodyResult.type === "value" && keptBindings.length === 0) {
         return [bodyEnv, bodyResult];
       }
 
-      // Otherwise, return simplified let expression
-      return [bodyEnv, simplifyLet(partialBindings, bodyResult, expr.location)];
+      // Otherwise, return simplified let expression with kept bindings
+      return [bodyEnv, simplifyLet(keptBindings, bodyResult, expr.location)];
     }
 
     case "value":
@@ -417,6 +424,24 @@ function isSimpleValue(value: unknown): boolean {
 }
 
 /**
+ * Check if an expression should be inlined during partial evaluation.
+ * Returns true for:
+ * - ValueExpr (all fully evaluated values, simple or complex)
+ * - VarExpr (simple variable references)
+ * Returns false for symbolic expressions that should be kept as let bindings:
+ * - CallExpr, ArrayExpr, PropertyExpr, LetExpr, LambdaExpr
+ */
+function isInlinableExpr(expr: EvalExpr): boolean {
+  if (expr.type === "value") {
+    return true;  // All ValueExprs are inlinable
+  }
+  if (expr.type === "var") {
+    return true;  // Inline simple variable references
+  }
+  return false;  // Keep symbolic expressions as let bindings
+}
+
+/**
  * Simplify a let expression by:
  * - Eliminating unused variables (dead code elimination)
  * - Inlining simple constant values (constant propagation)
@@ -430,14 +455,37 @@ export function simplifyLet(
   bodyResult: EvalExpr,
   location?: any
 ): EvalExpr {
-  const usedVars = freeVariables(bodyResult);
+  // Find all variables that are used, including transitive dependencies
+  // Start with variables used in the body
+  let usedVars = freeVariables(bodyResult);
+
+  // Keep adding variables that are used in the bindings of already-used variables
+  // until no new variables are found (fixed-point iteration)
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const [varExpr, partialResult] of partialBindings) {
+      const varName = varExpr.variable;
+      // If this binding is used, mark all variables it references as used too
+      if (usedVars.has(varName)) {
+        const bindingVars = freeVariables(partialResult);
+        for (const bindingVar of bindingVars) {
+          if (!usedVars.has(bindingVar)) {
+            usedVars.add(bindingVar);
+            changed = true;
+          }
+        }
+      }
+    }
+  }
+
   const relevantBindings: [VarExpr, EvalExpr][] = [];
   const inlineBindings = new Map<string, EvalExpr>();
 
   for (const [varExpr, partialResult] of partialBindings) {
     const varName = varExpr.variable;
 
-    // Dead variable elimination - skip if not used in body
+    // Dead variable elimination - skip if not used (directly or indirectly)
     if (!usedVars.has(varName)) {
       continue;
     }
