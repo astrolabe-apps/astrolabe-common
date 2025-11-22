@@ -4,7 +4,21 @@ namespace Astrolabe.Evaluator;
 
 using EvaluatedExpr = EnvironmentValue<ValueExpr>;
 
-public record EvalData(ValueExpr Root, Func<ValueExpr, string, ValueExpr> GetProperty);
+public record EvalData(ValueExpr Root, Func<ValueExpr, string, EvalExpr> GetProperty, bool IsUndefined = false)
+{
+    /// <summary>
+    /// Creates an EvalData instance representing undefined/missing data.
+    /// Property access on undefined data returns PropertyExpr (symbolic) instead of ValueExpr(null).
+    /// </summary>
+    public static EvalData UndefinedData()
+    {
+        return new EvalData(
+            Root: ValueExpr.Null,
+            GetProperty: (_, property) => new PropertyExpr(property),  // Returns symbolic PropertyExpr
+            IsUndefined: true
+        );
+    }
+};
 
 public record EvalEnvironmentState(
     EvalData Data,
@@ -90,7 +104,7 @@ public class EvalEnvironment(EvalEnvironmentState state)
         return NewEnv(state with { Compare = comparison });
     }
 
-    public ValueExpr GetProperty(string property)
+    public EvalExpr GetProperty(string property)
     {
         return state.Data.GetProperty(state.Current, property);
     }

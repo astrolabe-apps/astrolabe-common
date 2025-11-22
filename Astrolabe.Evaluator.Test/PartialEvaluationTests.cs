@@ -7,7 +7,10 @@ public class PartialEvaluationTests
 {
     private static EvalEnvironment CreateEnv(JsonObject? data = null)
     {
-        var evalData = JsonDataLookup.FromObject(data);
+        // When data is null, use UndefinedData for symbolic evaluation (property access returns PropertyExpr)
+        var evalData = data == null
+            ? EvalData.UndefinedData()
+            : JsonDataLookup.FromObject(data);
         return EvalEnvironment.DataFrom(evalData).AddDefaultFunctions();
     }
 
@@ -458,7 +461,7 @@ public class PartialEvaluationTests
     public void PartialEval_FirstWithKnownArray_FindsElement()
     {
         var env = CreateEnv();
-        var expr = Parse("first([1, 2, 3, 4, 5], $x > 3)");
+        var expr = Parse("$first([1, 2, 3, 4, 5], $x => $x > 3)");
 
         var (_, result) = env.EvaluatePartial(expr);
 
@@ -472,7 +475,7 @@ public class PartialEvaluationTests
     public void PartialEval_FirstWithUnknownArray_ReturnsSymbolicCall()
     {
         var env = CreateEnv();
-        var expr = Parse("first($unknownArray, $x > 3)");
+        var expr = Parse("$first($unknownArray, $x => $x > 3)");
 
         var (_, result) = env.EvaluatePartial(expr);
 
@@ -642,6 +645,220 @@ public class PartialEvaluationTests
         Assert.IsType<ValueExpr>(result);
         // JSON integers become doubles through arithmetic operations
         Assert.Equal(20.0, (double)((ValueExpr)result).Value!);
+    }
+
+    #endregion
+
+    #region Property Access Without Data Tests
+
+    [Fact]
+    public void PartialEval_PropertyAccessWithoutData_ReturnsPropertyExpr()
+    {
+        // Create environment with no data (null data)
+        var env = CreateEnv(null);
+        var expr = Parse("name");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<PropertyExpr>(result);
+        Assert.Equal("name", ((PropertyExpr)result).Property);
+    }
+
+    [Fact]
+    public void Evaluate_PropertyAccessWithoutData_ReturnsError()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("name");
+
+        var (resultEnv, result) = env.Evaluate(expr);
+
+        Assert.IsType<ValueExpr>(result);
+        Assert.Null(((ValueExpr)result).Value);
+        Assert.NotEmpty(resultEnv.Errors);
+    }
+
+    #endregion
+
+    #region Known Variable Tests
+
+    [Fact]
+    public void PartialEval_KnownVariable_EvaluatesFully()
+    {
+        var env = CreateEnv(null).WithVariables([
+            new KeyValuePair<string, EvalExpr>("x", new ValueExpr(42))
+        ]);
+        var expr = Parse("$x");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<ValueExpr>(result);
+        Assert.Equal(42, ((ValueExpr)result).Value);
+    }
+
+    [Fact]
+    public void PartialEval_KnownVariableInExpression_EvaluatesPartially()
+    {
+        var env = CreateEnv(null).WithVariables([
+            new KeyValuePair<string, EvalExpr>("x", new ValueExpr(10))
+        ]);
+        var expr = Parse("$x + $unknown");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+        var call = (CallExpr)result;
+        Assert.Equal("+", call.Function);
+    }
+
+    #endregion
+
+    #region Variable Shadowing Tests
+
+    [Fact]
+    public void PartialEval_InnerVariableShadowsOuter()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("let $x := 5 in let $x := 10 in $x");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<ValueExpr>(result);
+        Assert.Equal(10.0, (double)((ValueExpr)result).Value!);
+    }
+
+    [Fact]
+    public void PartialEval_ShadowingWithPartialEvaluation()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("let $x := 5 in let $x := $x + 3 in $x");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<ValueExpr>(result);
+        Assert.Equal(8.0, (double)((ValueExpr)result).Value!);
+    }
+
+    #endregion
+
+    #region Array Edge Case Tests
+
+    [Fact]
+    public void PartialEval_ArrayWithUnknownElement_ReturnsArrayExpr()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("[1, 2, $unknown, 4]");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<ArrayExpr>(result);
+        var arrayExpr = (ArrayExpr)result;
+        var values = arrayExpr.Values.ToList();
+        Assert.Equal(4, values.Count);
+        Assert.IsType<ValueExpr>(values[0]);
+        Assert.IsType<VarExpr>(values[2]);
+    }
+
+    [Fact]
+    public void PartialEval_ArrayWithMixedSymbolicElements_PartiallyEvaluates()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("[1 + 1, $x, 3 * 2]");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<ArrayExpr>(result);
+        var arrayExpr = (ArrayExpr)result;
+        var values = arrayExpr.Values.ToList();
+        Assert.Equal(3, values.Count);
+        Assert.IsType<ValueExpr>(values[0]); // 1+1 = 2
+        Assert.IsType<VarExpr>(values[1]);   // $x stays symbolic
+        Assert.IsType<ValueExpr>(values[2]); // 3*2 = 6
+    }
+
+    #endregion
+
+    #region Advanced Array Operation Tests
+
+    [Fact]
+    public void PartialEval_SumOverSymbolicArray_ReturnsSymbolicCall()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("$sum($unknownArray)");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+        var call = (CallExpr)result;
+        Assert.Equal("sum", call.Function);
+    }
+
+    [Fact]
+    public void PartialEval_CountWithSymbolicArray_ReturnsSymbolicCall()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("$count($unknownArray)");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+    }
+
+    [Fact]
+    public void PartialEval_ElemWithSymbolicArrayIndex_ReturnsSymbolicCall()
+    {
+        var env = CreateEnv(null).WithVariables([
+            new KeyValuePair<string, EvalExpr>("arr", new ValueExpr(new ArrayValue([
+                new ValueExpr(1), new ValueExpr(2), new ValueExpr(3)
+            ])))
+        ]);
+        var expr = Parse("$elem($arr, $unknownIndex)");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+    }
+
+    [Fact]
+    public void PartialEval_ElemWithSymbolicArray_ReturnsSymbolicCall()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("$elem($unknownArray, 0)");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+    }
+
+    [Fact]
+    public void PartialEval_ObjectFunctionWithSymbolicValue_ReturnsCallExpr()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("$object(\"key\", $unknownValue)");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        // Should return a CallExpr since value is symbolic
+        Assert.IsType<CallExpr>(result);
+    }
+
+    #endregion
+
+    #region Edge Case Tests
+
+    // Note: Empty let expression test removed - C# parser doesn't support "let in <expr>" syntax
+    // (would require grammar change to make variable assignments optional)
+
+    [Fact]
+    public void PartialEval_NullHandling_EvaluatesCorrectly()
+    {
+        var env = CreateEnv(null);
+        var expr = Parse("null + 5");
+
+        var (_, result) = env.EvaluatePartial(expr);
+
+        // null + anything should return null
+        Assert.IsType<ValueExpr>(result);
+        Assert.Null(((ValueExpr)result).Value);
     }
 
     #endregion

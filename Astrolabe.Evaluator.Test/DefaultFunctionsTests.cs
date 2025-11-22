@@ -648,7 +648,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["items"] = new JsonArray(1, 2, 3, 4, 5) };
         var result = EvalExpr("$count(items)", data);
-        Assert.Equal(5, result);
+        Assert.Equal(5L, result);
     }
 
     [Fact]
@@ -656,14 +656,14 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["items"] = new JsonArray() };
         var result = EvalExpr("$count(items)", data);
-        Assert.Equal(0, result);
+        Assert.Equal(0L, result);
     }
 
     [Fact]
     public void Count_WithDirectValues()
     {
         var result = EvalExpr("$count(1, 2, 3)");
-        Assert.Equal(3, result);
+        Assert.Equal(3L, result);
     }
 
     [Fact]

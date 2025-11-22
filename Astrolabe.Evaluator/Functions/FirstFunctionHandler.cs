@@ -23,8 +23,9 @@ public class FirstFunctionHandler
 
                 if (leftPartial is not ValueExpr leftVal)
                 {
-                    // Left side is symbolic - return symbolic call
-                    return leftEnv.WithValue<EvalExpr>(new CallExpr(name, [leftPartial, right]));
+                    // Left side is symbolic (VarExpr, PropertyExpr, etc.) - return null
+                    // In partial evaluation mode, we can't determine the result without the array
+                    return leftEnv.WithValue<EvalExpr>(finished ?? ValueExpr.Null);
                 }
 
                 return leftVal.Value switch

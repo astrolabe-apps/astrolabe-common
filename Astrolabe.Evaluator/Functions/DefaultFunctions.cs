@@ -497,7 +497,52 @@ public static class DefaultFunctions
                     }
             )
         },
-        { "sum", ArrayAggOp(0d, (acc, v) => acc + ValueExpr.AsDouble(v)) },
+        {
+            "sum",
+            new FunctionHandler((env, call) =>
+            {
+                if (call.Args.Count == 0)
+                    return env.WithValue<EvalExpr>(ValueExpr.WithDeps(0d, []));
+
+                // Handle single array argument vs multiple value arguments
+                if (call.Args.Count == 1)
+                {
+                    var (nextEnv, arrayPartial) = env.EvaluatePartial(call.Args[0]);
+
+                    // If array is symbolic, return CallExpr
+                    if (arrayPartial is not ValueExpr arrayValue)
+                        return nextEnv.WithValue<EvalExpr>(new CallExpr("sum", [arrayPartial]));
+
+                    // Array is concrete - compute sum
+                    return arrayValue.Value switch
+                    {
+                        ArrayValue av => nextEnv.WithValue<EvalExpr>(
+                            ValueExpr.WithDeps(
+                                av.Values.All(x => x.Value != null)
+                                    ? av.Values.Aggregate(0d, (acc, next) => acc + ValueExpr.AsDouble(next.Value))
+                                    : null,
+                                av.Values.ToList()
+                            )
+                        ),
+                        null => nextEnv.WithValue<EvalExpr>(arrayValue),
+                        _ => nextEnv.WithError("sum requires an array").WithValue<EvalExpr>(ValueExpr.Null)
+                    };
+                }
+                else
+                {
+                    // Multiple arguments - treat as array of values
+                    var (envAfter, evaluatedArgs) = env.EvalSelect(call.Args, (e, arg) => e.Evaluate(arg));
+                    return envAfter.WithValue<EvalExpr>(
+                        ValueExpr.WithDeps(
+                            evaluatedArgs.All(x => x.Value != null)
+                                ? evaluatedArgs.Aggregate(0d, (acc, next) => acc + ValueExpr.AsDouble(next.Value))
+                                : null,
+                            evaluatedArgs.ToList()
+                        )
+                    );
+                }
+            })
+        },
         {
             "min",
             ArrayAggOp(
@@ -512,7 +557,39 @@ public static class DefaultFunctions
                 (acc, v) => Math.Max(acc ?? double.MinValue, ValueExpr.AsDouble(v))
             )
         },
-        { "count", ArrayOp((args, o) => ValueExpr.WithDeps(args.Count, o != null ? [o] : [])) },
+        {
+            "count",
+            new FunctionHandler((env, call) =>
+            {
+                if (call.Args.Count == 0)
+                    return env.WithValue<EvalExpr>(ValueExpr.WithDeps(0L, []));
+
+                // Handle single array argument vs multiple value arguments
+                if (call.Args.Count == 1)
+                {
+                    var (nextEnv, arrayPartial) = env.EvaluatePartial(call.Args[0]);
+
+                    // If array is symbolic, return CallExpr
+                    if (arrayPartial is not ValueExpr arrayValue)
+                        return nextEnv.WithValue<EvalExpr>(new CallExpr("count", [arrayPartial]));
+
+                    // Array is concrete - count elements
+                    return arrayValue.Value switch
+                    {
+                        ArrayValue av => nextEnv.WithValue<EvalExpr>(
+                            ValueExpr.WithDeps((long)av.Values.Count(), [arrayValue])
+                        ),
+                        null => nextEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(0L, [arrayValue])),
+                        _ => nextEnv.WithError("count requires an array").WithValue<EvalExpr>(ValueExpr.Null)
+                    };
+                }
+                else
+                {
+                    // Multiple arguments - count them directly
+                    return env.WithValue<EvalExpr>(ValueExpr.WithDeps((long)call.Args.Count, []));
+                }
+            })
+        },
         {
             "array",
             FunctionHandler.DefaultEval(args => new ArrayValue(
@@ -599,20 +676,39 @@ public static class DefaultFunctions
         },
         {
             "object",
-            FunctionHandler.DefaultEvalArgs(
-                (e, args) =>
+            new FunctionHandler((env, call) =>
+            {
+                // Partially evaluate all arguments
+                var currentEnv = env;
+                var partialArgs = new List<EvalExpr>();
+                var allConcrete = true;
+
+                foreach (var arg in call.Args)
                 {
-                    var i = 0;
-                    var obj = new Dictionary<string, ValueExpr>();
-                    while (i < args.Count - 1)
-                    {
-                        var name = (string)args[i++].Value!;
-                        var value = args[i++];
-                        obj[name] = value;
-                    }
-                    return new ValueExpr(new ObjectValue(obj));
+                    var (nextEnv, partialArg) = currentEnv.EvaluatePartial(arg);
+                    currentEnv = nextEnv;
+                    partialArgs.Add(partialArg);
+
+                    if (partialArg is not ValueExpr)
+                        allConcrete = false;
                 }
-            )
+
+                // If any argument is symbolic, return CallExpr
+                if (!allConcrete)
+                    return currentEnv.WithValue<EvalExpr>(new CallExpr("object", partialArgs));
+
+                // All arguments are concrete - build object
+                var i = 0;
+                var obj = new Dictionary<string, ValueExpr>();
+                while (i < partialArgs.Count - 1)
+                {
+                    var keyExpr = (ValueExpr)partialArgs[i++];
+                    var valueExpr = (ValueExpr)partialArgs[i++];
+                    var name = (string)keyExpr.Value!;
+                    obj[name] = valueExpr;
+                }
+                return currentEnv.WithValue<EvalExpr>(new ValueExpr(new ObjectValue(obj)));
+            })
         },
         { "this", new FunctionHandler((e, c) => e.WithValue<EvalExpr>(e.Current)) },
         { "keys", KeysOrValuesFunctionHandler("keys") },

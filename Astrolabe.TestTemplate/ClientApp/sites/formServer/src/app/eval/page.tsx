@@ -108,7 +108,10 @@ export default function EvalPage() {
           if (sm) {
             try {
               setEvalResult(
-                await client.eval(showDeps, { expression: v, data: dv }),
+                await client.eval(showDeps, partialMode, {
+                  expression: v,
+                  data: dv,
+                }),
               );
             } catch (e) {
               setOutput(e);
@@ -125,7 +128,9 @@ export default function EvalPage() {
               // Set data to undefined for symbolic evaluation
               emptyState.data = undefined;
               emptyState.current = undefined;
-              const env = addDefaults(new BasicEvalEnv(emptyState).withVariables(variables));
+              const env = addDefaults(
+                new BasicEvalEnv(emptyState).withVariables(variables),
+              );
               const [outEnv, partialResult] = env.evaluatePartial(exprTree);
               setEvalResult({
                 result: printExpr(partialResult),
