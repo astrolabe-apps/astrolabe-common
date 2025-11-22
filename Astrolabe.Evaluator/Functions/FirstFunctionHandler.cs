@@ -19,17 +19,24 @@ public class FirstFunctionHandler
             name,
             (env, left, right) =>
             {
-                var (leftEnv, leftVal) = env.Evaluate(left);
+                var (leftEnv, leftPartial) = env.EvaluatePartial(left);
+
+                if (leftPartial is not ValueExpr leftVal)
+                {
+                    // Left side is symbolic - return symbolic call
+                    return leftEnv.WithValue<EvalExpr>(new CallExpr(name, [leftPartial, right]));
+                }
+
                 return leftVal.Value switch
                 {
                     ArrayValue av => RunFirst(av.Values.ToList()),
                     _
                         => leftEnv
                             .WithError($"${name} only works on arrays: {leftVal.Print()}")
-                            .WithNull()
+                            .WithValue<EvalExpr>(ValueExpr.Null)
                 };
 
-                EnvironmentValue<ValueExpr> RunFirst(List<ValueExpr> values)
+                EnvironmentValue<EvalExpr> RunFirst(List<ValueExpr> values)
                 {
                     var curEnv = leftEnv;
                     for (var i = 0; i < values.Count; i++)
@@ -38,9 +45,9 @@ public class FirstFunctionHandler
                         curEnv = nextEnv;
                         var valueResult = callback(i, values, result, curEnv);
                         if (valueResult != null)
-                            return curEnv.WithValue(valueResult);
+                            return curEnv.WithValue<EvalExpr>(valueResult);
                     }
-                    return curEnv.WithValue(finished ?? ValueExpr.Null);
+                    return curEnv.WithValue<EvalExpr>(finished ?? ValueExpr.Null);
                 }
             }
         );

@@ -7,20 +7,40 @@ public static class FilterFunctionHandler
             {
                 return call.Args switch
                 {
-                    [var left, var right]
-                        when e.Evaluate(left) is (var nextEnv, var leftValue) leftEval
-                        => leftValue.Value switch
-                        {
-                            ArrayValue av
-                                when av.Values.Select((x, i) => (x, i)).ToList() is var indexed
-                                => FilterArray(nextEnv, leftValue, indexed, right),
-                            null => leftEval,
-                            ObjectValue _ => FilterObject(nextEnv, leftValue, right),
-                            _ => nextEnv.WithError("Can't filter: " + leftValue.Print()).WithNull()
-                        }
+                    [var left, var right] => HandleFilter(e, left, right, call),
+                    _ => e.WithError("Filter expects 2 arguments").WithValue<EvalExpr>(ValueExpr.Null)
                 };
 
-                EnvironmentValue<ValueExpr> FilterObject(
+                EnvironmentValue<EvalExpr> HandleFilter(
+                    EvalEnvironment env,
+                    EvalExpr left,
+                    EvalExpr right,
+                    CallExpr originalCall
+                )
+                {
+                    var (nextEnv, leftPartial) = env.EvaluatePartial(left);
+
+                    if (leftPartial is not ValueExpr leftValue)
+                    {
+                        // Left side is symbolic - return symbolic filter call
+                        return nextEnv.WithValue<EvalExpr>(
+                            new CallExpr("[", [leftPartial, right])
+                        );
+                    }
+
+                    return leftValue.Value switch
+                    {
+                        ArrayValue av
+                            when av.Values.Select((x, i) => (x, i)).ToList() is var indexed
+                            => FilterArray(nextEnv, leftValue, indexed, right),
+                        null => nextEnv.WithValue<EvalExpr>(leftValue),
+                        ObjectValue _ => FilterObject(nextEnv, leftValue, right),
+                        _ => nextEnv.WithError("Can't filter: " + leftValue.Print())
+                            .WithValue<EvalExpr>(ValueExpr.Null)
+                    };
+                }
+
+                EnvironmentValue<EvalExpr> FilterObject(
                     EvalEnvironment nextEnv,
                     ValueExpr leftValue,
                     EvalExpr right
@@ -33,11 +53,12 @@ public static class FilterFunctionHandler
                     if (keyResult.Value == null)
                     {
                         var nullDeps = DependencyHelpers.CombineDeps(keyResult, ValueExpr.Null, leftValue);
-                        return keyEnv.WithValue(new ValueExpr(null, null, nullDeps));
+                        return keyEnv.WithValue<EvalExpr>(new ValueExpr(null, null, nullDeps));
                     }
 
                     if (!keyResult.IsString())
-                        return keyEnv.WithError("Object filter must be string").WithNull();
+                        return keyEnv.WithError("Object filter must be string")
+                            .WithValue<EvalExpr>(ValueExpr.Null);
 
                     var (propEnv, propValue) = keyEnv.EvaluateWith(
                         leftValue,
@@ -51,7 +72,7 @@ public static class FilterFunctionHandler
 
                     // If neither key nor object has deps, return property value as-is
                     if (!keyHasDeps && !objectHasDeps)
-                        return propEnv.WithValue(propValue);
+                        return propEnv.WithValue<EvalExpr>(propValue);
 
                     // Key is dynamic OR object has deps
                     // Add parent reference - if propValue is array, children get deps when extracted via AllValues
@@ -60,10 +81,12 @@ public static class FilterFunctionHandler
                         propValue.Path,
                         new[] { keyResult }.Concat(leftValue.Deps ?? Enumerable.Empty<ValueExpr>())
                     );
-                    return propEnv.WithValue(propValue with { Deps = (propValue.Deps ?? Enumerable.Empty<ValueExpr>()).Concat([parentWithDeps]) });
+                    return propEnv.WithValue<EvalExpr>(
+                        propValue with { Deps = (propValue.Deps ?? Enumerable.Empty<ValueExpr>()).Concat([parentWithDeps]) }
+                    );
                 }
 
-                EnvironmentValue<ValueExpr> FilterArray(
+                EnvironmentValue<EvalExpr> FilterArray(
                     EvalEnvironment nextEnv,
                     ValueExpr arrayValue,
                     List<(ValueExpr, int)> indexed,
@@ -81,7 +104,7 @@ public static class FilterFunctionHandler
                     if (firstFilter.Value.Value == null)
                     {
                         var nullDeps = DependencyHelpers.CombineDeps(firstFilter.Value, ValueExpr.Null, arrayValue);
-                        return firstFilter.Env.WithValue(new ValueExpr(null, null, nullDeps));
+                        return firstFilter.Env.WithValue<EvalExpr>(new ValueExpr(null, null, nullDeps));
                     }
 
                     if (firstFilter.Value.MaybeDouble() is not { } indLong)
@@ -97,11 +120,11 @@ public static class FilterFunctionHandler
                                     acc.Env.EvaluateWith(v.Item1, v.Item2, right)
                                         .Map(result => result.IsTrue() ? acc.Value.Append(v.Item1) : acc.Value)
                             )
-                            .Map(x => new ValueExpr(new ArrayValue(x)));
+                            .Map<EvalExpr>(x => new ValueExpr(new ArrayValue(x)));
                     }
 
                     var ind = (int)indLong;
-                    return firstFilter.Map(indexResult =>
+                    return firstFilter.Map<EvalExpr>(indexResult =>
                     {
                         if (ind >= indexed.Count)
                             return ValueExpr.Null;

@@ -6,8 +6,14 @@ public static class FlatMapFunctionHandler
         ".",
         (e, left, right) =>
         {
-            var leftEval = e.Evaluate(left);
-            var (nextEnv, leftValue) = leftEval;
+            var (nextEnv, leftPartial) = e.EvaluatePartial(left);
+
+            if (leftPartial is not ValueExpr leftValue)
+            {
+                // Left side is symbolic - return symbolic flatmap call
+                return nextEnv.WithValue<EvalExpr>(new CallExpr(".", [leftPartial, right]));
+            }
+
             return leftValue.Value switch
             {
                 ArrayValue av
@@ -16,10 +22,11 @@ public static class FlatMapFunctionHandler
                             av.Values.Select((x, i) => (x, i)),
                             (e2, v) => e2.EvaluateWith(v.x, v.i, right)
                         )
-                        .Map(x => new ValueExpr(new ArrayValue(x.SelectMany(v => v.AllValues())))),
-                ObjectValue => nextEnv.EvaluateWith(leftValue, null, right),
-                null => leftEval,
-                _ => nextEnv.WithError("Can't map " + leftValue.Print()).WithNull()
+                        .Map<EvalExpr>(x => new ValueExpr(new ArrayValue(x.SelectMany(v => v.AllValues())))),
+                ObjectValue => nextEnv.EvaluateWith(leftValue, null, right).Map<EvalExpr>(v => v),
+                null => nextEnv.WithValue<EvalExpr>(leftValue),
+                _ => nextEnv.WithError("Can't map " + leftValue.Print())
+                    .WithValue<EvalExpr>(ValueExpr.Null)
             };
         }
     );

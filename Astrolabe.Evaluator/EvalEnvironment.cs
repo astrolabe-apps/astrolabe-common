@@ -95,7 +95,7 @@ public class EvalEnvironment(EvalEnvironmentState state)
         return state.Data.GetProperty(state.Current, property);
     }
 
-    public EvalExpr? GetVariable(string name)
+    public virtual EvalExpr? GetVariable(string name)
     {
         return state.LookupVariable(name);
     }
@@ -178,6 +178,11 @@ public class EvalEnvironment(EvalEnvironmentState state)
     public virtual EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
     {
         return this.DefaultEvaluate(evalExpr);
+    }
+
+    public virtual EnvironmentValue<EvalExpr> EvaluatePartial(EvalExpr evalExpr)
+    {
+        return this.DefaultPartialEvaluate(evalExpr);
     }
 
     public int Compare(object? v1, object? v2)

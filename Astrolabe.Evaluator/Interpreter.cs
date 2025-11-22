@@ -42,34 +42,129 @@ public static class Interpreter
         EvalExpr expr
     )
     {
+        var (env, result) = environment.DefaultPartialEvaluate(expr);
+
+        return result switch
+        {
+            ValueExpr v => env.WithValue(v),
+            VarExpr ve => env.WithError($"Variable ${ve.Name} not declared").WithNull(),
+            CallExpr ce => env.WithError($"Function ${ce.Function} not declared").WithNull(),
+            PropertyExpr pe => env.WithError($"Property {pe.Property} could not be accessed").WithNull(),
+            _ => env.WithError("Expression could not be fully evaluated").WithNull()
+        };
+    }
+
+    public static EnvironmentValue<EvalExpr> DefaultPartialEvaluate(
+        this EvalEnvironment environment,
+        EvalExpr expr
+    )
+    {
         return expr switch
         {
-            ArrayExpr arrayExpr
-                => environment
-                    .EvalSelect(arrayExpr.Values, (e, x) => e.Evaluate(x))
-                    .Map(x => new ValueExpr(new ArrayValue(x))),
-            LetExpr le
-                => environment
-                    .WithVariables(
-                        le.Vars.Select(x => new KeyValuePair<string, EvalExpr>(
-                                x.Item1.Name,
-                                x.Item2
-                            ))
-                            .ToList()
-                    )
-                    .Evaluate(le.In),
-            VarExpr ve when environment.GetVariable(ve.Name) is var v
-                => v != null
-                    ? environment.Evaluate(v)
-                    : environment.WithError("No variable $" + ve.Name + " declared").WithNull(),
-            ValueExpr v => environment.WithValue(v),
-            CallExpr { Function: var func, Args: var args } callExpr
+            ValueExpr v => environment.WithValue<EvalExpr>(v),
+
+            VarExpr ve when environment.GetVariable(ve.Name) is var varExpr
+                => varExpr != null
+                    ? environment.EvaluatePartial(varExpr)
+                    : environment.WithValue<EvalExpr>(ve),  // Return VarExpr unchanged for unknown variables
+
+            PropertyExpr pe => environment.WithValue<EvalExpr>(environment.GetProperty(pe.Property)),
+
+            CallExpr { Function: var func } callExpr
                 when environment.GetVariable(func) is ValueExpr { Value: FunctionHandler handler }
-                => handler.Evaluate(environment, callExpr),
-            CallExpr ce
-                => environment.WithError("No function $" + ce.Function + " declared").WithNull(),
-            PropertyExpr { Property: var dp } => environment.Evaluate(environment.GetProperty(dp)),
+                => handler.Evaluate(environment, callExpr).Map<EvalExpr>(v => v),
+
+            CallExpr ce => environment.WithValue<EvalExpr>(ce),  // Return CallExpr unchanged for unknown functions
+
+            ArrayExpr arrayExpr => EvaluateArrayPartial(environment, arrayExpr),
+
+            LetExpr le => EvaluateLetPartial(environment, le),
+
             _ => throw new ArgumentOutOfRangeException(expr?.ToString())
         };
+    }
+
+    private static EnvironmentValue<EvalExpr> EvaluateArrayPartial(
+        EvalEnvironment environment,
+        ArrayExpr arrayExpr
+    )
+    {
+        var (envAfter, partialValues) = environment.EvalSelect(
+            arrayExpr.Values,
+            (e, x) => e.EvaluatePartial(x)
+        );
+
+        var allFullyEvaluated = partialValues.All(v => v is ValueExpr);
+
+        if (allFullyEvaluated)
+        {
+            return envAfter.WithValue<EvalExpr>(
+                new ValueExpr(new ArrayValue(partialValues.Cast<ValueExpr>()))
+            );
+        }
+
+        return envAfter.WithValue<EvalExpr>(new ArrayExpr(partialValues));
+    }
+
+    private static EnvironmentValue<EvalExpr> EvaluateLetPartial(
+        EvalEnvironment environment,
+        LetExpr letExpr
+    )
+    {
+        var currentEnv = environment;
+        var keptBindings = new List<(VarExpr, EvalExpr)>();
+        var inlineBindings = System.Collections.Immutable.ImmutableDictionary<string, EvalExpr>.Empty.ToBuilder();
+
+        foreach (var (varExpr, bindingExpr) in letExpr.Vars)
+        {
+            var (nextEnv, partialBinding) = currentEnv.EvaluatePartial(bindingExpr);
+
+            // Only inline simple values and variables
+            if (IsInlinableExpr(partialBinding))
+            {
+                inlineBindings[varExpr.Name] = partialBinding;
+                // Create environment with current bindings for subsequent expressions
+                currentEnv = new LetEvaluationEnvironment(
+                    nextEnv.State with
+                    {
+                        LocalVariables = inlineBindings.ToImmutable(),
+                        Parent = environment.State
+                    }
+                );
+            }
+            else
+            {
+                keptBindings.Add((varExpr, partialBinding));
+                currentEnv = nextEnv;
+            }
+        }
+
+        var (bodyEnv, bodyResult) = currentEnv.EvaluatePartial(letExpr.In);
+
+        // If body is fully evaluated and no bindings remain, return the value
+        if (bodyResult is ValueExpr && keptBindings.Count == 0)
+        {
+            return bodyEnv.WithValue(bodyResult);
+        }
+
+        // Return a simplified let expression
+        return bodyEnv.WithValue<EvalExpr>(
+            PartialEvaluation.SimplifyLet(keptBindings, bodyResult, letExpr.Location)
+        );
+    }
+
+    /// <summary>
+    /// Special environment for let expression evaluation that doesn't force full evaluation of variables
+    /// </summary>
+    private class LetEvaluationEnvironment : EvalEnvironment
+    {
+        public LetEvaluationEnvironment(EvalEnvironmentState state) : base(state)
+        {
+        }
+    }
+
+    private static bool IsInlinableExpr(EvalExpr expr)
+    {
+        return expr is ValueExpr or VarExpr;
     }
 }

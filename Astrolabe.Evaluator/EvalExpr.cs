@@ -73,7 +73,7 @@ public record LambdaExpr(string Variable, EvalExpr Value, SourceLocation? Locati
 
 public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, CallExpr callExpr);
 
-public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
+public record FunctionHandler(CallHandler<EvalExpr> Evaluate)
 {
     public static FunctionHandler DefaultEvalArgs(
         Func<EvalEnvironment, List<ValueExpr>, ValueExpr> eval
@@ -81,7 +81,7 @@ public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
         new(
             (e, call) =>
                 e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x))
-                    .Map(args => eval(e, args.ToList()))
+                    .Map<EvalExpr>(args => eval(e, args.ToList()))
         );
 
     public static FunctionHandler DefaultEval(Func<EvalEnvironment, List<object?>, object?> eval) =>
@@ -94,7 +94,7 @@ public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
 
     public static FunctionHandler BinFunctionHandler(
         string name,
-        Func<EvalEnvironment, EvalExpr, EvalExpr, EnvironmentValue<ValueExpr>> handle
+        Func<EvalEnvironment, EvalExpr, EvalExpr, EnvironmentValue<EvalExpr>> handle
     )
     {
         return new FunctionHandler(
@@ -104,7 +104,7 @@ public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
                     [var a1, var a2] => handle(env, a1, a2),
                     var a
                         => env.WithError($"{name} expects 2 arguments, received {a.Count}")
-                            .WithNull()
+                            .WithValue<EvalExpr>(ValueExpr.Null)
                 }
         );
     }
@@ -437,14 +437,14 @@ public static class ValueExtensions
         return v.Value == null;
     }
 
-    public static bool IsTrue(this ValueExpr v)
+    public static bool IsTrue(this EvalExpr v)
     {
-        return v.Value is true;
+        return v is ValueExpr { Value: true };
     }
 
-    public static bool IsFalse(this ValueExpr v)
+    public static bool IsFalse(this EvalExpr v)
     {
-        return v.Value is false;
+        return v is ValueExpr { Value: false };
     }
 
     public static string AsString(this ValueExpr v)

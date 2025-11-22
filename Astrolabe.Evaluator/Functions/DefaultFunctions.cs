@@ -66,6 +66,39 @@ public static class DefaultFunctions
         );
     }
 
+    /// <summary>
+    /// Binary operator with partial evaluation support
+    /// </summary>
+    public static FunctionHandler BinPartialOp(
+        string name,
+        Func<EvalEnvironment, object, object, object?> evaluate
+    )
+    {
+        return FunctionHandler.BinFunctionHandler(
+            name,
+            (env, a, b) =>
+            {
+                var (env1, aPartial) = env.EvaluatePartial(a);
+                var (env2, bPartial) = env1.EvaluatePartial(b);
+
+                if (aPartial is ValueExpr aVal && bPartial is ValueExpr bVal)
+                {
+                    // Both fully evaluated
+                    if (aVal.Value == null || bVal.Value == null)
+                    {
+                        return env2.WithValue<EvalExpr>(ValueExpr.WithDeps(null, [aVal, bVal]));
+                    }
+                    return env2.WithValue<EvalExpr>(
+                        ValueExpr.WithDeps(evaluate(env2, aVal.Value, bVal.Value), [aVal, bVal])
+                    );
+                }
+
+                // Return symbolic call expression
+                return env2.WithValue<EvalExpr>(new CallExpr(name, [aPartial, bPartial]));
+            }
+        );
+    }
+
     public static FunctionHandler BoolOp(Func<bool, bool, bool> func)
     {
         return BinNullOp(
@@ -95,28 +128,85 @@ public static class DefaultFunctions
         );
     }
 
+    /// <summary>
+    /// Number operator with partial evaluation support
+    /// </summary>
+    public static FunctionHandler NumberPartialOp<TOutD, TOutL>(
+        string name,
+        Func<double, double, TOutD> doubleOp,
+        Func<long, long, TOutL> longOp
+    )
+    {
+        return BinPartialOp(
+            name,
+            (e, o1, o2) =>
+            {
+                if (ValueExpr.MaybeInteger(o1) is { } l1 && ValueExpr.MaybeInteger(o2) is { } l2)
+                {
+                    return longOp(l1, l2);
+                }
+                return doubleOp(ValueExpr.AsDouble(o1), ValueExpr.AsDouble(o2));
+            }
+        );
+    }
+
     public static FunctionHandler ComparisonFunc(Func<int, bool> toResult)
     {
         return BinNullOp((e, v1, v2) => toResult(e.Compare(v1, v2)));
     }
 
+    /// <summary>
+    /// Comparison function with partial evaluation support
+    /// </summary>
+    public static FunctionHandler ComparisonPartialFunc(string name, Func<int, bool> toResult)
+    {
+        return BinPartialOp(name, (e, v1, v2) => toResult(e.Compare(v1, v2)));
+    }
+
+    /// <summary>
+    /// Conditional operator with partial evaluation support (branch selection)
+    /// </summary>
     private static readonly FunctionHandler IfElseOp = new FunctionHandler(
         (env, call) =>
         {
             if (call.Args.Count != 3)
             {
-                return env.WithError("Conditional expects 3 arguments").WithNull();
+                return env.WithError("Conditional expects 3 arguments")
+                    .WithValue<EvalExpr>(ValueExpr.Null);
             }
-            var (env1, condVal) = env.Evaluate(call.Args[0]);
-            return condVal.Value switch
+
+            var (condExpr, thenExpr, elseExpr) = (call.Args[0], call.Args[1], call.Args[2]);
+            var (env1, condPartial) = env.EvaluatePartial(condExpr);
+
+            if (condPartial is ValueExpr condVal)
             {
-                true => env1.Evaluate(call.Args[1])
-                    .Map(thenVal => ValueExpr.WithDeps(thenVal.Value, [condVal, thenVal])),
-                false => env1.Evaluate(call.Args[2])
-                    .Map(elseVal => ValueExpr.WithDeps(elseVal.Value, [condVal, elseVal])),
-                null => env1.WithValue(ValueExpr.WithDeps(null, [condVal])),
-                _ => env1.WithError("Conditional expects boolean condition").WithNull(),
-            };
+                // Condition is fully evaluated - select branch
+                return condVal.Value switch
+                {
+                    true =>
+                        env1.EvaluatePartial(thenExpr)
+                            .Map(thenVal =>
+                                thenVal is ValueExpr thenValue
+                                    ? (EvalExpr)ValueExpr.WithDeps(thenValue.Value, [condVal, thenValue])
+                                    : thenVal
+                            ),
+                    false =>
+                        env1.EvaluatePartial(elseExpr)
+                            .Map(elseVal =>
+                                elseVal is ValueExpr elseValue
+                                    ? (EvalExpr)ValueExpr.WithDeps(elseValue.Value, [condVal, elseValue])
+                                    : elseVal
+                            ),
+                    null => env1.WithValue<EvalExpr>(ValueExpr.WithDeps(null, [condVal])),
+                    _ => env1.WithError("Conditional expects boolean condition")
+                        .WithValue<EvalExpr>(ValueExpr.Null),
+                };
+            }
+
+            // Condition is symbolic - partially evaluate both branches
+            var (env2, thenPartial) = env1.EvaluatePartial(thenExpr);
+            var (env3, elsePartial) = env2.EvaluatePartial(elseExpr);
+            return env3.WithValue<EvalExpr>(new CallExpr("?", [condPartial, thenPartial, elsePartial]));
         }
     );
 
@@ -154,14 +244,14 @@ public static class DefaultFunctions
     }
 
     /// <summary>
-    /// Helper for short-circuiting boolean operators (AND/OR).
+    /// Helper for short-circuiting boolean operators (AND/OR) with partial evaluation.
     /// Evaluates arguments sequentially until short-circuit condition is met.
     /// </summary>
     /// <param name="env">The evaluation environment</param>
     /// <param name="call">The function call expression</param>
     /// <param name="shortCircuitValue">The value that triggers short-circuiting (false for AND, true for OR)</param>
     /// <param name="defaultResult">The result when all args evaluated without short-circuit (true for AND, false for OR)</param>
-    private static EnvironmentValue<ValueExpr> ShortCircuitBooleanOp(
+    private static EnvironmentValue<EvalExpr> ShortCircuitBooleanOp(
         EvalEnvironment env,
         CallExpr call,
         bool shortCircuitValue,
@@ -169,35 +259,48 @@ public static class DefaultFunctions
     )
     {
         var deps = new List<ValueExpr>();
+        var partialArgs = new List<EvalExpr>();
         var currentEnv = env;
 
         foreach (var arg in call.Args)
         {
-            var (nextEnv, argResult) = currentEnv.Evaluate(arg);
+            var (nextEnv, argPartial) = currentEnv.EvaluatePartial(arg);
             currentEnv = nextEnv;
+
+            if (argPartial is not ValueExpr argResult)
+            {
+                // Argument is symbolic - return symbolic call with partially evaluated args
+                partialArgs.AddRange(deps);
+                partialArgs.Add(argPartial);
+                partialArgs.AddRange(call.Args.Skip(partialArgs.Count));
+                return currentEnv.WithValue<EvalExpr>(
+                    new CallExpr(call.Function, partialArgs)
+                );
+            }
+
             deps.Add(argResult);
 
             // Short-circuit: if we hit the short-circuit value, stop evaluating
             if (argResult.Value is bool b && b == shortCircuitValue)
             {
-                return currentEnv.WithValue(ValueExpr.WithDeps(shortCircuitValue, deps));
+                return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(shortCircuitValue, deps));
             }
 
             // If null, return null
             if (argResult.Value is null)
             {
-                return currentEnv.WithValue(ValueExpr.WithDeps(null, deps));
+                return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(null, deps));
             }
 
             // If not a valid boolean, return null
             if (argResult.Value is not bool || (bool)argResult.Value != !shortCircuitValue)
             {
-                return currentEnv.WithValue(ValueExpr.WithDeps(null, deps));
+                return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(null, deps));
             }
         }
 
         // All arguments evaluated without short-circuiting
-        return currentEnv.WithValue(ValueExpr.WithDeps(defaultResult, deps));
+        return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(defaultResult, deps));
     }
 
     private static readonly FunctionHandler ElemFunctionHandler = new FunctionHandler(
@@ -205,10 +308,17 @@ public static class DefaultFunctions
         {
             if (call.Args.Count != 2)
             {
-                return env.WithError("elem expects 2 arguments").WithNull();
+                return env.WithError("elem expects 2 arguments")
+                    .WithValue<EvalExpr>(ValueExpr.Null);
             }
-            var (env1, arrayVal) = env.Evaluate(call.Args[0]);
-            var (env2, indexVal) = env1.Evaluate(call.Args[1]);
+            var (env1, arrayPartial) = env.EvaluatePartial(call.Args[0]);
+            var (env2, indexPartial) = env1.EvaluatePartial(call.Args[1]);
+
+            if (arrayPartial is not ValueExpr arrayVal || indexPartial is not ValueExpr indexVal)
+            {
+                // Return symbolic elem call
+                return env2.WithValue<EvalExpr>(new CallExpr("elem", [arrayPartial, indexPartial]));
+            }
 
             return (arrayVal.Value, indexVal.Value) switch
             {
@@ -221,20 +331,20 @@ public static class DefaultFunctions
                     (indexVal.Deps == null || !indexVal.Deps.Any()) && indexVal.Path == null
                 )
                     ? (arrayVal.Deps == null || !arrayVal.Deps.Any())
-                        ? env2.WithValue(vl[ind]) // Neither index nor array has deps
-                        : env2.WithValue(
+                        ? env2.WithValue<EvalExpr>(vl[ind]) // Neither index nor array has deps
+                        : env2.WithValue<EvalExpr>(
                             vl[ind] with
                             {
                                 Deps = DependencyHelpers.CombineDeps(indexVal, vl[ind], arrayVal),
                             }
                         )
-                    : env2.WithValue(
+                    : env2.WithValue<EvalExpr>(
                         vl[ind] with
                         {
                             Deps = DependencyHelpers.CombineDeps(indexVal, vl[ind], arrayVal),
                         }
                     ),
-                _ => env2.WithValue(ValueExpr.WithDeps(null, [arrayVal, indexVal])),
+                _ => env2.WithValue<EvalExpr>(ValueExpr.WithDeps(null, [arrayVal, indexVal])),
             };
         }
     );
@@ -245,14 +355,21 @@ public static class DefaultFunctions
             {
                 if (c.Args.Count != 1)
                 {
-                    return e.WithError($"{type} expects 1 argument").WithNull();
+                    return e.WithError($"{type} expects 1 argument")
+                        .WithValue<EvalExpr>(ValueExpr.Null);
                 }
 
-                var (nextEnv, objVal) = e.Evaluate(c.Args[0]);
+                var (nextEnv, objPartial) = e.EvaluatePartial(c.Args[0]);
+
+                if (objPartial is not ValueExpr objVal)
+                {
+                    // Return symbolic call
+                    return nextEnv.WithValue<EvalExpr>(new CallExpr(type, [objPartial]));
+                }
 
                 return objVal.Value switch
                 {
-                    ObjectValue ov => nextEnv.WithValue(
+                    ObjectValue ov => nextEnv.WithValue<EvalExpr>(
                         new ValueExpr(
                             new ArrayValue(
                                 ov.Properties.Select(x =>
@@ -266,7 +383,7 @@ public static class DefaultFunctions
                     ),
                     _ => nextEnv
                         .WithError($"{type} expects an object: " + objVal.Print())
-                        .WithNull(),
+                        .WithValue<EvalExpr>(ValueExpr.Null),
                 };
             }
         );
@@ -295,22 +412,24 @@ public static class DefaultFunctions
         );
     }
 
-    public static EnvironmentValue<ValueExpr> WhichFunction(EvalEnvironment env, CallExpr call)
+    public static EnvironmentValue<EvalExpr> WhichFunction(EvalEnvironment env, CallExpr call)
     {
         return call.Args.ToList() switch
         {
             [var cond, .. var others] when env.Evaluate(cond) is var (nextEnv, condValue) =>
                 FindWhich(nextEnv, condValue, others),
+            _ => env.WithError("which expects at least 1 argument")
+                .WithValue<EvalExpr>(ValueExpr.Null)
         };
 
-        EnvironmentValue<ValueExpr> FindWhich(
+        EnvironmentValue<EvalExpr> FindWhich(
             EvalEnvironment curEnv,
             ValueExpr condValue,
             List<EvalExpr> others
         )
         {
             if (condValue.IsNull())
-                return curEnv.WithNull();
+                return curEnv.WithValue<EvalExpr>(ValueExpr.Null);
             var condCompare = condValue.Value;
             var i = 0;
             while (i < others.Count - 1)
@@ -327,27 +446,27 @@ public static class DefaultFunctions
                 {
                     return nextEnv
                         .Evaluate(value)
-                        .Map(x => ValueExpr.WithDeps(x.Value, [condValue, compValue, x]));
+                        .Map<EvalExpr>(x => ValueExpr.WithDeps(x.Value, [condValue, compValue, x]));
                 }
                 curEnv = nextEnv;
             }
-            return curEnv.WithValue(ValueExpr.WithDeps(null, [condValue]));
+            return curEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(null, [condValue]));
         }
     }
 
     public static readonly Dictionary<string, FunctionHandler> FunctionHandlers = new()
     {
-        { "+", NumberOp((d1, d2) => d1 + d2, (l1, l2) => l1 + l2) },
-        { "-", NumberOp((d1, d2) => d1 - d2, (l1, l2) => l1 - l2) },
-        { "*", NumberOp((d1, d2) => d1 * d2, (l1, l2) => l1 * l2) },
-        { "/", NumberOp((d1, d2) => d1 / d2, (l1, l2) => (double)l1 / l2) },
-        { "%", NumberOp((d1, d2) => d1 % d2, (l1, l2) => (double)l1 % l2) },
-        { "=", ComparisonFunc(v => v == 0) },
-        { "!=", ComparisonFunc(v => v != 0) },
-        { "<", ComparisonFunc(x => x < 0) },
-        { "<=", ComparisonFunc(x => x <= 0) },
-        { ">", ComparisonFunc(x => x > 0) },
-        { ">=", ComparisonFunc(x => x >= 0) },
+        { "+", NumberPartialOp("+", (d1, d2) => d1 + d2, (l1, l2) => l1 + l2) },
+        { "-", NumberPartialOp("-", (d1, d2) => d1 - d2, (l1, l2) => l1 - l2) },
+        { "*", NumberPartialOp("*", (d1, d2) => d1 * d2, (l1, l2) => l1 * l2) },
+        { "/", NumberPartialOp("/", (d1, d2) => d1 / d2, (l1, l2) => (double)l1 / l2) },
+        { "%", NumberPartialOp("%", (d1, d2) => d1 % d2, (l1, l2) => (double)l1 % l2) },
+        { "=", ComparisonPartialFunc("=", v => v == 0) },
+        { "!=", ComparisonPartialFunc("!=", v => v != 0) },
+        { "<", ComparisonPartialFunc("<", x => x < 0) },
+        { "<=", ComparisonPartialFunc("<=", x => x <= 0) },
+        { ">", ComparisonPartialFunc(">", x => x > 0) },
+        { ">=", ComparisonPartialFunc(">=", x => x >= 0) },
         // Short-circuiting AND operator - stops on false, returns true if all true
         {
             "and",
@@ -495,7 +614,7 @@ public static class DefaultFunctions
                 }
             )
         },
-        { "this", new FunctionHandler((e, c) => e.WithValue(e.Current)) },
+        { "this", new FunctionHandler((e, c) => e.WithValue<EvalExpr>(e.Current)) },
         { "keys", KeysOrValuesFunctionHandler("keys") },
         { "values", KeysOrValuesFunctionHandler("values") },
         {
@@ -505,7 +624,8 @@ public static class DefaultFunctions
                 {
                     if (call.Args.Count == 0)
                     {
-                        return env.WithError("merge expects at least 1 argument").WithNull();
+                        return env.WithError("merge expects at least 1 argument")
+                            .WithValue<EvalExpr>(ValueExpr.Null);
                     }
 
                     var merged = new Dictionary<string, ValueExpr>();
@@ -518,7 +638,7 @@ public static class DefaultFunctions
 
                         if (argVal.IsNull())
                         {
-                            return currentEnv.WithNull();
+                            return currentEnv.WithValue<EvalExpr>(ValueExpr.Null);
                         }
 
                         if (argVal.Value is ObjectValue ov)
@@ -530,7 +650,7 @@ public static class DefaultFunctions
                         }
                     }
 
-                    return currentEnv.WithValue(new ValueExpr(new ObjectValue(merged)));
+                    return currentEnv.WithValue<EvalExpr>(new ValueExpr(new ObjectValue(merged)));
                 }
             )
         },
