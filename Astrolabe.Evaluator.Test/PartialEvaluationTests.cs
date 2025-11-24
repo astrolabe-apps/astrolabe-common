@@ -335,9 +335,9 @@ public class PartialEvaluationTests
 
         var (_, result) = env.EvaluateExpr(expr);
 
-        // Should return symbolic expression for the AND
-        Assert.IsType<CallExpr>(result);
-        Assert.Equal("and", ((CallExpr)result).Function);
+        // Should simplify to just $unknown (true is identity for AND)
+        Assert.IsType<VarExpr>(result);
+        Assert.Equal("unknown", ((VarExpr)result).Name);
     }
 
     [Fact]
@@ -360,9 +360,9 @@ public class PartialEvaluationTests
 
         var (_, result) = env.EvaluateExpr(expr);
 
-        // Should return symbolic expression
-        Assert.IsType<CallExpr>(result);
-        Assert.Equal("or", ((CallExpr)result).Function);
+        // Should simplify to just $unknown (false is identity for OR)
+        Assert.IsType<VarExpr>(result);
+        Assert.Equal("unknown", ((VarExpr)result).Name);
     }
 
     [Fact]
@@ -860,6 +860,103 @@ public class PartialEvaluationTests
         // null + anything should return null
         Assert.IsType<ValueExpr>(result);
         Assert.Null(((ValueExpr)result).Value);
+    }
+
+    [Fact]
+    public void PartialEval_ComparisonInBooleanExpr_SubstitutesDefinedVariables()
+    {
+        var env = CreateEnv().WithVariables([
+            new KeyValuePair<string, EvalExpr>("FreightMaxWidth", new ValueExpr(12))
+        ]);
+        var expr = Parse("height <= $FreightMaxHeight and width <= $FreightMaxWidth");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        // Should partially evaluate: FreightMaxWidth should be substituted
+        var printed = PrintExpr.Print(result);
+        Assert.Contains("12", printed);
+        Assert.DoesNotContain("FreightMaxWidth", printed);
+        // Expected output: "height <= $FreightMaxHeight and width <= 12"
+    }
+
+    [Fact]
+    public void PartialEval_AndWithTrueFirst_SimplifiesToSecondArg()
+    {
+        var env = CreateEnv();
+        var expr = Parse("true and $unknown");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        // Should simplify to just $unknown
+        Assert.IsType<VarExpr>(result);
+        Assert.Equal("unknown", ((VarExpr)result).Name);
+    }
+
+    [Fact]
+    public void PartialEval_OrWithFalseFirst_SimplifiesToSecondArg()
+    {
+        var env = CreateEnv();
+        var expr = Parse("false or $unknown");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        // Should simplify to just $unknown
+        Assert.IsType<VarExpr>(result);
+        Assert.Equal("unknown", ((VarExpr)result).Name);
+    }
+
+    [Fact]
+    public void PartialEval_AndWithTrueAndSymbolic_FiltersOutTrue()
+    {
+        var env = CreateEnv();
+        var expr = Parse("$x and true and $y");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        // Should simplify to: $x and $y (true filtered out)
+        var printed = PrintExpr.Print(result);
+        Assert.DoesNotContain("true", printed);
+        Assert.Contains("$x", printed);
+        Assert.Contains("$y", printed);
+    }
+
+    [Fact]
+    public void PartialEval_OrWithFalseAndSymbolic_FiltersOutFalse()
+    {
+        var env = CreateEnv();
+        var expr = Parse("$x or false or $y");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        // Should simplify to: $x or $y (false filtered out)
+        var printed = PrintExpr.Print(result);
+        Assert.DoesNotContain("false", printed);
+        Assert.Contains("$x", printed);
+        Assert.Contains("$y", printed);
+    }
+
+    [Fact]
+    public void PartialEval_AndAllIdentityValues_ReturnsTrue()
+    {
+        var env = CreateEnv();
+        var expr = Parse("true and true and true");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        Assert.IsType<ValueExpr>(result);
+        Assert.True((bool)((ValueExpr)result).Value!);
+    }
+
+    [Fact]
+    public void PartialEval_OrAllIdentityValues_ReturnsFalse()
+    {
+        var env = CreateEnv();
+        var expr = Parse("false or false or false");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        Assert.IsType<ValueExpr>(result);
+        Assert.False((bool)((ValueExpr)result).Value!);
     }
 
     #endregion

@@ -731,45 +731,62 @@ function shortCircuitBooleanOp(
   defaultResult: boolean,
 ): EnvValue<EvalExpr> {
   const deps: ValueExpr[] = [];
-  const partialArgs: EvalExpr[] = [];
+  const evaluatedArgs: EvalExpr[] = [];
   let currentEnv = env;
+  const identityValue = !shortCircuitValue; // true for AND, false for OR
 
+  // Evaluate all arguments and collect them
   for (const arg of call.args) {
     const [nextEnv, argPartial] = currentEnv.evaluateExpr(arg);
     currentEnv = nextEnv;
 
-    // If we encounter a symbolic value, return symbolic call
-    if (argPartial.type !== "value") {
-      // Include all evaluated args plus this symbolic one and remaining args
-      partialArgs.push(
-        ...deps,
-        argPartial,
-        ...call.args.slice(partialArgs.length + deps.length + 1),
-      );
-      return [currentEnv, { ...call, args: partialArgs }];
+    if (argPartial.type === "value") {
+      const argResult = argPartial as ValueExpr;
+      deps.push(argResult);
+
+      // Short-circuit: if we hit the short-circuit value, stop immediately
+      if (argResult.value === shortCircuitValue) {
+        return [currentEnv, valueExprWithDeps(shortCircuitValue, deps)];
+      }
+
+      // If null, return null
+      if (argResult.value == null) {
+        return [currentEnv, valueExprWithDeps(null, deps)];
+      }
+
+      // If not a boolean, return null (error case)
+      if (typeof argResult.value !== "boolean") {
+        return [currentEnv, valueExprWithDeps(null, deps)];
+      }
+
+      // At this point, it must be the identity value (we checked short-circuit already)
+      // Add it to evaluated args - we'll filter identity values later
     }
 
-    const argResult = argPartial as ValueExpr;
-    deps.push(argResult);
-
-    // Short-circuit: if we hit the short-circuit value, stop evaluating
-    if (argResult.value === shortCircuitValue) {
-      return [currentEnv, valueExprWithDeps(shortCircuitValue, deps)];
-    }
-
-    // If null, return null
-    if (argResult.value == null) {
-      return [currentEnv, valueExprWithDeps(null, deps)];
-    }
-
-    // If not a valid boolean, return null
-    if (argResult.value !== !shortCircuitValue) {
-      return [currentEnv, valueExprWithDeps(null, deps)];
-    }
+    // Add all args (symbolic and identity values) for potential filtering
+    evaluatedArgs.push(argPartial);
   }
 
-  // All arguments evaluated without short-circuiting
-  return [currentEnv, valueExprWithDeps(defaultResult, deps)];
+  // Filter out identity values (true for AND, false for OR)
+  const filteredArgs = evaluatedArgs.filter(
+    (arg) =>
+      arg.type !== "value" ||
+      typeof arg.value !== "boolean" ||
+      arg.value !== identityValue,
+  );
+
+  // If no args remain after filtering, all were identity values
+  if (filteredArgs.length === 0) {
+    return [currentEnv, valueExprWithDeps(defaultResult, deps)];
+  }
+
+  // If only one arg remains, return it directly (no need for CallExpr)
+  if (filteredArgs.length === 1) {
+    return [currentEnv, filteredArgs[0]];
+  }
+
+  // Multiple args remain - return CallExpr with filtered args
+  return [currentEnv, { ...call, args: filteredArgs }];
 }
 
 // Short-circuiting AND operator - stops on false, returns true if all true

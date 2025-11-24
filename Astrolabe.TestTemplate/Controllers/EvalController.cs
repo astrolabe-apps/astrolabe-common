@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Astrolabe.Evaluator;
+using Astrolabe.Evaluator.Functions;
 using Astrolabe.Validation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -28,7 +29,7 @@ public class EvalController : ControllerBase
 
             // Create environment with undefined data (property access returns PropertyExpr for symbolic evaluation)
             var partialEnv = new PartialEvalEnvironment(EvalEnvironmentState.EmptyState(EvalData.UndefinedData())
-            ).WithVariables(variables);
+            ).AddDefaultFunctions().WithVariables(variables);
 
             var result = partialEnv.EvaluateExpr(evalExpr);
 

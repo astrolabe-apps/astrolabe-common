@@ -674,4 +674,101 @@ describe("Partial Evaluation", () => {
       expect(printExpr(result)).toContain("merge");
     });
   });
+
+  describe("Boolean Identity Simplification", () => {
+    test("comparison in boolean expression substitutes defined variables", () => {
+      const env = createPartialEnv().withVariable(
+        "FreightMaxWidth",
+        valueExpr(12),
+      );
+      const expr = callExpr("and", [
+        callExpr("<=", [propertyExpr("height"), varExpr("FreightMaxHeight")]),
+        callExpr("<=", [propertyExpr("width"), varExpr("FreightMaxWidth")]),
+      ]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      // Should partially evaluate: FreightMaxWidth should be substituted
+      const printed = printExpr(result);
+      expect(printed).toContain("12");
+      expect(printed).not.toContain("FreightMaxWidth");
+    });
+
+    test("true and X simplifies to X", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("and", [valueExpr(true), varExpr("unknown")]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      // Should simplify to just $unknown
+      expect(result.type).toBe("var");
+      expect((result as any).variable).toBe("unknown");
+    });
+
+    test("false or X simplifies to X", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("or", [valueExpr(false), varExpr("unknown")]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      // Should simplify to just $unknown
+      expect(result.type).toBe("var");
+      expect((result as any).variable).toBe("unknown");
+    });
+
+    test("X and true and Y filters out true", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("and", [
+        varExpr("x"),
+        valueExpr(true),
+        varExpr("y"),
+      ]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      // Should simplify to: $x and $y (true filtered out)
+      const printed = printExpr(result);
+      expect(printed).not.toContain("true");
+      expect(printed).toContain("$x");
+      expect(printed).toContain("$y");
+    });
+
+    test("X or false or Y filters out false", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("or", [
+        varExpr("x"),
+        valueExpr(false),
+        varExpr("y"),
+      ]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      // Should simplify to: $x or $y (false filtered out)
+      const printed = printExpr(result);
+      expect(printed).not.toContain("false");
+      expect(printed).toContain("$x");
+      expect(printed).toContain("$y");
+    });
+
+    test("all identity values for AND returns true", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("and", [
+        valueExpr(true),
+        valueExpr(true),
+        valueExpr(true),
+      ]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      expect(result.type).toBe("value");
+      expect((result as ValueExpr).value).toBe(true);
+    });
+
+    test("all identity values for OR returns false", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("or", [
+        valueExpr(false),
+        valueExpr(false),
+        valueExpr(false),
+      ]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      expect(result.type).toBe("value");
+      expect((result as ValueExpr).value).toBe(false);
+    });
+  });
 });

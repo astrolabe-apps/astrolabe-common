@@ -259,48 +259,67 @@ public static class DefaultFunctions
     )
     {
         var deps = new List<ValueExpr>();
-        var partialArgs = new List<EvalExpr>();
+        var evaluatedArgs = new List<EvalExpr>();
         var currentEnv = env;
+        var identityValue = !shortCircuitValue; // true for AND, false for OR
 
+        // Evaluate all arguments and collect them
         foreach (var arg in call.Args)
         {
             var (nextEnv, argPartial) = currentEnv.EvaluateExpr(arg);
             currentEnv = nextEnv;
 
-            if (argPartial is not ValueExpr argResult)
+            if (argPartial is ValueExpr argResult)
             {
-                // Argument is symbolic - return symbolic call with partially evaluated args
-                partialArgs.AddRange(deps);
-                partialArgs.Add(argPartial);
-                partialArgs.AddRange(call.Args.Skip(partialArgs.Count));
-                return currentEnv.WithValue<EvalExpr>(
-                    new CallExpr(call.Function, partialArgs)
-                );
+                deps.Add(argResult);
+
+                // Short-circuit: if we hit the short-circuit value, stop immediately
+                if (argResult.Value is bool b && b == shortCircuitValue)
+                {
+                    return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(shortCircuitValue, deps));
+                }
+
+                // If null, return null
+                if (argResult.Value is null)
+                {
+                    return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(null, deps));
+                }
+
+                // If not a boolean, return null (error case)
+                if (argResult.Value is not bool)
+                {
+                    return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(null, deps));
+                }
+
+                // At this point, it must be the identity value (we checked short-circuit already)
+                // Add it to evaluated args - we'll filter identity values later
             }
 
-            deps.Add(argResult);
-
-            // Short-circuit: if we hit the short-circuit value, stop evaluating
-            if (argResult.Value is bool b && b == shortCircuitValue)
-            {
-                return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(shortCircuitValue, deps));
-            }
-
-            // If null, return null
-            if (argResult.Value is null)
-            {
-                return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(null, deps));
-            }
-
-            // If not a valid boolean, return null
-            if (argResult.Value is not bool || (bool)argResult.Value != !shortCircuitValue)
-            {
-                return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(null, deps));
-            }
+            // Add all args (symbolic and identity values) for potential filtering
+            evaluatedArgs.Add(argPartial);
         }
 
-        // All arguments evaluated without short-circuiting
-        return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(defaultResult, deps));
+        // Filter out identity values (true for AND, false for OR)
+        var filteredArgs = evaluatedArgs
+            .Where(arg => arg is not ValueExpr ve ||
+                          ve.Value is not bool bv ||
+                          bv != identityValue)
+            .ToList();
+
+        // If no args remain after filtering, all were identity values
+        if (filteredArgs.Count == 0)
+        {
+            return currentEnv.WithValue<EvalExpr>(ValueExpr.WithDeps(defaultResult, deps));
+        }
+
+        // If only one arg remains, return it directly (no need for CallExpr)
+        if (filteredArgs.Count == 1)
+        {
+            return currentEnv.WithValue<EvalExpr>(filteredArgs[0]);
+        }
+
+        // Multiple args remain - return CallExpr with filtered args
+        return currentEnv.WithValue<EvalExpr>(new CallExpr(call.Function, filteredArgs));
     }
 
     private static readonly FunctionHandler ElemFunctionHandler = new FunctionHandler(
