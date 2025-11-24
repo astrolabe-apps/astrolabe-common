@@ -6,7 +6,7 @@ public static class MapFunctionHandler
         "map",
         (e, left, right) =>
         {
-            var (nextEnv, leftPartial) = e.EvaluatePartial(left);
+            var (nextEnv, leftPartial) = e.EvaluateExpr(left);
 
             if (leftPartial is not ValueExpr leftValue)
             {
@@ -40,7 +40,7 @@ public static class MapFunctionHandler
                                     .WithValue(valExpr),
                             _ => e2.WithValue(mapExpr)
                         };
-                        return evalEnv.WithCurrent(v.x).EvaluatePartial(toEval);
+                        return evalEnv.WithCurrent(v.x).EvaluateExpr(toEval);
                     }
                 );
 

@@ -19,7 +19,7 @@ public class FirstFunctionHandler
             name,
             (env, left, right) =>
             {
-                var (leftEnv, leftPartial) = env.EvaluatePartial(left);
+                var (leftEnv, leftPartial) = env.EvaluateExpr(left);
 
                 if (leftPartial is not ValueExpr leftVal)
                 {

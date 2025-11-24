@@ -1,9 +1,10 @@
 "use client";
 import {
   addDefaults,
+  basicEnv,
   BasicEvalEnv,
   defaultCheckEnv,
-  defaultEvaluate,
+  defaultFullEvaluateExpr,
   emptyEnvState,
   EnvValue,
   EvalEnvState,
@@ -11,8 +12,9 @@ import {
   extractAllPaths,
   nativeType,
   parseEval,
-  printPath,
+  PartialEvalEnv,
   printExpr,
+  printPath,
   toNative,
   toValue,
   ValueExpr,
@@ -28,11 +30,10 @@ import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client";
 import { EvalClient, EvalResult } from "../../client";
 import { basicSetup, EditorView } from "codemirror";
-import { Evaluator } from "@astroapps/codemirror-evaluator";
+import { evalCompletions, Evaluator } from "@astroapps/codemirror-evaluator";
 import { autocompletion } from "@codemirror/autocomplete";
-import { evalCompletions } from "@astroapps/codemirror-evaluator";
 import { JsonEditor } from "@astroapps/schemas-editor";
-import { Layout, Model, TabNode, IJsonModel } from "flexlayout-react";
+import { IJsonModel, Layout, Model, TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
 
 const layoutModel: IJsonModel = {
@@ -124,14 +125,11 @@ export default function EvalPage() {
               const variables: [string, EvalExpr][] = Object.entries(dv).map(
                 (x) => [x[0], toValue(undefined, x[1])],
               );
-              const emptyState = emptyEnvState({});
-              // Set data to undefined for symbolic evaluation
-              emptyState.data = undefined;
-              emptyState.current = undefined;
+              const emptyState = emptyEnvState();
               const env = addDefaults(
-                new BasicEvalEnv(emptyState).withVariables(variables),
+                new PartialEvalEnv(emptyState).withVariables(variables),
               );
-              const [outEnv, partialResult] = env.evaluatePartial(exprTree);
+              const [outEnv, partialResult] = env.evaluateExpr(exprTree);
               setEvalResult({
                 result: printExpr(partialResult),
                 errors: outEnv.errors,
@@ -142,8 +140,7 @@ export default function EvalPage() {
             }
           } else {
             const exprTree = parseEval(v);
-            const emptyState = emptyEnvState(dv);
-            const env = addDefaults(new TrackDataEnv(emptyState));
+            const env = basicEnv(dv);
             try {
               const [outEnv, value] = env.evaluate(exprTree);
               setEvalResult({
@@ -240,25 +237,6 @@ export default function EvalPage() {
       });
     } else {
       editor.value?.destroy();
-    }
-  }
-}
-
-class TrackDataEnv extends BasicEvalEnv {
-  constructor(state: EvalEnvState) {
-    super(state);
-  }
-  protected newEnv(newState: EvalEnvState): BasicEvalEnv {
-    return new TrackDataEnv(newState);
-  }
-
-  evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
-    switch (expr.type) {
-      case "value":
-        if (expr.path) console.log(printPath(expr.path));
-        return [this, expr];
-      default:
-        return defaultEvaluate(this, expr);
     }
   }
 }

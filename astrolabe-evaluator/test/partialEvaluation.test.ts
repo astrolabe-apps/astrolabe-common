@@ -11,22 +11,14 @@ import {
   EvalExpr,
 } from "../src/ast";
 import { printExpr } from "../src/printExpr";
-import { basicEnv } from "../src/defaultFunctions";
+import { basicEnv, partialEnv } from "../src/defaultFunctions";
 
 /**
  * Create an environment for partial evaluation testing.
  * If data is undefined, the environment supports symbolic evaluation (no data context).
  */
 function createPartialEnv(data?: any): EvalEnv {
-  if (data === undefined) {
-    // For symbolic evaluation without data, create env with empty data
-    // then override data/current to undefined
-    const env = basicEnv({});
-    env.state.data = undefined;
-    env.state.current = undefined;
-    return env;
-  }
-  return basicEnv(data);
+  return partialEnv(data);
 }
 
 describe("Partial Evaluation", () => {
@@ -34,7 +26,7 @@ describe("Partial Evaluation", () => {
     test("unknown variable returns VarExpr", () => {
       const env = createPartialEnv();
       const expr = varExpr("unknownVar");
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("var");
       expect(printExpr(result)).toBe("$unknownVar");
@@ -54,7 +46,7 @@ describe("Partial Evaluation", () => {
     test("known variable evaluates fully", () => {
       const env = createPartialEnv().withVariable("x", valueExpr(42));
       const expr = varExpr("x");
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(42);
@@ -65,7 +57,7 @@ describe("Partial Evaluation", () => {
     test("property access without data returns PropertyExpr", () => {
       const env = createPartialEnv(); // No data
       const expr = propertyExpr("name");
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("property");
       expect(printExpr(result)).toBe("name");
@@ -77,7 +69,9 @@ describe("Partial Evaluation", () => {
       const [resultEnv, result] = env.evaluate(expr);
 
       expect(resultEnv.errors.length).toBeGreaterThan(0);
-      expect(resultEnv.errors[0]).toContain("Expression could not be fully evaluated");
+      expect(resultEnv.errors[0]).toContain(
+        "Property name could not be accessed",
+      );
     });
   });
 
@@ -85,7 +79,7 @@ describe("Partial Evaluation", () => {
     test("addition with unknown variable returns symbolic CallExpr", () => {
       const env = createPartialEnv().withVariable("x", varExpr("unknownX"));
       const expr = callExpr("+", [valueExpr(5), varExpr("x")]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toBe("5 + $unknownX");
@@ -94,7 +88,7 @@ describe("Partial Evaluation", () => {
     test("addition with all known values fully evaluates", () => {
       const env = createPartialEnv();
       const expr = callExpr("+", [valueExpr(5), valueExpr(3)]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(8);
@@ -107,7 +101,7 @@ describe("Partial Evaluation", () => {
         callExpr("+", [valueExpr(2), valueExpr(3)]),
         varExpr("y"),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       // Inner add should be evaluated to 5
@@ -122,7 +116,7 @@ describe("Partial Evaluation", () => {
         callExpr("*", [varExpr("a"), valueExpr(2)]),
         callExpr("*", [varExpr("b"), valueExpr(3)]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toBe("$unknownA * 2 + $unknownB * 3");
@@ -137,7 +131,7 @@ describe("Partial Evaluation", () => {
         valueExpr("yes"),
         valueExpr("no"),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe("yes");
@@ -151,7 +145,7 @@ describe("Partial Evaluation", () => {
         valueExpr("yes"),
         valueExpr("no"),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe("no");
@@ -159,13 +153,16 @@ describe("Partial Evaluation", () => {
     });
 
     test("if with unknown condition returns symbolic", () => {
-      const env = createPartialEnv().withVariable("cond", varExpr("unknownCond"));
+      const env = createPartialEnv().withVariable(
+        "cond",
+        varExpr("unknownCond"),
+      );
       const expr = callExpr("?", [
         varExpr("cond"),
         valueExpr("yes"),
         valueExpr("no"),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toBe('$unknownCond ? "yes" : "no"');
@@ -178,7 +175,7 @@ describe("Partial Evaluation", () => {
         callExpr("+", [varExpr("x"), valueExpr(1)]),
         callExpr("+", [varExpr("x"), valueExpr(2)]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // True branch selected, else branch not evaluated
       expect(printExpr(result)).toBe("$unknownX + 1");
@@ -195,7 +192,7 @@ describe("Partial Evaluation", () => {
         ],
         varExpr("y"), // Only uses y
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(10);
@@ -208,7 +205,7 @@ describe("Partial Evaluation", () => {
         [[varExpr("x"), valueExpr(5)]],
         callExpr("+", [varExpr("x"), valueExpr(3)]),
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(8);
@@ -224,7 +221,7 @@ describe("Partial Evaluation", () => {
         ],
         callExpr("*", [varExpr("a"), varExpr("b")]),
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(6);
@@ -239,7 +236,7 @@ describe("Partial Evaluation", () => {
         ],
         callExpr("+", [varExpr("x"), varExpr("y")]),
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // After variable resolution, both x and y are inlined/substituted
       expect(printExpr(result)).toBe("$unknownX + 5");
@@ -255,7 +252,7 @@ describe("Partial Evaluation", () => {
         ],
         varExpr("z"),
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // All should evaluate: x=5, y=8, z=16
       expect(result.type).toBe("value");
@@ -272,7 +269,7 @@ describe("Partial Evaluation", () => {
         ],
         callExpr("+", [varExpr("c"), varExpr("b")]),
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // Simple values and VarExprs are inlined, but CallExpr bindings are kept
       expect(printExpr(result)).toBe("let $c := $unknownA * 2 in $c + 10");
@@ -286,7 +283,7 @@ describe("Partial Evaluation", () => {
         [[varExpr("x"), valueExpr(5)]],
         letExpr([[varExpr("x"), valueExpr(10)]], varExpr("x")),
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(10);
@@ -301,7 +298,7 @@ describe("Partial Evaluation", () => {
           callExpr("+", [varExpr("x"), valueExpr(1)]),
         ),
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // Inner x=42 shadows outer x=unknownX
       expect(result.type).toBe("value");
@@ -313,7 +310,7 @@ describe("Partial Evaluation", () => {
     test("array with all known values evaluates fully", () => {
       const env = createPartialEnv();
       const expr = arrayExpr([valueExpr(1), valueExpr(2), valueExpr(3)]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect(Array.isArray((result as ValueExpr).value)).toBe(true);
@@ -322,12 +319,8 @@ describe("Partial Evaluation", () => {
 
     test("array with unknown element returns ArrayExpr", () => {
       const env = createPartialEnv().withVariable("x", varExpr("unknownX"));
-      const expr = arrayExpr([
-        valueExpr(1),
-        varExpr("x"),
-        valueExpr(3),
-      ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const expr = arrayExpr([valueExpr(1), varExpr("x"), valueExpr(3)]);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("array");
       expect(printExpr(result)).toBe("[1, $unknownX, 3]");
@@ -339,7 +332,7 @@ describe("Partial Evaluation", () => {
         callExpr("+", [valueExpr(1), valueExpr(2)]),
         callExpr("*", [varExpr("y"), valueExpr(3)]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("array");
       expect(printExpr(result)).toBe("[3, $unknownY * 3]");
@@ -359,7 +352,7 @@ describe("Partial Evaluation", () => {
           ),
         ),
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // Should fully evaluate: a=1, b=3, c=6
       expect(result.type).toBe("value");
@@ -373,18 +366,10 @@ describe("Partial Evaluation", () => {
 
       const expr = callExpr("?", [
         valueExpr(true),
-        callExpr("?", [
-          varExpr("cond1"),
-          valueExpr("a"),
-          valueExpr("b"),
-        ]),
-        callExpr("?", [
-          varExpr("cond2"),
-          valueExpr("c"),
-          valueExpr("d"),
-        ]),
+        callExpr("?", [varExpr("cond1"), valueExpr("a"), valueExpr("b")]),
+        callExpr("?", [varExpr("cond2"), valueExpr("c"), valueExpr("d")]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // Outer true eliminates else branch entirely
       expect(printExpr(result)).toBe('$unknownCond1 ? "a" : "b"');
@@ -419,11 +404,13 @@ describe("Partial Evaluation", () => {
         varExpr("total"),
       );
 
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // Should simplify tax and discount calculations, but keep CallExpr bindings
       const printed = printExpr(result);
-      expect(printed).toBe("let $discountedPrice := $userInputPrice * 0.9, $total := $discountedPrice * 1.08 in $total");
+      expect(printed).toBe(
+        "let $discountedPrice := $userInputPrice * 0.9, $total := $discountedPrice * 1.08 in $total",
+      );
     });
 
     test("conditional with side computations", () => {
@@ -437,7 +424,7 @@ describe("Partial Evaluation", () => {
         varExpr("basePrice"),
       ]);
 
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // Condition unknown, but branches should be partially evaluated
       expect(printExpr(result)).toBe("$userIsVIP ? 80 : 100");
@@ -448,7 +435,7 @@ describe("Partial Evaluation", () => {
     test("empty let expression", () => {
       const env = createPartialEnv();
       const expr = letExpr([], valueExpr(42));
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(42);
@@ -456,11 +443,8 @@ describe("Partial Evaluation", () => {
 
     test("self-referential bindings fail gracefully", () => {
       const env = createPartialEnv();
-      const expr = letExpr(
-        [[varExpr("x"), varExpr("x")]],
-        varExpr("x"),
-      );
-      const [_, result] = env.evaluatePartial(expr);
+      const expr = letExpr([[varExpr("x"), varExpr("x")]], varExpr("x"));
+      const [_, result] = env.evaluateExpr(expr);
 
       // x references itself, which becomes symbolic
       expect(printExpr(result)).toContain("$x");
@@ -469,7 +453,7 @@ describe("Partial Evaluation", () => {
     test("null and undefined handling", () => {
       const env = createPartialEnv();
       const expr = callExpr("+", [valueExpr(null), valueExpr(5)]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(null);
@@ -481,9 +465,12 @@ describe("Partial Evaluation", () => {
       const env = createPartialEnv();
       const expr = letExpr(
         [[varExpr("a"), arrayExpr([valueExpr(1), valueExpr(2), varExpr("z")])]],
-        callExpr(".", [varExpr("a"), callExpr("*", [callExpr("this", []), valueExpr(2)])]),
+        callExpr(".", [
+          varExpr("a"),
+          callExpr("*", [callExpr("this", []), valueExpr(2)]),
+        ]),
       );
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // Should keep ArrayExpr binding since array contains symbolic element
       expect(result.type).toBe("let");
@@ -496,7 +483,7 @@ describe("Partial Evaluation", () => {
         varExpr("arr"),
         callExpr("+", [callExpr("this", []), valueExpr(1)]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toBe("$map($unknownArr, $this() + 1)");
@@ -508,19 +495,22 @@ describe("Partial Evaluation", () => {
         arrayExpr([valueExpr(1), valueExpr(2), valueExpr(3)]),
         callExpr("*", [callExpr("this", []), valueExpr(2)]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect(printExpr(result)).toBe("[2, 4, 6]");
     });
 
     test("filter with symbolic array", () => {
-      const env = createPartialEnv().withVariable("items", varExpr("unknownItems"));
+      const env = createPartialEnv().withVariable(
+        "items",
+        varExpr("unknownItems"),
+      );
       const expr = callExpr("filter", [
         varExpr("items"),
         callExpr(">", [callExpr("this", []), valueExpr(10)]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toContain("filter");
@@ -528,9 +518,12 @@ describe("Partial Evaluation", () => {
     });
 
     test("sum over symbolic array", () => {
-      const env = createPartialEnv().withVariable("nums", varExpr("unknownNums"));
+      const env = createPartialEnv().withVariable(
+        "nums",
+        varExpr("unknownNums"),
+      );
       const expr = callExpr("sum", [varExpr("nums")]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toBe("$sum($unknownNums)");
@@ -538,29 +531,37 @@ describe("Partial Evaluation", () => {
 
     test("sum over concrete array evaluates", () => {
       const env = createPartialEnv();
-      const expr = callExpr("sum", [arrayExpr([valueExpr(1), valueExpr(2), valueExpr(3)])]);
-      const [_, result] = env.evaluatePartial(expr);
+      const expr = callExpr("sum", [
+        arrayExpr([valueExpr(1), valueExpr(2), valueExpr(3)]),
+      ]);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(6);
     });
 
     test("count with symbolic array", () => {
-      const env = createPartialEnv().withVariable("items", varExpr("unknownItems"));
+      const env = createPartialEnv().withVariable(
+        "items",
+        varExpr("unknownItems"),
+      );
       const expr = callExpr("count", [varExpr("items")]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toBe("$count($unknownItems)");
     });
 
     test("elem with symbolic array index", () => {
-      const env = createPartialEnv().withVariable("idx", varExpr("unknownIndex"));
+      const env = createPartialEnv().withVariable(
+        "idx",
+        varExpr("unknownIndex"),
+      );
       const expr = callExpr("elem", [
         arrayExpr([valueExpr("a"), valueExpr("b"), valueExpr("c")]),
         varExpr("idx"),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toContain("elem");
@@ -570,7 +571,7 @@ describe("Partial Evaluation", () => {
     test("elem with symbolic array", () => {
       const env = createPartialEnv().withVariable("arr", varExpr("unknownArr"));
       const expr = callExpr("elem", [varExpr("arr"), valueExpr(0)]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toBe("$elem($unknownArr, 0)");
@@ -582,21 +583,24 @@ describe("Partial Evaluation", () => {
         arrayExpr([valueExpr(10), valueExpr(20), valueExpr(30)]),
         valueExpr(1),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(20);
     });
 
     test("nested array operations with partial unknowns", () => {
-      const env = createPartialEnv().withVariable("base", varExpr("unknownBase"));
+      const env = createPartialEnv().withVariable(
+        "base",
+        varExpr("unknownBase"),
+      );
       const expr = callExpr("sum", [
         callExpr("map", [
           arrayExpr([valueExpr(1), valueExpr(2), valueExpr(3)]),
           callExpr("+", [callExpr("this", []), varExpr("base")]),
         ]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // Map returns symbolic because base is unknown, so sum also returns symbolic
       expect(result.type).toBe("call");
@@ -613,7 +617,7 @@ describe("Partial Evaluation", () => {
         varExpr("x"),
         callExpr("+", [varExpr("y"), valueExpr(3)]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // y is known (5), so y+3=8, but x is unknown
       expect(result.type).toBe("array");
@@ -621,12 +625,15 @@ describe("Partial Evaluation", () => {
     });
 
     test("first with symbolic array", () => {
-      const env = createPartialEnv().withVariable("items", varExpr("unknownItems"));
+      const env = createPartialEnv().withVariable(
+        "items",
+        varExpr("unknownItems"),
+      );
       const expr = callExpr("first", [
         varExpr("items"),
         callExpr(">", [callExpr("this", []), valueExpr(5)]),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toContain("first");
@@ -636,7 +643,7 @@ describe("Partial Evaluation", () => {
     test("object function with symbolic value", () => {
       const env = createPartialEnv().withVariable("val", varExpr("unknownVal"));
       const expr = callExpr("object", [valueExpr("key"), varExpr("val")]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       // The result depends on implementation - just verify it handles symbolic values
       // Currently returns a value with symbolic field
@@ -646,19 +653,22 @@ describe("Partial Evaluation", () => {
     test("keys function with symbolic object", () => {
       const env = createPartialEnv().withVariable("obj", varExpr("unknownObj"));
       const expr = callExpr("keys", [varExpr("obj")]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toBe("$keys($unknownObj)");
     });
 
     test("merge with symbolic object", () => {
-      const env = createPartialEnv().withVariable("obj1", varExpr("unknownObj"));
+      const env = createPartialEnv().withVariable(
+        "obj1",
+        varExpr("unknownObj"),
+      );
       const expr = callExpr("merge", [
         callExpr("object", [valueExpr("a"), valueExpr(1)]),
         varExpr("obj1"),
       ]);
-      const [_, result] = env.evaluatePartial(expr);
+      const [_, result] = env.evaluateExpr(expr);
 
       expect(result.type).toBe("call");
       expect(printExpr(result)).toContain("merge");

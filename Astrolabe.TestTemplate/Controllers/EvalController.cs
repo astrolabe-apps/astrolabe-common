@@ -27,11 +27,10 @@ public class EvalController : ControllerBase
             }).ToList();
 
             // Create environment with undefined data (property access returns PropertyExpr for symbolic evaluation)
-            var partialEnv = RuleValidator.FromData(
-                EvalData.UndefinedData()
+            var partialEnv = new PartialEvalEnvironment(EvalEnvironmentState.EmptyState(EvalData.UndefinedData())
             ).WithVariables(variables);
 
-            var result = partialEnv.EvaluatePartial(evalExpr);
+            var result = partialEnv.EvaluateExpr(evalExpr);
 
             return new EvalResult(
                 PrintExpr.Print(result.Value),

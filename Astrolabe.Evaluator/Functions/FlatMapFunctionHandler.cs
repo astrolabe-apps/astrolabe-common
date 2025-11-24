@@ -6,7 +6,7 @@ public static class FlatMapFunctionHandler
         ".",
         (e, left, right) =>
         {
-            var (nextEnv, leftPartial) = e.EvaluatePartial(left);
+            var (nextEnv, leftPartial) = e.EvaluateExpr(left);
 
             if (leftPartial is not ValueExpr leftValue)
             {

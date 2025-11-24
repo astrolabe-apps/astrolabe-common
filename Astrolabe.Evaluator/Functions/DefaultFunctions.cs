@@ -78,8 +78,8 @@ public static class DefaultFunctions
             name,
             (env, a, b) =>
             {
-                var (env1, aPartial) = env.EvaluatePartial(a);
-                var (env2, bPartial) = env1.EvaluatePartial(b);
+                var (env1, aPartial) = env.EvaluateExpr(a);
+                var (env2, bPartial) = env1.EvaluateExpr(b);
 
                 if (aPartial is ValueExpr aVal && bPartial is ValueExpr bVal)
                 {
@@ -176,7 +176,7 @@ public static class DefaultFunctions
             }
 
             var (condExpr, thenExpr, elseExpr) = (call.Args[0], call.Args[1], call.Args[2]);
-            var (env1, condPartial) = env.EvaluatePartial(condExpr);
+            var (env1, condPartial) = env.EvaluateExpr(condExpr);
 
             if (condPartial is ValueExpr condVal)
             {
@@ -184,14 +184,14 @@ public static class DefaultFunctions
                 return condVal.Value switch
                 {
                     true =>
-                        env1.EvaluatePartial(thenExpr)
+                        env1.EvaluateExpr(thenExpr)
                             .Map(thenVal =>
                                 thenVal is ValueExpr thenValue
                                     ? (EvalExpr)ValueExpr.WithDeps(thenValue.Value, [condVal, thenValue])
                                     : thenVal
                             ),
                     false =>
-                        env1.EvaluatePartial(elseExpr)
+                        env1.EvaluateExpr(elseExpr)
                             .Map(elseVal =>
                                 elseVal is ValueExpr elseValue
                                     ? (EvalExpr)ValueExpr.WithDeps(elseValue.Value, [condVal, elseValue])
@@ -204,8 +204,8 @@ public static class DefaultFunctions
             }
 
             // Condition is symbolic - partially evaluate both branches
-            var (env2, thenPartial) = env1.EvaluatePartial(thenExpr);
-            var (env3, elsePartial) = env2.EvaluatePartial(elseExpr);
+            var (env2, thenPartial) = env1.EvaluateExpr(thenExpr);
+            var (env3, elsePartial) = env2.EvaluateExpr(elseExpr);
             return env3.WithValue<EvalExpr>(new CallExpr("?", [condPartial, thenPartial, elsePartial]));
         }
     );
@@ -264,7 +264,7 @@ public static class DefaultFunctions
 
         foreach (var arg in call.Args)
         {
-            var (nextEnv, argPartial) = currentEnv.EvaluatePartial(arg);
+            var (nextEnv, argPartial) = currentEnv.EvaluateExpr(arg);
             currentEnv = nextEnv;
 
             if (argPartial is not ValueExpr argResult)
@@ -311,8 +311,8 @@ public static class DefaultFunctions
                 return env.WithError("elem expects 2 arguments")
                     .WithValue<EvalExpr>(ValueExpr.Null);
             }
-            var (env1, arrayPartial) = env.EvaluatePartial(call.Args[0]);
-            var (env2, indexPartial) = env1.EvaluatePartial(call.Args[1]);
+            var (env1, arrayPartial) = env.EvaluateExpr(call.Args[0]);
+            var (env2, indexPartial) = env1.EvaluateExpr(call.Args[1]);
 
             if (arrayPartial is not ValueExpr arrayVal || indexPartial is not ValueExpr indexVal)
             {
@@ -359,7 +359,7 @@ public static class DefaultFunctions
                         .WithValue<EvalExpr>(ValueExpr.Null);
                 }
 
-                var (nextEnv, objPartial) = e.EvaluatePartial(c.Args[0]);
+                var (nextEnv, objPartial) = e.EvaluateExpr(c.Args[0]);
 
                 if (objPartial is not ValueExpr objVal)
                 {
@@ -507,7 +507,7 @@ public static class DefaultFunctions
                 // Handle single array argument vs multiple value arguments
                 if (call.Args.Count == 1)
                 {
-                    var (nextEnv, arrayPartial) = env.EvaluatePartial(call.Args[0]);
+                    var (nextEnv, arrayPartial) = env.EvaluateExpr(call.Args[0]);
 
                     // If array is symbolic, return CallExpr
                     if (arrayPartial is not ValueExpr arrayValue)
@@ -567,7 +567,7 @@ public static class DefaultFunctions
                 // Handle single array argument vs multiple value arguments
                 if (call.Args.Count == 1)
                 {
-                    var (nextEnv, arrayPartial) = env.EvaluatePartial(call.Args[0]);
+                    var (nextEnv, arrayPartial) = env.EvaluateExpr(call.Args[0]);
 
                     // If array is symbolic, return CallExpr
                     if (arrayPartial is not ValueExpr arrayValue)
@@ -685,7 +685,7 @@ public static class DefaultFunctions
 
                 foreach (var arg in call.Args)
                 {
-                    var (nextEnv, partialArg) = currentEnv.EvaluatePartial(arg);
+                    var (nextEnv, partialArg) = currentEnv.EvaluateExpr(arg);
                     currentEnv = nextEnv;
                     partialArgs.Add(partialArg);
 

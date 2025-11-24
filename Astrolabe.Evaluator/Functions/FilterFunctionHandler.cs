@@ -18,7 +18,7 @@ public static class FilterFunctionHandler
                     CallExpr originalCall
                 )
                 {
-                    var (nextEnv, leftPartial) = env.EvaluatePartial(left);
+                    var (nextEnv, leftPartial) = env.EvaluateExpr(left);
 
                     if (leftPartial is not ValueExpr leftValue)
                     {

@@ -197,7 +197,7 @@ export abstract class EvalEnv {
   abstract withVariable(name: string, expr: EvalExpr): EvalEnv;
   abstract withCurrent(path: ValueExpr): EvalEnv;
   abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
-  abstract evaluatePartial(expr: EvalExpr): EnvValue<EvalExpr>;
+  abstract evaluateExpr(expr: EvalExpr): EnvValue<EvalExpr>;
   abstract withError(error: string): EvalEnv;
 }
 
@@ -274,10 +274,7 @@ export function concatPath(path1: Path, path2: Path): Path {
   return { ...path2, parent: concatPath(path1, path2.parent!) };
 }
 
-export function varExpr(
-  variable: string,
-  location?: SourceLocation,
-): VarExpr {
+export function varExpr(variable: string, location?: SourceLocation): VarExpr {
   return { type: "var", variable, location };
 }
 
@@ -473,36 +470,43 @@ export function toValue(path: Path | undefined, value: unknown): ValueExpr {
   return valueExpr(value, path);
 }
 
-export function emptyEnvState(root: unknown): EvalEnvState {
-  const data: EvalData = {
-    root: toValue(EmptyPath, root),
-    getProperty(object: ValueExpr, property: string): ValueExpr {
-      const propPath = object.path
-        ? segmentPath(property, object.path)
-        : undefined;
-      const value = object.value;
-      if (typeof value === "object" && value != null && !Array.isArray(value)) {
-        const objValue = value as Record<string, ValueExpr>;
-        const propValue = objValue[property];
-        if (propValue) {
-          // Preserve dependencies from parent object when accessing properties
-          const combinedDeps: ValueExpr[] = [
-            ...(object.deps || []),
-            ...(propValue.deps || []),
-          ];
-          return {
-            ...propValue,
-            path: propPath,
-            deps: combinedDeps.length > 0 ? combinedDeps : undefined
-          };
+export function emptyEnvState(root?: unknown): EvalEnvState {
+  const data: EvalData | undefined =
+    root !== undefined
+      ? {
+          root: toValue(EmptyPath, root),
+          getProperty(object: ValueExpr, property: string): ValueExpr {
+            const propPath = object.path
+              ? segmentPath(property, object.path)
+              : undefined;
+            const value = object.value;
+            if (
+              typeof value === "object" &&
+              value != null &&
+              !Array.isArray(value)
+            ) {
+              const objValue = value as Record<string, ValueExpr>;
+              const propValue = objValue[property];
+              if (propValue) {
+                // Preserve dependencies from parent object when accessing properties
+                const combinedDeps: ValueExpr[] = [
+                  ...(object.deps || []),
+                  ...(propValue.deps || []),
+                ];
+                return {
+                  ...propValue,
+                  path: propPath,
+                  deps: combinedDeps.length > 0 ? combinedDeps : undefined,
+                };
+              }
+            }
+            return valueExpr(null, propPath);
+          },
         }
-      }
-      return valueExpr(null, propPath);
-    },
-  };
+      : undefined;
   return {
     data,
-    current: data.root,
+    current: data?.root,
     localVars: {},
     parent: undefined,
     errors: [],

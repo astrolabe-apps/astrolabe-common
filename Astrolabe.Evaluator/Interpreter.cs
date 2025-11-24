@@ -37,12 +37,65 @@ public static class Interpreter
         return e.WithCurrent(baseValue).Evaluate(toEval).WithCurrent(e.Current);
     }
 
+    /// <summary>
+    /// Full evaluation that fails immediately with errors for unknown variables/functions.
+    /// Based on main branch DefaultEvaluate implementation.
+    /// Used by EvalEnvironment base class for immediate, precise error reporting.
+    /// </summary>
+    public static EnvironmentValue<EvalExpr> DefaultFullEvaluateExpr(
+        this EvalEnvironment environment,
+        EvalExpr expr
+    )
+    {
+        return expr switch
+        {
+            ArrayExpr arrayExpr
+                => environment
+                    .EvalSelect(arrayExpr.Values, (e, x) => e.EvaluateExpr(x))
+                    .Map(x => (EvalExpr)new ValueExpr(new ArrayValue(x.Cast<ValueExpr>()))),
+
+            LetExpr le
+                => environment
+                    .WithVariables(
+                        le.Vars.Select(x => new KeyValuePair<string, EvalExpr>(
+                                x.Item1.Name,
+                                x.Item2
+                            ))
+                            .ToList()
+                    )
+                    .EvaluateExpr(le.In),
+
+            VarExpr ve when environment.GetVariable(ve.Name) is var v
+                => v != null
+                    ? environment.EvaluateExpr(v)
+                    : environment.WithError("Variable $" + ve.Name + " not declared").WithValue<EvalExpr>(ValueExpr.Null),
+
+            ValueExpr v => environment.WithValue<EvalExpr>(v),
+
+            CallExpr { Function: var func, Args: var args } callExpr
+                when environment.GetVariable(func) is ValueExpr { Value: FunctionHandler handler }
+                => handler.Evaluate(environment, callExpr).Map<EvalExpr>(v => v),
+
+            CallExpr ce
+                => environment.WithError("Function $" + ce.Function + " not declared").WithValue<EvalExpr>(ValueExpr.Null),
+
+            PropertyExpr { Property: var dp }
+                when environment.Data != null && environment.Current != null
+                => environment.EvaluateExpr(environment.GetProperty(dp)),
+
+            PropertyExpr pe
+                => environment.WithError($"Property {pe.Property} cannot be accessed without data").WithValue<EvalExpr>(ValueExpr.Null),
+
+            _ => throw new ArgumentOutOfRangeException(expr?.ToString())
+        };
+    }
+
     public static EvaluatedExprValue DefaultEvaluate(
         this EvalEnvironment environment,
         EvalExpr expr
     )
     {
-        var (env, result) = environment.DefaultPartialEvaluate(expr);
+        var (env, result) = environment.DefaultPartialEvaluateExpr(expr);
 
         return result switch
         {
@@ -54,7 +107,11 @@ public static class Interpreter
         };
     }
 
-    public static EnvironmentValue<EvalExpr> DefaultPartialEvaluate(
+    /// <summary>
+    /// Partial evaluation that returns symbolic expressions for unknown variables/functions.
+    /// Used by PartialEvalEnvironment for symbolic computation and deferred evaluation.
+    /// </summary>
+    public static EnvironmentValue<EvalExpr> DefaultPartialEvaluateExpr(
         this EvalEnvironment environment,
         EvalExpr expr
     )
@@ -65,7 +122,7 @@ public static class Interpreter
 
             VarExpr ve when environment.GetVariable(ve.Name) is var varExpr
                 => varExpr != null
-                    ? environment.EvaluatePartial(varExpr)
+                    ? environment.EvaluateExpr(varExpr)
                     : environment.WithValue<EvalExpr>(ve),  // Return VarExpr unchanged for unknown variables
 
             PropertyExpr pe => environment.WithValue<EvalExpr>(environment.GetProperty(pe.Property)),
@@ -91,7 +148,7 @@ public static class Interpreter
     {
         var (envAfter, partialValues) = environment.EvalSelect(
             arrayExpr.Values,
-            (e, x) => e.EvaluatePartial(x)
+            (e, x) => e.EvaluateExpr(x)
         );
 
         var allFullyEvaluated = partialValues.All(v => v is ValueExpr);
@@ -117,20 +174,29 @@ public static class Interpreter
 
         foreach (var (varExpr, bindingExpr) in letExpr.Vars)
         {
-            var (nextEnv, partialBinding) = currentEnv.EvaluatePartial(bindingExpr);
+            var (nextEnv, partialBinding) = currentEnv.EvaluateExpr(bindingExpr);
 
             // Only inline simple values and variables
             if (IsInlinableExpr(partialBinding))
             {
                 inlineBindings[varExpr.Name] = partialBinding;
                 // Create environment with current bindings for subsequent expressions
-                currentEnv = new LetEvaluationEnvironment(
-                    nextEnv.State with
-                    {
-                        LocalVariables = inlineBindings.ToImmutable(),
-                        Parent = environment.State
-                    }
-                );
+                // Preserve the evaluation mode by using the original environment's type
+                currentEnv = environment is PartialEvalEnvironment
+                    ? new PartialLetEvaluationEnvironment(
+                        nextEnv.State with
+                        {
+                            LocalVariables = inlineBindings.ToImmutable(),
+                            Parent = environment.State
+                        }
+                    )
+                    : new LetEvaluationEnvironment(
+                        nextEnv.State with
+                        {
+                            LocalVariables = inlineBindings.ToImmutable(),
+                            Parent = environment.State
+                        }
+                    );
             }
             else
             {
@@ -139,7 +205,7 @@ public static class Interpreter
             }
         }
 
-        var (bodyEnv, bodyResult) = currentEnv.EvaluatePartial(letExpr.In);
+        var (bodyEnv, bodyResult) = currentEnv.EvaluateExpr(letExpr.In);
 
         // If body is fully evaluated and no bindings remain, return the value
         if (bodyResult is ValueExpr && keptBindings.Count == 0)
@@ -159,6 +225,16 @@ public static class Interpreter
     private class LetEvaluationEnvironment : EvalEnvironment
     {
         public LetEvaluationEnvironment(EvalEnvironmentState state) : base(state)
+        {
+        }
+    }
+
+    /// <summary>
+    /// Partial evaluation version of LetEvaluationEnvironment
+    /// </summary>
+    private class PartialLetEvaluationEnvironment : PartialEvalEnvironment
+    {
+        public PartialLetEvaluationEnvironment(EvalEnvironmentState state) : base(state)
         {
         }
     }

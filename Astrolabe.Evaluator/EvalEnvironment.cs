@@ -189,14 +189,22 @@ public class EvalEnvironment(EvalEnvironmentState state)
         return new EvalEnvironment(EvalEnvironmentState.EmptyState(data));
     }
 
-    public virtual EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
+    public virtual EnvironmentValue<EvalExpr> EvaluateExpr(EvalExpr evalExpr)
     {
-        return this.DefaultEvaluate(evalExpr);
+        return this.DefaultFullEvaluateExpr(evalExpr);
     }
 
-    public virtual EnvironmentValue<EvalExpr> EvaluatePartial(EvalExpr evalExpr)
+    public virtual EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
     {
-        return this.DefaultPartialEvaluate(evalExpr);
+        var (env, result) = EvaluateExpr(evalExpr);
+        if (result is not ValueExpr valueExpr)
+        {
+            throw new InvalidOperationException(
+                $"EvalEnvironment.Evaluate() expected ValueExpr but got {result.GetType().Name}. " +
+                $"This indicates a bug in DefaultFullEvaluateExpr."
+            );
+        }
+        return env.WithValue(valueExpr);
     }
 
     public int Compare(object? v1, object? v2)
@@ -364,6 +372,97 @@ public static class EvalEnvironmentExtensions
     )
     {
         return envResult.Map<IEnumerable<T>>(x => other.Value.Concat(x));
+    }
+}
+
+/// <summary>
+/// PartialEvalEnvironment performs partial evaluation, returning symbolic expressions
+/// for unknown variables and functions. Enables deferred evaluation and symbolic computation.
+/// </summary>
+public class PartialEvalEnvironment : EvalEnvironment
+{
+    public PartialEvalEnvironment(EvalEnvironmentState state) : base(state)
+    {
+    }
+
+    public override EnvironmentValue<EvalExpr> EvaluateExpr(EvalExpr evalExpr)
+    {
+        return this.DefaultPartialEvaluateExpr(evalExpr);
+    }
+
+    public override EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
+    {
+        var (env, result) = EvaluateExpr(evalExpr);
+
+        // If fully evaluated, return as-is
+        if (result is ValueExpr valueExpr)
+        {
+            return env.WithValue(valueExpr);
+        }
+
+        // Not fully evaluated - generate appropriate error
+        return result switch
+        {
+            VarExpr ve => env.WithError($"Variable ${ve.Name} not declared").WithNull(),
+            CallExpr ce => env.WithError($"Function ${ce.Function} not declared").WithNull(),
+            PropertyExpr pe => env.WithError($"Property {pe.Property} could not be accessed").WithNull(),
+            _ => env.WithError("Expression could not be fully evaluated").WithNull()
+        };
+    }
+
+    public override EvalEnvironment WithVariable(string name, EvalExpr value)
+    {
+        var (e, exprResult) = EvaluateExpr(value);
+        // Create a new child scope with this single variable
+        // The new scope has only this variable in LocalVariables
+        // and points to the current scope as parent
+        return NewEnv(e.State with
+        {
+            LocalVariables = System.Collections.Immutable.ImmutableDictionary<string, EvalExpr>.Empty.Add(name, exprResult),
+            Parent = e.State
+        });
+    }
+
+    public override EvalEnvironment WithVariables(ICollection<KeyValuePair<string, EvalExpr>> vars)
+    {
+        // Optimize: Create a single child scope with all variables
+        // instead of nested scopes (one per variable)
+        if (vars.Count == 0)
+        {
+            return this;
+        }
+
+        if (vars.Count == 1)
+        {
+            // Single variable - use existing WithVariable
+            var single = vars.First();
+            return WithVariable(single.Key, single.Value);
+        }
+
+        // Partially evaluate all variables sequentially, making each available to the next
+        var currentEnv = (EvalEnvironment)this;
+        var partiallyEvaluatedVars = System.Collections.Immutable.ImmutableDictionary<string, EvalExpr>.Empty.ToBuilder();
+
+        foreach (var (name, expr) in vars)
+        {
+            var (nextEnv, partialResult) = currentEnv.EvaluateExpr(expr);
+            partiallyEvaluatedVars[name] = partialResult;
+            // Create environment with all variables evaluated so far
+            // This allows subsequent variables to reference earlier ones
+            currentEnv = NewEnv(nextEnv.State with
+            {
+                LocalVariables = partiallyEvaluatedVars.ToImmutable(),
+                Parent = this.State
+            });
+        }
+
+        // Return the final environment that already has all variables
+        return currentEnv;
+    }
+
+    protected override EvalEnvironment NewEnv(EvalEnvironmentState newState)
+    {
+        return new PartialEvalEnvironment(newState);
     }
 }
 
