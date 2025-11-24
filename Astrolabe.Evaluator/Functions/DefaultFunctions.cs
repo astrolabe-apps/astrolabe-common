@@ -41,31 +41,7 @@ public static class DefaultFunctions
             }
         );
     }
-
-    public static FunctionHandler BinOp(Func<object?, object?, object?> evaluate)
-    {
-        return FunctionHandler.DefaultEval(args =>
-            args switch
-            {
-                [var v1, var v2] => evaluate(v1, v2),
-                _ => throw new ArgumentException("Wrong number of args:" + args),
-            }
-        );
-    }
-
-    public static FunctionHandler BinNullOp(Func<EvalEnvironment, object, object, object?> evaluate)
-    {
-        return FunctionHandler.DefaultEval(
-            (e, args) =>
-                args switch
-                {
-                    [{ } v1, { } v2] => evaluate(e, v1, v2),
-                    [_, _] => null,
-                    _ => throw new ArgumentException("Wrong number of args:" + args),
-                }
-        );
-    }
-
+    
     /// <summary>
     /// Binary operator with partial evaluation support
     /// </summary>
@@ -81,15 +57,34 @@ public static class DefaultFunctions
                 var (env1, aPartial) = env.EvaluateExpr(a);
                 var (env2, bPartial) = env1.EvaluateExpr(b);
 
-                if (aPartial is ValueExpr aVal && bPartial is ValueExpr bVal)
+                // Null propagation: if either arg is null, return null
+                var deps = new List<ValueExpr>();
+                if (aPartial is ValueExpr aVal)
                 {
-                    // Both fully evaluated
-                    if (aVal.Value == null || bVal.Value == null)
+                    deps.Add(aVal);
+                    if (aVal.Value is null)
                     {
-                        return env2.WithValue<EvalExpr>(ValueExpr.WithDeps(null, [aVal, bVal]));
+                        if (bPartial is ValueExpr bVal)
+                        {
+                            deps.Add(bVal);
+                        }
+                        return env2.WithValue<EvalExpr>(ValueExpr.WithDeps(null, deps));
                     }
+                }
+                if (bPartial is ValueExpr bVal2)
+                {
+                    deps.Add(bVal2);
+                    if (bVal2.Value is null)
+                    {
+                        return env2.WithValue<EvalExpr>(ValueExpr.WithDeps(null, deps));
+                    }
+                }
+
+                if (aPartial is ValueExpr aVal3 && bPartial is ValueExpr bVal3)
+                {
+                    // Both fully evaluated (and neither is null, checked above)
                     return env2.WithValue<EvalExpr>(
-                        ValueExpr.WithDeps(evaluate(env2, aVal.Value, bVal.Value), [aVal, bVal])
+                        ValueExpr.WithDeps(evaluate(env2, aVal3.Value!, bVal3.Value!), [aVal3, bVal3])
                     );
                 }
 
@@ -98,36 +93,7 @@ public static class DefaultFunctions
             }
         );
     }
-
-    public static FunctionHandler BoolOp(Func<bool, bool, bool> func)
-    {
-        return BinNullOp(
-            (e, a, b) =>
-                (a, b) switch
-                {
-                    (bool b1, bool b2) => func(b1, b2),
-                    _ => throw new ArgumentException("Bad args for bool op"),
-                }
-        );
-    }
-
-    public static FunctionHandler NumberOp<TOutD, TOutL>(
-        Func<double, double, TOutD> doubleOp,
-        Func<long, long, TOutL> longOp
-    )
-    {
-        return BinNullOp(
-            (e, o1, o2) =>
-            {
-                if (ValueExpr.MaybeInteger(o1) is { } l1 && ValueExpr.MaybeInteger(o2) is { } l2)
-                {
-                    return longOp(l1, l2);
-                }
-                return doubleOp(ValueExpr.AsDouble(o1), ValueExpr.AsDouble(o2));
-            }
-        );
-    }
-
+    
     /// <summary>
     /// Number operator with partial evaluation support
     /// </summary>
@@ -149,12 +115,7 @@ public static class DefaultFunctions
             }
         );
     }
-
-    public static FunctionHandler ComparisonFunc(Func<int, bool> toResult)
-    {
-        return BinNullOp((e, v1, v2) => toResult(e.Compare(v1, v2)));
-    }
-
+    
     /// <summary>
     /// Comparison function with partial evaluation support
     /// </summary>

@@ -392,22 +392,11 @@ public class PartialEvalEnvironment : EvalEnvironment
 
     public override EnvironmentValue<ValueExpr> Evaluate(EvalExpr evalExpr)
     {
-        var (env, result) = EvaluateExpr(evalExpr);
-
-        // If fully evaluated, return as-is
-        if (result is ValueExpr valueExpr)
-        {
-            return env.WithValue(valueExpr);
-        }
-
-        // Not fully evaluated - generate appropriate error
-        return result switch
-        {
-            VarExpr ve => env.WithError($"Variable ${ve.Name} not declared").WithNull(),
-            CallExpr ce => env.WithError($"Function ${ce.Function} not declared").WithNull(),
-            PropertyExpr pe => env.WithError($"Property {pe.Property} could not be accessed").WithNull(),
-            _ => env.WithError("Expression could not be fully evaluated").WithNull()
-        };
+        throw new InvalidOperationException(
+            "Cannot call Evaluate() on PartialEvalEnvironment. " +
+            "Use EvaluateExpr() instead for partial evaluation. " +
+            "Evaluate() requires all expressions to be fully evaluated to ValueExpr."
+        );
     }
 
     public override EvalEnvironment WithVariable(string name, EvalExpr value)

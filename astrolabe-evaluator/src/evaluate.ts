@@ -332,39 +332,11 @@ export class PartialEvalEnv extends EvalEnv {
   }
 
   evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
-    const [env, result] = this.evaluateExpr(expr);
-
-    // If fully evaluated, return as-is
-    if (result.type === "value") {
-      return [env, result];
-    }
-
-    // Not fully evaluated - generate appropriate error
-    if (result.type === "var") {
-      return [
-        env.withError("Variable $" + result.variable + " not declared"),
-        valueExpr(null),
-      ];
-    }
-
-    if (result.type === "call") {
-      return [
-        env.withError("Function $" + result.function + " not declared"),
-        valueExpr(null),
-      ];
-    }
-
-    if (result.type === "property") {
-      return [
-        env.withError("Property " + result.property + " could not be accessed"),
-        valueExpr(null),
-      ];
-    }
-
-    return [
-      env.withError("Expression could not be fully evaluated"),
-      valueExpr(null),
-    ];
+    throw new Error(
+      "Cannot call evaluate() on PartialEvalEnv. " +
+        "Use evaluateExpr() instead for partial evaluation. " +
+        "evaluate() requires all expressions to be fully evaluated to ValueExpr.",
+    );
   }
 
   constructor(public state: EvalEnvState) {

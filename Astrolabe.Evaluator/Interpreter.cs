@@ -34,7 +34,15 @@ public static class Interpreter
                     .WithValue(valExpr),
             _ => environment.WithValue(expr)
         };
-        return e.WithCurrent(baseValue).Evaluate(toEval).WithCurrent(e.Current);
+        var (resultEnv, resultExpr) = e.WithCurrent(baseValue).EvaluateExpr(toEval);
+        if (resultExpr is not ValueExpr valueExpr)
+        {
+            throw new InvalidOperationException(
+                $"EvaluateWithValue() expected ValueExpr but got {resultExpr.GetType().Name}. " +
+                $"This function requires full evaluation and cannot be used with PartialEvalEnvironment."
+            );
+        }
+        return resultEnv.WithCurrent(e.Current).WithValue(valueExpr);
     }
 
     /// <summary>

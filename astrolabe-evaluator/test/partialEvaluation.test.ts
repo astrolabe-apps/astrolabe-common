@@ -21,6 +21,13 @@ function createPartialEnv(data?: any): EvalEnv {
   return partialEnv(data);
 }
 
+/**
+ * Create an environment for full evaluation testing (returns errors for unknown variables).
+ */
+function createBasicEnv(data?: any): EvalEnv {
+  return basicEnv(data);
+}
+
 describe("Partial Evaluation", () => {
   describe("Unknown Variables", () => {
     test("unknown variable returns VarExpr", () => {
@@ -33,7 +40,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("evaluate() returns error for unknown variable", () => {
-      const env = createPartialEnv();
+      const env = createBasicEnv();
       const expr = varExpr("unknownVar");
       const [resultEnv, result] = env.evaluate(expr);
 
@@ -64,13 +71,13 @@ describe("Partial Evaluation", () => {
     });
 
     test("evaluate() returns error for property without data", () => {
-      const env = createPartialEnv();
+      const env = createBasicEnv();
       const expr = propertyExpr("name");
       const [resultEnv, result] = env.evaluate(expr);
 
       expect(resultEnv.errors.length).toBeGreaterThan(0);
       expect(resultEnv.errors[0]).toContain(
-        "Property name could not be accessed",
+        "Property name cannot be accessed",
       );
     });
   });
@@ -769,6 +776,44 @@ describe("Partial Evaluation", () => {
 
       expect(result.type).toBe("value");
       expect((result as ValueExpr).value).toBe(false);
+    });
+  });
+
+  describe("Null Propagation with Symbolic Values", () => {
+    test("null with symbolic in binary op simplifies to null", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("+", [varExpr("x"), valueExpr(null)]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      expect(result.type).toBe("value");
+      expect((result as ValueExpr).value).toBe(null);
+    });
+
+    test("null with symbolic in comparison simplifies to null", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("<=", [varExpr("x"), valueExpr(null)]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      expect(result.type).toBe("value");
+      expect((result as ValueExpr).value).toBe(null);
+    });
+
+    test("null with symbolic in AND simplifies to null", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("and", [varExpr("x"), valueExpr(null)]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      expect(result.type).toBe("value");
+      expect((result as ValueExpr).value).toBe(null);
+    });
+
+    test("null with symbolic in OR simplifies to null", () => {
+      const env = createPartialEnv();
+      const expr = callExpr("or", [valueExpr(null), varExpr("y")]);
+      const [_, result] = env.evaluateExpr(expr);
+
+      expect(result.type).toBe("value");
+      expect((result as ValueExpr).value).toBe(null);
     });
   });
 });

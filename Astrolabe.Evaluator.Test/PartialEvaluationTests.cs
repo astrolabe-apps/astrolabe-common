@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Text.Json.Nodes;
 using Astrolabe.Evaluator.Functions;
 
@@ -13,6 +14,16 @@ public class PartialEvaluationTests
             : JsonDataLookup.FromObject(data);
         var state = EvalEnvironmentState.EmptyState(evalData);
         return new PartialEvalEnvironment(state).AddDefaultFunctions();
+    }
+
+    private static EvalEnvironment CreateBasicEnv(JsonObject? data = null)
+    {
+        // Basic environment for full evaluation (returns errors for unknown variables)
+        var evalData = data == null
+            ? EvalData.UndefinedData()
+            : JsonDataLookup.FromObject(data);
+        var state = EvalEnvironmentState.EmptyState(evalData);
+        return EvalEnvironment.DataFrom(evalData).AddDefaultFunctions();
     }
 
     private static EvalExpr Parse(string expr)
@@ -432,18 +443,14 @@ public class PartialEvaluationTests
     public void PartialEval_FilterWithKnownArray_FiltersElements()
     {
         var env = CreateEnv();
-        var expr = Parse("[1, 2, 3, 4, 5][$x > 2]");
+        var expr = Parse("[1, 2, 3, 4, 5][$this() > 2]");
 
         var (_, result) = env.EvaluateExpr(expr);
-
+        
         // Filter uses Evaluate internally
         Assert.IsType<ValueExpr>(result);
-        var arrayValue = result.MaybeValue()?.Value as ArrayValue;
-        if (arrayValue != null)
-        {
-            // Elements greater than 2: [3, 4, 5]
-            Assert.True(arrayValue.Values.Count() >= 0);
-        }
+        var resultValue = result.AsValue().ToNative();
+        Assert.Equal([3.0d, 4.0d, 5.0d], ((IEnumerable) resultValue).Cast<double>());
     }
 
     [Fact]
@@ -487,22 +494,11 @@ public class PartialEvaluationTests
     #endregion
 
     #region Integration with Evaluate Tests
-
-    [Fact]
-    public void Evaluate_FullyEvaluableExpression_ReturnsValue()
-    {
-        var env = CreateEnv();
-        var expr = Parse("5 + 3");
-
-        var (_, result) = env.Evaluate(expr);
-
-        Assert.Equal(8.0, (double) result.Value);
-    }
-
+    
     [Fact]
     public void Evaluate_ExpressionWithUnknownVariable_ReturnsError()
     {
-        var env = CreateEnv();
+        var env = CreateBasicEnv();
         var expr = Parse("$unknown");
 
         var (resultEnv, result) = env.Evaluate(expr);
@@ -515,7 +511,7 @@ public class PartialEvaluationTests
     [Fact]
     public void Evaluate_LetWithUnknownVariable_ReturnsError()
     {
-        var env = CreateEnv();
+        var env = CreateBasicEnv();
         var expr = Parse("let $x := $unknown in $x + 5");
 
         var (resultEnv, result) = env.Evaluate(expr);
@@ -527,14 +523,15 @@ public class PartialEvaluationTests
     [Fact]
     public void EvaluatePartial_ThenEvaluate_ProducesConsistentResults()
     {
-        var env = CreateEnv();
+        var partialEnv = CreateEnv();
+        var basicEnv = CreateBasicEnv();
         var expr = Parse("let $x := 5 in $x * 2");
 
         // Partial evaluation
-        var (env1, partialResult) = env.EvaluateExpr(expr);
+        var (env1, partialResult) = partialEnv.EvaluateExpr(expr);
 
         // Full evaluation
-        var (env2, fullResult) = env.Evaluate(expr);
+        var (env2, fullResult) = basicEnv.Evaluate(expr);
 
         // Both should produce the same result
         Assert.IsType<ValueExpr>(partialResult);
@@ -664,20 +661,7 @@ public class PartialEvaluationTests
         Assert.IsType<PropertyExpr>(result);
         Assert.Equal("name", ((PropertyExpr)result).Property);
     }
-
-    [Fact]
-    public void Evaluate_PropertyAccessWithoutData_ReturnsError()
-    {
-        var env = CreateEnv(null);
-        var expr = Parse("name");
-
-        var (resultEnv, result) = env.Evaluate(expr);
-
-        Assert.IsType<ValueExpr>(result);
-        Assert.Null(((ValueExpr)result).Value);
-        Assert.NotEmpty(resultEnv.Errors);
-    }
-
+    
     #endregion
 
     #region Known Variable Tests
@@ -858,6 +842,58 @@ public class PartialEvaluationTests
         var (_, result) = env.EvaluateExpr(expr);
 
         // null + anything should return null
+        Assert.IsType<ValueExpr>(result);
+        Assert.Null(((ValueExpr)result).Value);
+    }
+
+    [Fact]
+    public void PartialEval_NullWithSymbolicInBinaryOp_SimplifiesToNull()
+    {
+        var env = CreateEnv();
+        var expr = Parse("$x + null");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        // $x + null should simplify to null
+        Assert.IsType<ValueExpr>(result);
+        Assert.Null(((ValueExpr)result).Value);
+    }
+
+    [Fact]
+    public void PartialEval_NullWithSymbolicInComparison_SimplifiesToNull()
+    {
+        var env = CreateEnv();
+        var expr = Parse("$x <= null");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        // $x <= null should simplify to null
+        Assert.IsType<ValueExpr>(result);
+        Assert.Null(((ValueExpr)result).Value);
+    }
+
+    [Fact]
+    public void PartialEval_NullWithSymbolicInAnd_SimplifiesToNull()
+    {
+        var env = CreateEnv();
+        var expr = Parse("$x and null");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        // $x and null should simplify to null
+        Assert.IsType<ValueExpr>(result);
+        Assert.Null(((ValueExpr)result).Value);
+    }
+
+    [Fact]
+    public void PartialEval_NullWithSymbolicInOr_SimplifiesToNull()
+    {
+        var env = CreateEnv();
+        var expr = Parse("null or $y");
+
+        var (_, result) = env.EvaluateExpr(expr);
+
+        // null or $y should simplify to null
         Assert.IsType<ValueExpr>(result);
         Assert.Null(((ValueExpr)result).Value);
     }

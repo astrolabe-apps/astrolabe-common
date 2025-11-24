@@ -80,8 +80,18 @@ public record FunctionHandler(CallHandler<EvalExpr> Evaluate)
     ) =>
         new(
             (e, call) =>
-                e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x))
-                    .Map<EvalExpr>(args => eval(e, args.ToList()))
+            {
+                var (env, partials) = e.EvalSelect(call.Args, (e2, x) => e2.EvaluateExpr(x));
+
+                // Check if all are fully evaluated
+                if (partials.All(p => p is ValueExpr))
+                {
+                    return env.WithValue<EvalExpr>(eval(env, partials.Cast<ValueExpr>().ToList()));
+                }
+
+                // Return symbolic call with partially evaluated args
+                return env.WithValue<EvalExpr>(new CallExpr(call.Function, partials.ToList()));
+            }
         );
 
     public static FunctionHandler DefaultEval(Func<EvalEnvironment, List<object?>, object?> eval) =>

@@ -122,10 +122,26 @@ export function binFunction(
     const [env1, a] = env.evaluateExpr(aE);
     const [env2, b] = env1.evaluateExpr(bE);
 
-    // Check if both operands are fully evaluated
+    // Null propagation: if either arg is null, return null
+    const deps: ValueExpr[] = [];
+    if (a.type === "value") {
+      deps.push(a);
+      if (a.value == null) {
+        if (b.type === "value") {
+          deps.push(b);
+        }
+        return [env2, valueExprWithDeps(null, deps)];
+      }
+    }
+    if (b.type === "value") {
+      deps.push(b);
+      if (b.value == null) {
+        return [env2, valueExprWithDeps(null, deps)];
+      }
+    }
+
+    // Check if both operands are fully evaluated (and neither is null, checked above)
     if (a.type === "value" && b.type === "value") {
-      if (a.value == null || b.value == null)
-        return [env2, valueExprWithDeps(null, [a, b])];
       return [env2, valueExprWithDeps(func(a.value, b.value, env2), [a, b])];
     }
 
@@ -173,7 +189,18 @@ export function evalFunctionExpr(
   returnType: GetReturnType,
 ): ValueExpr {
   return functionValue(
-    (e, call) => mapEnv(evaluateAll(e, call.args), run),
+    (e, call) => {
+      // Use evaluateExpr for partial evaluation
+      const [env, partials] = mapAllEnv(e, call.args, doEvaluateExpr);
+
+      // Check if all are fully evaluated
+      if (partials.every((p) => p.type === "value")) {
+        return [env, run(partials as ValueExpr[])];
+      }
+
+      // Return symbolic call with partially evaluated args
+      return [env, { ...call, args: partials }];
+    },
     returnType,
   );
 }
