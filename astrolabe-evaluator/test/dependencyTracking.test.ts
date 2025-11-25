@@ -3,6 +3,7 @@ import { basicEnv } from "../src/defaultFunctions";
 import { valueExpr, extractAllPaths } from "../src/ast";
 import { parseEval } from "../src/parseEval";
 import type { ValueExpr, Path } from "../src/ast";
+import { evalResult } from "./testHelpers";
 
 /**
  * Comprehensive tests for dependency tracking in the TypeScript evaluator.
@@ -45,7 +46,7 @@ describe("Parameter Binding Tests", () => {
 
     // Lambda variable $x should be the element value
     const expr = parseEval("$map(nums, $x => $x * 2)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(Array.isArray(result.value)).toBe(true);
     const values = (result.value as ValueExpr[]).map((v) => v.value);
@@ -70,7 +71,7 @@ describe("Parameter Binding Tests", () => {
     // Use $this() to access the ELEMENT
     // Filter where element > 25 should give [30, 40, 50]
     const exprByElement = parseEval("nums[$i => $this() > 25]");
-    const [_2, resultByElement] = env.evaluate(exprByElement);
+    const resultByElement = evalResult(env, exprByElement);
 
     expect(Array.isArray(resultByElement.value)).toBe(true);
     const valuesByElement = (resultByElement.value as ValueExpr[]).map(
@@ -85,7 +86,7 @@ describe("Parameter Binding Tests", () => {
 
     // Lambda variable is index - find first where index >= 2 should give "c"
     const expr = parseEval("$first(items, $i => $i >= 2)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("c");
   });
@@ -97,7 +98,7 @@ describe("Lazy Dependency Model Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$map(nums, $x => $x * 2)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(Array.isArray(result.value)).toBe(true);
     const elements = result.value as ValueExpr[];
@@ -117,7 +118,7 @@ describe("Lazy Dependency Model Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("nums[$i => $this() > 2]");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(Array.isArray(result.value)).toBe(true);
     const elements = result.value as ValueExpr[];
@@ -140,7 +141,7 @@ describe("Dependency Aggregation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$sum(vals)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(6);
 
@@ -155,7 +156,7 @@ describe("Dependency Aggregation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$elem(items, 1)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(20);
 
@@ -172,7 +173,7 @@ describe("Dependency Aggregation Tests", () => {
 
     // Find first element > 4 (should be 5 at index 1)
     const expr = parseEval("$first(items, $i => $this() > 4)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(5);
 
@@ -186,7 +187,7 @@ describe("Dependency Aggregation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$sum(vals)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(null); // Result is null when array contains nulls
 
@@ -204,7 +205,7 @@ describe("Dependency Aggregation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$min(vals)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(null); // Result is null when array contains nulls
 
@@ -222,7 +223,7 @@ describe("Dependency Aggregation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$max(vals)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(null); // Result is null when array contains nulls
 
@@ -240,7 +241,7 @@ describe("Dependency Aggregation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$count(vals)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(5); // Total count including nulls
 
@@ -255,7 +256,7 @@ describe("Dependency Aggregation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$sum(vals)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(null); // Result is null when all values are null
 
@@ -272,7 +273,7 @@ describe("Dependency Aggregation Tests", () => {
 
     // Dynamic index - should track both the element AND the index variable
     const expr = parseEval("$elem(items, indexVar)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(20);
 
@@ -291,7 +292,7 @@ describe("Dependency Aggregation Tests", () => {
 
     // Array access with dynamic index using let expression: let $idx := offset in items[$idx]
     const expr = parseEval("let $idx := offset in items[$idx]");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(30);
 
@@ -313,7 +314,7 @@ describe("Dependency Aggregation Tests", () => {
     const expr = parseEval(
       "let $idx := baseIndex + indexOffset in values[$idx]",
     );
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(300);
 
@@ -334,7 +335,7 @@ describe("Pipeline Tests - Dependencies Flow Through Transformations", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$sum($map(values, $x => $x * 2))");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(12); // (1*2 + 2*2 + 3*2) = 12
 
@@ -351,7 +352,7 @@ describe("Pipeline Tests - Dependencies Flow Through Transformations", () => {
 
     // Filter scores >= 70 (keeps 75, 90, 85; filters out 50 and 65)
     const expr = parseEval("$sum(scores[$i => $this() >= 70])");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(250); // 75 + 90 + 85 = 250
 
@@ -370,7 +371,7 @@ describe("Pipeline Tests - Dependencies Flow Through Transformations", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$elem($map(items, $x => $x * 2), 1)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(40); // 20 * 2 = 40
 
@@ -388,7 +389,7 @@ describe("Basic Operation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("a + b");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(15);
 
@@ -402,7 +403,7 @@ describe("Basic Operation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("x < y");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(true);
 
@@ -416,7 +417,7 @@ describe("Basic Operation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$and(cond1, cond2)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(true);
 
@@ -430,7 +431,7 @@ describe("Basic Operation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$and(cond1, cond2)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(false);
 
@@ -446,7 +447,7 @@ describe("Basic Operation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$or(cond1, cond2)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(true);
 
@@ -462,7 +463,7 @@ describe("Basic Operation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$and(cond1, cond2, cond3, cond4)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(false);
 
@@ -480,7 +481,7 @@ describe("Basic Operation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$or(cond1, cond2, cond3, cond4)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(true);
 
@@ -498,7 +499,7 @@ describe("Basic Operation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$and(cond1, cond2, cond3)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(true);
 
@@ -514,7 +515,7 @@ describe("Basic Operation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$or(cond1, cond2, cond3)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(false);
 
@@ -532,7 +533,7 @@ describe("Conditional Operator Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("cond ? thenVal : elseVal");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("A");
 
@@ -548,7 +549,7 @@ describe("Conditional Operator Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("age >= minAge ? adult : minor");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("yes");
 
@@ -568,7 +569,7 @@ describe("String Operations Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval('$string(first, " ", last)');
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("John Doe");
 
@@ -582,7 +583,7 @@ describe("String Operations Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$lower(name)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("hello");
 
@@ -598,7 +599,7 @@ describe("Utility Functions Tests", () => {
 
     // nullField doesn't exist, so should use value
     const expr = parseEval("nullField ?? value");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("exists");
 
@@ -613,7 +614,7 @@ describe("Utility Functions Tests", () => {
     // $min(array) returns null, so should use fallback
     // BUT should also preserve dependencies from evaluating $min(array)
     const expr = parseEval("$min(array) ?? fallback");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(10);
 
@@ -637,7 +638,7 @@ describe("Utility Functions Tests", () => {
     const expr = parseEval(
       '$which(status, "pending", pendingMsg, "active", activeMsg)',
     );
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("Please wait");
 
@@ -654,7 +655,7 @@ describe("Object Property Dependency Tracking Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("user.name");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("John");
 
@@ -674,7 +675,7 @@ describe("Object Property Dependency Tracking Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("company.department.manager.name");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("Alice");
 
@@ -689,7 +690,7 @@ describe("Object Property Dependency Tracking Tests", () => {
 
     // Create object and access property
     const expr = parseEval('let $obj := $object("val", a + b) in $obj.val');
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(15);
 
@@ -704,7 +705,7 @@ describe("Object Property Dependency Tracking Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$sum($values(obj))");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(60);
 
@@ -722,7 +723,7 @@ describe("Array Element Access Path Preservation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("array[0]");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(1);
 
@@ -740,7 +741,7 @@ describe("Array Element Access Path Preservation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$elem(items, 1)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(20);
 
@@ -759,7 +760,7 @@ describe("Array Element Access Path Preservation Tests", () => {
 
     // Use $elem for dynamic index (array[idx] doesn't work due to scoping limitation)
     const expr = parseEval("$elem(array, idx)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(20);
 
@@ -778,7 +779,7 @@ describe("Array Element Access Path Preservation Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("$elem(values, position)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(300);
 
@@ -797,7 +798,7 @@ describe("Array Element Access Path Preservation Tests", () => {
 
     // Use $elem for computed index
     const expr = parseEval("$elem(nums, base + offset)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(4); // nums[3]
 
@@ -818,7 +819,7 @@ describe("Object Filter with Dynamic Keys Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval('obj["x"]');
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(10);
 
@@ -837,7 +838,7 @@ describe("Object Filter with Dynamic Keys Tests", () => {
 
     // Access object property using variable key from within the object context
     const expr = parseEval("user[fieldToAccess]");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("Alice");
 
@@ -859,7 +860,7 @@ describe("Object Filter with Dynamic Keys Tests", () => {
 
     // Access property with computed key: prefix + suffix (from within object context)
     const expr = parseEval("config[$string(prefix, suffix)]");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("value1");
 
@@ -882,7 +883,7 @@ describe("Object Filter with Dynamic Keys Tests", () => {
     const env = basicEnv(data);
 
     const expr = parseEval("company.employees[selectedName].role");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe("manager");
 
@@ -901,7 +902,7 @@ describe("Object Filter with Dynamic Keys Tests", () => {
 
     // Create object and access with constant key
     const expr = parseEval('let $obj := $object("sum", a + b) in $obj["sum"]');
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(15);
 
@@ -919,7 +920,7 @@ describe("Object Filter with Dynamic Keys Tests", () => {
     const expr = parseEval(
       'let $table := $object("6", [1.5, 1.5, 1.5]), $key := $fixed($sum(array), 0) in $table[$key]'
     );
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(Array.isArray(result.value)).toBe(true);
     const resultArray = result.value as ValueExpr[];
@@ -940,7 +941,7 @@ describe("Object Filter with Dynamic Keys Tests", () => {
     const expr = parseEval(
       'let $table := $object("6", [1.5, 1.5, 1.5]), $key := $fixed($sum(array), 0) in $table[$key][0]'
     );
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(1.5);
 
@@ -959,7 +960,7 @@ describe("Null Index/Key Handling Tests", () => {
 
     // When $min(array) returns null, lookup[$idx] should return null with preserved deps
     const expr = parseEval("let $idx := $min(array) in lookup[$idx]");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     // Result should be null
     expect(result.value).toBe(null);
@@ -977,7 +978,7 @@ describe("Null Index/Key Handling Tests", () => {
 
     // When $min(array) returns null, obj[$key] should return null with preserved deps
     const expr = parseEval('let $key := $min(array) in obj[$key]');
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     // Result should be null
     expect(result.value).toBe(null);
@@ -995,7 +996,7 @@ describe("Null Index/Key Handling Tests", () => {
 
     // Use let expression to access idx in global scope
     const expr = parseEval("let $i := idx in lookup[$i]");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     // Result should be null
     expect(result.value).toBe(null);
@@ -1011,7 +1012,7 @@ describe("Null Index/Key Handling Tests", () => {
 
     // Use let expression to access key in global scope
     const expr = parseEval("let $k := key in obj[$k]");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     // Result should be null
     expect(result.value).toBe(null);
@@ -1034,7 +1035,7 @@ describe("FlatMap Dependency Tracking Tests", () => {
 
     // Flatmap items to their values arrays
     const expr = parseEval("items . values");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(Array.isArray(result.value)).toBe(true);
     const elements = result.value as ValueExpr[];
@@ -1066,7 +1067,7 @@ describe("FlatMap Dependency Tracking Tests", () => {
 
     // Flatmap to get all numbers then sum
     const expr = parseEval("$sum(groups . nums)");
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(result.value).toBe(15); // 1+2+3+4+5 = 15
 
@@ -1097,7 +1098,7 @@ describe("FlatMap Dependency Tracking Tests", () => {
         in $table[$key]
       )
     `);
-    const [_, result] = env.evaluate(expr);
+    const result = evalResult(env, expr);
 
     expect(Array.isArray(result.value)).toBe(true);
     const elements = result.value as ValueExpr[];

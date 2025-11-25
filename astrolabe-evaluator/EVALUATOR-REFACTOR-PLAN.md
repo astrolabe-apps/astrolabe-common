@@ -22,9 +22,13 @@ This threads environment state (errors, variable bindings, data context) through
 Simplify the API by:
 1. **Return just `EvalExpr`** - No tuple unpacking needed
 2. **Errors in `ValueExpr.errors`** - Error messages as optional properties
-3. **Mutable memoization cache** - Variables evaluated once and cached
-4. **Dependencies via `withDeps()`** - Explicit dependency collection
-5. **Lazy error collection** - Client walks tree if all errors needed
+3. **Extension data in `ValueExpr.data`** - Custom metadata for validators/extensions
+4. **Mutable memoization cache** - Variables evaluated once and cached
+5. **Dependencies via `withDeps()`** - Explicit dependency collection
+6. **Uniform variable model** - `root` and `this` are just regular variables
+7. **Single scope method** - `newScope(variables)` replaces multiple methods
+8. **Static evaluate helper** - Validates full evaluation to ValueExpr
+9. **Lazy error collection** - Client walks tree if all errors needed
 
 ```typescript
 // Proposed usage:
@@ -48,7 +52,7 @@ return env.withDeps(combineResults(result1, result2), [result1, result2]);
 
 ### 1. ValueExpr Interface
 
-**Add `errors` field:**
+**Add `errors` and `data` fields:**
 
 ```typescript
 export interface ValueExpr {
@@ -58,45 +62,98 @@ export interface ValueExpr {
   path?: Path;
   deps?: EvalExpr[];        // Existing: dependencies for reactivity
   errors?: string[];        // NEW: error messages from evaluation
+  data?: any;               // NEW: extension point for custom metadata (validation, etc.)
   location?: SourceLocation;
 }
 ```
 
 **Error format:**
-- Array of human-readable error messages
-- Undefined if no errors
-- Accumulated from dependencies via `withDeps()`
+- Array of human-readable error messages set directly on the ValueExpr during evaluation
+- Undefined if no errors occurred during evaluation of this specific expression
+- Errors from dependencies are collected lazily via `collectAllErrors()` when needed
+
+**Data field:**
+- Optional extension point for evaluator implementations
+- Validation evaluators can store validation state
+- Partial evaluators can store symbolic information
+- Not used by default implementations
 
 ### 2. EvalEnv Interface
 
-**Change signature of `evaluateExpr()`:**
+**Complete interface redesign:**
 
 ```typescript
-abstract class EvalEnv {
-  // BEFORE:
-  evaluateExpr(expr: EvalExpr): EnvValue<EvalExpr>;
+// BEFORE: Complex state with special data/current fields
+export interface EvalEnvState {
+  data: EvalData | undefined;
+  current: ValueExpr | undefined;
+  localVars: Record<string, EvalExpr>;
+  parent?: EvalEnvState;
+  errors: string[];  // Moving to ValueExpr
+  compare: (v1: unknown, v2: unknown) => number;
+}
 
-  // AFTER:
-  evaluateExpr(expr: EvalExpr): EvalExpr;
+abstract class EvalEnv {
+  abstract data: EvalData | undefined;
+  abstract current: ValueExpr | undefined;
+  abstract state: EvalEnvState;
+  abstract withVariables(vars: [string, EvalExpr][]): EvalEnv;
+  abstract withVariable(name: string, expr: EvalExpr): EvalEnv;
+  abstract withCurrent(path: ValueExpr): EvalEnv;
+  abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
+  abstract evaluateExpr(expr: EvalExpr): EnvValue<EvalExpr>;
+}
+
+// AFTER: Simplified - EvalEnv IS the scope chain node
+abstract class EvalEnv {
+  abstract localVars: Record<string, EvalExpr>;
+  abstract parent?: EvalEnv;
+  abstract compare: (v1: unknown, v2: unknown) => number;
+
+  abstract getVariable(name: string): EvalExpr | undefined;
+  abstract newScope(variables: Record<string, EvalExpr>): EvalEnv;
+  abstract evaluateExpr(expr: EvalExpr): EvalExpr;
+  abstract withDeps(result: ValueExpr, deps: EvalExpr[]): ValueExpr;
+}
+
+// Static helper - validates full evaluation
+export function evaluate(env: EvalEnv, expr: EvalExpr): ValueExpr {
+  const result = env.evaluateExpr(expr);
+  if (result.type !== "value") {
+    throw new Error("Expression did not fully evaluate");
+  }
+  return result;
 }
 ```
 
-**Add `withDeps()` method:**
+**Key changes:**
+
+1. **No EvalEnvState** - EvalEnv itself is the scope node
+2. **No special data/current** - Use regular variables ("root", "this")
+3. **Single scope method** - `newScope(variables)` replaces three methods
+4. **No evaluate() method** - Use static `evaluate()` function instead
+5. **No tuple returns** - `evaluateExpr()` returns just `EvalExpr`
+
+**Variable model:**
 
 ```typescript
-abstract class EvalEnv {
-  /**
-   * Creates a ValueExpr with dependencies, propagating errors from deps.
-   *
-   * @param result - The ValueExpr to wrap (should not have deps/errors set yet)
-   * @param deps - Array of dependent expressions (may include symbolic expressions)
-   * @returns ValueExpr with deps and accumulated errors
-   */
-  withDeps(result: ValueExpr, deps: EvalExpr[]): ValueExpr;
-}
+// "root" and "this" are just regular variables (no $ prefix internally)
+const env = new BasicEvalEnv({
+  localVars: {
+    root: toValue(EmptyPath, myData),    // Root data context
+    this: toValue(EmptyPath, myData),    // Current context
+    x: valueExpr(42),                    // User variable
+  },
+  parent: undefined,
+  compare: compareSignificantDigits(5),
+});
+
+// Access via $root, $this, $x in expression syntax
+const expr = parseExpr("$this.name");
+const result = env.evaluateExpr(expr);
 ```
 
-**Add memoization cache (internal):**
+**Memoization cache (internal):**
 
 ```typescript
 class BasicEvalEnv extends EvalEnv {
@@ -108,7 +165,7 @@ class BasicEvalEnv extends EvalEnv {
   }
 
   protected setCachedEvaluation(key: string, value: EvalExpr): void {
-    this.evaluationCache.set(key);
+    this.evaluationCache.set(key, value);
   }
 }
 ```
@@ -116,11 +173,15 @@ class BasicEvalEnv extends EvalEnv {
 **Remove old helper functions:**
 
 These become unnecessary:
+- `EnvValue<T>` type - No more tuple returns
+- `EvalEnvState` interface - EvalEnv is the state
 - `mapEnv` - Just use `evaluateExpr()` directly
 - `flatmapEnv` - No longer needed
 - `mapAllEnv` - Use `.map()` directly
-- `alterEnv` - Use `withVariables()` instead
+- `alterEnv` - Use `newScope()` instead
 - `envEffect` - Not needed with no tuple return
+- `withVariables/withVariable/withCurrent` - Use `newScope()` instead
+- `evaluate()` instance method - Use static `evaluate()` function
 
 ### 3. Helper Functions
 
@@ -261,28 +322,19 @@ withDeps(result: ValueExpr, deps: EvalExpr[]): ValueExpr {
     return result;
   }
 
-  // Collect errors from all ValueExpr dependencies
-  const errors: string[] = [];
-  for (const dep of deps) {
-    if (dep.type === "value" && dep.errors) {
-      errors.push(...dep.errors);
-    }
-  }
-
-  // Combine with any existing errors in result
-  const allErrors = result.errors
-    ? [...result.errors, ...errors]
-    : errors.length > 0
-      ? errors
-      : undefined;
-
+  // Simply attach dependencies - errors are collected lazily by collectAllErrors()
   return {
     ...result,
-    deps: deps.length > 0 ? deps : undefined,
-    errors: allErrors,
+    deps,
   };
 }
 ```
+
+**Key insight:** Errors are NOT propagated eagerly in `withDeps()`. Instead:
+- Each ValueExpr may have its own `errors` field set during evaluation
+- Dependencies are attached via the `deps` field
+- `collectAllErrors()` walks the dependency tree lazily when errors are needed
+- This keeps evaluation fast and error collection on-demand
 
 ### 3. Memoization Cache Implementation
 
@@ -321,238 +373,36 @@ private evaluateVariable(expr: VarExpr): EvalExpr {
 
 **Cache invalidation:**
 
-The cache should be invalidated when creating new scopes:
+The cache is automatically invalidated when creating new scopes:
 
 ```typescript
-withVariables(vars: Record<string, EvalExpr>): EvalEnv {
+newScope(variables: Record<string, EvalExpr>): EvalEnv {
   // Create new environment with new scope
-  const newState = {
-    ...this.state,
-    localVars: vars,
-    parent: this.state, // Scope chain
-  };
+  // The new env inherits this env as parent for variable lookup
+  const newEnv = new BasicEvalEnv({
+    localVars: variables,
+    parent: this,  // Scope chain
+    compare: this.compare,
+  });
 
-  // Create new environment with fresh cache
-  const newEnv = new BasicEvalEnv(newState);
   // Cache is automatically fresh (new instance)
-
   return newEnv;
 }
 ```
 
----
-
-## Code Examples: Before vs After
-
-### Example 1: Binary Function
-
-**Before:**
+**getVariable implementation:**
 
 ```typescript
-export function binFunction(
-  func: (a: any, b: any, env: EvalEnv) => any,
-  returnType: DataType
-): FunctionValue {
-  return functionValue((env, call) => {
-    const [env1, a] = env.evaluateExpr(call.args[0]);
-    const [env2, b] = env1.evaluateExpr(call.args[1]);
-
-    if (a.type === "value" && b.type === "value") {
-      return [env2, valueExprWithDeps(func(a.value, b.value, env2), [a, b])];
-    }
-
-    return [env2, { ...call, args: [a, b] }];
-  }, returnType);
-}
-```
-
-**After:**
-
-```typescript
-export function binFunction(
-  func: (a: any, b: any, env: EvalEnv) => any,
-  returnType: DataType
-): FunctionValue {
-  return functionValue((env, call) => {
-    const a = env.evaluateExpr(call.args[0]);
-    const b = env.evaluateExpr(call.args[1]);
-
-    if (a.type === "value" && b.type === "value") {
-      return env.withDeps(
-        valueExpr(func(a.value, b.value, env)),
-        [a, b]
-      );
-    }
-
-    return { ...call, args: [a, b] };
-  }, returnType);
-}
-```
-
-**Reduction: 5 lines → 4 lines, much clearer data flow**
-
-### Example 2: Array Evaluation
-
-**Before:**
-
-```typescript
-case "array": {
-  const [env1, elements] = mapAllEnv(
-    env,
-    expr.elements,
-    (e, elem) => e.evaluateExpr(elem)
-  );
-
-  if (elements.every((e) => e.type === "value")) {
-    return [
-      env1,
-      valueExprWithDeps(
-        elements.map((e) => (e as ValueExpr).value),
-        elements as ValueExpr[]
-      ),
-    ];
+getVariable(name: string): EvalExpr | undefined {
+  // Check local scope first
+  if (name in this.localVars) {
+    return this.localVars[name];
   }
 
-  return [env1, { type: "array", elements }];
+  // Walk up scope chain
+  return this.parent?.getVariable(name);
 }
 ```
-
-**After:**
-
-```typescript
-case "array": {
-  const elements = expr.elements.map(e => env.evaluateExpr(e));
-
-  if (elements.every(e => e.type === "value")) {
-    return env.withDeps(
-      valueExpr(elements.map(e => (e as ValueExpr).value)),
-      elements as ValueExpr[]
-    );
-  }
-
-  return { type: "array", elements };
-}
-```
-
-**Reduction: 17 lines → 10 lines, no special helper needed**
-
-### Example 3: Conditional Evaluation
-
-**Before:**
-
-```typescript
-case "call": {
-  if (expr.function === "$if") {
-    const [env1, cond] = env.evaluateExpr(expr.args[0]);
-
-    if (cond.type === "value") {
-      const branchIndex = cond.value ? 1 : 2;
-      const [env2, result] = env1.evaluateExpr(expr.args[branchIndex]);
-
-      return [env2, env2.withDeps(result, [cond])];
-    }
-
-    const [env2, then] = env1.evaluateExpr(expr.args[1]);
-    const [env3, else_] = env2.evaluateExpr(expr.args[2]);
-
-    return [env3, { ...expr, args: [cond, then, else_] }];
-  }
-}
-```
-
-**After:**
-
-```typescript
-case "call": {
-  if (expr.function === "$if") {
-    const cond = env.evaluateExpr(expr.args[0]);
-
-    if (cond.type === "value") {
-      const branchIndex = cond.value ? 1 : 2;
-      const result = env.evaluateExpr(expr.args[branchIndex]);
-
-      return env.withDeps(result, [cond]);
-    }
-
-    const then = env.evaluateExpr(expr.args[1]);
-    const else_ = env.evaluateExpr(expr.args[2]);
-
-    return { ...expr, args: [cond, then, else_] };
-  }
-}
-```
-
-**Reduction: 15 lines → 13 lines, clearer control flow**
-
-### Example 4: Let Expression
-
-**Before:**
-
-```typescript
-case "let": {
-  const [env1, value] = env.evaluateExpr(expr.value);
-  const env2 = env1.withVariables({ [expr.variable]: value });
-  const [env3, body] = env2.evaluateExpr(expr.body);
-  return [env3, body];
-}
-```
-
-**After:**
-
-```typescript
-case "let": {
-  const value = env.evaluateExpr(expr.value);
-  const env2 = env.withVariables({ [expr.variable]: value });
-  return env2.evaluateExpr(expr.body);
-}
-```
-
-**Reduction: 5 lines → 4 lines, no env threading**
-
-### Example 5: Property Access
-
-**Before:**
-
-```typescript
-case "property": {
-  const [env1, target] = env.evaluateExpr(expr.target);
-
-  if (target.type === "value") {
-    const prop = target.value?.[expr.property];
-    return [
-      env1,
-      valueExprWithDeps(
-        prop,
-        target.path ? [] : [target],
-        target.path ? extendPath(target.path, expr.property) : undefined
-      ),
-    ];
-  }
-
-  return [env1, { ...expr, target }];
-}
-```
-
-**After:**
-
-```typescript
-case "property": {
-  const target = env.evaluateExpr(expr.target);
-
-  if (target.type === "value") {
-    const prop = target.value?.[expr.property];
-    const result = valueExpr(prop, {
-      path: target.path ? extendPath(target.path, expr.property) : undefined,
-    });
-
-    return target.path ? result : env.withDeps(result, [target]);
-  }
-
-  return { ...expr, target };
-}
-```
-
-**Reduction: Similar length but clearer intent**
 
 ---
 
@@ -628,143 +478,102 @@ If issues arise:
 
 ---
 
+## Test Preparation Strategy
+
+To minimize test churn during the refactor, we've abstracted all direct calls to `env.evaluate()` and `env.evaluateExpr()` behind helper functions. This means when the API changes, only the helper implementations need updating - not the 404 individual test cases.
+
+### Helper Function Abstraction Layer
+
+Created `test/testHelpers.ts` with 5 core helper functions:
+
+1. **`evalResult<T>(env: EvalEnv, expr: EvalExpr): T`**
+   - For tests that just need the evaluation result
+   - Replaces: `const [_, result] = env.evaluateExpr(expr);`
+   - Usage: Most common case (~140+ test callsites)
+
+2. **`evalWithErrors(env: EvalEnv, expr: EvalExpr): { result: ValueExpr; errors: string[] }`**
+   - For tests that need to check error conditions
+   - Replaces: `const [nextEnv, result] = env.evaluate(expr); expect(nextEnv.errors.length)...`
+   - Usage: Only 3 tests check environment errors
+
+3. **`evalExpr(expr: string, data?: unknown): unknown`**
+   - Convenience helper for simple expression evaluation
+   - Parses expression, creates basic environment, returns value
+   - Usage: Common in syntax and operator tests
+
+4. **`evalExprNative(expr: string, data?: unknown): unknown`**
+   - Like evalExpr but converts result to native JS via toNative()
+   - Usage: Tests expecting plain JS objects/arrays
+
+5. **`evalToArray(expr: string, data?: unknown): unknown[]`**
+   - Specialized for tests expecting array results
+   - Includes type validation (throws if result not an array)
+   - Usage: Array operation tests
+
+### Migration Statistics
+
+Successfully migrated all test files to use helpers:
+
+- **test/comparison-partial-eval.test.ts**: 6 evaluate calls → evalResult()
+- **test/defaultFunctions.test.ts**: Consolidated local helpers → testHelpers
+- **test/commentSyntax.test.ts**: Consolidated local helpers → testHelpers
+- **test/partialEvaluation.test.ts**: 67 evaluate calls → evalResult(), 2 error tests → evalWithErrors()
+- **test/dependencyTracking.test.ts**: 62 evaluate calls → evalResult()
+
+**Result**: All 404 tests passing with helper abstraction in place.
+
+### Benefits of This Approach
+
+1. **Minimal test churn**: When evaluate() signature changes, update 5 helpers instead of 140+ test callsites
+2. **Type safety**: Helpers provide better type inference than tuple unpacking
+3. **Readability**: `evalResult(env, expr)` is clearer than `const [_, result] = env.evaluateExpr(expr)`
+4. **Consistency**: All tests use same patterns for evaluation
+5. **Easy migration**: When refactor completes, helpers can be updated to new API seamlessly
+
+### Implementation Notes
+
+The helper functions currently use the old tuple-returning API internally:
+
+```typescript
+export function evalResult<T = EvalExpr>(env: EvalEnv, expr: EvalExpr): T {
+  const [_, result] = env.evaluateExpr(expr);
+  return result as T;
+}
+```
+
+After the refactor, they'll be updated to use the new direct-return API:
+
+```typescript
+export function evalResult<T = EvalExpr>(env: EvalEnv, expr: EvalExpr): T {
+  return env.evaluateExpr(expr) as T;
+}
+```
+
+This abstraction layer allows the refactor to proceed without touching most test code.
+
+---
+
 ## Testing Strategy
 
 ### Unit Tests
 
-**Test error propagation:**
-
-```typescript
-describe("Error propagation", () => {
-  it("should propagate errors from dependencies", () => {
-    const env = new BasicEvalEnv();
-    const expr = parseExpr("$unknownVar + 5");
-
-    const result = env.evaluateExpr(expr);
-
-    expect(result.type).toBe("value");
-    expect(result.errors).toContainEqual(
-      expect.stringContaining("unknownVar not declared")
-    );
-  });
-
-  it("should accumulate errors from multiple dependencies", () => {
-    const env = new BasicEvalEnv();
-    const expr = parseExpr("$unknown1 + $unknown2");
-
-    const result = env.evaluateExpr(expr);
-
-    expect(result.errors).toHaveLength(2);
-  });
-
-  it("should collect nested errors", () => {
-    const env = new BasicEvalEnv();
-    const expr = parseExpr("[$unknown1, [$unknown2, $unknown3]]");
-
-    const result = env.evaluateExpr(expr);
-    const allErrors = collectAllErrors(result);
-
-    expect(allErrors).toHaveLength(3);
-  });
-});
-```
-
-**Test memoization:**
-
-```typescript
-describe("Memoization", () => {
-  it("should evaluate variable only once", () => {
-    let evalCount = 0;
-    const expensive = functionValue((env, call) => {
-      evalCount++;
-      return valueExpr(42);
-    });
-
-    const env = new BasicEvalEnv().withVariables({
-      "$expensive": valueExpr(null, { function: expensive }),
-    });
-
-    const expr = parseExpr("$expensive + $expensive");
-    env.evaluateExpr(expr);
-
-    expect(evalCount).toBe(1); // Only evaluated once
-  });
-
-  it("should not cache across scopes", () => {
-    const env = new BasicEvalEnv().withVariables({ "$x": valueExpr(1) });
-
-    const expr1 = parseExpr("let $x = 2 in $x");
-    const result1 = env.evaluateExpr(expr1);
-
-    const expr2 = parseExpr("$x");
-    const result2 = env.evaluateExpr(expr2);
-
-    expect((result1 as ValueExpr).value).toBe(2); // Inner scope
-    expect((result2 as ValueExpr).value).toBe(1); // Outer scope
-  });
-});
-```
-
-**Test independence:**
-
-```typescript
-describe("Evaluation independence", () => {
-  it("should not share side effects between siblings", () => {
-    const env = new BasicEvalEnv();
-    const expr = parseExpr("[$unknown1, $unknown2]");
-
-    const result = env.evaluateExpr(expr);
-
-    // Each element should have independent error
-    const elements = (result as ValueExpr).value as ValueExpr[];
-    expect(elements[0].errors).toBeDefined();
-    expect(elements[1].errors).toBeDefined();
-  });
-});
-```
+Test areas to cover:
+- **Error propagation** - Verify errors are set on ValueExpr during evaluation
+- **Error collection** - Test `collectAllErrors()` walks dependency tree correctly
+- **Memoization** - Verify variables are evaluated once and cached within scope
+- **Scope isolation** - Ensure caches don't leak across scopes
+- **Evaluation independence** - Confirm sibling evaluations don't share side effects
 
 ### Integration Tests
 
-**Test complex expressions:**
-
-```typescript
-describe("Complex expressions", () => {
-  it("should handle nested conditionals with errors", () => {
-    const env = new BasicEvalEnv().withVariables({
-      "$x": valueExpr(5),
-    });
-
-    const expr = parseExpr("$if($x > 3, $unknown, $x)");
-    const result = env.evaluateExpr(expr);
-
-    // Should not evaluate false branch
-    expect(result.type).toBe("value");
-    expect(result.errors).toBeUndefined();
-  });
-
-  it("should handle array transformations", () => {
-    const env = new BasicEvalEnv().withVariables({
-      "$data": valueExpr([1, 2, 3]),
-    });
-
-    const expr = parseExpr("$map($data, $x => $x * 2)");
-    const result = env.evaluateExpr(expr);
-
-    expect((result as ValueExpr).value).toEqual([2, 4, 6]);
-  });
-});
-```
+Test areas to cover:
+- **Complex expressions** - Nested conditionals, array operations, function calls
+- **Error handling** - Errors in various expression types and compositions
+- **Performance** - Benchmark memoization benefits and error collection overhead
 
 ### Regression Tests
 
-**Ensure all existing tests pass:**
-
-```bash
-cd astrolabe-evaluator
-npm test
-```
-
-All existing tests should continue to pass after migration, possibly with minor adjustments to match new error format.
+All existing tests should continue to pass after migration, possibly with minor adjustments to match the new API (no tuple unpacking, error collection via `collectAllErrors()`).
 
 ---
 

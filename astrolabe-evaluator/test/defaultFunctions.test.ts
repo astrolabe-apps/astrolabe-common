@@ -1,37 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";
-import { toNative } from "../src/ast";
+import {
+  evalExpr,
+  evalExprNative,
+  evalToArray,
+  evalWithErrors,
+} from "./testHelpers";
 
 /**
  * Comprehensive tests for all default functions in the TypeScript evaluator.
  * Tests the actual behavior and edge cases of each of the 37 default functions.
  */
-
-function evalExpr(expr: string, data: unknown = {}): unknown {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  return result.value;
-}
-
-function evalExprNative(expr: string, data: unknown = {}): unknown {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  return toNative(result);
-}
-
-function evalToArray(expr: string, data: unknown = {}): unknown[] {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  const nativeResult = toNative(result);
-  if (!Array.isArray(nativeResult)) {
-    throw new Error("Expected array result");
-  }
-  return nativeResult as unknown[];
-}
 
 describe("Mathematical Operations", () => {
   test("Addition with integers", () => {
@@ -677,9 +657,9 @@ describe("Object Functions", () => {
   test("Merge - no arguments returns error", () => {
     const env = basicEnv({});
     const parsed = parseEval("$merge()");
-    const [nextEnv, result] = env.evaluate(parsed);
+    const { result, errors } = evalWithErrors(env, parsed);
     expect(result.value).toBeNull();
-    expect(nextEnv.errors.length).toBeGreaterThan(0);
+    expect(errors.length).toBeGreaterThan(0);
   });
 
   test("Merge - skips non-object arguments", () => {

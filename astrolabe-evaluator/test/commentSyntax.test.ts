@@ -1,30 +1,13 @@
 import { describe, expect, test } from "vitest";
+import { evalExpr, evalToArray, evalResult } from "./testHelpers";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";
-import { toNative } from "../src/ast";
+import { toNative, ValueExpr } from "../src/ast";
 
 /**
  * Tests for comment syntax support in the evaluator.
  * Tests both line comments and block comments
  */
-
-function evalExpr(expr: string, data: unknown = {}): unknown {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  return result.value;
-}
-
-function evalToArray(expr: string, data: unknown = {}): unknown[] {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  const nativeResult = toNative(result);
-  if (!Array.isArray(nativeResult)) {
-    throw new Error("Expected array result");
-  }
-  return nativeResult as unknown[];
-}
 
 describe("Line Comments", () => {
   test("Line comment after expression", () => {
@@ -38,17 +21,18 @@ describe("Line Comments", () => {
   });
 
   test("Line comment in middle of expression", () => {
-    const result = evalExpr(
-      "(a // first value\n- b) // subtract b\n* c",
-      { a: 10, b: 5, c: 2 }
-    );
+    const result = evalExpr("(a // first value\n- b) // subtract b\n* c", {
+      a: 10,
+      b: 5,
+      c: 2,
+    });
     expect(result).toBe(10); // (a - b) * c = (10 - 5) * 2 = 10
   });
 
   test("Line comment with conditional expression", () => {
     const result = evalExpr(
       "x > y // check if x is greater\n? x // return x\n: y // return y",
-      { x: 10, y: 5 }
+      { x: 10, y: 5 },
     );
     expect(result).toBe(10);
   });
@@ -66,10 +50,10 @@ describe("Block Comments", () => {
   });
 
   test("Block comment in middle of expression", () => {
-    const result = evalExpr(
-      "a /* first value */ + /* operator */ b",
-      { a: 5, b: 3 }
-    );
+    const result = evalExpr("a /* first value */ + /* operator */ b", {
+      a: 5,
+      b: 3,
+    });
     expect(result).toBe(8);
   });
 
@@ -78,7 +62,7 @@ describe("Block Comments", () => {
       `a + b /* this is a
         multiline
         comment */`,
-      { a: 5, b: 3 }
+      { a: 5, b: 3 },
     );
     expect(result).toBe(8);
   });
@@ -89,20 +73,21 @@ describe("Block Comments", () => {
   });
 
   test("Block comment multiple separate comments", () => {
-    const result = evalExpr(
-      "/* first */ a + /* second */ b - /* third */ c",
-      { a: 10, b: 3, c: 2 }
-    );
+    const result = evalExpr("/* first */ a + /* second */ b - /* third */ c", {
+      a: 10,
+      b: 3,
+      c: 2,
+    });
     expect(result).toBe(11);
   });
 });
 
 describe("Mixed Comments", () => {
   test("Mixed line and block comments", () => {
-    const result = evalExpr(
-      "/* block comment */ a + b // line comment",
-      { a: 5, b: 3 }
-    );
+    const result = evalExpr("/* block comment */ a + b // line comment", {
+      a: 5,
+      b: 3,
+    });
     expect(result).toBe(8);
   });
 
@@ -114,7 +99,7 @@ describe("Mixed Comments", () => {
             * y // multiply by y
             / /* divide by */ z // z value
         `,
-      { x: 10, y: 5, z: 2 }
+      { x: 10, y: 5, z: 2 },
     );
     expect(result).toBe(25);
   });
@@ -137,7 +122,7 @@ describe("Comments with Different Expression Types", () => {
             nums[/* filter */ $i => $this() > 2 // greater than 2
             ]
         `,
-      { nums: [1, 2, 3, 4, 5] }
+      { nums: [1, 2, 3, 4, 5] },
     );
     expect(result).toEqual([3, 4, 5]);
   });
@@ -147,7 +132,7 @@ describe("Comments with Different Expression Types", () => {
       `
             $sum(/* array parameter */ nums) // calculate sum
         `,
-      { nums: [1, 2, 3, 4, 5] }
+      { nums: [1, 2, 3, 4, 5] },
     );
     expect(result).toBe(15);
   });
@@ -166,12 +151,12 @@ describe("Comments with Different Expression Types", () => {
   test("Comments with object literal", () => {
     const env = basicEnv({});
     const parsed = parseEval('$object("a", 1, "b", 2) /* create object */');
-    const [_, result] = env.evaluate(parsed);
+    const result = evalResult(env, parsed);
     expect(toNative(result)).toEqual({ a: 1, b: 2 });
   });
 
   test("Comments with template string", () => {
-    const result = evalExpr('`Hello /* comment */ World` // template string');
+    const result = evalExpr("`Hello /* comment */ World` // template string");
     expect(result).toBe("Hello /* comment */ World");
   });
 });
