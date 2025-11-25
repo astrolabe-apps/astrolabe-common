@@ -643,9 +643,7 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_KnownVariable_EvaluatesFully()
     {
-        var env = TestHelpers.CreatePartialEnv(null).WithVariables([
-            new KeyValuePair<string, EvalExpr>("x", new ValueExpr(42))
-        ]);
+        var env = TestHelpers.CreatePartialEnv(null).WithVariables(("x", 42));
         var expr = TestHelpers.Parse("$x");
 
         var result = env.EvalPartial(expr);
@@ -657,9 +655,7 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_KnownVariableInExpression_EvaluatesPartially()
     {
-        var env = TestHelpers.CreatePartialEnv(null).WithVariables([
-            new KeyValuePair<string, EvalExpr>("x", new ValueExpr(10))
-        ]);
+        var env = TestHelpers.CreatePartialEnv(null).WithVariables(("x", 10));
         var expr = TestHelpers.Parse("$x + $unknown");
 
         var result = env.EvalPartial(expr);
@@ -765,11 +761,9 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ElemWithSymbolicArrayIndex_ReturnsSymbolicCall()
     {
-        var env = TestHelpers.CreatePartialEnv(null).WithVariables([
-            new KeyValuePair<string, EvalExpr>("arr", new ValueExpr(new ArrayValue([
-                new ValueExpr(1), new ValueExpr(2), new ValueExpr(3)
-            ])))
-        ]);
+        var env = TestHelpers.CreatePartialEnv(null).WithVariables(
+            ("arr", new ArrayValue([new ValueExpr(1), new ValueExpr(2), new ValueExpr(3)]))
+        );
         var expr = TestHelpers.Parse("$elem($arr, $unknownIndex)");
 
         var result = env.EvalPartial(expr);
@@ -875,9 +869,7 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ComparisonInBooleanExpr_SubstitutesDefinedVariables()
     {
-        var env = TestHelpers.CreatePartialEnv().WithVariables([
-            new KeyValuePair<string, EvalExpr>("FreightMaxWidth", new ValueExpr(12))
-        ]);
+        var env = TestHelpers.CreatePartialEnv().WithVariables(("FreightMaxWidth", 12));
         var expr = TestHelpers.Parse("height <= $FreightMaxHeight and width <= $FreightMaxWidth");
 
         var result = env.EvalPartial(expr);

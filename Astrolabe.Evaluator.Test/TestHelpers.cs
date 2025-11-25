@@ -4,20 +4,40 @@ using Astrolabe.Evaluator.Functions;
 namespace Astrolabe.Evaluator.Test;
 
 /// <summary>
-/// Test helper methods that abstract evaluation API calls.
-/// When the evaluator API changes during refactor, only these helpers need updating.
-/// Mirrors the TypeScript test/testHelpers.ts implementation.
+/// Test evaluation context that hides EvalEnvironment internals.
+/// Tests work with this opaque wrapper instead of EvalEnvironment directly.
+/// This mirrors the TypeScript approach where tests don't see the internal EvalEnv class.
 /// </summary>
-public static class TestHelpers
+public class TestEvalContext
 {
+    private readonly EvalEnvironment _env;
+
+    internal TestEvalContext(EvalEnvironment env)
+    {
+        _env = env;
+    }
+
     /// <summary>
-    /// Evaluate an expression and return just the result.
+    /// Create a new context with additional variables.
+    /// Use for tests that need to set up variables before evaluation.
+    /// </summary>
+    public TestEvalContext WithVariables(params (string name, object? value)[] vars)
+    {
+        var kvps = vars.Select(v => new KeyValuePair<string, EvalExpr>(
+            v.name,
+            v.value is EvalExpr expr ? expr : new ValueExpr(v.value)
+        )).ToList();
+        return new TestEvalContext(_env.WithVariables(kvps));
+    }
+
+    /// <summary>
+    /// Full evaluation - returns ValueExpr result.
     /// Use for tests that only care about the computed value.
     /// Equivalent to TypeScript: evalResult()
     /// </summary>
-    public static ValueExpr EvalResult(this EvalEnvironment env, EvalExpr expr)
+    public ValueExpr EvalResult(EvalExpr expr)
     {
-        var (_, result) = env.Evaluate(expr);
+        var (_, result) = _env.Evaluate(expr);
         return result;
     }
 
@@ -26,9 +46,9 @@ public static class TestHelpers
     /// Use for tests that need to inspect partial evaluation results.
     /// Equivalent to TypeScript: evalPartial()
     /// </summary>
-    public static EvalExpr EvalPartial(this EvalEnvironment env, EvalExpr expr)
+    public EvalExpr EvalPartial(EvalExpr expr)
     {
-        var (_, result) = env.EvaluateExpr(expr);
+        var (_, result) = _env.EvaluateExpr(expr);
         return result;
     }
 
@@ -37,14 +57,20 @@ public static class TestHelpers
     /// Use for tests that need to check error conditions.
     /// Equivalent to TypeScript: evalWithErrors()
     /// </summary>
-    public static (ValueExpr Result, IEnumerable<EvalError> Errors) EvalWithErrors(
-        this EvalEnvironment env,
-        EvalExpr expr)
+    public (ValueExpr Result, IEnumerable<EvalError> Errors) EvalWithErrors(EvalExpr expr)
     {
-        var (nextEnv, result) = env.Evaluate(expr);
+        var (nextEnv, result) = _env.Evaluate(expr);
         return (result, nextEnv.Errors);
     }
+}
 
+/// <summary>
+/// Test helper methods that abstract evaluation API calls.
+/// When the evaluator API changes during refactor, only these helpers need updating.
+/// Mirrors the TypeScript test/testHelpers.ts implementation.
+/// </summary>
+public static class TestHelpers
+{
     /// <summary>
     /// Evaluate a string expression with data context (convenience wrapper).
     /// Returns the raw value property from the ValueExpr.
@@ -53,7 +79,7 @@ public static class TestHelpers
     /// </summary>
     public static object? EvalExpr(string expr, JsonObject? data = null)
     {
-        var env = CreateBasicEnv(data);
+        var env = CreateBasicEnvInternal(data);
         var parsed = ExprParser.Parse(expr);
         var (_, result) = env.Evaluate(parsed);
         return result.Value;
@@ -66,7 +92,7 @@ public static class TestHelpers
     /// </summary>
     public static object? EvalExprNative(string expr, JsonObject? data = null)
     {
-        var env = CreateBasicEnv(data);
+        var env = CreateBasicEnvInternal(data);
         var parsed = ExprParser.Parse(expr);
         var (_, result) = env.Evaluate(parsed);
         return result.ToNative();
@@ -80,7 +106,7 @@ public static class TestHelpers
     /// </summary>
     public static IEnumerable<object?> EvalToArray(string expr, JsonObject? data = null)
     {
-        var env = CreateBasicEnv(data);
+        var env = CreateBasicEnvInternal(data);
         var parsed = ExprParser.Parse(expr);
         var (_, result) = env.Evaluate(parsed);
         var native = result.ToNative();
@@ -92,28 +118,21 @@ public static class TestHelpers
     }
 
     /// <summary>
-    /// Create a basic (full) evaluation environment with data.
+    /// Create a basic (full) evaluation context with data.
     /// Use for normal evaluation tests where all variables should resolve.
     /// </summary>
-    public static EvalEnvironment CreateBasicEnv(JsonObject? data = null)
+    public static TestEvalContext CreateBasicEnv(JsonObject? data = null)
     {
-        var evalData = data == null
-            ? EvalData.UndefinedData()
-            : JsonDataLookup.FromObject(data);
-        return EvalEnvironment.DataFrom(evalData).AddDefaultFunctions();
+        return new TestEvalContext(CreateBasicEnvInternal(data));
     }
 
     /// <summary>
-    /// Create a partial evaluation environment (returns symbolic for unknown variables).
+    /// Create a partial evaluation context (returns symbolic for unknown variables).
     /// Use for partial evaluation tests where undefined variables remain symbolic.
     /// </summary>
-    public static EvalEnvironment CreatePartialEnv(JsonObject? data = null)
+    public static TestEvalContext CreatePartialEnv(JsonObject? data = null)
     {
-        var evalData = data == null
-            ? EvalData.UndefinedData()
-            : JsonDataLookup.FromObject(data);
-        var state = EvalEnvironmentState.EmptyState(evalData);
-        return new PartialEvalEnvironment(state).AddDefaultFunctions();
+        return new TestEvalContext(CreatePartialEnvInternal(data));
     }
 
     /// <summary>
@@ -123,5 +142,23 @@ public static class TestHelpers
     public static EvalExpr Parse(string expr)
     {
         return ExprParser.Parse(expr);
+    }
+
+    // Internal methods that create the actual EvalEnvironment instances
+    private static EvalEnvironment CreateBasicEnvInternal(JsonObject? data)
+    {
+        var evalData = data == null
+            ? EvalData.UndefinedData()
+            : JsonDataLookup.FromObject(data);
+        return EvalEnvironment.DataFrom(evalData).AddDefaultFunctions();
+    }
+
+    private static EvalEnvironment CreatePartialEnvInternal(JsonObject? data)
+    {
+        var evalData = data == null
+            ? EvalData.UndefinedData()
+            : JsonDataLookup.FromObject(data);
+        var state = EvalEnvironmentState.EmptyState(evalData);
+        return new PartialEvalEnvironment(state).AddDefaultFunctions();
     }
 }
