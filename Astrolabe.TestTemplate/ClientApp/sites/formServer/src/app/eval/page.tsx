@@ -7,6 +7,7 @@ import {
   nativeType,
   parseEval,
   partialEnv,
+  PartialEvalEnv,
   printExpr,
   printPath,
   toNative,
@@ -119,8 +120,8 @@ export default function EvalPage() {
               const variables = Object.fromEntries(
                 Object.entries(dv).map((x) => [x[0], toValue(undefined, x[1])]),
               );
-              const env = partialEnv().newScope(variables);
-              const partialResult = env.evaluateExpr(exprTree);
+              const env = partialEnv().newScope(variables) as PartialEvalEnv;
+              const partialResult = env.uninline(env.evaluateExpr(exprTree));
               setEvalResult({
                 result: printExpr(partialResult),
                 errors: collectAllErrors(partialResult),

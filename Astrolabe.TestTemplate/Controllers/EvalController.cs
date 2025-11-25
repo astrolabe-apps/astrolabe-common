@@ -31,15 +31,15 @@ public class EvalController : ControllerBase
             // Create partial evaluation environment with variables
             var partialEnv = EvalEnvFactory.CreatePartialEnv(variables);
 
-            var result = partialEnv.EvaluateExpr(evalExpr);
+            var result = partialEnv.Uninline(partialEnv.EvaluateExpr(evalExpr));
 
             // Collect errors from result tree
             var errors = result is ValueExpr ve
                 ? ValueExpr.CollectAllErrors(ve)
-                : Enumerable.Empty<string>();
+                : [];
 
             return new EvalResult(
-                PrintExpr.Print(result),
+                result.Print(),
                 errors
             );
         }
