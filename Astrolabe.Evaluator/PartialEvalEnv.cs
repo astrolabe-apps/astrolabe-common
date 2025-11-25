@@ -10,13 +10,13 @@ internal record InlineData(string InlinedFrom, int ScopeId);
 /// Partial evaluation environment that returns symbolic expressions for unknowns.
 /// Mirrors TypeScript's PartialEvalEnv.
 /// </summary>
-public class PartialEvalEnv2 : EvalEnv
+public class PartialEvalEnv : EvalEnv
 {
     private static int _nextScopeId;
 
     private readonly IReadOnlyDictionary<string, EvalExpr> _localVars;
     private readonly Dictionary<string, EvalExpr> _evalCache = new();
-    private readonly PartialEvalEnv2? _parent;
+    private readonly PartialEvalEnv? _parent;
     private readonly Func<object?, object?, int> _compare;
 
     /// <summary>
@@ -24,9 +24,9 @@ public class PartialEvalEnv2 : EvalEnv
     /// </summary>
     public int ScopeId { get; }
 
-    public PartialEvalEnv2(
+    public PartialEvalEnv(
         IReadOnlyDictionary<string, EvalExpr> localVars,
-        PartialEvalEnv2? parent,
+        PartialEvalEnv? parent,
         Func<object?, object?, int> compare)
     {
         _localVars = localVars;
@@ -40,7 +40,7 @@ public class PartialEvalEnv2 : EvalEnv
     public override EvalEnv NewScope(IReadOnlyDictionary<string, EvalExpr> vars)
     {
         if (vars.Count == 0) return this;
-        return new PartialEvalEnv2(vars, this, _compare);
+        return new PartialEvalEnv(vars, this, _compare);
     }
 
     public override EvalExpr? GetCurrentValue()
@@ -145,7 +145,7 @@ public class PartialEvalEnv2 : EvalEnv
     private EvalExpr EvaluateCallPartial(CallExpr ce)
     {
         var funcExpr = EvaluateVariable(ce.Function);
-        if (funcExpr is not ValueExpr { Value: FunctionHandler2 handler })
+        if (funcExpr is not ValueExpr { Value: FunctionHandler handler })
         {
             // Unknown function - return CallExpr unchanged
             return ce;

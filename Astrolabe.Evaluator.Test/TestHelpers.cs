@@ -5,7 +5,7 @@ namespace Astrolabe.Evaluator.Test;
 
 /// <summary>
 /// Test evaluation context using the EvalEnv-based system.
-/// Uses BasicEvalEnv or PartialEvalEnv2 internally.
+/// Uses BasicEvalEnv or PartialEvalEnv internally.
 /// </summary>
 public class TestEvalContext
 {
@@ -49,8 +49,8 @@ public class TestEvalContext
     public EvalExpr EvalPartial(EvalExpr expr)
     {
         var result = _env.EvaluateExpr(expr);
-        // Call Uninline if using PartialEvalEnv2
-        if (_env is PartialEvalEnv2 partialEnv)
+        // Call Uninline if using PartialEvalEnv
+        if (_env is PartialEvalEnv partialEnv)
         {
             return partialEnv.Uninline(result);
         }
@@ -74,7 +74,7 @@ public class TestEvalContext
 
 /// <summary>
 /// Test helper methods that abstract evaluation API calls.
-/// Uses the new EvalEnv-based system (BasicEvalEnv, PartialEvalEnv2).
+/// Uses the new EvalEnv-based system (BasicEvalEnv, PartialEvalEnv).
 /// </summary>
 public static class TestHelpers
 {

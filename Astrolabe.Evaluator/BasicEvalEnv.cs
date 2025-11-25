@@ -94,7 +94,7 @@ public class BasicEvalEnv : EvalEnv
     private EvalExpr EvaluateCallExpr(CallExpr ce)
     {
         var funcExpr = EvaluateVariable(ce.Function, ce.Location);
-        if (funcExpr is not ValueExpr { Value: FunctionHandler2 handler })
+        if (funcExpr is not ValueExpr { Value: FunctionHandler handler })
         {
             return ValueExpr.WithError(null, $"Function ${ce.Function} not declared or not a function");
         }

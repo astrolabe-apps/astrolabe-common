@@ -22,7 +22,7 @@ public abstract class EvalEnv
     /// <summary>
     /// Evaluate an expression and return the result.
     /// - BasicEvalEnv: Returns ValueExpr (full evaluation)
-    /// - PartialEvalEnv2: Returns EvalExpr (may be symbolic)
+    /// - PartialEvalEnv: Returns EvalExpr (may be symbolic)
     /// </summary>
     public abstract EvalExpr EvaluateExpr(EvalExpr expr);
 
@@ -46,6 +46,42 @@ public abstract class EvalEnv
 
         return result with { Deps = allDeps };
     }
+
+    /// <summary>
+    /// Create a comparison function that compares numbers to a given number of significant digits.
+    /// </summary>
+    public static Func<object?, object?, int> CompareSignificantDigits(int digits)
+    {
+        var multiply = (long)Math.Pow(10, digits);
+        return (v1, v2) =>
+            (v1, v2) switch
+            {
+                (long l1, long l2) => l1.CompareTo(l2),
+                (int i1, int i2) => i1.CompareTo(i2),
+                (long l1, int i2) => l1.CompareTo(i2),
+                (int i1, long l2) => -l2.CompareTo(i1),
+                (_, double d2) => NumberCompare(ValueExpr.AsDouble(v1), d2),
+                (double d1, _) => NumberCompare(d1, ValueExpr.AsDouble(v2)),
+                (string s1, string s2) => string.Compare(s1, s2, StringComparison.InvariantCulture),
+                _ => Equals(v1, v2)
+                    ? 0
+                    : v1 == null
+                        ? 1
+                        : -1
+            };
+
+        int NumberCompare(double d1, double d2)
+        {
+            var l1 = (long)Math.Round(d1 * multiply);
+            var l2 = (long)Math.Round(d2 * multiply);
+            return l1.CompareTo(l2);
+        }
+    }
+
+    /// <summary>
+    /// Default comparison function with 5 significant digits.
+    /// </summary>
+    public static readonly Func<object?, object?, int> DefaultComparison = CompareSignificantDigits(5);
 }
 
 /// <summary>
@@ -57,7 +93,7 @@ public static class EvalEnvFactory
     /// Create a BasicEvalEnv with root data and default functions.
     /// </summary>
     /// <param name="root">Optional root data to bind to the _ variable</param>
-    /// <param name="functions">Optional additional functions (FunctionHandler2 wrapped in ValueExpr)</param>
+    /// <param name="functions">Optional additional functions (FunctionHandler wrapped in ValueExpr)</param>
     /// <returns>A new BasicEvalEnv configured with the given data and functions</returns>
     public static BasicEvalEnv CreateBasicEnv(
         object? root = null,
@@ -66,7 +102,7 @@ public static class EvalEnvFactory
         var vars = new Dictionary<string, EvalExpr>();
 
         // Add default functions
-        foreach (var (name, handler) in DefaultFunctions2.FunctionHandlers2)
+        foreach (var (name, handler) in DefaultFunctions.FunctionHandlers)
         {
             vars[name] = new ValueExpr(handler);
         }
@@ -87,23 +123,23 @@ public static class EvalEnvFactory
         return new BasicEvalEnv(
             vars,
             null,
-            EvalEnvironment.CompareSignificantDigits(5));
+            EvalEnv.CompareSignificantDigits(5));
     }
 
     /// <summary>
-    /// Create a PartialEvalEnv2 with default functions.
+    /// Create a PartialEvalEnv with default functions.
     /// </summary>
-    /// <param name="functions">Optional additional functions (FunctionHandler2 wrapped in ValueExpr)</param>
+    /// <param name="functions">Optional additional functions (FunctionHandler wrapped in ValueExpr)</param>
     /// <param name="current">Optional current value to bind to the _ variable</param>
-    /// <returns>A new PartialEvalEnv2 configured with the given functions and current value</returns>
-    public static PartialEvalEnv2 CreatePartialEnv(
+    /// <returns>A new PartialEvalEnv configured with the given functions and current value</returns>
+    public static PartialEvalEnv CreatePartialEnv(
         IReadOnlyDictionary<string, EvalExpr>? functions = null,
         ValueExpr? current = null)
     {
         var vars = new Dictionary<string, EvalExpr>();
 
         // Add default functions
-        foreach (var (name, handler) in DefaultFunctions2.FunctionHandlers2)
+        foreach (var (name, handler) in DefaultFunctions.FunctionHandlers)
         {
             vars[name] = new ValueExpr(handler);
         }
@@ -119,10 +155,10 @@ public static class EvalEnvFactory
         if (current != null)
             vars["_"] = current;
 
-        return new PartialEvalEnv2(
+        return new PartialEvalEnv(
             vars,
             null,
-            EvalEnvironment.CompareSignificantDigits(5));
+            EvalEnv.CompareSignificantDigits(5));
     }
 
     /// <summary>
@@ -135,10 +171,10 @@ public static class EvalEnvFactory
     }
 
     /// <summary>
-    /// Create a PartialEvalEnv2 with default functions.
+    /// Create a PartialEvalEnv with default functions.
     /// Convenience method for partial evaluation.
     /// </summary>
-    public static PartialEvalEnv2 PartialEnv(object? data = null)
+    public static PartialEvalEnv PartialEnv(object? data = null)
     {
         var current = data != null ? ObjectToValueExpr(data) : null;
         return CreatePartialEnv(current: current);

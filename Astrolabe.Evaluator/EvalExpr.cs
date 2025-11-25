@@ -84,61 +84,11 @@ public record PropertyExpr(string Property, SourceLocation? Location = null, obj
 public record LambdaExpr(string Variable, EvalExpr Value, SourceLocation? Location = null, object? Data = null)
     : EvalExpr;
 
-public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, CallExpr callExpr);
-
 /// <summary>
-/// Function handler that mirrors TypeScript's FunctionValue.eval signature.
-/// Takes an EvalEnv and CallExpr, returns EvalExpr directly.
-/// Used by the new EvalEnv-based evaluation system.
+/// Function handler that takes an EvalEnv and CallExpr, returns EvalExpr directly.
+/// Used by the EvalEnv-based evaluation system.
 /// </summary>
-public delegate EvalExpr FunctionHandler2(EvalEnv env, CallExpr call);
-
-public record FunctionHandler(CallHandler<EvalExpr> Evaluate)
-{
-    public static FunctionHandler DefaultEvalArgs(
-        Func<EvalEnvironment, List<ValueExpr>, ValueExpr> eval
-    ) =>
-        new(
-            (e, call) =>
-            {
-                var (env, partials) = e.EvalSelect(call.Args, (e2, x) => e2.EvaluateExpr(x));
-
-                // Check if all are fully evaluated
-                if (partials.All(p => p is ValueExpr))
-                {
-                    return env.WithValue<EvalExpr>(eval(env, partials.Cast<ValueExpr>().ToList()));
-                }
-
-                // Return symbolic call with partially evaluated args
-                return env.WithValue<EvalExpr>(new CallExpr(call.Function, partials.ToList()));
-            }
-        );
-
-    public static FunctionHandler DefaultEval(Func<EvalEnvironment, List<object?>, object?> eval) =>
-        DefaultEvalArgs(
-            (e, args) => ValueExpr.WithDeps(eval(e, args.Select(x => x.Value).ToList()), args)
-        );
-
-    public static FunctionHandler DefaultEval(Func<IList<object?>, object?> eval) =>
-        DefaultEval((_, a) => eval(a));
-
-    public static FunctionHandler BinFunctionHandler(
-        string name,
-        Func<EvalEnvironment, EvalExpr, EvalExpr, EnvironmentValue<EvalExpr>> handle
-    )
-    {
-        return new FunctionHandler(
-            (env, call) =>
-                call.Args switch
-                {
-                    [var a1, var a2] => handle(env, a1, a2),
-                    var a
-                        => env.WithError($"{name} expects 2 arguments, received {a.Count}")
-                            .WithValue<EvalExpr>(ValueExpr.Null)
-                }
-        );
-    }
-}
+public delegate EvalExpr FunctionHandler(EvalEnv env, CallExpr call);
 
 public record ValueExpr(
     object? Value,

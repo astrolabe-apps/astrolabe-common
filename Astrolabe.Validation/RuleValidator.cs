@@ -5,203 +5,278 @@ using Astrolabe.Evaluator.Functions;
 
 namespace Astrolabe.Validation;
 
-public record ValidatorState(
+/// <summary>
+/// Validation metadata stored in ValueExpr.Data during rule evaluation.
+/// Accumulated through Deps and collected at the end.
+/// </summary>
+public record ValidationData(
     IEnumerable<Failure> Failures,
-    ValueExpr Message,
-    IEnumerable<EvaluatedRule> Rules,
-    ImmutableDictionary<string, object?> Properties
-)
-{
-    public static readonly ValidatorState Empty =
-        new([], ValueExpr.Null, [], ImmutableDictionary<string, object?>.Empty);
-}
+    string? Message = null,
+    ImmutableDictionary<string, object?>? Properties = null
+);
 
-public class ValidatorEvalEnvironment(EvalEnvironmentState state, ValidatorState validatorState)
-    : EvalEnvironment(state)
-{
-    protected override EvalEnvironment NewEnv(EvalEnvironmentState newState)
-    {
-        return new ValidatorEvalEnvironment(newState, validatorState);
-    }
-
-    public ValidatorState ValidatorState => validatorState;
-
-    public EvalEnvironment WithValidatorState(
-        ValidatorState newState,
-        Func<EvalEnvironmentState, EvalEnvironmentState>? updateEvalState = null
-    )
-    {
-        return new ValidatorEvalEnvironment(updateEvalState?.Invoke(state) ?? state, newState);
-    }
-}
+/// <summary>
+/// Result data for a ValidatorRule call, stored in ValueExpr.Data.
+/// </summary>
+public record RuleResultData(EvaluatedRule Rule);
 
 public static class RuleValidator
 {
     public const string RuleFunction = "ValidatorRule";
 
-    public static ValidatorState GetValidatorState(this EvalEnvironment env)
+    /// <summary>
+    /// Wrap a comparison function to track failures when result is false.
+    /// </summary>
+    private static FunctionHandler WrapValidation(FunctionHandler handler, string funcName)
     {
-        return ((ValidatorEvalEnvironment)env).ValidatorState;
-    }
-
-    public static EvalEnvironment UpdateValidatorState(
-        this EvalEnvironment env,
-        Func<ValidatorState, ValidatorState> update,
-        Func<EvalEnvironmentState, EvalEnvironmentState>? updateEvalState = null
-    )
-    {
-        return ((ValidatorEvalEnvironment)env).WithValidatorState(
-            update(env.GetValidatorState()),
-            updateEvalState
-        );
-    }
-
-    public static EvalEnvironment FromData(EvalData data)
-    {
-        return new ValidatorEvalEnvironment(
-            EvalEnvironmentState.EmptyState(data),
-            ValidatorState.Empty
-        ).WithVariables(
-            ImmutableDictionary<string, EvalExpr>
-                .Empty.AddRange(DefaultFunctions.FunctionHandlers.Select(ToVariable))
-                .Add(RuleFunction, new ValueExpr(new FunctionHandler(EvaluateValidation)))
-                .Add("WithMessage", new ValueExpr(new FunctionHandler(EvalWithMessage)))
-                .Add("WithProperty", new ValueExpr(new FunctionHandler(EvalWithProperty)))
-        );
-    }
-
-    private static KeyValuePair<string, EvalExpr> ToVariable(
-        KeyValuePair<string, FunctionHandler> func
-    )
-    {
-        var funcValue = func.Key switch
+        return (env, call) =>
         {
-            "=" or "!=" or ">" or "<" or ">=" or "<=" or "notEmpty" => WrapFunc(func.Value),
-            _ => func.Value
-        };
-        return new KeyValuePair<string, EvalExpr>(func.Key, new ValueExpr(funcValue));
+            var result = handler(env, call);
 
-        FunctionHandler WrapFunc(FunctionHandler handler)
-        {
-            return handler with
+            if (result is ValueExpr ve && ve.Value is bool b && b == false)
             {
-                Evaluate = (e, call) =>
-                {
-                    var (env, args) = e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x));
-                    var argValuesValue = args.ToList();
-                    var result = handler.Evaluate(env, call.WithArgs(argValuesValue));
-                    var resultValue = result.Value;
-                    if (resultValue.IsFalse())
-                    {
-                        return result
-                            .Env.UpdateValidatorState(v =>
-                                v with
-                                {
-                                    Failures = v.Failures.Append(new Failure(call, argValuesValue))
-                                }
-                            )
-                            .WithValue(resultValue);
-                    }
-                    return result;
-                }
-            };
+                // Evaluate args to capture in failure record
+                var evaledArgs = call.Args
+                    .Select(a => env.EvaluateExpr(a))
+                    .OfType<ValueExpr>()
+                    .ToList();
+
+                var failure = new Failure(call, evaledArgs);
+                var validationData = new ValidationData([failure]);
+
+                // Attach validation data, preserve existing deps
+                return ve with { Data = validationData };
+            }
+
+            return result;
+        };
+    }
+
+    /// <summary>
+    /// WithMessage($msg, $expr) - evaluate expr with message context.
+    /// </summary>
+    private static readonly FunctionHandler WithMessageHandler = (env, call) =>
+    {
+        if (call.Args.Count != 2)
+            return ValueExpr.WithError(null, "WithMessage expects 2 arguments");
+
+        var msgResult = env.EvaluateExpr(call.Args[0]);
+        var exprResult = env.EvaluateExpr(call.Args[1]);
+
+        if (exprResult is not ValueExpr ve) return exprResult;
+
+        var message = (msgResult as ValueExpr)?.Value as string;
+        var existingData = ve.Data as ValidationData ?? new ValidationData([]);
+
+        var deps = (ve.Deps ?? []).ToList();
+        if (msgResult is ValueExpr msgVal)
+            deps.Add(msgVal);
+
+        return ve with
+        {
+            Data = existingData with { Message = message },
+            Deps = deps
+        };
+    };
+
+    /// <summary>
+    /// WithProperty($key, $value, $expr) - add property to context.
+    /// </summary>
+    private static readonly FunctionHandler WithPropertyHandler = (env, call) =>
+    {
+        if (call.Args.Count != 3)
+            return ValueExpr.WithError(null, "WithProperty expects 3 arguments");
+
+        var keyResult = env.EvaluateExpr(call.Args[0]);
+        var valueResult = env.EvaluateExpr(call.Args[1]);
+        var exprResult = env.EvaluateExpr(call.Args[2]);
+
+        if (exprResult is not ValueExpr ve) return exprResult;
+
+        var key = (keyResult as ValueExpr)?.Value as string;
+        var value = (valueResult as ValueExpr)?.Value;
+
+        var existingData = ve.Data as ValidationData ?? new ValidationData([]);
+        var props = existingData.Properties ?? ImmutableDictionary<string, object?>.Empty;
+
+        if (key != null)
+            props = props.SetItem(key, value);
+
+        return ve with
+        {
+            Data = existingData with { Properties = props }
+        };
+    };
+
+    /// <summary>
+    /// ValidatorRule($path, $must, $props) - evaluate rule and collect results.
+    /// </summary>
+    private static readonly FunctionHandler ValidatorRuleHandler = (env, call) =>
+    {
+        if (call.Args.Count < 2)
+            return ValueExpr.WithError(null, "ValidatorRule requires at least 2 arguments");
+
+        var pathResult = env.EvaluateExpr(call.Args[0]) as ValueExpr;
+        var mustResult = env.EvaluateExpr(call.Args[1]) as ValueExpr;
+
+        // Evaluate props if provided (3rd argument)
+        var propsResult = call.Args.Count > 2 ? env.EvaluateExpr(call.Args[2]) as ValueExpr : null;
+
+        if (pathResult == null || mustResult == null)
+            return ValueExpr.WithError(null, "ValidatorRule requires path and must expressions");
+
+        // Collect all validation data from the must expression tree
+        var validationData = CollectValidationData(mustResult);
+
+        // Merge properties from props expression (if any)
+        var properties = validationData.Properties ?? ImmutableDictionary<string, object?>.Empty;
+        if (propsResult?.Data is ValidationData propsData && propsData.Properties != null)
+        {
+            foreach (var (key, value) in propsData.Properties)
+            {
+                properties = properties.SetItem(key, value);
+            }
         }
-    }
 
-    private static EnvironmentValue<ValueExpr> EvalWithProperty(
-        EvalEnvironment environment,
-        CallExpr callExpr
-    )
-    {
-        var (evalEnvironment, args) = environment.EvalSelect(
-            callExpr.Args.Take(2),
-            (e, x) => e.Evaluate(x)
+        // Collect all errors from the must expression tree
+        var errors = ValueExpr.CollectAllErrors(mustResult);
+
+        // Create EvaluatedRule record
+        var rule = new EvaluatedRule(
+            pathResult.Path ?? DataPath.Empty,
+            pathResult.Value,
+            mustResult,
+            validationData.Failures,
+            errors,
+            validationData.Message,
+            ValueExpr.ExtractAllPaths(mustResult),
+            properties
         );
-        var argList = args.ToList();
-        return evalEnvironment
-            .UpdateValidatorState(valEnv =>
-                valEnv with
-                {
-                    Properties = valEnv.Properties.SetItem(argList[0].AsString(), argList[1].Value)
-                }
-            )
-            .Evaluate(callExpr.Args[2]);
-    }
 
-    public static EnvironmentValue<ValueExpr> EvalWithMessage(
-        EvalEnvironment environment,
-        CallExpr callExpr
-    )
+        // Return path value with rule attached (for chaining)
+        return pathResult with
+        {
+            Data = new RuleResultData(rule),
+            Deps = [mustResult]
+        };
+    };
+
+    /// <summary>
+    /// Collect all validation data from a ValueExpr tree.
+    /// Mirrors CollectAllErrors/ExtractAllPaths patterns.
+    /// </summary>
+    public static ValidationData CollectValidationData(ValueExpr expr)
     {
-        var (msgEnv, msg) = environment.Evaluate(callExpr.Args[0]);
-        return msgEnv
-            .UpdateValidatorState(v => v with { Message = msg })
-            .Evaluate(callExpr.Args[1]);
+        var failures = new List<Failure>();
+        string? message = null;
+        var properties = ImmutableDictionary<string, object?>.Empty;
+        var seen = new HashSet<ValueExpr>();
+
+        void Collect(ValueExpr ve)
+        {
+            if (!seen.Add(ve)) return; // Cycle detection
+
+            if (ve.Data is ValidationData vd)
+            {
+                failures.AddRange(vd.Failures);
+                if (vd.Message != null) message ??= vd.Message; // First message wins
+                if (vd.Properties != null)
+                    properties = properties.SetItems(vd.Properties);
+            }
+
+            if (ve.Deps != null)
+                foreach (var dep in ve.Deps)
+                    Collect(dep);
+        }
+
+        Collect(expr);
+        return new ValidationData(failures, message, properties);
     }
 
-    public static EnvironmentValue<ValueExpr> EvaluateValidation(
-        EvalEnvironment environment,
-        CallExpr callExpr
-    )
+    /// <summary>
+    /// Create a validator environment with wrapped comparison functions.
+    /// </summary>
+    public static BasicEvalEnv CreateValidatorEnv(object? data = null)
     {
-        var results = environment
-            .UpdateValidatorState(
-                (x) =>
-                    x with
-                    {
-                        Failures = [],
-                        Message = ValueExpr.Null,
-                        Properties = ImmutableDictionary<string, object?>.Empty
-                    },
-                e => e with { Errors = [] }
-            )
-            .EvalSelect(callExpr.Args, (e, x) => e.Evaluate(x));
-        var argValues = results.Value.ToList();
-        return results
-            .Env.UpdateValidatorState(x =>
-                x with
-                {
-                    Rules = x.Rules.Append(
-                        new EvaluatedRule(
-                            argValues[0].Path!,
-                            argValues[0].Value,
-                            argValues[1],
-                            x.Failures,
-                            results.Env.Errors,
-                            x.Message.AsString(),
-                            ValueExpr.ExtractAllPaths(argValues[1]),
-                            x.Properties
-                        )
-                    )
-                }
-            )
-            .WithValue(argValues[0]);
+        var functions = new Dictionary<string, EvalExpr>();
+
+        // Add default functions with validation wrappers for comparisons
+        foreach (var (name, handler) in DefaultFunctions.FunctionHandlers)
+        {
+            var wrappedHandler = name switch
+            {
+                "=" or "!=" or ">" or "<" or ">=" or "<=" or "notEmpty"
+                    => WrapValidation(handler, name),
+                _ => handler
+            };
+            functions[name] = new ValueExpr(wrappedHandler);
+        }
+
+        // Add validator-specific functions
+        functions[RuleFunction] = new ValueExpr(ValidatorRuleHandler);
+        functions["WithMessage"] = new ValueExpr(WithMessageHandler);
+        functions["WithProperty"] = new ValueExpr(WithPropertyHandler);
+
+        return EvalEnvFactory.CreateBasicEnv(data, functions);
     }
 
+    /// <summary>
+    /// Validate JSON data against a rule.
+    /// </summary>
     public static List<EvaluatedRule> ValidateJson(JsonNode data, Rule rule, LetExpr? variables)
     {
-        var baseEnv = FromData(JsonDataLookup.FromObject(data));
-        return ValidateRules(baseEnv, rule, variables);
+        var env = CreateValidatorEnv(JsonDataLookup.FromObject(data));
+        return ValidateRules(env, rule, variables);
     }
 
+    /// <summary>
+    /// Validate rules using an existing environment.
+    /// </summary>
     public static List<EvaluatedRule> ValidateRules(
-        EvalEnvironment baseEnv,
+        BasicEvalEnv baseEnv,
         Rule rule,
         LetExpr? variables
     )
     {
-        var ruleEnv = variables != null ? baseEnv.Evaluate(variables).Env : baseEnv;
-        var ruleList = ruleEnv.EvaluateRule(rule);
-        return ruleList.Value.ToList();
+        var ruleExpr = ToExpr(rule);
+        if (variables != null)
+            ruleExpr = variables with { In = ruleExpr };
+
+        var result = baseEnv.EvaluateExpr(ruleExpr);
+
+        // Collect all rules from result tree
+        return CollectRules(result as ValueExpr);
     }
 
-    public static EnvironmentValue<IEnumerable<EvaluatedRule>> EvaluateRule(
-        this EvalEnvironment environment,
-        Rule rule
-    )
+    /// <summary>
+    /// Collect all EvaluatedRule instances from a ValueExpr tree.
+    /// </summary>
+    private static List<EvaluatedRule> CollectRules(ValueExpr? expr)
     {
-        var ruleAsExpr = ToExpr(rule);
-        return environment.Evaluate(ruleAsExpr).Map((v, e) => e.GetValidatorState().Rules);
+        if (expr == null) return [];
+
+        var rules = new List<EvaluatedRule>();
+        var seen = new HashSet<ValueExpr>();
+
+        void Collect(ValueExpr ve)
+        {
+            if (!seen.Add(ve)) return;
+
+            if (ve.Data is RuleResultData rrd)
+                rules.Add(rrd.Rule);
+
+            // Also check array values
+            if (ve.Value is ArrayValue av)
+                foreach (var elem in av.Values)
+                    Collect(elem);
+
+            if (ve.Deps != null)
+                foreach (var dep in ve.Deps)
+                    Collect(dep);
+        }
+
+        Collect(expr);
+        return rules;
     }
 
     private static EvalExpr ToExpr(Rule rule)
@@ -210,7 +285,8 @@ public static class RuleValidator
         {
             ForEachRule rulesForEach => DoRulesForEach(rulesForEach),
             SingleRule pathRule => DoPathRule(pathRule),
-            MultiRule multi => DoMultiRule(multi)
+            MultiRule multi => DoMultiRule(multi),
+            _ => throw new ArgumentException($"Unknown rule type: {rule.GetType()}")
         };
 
         EvalExpr DoMultiRule(MultiRule multiRule)
@@ -240,13 +316,13 @@ public record EvaluatedRule(
     object? PathValue,
     ValueExpr Result,
     IEnumerable<Failure> Failures,
-    IEnumerable<EvalError> Errors,
+    IEnumerable<string> Errors,
     string? Message,
     IEnumerable<DataPath> DependentData,
     IDictionary<string, object?> Properties
 )
 {
-    public T GetProperty<T>(string key)
+    public T? GetProperty<T>(string key)
     {
         if (Properties.TryGetValue(key, out var res) && res is T asT)
         {

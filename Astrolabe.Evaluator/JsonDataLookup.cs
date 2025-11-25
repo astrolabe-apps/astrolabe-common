@@ -5,28 +5,12 @@ namespace Astrolabe.Evaluator;
 
 public static class JsonDataLookup
 {
-    public static EvalData FromObject(JsonNode? data)
+    /// <summary>
+    /// Convert a JsonNode to a ValueExpr with paths set up.
+    /// </summary>
+    public static ValueExpr FromObject(JsonNode? data)
     {
-        return new EvalData(
-            ToValue(DataPath.Empty, data),
-            (e, property) =>
-            {
-                var childPath = e.Path != null ? new FieldPath(property, e.Path) : null;
-                if (e.Value is ObjectValue { Properties: var props } && props.TryGetValue(property, out var propValue))
-                {
-                    // Preserve dependencies from parent object when accessing properties
-                    var combinedDeps = new List<ValueExpr>();
-                    if (e.Deps != null) combinedDeps.AddRange(e.Deps);
-                    if (propValue.Deps != null) combinedDeps.AddRange(propValue.Deps);
-                    return propValue with
-                    {
-                        Path = childPath,
-                        Deps = combinedDeps.Count > 0 ? combinedDeps : null
-                    };
-                }
-                return new ValueExpr(null, childPath);
-            }
-        );
+        return ToValue(DataPath.Empty, data);
     }
 
     public static ValueExpr ToValue(DataPath? p, JsonNode? node)
