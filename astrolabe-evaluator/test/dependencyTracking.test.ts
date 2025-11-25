@@ -60,7 +60,7 @@ describe("Parameter Binding Tests", () => {
     // Lambda variable $i is the INDEX
     // Filter where index >= 2 should give [30, 40, 50]
     const exprByIndex = parseEval("nums[$i => $i >= 2]");
-    const [_, resultByIndex] = env.evaluate(exprByIndex);
+    const resultByIndex = env.evaluateExpr(exprByIndex) as ValueExpr;
 
     expect(Array.isArray(resultByIndex.value)).toBe(true);
     const valuesByIndex = (resultByIndex.value as ValueExpr[]).map(

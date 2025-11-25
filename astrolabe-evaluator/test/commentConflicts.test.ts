@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { ValueExpr } from "../src/ast";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";
 
@@ -9,7 +10,7 @@ import { parseEval } from "../src/parseEval";
 function evalExpr(expr: string, data: unknown = {}): unknown {
   const env = basicEnv(data);
   const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
+  const result = env.evaluateExpr(parsed) as ValueExpr;
   return result.value;
 }
 

@@ -1,18 +1,12 @@
 "use client";
 import {
-  addDefaults,
   basicEnv,
-  BasicEvalEnv,
+  collectAllErrors,
   defaultCheckEnv,
-  defaultFullEvaluateExpr,
-  emptyEnvState,
-  EnvValue,
-  EvalEnvState,
-  EvalExpr,
   extractAllPaths,
   nativeType,
   parseEval,
-  PartialEvalEnv,
+  partialEnv,
   printExpr,
   printPath,
   toNative,
@@ -122,17 +116,14 @@ export default function EvalPage() {
             try {
               const exprTree = parseEval(v);
               // Create variables from data fields instead of data context
-              const variables: [string, EvalExpr][] = Object.entries(dv).map(
-                (x) => [x[0], toValue(undefined, x[1])],
+              const variables = Object.fromEntries(
+                Object.entries(dv).map((x) => [x[0], toValue(undefined, x[1])]),
               );
-              const emptyState = emptyEnvState();
-              const env = addDefaults(
-                new PartialEvalEnv(emptyState).withVariables(variables),
-              );
-              const [outEnv, partialResult] = env.evaluateExpr(exprTree);
+              const env = partialEnv().newScope(variables);
+              const partialResult = env.evaluateExpr(exprTree);
               setEvalResult({
                 result: printExpr(partialResult),
-                errors: outEnv.errors,
+                errors: collectAllErrors(partialResult),
               });
             } catch (e) {
               console.error(e);
@@ -142,10 +133,10 @@ export default function EvalPage() {
             const exprTree = parseEval(v);
             const env = basicEnv(dv);
             try {
-              const [outEnv, value] = env.evaluate(exprTree);
+              const value = env.evaluateExpr(exprTree) as ValueExpr;
               setEvalResult({
                 result: showDeps ? toValueDeps(value) : toNative(value),
-                errors: outEnv.errors,
+                errors: collectAllErrors(value),
               });
             } catch (e) {
               console.error(e);

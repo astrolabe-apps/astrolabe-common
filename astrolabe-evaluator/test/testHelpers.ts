@@ -1,6 +1,13 @@
-import { EvalEnv, EvalExpr, ValueExpr, toNative } from "../src/ast";
+import {
+  EvalEnv,
+  EvalExpr,
+  ValueExpr,
+  toNative,
+  collectAllErrors,
+} from "../src/ast";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";
+import { PartialEvalEnv } from "../src";
 
 /**
  * Evaluate an expression and return just the result.
@@ -11,18 +18,23 @@ import { parseEval } from "../src/parseEval";
  * @returns The evaluated result
  */
 export function evalResult(env: EvalEnv, expr: EvalExpr): ValueExpr {
-  const [_, result] = env.evaluate(expr);
+  const result = env.evaluateExpr(expr);
+  if (result.type !== "value") {
+    throw new Error(
+      `Expected ValueExpr but got ${result.type}. Expression did not fully evaluate.`,
+    );
+  }
   return result;
 }
 
-export function evalPartial(env: EvalEnv, expr: EvalExpr): EvalExpr {
-  const [_, result] = env.evaluateExpr(expr);
-  return result;
+export function evalPartial(env: PartialEvalEnv, expr: EvalExpr): EvalExpr {
+  return env.uninline(env.evaluateExpr(expr));
 }
 
 /**
  * Evaluate an expression and return result with errors.
  * Use for tests that need to check error conditions.
+ * Collects errors from the ValueExpr.errors field.
  *
  * @param env - The evaluation environment
  * @param expr - The expression to evaluate
@@ -35,8 +47,14 @@ export function evalWithErrors(
   result: ValueExpr;
   errors: string[];
 } {
-  const [nextEnv, result] = env.evaluate(expr);
-  return { result, errors: nextEnv.errors };
+  const result = env.evaluateExpr(expr);
+  if (result.type !== "value") {
+    throw new Error(
+      `Expected ValueExpr but got ${result.type}. Expression did not fully evaluate.`,
+    );
+  }
+  const errors = collectAllErrors(result);
+  return { result, errors };
 }
 
 /**
@@ -50,7 +68,12 @@ export function evalWithErrors(
 export function evalExpr(expr: string, data: unknown = {}): unknown {
   const env = basicEnv(data);
   const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
+  const result = env.evaluateExpr(parsed);
+  if (result.type !== "value") {
+    throw new Error(
+      `Expected ValueExpr but got ${result.type}. Expression did not fully evaluate.`,
+    );
+  }
   return result.value;
 }
 
@@ -65,7 +88,12 @@ export function evalExpr(expr: string, data: unknown = {}): unknown {
 export function evalExprNative(expr: string, data: unknown = {}): unknown {
   const env = basicEnv(data);
   const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
+  const result = env.evaluateExpr(parsed);
+  if (result.type !== "value") {
+    throw new Error(
+      `Expected ValueExpr but got ${result.type}. Expression did not fully evaluate.`,
+    );
+  }
   return toNative(result);
 }
 
@@ -80,7 +108,12 @@ export function evalExprNative(expr: string, data: unknown = {}): unknown {
 export function evalToArray(expr: string, data: unknown = {}): unknown[] {
   const env = basicEnv(data);
   const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
+  const result = env.evaluateExpr(parsed);
+  if (result.type !== "value") {
+    throw new Error(
+      `Expected ValueExpr but got ${result.type}. Expression did not fully evaluate.`,
+    );
+  }
   const nativeResult = toNative(result);
   if (!Array.isArray(nativeResult)) {
     throw new Error("Expected array result");
