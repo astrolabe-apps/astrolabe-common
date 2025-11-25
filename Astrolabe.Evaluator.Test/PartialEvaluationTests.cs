@@ -1,45 +1,19 @@
 using System.Collections;
 using System.Text.Json.Nodes;
-using Astrolabe.Evaluator.Functions;
 
 namespace Astrolabe.Evaluator.Test;
 
 public class PartialEvaluationTests
 {
-    private static EvalEnvironment CreateEnv(JsonObject? data = null)
-    {
-        // When data is null, use UndefinedData for symbolic evaluation (property access returns PropertyExpr)
-        var evalData = data == null
-            ? EvalData.UndefinedData()
-            : JsonDataLookup.FromObject(data);
-        var state = EvalEnvironmentState.EmptyState(evalData);
-        return new PartialEvalEnvironment(state).AddDefaultFunctions();
-    }
-
-    private static EvalEnvironment CreateBasicEnv(JsonObject? data = null)
-    {
-        // Basic environment for full evaluation (returns errors for unknown variables)
-        var evalData = data == null
-            ? EvalData.UndefinedData()
-            : JsonDataLookup.FromObject(data);
-        var state = EvalEnvironmentState.EmptyState(evalData);
-        return EvalEnvironment.DataFrom(evalData).AddDefaultFunctions();
-    }
-
-    private static EvalExpr Parse(string expr)
-    {
-        return ExprParser.Parse(expr);
-    }
-
     #region Constant Folding Tests
 
     [Fact]
     public void PartialEval_ArithmeticExpression_FullyEvaluates()
     {
-        var env = CreateEnv();
-        var expr = Parse("5 + 3 * 2");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("5 + 3 * 2");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         var value = ((ValueExpr)result).Value;
@@ -49,10 +23,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_NestedArithmetic_FullyEvaluates()
     {
-        var env = CreateEnv();
-        var expr = Parse("(10 - 5) * (2 + 3)");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("(10 - 5) * (2 + 3)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         var value = ((ValueExpr)result).Value;
@@ -62,10 +36,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ComparisonWithConstants_FullyEvaluates()
     {
-        var env = CreateEnv();
-        var expr = Parse("5 > 3");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("5 > 3");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         var value = ((ValueExpr)result).Value;
@@ -79,10 +53,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_UnknownVariable_ReturnsVarExpr()
     {
-        var env = CreateEnv();
-        var expr = Parse("$unknownVar");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$unknownVar");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<VarExpr>(result);
         Assert.Equal("unknownVar", ((VarExpr)result).Name);
@@ -91,10 +65,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ArithmeticWithUnknownVariable_ReturnsCallExpr()
     {
-        var env = CreateEnv();
-        var expr = Parse("$x + 5");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$x + 5");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
         var call = (CallExpr)result;
@@ -107,10 +81,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ComparisonWithUnknownVariable_ReturnsCallExpr()
     {
-        var env = CreateEnv();
-        var expr = Parse("$x > 10");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$x > 10");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
         var call = (CallExpr)result;
@@ -120,10 +94,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_MultipleUnknownVariables_ReturnsSymbolicExpression()
     {
-        var env = CreateEnv();
-        var expr = Parse("$x + $y * 2");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$x + $y * 2");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
         var call = (CallExpr)result;
@@ -143,10 +117,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ConditionalWithTrueCondition_SelectsThenBranch()
     {
-        var env = CreateEnv();
-        var expr = Parse("true ? 100 : 200");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("true ? 100 : 200");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.Equal(100.0, (double) ((ValueExpr)result).Value);
@@ -155,10 +129,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ConditionalWithFalseCondition_SelectsElseBranch()
     {
-        var env = CreateEnv();
-        var expr = Parse("false ? 100 : 200");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("false ? 100 : 200");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.Equal(200.0, (double) ((ValueExpr)result).Value);
@@ -167,10 +141,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ConditionalWithUnknownCondition_ReturnsSymbolicCall()
     {
-        var env = CreateEnv();
-        var expr = Parse("$unknown ? 100 : 200");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$unknown ? 100 : 200");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
         var call = (CallExpr)result;
@@ -181,11 +155,11 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ConditionalWithTrueCondition_OnlyEvaluatesThenBranch()
     {
-        var env = CreateEnv();
+        var env = TestHelpers.CreatePartialEnv();
         // The else branch has an unknown variable, but shouldn't be evaluated
-        var expr = Parse("true ? 42 : $undefinedVar");
+        var expr = TestHelpers.Parse("true ? 42 : $undefinedVar");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.Equal(42.0, (double) ((ValueExpr)result).Value);
@@ -194,10 +168,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ConditionalWithPartiallyEvaluatedBranches_ReturnsPartialExpression()
     {
-        var env = CreateEnv();
-        var expr = Parse("$cond ? ($x + 5) : ($y * 2)");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$cond ? ($x + 5) : ($y * 2)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
         var call = (CallExpr)result;
@@ -216,10 +190,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_LetWithConstant_InlinesAndSimplifies()
     {
-        var env = CreateEnv();
-        var expr = Parse("let $x := 5 in $x + 3");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("let $x := 5 in $x + 3");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should fully evaluate to 8
         Assert.IsType<ValueExpr>(result);
@@ -229,10 +203,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_LetWithMultipleConstants_InlinesAll()
     {
-        var env = CreateEnv();
-        var expr = Parse("let $x := 5, $y := 3 in $x * $y");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("let $x := 5, $y := 3 in $x * $y");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.Equal(15.0, (double) ((ValueExpr)result).Value);
@@ -241,10 +215,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_LetWithUnusedVariable_EliminatesDeadCode()
     {
-        var env = CreateEnv();
-        var expr = Parse("let $x := 5, $unused := $unknown in $x + 3");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("let $x := 5, $unused := $unknown in $x + 3");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should evaluate to 8, eliminating the unused variable
         Assert.IsType<ValueExpr>(result);
@@ -254,10 +228,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_LetWithUnknownVariable_KeepsSymbolicBinding()
     {
-        var env = CreateEnv();
-        var expr = Parse("let $x := $unknown in $x + 5");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("let $x := $unknown in $x + 5");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // SimplifyLet inlines the variable reference since it's simple, resulting in CallExpr
         Assert.IsType<CallExpr>(result);
@@ -269,10 +243,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_LetWithChainedReferences_InlinesWherePossible()
     {
-        var env = CreateEnv();
-        var expr = Parse("let $x := 5, $y := $x + 3, $z := $y * 2 in $z");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("let $x := 5, $y := $x + 3, $z := $y * 2 in $z");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should fully evaluate to 16
         Assert.IsType<ValueExpr>(result);
@@ -282,10 +256,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_LetWithPartiallyKnownExpression_SimplifiesPartially()
     {
-        var env = CreateEnv();
-        var expr = Parse("let $x := 5 + 3, $y := $x + $unknown in $y");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("let $x := 5 + 3, $y := $x + $unknown in $y");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should simplify to: let $y := 8 + $unknown in $y
         Assert.IsType<LetExpr>(result);
@@ -299,10 +273,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_NestedLet_SimplifiesCorrectly()
     {
-        var env = CreateEnv();
-        var expr = Parse("let $x := 5 in let $y := $x + 3 in $y * 2");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("let $x := 5 in let $y := $x + 3 in $y * 2");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should fully evaluate to 16
         Assert.IsType<ValueExpr>(result);
@@ -312,10 +286,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_LetWithUnusedVariableInChain_EliminatesTransitively()
     {
-        var env = CreateEnv();
-        var expr = Parse("let $x := $unknown, $y := $x + 5, $z := 10 in $z");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("let $x := $unknown, $y := $x + 5, $z := 10 in $z");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should eliminate both $x and $y as they're not used in the body
         Assert.IsType<ValueExpr>(result);
@@ -329,10 +303,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_AndWithFalseFirst_ShortCircuits()
     {
-        var env = CreateEnv();
-        var expr = Parse("false and $unknown");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("false and $unknown");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.False((bool)((ValueExpr)result).Value!);
@@ -341,10 +315,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_AndWithTrueFirst_EvaluatesSecond()
     {
-        var env = CreateEnv();
-        var expr = Parse("true and $unknown");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("true and $unknown");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should simplify to just $unknown (true is identity for AND)
         Assert.IsType<VarExpr>(result);
@@ -354,10 +328,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_OrWithTrueFirst_ShortCircuits()
     {
-        var env = CreateEnv();
-        var expr = Parse("true or $unknown");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("true or $unknown");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.True((bool)((ValueExpr)result).Value!);
@@ -366,10 +340,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_OrWithFalseFirst_EvaluatesSecond()
     {
-        var env = CreateEnv();
-        var expr = Parse("false or $unknown");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("false or $unknown");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should simplify to just $unknown (false is identity for OR)
         Assert.IsType<VarExpr>(result);
@@ -379,10 +353,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_AndWithMultipleArgs_ShortCircuitsAtFirstFalse()
     {
-        var env = CreateEnv();
-        var expr = Parse("true and true and false and $unknown");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("true and true and false and $unknown");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.False((bool)((ValueExpr)result).Value!);
@@ -395,10 +369,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_MapWithKnownArray_EvaluatesElements()
     {
-        var env = CreateEnv();
-        var expr = Parse("$map([1, 2, 3], $x => $x * 2)");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$map([1, 2, 3], $x => $x * 2)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Map uses Evaluate internally, so it can evaluate simple expressions
         Assert.IsType<ValueExpr>(result);
@@ -412,10 +386,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_MapWithUnknownArray_ReturnsSymbolicCall()
     {
-        var env = CreateEnv();
-        var expr = Parse("$map($unknownArray, $x => $x * 2)");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$map($unknownArray, $x => $x * 2)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
         var call = (CallExpr)result;
@@ -425,10 +399,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_MapWithPartiallyEvaluableExpression_ReturnsArrayExpr()
     {
-        var env = CreateEnv();
-        var expr = Parse("$map([1, 2, 3], $x => $x + $unknown)");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$map([1, 2, 3], $x => $x + $unknown)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Map uses EvaluatePartial, so when $x + $unknown can't be fully evaluated,
         // it returns symbolic CallExpr for each element
@@ -442,10 +416,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_FilterWithKnownArray_FiltersElements()
     {
-        var env = CreateEnv();
-        var expr = Parse("[1, 2, 3, 4, 5][$this() > 2]");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("[1, 2, 3, 4, 5][$this() > 2]");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
         
         // Filter uses Evaluate internally
         Assert.IsType<ValueExpr>(result);
@@ -456,10 +430,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_FilterWithUnknownArray_ReturnsSymbolicCall()
     {
-        var env = CreateEnv();
-        var expr = Parse("$unknownArray[$x > 2]");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$unknownArray[$x > 2]");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
         Assert.Equal("[", ((CallExpr)result).Function);
@@ -468,10 +442,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_FirstWithKnownArray_FindsElement()
     {
-        var env = CreateEnv();
-        var expr = Parse("$first([1, 2, 3, 4, 5], $x => $x > 3)");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$first([1, 2, 3, 4, 5], $x => $x > 3)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // First uses Evaluate internally and can find matching elements
         Assert.IsType<ValueExpr>(result);
@@ -482,10 +456,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_FirstWithUnknownArray_ReturnsSymbolicCall()
     {
-        var env = CreateEnv();
-        var expr = Parse("$first($unknownArray, $x => $x > 3)");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$first($unknownArray, $x => $x > 3)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // First returns a ValueExpr with null because array is unknown
         Assert.IsType<ValueExpr>(result);
@@ -498,40 +472,40 @@ public class PartialEvaluationTests
     [Fact]
     public void Evaluate_ExpressionWithUnknownVariable_ReturnsError()
     {
-        var env = CreateBasicEnv();
-        var expr = Parse("$unknown");
+        var env = TestHelpers.CreateBasicEnv();
+        var expr = TestHelpers.Parse("$unknown");
 
-        var (resultEnv, result) = env.Evaluate(expr);
+        var (result, errors) = env.EvalWithErrors(expr);
 
         Assert.Null(result.Value);
-        Assert.NotEmpty(resultEnv.Errors);
-        Assert.Contains("unknown", resultEnv.Errors.First().Message);
+        Assert.NotEmpty(errors);
+        Assert.Contains("unknown", errors.First().Message);
     }
 
     [Fact]
     public void Evaluate_LetWithUnknownVariable_ReturnsError()
     {
-        var env = CreateBasicEnv();
-        var expr = Parse("let $x := $unknown in $x + 5");
+        var env = TestHelpers.CreateBasicEnv();
+        var expr = TestHelpers.Parse("let $x := $unknown in $x + 5");
 
-        var (resultEnv, result) = env.Evaluate(expr);
+        var (result, errors) = env.EvalWithErrors(expr);
 
         Assert.Null(result.Value);
-        Assert.NotEmpty(resultEnv.Errors);
+        Assert.NotEmpty(errors);
     }
 
     [Fact]
     public void EvaluatePartial_ThenEvaluate_ProducesConsistentResults()
     {
-        var partialEnv = CreateEnv();
-        var basicEnv = CreateBasicEnv();
-        var expr = Parse("let $x := 5 in $x * 2");
+        var partialEnv = TestHelpers.CreatePartialEnv();
+        var basicEnv = TestHelpers.CreateBasicEnv();
+        var expr = TestHelpers.Parse("let $x := 5 in $x * 2");
 
         // Partial evaluation
-        var (env1, partialResult) = partialEnv.EvaluateExpr(expr);
+        var partialResult = partialEnv.EvalPartial(expr);
 
         // Full evaluation
-        var (env2, fullResult) = basicEnv.Evaluate(expr);
+        var fullResult = basicEnv.EvalResult(expr);
 
         // Both should produce the same result
         Assert.IsType<ValueExpr>(partialResult);
@@ -545,10 +519,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ComplexExpressionWithMixedKnownUnknown_SimplifiesCorrectly()
     {
-        var env = CreateEnv();
-        var expr = Parse("let $a := 10, $b := $unknown, $c := $a * 2 in ($c + $b) > 15");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("let $a := 10, $b := $unknown, $c := $a * 2 in ($c + $b) > 15");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // SimplifyLet inlines all variables, resulting in: (20 + $unknown) > 15
         Assert.IsType<CallExpr>(result);
@@ -559,10 +533,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ConditionalWithConstantFoldingInBranches_SelectsAndSimplifies()
     {
-        var env = CreateEnv();
-        var expr = Parse("(5 > 3) ? (10 + 5) : (20 * 2)");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("(5 > 3) ? (10 + 5) : (20 * 2)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should fully evaluate to 15
         Assert.IsType<ValueExpr>(result);
@@ -572,15 +546,15 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_NestedLetsWithPartialEvaluation_SimplifiesCorrectly()
     {
-        var env = CreateEnv();
-        var expr = Parse(
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse(
             "let $x := 5 in " +
             "let $y := $x + 3 in " +
             "let $z := $unknown in " +
             "$y * 2 + $z"
         );
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // SimplifyLet inlines all variables, resulting in: 16 + $unknown
         Assert.IsType<CallExpr>(result);
@@ -591,10 +565,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ArrayWithMixedConstantsAndVariables_PartiallyEvaluates()
     {
-        var env = CreateEnv();
-        var expr = Parse("[1 + 1, 2 * 3, $unknown, 4 + 5]");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("[1 + 1, 2 * 3, $unknown, 4 + 5]");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ArrayExpr>(result);
         var arrayExpr = (ArrayExpr)result;
@@ -621,10 +595,10 @@ public class PartialEvaluationTests
     public void PartialEval_PropertyAccessWithData_FullyEvaluates()
     {
         var data = new JsonObject { ["value"] = 42 };
-        var env = CreateEnv(data);
-        var expr = Parse("value");
+        var env = TestHelpers.CreatePartialEnv(data);
+        var expr = TestHelpers.Parse("value");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         // JSON numbers are Int32
@@ -635,10 +609,10 @@ public class PartialEvaluationTests
     public void PartialEval_PropertyAccessWithArithmetic_FullyEvaluates()
     {
         var data = new JsonObject { ["x"] = 10, ["y"] = 5 };
-        var env = CreateEnv(data);
-        var expr = Parse("x + y * 2");
+        var env = TestHelpers.CreatePartialEnv(data);
+        var expr = TestHelpers.Parse("x + y * 2");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         // JSON integers become doubles through arithmetic operations
@@ -653,10 +627,10 @@ public class PartialEvaluationTests
     public void PartialEval_PropertyAccessWithoutData_ReturnsPropertyExpr()
     {
         // Create environment with no data (null data)
-        var env = CreateEnv(null);
-        var expr = Parse("name");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("name");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<PropertyExpr>(result);
         Assert.Equal("name", ((PropertyExpr)result).Property);
@@ -669,12 +643,12 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_KnownVariable_EvaluatesFully()
     {
-        var env = CreateEnv(null).WithVariables([
+        var env = TestHelpers.CreatePartialEnv(null).WithVariables([
             new KeyValuePair<string, EvalExpr>("x", new ValueExpr(42))
         ]);
-        var expr = Parse("$x");
+        var expr = TestHelpers.Parse("$x");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.Equal(42, ((ValueExpr)result).Value);
@@ -683,12 +657,12 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_KnownVariableInExpression_EvaluatesPartially()
     {
-        var env = CreateEnv(null).WithVariables([
+        var env = TestHelpers.CreatePartialEnv(null).WithVariables([
             new KeyValuePair<string, EvalExpr>("x", new ValueExpr(10))
         ]);
-        var expr = Parse("$x + $unknown");
+        var expr = TestHelpers.Parse("$x + $unknown");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
         var call = (CallExpr)result;
@@ -702,10 +676,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_InnerVariableShadowsOuter()
     {
-        var env = CreateEnv(null);
-        var expr = Parse("let $x := 5 in let $x := 10 in $x");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("let $x := 5 in let $x := 10 in $x");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.Equal(10.0, (double)((ValueExpr)result).Value!);
@@ -714,10 +688,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ShadowingWithPartialEvaluation()
     {
-        var env = CreateEnv(null);
-        var expr = Parse("let $x := 5 in let $x := $x + 3 in $x");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("let $x := 5 in let $x := $x + 3 in $x");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.Equal(8.0, (double)((ValueExpr)result).Value!);
@@ -730,10 +704,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ArrayWithUnknownElement_ReturnsArrayExpr()
     {
-        var env = CreateEnv(null);
-        var expr = Parse("[1, 2, $unknown, 4]");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("[1, 2, $unknown, 4]");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ArrayExpr>(result);
         var arrayExpr = (ArrayExpr)result;
@@ -746,10 +720,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ArrayWithMixedSymbolicElements_PartiallyEvaluates()
     {
-        var env = CreateEnv(null);
-        var expr = Parse("[1 + 1, $x, 3 * 2]");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("[1 + 1, $x, 3 * 2]");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ArrayExpr>(result);
         var arrayExpr = (ArrayExpr)result;
@@ -767,10 +741,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_SumOverSymbolicArray_ReturnsSymbolicCall()
     {
-        var env = CreateEnv(null);
-        var expr = Parse("$sum($unknownArray)");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("$sum($unknownArray)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
         var call = (CallExpr)result;
@@ -780,10 +754,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_CountWithSymbolicArray_ReturnsSymbolicCall()
     {
-        var env = CreateEnv(null);
-        var expr = Parse("$count($unknownArray)");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("$count($unknownArray)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
     }
@@ -791,14 +765,14 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ElemWithSymbolicArrayIndex_ReturnsSymbolicCall()
     {
-        var env = CreateEnv(null).WithVariables([
+        var env = TestHelpers.CreatePartialEnv(null).WithVariables([
             new KeyValuePair<string, EvalExpr>("arr", new ValueExpr(new ArrayValue([
                 new ValueExpr(1), new ValueExpr(2), new ValueExpr(3)
             ])))
         ]);
-        var expr = Parse("$elem($arr, $unknownIndex)");
+        var expr = TestHelpers.Parse("$elem($arr, $unknownIndex)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
     }
@@ -806,10 +780,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ElemWithSymbolicArray_ReturnsSymbolicCall()
     {
-        var env = CreateEnv(null);
-        var expr = Parse("$elem($unknownArray, 0)");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("$elem($unknownArray, 0)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<CallExpr>(result);
     }
@@ -817,10 +791,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ObjectFunctionWithSymbolicValue_ReturnsCallExpr()
     {
-        var env = CreateEnv(null);
-        var expr = Parse("$object(\"key\", $unknownValue)");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("$object(\"key\", $unknownValue)");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should return a CallExpr since value is symbolic
         Assert.IsType<CallExpr>(result);
@@ -836,10 +810,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_NullHandling_EvaluatesCorrectly()
     {
-        var env = CreateEnv(null);
-        var expr = Parse("null + 5");
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse("null + 5");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // null + anything should return null
         Assert.IsType<ValueExpr>(result);
@@ -849,10 +823,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_NullWithSymbolicInBinaryOp_SimplifiesToNull()
     {
-        var env = CreateEnv();
-        var expr = Parse("$x + null");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$x + null");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // $x + null should simplify to null
         Assert.IsType<ValueExpr>(result);
@@ -862,10 +836,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_NullWithSymbolicInComparison_SimplifiesToNull()
     {
-        var env = CreateEnv();
-        var expr = Parse("$x <= null");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$x <= null");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // $x <= null should simplify to null
         Assert.IsType<ValueExpr>(result);
@@ -875,10 +849,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_NullWithSymbolicInAnd_SimplifiesToNull()
     {
-        var env = CreateEnv();
-        var expr = Parse("$x and null");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$x and null");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // $x and null should simplify to null
         Assert.IsType<ValueExpr>(result);
@@ -888,10 +862,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_NullWithSymbolicInOr_SimplifiesToNull()
     {
-        var env = CreateEnv();
-        var expr = Parse("null or $y");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("null or $y");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // null or $y should simplify to null
         Assert.IsType<ValueExpr>(result);
@@ -901,12 +875,12 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_ComparisonInBooleanExpr_SubstitutesDefinedVariables()
     {
-        var env = CreateEnv().WithVariables([
+        var env = TestHelpers.CreatePartialEnv().WithVariables([
             new KeyValuePair<string, EvalExpr>("FreightMaxWidth", new ValueExpr(12))
         ]);
-        var expr = Parse("height <= $FreightMaxHeight and width <= $FreightMaxWidth");
+        var expr = TestHelpers.Parse("height <= $FreightMaxHeight and width <= $FreightMaxWidth");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should partially evaluate: FreightMaxWidth should be substituted
         var printed = PrintExpr.Print(result);
@@ -918,10 +892,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_AndWithTrueFirst_SimplifiesToSecondArg()
     {
-        var env = CreateEnv();
-        var expr = Parse("true and $unknown");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("true and $unknown");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should simplify to just $unknown
         Assert.IsType<VarExpr>(result);
@@ -931,10 +905,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_OrWithFalseFirst_SimplifiesToSecondArg()
     {
-        var env = CreateEnv();
-        var expr = Parse("false or $unknown");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("false or $unknown");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should simplify to just $unknown
         Assert.IsType<VarExpr>(result);
@@ -944,10 +918,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_AndWithTrueAndSymbolic_FiltersOutTrue()
     {
-        var env = CreateEnv();
-        var expr = Parse("$x and true and $y");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$x and true and $y");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should simplify to: $x and $y (true filtered out)
         var printed = PrintExpr.Print(result);
@@ -959,10 +933,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_OrWithFalseAndSymbolic_FiltersOutFalse()
     {
-        var env = CreateEnv();
-        var expr = Parse("$x or false or $y");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$x or false or $y");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         // Should simplify to: $x or $y (false filtered out)
         var printed = PrintExpr.Print(result);
@@ -974,10 +948,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_AndAllIdentityValues_ReturnsTrue()
     {
-        var env = CreateEnv();
-        var expr = Parse("true and true and true");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("true and true and true");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.True((bool)((ValueExpr)result).Value!);
@@ -986,10 +960,10 @@ public class PartialEvaluationTests
     [Fact]
     public void PartialEval_OrAllIdentityValues_ReturnsFalse()
     {
-        var env = CreateEnv();
-        var expr = Parse("false or false or false");
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("false or false or false");
 
-        var (_, result) = env.EvaluateExpr(expr);
+        var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
         Assert.False((bool)((ValueExpr)result).Value!);

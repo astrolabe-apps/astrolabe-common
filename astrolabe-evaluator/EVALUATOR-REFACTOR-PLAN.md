@@ -551,6 +551,54 @@ export function evalResult<T = EvalExpr>(env: EvalEnv, expr: EvalExpr): T {
 
 This abstraction layer allows the refactor to proceed without touching most test code.
 
+### C# Test Helpers
+
+The same approach has been implemented for the C# evaluator in `Astrolabe.Evaluator.Test/TestHelpers.cs`:
+
+**9 helper methods created:**
+
+1. **`EvalResult(env, expr)`** - Extension method returning just the `ValueExpr` result
+2. **`EvalPartial(env, expr)`** - Extension method for partial evaluation (returns `EvalExpr`)
+3. **`EvalWithErrors(env, expr)`** - Returns tuple with result and errors
+4. **`EvalExpr(string, data)`** - Static helper for simple string evaluation
+5. **`EvalExprNative(string, data)`** - Returns native C# objects via `ToNative()`
+6. **`EvalToArray(string, data)`** - Returns array results with validation
+7. **`CreateBasicEnv(data)`** - Creates full evaluation environment
+8. **`CreatePartialEnv(data)`** - Creates partial evaluation environment
+9. **`Parse(string)`** - Convenience wrapper for `ExprParser.Parse()`
+
+**Key C# differences from TypeScript:**
+
+- Uses **extension methods** on `EvalEnvironment` for cleaner syntax
+- C# tuple destructuring: `var (env, result) = env.Evaluate(expr)`
+- Stronger type safety with explicit `ValueExpr`, `CallExpr`, etc.
+- Uses `System.Text.Json.Nodes.JsonObject` for test data
+- Built-in `ToNative()` method on `ValueExpr` for native conversion
+
+**C# Migration Statistics:**
+
+- **11 test files** in Astrolabe.Evaluator.Test
+- **~137 evaluation calls** to migrate (optional)
+- **5,373 lines** of test code total
+- Existing helpers in 6 files can be consolidated
+
+The C# helpers currently use the old API internally:
+```csharp
+public static ValueExpr EvalResult(this EvalEnvironment env, EvalExpr expr)
+{
+    var (_, result) = env.Evaluate(expr);
+    return result;
+}
+```
+
+After refactor, they'll use the new direct-return API:
+```csharp
+public static ValueExpr EvalResult(this EvalEnvironment env, EvalExpr expr)
+{
+    return env.Evaluate(expr);
+}
+```
+
 ---
 
 ## Testing Strategy
