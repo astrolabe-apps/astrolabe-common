@@ -3,12 +3,12 @@ import {
   EmptyPath,
   EvalEnv,
   EvalExpr,
+  exprWithError,
   getPropertyFromValue,
-  SourceLocation,
   toValue,
   valueExpr,
   ValueExpr,
-  valueExprWithError,
+  varExpr,
 } from "./ast";
 
 /**
@@ -32,7 +32,7 @@ export class BasicEvalEnv extends EvalEnv {
    * Evaluate a variable by name with caching.
    * Each scope only caches its own local variables.
    */
-  private evaluateVariable(name: string, location?: SourceLocation): EvalExpr {
+  private evaluateVariable(name: string, varExpr: EvalExpr): EvalExpr {
     // If var is in THIS scope, check/update THIS cache
     if (name in this.localVars) {
       const cached = this.evalCache.get(name);
@@ -45,11 +45,9 @@ export class BasicEvalEnv extends EvalEnv {
     }
     // Delegate to parent - parent caches its own vars
     if (this.parent) {
-      return this.parent.evaluateVariable(name, location);
+      return this.parent.evaluateVariable(name, varExpr);
     }
-    return valueExprWithError(null, `Variable $${name} not declared`, {
-      location,
-    });
+    return exprWithError(varExpr, `Variable $${name} not declared`);
   }
 
   newScope(vars: Record<string, EvalExpr>): BasicEvalEnv {
@@ -60,7 +58,7 @@ export class BasicEvalEnv extends EvalEnv {
   getCurrentValue(): EvalExpr | undefined {
     // Check if _ is defined in this scope or parent scopes
     if ("_" in this.localVars) {
-      return this.evaluateVariable("_");
+      return this.evaluateVariable("_", varExpr("_"));
     }
     return this.parent?.getCurrentValue();
   }
@@ -68,7 +66,7 @@ export class BasicEvalEnv extends EvalEnv {
   evaluateExpr(expr: EvalExpr): EvalExpr {
     switch (expr.type) {
       case "var":
-        return this.evaluateVariable(expr.variable, expr.location);
+        return this.evaluateVariable(expr.variable, expr);
 
       case "let": {
         // Create scope with unevaluated bindings
@@ -83,12 +81,11 @@ export class BasicEvalEnv extends EvalEnv {
         return expr;
 
       case "call": {
-        const funcExpr = this.evaluateVariable(expr.function, expr.location);
+        const funcExpr = this.evaluateVariable(expr.function, expr);
         if (funcExpr.type !== "value" || !funcExpr.function) {
-          return valueExprWithError(
-            null,
+          return exprWithError(
+            expr,
             "Function " + expr.function + " not declared or not a function",
-            { location: expr.location },
           );
         }
         return funcExpr.function.eval(this, expr);
@@ -97,10 +94,9 @@ export class BasicEvalEnv extends EvalEnv {
       case "property": {
         const currentValue = this.getCurrentValue();
         if (!currentValue || currentValue.type !== "value") {
-          return valueExprWithError(
-            null,
+          return exprWithError(
+            expr,
             "Property " + expr.property + " cannot be accessed without data",
-            { location: expr.location },
           );
         }
         return this.evaluateExpr(
@@ -119,10 +115,9 @@ export class BasicEvalEnv extends EvalEnv {
 
       case "lambda":
         // Lambdas are evaluated when called, not here
-        return valueExprWithError(
-          null,
+        return exprWithError(
+          expr,
           "Lambda expressions cannot be evaluated directly",
-          { location: expr.location },
         );
 
       default:

@@ -17,7 +17,7 @@ public class PartialEvaluationTests
 
         Assert.IsType<ValueExpr>(result);
         var value = ((ValueExpr)result).Value;
-        Assert.Equal(11.0, (double)value!);
+        TestHelpers.AssertNumericEqual(11, value);
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public class PartialEvaluationTests
 
         Assert.IsType<ValueExpr>(result);
         var value = ((ValueExpr)result).Value;
-        Assert.Equal(25.0, (double)value!);
+        TestHelpers.AssertNumericEqual(25, value);
     }
 
     [Fact]
@@ -123,7 +123,7 @@ public class PartialEvaluationTests
         var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(100.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(100, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public class PartialEvaluationTests
         var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(200.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(200, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public class PartialEvaluationTests
         var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(42.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(42, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -197,7 +197,7 @@ public class PartialEvaluationTests
 
         // Should fully evaluate to 8
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(8.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(8, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public class PartialEvaluationTests
         var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(15.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(15, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -222,7 +222,7 @@ public class PartialEvaluationTests
 
         // Should evaluate to 8, eliminating the unused variable
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(8.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(8, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -250,7 +250,7 @@ public class PartialEvaluationTests
 
         // Should fully evaluate to 16
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(16.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(16, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -269,7 +269,7 @@ public class PartialEvaluationTests
         Assert.Equal("+", callExpr.Function);
         // First arg should be 8
         Assert.IsType<ValueExpr>(callExpr.Args[0]);
-        Assert.Equal(8.0, ((ValueExpr)callExpr.Args[0]).Value);
+        TestHelpers.AssertNumericEqual(8, ((ValueExpr)callExpr.Args[0]).Value);
         // Second arg should be $unknown
         Assert.IsType<VarExpr>(callExpr.Args[1]);
     }
@@ -284,7 +284,7 @@ public class PartialEvaluationTests
 
         // Should fully evaluate to 16
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(16.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(16, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -297,7 +297,7 @@ public class PartialEvaluationTests
 
         // Should eliminate both $x and $y as they're not used in the body
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(10.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(10, ((ValueExpr)result).Value);
     }
 
     #endregion
@@ -424,11 +424,11 @@ public class PartialEvaluationTests
         var expr = TestHelpers.Parse("[1, 2, 3, 4, 5][$this() > 2]");
 
         var result = env.EvalPartial(expr);
-        
+
         // Filter uses Evaluate internally
         Assert.IsType<ValueExpr>(result);
         var resultValue = result.AsValue().ToNative();
-        Assert.Equal([3.0d, 4.0d, 5.0d], ((IEnumerable) resultValue).Cast<double>());
+        Assert.Equal([3L, 4L, 5L], ((IEnumerable) resultValue).Cast<long>());
     }
 
     [Fact]
@@ -547,7 +547,7 @@ public class PartialEvaluationTests
 
         // Should fully evaluate to 15
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(15.0, (double) ((ValueExpr)result).Value);
+        TestHelpers.AssertNumericEqual(15, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -583,15 +583,15 @@ public class PartialEvaluationTests
 
         // First three should be values, last should be unknown
         Assert.IsType<ValueExpr>(arrayExpr.Values.ElementAt(0));
-        Assert.Equal(2.0, (double) ((ValueExpr)arrayExpr.Values.ElementAt(0)).Value);
+        TestHelpers.AssertNumericEqual(2, ((ValueExpr)arrayExpr.Values.ElementAt(0)).Value);
 
         Assert.IsType<ValueExpr>(arrayExpr.Values.ElementAt(1));
-        Assert.Equal(6.0, (double) ((ValueExpr)arrayExpr.Values.ElementAt(1)).Value);
+        TestHelpers.AssertNumericEqual(6, ((ValueExpr)arrayExpr.Values.ElementAt(1)).Value);
 
         Assert.IsType<VarExpr>(arrayExpr.Values.ElementAt(2));
 
         Assert.IsType<ValueExpr>(arrayExpr.Values.ElementAt(3));
-        Assert.Equal(9.0, (double) ((ValueExpr)arrayExpr.Values.ElementAt(3)).Value);
+        TestHelpers.AssertNumericEqual(9, ((ValueExpr)arrayExpr.Values.ElementAt(3)).Value);
     }
 
     #endregion
@@ -622,8 +622,8 @@ public class PartialEvaluationTests
         var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
-        // JSON integers become doubles through arithmetic operations
-        Assert.Equal(20.0, (double)((ValueExpr)result).Value!);
+        // JSON integers become longs through arithmetic operations
+        TestHelpers.AssertNumericEqual(20, ((ValueExpr)result).Value);
     }
 
     #endregion
@@ -685,7 +685,7 @@ public class PartialEvaluationTests
         var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(10.0, (double)((ValueExpr)result).Value!);
+        TestHelpers.AssertNumericEqual(10, ((ValueExpr)result).Value);
     }
 
     [Fact]
@@ -700,7 +700,7 @@ public class PartialEvaluationTests
         var result = env.EvalPartial(expr);
 
         Assert.IsType<ValueExpr>(result);
-        Assert.Equal(8.0, (double)((ValueExpr)result).Value!);
+        TestHelpers.AssertNumericEqual(8, ((ValueExpr)result).Value);
     }
 
     [Fact(Skip = "TODO: Implement circular reference detection - currently causes stack overflow")]

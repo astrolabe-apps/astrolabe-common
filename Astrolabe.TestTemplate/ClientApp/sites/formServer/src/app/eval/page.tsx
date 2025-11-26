@@ -1,9 +1,9 @@
 "use client";
 import {
   basicEnv,
-  collectAllErrors,
   defaultCheckEnv,
   extractAllPaths,
+  formatErrorsWithLocations,
   nativeType,
   parseEval,
   partialEnv,
@@ -124,7 +124,7 @@ export default function EvalPage() {
               const partialResult = env.uninline(env.evaluateExpr(exprTree));
               setEvalResult({
                 result: printExpr(partialResult),
-                errors: collectAllErrors(partialResult),
+                errors: formatErrorsWithLocations(partialResult, formatLocation),
               });
             } catch (e) {
               console.error(e);
@@ -137,7 +137,7 @@ export default function EvalPage() {
               const value = env.evaluateExpr(exprTree) as ValueExpr;
               setEvalResult({
                 result: showDeps ? toValueDeps(value) : toNative(value),
-                errors: collectAllErrors(value),
+                errors: formatErrorsWithLocations(value, formatLocation),
               });
             } catch (e) {
               console.error(e);
@@ -231,6 +231,11 @@ export default function EvalPage() {
       editor.value?.destroy();
     }
   }
+}
+
+function formatLocation(loc: { start: number; end: number; sourceFile?: string }): string {
+  const file = loc.sourceFile ?? "input";
+  return `${file}:${loc.start}-${loc.end}`;
 }
 
 function toValueDeps({ value, path, deps }: ValueExpr): unknown {

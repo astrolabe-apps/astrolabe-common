@@ -142,4 +142,26 @@ public static class TestHelpers
     {
         return ExprParser.Parse(expr);
     }
+
+    /// <summary>
+    /// Assert that a numeric result equals the expected value.
+    /// Handles int, long, and double comparisons transparently.
+    /// </summary>
+    public static void AssertNumericEqual(double expected, object? actual, double precision = 0.0001)
+    {
+        Assert.NotNull(actual);
+        var actualDouble = Convert.ToDouble(actual);
+        Assert.Equal(expected, actualDouble, precision);
+    }
+
+    /// <summary>
+    /// Assert that a numeric result equals the expected integer value.
+    /// For exact integer comparisons.
+    /// </summary>
+    public static void AssertNumericEqual(int expected, object? actual)
+    {
+        Assert.NotNull(actual);
+        var actualLong = Convert.ToInt64(actual);
+        Assert.Equal(expected, actualLong);
+    }
 }

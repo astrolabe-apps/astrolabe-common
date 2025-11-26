@@ -18,7 +18,7 @@ public static class DefaultFunctions
         return (env, call) =>
         {
             if (call.Args.Count != 2)
-                return ValueExpr.WithError(null, $"{name} expects 2 arguments");
+                return call.WithError($"{name} expects 2 arguments");
 
             var left = env.EvaluateExpr(call.Args[0]);
             var right = env.EvaluateExpr(call.Args[1]);
@@ -103,7 +103,7 @@ public static class DefaultFunctions
         return (env, call) =>
         {
             if (call.Args.Count != 1)
-                return ValueExpr.WithError(null, $"{name} expects 1 argument");
+                return call.WithError($"{name} expects 1 argument");
 
             var arg = env.EvaluateExpr(call.Args[0]);
 
@@ -188,7 +188,7 @@ public static class DefaultFunctions
     {
         if (call.Args.Count != 3)
         {
-            return ValueExpr.WithError(null, "Conditional expects 3 arguments");
+            return call.WithError("Conditional expects 3 arguments");
         }
 
         var (condExpr, thenExpr, elseExpr) = (call.Args[0], call.Args[1], call.Args[2]);
@@ -201,7 +201,7 @@ public static class DefaultFunctions
                 true => EvaluateAndAddDeps(env, thenExpr, condVal),
                 false => EvaluateAndAddDeps(env, elseExpr, condVal),
                 null => env.WithDeps(new ValueExpr(null), [condVal]),
-                _ => ValueExpr.WithError(null, "Conditional expects boolean condition"),
+                _ => call.WithError("Conditional expects boolean condition"),
             };
         }
 
@@ -228,7 +228,7 @@ public static class DefaultFunctions
     {
         if (call.Args.Count != 2)
         {
-            return ValueExpr.WithError(null, "Null coalescing operator expects 2 arguments");
+            return call.WithError("Null coalescing operator expects 2 arguments");
         }
 
         var left = env.EvaluateExpr(call.Args[0]);
@@ -277,7 +277,7 @@ public static class DefaultFunctions
                     av.Values.ToList()
                 ),
                 null => arrayValue,
-                _ => ValueExpr.WithError(null, "sum requires an array"),
+                _ => call.WithError("sum requires an array"),
             };
         }
 
@@ -317,7 +317,7 @@ public static class DefaultFunctions
                 {
                     ArrayValue av => ValueExpr.WithDeps((long)av.Values.Count(), [arrayValue]),
                     null => ValueExpr.WithDeps(0L, [arrayValue]),
-                    _ => ValueExpr.WithError(null, "count requires an array"),
+                    _ => call.WithError("count requires an array"),
                 };
             }
             default:
@@ -335,7 +335,7 @@ public static class DefaultFunctions
     {
         if (call.Args.Count != 2)
         {
-            return ValueExpr.WithError(null, "elem expects 2 arguments");
+            return call.WithError("elem expects 2 arguments");
         }
 
         var arrayPartial = env.EvaluateExpr(call.Args[0]);
@@ -385,7 +385,7 @@ public static class DefaultFunctions
     {
         if (call.Args.Count != 2)
         {
-            return ValueExpr.WithError(null, "map expects 2 arguments");
+            return call.WithError("map expects 2 arguments");
         }
 
         var left = call.Args[0];
@@ -402,7 +402,7 @@ public static class DefaultFunctions
         {
             return leftValue.Value == null
                 ? leftValue
-                : ValueExpr.WithError(null, "map requires an array");
+                : call.WithError("map requires an array");
         }
 
         var partialResults = av.Values.Select(elem => EvalWithElement(env, elem, right)).ToList();
@@ -424,7 +424,7 @@ public static class DefaultFunctions
     {
         if (call.Args.Count != 2)
         {
-            return ValueExpr.WithError(null, "filter expects 2 arguments");
+            return call.WithError("filter expects 2 arguments");
         }
 
         var left = call.Args[0];
@@ -484,7 +484,7 @@ public static class DefaultFunctions
         // Handle ARRAY filtering/indexing
         if (leftValue.Value is not ArrayValue av)
         {
-            return ValueExpr.WithError(null, "filter requires an array or object");
+            return call.WithError("filter requires an array or object");
         }
 
         var values = av.Values.ToList();
@@ -571,7 +571,7 @@ public static class DefaultFunctions
     {
         if (call.Args.Count != 2)
         {
-            return ValueExpr.WithError(null, "flatMap expects 2 arguments");
+            return call.WithError("flatMap expects 2 arguments");
         }
 
         var left = call.Args[0];
@@ -713,7 +713,7 @@ public static class DefaultFunctions
                             : ValueExpr.WithDeps(null, av.Values.ToList()),
                         ArrayValue => init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null,
                         null => arrayValue,
-                        _ => ValueExpr.WithError(null, $"{name} requires an array"),
+                        _ => call.WithError($"{name} requires an array"),
                     };
                 }
             }
@@ -799,7 +799,7 @@ public static class DefaultFunctions
         return (env, call) =>
         {
             if (call.Args.Count != 2)
-                return ValueExpr.WithError(null, $"{name} expects 2 arguments");
+                return call.WithError($"{name} expects 2 arguments");
 
             var left = call.Args[0];
             var right = call.Args[1];
@@ -813,7 +813,7 @@ public static class DefaultFunctions
             {
                 return leftValue.Value == null
                     ? leftValue
-                    : ValueExpr.WithError(null, $"{name} requires an array");
+                    : call.WithError($"{name} requires an array");
             }
 
             var deps = new List<ValueExpr> { leftValue };
@@ -849,7 +849,7 @@ public static class DefaultFunctions
     private static readonly FunctionHandler ContainsOp = (env, call) =>
     {
         if (call.Args.Count != 2)
-            return ValueExpr.WithError(null, "contains expects 2 arguments");
+            return call.WithError("contains expects 2 arguments");
 
         var left = call.Args[0];
         var right = call.Args[1];
@@ -863,7 +863,7 @@ public static class DefaultFunctions
         {
             return leftValue.Value == null
                 ? leftValue
-                : ValueExpr.WithError(null, "contains requires an array");
+                : call.WithError("contains requires an array");
         }
 
         var deps = new List<ValueExpr> { leftValue };
@@ -893,7 +893,7 @@ public static class DefaultFunctions
     private static readonly FunctionHandler IndexOfOp = (env, call) =>
     {
         if (call.Args.Count != 2)
-            return ValueExpr.WithError(null, "indexOf expects 2 arguments");
+            return call.WithError("indexOf expects 2 arguments");
 
         var left = call.Args[0];
         var right = call.Args[1];
@@ -907,7 +907,7 @@ public static class DefaultFunctions
         {
             return leftValue.Value == null
                 ? leftValue
-                : ValueExpr.WithError(null, "indexOf requires an array");
+                : call.WithError("indexOf requires an array");
         }
 
         var deps = new List<ValueExpr> { leftValue };
@@ -939,7 +939,7 @@ public static class DefaultFunctions
     private static readonly FunctionHandler KeysOp = (env, call) =>
     {
         if (call.Args.Count != 1)
-            return ValueExpr.WithError(null, "keys expects 1 argument");
+            return call.WithError("keys expects 1 argument");
 
         var arg = env.EvaluateExpr(call.Args[0]);
 
@@ -953,7 +953,7 @@ public static class DefaultFunctions
                 [argValue]
             ),
             null => argValue,
-            _ => ValueExpr.WithError(null, "keys requires an object"),
+            _ => call.WithError("keys requires an object"),
         };
     };
 
@@ -963,7 +963,7 @@ public static class DefaultFunctions
     private static readonly FunctionHandler ValuesOp = (env, call) =>
     {
         if (call.Args.Count != 1)
-            return ValueExpr.WithError(null, "values expects 1 argument");
+            return call.WithError("values expects 1 argument");
 
         var arg = env.EvaluateExpr(call.Args[0]);
 
@@ -977,7 +977,7 @@ public static class DefaultFunctions
                 [argValue]
             ),
             null => argValue,
-            _ => ValueExpr.WithError(null, "values requires an object"),
+            _ => call.WithError("values requires an object"),
         };
     };
 
@@ -987,7 +987,7 @@ public static class DefaultFunctions
     private static readonly FunctionHandler MergeOp = (env, call) =>
     {
         if (call.Args.Count == 0)
-            return ValueExpr.WithError(null, "merge requires at least 1 argument");
+            return call.WithError("merge requires at least 1 argument");
 
         var partials = call.Args.Select(a => env.EvaluateExpr(a)).ToList();
 
@@ -1022,7 +1022,7 @@ public static class DefaultFunctions
     private static readonly FunctionHandler ObjectOp = (env, call) =>
     {
         if (call.Args.Count % 2 != 0)
-            return ValueExpr.WithError(null, "object requires pairs of key-value arguments");
+            return call.WithError("object requires pairs of key-value arguments");
 
         var partials = call.Args.Select(a => env.EvaluateExpr(a)).ToList();
 
@@ -1049,7 +1049,7 @@ public static class DefaultFunctions
     private static readonly FunctionHandler WhichOp = (env, call) =>
     {
         if (call.Args.Count < 3 || call.Args.Count % 2 != 1)
-            return ValueExpr.WithError(null, "which expects odd number of arguments >= 3");
+            return call.WithError("which expects odd number of arguments >= 3");
 
         var valuePartial = env.EvaluateExpr(call.Args[0]);
 
@@ -1103,7 +1103,7 @@ public static class DefaultFunctions
     private static readonly FunctionHandler FixedOp = (env, call) =>
     {
         if (call.Args.Count != 2)
-            return ValueExpr.WithError(null, "fixed expects 2 arguments");
+            return call.WithError("fixed expects 2 arguments");
 
         var numPartial = env.EvaluateExpr(call.Args[0]);
         var digitsPartial = env.EvaluateExpr(call.Args[1]);
@@ -1171,7 +1171,7 @@ public static class DefaultFunctions
                 {
                     // all is inverted - return false on first non-match
                     if (call.Args.Count != 2)
-                        return ValueExpr.WithError(null, "all expects 2 arguments");
+                        return call.WithError("all expects 2 arguments");
 
                     var left = call.Args[0];
                     var right = call.Args[1];
@@ -1185,7 +1185,7 @@ public static class DefaultFunctions
                     {
                         if (leftValue.Value == null)
                             return leftValue;
-                        return ValueExpr.WithError(null, "all requires an array");
+                        return call.WithError("all requires an array");
                     }
 
                     var deps = new List<ValueExpr> { leftValue };
@@ -1231,7 +1231,7 @@ public static class DefaultFunctions
                 (env, call) =>
                 {
                     if (call.Args.Count < 1)
-                        return ValueExpr.WithError(null, "notEmpty expects 1 argument");
+                        return call.WithError("notEmpty expects 1 argument");
 
                     var arg = env.EvaluateExpr(call.Args[0]);
 

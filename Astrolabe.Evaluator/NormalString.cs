@@ -40,6 +40,7 @@ public static class NormalString
             string s => $"\"{Escape(s, Quote)}\"",
             bool b => b ? "t" : "f",
             int i => i.ToString(),
+            long l => l.ToString(),
             double d => "d"+d.ToString(CultureInfo.InvariantCulture),
             decimal d => "d"+((double)d).ToString(CultureInfo.InvariantCulture),
             short s => s.ToString(),
@@ -105,7 +106,7 @@ public static class NormalString
         if (numberEnd == -1)
             numberEnd = source.Length;
         var numSpan = source[..numberEnd];
-        object result = !fp ? int.Parse(numSpan) : double.Parse(numSpan);
+        object result = !fp ? long.Parse(numSpan) : double.Parse(numSpan);
         return new ParseResult<EvalExpr>(source[numberEnd..], new ValueExpr(result));
     }
 

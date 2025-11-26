@@ -6,6 +6,20 @@ namespace Astrolabe.Evaluator;
 
 public record SourceLocation(int Start, int End, string? SourceFile = null);
 
+/// <summary>
+/// Represents an error with its source location and call stack.
+/// </summary>
+public record ErrorWithLocation(
+    string Message,
+    SourceLocation? Location,
+    IReadOnlyList<SourceLocation> Stack
+);
+
+/// <summary>
+/// Function type for formatting source locations into human-readable strings.
+/// </summary>
+public delegate string LocationFormatter(SourceLocation location);
+
 [JsonString]
 public enum InbuiltFunction
 {
@@ -188,6 +202,71 @@ public record ValueExpr(
 
         Collect(expr);
         return errors;
+    }
+
+    /// <summary>
+    /// Collects all errors from a ValueExpr with their locations and stack traces.
+    /// The stack trace shows the chain of expressions from outer to inner.
+    /// </summary>
+    public static IEnumerable<ErrorWithLocation> CollectErrorsWithLocations(ValueExpr expr)
+    {
+        var results = new List<ErrorWithLocation>();
+        var seen = new HashSet<ValueExpr>();
+
+        void Collect(ValueExpr ve, List<SourceLocation> stack)
+        {
+            if (!seen.Add(ve)) return;
+
+            var currentStack = ve.Location != null
+                ? [..stack, ve.Location]
+                : stack;
+
+            if (ve.Errors != null)
+            {
+                foreach (var msg in ve.Errors)
+                {
+                    results.Add(new ErrorWithLocation(msg, ve.Location, currentStack));
+                }
+            }
+
+            if (ve.Deps != null)
+            {
+                foreach (var dep in ve.Deps)
+                {
+                    Collect(dep, currentStack);
+                }
+            }
+        }
+
+        Collect(expr, []);
+        return results;
+    }
+
+    /// <summary>
+    /// Formats errors with their locations using a custom formatter.
+    /// Shows stack traces for nested errors.
+    /// </summary>
+    public static IEnumerable<string> FormatErrorsWithLocations(
+        ValueExpr expr,
+        LocationFormatter formatLocation)
+    {
+        return CollectErrorsWithLocations(expr).Select(e =>
+        {
+            var formatted = e.Message;
+            if (e.Location != null)
+            {
+                formatted += $" at {formatLocation(e.Location)}";
+            }
+            if (e.Stack.Count > 1)
+            {
+                var trace = string.Join("\n",
+                    e.Stack.Take(e.Stack.Count - 1)
+                        .Reverse()
+                        .Select(loc => $"  in {formatLocation(loc)}"));
+                formatted += "\n" + trace;
+            }
+            return formatted;
+        });
     }
 
     public static double AsDouble(object? v)
@@ -378,6 +457,14 @@ public record ObjectValue(IDictionary<string, ValueExpr> Properties);
 
 public static class ValueExtensions
 {
+    /// <summary>
+    /// Creates a ValueExpr with an error, copying the location from the source expression.
+    /// </summary>
+    public static ValueExpr WithError(this EvalExpr expr, string error)
+    {
+        return new ValueExpr(null, Location: expr.Location, Errors: [error]);
+    }
+
     public static bool IsData(this EvalExpr expr)
     {
         return expr is ValueExpr { Value: DataPath dp };

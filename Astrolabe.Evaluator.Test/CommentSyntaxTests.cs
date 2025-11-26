@@ -85,7 +85,7 @@ public class CommentSyntaxTests
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2 };
         var result = TestHelpers.EvalExpr("a /* divide */ / b", data);
-        Assert.Equal(5.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(5, result);
     }
 
     [Fact]
@@ -118,7 +118,7 @@ public class CommentSyntaxTests
             * y // multiply by y
             / /* divide by */ z // z value
         ", data);
-        Assert.Equal(25.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(25, result);
     }
 
     #endregion
@@ -134,7 +134,7 @@ public class CommentSyntaxTests
                 $b := 3  /* second var */
             in $a + $b // return sum
         ");
-        Assert.Equal(8.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(8, result);
     }
 
     [Fact]
@@ -180,8 +180,8 @@ public class CommentSyntaxTests
     {
         var result = TestHelpers.EvalExpr("$object(\"a\", 1, \"b\", 2) /* create object */");
         var obj = (ObjectValue)result!;
-        Assert.Equal(1.0, obj.Properties["a"].Value);
-        Assert.Equal(2.0, obj.Properties["b"].Value);
+        TestHelpers.AssertNumericEqual(1, obj.Properties["a"].Value);
+        TestHelpers.AssertNumericEqual(2, obj.Properties["b"].Value);
     }
 
     [Fact]

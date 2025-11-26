@@ -23,7 +23,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["a"] = 5.5, ["b"] = 3.2 };
         var result = TestHelpers.EvalExpr("a + b", data);
-        Assert.Equal(8.7, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(8.7, result);
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["a"] = 5, ["b"] = 3.5 };
         var result = TestHelpers.EvalExpr("a + b", data);
-        Assert.Equal(8.5, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(8.5, result);
     }
 
     [Fact]
@@ -55,7 +55,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["a"] = 10.5, ["b"] = 3.2 };
         var result = TestHelpers.EvalExpr("a - b", data);
-        Assert.Equal(7.3, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(7.3, result);
     }
 
     [Fact]
@@ -63,7 +63,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["a"] = 5, ["b"] = 3 };
         var result = TestHelpers.EvalExpr("a * b", data);
-        Assert.Equal(15L, result);
+        TestHelpers.AssertNumericEqual(15, result);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["a"] = 5.5, ["b"] = 2.0 };
         var result = TestHelpers.EvalExpr("a * b", data);
-        Assert.Equal(11.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(11.0, result);
     }
 
     [Fact]
@@ -79,7 +79,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 4 };
         var result = TestHelpers.EvalExpr("a / b", data);
-        Assert.Equal(2.5, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(2.5, result);
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["a"] = 10.0, ["b"] = 4.0 };
         var result = TestHelpers.EvalExpr("a / b", data);
-        Assert.Equal(2.5, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(2.5, result);
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 3 };
         var result = TestHelpers.EvalExpr("a % b", data);
-        Assert.Equal(1.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(1, result);
     }
 
     [Fact]
@@ -103,7 +103,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["a"] = 10.5, ["b"] = 3.0 };
         var result = TestHelpers.EvalExpr("a % b", data);
-        Assert.Equal(1.5, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(1.5, result);
     }
 
     #endregion
@@ -578,7 +578,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["nums"] = new JsonArray(1.5, 2.5, 3.0) };
         var result = TestHelpers.EvalExpr("$sum(nums)", data);
-        Assert.Equal(7.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(7.0, result);
     }
 
     [Fact]
@@ -609,7 +609,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["nums"] = new JsonArray(5.5, 2.3, 8.7, 1.2) };
         var result = TestHelpers.EvalExpr("$min(nums)", data);
-        Assert.Equal(1.2, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(1.2, result);
     }
 
     [Fact]
@@ -625,7 +625,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["nums"] = new JsonArray(5.5, 2.3, 8.7, 1.2) };
         var result = TestHelpers.EvalExpr("$max(nums)", data);
-        Assert.Equal(8.7, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(8.7, result);
     }
 
     [Fact]
@@ -1041,7 +1041,7 @@ public class DefaultFunctionsTests
         var result = TestHelpers.EvalExpr("$object(\"name\", \"John\", \"age\", 30)");
         var obj = (ObjectValue)result!;
         Assert.Equal("John", obj.Properties["name"].Value);
-        Assert.Equal(30.0, obj.Properties["age"].Value);
+        TestHelpers.AssertNumericEqual(30, obj.Properties["age"].Value);
     }
 
     [Fact]
@@ -1058,7 +1058,7 @@ public class DefaultFunctionsTests
         var result = TestHelpers.EvalExpr("$object(\"str\", \"hello\", \"num\", 42, \"bool\", true)");
         var obj = (ObjectValue)result!;
         Assert.Equal("hello", obj.Properties["str"].Value);
-        Assert.Equal(42.0, obj.Properties["num"].Value);
+        TestHelpers.AssertNumericEqual(42, obj.Properties["num"].Value);
         Assert.True((bool)obj.Properties["bool"].Value!);
     }
 
@@ -1243,14 +1243,14 @@ public class DefaultFunctionsTests
     public void LetExpression_VariableCanReferencePreviousVariable()
     {
         var result = TestHelpers.EvalExpr("let $x := 5, $y := $x + 10 in $y");
-        Assert.Equal(15.0, result);
+        TestHelpers.AssertNumericEqual(15, result);
     }
 
     [Fact]
     public void LetExpression_MultipleChainedVariableReferences()
     {
         var result = TestHelpers.EvalExpr("let $a := 2, $b := $a * 3, $c := $b + 1 in $c");
-        Assert.Equal(7.0, result); // 2 * 3 + 1 = 7
+        TestHelpers.AssertNumericEqual(7, result); // 2 * 3 + 1 = 7
     }
 
     [Fact]
@@ -1258,7 +1258,7 @@ public class DefaultFunctionsTests
     {
         var data = new JsonObject { ["value"] = 10 };
         var result = TestHelpers.EvalExpr("let $x := value, $y := $x * 2 in $y", data);
-        Assert.Equal(20.0, result);
+        TestHelpers.AssertNumericEqual(20, result);
     }
 
     [Fact]
@@ -1274,7 +1274,7 @@ public class DefaultFunctionsTests
             "let $sum := a + b, $avg := $sum / 2, $result := $avg * multiplier in $result",
             data
         );
-        Assert.Equal(45.0, result); // ((10 + 20) / 2) * 3 = 45
+        TestHelpers.AssertNumericEqual(45, result); // ((10 + 20) / 2) * 3 = 45
     }
 
     [Fact]

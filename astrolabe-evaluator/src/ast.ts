@@ -573,3 +573,103 @@ export function valueExprWithError(
     location: opts?.location,
   };
 }
+
+/**
+ * Creates a ValueExpr with an error, copying the location from the source expression.
+ *
+ * @param expr - The source expression (provides location)
+ * @param error - The error message
+ * @returns ValueExpr with null value, error message, and location from expr
+ */
+export function exprWithError(expr: EvalExpr, error: string): ValueExpr {
+  return {
+    type: "value",
+    value: null,
+    errors: [error],
+    location: expr.location,
+  };
+}
+
+/**
+ * Represents an error with its source location and call stack.
+ */
+export interface ErrorWithLocation {
+  message: string;
+  location?: SourceLocation;
+  stack: SourceLocation[];
+}
+
+/**
+ * Function type for formatting source locations into human-readable strings.
+ */
+export type LocationFormatter = (location: SourceLocation) => string;
+
+/**
+ * Collects all errors from a ValueExpr with their locations and stack traces.
+ * The stack trace shows the chain of expressions from outer to inner.
+ *
+ * @param expr - The expression to collect errors from
+ * @returns Array of errors with location info and stack traces
+ */
+export function collectErrorsWithLocations(expr: EvalExpr): ErrorWithLocation[] {
+  if (expr.type !== "value") return [];
+
+  const results: ErrorWithLocation[] = [];
+  const visited = new Set<ValueExpr>();
+
+  function walk(e: ValueExpr, stack: SourceLocation[]) {
+    if (visited.has(e)) return;
+    visited.add(e);
+
+    const currentStack = e.location ? [...stack, e.location] : stack;
+
+    if (e.errors) {
+      for (const msg of e.errors) {
+        results.push({
+          message: msg,
+          location: e.location,
+          stack: currentStack,
+        });
+      }
+    }
+
+    if (e.deps) {
+      for (const dep of e.deps) {
+        walk(dep, currentStack);
+      }
+    }
+  }
+
+  walk(expr, []);
+  return results;
+}
+
+/**
+ * Formats errors with their locations using a custom formatter.
+ * Shows stack traces for nested errors.
+ *
+ * @param expr - The expression to collect and format errors from
+ * @param formatLocation - Function to format SourceLocation to string
+ * @returns Array of formatted error strings with location info
+ */
+export function formatErrorsWithLocations(
+  expr: EvalExpr,
+  formatLocation: LocationFormatter,
+): string[] {
+  return collectErrorsWithLocations(expr).map(({ message, location, stack }) => {
+    let formatted = message;
+    if (location) {
+      formatted += ` at ${formatLocation(location)}`;
+    }
+    if (stack.length > 1) {
+      // Show call stack (outer to inner, excluding the innermost already shown)
+      const trace = stack
+        .slice(0, -1)
+        .reverse()
+        .map((loc) => `  in ${formatLocation(loc)}`)
+        .join("\n");
+      formatted += "\n" + trace;
+    }
+    return formatted;
+  });
+}

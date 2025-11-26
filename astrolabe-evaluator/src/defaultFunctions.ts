@@ -11,6 +11,7 @@ import {
   EvalEnv,
   EvalExpr,
   EvalType,
+  exprWithError,
   getPrimitiveConstant,
   GetReturnType,
   isArrayType,
@@ -24,7 +25,6 @@ import {
   valueExpr,
   ValueExpr,
   valueExprWithDeps,
-  valueExprWithError,
 } from "./ast";
 import { createBasicEnv } from "./evaluate";
 import { createPartialEnv, PartialEvalEnv } from "./partialEvaluate";
@@ -199,7 +199,7 @@ function binEvalFunction2(
 ): ValueExpr {
   return functionValue((env, call) => {
     if (call.args.length != 2) {
-      return valueExprWithError(null, `$${call.function} expects 2 arguments`);
+      return exprWithError(call, `$${call.function} expects 2 arguments`);
     }
     const [a, b] = call.args;
     return func(a, b, env, call);
@@ -335,7 +335,7 @@ const mapFunction = binEvalFunction2(
   constGetType(AnyType),
   (left, right, env, call) => {
     const leftPartial = env.evaluateExpr(left);
-    if (!right) return valueExprWithError(null, "No map expression");
+    if (!right) return exprWithError(call, "No map expression");
 
     // Check if we got a fully evaluated array
     if (leftPartial.type === "value") {
@@ -366,10 +366,7 @@ const mapFunction = binEvalFunction2(
         // At least one element is symbolic - return symbolic array
         return { type: "array", values: partialResults };
       }
-      return valueExprWithError(
-        null,
-        "Can't map value: " + printExpr(leftPartial),
-      );
+      return exprWithError(call, "Can't map value: " + printExpr(leftPartial));
     }
 
     // Left side is symbolic - return symbolic map call
@@ -381,7 +378,7 @@ const flatmapFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
     const [left, right] = call.args;
     const leftPartial = env.evaluateExpr(left);
-    if (!right) return valueExprWithError(null, "No map expression");
+    if (!right) return exprWithError(call, "No map expression");
 
     // Check if we got a fully evaluated value
     if (leftPartial.type === "value") {
@@ -402,10 +399,7 @@ const flatmapFunction = functionValue(
         if (value == null) return NullExpr;
         return evalWithValue(env, leftPartial, null, right);
       } else {
-        return valueExprWithError(
-          null,
-          "Can't map value: " + printExpr(leftPartial),
-        );
+        return exprWithError(call, "Can't map value: " + printExpr(leftPartial));
       }
     }
 
@@ -460,8 +454,8 @@ function firstFunction(
         }
         return finished;
       }
-      return valueExprWithError(
-        null,
+      return exprWithError(
+        call,
         `$${name} only works on arrays: ${printExpr(leftPartial)}`,
       );
     },
@@ -476,7 +470,7 @@ const filterFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
     const [left, right] = call.args;
     const leftPartial = env.evaluateExpr(left);
-    if (!right) return valueExprWithError(null, "No filter expression");
+    if (!right) return exprWithError(call, "No filter expression");
 
     // Check if we got a fully evaluated value
     if (leftPartial.type !== "value") {
@@ -594,10 +588,7 @@ const filterFunction = functionValue(
       }
       return valueExpr(null);
     }
-    return valueExprWithError(
-      null,
-      "Can't filter value: " + printExpr(leftPartial),
-    );
+    return exprWithError(call, "Can't filter value: " + printExpr(leftPartial));
   },
   (env, call) => {
     const [left, right] = call.args;
@@ -615,7 +606,7 @@ const filterFunction = functionValue(
 const condFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
     if (call.args.length !== 3) {
-      return valueExprWithError(null, "Conditional expects 3 arguments");
+      return exprWithError(call, "Conditional expects 3 arguments");
     }
     const [condExpr, thenExpr, elseExpr] = call.args;
     const condVal = env.evaluateExpr(condExpr);
@@ -653,7 +644,7 @@ const condFunction = functionValue(
 const elemFunction = functionValue(
   (env, call) => {
     if (call.args.length !== 2) {
-      return valueExprWithError(null, "elem expects 2 arguments");
+      return exprWithError(call, "elem expects 2 arguments");
     }
     const [arrayExpr, indexExpr] = call.args;
     const arrayPartial = env.evaluateExpr(arrayExpr);
@@ -705,7 +696,7 @@ export const keysOrValuesFunction = (type: string) =>
   functionValue(
     (env: EvalEnv, call: CallExpr) => {
       if (call.args.length !== 1) {
-        return valueExprWithError(null, `${type} expects 1 argument`);
+        return exprWithError(call, `${type} expects 1 argument`);
       }
 
       const [objExpr] = call.args;
@@ -730,8 +721,8 @@ export const keysOrValuesFunction = (type: string) =>
         return valueExprWithDeps(data, [objVal]);
       }
 
-      return valueExprWithError(
-        null,
+      return exprWithError(
+        call,
         `${type} can only be called on an object but was called on: ` +
           (Array.isArray(objVal.value) ? "array" : typeof objVal.value),
       );
@@ -936,7 +927,7 @@ export const defaultFunctions = {
   merge: functionValue(
     (env, call) => {
       if (call.args.length === 0) {
-        return valueExprWithError(null, "merge expects at least 1 argument");
+        return exprWithError(call, "merge expects at least 1 argument");
       }
 
       const merged: Record<string, ValueExpr> = {};

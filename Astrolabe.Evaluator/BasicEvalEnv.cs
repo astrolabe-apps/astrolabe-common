@@ -32,11 +32,11 @@ public class BasicEvalEnv : EvalEnv
     public override EvalExpr? GetCurrentValue()
     {
         if (_localVars.ContainsKey("_"))
-            return EvaluateVariable("_");
+            return EvaluateVariable("_", new VarExpr("_"));
         return _parent?.GetCurrentValue();
     }
 
-    private EvalExpr EvaluateVariable(string name, SourceLocation? location = null)
+    private EvalExpr EvaluateVariable(string name, EvalExpr sourceExpr)
     {
         // Check local scope first
         if (_localVars.ContainsKey(name))
@@ -52,17 +52,17 @@ public class BasicEvalEnv : EvalEnv
 
         // Delegate to parent
         if (_parent != null)
-            return _parent.EvaluateVariable(name, location);
+            return _parent.EvaluateVariable(name, sourceExpr);
 
         // Error: unknown variable
-        return ValueExpr.WithError(null, $"Variable ${name} not declared");
+        return sourceExpr.WithError($"Variable ${name} not declared");
     }
 
     public override EvalExpr EvaluateExpr(EvalExpr expr)
     {
         return expr switch
         {
-            VarExpr ve => EvaluateVariable(ve.Name, ve.Location),
+            VarExpr ve => EvaluateVariable(ve.Name, ve),
 
             LetExpr le => EvaluateLetExpr(le),
 
@@ -74,7 +74,7 @@ public class BasicEvalEnv : EvalEnv
 
             ArrayExpr ae => EvaluateArrayExpr(ae),
 
-            LambdaExpr => ValueExpr.WithError(null, "Lambda expressions cannot be evaluated directly"),
+            LambdaExpr le => le.WithError("Lambda expressions cannot be evaluated directly"),
 
             _ => throw new ArgumentOutOfRangeException(nameof(expr))
         };
@@ -93,10 +93,10 @@ public class BasicEvalEnv : EvalEnv
 
     private EvalExpr EvaluateCallExpr(CallExpr ce)
     {
-        var funcExpr = EvaluateVariable(ce.Function, ce.Location);
+        var funcExpr = EvaluateVariable(ce.Function, ce);
         if (funcExpr is not ValueExpr { Value: FunctionHandler handler })
         {
-            return ValueExpr.WithError(null, $"Function ${ce.Function} not declared or not a function");
+            return ce.WithError($"Function ${ce.Function} not declared or not a function");
         }
         return handler(this, ce);
     }
@@ -106,7 +106,7 @@ public class BasicEvalEnv : EvalEnv
         var currentValue = GetCurrentValue();
         if (currentValue == null || currentValue is not ValueExpr ve)
         {
-            return ValueExpr.WithError(null, $"Property {pe.Property} cannot be accessed without data");
+            return pe.WithError($"Property {pe.Property} cannot be accessed without data");
         }
 
         var propResult = GetPropertyFromValue(ve, pe.Property);

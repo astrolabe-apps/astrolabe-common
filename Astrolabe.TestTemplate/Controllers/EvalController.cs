@@ -31,9 +31,9 @@ public class EvalController : ControllerBase
 
             var result = partialEnv.Uninline(partialEnv.EvaluateExpr(evalExpr));
 
-            // Collect errors from result tree
+            // Collect errors from result tree with source locations
             var errors = result is ValueExpr ve
-                ? ValueExpr.CollectAllErrors(ve)
+                ? ValueExpr.FormatErrorsWithLocations(ve, FormatLocation)
                 : [];
 
             return new EvalResult(
@@ -54,14 +54,20 @@ public class EvalController : ControllerBase
                 return new EvalResult(result.Print(), []);
             }
 
-            // Collect errors from result tree
-            var errors = ValueExpr.CollectAllErrors(resultValue);
+            // Collect errors from result tree with source locations
+            var errors = ValueExpr.FormatErrorsWithLocations(resultValue, FormatLocation);
 
             return new EvalResult(
                 includeDeps ? ToValueWithDeps(resultValue) : ToValueWithoutDeps(resultValue),
                 errors
             );
         }
+    }
+
+    private static string FormatLocation(SourceLocation loc)
+    {
+        var file = loc.SourceFile ?? "input";
+        return $"{file}:{loc.Start}-{loc.End}";
     }
 
     public static object? ToValueWithoutDeps(ValueExpr expr)

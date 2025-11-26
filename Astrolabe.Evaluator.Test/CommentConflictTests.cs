@@ -14,7 +14,7 @@ public class CommentConflictTests
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2 };
         var result = TestHelpers.EvalExpr("a / b", data);
-        Assert.Equal(5.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(5, result);
     }
 
     [Fact]
@@ -22,7 +22,7 @@ public class CommentConflictTests
     {
         var data = new JsonObject { ["a"] = 100, ["b"] = 5, ["c"] = 2 };
         var result = TestHelpers.EvalExpr("a / b / c", data);
-        Assert.Equal(10.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(10, result);
     }
 
     [Fact]
@@ -30,7 +30,7 @@ public class CommentConflictTests
     {
         var data = new JsonObject { ["a"] = 20, ["b"] = 4 };
         var result = TestHelpers.EvalExpr("a   /   b", data);
-        Assert.Equal(5.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(5, result);
     }
 
     #endregion
@@ -94,7 +94,7 @@ public class CommentConflictTests
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2 };
         var result = TestHelpers.EvalExpr("a / b // this is division", data);
-        Assert.Equal(5.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(5, result);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public class CommentConflictTests
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2 };
         var result = TestHelpers.EvalExpr("a /* comment */ / b", data);
-        Assert.Equal(5.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(5, result);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class CommentConflictTests
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2 };
         var result = TestHelpers.EvalExpr("a / /* comment */ b", data);
-        Assert.Equal(5.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(5, result);
     }
 
     #endregion
@@ -122,7 +122,7 @@ public class CommentConflictTests
     {
         var data = new JsonObject { ["a"] = 5, ["b"] = 3 };
         var result = TestHelpers.EvalExpr("a * b", data);
-        Assert.Equal(15L, result);
+        TestHelpers.AssertNumericEqual(15, result);
     }
 
     [Fact]
@@ -130,7 +130,7 @@ public class CommentConflictTests
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2, ["c"] = 3 };
         var result = TestHelpers.EvalExpr("a / b * c", data);
-        Assert.Equal(15.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(15, result);
     }
 
     #endregion
@@ -142,7 +142,7 @@ public class CommentConflictTests
     {
         var data = new JsonObject { ["a"] = 100, ["b"] = 5, ["c"] = 2 };
         var result = TestHelpers.EvalExpr("a / b / c // result is 10", data);
-        Assert.Equal(10.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(10, result);
     }
 
     [Fact]
@@ -155,7 +155,7 @@ public class CommentConflictTests
             b /* second */
             * /* multiply */
             c // result", data);
-        Assert.Equal(15.0, (double)result!, 0.0001);
+        TestHelpers.AssertNumericEqual(15, result);
     }
 
     [Fact]
