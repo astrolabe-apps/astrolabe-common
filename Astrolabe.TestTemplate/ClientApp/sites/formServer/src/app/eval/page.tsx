@@ -1,18 +1,17 @@
 "use client";
 import {
-  addDefaults,
-  BasicEvalEnv,
+  basicEnv,
+  collectAllErrors,
   defaultCheckEnv,
-  defaultEvaluate,
-  emptyEnvState,
-  EnvValue,
-  EvalEnvState,
-  EvalExpr,
   extractAllPaths,
   nativeType,
   parseEval,
+  partialEnv,
+  PartialEvalEnv,
+  printExpr,
   printPath,
   toNative,
+  toValue,
   ValueExpr,
 } from "@astroapps/evaluator";
 import {
@@ -26,11 +25,10 @@ import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client";
 import { EvalClient, EvalResult } from "../../client";
 import { basicSetup, EditorView } from "codemirror";
-import { Evaluator } from "@astroapps/codemirror-evaluator";
+import { evalCompletions, Evaluator } from "@astroapps/codemirror-evaluator";
 import { autocompletion } from "@codemirror/autocomplete";
-import { evalCompletions } from "@astroapps/codemirror-evaluator";
 import { JsonEditor } from "@astroapps/schemas-editor";
-import { Layout, Model, TabNode, IJsonModel } from "flexlayout-react";
+import { IJsonModel, Layout, Model, TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
 
 const layoutModel: IJsonModel = {
@@ -68,6 +66,7 @@ export default function EvalPage() {
   const client = useApiClient(EvalClient);
   const serverMode = useControl(false);
   const showDeps = useControl(false);
+  const partialEvalMode = useControl(false);
   const input = useControl("");
   const data = useControl(sample);
   const dataText = useControl(() => JSON.stringify(sample, null, 2));
@@ -85,36 +84,72 @@ export default function EvalPage() {
     },
   );
   useControlEffect(
-    () => [input.value, data.value, serverMode.value, showDeps.value] as const,
-    useDebounced(async ([v, dv, sm, showDeps]: [string, any, any, boolean]) => {
-      try {
-        if (sm) {
-          try {
-            setEvalResult(
-              await client.eval(showDeps, { expression: v, data: dv }),
-            );
-          } catch (e) {
-            setOutput(e);
+    () =>
+      [
+        input.value,
+        data.value,
+        serverMode.value,
+        showDeps.value,
+        partialEvalMode.value,
+      ] as const,
+    useDebounced(
+      async ([v, dv, sm, showDeps, partialMode]: [
+        string,
+        any,
+        any,
+        boolean,
+        boolean,
+      ]) => {
+        try {
+          if (sm) {
+            try {
+              setEvalResult(
+                await client.eval(showDeps, partialMode, {
+                  expression: v,
+                  data: dv,
+                }),
+              );
+            } catch (e) {
+              setOutput(e);
+            }
+          } else if (partialMode) {
+            // Partial evaluation mode - treat data fields as variables
+            try {
+              const exprTree = parseEval(v);
+              // Create variables from data fields instead of data context
+              const variables = Object.fromEntries(
+                Object.entries(dv).map((x) => [x[0], toValue(undefined, x[1])]),
+              );
+              const env = partialEnv().newScope(variables) as PartialEvalEnv;
+              const partialResult = env.uninline(env.evaluateExpr(exprTree));
+              setEvalResult({
+                result: printExpr(partialResult),
+                errors: collectAllErrors(partialResult),
+              });
+            } catch (e) {
+              console.error(e);
+              setOutput(e);
+            }
+          } else {
+            const exprTree = parseEval(v);
+            const env = basicEnv(dv);
+            try {
+              const value = env.evaluateExpr(exprTree) as ValueExpr;
+              setEvalResult({
+                result: showDeps ? toValueDeps(value) : toNative(value),
+                errors: collectAllErrors(value),
+              });
+            } catch (e) {
+              console.error(e);
+              setOutput(e);
+            }
           }
-        } else {
-          const exprTree = parseEval(v);
-          const emptyState = emptyEnvState(dv);
-          const env = addDefaults(new TrackDataEnv(emptyState));
-          try {
-            const [outEnv, value] = env.evaluate(exprTree);
-            setEvalResult({
-              result: showDeps ? toValueDeps(value) : toNative(value),
-              errors: outEnv.errors,
-            });
-          } catch (e) {
-            console.error(e);
-            setOutput(e);
-          }
+        } catch (e) {
+          console.error(e);
         }
-      } catch (e) {
-        console.error(e);
-      }
-    }, 1000),
+      },
+      1000,
+    ),
   );
   const editorRef = useCallback(setupEditor, [editor]);
 
@@ -128,6 +163,7 @@ export default function EvalPage() {
               <div className="flex gap-2 items-center">
                 <Fcheckbox control={serverMode} /> Server Mode
                 <Fcheckbox control={showDeps} /> Show Deps
+                <Fcheckbox control={partialEvalMode} /> Partial Eval
               </div>
             </div>
             <div className="flex-1 overflow-y-scroll">
@@ -193,25 +229,6 @@ export default function EvalPage() {
       });
     } else {
       editor.value?.destroy();
-    }
-  }
-}
-
-class TrackDataEnv extends BasicEvalEnv {
-  constructor(state: EvalEnvState) {
-    super(state);
-  }
-  protected newEnv(newState: EvalEnvState): BasicEvalEnv {
-    return new TrackDataEnv(newState);
-  }
-
-  evaluate(expr: EvalExpr): EnvValue<ValueExpr> {
-    switch (expr.type) {
-      case "value":
-        if (expr.path) console.log(printPath(expr.path));
-        return [this, expr];
-      default:
-        return defaultEvaluate(this, expr);
     }
   }
 }

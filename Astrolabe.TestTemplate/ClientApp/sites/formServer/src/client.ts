@@ -513,15 +513,20 @@ export class EvalClient {
 
     /**
      * @param includeDeps (optional) 
+     * @param partialEval (optional) 
      * @param body (optional) 
      * @return OK
      */
-    eval(includeDeps: boolean | undefined, body: EvalData | undefined): Promise<EvalResult> {
+    eval(includeDeps: boolean | undefined, partialEval: boolean | undefined, body: EvalTestData | undefined): Promise<EvalResult> {
         let url_ = this.baseUrl + "/api/Eval?";
         if (includeDeps === null)
             throw new Error("The parameter 'includeDeps' cannot be null.");
         else if (includeDeps !== undefined)
             url_ += "includeDeps=" + encodeURIComponent("" + includeDeps) + "&";
+        if (partialEval === null)
+            throw new Error("The parameter 'partialEval' cannot be null.");
+        else if (partialEval !== undefined)
+            url_ += "partialEval=" + encodeURIComponent("" + partialEval) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -983,14 +988,14 @@ export interface ElementSelectedRenderOptions extends RenderOptions {
     [key: string]: any;
 }
 
-export interface EvalData {
-    expression: string;
-    data: { [key: string]: any; };
-}
-
 export interface EvalResult {
     result: any | null;
     errors: string[];
+}
+
+export interface EvalTestData {
+    expression: string;
+    data: { [key: string]: any; };
 }
 
 export interface FlexRenderer extends GroupRenderOptions {

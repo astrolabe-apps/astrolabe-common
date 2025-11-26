@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using Astrolabe.Evaluator.Functions;
 
 namespace Astrolabe.Evaluator.Test;
 
@@ -22,12 +21,6 @@ namespace Astrolabe.Evaluator.Test;
 /// </summary>
 public class DependencyTrackingTests
 {
-    private static EvalEnvironment CreateEnvWithData(JsonObject? data)
-    {
-        var evalData = JsonDataLookup.FromObject(data);
-        return EvalEnvironment.DataFrom(evalData).AddDefaultFunctions();
-    }
-
     private static List<string> GetDeps(ValueExpr result)
     {
         return ValueExpr.ExtractAllPaths(result)
@@ -43,12 +36,12 @@ public class DependencyTrackingTests
     public void Map_Lambda_Variable_Is_Element_Value()
     {
         var data = new JsonObject { ["nums"] = new JsonArray(1, 2, 3) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Lambda variable $x should be the element value
         var expr = ExprParser.Parse("$map(nums, $x => $x * 2)");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
         var values = ((ArrayValue)result.Value!).Values.Select(v => v.AsLong()).ToList();
 
         Assert.Equal([2L, 4L, 6L], values);
@@ -58,13 +51,13 @@ public class DependencyTrackingTests
     public void Filter_Lambda_Variable_Is_Index_Use_This_For_Element()
     {
         var data = new JsonObject { ["nums"] = new JsonArray(10, 20, 30, 40, 50) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Lambda variable $i is the INDEX
         // Filter where index >= 2 should give [30, 40, 50]
         var exprByIndex = ExprParser.Parse("nums[$i => $i >= 2]");
 
-        var (_, resultByIndex) = env.Evaluate(exprByIndex);
+        var resultByIndex = env.EvalResult(exprByIndex);
         var valuesByIndex = ((ArrayValue)resultByIndex.Value!).Values.Select(v => v.AsLong()).ToList();
         Assert.Equal([30L, 40L, 50L], valuesByIndex);
 
@@ -72,7 +65,7 @@ public class DependencyTrackingTests
         // Filter where element > 25 should give [30, 40, 50]
         var exprByElement = ExprParser.Parse("nums[$i => $this() > 25]");
 
-        var (_, resultByElement) = env.Evaluate(exprByElement);
+        var resultByElement = env.EvalResult(exprByElement);
         var valuesByElement = ((ArrayValue)resultByElement.Value!).Values.Select(v => v.AsLong()).ToList();
         Assert.Equal([30L, 40L, 50L], valuesByElement);
     }
@@ -81,12 +74,12 @@ public class DependencyTrackingTests
     public void First_Lambda_Variable_Is_Index_Use_This_For_Element()
     {
         var data = new JsonObject { ["items"] = new JsonArray("a", "b", "c", "d") };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Lambda variable is index - find first where index >= 2 should give "c"
         var expr = ExprParser.Parse("$first(items, $i => $i >= 2)");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
         Assert.Equal("c", result.Value);
     }
 
@@ -98,11 +91,11 @@ public class DependencyTrackingTests
     public void Map_Preserves_Dependencies_In_Individual_Elements()
     {
         var data = new JsonObject { ["nums"] = new JsonArray(1, 2, 3) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$map(nums, $x => $x * 2)");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
         var elements = ((ArrayValue)result.Value!).Values.ToList();
 
         // The array itself should NOT have dependencies at the array level
@@ -120,11 +113,11 @@ public class DependencyTrackingTests
     public void Filter_Preserves_Dependencies_In_Filtered_Elements()
     {
         var data = new JsonObject { ["nums"] = new JsonArray(1, 2, 3, 4, 5) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("nums[$i => $this() > 2]");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
         var elements = ((ArrayValue)result.Value!).Values.ToList();
 
         Assert.Equal(3, elements.Count);
@@ -144,10 +137,10 @@ public class DependencyTrackingTests
     public void Sum_Aggregates_Dependencies_From_All_Elements()
     {
         var data = new JsonObject { ["vals"] = new JsonArray(1, 2, 3) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$sum(vals)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(6d, result.Value);
 
@@ -161,10 +154,10 @@ public class DependencyTrackingTests
     public void Elem_Tracks_Only_Accessed_Element()
     {
         var data = new JsonObject { ["items"] = new JsonArray(10, 20, 30) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$elem(items, 1)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(20, result.AsInt());
 
@@ -179,10 +172,10 @@ public class DependencyTrackingTests
     public void Sum_With_Null_Values_Tracks_All_Element_Dependencies()
     {
         var data = new JsonObject { ["vals"] = new JsonArray(1, null, 3, null, 5) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$sum(vals)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         // Result is null when array contains nulls
         Assert.Null(result.Value);
@@ -200,10 +193,10 @@ public class DependencyTrackingTests
     public void Min_With_Null_Values_Tracks_All_Element_Dependencies()
     {
         var data = new JsonObject { ["vals"] = new JsonArray(10, null, 3, null, 7) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$min(vals)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         // Result is null when array contains nulls
         Assert.Null(result.Value);
@@ -221,10 +214,10 @@ public class DependencyTrackingTests
     public void Max_With_Null_Values_Tracks_All_Element_Dependencies()
     {
         var data = new JsonObject { ["vals"] = new JsonArray(10, null, 30, null, 20) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$max(vals)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         // Result is null when array contains nulls
         Assert.Null(result.Value);
@@ -242,10 +235,10 @@ public class DependencyTrackingTests
     public void Count_With_Null_Values_Tracks_All_Element_Dependencies()
     {
         var data = new JsonObject { ["vals"] = new JsonArray(1, null, 3, null, 5) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$count(vals)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         // Count includes null values in the count
         Assert.Equal(5, result.AsInt());
@@ -259,10 +252,10 @@ public class DependencyTrackingTests
     public void Sum_With_All_Null_Values_Tracks_All_Element_Dependencies()
     {
         var data = new JsonObject { ["vals"] = new JsonArray(null, null, null) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$sum(vals)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         // Result is null when all values are null
         Assert.Null(result.Value);
@@ -281,11 +274,11 @@ public class DependencyTrackingTests
             ["items"] = new JsonArray(10, 20, 30),
             ["indexVar"] = 1
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Dynamic index - should track both the element AND the index variable
         var expr = ExprParser.Parse("$elem(items, indexVar)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(20, result.AsInt());
 
@@ -305,12 +298,12 @@ public class DependencyTrackingTests
             ["items"] = new JsonArray(10, 20, 30),
             ["offset"] = 2
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Array access with dynamic index using let expression to evaluate offset in global scope
         // let $idx = offset in items[$idx]
         var expr = ExprParser.Parse("let $idx := offset in items[$idx]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(30, result.AsInt());
 
@@ -331,12 +324,12 @@ public class DependencyTrackingTests
             ["baseIndex"] = 1,
             ["indexOffset"] = 1
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Array access with computed index using let expression: let $idx = baseIndex + indexOffset in values[$idx]
         // Should access values[2] = 300
         var expr = ExprParser.Parse("let $idx := baseIndex + indexOffset in values[$idx]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(300, result.AsInt());
 
@@ -354,12 +347,12 @@ public class DependencyTrackingTests
     public void First_Tracks_Dependencies_From_Evaluated_Elements()
     {
         var data = new JsonObject { ["items"] = new JsonArray(1, 5, 3, 8, 2) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Find first element > 4 (should be 5 at index 1)
         var expr = ExprParser.Parse("$first(items, $i => $this() > 4)");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(5L, result.AsLong());
 
@@ -377,11 +370,11 @@ public class DependencyTrackingTests
     public void Map_Then_Sum_Aggregates_Dependencies_Correctly()
     {
         var data = new JsonObject { ["values"] = new JsonArray(1, 2, 3) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Map to double then sum in one expression
         var expr = ExprParser.Parse("$sum($map(values, $x => $x * 2))");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(12d, result.Value); // (1*2 + 2*2 + 3*2) = 12
 
@@ -396,11 +389,11 @@ public class DependencyTrackingTests
     public void Filter_Then_Sum_Only_Tracks_Filtered_Elements()
     {
         var data = new JsonObject { ["scores"] = new JsonArray(50, 75, 90, 65, 85) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Filter scores >= 70 then sum in one expression (keeps 75, 90, 85; filters out 50 and 65)
         var expr = ExprParser.Parse("$sum(scores[$i => $this() >= 70])");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(250d, result.Value); // 75 + 90 + 85 = 250
 
@@ -418,11 +411,11 @@ public class DependencyTrackingTests
     public void Map_Then_Elem_Only_Tracks_Accessed_Element()
     {
         var data = new JsonObject { ["items"] = new JsonArray(10, 20, 30) };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Map to double then access element 1 in one expression
         var expr = ExprParser.Parse("$elem($map(items, $x => $x * 2), 1)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(40, result.AsInt()); // 20 * 2 = 40
 
@@ -444,11 +437,11 @@ public class DependencyTrackingTests
                 new JsonObject { ["name"] = "C", ["price"] = 15, ["stock"] = 3 }
             )
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Filter products with stock > 0, map to prices, then sum - all in one expression
         var expr = ExprParser.Parse("$sum($map(products[$i => $this()[\"stock\"] > 0], $p => $p[\"price\"]))");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(25, result.AsInt()); // Product A (10) + Product C (15) = 25
 
@@ -466,10 +459,10 @@ public class DependencyTrackingTests
     public void Arithmetic_Operations_Track_Dependencies()
     {
         var data = new JsonObject { ["a"] = 5, ["b"] = 10 };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("a + b");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(15L, result.Value);
 
@@ -482,10 +475,10 @@ public class DependencyTrackingTests
     public void Comparison_Operations_Track_Dependencies()
     {
         var data = new JsonObject { ["x"] = 5, ["y"] = 10 };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("x < y");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.True(result.IsTrue());
 
@@ -498,10 +491,10 @@ public class DependencyTrackingTests
     public void Boolean_And_Tracks_Dependencies_From_All_Evaluated_Args()
     {
         var data = new JsonObject { ["cond1"] = true, ["cond2"] = true };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("cond1 and cond2");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.True(result.IsTrue());
 
@@ -514,10 +507,10 @@ public class DependencyTrackingTests
     public void Boolean_And_Short_Circuits_And_Tracks_Only_Evaluated()
     {
         var data = new JsonObject { ["cond1"] = false, ["cond2"] = true };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("cond1 and cond2");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.True(result.IsFalse());
 
@@ -532,10 +525,10 @@ public class DependencyTrackingTests
     public void Boolean_Or_Short_Circuits_And_Tracks_Only_Evaluated()
     {
         var data = new JsonObject { ["cond1"] = true, ["cond2"] = false };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("cond1 or cond2");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.True(result.IsTrue());
 
@@ -556,10 +549,10 @@ public class DependencyTrackingTests
             ["cond3"] = true,
             ["cond4"] = true
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("cond1 and cond2 and cond3 and cond4");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.True(result.IsFalse());
 
@@ -582,10 +575,10 @@ public class DependencyTrackingTests
             ["cond3"] = false,
             ["cond4"] = false
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("cond1 or cond2 or cond3 or cond4");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.True(result.IsTrue());
 
@@ -607,10 +600,10 @@ public class DependencyTrackingTests
             ["cond2"] = true,
             ["cond3"] = true
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("cond1 and cond2 and cond3");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.True(result.IsTrue());
 
@@ -630,10 +623,10 @@ public class DependencyTrackingTests
             ["cond2"] = false,
             ["cond3"] = false
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("cond1 or cond2 or cond3");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.True(result.IsFalse());
 
@@ -652,11 +645,11 @@ public class DependencyTrackingTests
     public void Conditional_Should_Track_Only_Taken_Branch()
     {
         var data = new JsonObject { ["cond"] = true, ["thenVal"] = "A", ["elseVal"] = "B" };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("cond ? thenVal : elseVal");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("A", result.Value);
 
@@ -671,11 +664,11 @@ public class DependencyTrackingTests
     public void Conditional_With_Complex_Condition_Should_Track_Only_Taken_Branch()
     {
         var data = new JsonObject { ["age"] = 25, ["minAge"] = 18, ["adult"] = "yes", ["minor"] = "no" };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("age >= minAge ? adult : minor");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("yes", result.Value);
 
@@ -696,11 +689,11 @@ public class DependencyTrackingTests
     public void String_Concatenation_Tracks_Dependencies()
     {
         var data = new JsonObject { ["first"] = "John", ["last"] = "Doe" };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$string(first, \" \", last)");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("John Doe", result.Value);
 
@@ -713,10 +706,10 @@ public class DependencyTrackingTests
     public void Lower_Tracks_Dependencies()
     {
         var data = new JsonObject { ["name"] = "HELLO" };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$lower(name)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("hello", result.Value);
 
@@ -732,11 +725,11 @@ public class DependencyTrackingTests
     public void NullCoalesce_Tracks_Dependencies_From_First_NonNull()
     {
         var data = new JsonObject { ["value"] = "exists" };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // nullField is null, so should use value
         var expr = ExprParser.Parse("nullField ?? value");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("exists", result.Value);
 
@@ -752,12 +745,12 @@ public class DependencyTrackingTests
             ["array"] = new JsonArray(1, null, 2),
             ["fallback"] = 10
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // $min(array) returns null, so should use fallback
         // BUT should also preserve dependencies from evaluating $min(array)
         var expr = ExprParser.Parse("$min(array) ?? fallback");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(10, result.AsInt());
 
@@ -779,11 +772,11 @@ public class DependencyTrackingTests
             ["pendingMsg"] = "Please wait",
             ["activeMsg"] = "Active now"
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$which(status, \"pending\", pendingMsg, \"active\", activeMsg)");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("Please wait", result.Value);
 
@@ -801,10 +794,10 @@ public class DependencyTrackingTests
     public void Object_Property_Access_Tracks_Dependencies()
     {
         var data = new JsonObject { ["user"] = new JsonObject { ["name"] = "John", ["age"] = 30 } };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("user.name");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("John", result.Value);
 
@@ -826,10 +819,10 @@ public class DependencyTrackingTests
                 }
             }
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("company.department.manager.name");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("Alice", result.Value);
 
@@ -842,11 +835,11 @@ public class DependencyTrackingTests
     public void Accessing_Property_From_Constructed_Object_Preserves_Dependencies()
     {
         var data = new JsonObject { ["a"] = 5, ["b"] = 10 };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Create object and access property
         var expr = ExprParser.Parse("let $obj := $object(\"val\", a + b) in $obj.val");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(15L, result.Value);
 
@@ -863,10 +856,10 @@ public class DependencyTrackingTests
         {
             ["obj"] = new JsonObject { ["x"] = 10, ["y"] = 20, ["z"] = 30 }
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$sum($values(obj))");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(60.0, result.Value);
 
@@ -885,10 +878,10 @@ public class DependencyTrackingTests
     public void Constant_Index_Access_Preserves_Path_Not_Deps()
     {
         var data = new JsonObject { ["array"] = new JsonArray { 1, 2, 3 } };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("array[0]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(1, result.Value);
 
@@ -904,10 +897,10 @@ public class DependencyTrackingTests
     public void Elem_With_Constant_Index_Preserves_Path()
     {
         var data = new JsonObject { ["items"] = new JsonArray { 10, 20, 30 } };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$elem(items, 1)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(20, result.Value);
 
@@ -923,11 +916,11 @@ public class DependencyTrackingTests
     public void Dynamic_Index_Adds_Index_Dependencies_While_Preserving_Path()
     {
         var data = new JsonObject { ["array"] = new JsonArray { 10, 20, 30 }, ["idx"] = 1 };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Use $elem for dynamic index (array[idx] doesn't work due to scoping limitation)
         var expr = ExprParser.Parse("$elem(array, idx)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(20, result.Value);
 
@@ -948,10 +941,10 @@ public class DependencyTrackingTests
             ["values"] = new JsonArray { 100, 200, 300 },
             ["position"] = 2
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("$elem(values, position)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(300, result.Value);
 
@@ -972,11 +965,11 @@ public class DependencyTrackingTests
             ["offset"] = 1,
             ["base"] = 2
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Use $elem for computed index
         var expr = ExprParser.Parse("$elem(nums, base + offset)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(4, result.Value); // nums[3]
 
@@ -1000,10 +993,10 @@ public class DependencyTrackingTests
         {
             ["obj"] = new JsonObject { ["x"] = 10, ["y"] = 20, ["z"] = 30 }
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("obj[\"x\"]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(10, result.Value);
 
@@ -1022,11 +1015,11 @@ public class DependencyTrackingTests
         {
             ["user"] = new JsonObject { ["name"] = "Alice", ["age"] = 30, ["fieldToAccess"] = "name" }
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Access object property using variable key from within the object context
         var expr = ExprParser.Parse("user[fieldToAccess]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("Alice", result.Value);
 
@@ -1052,11 +1045,11 @@ public class DependencyTrackingTests
                 ["suffix"] = "_a"
             }
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Access property with computed key: prefix + suffix (from within object context)
         var expr = ExprParser.Parse("config[$string(prefix, suffix)]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("value1", result.Value);
 
@@ -1084,10 +1077,10 @@ public class DependencyTrackingTests
                 }
             }
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         var expr = ExprParser.Parse("company.employees[selectedName].role");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal("manager", result.Value);
 
@@ -1103,11 +1096,11 @@ public class DependencyTrackingTests
     public void Object_Filter_With_Constant_Key_In_Constructed_Object()
     {
         var data = new JsonObject { ["a"] = 5, ["b"] = 10 };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Create object and access with constant key
         var expr = ExprParser.Parse("let $obj := $object(\"sum\", a + b) in $obj[\"sum\"]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(15L, result.Value);
 
@@ -1129,11 +1122,11 @@ public class DependencyTrackingTests
             ["array"] = new JsonArray(1, null, 2),
             ["lookup"] = new JsonArray(0, 1)
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // When $min(array) returns null, lookup[$idx] should return null with preserved deps
         var expr = ExprParser.Parse("let $idx := $min(array) in lookup[$idx]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         // Result should be null
         Assert.Null(result.Value);
@@ -1153,11 +1146,11 @@ public class DependencyTrackingTests
             ["array"] = new JsonArray(1, null, 2),
             ["obj"] = new JsonObject { ["a"] = 10, ["b"] = 20 }
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // When $min(array) returns null, obj[$key] should return null with preserved deps
         var expr = ExprParser.Parse("let $key := $min(array) in obj[$key]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         // Result should be null
         Assert.Null(result.Value);
@@ -1177,11 +1170,11 @@ public class DependencyTrackingTests
             ["lookup"] = new JsonArray(0, 1),
             ["idx"] = null
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Use let expression to access idx in global scope
         var expr = ExprParser.Parse("let $i := idx in lookup[$i]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         // Result should be null
         Assert.Null(result.Value);
@@ -1199,11 +1192,11 @@ public class DependencyTrackingTests
             ["obj"] = new JsonObject { ["a"] = 10, ["b"] = 20 },
             ["key"] = null
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Use let expression to access key in global scope
         var expr = ExprParser.Parse("let $k := key in obj[$k]");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         // Result should be null
         Assert.Null(result.Value);
@@ -1227,12 +1220,12 @@ public class DependencyTrackingTests
                 new JsonObject { ["values"] = new JsonArray(3, 4) }
             )
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Flatmap items to their values arrays
         var expr = ExprParser.Parse("items . values");
 
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
         var elements = ((ArrayValue)result.Value!).Values.ToList();
 
         // Should produce [1, 2, 3, 4]
@@ -1261,11 +1254,11 @@ public class DependencyTrackingTests
                 new JsonObject { ["nums"] = new JsonArray(3, 4, 5) }
             )
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Flatmap to get all numbers then sum
         var expr = ExprParser.Parse("$sum(groups . nums)");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.Equal(15d, result.Value); // 1+2+3+4+5 = 15
 
@@ -1288,7 +1281,7 @@ public class DependencyTrackingTests
                 new JsonObject { ["width"] = 3.5 }
             )
         };
-        var env = CreateEnvWithData(data);
+        var env = TestHelpers.CreateBasicEnv(data);
 
         // Simpler version of the real scenario:
         // For each item, lookup based on width and return array from table
@@ -1302,7 +1295,7 @@ public class DependencyTrackingTests
                 in $table[$key]
             )
         ");
-        var (_, result) = env.Evaluate(expr);
+        var result = env.EvalResult(expr);
 
         Assert.IsType<ArrayValue>(result.Value);
         var elements = ((ArrayValue)result.Value!).Values.ToList();

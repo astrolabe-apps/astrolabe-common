@@ -1,5 +1,4 @@
 using System.Text.Json.Nodes;
-using Astrolabe.Evaluator.Functions;
 
 namespace Astrolabe.Evaluator.Test;
 
@@ -8,22 +7,13 @@ namespace Astrolabe.Evaluator.Test;
 /// </summary>
 public class CommentConflictTests
 {
-    private static object? EvalExpr(string expr, JsonObject? data = null)
-    {
-        var evalData = JsonDataLookup.FromObject(data);
-        var env = EvalEnvironment.DataFrom(evalData).AddDefaultFunctions();
-        var parsed = ExprParser.Parse(expr);
-        var (_, result) = env.Evaluate(parsed);
-        return result.Value;
-    }
-
     #region Division Operator
 
     [Fact]
     public void DivisionOperator_StillWorks()
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2 };
-        var result = EvalExpr("a / b", data);
+        var result = TestHelpers.EvalExpr("a / b", data);
         Assert.Equal(5.0, (double)result!, 0.0001);
     }
 
@@ -31,7 +21,7 @@ public class CommentConflictTests
     public void MultipleDivisions_StillWork()
     {
         var data = new JsonObject { ["a"] = 100, ["b"] = 5, ["c"] = 2 };
-        var result = EvalExpr("a / b / c", data);
+        var result = TestHelpers.EvalExpr("a / b / c", data);
         Assert.Equal(10.0, (double)result!, 0.0001);
     }
 
@@ -39,7 +29,7 @@ public class CommentConflictTests
     public void DivisionWithSpaces_StillWorks()
     {
         var data = new JsonObject { ["a"] = 20, ["b"] = 4 };
-        var result = EvalExpr("a   /   b", data);
+        var result = TestHelpers.EvalExpr("a   /   b", data);
         Assert.Equal(5.0, (double)result!, 0.0001);
     }
 
@@ -51,7 +41,7 @@ public class CommentConflictTests
     public void DoubleQuotedString_WithLineCommentSyntax()
     {
         var data = new JsonObject { ["text"] = "This is // not a comment" };
-        var result = EvalExpr("text", data);
+        var result = TestHelpers.EvalExpr("text", data);
         Assert.Equal("This is // not a comment", result);
     }
 
@@ -59,21 +49,21 @@ public class CommentConflictTests
     public void DoubleQuotedString_WithBlockCommentSyntax()
     {
         var data = new JsonObject { ["text"] = "This is /* not a comment */" };
-        var result = EvalExpr("text", data);
+        var result = TestHelpers.EvalExpr("text", data);
         Assert.Equal("This is /* not a comment */", result);
     }
 
     [Fact]
     public void SingleQuotedString_WithLineCommentSyntax()
     {
-        var result = EvalExpr("'This is // not a comment'");
+        var result = TestHelpers.EvalExpr("'This is // not a comment'");
         Assert.Equal("This is // not a comment", result);
     }
 
     [Fact]
     public void SingleQuotedString_WithBlockCommentSyntax()
     {
-        var result = EvalExpr("'This is /* not a comment */'");
+        var result = TestHelpers.EvalExpr("'This is /* not a comment */'");
         Assert.Equal("This is /* not a comment */", result);
     }
 
@@ -84,14 +74,14 @@ public class CommentConflictTests
     [Fact]
     public void TemplateString_WithCommentSyntaxLiteral()
     {
-        var result = EvalExpr("`This is // not a comment`");
+        var result = TestHelpers.EvalExpr("`This is // not a comment`");
         Assert.Equal("This is // not a comment", result);
     }
 
     [Fact]
     public void TemplateString_WithBlockCommentSyntaxLiteral()
     {
-        var result = EvalExpr("`This is /* not a comment */`");
+        var result = TestHelpers.EvalExpr("`This is /* not a comment */`");
         Assert.Equal("This is /* not a comment */", result);
     }
 
@@ -103,7 +93,7 @@ public class CommentConflictTests
     public void LineComment_DoesNotBreakDivision()
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2 };
-        var result = EvalExpr("a / b // this is division", data);
+        var result = TestHelpers.EvalExpr("a / b // this is division", data);
         Assert.Equal(5.0, (double)result!, 0.0001);
     }
 
@@ -111,7 +101,7 @@ public class CommentConflictTests
     public void BlockComment_BeforeDivision()
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2 };
-        var result = EvalExpr("a /* comment */ / b", data);
+        var result = TestHelpers.EvalExpr("a /* comment */ / b", data);
         Assert.Equal(5.0, (double)result!, 0.0001);
     }
 
@@ -119,7 +109,7 @@ public class CommentConflictTests
     public void BlockComment_AfterDivision()
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2 };
-        var result = EvalExpr("a / /* comment */ b", data);
+        var result = TestHelpers.EvalExpr("a / /* comment */ b", data);
         Assert.Equal(5.0, (double)result!, 0.0001);
     }
 
@@ -131,7 +121,7 @@ public class CommentConflictTests
     public void MultiplicationOperator_NotConfusedWithBlockComment()
     {
         var data = new JsonObject { ["a"] = 5, ["b"] = 3 };
-        var result = EvalExpr("a * b", data);
+        var result = TestHelpers.EvalExpr("a * b", data);
         Assert.Equal(15L, result);
     }
 
@@ -139,7 +129,7 @@ public class CommentConflictTests
     public void DivisionFollowedByMultiplication_NotConfusedWithComment()
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2, ["c"] = 3 };
-        var result = EvalExpr("a / b * c", data);
+        var result = TestHelpers.EvalExpr("a / b * c", data);
         Assert.Equal(15.0, (double)result!, 0.0001);
     }
 
@@ -151,7 +141,7 @@ public class CommentConflictTests
     public void MultipleSlashesInExpression_WithComments()
     {
         var data = new JsonObject { ["a"] = 100, ["b"] = 5, ["c"] = 2 };
-        var result = EvalExpr("a / b / c // result is 10", data);
+        var result = TestHelpers.EvalExpr("a / b / c // result is 10", data);
         Assert.Equal(10.0, (double)result!, 0.0001);
     }
 
@@ -159,7 +149,7 @@ public class CommentConflictTests
     public void MixedOperators_WithComments()
     {
         var data = new JsonObject { ["a"] = 10, ["b"] = 2, ["c"] = 3 };
-        var result = EvalExpr(@"
+        var result = TestHelpers.EvalExpr(@"
             a /* first */
             / /* divide */
             b /* second */
@@ -171,7 +161,7 @@ public class CommentConflictTests
     [Fact]
     public void StringConcatenation_WithCommentLikeSyntax()
     {
-        var result = EvalExpr("$string('URL: ', 'http://example.com')");
+        var result = TestHelpers.EvalExpr("$string('URL: ', 'http://example.com')");
         Assert.Equal("URL: http://example.com", result);
     }
 

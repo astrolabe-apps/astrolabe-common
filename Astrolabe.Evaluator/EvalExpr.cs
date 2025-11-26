@@ -49,12 +49,25 @@ public static class InbuiltFunctions
     }
 }
 
-public interface EvalExpr;
+public interface EvalExpr
+{
+    /// <summary>
+    /// Source location for error reporting and debugging.
+    /// </summary>
+    SourceLocation? Location { get; }
+
+    /// <summary>
+    /// Generic metadata property for internal use by evaluation environments.
+    /// Used for tracking inlined variables (InlineData) and other metadata.
+    /// </summary>
+    object? Data { get; }
+}
 
 public record LetExpr(
     IEnumerable<(VarExpr, EvalExpr)> Vars,
     EvalExpr In,
-    SourceLocation? Location = null
+    SourceLocation? Location = null,
+    object? Data = null
 ) : EvalExpr
 {
     public static LetExpr AddVar(LetExpr? letExpr, VarExpr varExpr, EvalExpr expr)
@@ -66,55 +79,24 @@ public record LetExpr(
     }
 }
 
-public record PropertyExpr(string Property, SourceLocation? Location = null) : EvalExpr;
+public record PropertyExpr(string Property, SourceLocation? Location = null, object? Data = null) : EvalExpr;
 
-public record LambdaExpr(string Variable, EvalExpr Value, SourceLocation? Location = null)
+public record LambdaExpr(string Variable, EvalExpr Value, SourceLocation? Location = null, object? Data = null)
     : EvalExpr;
 
-public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, CallExpr callExpr);
-
-public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
-{
-    public static FunctionHandler DefaultEvalArgs(
-        Func<EvalEnvironment, List<ValueExpr>, ValueExpr> eval
-    ) =>
-        new(
-            (e, call) =>
-                e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x))
-                    .Map(args => eval(e, args.ToList()))
-        );
-
-    public static FunctionHandler DefaultEval(Func<EvalEnvironment, List<object?>, object?> eval) =>
-        DefaultEvalArgs(
-            (e, args) => ValueExpr.WithDeps(eval(e, args.Select(x => x.Value).ToList()), args)
-        );
-
-    public static FunctionHandler DefaultEval(Func<IList<object?>, object?> eval) =>
-        DefaultEval((_, a) => eval(a));
-
-    public static FunctionHandler BinFunctionHandler(
-        string name,
-        Func<EvalEnvironment, EvalExpr, EvalExpr, EnvironmentValue<ValueExpr>> handle
-    )
-    {
-        return new FunctionHandler(
-            (env, call) =>
-                call.Args switch
-                {
-                    [var a1, var a2] => handle(env, a1, a2),
-                    var a
-                        => env.WithError($"{name} expects 2 arguments, received {a.Count}")
-                            .WithNull()
-                }
-        );
-    }
-}
+/// <summary>
+/// Function handler that takes an EvalEnv and CallExpr, returns EvalExpr directly.
+/// Used by the EvalEnv-based evaluation system.
+/// </summary>
+public delegate EvalExpr FunctionHandler(EvalEnv env, CallExpr call);
 
 public record ValueExpr(
     object? Value,
     DataPath? Path = null,
     IEnumerable<ValueExpr>? Deps = null,
-    SourceLocation? Location = null
+    SourceLocation? Location = null,
+    object? Data = null,
+    IEnumerable<string>? Errors = null
 ) : EvalExpr
 {
     public static readonly ValueExpr Null = new((object?)null);
@@ -126,6 +108,22 @@ public record ValueExpr(
     private static readonly object UndefinedValue = new();
 
     public static readonly ValueExpr Undefined = new(UndefinedValue);
+
+    /// <summary>
+    /// Create a ValueExpr with an error message attached.
+    /// </summary>
+    public static ValueExpr WithError(object? value, string error)
+    {
+        return new ValueExpr(value, Errors: [error]);
+    }
+
+    /// <summary>
+    /// Create a ValueExpr with multiple error messages attached.
+    /// </summary>
+    public static ValueExpr WithErrors(object? value, IEnumerable<string> errors)
+    {
+        return new ValueExpr(value, Errors: errors);
+    }
 
     public static ValueExpr WithDeps(object? value, IEnumerable<ValueExpr> others)
     {
@@ -163,6 +161,33 @@ public record ValueExpr(
 
         Extract(expr);
         return paths;
+    }
+
+    /// <summary>
+    /// Recursively collect all errors from a ValueExpr and its dependencies.
+    /// Handles circular references via visited set.
+    /// </summary>
+    public static IEnumerable<string> CollectAllErrors(ValueExpr expr)
+    {
+        var errors = new List<string>();
+        var seen = new HashSet<ValueExpr>();
+
+        void Collect(ValueExpr ve)
+        {
+            if (!seen.Add(ve)) return;  // Already seen, avoid cycles
+
+            if (ve.Errors != null) errors.AddRange(ve.Errors);
+            if (ve.Deps != null)
+            {
+                foreach (var dep in ve.Deps)
+                {
+                    Collect(dep);
+                }
+            }
+        }
+
+        Collect(expr);
+        return errors;
     }
 
     public static double AsDouble(object? v)
@@ -285,7 +310,7 @@ public record ValueExpr(
 
 }
 
-public record ArrayExpr(IEnumerable<EvalExpr> Values, SourceLocation? Location = null) : EvalExpr
+public record ArrayExpr(IEnumerable<EvalExpr> Values, SourceLocation? Location = null, object? Data = null) : EvalExpr
 {
     public override string ToString()
     {
@@ -293,7 +318,7 @@ public record ArrayExpr(IEnumerable<EvalExpr> Values, SourceLocation? Location =
     }
 }
 
-public record CallExpr(string Function, IList<EvalExpr> Args, SourceLocation? Location = null)
+public record CallExpr(string Function, IList<EvalExpr> Args, SourceLocation? Location = null, object? Data = null)
     : EvalExpr
 {
     public override string ToString()
@@ -322,7 +347,7 @@ public record CallExpr(string Function, IList<EvalExpr> Args, SourceLocation? Lo
     }
 }
 
-public record VarExpr(string Name, SourceLocation? Location = null) : EvalExpr
+public record VarExpr(string Name, SourceLocation? Location = null, object? Data = null) : EvalExpr
 {
     private static int _indexCount;
 
@@ -437,14 +462,14 @@ public static class ValueExtensions
         return v.Value == null;
     }
 
-    public static bool IsTrue(this ValueExpr v)
+    public static bool IsTrue(this EvalExpr v)
     {
-        return v.Value is true;
+        return v is ValueExpr { Value: true };
     }
 
-    public static bool IsFalse(this ValueExpr v)
+    public static bool IsFalse(this EvalExpr v)
     {
-        return v.Value is false;
+        return v is ValueExpr { Value: false };
     }
 
     public static string AsString(this ValueExpr v)

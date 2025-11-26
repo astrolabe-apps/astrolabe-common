@@ -1,9 +1,6 @@
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Astrolabe.Evaluator;
-using Astrolabe.Evaluator.Functions;
-using Astrolabe.Validation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Astrolabe.TestTemplate.Controllers;
@@ -13,17 +10,58 @@ namespace Astrolabe.TestTemplate.Controllers;
 public class EvalController : ControllerBase
 {
     [HttpPost]
-    public async Task<EvalResult> Eval([FromBody] EvalData evalData, bool includeDeps = false)
+    public async Task<EvalResult> Eval([FromBody] EvalTestData evalData, bool includeDeps = false, bool partialEval = false)
     {
-        var valEnv = RuleValidator.FromData(
-            JsonDataLookup.FromObject(JsonSerializer.SerializeToNode(evalData.Data))
-        );
         var evalExpr = ExprParser.Parse(evalData.Expression);
-        var result = valEnv.Evaluate(evalExpr);
-        return new EvalResult(
-            includeDeps ? ToValueWithDeps(result.Value) : ToValueWithoutDeps(result.Value),
-            result.Env.Errors.Select(x => x.Message)
-        );
+
+        if (partialEval)
+        {
+            // For partial evaluation, treat data fields as variables
+            // Convert each data value to a proper ValueExpr structure via JsonNode
+            var variables = evalData.Data.ToDictionary(
+                kvp => kvp.Key, EvalExpr (kvp) =>
+                {
+                    var jsonNode = JsonSerializer.SerializeToNode(kvp.Value);
+                    return JsonDataLookup.ToValue(null, jsonNode);
+                }
+            );
+
+            // Create partial evaluation environment with variables
+            var partialEnv = EvalEnvFactory.CreatePartialEnv(variables);
+
+            var result = partialEnv.Uninline(partialEnv.EvaluateExpr(evalExpr));
+
+            // Collect errors from result tree
+            var errors = result is ValueExpr ve
+                ? ValueExpr.CollectAllErrors(ve)
+                : [];
+
+            return new EvalResult(
+                result.Print(),
+                errors
+            );
+        }
+        else
+        {
+            // Create basic evaluation environment with data
+            var jsonData = JsonSerializer.SerializeToNode(evalData.Data);
+            var env = EvalEnvFactory.BasicEnv(jsonData);
+
+            var result = env.EvaluateExpr(evalExpr);
+
+            if (result is not ValueExpr resultValue)
+            {
+                return new EvalResult(result.Print(), []);
+            }
+
+            // Collect errors from result tree
+            var errors = ValueExpr.CollectAllErrors(resultValue);
+
+            return new EvalResult(
+                includeDeps ? ToValueWithDeps(resultValue) : ToValueWithoutDeps(resultValue),
+                errors
+            );
+        }
     }
 
     public static object? ToValueWithoutDeps(ValueExpr expr)
@@ -52,7 +90,7 @@ public class EvalController : ControllerBase
     }
 }
 
-public record EvalData(string Expression, IDictionary<string, object?> Data);
+public record EvalTestData(string Expression, IDictionary<string, object?> Data);
 
 public record EvalResult(object? Result, IEnumerable<string> Errors);
 
