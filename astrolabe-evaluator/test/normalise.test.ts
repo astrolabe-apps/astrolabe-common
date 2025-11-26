@@ -34,7 +34,9 @@ const propertyExprArb: fc.Arbitrary<EvalExpr> = fc
 
 const letExprArb = (exprArb: fc.Arbitrary<EvalExpr>) =>
   fc
-    .array(fc.tuple(varExprArb as fc.Arbitrary<VarExpr>, exprArb), { maxLength: 3 })
+    .array(fc.tuple(varExprArb as fc.Arbitrary<VarExpr>, exprArb), {
+      maxLength: 3,
+    })
     .chain((vars) =>
       exprArb.map((expr) => ({ type: "let", variables: vars, expr })),
     ) as fc.Arbitrary<LetExpr>;

@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { evalExpr, evalToArray, evalResult } from "./testHelpers";
+import { evalExpr, evalResult, evalToArray } from "./testHelpers";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";
-import { toNative, ValueExpr } from "../src/ast";
+import { toNative } from "../src/ast";
 
 /**
  * Tests for comment syntax support in the evaluator.

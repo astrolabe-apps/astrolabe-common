@@ -1,9 +1,9 @@
 import {
+  collectAllErrors,
   EvalEnv,
   EvalExpr,
-  ValueExpr,
   toNative,
-  collectAllErrors,
+  ValueExpr,
 } from "../src/ast";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";

@@ -1,14 +1,13 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
-  valueExpr,
-  varExpr,
-  callExpr,
-  propertyExpr,
-  letExpr,
   arrayExpr,
+  callExpr,
   EvalEnv,
+  letExpr,
+  propertyExpr,
+  valueExpr,
   ValueExpr,
-  EvalExpr,
+  varExpr,
 } from "../src/ast";
 import { printExpr } from "../src/printExpr";
 import { basicEnv, partialEnv } from "../src/defaultFunctions";
@@ -507,7 +506,9 @@ describe("Partial Evaluation", () => {
     });
 
     test("filter with symbolic array", () => {
-      const env = createPartialEnv().newScope({ items: varExpr("unknownItems") });
+      const env = createPartialEnv().newScope({
+        items: varExpr("unknownItems"),
+      });
       const expr = callExpr("filter", [
         varExpr("items"),
         callExpr(">", [callExpr("this", []), valueExpr(10)]),
@@ -540,7 +541,9 @@ describe("Partial Evaluation", () => {
     });
 
     test("count with symbolic array", () => {
-      const env = createPartialEnv().newScope({ items: varExpr("unknownItems") });
+      const env = createPartialEnv().newScope({
+        items: varExpr("unknownItems"),
+      });
       const expr = callExpr("count", [varExpr("items")]);
       const result = evalPartial(env, expr);
 
@@ -616,7 +619,9 @@ describe("Partial Evaluation", () => {
     });
 
     test("first with symbolic array", () => {
-      const env = createPartialEnv().newScope({ items: varExpr("unknownItems") });
+      const env = createPartialEnv().newScope({
+        items: varExpr("unknownItems"),
+      });
       const expr = callExpr("first", [
         varExpr("items"),
         callExpr(">", [callExpr("this", []), valueExpr(5)]),
@@ -662,7 +667,9 @@ describe("Partial Evaluation", () => {
 
   describe("Boolean Identity Simplification", () => {
     test("comparison in boolean expression substitutes defined variables", () => {
-      const env = createPartialEnv().newScope({ FreightMaxWidth: valueExpr(12) });
+      const env = createPartialEnv().newScope({
+        FreightMaxWidth: valueExpr(12),
+      });
       const expr = callExpr("and", [
         callExpr("<=", [propertyExpr("height"), varExpr("FreightMaxHeight")]),
         callExpr("<=", [propertyExpr("width"), varExpr("FreightMaxWidth")]),

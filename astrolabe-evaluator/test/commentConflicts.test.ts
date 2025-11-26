@@ -109,10 +109,10 @@ describe("Edge Cases with Slashes and Asterisks", () => {
       `
             a /* first */
             / /* divide */
-            b /* second */
+            b /* second */ 
             * /* multiply */
             c // result`,
-      { a: 10, b: 2, c: 3 }
+      { a: 10, b: 2, c: 3 },
     );
     expect(result).toBe(15);
   });

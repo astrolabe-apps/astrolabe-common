@@ -27,7 +27,7 @@ import {
   valueExprWithError,
 } from "./ast";
 import { createBasicEnv } from "./evaluate";
-import { createPartialEnv } from "./partialEvaluate";
+import { createPartialEnv, PartialEvalEnv } from "./partialEvaluate";
 import { allElems, valuesToString } from "./values";
 import { printExpr } from "./printExpr";
 import {
@@ -101,19 +101,22 @@ function stringFunction(after: (s: string) => string) {
   }, constGetType(StringType));
 }
 
-const flatFunction = functionValue((env, call) => {
-  const partials = call.args.map((arg) => env.evaluateExpr(arg));
+const flatFunction = functionValue(
+  (env, call) => {
+    const partials = call.args.map((arg) => env.evaluateExpr(arg));
 
-  // Check if all arguments are fully evaluated
-  const allFullyEvaluated = partials.every((p) => p.type === "value");
-  if (!allFullyEvaluated) {
-    // At least one argument is symbolic - return symbolic call
-    return { ...call, args: partials };
-  }
+    // Check if all arguments are fully evaluated
+    const allFullyEvaluated = partials.every((p) => p.type === "value");
+    if (!allFullyEvaluated) {
+      // At least one argument is symbolic - return symbolic call
+      return { ...call, args: partials };
+    }
 
-  // All arguments are ValueExpr - proceed with concrete evaluation
-  return valueExpr((partials as ValueExpr[]).flatMap((v) => allElems(v)));
-}, constGetType(arrayType([])));
+    // All arguments are ValueExpr - proceed with concrete evaluation
+    return valueExpr((partials as ValueExpr[]).flatMap((v) => allElems(v)));
+  },
+  constGetType(arrayType([])),
+);
 
 export const objectFunction = functionValue(
   (env, call) => {
@@ -241,23 +244,26 @@ export function evalFunctionExpr(
 function arrayFunc(
   toValue: (values: ValueExpr[], arrayValue?: ValueExpr) => ValueExpr,
 ) {
-  return functionValue((env, call) => {
-    const partials = call.args.map((arg) => env.evaluateExpr(arg));
+  return functionValue(
+    (env, call) => {
+      const partials = call.args.map((arg) => env.evaluateExpr(arg));
 
-    // Check if all arguments are fully evaluated
-    const allFullyEvaluated = partials.every((p) => p.type === "value");
-    if (!allFullyEvaluated) {
-      // At least one argument is symbolic - return symbolic call
-      return { ...call, args: partials };
-    }
+      // Check if all arguments are fully evaluated
+      const allFullyEvaluated = partials.every((p) => p.type === "value");
+      if (!allFullyEvaluated) {
+        // At least one argument is symbolic - return symbolic call
+        return { ...call, args: partials };
+      }
 
-    // All arguments are ValueExpr - proceed with concrete evaluation
-    const v = partials as ValueExpr[];
-    if (v.length == 1 && Array.isArray(v[0].value)) {
-      return toValue(v[0].value as ValueExpr[], v[0]);
-    }
-    return toValue(v);
-  }, constGetType(arrayType([])));
+      // All arguments are ValueExpr - proceed with concrete evaluation
+      const v = partials as ValueExpr[];
+      if (v.length == 1 && Array.isArray(v[0].value)) {
+        return toValue(v[0].value as ValueExpr[], v[0]);
+      }
+      return toValue(v);
+    },
+    constGetType(arrayType([])),
+  );
 }
 
 function aggFunction<A>(
@@ -987,7 +993,7 @@ export function basicEnv(root: unknown): EvalEnv {
  * Create a PartialEvalEnv with default functions.
  * Optionally bind root data to the `_` variable.
  */
-export function partialEnv(data?: unknown): EvalEnv {
+export function partialEnv(data?: unknown): PartialEvalEnv {
   if (data !== undefined) {
     const dataValue = toValue(EmptyPath, data);
     return createPartialEnv({ ...defaultFunctions, _: dataValue });

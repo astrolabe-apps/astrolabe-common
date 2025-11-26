@@ -1,15 +1,14 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { printExpr } from "../src/printExpr";
 import { parseEval } from "../src/parseEval";
 import {
   ArrayExpr,
   CallExpr,
-  EvalExpr,
   LambdaExpr,
   LetExpr,
+  PropertyExpr,
   ValueExpr,
   VarExpr,
-  PropertyExpr,
 } from "../src/ast";
 import { toNormalString } from "../src/normalString";
 
@@ -136,7 +135,12 @@ describe("printExpr", () => {
     test("prints let with single variable", () => {
       const expr: LetExpr = {
         type: "let",
-        variables: [[{ type: "var", variable: "x" }, { type: "value", value: 5 }]],
+        variables: [
+          [
+            { type: "var", variable: "x" },
+            { type: "value", value: 5 },
+          ],
+        ],
         expr: { type: "var", variable: "x" },
       };
       expect(printExpr(expr)).toBe("let $x := 5 in $x");
@@ -146,8 +150,14 @@ describe("printExpr", () => {
       const expr: LetExpr = {
         type: "let",
         variables: [
-          [{ type: "var", variable: "x" }, { type: "value", value: 1 }],
-          [{ type: "var", variable: "y" }, { type: "value", value: 2 }],
+          [
+            { type: "var", variable: "x" },
+            { type: "value", value: 1 },
+          ],
+          [
+            { type: "var", variable: "y" },
+            { type: "value", value: 2 },
+          ],
         ],
         expr: {
           type: "call",
@@ -587,8 +597,8 @@ describe("printExpr", () => {
         type: "value",
         value: {
           name: { type: "value", value: "John" },
-          age: { type: "value", value: 30 }
-        }
+          age: { type: "value", value: 30 },
+        },
       };
       const printed = printExpr(expr);
 
@@ -602,7 +612,7 @@ describe("printExpr", () => {
     test("prints ValueExpr with empty object", () => {
       const expr: ValueExpr = {
         type: "value",
-        value: {}
+        value: {},
       };
       expect(printExpr(expr)).toBe("{}");
     });
@@ -613,8 +623,8 @@ describe("printExpr", () => {
         value: [
           { type: "value", value: 1 },
           { type: "value", value: 2 },
-          { type: "value", value: 3 }
-        ]
+          { type: "value", value: 3 },
+        ],
       };
       expect(printExpr(expr)).toBe("[1, 2, 3]");
     });
@@ -626,10 +636,10 @@ describe("printExpr", () => {
           user: {
             type: "value",
             value: {
-              name: { type: "value", value: "Jane" }
-            }
-          }
-        }
+              name: { type: "value", value: "Jane" },
+            },
+          },
+        },
       };
       const printed = printExpr(expr);
       expect(printed).toContain('"user":');
@@ -712,10 +722,10 @@ describe("printExpr", () => {
 
     test("round-trips object literals", () => {
       testRoundTrip("{}");
-      testRoundTrip("{name: \"John\"}");
-      testRoundTrip("{name: \"John\", age: 30}");
+      testRoundTrip('{name: "John"}');
+      testRoundTrip('{name: "John", age: 30}');
       testRoundTrip("{x: 1, y: 2, z: 3}");
-      testRoundTrip("{\"a\": 1, \"b\": 1}"); // quoted keys
+      testRoundTrip('{"a": 1, "b": 1}'); // quoted keys
     });
 
     test("round-trips template strings", () => {

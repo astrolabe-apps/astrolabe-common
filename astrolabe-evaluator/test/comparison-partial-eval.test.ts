@@ -1,8 +1,8 @@
-import { describe, test, expect } from "vitest";
-import { varExpr, callExpr, valueExpr } from "../src/ast";
+import { describe, expect, test } from "vitest";
+import { callExpr, valueExpr, varExpr } from "../src/ast";
 import { printExpr } from "../src/printExpr";
 import { partialEnv } from "../src/defaultFunctions";
-import { evalPartial, evalResult } from "./testHelpers";
+import { evalPartial } from "./testHelpers";
 
 describe("Comparison Operators with Partial Evaluation", () => {
   test("equality with unknown variable should print correctly", () => {

@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { basicEnv } from "../src/defaultFunctions";
-import { valueExpr, extractAllPaths } from "../src/ast";
+import type { Path, ValueExpr } from "../src/ast";
+import { extractAllPaths } from "../src/ast";
 import { parseEval } from "../src/parseEval";
-import type { ValueExpr, Path } from "../src/ast";
 import { evalResult } from "./testHelpers";
 
 /**
@@ -854,7 +854,12 @@ describe("Object Filter with Dynamic Keys Tests", () => {
 
   test("Dynamic key with computed expression tracks all dependencies", () => {
     const data = {
-      config: { setting_a: "value1", setting_b: "value2", prefix: "setting", suffix: "_a" },
+      config: {
+        setting_a: "value1",
+        setting_b: "value2",
+        prefix: "setting",
+        suffix: "_a",
+      },
     };
     const env = basicEnv(data);
 
@@ -877,7 +882,11 @@ describe("Object Filter with Dynamic Keys Tests", () => {
   test("Nested object access with dynamic key tracks dependencies", () => {
     const data = {
       company: {
-        employees: { alice: { role: "manager" }, bob: { role: "developer" }, selectedName: "alice" },
+        employees: {
+          alice: { role: "manager" },
+          bob: { role: "developer" },
+          selectedName: "alice",
+        },
       },
     };
     const env = basicEnv(data);
@@ -918,7 +927,7 @@ describe("Object Filter with Dynamic Keys Tests", () => {
 
     // Compute key from array sum, use it to lookup in literal object
     const expr = parseEval(
-      'let $table := $object("6", [1.5, 1.5, 1.5]), $key := $fixed($sum(array), 0) in $table[$key]'
+      'let $table := $object("6", [1.5, 1.5, 1.5]), $key := $fixed($sum(array), 0) in $table[$key]',
     );
     const result = evalResult(env, expr);
 
@@ -939,7 +948,7 @@ describe("Object Filter with Dynamic Keys Tests", () => {
 
     // Compute key from array sum, use it to lookup and then access element
     const expr = parseEval(
-      'let $table := $object("6", [1.5, 1.5, 1.5]), $key := $fixed($sum(array), 0) in $table[$key][0]'
+      'let $table := $object("6", [1.5, 1.5, 1.5]), $key := $fixed($sum(array), 0) in $table[$key][0]',
     );
     const result = evalResult(env, expr);
 
@@ -977,7 +986,7 @@ describe("Null Index/Key Handling Tests", () => {
     const env = basicEnv(data);
 
     // When $min(array) returns null, obj[$key] should return null with preserved deps
-    const expr = parseEval('let $key := $min(array) in obj[$key]');
+    const expr = parseEval("let $key := $min(array) in obj[$key]");
     const result = evalResult(env, expr);
 
     // Result should be null
@@ -1026,10 +1035,7 @@ describe("Null Index/Key Handling Tests", () => {
 describe("FlatMap Dependency Tracking Tests", () => {
   test("FlatMap preserves dependencies in individual elements", () => {
     const data = {
-      items: [
-        { values: [1, 2] },
-        { values: [3, 4] },
-      ],
+      items: [{ values: [1, 2] }, { values: [3, 4] }],
     };
     const env = basicEnv(data);
 
@@ -1058,10 +1064,7 @@ describe("FlatMap Dependency Tracking Tests", () => {
 
   test("FlatMap then sum aggregates dependencies correctly", () => {
     const data = {
-      groups: [
-        { nums: [1, 2] },
-        { nums: [3, 4, 5] },
-      ],
+      groups: [{ nums: [1, 2] }, { nums: [3, 4, 5] }],
     };
     const env = basicEnv(data);
 
