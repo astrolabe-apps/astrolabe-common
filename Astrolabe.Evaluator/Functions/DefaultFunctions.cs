@@ -593,14 +593,7 @@ public static class DefaultFunctions
                 EvalWithIndex(env, leftValue, 0, right);
         }
 
-        var partialResults = new List<EvalExpr>();
-        var index = 0;
-        foreach (var elem in av.Values)
-        {
-            var result = EvalWithIndex(env, elem, index, right);
-            partialResults.Add(result);
-            index++;
-        }
+        var partialResults = av.Values.Select((x, i) => EvalWithIndex(env, x, i, right)).ToList();
 
         // Check if all results are fully evaluated
         if (!partialResults.All(r => r is ValueExpr))
@@ -633,7 +626,7 @@ public static class DefaultFunctions
         // Leaf element - propagate parent deps if parent has deps
         if (parent?.Deps?.Any() != true)
             return [v];
-        var newDeps = v.Deps?.ToList() ?? new List<ValueExpr>();
+        var newDeps = v.Deps?.ToList() ?? [];
         newDeps.Add(parent);
         return [v with { Deps = newDeps }];
     }
@@ -653,7 +646,7 @@ public static class DefaultFunctions
             }
 
             var values = partials.Cast<ValueExpr>().ToList();
-            var strings = values.Select(v => ValueToString(v)).ToList();
+            var strings = values.Select(ValueToString).ToList();
             var result = transform(string.Join("", strings.Select(s => s.Value)));
 
             // Use original values (with their deps) instead of transformed strings
