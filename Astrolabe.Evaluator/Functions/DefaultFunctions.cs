@@ -65,17 +65,6 @@ public static class DefaultFunctions
     }
 
     /// <summary>
-    /// Binary function with null propagation (returns null if either arg is null).
-    /// </summary>
-    public static FunctionHandler BinNullPropFunction(
-        string name,
-        Func<object, object, EvalEnv, object?> evaluate
-    )
-    {
-        return BinFunction(name, evaluate);
-    }
-
-    /// <summary>
     /// Comparison function with partial evaluation support.
     /// </summary>
     public static FunctionHandler ComparisonFunction(string name, Func<int, bool> toResult)
@@ -154,16 +143,14 @@ public static class DefaultFunctions
                 {
                     deps.Add(argResult);
 
-                    // Short-circuit if we hit the short-circuit value
-                    if (argResult.Value is bool b && b == shortCircuitValue)
+                    switch (argResult.Value)
                     {
-                        return ValueExpr.WithDeps(shortCircuitValue, deps);
-                    }
-
-                    // If null, return null
-                    if (argResult.Value is null)
-                    {
-                        return ValueExpr.WithDeps(null, deps);
+                        // Short-circuit if we hit the short-circuit value
+                        case bool b when b == shortCircuitValue:
+                            return ValueExpr.WithDeps(shortCircuitValue, deps);
+                        // If null, return null
+                        case null:
+                            return ValueExpr.WithDeps(null, deps);
                     }
 
                     // If not a boolean, return null (error case)
@@ -178,25 +165,19 @@ public static class DefaultFunctions
 
             // Filter out identity values (true for AND, false for OR)
             var filteredArgs = evaluatedArgs
-                .Where(arg =>
-                    arg is not ValueExpr ve || ve.Value is not bool bv || bv != identityValue
-                )
+                .Where(arg => arg is not ValueExpr { Value: bool bv } || bv != identityValue)
                 .ToList();
 
-            // If no args remain after filtering, all were identity values
-            if (filteredArgs.Count == 0)
+            return filteredArgs.Count switch
             {
-                return ValueExpr.WithDeps(defaultResult, deps);
-            }
-
-            // If only one arg remains, return it directly
-            if (filteredArgs.Count == 1)
-            {
-                return filteredArgs[0];
-            }
+                // If no args remain after filtering, all were identity values
+                0 => ValueExpr.WithDeps(defaultResult, deps),
+                // If only one arg remains, return it directly
+                1 => filteredArgs[0],
+                _ => new CallExpr(name, filteredArgs),
+            };
 
             // Multiple args remain - return CallExpr with filtered args
-            return new CallExpr(name, filteredArgs);
         };
     }
 
@@ -253,58 +234,21 @@ public static class DefaultFunctions
         var left = env.EvaluateExpr(call.Args[0]);
         var right = env.EvaluateExpr(call.Args[1]);
 
-        if (left is ValueExpr lv)
+        if (left is not ValueExpr lv)
+            return new CallExpr("??", [left, right]);
+        if (lv.Value != null)
         {
-            if (lv.Value != null)
-            {
-                return lv;
-            }
-            // Left is null, use right
-            if (right is ValueExpr rv)
-            {
-                return env.WithDeps(rv, [lv, rv]);
-            }
+            return lv;
+        }
+        // Left is null, use right
+        if (right is ValueExpr rv)
+        {
+            return env.WithDeps(rv, [lv, rv]);
         }
 
         // Return symbolic call
         return new CallExpr("??", [left, right]);
     };
-
-    /// <summary>
-    /// Array/list operations helper.
-    /// </summary>
-    private static FunctionHandler ArrayOp(
-        string name,
-        Func<List<ValueExpr>, ValueExpr?, EvalEnv, EvalExpr> arrayFunc
-    )
-    {
-        return (env, call) =>
-        {
-            if (call.Args.Count == 0)
-            {
-                return arrayFunc([], null, env);
-            }
-
-            // Evaluate all arguments
-            var partials = call.Args.Select(a => env.EvaluateExpr(a)).ToList();
-
-            // Check if all are fully evaluated
-            if (!partials.All(p => p is ValueExpr))
-            {
-                return new CallExpr(name, partials);
-            }
-
-            var values = partials.Cast<ValueExpr>().ToList();
-
-            // Handle single array argument
-            if (values.Count == 1 && values[0].Value is ArrayValue av)
-            {
-                return arrayFunc(av.Values.ToList(), values[0], env);
-            }
-
-            return arrayFunc(values, null, env);
-        };
-    }
 
     /// <summary>
     /// Sum aggregation function.
@@ -358,26 +302,28 @@ public static class DefaultFunctions
     /// </summary>
     private static readonly FunctionHandler CountOp = (env, call) =>
     {
-        if (call.Args.Count == 0)
-            return ValueExpr.WithDeps(0L, []);
-
-        if (call.Args.Count == 1)
+        switch (call.Args.Count)
         {
-            var arrayPartial = env.EvaluateExpr(call.Args[0]);
-
-            if (arrayPartial is not ValueExpr arrayValue)
-                return new CallExpr("count", [arrayPartial]);
-
-            return arrayValue.Value switch
+            case 0:
+                return ValueExpr.WithDeps(0L, []);
+            case 1:
             {
-                ArrayValue av => ValueExpr.WithDeps((long)av.Values.Count(), [arrayValue]),
-                null => ValueExpr.WithDeps(0L, [arrayValue]),
-                _ => ValueExpr.WithError(null, "count requires an array"),
-            };
-        }
+                var arrayPartial = env.EvaluateExpr(call.Args[0]);
 
-        // Multiple arguments - count them directly
-        return new ValueExpr((long)call.Args.Count);
+                if (arrayPartial is not ValueExpr arrayValue)
+                    return new CallExpr("count", [arrayPartial]);
+
+                return arrayValue.Value switch
+                {
+                    ArrayValue av => ValueExpr.WithDeps((long)av.Values.Count(), [arrayValue]),
+                    null => ValueExpr.WithDeps(0L, [arrayValue]),
+                    _ => ValueExpr.WithError(null, "count requires an array"),
+                };
+            }
+            default:
+                // Multiple arguments - count them directly
+                return new ValueExpr((long)call.Args.Count);
+        }
     };
 
     /// <summary>
@@ -454,17 +400,12 @@ public static class DefaultFunctions
 
         if (leftValue.Value is not ArrayValue av)
         {
-            if (leftValue.Value == null)
-                return leftValue;
-            return ValueExpr.WithError(null, "map requires an array");
+            return leftValue.Value == null
+                ? leftValue
+                : ValueExpr.WithError(null, "map requires an array");
         }
 
-        var partialResults = new List<EvalExpr>();
-        foreach (var elem in av.Values)
-        {
-            var result = EvalWithElement(env, elem, right);
-            partialResults.Add(result);
-        }
+        var partialResults = av.Values.Select(elem => EvalWithElement(env, elem, right)).ToList();
 
         // Check if all results are fully evaluated
         if (partialResults.All(r => r is ValueExpr))
@@ -496,27 +437,28 @@ public static class DefaultFunctions
             return new CallExpr("[", [leftPartial, right]);
         }
 
-        // Handle null
-        if (leftValue.Value == null)
-            return leftValue;
-
-        // Handle OBJECT property access (obj[key])
-        if (leftValue.Value is ObjectValue ov)
+        switch (leftValue.Value)
         {
-            // Evaluate key expression with object as context
-            var keyResult = EvalWithIndex(env, leftValue, 0, right);
-
-            if (keyResult is not ValueExpr keyVal)
-                return new CallExpr("[", [leftPartial, right]);
-
-            // Handle null key
-            if (keyVal.Value == null)
-                return env.WithDeps(ValueExpr.Null, [keyVal, leftValue]);
-
-            // Get property by key
-            var keyStr = keyVal.Value?.ToString();
-            if (keyStr != null && ov.Properties.TryGetValue(keyStr, out var propValue))
+            // Handle null
+            case null:
+                return leftValue;
+            // Handle OBJECT property access (obj[key])
+            case ObjectValue ov:
             {
+                // Evaluate key expression with object as context
+                var keyResult = EvalWithIndex(env, leftValue, 0, right);
+
+                if (keyResult is not ValueExpr keyVal)
+                    return new CallExpr("[", [leftPartial, right]);
+
+                // Handle null key
+                if (keyVal.Value == null)
+                    return env.WithDeps(ValueExpr.Null, [keyVal, leftValue]);
+
+                // Get property by key
+                var keyStr = keyVal.Value?.ToString();
+                if (keyStr == null || !ov.Properties.TryGetValue(keyStr, out var propValue))
+                    return ValueExpr.Null;
                 // Track key dependency for dynamic keys
                 var hasKeyDeps = keyVal.Deps?.Any() == true || keyVal.Path != null;
                 var hasObjDeps = leftValue.Deps?.Any() == true;
@@ -537,8 +479,6 @@ public static class DefaultFunctions
                     Deps = (propValue.Deps?.ToList() ?? []).Concat([parentWithDeps]).ToList(),
                 };
             }
-
-            return ValueExpr.Null;
         }
 
         // Handle ARRAY filtering/indexing
@@ -552,7 +492,7 @@ public static class DefaultFunctions
 
         // Evaluate filter expression with first element to determine type
         var firstElem = empty ? ValueExpr.Null : values[0];
-        var indexResult = EvalWithIndex(env, firstElem, empty ? 0 : 0, right);
+        var indexResult = EvalWithIndex(env, firstElem, empty ? null : 0, right);
 
         if (indexResult is not ValueExpr indexVal)
         {
@@ -646,10 +586,11 @@ public static class DefaultFunctions
 
         if (leftValue.Value is not ArrayValue av)
         {
-            if (leftValue.Value == null)
-                return leftValue;
-            // Single value - evaluate right side with it as context (index null)
-            return EvalWithIndex(env, leftValue, 0, right);
+            return leftValue.Value == null
+                ? leftValue
+                :
+                // Single value - evaluate right side with it as context (index null)
+                EvalWithIndex(env, leftValue, 0, right);
         }
 
         var partialResults = new List<EvalExpr>();
@@ -662,18 +603,15 @@ public static class DefaultFunctions
         }
 
         // Check if all results are fully evaluated
-        if (partialResults.All(r => r is ValueExpr))
+        if (!partialResults.All(r => r is ValueExpr))
+            return new ArrayExpr(partialResults);
+        // Flatten results with dependency propagation
+        var flattened = new List<ValueExpr>();
+        foreach (var result in partialResults.Cast<ValueExpr>())
         {
-            // Flatten results with dependency propagation
-            var flattened = new List<ValueExpr>();
-            foreach (var result in partialResults.Cast<ValueExpr>())
-            {
-                flattened.AddRange(AllElems(result));
-            }
-            return new ValueExpr(new ArrayValue(flattened));
+            flattened.AddRange(AllElems(result));
         }
-
-        return new ArrayExpr(partialResults);
+        return new ValueExpr(new ArrayValue(flattened));
     };
 
     /// <summary>
@@ -682,25 +620,22 @@ public static class DefaultFunctions
     /// </summary>
     private static IEnumerable<ValueExpr> AllElems(ValueExpr v, ValueExpr? parent = null)
     {
-        if (v.Value is ArrayValue av)
+        switch (v.Value)
         {
-            // Recurse into nested arrays, passing v as the parent
-            return av.Values.SelectMany(child => AllElems(child, v));
+            case ArrayValue av:
+                // Recurse into nested arrays, passing v as the parent
+                return av.Values.SelectMany(child => AllElems(child, v));
+            // Skip null values
+            case null:
+                return [];
         }
-
-        // Skip null values
-        if (v.Value == null)
-            return [];
 
         // Leaf element - propagate parent deps if parent has deps
-        if (parent?.Deps?.Any() == true)
-        {
-            var newDeps = v.Deps?.ToList() ?? new List<ValueExpr>();
-            newDeps.Add(parent);
-            return [v with { Deps = newDeps }];
-        }
-
-        return [v];
+        if (parent?.Deps?.Any() != true)
+            return [v];
+        var newDeps = v.Deps?.ToList() ?? new List<ValueExpr>();
+        newDeps.Add(parent);
+        return [v with { Deps = newDeps }];
     }
 
     /// <summary>
@@ -710,7 +645,7 @@ public static class DefaultFunctions
     {
         return (env, call) =>
         {
-            var partials = call.Args.Select(a => env.EvaluateExpr(a)).ToList();
+            var partials = call.Args.Select(env.EvaluateExpr).ToList();
 
             if (!partials.All(p => p is ValueExpr))
             {
@@ -742,7 +677,7 @@ public static class DefaultFunctions
     /// <summary>
     /// This function - returns current value.
     /// </summary>
-    private static readonly FunctionHandler ThisOp = (env, call) =>
+    private static readonly FunctionHandler ThisOp = (env, _) =>
     {
         var current = env.GetCurrentValue();
         return current ?? ValueExpr.Null;
@@ -759,32 +694,35 @@ public static class DefaultFunctions
     {
         return (env, call) =>
         {
-            if (call.Args.Count == 0)
-                return init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null;
-
-            if (call.Args.Count == 1)
+            switch (call.Args.Count)
             {
-                var arrayPartial = env.EvaluateExpr(call.Args[0]);
-
-                if (arrayPartial is not ValueExpr arrayValue)
-                    return new CallExpr(name, [arrayPartial]);
-
-                return arrayValue.Value switch
+                case 0:
+                    return init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null;
+                case 1:
                 {
-                    ArrayValue av when av.Values.Any() => av.Values.All(x => x.Value != null)
-                        ? ValueExpr.WithDeps(
-                            av.Values.Skip(1)
-                                .Aggregate(
-                                    ValueExpr.AsDouble(av.Values.First().Value),
-                                    (acc, next) => accumulator(acc, ValueExpr.AsDouble(next.Value))
-                                ),
-                            av.Values.ToList()
-                        )
-                        : ValueExpr.WithDeps(null, av.Values.ToList()),
-                    ArrayValue => init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null,
-                    null => arrayValue,
-                    _ => ValueExpr.WithError(null, $"{name} requires an array"),
-                };
+                    var arrayPartial = env.EvaluateExpr(call.Args[0]);
+
+                    if (arrayPartial is not ValueExpr arrayValue)
+                        return new CallExpr(name, [arrayPartial]);
+
+                    return arrayValue.Value switch
+                    {
+                        ArrayValue av when av.Values.Any() => av.Values.All(x => x.Value != null)
+                            ? ValueExpr.WithDeps(
+                                av.Values.Skip(1)
+                                    .Aggregate(
+                                        ValueExpr.AsDouble(av.Values.First().Value),
+                                        (acc, next) =>
+                                            accumulator(acc, ValueExpr.AsDouble(next.Value))
+                                    ),
+                                av.Values.ToList()
+                            )
+                            : ValueExpr.WithDeps(null, av.Values.ToList()),
+                        ArrayValue => init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null,
+                        null => arrayValue,
+                        _ => ValueExpr.WithError(null, $"{name} requires an array"),
+                    };
+                }
             }
 
             // Multiple arguments - treat as array of values
@@ -795,7 +733,7 @@ public static class DefaultFunctions
             }
 
             var values = partials.Cast<ValueExpr>().ToList();
-            if (!values.Any())
+            if (values.Count == 0)
                 return init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null;
 
             return ValueExpr.WithDeps(
@@ -838,7 +776,7 @@ public static class DefaultFunctions
     /// Helper for evaluating lambda with index bound to lambda variable.
     /// Used by Filter, FlatMap, First, etc. where $i gets the index and $this() gets element.
     /// </summary>
-    private static EvalExpr EvalWithIndex(EvalEnv env, ValueExpr element, int index, EvalExpr expr)
+    private static EvalExpr EvalWithIndex(EvalEnv env, ValueExpr element, int? index, EvalExpr expr)
     {
         var vars = new Dictionary<string, EvalExpr> { ["_"] = element };
         EvalExpr toEval;
@@ -880,9 +818,9 @@ public static class DefaultFunctions
 
             if (leftValue.Value is not ArrayValue av)
             {
-                if (leftValue.Value == null)
-                    return leftValue;
-                return ValueExpr.WithError(null, $"{name} requires an array");
+                return leftValue.Value == null
+                    ? leftValue
+                    : ValueExpr.WithError(null, $"{name} requires an array");
             }
 
             var deps = new List<ValueExpr> { leftValue };
@@ -930,9 +868,9 @@ public static class DefaultFunctions
 
         if (leftValue.Value is not ArrayValue av)
         {
-            if (leftValue.Value == null)
-                return leftValue;
-            return ValueExpr.WithError(null, "contains requires an array");
+            return leftValue.Value == null
+                ? leftValue
+                : ValueExpr.WithError(null, "contains requires an array");
         }
 
         var deps = new List<ValueExpr> { leftValue };
@@ -974,9 +912,9 @@ public static class DefaultFunctions
 
         if (leftValue.Value is not ArrayValue av)
         {
-            if (leftValue.Value == null)
-                return leftValue;
-            return ValueExpr.WithError(null, "indexOf requires an array");
+            return leftValue.Value == null
+                ? leftValue
+                : ValueExpr.WithError(null, "indexOf requires an array");
         }
 
         var deps = new List<ValueExpr> { leftValue };
@@ -1073,12 +1011,11 @@ public static class DefaultFunctions
 
         foreach (var val in values)
         {
-            if (val.Value is ObjectValue ov)
+            if (val.Value is not ObjectValue ov)
+                continue;
+            foreach (var (key, propVal) in ov.Properties)
             {
-                foreach (var (key, propVal) in ov.Properties)
-                {
-                    merged[key] = propVal;
-                }
+                merged[key] = propVal;
             }
             // Skip non-object arguments (as per TypeScript behavior)
         }
@@ -1141,7 +1078,7 @@ public static class DefaultFunctions
 
             deps.Add(caseVal);
 
-            var matches = false;
+            bool matches;
 
             // Check if case is an array (matches any element)
             if (caseVal.Value is ArrayValue caseArray)
@@ -1153,15 +1090,14 @@ public static class DefaultFunctions
                 matches = env.Compare(valueExpr.Value, caseVal.Value) == 0;
             }
 
-            if (matches)
+            if (!matches)
+                continue;
+            var resultPartial = env.EvaluateExpr(call.Args[i + 1]);
+            if (resultPartial is ValueExpr resultVal)
             {
-                var resultPartial = env.EvaluateExpr(call.Args[i + 1]);
-                if (resultPartial is ValueExpr resultVal)
-                {
-                    return env.WithDeps(resultVal, deps.Append(resultVal));
-                }
-                return resultPartial;
+                return env.WithDeps(resultVal, deps.Append(resultVal));
             }
+            return resultPartial;
         }
 
         // No match found
