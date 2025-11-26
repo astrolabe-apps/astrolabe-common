@@ -63,7 +63,10 @@ export function SelectDataRenderer({
   ...props
 }: SelectDataRendererProps) {
   const { value, disabled } = state;
-  const [showEmpty] = useState(!required || value == null);
+  const showEmpty = useMemo(
+    () => !required || value == null,
+    [required, value],
+  );
   const optionStringMap = useMemo(
     () => Object.fromEntries(options.map((x) => [convert(x.value), x.value])),
     [options],
