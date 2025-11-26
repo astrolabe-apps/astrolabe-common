@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Astrolabe.Evaluator;
-using Astrolabe.Evaluator.Functions;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Astrolabe.TestTemplate.Controllers;
@@ -20,11 +19,10 @@ public class EvalController : ControllerBase
             // For partial evaluation, treat data fields as variables
             // Convert each data value to a proper ValueExpr structure via JsonNode
             var variables = evalData.Data.ToDictionary(
-                kvp => kvp.Key,
-                kvp =>
+                kvp => kvp.Key, EvalExpr (kvp) =>
                 {
                     var jsonNode = JsonSerializer.SerializeToNode(kvp.Value);
-                    return (EvalExpr)JsonDataLookup.ToValue(null, jsonNode);
+                    return JsonDataLookup.ToValue(null, jsonNode);
                 }
             );
 
@@ -53,7 +51,7 @@ public class EvalController : ControllerBase
 
             if (result is not ValueExpr resultValue)
             {
-                return new EvalResult(PrintExpr.Print(result), []);
+                return new EvalResult(result.Print(), []);
             }
 
             // Collect errors from result tree
