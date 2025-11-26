@@ -14,14 +14,6 @@ import { basicEnv, partialEnv } from "../src/defaultFunctions";
 import { evalPartial, evalWithErrors } from "./testHelpers";
 
 /**
- * Create an environment for partial evaluation testing.
- * If data is undefined, the environment supports symbolic evaluation (no data context).
- */
-function createPartialEnv(data?: any): EvalEnv {
-  return partialEnv(data);
-}
-
-/**
  * Create an environment for full evaluation testing (returns errors for unknown variables).
  */
 function createBasicEnv(data?: any): EvalEnv {
@@ -31,7 +23,7 @@ function createBasicEnv(data?: any): EvalEnv {
 describe("Partial Evaluation", () => {
   describe("Unknown Variables", () => {
     test("unknown variable returns VarExpr", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = varExpr("unknownVar");
       const result = evalPartial(env, expr);
 
@@ -51,7 +43,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("known variable evaluates fully", () => {
-      const env = createPartialEnv().newScope({ x: valueExpr(42) });
+      const env = partialEnv().newScope({ x: valueExpr(42) });
       const expr = varExpr("x");
       const result = evalPartial(env, expr);
 
@@ -62,7 +54,7 @@ describe("Partial Evaluation", () => {
 
   describe("Property Access Without Data", () => {
     test("property access without data returns PropertyExpr", () => {
-      const env = createPartialEnv(); // No data
+      const env = partialEnv(); // No data
       const expr = propertyExpr("name");
       const result = evalPartial(env, expr);
 
@@ -82,7 +74,7 @@ describe("Partial Evaluation", () => {
 
   describe("Arithmetic with Unknowns", () => {
     test("addition with unknown variable returns symbolic CallExpr", () => {
-      const env = createPartialEnv().newScope({ x: varExpr("unknownX") });
+      const env = partialEnv().newScope({ x: varExpr("unknownX") });
       const expr = callExpr("+", [valueExpr(5), varExpr("x")]);
       const result = evalPartial(env, expr);
 
@@ -91,7 +83,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("addition with all known values fully evaluates", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("+", [valueExpr(5), valueExpr(3)]);
       const result = evalPartial(env, expr);
 
@@ -101,7 +93,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("nested arithmetic with partial unknowns", () => {
-      const env = createPartialEnv().newScope({ y: varExpr("unknownY") });
+      const env = partialEnv().newScope({ y: varExpr("unknownY") });
       const expr = callExpr("*", [
         callExpr("+", [valueExpr(2), valueExpr(3)]),
         varExpr("y"),
@@ -114,7 +106,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("complex expression with multiple unknowns", () => {
-      const env = createPartialEnv().newScope({
+      const env = partialEnv().newScope({
         a: varExpr("unknownA"),
         b: varExpr("unknownB"),
       });
@@ -131,7 +123,7 @@ describe("Partial Evaluation", () => {
 
   describe("Conditional Branch Selection", () => {
     test("if with true condition evaluates then branch only", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("?", [
         valueExpr(true),
         valueExpr("yes"),
@@ -145,7 +137,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("if with false condition evaluates else branch only", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("?", [
         valueExpr(false),
         valueExpr("yes"),
@@ -159,7 +151,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("if with unknown condition returns symbolic", () => {
-      const env = createPartialEnv().newScope({ cond: varExpr("unknownCond") });
+      const env = partialEnv().newScope({ cond: varExpr("unknownCond") });
       const expr = callExpr("?", [
         varExpr("cond"),
         valueExpr("yes"),
@@ -172,7 +164,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("nested conditionals with branch elimination", () => {
-      const env = createPartialEnv().newScope({ x: varExpr("unknownX") });
+      const env = partialEnv().newScope({ x: varExpr("unknownX") });
       const expr = callExpr("?", [
         valueExpr(true),
         callExpr("+", [varExpr("x"), valueExpr(1)]),
@@ -187,7 +179,7 @@ describe("Partial Evaluation", () => {
 
   describe("Let Expression Simplification", () => {
     test("dead variable elimination - unused variable removed", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [
           [varExpr("x"), valueExpr(5)],
@@ -203,7 +195,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("constant propagation - simple values inlined", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [[varExpr("x"), valueExpr(5)]],
         callExpr("+", [varExpr("x"), valueExpr(3)]),
@@ -216,7 +208,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("let flattening - all bindings inlined", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [
           [varExpr("a"), valueExpr(2)],
@@ -231,7 +223,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("partial let - keeps symbolic bindings", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [
           [varExpr("x"), varExpr("unknownX")],
@@ -246,7 +238,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("dependent bindings with partial evaluation", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [
           [varExpr("x"), valueExpr(5)],
@@ -263,7 +255,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("mixed symbolic and concrete in let", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [
           [varExpr("a"), varExpr("unknownA")],
@@ -281,7 +273,7 @@ describe("Partial Evaluation", () => {
 
   describe("Variable Shadowing", () => {
     test("inner variable shadows outer", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [[varExpr("x"), valueExpr(5)]],
         letExpr([[varExpr("x"), valueExpr(10)]], varExpr("x")),
@@ -293,7 +285,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("shadowing with partial evaluation", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [[varExpr("x"), varExpr("unknownX")]],
         letExpr(
@@ -311,7 +303,7 @@ describe("Partial Evaluation", () => {
 
   describe("Array Partial Evaluation", () => {
     test("array with all known values evaluates fully", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = arrayExpr([valueExpr(1), valueExpr(2), valueExpr(3)]);
       const result = evalPartial(env, expr);
 
@@ -321,7 +313,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("array with unknown element returns ArrayExpr", () => {
-      const env = createPartialEnv().newScope({ x: varExpr("unknownX") });
+      const env = partialEnv().newScope({ x: varExpr("unknownX") });
       const expr = arrayExpr([valueExpr(1), varExpr("x"), valueExpr(3)]);
       const result = evalPartial(env, expr);
 
@@ -330,7 +322,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("array with expressions partially evaluates elements", () => {
-      const env = createPartialEnv().newScope({ y: varExpr("unknownY") });
+      const env = partialEnv().newScope({ y: varExpr("unknownY") });
       const expr = arrayExpr([
         callExpr("+", [valueExpr(1), valueExpr(2)]),
         callExpr("*", [varExpr("y"), valueExpr(3)]),
@@ -344,7 +336,7 @@ describe("Partial Evaluation", () => {
 
   describe("Nested Partial Evaluation", () => {
     test("deeply nested let expressions", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [[varExpr("a"), valueExpr(1)]],
         letExpr(
@@ -363,7 +355,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("nested conditionals with partial conditions", () => {
-      const env = createPartialEnv().newScope({
+      const env = partialEnv().newScope({
         cond1: varExpr("unknownCond1"),
         cond2: varExpr("unknownCond2"),
       });
@@ -382,7 +374,7 @@ describe("Partial Evaluation", () => {
 
   describe("Complex Real-World Scenarios", () => {
     test("formula with mix of known and unknown inputs", () => {
-      const env = createPartialEnv().newScope({
+      const env = partialEnv().newScope({
         price: varExpr("userInputPrice"),
         taxRate: valueExpr(0.08),
         discount: valueExpr(0.1),
@@ -417,7 +409,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("conditional with side computations", () => {
-      const env = createPartialEnv().newScope({
+      const env = partialEnv().newScope({
         isVIP: varExpr("userIsVIP"),
         basePrice: valueExpr(100),
       });
@@ -437,7 +429,7 @@ describe("Partial Evaluation", () => {
 
   describe("Edge Cases", () => {
     test("empty let expression", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr([], valueExpr(42));
       const result = evalPartial(env, expr);
 
@@ -446,7 +438,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("self-referential bindings fail gracefully", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr([[varExpr("x"), varExpr("x")]], varExpr("x"));
       const result = evalPartial(env, expr);
 
@@ -455,7 +447,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("null and undefined handling", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("+", [valueExpr(null), valueExpr(5)]);
       const result = evalPartial(env, expr);
 
@@ -466,7 +458,7 @@ describe("Partial Evaluation", () => {
 
   describe("Array Operations with Symbolic Values", () => {
     test("flatmap over symbolic array", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = letExpr(
         [[varExpr("a"), arrayExpr([valueExpr(1), valueExpr(2), varExpr("z")])]],
         callExpr(".", [
@@ -482,7 +474,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("map over symbolic array returns symbolic result", () => {
-      const env = createPartialEnv().newScope({ arr: varExpr("unknownArr") });
+      const env = partialEnv().newScope({ arr: varExpr("unknownArr") });
       const expr = callExpr("map", [
         varExpr("arr"),
         callExpr("+", [callExpr("this", []), valueExpr(1)]),
@@ -494,7 +486,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("map over concrete array evaluates fully", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("map", [
         arrayExpr([valueExpr(1), valueExpr(2), valueExpr(3)]),
         callExpr("*", [callExpr("this", []), valueExpr(2)]),
@@ -506,7 +498,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("filter with symbolic array", () => {
-      const env = createPartialEnv().newScope({
+      const env = partialEnv().newScope({
         items: varExpr("unknownItems"),
       });
       const expr = callExpr("filter", [
@@ -521,7 +513,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("sum over symbolic array", () => {
-      const env = createPartialEnv().newScope({ nums: varExpr("unknownNums") });
+      const env = partialEnv().newScope({ nums: varExpr("unknownNums") });
       const expr = callExpr("sum", [varExpr("nums")]);
       const result = evalPartial(env, expr);
 
@@ -530,7 +522,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("sum over concrete array evaluates", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("sum", [
         arrayExpr([valueExpr(1), valueExpr(2), valueExpr(3)]),
       ]);
@@ -541,7 +533,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("count with symbolic array", () => {
-      const env = createPartialEnv().newScope({
+      const env = partialEnv().newScope({
         items: varExpr("unknownItems"),
       });
       const expr = callExpr("count", [varExpr("items")]);
@@ -552,7 +544,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("elem with symbolic array index", () => {
-      const env = createPartialEnv().newScope({ idx: varExpr("unknownIndex") });
+      const env = partialEnv().newScope({ idx: varExpr("unknownIndex") });
       const expr = callExpr("elem", [
         arrayExpr([valueExpr("a"), valueExpr("b"), valueExpr("c")]),
         varExpr("idx"),
@@ -565,7 +557,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("elem with symbolic array", () => {
-      const env = createPartialEnv().newScope({ arr: varExpr("unknownArr") });
+      const env = partialEnv().newScope({ arr: varExpr("unknownArr") });
       const expr = callExpr("elem", [varExpr("arr"), valueExpr(0)]);
       const result = evalPartial(env, expr);
 
@@ -574,7 +566,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("elem with concrete values evaluates", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("elem", [
         arrayExpr([valueExpr(10), valueExpr(20), valueExpr(30)]),
         valueExpr(1),
@@ -586,7 +578,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("nested array operations with partial unknowns", () => {
-      const env = createPartialEnv().newScope({ base: varExpr("unknownBase") });
+      const env = partialEnv().newScope({ base: varExpr("unknownBase") });
       const expr = callExpr("sum", [
         callExpr("map", [
           arrayExpr([valueExpr(1), valueExpr(2), valueExpr(3)]),
@@ -601,7 +593,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("array with mixed symbolic elements", () => {
-      const env = createPartialEnv().newScope({
+      const env = partialEnv().newScope({
         x: varExpr("unknownX"),
         y: valueExpr(5),
       });
@@ -619,7 +611,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("first with symbolic array", () => {
-      const env = createPartialEnv().newScope({
+      const env = partialEnv().newScope({
         items: varExpr("unknownItems"),
       });
       const expr = callExpr("first", [
@@ -634,7 +626,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("object function with symbolic value", () => {
-      const env = createPartialEnv().newScope({ val: varExpr("unknownVal") });
+      const env = partialEnv().newScope({ val: varExpr("unknownVal") });
       const expr = callExpr("object", [valueExpr("key"), varExpr("val")]);
       const result = evalPartial(env, expr);
 
@@ -644,7 +636,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("keys function with symbolic object", () => {
-      const env = createPartialEnv().newScope({ obj: varExpr("unknownObj") });
+      const env = partialEnv().newScope({ obj: varExpr("unknownObj") });
       const expr = callExpr("keys", [varExpr("obj")]);
       const result = evalPartial(env, expr);
 
@@ -653,7 +645,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("merge with symbolic object", () => {
-      const env = createPartialEnv().newScope({ obj1: varExpr("unknownObj") });
+      const env = partialEnv().newScope({ obj1: varExpr("unknownObj") });
       const expr = callExpr("merge", [
         callExpr("object", [valueExpr("a"), valueExpr(1)]),
         varExpr("obj1"),
@@ -667,7 +659,7 @@ describe("Partial Evaluation", () => {
 
   describe("Boolean Identity Simplification", () => {
     test("comparison in boolean expression substitutes defined variables", () => {
-      const env = createPartialEnv().newScope({
+      const env = partialEnv().newScope({
         FreightMaxWidth: valueExpr(12),
       });
       const expr = callExpr("and", [
@@ -683,7 +675,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("true and X simplifies to X", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("and", [valueExpr(true), varExpr("unknown")]);
       const result = evalPartial(env, expr);
 
@@ -693,7 +685,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("false or X simplifies to X", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("or", [valueExpr(false), varExpr("unknown")]);
       const result = evalPartial(env, expr);
 
@@ -703,7 +695,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("X and true and Y filters out true", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("and", [
         varExpr("x"),
         valueExpr(true),
@@ -719,7 +711,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("X or false or Y filters out false", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("or", [
         varExpr("x"),
         valueExpr(false),
@@ -735,7 +727,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("all identity values for AND returns true", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("and", [
         valueExpr(true),
         valueExpr(true),
@@ -748,7 +740,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("all identity values for OR returns false", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("or", [
         valueExpr(false),
         valueExpr(false),
@@ -763,7 +755,7 @@ describe("Partial Evaluation", () => {
 
   describe("Null Propagation with Symbolic Values", () => {
     test("null with symbolic in binary op simplifies to null", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("+", [varExpr("x"), valueExpr(null)]);
       const result = evalPartial(env, expr);
 
@@ -772,7 +764,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("null with symbolic in comparison simplifies to null", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("<=", [varExpr("x"), valueExpr(null)]);
       const result = evalPartial(env, expr);
 
@@ -781,7 +773,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("null with symbolic in AND simplifies to null", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("and", [varExpr("x"), valueExpr(null)]);
       const result = evalPartial(env, expr);
 
@@ -790,7 +782,7 @@ describe("Partial Evaluation", () => {
     });
 
     test("null with symbolic in OR simplifies to null", () => {
-      const env = createPartialEnv();
+      const env = partialEnv();
       const expr = callExpr("or", [valueExpr(null), varExpr("y")]);
       const result = evalPartial(env, expr);
 
@@ -802,7 +794,7 @@ describe("Partial Evaluation", () => {
   describe("Uninlining", () => {
     describe("Basic Uninlining", () => {
       test("variable used twice with sufficient complexity is uninlined", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let c = $unknownA * 2 in c + c
         // After partial eval, c gets inlined twice, then uninline() should extract it back
         const expr = letExpr(
@@ -817,7 +809,7 @@ describe("Partial Evaluation", () => {
       });
 
       test("variable used once is not uninlined", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let c = $unknownA * 2 in c + 10
         const expr = letExpr(
           [[varExpr("c"), callExpr("*", [varExpr("unknownA"), valueExpr(2)])]],
@@ -831,7 +823,7 @@ describe("Partial Evaluation", () => {
       });
 
       test("multiple variables uninlined correctly", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let a = $x * 2, b = $y + 1 in a + b + a + b
         const expr = letExpr(
           [
@@ -858,7 +850,7 @@ describe("Partial Evaluation", () => {
 
     describe("Complexity Threshold", () => {
       test("simple VarExpr is not uninlined even if used multiple times", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let c = $unknownA in c + c
         // VarExpr has complexity 0, should not be uninlined
         const expr = letExpr(
@@ -873,7 +865,7 @@ describe("Partial Evaluation", () => {
       });
 
       test("simple ValueExpr is not uninlined even if used multiple times", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let c = 42 in $x + c + c
         // This fully evaluates to $x + 42 + 42 since 42 is concrete
         // But if c were symbolic and simple, it wouldn't be uninlined
@@ -891,7 +883,7 @@ describe("Partial Evaluation", () => {
       });
 
       test("PropertyExpr has complexity 1 - uninlined at default threshold", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let c = .prop in c + c
         // PropertyExpr has complexity 1, threshold is 1
         const expr = letExpr(
@@ -906,7 +898,7 @@ describe("Partial Evaluation", () => {
       });
 
       test("CallExpr with args has sufficient complexity to be uninlined", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let c = ($x + 1) * 2 in c + c
         // Nested call has complexity 2: outer * (1) + inner + (1) = 2
         const expr = letExpr(
@@ -934,7 +926,7 @@ describe("Partial Evaluation", () => {
       // distinguish shadowed variables in different scopes.
 
       test("shadowed variables are correctly distinguished by scope", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let x = $a * 2 in (let x = 5 in x) + x + x
         // Inner x=5 (complexity 0, used once) - not uninlined
         // Outer x=$a*2 (complexity 1, used twice) - uninlined
@@ -957,7 +949,7 @@ describe("Partial Evaluation", () => {
       });
 
       test("nested uninlining with different variable names", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let a = $x * 2 in let b = $y + 1 in a + b + a + b
         const expr = letExpr(
           [[varExpr("a"), callExpr("*", [varExpr("x"), valueExpr(2)])]],
@@ -982,7 +974,7 @@ describe("Partial Evaluation", () => {
       });
 
       test("shadowed variable - each scope uninlined independently", () => {
-        const env = createPartialEnv();
+        const env = partialEnv();
         // let x = $a * 2 in (let x = $b * 3 in x + x) + x
         // Inner x=$b*3 (complexity 1, used twice) - uninlined
         // Outer x=$a*2 (complexity 1, used once) - not uninlined
@@ -1011,7 +1003,7 @@ describe("Partial Evaluation", () => {
         // $x is fully known (8), so it gets inlined
         // $y is only used once, so it stays inlined (not wrapped in let)
         // Result: 8 + $unknown
-        const env = createPartialEnv();
+        const env = partialEnv();
         const expr = letExpr(
           [
             [varExpr("x"), callExpr("+", [valueExpr(5), valueExpr(3)])],
@@ -1030,7 +1022,7 @@ describe("Partial Evaluation", () => {
         // Currently both TypeScript and C# infinitely recurse on this expression.
         // The expected behavior is to detect the circular reference and return
         // a ValueExpr with null value and an error message.
-        const env = createPartialEnv();
+        const env = partialEnv();
         const expr = letExpr(
           [[varExpr("x"), valueExpr(5)]],
           letExpr(
@@ -1051,7 +1043,7 @@ describe("Partial Evaluation", () => {
         // TODO: Implement circular reference detection - currently causes stack overflow
         // Even simpler case: let $x := $x + 1 in $x
         // The binding directly references the variable being defined.
-        const env = createPartialEnv();
+        const env = partialEnv();
         const expr = letExpr(
           [[varExpr("x"), callExpr("+", [varExpr("x"), valueExpr(1)])]],
           varExpr("x"),
