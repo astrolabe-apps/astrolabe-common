@@ -12,7 +12,8 @@ public static class DefaultFunctions
     /// </summary>
     public static FunctionHandler BinFunction(
         string name,
-        Func<object, object, EvalEnv, object?> evaluate)
+        Func<object, object, EvalEnv, object?> evaluate
+    )
     {
         return (env, call) =>
         {
@@ -32,7 +33,8 @@ public static class DefaultFunctions
                 if (lv.Value == null)
                 {
                     // Left is null - collect right deps if available and return null
-                    if (right is ValueExpr rv) deps.Add(rv);
+                    if (right is ValueExpr rv)
+                        deps.Add(rv);
                     return env.WithDeps(ValueExpr.Null, deps);
                 }
             }
@@ -53,7 +55,8 @@ public static class DefaultFunctions
             {
                 return env.WithDeps(
                     new ValueExpr(evaluate(leftVal.Value!, rightVal.Value!, env)),
-                    deps);
+                    deps
+                );
             }
 
             // Return symbolic call (at least one arg is not a ValueExpr)
@@ -66,7 +69,8 @@ public static class DefaultFunctions
     /// </summary>
     public static FunctionHandler BinNullPropFunction(
         string name,
-        Func<object, object, EvalEnv, object?> evaluate)
+        Func<object, object, EvalEnv, object?> evaluate
+    )
     {
         return BinFunction(name, evaluate);
     }
@@ -86,16 +90,20 @@ public static class DefaultFunctions
     public static FunctionHandler NumberOp(
         string name,
         Func<double, double, double> doubleOp,
-        Func<long, long, object> longOp)
+        Func<long, long, object> longOp
+    )
     {
-        return BinFunction(name, (o1, o2, _) =>
-        {
-            if (ValueExpr.MaybeInteger(o1) is { } l1 && ValueExpr.MaybeInteger(o2) is { } l2)
+        return BinFunction(
+            name,
+            (o1, o2, _) =>
             {
-                return longOp(l1, l2);
+                if (ValueExpr.MaybeInteger(o1) is { } l1 && ValueExpr.MaybeInteger(o2) is { } l2)
+                {
+                    return longOp(l1, l2);
+                }
+                return doubleOp(ValueExpr.AsDouble(o1), ValueExpr.AsDouble(o2));
             }
-            return doubleOp(ValueExpr.AsDouble(o1), ValueExpr.AsDouble(o2));
-        });
+        );
     }
 
     /// <summary>
@@ -129,7 +137,8 @@ public static class DefaultFunctions
     private static FunctionHandler ShortCircuitBoolOp(
         string name,
         bool shortCircuitValue,
-        bool defaultResult)
+        bool defaultResult
+    )
     {
         return (env, call) =>
         {
@@ -169,9 +178,9 @@ public static class DefaultFunctions
 
             // Filter out identity values (true for AND, false for OR)
             var filteredArgs = evaluatedArgs
-                .Where(arg => arg is not ValueExpr ve ||
-                              ve.Value is not bool bv ||
-                              bv != identityValue)
+                .Where(arg =>
+                    arg is not ValueExpr ve || ve.Value is not bool bv || bv != identityValue
+                )
                 .ToList();
 
             // If no args remain after filtering, all were identity values
@@ -211,7 +220,7 @@ public static class DefaultFunctions
                 true => EvaluateAndAddDeps(env, thenExpr, condVal),
                 false => EvaluateAndAddDeps(env, elseExpr, condVal),
                 null => env.WithDeps(new ValueExpr(null), [condVal]),
-                _ => ValueExpr.WithError(null, "Conditional expects boolean condition")
+                _ => ValueExpr.WithError(null, "Conditional expects boolean condition"),
             };
         }
 
@@ -264,7 +273,10 @@ public static class DefaultFunctions
     /// <summary>
     /// Array/list operations helper.
     /// </summary>
-    private static FunctionHandler ArrayOp(string name, Func<List<ValueExpr>, ValueExpr?, EvalEnv, EvalExpr> arrayFunc)
+    private static FunctionHandler ArrayOp(
+        string name,
+        Func<List<ValueExpr>, ValueExpr?, EvalEnv, EvalExpr> arrayFunc
+    )
     {
         return (env, call) =>
         {
@@ -313,12 +325,15 @@ public static class DefaultFunctions
             {
                 ArrayValue av => ValueExpr.WithDeps(
                     av.Values.All(x => x.Value != null)
-                        ? av.Values.Aggregate(0d, (acc, next) => acc + ValueExpr.AsDouble(next.Value))
+                        ? av.Values.Aggregate(
+                            0d,
+                            (acc, next) => acc + ValueExpr.AsDouble(next.Value)
+                        )
                         : null,
                     av.Values.ToList()
                 ),
                 null => arrayValue,
-                _ => ValueExpr.WithError(null, "sum requires an array")
+                _ => ValueExpr.WithError(null, "sum requires an array"),
             };
         }
 
@@ -357,7 +372,7 @@ public static class DefaultFunctions
             {
                 ArrayValue av => ValueExpr.WithDeps((long)av.Values.Count(), [arrayValue]),
                 null => ValueExpr.WithDeps(0L, [arrayValue]),
-                _ => ValueExpr.WithError(null, "count requires an array")
+                _ => ValueExpr.WithError(null, "count requires an array"),
             };
         }
 
@@ -513,13 +528,13 @@ public static class DefaultFunctions
                 // Add parent reference with path preserved (matching TypeScript structure)
                 var parentWithDeps = new ValueExpr(null) with
                 {
-                    Deps = [keyVal, ..(leftValue.Deps ?? [])],
-                    Path = propValue.Path
+                    Deps = [keyVal, .. (leftValue.Deps ?? [])],
+                    Path = propValue.Path,
                 };
 
                 return propValue with
                 {
-                    Deps = (propValue.Deps?.ToList() ?? []).Concat([parentWithDeps]).ToList()
+                    Deps = (propValue.Deps?.ToList() ?? []).Concat([parentWithDeps]).ToList(),
                 };
             }
 
@@ -551,7 +566,8 @@ public static class DefaultFunctions
         if (firstFilter == null)
         {
             var additionalDeps = new List<ValueExpr> { indexVal };
-            if (leftValue.Deps != null) additionalDeps.AddRange(leftValue.Deps);
+            if (leftValue.Deps != null)
+                additionalDeps.AddRange(leftValue.Deps);
             return env.WithDeps(ValueExpr.Null, additionalDeps);
         }
 
@@ -575,19 +591,20 @@ public static class DefaultFunctions
             // Add parent reference with path preserved
             var parentWithDeps = new ValueExpr(null) with
             {
-                Deps = [indexVal, ..(leftValue.Deps ?? [])],
-                Path = element.Path
+                Deps = [indexVal, .. (leftValue.Deps ?? [])],
+                Path = element.Path,
             };
 
             return element with
             {
-                Deps = (element.Deps?.ToList() ?? []).Concat([parentWithDeps]).ToList()
+                Deps = (element.Deps?.ToList() ?? []).Concat([parentWithDeps]).ToList(),
             };
         }
 
         // Handle boolean filtering - keep elements where condition is true
         var results = new List<ValueExpr>();
-        if (firstFilter is true) results.Add(values[0]);
+        if (firstFilter is true)
+            results.Add(values[0]);
 
         for (var i = 1; i < values.Count; i++)
         {
@@ -713,10 +730,12 @@ public static class DefaultFunctions
     {
         return value.Value switch
         {
-            ArrayValue av => new ValueExpr(string.Join("", av.Values.Select(v => ValueToString(v).Value))),
+            ArrayValue av => new ValueExpr(
+                string.Join("", av.Values.Select(v => ValueToString(v).Value))
+            ),
             null => new ValueExpr("null"),
             bool b => new ValueExpr(b ? "true" : "false"),
-            var o => new ValueExpr(o.ToString())
+            var o => new ValueExpr(o.ToString()),
         };
     }
 
@@ -735,7 +754,8 @@ public static class DefaultFunctions
     private static FunctionHandler AggFunction(
         string name,
         double? init,
-        Func<double, double, double> accumulator)
+        Func<double, double, double> accumulator
+    )
     {
         return (env, call) =>
         {
@@ -751,17 +771,19 @@ public static class DefaultFunctions
 
                 return arrayValue.Value switch
                 {
-                    ArrayValue av when av.Values.Any() =>
-                        av.Values.All(x => x.Value != null)
-                            ? ValueExpr.WithDeps(
-                                av.Values.Skip(1).Aggregate(
+                    ArrayValue av when av.Values.Any() => av.Values.All(x => x.Value != null)
+                        ? ValueExpr.WithDeps(
+                            av.Values.Skip(1)
+                                .Aggregate(
                                     ValueExpr.AsDouble(av.Values.First().Value),
-                                    (acc, next) => accumulator(acc, ValueExpr.AsDouble(next.Value))),
-                                av.Values.ToList())
-                            : ValueExpr.WithDeps(null, av.Values.ToList()),
+                                    (acc, next) => accumulator(acc, ValueExpr.AsDouble(next.Value))
+                                ),
+                            av.Values.ToList()
+                        )
+                        : ValueExpr.WithDeps(null, av.Values.ToList()),
                     ArrayValue => init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null,
                     null => arrayValue,
-                    _ => ValueExpr.WithError(null, $"{name} requires an array")
+                    _ => ValueExpr.WithError(null, $"{name} requires an array"),
                 };
             }
 
@@ -773,13 +795,17 @@ public static class DefaultFunctions
             }
 
             var values = partials.Cast<ValueExpr>().ToList();
-            if (!values.Any()) return init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null;
+            if (!values.Any())
+                return init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null;
 
             return ValueExpr.WithDeps(
                 values.All(x => x.Value != null)
-                    ? values.Skip(1).Aggregate(
-                        ValueExpr.AsDouble(values.First().Value),
-                        (acc, next) => accumulator(acc, ValueExpr.AsDouble(next.Value)))
+                    ? values
+                        .Skip(1)
+                        .Aggregate(
+                            ValueExpr.AsDouble(values.First().Value),
+                            (acc, next) => accumulator(acc, ValueExpr.AsDouble(next.Value))
+                        )
                     : null,
                 values
             );
@@ -836,7 +862,8 @@ public static class DefaultFunctions
     private static FunctionHandler FirstFunction(
         string name,
         Func<int, ValueExpr, EvalEnv, ValueExpr> onFound,
-        Func<EvalEnv, ValueExpr> onNotFound)
+        Func<EvalEnv, ValueExpr> onNotFound
+    )
     {
         return (env, call) =>
         {
@@ -992,9 +1019,10 @@ public static class DefaultFunctions
         {
             ObjectValue ov => env.WithDeps(
                 new ValueExpr(new ArrayValue(ov.Properties.Keys.Select(k => new ValueExpr(k)))),
-                [argValue]),
+                [argValue]
+            ),
             null => argValue,
-            _ => ValueExpr.WithError(null, "keys requires an object")
+            _ => ValueExpr.WithError(null, "keys requires an object"),
         };
     };
 
@@ -1015,9 +1043,10 @@ public static class DefaultFunctions
         {
             ObjectValue ov => env.WithDeps(
                 new ValueExpr(new ArrayValue(ov.Properties.Values)),
-                [argValue]),
+                [argValue]
+            ),
             null => argValue,
-            _ => ValueExpr.WithError(null, "values requires an object")
+            _ => ValueExpr.WithError(null, "values requires an object"),
         };
     };
 
@@ -1076,7 +1105,8 @@ public static class DefaultFunctions
         for (var i = 0; i < values.Count; i += 2)
         {
             var key = values[i].Value?.ToString();
-            if (key == null) continue;
+            if (key == null)
+                continue;
             props[key] = values[i + 1];
         }
 
@@ -1094,7 +1124,7 @@ public static class DefaultFunctions
         var valuePartial = env.EvaluateExpr(call.Args[0]);
 
         if (valuePartial is not ValueExpr valueExpr)
-            return new CallExpr("which", [valuePartial, ..call.Args.Skip(1)]);
+            return new CallExpr("which", [valuePartial, .. call.Args.Skip(1)]);
 
         var deps = new List<ValueExpr> { valueExpr };
 
@@ -1106,7 +1136,7 @@ public static class DefaultFunctions
             if (casePartial is not ValueExpr caseVal)
             {
                 // Case is symbolic - return symbolic call
-                return new CallExpr("which", [valuePartial, ..call.Args.Skip(1)]);
+                return new CallExpr("which", [valuePartial, .. call.Args.Skip(1)]);
             }
 
             deps.Add(caseVal);
@@ -1177,7 +1207,6 @@ public static class DefaultFunctions
             { "*", NumberOp("*", (a, b) => a * b, (a, b) => a * b) },
             { "/", NumberOp("/", (a, b) => a / b, (a, b) => (double)a / b) },
             { "%", NumberOp("%", (a, b) => a % b, (a, b) => (double)a % b) },
-
             // Comparison
             { "=", ComparisonFunction("=", v => v == 0) },
             { "!=", ComparisonFunction("!=", v => v != 0) },
@@ -1185,16 +1214,13 @@ public static class DefaultFunctions
             { "<=", ComparisonFunction("<=", x => x <= 0) },
             { ">", ComparisonFunction(">", x => x > 0) },
             { ">=", ComparisonFunction(">=", x => x >= 0) },
-
             // Boolean
             { "and", ShortCircuitBoolOp("and", shortCircuitValue: false, defaultResult: true) },
             { "or", ShortCircuitBoolOp("or", shortCircuitValue: true, defaultResult: false) },
             { "!", UnaryNullOp("!", a => a is bool b ? !b : null) },
-
             // Control flow
             { "?", IfElseOp },
             { "??", NullCoalesceOp },
-
             // Array operations
             { "sum", SumOp },
             { "count", CountOp },
@@ -1205,7 +1231,10 @@ public static class DefaultFunctions
             { "min", AggFunction("min", null, Math.Min) },
             { "max", AggFunction("max", null, Math.Max) },
             { "first", FirstFunction("first", (i, elem, _) => elem, _ => ValueExpr.Null) },
-            { "firstIndex", FirstFunction("firstIndex", (i, _, _2) => new ValueExpr(i), _ => ValueExpr.Null) },
+            {
+                "firstIndex",
+                FirstFunction("firstIndex", (i, _, _2) => new ValueExpr(i), _ => ValueExpr.Null)
+            },
             { "any", FirstFunction("any", (_, _2, _3) => ValueExpr.True, _ => ValueExpr.False) },
             {
                 "all",
@@ -1254,29 +1283,25 @@ public static class DefaultFunctions
             },
             { "contains", ContainsOp },
             { "indexOf", IndexOfOp },
-
             // Object operations
             { "keys", KeysOp },
             { "values", ValuesOp },
             { "merge", MergeOp },
             { "object", ObjectOp },
-
             // Control flow
             { "which", WhichOp },
             { "fixed", FixedOp },
-
             // String operations
             { "string", StringOp("string", x => x) },
             { "lower", StringOp("lower", x => x.ToLower()) },
             { "upper", StringOp("upper", x => x.ToUpper()) },
-
             // Utility
             { "this", ThisOp },
             {
                 "notEmpty",
                 (env, call) =>
                 {
-                    if (call.Args.Count != 1)
+                    if (call.Args.Count < 1)
                         return ValueExpr.WithError(null, "notEmpty expects 1 argument");
 
                     var arg = env.EvaluateExpr(call.Args[0]);
@@ -1288,7 +1313,7 @@ public static class DefaultFunctions
                         {
                             null => false,
                             string s => !string.IsNullOrWhiteSpace(s),
-                            _ => true
+                            _ => true,
                         };
                         return env.WithDeps(new ValueExpr(result), [arg]);
                     }
@@ -1306,19 +1331,23 @@ public static class DefaultFunctions
                         return new CallExpr("array", partials);
                     }
 
-                    var values = partials.Cast<ValueExpr>()
-                        .SelectMany(x => x.AllValues())
-                        .ToList();
+                    var values = partials.Cast<ValueExpr>().SelectMany(x => x.AllValues()).ToList();
                     return new ValueExpr(new ArrayValue(values));
                 }
             },
             {
                 "floor",
-                UnaryNullOp("floor", a => ValueExpr.MaybeDouble(a) is { } num ? Math.Floor(num) : null)
+                UnaryNullOp(
+                    "floor",
+                    a => ValueExpr.MaybeDouble(a) is { } num ? Math.Floor(num) : null
+                )
             },
             {
                 "ceil",
-                UnaryNullOp("ceil", a => ValueExpr.MaybeDouble(a) is { } num ? Math.Ceiling(num) : null)
+                UnaryNullOp(
+                    "ceil",
+                    a => ValueExpr.MaybeDouble(a) is { } num ? Math.Ceiling(num) : null
+                )
             },
         };
 
@@ -1326,11 +1355,9 @@ public static class DefaultFunctions
     /// Convert FunctionHandler dictionary to ValueExpr dictionary for use with EvalEnv.
     /// </summary>
     public static IReadOnlyDictionary<string, EvalExpr> AsValueExprs(
-        this IReadOnlyDictionary<string, FunctionHandler> handlers)
+        this IReadOnlyDictionary<string, FunctionHandler> handlers
+    )
     {
-        return handlers.ToDictionary(
-            kvp => kvp.Key,
-            kvp => (EvalExpr)new ValueExpr(kvp.Value)
-        );
+        return handlers.ToDictionary(kvp => kvp.Key, kvp => (EvalExpr)new ValueExpr(kvp.Value));
     }
 }

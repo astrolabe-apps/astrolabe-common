@@ -36,8 +36,8 @@ public static class RuleValidator
             if (result is ValueExpr ve && ve.Value is bool b && b == false)
             {
                 // Evaluate args to capture in failure record
-                var evaledArgs = call.Args
-                    .Select(a => env.EvaluateExpr(a))
+                var evaledArgs = call
+                    .Args.Select(a => env.EvaluateExpr(a))
                     .OfType<ValueExpr>()
                     .ToList();
 
@@ -45,7 +45,10 @@ public static class RuleValidator
                 var validationData = new ValidationData([failure]);
 
                 // Attach validation data, preserve existing deps
-                return ve with { Data = validationData };
+                return ve with
+                {
+                    Data = validationData,
+                };
             }
 
             return result;
@@ -63,7 +66,8 @@ public static class RuleValidator
         var msgResult = env.EvaluateExpr(call.Args[0]);
         var exprResult = env.EvaluateExpr(call.Args[1]);
 
-        if (exprResult is not ValueExpr ve) return exprResult;
+        if (exprResult is not ValueExpr ve)
+            return exprResult;
 
         var message = (msgResult as ValueExpr)?.Value as string;
         var existingData = ve.Data as ValidationData ?? new ValidationData([]);
@@ -75,7 +79,7 @@ public static class RuleValidator
         return ve with
         {
             Data = existingData with { Message = message },
-            Deps = deps
+            Deps = deps,
         };
     };
 
@@ -91,7 +95,8 @@ public static class RuleValidator
         var valueResult = env.EvaluateExpr(call.Args[1]);
         var exprResult = env.EvaluateExpr(call.Args[2]);
 
-        if (exprResult is not ValueExpr ve) return exprResult;
+        if (exprResult is not ValueExpr ve)
+            return exprResult;
 
         var key = (keyResult as ValueExpr)?.Value as string;
         var value = (valueResult as ValueExpr)?.Value;
@@ -104,7 +109,7 @@ public static class RuleValidator
 
         return ve with
         {
-            Data = existingData with { Properties = props }
+            Data = existingData with { Properties = props },
         };
     };
 
@@ -157,7 +162,7 @@ public static class RuleValidator
         return pathResult with
         {
             Data = new RuleResultData(rule),
-            Deps = [mustResult]
+            Deps = [mustResult],
         };
     };
 
@@ -174,12 +179,14 @@ public static class RuleValidator
 
         void Collect(ValueExpr ve)
         {
-            if (!seen.Add(ve)) return; // Cycle detection
+            if (!seen.Add(ve))
+                return; // Cycle detection
 
             if (ve.Data is ValidationData vd)
             {
                 failures.AddRange(vd.Failures);
-                if (vd.Message != null) message ??= vd.Message; // First message wins
+                if (vd.Message != null)
+                    message ??= vd.Message; // First message wins
                 if (vd.Properties != null)
                     properties = properties.SetItems(vd.Properties);
             }
@@ -196,7 +203,10 @@ public static class RuleValidator
     /// <summary>
     /// Create a validator environment with wrapped comparison functions.
     /// </summary>
-    public static BasicEvalEnv CreateValidatorEnv(object? data = null)
+    public static BasicEvalEnv CreateValidatorEnv(
+        object? data = null,
+        Func<object?, object?, int>? compare = null
+    )
     {
         var functions = new Dictionary<string, EvalExpr>();
 
@@ -205,9 +215,11 @@ public static class RuleValidator
         {
             var wrappedHandler = name switch
             {
-                "=" or "!=" or ">" or "<" or ">=" or "<=" or "notEmpty"
-                    => WrapValidation(handler, name),
-                _ => handler
+                "=" or "!=" or ">" or "<" or ">=" or "<=" or "notEmpty" => WrapValidation(
+                    handler,
+                    name
+                ),
+                _ => handler,
             };
             functions[name] = new ValueExpr(wrappedHandler);
         }
@@ -217,7 +229,7 @@ public static class RuleValidator
         functions["WithMessage"] = new ValueExpr(WithMessageHandler);
         functions["WithProperty"] = new ValueExpr(WithPropertyHandler);
 
-        return EvalEnvFactory.CreateBasicEnv(data, functions);
+        return EvalEnvFactory.CreateBasicEnv(data, functions, compare);
     }
 
     /// <summary>
@@ -253,14 +265,16 @@ public static class RuleValidator
     /// </summary>
     private static List<EvaluatedRule> CollectRules(ValueExpr? expr)
     {
-        if (expr == null) return [];
+        if (expr == null)
+            return [];
 
         var rules = new List<EvaluatedRule>();
         var seen = new HashSet<ValueExpr>();
 
         void Collect(ValueExpr ve)
         {
-            if (!seen.Add(ve)) return;
+            if (!seen.Add(ve))
+                return;
 
             if (ve.Data is RuleResultData rrd)
                 rules.Add(rrd.Rule);
@@ -286,7 +300,7 @@ public static class RuleValidator
             ForEachRule rulesForEach => DoRulesForEach(rulesForEach),
             SingleRule pathRule => DoPathRule(pathRule),
             MultiRule multi => DoMultiRule(multi),
-            _ => throw new ArgumentException($"Unknown rule type: {rule.GetType()}")
+            _ => throw new ArgumentException($"Unknown rule type: {rule.GetType()}"),
         };
 
         EvalExpr DoMultiRule(MultiRule multiRule)

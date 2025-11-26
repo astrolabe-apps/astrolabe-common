@@ -39,12 +39,16 @@ public abstract class EvalEnv
     public ValueExpr WithDeps(ValueExpr result, IEnumerable<EvalExpr> deps)
     {
         var valueDeps = deps.OfType<ValueExpr>().ToList();
-        if (valueDeps.Count == 0) return result;
+        if (valueDeps.Count == 0)
+            return result;
 
         var existingDeps = result.Deps?.ToList() ?? [];
         var allDeps = existingDeps.Concat(valueDeps);
 
-        return result with { Deps = allDeps };
+        return result with
+        {
+            Deps = allDeps,
+        };
     }
 
     /// <summary>
@@ -63,11 +67,9 @@ public abstract class EvalEnv
                 (_, double d2) => NumberCompare(ValueExpr.AsDouble(v1), d2),
                 (double d1, _) => NumberCompare(d1, ValueExpr.AsDouble(v2)),
                 (string s1, string s2) => string.Compare(s1, s2, StringComparison.InvariantCulture),
-                _ => Equals(v1, v2)
-                    ? 0
-                    : v1 == null
-                        ? 1
-                        : -1
+                _ => Equals(v1, v2) ? 0
+                : v1 == null ? 1
+                : -1,
             };
 
         int NumberCompare(double d1, double d2)
@@ -81,7 +83,9 @@ public abstract class EvalEnv
     /// <summary>
     /// Default comparison function with 5 significant digits.
     /// </summary>
-    public static readonly Func<object?, object?, int> DefaultComparison = CompareSignificantDigits(5);
+    public static readonly Func<object?, object?, int> DefaultComparison = CompareSignificantDigits(
+        5
+    );
 }
 
 /// <summary>
@@ -94,10 +98,13 @@ public static class EvalEnvFactory
     /// </summary>
     /// <param name="root">Optional root data to bind to the _ variable</param>
     /// <param name="functions">Optional additional functions (FunctionHandler wrapped in ValueExpr)</param>
+    /// <param name="compare">Optional custom compare function</param>
     /// <returns>A new BasicEvalEnv configured with the given data and functions</returns>
     public static BasicEvalEnv CreateBasicEnv(
         object? root = null,
-        IReadOnlyDictionary<string, EvalExpr>? functions = null)
+        IReadOnlyDictionary<string, EvalExpr>? functions = null,
+        Func<object?, object?, int>? compare = null
+    )
     {
         var vars = new Dictionary<string, EvalExpr>();
 
@@ -120,10 +127,7 @@ public static class EvalEnvFactory
             vars["_"] = ObjectToValueExpr(root);
         }
 
-        return new BasicEvalEnv(
-            vars,
-            null,
-            EvalEnv.CompareSignificantDigits(5));
+        return new BasicEvalEnv(vars, null, compare ?? EvalEnv.CompareSignificantDigits(5));
     }
 
     /// <summary>
@@ -134,7 +138,8 @@ public static class EvalEnvFactory
     /// <returns>A new PartialEvalEnv configured with the given functions and current value</returns>
     public static PartialEvalEnv CreatePartialEnv(
         IReadOnlyDictionary<string, EvalExpr>? functions = null,
-        ValueExpr? current = null)
+        ValueExpr? current = null
+    )
     {
         var vars = new Dictionary<string, EvalExpr>();
 
@@ -155,10 +160,7 @@ public static class EvalEnvFactory
         if (current != null)
             vars["_"] = current;
 
-        return new PartialEvalEnv(
-            vars,
-            null,
-            EvalEnv.CompareSignificantDigits(5));
+        return new PartialEvalEnv(vars, null, EvalEnv.CompareSignificantDigits(5));
     }
 
     /// <summary>
@@ -190,7 +192,7 @@ public static class EvalEnvFactory
             null => ValueExpr.Null,
             ValueExpr ve => ve,
             System.Text.Json.Nodes.JsonNode jn => JsonDataLookup.ToValue(DataPath.Empty, jn),
-            _ => new ValueExpr(obj) // For simple values like primitives
+            _ => new ValueExpr(obj), // For simple values like primitives
         };
     }
 }
