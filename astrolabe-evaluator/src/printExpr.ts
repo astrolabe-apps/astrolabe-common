@@ -173,7 +173,13 @@ export function printCall(call: CallExpr) {
 }
 export function printPath(path: Path): string {
   if (path.segment != null) {
-    if (path.parent.segment == null) return path.segment.toString();
-    return printPath(path.parent) + "." + path.segment;
+    const parentStr = printPath(path.parent);
+    if (typeof path.segment === "number") {
+      // Index access uses bracket notation: [0]
+      return `${parentStr}[${path.segment}]`;
+    } else {
+      // Field access uses dot notation: .field or just field at root
+      return parentStr ? `${parentStr}.${path.segment}` : path.segment;
+    }
   } else return "";
 }

@@ -33,7 +33,7 @@ public class EvalController : ControllerBase
 
             // Collect errors from result tree with source locations
             var errors = result is ValueExpr ve
-                ? ValueExpr.FormatErrorsWithLocations(ve, FormatLocation)
+                ? ValueExpr.CollectErrorsWithLocations(ve)
                 : [];
 
             return new EvalResult(
@@ -55,19 +55,13 @@ public class EvalController : ControllerBase
             }
 
             // Collect errors from result tree with source locations
-            var errors = ValueExpr.FormatErrorsWithLocations(resultValue, FormatLocation);
+            var errors = ValueExpr.CollectErrorsWithLocations(resultValue);
 
             return new EvalResult(
                 includeDeps ? ToValueWithDeps(resultValue) : ToValueWithoutDeps(resultValue),
                 errors
             );
         }
-    }
-
-    private static string FormatLocation(SourceLocation loc)
-    {
-        var file = loc.SourceFile ?? "input";
-        return $"{file}:{loc.Start}-{loc.End}";
     }
 
     public static object? ToValueWithoutDeps(ValueExpr expr)
@@ -98,7 +92,7 @@ public class EvalController : ControllerBase
 
 public record EvalTestData(string Expression, IDictionary<string, object?> Data);
 
-public record EvalResult(object? Result, IEnumerable<string> Errors);
+public record EvalResult(object? Result, IEnumerable<ErrorWithLocation> Errors);
 
 public record ValueWithDeps(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.Never)] object? Value,

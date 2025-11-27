@@ -18,7 +18,7 @@ public static class DefaultFunctions
         return (env, call) =>
         {
             if (call.Args.Count != 2)
-                return call.WithError($"{name} expects 2 arguments");
+                return call.WithError($"${name} expects 2 arguments");
 
             var left = env.EvaluateExpr(call.Args[0]);
             var right = env.EvaluateExpr(call.Args[1]);
@@ -103,7 +103,7 @@ public static class DefaultFunctions
         return (env, call) =>
         {
             if (call.Args.Count != 1)
-                return call.WithError($"{name} expects 1 argument");
+                return call.WithError($"${name} expects 1 argument");
 
             var arg = env.EvaluateExpr(call.Args[0]);
 
@@ -201,7 +201,7 @@ public static class DefaultFunctions
                 true => EvaluateAndAddDeps(env, thenExpr, condVal),
                 false => EvaluateAndAddDeps(env, elseExpr, condVal),
                 null => env.WithDeps(new ValueExpr(null), [condVal]),
-                _ => call.WithError("Conditional expects boolean condition"),
+                _ => call.WithError($"Conditional expects boolean condition: {condVal.Print()}"),
             };
         }
 
@@ -277,7 +277,7 @@ public static class DefaultFunctions
                     av.Values.ToList()
                 ),
                 null => arrayValue,
-                _ => call.WithError("sum requires an array"),
+                _ => call.WithError($"$sum requires an array: {arrayValue.Print()}"),
             };
         }
 
@@ -317,7 +317,7 @@ public static class DefaultFunctions
                 {
                     ArrayValue av => ValueExpr.WithDeps((long)av.Values.Count(), [arrayValue]),
                     null => ValueExpr.WithDeps(0L, [arrayValue]),
-                    _ => call.WithError("count requires an array"),
+                    _ => call.WithError($"$count requires an array: {arrayValue.Print()}"),
                 };
             }
             default:
@@ -402,7 +402,7 @@ public static class DefaultFunctions
         {
             return leftValue.Value == null
                 ? leftValue
-                : call.WithError("map requires an array");
+                : call.WithError($"$map requires an array: {leftValue.Print()}");
         }
 
         var partialResults = av.Values.Select(elem => EvalWithElement(env, elem, right)).ToList();
@@ -484,7 +484,7 @@ public static class DefaultFunctions
         // Handle ARRAY filtering/indexing
         if (leftValue.Value is not ArrayValue av)
         {
-            return call.WithError("filter requires an array or object");
+            return call.WithError($"filter expects an array or object: {leftValue.Print()}");
         }
 
         var values = av.Values.ToList();
@@ -613,17 +613,13 @@ public static class DefaultFunctions
     /// </summary>
     private static IEnumerable<ValueExpr> AllElems(ValueExpr v, ValueExpr? parent = null)
     {
-        switch (v.Value)
+        if (v.Value is ArrayValue av)
         {
-            case ArrayValue av:
-                // Recurse into nested arrays, passing v as the parent
-                return av.Values.SelectMany(child => AllElems(child, v));
-            // Skip null values
-            case null:
-                return [];
+            // Recurse into nested arrays, passing v as the parent
+            return av.Values.SelectMany(child => AllElems(child, v));
         }
 
-        // Leaf element - propagate parent deps if parent has deps
+        // Leaf element (including null) - propagate parent deps if parent has deps
         if (parent?.Deps?.Any() != true)
             return [v];
         var newDeps = v.Deps?.ToList() ?? [];
@@ -713,7 +709,7 @@ public static class DefaultFunctions
                             : ValueExpr.WithDeps(null, av.Values.ToList()),
                         ArrayValue => init.HasValue ? new ValueExpr(init.Value) : ValueExpr.Null,
                         null => arrayValue,
-                        _ => call.WithError($"{name} requires an array"),
+                        _ => call.WithError($"${name} requires an array: {arrayValue.Print()}"),
                     };
                 }
             }
@@ -799,7 +795,7 @@ public static class DefaultFunctions
         return (env, call) =>
         {
             if (call.Args.Count != 2)
-                return call.WithError($"{name} expects 2 arguments");
+                return call.WithError($"${name} expects 2 arguments");
 
             var left = call.Args[0];
             var right = call.Args[1];
@@ -813,7 +809,7 @@ public static class DefaultFunctions
             {
                 return leftValue.Value == null
                     ? leftValue
-                    : call.WithError($"{name} requires an array");
+                    : call.WithError($"${name} requires an array: {leftValue.Print()}");
             }
 
             var deps = new List<ValueExpr> { leftValue };
@@ -863,7 +859,7 @@ public static class DefaultFunctions
         {
             return leftValue.Value == null
                 ? leftValue
-                : call.WithError("contains requires an array");
+                : call.WithError($"$contains requires an array: {leftValue.Print()}");
         }
 
         var deps = new List<ValueExpr> { leftValue };
@@ -907,7 +903,7 @@ public static class DefaultFunctions
         {
             return leftValue.Value == null
                 ? leftValue
-                : call.WithError("indexOf requires an array");
+                : call.WithError($"$indexOf requires an array: {leftValue.Print()}");
         }
 
         var deps = new List<ValueExpr> { leftValue };
@@ -953,7 +949,7 @@ public static class DefaultFunctions
                 [argValue]
             ),
             null => argValue,
-            _ => call.WithError("keys requires an object"),
+            _ => call.WithError($"$keys requires an object: {argValue.Print()}"),
         };
     };
 
@@ -977,7 +973,7 @@ public static class DefaultFunctions
                 [argValue]
             ),
             null => argValue,
-            _ => call.WithError("values requires an object"),
+            _ => call.WithError($"$values requires an object: {argValue.Print()}"),
         };
     };
 
@@ -1185,7 +1181,7 @@ public static class DefaultFunctions
                     {
                         if (leftValue.Value == null)
                             return leftValue;
-                        return call.WithError("all requires an array");
+                        return call.WithError($"$all requires an array: {leftValue.Print()}");
                     }
 
                     var deps = new List<ValueExpr> { leftValue };

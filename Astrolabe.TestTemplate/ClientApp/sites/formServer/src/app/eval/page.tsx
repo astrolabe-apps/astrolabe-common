@@ -1,9 +1,9 @@
 "use client";
 import {
   basicEnv,
+  collectErrorsWithLocations,
   defaultCheckEnv,
   extractAllPaths,
-  formatErrorsWithLocations,
   nativeType,
   parseEval,
   partialEnv,
@@ -23,7 +23,7 @@ import {
 import React, { useCallback, useState } from "react";
 import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client";
-import { EvalClient, EvalResult } from "../../client";
+import { EvalClient, EvalResult, ErrorWithLocation } from "../../client";
 import { basicSetup, EditorView } from "codemirror";
 import { evalCompletions, Evaluator } from "@astroapps/codemirror-evaluator";
 import { autocompletion } from "@codemirror/autocomplete";
@@ -124,7 +124,7 @@ export default function EvalPage() {
               const partialResult = env.uninline(env.evaluateExpr(exprTree));
               setEvalResult({
                 result: printExpr(partialResult),
-                errors: formatErrorsWithLocations(partialResult, formatLocation),
+                errors: collectErrorsWithLocations(partialResult) as ErrorWithLocation[],
               });
             } catch (e) {
               console.error(e);
@@ -137,7 +137,7 @@ export default function EvalPage() {
               const value = env.evaluateExpr(exprTree) as ValueExpr;
               setEvalResult({
                 result: showDeps ? toValueDeps(value) : toNative(value),
-                errors: formatErrorsWithLocations(value, formatLocation),
+                errors: collectErrorsWithLocations(value) as ErrorWithLocation[],
               });
             } catch (e) {
               console.error(e);
@@ -231,11 +231,6 @@ export default function EvalPage() {
       editor.value?.destroy();
     }
   }
-}
-
-function formatLocation(loc: { start: number; end: number; sourceFile?: string }): string {
-  const file = loc.sourceFile ?? "input";
-  return `${file}:${loc.start}-${loc.end}`;
 }
 
 function toValueDeps({ value, path, deps }: ValueExpr): unknown {

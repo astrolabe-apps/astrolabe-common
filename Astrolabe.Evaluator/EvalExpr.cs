@@ -15,11 +15,6 @@ public record ErrorWithLocation(
     IReadOnlyList<SourceLocation> Stack
 );
 
-/// <summary>
-/// Function type for formatting source locations into human-readable strings.
-/// </summary>
-public delegate string LocationFormatter(SourceLocation location);
-
 [JsonString]
 public enum InbuiltFunction
 {
@@ -58,7 +53,7 @@ public static class InbuiltFunctions
             InbuiltFunction.GtEq => ">=",
             InbuiltFunction.Ne => "!=",
             InbuiltFunction.NotEmpty => "notEmpty",
-            _ => throw new ArgumentException("Not an Inbuilt:" + func)
+            _ => throw new ArgumentException("Not an Inbuilt:" + func),
         };
     }
 }
@@ -93,10 +88,15 @@ public record LetExpr(
     }
 }
 
-public record PropertyExpr(string Property, SourceLocation? Location = null, object? Data = null) : EvalExpr;
-
-public record LambdaExpr(string Variable, EvalExpr Value, SourceLocation? Location = null, object? Data = null)
+public record PropertyExpr(string Property, SourceLocation? Location = null, object? Data = null)
     : EvalExpr;
+
+public record LambdaExpr(
+    string Variable,
+    EvalExpr Value,
+    SourceLocation? Location = null,
+    object? Data = null
+) : EvalExpr;
 
 /// <summary>
 /// Function handler that takes an EvalEnv and CallExpr, returns EvalExpr directly.
@@ -110,7 +110,7 @@ public record ValueExpr(
     IEnumerable<ValueExpr>? Deps = null,
     SourceLocation? Location = null,
     object? Data = null,
-    IEnumerable<string>? Errors = null
+    string? Error = null
 ) : EvalExpr
 {
     public static readonly ValueExpr Null = new((object?)null);
@@ -128,25 +128,13 @@ public record ValueExpr(
     /// </summary>
     public static ValueExpr WithError(object? value, string error)
     {
-        return new ValueExpr(value, Errors: [error]);
-    }
-
-    /// <summary>
-    /// Create a ValueExpr with multiple error messages attached.
-    /// </summary>
-    public static ValueExpr WithErrors(object? value, IEnumerable<string> errors)
-    {
-        return new ValueExpr(value, Errors: errors);
+        return new ValueExpr(value, Error: error);
     }
 
     public static ValueExpr WithDeps(object? value, IEnumerable<ValueExpr> others)
     {
         var othersList = others.ToList();
-        return new ValueExpr(
-            value,
-            null,
-            othersList.Count > 0 ? othersList : null
-        );
+        return new ValueExpr(value, null, othersList.Count > 0 ? othersList : null);
     }
 
     /// <summary>
@@ -160,9 +148,11 @@ public record ValueExpr(
 
         void Extract(ValueExpr ve)
         {
-            if (!seen.Add(ve)) return;  // Already seen, avoid cycles
+            if (!seen.Add(ve))
+                return; // Already seen, avoid cycles
 
-            if (ve.Path != null) paths.Add(ve.Path);
+            if (ve.Path != null)
+                paths.Add(ve.Path);
             if (ve.Deps != null)
             {
                 // Recursively extract paths from all dependency ValueExprs
@@ -188,9 +178,11 @@ public record ValueExpr(
 
         void Collect(ValueExpr ve)
         {
-            if (!seen.Add(ve)) return;  // Already seen, avoid cycles
+            if (!seen.Add(ve))
+                return; // Already seen, avoid cycles
 
-            if (ve.Errors != null) errors.AddRange(ve.Errors);
+            if (ve.Error != null)
+                errors.Add(ve.Error);
             if (ve.Deps != null)
             {
                 foreach (var dep in ve.Deps)
@@ -213,60 +205,28 @@ public record ValueExpr(
         var results = new List<ErrorWithLocation>();
         var seen = new HashSet<ValueExpr>();
 
-        void Collect(ValueExpr ve, List<SourceLocation> stack)
-        {
-            if (!seen.Add(ve)) return;
-
-            var currentStack = ve.Location != null
-                ? [..stack, ve.Location]
-                : stack;
-
-            if (ve.Errors != null)
-            {
-                foreach (var msg in ve.Errors)
-                {
-                    results.Add(new ErrorWithLocation(msg, ve.Location, currentStack));
-                }
-            }
-
-            if (ve.Deps != null)
-            {
-                foreach (var dep in ve.Deps)
-                {
-                    Collect(dep, currentStack);
-                }
-            }
-        }
-
         Collect(expr, []);
         return results;
-    }
 
-    /// <summary>
-    /// Formats errors with their locations using a custom formatter.
-    /// Shows stack traces for nested errors.
-    /// </summary>
-    public static IEnumerable<string> FormatErrorsWithLocations(
-        ValueExpr expr,
-        LocationFormatter formatLocation)
-    {
-        return CollectErrorsWithLocations(expr).Select(e =>
+        void Collect(ValueExpr ve, List<SourceLocation> stack)
         {
-            var formatted = e.Message;
-            if (e.Location != null)
+            if (!seen.Add(ve))
+                return;
+
+            var currentStack = ve.Location != null ? [.. stack, ve.Location] : stack;
+
+            if (ve.Error != null)
             {
-                formatted += $" at {formatLocation(e.Location)}";
+                results.Add(new ErrorWithLocation(ve.Error, ve.Location, currentStack));
             }
-            if (e.Stack.Count > 1)
+
+            if (ve.Deps == null)
+                return;
+            foreach (var dep in ve.Deps)
             {
-                var trace = string.Join("\n",
-                    e.Stack.Take(e.Stack.Count - 1)
-                        .Reverse()
-                        .Select(loc => $"  in {formatLocation(loc)}"));
-                formatted += "\n" + trace;
+                Collect(dep, currentStack);
             }
-            return formatted;
-        });
+        }
     }
 
     public static double AsDouble(object? v)
@@ -276,7 +236,7 @@ public record ValueExpr(
             int i => i,
             long l => l,
             double d => d,
-            _ => throw new ArgumentException("Value is not a number: " + (v ?? "null"))
+            _ => throw new ArgumentException("Value is not a number: " + (v ?? "null")),
         };
     }
 
@@ -291,7 +251,7 @@ public record ValueExpr(
         {
             int i => i,
             long l => l,
-            _ => null
+            _ => null,
         };
     }
 
@@ -307,7 +267,7 @@ public record ValueExpr(
             int i => i,
             long l => (int)l,
             double d => (int)d,
-            _ => null
+            _ => null,
         };
     }
 
@@ -318,7 +278,7 @@ public record ValueExpr(
             int i => i,
             long l => l,
             double d => d,
-            _ => null
+            _ => null,
         };
     }
 
@@ -346,7 +306,7 @@ public record ValueExpr(
     {
         return new ValueExpr(v);
     }
-    
+
     public static ValueExpr From(double? v)
     {
         return new ValueExpr(v);
@@ -367,8 +327,11 @@ public record ValueExpr(
         return v switch
         {
             ArrayValue av => av.Values.Select(x => x.ToNative()),
-            ObjectValue ov => ov.Properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToNative()),
-            _ => v
+            ObjectValue ov => ov.Properties.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.ToNative()
+            ),
+            _ => v,
         };
     }
 
@@ -383,13 +346,16 @@ public record ValueExpr(
             ArrayValue av => av.Values.SelectMany(child => child.AllValues(this)),
             _ => parent?.Deps is { } parentDeps && parentDeps.Any()
                 ? [this with { Deps = (Deps ?? Enumerable.Empty<ValueExpr>()).Concat([parent]) }]
-                : [this]
+                : [this],
         };
     }
-
 }
 
-public record ArrayExpr(IEnumerable<EvalExpr> Values, SourceLocation? Location = null, object? Data = null) : EvalExpr
+public record ArrayExpr(
+    IEnumerable<EvalExpr> Values,
+    SourceLocation? Location = null,
+    object? Data = null
+) : EvalExpr
 {
     public override string ToString()
     {
@@ -397,8 +363,12 @@ public record ArrayExpr(IEnumerable<EvalExpr> Values, SourceLocation? Location =
     }
 }
 
-public record CallExpr(string Function, IList<EvalExpr> Args, SourceLocation? Location = null, object? Data = null)
-    : EvalExpr
+public record CallExpr(
+    string Function,
+    IList<EvalExpr> Args,
+    SourceLocation? Location = null,
+    object? Data = null
+) : EvalExpr
 {
     public override string ToString()
     {
@@ -462,7 +432,7 @@ public static class ValueExtensions
     /// </summary>
     public static ValueExpr WithError(this EvalExpr expr, string error)
     {
-        return new ValueExpr(null, Location: expr.Location, Errors: [error]);
+        return new ValueExpr(null, Location: expr.Location, Error: error);
     }
 
     public static bool IsData(this EvalExpr expr)
@@ -510,7 +480,7 @@ public static class ValueExtensions
         return v.Value switch
         {
             ArrayValue av => av,
-            _ => new ArrayValue([v])
+            _ => new ArrayValue([v]),
         };
     }
 
@@ -525,7 +495,7 @@ public static class ValueExtensions
         {
             double d => (int)d,
             long l => (int)l,
-            int i => i
+            int i => i,
         };
     }
 
@@ -535,7 +505,7 @@ public static class ValueExtensions
         {
             double d => (long)d,
             long l => l,
-            int i => i
+            int i => i,
         };
     }
 

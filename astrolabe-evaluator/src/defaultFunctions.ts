@@ -335,7 +335,7 @@ const mapFunction = binEvalFunction2(
   constGetType(AnyType),
   (left, right, env, call) => {
     const leftPartial = env.evaluateExpr(left);
-    if (!right) return exprWithError(call, "No map expression");
+    if (!right) return exprWithError(call, "$map expects 2 arguments");
 
     // Check if we got a fully evaluated array
     if (leftPartial.type === "value") {
@@ -366,7 +366,7 @@ const mapFunction = binEvalFunction2(
         // At least one element is symbolic - return symbolic array
         return { type: "array", values: partialResults };
       }
-      return exprWithError(call, "Can't map value: " + printExpr(leftPartial));
+      return exprWithError(call, "$map requires an array: " + printExpr(leftPartial));
     }
 
     // Left side is symbolic - return symbolic map call
@@ -378,7 +378,7 @@ const flatmapFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
     const [left, right] = call.args;
     const leftPartial = env.evaluateExpr(left);
-    if (!right) return exprWithError(call, "No map expression");
+    if (!right) return exprWithError(call, "$. expects 2 arguments");
 
     // Check if we got a fully evaluated value
     if (leftPartial.type === "value") {
@@ -399,7 +399,7 @@ const flatmapFunction = functionValue(
         if (value == null) return NullExpr;
         return evalWithValue(env, leftPartial, null, right);
       } else {
-        return exprWithError(call, "Can't map value: " + printExpr(leftPartial));
+        return exprWithError(call, "$. requires an array or object: " + printExpr(leftPartial));
       }
     }
 
@@ -456,7 +456,7 @@ function firstFunction(
       }
       return exprWithError(
         call,
-        `$${name} only works on arrays: ${printExpr(leftPartial)}`,
+        `$${name} requires an array: ${printExpr(leftPartial)}`,
       );
     },
     (e, call) =>
@@ -470,7 +470,7 @@ const filterFunction = functionValue(
   (env: EvalEnv, call: CallExpr) => {
     const [left, right] = call.args;
     const leftPartial = env.evaluateExpr(left);
-    if (!right) return exprWithError(call, "No filter expression");
+    if (!right) return exprWithError(call, "filter expects 2 arguments");
 
     // Check if we got a fully evaluated value
     if (leftPartial.type !== "value") {
@@ -588,7 +588,7 @@ const filterFunction = functionValue(
       }
       return valueExpr(null);
     }
-    return exprWithError(call, "Can't filter value: " + printExpr(leftPartial));
+    return exprWithError(call, "filter expects an array or object: " + printExpr(leftPartial));
   },
   (env, call) => {
     const [left, right] = call.args;
@@ -624,9 +624,15 @@ const condFunction = functionValue(
         return elseVal.type === "value"
           ? valueExprWithDeps(elseVal.value, [condVal, elseVal])
           : elseVal;
-      } else {
-        // Condition evaluated to something other than true/false
+      } else if (condVal.value == null) {
+        // Null condition returns null
         return valueExprWithDeps(null, [condVal]);
+      } else {
+        // Condition evaluated to something other than true/false/null - error
+        return exprWithError(
+          call,
+          `Conditional expects boolean condition: ${printExpr(condVal)}`,
+        );
       }
     }
 
@@ -723,8 +729,7 @@ export const keysOrValuesFunction = (type: string) =>
 
       return exprWithError(
         call,
-        `${type} can only be called on an object but was called on: ` +
-          (Array.isArray(objVal.value) ? "array" : typeof objVal.value),
+        `$${type} requires an object: ${printExpr(objVal)}`,
       );
     },
     (env: CheckEnv, call: CallExpr) => {

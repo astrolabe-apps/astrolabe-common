@@ -988,9 +988,15 @@ export interface ElementSelectedRenderOptions extends RenderOptions {
     [key: string]: any;
 }
 
+export interface ErrorWithLocation {
+    message: string;
+    location: SourceLocation | null;
+    stack: SourceLocation[];
+}
+
 export interface EvalResult {
     result: any | null;
-    errors: string[];
+    errors: ErrorWithLocation[];
 }
 
 export interface EvalTestData {
@@ -1193,6 +1199,12 @@ export interface SimpleRenderOptions extends RenderOptions {
 export interface SimpleValidator extends SchemaValidator {
 
     [key: string]: any;
+}
+
+export interface SourceLocation {
+    start: number;
+    end: number;
+    sourceFile: string | null;
 }
 
 export enum SyncTextType {

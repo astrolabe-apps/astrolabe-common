@@ -931,6 +931,26 @@ public class DefaultFunctionsTests
         Assert.Equal(new[] { 1L, 2L, 3L }, values);
     }
 
+    [Fact]
+    public void FlatMap_PreservesNullValues()
+    {
+        var data = new JsonObject
+        {
+            ["items"] = new JsonArray(
+                new JsonObject { ["value"] = 1 },
+                new JsonObject { ["value"] = null },
+                new JsonObject { ["value"] = 3 }
+            ),
+        };
+        var result = TestHelpers.EvalExpr("items . value", data);
+        var array = (ArrayValue)result!;
+        var values = array.Values.Select(v => v.Value).ToList();
+        Assert.Equal(3, values.Count);
+        Assert.Equal(1, values[0]);
+        Assert.Null(values[1]);
+        Assert.Equal(3, values[2]);
+    }
+
     #endregion
 
     #region String Functions

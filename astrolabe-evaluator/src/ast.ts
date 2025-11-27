@@ -265,7 +265,7 @@ export interface ValueExpr {
   function?: FunctionValue;
   path?: Path;
   deps?: ValueExpr[];
-  errors?: string[];
+  error?: string;
   data?: unknown;
   location?: SourceLocation;
 }
@@ -507,8 +507,8 @@ export function collectAllErrors(expr: EvalExpr): string[] {
     if (visited.has(e)) return;
     visited.add(e);
 
-    if (e.errors) {
-      errors.push(...e.errors);
+    if (e.error) {
+      errors.push(e.error);
     }
 
     if (e.deps) {
@@ -537,7 +537,7 @@ export function hasErrors(expr: EvalExpr): boolean {
     if (visited.has(e)) return false;
     visited.add(e);
 
-    if (e.errors && e.errors.length > 0) return true;
+    if (e.error) return true;
 
     if (e.deps) {
       for (const dep of e.deps) {
@@ -552,16 +552,16 @@ export function hasErrors(expr: EvalExpr): boolean {
 }
 
 /**
- * Creates a ValueExpr with error messages attached.
+ * Creates a ValueExpr with an error message attached.
  *
  * @param value - The value (typically null for error cases)
- * @param error - Single error message or array of error messages
+ * @param error - Error message
  * @param opts - Optional location information
- * @returns ValueExpr with errors field populated
+ * @returns ValueExpr with error field populated
  */
 export function valueExprWithError(
   value: unknown,
-  error: string | string[],
+  error: string,
   opts?: {
     location?: SourceLocation;
   },
@@ -569,7 +569,7 @@ export function valueExprWithError(
   return {
     type: "value",
     value: value as any,
-    errors: Array.isArray(error) ? error : [error],
+    error,
     location: opts?.location,
   };
 }
@@ -585,7 +585,7 @@ export function exprWithError(expr: EvalExpr, error: string): ValueExpr {
   return {
     type: "value",
     value: null,
-    errors: [error],
+    error,
     location: expr.location,
   };
 }
@@ -598,11 +598,6 @@ export interface ErrorWithLocation {
   location?: SourceLocation;
   stack: SourceLocation[];
 }
-
-/**
- * Function type for formatting source locations into human-readable strings.
- */
-export type LocationFormatter = (location: SourceLocation) => string;
 
 /**
  * Collects all errors from a ValueExpr with their locations and stack traces.
@@ -623,14 +618,12 @@ export function collectErrorsWithLocations(expr: EvalExpr): ErrorWithLocation[] 
 
     const currentStack = e.location ? [...stack, e.location] : stack;
 
-    if (e.errors) {
-      for (const msg of e.errors) {
-        results.push({
-          message: msg,
-          location: e.location,
-          stack: currentStack,
-        });
-      }
+    if (e.error) {
+      results.push({
+        message: e.error,
+        location: e.location,
+        stack: currentStack,
+      });
     }
 
     if (e.deps) {
@@ -642,34 +635,4 @@ export function collectErrorsWithLocations(expr: EvalExpr): ErrorWithLocation[] 
 
   walk(expr, []);
   return results;
-}
-
-/**
- * Formats errors with their locations using a custom formatter.
- * Shows stack traces for nested errors.
- *
- * @param expr - The expression to collect and format errors from
- * @param formatLocation - Function to format SourceLocation to string
- * @returns Array of formatted error strings with location info
- */
-export function formatErrorsWithLocations(
-  expr: EvalExpr,
-  formatLocation: LocationFormatter,
-): string[] {
-  return collectErrorsWithLocations(expr).map(({ message, location, stack }) => {
-    let formatted = message;
-    if (location) {
-      formatted += ` at ${formatLocation(location)}`;
-    }
-    if (stack.length > 1) {
-      // Show call stack (outer to inner, excluding the innermost already shown)
-      const trace = stack
-        .slice(0, -1)
-        .reverse()
-        .map((loc) => `  in ${formatLocation(loc)}`)
-        .join("\n");
-      formatted += "\n" + trace;
-    }
-    return formatted;
-  });
 }

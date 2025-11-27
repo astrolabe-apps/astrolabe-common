@@ -503,6 +503,13 @@ describe("Array Mapping Functions", () => {
     });
     expect(result).toEqual([1, 2, 3]);
   });
+
+  test("FlatMap - preserves null values", () => {
+    const result = evalToArray("items . value", {
+      items: [{ value: 1 }, { value: null }, { value: 3 }],
+    });
+    expect(result).toEqual([1, null, 3]);
+  });
 });
 
 describe("String Functions", () => {

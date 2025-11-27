@@ -20,22 +20,17 @@ import { basicEnv, partialEnv } from "../src/defaultFunctions";
  */
 
 describe("valueExprWithError", () => {
-  test("creates ValueExpr with single error message", () => {
+  test("creates ValueExpr with error message", () => {
     const result = valueExprWithError(null, "Test error");
     expect(result.type).toBe("value");
     expect(result.value).toBeNull();
-    expect(result.errors).toEqual(["Test error"]);
-  });
-
-  test("creates ValueExpr with multiple error messages", () => {
-    const result = valueExprWithError(null, ["Error 1", "Error 2"]);
-    expect(result.errors).toEqual(["Error 1", "Error 2"]);
+    expect(result.error).toBe("Test error");
   });
 
   test("creates ValueExpr with value and error", () => {
     const result = valueExprWithError(42, "Warning: value may be incorrect");
     expect(result.value).toBe(42);
-    expect(result.errors).toEqual(["Warning: value may be incorrect"]);
+    expect(result.error).toBe("Warning: value may be incorrect");
   });
 
   test("preserves location information", () => {
@@ -95,13 +90,13 @@ describe("collectAllErrors", () => {
     const midDep: ValueExpr = {
       type: "value",
       value: null,
-      errors: ["Mid error"],
+      error: "Mid error",
       deps: [deepDep],
     };
     const parent: ValueExpr = {
       type: "value",
       value: null,
-      errors: ["Parent error"],
+      error: "Parent error",
       deps: [midDep],
     };
 
@@ -116,12 +111,12 @@ describe("collectAllErrors", () => {
     const expr1: ValueExpr = {
       type: "value",
       value: null,
-      errors: ["Error 1"],
+      error: "Error 1",
     };
     const expr2: ValueExpr = {
       type: "value",
       value: null,
-      errors: ["Error 2"],
+      error: "Error 2",
       deps: [expr1],
     };
     // Create circular reference
@@ -193,7 +188,7 @@ describe("hasErrors", () => {
     const expr1: ValueExpr = {
       type: "value",
       value: null,
-      errors: ["Error"],
+      error: "Error",
     };
     const expr2: ValueExpr = {
       type: "value",
@@ -268,7 +263,7 @@ describe("EvalEnv.withDeps", () => {
     const result: ValueExpr = {
       type: "value",
       value: 42,
-      errors: ["Warning"],
+      error: "Warning",
       data: { custom: true },
       location: { start: 0, end: 10 },
     };
@@ -276,7 +271,7 @@ describe("EvalEnv.withDeps", () => {
 
     const withDeps = env.withDeps(result, [dep]);
     expect(withDeps.value).toBe(42);
-    expect(withDeps.errors).toEqual(["Warning"]);
+    expect(withDeps.error).toBe("Warning");
     expect(withDeps.data).toEqual({ custom: true });
     expect(withDeps.location).toEqual({ start: 0, end: 10 });
   });
@@ -292,14 +287,14 @@ describe("EvalEnv.withDeps", () => {
   });
 });
 
-describe("ValueExpr.errors and data fields", () => {
-  test("ValueExpr can have errors field", () => {
+describe("ValueExpr.error and data fields", () => {
+  test("ValueExpr can have error field", () => {
     const expr: ValueExpr = {
       type: "value",
       value: null,
-      errors: ["Error 1", "Error 2"],
+      error: "Error message",
     };
-    expect(expr.errors).toEqual(["Error 1", "Error 2"]);
+    expect(expr.error).toBe("Error message");
   });
 
   test("ValueExpr can have data field", () => {
@@ -314,9 +309,9 @@ describe("ValueExpr.errors and data fields", () => {
     });
   });
 
-  test("errors and data are optional", () => {
+  test("error and data are optional", () => {
     const expr = valueExpr(42);
-    expect(expr.errors).toBeUndefined();
+    expect(expr.error).toBeUndefined();
     expect(expr.data).toBeUndefined();
   });
 });
@@ -381,8 +376,8 @@ describe("evaluateExpr - BasicEvalEnv", () => {
     const result = env.evaluateExpr(expr);
 
     expect(result.type).toBe("value");
-    expect((result as ValueExpr).errors).toBeDefined();
-    expect((result as ValueExpr).errors![0]).toContain("not declared");
+    expect((result as ValueExpr).error).toBeDefined();
+    expect((result as ValueExpr).error).toContain("not declared");
   });
 
   test("returns error in ValueExpr for undefined function", () => {
@@ -391,8 +386,8 @@ describe("evaluateExpr - BasicEvalEnv", () => {
     const result = env.evaluateExpr(expr);
 
     expect(result.type).toBe("value");
-    expect((result as ValueExpr).errors).toBeDefined();
-    expect((result as ValueExpr).errors![0]).toContain("not declared");
+    expect((result as ValueExpr).error).toBeDefined();
+    expect((result as ValueExpr).error).toContain("not declared");
   });
 
   test("evaluate2 helper returns ValueExpr", () => {
@@ -495,8 +490,7 @@ describe("evaluateExpr evaluation", () => {
 
     // Errors are in ValueExpr, not environment
     const result = env.evaluateExpr(expr);
-    expect((result as ValueExpr).errors).toBeDefined();
-    expect((result as ValueExpr).errors!.length).toBeGreaterThan(0);
-    expect((result as ValueExpr).errors![0]).toContain("undefined");
+    expect((result as ValueExpr).error).toBeDefined();
+    expect((result as ValueExpr).error).toContain("undefined");
   });
 });
