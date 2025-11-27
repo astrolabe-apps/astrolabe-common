@@ -695,6 +695,23 @@ importers:
       rimraf: 3.0.2
       typescript: 5.6.3
 
+  ../../../astrolabe-validation:
+    specifiers:
+      '@astroapps/evaluator': workspace:*
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      rimraf: ^3.0.2
+      typescript: ^5.6.2
+      vitest: ^3.2.4
+    dependencies:
+      '@astroapps/evaluator': link:../astrolabe-evaluator
+    devDependencies:
+      microbundle: 0.15.1
+      prettier: 3.4.2
+      rimraf: 3.0.2
+      typescript: 5.8.3
+      vitest: 3.2.4
+
   ../../../core:
     specifiers:
       '@astroapps/controls': workspace:*
@@ -2079,7 +2096,7 @@ packages:
       '@babel/core': ^7.0.0-0
     dependencies:
       '@babel/core': 7.28.0
-      '@babel/helper-create-class-features-plugin': 7.25.9_@babel+core@7.28.0
+      '@babel/helper-create-class-features-plugin': 7.28.3_@babel+core@7.28.0
       '@babel/helper-plugin-utils': 7.27.1
     transitivePeerDependencies:
       - supports-color

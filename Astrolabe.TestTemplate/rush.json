@@ -561,6 +561,11 @@
       "projectFolder": "../astrolabe-controls",
       "shouldPublish": true
     },
+    {
+      "packageName": "@astroapps/validation",
+      "projectFolder": "../astrolabe-validation",
+      "shouldPublish": true
+    },
 //    {
 //      "packageName": "tsup",
 //      "projectFolder": "../../tsup",
