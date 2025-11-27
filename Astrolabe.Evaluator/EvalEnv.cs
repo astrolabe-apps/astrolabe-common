@@ -52,6 +52,33 @@ public abstract class EvalEnv
     }
 
     /// <summary>
+    /// Get property from a ValueExpr object.
+    /// Handles path tracking and dependency preservation.
+    /// </summary>
+    public static ValueExpr GetPropertyFromValue(ValueExpr value, string property)
+    {
+        var propPath = value.Path != null ? new FieldPath(property, value.Path) : null;
+        return value.Value switch
+        {
+            ObjectValue ov when ov.Properties.TryGetValue(property, out var propVal) =>
+                propVal with
+                {
+                    Path = propPath,
+                    Deps = CombineDeps(value.Deps, propVal.Deps)
+                },
+            _ => new ValueExpr(null, propPath)
+        };
+    }
+
+    private static IEnumerable<ValueExpr>? CombineDeps(IEnumerable<ValueExpr>? deps1, IEnumerable<ValueExpr>? deps2)
+    {
+        if (deps1 == null) return deps2;
+        if (deps2 == null) return deps1;
+        var combined = deps1.Concat(deps2).ToList();
+        return combined.Count > 0 ? combined : null;
+    }
+
+    /// <summary>
     /// Create a comparison function that compares numbers to a given number of significant digits.
     /// </summary>
     public static Func<object?, object?, int> CompareSignificantDigits(int digits)

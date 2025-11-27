@@ -15,11 +15,6 @@ public record ValidationData(
     ImmutableDictionary<string, object?>? Properties = null
 );
 
-/// <summary>
-/// Result data for a ValidatorRule call, stored in ValueExpr.Data.
-/// </summary>
-public record RuleResultData(EvaluatedRule Rule);
-
 public static class RuleValidator
 {
     public const string RuleFunction = "ValidatorRule";
@@ -33,25 +28,19 @@ public static class RuleValidator
         {
             var result = handler(env, call);
 
-            if (result is ValueExpr ve && ve.Value is bool b && b == false)
+            if (result is not ValueExpr { Value: false } ve)
+                return result;
+            // Evaluate args to capture in failure record
+            var evaledArgs = call.Args.Select(env.EvaluateExpr).OfType<ValueExpr>().ToList();
+
+            var failure = new Failure(call, evaledArgs);
+            var validationData = new ValidationData([failure]);
+
+            // Attach validation data, preserve existing deps
+            return ve with
             {
-                // Evaluate args to capture in failure record
-                var evaledArgs = call
-                    .Args.Select(a => env.EvaluateExpr(a))
-                    .OfType<ValueExpr>()
-                    .ToList();
-
-                var failure = new Failure(call, evaledArgs);
-                var validationData = new ValidationData([failure]);
-
-                // Attach validation data, preserve existing deps
-                return ve with
-                {
-                    Data = validationData,
-                };
-            }
-
-            return result;
+                Data = validationData,
+            };
         };
     }
 
@@ -135,7 +124,7 @@ public static class RuleValidator
 
         // Merge properties from props expression (if any)
         var properties = validationData.Properties ?? ImmutableDictionary<string, object?>.Empty;
-        if (propsResult?.Data is ValidationData propsData && propsData.Properties != null)
+        if (propsResult?.Data is ValidationData { Properties: not null } propsData)
         {
             foreach (var (key, value) in propsData.Properties)
             {
@@ -161,7 +150,7 @@ public static class RuleValidator
         // Return path value with rule attached (for chaining)
         return pathResult with
         {
-            Data = new RuleResultData(rule),
+            Data = rule,
             Deps = [mustResult],
         };
     };
@@ -177,6 +166,9 @@ public static class RuleValidator
         var properties = ImmutableDictionary<string, object?>.Empty;
         var seen = new HashSet<ValueExpr>();
 
+        Collect(expr);
+        return new ValidationData(failures, message, properties);
+
         void Collect(ValueExpr ve)
         {
             if (!seen.Add(ve))
@@ -191,13 +183,11 @@ public static class RuleValidator
                     properties = properties.SetItems(vd.Properties);
             }
 
-            if (ve.Deps != null)
-                foreach (var dep in ve.Deps)
-                    Collect(dep);
+            if (ve.Deps == null)
+                return;
+            foreach (var dep in ve.Deps)
+                Collect(dep);
         }
-
-        Collect(expr);
-        return new ValidationData(failures, message, properties);
     }
 
     /// <summary>
@@ -271,26 +261,27 @@ public static class RuleValidator
         var rules = new List<EvaluatedRule>();
         var seen = new HashSet<ValueExpr>();
 
+        Collect(expr);
+        return rules;
+
         void Collect(ValueExpr ve)
         {
             if (!seen.Add(ve))
                 return;
 
-            if (ve.Data is RuleResultData rrd)
-                rules.Add(rrd.Rule);
+            if (ve.Data is EvaluatedRule rrd)
+                rules.Add(rrd);
 
             // Also check array values
             if (ve.Value is ArrayValue av)
                 foreach (var elem in av.Values)
                     Collect(elem);
 
-            if (ve.Deps != null)
-                foreach (var dep in ve.Deps)
-                    Collect(dep);
+            if (ve.Deps == null)
+                return;
+            foreach (var dep in ve.Deps)
+                Collect(dep);
         }
-
-        Collect(expr);
-        return rules;
     }
 
     private static EvalExpr ToExpr(Rule rule)

@@ -178,15 +178,6 @@ public class PartialEvalEnv : EvalEnv
         return new ArrayExpr(partialValues);
     }
 
-    private static EvalExpr GetPropertyFromValue(ValueExpr value, string property)
-    {
-        return value.Value switch
-        {
-            ObjectValue ov when ov.Properties.TryGetValue(property, out var propVal) => propVal,
-            _ => ValueExpr.Null
-        };
-    }
-
     /// <summary>
     /// Reconstruct let bindings for expressions that appear multiple times.
     /// Uses composite keys (scopeId:varName) to correctly handle variable shadowing.

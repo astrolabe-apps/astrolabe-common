@@ -1208,6 +1208,60 @@ public class DependencyTrackingTests
 
     #endregion
 
+    #region Property Path Preservation Tests
+
+    [Fact]
+    public void Property_Access_With_Null_Value_Preserves_Path()
+    {
+        // When data is {"data": null}, accessing "data" should return ValueExpr with path preserved
+        var data = new JsonObject { ["data"] = null };
+        var env = TestHelpers.CreateBasicEnv(data);
+        var expr = ExprParser.Parse("data");
+
+        var result = env.EvalResult(expr);
+
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Path);
+        Assert.IsType<FieldPath>(result.Path);
+        var fieldPath = (FieldPath)result.Path;
+        Assert.Equal("data", fieldPath.Field);
+    }
+
+    [Fact]
+    public void Nested_Property_Access_With_Null_Value_Preserves_Full_Path()
+    {
+        // When data is {"outer": {"inner": null}}, accessing "outer.inner" should preserve full path
+        var data = new JsonObject
+        {
+            ["outer"] = new JsonObject { ["inner"] = null }
+        };
+        var env = TestHelpers.CreateBasicEnv(data);
+        var expr = ExprParser.Parse("outer.inner");
+
+        var result = env.EvalResult(expr);
+
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Path);
+        Assert.Equal("outer.inner", result.Path.ToPathString());
+    }
+
+    [Fact]
+    public void Property_Access_With_Missing_Property_Preserves_Path()
+    {
+        // When accessing a property that doesn't exist, path should still be preserved
+        var data = new JsonObject { ["existing"] = "value" };
+        var env = TestHelpers.CreateBasicEnv(data);
+        var expr = ExprParser.Parse("missing");
+
+        var result = env.EvalResult(expr);
+
+        Assert.Null(result.Value);
+        Assert.NotNull(result.Path);
+        Assert.Equal("missing", result.Path.ToPathString());
+    }
+
+    #endregion
+
     #region FlatMap Dependency Tracking Tests
 
     [Fact]

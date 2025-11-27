@@ -130,12 +130,4 @@ public class BasicEvalEnv : EvalEnv
         return new ValueExpr(new ArrayValue(results.Cast<ValueExpr>()));
     }
 
-    private static EvalExpr GetPropertyFromValue(ValueExpr value, string property)
-    {
-        return value.Value switch
-        {
-            ObjectValue ov when ov.Properties.TryGetValue(property, out var propVal) => propVal,
-            _ => ValueExpr.Null
-        };
-    }
 }

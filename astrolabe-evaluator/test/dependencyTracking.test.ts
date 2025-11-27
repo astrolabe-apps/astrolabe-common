@@ -1032,6 +1032,50 @@ describe("Null Index/Key Handling Tests", () => {
   });
 });
 
+describe("Property Path Preservation Tests", () => {
+  test("Property access with null value preserves path", () => {
+    // When data is {data: null}, accessing "data" should return ValueExpr with path preserved
+    const data = { data: null };
+    const env = basicEnv(data);
+    const expr = parseEval("data");
+
+    const result = evalResult(env, expr);
+
+    expect(result.value).toBe(null);
+    expect(result.path).toBeDefined();
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("data");
+  });
+
+  test("Nested property access with null value preserves full path", () => {
+    // When data is {outer: {inner: null}}, accessing "outer.inner" should preserve full path
+    const data = { outer: { inner: null } };
+    const env = basicEnv(data);
+    const expr = parseEval("outer.inner");
+
+    const result = evalResult(env, expr);
+
+    expect(result.value).toBe(null);
+    expect(result.path).toBeDefined();
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("outer.inner");
+  });
+
+  test("Property access with missing property preserves path", () => {
+    // When accessing a property that doesn't exist, path should still be preserved
+    const data = { existing: "value" };
+    const env = basicEnv(data);
+    const expr = parseEval("missing");
+
+    const result = evalResult(env, expr);
+
+    expect(result.value).toBe(null);
+    expect(result.path).toBeDefined();
+    const pathStr = result.path ? pathToString(result.path) : "";
+    expect(pathStr).toBe("missing");
+  });
+});
+
 describe("FlatMap Dependency Tracking Tests", () => {
   test("FlatMap preserves dependencies in individual elements", () => {
     const data = {
