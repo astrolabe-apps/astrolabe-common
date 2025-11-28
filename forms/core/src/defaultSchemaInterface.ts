@@ -9,11 +9,13 @@ import { SchemaInterface } from "./schemaInterface";
 import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaNode } from "./schemaNode";
 import { Control, ControlSetup } from "@astroapps/controls";
+import { parseDate } from "@internationalized/date";
 
 export class DefaultSchemaInterface implements SchemaInterface {
   constructor(
     protected boolStrings: [string, string] = ["No", "Yes"],
-    protected parseDateTime: (s: string) => number = (s) => Date.parse(s),
+    protected parseDateTime: (s: string) => number = (s) =>
+      parseDate(s).toDate("UTC").getTime(),
   ) {}
 
   parseToMillis(field: SchemaField, v: string): number {
@@ -117,7 +119,7 @@ export class DefaultSchemaInterface implements SchemaInterface {
 
   controlLength(f: SchemaField, control: Control<any>): number {
     return f.collection
-      ? (control.elements?.length ?? 0)
+      ? control.elements?.length ?? 0
       : this.valueLength(f, control.value);
   }
 
