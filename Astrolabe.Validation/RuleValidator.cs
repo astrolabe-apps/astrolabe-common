@@ -18,6 +18,8 @@ public record ValidationData(
 public static class RuleValidator
 {
     public const string RuleFunction = "ValidatorRule";
+    private const string ValidationDataKey = "validation";
+    private const string EvaluatedRuleKey = "rule";
 
     /// <summary>
     /// Wrap a comparison function to track failures when result is false.
@@ -37,10 +39,7 @@ public static class RuleValidator
             var validationData = new ValidationData([failure]);
 
             // Attach validation data, preserve existing deps
-            return ve with
-            {
-                Data = validationData,
-            };
+            return ve.WithData(ValidationDataKey, validationData) as ValueExpr ?? ve;
         };
     }
 
@@ -59,17 +58,14 @@ public static class RuleValidator
             return exprResult;
 
         var message = (msgResult as ValueExpr)?.Value as string;
-        var existingData = ve.Data as ValidationData ?? new ValidationData([]);
+        var existingData = ve.GetData<ValidationData>(ValidationDataKey) ?? new ValidationData([]);
 
         var deps = (ve.Deps ?? []).ToList();
         if (msgResult is ValueExpr msgVal)
             deps.Add(msgVal);
 
-        return ve with
-        {
-            Data = existingData with { Message = message },
-            Deps = deps,
-        };
+        var updatedExpr = ve.WithData(ValidationDataKey, existingData with { Message = message }) as ValueExpr ?? ve;
+        return updatedExpr with { Deps = deps };
     };
 
     /// <summary>
@@ -90,16 +86,13 @@ public static class RuleValidator
         var key = (keyResult as ValueExpr)?.Value as string;
         var value = (valueResult as ValueExpr)?.Value;
 
-        var existingData = ve.Data as ValidationData ?? new ValidationData([]);
+        var existingData = ve.GetData<ValidationData>(ValidationDataKey) ?? new ValidationData([]);
         var props = existingData.Properties ?? ImmutableDictionary<string, object?>.Empty;
 
         if (key != null)
             props = props.SetItem(key, value);
 
-        return ve with
-        {
-            Data = existingData with { Properties = props },
-        };
+        return ve.WithData(ValidationDataKey, existingData with { Properties = props }) as ValueExpr ?? ve;
     };
 
     /// <summary>
@@ -124,7 +117,7 @@ public static class RuleValidator
 
         // Merge properties from props expression (if any)
         var properties = validationData.Properties ?? ImmutableDictionary<string, object?>.Empty;
-        if (propsResult?.Data is ValidationData { Properties: not null } propsData)
+        if (propsResult?.GetData<ValidationData>(ValidationDataKey) is { Properties: not null } propsData)
         {
             foreach (var (key, value) in propsData.Properties)
             {
@@ -148,11 +141,8 @@ public static class RuleValidator
         );
 
         // Return path value with rule attached (for chaining)
-        return pathResult with
-        {
-            Data = rule,
-            Deps = [mustResult],
-        };
+        var resultExpr = pathResult.WithData(EvaluatedRuleKey, rule) as ValueExpr ?? pathResult;
+        return resultExpr with { Deps = [mustResult] };
     };
 
     /// <summary>
@@ -174,7 +164,7 @@ public static class RuleValidator
             if (!seen.Add(ve))
                 return; // Cycle detection
 
-            if (ve.Data is ValidationData vd)
+            if (ve.GetData<ValidationData>(ValidationDataKey) is { } vd)
             {
                 failures.AddRange(vd.Failures);
                 if (vd.Message != null)
@@ -269,7 +259,7 @@ public static class RuleValidator
             if (!seen.Add(ve))
                 return;
 
-            if (ve.Data is EvaluatedRule rrd)
+            if (ve.GetData<EvaluatedRule>(EvaluatedRuleKey) is { } rrd)
                 rules.Add(rrd);
 
             // Also check array values

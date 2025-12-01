@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.ObjectModel;
 using System.ComponentModel.DataAnnotations;
 using Astrolabe.Annotation;
 
@@ -66,17 +67,17 @@ public interface EvalExpr
     SourceLocation? Location { get; }
 
     /// <summary>
-    /// Generic metadata property for internal use by evaluation environments.
+    /// Generic metadata dictionary for internal use by evaluation environments.
     /// Used for tracking inlined variables (InlineData) and other metadata.
     /// </summary>
-    object? Data { get; }
+    IReadOnlyDictionary<string, object?>? Data { get; }
 }
 
 public record LetExpr(
     IEnumerable<(VarExpr, EvalExpr)> Vars,
     EvalExpr In,
     SourceLocation? Location = null,
-    object? Data = null
+    IReadOnlyDictionary<string, object?>? Data = null
 ) : EvalExpr
 {
     public static LetExpr AddVar(LetExpr? letExpr, VarExpr varExpr, EvalExpr expr)
@@ -88,14 +89,14 @@ public record LetExpr(
     }
 }
 
-public record PropertyExpr(string Property, SourceLocation? Location = null, object? Data = null)
+public record PropertyExpr(string Property, SourceLocation? Location = null, IReadOnlyDictionary<string, object?>? Data = null)
     : EvalExpr;
 
 public record LambdaExpr(
     string Variable,
     EvalExpr Value,
     SourceLocation? Location = null,
-    object? Data = null
+    IReadOnlyDictionary<string, object?>? Data = null
 ) : EvalExpr;
 
 /// <summary>
@@ -109,7 +110,7 @@ public record ValueExpr(
     DataPath? Path = null,
     IEnumerable<ValueExpr>? Deps = null,
     SourceLocation? Location = null,
-    object? Data = null,
+    IReadOnlyDictionary<string, object?>? Data = null,
     string? Error = null
 ) : EvalExpr
 {
@@ -354,7 +355,7 @@ public record ValueExpr(
 public record ArrayExpr(
     IEnumerable<EvalExpr> Values,
     SourceLocation? Location = null,
-    object? Data = null
+    IReadOnlyDictionary<string, object?>? Data = null
 ) : EvalExpr
 {
     public override string ToString()
@@ -367,7 +368,7 @@ public record CallExpr(
     string Function,
     IList<EvalExpr> Args,
     SourceLocation? Location = null,
-    object? Data = null
+    IReadOnlyDictionary<string, object?>? Data = null
 ) : EvalExpr
 {
     public override string ToString()
@@ -396,7 +397,7 @@ public record CallExpr(
     }
 }
 
-public record VarExpr(string Name, SourceLocation? Location = null, object? Data = null) : EvalExpr
+public record VarExpr(string Name, SourceLocation? Location = null, IReadOnlyDictionary<string, object?>? Data = null) : EvalExpr
 {
     private static int _indexCount;
 
@@ -533,4 +534,41 @@ public static class ValueExtensions
     {
         return (string)v.Value!;
     }
+}
+
+public static class EvalExprDataExtensions
+{
+    public static T? GetData<T>(this EvalExpr expr, string key) where T : class =>
+        expr.Data?.TryGetValue(key, out var value) == true ? value as T : null;
+
+    public static bool HasData(this EvalExpr expr, string key) =>
+        expr.Data?.ContainsKey(key) == true;
+
+    public static EvalExpr WithData(this EvalExpr expr, string key, object? value)
+    {
+        var newData = expr.Data != null
+            ? new Dictionary<string, object?>(expr.Data) { [key] = value }
+            : new Dictionary<string, object?> { [key] = value };
+        return SetDataDirect(expr, newData);
+    }
+
+    public static EvalExpr WithoutData(this EvalExpr expr, string key)
+    {
+        if (expr.Data == null || !expr.Data.ContainsKey(key)) return expr;
+        var newData = expr.Data.Where(kvp => kvp.Key != key).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        return SetDataDirect(expr, newData.Count > 0 ? newData : null);
+    }
+
+    private static EvalExpr SetDataDirect(EvalExpr expr, IReadOnlyDictionary<string, object?>? data) =>
+        expr switch
+        {
+            ValueExpr v => v with { Data = data },
+            VarExpr vr => vr with { Data = data },
+            CallExpr c => c with { Data = data },
+            ArrayExpr a => a with { Data = data },
+            LetExpr l => l with { Data = data },
+            PropertyExpr p => p with { Data = data },
+            LambdaExpr lm => lm with { Data = data },
+            _ => expr,
+        };
 }

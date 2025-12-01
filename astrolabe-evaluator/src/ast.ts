@@ -227,7 +227,7 @@ export interface VarExpr {
   type: "var";
   variable: string;
   location?: SourceLocation;
-  data?: unknown;
+  data?: Record<string, unknown>;
 }
 
 export interface LetExpr {
@@ -235,13 +235,13 @@ export interface LetExpr {
   variables: [VarExpr, EvalExpr][];
   expr: EvalExpr;
   location?: SourceLocation;
-  data?: unknown;
+  data?: Record<string, unknown>;
 }
 export interface ArrayExpr {
   type: "array";
   values: EvalExpr[];
   location?: SourceLocation;
-  data?: unknown;
+  data?: Record<string, unknown>;
 }
 
 export interface CallExpr {
@@ -249,7 +249,7 @@ export interface CallExpr {
   function: string;
   args: EvalExpr[];
   location?: SourceLocation;
-  data?: unknown;
+  data?: Record<string, unknown>;
 }
 
 export interface ValueExpr {
@@ -266,7 +266,7 @@ export interface ValueExpr {
   path?: Path;
   deps?: ValueExpr[];
   error?: string;
-  data?: unknown;
+  data?: Record<string, unknown>;
   location?: SourceLocation;
 }
 
@@ -274,7 +274,7 @@ export interface PropertyExpr {
   type: "property";
   property: string;
   location?: SourceLocation;
-  data?: unknown;
+  data?: Record<string, unknown>;
 }
 
 export interface LambdaExpr {
@@ -282,7 +282,7 @@ export interface LambdaExpr {
   variable: string;
   expr: EvalExpr;
   location?: SourceLocation;
-  data?: unknown;
+  data?: Record<string, unknown>;
 }
 
 export interface FunctionValue {
@@ -638,4 +638,55 @@ export function collectErrorsWithLocations(expr: EvalExpr): ErrorWithLocation[] 
 
   walk(expr, []);
   return results;
+}
+
+/**
+ * Get a typed value from an expression's data dictionary.
+ *
+ * @param expr - The expression to get data from
+ * @param key - The key to look up
+ * @returns The value cast to type T, or undefined if not present
+ */
+export function getExprData<T>(expr: EvalExpr, key: string): T | undefined {
+  return expr.data?.[key] as T | undefined;
+}
+
+/**
+ * Check if an expression has data for a specific key.
+ *
+ * @param expr - The expression to check
+ * @param key - The key to look for
+ * @returns true if the key exists in the data dictionary
+ */
+export function hasExprData(expr: EvalExpr, key: string): boolean {
+  return expr.data !== undefined && key in expr.data;
+}
+
+/**
+ * Create a new expression with a key-value pair added to its data dictionary.
+ *
+ * @param expr - The expression to add data to
+ * @param key - The key to set
+ * @param value - The value to store
+ * @returns A new expression with the data added
+ */
+export function withExprData<E extends EvalExpr>(
+  expr: E,
+  key: string,
+  value: unknown,
+): E {
+  return { ...expr, data: { ...expr.data, [key]: value } };
+}
+
+/**
+ * Create a new expression with a key removed from its data dictionary.
+ *
+ * @param expr - The expression to remove data from
+ * @param key - The key to remove
+ * @returns A new expression with the key removed (or undefined data if empty)
+ */
+export function withoutExprData<E extends EvalExpr>(expr: E, key: string): E {
+  if (!expr.data || !(key in expr.data)) return expr;
+  const { [key]: _, ...rest } = expr.data;
+  return { ...expr, data: Object.keys(rest).length > 0 ? rest : undefined };
 }

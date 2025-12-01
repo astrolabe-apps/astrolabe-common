@@ -2,9 +2,13 @@ import {
   compareSignificantDigits,
   EvalEnv,
   EvalExpr,
+  getExprData,
   getPropertyFromValue,
+  hasExprData,
   ValueExpr,
   VarExpr,
+  withExprData,
+  withoutExprData,
 } from "./ast";
 
 /**
@@ -32,6 +36,9 @@ export function isInlineData(data: unknown): data is InlineData {
 
 /** Counter for generating unique scope IDs */
 let nextScopeId = 0;
+
+/** Key used to store InlineData in expression data dictionaries */
+const INLINE_DATA_KEY = "inline";
 
 /**
  * PartialEvalEnv performs partial evaluation with lazy variable evaluation and caching.
@@ -71,10 +78,12 @@ export class PartialEvalEnv extends EvalEnv {
       const result = this.evaluateExpr(binding);
 
       // Tag the result with the variable name and scope ID (for uninlining)
-      const tagged =
-        result.data === undefined
-          ? { ...result, data: { inlinedFrom: name, scopeId: this.scopeId } as InlineData }
-          : result;
+      const tagged = !hasExprData(result, INLINE_DATA_KEY)
+        ? withExprData(result, INLINE_DATA_KEY, {
+            inlinedFrom: name,
+            scopeId: this.scopeId,
+          } as InlineData)
+        : result;
 
       this.evalCache.set(name, tagged);
       return tagged;
@@ -271,8 +280,9 @@ function collectTaggedExprs(
   expr: EvalExpr,
   collected: Map<string, { expr: EvalExpr; count: number; complexity: number; varName: string }>,
 ): void {
-  if (isInlineData(expr.data)) {
-    const key = `${expr.data.scopeId}:${expr.data.inlinedFrom}`;
+  const inlineData = getExprData<InlineData>(expr, INLINE_DATA_KEY);
+  if (inlineData && isInlineData(inlineData)) {
+    const key = `${inlineData.scopeId}:${inlineData.inlinedFrom}`;
     const existing = collected.get(key);
     if (existing) {
       existing.count++;
@@ -281,7 +291,7 @@ function collectTaggedExprs(
         expr,
         count: 1,
         complexity: calculateComplexity(expr),
-        varName: expr.data.inlinedFrom,
+        varName: inlineData.inlinedFrom,
       });
     }
   }
@@ -311,8 +321,9 @@ function replaceTaggedWithVars(
   expr: EvalExpr,
   toReplace: Map<string, string>, // compositeKey -> actualVarName
 ): EvalExpr {
-  if (isInlineData(expr.data)) {
-    const key = `${expr.data.scopeId}:${expr.data.inlinedFrom}`;
+  const inlineData = getExprData<InlineData>(expr, INLINE_DATA_KEY);
+  if (inlineData && isInlineData(inlineData)) {
+    const key = `${inlineData.scopeId}:${inlineData.inlinedFrom}`;
     const varName = toReplace.get(key);
     if (varName) {
       return { type: "var", variable: varName };
@@ -352,9 +363,7 @@ function replaceTaggedWithVars(
  * Remove inline data tag from an expression (shallow copy).
  */
 function removeTag(expr: EvalExpr): EvalExpr {
-  if (expr.data === undefined) return expr;
-  const { data, ...rest } = expr as any;
-  return rest as EvalExpr;
+  return withoutExprData(expr, INLINE_DATA_KEY);
 }
 
 /**

@@ -75,10 +75,9 @@ public class PartialEvalEnv : EvalEnv
             var result = EvaluateExpr(binding);
 
             // Tag with inline data for uninlining (internal use)
-            // Access Data directly via EvalExpr interface
-            if (result.Data == null)
+            if (!result.HasData(InlineDataKey))
             {
-                result = SetData(result, new InlineData(name, ScopeId));
+                result = result.WithData(InlineDataKey, new InlineData(name, ScopeId));
             }
 
             _evalCache[name] = result;
@@ -89,19 +88,7 @@ public class PartialEvalEnv : EvalEnv
         return _parent != null ? _parent.EvaluateVariable(name) : new VarExpr(name); // Unknown variable - return VarExpr unchanged (partial evaluation)
     }
 
-    // Helper to set Data on any EvalExpr (uses 'with' expression on records)
-    private static EvalExpr SetData(EvalExpr expr, object? data) =>
-        expr switch
-        {
-            ValueExpr v => v with { Data = data },
-            VarExpr vr => vr with { Data = data },
-            CallExpr c => c with { Data = data },
-            ArrayExpr a => a with { Data = data },
-            LetExpr l => l with { Data = data },
-            PropertyExpr p => p with { Data = data },
-            LambdaExpr lm => lm with { Data = data },
-            _ => expr,
-        };
+    private const string InlineDataKey = "inline";
 
     public override EvalExpr EvaluateExpr(EvalExpr expr)
     {
@@ -219,7 +206,7 @@ public class PartialEvalEnv : EvalEnv
     )
     {
         // Check if this expression has inline data
-        if (expr.Data is InlineData inlineData)
+        if (expr.GetData<InlineData>(InlineDataKey) is { } inlineData)
         {
             var key = $"{inlineData.ScopeId}:{inlineData.InlinedFrom}";
             var complexity = CalculateComplexity(expr);
@@ -282,7 +269,7 @@ public class PartialEvalEnv : EvalEnv
     )
     {
         // Check if this expression should be replaced with a variable reference
-        if (expr.Data is InlineData inlineData)
+        if (expr.GetData<InlineData>(InlineDataKey) is { } inlineData)
         {
             var key = $"{inlineData.ScopeId}:{inlineData.InlinedFrom}";
             if (toUninline.TryGetValue(key, out var varName))
@@ -312,5 +299,5 @@ public class PartialEvalEnv : EvalEnv
         };
     }
 
-    private static EvalExpr RemoveTag(EvalExpr expr) => SetData(expr, null);
+    private static EvalExpr RemoveTag(EvalExpr expr) => expr.WithoutData(InlineDataKey);
 }
