@@ -12,6 +12,7 @@ import {
 import { printExpr } from "../src/printExpr";
 import { basicEnv, partialEnv } from "../src/defaultFunctions";
 import { evalPartial, evalWithErrors } from "./testHelpers";
+import { parseEval } from "../src/parseEval";
 
 /**
  * Create an environment for full evaluation testing (returns errors for unknown variables).
@@ -1035,8 +1036,8 @@ describe("Partial Evaluation", () => {
         // Should return null with an error about circular reference
         expect(result.type).toBe("value");
         expect((result as ValueExpr).value).toBeNull();
-        expect((result as ValueExpr).errors).toBeDefined();
-        expect((result as ValueExpr).errors?.length).toBeGreaterThan(0);
+        expect((result as ValueExpr).error).toBeDefined();
+        expect((result as ValueExpr).error?.length).toBeGreaterThan(0);
       });
 
       test.skip("direct self-reference should return error not infinite loop", () => {
@@ -1053,9 +1054,109 @@ describe("Partial Evaluation", () => {
         // Should return null with an error about circular reference
         expect(result.type).toBe("value");
         expect((result as ValueExpr).value).toBeNull();
-        expect((result as ValueExpr).errors).toBeDefined();
-        expect((result as ValueExpr).errors?.length).toBeGreaterThan(0);
+        expect((result as ValueExpr).error).toBeDefined();
+        expect((result as ValueExpr).error?.length).toBeGreaterThan(0);
       });
+    });
+  });
+
+  describe("$which Partial Evaluation", () => {
+    test("symbolic condition - returns call with all args evaluated", () => {
+      const env = partialEnv({ known: "value1" });
+      const expr = parseEval('$which($unknown, "a", known, "b", $other)');
+      const result = evalPartial(env, expr);
+
+      expect(result.type).toBe("call");
+      // All args should be partially evaluated
+      expect(printExpr(result)).toBe(
+        '$which($unknown, "a", "value1", "b", $other)',
+      );
+    });
+
+    test("known condition with matching value - returns result", () => {
+      const env = partialEnv();
+      const expr = parseEval(
+        '$which("test", "test", "matched", "other", "not matched")',
+      );
+      const result = evalPartial(env, expr);
+
+      expect(result.type).toBe("value");
+      expect((result as ValueExpr).value).toBe("matched");
+    });
+
+    test("known condition with non-matching values removed", () => {
+      const env = partialEnv();
+      // condition="x", first case="a" (no match), second case=$unknown (symbolic)
+      const expr = parseEval(
+        '$which("x", "a", "resultA", $unknown, "resultB")',
+      );
+      const result = evalPartial(env, expr);
+
+      expect(result.type).toBe("call");
+      // "a"/"resultA" pair should be removed since "x" != "a"
+      // Only the symbolic pair should remain
+      expect(printExpr(result)).toBe('$which("x", $unknown, "resultB")');
+    });
+
+    test("known condition with multiple non-matching pairs removed", () => {
+      const env = partialEnv();
+      // condition="x", cases "a", "b", "c" don't match, $unknown is symbolic
+      const expr = parseEval(
+        '$which("x", "a", "A", "b", "B", $unknown, "X", "c", "C")',
+      );
+      const result = evalPartial(env, expr);
+
+      expect(result.type).toBe("call");
+      // All known non-matching pairs removed, only symbolic pair remains
+      expect(printExpr(result)).toBe('$which("x", $unknown, "X")');
+    });
+
+    test("known condition with no matches and no symbolic - returns null", () => {
+      const env = partialEnv();
+      const expr = parseEval('$which("x", "a", "A", "b", "B")');
+      const result = evalPartial(env, expr);
+
+      expect(result.type).toBe("value");
+      expect((result as ValueExpr).value).toBeNull();
+    });
+
+    test("symbolic comparison keeps pair and continues processing", () => {
+      const env = partialEnv();
+      // First pair is symbolic, second matches
+      const expr = parseEval(
+        '$which("test", $unknown, "first", "test", "matched")',
+      );
+      const result = evalPartial(env, expr);
+
+      // Should return "matched" since second pair matches
+      expect(result.type).toBe("value");
+      expect((result as ValueExpr).value).toBe("matched");
+    });
+
+    test("result values are also evaluated", () => {
+      const env = partialEnv({ resultVal: "computed" });
+      const expr = parseEval('$which("x", $unknown, resultVal)');
+      const result = evalPartial(env, expr);
+
+      expect(result.type).toBe("call");
+      // The result value should be evaluated
+      expect(printExpr(result)).toBe('$which("x", $unknown, "computed")');
+    });
+
+    test("original issue - all args preserved with symbolic comparison", () => {
+      // This was the original bug: $blah was being dropped
+      const env = partialEnv({
+        thing: "test",
+        match: "test1",
+        result: "ok",
+      });
+      const expr = parseEval("$which(thing, match, result, $derp, $blah)");
+      const result = evalPartial(env, expr);
+
+      expect(result.type).toBe("call");
+      // "test1"/"ok" pair doesn't match "test", so removed
+      // $derp/$blah pair should be preserved
+      expect(printExpr(result)).toBe('$which("test", $derp, $blah)');
     });
   });
 });

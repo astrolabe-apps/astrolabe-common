@@ -281,47 +281,70 @@ function aggFunction<A>(
 
 export const whichFunction: ValueExpr = functionValue(
   (env, call) => {
-    const [c, ...args] = call.args;
-    const condPartial = env.evaluateExpr(c);
+    if (call.args.length < 3 || call.args.length % 2 !== 1) {
+      return exprWithError(call, "which expects odd number of arguments >= 3");
+    }
 
-    // If condition is symbolic, return symbolic call
+    // 1. Partially evaluate ALL arguments upfront
+    const evaluatedArgs = call.args.map((arg) => env.evaluateExpr(arg));
+    const condPartial = evaluatedArgs[0];
+
+    // 2. If condition is symbolic, return call with all evaluated args
     if (condPartial.type !== "value") {
-      return { ...call, args: [condPartial, ...args] };
+      return { ...call, args: evaluatedArgs };
     }
 
     const cond = condPartial as ValueExpr;
-    let i = 0;
-    while (i < args.length - 1) {
-      const compare = args[i++];
-      const value = args[i++];
-      const compPartial = env.evaluateExpr(compare);
 
-      // If comparison value is symbolic, we can't determine the branch
+    // 3. If condition has an error, return it directly
+    if (cond.error) {
+      return cond;
+    }
+
+    const deps: ValueExpr[] = [cond];
+    const resultPairs: EvalExpr[] = [];
+
+    // 3. Process pairs - remove non-matching, keep symbolic, return on match
+    for (let i = 1; i < evaluatedArgs.length; i += 2) {
+      const compPartial = evaluatedArgs[i];
+      const valuePartial = evaluatedArgs[i + 1];
+
       if (compPartial.type !== "value") {
-        // Return symbolic call with partially evaluated args
-        const partialArgs: EvalExpr[] = [condPartial];
-        for (let j = 0; j < i - 2; j++) partialArgs.push(args[j]);
-        partialArgs.push(compPartial);
-        for (let j = i; j < args.length; j++) partialArgs.push(args[j]);
-        return { ...call, args: partialArgs };
+        // Symbolic comparison - keep the pair
+        resultPairs.push(compPartial, valuePartial);
+        continue;
       }
 
-      const compValue = compPartial as ValueExpr;
-      const cv = compValue.value;
-      const cva = Array.isArray(cv) ? cv.map((x) => x.value) : [cv];
-      if (cva.find((x) => env.compare(x, cond.value) === 0)) {
-        const valuePartial = env.evaluateExpr(value);
+      const caseVal = compPartial as ValueExpr;
+      deps.push(caseVal);
+
+      const cv = caseVal.value;
+      let matches: boolean;
+      if (Array.isArray(cv)) {
+        matches = (cv as ValueExpr[]).some(
+          (v) => env.compare(cond.value, v.value) === 0,
+        );
+      } else {
+        matches = env.compare(cond.value, cv) === 0;
+      }
+
+      if (matches) {
+        // Match found - return the result
         if (valuePartial.type !== "value") {
           return valuePartial;
         }
-        return valueExprWithDeps((valuePartial as ValueExpr).value, [
-          cond,
-          compValue,
-          valuePartial as ValueExpr,
-        ]);
+        return env.withDeps(valuePartial as ValueExpr, deps);
       }
+      // No match - pair is removed (not added to resultPairs)
     }
-    return valueExprWithDeps(null, [cond]);
+
+    // 4. If we have remaining symbolic pairs, return symbolic call
+    if (resultPairs.length > 0) {
+      return { ...call, args: [condPartial, ...resultPairs] };
+    }
+
+    // 5. No matches found
+    return env.withDeps(valueExpr(null), deps);
   },
   (e, call) => {
     return mapCallArgs(call, e, (argTypes) => {

@@ -985,7 +985,7 @@ public static class DefaultFunctions
         if (call.Args.Count == 0)
             return call.WithError("merge requires at least 1 argument");
 
-        var partials = call.Args.Select(a => env.EvaluateExpr(a)).ToList();
+        var partials = call.Args.Select(env.EvaluateExpr).ToList();
 
         if (!partials.All(p => p is ValueExpr))
             return new CallExpr("merge", partials);
@@ -1047,22 +1047,33 @@ public static class DefaultFunctions
         if (call.Args.Count < 3 || call.Args.Count % 2 != 1)
             return call.WithError("which expects odd number of arguments >= 3");
 
-        var valuePartial = env.EvaluateExpr(call.Args[0]);
+        // 1. Partially evaluate ALL arguments upfront
+        var evaluatedArgs = call.Args.Select(env.EvaluateExpr).ToList();
+        var condPartial = evaluatedArgs[0];
 
-        if (valuePartial is not ValueExpr valueExpr)
-            return new CallExpr("which", [valuePartial, .. call.Args.Skip(1)]);
+        // 2. If condition is symbolic, return call with all evaluated args
+        if (condPartial is not ValueExpr valueExpr)
+            return new CallExpr("which", evaluatedArgs);
+
+        // 3. If condition has an error, return it directly
+        if (valueExpr.Error != null)
+            return valueExpr;
 
         var deps = new List<ValueExpr> { valueExpr };
+        var resultPairs = new List<EvalExpr>();
 
-        // Iterate through case/result pairs
-        for (var i = 1; i < call.Args.Count; i += 2)
+        // 3. Process pairs - remove non-matching, keep symbolic, return on match
+        for (var i = 1; i < evaluatedArgs.Count; i += 2)
         {
-            var casePartial = env.EvaluateExpr(call.Args[i]);
+            var compPartial = evaluatedArgs[i];
+            var valuePartial = evaluatedArgs[i + 1];
 
-            if (casePartial is not ValueExpr caseVal)
+            if (compPartial is not ValueExpr caseVal)
             {
-                // Case is symbolic - return symbolic call
-                return new CallExpr("which", [valuePartial, .. call.Args.Skip(1)]);
+                // Symbolic comparison - keep the pair
+                resultPairs.Add(compPartial);
+                resultPairs.Add(valuePartial);
+                continue;
             }
 
             deps.Add(caseVal);
@@ -1079,17 +1090,23 @@ public static class DefaultFunctions
                 matches = env.Compare(valueExpr.Value, caseVal.Value) == 0;
             }
 
-            if (!matches)
-                continue;
-            var resultPartial = env.EvaluateExpr(call.Args[i + 1]);
-            if (resultPartial is ValueExpr resultVal)
+            if (!matches) continue;
+            // Match found - return the result
+            if (valuePartial is ValueExpr resultVal)
             {
-                return env.WithDeps(resultVal, deps.Append(resultVal));
+                return env.WithDeps(resultVal, deps);
             }
-            return resultPartial;
+            return valuePartial;
+            // No match - pair is removed (not added to resultPairs)
         }
 
-        // No match found
+        // 4. If we have remaining symbolic pairs, return symbolic call
+        if (resultPairs.Count > 0)
+        {
+            return new CallExpr("which", [condPartial, .. resultPairs]);
+        }
+
+        // 5. No matches found
         return env.WithDeps(ValueExpr.Null, deps);
     };
 

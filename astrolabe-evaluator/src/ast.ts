@@ -396,6 +396,9 @@ export function compareSignificantDigits(
 ): (v1: unknown, v2: unknown) => number {
   const multiplier = Math.pow(10, digits);
   return (v1, v2) => {
+    // Handle null comparisons explicitly to match C# behavior
+    if (v1 == null && v2 == null) return 0;
+    if (v1 == null || v2 == null) return 1;
     switch (typeof v1) {
       case "number":
         return (

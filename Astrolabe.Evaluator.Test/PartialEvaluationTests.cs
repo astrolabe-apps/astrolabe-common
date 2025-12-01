@@ -1006,4 +1006,124 @@ public class PartialEvaluationTests
     }
 
     #endregion
+
+    #region Which Partial Evaluation Tests
+
+    [Fact]
+    public void PartialEval_Which_SymbolicCondition_ReturnsCallWithAllArgsEvaluated()
+    {
+        var data = new JsonObject { ["known"] = "value1" };
+        var env = TestHelpers.CreatePartialEnv(data);
+        var expr = TestHelpers.Parse("$which($unknown, \"a\", known, \"b\", $other)");
+
+        var result = env.EvalPartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+        // All args should be partially evaluated
+        Assert.Equal("$which($unknown, \"a\", \"value1\", \"b\", $other)", result.Print());
+    }
+
+    [Fact]
+    public void PartialEval_Which_KnownConditionWithMatch_ReturnsResult()
+    {
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$which(\"test\", \"test\", \"matched\", \"other\", \"not matched\")");
+
+        var result = env.EvalPartial(expr);
+
+        Assert.IsType<ValueExpr>(result);
+        Assert.Equal("matched", ((ValueExpr)result).Value);
+    }
+
+    [Fact]
+    public void PartialEval_Which_NonMatchingValuesRemoved()
+    {
+        var env = TestHelpers.CreatePartialEnv();
+        // condition="x", first case="a" (no match), second case=$unknown (symbolic)
+        var expr = TestHelpers.Parse("$which(\"x\", \"a\", \"resultA\", $unknown, \"resultB\")");
+
+        var result = env.EvalPartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+        // "a"/"resultA" pair should be removed since "x" != "a"
+        // Only the symbolic pair should remain
+        Assert.Equal("$which(\"x\", $unknown, \"resultB\")", result.Print());
+    }
+
+    [Fact]
+    public void PartialEval_Which_MultipleNonMatchingPairsRemoved()
+    {
+        var env = TestHelpers.CreatePartialEnv();
+        // condition="x", cases "a", "b", "c" don't match, $unknown is symbolic
+        var expr = TestHelpers.Parse("$which(\"x\", \"a\", \"A\", \"b\", \"B\", $unknown, \"X\", \"c\", \"C\")");
+
+        var result = env.EvalPartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+        // All known non-matching pairs removed, only symbolic pair remains
+        Assert.Equal("$which(\"x\", $unknown, \"X\")", result.Print());
+    }
+
+    [Fact]
+    public void PartialEval_Which_NoMatchesNoSymbolic_ReturnsNull()
+    {
+        var env = TestHelpers.CreatePartialEnv();
+        var expr = TestHelpers.Parse("$which(\"x\", \"a\", \"A\", \"b\", \"B\")");
+
+        var result = env.EvalPartial(expr);
+
+        Assert.IsType<ValueExpr>(result);
+        Assert.Null(((ValueExpr)result).Value);
+    }
+
+    [Fact]
+    public void PartialEval_Which_SymbolicComparisonKeptContinuesProcessing()
+    {
+        var env = TestHelpers.CreatePartialEnv();
+        // First pair is symbolic, second matches
+        var expr = TestHelpers.Parse("$which(\"test\", $unknown, \"first\", \"test\", \"matched\")");
+
+        var result = env.EvalPartial(expr);
+
+        // Should return "matched" since second pair matches
+        Assert.IsType<ValueExpr>(result);
+        Assert.Equal("matched", ((ValueExpr)result).Value);
+    }
+
+    [Fact]
+    public void PartialEval_Which_ResultValuesAlsoEvaluated()
+    {
+        var data = new JsonObject { ["resultVal"] = "computed" };
+        var env = TestHelpers.CreatePartialEnv(data);
+        var expr = TestHelpers.Parse("$which(\"x\", $unknown, resultVal)");
+
+        var result = env.EvalPartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+        // The result value should be evaluated
+        Assert.Equal("$which(\"x\", $unknown, \"computed\")", result.Print());
+    }
+
+    [Fact]
+    public void PartialEval_Which_OriginalIssue_AllArgsPreserved()
+    {
+        // This was the original bug: $blah was being dropped
+        var data = new JsonObject
+        {
+            ["thing"] = "test",
+            ["match"] = "test1",
+            ["result"] = "ok"
+        };
+        var env = TestHelpers.CreatePartialEnv(data);
+        var expr = TestHelpers.Parse("$which(thing, match, result, $derp, $blah)");
+
+        var result = env.EvalPartial(expr);
+
+        Assert.IsType<CallExpr>(result);
+        // "test1"/"ok" pair doesn't match "test", so removed
+        // $derp/$blah pair should be preserved
+        Assert.Equal("$which(\"test\", $derp, $blah)", result.Print());
+    }
+
+    #endregion
 }
