@@ -1,61 +1,47 @@
+using System.Collections.Concurrent;
+
 namespace Astrolabe.Evaluator;
 
 /// <summary>
 /// Full evaluation environment with lazy variable memoization.
 /// Mirrors TypeScript's BasicEvalEnv.
 /// </summary>
-public class BasicEvalEnv : EvalEnv
+public class BasicEvalEnv(
+    IReadOnlyDictionary<string, EvalExpr> localVars,
+    BasicEvalEnv? parent,
+    Func<object?, object?, int> compare
+) : EvalEnv
 {
-    private readonly IReadOnlyDictionary<string, EvalExpr> _localVars;
-    private readonly Dictionary<string, EvalExpr> _evalCache = new();
-    private readonly BasicEvalEnv? _parent;
-    private readonly Func<object?, object?, int> _compare;
+    private readonly IDictionary<string, EvalExpr> _evalCache =
+        new ConcurrentDictionary<string, EvalExpr>();
 
-    public BasicEvalEnv(
-        IReadOnlyDictionary<string, EvalExpr> localVars,
-        BasicEvalEnv? parent,
-        Func<object?, object?, int> compare)
-    {
-        _localVars = localVars;
-        _parent = parent;
-        _compare = compare;
-    }
-
-    public override int Compare(object? v1, object? v2) => _compare(v1, v2);
+    public override int Compare(object? v1, object? v2) => compare(v1, v2);
 
     public override EvalEnv NewScope(IReadOnlyDictionary<string, EvalExpr> vars)
     {
-        if (vars.Count == 0) return this;
-        return new BasicEvalEnv(vars, this, _compare);
+        return vars.Count == 0 ? this : new BasicEvalEnv(vars, this, compare);
     }
 
     public override EvalExpr? GetCurrentValue()
     {
-        if (_localVars.ContainsKey("_"))
-            return EvaluateVariable("_", new VarExpr("_"));
-        return _parent?.GetCurrentValue();
+        return localVars.ContainsKey("_")
+            ? EvaluateVariable("_", new VarExpr("_"))
+            : parent?.GetCurrentValue();
     }
 
     private EvalExpr EvaluateVariable(string name, EvalExpr sourceExpr)
     {
         // Check local scope first
-        if (_localVars.ContainsKey(name))
-        {
-            if (_evalCache.TryGetValue(name, out var cached))
-                return cached;
+        if (!localVars.TryGetValue(name, out var binding))
+            return parent != null
+                ? parent.EvaluateVariable(name, sourceExpr)
+                : sourceExpr.WithError($"Variable ${name} not declared");
+        if (_evalCache.TryGetValue(name, out var cached))
+            return cached;
 
-            var binding = _localVars[name];
-            var result = EvaluateExpr(binding);
-            _evalCache[name] = result;
-            return result;
-        }
-
-        // Delegate to parent
-        if (_parent != null)
-            return _parent.EvaluateVariable(name, sourceExpr);
-
-        // Error: unknown variable
-        return sourceExpr.WithError($"Variable ${name} not declared");
+        var result = EvaluateExpr(binding);
+        _evalCache[name] = result;
+        return result;
     }
 
     public override EvalExpr EvaluateExpr(EvalExpr expr)
@@ -63,20 +49,13 @@ public class BasicEvalEnv : EvalEnv
         return expr switch
         {
             VarExpr ve => EvaluateVariable(ve.Name, ve),
-
             LetExpr le => EvaluateLetExpr(le),
-
             ValueExpr v => v,
-
             CallExpr ce => EvaluateCallExpr(ce),
-
             PropertyExpr pe => EvaluatePropertyExpr(pe),
-
             ArrayExpr ae => EvaluateArrayExpr(ae),
-
             LambdaExpr le => le.WithError("Lambda expressions cannot be evaluated directly"),
-
-            _ => throw new ArgumentOutOfRangeException(nameof(expr))
+            _ => throw new ArgumentOutOfRangeException(nameof(expr)),
         };
     }
 
@@ -94,11 +73,9 @@ public class BasicEvalEnv : EvalEnv
     private EvalExpr EvaluateCallExpr(CallExpr ce)
     {
         var funcExpr = EvaluateVariable(ce.Function, ce);
-        if (funcExpr is not ValueExpr { Value: FunctionHandler handler })
-        {
-            return ce.WithError($"Function ${ce.Function} not declared or not a function");
-        }
-        return handler(this, ce);
+        return funcExpr is not ValueExpr { Value: FunctionHandler handler }
+            ? ce.WithError($"Function ${ce.Function} not declared or not a function")
+            : handler(this, ce);
     }
 
     private EvalExpr EvaluatePropertyExpr(PropertyExpr pe)
@@ -112,22 +89,19 @@ public class BasicEvalEnv : EvalEnv
         var propResult = GetPropertyFromValue(ve, pe.Property);
 
         // Propagate parent's dependencies to the property value
-        if (propResult is ValueExpr propValue && ve.Deps != null && ve.Deps.Any())
-        {
-            var combinedDeps = new List<ValueExpr>();
-            combinedDeps.AddRange(ve.Deps);
-            if (propValue.Deps != null) combinedDeps.AddRange(propValue.Deps);
-            return EvaluateExpr(propValue with { Deps = combinedDeps });
-        }
-
-        return EvaluateExpr(propResult);
+        if (ve.Deps == null || !ve.Deps.Any())
+            return EvaluateExpr(propResult);
+        var combinedDeps = new List<ValueExpr>();
+        combinedDeps.AddRange(ve.Deps);
+        if (propResult.Deps != null)
+            combinedDeps.AddRange(propResult.Deps);
+        return EvaluateExpr(propResult with { Deps = combinedDeps });
     }
 
     private EvalExpr EvaluateArrayExpr(ArrayExpr ae)
     {
-        var results = ae.Values.Select(v => EvaluateExpr(v)).ToList();
+        var results = ae.Values.Select(EvaluateExpr).ToList();
         // All results should be ValueExpr in full evaluation
         return new ValueExpr(new ArrayValue(results.Cast<ValueExpr>()));
     }
-
 }

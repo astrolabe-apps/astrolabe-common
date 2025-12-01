@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace Astrolabe.Evaluator;
 
 /// <summary>
@@ -15,7 +17,8 @@ public class PartialEvalEnv : EvalEnv
     private static int _nextScopeId;
 
     private readonly IReadOnlyDictionary<string, EvalExpr> _localVars;
-    private readonly Dictionary<string, EvalExpr> _evalCache = new();
+    private readonly IDictionary<string, EvalExpr> _evalCache =
+        new ConcurrentDictionary<string, EvalExpr>();
     private readonly PartialEvalEnv? _parent;
     private readonly Func<object?, object?, int> _compare;
 
@@ -27,7 +30,8 @@ public class PartialEvalEnv : EvalEnv
     public PartialEvalEnv(
         IReadOnlyDictionary<string, EvalExpr> localVars,
         PartialEvalEnv? parent,
-        Func<object?, object?, int> compare)
+        Func<object?, object?, int> compare
+    )
     {
         _localVars = localVars;
         _parent = parent;
@@ -39,15 +43,12 @@ public class PartialEvalEnv : EvalEnv
 
     public override EvalEnv NewScope(IReadOnlyDictionary<string, EvalExpr> vars)
     {
-        if (vars.Count == 0) return this;
-        return new PartialEvalEnv(vars, this, _compare);
+        return vars.Count == 0 ? this : new PartialEvalEnv(vars, this, _compare);
     }
 
     public override EvalExpr? GetCurrentValue()
     {
-        if (_localVars.ContainsKey("_"))
-            return EvaluateVariable("_");
-        return _parent?.GetCurrentValue();
+        return _localVars.ContainsKey("_") ? EvaluateVariable("_") : _parent?.GetCurrentValue();
     }
 
     // Sentinel value to detect circular evaluation
@@ -56,17 +57,13 @@ public class PartialEvalEnv : EvalEnv
     private EvalExpr EvaluateVariable(string name)
     {
         // Check local scope
-        if (_localVars.ContainsKey(name))
+        if (_localVars.TryGetValue(name, out var binding))
         {
             if (_evalCache.TryGetValue(name, out var cached))
             {
                 // If we hit the sentinel, we have a circular reference - return as VarExpr
-                if (ReferenceEquals(cached, EvaluatingSentinel))
-                    return new VarExpr(name);
-                return cached;
+                return ReferenceEquals(cached, EvaluatingSentinel) ? new VarExpr(name) : cached;
             }
-
-            var binding = _localVars[name];
 
             // Detect self-reference to prevent infinite recursion
             if (binding is VarExpr ve && ve.Name == name)
@@ -89,45 +86,35 @@ public class PartialEvalEnv : EvalEnv
         }
 
         // Delegate to parent
-        if (_parent != null)
-            return _parent.EvaluateVariable(name);
-
-        // Unknown variable - return VarExpr unchanged (partial evaluation)
-        return new VarExpr(name);
+        return _parent != null ? _parent.EvaluateVariable(name) : new VarExpr(name); // Unknown variable - return VarExpr unchanged (partial evaluation)
     }
 
     // Helper to set Data on any EvalExpr (uses 'with' expression on records)
-    private static EvalExpr SetData(EvalExpr expr, object? data) => expr switch
-    {
-        ValueExpr v => v with { Data = data },
-        VarExpr vr => vr with { Data = data },
-        CallExpr c => c with { Data = data },
-        ArrayExpr a => a with { Data = data },
-        LetExpr l => l with { Data = data },
-        PropertyExpr p => p with { Data = data },
-        LambdaExpr lm => lm with { Data = data },
-        _ => expr
-    };
+    private static EvalExpr SetData(EvalExpr expr, object? data) =>
+        expr switch
+        {
+            ValueExpr v => v with { Data = data },
+            VarExpr vr => vr with { Data = data },
+            CallExpr c => c with { Data = data },
+            ArrayExpr a => a with { Data = data },
+            LetExpr l => l with { Data = data },
+            PropertyExpr p => p with { Data = data },
+            LambdaExpr lm => lm with { Data = data },
+            _ => expr,
+        };
 
     public override EvalExpr EvaluateExpr(EvalExpr expr)
     {
         return expr switch
         {
             VarExpr ve => EvaluateVariable(ve.Name),
-
             LetExpr le => EvaluateLetPartial(le),
-
             ValueExpr v => v,
-
             CallExpr ce => EvaluateCallPartial(ce),
-
             PropertyExpr pe => EvaluatePropertyPartial(pe),
-
             ArrayExpr ae => EvaluateArrayPartial(ae),
-
             LambdaExpr => expr, // Keep lambda unchanged
-
-            _ => throw new ArgumentOutOfRangeException(nameof(expr))
+            _ => throw new ArgumentOutOfRangeException(nameof(expr)),
         };
     }
 
@@ -145,12 +132,9 @@ public class PartialEvalEnv : EvalEnv
     private EvalExpr EvaluateCallPartial(CallExpr ce)
     {
         var funcExpr = EvaluateVariable(ce.Function);
-        if (funcExpr is not ValueExpr { Value: FunctionHandler handler })
-        {
-            // Unknown function - return CallExpr unchanged
-            return ce;
-        }
-        return handler(this, ce);
+        return funcExpr is not ValueExpr { Value: FunctionHandler handler }
+            ? ce // Unknown function - return CallExpr unchanged
+            : handler(this, ce);
     }
 
     private EvalExpr EvaluatePropertyPartial(PropertyExpr pe)
@@ -185,7 +169,8 @@ public class PartialEvalEnv : EvalEnv
     public EvalExpr Uninline(EvalExpr expr, int complexityThreshold = 1, int minOccurrences = 2)
     {
         // Collect tagged expressions and count occurrences
-        var tagged = new Dictionary<string, (EvalExpr Expr, int Count, int Complexity, string VarName)>();
+        var tagged =
+            new Dictionary<string, (EvalExpr Expr, int Count, int Complexity, string VarName)>();
         CollectTaggedExprs(expr, tagged);
 
         // Filter candidates
@@ -200,7 +185,8 @@ public class PartialEvalEnv : EvalEnv
                 if (usedNames.Contains(varName))
                 {
                     var i = 1;
-                    while (usedNames.Contains($"{varName}_{i}")) i++;
+                    while (usedNames.Contains($"{varName}_{i}"))
+                        i++;
                     varName = $"{varName}_{i}";
                 }
                 usedNames.Add(varName);
@@ -208,7 +194,8 @@ public class PartialEvalEnv : EvalEnv
             }
         }
 
-        if (toUninline.Count == 0) return expr;
+        if (toUninline.Count == 0)
+            return expr;
 
         // Replace tagged expressions with variable references
         var replaced = ReplaceTaggedWithVars(expr, toUninline);
@@ -228,7 +215,8 @@ public class PartialEvalEnv : EvalEnv
 
     private static void CollectTaggedExprs(
         EvalExpr expr,
-        Dictionary<string, (EvalExpr Expr, int Count, int Complexity, string VarName)> tagged)
+        Dictionary<string, (EvalExpr Expr, int Count, int Complexity, string VarName)> tagged
+    )
     {
         // Check if this expression has inline data
         if (expr.Data is InlineData inlineData)
@@ -238,7 +226,12 @@ public class PartialEvalEnv : EvalEnv
 
             if (tagged.TryGetValue(key, out var existing))
             {
-                tagged[key] = (existing.Expr, existing.Count + 1, existing.Complexity, existing.VarName);
+                tagged[key] = (
+                    existing.Expr,
+                    existing.Count + 1,
+                    existing.Complexity,
+                    existing.VarName
+                );
             }
             else
             {
@@ -275,13 +268,18 @@ public class PartialEvalEnv : EvalEnv
             ValueExpr or VarExpr or PropertyExpr => 1,
             CallExpr ce => 1 + ce.Args.Sum(CalculateComplexity),
             ArrayExpr ae => 1 + ae.Values.Sum(CalculateComplexity),
-            LetExpr le => 1 + le.Vars.Sum(v => CalculateComplexity(v.Item2)) + CalculateComplexity(le.In),
+            LetExpr le => 1
+                + le.Vars.Sum(v => CalculateComplexity(v.Item2))
+                + CalculateComplexity(le.In),
             LambdaExpr lm => 1 + CalculateComplexity(lm.Value),
-            _ => 1
+            _ => 1,
         };
     }
 
-    private static EvalExpr ReplaceTaggedWithVars(EvalExpr expr, Dictionary<string, string> toUninline)
+    private static EvalExpr ReplaceTaggedWithVars(
+        EvalExpr expr,
+        Dictionary<string, string> toUninline
+    )
     {
         // Check if this expression should be replaced with a variable reference
         if (expr.Data is InlineData inlineData)
@@ -296,15 +294,21 @@ public class PartialEvalEnv : EvalEnv
         // Recursively replace in children
         return expr switch
         {
-            CallExpr ce => ce with { Args = ce.Args.Select(a => ReplaceTaggedWithVars(a, toUninline)).ToList() },
-            ArrayExpr ae => ae with { Values = ae.Values.Select(v => ReplaceTaggedWithVars(v, toUninline)) },
+            CallExpr ce => ce with
+            {
+                Args = ce.Args.Select(a => ReplaceTaggedWithVars(a, toUninline)).ToList(),
+            },
+            ArrayExpr ae => ae with
+            {
+                Values = ae.Values.Select(v => ReplaceTaggedWithVars(v, toUninline)),
+            },
             LetExpr le => le with
             {
                 Vars = le.Vars.Select(v => (v.Item1, ReplaceTaggedWithVars(v.Item2, toUninline))),
-                In = ReplaceTaggedWithVars(le.In, toUninline)
+                In = ReplaceTaggedWithVars(le.In, toUninline),
             },
             LambdaExpr lm => lm with { Value = ReplaceTaggedWithVars(lm.Value, toUninline) },
-            _ => expr
+            _ => expr,
         };
     }
 
