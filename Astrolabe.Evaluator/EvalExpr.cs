@@ -8,12 +8,12 @@ namespace Astrolabe.Evaluator;
 public record SourceLocation(int Start, int End, string? SourceFile = null);
 
 /// <summary>
-/// Represents an error with its source location and call stack.
+/// Represents an error with its source location and dependent errors.
 /// </summary>
 public record ErrorWithLocation(
     string Message,
     SourceLocation? Location,
-    IReadOnlyList<SourceLocation> Stack
+    IReadOnlyList<ErrorWithLocation> Deps
 );
 
 [JsonString]
@@ -198,35 +198,28 @@ public record ValueExpr(
     }
 
     /// <summary>
-    /// Collects all errors from a ValueExpr with their locations and stack traces.
-    /// The stack trace shows the chain of expressions from outer to inner.
+    /// Collects all errors from a ValueExpr with their locations and dependent errors.
+    /// Returns a hierarchical structure where each error contains its dependent errors.
     /// </summary>
     public static IEnumerable<ErrorWithLocation> CollectErrorsWithLocations(ValueExpr expr)
     {
-        var results = new List<ErrorWithLocation>();
         var seen = new HashSet<ValueExpr>();
+        return Collect(expr);
 
-        Collect(expr, []);
-        return results;
-
-        void Collect(ValueExpr ve, List<SourceLocation> stack)
+        IReadOnlyList<ErrorWithLocation> Collect(ValueExpr ve)
         {
             if (!seen.Add(ve))
-                return;
+                return [];
 
-            var currentStack = ve.Location != null ? [.. stack, ve.Location] : stack;
+            // Recursively collect errors from dependencies
+            var depErrors = ve.Deps?.SelectMany(Collect).ToList() ?? [];
 
             if (ve.Error != null)
             {
-                results.Add(new ErrorWithLocation(ve.Error, ve.Location, currentStack));
+                return [new ErrorWithLocation(ve.Error, ve.Location, depErrors)];
             }
 
-            if (ve.Deps == null)
-                return;
-            foreach (var dep in ve.Deps)
-            {
-                Collect(dep, currentStack);
-            }
+            return depErrors;
         }
     }
 

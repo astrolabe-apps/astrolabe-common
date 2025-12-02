@@ -594,50 +594,47 @@ export function exprWithError(expr: EvalExpr, error: string): ValueExpr {
 }
 
 /**
- * Represents an error with its source location and call stack.
+ * Represents an error with its source location and dependent errors.
  */
 export interface ErrorWithLocation {
   message: string;
   location?: SourceLocation;
-  stack: SourceLocation[];
+  deps: ErrorWithLocation[];
 }
 
 /**
- * Collects all errors from a ValueExpr with their locations and stack traces.
- * The stack trace shows the chain of expressions from outer to inner.
+ * Collects all errors from a ValueExpr with their locations and dependent errors.
+ * Returns a hierarchical structure where each error contains its dependent errors.
  *
  * @param expr - The expression to collect errors from
- * @returns Array of errors with location info and stack traces
+ * @returns Array of errors with location info and dependent errors
  */
 export function collectErrorsWithLocations(expr: EvalExpr): ErrorWithLocation[] {
   if (expr.type !== "value") return [];
 
-  const results: ErrorWithLocation[] = [];
   const visited = new Set<ValueExpr>();
 
-  function walk(e: ValueExpr, stack: SourceLocation[]) {
-    if (visited.has(e)) return;
+  function collect(e: ValueExpr): ErrorWithLocation[] {
+    if (visited.has(e)) return [];
     visited.add(e);
 
-    const currentStack = e.location ? [...stack, e.location] : stack;
+    // Recursively collect errors from dependencies
+    const depErrors = e.deps?.flatMap(collect) ?? [];
 
     if (e.error) {
-      results.push({
-        message: e.error,
-        location: e.location,
-        stack: currentStack,
-      });
+      return [
+        {
+          message: e.error,
+          location: e.location,
+          deps: depErrors,
+        },
+      ];
     }
 
-    if (e.deps) {
-      for (const dep of e.deps) {
-        walk(dep, currentStack);
-      }
-    }
+    return depErrors;
   }
 
-  walk(expr, []);
-  return results;
+  return collect(expr);
 }
 
 /**
