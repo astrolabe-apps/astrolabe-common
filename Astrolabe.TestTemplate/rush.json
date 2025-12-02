@@ -564,7 +564,7 @@
     {
       "packageName": "@astroapps/validation",
       "projectFolder": "../astrolabe-validation",
-      "shouldPublish": true
+      "shouldPublish": false
     },
 //    {
 //      "packageName": "tsup",
