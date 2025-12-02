@@ -216,7 +216,7 @@ public static class DefaultFunctions
         var result = env.EvaluateExpr(expr);
         if (result is ValueExpr resultVal)
         {
-            return env.WithDeps(resultVal, [condVal, resultVal]);
+            return env.WithDeps(resultVal, [condVal]);
         }
         return result;
     }
@@ -1090,7 +1090,8 @@ public static class DefaultFunctions
                 matches = env.Compare(valueExpr.Value, caseVal.Value) == 0;
             }
 
-            if (!matches) continue;
+            if (!matches)
+                continue;
             // Match found - return the result
             if (valuePartial is ValueExpr resultVal)
             {
