@@ -54,7 +54,7 @@ export function useNextNavigationService<T = {}>(
     const newQuery = parse(queryString || "");
 
     // Track the query string we're setting for comparison on next render
-    queryRef.current = queryString || "";
+    queryRef.current = queryString || null;
 
     const current = queryControl.value;
     if (
