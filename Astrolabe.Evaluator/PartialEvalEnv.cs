@@ -41,7 +41,7 @@ public class PartialEvalEnv : EvalEnv
 
     public override int Compare(object? v1, object? v2) => _compare(v1, v2);
 
-    public override EvalEnv NewScope(IReadOnlyDictionary<string, EvalExpr> vars)
+    public override PartialEvalEnv NewScope(IReadOnlyDictionary<string, EvalExpr> vars)
     {
         return vars.Count == 0 ? this : new PartialEvalEnv(vars, this, _compare);
     }

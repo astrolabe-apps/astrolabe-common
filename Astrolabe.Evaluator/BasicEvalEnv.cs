@@ -17,7 +17,7 @@ public class BasicEvalEnv(
 
     public override int Compare(object? v1, object? v2) => compare(v1, v2);
 
-    public override EvalEnv NewScope(IReadOnlyDictionary<string, EvalExpr> vars)
+    public override BasicEvalEnv NewScope(IReadOnlyDictionary<string, EvalExpr> vars)
     {
         return vars.Count == 0 ? this : new BasicEvalEnv(vars, this, compare);
     }
