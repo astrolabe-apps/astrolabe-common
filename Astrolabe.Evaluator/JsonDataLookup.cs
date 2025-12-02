@@ -13,6 +13,25 @@ public static class JsonDataLookup
         return ToValue(DataPath.Empty, data);
     }
 
+    public static ValueExpr ToValue(DataPath? p, JsonElement e)
+    {
+        return new ValueExpr(ValueFromElement(e), p);
+    }
+
+    private static object? ValueFromElement(JsonElement e)
+    {
+        return e.ValueKind switch
+        {
+            JsonValueKind.False => false,
+            JsonValueKind.True => true,
+            JsonValueKind.String => e.GetString(),
+            JsonValueKind.Number => e.TryGetInt64(out var l) ? l
+            : e.TryGetDouble(out var d) ? d
+            : null,
+            _ => throw new ArgumentOutOfRangeException($"{e.ValueKind}-{e}"),
+        };
+    }
+
     public static ValueExpr ToValue(DataPath? p, JsonNode? node)
     {
         return new ValueExpr(
@@ -30,16 +49,7 @@ public static class JsonDataLookup
                 ),
                 JsonValue v => v.GetValue<object>() switch
                 {
-                    JsonElement e => e.ValueKind switch
-                    {
-                        JsonValueKind.False => false,
-                        JsonValueKind.True => true,
-                        JsonValueKind.String => e.GetString(),
-                        JsonValueKind.Number => e.TryGetInt64(out var l) ? l
-                        : e.TryGetDouble(out var d) ? d
-                        : null,
-                        _ => throw new ArgumentOutOfRangeException($"{e.ValueKind}-{e}"),
-                    },
+                    JsonElement e => ValueFromElement(e),
                     var objValue => objValue,
                 },
             },

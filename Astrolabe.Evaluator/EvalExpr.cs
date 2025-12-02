@@ -1,6 +1,6 @@
-﻿using System.Collections;
-using System.Collections.ObjectModel;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Astrolabe.Annotation;
 
 namespace Astrolabe.Evaluator;
@@ -89,8 +89,11 @@ public record LetExpr(
     }
 }
 
-public record PropertyExpr(string Property, SourceLocation? Location = null, IReadOnlyDictionary<string, object?>? Data = null)
-    : EvalExpr;
+public record PropertyExpr(
+    string Property,
+    SourceLocation? Location = null,
+    IReadOnlyDictionary<string, object?>? Data = null
+) : EvalExpr;
 
 public record LambdaExpr(
     string Variable,
@@ -311,6 +314,21 @@ public record ValueExpr(
         return new ValueExpr((double?)v);
     }
 
+    public static ValueExpr FromNative(object? obj)
+    {
+        return obj switch
+        {
+            null => Null,
+            ValueExpr ve => ve,
+            JsonNode jn => JsonDataLookup.ToValue(DataPath.Empty, jn),
+            JsonElement je => JsonDataLookup.ToValue(DataPath.Empty, je),
+            IEnumerable<KeyValuePair<string, object?>> kvs => new ValueExpr(
+                new ObjectValue(kvs.ToDictionary(kv => kv.Key, kv => FromNative(kv.Value)))
+            ),
+            _ => new ValueExpr(obj),
+        };
+    }
+
     public object? ToNative()
     {
         return ToNative(Value);
@@ -390,7 +408,11 @@ public record CallExpr(
     }
 }
 
-public record VarExpr(string Name, SourceLocation? Location = null, IReadOnlyDictionary<string, object?>? Data = null) : EvalExpr
+public record VarExpr(
+    string Name,
+    SourceLocation? Location = null,
+    IReadOnlyDictionary<string, object?>? Data = null
+) : EvalExpr
 {
     private static int _indexCount;
 
@@ -531,28 +553,35 @@ public static class ValueExtensions
 
 public static class EvalExprDataExtensions
 {
-    public static T? GetData<T>(this EvalExpr expr, string key) where T : class =>
-        expr.Data?.TryGetValue(key, out var value) == true ? value as T : null;
+    public static T? GetData<T>(this EvalExpr expr, string key)
+        where T : class => expr.Data?.TryGetValue(key, out var value) == true ? value as T : null;
 
     public static bool HasData(this EvalExpr expr, string key) =>
         expr.Data?.ContainsKey(key) == true;
 
     public static EvalExpr WithData(this EvalExpr expr, string key, object? value)
     {
-        var newData = expr.Data != null
-            ? new Dictionary<string, object?>(expr.Data) { [key] = value }
-            : new Dictionary<string, object?> { [key] = value };
+        var newData =
+            expr.Data != null
+                ? new Dictionary<string, object?>(expr.Data) { [key] = value }
+                : new Dictionary<string, object?> { [key] = value };
         return SetDataDirect(expr, newData);
     }
 
     public static EvalExpr WithoutData(this EvalExpr expr, string key)
     {
-        if (expr.Data == null || !expr.Data.ContainsKey(key)) return expr;
-        var newData = expr.Data.Where(kvp => kvp.Key != key).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        if (expr.Data == null || !expr.Data.ContainsKey(key))
+            return expr;
+        var newData = expr
+            .Data.Where(kvp => kvp.Key != key)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         return SetDataDirect(expr, newData.Count > 0 ? newData : null);
     }
 
-    private static EvalExpr SetDataDirect(EvalExpr expr, IReadOnlyDictionary<string, object?>? data) =>
+    private static EvalExpr SetDataDirect(
+        EvalExpr expr,
+        IReadOnlyDictionary<string, object?>? data
+    ) =>
         expr switch
         {
             ValueExpr v => v with { Data = data },

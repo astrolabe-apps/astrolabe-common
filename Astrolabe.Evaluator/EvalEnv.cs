@@ -155,7 +155,7 @@ public static class EvalEnvFactory
         // Add root data as _ variable
         if (root != null)
         {
-            vars["_"] = ObjectToValueExpr(root);
+            vars["_"] = ValueExpr.FromNative(root);
         }
 
         return new BasicEvalEnv(vars, null, compare ?? EvalEnv.CompareSignificantDigits(5));
@@ -209,21 +209,7 @@ public static class EvalEnvFactory
     /// </summary>
     public static PartialEvalEnv PartialEnv(object? data = null)
     {
-        var current = data != null ? ObjectToValueExpr(data) : null;
+        var current = data != null ? ValueExpr.FromNative(data) : null;
         return CreatePartialEnv(current: current);
-    }
-
-    /// <summary>
-    /// Convert an object to a ValueExpr, handling JsonNode and other types.
-    /// </summary>
-    private static ValueExpr ObjectToValueExpr(object? obj)
-    {
-        return obj switch
-        {
-            null => ValueExpr.Null,
-            ValueExpr ve => ve,
-            System.Text.Json.Nodes.JsonNode jn => JsonDataLookup.ToValue(DataPath.Empty, jn),
-            _ => new ValueExpr(obj), // For simple values like primitives
-        };
     }
 }
