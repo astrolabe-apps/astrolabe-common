@@ -746,6 +746,7 @@ importers:
   ../../../forms/core:
     specifiers:
       '@astroapps/controls': workspace:*
+      '@internationalized/date': ^3.10.0
       '@jest/globals': ^29.7.0
       '@types/react': ^19.0.0
       '@types/uuid': ^10.0.0
@@ -764,6 +765,7 @@ importers:
       typescript: ^5.6.2
       uuid: ^10.0.0
     dependencies:
+      '@internationalized/date': 3.10.0
       clsx: 2.1.1
       jsonata: 2.0.5
       uuid: 10.0.0
@@ -5959,6 +5961,12 @@ packages:
     dev: false
     optional: true
 
+  /@internationalized/date/3.10.0:
+    resolution: {integrity: sha512-oxDR/NTEJ1k+UFVQElaNIk65E/Z83HK1z1WI3lQyhTtnNg4R5oVXaPzK3jcpKG8UHKDVuDQHzn+wsxSz8RP3aw==}
+    dependencies:
+      '@swc/helpers': 0.5.15
+    dev: false
+
   /@internationalized/date/3.8.2:
     resolution: {integrity: sha512-/wENk7CbvLbkUvX1tu0mwq49CVkkWpkXubGel6birjRPyo6uQ4nQpnq5xZu823zRCwwn82zgHrvgF1vZyvmVgA==}
     dependencies:
@@ -9481,7 +9489,7 @@ packages:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
       react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@internationalized/date': 3.8.2
+      '@internationalized/date': 3.10.0
       '@react-aria/i18n': 3.12.11_upmzqgzhjrquwzo2dphtigtdgi
       '@react-aria/interactions': 3.25.4_upmzqgzhjrquwzo2dphtigtdgi
       '@react-aria/live-announcer': 3.4.4
@@ -9613,7 +9621,7 @@ packages:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
       react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@internationalized/date': 3.8.2
+      '@internationalized/date': 3.10.0
       '@internationalized/number': 3.6.4
       '@internationalized/string': 3.2.7
       '@react-aria/focus': 3.21.0_upmzqgzhjrquwzo2dphtigtdgi
@@ -9816,7 +9824,7 @@ packages:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
       react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@internationalized/date': 3.8.2
+      '@internationalized/date': 3.10.0
       '@internationalized/message': 3.1.8
       '@internationalized/number': 3.6.4
       '@internationalized/string': 3.2.7
@@ -9834,7 +9842,7 @@ packages:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
       react-dom: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@internationalized/date': 3.8.2
+      '@internationalized/date': 3.10.0
       '@internationalized/message': 3.1.7
       '@internationalized/number': 3.6.1
       '@internationalized/string': 3.2.6
@@ -11066,7 +11074,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@internationalized/date': 3.8.2
+      '@internationalized/date': 3.10.0
       '@react-stately/utils': 3.10.8_react@19.0.0
       '@react-types/calendar': 3.7.3_react@19.0.0
       '@react-types/shared': 3.31.0_react@19.0.0
@@ -11173,7 +11181,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@internationalized/date': 3.8.2
+      '@internationalized/date': 3.10.0
       '@internationalized/string': 3.2.7
       '@react-stately/form': 3.2.0_react@19.0.0
       '@react-stately/overlays': 3.6.18_react@19.0.0
@@ -11697,7 +11705,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@internationalized/date': 3.8.2
+      '@internationalized/date': 3.10.0
       '@react-types/shared': 3.31.0_react@19.0.0
       react: 19.0.0
     dev: false
@@ -11744,7 +11752,7 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1
     dependencies:
-      '@internationalized/date': 3.8.2
+      '@internationalized/date': 3.10.0
       '@react-types/calendar': 3.7.3_react@19.0.0
       '@react-types/overlays': 3.9.0_react@19.0.0
       '@react-types/shared': 3.31.0_react@19.0.0
