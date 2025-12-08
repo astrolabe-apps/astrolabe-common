@@ -14,8 +14,13 @@ import { parseDateTime as pdt } from "@internationalized/date";
 export class DefaultSchemaInterface implements SchemaInterface {
   constructor(
     protected boolStrings: [string, string] = ["No", "Yes"],
-    protected parseDateTime: (s: string) => number = (s) =>
-      pdt(s).toDate("UTC").getTime(),
+    protected parseDateTime: (s: string) => number = (s) => {
+      try {
+        return pdt(s).toDate("UTC").getTime();
+      } catch (e) {
+        return Number.NaN;
+      }
+    },
   ) {}
 
   parseToMillis(field: SchemaField, v: string): number {
@@ -119,7 +124,7 @@ export class DefaultSchemaInterface implements SchemaInterface {
 
   controlLength(f: SchemaField, control: Control<any>): number {
     return f.collection
-      ? control.elements?.length ?? 0
+      ? (control.elements?.length ?? 0)
       : this.valueLength(f, control.value);
   }
 
