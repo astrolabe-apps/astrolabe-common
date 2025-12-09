@@ -220,5 +220,17 @@ function valueToNormalString(expr: EvalExpr): string {
   if (typeof v === "boolean") return v ? "t" : "f";
   if (typeof v === "number")
     return Number.isSafeInteger(v) ? v.toString() : `d${v}`;
+  if (Array.isArray(v)) {
+    // ArrayValue encoded as ArrayExpr format
+    return "[" + v.map((x) => "," + toNormalString(x)).join("") + "]";
+  }
+  if (typeof v === "object") {
+    // ObjectValue encoded as call to "object" with key-value pairs
+    const pairs = Object.entries(v).flatMap(([key, val]) => [
+      "," + valueToNormalString({ type: "value", value: key }),
+      "," + toNormalString(val),
+    ]);
+    return "(object" + pairs.join("") + ")";
+  }
   throw new Error(`Unsupported ValueExpr value: ${v}`);
 }

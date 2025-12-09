@@ -44,6 +44,9 @@ public static class NormalString
             double d => "d"+d.ToString(CultureInfo.InvariantCulture),
             decimal d => "d"+((double)d).ToString(CultureInfo.InvariantCulture),
             short s => s.ToString(),
+            ArrayValue av => "[" + string.Concat(av.Values.SelectMany(x => new[] { ",", x.ToNormalString() })) + "]",
+            ObjectValue ov => "(object" + string.Concat(ov.Properties.SelectMany(kv =>
+                new[] { ",", new ValueExpr(kv.Key).ToNormalString(), ",", kv.Value.ToNormalString() })) + ")",
             _ => throw new ArgumentOutOfRangeException(nameof(evalExpr)),
         };
     }
