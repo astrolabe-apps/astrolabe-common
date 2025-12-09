@@ -1,6 +1,6 @@
 ---
 name: appforms-bootstrap
-description: Guide for bootstrapping AppForms in a C#/TypeScript project with Astrolabe.Schemas code generation, @react-typed-forms/schemas for rendering, and the visual form editor. Use when setting up schema-driven forms with Next.js.
+description: Guide for bootstrapping AppForms in a C#/TypeScript project with Astrolabe.Schemas code generation, @react-typed-forms/schemas for rendering, and the visual form editor.
 ---
 
 # AppForms Bootstrap Guide
@@ -14,8 +14,6 @@ AppForms is a schema-driven form system that bridges C# backend types with TypeS
 - **Runtime rendering**: Render forms from JSON control definitions
 - **Tailwind styling**: Built-in support for Tailwind CSS theming
 
-**When to use**: Use this guide when bootstrapping a new project that needs schema-driven forms with a C# backend and Next.js frontend.
-
 ## Prerequisites
 
 ### NuGet Packages (C#)
@@ -24,38 +22,35 @@ AppForms is a schema-driven form system that bridges C# backend types with TypeS
 <PackageReference Include="Astrolabe.Schemas" Version="*" />
 ```
 
-### npm Packages (TypeScript)
+### npm Packages
 
 ```bash
-npm install @react-typed-forms/core @react-typed-forms/schemas @react-typed-forms/schemas-html
+npm install @react-typed-forms/core @react-typed-forms/schemas @react-typed-forms/schemas-html @astroapps/schemas-datepicker
 # For the form editor:
-npm install @react-typed-forms/schemas-editor flexlayout-react
+npm install @astroapps/schemas-editor flexlayout-react
 ```
 
-### Project Structure
+---
+
+## Project Structure
 
 ```
-MyProject/
-├── MyProject.Api/                    # C# ASP.NET Core API
-│   ├── Forms/
-│   │   ├── AppForms.cs               # Form definitions
-│   │   └── MyForm.cs                 # Form class
-│   └── Controllers/
-│       └── FormsController.cs        # Schema/form endpoints
-│
-└── ClientApp/                        # Next.js App Router
-    ├── src/
-    │   ├── app/
-    │   │   ├── forms/[formId]/page.tsx
-    │   │   └── editor/page.tsx
-    │   ├── forms/                    # Form JSON files
-    │   │   └── MyForm.json
-    │   ├── generated/
-    │   │   ├── schemas.ts            # Generated schemas
-    │   │   └── forms.ts              # Generated form module
-    │   └── lib/
-    │       └── formRenderer.ts
-    └── package.json
+MyProject.Api/
+├── Forms/
+│   ├── AppForms.cs               # Form definitions
+│   └── MyForm.cs                 # Form classes
+├── Controllers/
+│   └── FormsController.cs        # Schema/form endpoints
+└── ClientApp/
+    ├── package.json
+    └── src/
+        ├── schemas.ts            # Generated schemas
+        ├── formDefs.ts           # Generated form module
+        ├── formDefs/             # Form JSON files
+        │   └── MyForm.json
+        ├── renderer.tsx          # Form renderer setup
+        ├── AppForm.tsx           # Main form component
+        └── components/           # Reusable form components
 ```
 
 ---
@@ -134,7 +129,7 @@ using Microsoft.AspNetCore.Mvc;
 [Route("api/[controller]")]
 public class FormsController : ControllerBase
 {
-    private const string FormDefDir = "ClientApp/src/forms";
+    private const string FormDefDir = "ClientApp/src/formDefs";
 
     private static readonly JsonSerializerOptions Indented = new(FormDataJson.Options)
     {
@@ -185,7 +180,7 @@ public class FormsController : ControllerBase
         }
 
         return FormDefinition
-            .GenerateFormModule("FormDefinitions", AppForms.Forms, "./schemas", "./forms/")
+            .GenerateFormModule("FormDefinitions", AppForms.Forms, "./schemas", "./formDefs/")
             .ToSource();
     }
 
@@ -226,109 +221,149 @@ public class FormsController : ControllerBase
 
 ---
 
-## TypeScript Frontend Setup
+## TypeScript Setup
 
 ### Step 1: Generate Schemas
 
-Create a script to fetch generated TypeScript from the API:
-
-```bash
-# scripts/generate-schemas.sh
-#!/bin/bash
-API_URL="${API_URL:-http://localhost:5000}"
-
-mkdir -p src/generated
-
-curl -s "$API_URL/api/forms/Schemas" > src/generated/schemas.ts
-curl -s "$API_URL/api/forms/Forms" > src/generated/forms.ts
-
-echo "Schemas generated successfully"
-```
-
-Add to `package.json`:
+Add generation script to `package.json`:
 
 ```json
 {
+  "devDependencies": {
+    "http-request-cli": "^0.2.0",
+    "prettier": "^3.2.5"
+  },
   "scripts": {
-    "generate:schemas": "./scripts/generate-schemas.sh"
+    "gencode": "h get http://localhost:5000/api/forms/Schemas > src/schemas.ts && h get http://localhost:5000/api/forms/Forms > src/formDefs.ts && prettier -w src/schemas.ts src/formDefs.ts"
   }
 }
 ```
 
+Run with the API server running:
+```bash
+npm run gencode
+```
+
 ### Step 2: Create Form Renderer
 
-```typescript
-// src/lib/formRenderer.ts
+```tsx
+// src/renderer.tsx
 import {
   createFormRenderer,
   createDefaultRenderers,
   defaultTailwindTheme,
+  DefaultRendererOptions,
+  createDataRenderer,
+  deepMerge,
 } from "@react-typed-forms/schemas-html";
+import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
+
+// Custom Switch renderer example
+const SwitchRenderer = createDataRenderer(
+  (props) => {
+    const { control } = props;
+    return (
+      <label className="inline-flex items-center cursor-pointer">
+        <input
+          type="checkbox"
+          checked={control.value ?? false}
+          onChange={() => control.setValue((x) => !x)}
+          className="sr-only peer"
+          disabled={control.disabled}
+        />
+        <div className="relative w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-blue-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all" />
+      </label>
+    );
+  },
+  { renderType: "Switch" }
+);
+
+// Default render options
+const DefaultRenderOptions: DefaultRendererOptions = deepMerge(
+  {
+    label: {
+      requiredElement: ({ Span }) => <Span className="text-red-500">*</Span>,
+    },
+    data: {
+      inputClass: "border border-gray-300 rounded px-3 py-2 w-full",
+      selectOptions: { className: "border border-gray-300 rounded px-3 py-2" },
+    },
+    group: {
+      grid: { defaultColumns: 1 },
+      defaultFlexGap: "1em",
+    },
+  },
+  defaultTailwindTheme
+);
 
 export const formRenderer = createFormRenderer(
-  [], // Custom renderers (empty for defaults)
-  createDefaultRenderers(defaultTailwindTheme)
+  [
+    SwitchRenderer,
+    createDatePickerRenderer("border border-gray-300 rounded px-3 py-2"),
+  ],
+  createDefaultRenderers(DefaultRenderOptions)
 );
 ```
 
-### Step 3: Create Form Rendering Page
+### Step 3: Create AppForm Component
 
-```typescript
-// src/app/forms/[formId]/page.tsx
-"use client";
-
-import { useControl } from "@react-typed-forms/core";
+```tsx
+// src/AppForm.tsx
+import { useMemo } from "react";
+import { Control } from "@react-typed-forms/core";
 import {
-  RenderForm,
   createFormTree,
   createSchemaDataNode,
   createSchemaLookup,
-  defaultValueForFields,
+  FormRenderer,
+  RenderForm,
 } from "@react-typed-forms/schemas";
-import { formRenderer } from "@/lib/formRenderer";
-import { FormDefinitions, SchemaMap } from "@/generated/schemas";
-import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { FormDefinitions } from "./formDefs";
+import { SchemaMap } from "./schemas";
+import { formRenderer } from "./renderer";
 
-export default function FormPage() {
-  const params = useParams();
-  const formId = params.formId as string;
+export type FormType = keyof typeof FormDefinitions;
 
-  // Find the form definition
-  const formDef = FormDefinitions.find((f) => f.value === formId);
+export const schemaLookup = createSchemaLookup(SchemaMap);
 
-  if (!formDef) {
-    return <div>Form not found: {formId}</div>;
-  }
+interface AppFormProps<T> {
+  formType: FormType;
+  data: Control<T>;
+  renderer?: FormRenderer;
+}
 
-  // Create schema lookup and tree
-  const schemaLookup = useMemo(
-    () => createSchemaLookup(SchemaMap),
-    []
-  );
+export function AppForm<T>({ formType, data, renderer }: AppFormProps<T>) {
+  const formDef = FormDefinitions[formType];
+  const formTree = useMemo(() => createFormTree(formDef.controls), [formDef]);
   const schemaTree = schemaLookup.getSchemaTree(formDef.schemaName);
-  const formTree = useMemo(
-    () => createFormTree(formDef.controls),
-    [formDef]
-  );
 
-  // Initialize form data with defaults
+  return (
+    <RenderForm
+      data={createSchemaDataNode(schemaTree.rootNode, data)}
+      form={formTree.rootNode}
+      renderer={renderer ?? formRenderer}
+    />
+  );
+}
+```
+
+### Step 4: Create Feature Components
+
+```tsx
+// src/components/ContactPage.tsx
+import { useControl } from "@react-typed-forms/core";
+import { defaultValueForFields } from "@react-typed-forms/schemas";
+import { AppForm } from "../AppForm";
+import { FormDefinitions } from "../formDefs";
+
+export function ContactPage() {
+  const formDef = FormDefinitions.Contact;
   const data = useControl(() => defaultValueForFields(formDef.schema));
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">{formDef.name}</h1>
-
-      <RenderForm
-        data={createSchemaDataNode(schemaTree.rootNode, data)}
-        form={formTree.rootNode}
-        renderer={formRenderer}
-      />
-
-      {/* Debug: Show current form values */}
-      <pre className="mt-4 p-4 bg-gray-100 rounded">
-        {JSON.stringify(data.value, null, 2)}
-      </pre>
+      <AppForm formType="Contact" data={data} />
     </div>
   );
 }
@@ -338,84 +373,33 @@ export default function FormPage() {
 
 ## Form Editor Setup
 
-### Step 1: Create Editor Page
-
-```typescript
-// src/app/editor/page.tsx
-"use client";
-
-import { BasicFormEditor, FormLoader, SchemaLoader } from "@react-typed-forms/schemas-editor";
-import { formRenderer } from "@/lib/formRenderer";
-import { FormDefinitions, SchemaMap } from "@/generated/schemas";
-import { useMemo, useRef } from "react";
-
-// Import editor CSS
+```tsx
+// src/editor.tsx
+import { BasicFormEditor, readOnlySchemas } from "@react-typed-forms/schemas-editor";
+import { FormDefinitions } from "./formDefs";
+import { SchemaMap } from "./schemas";
+import { formRenderer } from "./renderer";
+import { FormType } from "./AppForm";
 import "flexlayout-react/style/light.css";
 
-export default function EditorPage() {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // Form types for the editor sidebar
-  const formTypes = useMemo(
-    () =>
-      FormDefinitions.map((f) => ({
-        value: f.value,
-        name: f.name,
-        group: f.config?.group,
-      })),
-    []
-  );
-
-  // Load form definition from API
-  const loadForm: FormLoader = async (formId) => {
-    const formDef = FormDefinitions.find((f) => f.value === formId);
-    if (!formDef) throw new Error(`Form not found: ${formId}`);
-
-    // Fetch latest controls from API
-    const response = await fetch(`/api/forms/ControlDefinition/${formId}`);
-    const formJson = await response.json();
-
-    return {
-      controls: formJson.controls ?? formJson.Controls ?? [],
-      schemaName: formDef.schemaName,
-      config: formJson.config ?? formJson.Config ?? null,
-      formFields: formJson.fields ?? formJson.Fields ?? [],
-      configSchema: undefined,
-    };
-  };
-
-  // Load schema for a form
-  const loadSchema: SchemaLoader = async (schemaName) => {
-    const schema = SchemaMap[schemaName as keyof typeof SchemaMap];
-    if (!schema) throw new Error(`Schema not found: ${schemaName}`);
-    return schema;
-  };
-
-  // Save form to API
-  const saveForm = async (
-    controls: any[],
-    formId: string,
-    config: any,
-    formFields: any[]
-  ) => {
-    await fetch(`/api/forms/ControlDefinition/${formId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        controls,
-        config,
-        fields: formFields,
-      }),
-    });
-  };
-
+export function FormEditor() {
   return (
-    <div ref={containerRef} className="h-screen w-full">
-      <BasicFormEditor
-        formTypes={formTypes}
-        loadForm={loadForm}
-        loadSchema={loadSchema}
-        saveForm={saveForm}
+    <div className="h-screen w-full">
+      <BasicFormEditor<FormType>
+        formTypes={Object.values(FormDefinitions).map((x) => ({
+          name: x.name,
+          id: x.value,
+          folder: x.defaultConfig?.group,
+        }))}
+        loadForm={async (formType) => FormDefinitions[formType]}
+        loadSchema={readOnlySchemas(SchemaMap)}
+        saveForm={async (controls, formType, config, fields) => {
+          await fetch(`/api/forms/ControlDefinition/${formType}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ controls, config, fields }),
+          });
+        }}
         formRenderer={formRenderer}
       />
     </div>
@@ -423,9 +407,7 @@ export default function EditorPage() {
 }
 ```
 
-### Step 2: Configure Tailwind for Editor
-
-The editor requires Tailwind classes. Ensure your `tailwind.config.js` includes:
+### Configure Tailwind for Editor
 
 ```javascript
 // tailwind.config.js
@@ -464,7 +446,6 @@ public class ContactEdit
     public string Email { get; set; } = string.Empty;
 
     public string? Phone { get; set; }
-
     public string? CountryCode { get; set; }
 
     [MaxLength(500)]
@@ -477,7 +458,6 @@ public record CountryInfo(string Code, string Name);
 ### 2. Register in AppForms
 
 ```csharp
-// Forms/AppForms.cs
 public static readonly FormDefinition<FormConfig?>[] Forms =
 [
     Form<ContactForm>("Contact", "Contact Form", null),
@@ -487,12 +467,12 @@ public static readonly FormDefinition<FormConfig?>[] Forms =
 ### 3. Generate Schemas
 
 ```bash
-npm run generate:schemas
+npm run gencode
 ```
 
 ### 4. Create Form JSON
 
-The first time you call `/api/forms/Forms`, an empty `Contact.json` will be created. Use the editor to design the form layout, or create it manually:
+The first time you call the Forms endpoint, an empty `Contact.json` will be created. Use the editor to design the form layout, or create it manually:
 
 ```json
 {
@@ -516,31 +496,19 @@ The first time you call `/api/forms/Forms`, an empty `Contact.json` will be crea
       "type": "Data",
       "field": "contact/countryCode",
       "title": "Country",
-      "renderOptions": {
-        "type": "Select"
-      }
+      "renderOptions": { "type": "Select" }
     },
     {
       "type": "Data",
       "field": "contact/message",
       "title": "Message",
-      "renderOptions": {
-        "type": "Textarea"
-      }
+      "renderOptions": { "type": "Textarea" }
     }
   ],
   "config": {},
   "fields": []
 }
 ```
-
-### 5. View Form
-
-Navigate to `/forms/Contact` to see your rendered form.
-
-### 6. Edit Form
-
-Navigate to `/editor` to open the visual form designer.
 
 ---
 
@@ -552,14 +520,14 @@ Navigate to `/editor` to open the visual form designer.
 
 **Solution**: Regenerate schemas after changing C# types:
 ```bash
-npm run generate:schemas
+npm run gencode
 ```
 
 ### Missing Form JSON Files
 
 **Problem**: Form not loading in editor
 
-**Solution**: Ensure the form JSON file exists in `src/forms/`. Call `GET /api/forms/Forms` to auto-create missing files.
+**Solution**: Ensure the form JSON file exists. Call `GET /api/forms/Forms` to auto-create missing files.
 
 ### Editor Not Loading Forms
 
@@ -579,12 +547,6 @@ npm run generate:schemas
 2. Check that CSS is imported in your layout
 3. Ensure `defaultTailwindTheme` is passed to `createDefaultRenderers`
 
-### Form Data Not Binding
-
-**Problem**: Changes in form don't update data control
-
-**Solution**: Ensure you're using `useControl` from `@react-typed-forms/core` and passing the control to `createSchemaDataNode`.
-
 ---
 
 ## Best Practices
@@ -592,21 +554,20 @@ npm run generate:schemas
 ### 1. Use the Preferred Form Pattern
 
 ```csharp
-// ✅ DO - Dedicated form class with Edit + lookup data
+// DO - Dedicated form class with Edit + lookup data
 public class UserEditorForm
 {
     public UserEdit User { get; set; } = new();
     public List<RoleInfo> AvailableRoles { get; set; } = new();
 }
 
-// ❌ DON'T - Using Edit class directly (loses lookup data)
+// DON'T - Using Edit class directly (loses lookup data)
 Form<UserEdit>("UserEditor", "User Editor", null)
 ```
 
 ### 2. Organize Forms by Feature
 
 ```csharp
-// ✅ DO - Group related forms
 public static readonly FormDefinition<FormConfig?>[] Forms =
 [
     Form<UserListForm>("UserList", "User List", new FormConfig(Group: "Users")),
@@ -624,6 +585,6 @@ Always commit your form JSON files to version control. They define your UI layou
 Create a pre-commit hook or CI step to ensure schemas are up-to-date:
 
 ```bash
-npm run generate:schemas
-git diff --exit-code src/generated/
+npm run gencode
+git diff --exit-code src/schemas.ts src/formDefs.ts
 ```
