@@ -1,3 +1,8 @@
+---
+name: astrolabe-workflow
+description: Workflow execution framework with state transitions, bulk operations, rule-based triggers, and authorization. Use when implementing entity workflows with CRUD operations requiring state management and audit trails.
+---
+
 # Astrolabe.Workflow - Workflow Execution Framework
 
 ## Overview
@@ -8,7 +13,6 @@ Astrolabe.Workflow provides abstractions for implementing workflow execution pat
 
 **Package**: `Astrolabe.Workflow`
 **Dependencies**: Astrolabe.Common
-**Related**: See AbstractWorkflowExecutor-Guide.md for detailed implementation patterns
 **Target Framework**: .NET 7-8
 
 ## Key Concepts
@@ -204,20 +208,6 @@ public class CarWorkflowExecutor
 
         await _context.SaveChangesAsync();
     }
-
-    // Optional: Define automatic triggers
-    protected override IEnumerable<CarAction> GetTriggeredActions(CarContext context)
-    {
-        var car = context.Car;
-
-        // Auto-publish cars from current year
-        if (car.Status == ItemStatus.Draft && car.Year == DateTime.Now.Year)
-        {
-            yield return new CarAction.Publish();
-        }
-
-        // Could trigger email notifications, etc.
-    }
 }
 ```
 
@@ -241,46 +231,6 @@ public class CarsController : ControllerBase
     private string GetCurrentUser() =>
         User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "anonymous";
 
-    [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CarEdit edit)
-    {
-        var car = new CarItem
-        {
-            Id = Guid.NewGuid(),
-            Owner = GetCurrentUser(),
-            Status = ItemStatus.Draft,
-            Make = edit.Make,
-            Model = edit.Model,
-            Year = edit.Year
-        };
-
-        _context.Cars.Add(car);
-        await _context.SaveChangesAsync();
-
-        // Run workflow to check triggers
-        var executor = new CarWorkflowExecutor(_context, GetCurrentUser());
-        await executor.ExecuteWorkflow(new CarLoadContext
-        {
-            CarIds = new List<Guid> { car.Id }
-        });
-
-        return Ok(car.Id);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> Edit(Guid id, [FromBody] CarEdit edit)
-    {
-        var executor = new CarWorkflowExecutor(_context, GetCurrentUser());
-
-        await executor.ExecuteUserAction(
-            new CarLoadContext { CarIds = new List<Guid> { id } },
-            id,
-            new CarAction.Edit(edit.Make, edit.Model, edit.Year)
-        );
-
-        return NoContent();
-    }
-
     [HttpPost("{id}/publish")]
     public async Task<IActionResult> Publish(Guid id)
     {
@@ -290,34 +240,6 @@ public class CarsController : ControllerBase
             new CarLoadContext { CarIds = new List<Guid> { id } },
             id,
             new CarAction.Publish()
-        );
-
-        return NoContent();
-    }
-
-    [HttpPost("{id}/unpublish")]
-    public async Task<IActionResult> Unpublish(Guid id)
-    {
-        var executor = new CarWorkflowExecutor(_context, GetCurrentUser());
-
-        await executor.ExecuteUserAction(
-            new CarLoadContext { CarIds = new List<Guid> { id } },
-            id,
-            new CarAction.Unpublish()
-        );
-
-        return NoContent();
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        var executor = new CarWorkflowExecutor(_context, GetCurrentUser());
-
-        await executor.ExecuteUserAction(
-            new CarLoadContext { CarIds = new List<Guid> { id } },
-            id,
-            new CarAction.Delete()
         );
 
         return NoContent();
@@ -334,85 +256,6 @@ public class CarsController : ControllerBase
         );
 
         return Ok(actions.Select(a => a.GetType().Name));
-    }
-}
-
-public record CarEdit(string Make, string Model, int Year);
-```
-
-### Bulk Operations
-
-```csharp
-using Astrolabe.Workflow;
-
-public class BulkOperationService
-{
-    private readonly AppDbContext _context;
-
-    public async Task PublishAllDrafts(string userId)
-    {
-        // Get all draft car IDs for user
-        var draftIds = await _context.Cars
-            .Where(c => c.Owner == userId && c.Status == ItemStatus.Draft)
-            .Select(c => c.Id)
-            .ToListAsync();
-
-        if (draftIds.Count == 0) return;
-
-        // Execute workflow with bulk load
-        var executor = new CarWorkflowExecutor(_context, userId);
-
-        // Load all contexts at once (efficient bulk operation)
-        await executor.ExecuteBulkActions(
-            new CarLoadContext { CarIds = draftIds },
-            draftIds.Select(id => (id, (CarAction)new CarAction.Publish()))
-        );
-    }
-
-    public async Task DeleteOldCars(int olderThanYear)
-    {
-        var oldCarIds = await _context.Cars
-            .Where(c => c.Year < olderThanYear)
-            .Select(c => c.Id)
-            .ToListAsync();
-
-        var executor = new CarWorkflowExecutor(_context, "system");
-
-        await executor.ExecuteBulkActions(
-            new CarLoadContext { CarIds = oldCarIds },
-            oldCarIds.Select(id => (id, (CarAction)new CarAction.Delete()))
-        );
-    }
-}
-```
-
-### Automated Workflow Rules
-
-```csharp
-public class CarWorkflowExecutor
-    : AbstractWorkflowExecutor<CarContext, CarLoadContext, CarAction>
-{
-    protected override IEnumerable<CarAction> GetTriggeredActions(CarContext context)
-    {
-        var car = context.Car;
-
-        // Rule 1: Auto-publish recent year cars
-        if (car.Status == ItemStatus.Draft && car.Year >= DateTime.Now.Year - 1)
-        {
-            yield return new CarAction.Publish();
-        }
-
-        // Rule 2: Auto-delete very old cars
-        if (car.Status == ItemStatus.Published && car.Year < 1980)
-        {
-            yield return new CarAction.Delete();
-        }
-
-        // Rule 3: Send notification on publish
-        if (car.Status == ItemStatus.Published && !_notificationSent)
-        {
-            yield return new CarAction.SendNotification();
-        }
     }
 }
 ```
@@ -445,14 +288,7 @@ protected override IEnumerable<CarAction> GetAllowedActions(CarContext context)
     if (!isOwner && !isAdmin)
         return Array.Empty<CarAction>();
 
-    // Return allowed actions based on state and permissions
     return GetActionsForStatus(context.Car.Status);
-}
-
-// ❌ DON'T - Skip authorization checks
-protected override IEnumerable<CarAction> GetAllowedActions(CarContext context)
-{
-    return AllActions; // Anyone can do anything!
 }
 ```
 
@@ -462,10 +298,8 @@ protected override IEnumerable<CarAction> GetAllowedActions(CarContext context)
 // ✅ DO - Log all actions
 protected override async Task ApplyAction(CarContext context, CarAction action)
 {
-    // Apply the action
     UpdateEntity(context, action);
 
-    // Always create audit log
     context.AuditLogs.Add(new AuditLog
     {
         EntityId = context.Car.Id,
@@ -475,8 +309,6 @@ protected override async Task ApplyAction(CarContext context, CarAction action)
         Details = JsonSerializer.Serialize(action)
     });
 }
-
-// ❌ DON'T - Skip audit trails
 ```
 
 ### 4. Use Bulk Operations for Performance
@@ -502,47 +334,16 @@ foreach (var id in allIds)
 - **Cause**: Action not returned by `GetAllowedActions` for current user/state
 - **Solution**: Check authorization logic in `GetAllowedActions`. Verify user permissions and entity state.
 
-**Issue: Triggered actions not executing**
-- **Cause**: `GetTriggeredActions` not implemented or returning empty
-- **Solution**: Implement `GetTriggeredActions` and ensure it returns appropriate actions based on entity state
-
 **Issue: Changes not persisting to database**
 - **Cause**: `SaveContexts` not implemented or not calling `SaveChangesAsync`
 - **Solution**: Ensure `SaveContexts` saves all changes to database
 
 **Issue: Bulk operations timing out**
 - **Cause**: Loading too many entities at once
-- **Solution**: Process in batches:
-  ```csharp
-  var batches = allIds.Chunk(100); // Process 100 at a time
-  foreach (var batch in batches)
-  {
-      await executor.ExecuteBulkActions(
-          new CarLoadContext { CarIds = batch.ToList() },
-          /* ... */
-      );
-  }
-  ```
-
-**Issue: Concurrent modification errors**
-- **Cause**: Multiple users editing same entity
-- **Solution**: Implement optimistic concurrency with row versions:
-  ```csharp
-  public class CarItem
-  {
-      [Timestamp]
-      public byte[] RowVersion { get; set; }
-  }
-  ```
+- **Solution**: Process in batches
 
 ## Project Structure Location
 
 - **Path**: `Astrolabe.Workflow/`
 - **Project File**: `Astrolabe.Workflow.csproj`
 - **Namespace**: `Astrolabe.Workflow`
-
-## Related Documentation
-
-- [AbstractWorkflowExecutor-Guide.md](../../AbstractWorkflowExecutor-Guide.md) - Detailed implementation guide
-- [Astrolabe.Common](./astrolabe-common.md) - Base exceptions
-- [CLAUDE.md](../../CLAUDE.md) - Development guidelines

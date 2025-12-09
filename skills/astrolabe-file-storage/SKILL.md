@@ -1,3 +1,8 @@
+---
+name: astrolabe-file-storage
+description: Generic file storage abstractions for .NET with IFileStorage interface supporting uploads, downloads, and deletions. Use when handling file operations with database or any storage backend.
+---
+
 # Astrolabe.FileStorage - File Storage Abstraction
 
 ## Overview
@@ -31,10 +36,6 @@ Generic interface providing standard file operations where `T` is your file refe
 ### 3. ByteArrayFileStorage
 
 In-memory/database-friendly implementation that works with byte arrays. Perfect for storing files in SQL databases.
-
-### 4. File Size Limiting
-
-Built-in `LimitedStream` prevents file size violations and excessive memory usage.
 
 ## Common Patterns
 
@@ -202,198 +203,7 @@ public class FilesController : ControllerBase
         await _fileStorage.DeleteFile(fileEntity);
         return NoContent();
     }
-
-    [HttpGet]
-    public async Task<IActionResult> List()
-    {
-        var files = await _context.Files
-            .OrderByDescending(f => f.UploadedAt)
-            .Select(f => new
-            {
-                f.Id,
-                f.FileName,
-                f.ContentType,
-                f.Size,
-                f.UploadedAt
-            })
-            .ToListAsync();
-
-        return Ok(files);
-    }
 }
-```
-
-### Simple File Storage with Guid Keys
-
-```csharp
-using Astrolabe.FileStorage;
-
-// Store files with Guid references
-public class SimpleFileService
-{
-    private readonly Dictionary<Guid, (byte[] content, string fileName, string contentType)> _files = new();
-
-    private readonly IFileStorage<Guid> _fileStorage;
-
-    public SimpleFileService()
-    {
-        _fileStorage = ByteArrayFileStorage.Create<Guid>(
-            create: (content, request) =>
-            {
-                var id = Guid.NewGuid();
-                _files[id] = (content, request.FileName, request.ContentType ?? "application/octet-stream");
-                return Task.FromResult(id);
-            },
-            getBytes: (id) =>
-            {
-                if (!_files.ContainsKey(id))
-                    throw new NotFoundException($"File {id} not found");
-
-                var (content, fileName, contentType) = _files[id];
-                return Task.FromResult(new ByteArrayResponse(content, contentType, fileName));
-            },
-            options: null,
-            deleteFile: (id) =>
-            {
-                _files.Remove(id);
-                return Task.CompletedTask;
-            }
-        );
-    }
-}
-```
-
-### Custom Content Type Provider
-
-```csharp
-using Astrolabe.FileStorage;
-using Microsoft.AspNetCore.StaticFiles;
-
-public class CustomContentTypeProvider : IContentTypeProvider
-{
-    private readonly FileExtensionContentTypeProvider _defaultProvider = new();
-
-    public bool TryGetContentType(string subpath, out string contentType)
-    {
-        // Custom mappings
-        if (subpath.EndsWith(".webp", StringComparison.OrdinalIgnoreCase))
-        {
-            contentType = "image/webp";
-            return true;
-        }
-
-        if (subpath.EndsWith(".heic", StringComparison.OrdinalIgnoreCase))
-        {
-            contentType = "image/heic";
-            return true;
-        }
-
-        // Fall back to default
-        return _defaultProvider.TryGetContentType(subpath, out contentType);
-    }
-}
-
-// Use custom provider
-var options = new FileStorageOptions
-{
-    MaxLength = 5 * 1024 * 1024,
-    ContentTypeProvider = new CustomContentTypeProvider()
-};
-```
-
-### File Validation and Processing
-
-```csharp
-using Astrolabe.FileStorage;
-
-public class ImageFileService
-{
-    private readonly IFileStorage<FileEntity> _fileStorage;
-
-    public async Task<FileEntity> UploadImage(IFormFile file)
-    {
-        // Validate file type
-        var allowedTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
-        if (!allowedTypes.Contains(file.ContentType))
-        {
-            throw new FileStorageException(
-                FileStorageErrorCode.IllegalFileType,
-                "Only image files are allowed"
-            );
-        }
-
-        // Validate file extension
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!allowedExtensions.Contains(extension))
-        {
-            throw new FileStorageException(
-                FileStorageErrorCode.IllegalFileType,
-                "Invalid file extension"
-            );
-        }
-
-        var request = new UploadRequest(
-            file.OpenReadStream(),
-            file.FileName,
-            file.ContentType
-        );
-
-        return await _fileStorage.UploadFile(request);
-    }
-}
-```
-
-### Dependency Injection Setup
-
-```csharp
-using Astrolabe.FileStorage;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// Register file storage
-builder.Services.AddScoped<IFileStorage<FileEntity>>(sp =>
-{
-    var context = sp.GetRequiredService<AppDbContext>();
-
-    return ByteArrayFileStorage.Create<FileEntity>(
-        create: async (content, request) =>
-        {
-            var file = new FileEntity
-            {
-                Id = Guid.NewGuid(),
-                FileName = request.FileName,
-                ContentType = request.ContentType ?? "application/octet-stream",
-                Content = content,
-                Size = content.Length,
-                UploadedAt = DateTime.UtcNow
-            };
-            context.Files.Add(file);
-            await context.SaveChangesAsync();
-            return file;
-        },
-        getBytes: async (fileEntity) =>
-        {
-            var file = await context.Files.FindAsync(fileEntity.Id);
-            if (file == null)
-                throw new NotFoundException($"File {fileEntity.Id} not found");
-
-            return new ByteArrayResponse(file.Content, file.ContentType, file.FileName);
-        },
-        options: new FileStorageOptions { MaxLength = 10 * 1024 * 1024 },
-        deleteFile: async (fileEntity) =>
-        {
-            var file = await context.Files.FindAsync(fileEntity.Id);
-            if (file != null)
-            {
-                context.Files.Remove(file);
-                await context.SaveChangesAsync();
-            }
-        }
-    );
-});
-
-var app = builder.Build();
 ```
 
 ## Best Practices
@@ -408,24 +218,7 @@ new FileStorageOptions { MaxLength = 10 * 1024 * 1024 } // 10MB
 new FileStorageOptions { MaxLength = int.MaxValue } // Dangerous!
 ```
 
-### 2. Dispose Streams Properly
-
-```csharp
-// ✅ DO - Use 'using' for proper disposal
-var download = await _fileStorage.DownloadFile(file);
-if (download != null)
-{
-    using var stream = download.Content;
-    // Work with stream
-}
-
-// ❌ DON'T - Forget to dispose streams
-var download = await _fileStorage.DownloadFile(file);
-var bytes = new byte[download.Content.Length];
-download.Content.Read(bytes, 0, bytes.Length); // Stream not disposed!
-```
-
-### 3. Validate File Types
+### 2. Validate File Types
 
 ```csharp
 // ✅ DO - Validate both content type and extension
@@ -437,21 +230,6 @@ if (!allowedTypes.Contains(file.ContentType) ||
 {
     throw new FileStorageException(FileStorageErrorCode.IllegalFileType, "Invalid file type");
 }
-
-// ❌ DON'T - Trust only content type (can be spoofed)
-if (!allowedTypes.Contains(file.ContentType)) { /* ... */ }
-```
-
-### 4. Use Async Operations
-
-```csharp
-// ✅ DO - All operations should be async
-await _fileStorage.UploadFile(request);
-await _fileStorage.DownloadFile(file);
-await _fileStorage.DeleteFile(file);
-
-// ❌ DON'T - Block on async operations
-_fileStorage.UploadFile(request).Wait(); // Can cause deadlocks!
 ```
 
 ## Troubleshooting
@@ -470,38 +248,8 @@ _fileStorage.UploadFile(request).Wait(); // Can cause deadlocks!
 - **Cause**: Content type not provided in request or file extension not recognized
 - **Solution**: Provide content type explicitly or configure custom `ContentTypeProvider`
 
-**Issue: Files not being deleted from database**
-- **Cause**: Delete function not saving changes
-- **Solution**: Ensure `SaveChangesAsync()` is called in delete function
-
-**Issue: Downloaded files have wrong encoding/corrupted**
-- **Cause**: Byte array corruption or encoding issues
-- **Solution**: Store as byte[], not string. Verify data integrity during upload/download.
-
-**Issue: ASP.NET Core request size limit exceeded**
-- **Cause**: Default request size limit (28.6MB) exceeded
-- **Solution**: Configure request size limits:
-  ```csharp
-  builder.Services.Configure<FormOptions>(options =>
-  {
-      options.MultipartBodyLengthLimit = 100 * 1024 * 1024; // 100MB
-  });
-
-  builder.WebHost.ConfigureKestrel(options =>
-  {
-      options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100MB
-  });
-  ```
-
 ## Project Structure Location
 
 - **Path**: `Astrolabe.FileStorage/`
 - **Project File**: `Astrolabe.FileStorage.csproj`
 - **Namespace**: `Astrolabe.FileStorage`
-- **NuGet**: https://www.nuget.org/packages/Astrolabe.FileStorage/
-
-## Related Documentation
-
-- [Astrolabe.FileStorage.Azure](./astrolabe-file-storage-azure.md) - Azure Blob Storage implementation
-- [Astrolabe.Common](./astrolabe-common.md) - Base utilities
-- [ASP.NET Core File Uploads](https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads)

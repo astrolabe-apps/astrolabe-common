@@ -1,3 +1,8 @@
+---
+name: astrolabe-schemas
+description: C# schema definition system bridging .NET types to TypeScript/React form definitions. Use when generating TypeScript schemas from C# types or implementing schema-driven UI generation with @react-typed-forms/schemas.
+---
+
 # Astrolabe.Schemas - Schema Definition System
 
 ## Overview
@@ -213,81 +218,6 @@ var personSchema = new SchemaField[]
 };
 ```
 
-### Collection Fields (Arrays)
-
-```csharp
-using Astrolabe.Schemas;
-
-public class Project
-{
-    public string Name { get; set; }
-    public List<string> Tags { get; set; }
-    public List<TeamMember> Members { get; set; }
-}
-
-public class TeamMember
-{
-    public string Name { get; set; }
-    public string Role { get; set; }
-}
-
-// Build schema with collections
-var projectSchema = new SchemaField[]
-{
-    new SimpleSchemaField(FieldType.String.ToString(), "name")
-    {
-        DisplayName = "Project Name",
-        Required = true
-    },
-    // Simple collection
-    new SimpleSchemaField(FieldType.String.ToString(), "tags")
-    {
-        DisplayName = "Tags",
-        Collection = true
-    },
-    // Complex collection
-    new CompoundField(
-        "members",
-        new SchemaField[]
-        {
-            new SimpleSchemaField(FieldType.String.ToString(), "name")
-            {
-                DisplayName = "Name",
-                Required = true
-            },
-            new SimpleSchemaField(FieldType.String.ToString(), "role")
-            {
-                DisplayName = "Role"
-            }
-        },
-        TreeChildren: false
-    )
-    {
-        DisplayName = "Team Members",
-        Collection = true
-    }
-};
-```
-
-### Exporting Schemas to TypeScript
-
-```csharp
-using Astrolabe.Schemas;
-using System.Text.Json;
-
-// Serialize schema to JSON for TypeScript consumption
-var schema = SchemaBuilder.Build<UserProfile>(/* ... */);
-
-var json = JsonSerializer.Serialize(schema, new JsonSerializerOptions
-{
-    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    WriteIndented = true
-});
-
-// Write to file or API response
-await File.WriteAllTextAsync("schemas/userProfile.json", json);
-```
-
 ### Validation Rules
 
 ```csharp
@@ -333,25 +263,23 @@ var emailField = new SimpleSchemaField(FieldType.String.ToString(), "email")
 };
 ```
 
-## Integration with TypeScript
+### Exporting Schemas to TypeScript
 
-### Consuming Schemas in React
+```csharp
+using Astrolabe.Schemas;
+using System.Text.Json;
 
-```typescript
-// TypeScript side - import and use schema
-import userProfileSchema from './schemas/userProfile.json';
-import { useControl } from '@react-typed-forms/core';
-import { renderControl, useControlDefinitionForSchema } from '@react-typed-forms/schemas';
+// Serialize schema to JSON for TypeScript consumption
+var schema = SchemaBuilder.Build<UserProfile>(/* ... */);
 
-function UserProfileForm() {
-  const data = useControl<UserProfile>(() => defaultValueForFields(userProfileSchema));
-  const controlDefinition = useControlDefinitionForSchema(userProfileSchema);
+var json = JsonSerializer.Serialize(schema, new JsonSerializerOptions
+{
+    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    WriteIndented = true
+});
 
-  return renderControl(controlDefinition, data, {
-    fields: userProfileSchema,
-    renderer: myFormRenderer,
-  });
-}
+// Write to file or API response
+await File.WriteAllTextAsync("schemas/userProfile.json", json);
 ```
 
 ## Best Practices
@@ -386,18 +314,6 @@ var statusField = new SimpleSchemaField(FieldType.String.ToString(), "status")
         .Select(s => new FieldOption(s.ToString(), s.ToString()))
         .ToArray()
 };
-
-// Or with custom display names
-var statusFieldCustom = new SimpleSchemaField(FieldType.String.ToString(), "status")
-{
-    DisplayName = "Status",
-    Options = new[]
-    {
-        new FieldOption("Active", Status.Active.ToString()),
-        new FieldOption("Inactive", Status.Inactive.ToString()),
-        new FieldOption("Pending", Status.Pending.ToString())
-    }
-};
 ```
 
 ### 3. Keep Display Names User-Friendly
@@ -409,51 +325,10 @@ new SimpleSchemaField(FieldType.String.ToString(), "firstName")
     DisplayName = "First Name"
 };
 
-new SimpleSchemaField(FieldType.Date.ToString(), "dateOfBirth")
-{
-    DisplayName = "Date of Birth"
-};
-
 // ❌ DON'T - Use technical names
 new SimpleSchemaField(FieldType.String.ToString(), "firstName")
 {
     DisplayName = "firstName" // Not user-friendly
-};
-```
-
-### 4. Define Meaningful Validation Messages
-
-```csharp
-// ✅ DO - Provide helpful error messages
-var emailField = new SimpleSchemaField(FieldType.String.ToString(), "email")
-{
-    DisplayName = "Email",
-    Required = true,
-    RequiredText = "Email address is required",
-    Validators = new[]
-    {
-        new SchemaValidator
-        {
-            Type = "pattern",
-            Value = @"^[^\s@]+@[^\s@]+\.[^\s@]+$",
-            Message = "Please enter a valid email address (e.g., user@example.com)"
-        }
-    }
-};
-
-// ❌ DON'T - Use generic or no messages
-var emailField = new SimpleSchemaField(FieldType.String.ToString(), "email")
-{
-    Required = true,
-    Validators = new[]
-    {
-        new SchemaValidator
-        {
-            Type = "pattern",
-            Value = @"^[^\s@]+@[^\s@]+\.[^\s@]+$"
-            // No message!
-        }
-    }
 };
 ```
 
@@ -467,64 +342,14 @@ var emailField = new SimpleSchemaField(FieldType.String.ToString(), "email")
 
 **Issue: TypeScript can't import schema JSON**
 - **Cause**: Schema not serialized with camelCase naming
-- **Solution**: Use `JsonNamingPolicy.CamelCase` when serializing:
-  ```csharp
-  JsonSerializer.Serialize(schema, new JsonSerializerOptions
-  {
-      PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-  });
-  ```
+- **Solution**: Use `JsonNamingPolicy.CamelCase` when serializing
 
 **Issue: Nested objects not rendering correctly**
 - **Cause**: Compound field not properly defined
 - **Solution**: Use `builder.Compound()` for nested objects, not regular `Field()`
-
-**Issue: Collection validation not working**
-- **Cause**: Validation rules on wrong level
-- **Solution**: Apply validation to the collection item definition, not the collection itself
-
-**Issue: Date fields showing wrong format**
-- **Cause**: Using DateTime instead of Date field type
-- **Solution**: Use `SchemaField.Date()` for date-only values, `SchemaField.DateTime()` for date+time
 
 ## Project Structure Location
 
 - **Path**: `Astrolabe.Schemas/`
 - **Project File**: `Astrolabe.Schemas.csproj`
 - **Namespace**: `Astrolabe.Schemas`
-
-## Related Documentation
-
-- [react-typed-forms-schemas](../typescript/react-typed-forms-schemas.md) - TypeScript counterpart
-- [Astrolabe.Common](./astrolabe-common.md) - Base utilities
-- [BEST-PRACTICES.md](../../BEST-PRACTICES.md) - Development guidelines
-
-## Advanced Topics
-
-### Dynamic Schema Generation
-
-```csharp
-// Generate schemas at runtime based on configuration
-public SchemaField GenerateSchema(Type modelType)
-{
-    var builder = new SchemaBuilder();
-    return builder.BuildDynamic(modelType);
-}
-```
-
-### Schema Caching
-
-```csharp
-// Cache schemas for performance
-private static readonly Dictionary<Type, SchemaField> _schemaCache = new();
-
-public SchemaField GetSchema<T>()
-{
-    var type = typeof(T);
-    if (!_schemaCache.ContainsKey(type))
-    {
-        _schemaCache[type] = SchemaBuilder.Build<T>(/* ... */);
-    }
-    return _schemaCache[type];
-}
-```

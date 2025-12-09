@@ -1,3 +1,8 @@
+---
+name: react-typed-forms-schemas
+description: Schema-driven form generation on @react-typed-forms/core. Use buildSchema to define forms, use renderers for automatic UI generation. Use when generating forms from C# schemas or building dynamic configurable forms.
+---
+
 # @react-typed-forms/schemas - Schema-Driven Form Generation
 
 ## Overview
@@ -374,67 +379,6 @@ const projectSchema = buildSchema<ProjectForm>({
 });
 ```
 
-### Display and Action Controls
-
-```typescript
-import {
-  GroupedControlsDefinition,
-  DisplayControlDefinition,
-  ActionControlDefinition,
-} from "@react-typed-forms/schemas";
-
-const formWithActionsAndDisplay: GroupedControlsDefinition = {
-  type: "group",
-  children: [
-    // Display control (readonly)
-    {
-      type: "display",
-      displayType: "text",
-      content: "Please fill out the form below:",
-    } as DisplayControlDefinition,
-
-    // Data controls...
-    { type: "data", field: "name" },
-    { type: "data", field: "email" },
-
-    // Action button
-    {
-      type: "action",
-      actionId: "save",
-      label: "Save Draft",
-    } as ActionControlDefinition,
-
-    {
-      type: "action",
-      actionId: "submit",
-      label: "Submit",
-    } as ActionControlDefinition,
-  ],
-};
-
-// Handle actions in component
-function FormWithActions() {
-  const data = useControl<MyForm>(defaultValue);
-
-  const handleAction = (actionId: string) => {
-    if (actionId === "save") {
-      saveDraft(data.value);
-    } else if (actionId === "submit") {
-      submitForm(data.value);
-    }
-  };
-
-  return renderControl(formWithActionsAndDisplay, data, {
-    fields: mySchema,
-    renderer: myRenderer,
-    hooks: {
-      ...defaultFormEditHooks,
-      onAction: handleAction,
-    },
-  });
-}
-```
-
 ## Best Practices
 
 ### 1. Generate Schemas from C# When Possible
@@ -521,10 +465,3 @@ yearOfBirth: intField("Year of Birth") // Defaults to 0
 - **Path**: `schemas/`
 - **Published to**: npm
 - **GitHub**: https://github.com/doolse/react-typed-forms
-
-## Related Documentation
-
-- [react-typed-forms-core](./react-typed-forms-core.md) - Core form state management
-- [react-typed-forms-mui](./react-typed-forms-mui.md) - Material-UI renderers
-- [Astrolabe.Schemas](../dotnet/astrolabe-schemas.md) - C# schema generation
-- [astrolabe-ui](./astrolabe-ui.md) - Radix UI-based renderers

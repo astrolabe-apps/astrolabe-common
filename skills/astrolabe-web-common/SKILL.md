@@ -1,3 +1,8 @@
+---
+name: astrolabe-web-common
+description: ASP.NET Core utilities for JWT authentication and SPA hosting with domain-based routing. Use when building web apps needing JWT tokens, multi-SPA hosting, or development-mode controller filtering.
+---
+
 # Astrolabe.Web.Common - JWT & SPA Hosting
 
 ## Overview
@@ -113,76 +118,6 @@ ClientApp/
     └── dashboard/    # Dashboard SPA files
 ```
 
-### Hosting SPAs by Path Segment
-
-```csharp
-using Astrolabe.Web.Common;
-
-var app = builder.Build();
-
-// Dashboard at /dashboard
-app.UseDomainSpa(
-    app.Environment,
-    "dashboard",
-    domainPrefix: null,
-    pathString: "/dashboard"
-);
-
-// Admin at /admin
-app.UseDomainSpa(
-    app.Environment,
-    "admin",
-    domainPrefix: null,
-    pathString: "/admin"
-);
-
-// Main app as fallback
-app.UseDomainSpa(app.Environment, "main", fallback: true);
-
-app.Run();
-```
-
-### Custom SPA Matching Logic
-
-```csharp
-using Astrolabe.Web.Common;
-
-var app = builder.Build();
-
-// Match based on custom header
-app.UseDomainSpa(
-    app.Environment,
-    "special",
-    match: req => req.Headers["X-App-Type"].Contains("special")
-);
-
-// Match based on query parameter
-app.UseDomainSpa(
-    app.Environment,
-    "beta",
-    match: req => req.Query.ContainsKey("beta")
-);
-
-app.Run();
-```
-
-### Configuring SPA Options
-
-```csharp
-using Astrolabe.Web.Common;
-
-var spaOptions = new DomainSpaOptions
-{
-    CacheControl = "public, max-age=3600" // Cache static files for 1 hour
-};
-
-app.UseDomainSpa(
-    app.Environment,
-    "admin",
-    options: spaOptions
-);
-```
-
 ### Development-Only Controllers
 
 ```csharp
@@ -231,108 +166,6 @@ var app = builder.Build();
 app.Run();
 ```
 
-## Complete Example
-
-```csharp
-using Astrolabe.Web.Common;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using System.Text;
-
-var builder = WebApplication.CreateBuilder(args);
-
-// JWT Configuration
-var jwtSecretKey = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!);
-var jwtToken = new BasicJwtToken(
-    jwtSecretKey,
-    builder.Configuration["Jwt:Issuer"]!,
-    builder.Configuration["Jwt:Audience"]!
-);
-
-// Services
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(jwtToken.ConfigureJwtBearer());
-
-builder.Services.AddAuthorization();
-
-builder.Services.AddControllers(options =>
-{
-    if (!builder.Environment.IsDevelopment())
-    {
-        options.Conventions.Add(new HideDevModeControllersConvention());
-    }
-});
-
-// Add token generator as singleton
-builder.Services.AddSingleton(jwtToken.MakeTokenSigner());
-
-var app = builder.Build();
-
-// SPA Hosting
-app.UseDomainSpa(app.Environment, "admin");
-app.UseDomainSpa(app.Environment, "dashboard", pathString: "/dashboard");
-app.UseDomainSpa(app.Environment, "main", fallback: true);
-
-// Middleware
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();
-
-// Example authenticated controller
-[Authorize]
-[ApiController]
-[Route("api/[controller]")]
-public class UserController : ControllerBase
-{
-    [HttpGet("profile")]
-    public IActionResult GetProfile()
-    {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        return Ok(new { UserId = userId });
-    }
-}
-
-// Example login controller
-[ApiController]
-[Route("api/[controller]")]
-public class AuthController : ControllerBase
-{
-    private readonly TokenGenerator _tokenGenerator;
-
-    public AuthController(TokenGenerator tokenGenerator)
-    {
-        _tokenGenerator = tokenGenerator;
-    }
-
-    [HttpPost("login")]
-    public IActionResult Login([FromBody] LoginRequest request)
-    {
-        // Validate credentials (simplified)
-        if (request.Username == "admin" && request.Password == "password")
-        {
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, "1"),
-                new Claim(ClaimTypes.Name, request.Username),
-                new Claim(ClaimTypes.Role, "Admin")
-            };
-
-            var token = _tokenGenerator(claims, 3600); // 1 hour
-            return Ok(new { Token = token });
-        }
-
-        return Unauthorized();
-    }
-}
-
-public record LoginRequest(string Username, string Password);
-```
-
 ## Best Practices
 
 ### 1. Secure Secret Key Storage
@@ -370,18 +203,6 @@ app.UseDomainSpa(app.Environment, "main", fallback: true);
 app.UseDomainSpa(app.Environment, "admin"); // Never reached!
 ```
 
-### 4. Use Development Mode Controllers Wisely
-
-```csharp
-// ✅ DO - Use for debugging and development tools
-[DevMode]
-public class DevToolsController : ControllerBase { }
-
-// ❌ DON'T - Use for features that should be in production with authorization
-[DevMode] // Wrong! Should use [Authorize] instead
-public class AdminController : ControllerBase { }
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -402,47 +223,8 @@ public class AdminController : ControllerBase { }
 - **Cause**: Secret key changes between restarts
 - **Solution**: Store secret key in persistent configuration (appsettings.json, environment variables, or secrets manager)
 
-**Issue: Dev controllers still visible in production**
-- **Cause**: `HideDevModeControllersConvention` not registered
-- **Solution**: Add convention in controller configuration:
-  ```csharp
-  builder.Services.AddControllers(options =>
-  {
-      if (!builder.Environment.IsDevelopment())
-      {
-          options.Conventions.Add(new HideDevModeControllersConvention());
-      }
-  });
-  ```
-
-**Issue: CORS errors when calling API from SPA**
-- **Cause**: CORS not configured for SPA domains
-- **Solution**: Add CORS policy before authentication:
-  ```csharp
-  builder.Services.AddCors(options =>
-  {
-      options.AddPolicy("SpaPolicy", builder =>
-      {
-          builder.WithOrigins("https://admin.example.com")
-                 .AllowAnyHeader()
-                 .AllowAnyMethod()
-                 .AllowCredentials();
-      });
-  });
-
-  app.UseCors("SpaPolicy");
-  app.UseAuthentication();
-  ```
-
 ## Project Structure Location
 
 - **Path**: `Astrolabe.Web.Common/`
 - **Project File**: `Astrolabe.Web.Common.csproj`
 - **Namespace**: `Astrolabe.Web.Common`
-- **NuGet**: https://www.nuget.org/packages/Astrolabe.Web.Common/
-
-## Related Documentation
-
-- [Astrolabe.LocalUsers](./astrolabe-local-users.md) - User authentication implementation
-- [Astrolabe.Common](./astrolabe-common.md) - Base utilities
-- [Microsoft JWT Bearer Authentication](https://docs.microsoft.com/en-us/aspnet/core/security/authentication/)

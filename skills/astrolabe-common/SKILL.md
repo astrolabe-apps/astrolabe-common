@@ -1,3 +1,8 @@
+---
+name: astrolabe-common
+description: Base .NET utilities library providing exceptions (NotFoundException, ForbiddenException), LINQ extensions, list editing with change tracking, and reflection utilities. Use when working with Astrolabe.Common or needing common .NET utilities.
+---
+
 # Astrolabe.Common - Base Utilities Library
 
 ## Overview
@@ -207,9 +212,3 @@ foreach (var item in items)
 - **Path**: `Astrolabe.Common/`
 - **Project File**: `Astrolabe.Common.csproj`
 - **Namespace**: `Astrolabe.Common`
-
-## Related Documentation
-
-- [Astrolabe.Schemas](./astrolabe-schemas.md) - Uses reflection utilities
-- [Astrolabe.Web.Common](./astrolabe-web-common.md) - Uses common exceptions
-- [BEST-PRACTICES.md](../../BEST-PRACTICES.md) - General development guidelines

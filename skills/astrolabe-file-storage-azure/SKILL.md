@@ -1,3 +1,8 @@
+---
+name: astrolabe-file-storage-azure
+description: Azure Blob Storage implementation of IFileStorage interface with organized blob paths and metadata handling. Use when storing files in Azure Blob Storage with Entity Framework integration.
+---
+
 # Astrolabe.FileStorage.Azure - Azure Blob Storage Implementation
 
 ## Overview
@@ -23,10 +28,6 @@ Custom functions generate blob paths from upload requests, allowing organized st
 ### 3. Metadata Handling
 
 Transform blob upload results into your domain objects, storing paths and metadata in your database while files live in Azure.
-
-### 4. HTTP Headers
-
-Automatic content type detection and HTTP header configuration for proper browser handling.
 
 ## Common Patterns
 
@@ -212,165 +213,6 @@ newUploadPath: request =>
 }
 ```
 
-### ASP.NET Core Controller with Azure Storage
-
-```csharp
-using Astrolabe.FileStorage;
-using Microsoft.AspNetCore.Mvc;
-
-[ApiController]
-[Route("api/files")]
-public class FilesController : ControllerBase
-{
-    private readonly IFileStorage<FileEntity> _fileStorage;
-    private readonly AppDbContext _context;
-
-    public FilesController(IFileStorage<FileEntity> fileStorage, AppDbContext context)
-    {
-        _fileStorage = fileStorage;
-        _context = context;
-    }
-
-    [HttpPost("upload")]
-    [RequestSizeLimit(100 * 1024 * 1024)] // 100MB limit
-    public async Task<IActionResult> Upload(IFormFile file)
-    {
-        if (file == null || file.Length == 0)
-            return BadRequest("No file uploaded");
-
-        var request = new UploadRequest(
-            file.OpenReadStream(),
-            file.FileName,
-            file.ContentType
-        );
-
-        try
-        {
-            var fileEntity = await _fileStorage.UploadFile(request);
-
-            return Ok(new
-            {
-                fileEntity.Id,
-                fileEntity.FileName,
-                fileEntity.Size,
-                fileEntity.ContentType,
-                fileEntity.UploadedAt,
-                DownloadUrl = Url.Action(nameof(Download), new { id = fileEntity.Id })
-            });
-        }
-        catch (FileStorageException ex) when (ex.ErrorCode == FileStorageErrorCode.TooLarge)
-        {
-            return BadRequest($"File is too large. Maximum size is 50MB.");
-        }
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> Download(Guid id)
-    {
-        var fileEntity = await _context.Files.FindAsync(id);
-        if (fileEntity == null)
-            return NotFound();
-
-        var download = await _fileStorage.DownloadFile(fileEntity);
-        if (download == null)
-            return NotFound();
-
-        // Set cache headers for better performance
-        Response.Headers.Add("Cache-Control", "public, max-age=3600");
-
-        return File(download.Content, download.ContentType, download.FileName);
-    }
-
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
-    {
-        var fileEntity = await _context.Files.FindAsync(id);
-        if (fileEntity == null)
-            return NotFound();
-
-        // This will delete both from blob storage and database
-        await _fileStorage.DeleteFile(fileEntity);
-
-        return NoContent();
-    }
-}
-```
-
-### Handling BlobUploadInfo
-
-```csharp
-using Astrolabe.FileStorage.Azure;
-
-// The newUpload callback receives BlobUploadInfo with details:
-newUpload: async uploadInfo =>
-{
-    // uploadInfo.ContentInfo - Azure upload result
-    // uploadInfo.Request - Original upload request
-    // uploadInfo.ContentLength - Actual bytes uploaded
-    // uploadInfo.BlobPath - Generated blob path
-    // uploadInfo.ContentType - Final content type used
-
-    var file = new FileEntity
-    {
-        Id = Guid.NewGuid(),
-        FileName = uploadInfo.Request.FileName,
-        BlobPath = uploadInfo.BlobPath,
-        ContentType = uploadInfo.ContentType,
-        Size = uploadInfo.ContentLength,
-        UploadedAt = DateTime.UtcNow,
-
-        // Store additional Azure metadata if needed
-        ETag = uploadInfo.ContentInfo.ETag.ToString(),
-        BlobCreatedOn = uploadInfo.ContentInfo.CreatedOn
-    };
-
-    _context.Files.Add(file);
-    await _context.SaveChangesAsync();
-
-    return file;
-}
-```
-
-### Image Processing Before Upload
-
-```csharp
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
-
-public class ImageService
-{
-    private readonly IFileStorage<FileEntity> _fileStorage;
-
-    public async Task<FileEntity> UploadAndResizeImage(IFormFile file, int maxWidth = 1920, int maxHeight = 1080)
-    {
-        using var image = await Image.LoadAsync(file.OpenReadStream());
-
-        // Resize if needed
-        if (image.Width > maxWidth || image.Height > maxHeight)
-        {
-            image.Mutate(x => x.Resize(new ResizeOptions
-            {
-                Size = new Size(maxWidth, maxHeight),
-                Mode = ResizeMode.Max
-            }));
-        }
-
-        // Convert to JPEG
-        using var output = new MemoryStream();
-        await image.SaveAsJpegAsync(output);
-        output.Position = 0;
-
-        var request = new UploadRequest(
-            output,
-            Path.ChangeExtension(file.FileName, ".jpg"),
-            "image/jpeg"
-        );
-
-        return await _fileStorage.UploadFile(request);
-    }
-}
-```
-
 ## Best Practices
 
 ### 1. Use Managed Identity in Production
@@ -386,27 +228,7 @@ new BlobContainerClient(connectionString, containerName);
 new BlobContainerClient("DefaultEndpointsProtocol=https;...", "files");
 ```
 
-### 2. Implement Soft Delete
-
-```csharp
-// ✅ DO - Consider soft delete for important files
-public class FileEntity
-{
-    public bool IsDeleted { get; set; }
-    public DateTime? DeletedAt { get; set; }
-}
-
-// In delete implementation:
-newUpload: async uploadInfo =>
-{
-    // Don't actually delete, just mark as deleted
-    file.IsDeleted = true;
-    file.DeletedAt = DateTime.UtcNow;
-    await _context.SaveChangesAsync();
-}
-```
-
-### 3. Use Structured Blob Paths
+### 2. Use Structured Blob Paths
 
 ```csharp
 // ✅ DO - Use organized, hierarchical paths
@@ -417,7 +239,7 @@ $"users/{userId}/documents/{guid}/{filename}"
 $"{guid}-{filename}"
 ```
 
-### 4. Handle Upload Failures
+### 3. Handle Upload Failures
 
 ```csharp
 // ✅ DO - Handle partial failures
@@ -460,27 +282,6 @@ newUpload: async uploadInfo =>
 - **Cause**: Exception in `newUpload` callback after blob upload
 - **Solution**: Wrap database operations in try-catch and delete blob on failure
 
-**Issue: Downloaded files are corrupted**
-- **Cause**: Stream not properly positioned or disposed
-- **Solution**: Ensure streams are at position 0 and use `using` statements
-
-**Issue: Very slow uploads/downloads**
-- **Cause**: Not using streaming, loading entire file into memory
-- **Solution**: The library uses streaming by default, but ensure your code doesn't buffer the entire stream
-
-**Issue: Blob paths with special characters cause errors**
-- **Cause**: Invalid characters in blob names
-- **Solution**: Sanitize filenames:
-  ```csharp
-  var sanitizedName = Path.GetFileName(request.FileName)
-      .Replace(" ", "-")
-      .Replace("&", "and");
-  ```
-
-**Issue: High Azure storage costs**
-- **Cause**: Storing too many or too large files
-- **Solution**: Implement file size limits, compress images, use blob lifecycle policies to archive old files
-
 ## Configuration
 
 ### appsettings.json
@@ -497,23 +298,8 @@ newUpload: async uploadInfo =>
 }
 ```
 
-### Environment Variables (Recommended for Production)
-
-```bash
-AZURE__STORAGE__ACCOUNTNAME=mystorageaccount
-AZURE__STORAGE__CONTAINERNAME=files
-# No connection string needed when using managed identity
-```
-
 ## Project Structure Location
 
 - **Path**: `Astrolabe.FileStorage.Azure/`
 - **Project File**: `Astrolabe.FileStorage.Azure.csproj`
 - **Namespace**: `Astrolabe.FileStorage.Azure`
-- **NuGet**: https://www.nuget.org/packages/Astrolabe.FileStorage.Azure/
-
-## Related Documentation
-
-- [Astrolabe.FileStorage](./astrolabe-file-storage.md) - Base file storage abstraction
-- [Azure Blob Storage](https://docs.microsoft.com/en-us/azure/storage/blobs/) - Azure documentation
-- [Azure Identity](https://docs.microsoft.com/en-us/dotnet/api/azure.identity) - Authentication options

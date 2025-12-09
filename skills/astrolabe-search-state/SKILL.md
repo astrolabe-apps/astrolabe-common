@@ -1,3 +1,8 @@
+---
+name: astrolabe-search-state
+description: Generic search, filtering, sorting, and pagination utilities for .NET. Use when implementing search APIs with dynamic filtering, sorting, and pagination for list/grid endpoints.
+---
+
 # Astrolabe.SearchState - Generic Search & Filtering
 
 ## Overview
@@ -103,54 +108,6 @@ public class ProductDto
 }
 ```
 
-### Custom Sorting Logic
-
-```csharp
-using Astrolabe.SearchState;
-using System.Linq.Expressions;
-
-// Create custom sorter
-var sorter = SearchHelper.MakeSorter<Product>(field =>
-{
-    // Handle special "relevance" sort
-    if (field == "relevance")
-    {
-        var param = Expression.Parameter(typeof(Product));
-        return Expression.Lambda<Func<Product, object>>(
-            Expression.Convert(
-                Expression.Property(param, nameof(Product.ViewCount)),
-                typeof(object)
-            ),
-            param
-        );
-    }
-
-    // Handle "popularity" sort (combination of views and sales)
-    if (field == "popularity")
-    {
-        var param = Expression.Parameter(typeof(Product));
-        var viewCount = Expression.Property(param, nameof(Product.ViewCount));
-        var salesCount = Expression.Property(param, nameof(Product.SalesCount));
-        var combined = Expression.Add(viewCount, salesCount);
-
-        return Expression.Lambda<Func<Product, object>>(
-            Expression.Convert(combined, typeof(object)),
-            param
-        );
-    }
-
-    // Return null to use default property-based sorting
-    return null;
-});
-
-// Use custom sorter
-var searcher = SearchHelper.CreateSearcher<Product, ProductDto>(
-    query => query.Select(/* ... */).ToListAsync(),
-    query => query.CountAsync(),
-    sorter // Custom sorter
-);
-```
-
 ### Custom Filtering Logic
 
 ```csharp
@@ -185,30 +142,6 @@ var filterer = SearchHelper.MakeFilterer<Product>(field =>
                 p.Description.Contains(searchTerm) ||
                 p.Category.Name.Contains(searchTerm)
             );
-        };
-    }
-
-    // Handle date range filter
-    if (field == "createdDateRange")
-    {
-        return (query, values) =>
-        {
-            if (values.Count != 2) return query;
-            if (!DateTime.TryParse(values[0], out var start)) return query;
-            if (!DateTime.TryParse(values[1], out var end)) return query;
-
-            return query.Where(p => p.CreatedAt >= start && p.CreatedAt <= end);
-        };
-    }
-
-    // Handle multi-select filter (e.g., categories)
-    if (field == "categories")
-    {
-        return (query, values) =>
-        {
-            if (values.Count == 0) return query;
-            var categoryIds = values.Select(int.Parse).ToList();
-            return query.Where(p => categoryIds.Contains(p.CategoryId));
         };
     }
 
@@ -255,138 +188,6 @@ public class ProductsController : ControllerBase
 // GET /api/products?offset=0&length=10
 // GET /api/products?query=laptop&sort=price&sortDesc=false
 // GET /api/products?filters[category]=electronics&filters[priceRange]=100,500
-```
-
-### Complete Search Service with Custom Logic
-
-```csharp
-using Astrolabe.SearchState;
-using Microsoft.EntityFrameworkCore;
-
-public class AdvancedProductService
-{
-    private readonly AppDbContext _context;
-    private readonly SearchDelegate<Product, ProductDto> _searcher;
-
-    public AdvancedProductService(AppDbContext context)
-    {
-        _context = context;
-
-        // Create custom sorter
-        var sorter = SearchHelper.MakeSorter<Product>(field =>
-        {
-            return field switch
-            {
-                "relevance" => MakePropertyExpression<Product>("ViewCount"),
-                "popularity" => MakeCombinedExpression(),
-                _ => null // Use default
-            };
-        });
-
-        // Create custom filterer
-        var filterer = SearchHelper.MakeFilterer<Product>(field =>
-        {
-            return field switch
-            {
-                "search" => HandleTextSearch,
-                "priceRange" => HandlePriceRange,
-                "categories" => HandleCategories,
-                "inStock" => HandleInStock,
-                _ => null // Use default
-            };
-        });
-
-        // Build searcher
-        _searcher = SearchHelper.CreateSearcher<Product, ProductDto>(
-            query => query.Select(p => new ProductDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                Price = p.Price,
-                CategoryName = p.Category.Name,
-                InStock = p.Stock > 0
-            }).ToListAsync(),
-            query => query.CountAsync(),
-            sorter,
-            filterer,
-            maxLength: 100 // Max 100 items per page
-        );
-    }
-
-    public Task<SearchResults<ProductDto>> SearchProducts(
-        SearchOptions options,
-        bool includeTotal = true)
-    {
-        return _searcher(_context.Products, options, includeTotal);
-    }
-
-    // Custom filter implementations
-    private IQueryable<Product> HandleTextSearch(
-        IQueryable<Product> query,
-        IReadOnlyList<string> values)
-    {
-        var searchTerm = values.FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(searchTerm)) return query;
-
-        return query.Where(p =>
-            EF.Functions.Like(p.Name, $"%{searchTerm}%") ||
-            EF.Functions.Like(p.Description, $"%{searchTerm}%")
-        );
-    }
-
-    private IQueryable<Product> HandlePriceRange(
-        IQueryable<Product> query,
-        IReadOnlyList<string> values)
-    {
-        if (values.Count != 2) return query;
-        if (!decimal.TryParse(values[0], out var min)) return query;
-        if (!decimal.TryParse(values[1], out var max)) return query;
-
-        return query.Where(p => p.Price >= min && p.Price <= max);
-    }
-
-    private IQueryable<Product> HandleCategories(
-        IQueryable<Product> query,
-        IReadOnlyList<string> values)
-    {
-        if (values.Count == 0) return query;
-        var categoryIds = values.Select(int.Parse).ToList();
-        return query.Where(p => categoryIds.Contains(p.CategoryId));
-    }
-
-    private IQueryable<Product> HandleInStock(
-        IQueryable<Product> query,
-        IReadOnlyList<string> values)
-    {
-        var inStockOnly = values.FirstOrDefault()?.ToLower() == "true";
-        if (!inStockOnly) return query;
-
-        return query.Where(p => p.Stock > 0);
-    }
-
-    private Expression<Func<Product, object>> MakeCombinedExpression()
-    {
-        var param = Expression.Parameter(typeof(Product));
-        var viewCount = Expression.Property(param, nameof(Product.ViewCount));
-        var salesCount = Expression.Property(param, nameof(Product.SalesCount));
-        var combined = Expression.Add(viewCount, salesCount);
-
-        return Expression.Lambda<Func<Product, object>>(
-            Expression.Convert(combined, typeof(object)),
-            param
-        );
-    }
-
-    private Expression<Func<T, object>>? MakePropertyExpression<T>(string propertyName)
-    {
-        var param = Expression.Parameter(typeof(T));
-        var property = Expression.Property(param, propertyName);
-        return Expression.Lambda<Func<T, object>>(
-            Expression.Convert(property, typeof(object)),
-            param
-        );
-    }
-}
 ```
 
 ## Best Practices
@@ -469,37 +270,14 @@ return (query, values) => query.Where(p =>
 
 **Issue: Filters not being applied**
 - **Cause**: Custom filterer returning null instead of filtered query
-- **Solution**: Always return the query from filter functions, even if unchanged:
-  ```csharp
-  if (string.IsNullOrEmpty(searchTerm)) return query; // ✅
-  if (string.IsNullOrEmpty(searchTerm)) return null; // ❌
-  ```
+- **Solution**: Always return the query from filter functions, even if unchanged
 
 **Issue: Count query is slow**
 - **Cause**: Complex joins or lack of indexes
 - **Solution**: Add database indexes on filtered/sorted columns, simplify count query if possible
-
-**Issue: Search returns wrong total count**
-- **Cause**: Filters not applied before counting
-- **Solution**: Ensure filters are applied in the correct order
-
-**Issue: Expression errors when building custom sorts/filters**
-- **Cause**: Incorrect expression tree construction
-- **Solution**: Use simpler LINQ lambda expressions when possible, or test expression construction separately
-
-**Issue: Client sends invalid filter values**
-- **Cause**: No validation on client side
-- **Solution**: Always validate filter values in custom filterers. Return unmodified query for invalid input.
 
 ## Project Structure Location
 
 - **Path**: `Astrolabe.SearchState/`
 - **Project File**: `Astrolabe.SearchState.csproj`
 - **Namespace**: `Astrolabe.SearchState`
-- **NuGet**: https://www.nuget.org/packages/Astrolabe.SearchState/
-
-## Related Documentation
-
-- [Astrolabe.Common](./astrolabe-common.md) - Base utilities
-- [astrolabe-searchstate](../typescript/astrolabe-searchstate.md) - TypeScript client
-- [Entity Framework Core](https://docs.microsoft.com/en-us/ef/core/) - Database queries

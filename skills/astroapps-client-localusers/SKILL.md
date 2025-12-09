@@ -1,3 +1,8 @@
+---
+name: astroapps-client-localusers
+description: React hooks for local user authentication UI including login, signup, password reset, MFA, and account management. Use when building authentication pages for email/password authentication instead of OAuth providers.
+---
+
 # @astroapps/client-localusers - Local User Authentication UI
 
 ## Overview
@@ -492,121 +497,6 @@ export default function MfaPage() {
 }
 ```
 
-### Email Verification Page
-
-```typescript
-import { useVerifyPage } from "@astroapps/client-localusers";
-import { Finput } from "@react-typed-forms/core";
-import { useSecurityService } from "@astroapps/client";
-
-export default function VerifyEmailPage() {
-  const security = useSecurityService();
-
-  const { control, mfaControl, authenticate, send } = useVerifyPage(
-    async (verificationCode: string) => {
-      // Verify email with code from URL
-      const response = await fetch("/api/auth/verify-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ verificationCode }),
-      });
-
-      if (!response.ok) {
-        throw response;
-      }
-
-      const data = await response.json();
-
-      // Return verification result
-      return {
-        token: data.token,
-        requiresMfa: data.requiresMfa,
-      };
-    },
-    async (mfaData) => {
-      // If MFA is required after email verification
-      const response = await fetch("/api/auth/mfa-verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mfaData),
-      });
-
-      if (!response.ok) {
-        throw response;
-      }
-
-      const { accessToken, user } = await response.json();
-
-      security.currentUser.value = {
-        loggedIn: true,
-        accessToken,
-        name: user.name,
-        email: user.email,
-        roles: user.roles || [],
-      };
-    },
-    async (mfaData) => {
-      // Send MFA code
-      const response = await fetch("/api/auth/mfa-send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: mfaData.token }),
-      });
-
-      if (!response.ok) {
-        throw response;
-      }
-    }
-  );
-
-  const handleMfaSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = await authenticate();
-    if (success) {
-      window.location.href = "/dashboard";
-    }
-  };
-
-  if (control.error) {
-    return (
-      <div>
-        <h1>Verification Failed</h1>
-        <p>{control.error}</p>
-        <a href="/auth/signup">Sign up again</a>
-      </div>
-    );
-  }
-
-  if (!control.value.requiresMfa) {
-    return (
-      <div>
-        <h1>Email Verified!</h1>
-        <p>Your email has been verified successfully.</p>
-        <a href="/auth/login">Continue to login</a>
-      </div>
-    );
-  }
-
-  // MFA required
-  return (
-    <form onSubmit={handleMfaSubmit}>
-      <h1>Two-Factor Authentication</h1>
-      <p>Please enter the code sent to your phone.</p>
-
-      <div>
-        <label>Verification Code</label>
-        <Finput type="text" control={mfaControl.fields.code} />
-      </div>
-
-      <button type="submit">Verify</button>
-      <button type="button" onClick={() => send()}>
-        Resend Code
-      </button>
-    </form>
-  );
-}
-```
-
 ### Change Password Page
 
 ```typescript
@@ -668,61 +558,6 @@ export default function ChangePasswordPage() {
 }
 ```
 
-### Change Email Page
-
-```typescript
-import { useChangeEmailPage } from "@astroapps/client-localusers";
-import { Finput } from "@react-typed-forms/core";
-
-export default function ChangeEmailPage() {
-  const { control, changeEmail } = useChangeEmailPage(
-    async (emailData) => {
-      const response = await fetch("/api/user/change-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(emailData),
-      });
-
-      if (!response.ok) {
-        throw response;
-      }
-
-      return response.json();
-    }
-  );
-
-  const { fields } = control;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const success = await changeEmail();
-    if (success) {
-      alert("Email change request sent! Please check your new email to verify.");
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <h1>Change Email</h1>
-
-      <div>
-        <label>Current Password</label>
-        <Finput type="password" control={fields.password} />
-        {fields.password.error && <span className="error">{fields.password.error}</span>}
-      </div>
-
-      <div>
-        <label>New Email</label>
-        <Finput type="email" control={fields.newEmail} />
-        {fields.newEmail.error && <span className="error">{fields.newEmail.error}</span>}
-      </div>
-
-      <button type="submit">Change Email</button>
-    </form>
-  );
-}
-```
-
 ### Custom Error Messages
 
 ```typescript
@@ -744,30 +579,6 @@ export default function LoginPageWithCustomErrors() {
 
   // Rest of component...
 }
-```
-
-### Using Default Route Configurations
-
-```typescript
-import { defaultUserRoutes } from "@astroapps/client-localusers";
-
-// Use default route configurations with PageSecurity
-const routes = {
-  ...defaultUserRoutes,
-  dashboard: { label: "Dashboard", allowGuests: false },
-  admin: { label: "Admin", allowGuests: false, roles: ["Admin"] },
-};
-
-// defaultUserRoutes provides:
-// - login (allows guests, forwards authenticated users)
-// - logout (requires authentication)
-// - signup (allows guests, forwards authenticated users)
-// - forgotPassword (allows guests, forwards authenticated users)
-// - resetPassword (allows guests)
-// - mfa (allows guests, forwards authenticated users)
-// - verify (allows guests, forwards authenticated users)
-// - changePassword (requires authentication)
-// - changeEmail (requires authentication)
 ```
 
 ## Best Practices
@@ -869,9 +680,3 @@ interface CustomSignup { // Missing required fields
 - **Path**: `astrolabe-client-localusers/`
 - **Published to**: npm
 - **Version**: 1.0.0+
-
-## Related Documentation
-
-- [astroapps-client](./astroapps-client.md) - Core client library with SecurityService interface
-- [react-typed-forms-core](./react-typed-forms-core.md) - Form state management
-- [astrolabe-local-users](../dotnet/astrolabe-local-users.md) - .NET backend for local user authentication

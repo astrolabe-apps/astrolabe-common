@@ -1,67 +1,56 @@
-# Astrolabe Library Skills for Claude Code
+# Astrolabe Skills
 
-This directory contains Claude Code skill files that provide comprehensive knowledge about Astrolabe libraries. These skills enable Claude Code to assist with development using the Astrolabe framework.
-
-## What are Skills?
-
-Skills are specialized knowledge domains that enhance Claude Code's ability to help you work with specific libraries and frameworks. Each skill file contains:
-
-- Library overview and architecture
-- Key concepts and patterns
-- API references with examples
-- Integration guidance
-- Troubleshooting tips
-- Best practices
-
-## How to Use These Skills
-
-### Option 1: Copy to Your Project
-
-Copy the `skills/` directory (or individual skill files) to your project's `.claude/skills/` directory:
-
-```bash
-# Copy all skills
-cp -r skills/ /path/to/your/project/.claude/skills/
-
-# Or copy specific skills you need
-cp skills/dotnet/astrolabe-schemas.md /path/to/your/project/.claude/skills/
-cp skills/typescript/react-typed-forms-core.md /path/to/your/project/.claude/skills/
-```
-
-### Option 2: Invoke Skills Directly
-
-When working in this repository, invoke skills using the `/skill` command or by referencing them in your prompts:
-
-```
-# Example: Get help with schemas
-Can you help me create a schema using the astrolabe-schemas skill?
-
-# Example: Generate form code
-Using react-typed-forms-core, create a form with validation
-```
+This directory contains Claude Code skills for the Astrolabe framework. Each skill provides documentation and patterns for using specific packages.
 
 ## Available Skills
 
 ### .NET Libraries
 
-| Skill File | Library | Purpose |
-|------------|---------|---------|
-| `dotnet/astrolabe-common.md` | Astrolabe.Common | Base utilities, LINQ extensions, list editing |
-| `dotnet/astrolabe-schemas.md` | Astrolabe.Schemas | Schema definitions bridging .NET to TypeScript |
-| `dotnet/astrolabe-web-common.md` | Astrolabe.Web.Common | JWT authentication, SPA hosting |
-| `dotnet/astrolabe-local-users.md` | Astrolabe.LocalUsers | User management, email verification, MFA |
-| `dotnet/astrolabe-file-storage.md` | Astrolabe.FileStorage | File storage abstractions |
-| `dotnet/astrolabe-file-storage-azure.md` | Astrolabe.FileStorage.Azure | Azure Blob Storage implementation |
-| `dotnet/astrolabe-search-state.md` | Astrolabe.SearchState | Generic search state management |
-| `dotnet/astrolabe-workflow.md` | Astrolabe.Workflow | Workflow execution patterns |
+| Skill | Package | Description |
+|-------|---------|-------------|
+| [astrolabe-common](./astrolabe-common/) | `Astrolabe.Common` | Base utilities, exceptions, LINQ extensions |
+| [astrolabe-schemas](./astrolabe-schemas/) | `Astrolabe.Schemas` | C# schema definitions bridging to TypeScript |
+| [astrolabe-web-common](./astrolabe-web-common/) | `Astrolabe.Web.Common` | JWT auth and SPA hosting |
+| [astrolabe-local-users](./astrolabe-local-users/) | `Astrolabe.LocalUsers` | Local user authentication backend |
+| [astrolabe-file-storage](./astrolabe-file-storage/) | `Astrolabe.FileStorage` | File storage abstractions |
+| [astrolabe-file-storage-azure](./astrolabe-file-storage-azure/) | `Astrolabe.FileStorage.Azure` | Azure Blob Storage implementation |
+| [astrolabe-search-state](./astrolabe-search-state/) | `Astrolabe.SearchState` | Search, filtering, and pagination |
+| [astrolabe-workflow](./astrolabe-workflow/) | `Astrolabe.Workflow` | Workflow execution framework |
 
 ### TypeScript/React Libraries
 
-| Skill File | Library | Purpose |
-|------------|---------|---------|
-| `typescript/react-typed-forms-core.md` | @react-typed-forms/core | Type-safe form state management |
-| `typescript/react-typed-forms-schemas.md` | @react-typed-forms/schemas | Schema-driven form generation |
-| `typescript/react-typed-forms-mui.md` | @react-typed-forms/mui | Material-UI integration |
+| Skill | Package | Description |
+|-------|---------|-------------|
+| [react-typed-forms-core](./react-typed-forms-core/) | `@react-typed-forms/core` | Core type-safe form state management |
+| [react-typed-forms-schemas](./react-typed-forms-schemas/) | `@react-typed-forms/schemas` | Schema-driven form generation |
+| [react-typed-forms-mui](./react-typed-forms-mui/) | `@react-typed-forms/mui` | Material-UI integration |
+| [astroapps-client](./astroapps-client/) | `@astroapps/client` | Core React client library |
+| [astroapps-client-nextjs](./astroapps-client-nextjs/) | `@astroapps/client-nextjs` | Next.js App Router integration |
+| [astroapps-client-msal](./astroapps-client-msal/) | `@astroapps/client-msal` | Azure AD/MSAL authentication |
+| [astroapps-client-localusers](./astroapps-client-localusers/) | `@astroapps/client-localusers` | Local user authentication UI |
+
+### Guides
+
+| Skill | Description |
+|-------|-------------|
+| [appforms-bootstrap](./appforms-bootstrap/) | Bootstrapping AppForms with C# schemas, form rendering, and visual editor |
+
+## Skill Format
+
+Each skill is a directory containing a `SKILL.md` file with YAML frontmatter:
+
+```markdown
+---
+name: skill-name
+description: Brief description of when to use this skill
+---
+
+# Skill Title
+
+Documentation content...
+```
+
+The `name` field should be lowercase with hyphens. The `description` field tells Claude Code when to invoke this skill.
 
 ## Skill Capabilities
 
@@ -71,15 +60,6 @@ Each skill enables Claude Code to:
 2. **Generate Code Examples** - Provide working code snippets for common tasks
 3. **Architectural Guidance** - Recommend best practices and integration approaches
 4. **Debug Issues** - Help troubleshoot common problems and errors
-
-## Contributing
-
-To add new skills or improve existing ones:
-
-1. Follow the structure of existing skill files
-2. Include practical code examples
-3. Reference actual library code and documentation
-4. Test that the skill helps Claude Code provide accurate assistance
 
 ## Related Documentation
 

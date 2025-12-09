@@ -1,3 +1,8 @@
+---
+name: astroapps-client-msal
+description: Microsoft Authentication Library (MSAL) integration for @astroapps/client with Azure AD/Entra ID authentication. Use when building React apps that need Azure AD authentication with popup or redirect flows.
+---
+
 # @astroapps/client-msal - Microsoft Authentication Library Integration
 
 ## Overview
@@ -175,47 +180,6 @@ function App() {
 }
 ```
 
-### Multi-Tenant Configuration
-
-```typescript
-import { PublicClientApplication } from "@azure/msal-browser";
-import { wrapWithMsalContext, useMsalSecurityService } from "@astroapps/client-msal";
-
-// Multi-tenant Azure AD configuration
-const msalConfig = {
-  auth: {
-    clientId: "your-client-id",
-    authority: "https://login.microsoftonline.com/common", // Multi-tenant
-    redirectUri: window.location.origin,
-  },
-  cache: {
-    cacheLocation: "localStorage", // Persist across sessions
-    storeAuthStateInCookie: true, // For IE11/Edge compatibility
-  },
-};
-
-const msalInstance = new PublicClientApplication(msalConfig);
-
-function RootLayout({ children }: { children: React.ReactNode }) {
-  const security = useMsalSecurityService({
-    getUserData: async (fetch) => {
-      // Fetch tenant-specific roles
-      const response = await fetch("/api/user/tenant-roles");
-      const data = await response.json();
-      return { roles: data.roles };
-    },
-  });
-
-  return (
-    <AppContextProvider value={{ security }}>
-      {children}
-    </AppContextProvider>
-  );
-}
-
-export default wrapWithMsalContext(RootLayout, msalInstance);
-```
-
 ### Login Component
 
 ```typescript
@@ -347,154 +311,6 @@ function UserProfile() {
     </div>
   );
 }
-```
-
-### Custom Token Extraction
-
-```typescript
-import { useMsalSecurityService } from "@astroapps/client-msal";
-
-function App() {
-  const security = useMsalSecurityService({
-    // Extract ID token instead of access token
-    getTokenFromResult: (result) => result.idToken,
-
-    // Or extract custom token from claims
-    getTokenFromResult: (result) => {
-      const customToken = result.account?.idTokenClaims?.["custom_token"];
-      return customToken || result.accessToken;
-    },
-  });
-
-  return <AppContextProvider value={{ security }}>...</AppContextProvider>;
-}
-```
-
-### Custom Request Adjustment
-
-```typescript
-import { useMsalSecurityService } from "@astroapps/client-msal";
-
-function App() {
-  const security = useMsalSecurityService({
-    // Add custom headers to all authenticated requests
-    adjustRequest: (req) => {
-      const newReq = new Request(req, {
-        headers: {
-          ...Object.fromEntries(req.headers.entries()),
-          "X-Custom-Header": "value",
-          "X-Tenant-Id": "your-tenant-id",
-        },
-      });
-      return newReq;
-    },
-  });
-
-  return <AppContextProvider value={{ security }}>...</AppContextProvider>;
-}
-```
-
-### Custom URL Storage (for After-Login Redirect)
-
-```typescript
-import { useMsalSecurityService } from "@astroapps/client-msal";
-
-function App() {
-  const security = useMsalSecurityService({
-    // Use localStorage instead of sessionStorage
-    urlStorage: () => localStorage,
-
-    // Or use a custom storage implementation
-    urlStorage: () => ({
-      setItem: (key, value) => {
-        // Custom storage logic
-        window.customStorage.set(key, value);
-      },
-      getItem: (key) => {
-        return window.customStorage.get(key);
-      },
-      removeItem: (key) => {
-        window.customStorage.remove(key);
-      },
-    }),
-  });
-
-  return <AppContextProvider value={{ security }}>...</AppContextProvider>;
-}
-```
-
-### Handling Authentication Errors
-
-```typescript
-import { useSecurityService } from "@astroapps/client";
-import { useEffect, useState } from "react";
-
-function App() {
-  const security = useSecurityService();
-  const [authError, setAuthError] = useState<string | null>(null);
-  const user = security.currentUser.value;
-
-  const handleLogin = async () => {
-    try {
-      setAuthError(null);
-      await security.login();
-    } catch (error) {
-      console.error("Authentication failed:", error);
-      setAuthError("Failed to authenticate. Please try again.");
-    }
-  };
-
-  return (
-    <div>
-      {authError && <div className="error">{authError}</div>}
-      {!user.loggedIn && (
-        <button onClick={handleLogin}>Sign In</button>
-      )}
-    </div>
-  );
-}
-```
-
-### B2C Configuration
-
-```typescript
-import { PublicClientApplication } from "@azure/msal-browser";
-import { wrapWithMsalContext, useMsalSecurityService } from "@astroapps/client-msal";
-
-// Azure AD B2C configuration
-const msalConfig = {
-  auth: {
-    clientId: "your-b2c-client-id",
-    authority: "https://your-tenant.b2clogin.com/your-tenant.onmicrosoft.com/B2C_1_signupsignin",
-    knownAuthorities: ["your-tenant.b2clogin.com"],
-    redirectUri: window.location.origin,
-  },
-  cache: {
-    cacheLocation: "sessionStorage",
-    storeAuthStateInCookie: false,
-  },
-};
-
-const msalInstance = new PublicClientApplication(msalConfig);
-
-function RootLayout({ children }: { children: React.ReactNode }) {
-  const security = useMsalSecurityService({
-    silentRequest: {
-      scopes: ["openid", "profile"],
-    },
-    popupRequest: {
-      scopes: ["openid", "profile"],
-    },
-  });
-
-  return (
-    <AppContextProvider value={{ security }}>
-      {children}
-    </AppContextProvider>
-  );
-}
-
-export default wrapWithMsalContext(RootLayout, msalInstance);
 ```
 
 ## Best Practices
@@ -632,9 +448,3 @@ cache: {
 - **Path**: `astrolabe-client-msal/`
 - **Published to**: npm
 - **Version**: 3.0.0+
-
-## Related Documentation
-
-- [astroapps-client](./astroapps-client.md) - Core client library with SecurityService interface
-- [Microsoft MSAL Documentation](https://learn.microsoft.com/en-us/azure/active-directory/develop/msal-overview) - Official MSAL docs
-- [Azure AD App Registration](https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app) - Setting up Azure AD apps

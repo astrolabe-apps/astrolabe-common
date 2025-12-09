@@ -1,3 +1,8 @@
+---
+name: react-typed-forms-core
+description: Core TypeScript/React library for type-safe form state management with useControl hook, Finput component, and built-in validation. Use when building React forms needing type-safe state, validation, and change tracking.
+---
+
 # @react-typed-forms/core - Type-Safe Form State Management
 
 ## Overview
@@ -292,61 +297,6 @@ function FormWithChangeTracking() {
 }
 ```
 
-### Conditional Validation
-
-```typescript
-import { useControl, Validator, RenderControl } from "@react-typed-forms/core";
-
-interface ShippingForm {
-  sameAsBilling: boolean;
-  shippingAddress?: string;
-}
-
-function ConditionalForm() {
-  const formState = useControl<ShippingForm>(
-    { sameAsBilling: true },
-    {
-      fields: {
-        shippingAddress: {
-          // Only validate if sameAsBilling is false
-          validator: (value, control) => {
-            const parent = control.parent?.value as ShippingForm;
-            if (parent.sameAsBilling) return null; // Skip validation
-
-            return value ? null : "Shipping address is required";
-          }
-        }
-      }
-    }
-  );
-
-  const { fields } = formState;
-
-  return (
-    <form>
-      <label>
-        <input
-          type="checkbox"
-          checked={fields.sameAsBilling.value}
-          onChange={(e) => fields.sameAsBilling.setValue(e.target.checked)}
-        />
-        Same as billing address
-      </label>
-
-      {!fields.sameAsBilling.value && (
-        <div>
-          <label>Shipping Address</label>
-          <Finput type="text" control={fields.shippingAddress} />
-          {fields.shippingAddress.error && (
-            <span>{fields.shippingAddress.error}</span>
-          )}
-        </div>
-      )}
-    </form>
-  );
-}
-```
-
 ### Manual Control Manipulation
 
 ```typescript
@@ -502,9 +452,3 @@ import { notEmpty, minLength } from "@react-typed-forms/core";
 - **Path**: `core/`
 - **Published to**: npm
 - **GitHub**: https://github.com/doolse/react-typed-forms
-
-## Related Documentation
-
-- [react-typed-forms-schemas](./react-typed-forms-schemas.md) - Schema-driven forms
-- [react-typed-forms-mui](./react-typed-forms-mui.md) - Material-UI integration
-- [Astrolabe.Schemas](../dotnet/astrolabe-schemas.md) - C# schema definitions

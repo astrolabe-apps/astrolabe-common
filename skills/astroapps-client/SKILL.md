@@ -1,3 +1,8 @@
+---
+name: astroapps-client
+description: Core React client library for authentication (SecurityService), navigation with URL query syncing, API clients, form validation, toast notifications, and breadcrumbs. Foundation for all @astroapps client packages.
+---
+
 # @astroapps/client - Core Client Library
 
 ## Overview
@@ -330,28 +335,6 @@ function UpdateProfileForm() {
 }
 ```
 
-### Page-Level Security
-
-```typescript
-import { usePageSecurity } from "@astroapps/client";
-
-function AdminDashboard() {
-  // Redirects unauthenticated users to /login
-  // Returns true while checking authentication
-  const isLoading = usePageSecurity(
-    "/login",      // loginHref - redirect here if not logged in
-    "/dashboard",  // defaultHref - redirect here after login
-    "/logout"      // logoutHref - logout page path
-  );
-
-  if (isLoading) {
-    return <LoadingSpinner />;
-  }
-
-  return <AdminContent />;
-}
-```
-
 ### Toast Notifications
 
 ```typescript
@@ -443,71 +426,6 @@ function UserDetailPage({ userId }: { userId: string }) {
   }, [userId]);
 
   return <div>User details...</div>;
-}
-```
-
-### Search State Management
-
-```typescript
-import { useSearchingState } from "@astroapps/client";
-
-function SearchableTable() {
-  const searchState = useSearchingState({
-    page: 1,
-    perPage: 20,
-    query: "",
-    sort: [],
-    filters: {},
-    loading: false,
-    totalRows: 0,
-  });
-
-  const fields = searchState.fields;
-
-  useEffect(() => {
-    fields.loading.value = true;
-    fetchData({
-      page: fields.page.value,
-      perPage: fields.perPage.value,
-      query: fields.query.value,
-      sort: fields.sort.value,
-      filters: fields.filters.value,
-    }).then(result => {
-      fields.totalRows.value = result.total;
-      fields.loading.value = false;
-    });
-  }, [
-    fields.page.value,
-    fields.perPage.value,
-    fields.query.value,
-    fields.sort.value,
-    fields.filters.value,
-  ]);
-
-  return (
-    <div>
-      <input
-        value={fields.query.value}
-        onChange={(e) => {
-          fields.query.value = e.target.value;
-          fields.page.value = 1; // Reset to first page
-        }}
-        placeholder="Search..."
-      />
-
-      {fields.loading.value ? (
-        <p>Loading...</p>
-      ) : (
-        <Table data={data} />
-      )}
-
-      <Pagination
-        currentPage={fields.page.value}
-        totalPages={Math.ceil(fields.totalRows.value / fields.perPage.value)}
-        onPageChange={(page) => { fields.page.value = page; }}
-      />
-    </div>
-  );
 }
 ```
 
@@ -606,10 +524,3 @@ await fetch("/api/data", {
 - **Path**: `astrolabe-client/`
 - **Published to**: npm
 - **Version**: 2.6.0+
-
-## Related Documentation
-
-- [react-typed-forms-core](./react-typed-forms-core.md) - Form state management
-- [astroapps-client-nextjs](./astroapps-client-nextjs.md) - Next.js integration
-- [astroapps-client-msal](./astroapps-client-msal.md) - Microsoft Authentication
-- [astroapps-client-localusers](./astroapps-client-localusers.md) - Local user authentication
