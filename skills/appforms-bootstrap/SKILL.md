@@ -34,6 +34,59 @@ npm install @astroapps/schemas-editor flexlayout-react
 
 ## Project Structure
 
+### Rush Monorepo with Shared Library (Preferred)
+
+If the project has a Rush monorepo with a shared library (commonly named `client-common`), place the AppForms infrastructure code in the shared library:
+
+```
+MyProject.Api/
+├── Forms/
+│   ├── AppForms.cs               # Form definitions
+│   └── MyForm.cs                 # Form classes
+├── Controllers/
+│   └── FormsController.cs        # Schema/form endpoints
+└── ClientApp/
+    ├── rush.json                 # Rush monorepo config
+    ├── client-common/            # Shared library
+    │   ├── package.json
+    │   └── src/
+    │       ├── schemas.ts        # Generated schemas
+    │       ├── formDefs.ts       # Generated form module
+    │       ├── formDefs/         # Form JSON files
+    │       │   └── MyForm.json
+    │       ├── renderer.tsx      # Form renderer setup
+    │       └── AppForm.tsx       # Main form component
+    └── sites/
+        └── my-frontend/          # Frontend app(s)
+            ├── package.json
+            └── src/
+                └── components/   # App-specific components
+```
+
+**What goes in `client-common`:**
+- Generated files (`schemas.ts`, `formDefs.ts`, `formDefs/`)
+- Renderer setup (`renderer.tsx`)
+- AppForm component (`AppForm.tsx`)
+- Shared form utilities and custom renderers
+
+**What stays in `sites/{frontend}/`:**
+- App-specific pages and components
+- App-specific routing and layouts
+
+Update the `gencode` script paths to target the shared library:
+
+```json
+{
+  "scripts": {
+    "gencode": "h get http://localhost:5000/api/forms/Schemas > client-common/src/schemas.ts && h get http://localhost:5000/api/forms/Forms > client-common/src/formDefs.ts && prettier -w client-common/src/schemas.ts client-common/src/formDefs.ts"
+  }
+}
+```
+
+### Simple Structure (No Shared Library)
+
+If no shared library exists, place everything in the main `src/` directory:
+
 ```
 MyProject.Api/
 ├── Forms/
@@ -172,7 +225,7 @@ public class FormsController : ControllerBase
                 await System.IO.File.WriteAllTextAsync(
                     jsonFile,
                     JsonSerializer.Serialize(
-                        new { Controls = Enumerable.Empty<object>(), Config = new { } },
+                        new { Controls = Enumerable.Empty<object>(), Config = new { }, Fields = new { } },
                         Indented
                     )
                 );
@@ -316,7 +369,8 @@ import {
   createSchemaDataNode,
   createSchemaLookup,
   FormRenderer,
-  RenderForm,
+  RenderForm, 
+  SchemaField,
 } from "@react-typed-forms/schemas";
 import { FormDefinitions } from "./formDefs";
 import { SchemaMap } from "./schemas";
@@ -324,7 +378,7 @@ import { formRenderer } from "./renderer";
 
 export type FormType = keyof typeof FormDefinitions;
 
-export const schemaLookup = createSchemaLookup(SchemaMap);
+export const schemaLookup = createSchemaLookup(SchemaMap  as Record<string, SchemaField[]>);
 
 interface AppFormProps<T> {
   formType: FormType;
@@ -375,7 +429,7 @@ export function ContactPage() {
 
 ```tsx
 // src/editor.tsx
-import { BasicFormEditor, readOnlySchemas } from "@react-typed-forms/schemas-editor";
+import { BasicFormEditor, readOnlySchemas } from "@astroapps/schemas-editor";
 import { FormDefinitions } from "./formDefs";
 import { SchemaMap } from "./schemas";
 import { formRenderer } from "./renderer";
@@ -415,7 +469,7 @@ module.exports = {
   content: [
     "./src/**/*.{js,ts,jsx,tsx}",
     "./node_modules/@react-typed-forms/schemas-html/**/*.{js,ts,jsx,tsx}",
-    "./node_modules/@react-typed-forms/schemas-editor/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@astroapps/schemas-editor/**/*.{js,ts,jsx,tsx}",
   ],
   // ... rest of config
 };
