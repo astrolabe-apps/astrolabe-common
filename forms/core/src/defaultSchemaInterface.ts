@@ -9,11 +9,18 @@ import { SchemaInterface } from "./schemaInterface";
 import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaNode } from "./schemaNode";
 import { Control, ControlSetup } from "@astroapps/controls";
+import { parseDateTime as pdt } from "@internationalized/date";
 
 export class DefaultSchemaInterface implements SchemaInterface {
   constructor(
     protected boolStrings: [string, string] = ["No", "Yes"],
-    protected parseDateTime: (s: string) => number = (s) => Date.parse(s),
+    protected parseDateTime: (s: string) => number = (s) => {
+      try {
+        return pdt(s).toDate("UTC").getTime();
+      } catch (e) {
+        return Number.NaN;
+      }
+    },
   ) {}
 
   parseToMillis(field: SchemaField, v: string): number {

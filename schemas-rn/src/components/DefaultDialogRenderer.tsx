@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
   View,
+  ScrollView,
 } from "react-native";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "./RNDialog";
 import { useControl, useControlEffect } from "@react-typed-forms/core";
@@ -118,12 +119,20 @@ export function DefaultDialogRenderer({
             </TouchableOpacity>
           </DialogClose>
         </View>
-        {allChildren
-          .filter(
-            (x) =>
-              !x.definition.placement || x.definition.placement === "dialog",
-          )
-          .map((x, i) => props.renderChild(x, { actionOnClick }))}
+        <ScrollView persistentScrollbar={true}>
+          <View
+            className={"flex flex-col gap-[12px]"}
+            onStartShouldSetResponder={() => true}
+          >
+            {allChildren
+              .filter(
+                (x) =>
+                  !x.definition.placement ||
+                  x.definition.placement === "dialog",
+              )
+              .map((x, i) => props.renderChild(x, { actionOnClick }))}
+          </View>
+        </ScrollView>
       </DialogContent>
     </Dialog>
   );
