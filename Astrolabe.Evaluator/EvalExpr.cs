@@ -319,6 +319,8 @@ public record ValueExpr(
         return obj switch
         {
             null => Null,
+            short s => From((int)s),
+            decimal d => From(d),
             ValueExpr ve => ve,
             JsonNode jn => JsonDataLookup.ToValue(DataPath.Empty, jn),
             JsonElement je => JsonDataLookup.ToValue(DataPath.Empty, je),

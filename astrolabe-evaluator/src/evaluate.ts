@@ -137,7 +137,9 @@ export function createBasicEnv(
   const rootValue = root !== undefined ? toValue(EmptyPath, root) : undefined;
   // Bind root data to `_` variable along with functions
   const vars =
-    rootValue !== undefined ? { ...functions, _: rootValue } : functions;
+    rootValue !== undefined
+      ? { ...functions, _: rootValue, root: rootValue }
+      : functions;
   return new BasicEvalEnv(vars, undefined, compareSignificantDigits(5));
 }
 

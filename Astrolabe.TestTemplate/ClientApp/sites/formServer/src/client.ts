@@ -991,7 +991,7 @@ export interface ElementSelectedRenderOptions extends RenderOptions {
 export interface ErrorWithLocation {
     message: string;
     location: SourceLocation | null;
-    stack: SourceLocation[];
+    deps: ErrorWithLocation[];
 }
 
 export interface EvalResult {

@@ -155,7 +155,9 @@ public static class EvalEnvFactory
         // Add root data as _ variable
         if (root != null)
         {
-            vars["_"] = ValueExpr.FromNative(root);
+            var rootVal = ValueExpr.FromNative(root);
+            vars["_"] = rootVal;
+            vars["root"] = rootVal;
         }
 
         return new BasicEvalEnv(vars, null, compare ?? EvalEnv.CompareSignificantDigits(5));

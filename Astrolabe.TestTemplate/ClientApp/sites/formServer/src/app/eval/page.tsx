@@ -30,6 +30,8 @@ import { autocompletion } from "@codemirror/autocomplete";
 import { JsonEditor } from "@astroapps/schemas-editor";
 import { IJsonModel, Layout, Model, TabNode } from "flexlayout-react";
 import "flexlayout-react/style/light.css";
+import { keymap } from "@codemirror/view";
+import { indentWithTab } from "@codemirror/commands";
 
 const layoutModel: IJsonModel = {
   global: {
@@ -49,7 +51,10 @@ const layoutModel: IJsonModel = {
           },
           {
             type: "tabset",
-            children: [{ type: "tab", id: "output", name: "Output" }],
+            children: [
+              { type: "tab", id: "output", name: "Output" },
+              { type: "tab", id: "partial", name: "Partial" },
+            ],
           },
         ],
       },
@@ -71,7 +76,9 @@ export default function EvalPage() {
   const data = useControl(sample);
   const dataText = useControl(() => JSON.stringify(sample, null, 2));
   const outputJson = useControl<string>("");
+  const partialOutput = useControl<string>("");
   const editor = useControl<EditorView>();
+  const partialEditor = useControl<EditorView>();
   const [model] = useState(() => Model.fromJson(layoutModel));
   useControlEffect(
     () => dataText.value,
@@ -122,12 +129,17 @@ export default function EvalPage() {
               );
               const env = partialEnv().newScope(variables) as PartialEvalEnv;
               const partialResult = env.uninline(env.evaluateExpr(exprTree));
+              const partialExpr = printExpr(partialResult);
+              partialOutput.value = partialExpr;
               setEvalResult({
-                result: printExpr(partialResult),
-                errors: collectErrorsWithLocations(partialResult) as ErrorWithLocation[],
+                result: partialExpr,
+                errors: collectErrorsWithLocations(
+                  partialResult,
+                ) as ErrorWithLocation[],
               });
             } catch (e) {
               console.error(e);
+              partialOutput.value = String(e);
               setOutput(e);
             }
           } else {
@@ -137,7 +149,9 @@ export default function EvalPage() {
               const value = env.evaluateExpr(exprTree) as ValueExpr;
               setEvalResult({
                 result: showDeps ? toValueDeps(value) : toNative(value),
-                errors: collectErrorsWithLocations(value) as ErrorWithLocation[],
+                errors: collectErrorsWithLocations(
+                  value,
+                ) as ErrorWithLocation[],
               });
             } catch (e) {
               console.error(e);
@@ -152,6 +166,20 @@ export default function EvalPage() {
     ),
   );
   const editorRef = useCallback(setupEditor, [editor]);
+  const partialEditorRef = useCallback(setupPartialEditor, [partialEditor]);
+
+  // Update partial editor when partialOutput changes
+  useControlEffect(
+    () => partialOutput.value,
+    (v) => {
+      const pe = partialEditor.value;
+      if (pe && pe.state.doc.toString() !== v) {
+        pe.dispatch({
+          changes: { from: 0, to: pe.state.doc.length, insert: v },
+        });
+      }
+    },
+  );
 
   function renderTab(node: TabNode) {
     const id = node.getId();
@@ -181,6 +209,12 @@ export default function EvalPage() {
         return (
           <div className="h-full overflow-y-scroll">
             <JsonEditor control={dataText} />
+          </div>
+        );
+      case "partial":
+        return (
+          <div className="h-full overflow-y-scroll">
+            <div ref={partialEditorRef} />
           </div>
         );
       default:
@@ -215,6 +249,7 @@ export default function EvalPage() {
         extensions: [
           basicSetup,
           Evaluator(),
+          keymap.of([indentWithTab]),
           autocompletion({
             override: [
               evalCompletions(() => ({
@@ -229,6 +264,18 @@ export default function EvalPage() {
       });
     } else {
       editor.value?.destroy();
+    }
+  }
+
+  function setupPartialEditor(elem: HTMLElement | null) {
+    if (elem) {
+      partialEditor.value = new EditorView({
+        doc: partialOutput.value,
+        extensions: [basicSetup, Evaluator(), keymap.of([indentWithTab])],
+        parent: elem,
+      });
+    } else {
+      partialEditor.value?.destroy();
     }
   }
 }

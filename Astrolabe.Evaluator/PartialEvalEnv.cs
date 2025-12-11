@@ -252,6 +252,8 @@ public class PartialEvalEnv : EvalEnv
     {
         return expr switch
         {
+            ValueExpr { Value: ArrayValue av } => av.Values.Count(),
+            ValueExpr { Value: ObjectValue ov } => ov.Properties.Count,
             ValueExpr or VarExpr or PropertyExpr => 1,
             CallExpr ce => 1 + ce.Args.Sum(CalculateComplexity),
             ArrayExpr ae => 1 + ae.Values.Sum(CalculateComplexity),

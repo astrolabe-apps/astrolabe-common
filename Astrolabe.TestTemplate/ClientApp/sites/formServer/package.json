@@ -23,6 +23,8 @@
 		"@astroapps/client": "workspace:*",
 		"@astroapps/evaluator": "workspace:*",
 		"@lezer/common": "^1.0.0",
+		"@codemirror/view": "^6.39.2",
+		"@codemirror/commands": "^6.10.0",
 		"@astroapps/client-nextjs": "workspace:*",
 		"@astroapps/datagrid": "workspace:*",
 		"@astroapps/schemas-datagrid": "workspace:*",
