@@ -316,7 +316,7 @@ public static class DefaultFunctions
                 return arrayValue.Value switch
                 {
                     ArrayValue av => ValueExpr.WithDeps((long)av.Values.Count(), [arrayValue]),
-                    null => ValueExpr.WithDeps(0L, [arrayValue]),
+                    null => arrayValue, // Propagate null (with any error/deps preserved)
                     _ => call.WithError($"$count requires an array: {arrayValue.Print()}"),
                 };
             }

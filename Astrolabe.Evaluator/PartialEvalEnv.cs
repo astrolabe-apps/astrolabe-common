@@ -188,12 +188,17 @@ public class PartialEvalEnv : EvalEnv
         var replaced = ReplaceTaggedWithVars(expr, toUninline);
 
         // Build let expression with bindings
+        // Process bindings in order, replacing tags within each binding's expression
+        // This ensures that if $c uses $applicable, and both are being uninlined,
+        // $applicable within $c's definition gets replaced with a variable reference
         var bindings = new List<(VarExpr, EvalExpr)>();
         foreach (var (key, info) in tagged)
         {
             if (toUninline.TryGetValue(key, out var varName))
             {
-                bindings.Add((new VarExpr(varName), RemoveTag(info.Expr)));
+                // Replace any tagged expressions within this binding's expression
+                var replacedExpr = ReplaceTaggedWithVars(RemoveTag(info.Expr), toUninline);
+                bindings.Add((new VarExpr(varName), replacedExpr));
             }
         }
 

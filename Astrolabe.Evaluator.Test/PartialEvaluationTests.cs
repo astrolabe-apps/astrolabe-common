@@ -703,6 +703,36 @@ public class PartialEvaluationTests
         TestHelpers.AssertNumericEqual(8, ((ValueExpr)result).Value);
     }
 
+    [Fact]
+    public void PartialEval_NestedVariableUsageInUninlinedBindings()
+    {
+        // Test that when multiple variables are uninlined, nested references are properly handled.
+        // Given: let $applicable := $filter($data, $cond), $c := $count($applicable)
+        //        in $c = 0 ? "U" : $count($applicable[$filter2]) = $c ? "N" : "X"
+        // Both $applicable and $c are used twice, so both should be uninlined.
+        // The key test is that $c's definition should reference $applicable, not duplicate the filter expression.
+        var env = TestHelpers.CreatePartialEnv(null);
+        var expr = TestHelpers.Parse(
+            "let $applicable := $filter($data, $condition), " +
+            "$c := $count($applicable) " +
+            "in $c = 0 ? \"U\" : $count($applicable[$filter2]) = $c ? \"N\" : \"X\""
+        );
+
+        var result = env.EvalPartial(expr);
+
+        // Should be uninlined with $applicable referenced in $c's definition
+        Assert.IsType<LetExpr>(result);
+        var letExpr = (LetExpr)result;
+        var printed = letExpr.Print();
+
+        // $applicable should appear in the let bindings
+        Assert.Contains("$applicable := $filter($data, $condition)", printed);
+        // $c should use $applicable, not the duplicated filter expression
+        Assert.Contains("$c := $count($applicable)", printed);
+        // The body should use both variables
+        Assert.Contains("$c = 0", printed);
+    }
+
     [Fact(Skip = "TODO: Implement circular reference detection - currently causes stack overflow")]
     public void PartialEval_ShadowingWithSelfReference_ShouldReturnErrorNotInfiniteLoop()
     {

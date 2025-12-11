@@ -216,14 +216,19 @@ export class PartialEvalEnv extends EvalEnv {
     const replaced = replaceTaggedWithVars(expr, toUninline);
 
     // 4. Build let expression with bindings
+    // Process bindings in order, replacing tags within each binding's expression
+    // This ensures that if $c uses $applicable, and both are being uninlined,
+    // $applicable within $c's definition gets replaced with a variable reference
     const bindings: [VarExpr, EvalExpr][] = [];
     for (const [key, info] of tagged) {
       const varName = toUninline.get(key);
       if (varName) {
-        bindings.push([
-          { type: "var", variable: varName },
+        // Replace any tagged expressions within this binding's expression
+        const replacedExpr = replaceTaggedWithVars(
           removeTag(info.expr),
-        ]);
+          toUninline,
+        );
+        bindings.push([{ type: "var", variable: varName }, replacedExpr]);
       }
     }
 

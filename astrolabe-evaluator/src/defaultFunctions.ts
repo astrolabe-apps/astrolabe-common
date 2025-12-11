@@ -257,8 +257,15 @@ function arrayFunc(
 
       // All arguments are ValueExpr - proceed with concrete evaluation
       const v = partials as ValueExpr[];
-      if (v.length == 1 && Array.isArray(v[0].value)) {
-        return toValue(v[0].value as ValueExpr[], v[0]);
+      if (v.length == 1) {
+        const singleArg = v[0];
+        if (Array.isArray(singleArg.value)) {
+          return toValue(singleArg.value as ValueExpr[], singleArg);
+        }
+        // Single non-array argument that is null - propagate null
+        if (singleArg.value == null) {
+          return singleArg;
+        }
       }
       return toValue(v);
     },

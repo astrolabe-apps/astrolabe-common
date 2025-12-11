@@ -1017,6 +1017,51 @@ describe("Partial Evaluation", () => {
         expect(printExpr(result)).toBe("8 + $unknown");
       });
 
+      test("nested variable usage in uninlined bindings", () => {
+        // let $applicable := $data[condition],
+        //     $c := $count($applicable)
+        // in $c = 0 ? "U" : $applicable[filter] = $c ? "N" : "X"
+        //
+        // Both $applicable and $c are used twice, so both should be uninlined.
+        // When building the let bindings, $applicable should be referenced
+        // within $c's definition, not duplicated.
+        const env = partialEnv();
+        const expr = letExpr(
+          [
+            [
+              varExpr("applicable"),
+              callExpr("filter", [varExpr("data"), varExpr("condition")]),
+            ],
+            [varExpr("c"), callExpr("count", [varExpr("applicable")])],
+          ],
+          callExpr("?", [
+            callExpr("=", [varExpr("c"), valueExpr(0)]),
+            valueExpr("U"),
+            callExpr("?", [
+              callExpr("=", [
+                callExpr("count", [
+                  callExpr("filter", [varExpr("applicable"), varExpr("filter2")]),
+                ]),
+                varExpr("c"),
+              ]),
+              valueExpr("N"),
+              valueExpr("X"),
+            ]),
+          ]),
+        );
+        const result = evalPartial(env, expr);
+
+        // Should be uninlined with $applicable referenced in $c's definition
+        expect(result.type).toBe("let");
+        const printed = printExpr(result);
+        // $applicable should appear in the let bindings
+        expect(printed).toContain("$applicable := $filter($data, $condition)");
+        // $c should use $applicable, not the duplicated filter expression
+        expect(printed).toContain("$c := $count($applicable)");
+        // The body should use both variables
+        expect(printed).toContain("$c = 0");
+      });
+
       test.skip("shadowing with self-reference should return error not infinite loop", () => {
         // TODO: Implement circular reference detection - currently causes stack overflow
         // This test documents the desired behavior for self-referential bindings.
