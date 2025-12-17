@@ -148,7 +148,7 @@ function RNDateTimePicker({
     try {
       switch (mode) {
         case "date":
-          return parseDate(dateString).toDate(getLocalTimeZone());
+          return parseDate(dateString).toDate("UTC");
         case "datetime":
           return parseAbsolute(dateString, getLocalTimeZone()).toDate();
         case "time":
@@ -165,7 +165,6 @@ function RNDateTimePicker({
   function getFormattedDate() {
     if (!innerPickerValue) return null;
     let options: Intl.DateTimeFormatOptions = {};
-
     try {
       switch (mode) {
         case "date":
@@ -173,7 +172,7 @@ function RNDateTimePicker({
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
-            timeZone: getLocalTimeZone(),
+            timeZone: "UTC",
           };
           break;
 
