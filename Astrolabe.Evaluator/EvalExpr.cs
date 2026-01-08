@@ -324,8 +324,12 @@ public record ValueExpr(
             ValueExpr ve => ve,
             JsonNode jn => JsonDataLookup.ToValue(DataPath.Empty, jn),
             JsonElement je => JsonDataLookup.ToValue(DataPath.Empty, je),
+            string str => new ValueExpr(str),
             IEnumerable<KeyValuePair<string, object?>> kvs => new ValueExpr(
                 new ObjectValue(kvs.ToDictionary(kv => kv.Key, kv => FromNative(kv.Value)))
+            ),
+            System.Collections.IEnumerable enumerable => new ValueExpr(
+                new ArrayValue(enumerable.Cast<object?>().Select(FromNative))
             ),
             _ => new ValueExpr(obj),
         };
