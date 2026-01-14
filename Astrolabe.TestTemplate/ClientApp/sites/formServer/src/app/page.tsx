@@ -68,6 +68,7 @@ import allControls from "../forms/AllControls.json";
 import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
 import { SignatureExtension } from "@astroapps/schemas-signature";
+import { TurnstileExtension } from "@astroapps/schemas-turnstile";
 import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
@@ -91,6 +92,7 @@ const Extensions = [
   PagerExtension,
   FieldSelectionExtension,
   SignatureExtension,
+  TurnstileExtension,
   RechartsExtension,
   createIconLibraryExtension("Custom Icon Library", "custom"),
 ];

@@ -1134,6 +1134,33 @@ importers:
       rimraf: 5.0.10
       typescript: 5.7.2
 
+  ../../../schemas-turnstile:
+    specifiers:
+      '@marsidev/react-turnstile': ^1.1.0
+      '@react-typed-forms/core': workspace:*
+      '@react-typed-forms/schemas': workspace:*
+      '@react-typed-forms/transform': ^0.2.0
+      '@types/react': ^19.0.0
+      clsx: ^2
+      microbundle: ^0.15.1
+      prettier: ^3.0.3
+      react: ^19.0.0
+      rimraf: ^5.0.7
+      typescript: ^5.6.2
+    dependencies:
+      '@marsidev/react-turnstile': 1.4.1_react@19.0.0
+      clsx: 2.1.1
+    devDependencies:
+      '@react-typed-forms/core': link:../core
+      '@react-typed-forms/schemas': link:../schemas
+      '@react-typed-forms/transform': 0.2.0
+      '@types/react': 19.1.10
+      microbundle: 0.15.1
+      prettier: 3.4.2
+      react: 19.0.0
+      rimraf: 5.0.10
+      typescript: 5.8.3
+
   ../../ClientApp/schemas-rn-demo:
     specifiers:
       '@astroapps/client': workspace:*
@@ -1270,6 +1297,7 @@ importers:
       '@astroapps/schemas-quickstream': workspace:*
       '@astroapps/schemas-rechart': workspace:*
       '@astroapps/schemas-signature': workspace:*
+      '@astroapps/schemas-turnstile': workspace:*
       '@astroapps/searchstate': workspace:*
       '@astroapps/swc-controls-plugin': 1.1.0-next15-2
       '@astrolabe/ui': workspace:*
@@ -1321,6 +1349,7 @@ importers:
       '@astroapps/schemas-quickstream': link:../../../../astrolabe-schemas-quickstream
       '@astroapps/schemas-rechart': link:../../../../schemas-rechart
       '@astroapps/schemas-signature': link:../../../../schemas-signature
+      '@astroapps/schemas-turnstile': link:../../../../schemas-turnstile
       '@astroapps/searchstate': link:../../../../astrolabe-searchstate
       '@astrolabe/ui': link:../../../../astrolabe-ui
       '@codemirror/autocomplete': 6.18.6
@@ -6367,6 +6396,15 @@ packages:
 
   /@marijn/find-cluster-break/1.0.2:
     resolution: {integrity: sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g==}
+    dev: false
+
+  /@marsidev/react-turnstile/1.4.1_react@19.0.0:
+    resolution: {integrity: sha512-1jE0IjvB8z+q1NFRs3149gXzXwIzXQWqQjn9fmAr13BiE3RYLWck5Me6flHYE90shW5L12Jkm6R1peS1OnA9oQ==}
+    peerDependencies:
+      react: ^17.0.2 || ^18.0.0 || ^19.0
+      react-dom: ^17.0.2 || ^18.0.0 || ^19.0
+    dependencies:
+      react: 19.0.0
     dev: false
 
   /@mdn/browser-compat-data/5.6.10:
