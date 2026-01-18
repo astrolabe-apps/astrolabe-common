@@ -1,12 +1,20 @@
-import { AriaButtonProps, useButton } from "react-aria";
-import React, { useRef } from "react";
+import {
+  composeRenderProps,
+  Button as RACButton,
+  ButtonProps as RACButtonProps,
+} from "react-aria-components";
+import React from "react";
 
 export function Button({
   children,
   className,
   ...props
-}: AriaButtonProps<"button"> & { className?: string }) {
-  const ref = useRef(null);
-  const { buttonProps } = useButton(props, ref);
-  return <button {...buttonProps} className={className} children={children} />;
+}: RACButtonProps & { className?: string }) {
+  return (
+    <RACButton {...props} className={className}>
+      {composeRenderProps(children, (children, { isPending }) => (
+        <>{children}</>
+      ))}
+    </RACButton>
+  );
 }

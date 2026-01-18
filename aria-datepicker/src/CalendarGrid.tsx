@@ -16,7 +16,8 @@ export interface CalendarGridClasses extends CalendarCellClasses {
 
 export const DefaultCalendarGridClasses = {
   ...DefaultCalendarCellClasses,
-};
+  gridClass: "w-full",
+} satisfies CalendarGridClasses;
 
 export interface CalendarGridProps
   extends AriaCalendarGridProps,

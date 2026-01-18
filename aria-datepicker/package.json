@@ -22,8 +22,11 @@
     "react-stately": "^3.40.0",
     "react-aria": "^3.42.0",
     "clsx": "^2",
-    "@internationalized/date": "^3.8.2",
-    "@astroapps/aria-base": "workspace:^1.1.0"
+    "@internationalized/date": "^3.10.0",
+    "@astroapps/aria-base": "workspace:^1.1.0",
+    "react-aria-components": "^1.8.0",
+    "tailwind-variants": "^3.2.2",
+    "tailwind-merge": "^3.4.0"
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19",

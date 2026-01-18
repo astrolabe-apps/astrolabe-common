@@ -25,7 +25,10 @@
   "dependencies": {
     "react-stately": "^3.40.0",
     "react-aria": "^3.42.0",
-    "clsx": "^2"
+    "react-aria-components": "^1.8.0",
+    "clsx": "^2",
+    "tailwind-variants": "^3.2.2",
+    "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
     "react": "^18.2.0 || ^19",

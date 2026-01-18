@@ -2,15 +2,10 @@ import React from "react";
 import { useDatePicker } from "react-aria";
 import { DatePickerStateOptions, useDatePickerState } from "react-stately";
 import { DateField } from "./DateField";
-import { Calendar, CalendarClasses } from "./Calendar";
-import {
-  CalendarDateTime,
-  DateValue,
-  ZonedDateTime,
-} from "@internationalized/date";
+import { Calendar, CalendarClasses, CalendarProps } from "./Calendar";
+import { DateValue } from "@internationalized/date";
 import { Button, Dialog, Popover } from "@astroapps/aria-base";
 import { DialogClasses, PopoverClasses } from "@astroapps/aria-base";
-import { TimeField, TimeFieldProps } from "./TimeField";
 
 export interface DatePickerClasses {
   className?: string;
@@ -28,7 +23,11 @@ export const DefaultDatePickerClasses = {
 
 export interface DatePickerProps<T extends DateValue = DateValue>
   extends DatePickerStateOptions<T>,
-    DatePickerClasses {
+    DatePickerClasses,
+    Pick<
+      CalendarProps,
+      "headerMode" | "minDate" | "maxDate" | "defaultYearRange"
+    > {
   portalContainer?: Element;
   designMode?: boolean;
 }
@@ -43,6 +42,10 @@ export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
     containerClass,
     portalContainer,
     designMode,
+    headerMode,
+    minDate,
+    maxDate,
+    defaultYearRange,
   } = {
     ...DefaultDatePickerClasses,
     ...props,
@@ -65,19 +68,25 @@ export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
           </Button>
         )}
       </div>
-      {state.isOpen && (
-        <Popover
-          state={state}
-          triggerRef={ref}
-          placement="bottom start"
-          portalContainer={portalContainer}
-          {...popoverClasses}
-        >
-          <Dialog {...dialogProps} {...dialogClasses}>
-            <Calendar {...calendarProps} {...calendarClasses} />
-          </Dialog>
-        </Popover>
-      )}
+
+      <Popover
+        isOpen={state.isOpen}
+        onOpenChange={state.setOpen}
+        triggerRef={ref}
+        placement="bottom start"
+        {...popoverClasses}
+      >
+        <Dialog {...dialogProps} {...dialogClasses}>
+          <Calendar
+            {...calendarProps}
+            {...calendarClasses}
+            headerMode={headerMode}
+            minDate={minDate}
+            maxDate={maxDate}
+            defaultYearRange={defaultYearRange}
+          />
+        </Dialog>
+      </Popover>
     </div>
   );
 }
