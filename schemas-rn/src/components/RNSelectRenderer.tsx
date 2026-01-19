@@ -188,13 +188,15 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-row h-10 native:h-12 items-center text-sm justify-between border border-[#E7E7E8] bg-background px-3 py-2 [&>span]:line-clamp-1 min-w-[128px]",
+        "flex flex-row min-h-10 native:min-h-12 items-center text-sm justify-between border border-[#E7E7E8] bg-background px-3 py-2 [&>span]:line-clamp-1 min-w-[128px]",
         props.disabled && "opacity-50",
         className,
       )}
       {...props}
     >
-      <Pressable pointerEvents={"none"}>{children}</Pressable>
+      <Pressable pointerEvents={"none"} className={"flex-1"}>
+        {children}
+      </Pressable>
       <Icon name={"chevron-down"} className={"!text-[12px] text-accent"} />
     </SelectPrimitive.Trigger>
   );
