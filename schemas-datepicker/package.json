@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "clsx": "^2",
-    "@internationalized/date": "^3.8.2"
+    "@internationalized/date": "^3.10.0"
   },
   "devDependencies": {
     "react": "^18.2.0 || ^19",

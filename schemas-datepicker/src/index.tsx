@@ -1,12 +1,15 @@
 import {
   createDataRenderer,
   DataRenderType,
+  DateComparison,
   DateTimeRenderOptions,
+  DateValidator,
   FieldType,
   isDateTimeRenderer,
   rendererClass,
+  ValidatorType,
 } from "@react-typed-forms/schemas";
-import { DatePicker } from "@astroapps/aria-datepicker";
+import { CalendarProps, DatePicker } from "@astroapps/aria-datepicker";
 import React from "react";
 import { Control } from "@react-typed-forms/core";
 import {
@@ -16,6 +19,7 @@ import {
   parseDate,
   toCalendarDate,
   toCalendarDateTime,
+  today,
   toZoned,
 } from "@internationalized/date";
 import { DatePickerClasses } from "@astroapps/aria-datepicker/lib";
@@ -23,7 +27,12 @@ import { DatePickerClasses } from "@astroapps/aria-datepicker/lib";
 export const DefaultDatePickerClass =
   "flex border border-black w-full pl-3 py-2 space-x-4";
 
-export interface DatePickerOptions extends DatePickerClasses {
+export interface DatePickerOptions
+  extends DatePickerClasses,
+    Pick<
+      CalendarProps,
+      "headerMode" | "minDate" | "maxDate" | "defaultYearRange"
+    > {
   portalContainer?: Element;
 }
 
@@ -32,17 +41,40 @@ export function createDatePickerRenderer(
   pickerOptions?: DatePickerOptions,
 ) {
   return createDataRenderer(
-    (p) => (
-      <DatePickerRenderer
-        dateTime={p.field.type == FieldType.DateTime}
-        pickerOptions={pickerOptions}
-        className={rendererClass(p.className, className)}
-        control={p.control.as()}
-        readonly={p.readonly}
-        designMode={p.designMode}
-        options={p.renderOptions as DateTimeRenderOptions}
-      />
-    ),
+    (p) => {
+      const dateValidators = p.definition.validators?.filter(
+        (x) => x.type === ValidatorType.Date,
+      ) as DateValidator[] | undefined;
+      const minDateValidator = dateValidators?.find(
+        (x) => x.comparison === DateComparison.NotBefore,
+      );
+      const maxDateValidator = dateValidators?.find(
+        (x) => x.comparison === DateComparison.NotAfter,
+      );
+      const minDate = minDateValidator
+        ? getMinOrMaxDate(minDateValidator)
+        : pickerOptions?.minDate;
+
+      const maxDate = maxDateValidator
+        ? getMinOrMaxDate(maxDateValidator)
+        : pickerOptions?.maxDate;
+
+      return (
+        <DatePickerRenderer
+          dateTime={p.field.type == FieldType.DateTime}
+          pickerOptions={{
+            ...pickerOptions,
+            minDate: minDate,
+            maxDate: maxDate,
+          }}
+          className={rendererClass(p.className, className)}
+          control={p.control.as()}
+          readonly={p.readonly}
+          designMode={p.designMode}
+          options={p.renderOptions as DateTimeRenderOptions}
+        />
+      );
+    },
     {
       schemaType: [FieldType.Date, FieldType.DateTime],
       renderType: DataRenderType.DateTime,
@@ -50,6 +82,15 @@ export function createDatePickerRenderer(
         !isDateTimeRenderer(renderOptions) || !renderOptions.forceStandard,
     },
   );
+}
+
+function getMinOrMaxDate(dateValidator: DateValidator): string {
+  const { fixedDate, daysFromCurrent } = dateValidator;
+  if (fixedDate) return fixedDate;
+
+  const daysOffset = daysFromCurrent ?? 0;
+  const date = today(getLocalTimeZone());
+  return date.add({ days: daysOffset }).toString();
 }
 
 function DatePickerRenderer({
@@ -71,7 +112,14 @@ function DatePickerRenderer({
   options?: Omit<DateTimeRenderOptions, "type">;
   pickerOptions?: DatePickerOptions;
 }) {
-  const { portalContainer, ...classes } = pickerOptions ?? {};
+  const {
+    portalContainer,
+    headerMode,
+    minDate,
+    maxDate,
+    defaultYearRange,
+    ...classes
+  } = pickerOptions ?? {};
   const disabled = control.disabled;
   let dateValue: CalendarDateTime | null = null;
   try {
@@ -93,6 +141,10 @@ function DatePickerRenderer({
       isReadOnly={readonly}
       value={dateValue}
       label={"FIXME"}
+      headerMode={headerMode}
+      minDate={minDate}
+      maxDate={maxDate}
+      defaultYearRange={defaultYearRange}
       granularity={dateTime && !options.forceMidnight ? "minute" : "day"}
       designMode={designMode}
       onChange={(c) => {

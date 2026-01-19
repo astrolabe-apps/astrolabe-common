@@ -14,6 +14,8 @@ import {
   CalendarGridClasses,
   DefaultCalendarGridClasses,
 } from "./CalendarGrid";
+import { MonthDropdown } from "./MonthDropdown";
+import { YearDropdown, YearDropdownProps } from "./YearDropdown";
 
 export interface CalendarClasses extends CalendarGridClasses {
   className?: string;
@@ -22,19 +24,27 @@ export interface CalendarClasses extends CalendarGridClasses {
   navButtonClass?: string;
   navButtonContainerClass?: string;
 }
+
+export type CalendarHeaderMode =
+  | "Title"
+  | "MonthSelector"
+  | "YearSelector"
+  | "MonthAndYearSelector";
+
 export interface CalendarProps<T extends DateValue = DateValue>
   extends AriaCalendarProps<T>,
-    CalendarClasses {
+    CalendarClasses,
+    Pick<YearDropdownProps, "minDate" | "maxDate" | "defaultYearRange"> {
   prevButton?: React.ReactNode;
   nextButton?: React.ReactNode;
+  headerMode?: CalendarHeaderMode;
 }
 
 export const DefaultCalendarClasses = {
-  className: "border border-black",
-  titleClass: "text-xl ml-2 font-bold",
-  headerClass: "flex items-center justify-between pb-4",
+  className: "p-2",
+  titleClass: "text-xl font-bold",
+  headerClass: "flex items-center justify-between py-2 gap-2",
   navButtonClass: "w-8 h-8",
-  navButtonContainerClass: "flex gap-2",
   ...DefaultCalendarGridClasses,
 } satisfies CalendarClasses;
 
@@ -57,10 +67,15 @@ export function Calendar<T extends DateValue = DateValue>(
     navButtonClass,
     titleClass,
     navButtonContainerClass,
+    headerMode,
+    minDate,
+    maxDate,
+    defaultYearRange,
     ...otherProps
   } = {
     ...DefaultCalendarClasses,
     ...props,
+    headerMode: props.headerMode ?? "MonthAndYearSelector",
   };
   let { locale } = useLocale();
   let state = useCalendarState({
@@ -78,23 +93,42 @@ export function Calendar<T extends DateValue = DateValue>(
   return (
     <div {...calendarProps} className={className}>
       <div className={headerClass}>
-        <h2 className={titleClass}>{title}</h2>
-        <div className={navButtonContainerClass}>
-          <Button
-            aria-label="Previous Month"
-            {...prevButtonProps}
-            className={navButtonClass}
-          >
-            {prevButton ?? <i aria-hidden className="fa fa-arrow-left" />}
-          </Button>
-          <Button
-            aria-label="Next Month"
-            {...nextButtonProps}
-            className={navButtonClass}
-          >
-            {nextButton ?? <i aria-hidden className="fa fa-arrow-right" />}
-          </Button>
-        </div>
+        <Button
+          aria-label="Previous Month"
+          {...prevButtonProps}
+          className={navButtonClass}
+        >
+          {prevButton ?? <i aria-hidden className="fa fa-arrow-left" />}
+        </Button>
+        {headerMode === "Title" && <h2 className={titleClass}>{title}</h2>}
+        {headerMode === "MonthSelector" ||
+        headerMode === "MonthAndYearSelector" ? (
+          <MonthDropdown state={state} />
+        ) : (
+          headerMode !== "Title" && (
+            <h2 className={titleClass}>{title.split(" ")?.at(0)}</h2>
+          )
+        )}
+        {headerMode === "YearSelector" ||
+        headerMode === "MonthAndYearSelector" ? (
+          <YearDropdown
+            state={state}
+            minDate={minDate}
+            maxDate={maxDate}
+            defaultYearRange={defaultYearRange}
+          />
+        ) : (
+          headerMode !== "Title" && (
+            <h2 className={titleClass}>{title.split(" ")?.at(1)}</h2>
+          )
+        )}
+        <Button
+          aria-label="Next Month"
+          {...nextButtonProps}
+          className={navButtonClass}
+        >
+          {nextButton ?? <i aria-hidden className="fa fa-arrow-right" />}
+        </Button>
       </div>
       <CalendarGrid {...otherProps} state={state} />
     </div>
