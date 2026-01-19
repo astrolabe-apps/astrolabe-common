@@ -66,7 +66,6 @@ export function YearDropdown({
       style={{ flex: 1, width: "fit-content" }}
       onSelectionChange={(key) => {
         if (typeof key === "number") {
-          console.log("setting focused date to", years[key].date);
           state.setFocusedDate(years[key].date);
         }
       }}
