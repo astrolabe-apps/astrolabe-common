@@ -5,10 +5,6 @@
 | Package | Current Version | Changes |
 |---------|-----------------|---------|
 | **@astrolabe/ui** | 0.2.0 | 57+ files changed - UI components, auth forms, SmsMfa integration, navigation Link |
-| **@astroapps/forms-core** | 2.0.1 | `defaultSchemaInterface.ts` - datetime parsing fixes, NaN handling |
-| **@react-typed-forms/mui** | 4.0.2 | 7 files - FAutocomplete, FCheckList, FDateField, FMultiSelect, FNumberField, FRadioButton, FSelectAutocomplete |
-| **@react-typed-forms/schemas-html** | 5.0.0 | HtmlCheckButtons, SelectDataRenderer - dropdown/radio disabled fixes |
-| **@react-typed-forms/schemas-rn** | 2.0.0 | DefaultDialogRenderer, RNCheckButtons, RNDateTimePickerRenderer, RNSelectRenderer - scrolling, timezone, styling |
 
 ## C# Projects
 
@@ -28,13 +24,6 @@
 - `Astrolabe.Schemas`: **7.2.0 → 8.0.0** (major refactoring, potential breaking changes)
 - `Astrolabe.LocalUsers`: **3.0.0 → 3.1.0** (API endpoint changes)
 - `Astrolabe.Common`: **1.1.0 → 1.2.0** (new features)
-
-### Patch updates
-
-- `@astroapps/forms-core`: **2.0.1 → 2.0.2**
-- `@react-typed-forms/mui`: **4.0.2 → 4.0.3**
-- `@react-typed-forms/schemas-html`: **5.0.0 → 5.0.1**
-- `@react-typed-forms/schemas-rn`: **2.0.0 → 2.0.1**
 
 ---
 
@@ -58,80 +47,6 @@
 - Use SmsMfa component for MfaForm, ResetPasswordForm, and VerifyForm
 - Split change password endpoint into two for authenticated/unauthenticated
 - Allow ResetPasswordForm to work without MFA
-
----
-
-### @astroapps/forms-core (2.0.1)
-
-**Location:** `forms/core/`
-
-**Last version bump:** 2025-11-05
-
-**Changed files:**
-- `forms/core/src/defaultSchemaInterface.ts`
-
-**Key commits:**
-- Needs to be NaN for exceptions in parsing
-- It needs to parse a datetime, not just date
-- Use internationalised/date to avoid power pages problems
-
----
-
-### @react-typed-forms/mui (4.0.2)
-
-**Location:** `mui/`
-
-**Last version bump:** 2025-02-16
-
-**Changed files:**
-- `mui/src/FAutocomplete.tsx`
-- `mui/src/FCheckList.tsx`
-- `mui/src/FDateField.tsx`
-- `mui/src/FMultiSelect.tsx`
-- `mui/src/FNumberField.tsx`
-- `mui/src/FRadioButton.tsx`
-- `mui/src/FSelectAutocomplete.tsx`
-
-**Key commits:**
-- Tsup with babel for core packages
-- Allow disabling to be selected
-- Fix build
-
----
-
-### @react-typed-forms/schemas-html (5.0.0)
-
-**Location:** `schemas-html/`
-
-**Last version bump:** 2025-11-05
-
-**Changed files:**
-- `schemas-html/src/components/HtmlCheckButtons.tsx`
-- `schemas-html/src/components/SelectDataRenderer.tsx`
-
-**Key commits:**
-- Dropdown menu will not show empty option after selecting an option if its required
-- Fix radio button group disabled state
-
----
-
-### @react-typed-forms/schemas-rn (2.0.0)
-
-**Location:** `schemas-rn/`
-
-**Last version bump:** 2025-11-05
-
-**Changed files:**
-- `schemas-rn/src/components/DefaultDialogRenderer.tsx`
-- `schemas-rn/src/components/RNCheckButtons.tsx`
-- `schemas-rn/src/components/RNDateTimePickerRenderer.tsx`
-- `schemas-rn/src/components/RNSelectRenderer.tsx`
-
-**Key commits:**
-- Improve select renderer
-- Fix date rendering
-- Make the content scrollable
-- Fix radio button group disabled state
 
 ---
 
