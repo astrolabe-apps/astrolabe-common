@@ -69,6 +69,7 @@ import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
 import { SignatureExtension } from "@astroapps/schemas-signature";
 import { TurnstileExtension } from "@astroapps/schemas-turnstile";
+import { RecaptchaExtension } from "@astroapps/schemas-recaptcha";
 import { FormDefinitions } from "../forms";
 import { createStdFormRenderer } from "../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
@@ -93,6 +94,7 @@ const Extensions = [
   FieldSelectionExtension,
   SignatureExtension,
   TurnstileExtension,
+  RecaptchaExtension,
   RechartsExtension,
   createIconLibraryExtension("Custom Icon Library", "custom"),
 ];

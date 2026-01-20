@@ -30,6 +30,7 @@
     "@astroapps/schemas-datagrid": "workspace:*",
     "@astroapps/schemas-signature": "workspace:*",
     "@astroapps/schemas-turnstile": "workspace:*",
+    "@astroapps/schemas-recaptcha": "workspace:*",
     "@astroapps/schemas-quickstream": "workspace:*",
     "@astrolabe/ui": "workspace:*",
     "react": "^19.0.0",

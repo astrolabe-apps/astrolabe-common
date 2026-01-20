@@ -492,6 +492,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/schemas-recaptcha",
+      "projectFolder": "../schemas-recaptcha",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@react-typed-forms/schemas-html",
       "projectFolder": "../schemas-html",
       "shouldPublish": true

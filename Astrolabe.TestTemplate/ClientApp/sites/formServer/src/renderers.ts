@@ -13,6 +13,7 @@ import { createQuickstreamCC } from "@astroapps/schemas-quickstream";
 import { createSignatureRenderer } from "@astroapps/schemas-signature";
 import { createRechartsRenderer } from "@astroapps/schemas-rechart";
 import { createTurnstileRenderer } from "@astroapps/schemas-turnstile";
+import { createRecaptchaRenderer } from "@astroapps/schemas-recaptcha";
 
 export function createStdFormRenderer(container: HTMLElement | null) {
   return createFormRenderer(
@@ -31,6 +32,9 @@ export function createStdFormRenderer(container: HTMLElement | null) {
       createRechartsRenderer(),
       createTurnstileRenderer({
         siteKey: process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY,
+      }),
+      createRecaptchaRenderer({
+        sitekey: process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY,
       }),
       DataGridGroupRenderer,
       createDatePickerRenderer(undefined, {
