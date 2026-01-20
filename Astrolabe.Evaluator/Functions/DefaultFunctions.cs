@@ -1036,7 +1036,9 @@ public static class DefaultFunctions
             props[key] = values[i + 1];
         }
 
-        return env.WithDeps(new ValueExpr(new ObjectValue(props)), values);
+        // Don't attach all deps to the object - each property value already has its own deps.
+        // When accessing a property, only that property's deps will be returned.
+        return new ValueExpr(new ObjectValue(props));
     };
 
     /// <summary>

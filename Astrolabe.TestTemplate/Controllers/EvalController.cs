@@ -10,7 +10,11 @@ namespace Astrolabe.TestTemplate.Controllers;
 public class EvalController : ControllerBase
 {
     [HttpPost]
-    public async Task<EvalResult> Eval([FromBody] EvalTestData evalData, bool includeDeps = false, bool partialEval = false)
+    public async Task<EvalResult> Eval(
+        [FromBody] EvalTestData evalData,
+        bool includeDeps = false,
+        bool partialEval = false
+    )
     {
         var evalExpr = ExprParser.Parse(evalData.Expression);
 
@@ -19,7 +23,8 @@ public class EvalController : ControllerBase
             // For partial evaluation, treat data fields as variables
             // Convert each data value to a proper ValueExpr structure via JsonNode
             var variables = evalData.Data.ToDictionary(
-                kvp => kvp.Key, EvalExpr (kvp) =>
+                kvp => kvp.Key,
+                EvalExpr (kvp) =>
                 {
                     var jsonNode = JsonSerializer.SerializeToNode(kvp.Value);
                     return JsonDataLookup.ToValue(null, jsonNode);
@@ -32,14 +37,9 @@ public class EvalController : ControllerBase
             var result = partialEnv.Uninline(partialEnv.EvaluateExpr(evalExpr));
 
             // Collect errors from result tree with source locations
-            var errors = result is ValueExpr ve
-                ? ValueExpr.CollectErrorsWithLocations(ve)
-                : [];
+            var errors = result is ValueExpr ve ? ValueExpr.CollectErrorsWithLocations(ve) : [];
 
-            return new EvalResult(
-                result.Print(),
-                errors
-            );
+            return new EvalResult(result.Print(), errors);
         }
         else
         {
@@ -69,7 +69,8 @@ public class EvalController : ControllerBase
         return expr.Value switch
         {
             ArrayValue av => av.Values.Select(ToValueWithoutDeps),
-            ObjectValue ov => ov.Properties.ToDictionary(kv => kv.Key, kv => ToValueWithoutDeps(kv.Value)),
+            ObjectValue ov
+                => ov.Properties.ToDictionary(kv => kv.Key, kv => ToValueWithoutDeps(kv.Value)),
             var v => v,
         };
     }
@@ -79,13 +80,16 @@ public class EvalController : ControllerBase
         var value = expr.Value switch
         {
             ArrayValue av => av.Values.Select(ToValueWithDeps),
-            ObjectValue ov => ov.Properties.ToDictionary(kv => kv.Key, kv => ToValueWithDeps(kv.Value)),
+            ObjectValue ov
+                => ov.Properties.ToDictionary(kv => kv.Key, kv => ToValueWithDeps(kv.Value)),
             var v => v,
         };
         return new ValueWithDeps(
             value,
             expr.Path?.ToPathString(),
-            expr.Deps?.SelectMany(ValueExpr.ExtractAllPaths).Select(x => x.ToPathString())
+            expr.Deps?.SelectMany(ValueExpr.ExtractAllPaths)
+                .Select(x => x.ToPathString())
+                .Distinct()
         );
     }
 }

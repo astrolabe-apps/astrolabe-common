@@ -305,9 +305,18 @@ $lower(name)                 // deps = ["name"]
 
 **`object`:** Creates object from key-value pairs
 
+Each property value in a constructed object retains its own dependencies. When you
+access a property, only that property's deps are returned (not deps from other properties).
+
 ```javascript
-$object("sum", x + y, "product", x * y)
-// deps = ["x", "y"]
+// Data: { x: 5, y: 10, a: 3, b: 7 }
+
+// Creating an object - each property tracks its own deps
+let $obj := $object("sum", x + y, "product", a * b)
+
+// Accessing a property returns ONLY that property's deps
+$obj.sum       // deps = ["x", "y"] (NOT ["x", "y", "a", "b"])
+$obj.product   // deps = ["a", "b"] (NOT ["x", "y", "a", "b"])
 ```
 
 **`array`:** Flattens and combines
@@ -401,7 +410,7 @@ config[$string("theme_", mode)]
 | **Dynamic access** | Yes | Index/key | `$elem(array, idx)` |
 | **Search** | Element | Evaluated only | `$first`, `$any` |
 | **Property** | Yes | Parent + child | `user.name` |
-| **Construction** | No | All inputs | `$object(...)` |
+| **Construction** | No | Per-property | `$object(...)` - access returns only that property's deps |
 
 ---
 

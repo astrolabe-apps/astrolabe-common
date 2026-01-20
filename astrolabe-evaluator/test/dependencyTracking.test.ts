@@ -700,6 +700,48 @@ describe("Object Property Dependency Tracking Tests", () => {
     expect(deps).toContain("b");
   });
 
+  test("Multi-property object access only returns deps for accessed property", () => {
+    const data = { a: 5, b: 10, c: 3, d: 7 };
+    const env = basicEnv(data);
+
+    // Create object with multiple properties and access just one
+    const expr = parseEval(
+      'let $obj := $object("sum", a + b, "product", c * d) in $obj.sum',
+    );
+    const result = evalResult(env, expr);
+
+    expect(result.value).toBe(15);
+
+    const deps = getDeps(result);
+    // Should ONLY track dependencies from the "sum" property (a + b)
+    expect(deps).toContain("a");
+    expect(deps).toContain("b");
+    // Should NOT include dependencies from the "product" property (c * d)
+    expect(deps).not.toContain("c");
+    expect(deps).not.toContain("d");
+  });
+
+  test("Multi-property object access product only returns its deps", () => {
+    const data = { a: 5, b: 10, c: 3, d: 7 };
+    const env = basicEnv(data);
+
+    // Create object with multiple properties and access a different property
+    const expr = parseEval(
+      'let $obj := $object("sum", a + b, "product", c * d) in $obj.product',
+    );
+    const result = evalResult(env, expr);
+
+    expect(result.value).toBe(21);
+
+    const deps = getDeps(result);
+    // Should ONLY track dependencies from the "product" property (c * d)
+    expect(deps).toContain("c");
+    expect(deps).toContain("d");
+    // Should NOT include dependencies from the "sum" property (a + b)
+    expect(deps).not.toContain("a");
+    expect(deps).not.toContain("b");
+  });
+
   test("$values tracks dependencies from object properties", () => {
     const data = { obj: { x: 10, y: 20, z: 30 } };
     const env = basicEnv(data);

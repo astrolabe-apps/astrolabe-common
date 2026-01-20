@@ -850,6 +850,48 @@ public class DependencyTrackingTests
     }
 
     [Fact]
+    public void Multi_Property_Object_Access_Only_Returns_Deps_For_Accessed_Property()
+    {
+        var data = new JsonObject { ["a"] = 5, ["b"] = 10, ["c"] = 3, ["d"] = 7 };
+        var env = TestHelpers.CreateBasicEnv(data);
+
+        // Create object with multiple properties and access just one
+        var expr = ExprParser.Parse("let $obj := $object(\"sum\", a + b, \"product\", c * d) in $obj.sum");
+        var result = env.EvalResult(expr);
+
+        Assert.Equal(15L, result.Value);
+
+        var deps = GetDeps(result);
+        // Should ONLY track dependencies from the "sum" property (a + b)
+        Assert.Contains("a", deps);
+        Assert.Contains("b", deps);
+        // Should NOT include dependencies from the "product" property (c * d)
+        Assert.DoesNotContain("c", deps);
+        Assert.DoesNotContain("d", deps);
+    }
+
+    [Fact]
+    public void Multi_Property_Object_Access_Product_Only_Returns_Its_Deps()
+    {
+        var data = new JsonObject { ["a"] = 5, ["b"] = 10, ["c"] = 3, ["d"] = 7 };
+        var env = TestHelpers.CreateBasicEnv(data);
+
+        // Create object with multiple properties and access a different property
+        var expr = ExprParser.Parse("let $obj := $object(\"sum\", a + b, \"product\", c * d) in $obj.product");
+        var result = env.EvalResult(expr);
+
+        Assert.Equal(21L, result.Value);
+
+        var deps = GetDeps(result);
+        // Should ONLY track dependencies from the "product" property (c * d)
+        Assert.Contains("c", deps);
+        Assert.Contains("d", deps);
+        // Should NOT include dependencies from the "sum" property (a + b)
+        Assert.DoesNotContain("a", deps);
+        Assert.DoesNotContain("b", deps);
+    }
+
+    [Fact]
     public void Values_Function_Tracks_Dependencies_From_Object_Properties()
     {
         var data = new JsonObject
