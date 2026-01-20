@@ -12,13 +12,29 @@
    */
   "commands": [
      {
-       "commandKind": "bulk", 
+       "commandKind": "bulk",
        "summary": "Watch for changes",
-       "name":"watch", 
-       "watchForChanges": true, 
-       "incremental": true, 
-       "enableParallelism": true, 
+       "name":"watch",
+       "watchForChanges": true,
+       "incremental": true,
+       "enableParallelism": true,
        "ignoreMissingScript": true
+     },
+     {
+       "commandKind": "global",
+       "name": "publish-check",
+       "summary": "Check what would be published (dry run)",
+       "description": "Runs rush publish --include-all with XDG_CONFIG_HOME preserved so browser authentication works correctly",
+       "shellCommand": "XDG_CONFIG_HOME=\"${XDG_CONFIG_HOME:-$HOME/.config}\" rush publish --include-all",
+       "safeForSimultaneousRushProcesses": true
+     },
+     {
+       "commandKind": "global",
+       "name": "publish-commit",
+       "summary": "Publish all packages to npm",
+       "description": "Runs rush publish --include-all -b main --publish with XDG_CONFIG_HOME preserved so browser authentication works correctly",
+       "shellCommand": "XDG_CONFIG_HOME=\"${XDG_CONFIG_HOME:-$HOME/.config}\" rush publish --include-all -b main --publish",
+       "safeForSimultaneousRushProcesses": true
      }
     // {
     //   /**
