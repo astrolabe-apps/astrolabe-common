@@ -156,7 +156,7 @@ value ?? fallback
 
 ### Array Aggregation
 
-**Functions:** `sum`, `min`, `max`, `count`
+**Functions:** `sum`, `min`, `max`
 
 Tracks all consumed elements:
 
@@ -164,6 +164,16 @@ Tracks all consumed elements:
 // Data: { values: [1, 2, 3] }
 $sum(values)
 // deps = ["values[0]", "values[1]", "values[2]"]
+```
+
+**Function:** `count`
+
+Tracks only the array reference, not individual elements:
+
+```javascript
+// Data: { values: [1, 2, 3] }
+$count(values)
+// deps = ["values"]  (the array path only)
 ```
 
 ---
@@ -384,7 +394,8 @@ config[$string("theme_", mode)]
 |----------|------|------|-------|
 | **Arithmetic** | No | Data refs only | `a + 5` → deps = `["a"]` |
 | **Conditionals** | No | Cond + taken branch | `a ? b : c` |
-| **Aggregations** | No | All elements | `$sum(array)` |
+| **Aggregations** | No | All elements | `$sum`, `$min`, `$max` |
+| **Count** | No | Array only | `$count(array)` → deps = `["array"]` |
 | **Transformations** | Per element | Per element | `$map`, `filter` |
 | **Constant access** | Yes | None | `array[0]`, `obj.x` |
 | **Dynamic access** | Yes | Index/key | `$elem(array, idx)` |
