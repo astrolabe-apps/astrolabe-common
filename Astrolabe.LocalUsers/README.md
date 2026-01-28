@@ -3,7 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Astrolabe.LocalUsers.svg)](https://www.nuget.org/packages/Astrolabe.LocalUsers/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A comprehensive library for implementing local user management in .NET applications. Part of the Astrolabe Apps library stack.
+A comprehensive library for implementing local user management in .NET 8+ applications using Minimal APIs. Part of the Astrolabe Apps library stack.
 
 ## Overview
 
@@ -34,7 +34,7 @@ dotnet add package Astrolabe.LocalUsers
 ### Security Features
 
 - **Password Hashing**: Secure password storage with salted SHA-256 hashing (customizable)
-- **Validation**: Comprehensive validation for user inputs
+- **Validation**: Comprehensive validation for user inputs using FluentValidation
 - **MFA Support**: Two-factor authentication with verification codes
 
 ## Getting Started
@@ -44,56 +44,105 @@ dotnet add package Astrolabe.LocalUsers
 Create a class that implements `ICreateNewUser`:
 
 ```csharp
-public class NewUser : ICreateNewUser
+public class CreateUserRequest : ICreateNewUser
 {
     public string Email { get; set; }
     public string Password { get; set; }
     public string Confirm { get; set; }
-    
+
     // Additional properties as needed
+    public string FirstName { get; set; }
+    public string LastName { get; set; }
+    public string MobileNumber { get; set; }
 }
 ```
 
-### Step 2: Create a User ID Type
-
-Define your user ID type (typically `int`, `Guid`, or `string`).
-
-### Step 3: Implement a User Service
+### Step 2: Implement a User Service
 
 Extend the `AbstractLocalUserService<TNewUser, TUserId>` class:
 
 ```csharp
-public class MyUserService : AbstractLocalUserService<NewUser, int>
+public class MyUserService : AbstractLocalUserService<CreateUserRequest, Guid>
 {
-    public MyUserService(IPasswordHasher passwordHasher, LocalUserMessages? messages = null) 
+    private readonly AppDbContext _context;
+    private readonly IEmailService _emailService;
+
+    public MyUserService(
+        IPasswordHasher passwordHasher,
+        AppDbContext context,
+        IEmailService emailService,
+        LocalUserMessages? messages = null)
         : base(passwordHasher, messages)
     {
+        _context = context;
+        _emailService = emailService;
     }
 
     // Implement abstract methods (see implementation section below)
 }
 ```
 
-### Step 4: Set Up a Controller
+### Step 3: Implement a User ID Provider
 
-Extend the `AbstractLocalUserController<TNewUser, TUserId>` class:
+Create a class that extracts the user ID from the HTTP context:
 
 ```csharp
-[ApiController]
-[Route("api/users")]
-public class UserController : AbstractLocalUserController<NewUser, int>
+public class ClaimsUserIdProvider : ILocalUserIdProvider<Guid>
 {
-    public UserController(ILocalUserService<NewUser, int> userService) 
-        : base(userService)
+    public Guid GetUserId(HttpContext context)
     {
-    }
-
-    protected override int GetUserId()
-    {
-        // Extract user ID from the current authenticated user's claims
-        return int.Parse(User.FindFirst("userId")?.Value ?? "0");
+        var claim = context.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (claim == null)
+            throw new UnauthorizedException("User not authenticated");
+        return Guid.Parse(claim.Value);
     }
 }
+```
+
+### Step 4: Create Your Endpoints Class
+
+Extend the `LocalUserEndpoints<TNewUser, TUserId>` class:
+
+```csharp
+public class MyUserEndpoints : LocalUserEndpoints<CreateUserRequest, Guid>
+{
+    public MyUserEndpoints(
+        ILocalUserService<CreateUserRequest, Guid> userService,
+        ILocalUserIdProvider<Guid> userIdProvider,
+        LocalUserEndpointOptions? options = null)
+        : base(userService, userIdProvider, options) { }
+}
+```
+
+### Step 5: Register Services in Program.cs
+
+```csharp
+// Register the password hasher
+builder.Services.AddSingleton<IPasswordHasher, SaltedSha256PasswordHasher>();
+
+// Register your user service
+builder.Services.AddScoped<ILocalUserService<CreateUserRequest, Guid>, MyUserService>();
+
+// Register the user ID provider
+builder.Services.AddScoped<ILocalUserIdProvider<Guid>, ClaimsUserIdProvider>();
+
+// Register the endpoints
+builder.Services.AddLocalUserEndpoints<MyUserEndpoints, CreateUserRequest, Guid>();
+```
+
+### Step 6: Map the Endpoints
+
+```csharp
+// Map endpoints with a route prefix
+app.MapLocalUserEndpoints<MyUserEndpoints, CreateUserRequest, Guid>("api/auth");
+```
+
+Or with additional configuration:
+
+```csharp
+app.MapGroup("api/auth")
+   .MapLocalUserEndpoints<MyUserEndpoints, CreateUserRequest, Guid>()
+   .WithTags("Authentication");
 ```
 
 ## Implementation Guide
@@ -112,18 +161,18 @@ protected abstract Task CreateUnverifiedAccount(TNewUser newUser, string hashedP
 // Count existing users with the same email
 protected abstract Task<int> CountExistingForEmail(string email);
 
-// Verify email with code and return JWT token
+// Verify email with code and return JWT token (or MFA token if MFA required)
 protected abstract Task<string?> VerifyAccountCode(string code);
 
-// MFA verification for account
-protected abstract Task<string?> MfaVerifyAccountForUserId(MfaAuthenticateRequest mfaAuthenticateRequest);
+// MFA verification for account creation
+protected abstract Task<string?> VerifyAccountWithMfaForUserId(MfaAuthenticateRequest mfaAuthenticateRequest);
 
-// Authenticate with username/password and return JWT token
+// Authenticate with username/password and return JWT token (or MFA token)
 protected abstract Task<string?> AuthenticatedHashed(AuthenticateRequest authenticateRequest, string hashedPassword);
 
 // Send an MFA code via SMS/phone
 protected abstract Task<bool> SendCode(MfaCodeRequest mfaCodeRequest);
-protected abstract Task<bool> SendCode(TUserId userId, string? number=null);
+protected abstract Task<bool> SendCode(TUserId userId, string? number = null);
 
 // Verify MFA code and return JWT token
 protected abstract Task<string?> VerifyMfaCode(string token, string code, string? number);
@@ -135,9 +184,9 @@ protected abstract Task SetResetCodeAndEmail(string email, string resetCode);
 // Change email for a user
 protected abstract Task<bool> EmailChangeForUserId(TUserId userId, string hashedPassword, string newEmail);
 
-// Change password with appropriate methods
+// Change password
 protected abstract Task<(bool, Func<string, Task<string>>?)> PasswordChangeForUserId(TUserId userId, string hashedPassword);
-protected abstract Task<Func<string, Task<string>>?> PasswordChangeForResetCode(string resetCode);
+protected abstract Task<Func<string, Task>?> PasswordResetForResetCode(string resetCode);
 
 // Change MFA phone number
 protected abstract Task<bool> ChangeMfaNumberForUserId(TUserId userId, string hashedPassword, string newNumber);
@@ -145,21 +194,83 @@ protected abstract Task<bool> ChangeMfaNumberForUserId(TUserId userId, string ha
 
 ## Customization
 
+### Disabling Specific Endpoints
+
+Use `LocalUserEndpointOptions` to disable endpoints you don't need:
+
+```csharp
+builder.Services.AddLocalUserEndpoints<MyUserEndpoints, CreateUserRequest, Guid>(options =>
+{
+    options.EnableSendMfaCodeToNumber = false;
+    options.EnableInitiateMfaNumberChange = false;
+    options.EnableCompleteMfaNumberChange = false;
+});
+```
+
+### Customizing Endpoint Routes
+
+Override the mapping methods in your endpoints class:
+
+```csharp
+public class MyUserEndpoints : LocalUserEndpoints<CreateUserRequest, Guid>
+{
+    // Change the route path
+    protected override RouteHandlerBuilder MapCreateAccount(RouteGroupBuilder group) =>
+        group
+            .MapPost("register", (CreateUserRequest newUser) => HandleCreateAccount(newUser))
+            .WithName("RegisterUser");
+
+    // Add custom authorization policy
+    protected override RouteHandlerBuilder MapChangePassword(RouteGroupBuilder group) =>
+        base.MapChangePassword(group)
+            .RequireAuthorization("MustBeVerified");
+}
+```
+
+### Customizing Handler Logic
+
+Override handler methods to add custom logic:
+
+```csharp
+public class MyUserEndpoints : LocalUserEndpoints<CreateUserRequest, Guid>
+{
+    private readonly ILogger<MyUserEndpoints> _logger;
+
+    public MyUserEndpoints(
+        ILocalUserService<CreateUserRequest, Guid> userService,
+        ILocalUserIdProvider<Guid> userIdProvider,
+        ILogger<MyUserEndpoints> logger,
+        LocalUserEndpointOptions? options = null)
+        : base(userService, userIdProvider, options)
+    {
+        _logger = logger;
+    }
+
+    protected override async Task HandleCreateAccount(CreateUserRequest newUser)
+    {
+        _logger.LogInformation("Creating account for {Email}", newUser.Email);
+        await base.HandleCreateAccount(newUser);
+        _logger.LogInformation("Account created successfully for {Email}", newUser.Email);
+    }
+}
+```
+
 ### Custom Password Requirements
 
 Override the `ApplyPasswordRules` method in your service implementation:
 
 ```csharp
 protected override void ApplyPasswordRules<T>(AbstractValidator<T> validator)
+    where T : IPasswordHolder
 {
-    // Default is 8 character minimum
-    validator.RuleFor(x => x.Password).MinimumLength(10);
-    validator.RuleFor(x => x.Password).Must(HasUpperCase).WithMessage("Password must contain an uppercase letter");
-    validator.RuleFor(x => x.Password).Must(HasNumber).WithMessage("Password must contain a number");
+    validator.RuleFor(x => x.Password)
+        .MinimumLength(10)
+        .WithMessage("Password must be at least 10 characters")
+        .Matches(@"[A-Z]+")
+        .WithMessage("Password must contain an uppercase letter")
+        .Matches(@"[0-9]+")
+        .WithMessage("Password must contain a number");
 }
-
-private bool HasUpperCase(string password) => password.Any(char.IsUpper);
-private bool HasNumber(string password) => password.Any(char.IsDigit);
 ```
 
 ### Custom Error Messages
@@ -175,7 +286,7 @@ var messages = new LocalUserMessages
     EmailInvalid = "Please enter a valid email address"
 };
 
-var userService = new MyUserService(passwordHasher, messages);
+builder.Services.AddSingleton(messages);
 ```
 
 ### Custom Email Validation Rules
@@ -183,12 +294,12 @@ var userService = new MyUserService(passwordHasher, messages);
 Override the `ApplyCreationRules` method:
 
 ```csharp
-protected override Task ApplyCreationRules(NewUser user, AbstractValidator<NewUser> validator)
+protected override Task ApplyCreationRules(CreateUserRequest user, AbstractValidator<CreateUserRequest> validator)
 {
-    // Add domain-specific validation
-    validator.RuleFor(x => x.Email).Must(x => x.EndsWith("@mycompany.com"))
+    validator.RuleFor(x => x.Email)
+        .Must(x => x.EndsWith("@mycompany.com"))
         .WithMessage("Only company email addresses are allowed");
-    
+
     return Task.CompletedTask;
 }
 ```
@@ -209,21 +320,35 @@ public class BcryptPasswordHasher : IPasswordHasher
 
 ## API Endpoints
 
-The controller provides these standard endpoints:
+The endpoints are organized by resource with sensible OpenAPI operation IDs:
 
-- `POST /create` - Create a new account
-- `POST /verify` - Verify account with email code
-- `POST /mfaVerify` - Verify account with MFA
-- `POST /authenticate` - Authenticate with username/password
-- `POST /mfaCode/authenticate` - Send MFA code
-- `POST /mfaAuthenticate` - Authenticate with MFA code
-- `POST /forgotPassword` - Initiate password reset
-- `POST /changeEmail` - Change email address
-- `POST /changeMfaNumber` - Change MFA phone number
-- `POST /mfaChangeMfaNumber` - Change MFA number with verification
-- `POST /changePassword` - Change password (authenticated)
-- `POST /resetPassword` - Reset password (with reset code)
-- `POST /mfaCode/number` - Send MFA code to a specific number
+### Account Management (`account/*`)
+
+| Method | Path | Operation ID | Auth Required | Description |
+|--------|------|--------------|---------------|-------------|
+| POST | `/account` | CreateAccount | No | Create a new account |
+| POST | `/account/verify` | VerifyAccount | No | Verify account with email code |
+| POST | `/account/verify/mfa` | VerifyAccountWithMfa | No | Complete verification with MFA |
+| POST | `/account/email` | ChangeEmail | Yes | Change email address |
+| POST | `/account/password` | ChangePassword | Yes | Change password |
+| POST | `/account/mfa-number` | InitiateMfaNumberChange | No | Start MFA number change |
+| POST | `/account/mfa-number/complete` | CompleteMfaNumberChange | Yes | Complete MFA number change |
+| POST | `/account/mfa-number/send-code` | SendMfaCodeToNumber | No | Send MFA code to number |
+
+### Authentication (`auth/*`)
+
+| Method | Path | Operation ID | Auth Required | Description |
+|--------|------|--------------|---------------|-------------|
+| POST | `/auth` | Authenticate | No | Authenticate with credentials |
+| POST | `/auth/mfa/send` | SendAuthenticationMfaCode | No | Send MFA code for auth |
+| POST | `/auth/mfa/complete` | CompleteAuthentication | No | Complete MFA authentication |
+
+### Password Reset (`password/*`)
+
+| Method | Path | Operation ID | Auth Required | Description |
+|--------|------|--------------|---------------|-------------|
+| POST | `/password/forgot` | ForgotPassword | No | Initiate password reset |
+| POST | `/password/reset` | ResetPassword | No | Reset password with code |
 
 ## License
 
