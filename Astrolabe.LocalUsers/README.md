@@ -350,6 +350,133 @@ The endpoints are organized by resource with sensible OpenAPI operation IDs:
 | POST | `/password/forgot` | ForgotPassword | No | Initiate password reset |
 | POST | `/password/reset` | ResetPassword | No | Reset password with code |
 
+## Migration Guide (v3.x to v4.x)
+
+This version introduces breaking changes to improve API clarity and migrate from MVC controllers to Minimal APIs.
+
+### Breaking Changes
+
+#### 1. AbstractLocalUserController Removed
+
+The `AbstractLocalUserController<TNewUser, TUserId>` class has been removed. Replace it with the new `LocalUserEndpoints<TNewUser, TUserId>` class and Minimal APIs approach.
+
+**Before (v3.x):**
+```csharp
+[ApiController]
+[Route("api/users")]
+public class UserController : AbstractLocalUserController<NewUser, Guid>
+{
+    public UserController(ILocalUserService<NewUser, Guid> userService)
+        : base(userService) { }
+
+    protected override Guid GetUserId() =>
+        Guid.Parse(User.FindFirst("userId")?.Value ?? "");
+}
+```
+
+**After (v4.x):**
+```csharp
+// 1. Create a user ID provider
+public class ClaimsUserIdProvider : ILocalUserIdProvider<Guid>
+{
+    public Guid GetUserId(HttpContext context) =>
+        Guid.Parse(context.User.FindFirst("userId")?.Value ?? "");
+}
+
+// 2. Create an endpoints class
+public class UserEndpoints : LocalUserEndpoints<NewUser, Guid>
+{
+    public UserEndpoints(
+        ILocalUserService<NewUser, Guid> userService,
+        ILocalUserIdProvider<Guid> userIdProvider,
+        LocalUserEndpointOptions? options = null)
+        : base(userService, userIdProvider, options) { }
+}
+
+// 3. Register in Program.cs
+builder.Services.AddScoped<ILocalUserIdProvider<Guid>, ClaimsUserIdProvider>();
+builder.Services.AddLocalUserEndpoints<UserEndpoints, NewUser, Guid>();
+
+// 4. Map endpoints
+app.MapLocalUserEndpoints<UserEndpoints, NewUser, Guid>("api/users");
+```
+
+#### 2. ILocalUserService Method Renames
+
+The following methods have been renamed for clarity:
+
+| Old Name (v3.x) | New Name (v4.x) | Description |
+|-----------------|-----------------|-------------|
+| `MfaVerifyAccount` | `VerifyAccountWithMfa` | Complete account verification with MFA |
+| `SendMfaCode(MfaCodeRequest)` | `SendAuthenticationMfaCode` | Send MFA code during authentication |
+| `MfaAuthenticate` | `CompleteAuthentication` | Complete MFA authentication flow |
+| `ChangeMfaNumber` | `InitiateMfaNumberChange` | Start MFA number change process |
+| `MfaChangeMfaNumber` | `CompleteMfaNumberChange` | Complete MFA number change with code |
+| `SendMfaCode(string, Func)` | `SendMfaCodeToNumber` | Send MFA code to specific number |
+
+#### 3. AbstractLocalUserService Abstract Method Rename
+
+If you extend `AbstractLocalUserService`, rename this method:
+
+| Old Name (v3.x) | New Name (v4.x) |
+|-----------------|-----------------|
+| `MfaVerifyAccountForUserId` | `VerifyAccountWithMfaForUserId` |
+
+**Before:**
+```csharp
+protected override Task<string?> MfaVerifyAccountForUserId(
+    MfaAuthenticateRequest mfaAuthenticateRequest)
+{
+    // ...
+}
+```
+
+**After:**
+```csharp
+protected override Task<string?> VerifyAccountWithMfaForUserId(
+    MfaAuthenticateRequest mfaAuthenticateRequest)
+{
+    // ...
+}
+```
+
+#### 4. API Route Changes
+
+The default API routes have changed to be more RESTful:
+
+| Old Route (v3.x) | New Route (v4.x) |
+|------------------|------------------|
+| `/create` | `/account` |
+| `/verify` | `/account/verify` |
+| `/mfaVerify` | `/account/verify/mfa` |
+| `/authenticate` | `/auth` |
+| `/mfaCode/authenticate` | `/auth/mfa/send` |
+| `/mfaAuthenticate` | `/auth/mfa/complete` |
+| `/forgotPassword` | `/password/forgot` |
+| `/resetPassword` | `/password/reset` |
+| `/changeEmail` | `/account/email` |
+| `/changePassword` | `/account/password` |
+| `/changeMfaNumber` | `/account/mfa-number` |
+| `/mfaChangeMfaNumber` | `/account/mfa-number/complete` |
+| `/mfaCode/number` | `/account/mfa-number/send-code` |
+
+If you need to maintain backwards compatibility with existing clients, override the mapping methods to use the old routes:
+
+```csharp
+public class UserEndpoints : LocalUserEndpoints<NewUser, Guid>
+{
+    protected override RouteHandlerBuilder MapCreateAccount(RouteGroupBuilder group) =>
+        group.MapPost("create", (NewUser newUser) => HandleCreateAccount(newUser))
+            .WithName("CreateAccount");
+
+    // Override other methods as needed...
+}
+```
+
+#### 5. Target Framework
+
+The library now targets .NET 8.0 (previously .NET 7.0).
+
 ## License
 
 MIT
