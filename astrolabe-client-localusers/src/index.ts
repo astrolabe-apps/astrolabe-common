@@ -3,6 +3,7 @@ import {
   notEmpty,
   useComputed,
   useControl,
+  useControlEffect,
 } from "@react-typed-forms/core";
 import {
   isApiResponse,
@@ -10,6 +11,7 @@ import {
   PageSecurity,
   RouteData,
   useNavigationService,
+  useSecurityService,
   validateAndRunMessages,
   validateAndRunResult,
 } from "@astroapps/client";
@@ -203,6 +205,24 @@ export function useChangeEmailPage(
         },
       ),
   };
+}
+
+export function useLogoutPage() {
+  const security = useSecurityService();
+  const { loggedIn, busy } = security.currentUser.fields;
+  const {
+    hrefs: { login },
+  } = useAuthPageSetup();
+  const nav = useNavigationService();
+  useControlEffect(
+    () => [busy.value, loggedIn.value],
+    ([busy, loggedIn]) => {
+      if (busy) return;
+      if (loggedIn) security.logout();
+      else nav.replace(login);
+    },
+    true,
+  );
 }
 
 export interface LoginProps {
@@ -565,7 +585,7 @@ export function useVerifyPage(
 
 export const defaultUserRoutes = {
   login: { label: "Login", allowGuests: true, forwardAuthenticated: true },
-  logout: { label: "Logout", allowGuests: false },
+  logout: { label: "Logout", allowGuests: true },
   changePassword: { label: "Change password", allowGuests: false },
   changeEmail: { label: "Change email", allowGuests: false },
   resetPassword: {
