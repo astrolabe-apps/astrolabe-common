@@ -107,10 +107,9 @@ Extend the `LocalUserEndpoints<TNewUser, TUserId>` class:
 public class MyUserEndpoints : LocalUserEndpoints<CreateUserRequest, Guid>
 {
     public MyUserEndpoints(
-        ILocalUserService<CreateUserRequest, Guid> userService,
         ILocalUserIdProvider<Guid> userIdProvider,
         LocalUserEndpointOptions? options = null)
-        : base(userService, userIdProvider, options) { }
+        : base(userIdProvider, options) { }
 }
 ```
 
@@ -217,7 +216,7 @@ public class MyUserEndpoints : LocalUserEndpoints<CreateUserRequest, Guid>
     // Change the route path
     protected override RouteHandlerBuilder MapCreateAccount(RouteGroupBuilder group) =>
         group
-            .MapPost("register", (CreateUserRequest newUser) => HandleCreateAccount(newUser))
+            .MapPost("register", (CreateUserRequest newUser, HttpContext context) => HandleCreateAccount(newUser, context))
             .WithName("RegisterUser");
 
     // Add custom authorization policy
@@ -237,19 +236,18 @@ public class MyUserEndpoints : LocalUserEndpoints<CreateUserRequest, Guid>
     private readonly ILogger<MyUserEndpoints> _logger;
 
     public MyUserEndpoints(
-        ILocalUserService<CreateUserRequest, Guid> userService,
         ILocalUserIdProvider<Guid> userIdProvider,
         ILogger<MyUserEndpoints> logger,
         LocalUserEndpointOptions? options = null)
-        : base(userService, userIdProvider, options)
+        : base(userIdProvider, options)
     {
         _logger = logger;
     }
 
-    protected override async Task HandleCreateAccount(CreateUserRequest newUser)
+    protected override async Task HandleCreateAccount(CreateUserRequest newUser, HttpContext context)
     {
         _logger.LogInformation("Creating account for {Email}", newUser.Email);
-        await base.HandleCreateAccount(newUser);
+        await base.HandleCreateAccount(newUser, context);
         _logger.LogInformation("Account created successfully for {Email}", newUser.Email);
     }
 }
@@ -387,10 +385,9 @@ public class ClaimsUserIdProvider : ILocalUserIdProvider<Guid>
 public class UserEndpoints : LocalUserEndpoints<NewUser, Guid>
 {
     public UserEndpoints(
-        ILocalUserService<NewUser, Guid> userService,
         ILocalUserIdProvider<Guid> userIdProvider,
         LocalUserEndpointOptions? options = null)
-        : base(userService, userIdProvider, options) { }
+        : base(userIdProvider, options) { }
 }
 
 // 3. Register in Program.cs
@@ -466,7 +463,7 @@ If you need to maintain backwards compatibility with existing clients, override 
 public class UserEndpoints : LocalUserEndpoints<NewUser, Guid>
 {
     protected override RouteHandlerBuilder MapCreateAccount(RouteGroupBuilder group) =>
-        group.MapPost("create", (NewUser newUser) => HandleCreateAccount(newUser))
+        group.MapPost("create", (NewUser newUser, HttpContext context) => HandleCreateAccount(newUser, context))
             .WithName("CreateAccount");
 
     // Override other methods as needed...

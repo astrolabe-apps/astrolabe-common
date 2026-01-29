@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Astrolabe.LocalUsers;
 
@@ -40,20 +41,23 @@ public class LocalUserEndpointOptions
 public abstract class LocalUserEndpoints<TNewUser, TUserId>
     where TNewUser : ICreateNewUser
 {
-    protected ILocalUserService<TNewUser, TUserId> UserService { get; }
     protected ILocalUserIdProvider<TUserId> UserIdProvider { get; }
     protected LocalUserEndpointOptions Options { get; }
 
     protected LocalUserEndpoints(
-        ILocalUserService<TNewUser, TUserId> userService,
         ILocalUserIdProvider<TUserId> userIdProvider,
         LocalUserEndpointOptions? options = null
     )
     {
-        UserService = userService;
         UserIdProvider = userIdProvider;
         Options = options ?? new LocalUserEndpointOptions();
     }
+
+    /// <summary>
+    /// Gets the ILocalUserService from the request's service scope.
+    /// </summary>
+    protected ILocalUserService<TNewUser, TUserId> GetUserService(HttpContext context) =>
+        context.RequestServices.GetRequiredService<ILocalUserService<TNewUser, TUserId>>();
 
     /// <summary>
     /// Maps all enabled endpoints to the route group.
@@ -91,45 +95,46 @@ public abstract class LocalUserEndpoints<TNewUser, TUserId>
 
     #region Handler Methods
 
-    protected virtual Task HandleCreateAccount(TNewUser newUser) =>
-        UserService.CreateAccount(newUser);
+    protected virtual Task HandleCreateAccount(TNewUser newUser, HttpContext context) =>
+        GetUserService(context).CreateAccount(newUser);
 
-    protected virtual Task<string> HandleVerifyAccount(string code) =>
-        UserService.VerifyAccount(code);
+    protected virtual Task<string> HandleVerifyAccount(string code, HttpContext context) =>
+        GetUserService(context).VerifyAccount(code);
 
-    protected virtual Task<string> HandleVerifyAccountWithMfa(MfaAuthenticateRequest request) =>
-        UserService.VerifyAccountWithMfa(request);
+    protected virtual Task<string> HandleVerifyAccountWithMfa(MfaAuthenticateRequest request, HttpContext context) =>
+        GetUserService(context).VerifyAccountWithMfa(request);
 
-    protected virtual Task<string> HandleAuthenticate(AuthenticateRequest request) =>
-        UserService.Authenticate(request);
+    protected virtual Task<string> HandleAuthenticate(AuthenticateRequest request, HttpContext context) =>
+        GetUserService(context).Authenticate(request);
 
-    protected virtual Task HandleSendAuthenticationMfaCode(MfaCodeRequest request) =>
-        UserService.SendAuthenticationMfaCode(request);
+    protected virtual Task HandleSendAuthenticationMfaCode(MfaCodeRequest request, HttpContext context) =>
+        GetUserService(context).SendAuthenticationMfaCode(request);
 
-    protected virtual Task<string> HandleCompleteAuthentication(MfaAuthenticateRequest request) =>
-        UserService.CompleteAuthentication(request);
+    protected virtual Task<string> HandleCompleteAuthentication(MfaAuthenticateRequest request, HttpContext context) =>
+        GetUserService(context).CompleteAuthentication(request);
 
-    protected virtual Task HandleForgotPassword(string email) => UserService.ForgotPassword(email);
+    protected virtual Task HandleForgotPassword(string email, HttpContext context) =>
+        GetUserService(context).ForgotPassword(email);
 
     protected virtual Task HandleChangeEmail(ChangeEmail change, HttpContext context) =>
-        UserService.ChangeEmail(change, () => UserIdProvider.GetUserId(context));
+        GetUserService(context).ChangeEmail(change, () => UserIdProvider.GetUserId(context));
 
     protected virtual Task HandleInitiateMfaNumberChange(
         ChangeMfaNumber change,
         HttpContext context
-    ) => UserService.InitiateMfaNumberChange(change, () => UserIdProvider.GetUserId(context));
+    ) => GetUserService(context).InitiateMfaNumberChange(change, () => UserIdProvider.GetUserId(context));
 
     protected virtual Task HandleCompleteMfaNumberChange(MfaChangeNumber change, HttpContext context) =>
-        UserService.CompleteMfaNumberChange(change, () => UserIdProvider.GetUserId(context));
+        GetUserService(context).CompleteMfaNumberChange(change, () => UserIdProvider.GetUserId(context));
 
     protected virtual Task<string> HandleChangePassword(ChangePassword change, HttpContext context) =>
-        UserService.ChangePassword(change, () => UserIdProvider.GetUserId(context));
+        GetUserService(context).ChangePassword(change, () => UserIdProvider.GetUserId(context));
 
-    protected virtual Task HandleResetPassword(ResetPassword reset, string resetCode) =>
-        UserService.ResetPassword(reset, resetCode);
+    protected virtual Task HandleResetPassword(ResetPassword reset, string resetCode, HttpContext context) =>
+        GetUserService(context).ResetPassword(reset, resetCode);
 
     protected virtual Task HandleSendMfaCodeToNumber(string number, HttpContext context) =>
-        UserService.SendMfaCodeToNumber(number, () => UserIdProvider.GetUserId(context));
+        GetUserService(context).SendMfaCodeToNumber(number, () => UserIdProvider.GetUserId(context));
 
     #endregion
 
@@ -137,32 +142,32 @@ public abstract class LocalUserEndpoints<TNewUser, TUserId>
 
     protected virtual RouteHandlerBuilder MapCreateAccount(RouteGroupBuilder group) =>
         group
-            .MapPost("account", (TNewUser newUser) => HandleCreateAccount(newUser))
+            .MapPost("account", (TNewUser newUser, HttpContext context) => HandleCreateAccount(newUser, context))
             .WithName("CreateAccount");
 
     protected virtual RouteHandlerBuilder MapVerifyAccount(RouteGroupBuilder group) =>
         group
-            .MapPost("account/verify", (string code) => HandleVerifyAccount(code))
+            .MapPost("account/verify", (string code, HttpContext context) => HandleVerifyAccount(code, context))
             .WithName("VerifyAccount");
 
     protected virtual RouteHandlerBuilder MapVerifyAccountWithMfa(RouteGroupBuilder group) =>
         group
             .MapPost(
                 "account/verify/mfa",
-                (MfaAuthenticateRequest request) => HandleVerifyAccountWithMfa(request)
+                (MfaAuthenticateRequest request, HttpContext context) => HandleVerifyAccountWithMfa(request, context)
             )
             .WithName("VerifyAccountWithMfa");
 
     protected virtual RouteHandlerBuilder MapAuthenticate(RouteGroupBuilder group) =>
         group
-            .MapPost("auth", (AuthenticateRequest request) => HandleAuthenticate(request))
+            .MapPost("auth", (AuthenticateRequest request, HttpContext context) => HandleAuthenticate(request, context))
             .WithName("Authenticate");
 
     protected virtual RouteHandlerBuilder MapSendAuthenticationMfaCode(RouteGroupBuilder group) =>
         group
             .MapPost(
                 "auth/mfa/send",
-                (MfaCodeRequest request) => HandleSendAuthenticationMfaCode(request)
+                (MfaCodeRequest request, HttpContext context) => HandleSendAuthenticationMfaCode(request, context)
             )
             .WithName("SendAuthenticationMfaCode");
 
@@ -170,13 +175,13 @@ public abstract class LocalUserEndpoints<TNewUser, TUserId>
         group
             .MapPost(
                 "auth/mfa/complete",
-                (MfaAuthenticateRequest request) => HandleCompleteAuthentication(request)
+                (MfaAuthenticateRequest request, HttpContext context) => HandleCompleteAuthentication(request, context)
             )
             .WithName("CompleteAuthentication");
 
     protected virtual RouteHandlerBuilder MapForgotPassword(RouteGroupBuilder group) =>
         group
-            .MapPost("password/forgot", (string email) => HandleForgotPassword(email))
+            .MapPost("password/forgot", (string email, HttpContext context) => HandleForgotPassword(email, context))
             .WithName("ForgotPassword");
 
     protected virtual RouteHandlerBuilder MapChangeEmail(RouteGroupBuilder group) =>
@@ -221,7 +226,7 @@ public abstract class LocalUserEndpoints<TNewUser, TUserId>
         group
             .MapPost(
                 "password/reset",
-                (ResetPassword reset, string resetCode) => HandleResetPassword(reset, resetCode)
+                (ResetPassword reset, string resetCode, HttpContext context) => HandleResetPassword(reset, resetCode, context)
             )
             .WithName("ResetPassword");
 
