@@ -350,7 +350,7 @@ The endpoints are organized by resource with sensible OpenAPI operation IDs:
 | POST | `/password/forgot` | ForgotPassword | No | Initiate password reset |
 | POST | `/password/reset` | ResetPassword | No | Reset password with code |
 
-## Migration Guide (v3.x to v4.x)
+## Migration Guide (v4.x to v5.x)
 
 This version introduces breaking changes to improve API clarity and migrate from MVC controllers to Minimal APIs.
 
@@ -360,7 +360,7 @@ This version introduces breaking changes to improve API clarity and migrate from
 
 The `AbstractLocalUserController<TNewUser, TUserId>` class has been removed. Replace it with the new `LocalUserEndpoints<TNewUser, TUserId>` class and Minimal APIs approach.
 
-**Before (v3.x):**
+**Before (v4.x):**
 ```csharp
 [ApiController]
 [Route("api/users")]
@@ -405,21 +405,21 @@ app.MapLocalUserEndpoints<UserEndpoints, NewUser, Guid>("api/users");
 
 The following methods have been renamed for clarity:
 
-| Old Name (v3.x) | New Name (v4.x) | Description |
-|-----------------|-----------------|-------------|
-| `MfaVerifyAccount` | `VerifyAccountWithMfa` | Complete account verification with MFA |
+| Old Name (v4.x)               | New Name (v5.x)             | Description |
+|-------------------------------|-----------------------------|-------------|
+| `MfaVerifyAccount`            | `VerifyAccountWithMfa`      | Complete account verification with MFA |
 | `SendMfaCode(MfaCodeRequest)` | `SendAuthenticationMfaCode` | Send MFA code during authentication |
-| `MfaAuthenticate` | `CompleteAuthentication` | Complete MFA authentication flow |
-| `ChangeMfaNumber` | `InitiateMfaNumberChange` | Start MFA number change process |
-| `MfaChangeMfaNumber` | `CompleteMfaNumberChange` | Complete MFA number change with code |
-| `SendMfaCode(string, Func)` | `SendMfaCodeToNumber` | Send MFA code to specific number |
+| `MfaAuthenticate`             | `CompleteAuthentication`    | Complete MFA authentication flow |
+| `ChangeMfaNumber`             | `InitiateMfaNumberChange`   | Start MFA number change process |
+| `MfaChangeMfaNumber`          | `CompleteMfaNumberChange`   | Complete MFA number change with code |
+| `SendMfaCode(string, Func)`   | `SendMfaCodeToNumber`       | Send MFA code to specific number |
 
 #### 3. AbstractLocalUserService Abstract Method Rename
 
 If you extend `AbstractLocalUserService`, rename this method:
 
-| Old Name (v3.x) | New Name (v4.x) |
-|-----------------|-----------------|
+| Old Name (v4.x)             | New Name (v5.x)                 |
+|-----------------------------|---------------------------------|
 | `MfaVerifyAccountForUserId` | `VerifyAccountWithMfaForUserId` |
 
 **Before:**
