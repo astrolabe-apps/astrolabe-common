@@ -54,6 +54,7 @@ export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
   let ref = React.useRef(null);
   let { groupProps, fieldProps, buttonProps, dialogProps, calendarProps } =
     useDatePicker<T>(props, state, ref);
+
   return (
     <div
       style={{ display: "inline-flex", flexDirection: "column" }}
@@ -74,6 +75,7 @@ export function DatePicker<T extends DateValue>(props: DatePickerProps<T>) {
         onOpenChange={state.setOpen}
         triggerRef={ref}
         placement="bottom start"
+        UNSTABLE_portalContainer={portalContainer}
         {...popoverClasses}
       >
         <Dialog {...dialogProps} {...dialogClasses}>

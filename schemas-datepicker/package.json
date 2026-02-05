@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-datepicker",
-  "version": "9.1.0",
+  "version": "9.1.1",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -29,7 +29,7 @@
     "react": "^18.2.0 || ^19",
     "@react-typed-forms/core": "^4.4.0",
     "@react-typed-forms/schemas": "^17.0.0",
-    "@astroapps/aria-datepicker": "^1.5.0"
+    "@astroapps/aria-datepicker": "^1.5.1"
   },
   "dependencies": {
     "clsx": "^2",
