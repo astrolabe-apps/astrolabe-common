@@ -64,13 +64,13 @@ import {
 import { defaultLayout } from "./defaultLayout";
 import { setIncluded } from "@astroapps/client";
 import {
+  BasicFormEditorViewContext,
   EditableForm,
   FormInfo,
   FormLoader,
   PreviewData,
   SchemaLoader,
   Snippet,
-  ViewContext,
 } from "./types";
 import { EditorFormTree } from "./EditorFormTree";
 import { EditorSchemaTree } from "./EditorSchemaTree";
@@ -309,7 +309,7 @@ export function BasicFormEditor<A extends string = string>({
   const formList = formTypes.map((e) =>
     Array.isArray(e) ? { id: e[0], name: e[1] } : e,
   );
-  const viewContext: ViewContext = {
+  const viewContext: BasicFormEditorViewContext = {
     validation,
     previewOptions,
     button,

@@ -9,3 +9,7 @@ export * from "./types";
 export * from "./JsonEditor";
 export * from "./FormControlPreview";
 export * from "./hooks/useFormUndoRedo";
+export * from "./useViewContext";
+export { createView, getTabTitle, getViewAndParams } from "./views";
+export { EditorFormTree } from "./EditorFormTree";
+export { EditorSchemaTree } from "./EditorSchemaTree";

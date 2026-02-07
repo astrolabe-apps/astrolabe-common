@@ -3,7 +3,7 @@ import { NodeRendererProps, Tree } from "react-arborist";
 import React from "react";
 import { StdTreeNode } from "../StdTreeNode";
 import clsx from "clsx";
-import { FormInfo, ViewContext } from "../types";
+import { FormInfo, FormListContext, ViewContext } from "../types";
 
 interface FormListNode {
   id: string;
@@ -11,7 +11,11 @@ interface FormListNode {
   info?: FormInfo;
   children?: FormListNode[];
 }
-export function FormListView({ context }: { context: ViewContext }) {
+export function FormListView({
+  context,
+}: {
+  context: ViewContext & FormListContext;
+}) {
   const { ref, width, height } = useResizeObserver();
   return (
     <div className="flex flex-col h-full">
