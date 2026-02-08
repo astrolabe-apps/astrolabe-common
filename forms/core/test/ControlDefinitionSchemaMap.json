@@ -1,0 +1,4334 @@
+{
+  "FieldOption": [
+    {
+      "field": "name",
+      "displayName": "Name",
+      "type": "String",
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "value",
+      "displayName": "Value",
+      "type": "Any",
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "description",
+      "displayName": "Description",
+      "type": "String"
+    },
+    {
+      "field": "disabled",
+      "displayName": "Disabled",
+      "type": "Bool"
+    },
+    {
+      "field": "group",
+      "displayName": "Group",
+      "type": "String"
+    }
+  ],
+  "SchemaValidator": [
+    {
+      "field": "type",
+      "displayName": "Type",
+      "type": "String",
+      "isTypeField": true,
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "Jsonata",
+          "value": "Jsonata"
+        },
+        {
+          "name": "Date",
+          "value": "Date"
+        },
+        {
+          "name": "Length",
+          "value": "Length"
+        }
+      ]
+    },
+    {
+      "field": "expression",
+      "displayName": "Expression",
+      "type": "String",
+      "onlyForTypes": [
+        "Jsonata"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "comparison",
+      "displayName": "Comparison",
+      "type": "String",
+      "onlyForTypes": [
+        "Date"
+      ],
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "Not Before",
+          "value": "NotBefore"
+        },
+        {
+          "name": "Not After",
+          "value": "NotAfter"
+        }
+      ]
+    },
+    {
+      "field": "fixedDate",
+      "displayName": "Fixed Date",
+      "type": "Date",
+      "onlyForTypes": [
+        "Date"
+      ]
+    },
+    {
+      "field": "daysFromCurrent",
+      "displayName": "Days From Current",
+      "type": "Int",
+      "onlyForTypes": [
+        "Date"
+      ]
+    },
+    {
+      "field": "min",
+      "displayName": "Min",
+      "type": "Int",
+      "onlyForTypes": [
+        "Length"
+      ]
+    },
+    {
+      "field": "max",
+      "displayName": "Max",
+      "type": "Int",
+      "onlyForTypes": [
+        "Length"
+      ]
+    }
+  ],
+  "SchemaField": [
+    {
+      "field": "type",
+      "displayName": "Type",
+      "type": "String",
+      "isTypeField": true,
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "String",
+          "value": "String"
+        },
+        {
+          "name": "Bool",
+          "value": "Bool"
+        },
+        {
+          "name": "Int",
+          "value": "Int"
+        },
+        {
+          "name": "Date",
+          "value": "Date"
+        },
+        {
+          "name": "DateTime",
+          "value": "DateTime"
+        },
+        {
+          "name": "Time",
+          "value": "Time"
+        },
+        {
+          "name": "Double",
+          "value": "Double"
+        },
+        {
+          "name": "EntityRef",
+          "value": "EntityRef"
+        },
+        {
+          "name": "Compound",
+          "value": "Compound"
+        },
+        {
+          "name": "AutoId",
+          "value": "AutoId"
+        },
+        {
+          "name": "Image",
+          "value": "Image"
+        },
+        {
+          "name": "Any",
+          "value": "Any"
+        }
+      ]
+    },
+    {
+      "field": "field",
+      "displayName": "Field",
+      "type": "String",
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "displayName",
+      "displayName": "Display Name",
+      "type": "String"
+    },
+    {
+      "field": "system",
+      "displayName": "System",
+      "type": "Bool",
+      "tags": [
+        "_NoControl"
+      ]
+    },
+    {
+      "field": "meta",
+      "displayName": "Meta",
+      "type": "Bool"
+    },
+    {
+      "field": "tags",
+      "displayName": "Tags",
+      "type": "String",
+      "collection": true
+    },
+    {
+      "field": "onlyForTypes",
+      "displayName": "Only For Types",
+      "type": "String",
+      "collection": true
+    },
+    {
+      "field": "required",
+      "displayName": "Required",
+      "type": "Bool"
+    },
+    {
+      "field": "notNullable",
+      "displayName": "Not Nullable",
+      "type": "Bool"
+    },
+    {
+      "field": "collection",
+      "displayName": "Collection",
+      "type": "Bool"
+    },
+    {
+      "field": "defaultValue",
+      "displayName": "Default Value",
+      "type": "Any"
+    },
+    {
+      "field": "isTypeField",
+      "displayName": "Is Type Field",
+      "type": "Bool"
+    },
+    {
+      "field": "searchable",
+      "displayName": "Searchable",
+      "type": "Bool"
+    },
+    {
+      "field": "singularName",
+      "displayName": "Singular Name",
+      "type": "String"
+    },
+    {
+      "field": "requiredText",
+      "displayName": "Required Text",
+      "type": "String"
+    },
+    {
+      "field": "options",
+      "displayName": "Options",
+      "type": "Compound",
+      "collection": true,
+      "children": [
+        {
+          "field": "name",
+          "displayName": "Name",
+          "type": "String",
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "value",
+          "displayName": "Value",
+          "type": "Any",
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "description",
+          "displayName": "Description",
+          "type": "String"
+        },
+        {
+          "field": "disabled",
+          "displayName": "Disabled",
+          "type": "Bool"
+        },
+        {
+          "field": "group",
+          "displayName": "Group",
+          "type": "String"
+        }
+      ],
+      "schemaRef": "FieldOption"
+    },
+    {
+      "field": "validators",
+      "displayName": "Validators",
+      "type": "Compound",
+      "collection": true,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Jsonata",
+              "value": "Jsonata"
+            },
+            {
+              "name": "Date",
+              "value": "Date"
+            },
+            {
+              "name": "Length",
+              "value": "Length"
+            }
+          ]
+        },
+        {
+          "field": "expression",
+          "displayName": "Expression",
+          "type": "String",
+          "onlyForTypes": [
+            "Jsonata"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "comparison",
+          "displayName": "Comparison",
+          "type": "String",
+          "onlyForTypes": [
+            "Date"
+          ],
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Not Before",
+              "value": "NotBefore"
+            },
+            {
+              "name": "Not After",
+              "value": "NotAfter"
+            }
+          ]
+        },
+        {
+          "field": "fixedDate",
+          "displayName": "Fixed Date",
+          "type": "Date",
+          "onlyForTypes": [
+            "Date"
+          ]
+        },
+        {
+          "field": "daysFromCurrent",
+          "displayName": "Days From Current",
+          "type": "Int",
+          "onlyForTypes": [
+            "Date"
+          ]
+        },
+        {
+          "field": "min",
+          "displayName": "Min",
+          "type": "Int",
+          "onlyForTypes": [
+            "Length"
+          ]
+        },
+        {
+          "field": "max",
+          "displayName": "Max",
+          "type": "Int",
+          "onlyForTypes": [
+            "Length"
+          ]
+        }
+      ],
+      "schemaRef": "SchemaValidator"
+    },
+    {
+      "field": "entityRefType",
+      "displayName": "Entity Ref Type",
+      "type": "String",
+      "onlyForTypes": [
+        "EntityRef"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "parentField",
+      "displayName": "Parent Field",
+      "type": "String",
+      "onlyForTypes": [
+        "EntityRef"
+      ]
+    },
+    {
+      "field": "children",
+      "displayName": "Children",
+      "type": "Compound",
+      "collection": true,
+      "children": [],
+      "treeChildren": true,
+      "onlyForTypes": [
+        "Compound"
+      ],
+      "notNullable": true,
+      "tags": [
+        "_NoControl"
+      ]
+    },
+    {
+      "field": "treeChildren",
+      "displayName": "Tree Children",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Compound"
+      ]
+    },
+    {
+      "field": "schemaRef",
+      "displayName": "Schema Ref",
+      "type": "String",
+      "onlyForTypes": [
+        "Compound"
+      ]
+    }
+  ],
+  "EntityExpression": [
+    {
+      "field": "type",
+      "displayName": "Type",
+      "type": "String",
+      "isTypeField": true,
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "Jsonata",
+          "value": "Jsonata"
+        },
+        {
+          "name": "Data Match",
+          "value": "FieldValue"
+        },
+        {
+          "name": "User Match",
+          "value": "UserMatch"
+        },
+        {
+          "name": "Data",
+          "value": "Data"
+        },
+        {
+          "name": "Not Empty",
+          "value": "NotEmpty"
+        },
+        {
+          "name": "UUID",
+          "value": "UUID"
+        }
+      ]
+    },
+    {
+      "field": "expression",
+      "displayName": "Expression",
+      "type": "String",
+      "onlyForTypes": [
+        "Jsonata"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "field",
+      "displayName": "Field",
+      "type": "String",
+      "onlyForTypes": [
+        "FieldValue",
+        "NotEmpty",
+        "Data"
+      ],
+      "notNullable": true,
+      "required": true,
+      "tags": [
+        "_SchemaField"
+      ]
+    },
+    {
+      "field": "value",
+      "displayName": "Value",
+      "type": "Any",
+      "onlyForTypes": [
+        "FieldValue"
+      ],
+      "notNullable": true,
+      "required": true,
+      "tags": [
+        "_ValuesOf:field"
+      ]
+    },
+    {
+      "field": "empty",
+      "displayName": "Empty",
+      "type": "Bool",
+      "onlyForTypes": [
+        "NotEmpty"
+      ]
+    },
+    {
+      "field": "userMatch",
+      "displayName": "User Match",
+      "type": "String",
+      "onlyForTypes": [
+        "UserMatch"
+      ],
+      "notNullable": true,
+      "required": true
+    }
+  ],
+  "DynamicProperty": [
+    {
+      "field": "type",
+      "displayName": "Type",
+      "type": "String",
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "Visible",
+          "value": "Visible"
+        },
+        {
+          "name": "DefaultValue",
+          "value": "DefaultValue"
+        },
+        {
+          "name": "Readonly",
+          "value": "Readonly"
+        },
+        {
+          "name": "Disabled",
+          "value": "Disabled"
+        },
+        {
+          "name": "Display",
+          "value": "Display"
+        },
+        {
+          "name": "Style",
+          "value": "Style"
+        },
+        {
+          "name": "LayoutStyle",
+          "value": "LayoutStyle"
+        },
+        {
+          "name": "AllowedOptions",
+          "value": "AllowedOptions"
+        },
+        {
+          "name": "Label",
+          "value": "Label"
+        },
+        {
+          "name": "ActionData",
+          "value": "ActionData"
+        },
+        {
+          "name": "GridColumns",
+          "value": "GridColumns"
+        }
+      ]
+    },
+    {
+      "field": "expr",
+      "displayName": "Expr",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Jsonata",
+              "value": "Jsonata"
+            },
+            {
+              "name": "Data Match",
+              "value": "FieldValue"
+            },
+            {
+              "name": "User Match",
+              "value": "UserMatch"
+            },
+            {
+              "name": "Data",
+              "value": "Data"
+            },
+            {
+              "name": "Not Empty",
+              "value": "NotEmpty"
+            },
+            {
+              "name": "UUID",
+              "value": "UUID"
+            }
+          ]
+        },
+        {
+          "field": "expression",
+          "displayName": "Expression",
+          "type": "String",
+          "onlyForTypes": [
+            "Jsonata"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "field",
+          "displayName": "Field",
+          "type": "String",
+          "onlyForTypes": [
+            "FieldValue",
+            "NotEmpty",
+            "Data"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_SchemaField"
+          ]
+        },
+        {
+          "field": "value",
+          "displayName": "Value",
+          "type": "Any",
+          "onlyForTypes": [
+            "FieldValue"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_ValuesOf:field"
+          ]
+        },
+        {
+          "field": "empty",
+          "displayName": "Empty",
+          "type": "Bool",
+          "onlyForTypes": [
+            "NotEmpty"
+          ]
+        },
+        {
+          "field": "userMatch",
+          "displayName": "User Match",
+          "type": "String",
+          "onlyForTypes": [
+            "UserMatch"
+          ],
+          "notNullable": true,
+          "required": true
+        }
+      ],
+      "schemaRef": "EntityExpression",
+      "notNullable": true
+    }
+  ],
+  "IconReference": [
+    {
+      "field": "library",
+      "displayName": "Library",
+      "type": "String",
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "FontAwesome",
+          "value": "FontAwesome"
+        },
+        {
+          "name": "Material",
+          "value": "Material"
+        },
+        {
+          "name": "CssClass",
+          "value": "CssClass"
+        }
+      ]
+    },
+    {
+      "field": "name",
+      "displayName": "Name",
+      "type": "String",
+      "notNullable": true,
+      "required": true
+    }
+  ],
+  "ControlAdornment": [
+    {
+      "field": "type",
+      "displayName": "Type",
+      "type": "String",
+      "isTypeField": true,
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "Tooltip",
+          "value": "Tooltip"
+        },
+        {
+          "name": "Accordion",
+          "value": "Accordion"
+        },
+        {
+          "name": "Help Text",
+          "value": "HelpText"
+        },
+        {
+          "name": "Icon",
+          "value": "Icon"
+        },
+        {
+          "name": "SetField",
+          "value": "SetField"
+        },
+        {
+          "name": "Optional",
+          "value": "Optional"
+        }
+      ]
+    },
+    {
+      "field": "placement",
+      "displayName": "Placement",
+      "type": "String",
+      "onlyForTypes": [
+        "Optional",
+        "Icon",
+        "HelpText"
+      ],
+      "options": [
+        {
+          "name": "Start of control",
+          "value": "ControlStart"
+        },
+        {
+          "name": "End of control",
+          "value": "ControlEnd"
+        },
+        {
+          "name": "Start of label",
+          "value": "LabelStart"
+        },
+        {
+          "name": "End of label",
+          "value": "LabelEnd"
+        }
+      ]
+    },
+    {
+      "field": "allowNull",
+      "displayName": "Allow Null",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Optional"
+      ]
+    },
+    {
+      "field": "editSelectable",
+      "displayName": "Edit Selectable",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Optional"
+      ]
+    },
+    {
+      "field": "iconClass",
+      "displayName": "Icon Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Icon"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "icon",
+      "displayName": "Icon",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "library",
+          "displayName": "Library",
+          "type": "String",
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "FontAwesome",
+              "value": "FontAwesome"
+            },
+            {
+              "name": "Material",
+              "value": "Material"
+            },
+            {
+              "name": "CssClass",
+              "value": "CssClass"
+            }
+          ]
+        },
+        {
+          "field": "name",
+          "displayName": "Name",
+          "type": "String",
+          "notNullable": true,
+          "required": true
+        }
+      ],
+      "schemaRef": "IconReference",
+      "onlyForTypes": [
+        "Icon"
+      ]
+    },
+    {
+      "field": "tooltip",
+      "displayName": "Tooltip",
+      "type": "String",
+      "onlyForTypes": [
+        "Tooltip"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "title",
+      "displayName": "Title",
+      "type": "String",
+      "onlyForTypes": [
+        "Accordion"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "defaultExpanded",
+      "displayName": "Default Expanded",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Accordion"
+      ]
+    },
+    {
+      "field": "helpText",
+      "displayName": "Help Text",
+      "type": "String",
+      "onlyForTypes": [
+        "HelpText"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "defaultOnly",
+      "displayName": "Default Only",
+      "type": "Bool",
+      "onlyForTypes": [
+        "SetField"
+      ]
+    },
+    {
+      "field": "field",
+      "displayName": "Field",
+      "type": "String",
+      "onlyForTypes": [
+        "SetField"
+      ],
+      "notNullable": true,
+      "required": true,
+      "tags": [
+        "_SchemaField"
+      ]
+    },
+    {
+      "field": "expression",
+      "displayName": "Expression",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Jsonata",
+              "value": "Jsonata"
+            },
+            {
+              "name": "Data Match",
+              "value": "FieldValue"
+            },
+            {
+              "name": "User Match",
+              "value": "UserMatch"
+            },
+            {
+              "name": "Data",
+              "value": "Data"
+            },
+            {
+              "name": "Not Empty",
+              "value": "NotEmpty"
+            },
+            {
+              "name": "UUID",
+              "value": "UUID"
+            }
+          ]
+        },
+        {
+          "field": "expression",
+          "displayName": "Expression",
+          "type": "String",
+          "onlyForTypes": [
+            "Jsonata"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "field",
+          "displayName": "Field",
+          "type": "String",
+          "onlyForTypes": [
+            "FieldValue",
+            "NotEmpty",
+            "Data"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_SchemaField"
+          ]
+        },
+        {
+          "field": "value",
+          "displayName": "Value",
+          "type": "Any",
+          "onlyForTypes": [
+            "FieldValue"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_ValuesOf:field"
+          ]
+        },
+        {
+          "field": "empty",
+          "displayName": "Empty",
+          "type": "Bool",
+          "onlyForTypes": [
+            "NotEmpty"
+          ]
+        },
+        {
+          "field": "userMatch",
+          "displayName": "User Match",
+          "type": "String",
+          "onlyForTypes": [
+            "UserMatch"
+          ],
+          "notNullable": true,
+          "required": true
+        }
+      ],
+      "schemaRef": "EntityExpression",
+      "onlyForTypes": [
+        "SetField"
+      ],
+      "notNullable": true,
+      "tags": [
+        "_ControlGroup:Expression"
+      ]
+    }
+  ],
+  "GroupRenderOptions": [
+    {
+      "field": "type",
+      "displayName": "Type",
+      "type": "String",
+      "isTypeField": true,
+      "notNullable": true,
+      "required": true,
+      "defaultValue": "Standard",
+      "options": [
+        {
+          "name": "Standard",
+          "value": "Standard"
+        },
+        {
+          "name": "Grid",
+          "value": "Grid"
+        },
+        {
+          "name": "Flex",
+          "value": "Flex"
+        },
+        {
+          "name": "Tabs",
+          "value": "Tabs"
+        },
+        {
+          "name": "GroupElement",
+          "value": "GroupElement"
+        },
+        {
+          "name": "SelectChild",
+          "value": "SelectChild"
+        },
+        {
+          "name": "Inline",
+          "value": "Inline"
+        },
+        {
+          "name": "Wizard",
+          "value": "Wizard"
+        },
+        {
+          "name": "Dialog",
+          "value": "Dialog"
+        },
+        {
+          "name": "Contents",
+          "value": "Contents"
+        },
+        {
+          "name": "Accordion",
+          "value": "Accordion"
+        }
+      ]
+    },
+    {
+      "field": "hideTitle",
+      "displayName": "Hide Title",
+      "type": "Bool"
+    },
+    {
+      "field": "childStyleClass",
+      "displayName": "Child Style Class",
+      "type": "String"
+    },
+    {
+      "field": "childLayoutClass",
+      "displayName": "Child Layout Class",
+      "type": "String"
+    },
+    {
+      "field": "childLabelClass",
+      "displayName": "Child Label Class",
+      "type": "String"
+    },
+    {
+      "field": "displayOnly",
+      "displayName": "Display Only",
+      "type": "Bool"
+    },
+    {
+      "field": "contentClass",
+      "displayName": "Content Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Tabs"
+      ]
+    },
+    {
+      "field": "title",
+      "displayName": "Title",
+      "type": "String",
+      "onlyForTypes": [
+        "Dialog"
+      ]
+    },
+    {
+      "field": "portalHost",
+      "displayName": "PortalHost",
+      "type": "String",
+      "onlyForTypes": [
+        "Dialog"
+      ]
+    },
+    {
+      "field": "direction",
+      "displayName": "Direction",
+      "type": "String",
+      "onlyForTypes": [
+        "Flex"
+      ]
+    },
+    {
+      "field": "gap",
+      "displayName": "Gap",
+      "type": "String",
+      "onlyForTypes": [
+        "Flex"
+      ]
+    },
+    {
+      "field": "columns",
+      "displayName": "Columns",
+      "type": "Int",
+      "onlyForTypes": [
+        "Grid"
+      ]
+    },
+    {
+      "field": "rowClass",
+      "displayName": "Row Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Grid"
+      ]
+    },
+    {
+      "field": "cellClass",
+      "displayName": "Cell Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Grid"
+      ]
+    },
+    {
+      "field": "value",
+      "displayName": "Value",
+      "type": "Any",
+      "onlyForTypes": [
+        "GroupElement"
+      ],
+      "notNullable": true,
+      "required": true,
+      "tags": [
+        "_DefaultValue"
+      ]
+    },
+    {
+      "field": "childIndexExpression",
+      "displayName": "Child Index Expression",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Jsonata",
+              "value": "Jsonata"
+            },
+            {
+              "name": "Data Match",
+              "value": "FieldValue"
+            },
+            {
+              "name": "User Match",
+              "value": "UserMatch"
+            },
+            {
+              "name": "Data",
+              "value": "Data"
+            },
+            {
+              "name": "Not Empty",
+              "value": "NotEmpty"
+            },
+            {
+              "name": "UUID",
+              "value": "UUID"
+            }
+          ]
+        },
+        {
+          "field": "expression",
+          "displayName": "Expression",
+          "type": "String",
+          "onlyForTypes": [
+            "Jsonata"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "field",
+          "displayName": "Field",
+          "type": "String",
+          "onlyForTypes": [
+            "FieldValue",
+            "NotEmpty",
+            "Data"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_SchemaField"
+          ]
+        },
+        {
+          "field": "value",
+          "displayName": "Value",
+          "type": "Any",
+          "onlyForTypes": [
+            "FieldValue"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_ValuesOf:field"
+          ]
+        },
+        {
+          "field": "empty",
+          "displayName": "Empty",
+          "type": "Bool",
+          "onlyForTypes": [
+            "NotEmpty"
+          ]
+        },
+        {
+          "field": "userMatch",
+          "displayName": "User Match",
+          "type": "String",
+          "onlyForTypes": [
+            "UserMatch"
+          ],
+          "notNullable": true,
+          "required": true
+        }
+      ],
+      "schemaRef": "EntityExpression",
+      "onlyForTypes": [
+        "SelectChild"
+      ],
+      "notNullable": true,
+      "tags": [
+        "_ControlRef:Expression"
+      ]
+    },
+    {
+      "field": "defaultExpanded",
+      "displayName": "Default Expanded",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Accordion"
+      ]
+    },
+    {
+      "field": "expandStateField",
+      "displayName": "Expand State Field",
+      "type": "String",
+      "onlyForTypes": [
+        "Accordion"
+      ]
+    }
+  ],
+  "IconMapping": [
+    {
+      "field": "value",
+      "displayName": "Value",
+      "type": "String",
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "materialIcon",
+      "displayName": "Material Icon",
+      "type": "String"
+    }
+  ],
+  "RenderOptions": [
+    {
+      "field": "type",
+      "displayName": "Type",
+      "type": "String",
+      "isTypeField": true,
+      "notNullable": true,
+      "required": true,
+      "defaultValue": "Standard",
+      "options": [
+        {
+          "name": "Default",
+          "value": "Standard"
+        },
+        {
+          "name": "Textfield",
+          "value": "Textfield"
+        },
+        {
+          "name": "Radio buttons",
+          "value": "Radio"
+        },
+        {
+          "name": "HTML Editor",
+          "value": "HtmlEditor"
+        },
+        {
+          "name": "Icon list",
+          "value": "IconList"
+        },
+        {
+          "name": "Check list",
+          "value": "CheckList"
+        },
+        {
+          "name": "User Selection",
+          "value": "UserSelection"
+        },
+        {
+          "name": "Synchronised Fields",
+          "value": "Synchronised"
+        },
+        {
+          "name": "Icon Selection",
+          "value": "IconSelector"
+        },
+        {
+          "name": "Date/Time",
+          "value": "DateTime"
+        },
+        {
+          "name": "Checkbox",
+          "value": "Checkbox"
+        },
+        {
+          "name": "Dropdown",
+          "value": "Dropdown"
+        },
+        {
+          "name": "Display Only",
+          "value": "DisplayOnly"
+        },
+        {
+          "name": "Group",
+          "value": "Group"
+        },
+        {
+          "name": "Null Toggler",
+          "value": "NullToggle"
+        },
+        {
+          "name": "Autocomplete",
+          "value": "Autocomplete"
+        },
+        {
+          "name": "Jsonata",
+          "value": "Jsonata"
+        },
+        {
+          "name": "Array",
+          "value": "Array"
+        },
+        {
+          "name": "Array Element",
+          "value": "ArrayElement"
+        },
+        {
+          "name": "Element Selected",
+          "value": "ElementSelected"
+        },
+        {
+          "name": "Scroll List",
+          "value": "ScrollList"
+        }
+      ]
+    },
+    {
+      "field": "expression",
+      "displayName": "Expression",
+      "type": "String",
+      "onlyForTypes": [
+        "Jsonata"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "addText",
+      "displayName": "Add Text",
+      "type": "String",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "removeText",
+      "displayName": "Remove Text",
+      "type": "String",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "addActionId",
+      "displayName": "Add Action Id",
+      "type": "String",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "removeActionId",
+      "displayName": "Remove Action Id",
+      "type": "String",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "editText",
+      "displayName": "Edit Text",
+      "type": "String",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "editActionId",
+      "displayName": "Edit Action Id",
+      "type": "String",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "noAdd",
+      "displayName": "No Add",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "noRemove",
+      "displayName": "No Remove",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "noReorder",
+      "displayName": "No Reorder",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "editExternal",
+      "displayName": "Edit External",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "childOverrideClass",
+      "displayName": "Child Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Array"
+      ]
+    },
+    {
+      "field": "showInline",
+      "displayName": "Show Inline",
+      "type": "Bool",
+      "onlyForTypes": [
+        "ArrayElement"
+      ]
+    },
+    {
+      "field": "entryWrapperClass",
+      "displayName": "Entry Wrapper Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Radio",
+        "CheckList"
+      ]
+    },
+    {
+      "field": "selectedClass",
+      "displayName": "Selected Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Radio",
+        "CheckList"
+      ]
+    },
+    {
+      "field": "notSelectedClass",
+      "displayName": "Not Selected Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Radio",
+        "CheckList"
+      ]
+    },
+    {
+      "field": "listContainerClass",
+      "displayName": "List Container Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Autocomplete"
+      ]
+    },
+    {
+      "field": "listEntryClass",
+      "displayName": "List Entry Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Autocomplete"
+      ]
+    },
+    {
+      "field": "chipContainerClass",
+      "displayName": "Chip Container Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Autocomplete"
+      ]
+    },
+    {
+      "field": "chipCloseButtonClass",
+      "displayName": "Chip Close Button Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Autocomplete"
+      ]
+    },
+    {
+      "field": "placeholder",
+      "displayName": "Placeholder",
+      "type": "String",
+      "onlyForTypes": [
+        "Autocomplete",
+        "Textfield"
+      ]
+    },
+    {
+      "field": "multiline",
+      "displayName": "Multiline",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Textfield"
+      ]
+    },
+    {
+      "field": "groupOptions",
+      "displayName": "Group Options",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "defaultValue": "Standard",
+          "options": [
+            {
+              "name": "Standard",
+              "value": "Standard"
+            },
+            {
+              "name": "Grid",
+              "value": "Grid"
+            },
+            {
+              "name": "Flex",
+              "value": "Flex"
+            },
+            {
+              "name": "Tabs",
+              "value": "Tabs"
+            },
+            {
+              "name": "GroupElement",
+              "value": "GroupElement"
+            },
+            {
+              "name": "SelectChild",
+              "value": "SelectChild"
+            },
+            {
+              "name": "Inline",
+              "value": "Inline"
+            },
+            {
+              "name": "Wizard",
+              "value": "Wizard"
+            },
+            {
+              "name": "Dialog",
+              "value": "Dialog"
+            },
+            {
+              "name": "Contents",
+              "value": "Contents"
+            },
+            {
+              "name": "Accordion",
+              "value": "Accordion"
+            }
+          ]
+        },
+        {
+          "field": "hideTitle",
+          "displayName": "Hide Title",
+          "type": "Bool"
+        },
+        {
+          "field": "childStyleClass",
+          "displayName": "Child Style Class",
+          "type": "String"
+        },
+        {
+          "field": "childLayoutClass",
+          "displayName": "Child Layout Class",
+          "type": "String"
+        },
+        {
+          "field": "childLabelClass",
+          "displayName": "Child Label Class",
+          "type": "String"
+        },
+        {
+          "field": "displayOnly",
+          "displayName": "Display Only",
+          "type": "Bool"
+        },
+        {
+          "field": "contentClass",
+          "displayName": "Content Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Tabs"
+          ]
+        },
+        {
+          "field": "title",
+          "displayName": "Title",
+          "type": "String",
+          "onlyForTypes": [
+            "Dialog"
+          ]
+        },
+        {
+          "field": "portalHost",
+          "displayName": "PortalHost",
+          "type": "String",
+          "onlyForTypes": [
+            "Dialog"
+          ]
+        },
+        {
+          "field": "direction",
+          "displayName": "Direction",
+          "type": "String",
+          "onlyForTypes": [
+            "Flex"
+          ]
+        },
+        {
+          "field": "gap",
+          "displayName": "Gap",
+          "type": "String",
+          "onlyForTypes": [
+            "Flex"
+          ]
+        },
+        {
+          "field": "columns",
+          "displayName": "Columns",
+          "type": "Int",
+          "onlyForTypes": [
+            "Grid"
+          ]
+        },
+        {
+          "field": "rowClass",
+          "displayName": "Row Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Grid"
+          ]
+        },
+        {
+          "field": "cellClass",
+          "displayName": "Cell Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Grid"
+          ]
+        },
+        {
+          "field": "value",
+          "displayName": "Value",
+          "type": "Any",
+          "onlyForTypes": [
+            "GroupElement"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_DefaultValue"
+          ]
+        },
+        {
+          "field": "childIndexExpression",
+          "displayName": "Child Index Expression",
+          "type": "Compound",
+          "collection": false,
+          "children": [
+            {
+              "field": "type",
+              "displayName": "Type",
+              "type": "String",
+              "isTypeField": true,
+              "notNullable": true,
+              "required": true,
+              "options": [
+                {
+                  "name": "Jsonata",
+                  "value": "Jsonata"
+                },
+                {
+                  "name": "Data Match",
+                  "value": "FieldValue"
+                },
+                {
+                  "name": "User Match",
+                  "value": "UserMatch"
+                },
+                {
+                  "name": "Data",
+                  "value": "Data"
+                },
+                {
+                  "name": "Not Empty",
+                  "value": "NotEmpty"
+                },
+                {
+                  "name": "UUID",
+                  "value": "UUID"
+                }
+              ]
+            },
+            {
+              "field": "expression",
+              "displayName": "Expression",
+              "type": "String",
+              "onlyForTypes": [
+                "Jsonata"
+              ],
+              "notNullable": true,
+              "required": true
+            },
+            {
+              "field": "field",
+              "displayName": "Field",
+              "type": "String",
+              "onlyForTypes": [
+                "FieldValue",
+                "NotEmpty",
+                "Data"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_SchemaField"
+              ]
+            },
+            {
+              "field": "value",
+              "displayName": "Value",
+              "type": "Any",
+              "onlyForTypes": [
+                "FieldValue"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_ValuesOf:field"
+              ]
+            },
+            {
+              "field": "empty",
+              "displayName": "Empty",
+              "type": "Bool",
+              "onlyForTypes": [
+                "NotEmpty"
+              ]
+            },
+            {
+              "field": "userMatch",
+              "displayName": "User Match",
+              "type": "String",
+              "onlyForTypes": [
+                "UserMatch"
+              ],
+              "notNullable": true,
+              "required": true
+            }
+          ],
+          "schemaRef": "EntityExpression",
+          "onlyForTypes": [
+            "SelectChild"
+          ],
+          "notNullable": true,
+          "tags": [
+            "_ControlRef:Expression"
+          ]
+        },
+        {
+          "field": "defaultExpanded",
+          "displayName": "Default Expanded",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Accordion"
+          ]
+        },
+        {
+          "field": "expandStateField",
+          "displayName": "Expand State Field",
+          "type": "String",
+          "onlyForTypes": [
+            "Accordion"
+          ]
+        }
+      ],
+      "schemaRef": "GroupRenderOptions",
+      "onlyForTypes": [
+        "Group"
+      ],
+      "notNullable": true,
+      "tags": [
+        "_NoControl"
+      ]
+    },
+    {
+      "field": "emptyText",
+      "displayName": "Empty Text",
+      "type": "String",
+      "onlyForTypes": [
+        "DisplayOnly"
+      ]
+    },
+    {
+      "field": "sampleText",
+      "displayName": "Sample Text",
+      "type": "String",
+      "onlyForTypes": [
+        "DisplayOnly"
+      ]
+    },
+    {
+      "field": "noGroups",
+      "displayName": "No Groups",
+      "type": "Bool",
+      "onlyForTypes": [
+        "UserSelection"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "noUsers",
+      "displayName": "No Users",
+      "type": "Bool",
+      "onlyForTypes": [
+        "UserSelection"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "format",
+      "displayName": "Format",
+      "type": "String",
+      "onlyForTypes": [
+        "DateTime"
+      ]
+    },
+    {
+      "field": "forceMidnight",
+      "displayName": "Force Midnight",
+      "type": "Bool",
+      "onlyForTypes": [
+        "DateTime"
+      ],
+      "defaultValue": false
+    },
+    {
+      "field": "forceStandard",
+      "displayName": "Force Standard",
+      "type": "Bool",
+      "onlyForTypes": [
+        "DateTime"
+      ]
+    },
+    {
+      "field": "fieldToSync",
+      "displayName": "Field To Sync",
+      "type": "String",
+      "onlyForTypes": [
+        "Synchronised"
+      ],
+      "notNullable": true,
+      "required": true,
+      "tags": [
+        "_SchemaField"
+      ]
+    },
+    {
+      "field": "syncType",
+      "displayName": "Sync Type",
+      "type": "String",
+      "onlyForTypes": [
+        "Synchronised"
+      ],
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "Camel",
+          "value": "Camel"
+        },
+        {
+          "name": "Snake",
+          "value": "Snake"
+        },
+        {
+          "name": "Pascal",
+          "value": "Pascal"
+        }
+      ]
+    },
+    {
+      "field": "iconMappings",
+      "displayName": "Icon Mappings",
+      "type": "Compound",
+      "collection": true,
+      "children": [
+        {
+          "field": "value",
+          "displayName": "Value",
+          "type": "String",
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "materialIcon",
+          "displayName": "Material Icon",
+          "type": "String"
+        }
+      ],
+      "schemaRef": "IconMapping",
+      "onlyForTypes": [
+        "IconList"
+      ],
+      "notNullable": true
+    },
+    {
+      "field": "allowImages",
+      "displayName": "Allow Images",
+      "type": "Bool",
+      "onlyForTypes": [
+        "HtmlEditor"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "elementExpression",
+      "displayName": "Element Expression",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Jsonata",
+              "value": "Jsonata"
+            },
+            {
+              "name": "Data Match",
+              "value": "FieldValue"
+            },
+            {
+              "name": "User Match",
+              "value": "UserMatch"
+            },
+            {
+              "name": "Data",
+              "value": "Data"
+            },
+            {
+              "name": "Not Empty",
+              "value": "NotEmpty"
+            },
+            {
+              "name": "UUID",
+              "value": "UUID"
+            }
+          ]
+        },
+        {
+          "field": "expression",
+          "displayName": "Expression",
+          "type": "String",
+          "onlyForTypes": [
+            "Jsonata"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "field",
+          "displayName": "Field",
+          "type": "String",
+          "onlyForTypes": [
+            "FieldValue",
+            "NotEmpty",
+            "Data"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_SchemaField"
+          ]
+        },
+        {
+          "field": "value",
+          "displayName": "Value",
+          "type": "Any",
+          "onlyForTypes": [
+            "FieldValue"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_ValuesOf:field"
+          ]
+        },
+        {
+          "field": "empty",
+          "displayName": "Empty",
+          "type": "Bool",
+          "onlyForTypes": [
+            "NotEmpty"
+          ]
+        },
+        {
+          "field": "userMatch",
+          "displayName": "User Match",
+          "type": "String",
+          "onlyForTypes": [
+            "UserMatch"
+          ],
+          "notNullable": true,
+          "required": true
+        }
+      ],
+      "schemaRef": "EntityExpression",
+      "onlyForTypes": [
+        "ElementSelected"
+      ],
+      "notNullable": true,
+      "tags": [
+        "_ControlRef:Expression"
+      ]
+    },
+    {
+      "field": "bottomActionId",
+      "displayName": "Bottom Action Id",
+      "type": "String",
+      "onlyForTypes": [
+        "ScrollList"
+      ]
+    }
+  ],
+  "DisplayData": [
+    {
+      "field": "type",
+      "displayName": "Type",
+      "type": "String",
+      "isTypeField": true,
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "Text",
+          "value": "Text"
+        },
+        {
+          "name": "Html",
+          "value": "Html"
+        },
+        {
+          "name": "Icon",
+          "value": "Icon"
+        },
+        {
+          "name": "Custom",
+          "value": "Custom"
+        }
+      ]
+    },
+    {
+      "field": "iconClass",
+      "displayName": "Icon Class",
+      "type": "String",
+      "onlyForTypes": [
+        "Icon"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "icon",
+      "displayName": "Icon",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "library",
+          "displayName": "Library",
+          "type": "String",
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "FontAwesome",
+              "value": "FontAwesome"
+            },
+            {
+              "name": "Material",
+              "value": "Material"
+            },
+            {
+              "name": "CssClass",
+              "value": "CssClass"
+            }
+          ]
+        },
+        {
+          "field": "name",
+          "displayName": "Name",
+          "type": "String",
+          "notNullable": true,
+          "required": true
+        }
+      ],
+      "schemaRef": "IconReference",
+      "onlyForTypes": [
+        "Icon"
+      ]
+    },
+    {
+      "field": "text",
+      "displayName": "Text",
+      "type": "String",
+      "onlyForTypes": [
+        "Text"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "customId",
+      "displayName": "Custom Id",
+      "type": "String",
+      "onlyForTypes": [
+        "Custom"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "html",
+      "displayName": "Html",
+      "type": "String",
+      "onlyForTypes": [
+        "Html"
+      ],
+      "notNullable": true,
+      "required": true,
+      "tags": [
+        "_HtmlEditor"
+      ]
+    }
+  ],
+  "ControlDefinition": [
+    {
+      "field": "type",
+      "displayName": "Type",
+      "type": "String",
+      "isTypeField": true,
+      "notNullable": true,
+      "required": true,
+      "options": [
+        {
+          "name": "Data",
+          "value": "Data"
+        },
+        {
+          "name": "Group",
+          "value": "Group"
+        },
+        {
+          "name": "Display",
+          "value": "Display"
+        },
+        {
+          "name": "Action",
+          "value": "Action"
+        }
+      ]
+    },
+    {
+      "field": "title",
+      "displayName": "Title",
+      "type": "String"
+    },
+    {
+      "field": "id",
+      "displayName": "Id",
+      "type": "String"
+    },
+    {
+      "field": "childRefId",
+      "displayName": "Child Ref Id",
+      "type": "String"
+    },
+    {
+      "field": "disabled",
+      "displayName": "Disabled",
+      "type": "Bool",
+      "defaultValue": false
+    },
+    {
+      "field": "hidden",
+      "displayName": "Hidden",
+      "type": "Bool",
+      "defaultValue": false
+    },
+    {
+      "field": "readonly",
+      "displayName": "Readonly",
+      "type": "Bool",
+      "defaultValue": false
+    },
+    {
+      "field": "dynamic",
+      "displayName": "Dynamic",
+      "type": "Compound",
+      "collection": true,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Visible",
+              "value": "Visible"
+            },
+            {
+              "name": "DefaultValue",
+              "value": "DefaultValue"
+            },
+            {
+              "name": "Readonly",
+              "value": "Readonly"
+            },
+            {
+              "name": "Disabled",
+              "value": "Disabled"
+            },
+            {
+              "name": "Display",
+              "value": "Display"
+            },
+            {
+              "name": "Style",
+              "value": "Style"
+            },
+            {
+              "name": "LayoutStyle",
+              "value": "LayoutStyle"
+            },
+            {
+              "name": "AllowedOptions",
+              "value": "AllowedOptions"
+            },
+            {
+              "name": "Label",
+              "value": "Label"
+            },
+            {
+              "name": "ActionData",
+              "value": "ActionData"
+            },
+            {
+              "name": "GridColumns",
+              "value": "GridColumns"
+            }
+          ]
+        },
+        {
+          "field": "expr",
+          "displayName": "Expr",
+          "type": "Compound",
+          "collection": false,
+          "children": [
+            {
+              "field": "type",
+              "displayName": "Type",
+              "type": "String",
+              "isTypeField": true,
+              "notNullable": true,
+              "required": true,
+              "options": [
+                {
+                  "name": "Jsonata",
+                  "value": "Jsonata"
+                },
+                {
+                  "name": "Data Match",
+                  "value": "FieldValue"
+                },
+                {
+                  "name": "User Match",
+                  "value": "UserMatch"
+                },
+                {
+                  "name": "Data",
+                  "value": "Data"
+                },
+                {
+                  "name": "Not Empty",
+                  "value": "NotEmpty"
+                },
+                {
+                  "name": "UUID",
+                  "value": "UUID"
+                }
+              ]
+            },
+            {
+              "field": "expression",
+              "displayName": "Expression",
+              "type": "String",
+              "onlyForTypes": [
+                "Jsonata"
+              ],
+              "notNullable": true,
+              "required": true
+            },
+            {
+              "field": "field",
+              "displayName": "Field",
+              "type": "String",
+              "onlyForTypes": [
+                "FieldValue",
+                "NotEmpty",
+                "Data"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_SchemaField"
+              ]
+            },
+            {
+              "field": "value",
+              "displayName": "Value",
+              "type": "Any",
+              "onlyForTypes": [
+                "FieldValue"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_ValuesOf:field"
+              ]
+            },
+            {
+              "field": "empty",
+              "displayName": "Empty",
+              "type": "Bool",
+              "onlyForTypes": [
+                "NotEmpty"
+              ]
+            },
+            {
+              "field": "userMatch",
+              "displayName": "User Match",
+              "type": "String",
+              "onlyForTypes": [
+                "UserMatch"
+              ],
+              "notNullable": true,
+              "required": true
+            }
+          ],
+          "schemaRef": "EntityExpression",
+          "notNullable": true
+        }
+      ],
+      "schemaRef": "DynamicProperty"
+    },
+    {
+      "field": "adornments",
+      "displayName": "Adornments",
+      "type": "Compound",
+      "collection": true,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Tooltip",
+              "value": "Tooltip"
+            },
+            {
+              "name": "Accordion",
+              "value": "Accordion"
+            },
+            {
+              "name": "Help Text",
+              "value": "HelpText"
+            },
+            {
+              "name": "Icon",
+              "value": "Icon"
+            },
+            {
+              "name": "SetField",
+              "value": "SetField"
+            },
+            {
+              "name": "Optional",
+              "value": "Optional"
+            }
+          ]
+        },
+        {
+          "field": "placement",
+          "displayName": "Placement",
+          "type": "String",
+          "onlyForTypes": [
+            "Optional",
+            "Icon",
+            "HelpText"
+          ],
+          "options": [
+            {
+              "name": "Start of control",
+              "value": "ControlStart"
+            },
+            {
+              "name": "End of control",
+              "value": "ControlEnd"
+            },
+            {
+              "name": "Start of label",
+              "value": "LabelStart"
+            },
+            {
+              "name": "End of label",
+              "value": "LabelEnd"
+            }
+          ]
+        },
+        {
+          "field": "allowNull",
+          "displayName": "Allow Null",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Optional"
+          ]
+        },
+        {
+          "field": "editSelectable",
+          "displayName": "Edit Selectable",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Optional"
+          ]
+        },
+        {
+          "field": "iconClass",
+          "displayName": "Icon Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Icon"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "icon",
+          "displayName": "Icon",
+          "type": "Compound",
+          "collection": false,
+          "children": [
+            {
+              "field": "library",
+              "displayName": "Library",
+              "type": "String",
+              "notNullable": true,
+              "required": true,
+              "options": [
+                {
+                  "name": "FontAwesome",
+                  "value": "FontAwesome"
+                },
+                {
+                  "name": "Material",
+                  "value": "Material"
+                },
+                {
+                  "name": "CssClass",
+                  "value": "CssClass"
+                }
+              ]
+            },
+            {
+              "field": "name",
+              "displayName": "Name",
+              "type": "String",
+              "notNullable": true,
+              "required": true
+            }
+          ],
+          "schemaRef": "IconReference",
+          "onlyForTypes": [
+            "Icon"
+          ]
+        },
+        {
+          "field": "tooltip",
+          "displayName": "Tooltip",
+          "type": "String",
+          "onlyForTypes": [
+            "Tooltip"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "title",
+          "displayName": "Title",
+          "type": "String",
+          "onlyForTypes": [
+            "Accordion"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "defaultExpanded",
+          "displayName": "Default Expanded",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Accordion"
+          ]
+        },
+        {
+          "field": "helpText",
+          "displayName": "Help Text",
+          "type": "String",
+          "onlyForTypes": [
+            "HelpText"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "defaultOnly",
+          "displayName": "Default Only",
+          "type": "Bool",
+          "onlyForTypes": [
+            "SetField"
+          ]
+        },
+        {
+          "field": "field",
+          "displayName": "Field",
+          "type": "String",
+          "onlyForTypes": [
+            "SetField"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_SchemaField"
+          ]
+        },
+        {
+          "field": "expression",
+          "displayName": "Expression",
+          "type": "Compound",
+          "collection": false,
+          "children": [
+            {
+              "field": "type",
+              "displayName": "Type",
+              "type": "String",
+              "isTypeField": true,
+              "notNullable": true,
+              "required": true,
+              "options": [
+                {
+                  "name": "Jsonata",
+                  "value": "Jsonata"
+                },
+                {
+                  "name": "Data Match",
+                  "value": "FieldValue"
+                },
+                {
+                  "name": "User Match",
+                  "value": "UserMatch"
+                },
+                {
+                  "name": "Data",
+                  "value": "Data"
+                },
+                {
+                  "name": "Not Empty",
+                  "value": "NotEmpty"
+                },
+                {
+                  "name": "UUID",
+                  "value": "UUID"
+                }
+              ]
+            },
+            {
+              "field": "expression",
+              "displayName": "Expression",
+              "type": "String",
+              "onlyForTypes": [
+                "Jsonata"
+              ],
+              "notNullable": true,
+              "required": true
+            },
+            {
+              "field": "field",
+              "displayName": "Field",
+              "type": "String",
+              "onlyForTypes": [
+                "FieldValue",
+                "NotEmpty",
+                "Data"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_SchemaField"
+              ]
+            },
+            {
+              "field": "value",
+              "displayName": "Value",
+              "type": "Any",
+              "onlyForTypes": [
+                "FieldValue"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_ValuesOf:field"
+              ]
+            },
+            {
+              "field": "empty",
+              "displayName": "Empty",
+              "type": "Bool",
+              "onlyForTypes": [
+                "NotEmpty"
+              ]
+            },
+            {
+              "field": "userMatch",
+              "displayName": "User Match",
+              "type": "String",
+              "onlyForTypes": [
+                "UserMatch"
+              ],
+              "notNullable": true,
+              "required": true
+            }
+          ],
+          "schemaRef": "EntityExpression",
+          "onlyForTypes": [
+            "SetField"
+          ],
+          "notNullable": true,
+          "tags": [
+            "_ControlGroup:Expression"
+          ]
+        }
+      ],
+      "schemaRef": "ControlAdornment"
+    },
+    {
+      "field": "styleClass",
+      "displayName": "Style Class",
+      "type": "String"
+    },
+    {
+      "field": "textClass",
+      "displayName": "Text Class",
+      "type": "String"
+    },
+    {
+      "field": "layoutClass",
+      "displayName": "Layout Class",
+      "type": "String"
+    },
+    {
+      "field": "labelClass",
+      "displayName": "Label Class",
+      "type": "String"
+    },
+    {
+      "field": "labelTextClass",
+      "displayName": "Label Text Class",
+      "type": "String"
+    },
+    {
+      "field": "placement",
+      "displayName": "Placement",
+      "type": "String"
+    },
+    {
+      "field": "children",
+      "displayName": "Children",
+      "type": "Compound",
+      "collection": true,
+      "children": [],
+      "treeChildren": true,
+      "tags": [
+        "_NoControl"
+      ]
+    },
+    {
+      "field": "field",
+      "displayName": "Field",
+      "type": "String",
+      "onlyForTypes": [
+        "Data"
+      ],
+      "notNullable": true,
+      "required": true,
+      "tags": [
+        "_SchemaField"
+      ]
+    },
+    {
+      "field": "hideTitle",
+      "displayName": "Hide Title",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Data"
+      ]
+    },
+    {
+      "field": "required",
+      "displayName": "Required",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Data"
+      ],
+      "defaultValue": false
+    },
+    {
+      "field": "renderOptions",
+      "displayName": "Render Options",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "defaultValue": "Standard",
+          "options": [
+            {
+              "name": "Default",
+              "value": "Standard"
+            },
+            {
+              "name": "Textfield",
+              "value": "Textfield"
+            },
+            {
+              "name": "Radio buttons",
+              "value": "Radio"
+            },
+            {
+              "name": "HTML Editor",
+              "value": "HtmlEditor"
+            },
+            {
+              "name": "Icon list",
+              "value": "IconList"
+            },
+            {
+              "name": "Check list",
+              "value": "CheckList"
+            },
+            {
+              "name": "User Selection",
+              "value": "UserSelection"
+            },
+            {
+              "name": "Synchronised Fields",
+              "value": "Synchronised"
+            },
+            {
+              "name": "Icon Selection",
+              "value": "IconSelector"
+            },
+            {
+              "name": "Date/Time",
+              "value": "DateTime"
+            },
+            {
+              "name": "Checkbox",
+              "value": "Checkbox"
+            },
+            {
+              "name": "Dropdown",
+              "value": "Dropdown"
+            },
+            {
+              "name": "Display Only",
+              "value": "DisplayOnly"
+            },
+            {
+              "name": "Group",
+              "value": "Group"
+            },
+            {
+              "name": "Null Toggler",
+              "value": "NullToggle"
+            },
+            {
+              "name": "Autocomplete",
+              "value": "Autocomplete"
+            },
+            {
+              "name": "Jsonata",
+              "value": "Jsonata"
+            },
+            {
+              "name": "Array",
+              "value": "Array"
+            },
+            {
+              "name": "Array Element",
+              "value": "ArrayElement"
+            },
+            {
+              "name": "Element Selected",
+              "value": "ElementSelected"
+            },
+            {
+              "name": "Scroll List",
+              "value": "ScrollList"
+            }
+          ]
+        },
+        {
+          "field": "expression",
+          "displayName": "Expression",
+          "type": "String",
+          "onlyForTypes": [
+            "Jsonata"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "addText",
+          "displayName": "Add Text",
+          "type": "String",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "removeText",
+          "displayName": "Remove Text",
+          "type": "String",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "addActionId",
+          "displayName": "Add Action Id",
+          "type": "String",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "removeActionId",
+          "displayName": "Remove Action Id",
+          "type": "String",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "editText",
+          "displayName": "Edit Text",
+          "type": "String",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "editActionId",
+          "displayName": "Edit Action Id",
+          "type": "String",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "noAdd",
+          "displayName": "No Add",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "noRemove",
+          "displayName": "No Remove",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "noReorder",
+          "displayName": "No Reorder",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "editExternal",
+          "displayName": "Edit External",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "childOverrideClass",
+          "displayName": "Child Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Array"
+          ]
+        },
+        {
+          "field": "showInline",
+          "displayName": "Show Inline",
+          "type": "Bool",
+          "onlyForTypes": [
+            "ArrayElement"
+          ]
+        },
+        {
+          "field": "entryWrapperClass",
+          "displayName": "Entry Wrapper Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Radio",
+            "CheckList"
+          ]
+        },
+        {
+          "field": "selectedClass",
+          "displayName": "Selected Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Radio",
+            "CheckList"
+          ]
+        },
+        {
+          "field": "notSelectedClass",
+          "displayName": "Not Selected Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Radio",
+            "CheckList"
+          ]
+        },
+        {
+          "field": "listContainerClass",
+          "displayName": "List Container Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Autocomplete"
+          ]
+        },
+        {
+          "field": "listEntryClass",
+          "displayName": "List Entry Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Autocomplete"
+          ]
+        },
+        {
+          "field": "chipContainerClass",
+          "displayName": "Chip Container Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Autocomplete"
+          ]
+        },
+        {
+          "field": "chipCloseButtonClass",
+          "displayName": "Chip Close Button Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Autocomplete"
+          ]
+        },
+        {
+          "field": "placeholder",
+          "displayName": "Placeholder",
+          "type": "String",
+          "onlyForTypes": [
+            "Autocomplete",
+            "Textfield"
+          ]
+        },
+        {
+          "field": "multiline",
+          "displayName": "Multiline",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Textfield"
+          ]
+        },
+        {
+          "field": "groupOptions",
+          "displayName": "Group Options",
+          "type": "Compound",
+          "collection": false,
+          "children": [
+            {
+              "field": "type",
+              "displayName": "Type",
+              "type": "String",
+              "isTypeField": true,
+              "notNullable": true,
+              "required": true,
+              "defaultValue": "Standard",
+              "options": [
+                {
+                  "name": "Standard",
+                  "value": "Standard"
+                },
+                {
+                  "name": "Grid",
+                  "value": "Grid"
+                },
+                {
+                  "name": "Flex",
+                  "value": "Flex"
+                },
+                {
+                  "name": "Tabs",
+                  "value": "Tabs"
+                },
+                {
+                  "name": "GroupElement",
+                  "value": "GroupElement"
+                },
+                {
+                  "name": "SelectChild",
+                  "value": "SelectChild"
+                },
+                {
+                  "name": "Inline",
+                  "value": "Inline"
+                },
+                {
+                  "name": "Wizard",
+                  "value": "Wizard"
+                },
+                {
+                  "name": "Dialog",
+                  "value": "Dialog"
+                },
+                {
+                  "name": "Contents",
+                  "value": "Contents"
+                },
+                {
+                  "name": "Accordion",
+                  "value": "Accordion"
+                }
+              ]
+            },
+            {
+              "field": "hideTitle",
+              "displayName": "Hide Title",
+              "type": "Bool"
+            },
+            {
+              "field": "childStyleClass",
+              "displayName": "Child Style Class",
+              "type": "String"
+            },
+            {
+              "field": "childLayoutClass",
+              "displayName": "Child Layout Class",
+              "type": "String"
+            },
+            {
+              "field": "childLabelClass",
+              "displayName": "Child Label Class",
+              "type": "String"
+            },
+            {
+              "field": "displayOnly",
+              "displayName": "Display Only",
+              "type": "Bool"
+            },
+            {
+              "field": "contentClass",
+              "displayName": "Content Class",
+              "type": "String",
+              "onlyForTypes": [
+                "Tabs"
+              ]
+            },
+            {
+              "field": "title",
+              "displayName": "Title",
+              "type": "String",
+              "onlyForTypes": [
+                "Dialog"
+              ]
+            },
+            {
+              "field": "portalHost",
+              "displayName": "PortalHost",
+              "type": "String",
+              "onlyForTypes": [
+                "Dialog"
+              ]
+            },
+            {
+              "field": "direction",
+              "displayName": "Direction",
+              "type": "String",
+              "onlyForTypes": [
+                "Flex"
+              ]
+            },
+            {
+              "field": "gap",
+              "displayName": "Gap",
+              "type": "String",
+              "onlyForTypes": [
+                "Flex"
+              ]
+            },
+            {
+              "field": "columns",
+              "displayName": "Columns",
+              "type": "Int",
+              "onlyForTypes": [
+                "Grid"
+              ]
+            },
+            {
+              "field": "rowClass",
+              "displayName": "Row Class",
+              "type": "String",
+              "onlyForTypes": [
+                "Grid"
+              ]
+            },
+            {
+              "field": "cellClass",
+              "displayName": "Cell Class",
+              "type": "String",
+              "onlyForTypes": [
+                "Grid"
+              ]
+            },
+            {
+              "field": "value",
+              "displayName": "Value",
+              "type": "Any",
+              "onlyForTypes": [
+                "GroupElement"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_DefaultValue"
+              ]
+            },
+            {
+              "field": "childIndexExpression",
+              "displayName": "Child Index Expression",
+              "type": "Compound",
+              "collection": false,
+              "children": [
+                {
+                  "field": "type",
+                  "displayName": "Type",
+                  "type": "String",
+                  "isTypeField": true,
+                  "notNullable": true,
+                  "required": true,
+                  "options": [
+                    {
+                      "name": "Jsonata",
+                      "value": "Jsonata"
+                    },
+                    {
+                      "name": "Data Match",
+                      "value": "FieldValue"
+                    },
+                    {
+                      "name": "User Match",
+                      "value": "UserMatch"
+                    },
+                    {
+                      "name": "Data",
+                      "value": "Data"
+                    },
+                    {
+                      "name": "Not Empty",
+                      "value": "NotEmpty"
+                    },
+                    {
+                      "name": "UUID",
+                      "value": "UUID"
+                    }
+                  ]
+                },
+                {
+                  "field": "expression",
+                  "displayName": "Expression",
+                  "type": "String",
+                  "onlyForTypes": [
+                    "Jsonata"
+                  ],
+                  "notNullable": true,
+                  "required": true
+                },
+                {
+                  "field": "field",
+                  "displayName": "Field",
+                  "type": "String",
+                  "onlyForTypes": [
+                    "FieldValue",
+                    "NotEmpty",
+                    "Data"
+                  ],
+                  "notNullable": true,
+                  "required": true,
+                  "tags": [
+                    "_SchemaField"
+                  ]
+                },
+                {
+                  "field": "value",
+                  "displayName": "Value",
+                  "type": "Any",
+                  "onlyForTypes": [
+                    "FieldValue"
+                  ],
+                  "notNullable": true,
+                  "required": true,
+                  "tags": [
+                    "_ValuesOf:field"
+                  ]
+                },
+                {
+                  "field": "empty",
+                  "displayName": "Empty",
+                  "type": "Bool",
+                  "onlyForTypes": [
+                    "NotEmpty"
+                  ]
+                },
+                {
+                  "field": "userMatch",
+                  "displayName": "User Match",
+                  "type": "String",
+                  "onlyForTypes": [
+                    "UserMatch"
+                  ],
+                  "notNullable": true,
+                  "required": true
+                }
+              ],
+              "schemaRef": "EntityExpression",
+              "onlyForTypes": [
+                "SelectChild"
+              ],
+              "notNullable": true,
+              "tags": [
+                "_ControlRef:Expression"
+              ]
+            },
+            {
+              "field": "defaultExpanded",
+              "displayName": "Default Expanded",
+              "type": "Bool",
+              "onlyForTypes": [
+                "Accordion"
+              ]
+            },
+            {
+              "field": "expandStateField",
+              "displayName": "Expand State Field",
+              "type": "String",
+              "onlyForTypes": [
+                "Accordion"
+              ]
+            }
+          ],
+          "schemaRef": "GroupRenderOptions",
+          "onlyForTypes": [
+            "Group"
+          ],
+          "notNullable": true,
+          "tags": [
+            "_NoControl"
+          ]
+        },
+        {
+          "field": "emptyText",
+          "displayName": "Empty Text",
+          "type": "String",
+          "onlyForTypes": [
+            "DisplayOnly"
+          ]
+        },
+        {
+          "field": "sampleText",
+          "displayName": "Sample Text",
+          "type": "String",
+          "onlyForTypes": [
+            "DisplayOnly"
+          ]
+        },
+        {
+          "field": "noGroups",
+          "displayName": "No Groups",
+          "type": "Bool",
+          "onlyForTypes": [
+            "UserSelection"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "noUsers",
+          "displayName": "No Users",
+          "type": "Bool",
+          "onlyForTypes": [
+            "UserSelection"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "format",
+          "displayName": "Format",
+          "type": "String",
+          "onlyForTypes": [
+            "DateTime"
+          ]
+        },
+        {
+          "field": "forceMidnight",
+          "displayName": "Force Midnight",
+          "type": "Bool",
+          "onlyForTypes": [
+            "DateTime"
+          ],
+          "defaultValue": false
+        },
+        {
+          "field": "forceStandard",
+          "displayName": "Force Standard",
+          "type": "Bool",
+          "onlyForTypes": [
+            "DateTime"
+          ]
+        },
+        {
+          "field": "fieldToSync",
+          "displayName": "Field To Sync",
+          "type": "String",
+          "onlyForTypes": [
+            "Synchronised"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_SchemaField"
+          ]
+        },
+        {
+          "field": "syncType",
+          "displayName": "Sync Type",
+          "type": "String",
+          "onlyForTypes": [
+            "Synchronised"
+          ],
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Camel",
+              "value": "Camel"
+            },
+            {
+              "name": "Snake",
+              "value": "Snake"
+            },
+            {
+              "name": "Pascal",
+              "value": "Pascal"
+            }
+          ]
+        },
+        {
+          "field": "iconMappings",
+          "displayName": "Icon Mappings",
+          "type": "Compound",
+          "collection": true,
+          "children": [
+            {
+              "field": "value",
+              "displayName": "Value",
+              "type": "String",
+              "notNullable": true,
+              "required": true
+            },
+            {
+              "field": "materialIcon",
+              "displayName": "Material Icon",
+              "type": "String"
+            }
+          ],
+          "schemaRef": "IconMapping",
+          "onlyForTypes": [
+            "IconList"
+          ],
+          "notNullable": true
+        },
+        {
+          "field": "allowImages",
+          "displayName": "Allow Images",
+          "type": "Bool",
+          "onlyForTypes": [
+            "HtmlEditor"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "elementExpression",
+          "displayName": "Element Expression",
+          "type": "Compound",
+          "collection": false,
+          "children": [
+            {
+              "field": "type",
+              "displayName": "Type",
+              "type": "String",
+              "isTypeField": true,
+              "notNullable": true,
+              "required": true,
+              "options": [
+                {
+                  "name": "Jsonata",
+                  "value": "Jsonata"
+                },
+                {
+                  "name": "Data Match",
+                  "value": "FieldValue"
+                },
+                {
+                  "name": "User Match",
+                  "value": "UserMatch"
+                },
+                {
+                  "name": "Data",
+                  "value": "Data"
+                },
+                {
+                  "name": "Not Empty",
+                  "value": "NotEmpty"
+                },
+                {
+                  "name": "UUID",
+                  "value": "UUID"
+                }
+              ]
+            },
+            {
+              "field": "expression",
+              "displayName": "Expression",
+              "type": "String",
+              "onlyForTypes": [
+                "Jsonata"
+              ],
+              "notNullable": true,
+              "required": true
+            },
+            {
+              "field": "field",
+              "displayName": "Field",
+              "type": "String",
+              "onlyForTypes": [
+                "FieldValue",
+                "NotEmpty",
+                "Data"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_SchemaField"
+              ]
+            },
+            {
+              "field": "value",
+              "displayName": "Value",
+              "type": "Any",
+              "onlyForTypes": [
+                "FieldValue"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_ValuesOf:field"
+              ]
+            },
+            {
+              "field": "empty",
+              "displayName": "Empty",
+              "type": "Bool",
+              "onlyForTypes": [
+                "NotEmpty"
+              ]
+            },
+            {
+              "field": "userMatch",
+              "displayName": "User Match",
+              "type": "String",
+              "onlyForTypes": [
+                "UserMatch"
+              ],
+              "notNullable": true,
+              "required": true
+            }
+          ],
+          "schemaRef": "EntityExpression",
+          "onlyForTypes": [
+            "ElementSelected"
+          ],
+          "notNullable": true,
+          "tags": [
+            "_ControlRef:Expression"
+          ]
+        },
+        {
+          "field": "bottomActionId",
+          "displayName": "Bottom Action Id",
+          "type": "String",
+          "onlyForTypes": [
+            "ScrollList"
+          ]
+        }
+      ],
+      "schemaRef": "RenderOptions",
+      "onlyForTypes": [
+        "Data"
+      ]
+    },
+    {
+      "field": "defaultValue",
+      "displayName": "Default Value",
+      "type": "Any",
+      "onlyForTypes": [
+        "Data"
+      ]
+    },
+    {
+      "field": "dontClearHidden",
+      "displayName": "Dont Clear Hidden",
+      "type": "Bool",
+      "onlyForTypes": [
+        "Data"
+      ]
+    },
+    {
+      "field": "requiredErrorText",
+      "displayName": "Required Error Text",
+      "type": "String",
+      "onlyForTypes": [
+        "Data"
+      ]
+    },
+    {
+      "field": "validators",
+      "displayName": "Validators",
+      "type": "Compound",
+      "collection": true,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Jsonata",
+              "value": "Jsonata"
+            },
+            {
+              "name": "Date",
+              "value": "Date"
+            },
+            {
+              "name": "Length",
+              "value": "Length"
+            }
+          ]
+        },
+        {
+          "field": "expression",
+          "displayName": "Expression",
+          "type": "String",
+          "onlyForTypes": [
+            "Jsonata"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "comparison",
+          "displayName": "Comparison",
+          "type": "String",
+          "onlyForTypes": [
+            "Date"
+          ],
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Not Before",
+              "value": "NotBefore"
+            },
+            {
+              "name": "Not After",
+              "value": "NotAfter"
+            }
+          ]
+        },
+        {
+          "field": "fixedDate",
+          "displayName": "Fixed Date",
+          "type": "Date",
+          "onlyForTypes": [
+            "Date"
+          ]
+        },
+        {
+          "field": "daysFromCurrent",
+          "displayName": "Days From Current",
+          "type": "Int",
+          "onlyForTypes": [
+            "Date"
+          ]
+        },
+        {
+          "field": "min",
+          "displayName": "Min",
+          "type": "Int",
+          "onlyForTypes": [
+            "Length"
+          ]
+        },
+        {
+          "field": "max",
+          "displayName": "Max",
+          "type": "Int",
+          "onlyForTypes": [
+            "Length"
+          ]
+        }
+      ],
+      "schemaRef": "SchemaValidator",
+      "onlyForTypes": [
+        "Data"
+      ]
+    },
+    {
+      "field": "compoundField",
+      "displayName": "Compound Field",
+      "type": "String",
+      "onlyForTypes": [
+        "Group"
+      ],
+      "tags": [
+        "_NestedSchemaField"
+      ]
+    },
+    {
+      "field": "groupOptions",
+      "displayName": "Group Options",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "defaultValue": "Standard",
+          "options": [
+            {
+              "name": "Standard",
+              "value": "Standard"
+            },
+            {
+              "name": "Grid",
+              "value": "Grid"
+            },
+            {
+              "name": "Flex",
+              "value": "Flex"
+            },
+            {
+              "name": "Tabs",
+              "value": "Tabs"
+            },
+            {
+              "name": "GroupElement",
+              "value": "GroupElement"
+            },
+            {
+              "name": "SelectChild",
+              "value": "SelectChild"
+            },
+            {
+              "name": "Inline",
+              "value": "Inline"
+            },
+            {
+              "name": "Wizard",
+              "value": "Wizard"
+            },
+            {
+              "name": "Dialog",
+              "value": "Dialog"
+            },
+            {
+              "name": "Contents",
+              "value": "Contents"
+            },
+            {
+              "name": "Accordion",
+              "value": "Accordion"
+            }
+          ]
+        },
+        {
+          "field": "hideTitle",
+          "displayName": "Hide Title",
+          "type": "Bool"
+        },
+        {
+          "field": "childStyleClass",
+          "displayName": "Child Style Class",
+          "type": "String"
+        },
+        {
+          "field": "childLayoutClass",
+          "displayName": "Child Layout Class",
+          "type": "String"
+        },
+        {
+          "field": "childLabelClass",
+          "displayName": "Child Label Class",
+          "type": "String"
+        },
+        {
+          "field": "displayOnly",
+          "displayName": "Display Only",
+          "type": "Bool"
+        },
+        {
+          "field": "contentClass",
+          "displayName": "Content Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Tabs"
+          ]
+        },
+        {
+          "field": "title",
+          "displayName": "Title",
+          "type": "String",
+          "onlyForTypes": [
+            "Dialog"
+          ]
+        },
+        {
+          "field": "portalHost",
+          "displayName": "PortalHost",
+          "type": "String",
+          "onlyForTypes": [
+            "Dialog"
+          ]
+        },
+        {
+          "field": "direction",
+          "displayName": "Direction",
+          "type": "String",
+          "onlyForTypes": [
+            "Flex"
+          ]
+        },
+        {
+          "field": "gap",
+          "displayName": "Gap",
+          "type": "String",
+          "onlyForTypes": [
+            "Flex"
+          ]
+        },
+        {
+          "field": "columns",
+          "displayName": "Columns",
+          "type": "Int",
+          "onlyForTypes": [
+            "Grid"
+          ]
+        },
+        {
+          "field": "rowClass",
+          "displayName": "Row Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Grid"
+          ]
+        },
+        {
+          "field": "cellClass",
+          "displayName": "Cell Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Grid"
+          ]
+        },
+        {
+          "field": "value",
+          "displayName": "Value",
+          "type": "Any",
+          "onlyForTypes": [
+            "GroupElement"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_DefaultValue"
+          ]
+        },
+        {
+          "field": "childIndexExpression",
+          "displayName": "Child Index Expression",
+          "type": "Compound",
+          "collection": false,
+          "children": [
+            {
+              "field": "type",
+              "displayName": "Type",
+              "type": "String",
+              "isTypeField": true,
+              "notNullable": true,
+              "required": true,
+              "options": [
+                {
+                  "name": "Jsonata",
+                  "value": "Jsonata"
+                },
+                {
+                  "name": "Data Match",
+                  "value": "FieldValue"
+                },
+                {
+                  "name": "User Match",
+                  "value": "UserMatch"
+                },
+                {
+                  "name": "Data",
+                  "value": "Data"
+                },
+                {
+                  "name": "Not Empty",
+                  "value": "NotEmpty"
+                },
+                {
+                  "name": "UUID",
+                  "value": "UUID"
+                }
+              ]
+            },
+            {
+              "field": "expression",
+              "displayName": "Expression",
+              "type": "String",
+              "onlyForTypes": [
+                "Jsonata"
+              ],
+              "notNullable": true,
+              "required": true
+            },
+            {
+              "field": "field",
+              "displayName": "Field",
+              "type": "String",
+              "onlyForTypes": [
+                "FieldValue",
+                "NotEmpty",
+                "Data"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_SchemaField"
+              ]
+            },
+            {
+              "field": "value",
+              "displayName": "Value",
+              "type": "Any",
+              "onlyForTypes": [
+                "FieldValue"
+              ],
+              "notNullable": true,
+              "required": true,
+              "tags": [
+                "_ValuesOf:field"
+              ]
+            },
+            {
+              "field": "empty",
+              "displayName": "Empty",
+              "type": "Bool",
+              "onlyForTypes": [
+                "NotEmpty"
+              ]
+            },
+            {
+              "field": "userMatch",
+              "displayName": "User Match",
+              "type": "String",
+              "onlyForTypes": [
+                "UserMatch"
+              ],
+              "notNullable": true,
+              "required": true
+            }
+          ],
+          "schemaRef": "EntityExpression",
+          "onlyForTypes": [
+            "SelectChild"
+          ],
+          "notNullable": true,
+          "tags": [
+            "_ControlRef:Expression"
+          ]
+        },
+        {
+          "field": "defaultExpanded",
+          "displayName": "Default Expanded",
+          "type": "Bool",
+          "onlyForTypes": [
+            "Accordion"
+          ]
+        },
+        {
+          "field": "expandStateField",
+          "displayName": "Expand State Field",
+          "type": "String",
+          "onlyForTypes": [
+            "Accordion"
+          ]
+        }
+      ],
+      "schemaRef": "GroupRenderOptions",
+      "onlyForTypes": [
+        "Group"
+      ]
+    },
+    {
+      "field": "displayData",
+      "displayName": "Display Data",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "type",
+          "displayName": "Type",
+          "type": "String",
+          "isTypeField": true,
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "Text",
+              "value": "Text"
+            },
+            {
+              "name": "Html",
+              "value": "Html"
+            },
+            {
+              "name": "Icon",
+              "value": "Icon"
+            },
+            {
+              "name": "Custom",
+              "value": "Custom"
+            }
+          ]
+        },
+        {
+          "field": "iconClass",
+          "displayName": "Icon Class",
+          "type": "String",
+          "onlyForTypes": [
+            "Icon"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "icon",
+          "displayName": "Icon",
+          "type": "Compound",
+          "collection": false,
+          "children": [
+            {
+              "field": "library",
+              "displayName": "Library",
+              "type": "String",
+              "notNullable": true,
+              "required": true,
+              "options": [
+                {
+                  "name": "FontAwesome",
+                  "value": "FontAwesome"
+                },
+                {
+                  "name": "Material",
+                  "value": "Material"
+                },
+                {
+                  "name": "CssClass",
+                  "value": "CssClass"
+                }
+              ]
+            },
+            {
+              "field": "name",
+              "displayName": "Name",
+              "type": "String",
+              "notNullable": true,
+              "required": true
+            }
+          ],
+          "schemaRef": "IconReference",
+          "onlyForTypes": [
+            "Icon"
+          ]
+        },
+        {
+          "field": "text",
+          "displayName": "Text",
+          "type": "String",
+          "onlyForTypes": [
+            "Text"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "customId",
+          "displayName": "Custom Id",
+          "type": "String",
+          "onlyForTypes": [
+            "Custom"
+          ],
+          "notNullable": true,
+          "required": true
+        },
+        {
+          "field": "html",
+          "displayName": "Html",
+          "type": "String",
+          "onlyForTypes": [
+            "Html"
+          ],
+          "notNullable": true,
+          "required": true,
+          "tags": [
+            "_HtmlEditor"
+          ]
+        }
+      ],
+      "schemaRef": "DisplayData",
+      "onlyForTypes": [
+        "Display"
+      ],
+      "notNullable": true
+    },
+    {
+      "field": "actionId",
+      "displayName": "Action Id",
+      "type": "String",
+      "onlyForTypes": [
+        "Action"
+      ],
+      "notNullable": true,
+      "required": true
+    },
+    {
+      "field": "actionData",
+      "displayName": "Action Data",
+      "type": "String",
+      "onlyForTypes": [
+        "Action"
+      ]
+    },
+    {
+      "field": "icon",
+      "displayName": "Icon",
+      "type": "Compound",
+      "collection": false,
+      "children": [
+        {
+          "field": "library",
+          "displayName": "Library",
+          "type": "String",
+          "notNullable": true,
+          "required": true,
+          "options": [
+            {
+              "name": "FontAwesome",
+              "value": "FontAwesome"
+            },
+            {
+              "name": "Material",
+              "value": "Material"
+            },
+            {
+              "name": "CssClass",
+              "value": "CssClass"
+            }
+          ]
+        },
+        {
+          "field": "name",
+          "displayName": "Name",
+          "type": "String",
+          "notNullable": true,
+          "required": true
+        }
+      ],
+      "schemaRef": "IconReference",
+      "onlyForTypes": [
+        "Action"
+      ]
+    },
+    {
+      "field": "actionStyle",
+      "displayName": "Action Style",
+      "type": "String",
+      "onlyForTypes": [
+        "Action"
+      ],
+      "options": [
+        {
+          "name": "Button",
+          "value": "Button"
+        },
+        {
+          "name": "Secondary",
+          "value": "Secondary"
+        },
+        {
+          "name": "Link",
+          "value": "Link"
+        },
+        {
+          "name": "Group",
+          "value": "Group"
+        }
+      ]
+    },
+    {
+      "field": "iconPlacement",
+      "displayName": "Icon Placement",
+      "type": "String",
+      "onlyForTypes": [
+        "Action"
+      ],
+      "options": [
+        {
+          "name": "BeforeText",
+          "value": "BeforeText"
+        },
+        {
+          "name": "AfterText",
+          "value": "AfterText"
+        },
+        {
+          "name": "ReplaceText",
+          "value": "ReplaceText"
+        }
+      ]
+    },
+    {
+      "field": "disableType",
+      "displayName": "Disable Type",
+      "type": "String",
+      "onlyForTypes": [
+        "Action"
+      ],
+      "options": [
+        {
+          "name": "None",
+          "value": "None"
+        },
+        {
+          "name": "Self",
+          "value": "Self"
+        },
+        {
+          "name": "Global",
+          "value": "Global"
+        }
+      ]
+    }
+  ]
+}
