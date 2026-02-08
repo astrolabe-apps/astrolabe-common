@@ -7,6 +7,7 @@ export function trackedValue<A>(
   c: Control<A>,
   tracker?: ChangeListenerFunc<any>,
 ): A {
+  if (c == null) return c as A;
   const cc = c.current;
   const cv = cc.value;
   if (cv == null) {
