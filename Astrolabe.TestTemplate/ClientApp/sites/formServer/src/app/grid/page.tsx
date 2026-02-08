@@ -6,7 +6,7 @@ import {
   defaultRenderCell,
 } from "@astroapps/datagrid";
 import { DataTable } from "@astrolabe/ui/table";
-import { Fragment, StrictMode } from "react";
+import { Fragment } from "react";
 
 export default function DataGridTest() {
   type Row = {
@@ -27,11 +27,7 @@ export default function DataGridTest() {
       { title: "Age", getter: (r) => r.age },
     ],
   });
-  return (
-    <StrictMode>
-      <DataTable loading={false} data={rows} columns={columns} />
-    </StrictMode>
-  );
+  return <DataTable loading={false} data={rows} columns={columns} />;
 
   function renderHeader(p: CellRenderProps<any>) {
     return <Fragment key={p.key}>{defaultRenderCell(p)}</Fragment>;

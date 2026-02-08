@@ -6,7 +6,7 @@ export * from "./components";
 export * from "./util";
 export * from "@astroapps/controls";
 
-const version = "4.5.0";
+const version = "4.5.1";
 const existingVersion = (globalThis as any)["_react_typed_forms"];
 if (existingVersion) {
   console.warn(
