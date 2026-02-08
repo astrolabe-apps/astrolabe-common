@@ -447,16 +447,45 @@ export function useTrackedComponent<A>(f: FC<A>, deps: any[]): FC<A> {
   }, deps);
 }
 
+const pendingCleanups = new Set<ComponentTracker>();
+let timerScheduled = false;
+
+function flushCleanups() {
+  timerScheduled = false;
+  const trackers = [...pendingCleanups];
+  pendingCleanups.clear();
+  for (const t of trackers) {
+    t.doCleanup();
+  }
+}
+
+function scheduleCleanup(tracker: ComponentTracker) {
+  pendingCleanups.add(tracker);
+  if (!timerScheduled) {
+    timerScheduled = true;
+    setTimeout(flushCleanups, 0);
+  }
+}
+
+function cancelCleanup(tracker: ComponentTracker) {
+  pendingCleanups.delete(tracker);
+}
+
 class ComponentTracker extends SubscriptionTracker {
   changeCount = 0;
   listener?: ChangeListenerFunc<any>;
   private cleanupCallbacks: (() => void)[] = [];
-  private cleanupTimer?: ReturnType<typeof setTimeout>;
 
   onCleanup(cb: () => void) {
     if (!this.cleanupCallbacks.includes(cb)) {
       this.cleanupCallbacks.push(cb);
     }
+  }
+
+  doCleanup() {
+    this.cleanupCallbacks.forEach((cb) => cb());
+    this.cleanupCallbacks = [];
+    this.cleanup();
   }
 
   constructor() {
@@ -486,10 +515,7 @@ class ComponentTracker extends SubscriptionTracker {
   getServerSnapshot = this.getSnapshot;
 
   subscribe: (onChange: () => void) => () => void = (onChange) => {
-    if (this.cleanupTimer) {
-      clearTimeout(this.cleanupTimer);
-      this.cleanupTimer = undefined;
-    }
+    cancelCleanup(this);
     this.listener = (c, change) => {
       this.changeCount++;
       onChange();
@@ -497,11 +523,7 @@ class ComponentTracker extends SubscriptionTracker {
     return () => {
       this.listener = undefined;
       this.changeCount++;
-      this.cleanupTimer = setTimeout(() => {
-        this.cleanupCallbacks.forEach((cb) => cb());
-        this.cleanupCallbacks = [];
-        this.cleanup();
-      }, 0);
+      scheduleCleanup(this);
     };
   };
 }

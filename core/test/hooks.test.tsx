@@ -1,6 +1,13 @@
-import { describe, expect, it, jest, beforeEach, afterEach } from "@jest/globals";
+import {
+  describe,
+  expect,
+  it,
+  jest,
+  beforeEach,
+  afterEach,
+} from "@jest/globals";
 import { renderHook, act } from "@testing-library/react";
-import React, { StrictMode } from "react";
+import { StrictMode } from "react";
 import {
   useControl,
   useComputed,
@@ -27,14 +34,13 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  jest.runOnlyPendingTimers();
   jest.useRealTimers();
 });
 
 describe("useControl", () => {
   it("creates a control with initial value", () => {
-    const { result } = renderHook(
-      useTracked(() => useControl(42)),
-    );
+    const { result } = renderHook(useTracked(() => useControl(42)));
     expect(result.current.value).toBe(42);
   });
 
@@ -46,9 +52,7 @@ describe("useControl", () => {
   });
 
   it("preserves control identity across re-renders", () => {
-    const { result, rerender } = renderHook(
-      useTracked(() => useControl(42)),
-    );
+    const { result, rerender } = renderHook(useTracked(() => useControl(42)));
     const first = result.current;
     rerender();
     expect(result.current).toBe(first);

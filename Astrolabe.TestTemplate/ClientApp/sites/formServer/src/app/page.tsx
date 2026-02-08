@@ -79,7 +79,7 @@ import { Button } from "@astrolabe/ui/Button";
 import { SchemaFields as AllControlsSchema } from "../setup/allControls";
 import useBreakpoint from "use-breakpoint";
 
-ControlMetricsRegistry.enableStackTraceCapture();
+// ControlMetricsRegistry.enableStackTraceCapture();
 
 /**
  * It is important to bind the object of breakpoints to a variable for memoization to work correctly.
