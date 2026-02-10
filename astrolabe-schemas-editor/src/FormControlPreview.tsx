@@ -441,6 +441,9 @@ class FormPreviewStateNode implements FormStateNode {
     return false;
   }
   get resolved() {
-    return { definition: this.definition };
+    return {
+      definition: this.definition,
+      fieldOptions: this.dataNode?.schema.field.options ?? undefined,
+    };
   }
 }
