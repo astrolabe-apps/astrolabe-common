@@ -7,26 +7,12 @@
         <IsPackable>true</IsPackable>
         <Nullable>enable</Nullable>
         <Version>1.3.1</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>Utilities for web projects</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>web utility</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3" />
         <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="8.0.2" />
-    </ItemGroup>
-
-
-    <ItemGroup>
-      <None Update="README.md">
-        <Pack>true</Pack>
-        <PackagePath>/</PackagePath>
-      </None>
     </ItemGroup>
 </Project>

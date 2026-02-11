@@ -5,20 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>2.0.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>Simple email sending abstraction with default SmtpClient implementation</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>email sending</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-
-    <ItemGroup>
-      <None Update="README.md">
-        <Pack>true</Pack>
-        <PackagePath>/</PackagePath>
-      </None>
-    </ItemGroup>
 
 </Project>

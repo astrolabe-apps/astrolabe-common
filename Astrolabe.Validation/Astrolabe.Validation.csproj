@@ -5,24 +5,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>4.0.2</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>A validation library built on top of Astrolabe.Evaluator</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>validation</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-    
+
     <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Evaluator\Astrolabe.Evaluator.csproj" />
-    </ItemGroup>
-    
-    <ItemGroup>
-      <None Update="README.md">
-        <Pack>true</Pack>
-        <PackagePath>/</PackagePath>
-      </None>
     </ItemGroup>
 
 </Project>

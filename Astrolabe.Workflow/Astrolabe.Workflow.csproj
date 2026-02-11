@@ -5,17 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>1.3.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>Library for building declarative workflow scenarios</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>workflow library</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="/"/>
-    </ItemGroup>
 
 </Project>
