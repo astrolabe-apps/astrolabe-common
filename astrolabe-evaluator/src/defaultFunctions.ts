@@ -1006,6 +1006,14 @@ export const defaultFunctions = {
     const [num] = args;
     return typeof num === "number" ? Math.ceil(num) : null;
   }, constGetType(NumberType)),
+  round: evalFunction((args) => {
+    if (args.length < 2 || args.length > 3) return null;
+    const [num, precision, roundUp = true] = args;
+    if (typeof num !== "number" || typeof precision !== "number" || (roundUp !== undefined && typeof roundUp !== "boolean"))
+      return null;
+    const factor = Math.pow(10, precision as number);
+    return (roundUp ? Math.ceil(num * factor) : Math.floor(num * factor)) / factor;
+  }, constGetType(NumberType)),
 };
 
 /**

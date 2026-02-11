@@ -876,4 +876,54 @@ describe("Math Rounding Functions", () => {
     const result = evalExpr("$ceil(missing)", {});
     expect(result).toBeNull();
   });
+
+  test("Round - round up with precision 2", () => {
+    const result = evalExpr("$round(num, 2, true)", { num: 3.456 });
+    expect(result).toBe(3.46);
+  });
+
+  test("Round - round down with precision 2", () => {
+    const result = evalExpr("$round(num, 2, false)", { num: 3.456 });
+    expect(result).toBe(3.45);
+  });
+
+  test("Round - round up with precision 0", () => {
+    const result = evalExpr("$round(num, 0, true)", { num: 3.2 });
+    expect(result).toBe(4);
+  });
+
+  test("Round - round down with precision 0", () => {
+    const result = evalExpr("$round(num, 0, false)", { num: 3.7 });
+    expect(result).toBe(3);
+  });
+
+  test("Round - negative number round up", () => {
+    const result = evalExpr("$round(num, 1, true)", { num: -3.45 });
+    expect(result).toBe(-3.4);
+  });
+
+  test("Round - negative number round down", () => {
+    const result = evalExpr("$round(num, 1, false)", { num: -3.45 });
+    expect(result).toBe(-3.5);
+  });
+
+  test("Round - integer unchanged", () => {
+    const result = evalExpr("$round(num, 2, true)", { num: 5 });
+    expect(result).toBe(5);
+  });
+
+  test("Round - null number returns null", () => {
+    const result = evalExpr("$round(missing, 2, true)", {});
+    expect(result).toBeNull();
+  });
+
+  test("Round - defaults to rounding up", () => {
+    const result = evalExpr("$round(num, 2)", { num: 3.456 });
+    expect(result).toBe(3.46);
+  });
+
+  test("Round - wrong arg count returns null", () => {
+    const result = evalExpr("$round(num)", { num: 3.5 });
+    expect(result).toBeNull();
+  });
 });
