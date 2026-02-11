@@ -16,5 +16,6 @@ export { FormStructureView } from "./views/FormStructureView";
 export { ControlPropertiesView } from "./views/ControlPropertiesView";
 export { CurrentSchemaView } from "./views/CurrentSchemaView";
 export { InactiveView } from "./views/InactiveView";
+export { FieldPropertiesView } from "./views/FieldPropertiesView";
 export { EditorFormTree } from "./EditorFormTree";
 export { EditorSchemaTree } from "./EditorSchemaTree";
