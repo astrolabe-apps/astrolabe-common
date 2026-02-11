@@ -105,6 +105,7 @@ importers:
     specifiers:
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/schemas': workspace:*
+      '@react-typed-forms/schemas-html': workspace:*
       '@react-typed-forms/transform': ^0.2.0
       '@types/react': ^19.0.0
       clsx: ^2
@@ -118,6 +119,7 @@ importers:
     devDependencies:
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/schemas': link:../schemas
+      '@react-typed-forms/schemas-html': link:../schemas-html
       '@react-typed-forms/transform': 0.2.0
       '@types/react': 19.1.10
       microbundle: 0.15.1

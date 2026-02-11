@@ -40,12 +40,12 @@ export function VisibilityConditionEditor({
 
   return (
     <div>
-      <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+      <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.5px] mb-2">
         Visibility
       </label>
       <div className="space-y-2">
         <select
-          className="w-full text-sm border rounded px-2 py-1"
+          className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
           value={condition?.field ?? ""}
           onChange={(e) => {
             const field = e.target.value;
@@ -71,7 +71,7 @@ export function VisibilityConditionEditor({
         {condition && (
           <>
             <select
-              className="w-full text-sm border rounded px-2 py-1"
+              className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
               value={condition.operator}
               onChange={(e) =>
                 updateCondition({
@@ -86,7 +86,7 @@ export function VisibilityConditionEditor({
 
             {hasOptions ? (
               <select
-                className="w-full text-sm border rounded px-2 py-1"
+                className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
                 value={String(condition.value ?? "")}
                 onChange={(e) =>
                   updateCondition({ ...condition, value: e.target.value })
@@ -101,7 +101,7 @@ export function VisibilityConditionEditor({
               </select>
             ) : (
               <input
-                className="w-full text-sm border rounded px-2 py-1"
+                className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
                 value={String(condition.value ?? "")}
                 onChange={(e) =>
                   updateCondition({ ...condition, value: e.target.value })
@@ -112,7 +112,7 @@ export function VisibilityConditionEditor({
 
             <button
               onClick={() => updateCondition(undefined)}
-              className="text-sm text-red-500 hover:text-red-700"
+              className="text-sm text-red-400 hover:text-red-600 transition-colors"
             >
               Clear condition
             </button>

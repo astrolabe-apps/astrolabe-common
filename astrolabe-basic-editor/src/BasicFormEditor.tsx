@@ -109,7 +109,7 @@ export function BasicFormEditor<A>({
     return (
       <div
         className={clsx(
-          "flex items-center justify-center h-full text-gray-400",
+          "flex items-center justify-center h-full text-slate-400",
           className,
         )}
       >
@@ -121,8 +121,8 @@ export function BasicFormEditor<A>({
   return (
     <BasicEditorProvider value={ctxValue}>
       <div className={clsx("flex flex-col h-full", className)}>
-        <div className="flex items-center justify-between px-4 py-2 border-b bg-white">
-          <h2 className="text-lg font-semibold">
+        <div className="flex items-center justify-between px-5 py-2.5 border-b border-violet-100 bg-white">
+          <h2 className="text-lg font-semibold text-slate-800">
             {state.fields.formTitle.value}
           </h2>
           <div className="flex items-center gap-2">
@@ -132,10 +132,10 @@ export function BasicFormEditor<A>({
                   !state.fields.previewMode.value)
               }
               className={clsx(
-                "px-3 py-1.5 text-sm rounded-md border transition-colors",
+                "px-3 py-1.5 text-sm rounded-md border transition-colors font-medium",
                 state.fields.previewMode.value
-                  ? "bg-blue-50 border-blue-300 text-blue-700"
-                  : "hover:bg-gray-50",
+                  ? "bg-violet-50 border-violet-300 text-violet-700"
+                  : "border-violet-200 text-slate-600 hover:bg-violet-50 hover:border-violet-300",
               )}
             >
               {state.fields.previewMode.value ? "Edit" : "Preview"}
@@ -143,7 +143,7 @@ export function BasicFormEditor<A>({
             <button
               onClick={handleSave}
               disabled={saving.value}
-              className="px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-1.5 text-sm rounded-md font-semibold text-white bg-gradient-to-r from-violet-600 to-violet-500 shadow-sm hover:shadow-md transition-all disabled:opacity-50"
             >
               {saving.value ? "Saving..." : "Save"}
             </button>

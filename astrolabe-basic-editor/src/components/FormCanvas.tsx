@@ -39,7 +39,7 @@ function EditModeCanvas() {
   const schemaRootNode = schemaTree?.rootNode;
   if (!rootNode || !schemaRootNode) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-400">
+      <div className="flex-1 flex items-center justify-center text-slate-400">
         Loading...
       </div>
     );
@@ -65,10 +65,10 @@ function EditModeCanvas() {
 
   return (
     <div
-      className="flex-1 overflow-auto p-6 bg-gray-50"
+      className="flex-1 overflow-auto p-6 bg-slate-50"
       onClick={() => selectField(undefined)}
     >
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border p-6 min-h-[200px]">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-[0_4px_20px_rgba(44,43,61,0.04),0_1px_4px_rgba(44,43,61,0.02)] border border-violet-100/60 p-6 min-h-[200px]">
         <FormControlPreview
           node={previewNode}
           context={previewContext}
@@ -88,7 +88,7 @@ function PreviewModeCanvas() {
   const schemaRootNode = schemaTree?.rootNode;
   if (!rootNode || !schemaRootNode) {
     return (
-      <div className="flex-1 flex items-center justify-center text-gray-400">
+      <div className="flex-1 flex items-center justify-center text-slate-400">
         Loading...
       </div>
     );
@@ -100,8 +100,8 @@ function PreviewModeCanvas() {
   );
 
   return (
-    <div className="flex-1 overflow-auto p-6 bg-gray-50">
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-sm border p-6 min-h-[200px]">
+    <div className="flex-1 overflow-auto p-6 bg-slate-50">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-[0_4px_20px_rgba(44,43,61,0.04),0_1px_4px_rgba(44,43,61,0.02)] border border-violet-100/60 p-6 min-h-[200px]">
         <RenderForm
           data={dataNode}
           form={rootNode}

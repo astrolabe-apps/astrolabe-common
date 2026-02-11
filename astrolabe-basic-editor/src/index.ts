@@ -1,4 +1,5 @@
 export { BasicFormEditor } from "./BasicFormEditor";
+export { createBasicEditorRenderer } from "./createBasicEditorRenderer";
 export type {
   BasicFormEditorProps,
   BasicEditorState,

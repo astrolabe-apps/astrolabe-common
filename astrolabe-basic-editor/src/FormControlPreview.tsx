@@ -182,8 +182,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     <div
       style={{
         ...style,
-        outline: isSelected ? "2px dashed #7c3aed" : undefined,
-        backgroundColor: isSelected ? "rgba(124, 58, 237, 0.06)" : undefined,
+        outline: isSelected ? "2px solid #7c6dd8" : undefined,
+        backgroundColor: isSelected ? "rgba(124, 109, 216, 0.04)" : undefined,
         position: "relative",
         cursor: "pointer",
       }}

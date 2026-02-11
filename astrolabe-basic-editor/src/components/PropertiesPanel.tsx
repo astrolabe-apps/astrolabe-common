@@ -21,7 +21,7 @@ export function PropertiesPanel() {
 
   if (!selectedId.value) {
     return (
-      <div className="w-80 border-l bg-white flex-shrink-0 p-4 text-gray-400 text-sm">
+      <div className="w-80 border-l border-violet-100 bg-white flex-shrink-0 p-4 text-slate-400 text-sm">
         Select a field to edit its properties
       </div>
     );
@@ -71,34 +71,35 @@ function PropertiesPanelContent() {
   ];
 
   return (
-    <div className="w-80 border-l bg-white flex-shrink-0 overflow-y-auto">
-      <div className="p-4 space-y-4">
+    <div className="w-80 border-l border-violet-100 bg-white flex-shrink-0 overflow-y-auto">
+      <div className="px-4 py-3 border-b border-violet-100 bg-violet-50/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {fieldConfig && (
-              <span className="text-gray-500 font-mono text-lg">
+              <span className="text-violet-500 font-mono text-lg">
                 {fieldConfig.icon}
               </span>
             )}
-            <span className="font-medium text-sm">
+            <span className="font-semibold text-sm text-slate-800">
               {fieldConfig?.label ?? def.type}
             </span>
           </div>
           <button
             onClick={() => deleteField(selectedId)}
-            className="text-gray-400 hover:text-red-500 text-sm"
+            className="text-slate-400 hover:text-red-500 text-sm transition-colors"
             title="Delete field"
           >
             Delete
           </button>
         </div>
-
+      </div>
+      <div className="p-4 space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+          <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.5px] mb-1.5">
             Label
           </label>
           <input
-            className="w-full text-sm border rounded px-2 py-1.5"
+            className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
             value={def.title ?? ""}
             onChange={(e) =>
               defControl.setValue((d) => ({ ...d, title: e.target.value }))
@@ -109,11 +110,11 @@ function PropertiesPanelContent() {
 
         {showPlaceholder && (
           <div>
-            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+            <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.5px] mb-1.5">
               Placeholder
             </label>
             <input
-              className="w-full text-sm border rounded px-2 py-1.5"
+              className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
               value={
                 (dataDef?.renderOptions as any)?.placeholder ?? ""
               }
@@ -134,7 +135,7 @@ function PropertiesPanelContent() {
         )}
 
         {isData && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <input
               type="checkbox"
               id="required-toggle"
@@ -145,9 +146,9 @@ function PropertiesPanelContent() {
                   required: e.target.checked || null,
                 }))
               }
-              className="rounded"
+              className="rounded accent-violet-600"
             />
-            <label htmlFor="required-toggle" className="text-sm">
+            <label htmlFor="required-toggle" className="text-sm text-slate-600">
               Required field
             </label>
           </div>

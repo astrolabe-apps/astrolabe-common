@@ -1,7 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { BasicFormEditor } from "@astroapps/basic-editor";
+import {
+  BasicFormEditor,
+  createBasicEditorRenderer,
+} from "@astroapps/basic-editor";
 import { readOnlySchemas } from "@astroapps/schemas-editor";
 import {
   boolField,
@@ -56,10 +59,7 @@ export default function BasicEditorPage() {
   const [container, setContainer] = useState<HTMLElement | null>(null);
   const formId = useControl("SampleSchema");
 
-  const renderer = useMemo(
-    () => createStdFormRenderer(container),
-    [container],
-  );
+  const renderer = useMemo(() => createBasicEditorRenderer(), [container]);
 
   return (
     <div className="h-screen flex flex-col">
@@ -84,8 +84,7 @@ export default function BasicEditorPage() {
           formRenderer={renderer}
           loadForm={async (fId) => {
             if (fId in FormDefinitions) {
-              const fd =
-                FormDefinitions[fId as keyof typeof FormDefinitions];
+              const fd = FormDefinitions[fId as keyof typeof FormDefinitions];
               return {
                 controls: fd.controls,
                 schemaName: fd.schemaName,
@@ -107,9 +106,8 @@ export default function BasicEditorPage() {
           formId={formId.value}
           formTitle={
             formId.value in FormDefinitions
-              ? FormDefinitions[
-                  formId.value as keyof typeof FormDefinitions
-                ].name
+              ? FormDefinitions[formId.value as keyof typeof FormDefinitions]
+                  .name
               : "Sample Form"
           }
           className="h-full"
