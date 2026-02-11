@@ -1141,6 +1141,50 @@ public static class DefaultFunctions
     };
 
     /// <summary>
+    /// Round function - rounds a number to a given precision.
+    /// Optional third boolean: true = force up (ceil), false = force down (floor).
+    /// Default (no third arg) uses standard rounding (half away from zero).
+    /// </summary>
+    private static readonly FunctionHandler RoundOp = (env, call) =>
+    {
+        if (call.Args.Count < 2 || call.Args.Count > 3)
+            return call.WithError("round expects 2 or 3 arguments");
+
+        var numPartial = env.EvaluateExpr(call.Args[0]);
+        var precisionPartial = env.EvaluateExpr(call.Args[1]);
+        var forceDirPartial = call.Args.Count == 3 ? env.EvaluateExpr(call.Args[2]) : null;
+
+        if (numPartial is not ValueExpr numVal || precisionPartial is not ValueExpr precisionVal)
+            return new CallExpr("round", call.Args.Select(env.EvaluateExpr).ToList());
+
+        if (forceDirPartial != null && forceDirPartial is not ValueExpr)
+            return new CallExpr("round", [numPartial, precisionPartial, forceDirPartial]);
+
+        var forceDirVal = forceDirPartial as ValueExpr;
+        var deps = forceDirVal != null
+            ? new List<ValueExpr> { numVal, precisionVal, forceDirVal }
+            : new List<ValueExpr> { numVal, precisionVal };
+
+        if (numVal.Value == null || precisionVal.Value == null || (forceDirVal != null && forceDirVal.Value == null))
+            return env.WithDeps(ValueExpr.Null, deps);
+
+        var num = ValueExpr.MaybeDouble(numVal.Value);
+        var precision = ValueExpr.MaybeIndex(precisionVal.Value);
+
+        if (num == null || precision == null || (forceDirVal != null && forceDirVal.Value is not bool))
+            return env.WithDeps(ValueExpr.Null, deps);
+
+        var factor = Math.Pow(10, precision.Value);
+        var result = forceDirVal?.Value switch
+        {
+            true => Math.Ceiling(num.Value * factor) / factor,
+            false => Math.Floor(num.Value * factor) / factor,
+            _ => Math.Floor(num.Value * factor + 0.5) / factor,
+        };
+        return env.WithDeps(new ValueExpr(result), deps);
+    };
+
+    /// <summary>
     /// All default function handlers for the new EvalEnv system.
     /// </summary>
     public static readonly IReadOnlyDictionary<string, FunctionHandler> FunctionHandlers =
@@ -1294,6 +1338,7 @@ public static class DefaultFunctions
                     a => ValueExpr.MaybeDouble(a) is { } num ? Math.Ceiling(num) : null
                 )
             },
+            { "round", RoundOp },
         };
 
     /// <summary>
