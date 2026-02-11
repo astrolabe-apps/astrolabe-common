@@ -5,13 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>7.2.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>C# Library for dealing with @react-typed-forms/schemas</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>form controls</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
 
     </PropertyGroup>
 
@@ -29,10 +24,4 @@
         <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-        <None Update="README.md">
-            <Pack>true</Pack>
-            <PackagePath>/</PackagePath>
-        </None>
-    </ItemGroup>
 </Project>

@@ -50,6 +50,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="display"
+        options={{
+          title: 'Display',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'eye' : 'eye-outline'} color={color} size={24} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

@@ -1,22 +1,40 @@
-﻿import RenderHtml, { HTMLSource } from "react-native-render-html";
+﻿import RenderHtml, {
+  HTMLSource,
+  RenderHTMLProps,
+} from "react-native-render-html";
 import React from "react";
-import { Dimensions, View } from "react-native";
+import { Dimensions, StyleProp, View, ViewStyle } from "react-native";
 
 export type RNHtmlRendererProps = {
   className?: string;
   html?: string;
-};
-export function RNHtmlRenderer({ className, html }: RNHtmlRendererProps) {
+  style?: React.CSSProperties | undefined;
+  noSelection?: boolean | null;
+} & Pick<
+  RenderHTMLProps,
+  "baseStyle" | "tagsStyles" | "systemFonts" | "contentWidth"
+>;
+
+export function RNHtmlRenderer({
+  className,
+  html,
+  style,
+  contentWidth,
+  noSelection,
+  ...props
+}: RNHtmlRendererProps) {
   if (!html) return;
   const source = {
     html: html,
   } satisfies HTMLSource;
 
   return (
-    <View className={className}>
+    <View style={style as StyleProp<ViewStyle>} className={className}>
       <RenderHtml
-        contentWidth={Dimensions.get("window").width}
+        defaultTextProps={{ selectable: !noSelection }}
+        contentWidth={contentWidth ?? Dimensions.get("window").width}
         source={source}
+        {...props}
       />
     </View>
   );

@@ -57,6 +57,9 @@ public abstract record ControlDefinition(
     [SchemaTag(SchemaTags.NoControl)]
     public IEnumerable<ControlDefinition>? Children { get; set; }
 
+    [DefaultValue(false)]
+    public bool? NoSelection { get; set; }
+
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
 }

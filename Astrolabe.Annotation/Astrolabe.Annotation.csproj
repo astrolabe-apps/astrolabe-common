@@ -6,15 +6,6 @@
         <Nullable>enable</Nullable>
         <LangVersion>10</LangVersion>
         <Version>1.2.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>Annotations required by astrolabe apps libraries</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-
-    <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="/"/>
-    </ItemGroup>
 </Project>

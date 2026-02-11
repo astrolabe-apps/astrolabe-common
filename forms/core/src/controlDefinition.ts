@@ -33,6 +33,7 @@ export interface ControlDefinition {
   dynamic?: DynamicProperty[] | null;
   adornments?: ControlAdornment[] | null;
   children?: ControlDefinition[] | null;
+  noSelection?: boolean | null;
 }
 
 export enum ControlDefinitionType {

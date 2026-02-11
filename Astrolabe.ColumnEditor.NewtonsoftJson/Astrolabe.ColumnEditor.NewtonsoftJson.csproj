@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <AssemblyName>Astrolabe.ColumnEditor.NewtonsoftJson</AssemblyName>
         <RootNamespace>Astrolabe.ColumnEditor.NewtonsoftJson</RootNamespace>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>

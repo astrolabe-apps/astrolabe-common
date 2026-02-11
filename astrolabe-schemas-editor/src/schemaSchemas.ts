@@ -1376,6 +1376,7 @@ export interface ControlDefinitionForm {
   actionStyle: ActionStyle | null;
   iconPlacement: IconPlacement | null;
   disableType: ControlDisableType | null;
+  noSelection: boolean | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -1617,6 +1618,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
         value: "Global",
       },
     ],
+  }),
+  noSelection: makeScalarField({
+    type: FieldType.Bool,
+    displayName: "No Selection",
   }),
 });
 

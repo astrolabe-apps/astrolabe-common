@@ -206,6 +206,113 @@ public class DefaultFunctionsTests
         Assert.Null(result);
     }
 
+    [Fact]
+    public void Round_UpWithPrecision2()
+    {
+        var data = new JsonObject { ["num"] = 3.456 };
+        var result = TestHelpers.EvalExpr("$round(num, 2, true)", data);
+        Assert.Equal(3.46, result);
+    }
+
+    [Fact]
+    public void Round_DownWithPrecision2()
+    {
+        var data = new JsonObject { ["num"] = 3.456 };
+        var result = TestHelpers.EvalExpr("$round(num, 2, false)", data);
+        Assert.Equal(3.45, result);
+    }
+
+    [Fact]
+    public void Round_UpWithPrecision0()
+    {
+        var data = new JsonObject { ["num"] = 3.2 };
+        var result = TestHelpers.EvalExpr("$round(num, 0, true)", data);
+        Assert.Equal(4.0, result);
+    }
+
+    [Fact]
+    public void Round_DownWithPrecision0()
+    {
+        var data = new JsonObject { ["num"] = 3.7 };
+        var result = TestHelpers.EvalExpr("$round(num, 0, false)", data);
+        Assert.Equal(3.0, result);
+    }
+
+    [Fact]
+    public void Round_NegativeNumberUp()
+    {
+        var data = new JsonObject { ["num"] = -3.45 };
+        var result = TestHelpers.EvalExpr("$round(num, 1, true)", data);
+        Assert.Equal(-3.4, result);
+    }
+
+    [Fact]
+    public void Round_NegativeNumberDown()
+    {
+        var data = new JsonObject { ["num"] = -3.45 };
+        var result = TestHelpers.EvalExpr("$round(num, 1, false)", data);
+        Assert.Equal(-3.5, result);
+    }
+
+    [Fact]
+    public void Round_IntegerUnchanged()
+    {
+        var data = new JsonObject { ["num"] = 5 };
+        var result = TestHelpers.EvalExpr("$round(num, 2, true)", data);
+        Assert.Equal(5.0, result);
+    }
+
+    [Fact]
+    public void Round_NullNumber_ReturnsNull()
+    {
+        var data = new JsonObject();
+        var result = TestHelpers.EvalExpr("$round(missing, 2, true)", data);
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public void Round_DefaultRoundsNormally()
+    {
+        var data = new JsonObject { ["num"] = 3.456 };
+        var result = TestHelpers.EvalExpr("$round(num, 2)", data);
+        Assert.Equal(3.46, result);
+    }
+
+    [Fact]
+    public void Round_DefaultRoundsDownBelowMidpoint()
+    {
+        var data = new JsonObject { ["num"] = 3.44 };
+        var result = TestHelpers.EvalExpr("$round(num, 1)", data);
+        Assert.Equal(3.4, result);
+    }
+
+    [Fact]
+    public void Round_DefaultRoundsUpAtMidpoint()
+    {
+        var data = new JsonObject { ["num"] = 3.45 };
+        var result = TestHelpers.EvalExpr("$round(num, 1)", data);
+        Assert.Equal(3.5, result);
+    }
+
+    [Fact]
+    public void Round_NegativeMidpointRoundsTowardPositiveInfinity()
+    {
+        var data = new JsonObject { ["num"] = -2.5 };
+        var result = TestHelpers.EvalExpr("$round(num, 0)", data);
+        Assert.Equal(-2.0, result);
+    }
+
+    [Fact]
+    public void Round_WrongArgCount_ReturnsError()
+    {
+        var data = new JsonObject { ["num"] = 3.5 };
+        var env = TestHelpers.CreateBasicEnv(data);
+        var parsed = TestHelpers.Parse("$round(num)");
+        var (result, errors) = env.EvalWithErrors(parsed);
+        Assert.Null(result.Value);
+        Assert.NotEmpty(errors);
+    }
+
     #endregion
 
     #region Comparison Operations

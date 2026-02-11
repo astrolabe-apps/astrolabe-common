@@ -208,6 +208,7 @@ export function createDefaultDataRenderer(
                   ? renderOptions.emptyText
                   : defaultEmptyText
               }
+              noSelection={props.definition.noSelection}
             />
           ),
         };
