@@ -208,11 +208,7 @@ export function createDefaultDataRenderer(
                   ? renderOptions.emptyText
                   : defaultEmptyText
               }
-              noSelection={
-                isDisplayOnlyRenderer(renderOptions)
-                  ? renderOptions.noSelection
-                  : undefined
-              }
+              noSelection={props.definition.noSelection}
             />
           ),
         };

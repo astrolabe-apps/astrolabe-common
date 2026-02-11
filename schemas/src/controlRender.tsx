@@ -422,6 +422,7 @@ export interface DisplayRendererProps {
    */
   style?: React.CSSProperties;
   inline?: boolean;
+  noSelection?: boolean | null;
 }
 
 export interface ParentRendererProps {
@@ -696,13 +697,14 @@ export function renderControlLayout(
   }
   if (isDisplayControl(c)) {
     const data = c.displayData ?? {};
-    const displayProps = {
+    const displayProps: DisplayRendererProps = {
       data,
       className: rendererClass(styleClass, c.styleClass),
       textClass: rendererClass(textClass, c.textClass),
       style,
       dataContext,
       inline,
+      noSelection: c.noSelection,
     };
     if (data.type === DisplayDataType.Custom && customDisplay) {
       return {

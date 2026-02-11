@@ -57,6 +57,9 @@ public abstract record ControlDefinition(
     [SchemaTag(SchemaTags.NoControl)]
     public IEnumerable<ControlDefinition>? Children { get; set; }
 
+    [DefaultValue(false)]
+    public bool? NoSelection { get; set; }
+
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
 }
@@ -267,7 +270,7 @@ public record DataGroupRenderOptions(
     [property: SchemaTag(SchemaTags.NoControl)] GroupRenderOptions GroupOptions
 ) : RenderOptions(DataRenderType.Group.ToString());
 
-public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText, bool? NoSelection = null)
+public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText)
     : RenderOptions(DataRenderType.DisplayOnly.ToString());
 
 public record UserSelectionRenderOptions(bool NoGroups, bool NoUsers)

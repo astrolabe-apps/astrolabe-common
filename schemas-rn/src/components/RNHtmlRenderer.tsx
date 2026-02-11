@@ -9,6 +9,7 @@ export type RNHtmlRendererProps = {
   className?: string;
   html?: string;
   style?: React.CSSProperties | undefined;
+  noSelection?: boolean | null;
 } & Pick<
   RenderHTMLProps,
   "baseStyle" | "tagsStyles" | "systemFonts" | "contentWidth"
@@ -19,6 +20,7 @@ export function RNHtmlRenderer({
   html,
   style,
   contentWidth,
+  noSelection,
   ...props
 }: RNHtmlRendererProps) {
   if (!html) return;
@@ -29,7 +31,7 @@ export function RNHtmlRenderer({
   return (
     <View style={style as StyleProp<ViewStyle>} className={className}>
       <RenderHtml
-        defaultTextProps={{ selectable: true }}
+        defaultTextProps={{ selectable: !noSelection }}
         contentWidth={contentWidth ?? Dimensions.get("window").width}
         source={source}
         {...props}
