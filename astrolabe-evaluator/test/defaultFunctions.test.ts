@@ -917,9 +917,24 @@ describe("Math Rounding Functions", () => {
     expect(result).toBeNull();
   });
 
-  test("Round - defaults to rounding up", () => {
+  test("Round - default rounds normally", () => {
     const result = evalExpr("$round(num, 2)", { num: 3.456 });
     expect(result).toBe(3.46);
+  });
+
+  test("Round - default rounds down at midpoint below .5", () => {
+    const result = evalExpr("$round(num, 1)", { num: 3.44 });
+    expect(result).toBe(3.4);
+  });
+
+  test("Round - default rounds up at .5", () => {
+    const result = evalExpr("$round(num, 1)", { num: 3.45 });
+    expect(result).toBe(3.5);
+  });
+
+  test("Round - negative midpoint rounds toward positive infinity", () => {
+    const result = evalExpr("$round(num, 0)", { num: -2.5 });
+    expect(result).toBe(-2);
   });
 
   test("Round - wrong arg count returns null", () => {

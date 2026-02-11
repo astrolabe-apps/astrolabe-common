@@ -1141,7 +1141,9 @@ public static class DefaultFunctions
     };
 
     /// <summary>
-    /// Round function - rounds a number to a given precision using ceil or floor. Rounds up by default.
+    /// Round function - rounds a number to a given precision.
+    /// Optional third boolean: true = force up (ceil), false = force down (floor).
+    /// Default (no third arg) uses standard rounding (half away from zero).
     /// </summary>
     private static readonly FunctionHandler RoundOp = (env, call) =>
     {
@@ -1150,31 +1152,35 @@ public static class DefaultFunctions
 
         var numPartial = env.EvaluateExpr(call.Args[0]);
         var precisionPartial = env.EvaluateExpr(call.Args[1]);
-        var roundUpPartial = call.Args.Count == 3 ? env.EvaluateExpr(call.Args[2]) : null;
+        var forceDirPartial = call.Args.Count == 3 ? env.EvaluateExpr(call.Args[2]) : null;
 
         if (numPartial is not ValueExpr numVal || precisionPartial is not ValueExpr precisionVal)
             return new CallExpr("round", call.Args.Select(env.EvaluateExpr).ToList());
 
-        if (roundUpPartial != null && roundUpPartial is not ValueExpr)
-            return new CallExpr("round", [numPartial, precisionPartial, roundUpPartial]);
+        if (forceDirPartial != null && forceDirPartial is not ValueExpr)
+            return new CallExpr("round", [numPartial, precisionPartial, forceDirPartial]);
 
-        var roundUpVal = roundUpPartial as ValueExpr;
-        var deps = roundUpVal != null
-            ? new List<ValueExpr> { numVal, precisionVal, roundUpVal }
+        var forceDirVal = forceDirPartial as ValueExpr;
+        var deps = forceDirVal != null
+            ? new List<ValueExpr> { numVal, precisionVal, forceDirVal }
             : new List<ValueExpr> { numVal, precisionVal };
 
-        if (numVal.Value == null || precisionVal.Value == null || (roundUpVal != null && roundUpVal.Value == null))
+        if (numVal.Value == null || precisionVal.Value == null || (forceDirVal != null && forceDirVal.Value == null))
             return env.WithDeps(ValueExpr.Null, deps);
 
         var num = ValueExpr.MaybeDouble(numVal.Value);
         var precision = ValueExpr.MaybeIndex(precisionVal.Value);
-        var roundUp = roundUpVal?.Value is bool b ? b : true;
 
-        if (num == null || precision == null || (roundUpVal != null && roundUpVal.Value is not bool))
+        if (num == null || precision == null || (forceDirVal != null && forceDirVal.Value is not bool))
             return env.WithDeps(ValueExpr.Null, deps);
 
-        var mode = roundUp ? MidpointRounding.ToPositiveInfinity : MidpointRounding.ToNegativeInfinity;
-        var result = Math.Round(num.Value, precision.Value, mode);
+        var factor = Math.Pow(10, precision.Value);
+        var result = forceDirVal?.Value switch
+        {
+            true => Math.Ceiling(num.Value * factor) / factor,
+            false => Math.Floor(num.Value * factor) / factor,
+            _ => Math.Floor(num.Value * factor + 0.5) / factor,
+        };
         return env.WithDeps(new ValueExpr(result), deps);
     };
 

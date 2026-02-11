@@ -396,7 +396,10 @@ const mapFunction = binEvalFunction2(
         // At least one element is symbolic - return symbolic array
         return { type: "array", values: partialResults };
       }
-      return exprWithError(call, "$map requires an array: " + printExpr(leftPartial));
+      return exprWithError(
+        call,
+        "$map requires an array: " + printExpr(leftPartial),
+      );
     }
 
     // Left side is symbolic - return symbolic map call
@@ -429,7 +432,10 @@ const flatmapFunction = functionValue(
         if (value == null) return NullExpr;
         return evalWithValue(env, leftPartial, null, right);
       } else {
-        return exprWithError(call, "$. requires an array or object: " + printExpr(leftPartial));
+        return exprWithError(
+          call,
+          "$. requires an array or object: " + printExpr(leftPartial),
+        );
       }
     }
 
@@ -618,7 +624,10 @@ const filterFunction = functionValue(
       }
       return valueExpr(null);
     }
-    return exprWithError(call, "filter expects an array or object: " + printExpr(leftPartial));
+    return exprWithError(
+      call,
+      "filter expects an array or object: " + printExpr(leftPartial),
+    );
   },
   (env, call) => {
     const [left, right] = call.args;
@@ -1008,11 +1017,13 @@ export const defaultFunctions = {
   }, constGetType(NumberType)),
   round: evalFunction((args) => {
     if (args.length < 2 || args.length > 3) return null;
-    const [num, precision, roundUp = true] = args;
-    if (typeof num !== "number" || typeof precision !== "number" || (roundUp !== undefined && typeof roundUp !== "boolean"))
-      return null;
-    const factor = Math.pow(10, precision as number);
-    return (roundUp ? Math.ceil(num * factor) : Math.floor(num * factor)) / factor;
+    const [num, precision, forceDir] = args;
+    if (typeof num !== "number" || typeof precision !== "number") return null;
+    if (forceDir !== undefined && typeof forceDir !== "boolean") return null;
+    const factor = Math.pow(10, precision);
+    if (forceDir === true) return Math.ceil(num * factor) / factor;
+    if (forceDir === false) return Math.floor(num * factor) / factor;
+    return Math.round(num * factor) / factor;
   }, constGetType(NumberType)),
 };
 

@@ -271,11 +271,35 @@ public class DefaultFunctionsTests
     }
 
     [Fact]
-    public void Round_DefaultsToRoundingUp()
+    public void Round_DefaultRoundsNormally()
     {
         var data = new JsonObject { ["num"] = 3.456 };
         var result = TestHelpers.EvalExpr("$round(num, 2)", data);
         Assert.Equal(3.46, result);
+    }
+
+    [Fact]
+    public void Round_DefaultRoundsDownBelowMidpoint()
+    {
+        var data = new JsonObject { ["num"] = 3.44 };
+        var result = TestHelpers.EvalExpr("$round(num, 1)", data);
+        Assert.Equal(3.4, result);
+    }
+
+    [Fact]
+    public void Round_DefaultRoundsUpAtMidpoint()
+    {
+        var data = new JsonObject { ["num"] = 3.45 };
+        var result = TestHelpers.EvalExpr("$round(num, 1)", data);
+        Assert.Equal(3.5, result);
+    }
+
+    [Fact]
+    public void Round_NegativeMidpointRoundsTowardPositiveInfinity()
+    {
+        var data = new JsonObject { ["num"] = -2.5 };
+        var result = TestHelpers.EvalExpr("$round(num, 0)", data);
+        Assert.Equal(-2.0, result);
     }
 
     [Fact]
