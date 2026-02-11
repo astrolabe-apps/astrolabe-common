@@ -12,12 +12,12 @@
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
-        <PackageReference Include="Astrolabe.JSON" Version="1.2.1" />
-        <PackageReference Include="Astrolabe.Common" Version="1.1.0" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
       <ProjectReference Include="..\Astrolabe.Evaluator\Astrolabe.Evaluator.csproj" />
+      <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
       <ProjectReference Include="..\Astrolabe.Schemas.PDF\Astrolabe.Schemas.PDF.csproj" />
       <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
       <ProjectReference Include="..\Astrolabe.SearchState\Astrolabe.SearchState.csproj" />

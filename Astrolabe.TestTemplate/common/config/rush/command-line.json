@@ -13,6 +13,22 @@
   "commands": [
      {
        "commandKind": "bulk",
+       "name": "build",
+       "summary": "Build all projects that haven't been built, or have changed since they were last built",
+       "enableParallelism": true,
+       "incremental": true,
+       "allowWarningsInSuccessfulBuild": true
+     },
+     {
+       "commandKind": "bulk",
+       "name": "rebuild",
+       "summary": "Clean and rebuild all projects",
+       "enableParallelism": true,
+       "incremental": false,
+       "allowWarningsInSuccessfulBuild": true
+     },
+     {
+       "commandKind": "bulk",
        "summary": "Watch for changes",
        "name":"watch",
        "watchForChanges": true,
