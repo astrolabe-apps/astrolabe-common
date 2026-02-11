@@ -10,6 +10,7 @@ export function DefaultDisplayOnly({
   dataNode,
   className,
   emptyText,
+  noSelection,
   schemaInterface,
   style,
   renderer,
@@ -25,6 +26,7 @@ export function DefaultDisplayOnly({
   inline: boolean;
   renderer: FormRenderer;
   emptyText?: string | null;
+  noSelection?: boolean | null;
   state: FormStateNode;
 }) {
   const { display } = state.resolved;
@@ -38,9 +40,12 @@ export function DefaultDisplayOnly({
           ? emptyText
           : schemaInterface.textValueForData(dataNode)) ?? "");
   const { Div } = renderer.html;
+  const mergedStyle = noSelection
+    ? { ...style, userSelect: "none" as const }
+    : style;
   return (
     <Div
-      style={style}
+      style={mergedStyle}
       className={className}
       textClass={textClass}
       text={text}

@@ -4,7 +4,10 @@ import {
   createPagerRenderer,
   DataGridGroupRenderer,
 } from "@astroapps/schemas-datagrid";
-import { createDatePickerRenderer } from "@astroapps/schemas-datepicker";
+import {
+  createDatePickerRenderer,
+  DatePickerOptions,
+} from "@astroapps/schemas-datepicker";
 import {
   createDefaultRenderers,
   defaultTailwindTheme,
@@ -40,7 +43,7 @@ export function createStdFormRenderer(container: HTMLElement | null) {
       createDatePickerRenderer(undefined, {
         portalContainer: container ? container : undefined,
         containerClass: "w-full",
-      }),
+      } as DatePickerOptions),
     ],
     createDefaultRenderers({
       ...defaultTailwindTheme,

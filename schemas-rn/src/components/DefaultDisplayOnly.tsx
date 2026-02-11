@@ -5,11 +5,13 @@ import {
   SchemaDataNode,
   SchemaInterface,
 } from "@react-typed-forms/schemas";
+import { RNDiv } from "../createDefaultRNRenderers";
 
 export function DefaultDisplayOnly({
   dataNode,
   className,
   emptyText,
+  noSelection,
   schemaInterface,
   style,
   renderer,
@@ -25,6 +27,7 @@ export function DefaultDisplayOnly({
   inline: boolean;
   renderer: FormRenderer;
   emptyText?: string | null;
+  noSelection?: boolean | null;
   state: FormStateNode;
 }) {
   const { display } = state.resolved;
@@ -37,14 +40,14 @@ export function DefaultDisplayOnly({
         )
           ? emptyText
           : schemaInterface.textValueForData(dataNode)) ?? "");
-  const { Div } = renderer.html;
   return (
-    <Div
+    <RNDiv
       style={style}
       className={className}
       textClass={textClass}
       text={text}
       inline={inline}
+      noSelection={noSelection}
     />
   );
 }

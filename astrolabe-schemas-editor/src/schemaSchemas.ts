@@ -929,6 +929,7 @@ export interface RenderOptionsForm {
   groupOptions: GroupRenderOptionsForm;
   emptyText: string | null;
   sampleText: string | null;
+  noSelection: boolean | null;
   noGroups: boolean;
   noUsers: boolean;
   format: string | null;
@@ -1166,6 +1167,11 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["DisplayOnly"],
     displayName: "Sample Text",
+  }),
+  noSelection: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["DisplayOnly"],
+    displayName: "No Selection",
   }),
   noGroups: makeScalarField({
     type: FieldType.Bool,

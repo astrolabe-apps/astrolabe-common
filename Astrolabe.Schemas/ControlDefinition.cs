@@ -267,7 +267,7 @@ public record DataGroupRenderOptions(
     [property: SchemaTag(SchemaTags.NoControl)] GroupRenderOptions GroupOptions
 ) : RenderOptions(DataRenderType.Group.ToString());
 
-public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText)
+public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText, bool? NoSelection = null)
     : RenderOptions(DataRenderType.DisplayOnly.ToString());
 
 public record UserSelectionRenderOptions(bool NoGroups, bool NoUsers)

@@ -208,6 +208,11 @@ export function createDefaultDataRenderer(
                   ? renderOptions.emptyText
                   : defaultEmptyText
               }
+              noSelection={
+                isDisplayOnlyRenderer(renderOptions)
+                  ? renderOptions.noSelection
+                  : undefined
+              }
             />
           ),
         };

@@ -175,6 +175,11 @@ export function createDefaultDataRenderer(
                   ? renderOptions.emptyText
                   : defaultEmptyText
               }
+              noSelection={
+                isDisplayOnlyRenderer(renderOptions)
+                  ? renderOptions.noSelection
+                  : undefined
+              }
             />
           ),
         };
@@ -484,7 +489,7 @@ function RNLabel({
   );
 }
 
-function RNDiv({
+export function RNDiv({
   className,
   html,
   children,
@@ -493,14 +498,19 @@ function RNDiv({
   style,
   inline,
   role,
+  noSelection,
   ...props
-}: HtmlDivProperties) {
+}: HtmlDivProperties & { noSelection?: boolean | null }) {
   if (html != null) {
     return <RNHtmlRenderer {...props} html={html} />;
   }
   if (inline) {
     return (
-      <Text style={style as StyleProp<ViewStyle>} className={textClass}>
+      <Text
+        style={style as StyleProp<ViewStyle>}
+        className={textClass}
+        selectable={!noSelection}
+      >
         {text ?? children}
       </Text>
     );
@@ -513,7 +523,9 @@ function RNDiv({
         role={role as Role}
         {...props}
       >
-        <Text className={textClass}>{text}</Text>
+        <Text className={textClass} selectable={!noSelection}>
+          {text}
+        </Text>
       </View>
     );
   }

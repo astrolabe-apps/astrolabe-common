@@ -29,6 +29,7 @@ export function RNHtmlRenderer({
   return (
     <View style={style as StyleProp<ViewStyle>} className={className}>
       <RenderHtml
+        defaultTextProps={{ selectable: true }}
         contentWidth={contentWidth ?? Dimensions.get("window").width}
         source={source}
         {...props}
