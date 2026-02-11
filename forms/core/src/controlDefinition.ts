@@ -33,6 +33,7 @@ export interface ControlDefinition {
   dynamic?: DynamicProperty[] | null;
   adornments?: ControlAdornment[] | null;
   children?: ControlDefinition[] | null;
+  noSelection?: boolean | null;
 }
 
 export enum ControlDefinitionType {
@@ -231,7 +232,6 @@ export interface DisplayOnlyRenderOptions extends RenderOptions {
   type: DataRenderType.DisplayOnly;
   emptyText?: string | null;
   sampleText?: string | null;
-  noSelection?: boolean | null;
 }
 export interface IconMapping {
   value: string;

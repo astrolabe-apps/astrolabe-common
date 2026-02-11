@@ -175,11 +175,7 @@ export function createDefaultDataRenderer(
                   ? renderOptions.emptyText
                   : defaultEmptyText
               }
-              noSelection={
-                isDisplayOnlyRenderer(renderOptions)
-                  ? renderOptions.noSelection
-                  : undefined
-              }
+              noSelection={props.definition.noSelection}
             />
           ),
         };
@@ -502,7 +498,7 @@ export function RNDiv({
   ...props
 }: HtmlDivProperties & { noSelection?: boolean | null }) {
   if (html != null) {
-    return <RNHtmlRenderer {...props} html={html} />;
+    return <RNHtmlRenderer {...props} html={html} noSelection={noSelection} />;
   }
   if (inline) {
     return (

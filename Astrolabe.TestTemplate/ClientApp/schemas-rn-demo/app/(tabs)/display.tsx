@@ -6,6 +6,8 @@ import {
   defaultRnTailwindTheme,
 } from "@react-typed-forms/schemas-rn";
 import {
+  actionControl,
+  ActionStyle,
   buildSchema,
   createFormRenderer,
   createFormTree,
@@ -66,16 +68,14 @@ const displayForm = [
   ),
   groupedControl(
     [
-      dataControl(
-        "status",
-        "Status (not selectable)",
-        displayOnlyOptions({ noSelection: true }),
-      ),
-      dataControl(
-        "notes",
-        "Notes (not selectable)",
-        displayOnlyOptions({ noSelection: true }),
-      ),
+      dataControl("status", "Status (not selectable)", {
+        ...displayOnlyOptions({}),
+        noSelection: true,
+      }),
+      dataControl("notes", "Notes (not selectable)", {
+        ...displayOnlyOptions({}),
+        noSelection: true,
+      }),
     ],
     "Display Only - No Selection",
   ),
@@ -88,6 +88,15 @@ const displayForm = [
     ],
     "Text & HTML Display Controls",
   ),
+  actionControl("Action Group", "actionGroup", {
+    actionStyle: ActionStyle.Group,
+    children: [
+      textDisplayControl("Text inside an action group."),
+      textDisplayControl("Another text display control (not selectable).", {
+        noSelection: true,
+      }),
+    ],
+  }),
 ];
 
 const initialData: DisplayDemo = {

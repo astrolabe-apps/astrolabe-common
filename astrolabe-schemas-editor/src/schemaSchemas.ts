@@ -929,7 +929,6 @@ export interface RenderOptionsForm {
   groupOptions: GroupRenderOptionsForm;
   emptyText: string | null;
   sampleText: string | null;
-  noSelection: boolean | null;
   noGroups: boolean;
   noUsers: boolean;
   format: string | null;
@@ -1168,11 +1167,6 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["DisplayOnly"],
     displayName: "Sample Text",
   }),
-  noSelection: makeScalarField({
-    type: FieldType.Bool,
-    onlyForTypes: ["DisplayOnly"],
-    displayName: "No Selection",
-  }),
   noGroups: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["UserSelection"],
@@ -1382,6 +1376,7 @@ export interface ControlDefinitionForm {
   actionStyle: ActionStyle | null;
   iconPlacement: IconPlacement | null;
   disableType: ControlDisableType | null;
+  noSelection: boolean | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -1623,6 +1618,10 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
         value: "Global",
       },
     ],
+  }),
+  noSelection: makeScalarField({
+    type: FieldType.Bool,
+    displayName: "No Selection",
   }),
 });
 

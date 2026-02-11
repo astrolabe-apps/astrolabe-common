@@ -15,6 +15,7 @@ import {
 } from "@react-typed-forms/schemas";
 import { DefaultDisplayRendererOptions } from "../rendererOptions";
 import { RNHtmlRenderer } from "./RNHtmlRenderer";
+import { RNDiv } from "../createDefaultRNRenderers";
 
 export function createDefaultDisplayRenderer(
   options: DefaultDisplayRendererOptions = {},
@@ -61,12 +62,13 @@ export function DefaultDisplay({
         ? coerceToString(display.value)
         : (data as TextDisplay).text;
       return (
-        <Div
+        <RNDiv
           style={style}
           className={rendererClass(className, options.textClassName)}
           textClass={rendererClass(textClass, options.textTextClass)}
           text={text}
           inline={displayProps.inline}
+          noSelection={displayProps.noSelection}
         />
       );
     case DisplayDataType.Html:
@@ -75,6 +77,7 @@ export function DefaultDisplay({
         <RNHtmlRenderer
           style={style}
           className={rendererClass(className, htmlClassName)}
+          noSelection={displayProps.noSelection}
           html={
             display ? coerceToString(display.value) : (data as HtmlDisplay).html
           }
