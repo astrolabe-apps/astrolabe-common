@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-editor",
-  "version": "18.1.1",
+  "version": "18.2.0",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",

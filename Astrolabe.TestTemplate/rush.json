@@ -555,7 +555,7 @@
     {
       "packageName": "@astroapps/basic-editor",
       "projectFolder": "../astrolabe-basic-editor",
-      "shouldPublish": true
+      "shouldPublish": false
     },
     {
       "packageName": "@astroapps/schemas-quickstream",
