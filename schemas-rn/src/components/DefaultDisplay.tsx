@@ -15,7 +15,7 @@ import {
 } from "@react-typed-forms/schemas";
 import { DefaultDisplayRendererOptions } from "../rendererOptions";
 import { RNHtmlRenderer } from "./RNHtmlRenderer";
-import { RNDiv } from "../createDefaultRNRenderers";
+import { RNDiv } from "../StdComponents";
 
 export function createDefaultDisplayRenderer(
   options: DefaultDisplayRendererOptions = {},
@@ -42,7 +42,7 @@ export function DefaultDisplay({
   renderer: FormRenderer;
 }) {
   const { data, display, className, textClass, style } = displayProps;
-  const { I, Div, B, H1, Span } = renderer.html;
+  const { I, Div, B, H1 } = renderer.html;
   switch (data.type) {
     case DisplayDataType.Icon:
       const iconDisplay = data as IconDisplay;
@@ -68,7 +68,7 @@ export function DefaultDisplay({
           textClass={rendererClass(textClass, options.textTextClass)}
           text={text}
           inline={displayProps.inline}
-          noSelection={displayProps.noSelection}
+          selectable={!displayProps.noSelection}
         />
       );
     case DisplayDataType.Html:

@@ -5,7 +5,7 @@ import {
   SchemaDataNode,
   SchemaInterface,
 } from "@react-typed-forms/schemas";
-import { RNDiv } from "../createDefaultRNRenderers";
+import { RNDiv } from "../StdComponents";
 
 export function DefaultDisplayOnly({
   dataNode,
@@ -47,7 +47,7 @@ export function DefaultDisplayOnly({
       textClass={textClass}
       text={text}
       inline={inline}
-      noSelection={noSelection}
+      selectable={!noSelection}
     />
   );
 }

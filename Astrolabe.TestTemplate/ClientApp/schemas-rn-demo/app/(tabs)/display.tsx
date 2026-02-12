@@ -1,7 +1,8 @@
 import React from "react";
-import { ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 import { useControl } from "@react-typed-forms/core";
 import {
+  createButtonActionRenderer,
   createDefaultRenderers,
   defaultRnTailwindTheme,
 } from "@react-typed-forms/schemas-rn";
@@ -88,6 +89,14 @@ const displayForm = [
     ],
     "Text & HTML Display Controls",
   ),
+  groupedControl(
+    [
+      actionControl("Link Action", "linkAction", {
+        actionStyle: ActionStyle.Link,
+      }),
+    ],
+    "Link Style Action",
+  ),
   actionControl("Action Group", "actionGroup", {
     actionStyle: ActionStyle.Group,
     children: [
@@ -137,6 +146,13 @@ export default function DisplayScreen() {
               variables: () => ({
                 platform: "mobile",
               }),
+              actionOnClick: (actionId) => {
+                if (actionId === "linkAction") {
+                  return () =>
+                    Alert.alert("Link Action", "Link styled button pressed!");
+                }
+                return undefined;
+              },
             }}
           />
 

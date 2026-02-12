@@ -1,54 +1,33 @@
 import { createDefaultDisplayRenderer } from "./components/DefaultDisplay";
 import { createDefaultLayoutRenderer } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
-import React, { isValidElement, ReactElement, ReactNode } from "react";
+import React, {
+  HTMLAttributes,
+  isValidElement,
+  ReactElement,
+  ReactNode,
+} from "react";
 import {
+  Platform,
+  Pressable,
+  Role,
+  StyleProp,
   Text,
   View,
-  Pressable,
-  StyleProp,
   ViewStyle,
-  Role,
 } from "react-native";
 import clsx from "clsx";
 import { Icon } from "./components/Icon";
 import { RNRadioItem } from "./components/RNRadioItem";
-import { RNTextInput } from "./components/RNTextInputRenderer";
-import { RNHtmlRenderer } from "./components/RNHtmlRenderer";
+import {
+  createRNTextInputRenderer,
+  RNTextInput,
+} from "./components/RNTextInputRenderer";
 import { RNCheckButtons } from "./components/RNCheckButtons";
-import { RNCheckbox } from "./components/RNCheckboxRenderer";
-import { HTMLAttributes } from "react";
 import {
-  HtmlButtonProperties,
-  HtmlDivProperties,
-  HtmlIconProperties,
-  HtmlInputProperties,
-  HtmlComponents,
-  IconLibrary,
-} from "@react-typed-forms/schemas";
-import { createRNSelectRenderer } from "./components/RNSelectRenderer";
-import { createRNCheckboxRenderer } from "./components/RNCheckboxRenderer";
-import { createRNTextInputRenderer } from "./components/RNTextInputRenderer";
-import {
-  createRNScrollListRenderer,
-  ExtendedDefaultScrollListOptions,
-} from "./components/RNScrollListRenderer";
-import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
-import { Platform } from "react-native";
-import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
-import { useControlEffect } from "@react-typed-forms/core";
-import { ControlInput, createInputConversion } from "./components/ControlInput";
-import {
-  createDefaultArrayDataRenderer,
-  createDefaultArrayRenderer,
-} from "./components/DefaultArrayRenderer";
-import {
-  createCheckListRenderer,
-  createElementSelectedRenderer,
-  createRadioRenderer,
-} from "./components/CheckRenderer";
-import { DefaultAccordion } from "./components/DefaultAccordion";
-import { createNullToggleRenderer } from "./components/NullToggle";
+  createRNCheckboxRenderer,
+  RNCheckbox,
+} from "./components/RNCheckboxRenderer";
 import {
   AdornmentPlacement,
   AdornmentRendererRegistration,
@@ -60,6 +39,12 @@ import {
   DefaultRenderers,
   FieldType,
   hasOptions,
+  HtmlButtonProperties,
+  HtmlComponents,
+  HtmlDivProperties,
+  HtmlIconProperties,
+  HtmlInputProperties,
+  IconLibrary,
   isAccordionAdornment,
   isDataGroupRenderer,
   isDisplayOnlyRenderer,
@@ -76,15 +61,36 @@ import {
   useExpression,
   wrapLayout,
 } from "@react-typed-forms/schemas";
+import { createRNSelectRenderer } from "./components/RNSelectRenderer";
 import {
-  DefaultRendererOptions,
+  createRNScrollListRenderer,
+  ExtendedDefaultScrollListOptions,
+} from "./components/RNScrollListRenderer";
+import { createRNDateTimePickerRenderer } from "./components/RNDateTimePickerRenderer";
+import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
+import { useControlEffect } from "@react-typed-forms/core";
+import { ControlInput, createInputConversion } from "./components/ControlInput";
+import {
+  createDefaultArrayDataRenderer,
+  createDefaultArrayRenderer,
+} from "./components/DefaultArrayRenderer";
+import {
+  createCheckListRenderer,
+  createElementSelectedRenderer,
+  createRadioRenderer,
+} from "./components/CheckRenderer";
+import { DefaultAccordion } from "./components/DefaultAccordion";
+import { createNullToggleRenderer } from "./components/NullToggle";
+import {
+  DefaultAdornmentRendererOptions,
+  DefaultBoolOptions,
   DefaultDataRendererOptions,
   DefaultLabelRendererOptions,
-  DefaultBoolOptions,
-  DefaultAdornmentRendererOptions,
+  DefaultRendererOptions,
 } from "./rendererOptions";
 import { createDefaultGroupRenderer } from "./components/DefaultGroupRenderer";
 import { createButtonActionRenderer } from "./createButtonActionRenderer";
+import { RNDiv } from "./StdComponents";
 
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
@@ -482,57 +488,6 @@ function RNLabel({
         <Text className={textClass}>{children}</Text>
       </View>
     )
-  );
-}
-
-export function RNDiv({
-  className,
-  html,
-  children,
-  textClass,
-  text,
-  style,
-  inline,
-  role,
-  noSelection,
-  ...props
-}: HtmlDivProperties & { noSelection?: boolean | null }) {
-  if (html != null) {
-    return <RNHtmlRenderer {...props} html={html} noSelection={noSelection} />;
-  }
-  if (inline) {
-    return (
-      <Text
-        style={style as StyleProp<ViewStyle>}
-        className={textClass}
-        selectable={!noSelection}
-      >
-        {text ?? children}
-      </Text>
-    );
-  }
-  if (text != null) {
-    return (
-      <View
-        className={className}
-        style={style as StyleProp<ViewStyle>}
-        role={role as Role}
-        {...props}
-      >
-        <Text className={textClass} selectable={!noSelection}>
-          {text}
-        </Text>
-      </View>
-    );
-  }
-  return (
-    <View
-      className={className}
-      style={style as StyleProp<ViewStyle>}
-      children={children}
-      role={role as Role}
-      {...props}
-    />
   );
 }
 

@@ -64,7 +64,7 @@ export function RNCheckButtons(props: CheckButtonsProps) {
                 />
                 <Label
                   className={classes.labelClass}
-                  textClass={classes.labelClass}
+                  textClass={classes.labelTextClass}
                   htmlFor={name + "_" + i}
                 >
                   {o.name}

@@ -131,6 +131,7 @@ export interface CheckRendererOptions {
   entryClass?: string;
   checkClass?: string;
   labelClass?: string;
+  labelTextClass?: string;
   entryWrapperClass?: string;
   selectedClass?: string;
   notSelectedClass?: string;
