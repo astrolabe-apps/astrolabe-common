@@ -15,7 +15,7 @@
    * path segment in the "$schema" field for all your Rush config files.  This will ensure
    * correct error-underlining and tab-completion for editors such as VS Code.
    */
-  "rushVersion": "5.153.2",
+  "rushVersion": "5.167.0",
   /**
    * The next field selects which package manager should be installed and determines its version.
    * Rush installs its own local copy of the package manager to ensure that your build process
@@ -550,6 +550,11 @@
     {
       "packageName": "@astroapps/schemas-rechart",
       "projectFolder": "../schemas-rechart",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@astroapps/basic-editor",
+      "projectFolder": "../astrolabe-basic-editor",
       "shouldPublish": true
     },
     {

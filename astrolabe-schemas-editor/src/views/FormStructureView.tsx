@@ -2,6 +2,7 @@ import { FormControlTree } from "../FormControlTree";
 import React from "react";
 import { NodeApi, TreeApi } from "react-arborist";
 import { ControlNode, ViewContext } from "../types";
+
 import {
   addElement,
   Control,
@@ -18,7 +19,7 @@ import { writeClipboardData } from "../clipboard";
 
 export function FormStructureView({ context }: { context: ViewContext }) {
   const controlTreeApi = React.useRef<TreeApi<ControlNode> | null>(null);
-  const { currentForm, button } = context;
+  const { button } = context;
   const cf = controlNotNull(context.getCurrentForm());
   if (!cf) return <InactiveView>No form selected</InactiveView>;
   const selectedTreeNode = cf.fields.selectedControlId;

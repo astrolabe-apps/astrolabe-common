@@ -1,13 +1,13 @@
 import { describe, expect, it } from "@jest/globals";
-import { newControl } from "../lib";
+import { newControl } from "@astroapps/controls";
 
 // Properties
 describe("properties", () => {
   // string text always contains itself
-  it("only shallow equals", () => {
+  it("deep equality", () => {
     const c = newControl(mkRoad());
     c.value = mkRoad();
-    expect(c.dirty).toBe(true);
+    expect(c.dirty).toBe(false);
   });
 });
 

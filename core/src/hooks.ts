@@ -13,7 +13,6 @@ import {
 import { useDebounced } from "./util";
 import {
   ChangeListenerFunc,
-  cleanupControl,
   Control,
   ControlChange,
   controlGroup,
@@ -31,6 +30,17 @@ import {
   updateComputedValue,
   updateElements,
 } from "@astroapps/controls";
+
+let activeTracker: ComponentTracker | undefined;
+
+function requireTracker(): ComponentTracker {
+  if (!activeTracker) {
+    throw new Error(
+      "No active ComponentTracker. Ensure this component is wrapped with useComponentTracking (e.g. via the SWC or Babel plugin).",
+    );
+  }
+  return activeTracker;
+}
 
 export function useRefState<A>(init: () => A): [MutableRefObject<A>, boolean] {
   const ref = useRef<A | null>(null);
@@ -58,7 +68,7 @@ export function useControlEffect<V>(
     m.__onChange = onChange;
     m.__onInitial =
       typeof initial === "function" ? initial : initial ? onChange : () => {};
-    c.subscribe((v) => {
+    const sub = c.subscribe((v) => {
       if (m.__onInitial) {
         m.__onInitial(v.current.value);
         m.__onInitial = undefined;
@@ -66,6 +76,7 @@ export function useControlEffect<V>(
         m.__onChange(v.current.value);
       }
     }, ControlChange.Value);
+    requireTracker().onCleanup(() => c.unsubscribe(sub));
   });
   c.meta.__onChange = onChange;
 }
@@ -107,21 +118,23 @@ export function useValidator<V>(
   validator: (value: V) => string | null | undefined,
   key: string = "default",
 ) {
-  const calculate = () => {
-    trackControlChange(control, ControlChange.Validate);
-    return validator(control.value);
-  };
-  const setError = (msg: string | null | undefined) => {
-    control.setError(key, msg);
-  };
-  const [effectRef] = useRefState(() => createEffect(calculate, setError));
-  const effect = effectRef.current;
-  effect.run = setError;
-  effect.calculate = calculate;
-  useEffect(() => {
-    return () => effect.cleanup();
-  }, [effect]);
-  useEffect(() => () => control.setError(key, null), [control, key]);
+  const validatorRef = useRef(validator);
+  validatorRef.current = validator;
+
+  useRefState(() => {
+    const calculate = () => {
+      trackControlChange(control, ControlChange.Validate);
+      return validatorRef.current(control.value);
+    };
+    const setError = (msg: string | null | undefined) => {
+      control.setError(key, msg);
+    };
+    const effect = createEffect(calculate, setError);
+    requireTracker().onCleanup(() => effect.cleanup());
+    return effect;
+  });
+
+  requireTracker().onCleanup(() => control.setError(key, null));
 }
 
 export function useAsyncValidator<V>(
@@ -227,10 +240,7 @@ export function useControl(
   if (configure?.use) {
     controlRef.current = configure.use;
   }
-  useEffect(
-    () => () => cleanupControl(controlRef.current),
-    [controlRef.current],
-  );
+  requireTracker().onCleanup(() => controlRef.current.cleanup());
   return controlRef.current;
 }
 
@@ -283,7 +293,10 @@ export function useSelectableArray<V>(
   reset?: any,
 ): Control<SelectionGroup<V>[]> {
   const selectable = useMemo(() => {
-    const selectable = newControl<SelectionGroup<V>[]>([], setup);
+    return newControl<SelectionGroup<V>[]>([], setup);
+  }, [control, reset]);
+
+  useEffect(() => {
     const selectionChangeListener = () => {
       updateElements(control, () =>
         selectable.current.elements
@@ -302,10 +315,6 @@ export function useSelectableArray<V>(
     });
     updateElements(selectable, () => selectableElems);
 
-    return selectable;
-  }, [control, reset]);
-
-  useEffect(() => {
     updateElements(control, () =>
       selectable.current.elements
         .filter((x) => x.fields.selected.current.value)
@@ -323,10 +332,10 @@ export function useCalculatedControl<V>(calculate: () => V): Control<V> {
 }
 
 /**
- * Computer a `Control` value based on other values and controls and recompute the value
- * when called or when dependant controls change.
+ * Compute a `Control` value based on other values and controls and recompute the value
+ * when called or when dependent controls change.
  *
- * @param compute The function to compute the value based on other vales and `Control`s
+ * @param compute The function to compute the value based on other values and `Control`s
  * @param preCompute Function to run before the compute function is called, useful for setting up dependencies.
  */
 export function useComputed<V>(
@@ -407,16 +416,22 @@ export function controlValues(
 export function useComponentTracking(): () => void {
   const [trackerRef] = useRefState(() => new ComponentTracker());
   const tracker = trackerRef.current;
+
+  activeTracker = tracker;
   tracker.start();
+
   useSyncExternalStore(
     tracker.subscribe,
     tracker.getSnapshot,
     tracker.getServerSnapshot,
   );
+
   useEffect(() => {
     runPendingChanges();
   });
+
   return () => {
+    activeTracker = undefined;
     tracker.stop();
   };
 }
@@ -432,9 +447,46 @@ export function useTrackedComponent<A>(f: FC<A>, deps: any[]): FC<A> {
   }, deps);
 }
 
-class ComponentTracker<V> extends SubscriptionTracker {
+const pendingCleanups = new Set<ComponentTracker>();
+let timerScheduled = false;
+
+function flushCleanups() {
+  timerScheduled = false;
+  const trackers = [...pendingCleanups];
+  pendingCleanups.clear();
+  for (const t of trackers) {
+    t.doCleanup();
+  }
+}
+
+function scheduleCleanup(tracker: ComponentTracker) {
+  pendingCleanups.add(tracker);
+  if (!timerScheduled) {
+    timerScheduled = true;
+    setTimeout(flushCleanups, 0);
+  }
+}
+
+function cancelCleanup(tracker: ComponentTracker) {
+  pendingCleanups.delete(tracker);
+}
+
+class ComponentTracker extends SubscriptionTracker {
   changeCount = 0;
   listener?: ChangeListenerFunc<any>;
+  private cleanupCallbacks: (() => void)[] = [];
+
+  onCleanup(cb: () => void) {
+    if (!this.cleanupCallbacks.includes(cb)) {
+      this.cleanupCallbacks.push(cb);
+    }
+  }
+
+  doCleanup() {
+    this.cleanupCallbacks.forEach((cb) => cb());
+    this.cleanupCallbacks = [];
+    this.cleanup();
+  }
 
   constructor() {
     super((control, change) => {
@@ -463,6 +515,7 @@ class ComponentTracker<V> extends SubscriptionTracker {
   getServerSnapshot = this.getSnapshot;
 
   subscribe: (onChange: () => void) => () => void = (onChange) => {
+    cancelCleanup(this);
     this.listener = (c, change) => {
       this.changeCount++;
       onChange();
@@ -470,7 +523,7 @@ class ComponentTracker<V> extends SubscriptionTracker {
     return () => {
       this.listener = undefined;
       this.changeCount++;
-      this.cleanup();
+      scheduleCleanup(this);
     };
   };
 }

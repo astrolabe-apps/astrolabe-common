@@ -3,8 +3,7 @@
 import "./globals.css";
 import "react-quill-new/dist/quill.snow.css";
 import { useNextNavigationService } from "@astroapps/client-nextjs";
-import { AppContextProvider } from "@astroapps/client";
-import { useControlTokenSecurity } from "@astroapps/client";
+import { AppContextProvider, useControlTokenSecurity } from "@astroapps/client";
 
 export default function RootLayout({
   children,

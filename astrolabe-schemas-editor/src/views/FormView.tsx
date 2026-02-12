@@ -21,7 +21,13 @@ import React, { Fragment, useMemo, useEffect, useRef } from "react";
 import { FormPreview } from "../FormPreview";
 import clsx from "clsx";
 import { JsonEditor } from "../JsonEditor";
-import { EditableForm, PreviewData, ViewContext } from "../types";
+import {
+  EditableForm,
+  FormEditContext,
+  PreviewContext,
+  PreviewData,
+  ViewContext,
+} from "../types";
 import { useFormUndoRedo } from "../hooks/useFormUndoRedo";
 
 // Toggle to enable/disable dirty state debugging
@@ -84,7 +90,10 @@ function debugDirtyState(
   }
 }
 
-export function FormView(props: { formId: string; context: ViewContext }) {
+export function FormView(props: {
+  formId: string;
+  context: ViewContext & FormEditContext & PreviewContext;
+}) {
   const { formId, context } = props;
   const control = context.getForm(formId);
   const previewData = useControl<PreviewData>(() => ({
@@ -133,7 +142,7 @@ function RenderFormDesign({
 }: {
   c: Control<EditableForm>;
   preview: Control<PreviewData>;
-  context: ViewContext;
+  context: ViewContext & FormEditContext & PreviewContext;
 }) {
   const {
     createEditorRenderer,

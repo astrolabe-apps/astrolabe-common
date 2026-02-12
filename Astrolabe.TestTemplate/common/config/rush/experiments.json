@@ -44,6 +44,12 @@
   // "buildCacheWithAllowWarningsInSuccessfulBuild": true,
 
   /**
+   * If true, incremental builds will skip projects that succeed with warnings,
+   * by writing package-deps even when there are warnings.
+   */
+  "buildSkipWithAllowWarningsInSuccessfulBuild": true,
+
+  /**
    * If true, the phased commands feature is enabled. To use this feature, create a "phased" command
    * in common/config/rush/command-line.json.
    */

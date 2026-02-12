@@ -11,11 +11,15 @@ import {
   SchemaField,
 } from "@react-typed-forms/schemas";
 import { InactiveView } from "./InactiveView";
-import { EditableForm, ViewContext } from "../types";
+import { EditableForm, FormEditContext, ViewContext } from "../types";
 import { TreeApi } from "react-arborist";
 import { defaultSchemaFieldForm } from "../schemaSchemas";
 
-export function CurrentSchemaView({ context }: { context: ViewContext }) {
+export function CurrentSchemaView({
+  context,
+}: {
+  context: ViewContext & Pick<FormEditContext, "saveSchema" | "updateTabTitle">;
+}) {
   const cf = controlNotNull(context.getCurrentForm());
   if (!cf) return <InactiveView>No form selected</InactiveView>;
 
@@ -27,7 +31,8 @@ function CurrentSchema({
   context,
 }: {
   form: Control<EditableForm>;
-  context: ViewContext;
+  context: ViewContext &
+    Pick<FormEditContext, "saveSchema" | "updateTabTitle">;
 }) {
   const { button } = context;
   const {

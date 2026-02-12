@@ -21,7 +21,7 @@ import {
 } from "@react-typed-forms/schemas";
 import React, { ReactNode, useMemo, Fragment, useEffect } from "react";
 import { JsonEditor } from "./JsonEditor";
-import { PreviewData, ViewContext } from "./types";
+import { PreviewContext, PreviewData, ViewContext } from "./types";
 import { getMetaFields } from "@react-typed-forms/schemas";
 
 export function FormPreview({
@@ -37,7 +37,7 @@ export function FormPreview({
   extraPreviewControls,
   viewContext,
 }: {
-  viewContext: ViewContext;
+  viewContext: ViewContext & PreviewContext;
   previewData: Control<PreviewData>;
   rootSchema: SchemaNode;
   controls: FormNode;
