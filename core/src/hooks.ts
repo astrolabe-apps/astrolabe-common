@@ -452,7 +452,7 @@ let timerScheduled = false;
 
 function flushCleanups() {
   timerScheduled = false;
-  const trackers = [...pendingCleanups];
+  const trackers = Array.from(pendingCleanups);
   pendingCleanups.clear();
   for (const t of trackers) {
     t.doCleanup();
