@@ -30,16 +30,13 @@ export function DefaultDisplayOnly({
   noSelection?: boolean | null;
   state: FormStateNode;
 }) {
-  const { display } = state.resolved;
   const text =
-    display != null
-      ? display
-      : ((schemaInterface.isEmptyValue(
-          dataNode.schema.field,
-          dataNode.control.value,
-        )
-          ? emptyText
-          : schemaInterface.textValueForData(dataNode)) ?? "");
+    (schemaInterface.isEmptyValue(
+      dataNode.schema.field,
+      dataNode.control.value,
+    )
+      ? emptyText
+      : schemaInterface.textValueForData(dataNode)) ?? "";
   return (
     <RNDiv
       style={style}

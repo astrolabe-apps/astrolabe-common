@@ -5,7 +5,7 @@ import {
   validDataNode,
 } from "./schemaDataNode";
 import { SchemaInterface } from "./schemaInterface";
-import { FieldOption } from "./schemaField";
+import { FieldOption, SchemaTags } from "./schemaField";
 import {
   ChangeListenerFunc,
   CleanupScope,
@@ -17,7 +17,7 @@ import {
   updateElements,
 } from "@astroapps/controls";
 import { createEvalExpr, ExpressionEvalContext } from "./evalExpression";
-import { EntityExpression } from "./entityExpression";
+import { EntityExpression, ExpressionType } from "./entityExpression";
 import { createScoped } from "./util";
 import {
   AnyControlDefinition,
@@ -26,6 +26,7 @@ import {
   ControlDisableType,
   DataGroupRenderOptions,
   DataRenderType,
+  DisplayDataType,
   DynamicPropertyType,
   getGroupRendererOptions,
   GridRendererOptions,
@@ -45,6 +46,12 @@ import { createOverrideProxy, KeysOfUnion, NoOverride } from "./overrideProxy";
 import { ChildNodeSpec, ChildResolverFunc } from "./resolveChildren";
 import { setupValidation } from "./validators";
 import { groupedControl } from "./controlBuilder";
+import {
+  ControlDefinitionScriptFields,
+  coerceForFieldType,
+  resolveSchemaPath,
+  hasSchemaTag,
+} from "./controlDefinitionSchemas";
 
 export type EvalExpr = <A>(
   scope: CleanupScope,
@@ -73,10 +80,7 @@ export interface FormGlobalOptions {
 
 export interface ResolvedDefinition {
   definition: ControlDefinition;
-  display?: string;
   stateId?: string;
-  style?: object;
-  layoutStyle?: object;
   fieldOptions?: FieldOption[];
 }
 
@@ -121,181 +125,199 @@ export interface FormStateNode extends FormStateBase, FormNodeOptions {
   setBusy(busy: boolean): void;
   setForceDisabled(forceDisable: boolean): void;
 }
+/**
+ * Converts legacy `dynamic[]` entries to the new `scripts` format,
+ * then merges with any explicit `scripts` entries (which take precedence).
+ */
+export function getMergedScripts(
+  def: ControlDefinition,
+): Record<string, EntityExpression> {
+  const scripts: Record<string, EntityExpression> = {};
+
+  // Convert legacy dynamic[] entries
+  if (def.dynamic) {
+    for (const dp of def.dynamic) {
+      if (!dp.expr?.type) continue;
+      switch (dp.type) {
+        case DynamicPropertyType.Visible:
+          // Visible inverts → hidden with Not wrapper
+          scripts["hidden"] = {
+            type: ExpressionType.Not,
+            expression: dp.expr,
+          } as EntityExpression;
+          break;
+        case DynamicPropertyType.Readonly:
+          scripts["readonly"] = dp.expr;
+          break;
+        case DynamicPropertyType.Disabled:
+          scripts["disabled"] = dp.expr;
+          break;
+        case DynamicPropertyType.Label:
+          scripts["title"] = dp.expr;
+          break;
+        case DynamicPropertyType.DefaultValue:
+          scripts["defaultValue"] = dp.expr;
+          break;
+        case DynamicPropertyType.ActionData:
+          scripts["actionData"] = dp.expr;
+          break;
+        case DynamicPropertyType.Style:
+          scripts["style"] = dp.expr;
+          break;
+        case DynamicPropertyType.LayoutStyle:
+          scripts["layoutStyle"] = dp.expr;
+          break;
+        case DynamicPropertyType.AllowedOptions:
+          scripts["allowedOptions"] = dp.expr;
+          break;
+        case DynamicPropertyType.Display:
+          // Map to displayData.text or displayData.html based on display type
+          if (isDisplayControl(def)) {
+            if (isTextDisplay(def.displayData)) {
+              scripts["displayData.text"] = dp.expr;
+            } else if (isHtmlDisplay(def.displayData)) {
+              scripts["displayData.html"] = dp.expr;
+            }
+          }
+          break;
+        case DynamicPropertyType.GridColumns:
+          // Map to groupOptions.columns or renderOptions.groupOptions.columns
+          if (isGroupControl(def)) {
+            scripts["groupOptions.columns"] = dp.expr;
+          } else if (
+            isDataControl(def) &&
+            isDataGroupRenderer(def.renderOptions)
+          ) {
+            scripts["renderOptions.groupOptions.columns"] = dp.expr;
+          }
+          break;
+      }
+    }
+  }
+
+  // Explicit scripts take precedence
+  if (def.scripts) {
+    Object.assign(scripts, def.scripts);
+  }
+
+  return scripts;
+}
+
 export function createEvaluatedDefinition(
   def: ControlDefinition,
   evalExpr: EvalExpr,
   scope: CleanupScope,
-  display: Control<string | undefined>,
 ): ControlDefinition {
   const definitionOverrides = createScoped<Record<string, any>>(scope, {});
   const displayOverrides = createScoped<Record<string, any>>(scope, {});
   const groupOptionsOverrides = createScoped<Record<string, any>>(scope, {});
   const renderOptionsOverrides = createScoped<Record<string, any>>(scope, {});
 
-  const {
-    hidden,
-    displayData,
-    readonly,
-    disabled,
-    defaultValue,
-    actionData,
-    title,
-    groupOptions,
-    renderOptions,
-  } = definitionOverrides.fields as Record<
-    KeysOfUnion<AnyControlDefinition>,
+  // Map from path prefix to override control
+  const overrideMap: Record<string, Control<Record<string, any>>> = {
+    "": definitionOverrides,
+    displayData: displayOverrides,
+    groupOptions: groupOptionsOverrides,
+    "renderOptions.groupOptions": groupOptionsOverrides,
+  };
+
+  // Set up computed nested proxies (same structure as before)
+  const defFields = definitionOverrides.fields as Record<string, Control<any>>;
+
+  updateComputedValue(
+    defFields["displayData"] ??
+      (definitionOverrides.fields as any).displayData,
+    () =>
+      isDisplayControl(def)
+        ? createOverrideProxy(def.displayData, displayOverrides)
+        : undefined,
+  );
+
+  updateComputedValue(
+    defFields["groupOptions"] ??
+      (definitionOverrides.fields as any).groupOptions,
+    () => {
+      const groupOptions = getGroupRendererOptions(def);
+      return groupOptions
+        ? createOverrideProxy(groupOptions, groupOptionsOverrides)
+        : undefined;
+    },
+  );
+
+  const renderOptionsFields = renderOptionsOverrides.fields as Record<
+    string,
     Control<any>
   >;
-
-  const { columns } = groupOptionsOverrides.fields as Record<
-    KeysOfUnion<GridRendererOptions>,
-    Control<any>
-  >;
-
-  const { groupOptions: dataGroupRenderOptions } =
-    renderOptionsOverrides.fields as Record<
-      KeysOfUnion<DataGroupRenderOptions>,
-      Control<any>
-    >;
-
-  const { html, text } = displayOverrides.fields as Record<
-    KeysOfUnion<TextDisplay | HtmlDisplay>,
-    Control<any>
-  >;
-
-  updateComputedValue(dataGroupRenderOptions, () =>
-    isDataControl(def) && isDataGroupRenderer(def.renderOptions)
-      ? createOverrideProxy(
-          (def.renderOptions.groupOptions as GridRendererOptions) ?? {},
-          groupOptionsOverrides,
-        )
-      : undefined,
+  updateComputedValue(
+    renderOptionsFields["groupOptions"] ??
+      (renderOptionsOverrides.fields as any).groupOptions,
+    () =>
+      isDataControl(def) && isDataGroupRenderer(def.renderOptions)
+        ? createOverrideProxy(
+            (def.renderOptions.groupOptions as GridRendererOptions) ?? {},
+            groupOptionsOverrides,
+          )
+        : undefined,
   );
 
-  updateComputedValue(displayData, () =>
-    isDisplayControl(def)
-      ? createOverrideProxy(def.displayData, displayOverrides)
-      : undefined,
-  );
-
-  updateComputedValue(groupOptions, () => {
-    const groupOptions = getGroupRendererOptions(def);
-    return groupOptions
-      ? createOverrideProxy(groupOptions, groupOptionsOverrides)
-      : undefined;
-  });
-
-  updateComputedValue(renderOptions, () =>
-    isDataControl(def)
-      ? createOverrideProxy(def.renderOptions ?? {}, renderOptionsOverrides)
-      : undefined,
-  );
-
-  evalDynamic(
-    hidden,
-    DynamicPropertyType.Visible,
-    // Make sure it's not null if no scripting
-    (x) => (x ? def.hidden : !!def.hidden),
-    (r) => !r,
-  );
-
-  evalDynamic(
-    readonly,
-    DynamicPropertyType.Readonly,
-    () => isControlReadonly(def),
-    (r) => !!r,
-  );
-
-  createScopedEffect((c) => {
-    evalExpr(
-      c,
-      isControlDisabled(def),
-      disabled,
-      firstExpr(DynamicPropertyType.Disabled),
-      (r) => !!r,
-    );
-  }, definitionOverrides);
-
-  createScopedEffect((c) => {
-    const groupOptions = getGroupRendererOptions(def);
-    evalExpr(
-      c,
-      (groupOptions as GridRendererOptions)?.columns,
-      columns,
-      groupOptions ? firstExpr(DynamicPropertyType.GridColumns) : undefined,
-      (r) => (typeof r === "number" ? r : undefined),
-    );
-  }, groupOptionsOverrides);
-
-  createScopedEffect((c) => {
-    evalExpr(
-      c,
-      isDataControl(def) ? def.defaultValue : undefined,
-      defaultValue,
+  updateComputedValue(
+    defFields["renderOptions"] ??
+      (definitionOverrides.fields as any).renderOptions,
+    () =>
       isDataControl(def)
-        ? firstExpr(DynamicPropertyType.DefaultValue)
+        ? createOverrideProxy(def.renderOptions ?? {}, renderOptionsOverrides)
         : undefined,
-      (r) => r,
-    );
-  }, definitionOverrides);
+  );
 
-  createScopedEffect((c) => {
-    evalExpr(
-      c,
-      isActionControl(def) ? def.actionData : undefined,
-      actionData,
-      isActionControl(def)
-        ? firstExpr(DynamicPropertyType.ActionData)
-        : undefined,
-      (r) => r,
-    );
-  }, definitionOverrides);
+  // Generic script evaluation loop
+  const scripts = getMergedScripts(def);
+  const schema = ControlDefinitionScriptFields;
 
-  createScopedEffect((c) => {
-    evalExpr(
-      c,
-      def.title,
-      title,
-      firstExpr(DynamicPropertyType.Label),
-      coerceString,
-    );
-  }, definitionOverrides);
+  for (const [key, expr] of Object.entries(scripts)) {
+    const resolved = resolveSchemaPath(key, schema);
+    if (!resolved) continue;
 
-  createSyncEffect(() => {
-    if (isDisplayControl(def)) {
-      if (display.value !== undefined) {
-        text.value = isTextDisplay(def.displayData)
-          ? display.value
-          : NoOverride;
-        html.value = isHtmlDisplay(def.displayData)
-          ? display.value
-          : NoOverride;
-      } else {
-        text.value = NoOverride;
-        html.value = NoOverride;
-      }
-    }
-  }, displayOverrides);
+    const { segments, leafField } = resolved;
+    const coerce = coerceForFieldType(leafField.type);
+
+    // Determine which override control and field name to target
+    const fieldName = segments[segments.length - 1];
+    const parentPath = segments.slice(0, -1).join(".");
+    const targetOverride = overrideMap[parentPath] ?? definitionOverrides;
+    const targetField = (targetOverride.fields as Record<string, Control<any>>)[
+      fieldName
+    ];
+
+    // Determine init value
+    const nullInit = hasSchemaTag(leafField, SchemaTags.ScriptNullInit);
+    const staticValue = getNestedValue(def, segments);
+    const initValue = nullInit ? staticValue : coerce(staticValue ?? undefined);
+
+    createScopedEffect((c) => {
+      evalExpr(c, initValue, targetField, expr, coerce);
+    }, targetOverride);
+  }
+
+  // If no script targets hidden, ensure it gets a non-null init
+  if (!("hidden" in scripts)) {
+    const hiddenField = (
+      definitionOverrides.fields as Record<string, Control<any>>
+    )["hidden"];
+    createScopedEffect((c) => {
+      evalExpr(c, !!def.hidden, hiddenField, undefined, (r) => !!r);
+    }, definitionOverrides);
+  }
 
   return createOverrideProxy(def, definitionOverrides);
+}
 
-  function firstExpr(
-    property: DynamicPropertyType,
-  ): EntityExpression | undefined {
-    return def.dynamic?.find((x) => x.type === property && x.expr.type)?.expr;
+function getNestedValue(obj: any, segments: string[]): any {
+  let current = obj;
+  for (const seg of segments) {
+    if (current == null) return undefined;
+    current = current[seg];
   }
-
-  function evalDynamic<A>(
-    control: Control<A>,
-    property: DynamicPropertyType,
-    init: (ex: EntityExpression | undefined) => A,
-    coerce: (v: unknown) => any,
-  ) {
-    createScopedEffect((c) => {
-      const x = firstExpr(property);
-      evalExpr(c, init(x), control, x, coerce);
-    }, scope);
-  }
+  return current;
 }
 
 export function coerceStyle(v: unknown): any {
@@ -343,7 +365,6 @@ export function createFormStateNode(
 
 export interface FormStateBaseImpl extends FormStateBase {
   children: FormStateBaseImpl[];
-  allowedOptions?: unknown;
   nodeOptions: FormNodeOptions;
   busy: boolean;
 }
@@ -383,7 +404,6 @@ class FormStateNodeImpl implements FormStateNode {
         children: [],
         resolved: { definition } as ResolvedDefinition,
         parent,
-        allowedOptions: undefined,
         childIndex,
         nodeOptions,
         busy: false,
@@ -555,35 +575,12 @@ function initFormState(
 
   const { forceReadonly, forceDisabled, forceHidden } = options.fields;
   const resolved = base.fields.resolved.as<ResolvedDefinition>();
-  const {
-    style,
-    layoutStyle,
-    fieldOptions,
-    display,
-    definition: rd,
-  } = resolved.fields;
+  const { fieldOptions, definition: rd } = resolved.fields;
 
-  evalDynamic(display, DynamicPropertyType.Display, undefined, coerceString);
+  const { dataNode, readonly, disabled, visible } = base.fields;
 
-  const { dataNode, readonly, disabled, visible, children, allowedOptions } =
-    base.fields;
-
-  const definition = createEvaluatedDefinition(def, evalExpr, scope, display);
+  const definition = createEvaluatedDefinition(def, evalExpr, scope);
   rd.value = definition;
-
-  evalDynamic(style, DynamicPropertyType.Style, undefined, coerceStyle);
-  evalDynamic(
-    layoutStyle,
-    DynamicPropertyType.LayoutStyle,
-    undefined,
-    coerceStyle,
-  );
-  evalDynamic(
-    allowedOptions,
-    DynamicPropertyType.AllowedOptions,
-    undefined,
-    (x) => x,
-  );
 
   updateComputedValue(dataNode, () => lookupDataNode(definition, parent));
 
@@ -618,7 +615,7 @@ function initFormState(
     const dn = dataNode.value;
     if (!dn) return undefined;
     const fieldOptions = schemaInterface.getDataOptions(dn);
-    const _allowed = allowedOptions.value ?? [];
+    const _allowed = definition.allowedOptions ?? [];
     const allowed = Array.isArray(_allowed) ? _allowed : [_allowed];
 
     return allowed.length > 0
@@ -677,7 +674,6 @@ function initFormState(
     if (dn && isDataControl(definition)) {
       if (impl.visible == false) {
         if (impl.clearHidden && !definition.dontClearHidden) {
-          // console.log("Clearing hidden");
           dn.value = undefined;
         }
       } else if (
@@ -689,47 +685,12 @@ function initFormState(
         ) &&
         definition.renderOptions?.type != DataRenderType.NullToggle
       ) {
-        // console.log(
-        //   "Setting to default",
-        //   definition.defaultValue,
-        //   definition.field,
-        // );
-        // const [required, dcv] = isDataControl(definition)
-        //   ? [definition.required, definition.defaultValue]
-        //   : [false, undefined];
-        // const field = ctx.dataNode?.schema.field;
-        // return (
-        //   dcv ??
-        //   (field
-        //     ? ctx.dataNode!.elementIndex != null
-        //       ? elementValueForField(field)
-        //       : defaultValueForField(field, required)
-        //     : undefined)
-        // );
         dn.value = definition.defaultValue;
       }
     }
   }, scope);
 
   initChildren(impl);
-
-  function firstExpr(
-    property: DynamicPropertyType,
-  ): EntityExpression | undefined {
-    return def.dynamic?.find((x) => x.type === property && x.expr.type)?.expr;
-  }
-
-  function evalDynamic<A>(
-    control: Control<A>,
-    property: DynamicPropertyType,
-    init: A,
-    coerce: (v: unknown) => any,
-  ) {
-    createScopedEffect(
-      (c) => evalExpr(c, init, control, firstExpr(property), coerce),
-      scope,
-    );
-  }
 }
 
 export function combineVariables(

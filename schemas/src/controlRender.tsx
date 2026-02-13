@@ -402,11 +402,6 @@ export interface DisplayRendererProps {
   data: DisplayData;
 
   /**
-   * A control with dynamic value for display.
-   */
-  display?: Control<string | undefined>;
-
-  /**
    * The context for the control data.
    */
   dataContext: ControlDataContext;

@@ -1,7 +1,6 @@
 import React from "react";
 import clsx from "clsx";
 import {
-  coerceToString,
   CustomDisplay,
   DisplayDataType,
   DisplayRendererProps,
@@ -41,7 +40,7 @@ export function DefaultDisplay({
   options: DefaultDisplayRendererOptions;
   renderer: FormRenderer;
 }) {
-  const { data, display, className, textClass, style } = displayProps;
+  const { data, className, textClass, style } = displayProps;
   const { I, Div, B, H1 } = renderer.html;
   switch (data.type) {
     case DisplayDataType.Icon:
@@ -51,22 +50,19 @@ export function DefaultDisplay({
           style={style}
           className={clsx(
             getOverrideClass(className),
-            display ? display.value : iconDisplay.iconClass,
+            iconDisplay.iconClass,
           )}
-          iconName={display ? display.value : iconDisplay.icon?.name}
+          iconName={iconDisplay.icon?.name}
           iconLibrary={iconDisplay.icon?.library}
         />
       );
     case DisplayDataType.Text:
-      const text = display
-        ? coerceToString(display.value)
-        : (data as TextDisplay).text;
       return (
         <RNDiv
           style={style}
           className={rendererClass(className, options.textClassName)}
           textClass={rendererClass(textClass, options.textTextClass)}
-          text={text}
+          text={(data as TextDisplay).text}
           inline={displayProps.inline}
           selectable={!displayProps.noSelection}
         />
@@ -78,9 +74,7 @@ export function DefaultDisplay({
           style={style}
           className={rendererClass(className, htmlClassName)}
           noSelection={displayProps.noSelection}
-          html={
-            display ? coerceToString(display.value) : (data as HtmlDisplay).html
-          }
+          html={(data as HtmlDisplay).html}
           {...props}
         />
       );

@@ -35,6 +35,7 @@ import {
   ExpressionType,
   JsonataExpression,
   NotEmptyExpression,
+  NotExpression,
 } from "./entityExpression";
 
 export function dataControl(
@@ -125,18 +126,22 @@ export function htmlDisplayControl(
   };
 }
 
+/** @deprecated Use scripts: { defaultValue: expr } instead */
 export function dynamicDefaultValue(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.DefaultValue, expr };
 }
 
+/** @deprecated Use scripts: { readonly: expr } instead */
 export function dynamicReadonly(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.Readonly, expr };
 }
 
+/** @deprecated Use scripts: { hidden: notExpr(expr) } instead */
 export function dynamicVisibility(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.Visible, expr };
 }
 
+/** @deprecated Use scripts: { disabled: expr } instead */
 export function dynamicDisabled(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.Disabled, expr };
 }
@@ -216,3 +221,14 @@ export const emptyGroupDefinition: GroupedControlsDefinition = {
   children: [],
   groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
 };
+
+export function notExpr(expression: EntityExpression): NotExpression {
+  return { type: ExpressionType.Not, expression };
+}
+
+export function withScripts<T extends ControlDefinition>(
+  def: T,
+  scripts: Record<string, EntityExpression>,
+): T {
+  return { ...def, scripts };
+}

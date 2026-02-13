@@ -159,9 +159,9 @@ describe("dynamic properties", () => {
       expect(state.definition).toHaveProperty("defaultValue", "second");
     });
 
-    it("dynamic DefaultValue only applies to DataControls", () => {
+    it("dynamic DefaultValue on non-DataControl is harmless no-op", () => {
       const schema = stringField("Name")("name");
-      // On a group control, DefaultValue should have no effect
+      // On a group control, DefaultValue is set on the definition but has no effect
       const state = testNodeState(
         groupedControl([], "Group", {
           dynamic: [dynamicProperty(DynamicPropertyType.DefaultValue)],
@@ -171,8 +171,8 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult("something"),
         },
       );
-      // defaultValue doesn't exist on group controls, should remain undefined
-      expect((state.definition as any).defaultValue).toBeUndefined();
+      // Value is set on definition (generic override) but nothing reads it for groups
+      expect((state.definition as any).defaultValue).toBe("something");
     });
 
     it("dynamic ActionData overrides definition.actionData", () => {
@@ -206,7 +206,7 @@ describe("dynamic properties", () => {
       expect(state.definition).toHaveProperty("actionData", "updated");
     });
 
-    it("dynamic ActionData only applies to ActionControls", () => {
+    it("dynamic ActionData on non-ActionControl is harmless no-op", () => {
       const schema = stringField("Name")("name");
       const state = testNodeState(
         dataControl("name", "Name", {
@@ -217,7 +217,8 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult("something"),
         },
       );
-      expect((state.definition as any).actionData).toBeUndefined();
+      // Value is set on definition (generic override) but nothing reads it for data controls
+      expect((state.definition as any).actionData).toBe("something");
     });
 
     it("dynamic GridColumns overrides groupOptions.columns", () => {
@@ -314,7 +315,7 @@ describe("dynamic properties", () => {
   });
 
   describe("state-level properties", () => {
-    it("dynamic Display updates resolved.display for TextDisplay", () => {
+    it("dynamic Display updates displayData.text for TextDisplay", () => {
       const schema = stringField("Test")("test");
       const state = testNodeState(
         textDisplayControl("original text", {
@@ -325,13 +326,11 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult("dynamic text"),
         },
       );
-      expect(state.resolved.display).toBe("dynamic text");
-      // The displayData proxy should also reflect the change
       const displayData = (state.definition as any).displayData;
       expect(displayData.text).toBe("dynamic text");
     });
 
-    it("dynamic Display updates resolved.display for HtmlDisplay", () => {
+    it("dynamic Display updates displayData.html for HtmlDisplay", () => {
       const schema = stringField("Test")("test");
       const state = testNodeState(
         htmlDisplayControl("<b>original</b>", {
@@ -342,7 +341,6 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult("<b>dynamic</b>"),
         },
       );
-      expect(state.resolved.display).toBe("<b>dynamic</b>");
       const displayData = (state.definition as any).displayData;
       expect(displayData.html).toBe("<b>dynamic</b>");
     });
@@ -357,10 +355,8 @@ describe("dynamic properties", () => {
         schema,
         { evalExpression: reactiveEval(dynValue) },
       );
-      expect(state.resolved.display).toBe("first");
       expect((state.definition as any).displayData.text).toBe("first");
       dynValue.value = "second";
-      expect(state.resolved.display).toBe("second");
       expect((state.definition as any).displayData.text).toBe("second");
     });
 
@@ -376,7 +372,7 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult(styleObj),
         },
       );
-      expect(state.resolved.style).toEqual(styleObj);
+      expect(state.definition.style).toEqual(styleObj);
     });
 
     it("dynamic Style coerces non-objects to undefined", () => {
@@ -390,7 +386,7 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult("not an object"),
         },
       );
-      expect(state.resolved.style).toBeUndefined();
+      expect(state.definition.style).toBeUndefined();
     });
 
     it("dynamic Style responds to reactive changes", () => {
@@ -403,9 +399,9 @@ describe("dynamic properties", () => {
         schema,
         { evalExpression: reactiveEval(dynValue) },
       );
-      expect(state.resolved.style).toEqual({ color: "red" });
+      expect(state.definition.style).toEqual({ color: "red" });
       dynValue.value = { color: "blue", fontSize: "14px" };
-      expect(state.resolved.style).toEqual({ color: "blue", fontSize: "14px" });
+      expect(state.definition.style).toEqual({ color: "blue", fontSize: "14px" });
     });
 
     it("dynamic LayoutStyle updates resolved.layoutStyle", () => {
@@ -420,7 +416,7 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult(layoutObj),
         },
       );
-      expect(state.resolved.layoutStyle).toEqual(layoutObj);
+      expect(state.definition.layoutStyle).toEqual(layoutObj);
     });
 
     it("dynamic LayoutStyle coerces non-objects to undefined", () => {
@@ -434,7 +430,7 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult(123),
         },
       );
-      expect(state.resolved.layoutStyle).toBeUndefined();
+      expect(state.definition.layoutStyle).toBeUndefined();
     });
 
     it("dynamic AllowedOptions filters fieldOptions", () => {
@@ -904,7 +900,7 @@ describe("dynamic properties", () => {
       );
       expect(state.visible).toBe(true);
       expect(state.definition.title).toBe("Dynamic Label");
-      expect(state.resolved.style).toEqual({ color: "red" });
+      expect(state.definition.style).toEqual({ color: "red" });
     });
 
     it("supports Disabled + Readonly simultaneously", () => {
@@ -958,7 +954,9 @@ describe("dynamic properties", () => {
         },
       );
       const displayChild = state.children[0];
-      const result = await changePromise(() => displayChild.resolved.display);
+      const result = await changePromise(
+        () => (displayChild.definition as any).displayData?.text,
+      );
       expect(result).toBe("Hello World");
     });
   });

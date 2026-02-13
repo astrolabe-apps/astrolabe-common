@@ -6,6 +6,7 @@ import {
   JsonataExpression,
   NotEmptyExpression,
 } from "./entityExpression";
+import type { NotExpression } from "./entityExpression";
 import {
   AsyncEffect,
   ChangeListenerFunc,
@@ -135,9 +136,18 @@ export function createEvalExpr(
   ): boolean {
     nk.value = init;
     if (e?.type) {
-      evalExpression(e, {
+      // Unwrap NotExpression at this level so it works with any evaluator
+      let actualExpr = e;
+      let actualCoerce = coerce;
+      while (actualExpr.type === ExpressionType.Not) {
+        const inner = (actualExpr as NotExpression).expression;
+        const prevCoerce = actualCoerce;
+        actualCoerce = (r: unknown) => prevCoerce(!r);
+        actualExpr = inner;
+      }
+      evalExpression(actualExpr, {
         returnResult: (r) => {
-          nk.value = coerce(r);
+          nk.value = actualCoerce(r);
         },
         scope,
         ...context,
