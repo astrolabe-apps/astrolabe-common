@@ -45,7 +45,7 @@ public class SchemaFieldsGenerator : CodeGenerator<SchemaFieldData, GeneratedSch
 
     public static TsImport FormLibImport(string type)
     {
-        return new TsImport("@react-typed-forms/schemas", type);
+        return new TsImport(".", type);
     }
     
     private static readonly TsRawExpr MakeScalarField =

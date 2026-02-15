@@ -18,7 +18,7 @@ import {
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import { SelectedControlNode, ViewContext } from "./types";
-import { ControlDefinitionForm } from "./schemaSchemas";
+import { ControlDefinitionForm } from "@react-typed-forms/schemas";
 import {
   Control,
   trackedValue,

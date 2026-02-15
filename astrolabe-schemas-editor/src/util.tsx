@@ -12,7 +12,7 @@ import {
   SchemaMap,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import { ControlDefinitionForm, SchemaFieldForm } from "./schemaSchemas";
+import { ControlDefinitionForm, SchemaFieldForm } from "@react-typed-forms/schemas";
 import { ReactElement } from "react";
 import { SchemaLoader } from "./types";
 

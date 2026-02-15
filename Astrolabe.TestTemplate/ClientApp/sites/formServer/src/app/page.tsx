@@ -3,12 +3,14 @@
 import "flexlayout-react/style/light.css";
 import { saveAs } from "file-saver";
 import {
-  BasicFormEditor,
   ControlDefinitionSchema,
   ControlDefinitionSchemaMap,
+  SchemaFieldSchema,
+} from "@react-typed-forms/schemas";
+import {
+  BasicFormEditor,
   FieldSelectionExtension,
   readOnlySchemas,
-  SchemaFieldSchema,
   Snippet,
 } from "@astroapps/schemas-editor";
 import {

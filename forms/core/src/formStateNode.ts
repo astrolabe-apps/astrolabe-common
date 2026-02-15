@@ -10,7 +10,6 @@ import {
   ChangeListenerFunc,
   CleanupScope,
   Control,
-  createScopedEffect,
   createSyncEffect,
   newControl,
   updateComputedValue,
@@ -188,23 +187,13 @@ export function createEvaluatedDefinition(
   scope: CleanupScope,
 ): ControlDefinition {
   const scripts = getMergedScripts(def);
-  const { proxy, rootOverrides } = createScriptedProxy(
+  const { proxy } = createScriptedProxy(
     def,
     scripts,
     ControlDefinitionScriptFields,
     evalExpr,
     scope,
   );
-
-  // If no script targets hidden, ensure it gets a non-null init
-  if (!("hidden" in scripts)) {
-    const hiddenField = (
-      rootOverrides.fields as Record<string, Control<any>>
-    )["hidden"];
-    createScopedEffect((c) => {
-      evalExpr(c, !!def.hidden, hiddenField, undefined, (r: unknown) => !!r);
-    }, rootOverrides);
-  }
 
   return proxy;
 }

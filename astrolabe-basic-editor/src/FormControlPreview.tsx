@@ -18,7 +18,6 @@ import {
   createScopedComputed,
   defaultDataProps,
   defaultValueForField,
-  DynamicPropertyType,
   elementValueForField,
   fieldPathForDefinition,
   FormNode,

@@ -85,4 +85,25 @@ public static class DynamicPropertyHelpers
             .FirstOrDefault(x => x.Type == typeString && x.Expr.Type != null)?
             .Expr;
     }
+
+    /// <summary>
+    /// Finds the expression for a given script key, checking Scripts first
+    /// then falling back to legacy Dynamic.
+    /// </summary>
+    public static EntityExpression? FindScriptExpression(
+        ControlDefinition definition,
+        string scriptKey,
+        DynamicPropertyType? legacyType = null)
+    {
+        if (definition.Scripts != null &&
+            definition.Scripts.TryGetValue(scriptKey, out var scriptExpr))
+        {
+            return scriptExpr;
+        }
+        if (legacyType != null)
+        {
+            return FindDynamicExpression(definition, legacyType.Value);
+        }
+        return null;
+    }
 }

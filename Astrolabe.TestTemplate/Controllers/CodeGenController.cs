@@ -19,9 +19,8 @@ public class CodeGenController : ControllerBase
         );
         var allGenSchemas = gen.CollectDataForTypes(typeof(SchemaField), typeof(ControlDefinition))
             .ToList();
-        var file = TsFile.FromDeclarations(
-            GeneratedSchema.ToDeclarations(allGenSchemas, "ControlDefinitionSchemaMap").ToList()
-        );
+        var declarations = GeneratedSchema.ToDeclarations(allGenSchemas, "ControlDefinitionSchemaMap").ToList();
+        var file = new TsFile(declarations);
         return file.ToSource();
     }
 

@@ -115,10 +115,13 @@ export function createScriptedProxy<T extends object>(
   const root = buildOverrideLevels(schema, scope);
   wireProxies(target, root, schema);
 
+  const scriptedKeys = new Set<string>();
+
   for (const [key, expr] of Object.entries(scripts)) {
     const resolved = resolveSchemaPath(key, schema);
     if (!resolved) continue;
 
+    scriptedKeys.add(key);
     const { segments, leafField } = resolved;
     const coerce = coerceForFieldType(leafField.type);
     const { targetOverride, fieldName } = findOverrideTarget(root, segments);
@@ -133,6 +136,21 @@ export function createScriptedProxy<T extends object>(
     createScopedEffect((c) => {
       evalExpr(c, initValue, targetField, expr, coerce);
     }, targetOverride);
+  }
+
+  // For ScriptNullInit fields with no script, init the override to the coerced
+  // static value so the proxy doesn't fall through to raw undefined/null.
+  for (const field of schema) {
+    if (hasSchemaTag(field, SchemaTags.ScriptNullInit) && !scriptedKeys.has(field.field)) {
+      const coerce = coerceForFieldType(field.type);
+      const staticValue = getNestedValue(target, [field.field]);
+      const targetField = (
+        root.overrides.fields as Record<string, Control<any>>
+      )[field.field];
+      createScopedEffect((c) => {
+        evalExpr(c, coerce(staticValue ?? undefined), targetField, undefined, coerce);
+      }, root.overrides);
+    }
   }
 
   return {

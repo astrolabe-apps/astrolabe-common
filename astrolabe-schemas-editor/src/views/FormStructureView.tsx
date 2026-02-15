@@ -11,7 +11,7 @@ import {
   removeElement,
   updateElements,
 } from "@react-typed-forms/core";
-import { defaultControlDefinitionForm } from "../schemaSchemas";
+import { defaultControlDefinitionForm } from "@react-typed-forms/schemas";
 import { InactiveView } from "./InactiveView";
 import { ControlDefinition, groupedControl } from "@react-typed-forms/schemas";
 import { paste } from "../controlActions";

@@ -1,25 +1,20 @@
 import {
-  DynamicProperty,
   DynamicPropertyType,
   ExpressionType,
   DataMatchExpression,
   JsonataExpression,
-  dynamicVisibility,
+  EntityExpression,
+  NotExpression,
   dataMatchExpr,
   jsonataExpr,
+  notExpr,
+  ControlDefinition,
 } from "@react-typed-forms/schemas";
 import { SimpleVisibilityCondition } from "./types";
 
-export function readVisibilityCondition(
-  dynamic: DynamicProperty[] | null | undefined,
+function readVisibilityExpr(
+  expr: EntityExpression,
 ): SimpleVisibilityCondition | undefined {
-  if (!dynamic) return undefined;
-  const visEntry = dynamic.find(
-    (d) => d.type === DynamicPropertyType.Visible,
-  );
-  if (!visEntry) return undefined;
-
-  const expr = visEntry.expr;
   if (expr.type === ExpressionType.DataMatch) {
     const match = expr as DataMatchExpression;
     return {
@@ -64,23 +59,56 @@ export function readVisibilityCondition(
   return undefined;
 }
 
+export function readVisibilityCondition(
+  def: ControlDefinition,
+): SimpleVisibilityCondition | undefined {
+  // Check scripts.hidden first (wrapped in Not)
+  const hiddenExpr = def.scripts?.["hidden"];
+  if (hiddenExpr) {
+    if (hiddenExpr.type === ExpressionType.Not) {
+      return readVisibilityExpr((hiddenExpr as NotExpression).expression);
+    }
+    return undefined;
+  }
+
+  // Fall back to legacy dynamic
+  if (!def.dynamic) return undefined;
+  const visEntry = def.dynamic.find(
+    (d) => d.type === DynamicPropertyType.Visible,
+  );
+  if (!visEntry) return undefined;
+  return readVisibilityExpr(visEntry.expr);
+}
+
+function buildVisibilityExpr(
+  condition: SimpleVisibilityCondition,
+): EntityExpression {
+  return condition.operator === "equals"
+    ? dataMatchExpr(condition.field, condition.value)
+    : jsonataExpr(
+        typeof condition.value === "string"
+          ? `${condition.field} != "${condition.value}"`
+          : `${condition.field} != ${condition.value}`,
+      );
+}
+
 export function writeVisibilityCondition(
-  existing: DynamicProperty[] | null | undefined,
+  def: ControlDefinition,
   condition: SimpleVisibilityCondition | undefined,
-): DynamicProperty[] | null {
-  const nonVisible = (existing ?? []).filter(
+): Pick<ControlDefinition, "scripts" | "dynamic"> {
+  // Remove legacy dynamic Visible entries
+  const nonVisible = (def.dynamic ?? []).filter(
     (d) => d.type !== DynamicPropertyType.Visible,
   );
-  if (!condition) {
-    return nonVisible.length > 0 ? nonVisible : null;
-  }
-  const expr =
-    condition.operator === "equals"
-      ? dataMatchExpr(condition.field, condition.value)
-      : jsonataExpr(
-          typeof condition.value === "string"
-            ? `${condition.field} != "${condition.value}"`
-            : `${condition.field} != ${condition.value}`,
-        );
-  return [...nonVisible, dynamicVisibility(expr)];
+  const cleanDynamic = nonVisible.length > 0 ? nonVisible : null;
+
+  // Build new scripts, removing hidden if no condition
+  const { hidden, ...otherScripts } = def.scripts ?? {};
+  const scripts = condition
+    ? { ...otherScripts, hidden: notExpr(buildVisibilityExpr(condition)) }
+    : Object.keys(otherScripts).length > 0
+      ? otherScripts
+      : null;
+
+  return { scripts, dynamic: cleanDynamic };
 }

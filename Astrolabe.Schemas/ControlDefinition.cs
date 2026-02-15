@@ -33,6 +33,7 @@ public abstract record ControlDefinition(
     public bool? Disabled { get; set; }
 
     [DefaultValue(false)]
+    [SchemaTag(SchemaTags.ScriptNullInit)]
     public bool? Hidden { get; set; }
 
     [DefaultValue(false)]
@@ -59,6 +60,14 @@ public abstract record ControlDefinition(
 
     [DefaultValue(false)]
     public bool? NoSelection { get; set; }
+
+    public IDictionary<string, EntityExpression>? Scripts { get; set; }
+
+    public IDictionary<string, object?>? Style { get; set; }
+
+    public IDictionary<string, object?>? LayoutStyle { get; set; }
+
+    public object? AllowedOptions { get; set; }
 
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }

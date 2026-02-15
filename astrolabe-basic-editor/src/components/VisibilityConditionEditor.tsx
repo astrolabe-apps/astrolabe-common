@@ -22,7 +22,7 @@ export function VisibilityConditionEditor({
   allFields,
 }: VisibilityConditionEditorProps) {
   const def = definition.value;
-  const condition = readVisibilityCondition(def.dynamic);
+  const condition = readVisibilityCondition(def);
   const dataFields = allFields.filter(
     (f) =>
       f.field !== (isDataControl(def) ? (def as DataControlDefinition).field : ""),
@@ -34,8 +34,8 @@ export function VisibilityConditionEditor({
   const hasOptions = selectedField?.options && selectedField.options.length > 0;
 
   function updateCondition(c: SimpleVisibilityCondition | undefined) {
-    const newDynamic = writeVisibilityCondition(def.dynamic, c);
-    definition.setValue((d) => ({ ...d, dynamic: newDynamic }));
+    const updates = writeVisibilityCondition(def, c);
+    definition.setValue((d) => ({ ...d, ...updates }));
   }
 
   return (

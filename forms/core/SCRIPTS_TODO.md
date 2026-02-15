@@ -4,42 +4,30 @@ The generic `scripts` system is implemented and working. Legacy `dynamic[]` is a
 
 ## 1. Schema editor support for `scripts`
 
-`astrolabe-schemas-editor/src/schemaSchemas.ts` still defines its own `DynamicPropertySchema` / `DynamicPropertyForm` and `ControlDefinitionSchema` with a `dynamic` field. Needs:
+`astrolabe-schemas-editor/src/schemaSchemas.ts` is auto-generated from the C# classes. The C# classes have been updated with `scripts`, `style`, `layoutStyle`, and `allowedOptions` fields (see section 5). The schema generation should be moved into `forms/core` so it's driven from the TypeScript types directly.
 
-- Add `scripts` field to `ControlDefinitionForm` and `ControlDefinitionSchema`
+Needs:
+- Move schema generation for `ControlDefinition` and related types into `forms/core`
 - Add editor UI for editing script key/expression pairs
 - Potentially deprecate/remove the `dynamic` field from the editor UI
 - Could reuse `ControlDefinitionScriptFields` from `forms/core` for type info
 
 Files:
-- `astrolabe-schemas-editor/src/schemaSchemas.ts`
+- `astrolabe-schemas-editor/src/schemaSchemas.ts` (currently auto-generated from C#)
 - `astrolabe-schemas-editor/src/FormControlPreview.tsx`
 
-## 2. Basic editor support for `scripts`
+## 2. ~~Basic editor support for `scripts`~~ (DONE)
 
-`astrolabe-basic-editor` still references `DynamicProperty` / `DynamicPropertyType` for visibility condition editing.
+`visibilityUtils.ts` now reads/writes `scripts.hidden` (with `Not` wrapper) and falls back to legacy `dynamic` for reading. `writeVisibilityCondition` always writes to `scripts` and cleans up legacy `dynamic` Visible entries. Unused `DynamicPropertyType` import removed from `FormControlPreview.tsx`.
 
-Files:
-- `astrolabe-basic-editor/src/components/VisibilityConditionEditor.tsx`
-- `astrolabe-basic-editor/src/FormControlPreview.tsx`
-- `astrolabe-basic-editor/src/visibilityUtils.ts`
+## 3. ~~Test helpers still use legacy API~~ (DONE)
 
-## 3. Test helpers still use legacy API
+Added `withScript(control, key, expr?)` helper to `nodeTester.ts`. New script-based tests added alongside existing legacy `withDynamic` tests in `flags.test.ts`, `cleanup.test.ts`, and `validation.test.ts`. All legacy tests preserved to validate the runtime migration (`getMergedScripts`).
 
-`nodeTester.ts` still has `withDynamic()` which creates legacy `DynamicProperty` entries. Should add a `withScript(control, key, expr?)` helper using the new `scripts` field, and update tests that are specifically testing the new API.
+## 4. ~~Remove special-case `hidden` init block~~ (DONE)
 
-Files:
-- `forms/core/test/nodeTester.ts`
-- `forms/core/test/cleanup.test.ts`
-- `forms/core/test/flags.test.ts`
-- `forms/core/test/validation.test.ts`
+`createScriptedProxy` now handles `ScriptNullInit` fields generically — after wiring scripts, it initializes the override for any `ScriptNullInit`-tagged fields not targeted by a script to their coerced static value. The special-case block in `createEvaluatedDefinition` has been removed.
 
-## 4. Remove special-case `hidden` init block
+## 5. ~~C# side~~ (DONE)
 
-`createEvaluatedDefinition` has a special block that inits `hidden` to `!!def.hidden` when no script targets it. This exists because `visible` is derived as `definition.hidden == null ? null : !definition.hidden`, and without the block the proxy falls through to the raw `def.hidden` (typically `undefined`), which `== null` is true, so visibility would appear "pending" forever.
-
-Could be cleaned up by changing the `visible` derivation to distinguish `undefined` (no opinion → visible) from `null` (pending script): `definition.hidden === null ? null : !definition.hidden`. Then the special block could be removed entirely.
-
-## 5. C# side
-
-The plan was TypeScript only. The C# `ControlDefinition` types (`Astrolabe.Schemas`) have not been updated with `scripts`, `style`, `layoutStyle`, or `allowedOptions` fields.
+C# `ControlDefinition` (`Astrolabe.Schemas`) updated with `Scripts`, `Style`, `LayoutStyle`, and `AllowedOptions` properties. `DynamicPropertyHelpers.FindScriptExpression` added to check `Scripts` first, falling back to legacy `Dynamic`. All `Initialize*` methods in C# `FormStateNode` updated to use `FindScriptExpression`.

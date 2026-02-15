@@ -5,7 +5,7 @@ import {
   defaultTailwindTheme,
   ValueForFieldExtension,
 } from "@react-typed-forms/schemas-html";
-import { ControlDefinitionSchemaMap } from "./schemaSchemas";
+import { ControlDefinitionSchemaMap } from "@react-typed-forms/schemas";
 import {
   addMissingControlsForSchema,
   applyExtensionsToSchema,

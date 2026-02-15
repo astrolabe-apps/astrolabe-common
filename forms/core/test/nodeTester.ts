@@ -80,6 +80,17 @@ export function withDynamic(
   return { ...c, dynamic: [{ type, expr: { type: "Anything" } }] };
 }
 
+export function withScript(
+  c: ControlDefinition,
+  key: string,
+  expr?: EntityExpression,
+): ControlDefinition {
+  return {
+    ...c,
+    scripts: { ...c.scripts, [key]: expr ?? { type: "Anything" } },
+  };
+}
+
 export function notNullPromise<A>(f: () => A | null | undefined) {
   return new Promise<A>((resolve, reject) => {
     const scope = createCleanupScope();

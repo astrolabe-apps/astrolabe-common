@@ -23,7 +23,6 @@
     "prepack": "npm run build",
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsx React --jsxImportSource react",
     "watch": "microbundle -f modern,cjs --no-compress --jsx React --jsxImportSource react",
-    "genschemas": "h get http://localhost:5000/api/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts",
     "test": "vitest run"
   },
   "peerDependencies": {
@@ -66,7 +65,6 @@
     "rimraf": "^5.0.5",
     "typescript": "^5.6.2",
     "prettier": "^3.0.3",
-    "http-request-cli": "^0.2.0",
     "microbundle": "^0.15.1",
     "@testing-library/react": "^16.0.0",
     "vitest": "^2.0.0",

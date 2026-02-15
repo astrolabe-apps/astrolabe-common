@@ -16,3 +16,5 @@ export * from "./util";
 export * from "./overrideProxy";
 export * from "./scriptedProxy";
 export * from "./resolveChildren";
+export * from "./defaultValues";
+export * from "./schemaSchemas";

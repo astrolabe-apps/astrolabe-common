@@ -56,6 +56,42 @@ describe("validator types", () => {
     );
   });
 
+  it("required validator (scripts)", () => {
+    fc.assert(
+      fc.property(
+        rootCompound().chain(({ root, schema }) =>
+          fc.record({
+            schema: fc.constant(schema),
+            data: randomValueForField(root, {
+              nullableChance: 0,
+              string: { minLength: 1 },
+              array: { minLength: 1, maxLength: 2 },
+            }),
+            initialVisible: fc.boolean(),
+          }),
+        ),
+        ({ schema, data, initialVisible }) => {
+          const vis = newControl(initialVisible);
+          const state = withScriptedHidden(
+            groupedControl([
+              groupedControl([
+                dataControl(schema.field, undefined, { required: true }),
+              ]),
+            ]),
+            schema,
+            data,
+            vis,
+          );
+          expect(state.valid).toBe(true);
+          state.parent.control.value = {};
+          expect(state.valid).toBe(!initialVisible);
+          vis.setValue((x) => !x);
+          expect(state.valid).toBe(initialVisible);
+        },
+      ),
+    );
+  });
+
   it("length validator", () => {
     fc.assert(
       fc.property(
@@ -240,6 +276,34 @@ function withDynamicVisible(
         if (e.type === "Anything") {
           createSyncEffect(() => {
             ctx.returnResult(vis.value);
+          }, ctx.scope);
+        } else {
+          defaultEvaluators[e.type]?.(e, ctx);
+        }
+      },
+    },
+  );
+  return state;
+}
+
+function withScriptedHidden(
+  c: ControlDefinition,
+  schema: SchemaField,
+  data: any,
+  vis: Control<boolean>,
+): FormStateNode {
+  const state = testNodeState(
+    {
+      ...c,
+      scripts: { hidden: { type: "Anything" } },
+    },
+    schema,
+    {
+      data,
+      evalExpression: (e, ctx) => {
+        if (e.type === "Anything") {
+          createSyncEffect(() => {
+            ctx.returnResult(!vis.value);
           }, ctx.scope);
         } else {
           defaultEvaluators[e.type]?.(e, ctx);

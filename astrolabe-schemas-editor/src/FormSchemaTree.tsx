@@ -19,7 +19,7 @@ import { Popover } from "./components/Popover";
 import { Menu } from "./components/Menu";
 import { MenuItem } from "./components/MenuItem";
 import { EditorSchemaTree } from "./EditorSchemaTree";
-import { defaultSchemaFieldForm } from "./schemaSchemas";
+import { defaultSchemaFieldForm } from "@react-typed-forms/schemas";
 
 export interface SchemaNodeCtx {
   schema: SchemaNode;

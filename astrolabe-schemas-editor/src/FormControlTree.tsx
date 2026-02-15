@@ -15,7 +15,7 @@ import {
   updateElements,
   useControl,
 } from "@react-typed-forms/core";
-import { defaultControlDefinitionForm } from "./schemaSchemas";
+import { defaultControlDefinitionForm } from "@react-typed-forms/schemas";
 import React, { Fragment, Key, MutableRefObject, useEffect } from "react";
 import clsx from "clsx";
 import {

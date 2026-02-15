@@ -30,8 +30,8 @@ import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
+import { ControlDefinitionSchemaMap } from "@react-typed-forms/schemas";
 import {
-  ControlDefinitionSchemaMap,
   FieldSelectionExtension,
   FormControlEditor,
   EditorFormTree,
