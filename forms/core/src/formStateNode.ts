@@ -5,7 +5,7 @@ import {
   validDataNode,
 } from "./schemaDataNode";
 import { SchemaInterface } from "./schemaInterface";
-import { FieldOption, SchemaTags } from "./schemaField";
+import { FieldOption } from "./schemaField";
 import {
   ChangeListenerFunc,
   CleanupScope,
@@ -18,20 +18,12 @@ import {
 } from "@astroapps/controls";
 import { createEvalExpr, ExpressionEvalContext } from "./evalExpression";
 import { EntityExpression, ExpressionType } from "./entityExpression";
-import { createScoped } from "./util";
 import {
-  AnyControlDefinition,
   ControlAdornmentType,
   ControlDefinition,
   ControlDisableType,
-  DataGroupRenderOptions,
   DataRenderType,
-  DisplayDataType,
   DynamicPropertyType,
-  getGroupRendererOptions,
-  GridRendererOptions,
-  HtmlDisplay,
-  isActionControl,
   isControlDisabled,
   isControlReadonly,
   isDataControl,
@@ -40,26 +32,13 @@ import {
   isGroupControl,
   isHtmlDisplay,
   isTextDisplay,
-  TextDisplay,
 } from "./controlDefinition";
-import { createOverrideProxy, KeysOfUnion, NoOverride } from "./overrideProxy";
 import { ChildNodeSpec, ChildResolverFunc } from "./resolveChildren";
 import { setupValidation } from "./validators";
 import { groupedControl } from "./controlBuilder";
-import {
-  ControlDefinitionScriptFields,
-  coerceForFieldType,
-  resolveSchemaPath,
-  hasSchemaTag,
-} from "./controlDefinitionSchemas";
-
-export type EvalExpr = <A>(
-  scope: CleanupScope,
-  init: A,
-  nk: Control<A>,
-  e: EntityExpression | undefined,
-  coerce: (t: unknown) => any,
-) => boolean;
+import { ControlDefinitionScriptFields } from "./controlDefinitionSchemas";
+import { createScriptedProxy, type EvalExpr } from "./scriptedProxy";
+export type { EvalExpr } from "./scriptedProxy";
 
 export type VariablesFunc = (
   changes: ChangeListenerFunc<any>,
@@ -208,116 +187,26 @@ export function createEvaluatedDefinition(
   evalExpr: EvalExpr,
   scope: CleanupScope,
 ): ControlDefinition {
-  const definitionOverrides = createScoped<Record<string, any>>(scope, {});
-  const displayOverrides = createScoped<Record<string, any>>(scope, {});
-  const groupOptionsOverrides = createScoped<Record<string, any>>(scope, {});
-  const renderOptionsOverrides = createScoped<Record<string, any>>(scope, {});
-
-  // Map from path prefix to override control
-  const overrideMap: Record<string, Control<Record<string, any>>> = {
-    "": definitionOverrides,
-    displayData: displayOverrides,
-    groupOptions: groupOptionsOverrides,
-    "renderOptions.groupOptions": groupOptionsOverrides,
-  };
-
-  // Set up computed nested proxies (same structure as before)
-  const defFields = definitionOverrides.fields as Record<string, Control<any>>;
-
-  updateComputedValue(
-    defFields["displayData"] ??
-      (definitionOverrides.fields as any).displayData,
-    () =>
-      isDisplayControl(def)
-        ? createOverrideProxy(def.displayData, displayOverrides)
-        : undefined,
-  );
-
-  updateComputedValue(
-    defFields["groupOptions"] ??
-      (definitionOverrides.fields as any).groupOptions,
-    () => {
-      const groupOptions = getGroupRendererOptions(def);
-      return groupOptions
-        ? createOverrideProxy(groupOptions, groupOptionsOverrides)
-        : undefined;
-    },
-  );
-
-  const renderOptionsFields = renderOptionsOverrides.fields as Record<
-    string,
-    Control<any>
-  >;
-  updateComputedValue(
-    renderOptionsFields["groupOptions"] ??
-      (renderOptionsOverrides.fields as any).groupOptions,
-    () =>
-      isDataControl(def) && isDataGroupRenderer(def.renderOptions)
-        ? createOverrideProxy(
-            (def.renderOptions.groupOptions as GridRendererOptions) ?? {},
-            groupOptionsOverrides,
-          )
-        : undefined,
-  );
-
-  updateComputedValue(
-    defFields["renderOptions"] ??
-      (definitionOverrides.fields as any).renderOptions,
-    () =>
-      isDataControl(def)
-        ? createOverrideProxy(def.renderOptions ?? {}, renderOptionsOverrides)
-        : undefined,
-  );
-
-  // Generic script evaluation loop
   const scripts = getMergedScripts(def);
-  const schema = ControlDefinitionScriptFields;
-
-  for (const [key, expr] of Object.entries(scripts)) {
-    const resolved = resolveSchemaPath(key, schema);
-    if (!resolved) continue;
-
-    const { segments, leafField } = resolved;
-    const coerce = coerceForFieldType(leafField.type);
-
-    // Determine which override control and field name to target
-    const fieldName = segments[segments.length - 1];
-    const parentPath = segments.slice(0, -1).join(".");
-    const targetOverride = overrideMap[parentPath] ?? definitionOverrides;
-    const targetField = (targetOverride.fields as Record<string, Control<any>>)[
-      fieldName
-    ];
-
-    // Determine init value
-    const nullInit = hasSchemaTag(leafField, SchemaTags.ScriptNullInit);
-    const staticValue = getNestedValue(def, segments);
-    const initValue = nullInit ? staticValue : coerce(staticValue ?? undefined);
-
-    createScopedEffect((c) => {
-      evalExpr(c, initValue, targetField, expr, coerce);
-    }, targetOverride);
-  }
+  const { proxy, rootOverrides } = createScriptedProxy(
+    def,
+    scripts,
+    ControlDefinitionScriptFields,
+    evalExpr,
+    scope,
+  );
 
   // If no script targets hidden, ensure it gets a non-null init
   if (!("hidden" in scripts)) {
     const hiddenField = (
-      definitionOverrides.fields as Record<string, Control<any>>
+      rootOverrides.fields as Record<string, Control<any>>
     )["hidden"];
     createScopedEffect((c) => {
-      evalExpr(c, !!def.hidden, hiddenField, undefined, (r) => !!r);
-    }, definitionOverrides);
+      evalExpr(c, !!def.hidden, hiddenField, undefined, (r: unknown) => !!r);
+    }, rootOverrides);
   }
 
-  return createOverrideProxy(def, definitionOverrides);
-}
-
-function getNestedValue(obj: any, segments: string[]): any {
-  let current = obj;
-  for (const seg of segments) {
-    if (current == null) return undefined;
-    current = current[seg];
-  }
-  return current;
+  return proxy;
 }
 
 export function coerceStyle(v: unknown): any {
