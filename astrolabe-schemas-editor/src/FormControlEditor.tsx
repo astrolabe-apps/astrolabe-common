@@ -1,5 +1,6 @@
 import React, { ReactElement, useMemo } from "react";
 import {
+  ControlDefinition,
   ControlDefinitionExtension,
   createSchemaDataNode,
   CustomRenderOptions,
@@ -29,6 +30,10 @@ import { createFieldSelectionRenderer } from "./renderer/FieldSelectionRenderer"
 import { createDataGridRenderer } from "@astroapps/schemas-datagrid";
 import { SchemaFieldEditor } from "./views/SchemaFieldEditor";
 import { createClassSelectionRenderer } from "./renderer/ClassSelectionRenderer";
+import {
+  ScriptEditContext,
+  scriptAdjustLayout,
+} from "./components/ScriptLabelRenderer";
 
 type ExtensionTypeFilterMap = { [key: string]: (n: SchemaNode) => boolean };
 
@@ -85,19 +90,26 @@ export function FormControlEditor({
     [controlNode.schema.id],
   );
 
-  const editorNode = createSchemaDataNode(
-    editorFields,
-    unsafeRestoreControl(controlNode.form.definition)!,
-  );
+  const definitionControl = unsafeRestoreControl(
+    controlNode.form.definition,
+  )! as Control<ControlDefinition>;
+  const allFields = controlNode.schema.getChildNodes().map((x) => x.field);
+
+  const editorNode = createSchemaDataNode(editorFields, definitionControl);
   const RenderEditor = useControlRendererComponent(
     editorControls.rootNode,
     renderer,
     {
       schemaInterface,
+      adjustLayout: scriptAdjustLayout,
     },
     editorNode,
   );
-  return <RenderEditor />;
+  return (
+    <ScriptEditContext.Provider value={{ definitionControl, allFields }}>
+      <RenderEditor />
+    </ScriptEditContext.Provider>
+  );
 }
 
 function addApplies(
