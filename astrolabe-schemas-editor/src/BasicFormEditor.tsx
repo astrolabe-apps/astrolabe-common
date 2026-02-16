@@ -11,6 +11,7 @@ import {
 import {
   createButtonActionRenderer,
   createDefaultRenderers,
+  DefaultRendererOptions,
   defaultTailwindTheme,
   ValueForFieldExtension,
 } from "@react-typed-forms/schemas-html";
@@ -27,6 +28,7 @@ import {
   createSchemaLookup,
   createSchemaTree,
   EditorGroup,
+  deepMerge,
   fontAwesomeIcon,
   FormNode,
   FormRenderer,
@@ -115,7 +117,21 @@ export function BasicFormEditor<A extends string = string>({
   loadForm,
   loadSchema,
   createEditorRenderer = (e) =>
-    createFormRenderer(e, createDefaultRenderers(defaultTailwindTheme)),
+    createFormRenderer(
+      e,
+      createDefaultRenderers(
+        deepMerge<DefaultRendererOptions>(
+          {
+            label: {
+              labelContainer: (c) => (
+                <div className="flex items-center gap-1">{c}</div>
+              ),
+            },
+          },
+          defaultTailwindTheme,
+        ),
+      ),
+    ),
   formTypes,
   listHeader,
   validation,

@@ -1,108 +1,192 @@
-import React, { createContext, Fragment, useContext, useState } from "react";
+import React, {
+  createContext,
+  Fragment,
+  useContext,
+  useMemo,
+  useState,
+} from "react";
 import {
+  addMissingControlsForSchema,
   appendMarkup,
   ControlDefinition,
-  ControlDefinitionScriptFields,
+  ControlDefinitionSchemaMap,
   ControlLayoutProps,
+  createFormTree,
+  createSchemaDataNode,
+  createSchemaLookup,
   EntityExpression,
+  FormRenderer,
   getJsonPath,
-  resolveSchemaPath,
+  isCompoundField,
+  RenderForm,
   SchemaField,
+  SchemaNode,
 } from "@react-typed-forms/schemas";
-import { Control } from "@react-typed-forms/core";
+import { Control, useControl } from "@react-typed-forms/core";
 import { ControlDataContext } from "@react-typed-forms/schemas";
-import { EntityExpressionEditor } from "./EntityExpressionEditor";
+import clsx from "clsx";
+import {
+  Button,
+  DialogTrigger,
+  Modal,
+  Dialog,
+  ModalOverlay,
+} from "react-aria-components";
+import expressionFormChildren from "../ExpressionForm.json";
 
 export interface ScriptEditContextValue {
   definitionControl: Control<ControlDefinition>;
   allFields: SchemaField[];
+  renderer: FormRenderer;
+  schemaNode: SchemaNode;
 }
 
 export const ScriptEditContext = createContext<
   ScriptEditContextValue | undefined
 >(undefined);
 
-const iconButtonStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  padding: "0 2px",
-  fontSize: "14px",
-  lineHeight: 1,
-  opacity: 0.6,
-  verticalAlign: "middle",
-  display: "inline-flex",
-  alignItems: "center",
-};
+const schemaLookup = createSchemaLookup(ControlDefinitionSchemaMap);
+const expressionSchemaNode = schemaLookup.getSchema("EntityExpression");
+const controlDefinitionSchemaNode = schemaLookup.getSchema("ControlDefinition");
 
-const iconButtonActiveStyle: React.CSSProperties = {
-  ...iconButtonStyle,
-  opacity: 1,
-  color: "#2563eb",
-};
+const resolvedChildren = addMissingControlsForSchema(
+  expressionSchemaNode,
+  expressionFormChildren as ControlDefinition[],
+);
+const expressionFormTree = createFormTree(resolvedChildren);
 
-const editorContainerStyle: React.CSSProperties = {
-  padding: "4px 8px",
-  marginTop: "2px",
-  marginBottom: "4px",
-  border: "1px solid #e5e7eb",
-  borderRadius: "4px",
-  backgroundColor: "#f9fafb",
-};
+function ScriptExpressionDialog({
+  fieldPath,
+  close,
+}: {
+  fieldPath: string;
+  close: () => void;
+}) {
+  const ctx = useContext(ScriptEditContext)!;
+  const currentExpr = ctx.definitionControl.current.value.scripts?.[
+    fieldPath
+  ] as EntityExpression | undefined;
+
+  const editControl = useControl<Partial<EntityExpression>>(currentExpr ?? {});
+
+  const dataNode = useMemo(
+    () => createSchemaDataNode(expressionSchemaNode, editControl),
+    [editControl],
+  );
+
+  const scriptsControl = ctx.definitionControl.fields.scripts;
+
+  function setScripts(scripts: Record<string, EntityExpression>) {
+    const hasKeys = Object.keys(scripts).length > 0;
+    scriptsControl.value = hasKeys ? scripts : null;
+  }
+
+  function save() {
+    const value = editControl.current.value;
+    const newScripts = { ...ctx.definitionControl.current.value.scripts };
+    if (value.type) {
+      newScripts[fieldPath] = value as EntityExpression;
+    } else {
+      delete newScripts[fieldPath];
+    }
+    setScripts(newScripts);
+    close();
+  }
+
+  function remove() {
+    const newScripts = { ...ctx.definitionControl.current.value.scripts };
+    delete newScripts[fieldPath];
+    setScripts(newScripts);
+    close();
+  }
+
+  return (
+    <>
+      <h3 className="text-lg font-semibold mb-4">Edit Script: {fieldPath}</h3>
+      <div className="mb-4">
+        <RenderForm
+          data={dataNode}
+          form={expressionFormTree.rootNode}
+          renderer={ctx.renderer}
+        />
+      </div>
+      <div className="flex gap-2 justify-end">
+        <button
+          type="button"
+          className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+          onClick={save}
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          className="px-3 py-1.5 text-sm bg-red-600 text-white rounded hover:bg-red-700"
+          onClick={remove}
+        >
+          Remove
+        </button>
+        <button
+          type="button"
+          className="px-3 py-1.5 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+          onClick={close}
+        >
+          Cancel
+        </button>
+      </div>
+    </>
+  );
+}
 
 function ScriptButton({ fieldPath }: { fieldPath: string }) {
   const ctx = useContext(ScriptEditContext);
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   if (!ctx) return null;
 
-  const currentExpr = ctx.definitionControl.current.value.scripts?.[fieldPath] as
-    | EntityExpression
-    | undefined;
+  const currentExpr = ctx.definitionControl.current.value.scripts?.[
+    fieldPath
+  ] as EntityExpression | undefined;
   const hasScript = !!currentExpr;
 
   return (
-    <Fragment>
-      <button
-        type="button"
-        style={hasScript ? iconButtonActiveStyle : iconButtonStyle}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen((v) => !v);
-        }}
-        title={
+    <DialogTrigger isOpen={isOpen} onOpenChange={setIsOpen}>
+      <Button
+        className={clsx(
+          "bg-transparent border-none cursor-pointer px-0.5 text-sm leading-none inline-flex items-center align-middle",
+          hasScript ? "opacity-100 text-blue-600" : "opacity-60",
+        )}
+        aria-label={
           hasScript
             ? `Script: ${currentExpr.type} (click to edit)`
             : "Add script"
         }
       >
         {"\u{1D453}"}
-      </button>
-      {open && (
-        <div style={editorContainerStyle}>
-          <EntityExpressionEditor
-            value={currentExpr}
-            onChange={(expr) => {
-              ctx.definitionControl.setValue((def) => {
-                const newScripts = { ...def.scripts };
-                if (expr) {
-                  newScripts[fieldPath] = expr;
-                } else {
-                  delete newScripts[fieldPath];
-                }
-                const hasKeys = Object.keys(newScripts).length > 0;
-                return {
-                  ...def,
-                  scripts: hasKeys ? newScripts : null,
-                };
-              });
-            }}
-            allFields={ctx.allFields}
-          />
-        </div>
-      )}
-    </Fragment>
+      </Button>
+      <ModalOverlay className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
+        <Modal className="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full">
+          <Dialog className="outline-none">
+            {({ close }) => (
+              <ScriptExpressionDialog fieldPath={fieldPath} close={close} />
+            )}
+          </Dialog>
+        </Modal>
+      </ModalOverlay>
+    </DialogTrigger>
   );
+}
+
+function resolveFieldPath(path: string, schema: SchemaNode): boolean {
+  const segments = path.split(".");
+  let fields = schema.getResolvedFields();
+  for (const seg of segments) {
+    if (/^\d+$/.test(seg)) continue;
+    const field = fields.find((f) => f.field === seg);
+    if (!field) return false;
+    if (isCompoundField(field)) {
+      fields = field.children;
+    }
+  }
+  return true;
 }
 
 export function scriptAdjustLayout(
@@ -110,11 +194,10 @@ export function scriptAdjustLayout(
   layout: ControlLayoutProps,
 ): ControlLayoutProps {
   const dataNode = context.dataNode;
-  if (!dataNode || !layout.label) return layout;
+  if (!dataNode) return layout;
 
   const fieldPath = getJsonPath(dataNode).join(".");
-  if (!resolveSchemaPath(fieldPath, ControlDefinitionScriptFields))
-    return layout;
+  if (!resolveFieldPath(fieldPath, controlDefinitionSchemaNode)) return layout;
 
   const adornment = {
     priority: 0,

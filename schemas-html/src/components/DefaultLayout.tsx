@@ -41,7 +41,15 @@ export function DefaultLayout({
         </Span>
       </Div>
     ),
-  layout: { controlEnd, controlStart, label, children, errorControl, errorId },
+  layout: {
+    controlEnd,
+    controlStart,
+    label,
+    children,
+    errorControl,
+    errorId,
+    inlineLabel,
+  },
 }: DefaultLayoutRendererOptions & {
   layout: RenderedLayout;
   renderer: FormRenderer;
@@ -50,9 +58,16 @@ export function DefaultLayout({
   const errorText = ec && ec.touched ? ec.error : undefined;
   return (
     <>
-      {label}
+      {!inlineLabel && label}
       {controlStart}
-      {children}
+      {inlineLabel ? (
+        <Div className="inline-flex items-center gap-1">
+          {children}
+          {label}
+        </Div>
+      ) : (
+        children
+      )}
       {renderError(errorText, errorId)}
       {controlEnd}
     </>

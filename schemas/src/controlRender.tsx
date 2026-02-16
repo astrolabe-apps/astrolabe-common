@@ -305,6 +305,7 @@ export interface RenderedLayout {
   style?: React.CSSProperties;
   wrapLayout: (layout: ReactElement) => ReactElement;
   inline?: boolean;
+  inlineLabel?: boolean;
 }
 
 export interface RenderedControl {
@@ -349,6 +350,11 @@ export enum LabelType {
    * Label for text.
    */
   Text,
+
+  /**
+   * Label rendered inline after the control (e.g. checkboxes).
+   */
+  Inline,
 }
 
 /**
@@ -749,6 +755,7 @@ type MarkupKeys = keyof Omit<
   | "readonly"
   | "disabled"
   | "inline"
+  | "inlineLabel"
   | "errorId"
 >;
 export function appendMarkup(
@@ -837,6 +844,9 @@ export function renderLayoutParts(
     label && !label.hide
       ? renderer.renderLabel(label, layout.labelStart, layout.labelEnd)
       : undefined;
+  if (label?.type === LabelType.Inline) {
+    layout.inlineLabel = true;
+  }
   return layout;
 }
 

@@ -1,0 +1,49 @@
+[
+  {
+    "type": "Data",
+    "title": "Type",
+    "field": "type",
+    "required": true,
+    "renderOptions": {
+      "type": "Standard"
+    }
+  },
+  {
+    "type": "Data",
+    "title": "Expression",
+    "field": "expression",
+    "required": true,
+    "renderOptions": {
+      "type": "Textfield",
+      "multiline": true
+    }
+  },
+  {
+    "type": "Data",
+    "title": "Field",
+    "field": "field",
+    "required": true,
+    "renderOptions": {
+      "type": "FieldSelection"
+    }
+  },
+  {
+    "type": "Data",
+    "title": "Value",
+    "field": "value",
+    "required": true,
+    "renderOptions": {
+      "type": "ValueForField",
+      "fieldRef": "field"
+    }
+  },
+  {
+    "type": "Data",
+    "title": "User Match",
+    "field": "userMatch",
+    "required": true,
+    "renderOptions": {
+      "type": "Standard"
+    }
+  }
+]
