@@ -281,6 +281,7 @@ class FormStateNodeImpl implements FormStateNode {
   readonly base: Control<FormStateBaseImpl>;
   readonly options: Control<FormNodeOptions>;
   readonly resolveChildren: ChildResolverFunc;
+  _childrenInitialized = false;
 
   ui = noopUi;
 
@@ -360,11 +361,19 @@ class FormStateNodeImpl implements FormStateNode {
     this.ui = f;
   }
 
+  private ensureChildren() {
+    if (!this._childrenInitialized) {
+      this._childrenInitialized = true;
+      initChildren(this);
+    }
+  }
+
   get childIndex() {
     return this.base.fields.childIndex.value;
   }
 
   get children() {
+    this.ensureChildren();
     return this.base.fields.children.elements.map(
       (x) => x.meta["$FormState"] as FormStateNode,
     );
@@ -420,12 +429,14 @@ class FormStateNodeImpl implements FormStateNode {
   }
 
   getChild(index: number) {
+    this.ensureChildren();
     return this.base.fields.children.elements[index]?.meta[
       "$FormState"
     ] as FormStateNode;
   }
 
   getChildCount(): number {
+    this.ensureChildren();
     return this.base.fields.children.elements.length;
   }
 
@@ -592,7 +603,11 @@ function initFormState(
     }
   }, scope);
 
-  initChildren(impl);
+  // Eagerly init children unless this node has childRefId (potential recursion)
+  if (!(def as any).childRefId) {
+    impl._childrenInitialized = true;
+    initChildren(impl);
+  }
 }
 
 export function combineVariables(

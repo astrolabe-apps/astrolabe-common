@@ -20,6 +20,7 @@ import {
   fontAwesomeIcon,
   FormRenderer,
   FormTree,
+  FormTreeLookup,
   IconPlacement,
   LabelType,
   RendererRegistration,
@@ -27,6 +28,7 @@ import {
 import React, { ReactNode, useMemo } from "react";
 import defaultEditorControls from "./ControlDefinition.json";
 import defaultSchemaEditorControls from "./SchemaField.json";
+import expressionFormControls from "./ExpressionForm.json";
 import { EditableForm, ViewContext } from "./types";
 import { EditorFormTree } from "./EditorFormTree";
 import { EditorSchemaTree } from "./EditorSchemaTree";
@@ -37,6 +39,7 @@ export interface UseViewContextConfig {
   extensions?: ControlDefinitionExtension[];
   editorControls?: ControlDefinition[];
   schemaEditorControls?: ControlDefinition[];
+  externalForms?: Record<string, ControlDefinition[]>;
   createEditorRenderer?: (registrations: RendererRegistration[]) => FormRenderer;
   editorPanelClass?: string;
 }
@@ -58,6 +61,7 @@ export function useViewContext({
   extensions: _extensions,
   editorControls,
   schemaEditorControls,
+  externalForms: _externalForms,
   createEditorRenderer = (e) =>
     createFormRenderer(
       e,
@@ -115,7 +119,14 @@ export function useViewContext({
   }, [schemaEditorControls, controlSchemas, defaultSchemaEditorControls]);
 
   const editorTree: FormTree = useMemo(() => {
-    const tree = new EditorFormTree(editorControls ?? defaultEditorControls);
+    const mergedExternalForms: Record<string, ControlDefinition[]> = {
+      ExpressionForm: expressionFormControls,
+      ...(_externalForms ?? {}),
+    };
+    const tree = new EditorFormTree(
+      editorControls ?? defaultEditorControls,
+      mergedExternalForms,
+    );
     const extraGroups: EditorGroup[] = extensions.flatMap((x) =>
       Object.values(x).flatMap((ro) =>
         Array.isArray(ro)
@@ -136,8 +147,14 @@ export function useViewContext({
       tree.getRootDefinitions().value,
       (m) => console.warn(m),
     );
-    return createFormTree(allNodes);
-  }, [editorControls, controlSchemas, defaultEditorControls]);
+    const formLookup: FormTreeLookup = {
+      getForm(formId: string) {
+        const controls = mergedExternalForms[formId];
+        return controls ? createFormTree(controls, this) : undefined;
+      },
+    };
+    return createFormTree(allNodes, formLookup);
+  }, [editorControls, controlSchemas, defaultEditorControls, _externalForms]);
 
   function button(onClick: () => void, action: string, actionId?: string) {
     return editorFormRenderer.renderAction({

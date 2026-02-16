@@ -139,12 +139,14 @@ export function createEvalExpr(
       // Unwrap NotExpression at this level so it works with any evaluator
       let actualExpr = e;
       let actualCoerce = coerce;
-      while (actualExpr.type === ExpressionType.Not) {
-        const inner = (actualExpr as NotExpression).expression;
+      while (actualExpr?.type === ExpressionType.Not) {
+        const inner = (actualExpr as NotExpression).innerExpression;
+        if (!inner) break;
         const prevCoerce = actualCoerce;
         actualCoerce = (r: unknown) => prevCoerce(!r);
         actualExpr = inner;
       }
+      if (!actualExpr?.type) return false;
       evalExpression(actualExpr, {
         returnResult: (r) => {
           nk.value = actualCoerce(r);

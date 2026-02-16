@@ -59,5 +59,5 @@ public record DataExpression([property: SchemaTag(SchemaTags.SchemaField)] strin
 public record UserMatchExpression(string UserMatch)
     : EntityExpression(nameof(ExpressionType.UserMatch));
 
-public record NotExpression(EntityExpression Expression)
+public record NotExpression(    [property: SchemaTag(SchemaTags.ControlRef + "/ExpressionForm")] EntityExpression InnerExpression)
     : EntityExpression(nameof(ExpressionType.Not));

@@ -6,22 +6,17 @@ import {
   createSchemaTree,
   DataControlDefinition,
   DataRenderType,
-  DisplayOnlyRenderOptions,
   EntityExpression,
   FieldOption,
   fieldPathForDefinition,
   findField,
-  FormContextData,
   getGroupRendererOptions,
   getTagParam,
-  GroupRenderOptions,
   isAutoCompleteClasses,
   isCheckEntryClasses,
   isCompoundField,
   isCompoundNode,
   isDataControl,
-  isDataGroupRenderer,
-  isDisplayOnlyRenderer,
   isGridRenderer,
   isGroupControl,
   isScalarField,
@@ -30,7 +25,7 @@ import {
   SchemaField,
   schemaForFieldPath,
   SchemaNode,
-  SchemaTags,
+  SchemaTags
 } from "@astroapps/forms-core";
 import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
@@ -42,14 +37,9 @@ import {
   ensureMetaValue,
   getElementIndex,
   newControl,
-  useControl,
+  useControl
 } from "@react-typed-forms/core";
-import {
-  ActionRendererProps,
-  ControlActionHandler,
-  RunExpression,
-} from "./types";
-import { Expression } from "jsonata";
+import { ActionRendererProps, ControlActionHandler, RunExpression } from "./types";
 
 /**
  * Interface representing the classes for a control.
@@ -336,14 +326,16 @@ export function addMissingControlsForSchema(
     function addCompound(node: SchemaNode) {
       if (isCompoundNode(node) && !node.field.collection) {
         eligibleParents.push(node.id);
-        node.getChildNodes().forEach(addCompound);
+        if (!(node.field as CompoundField).treeChildren) {
+          node.getChildNodes().forEach(addCompound);
+        }
       }
     }
   }
 
   function addReferences(c: ControlAndSchema) {
     c.children.forEach(addReferences);
-    if (c.control.childRefId) {
+    if (c.control.childRefId && !c.control.childRefId.startsWith("/")) {
       const ref = controlMap[c.control.childRefId];
       if (ref) {
         ref.children.forEach((x) =>

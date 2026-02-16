@@ -66,7 +66,7 @@ export function readVisibilityCondition(
   const hiddenExpr = (def as any)["$scripts"]?.["hidden"];
   if (hiddenExpr) {
     if (hiddenExpr.type === ExpressionType.Not) {
-      return readVisibilityExpr((hiddenExpr as NotExpression).expression);
+      return readVisibilityExpr((hiddenExpr as NotExpression).innerExpression);
     }
     return undefined;
   }

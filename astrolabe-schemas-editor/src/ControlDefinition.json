@@ -486,7 +486,7 @@
                 "type": "Data",
                 "title": "Child Index Expression",
                 "field": "childIndexExpression",
-                "childRefId": "Expression",
+                "childRefId": "/ExpressionForm",
                 "renderOptions": {
                   "type": "Standard"
                 }
@@ -956,7 +956,7 @@
                 "type": "Data",
                 "title": "Expression",
                 "field": "expression",
-                "childRefId": "Expression",
+                "childRefId": "/ExpressionForm",
                 "renderOptions": {
                   "type": "Standard"
                 },
@@ -1097,59 +1097,10 @@
                 "type": "Data",
                 "title": "Expression",
                 "field": "expr",
-                "children": [
-                  {
-                    "type": "Data",
-                    "title": "Type",
-                    "field": "type",
-                    "required": true,
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Expression",
-                    "field": "expression",
-                    "required": true,
-                    "renderOptions": {
-                      "type": "Textfield",
-                      "multiline": true
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Field",
-                    "field": "field",
-                    "required": true,
-                    "renderOptions": {
-                      "type": "FieldSelection"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "Value",
-                    "field": "value",
-                    "required": true,
-                    "renderOptions": {
-                      "type": "ValueForField",
-                      "fieldRef": "field"
-                    }
-                  },
-                  {
-                    "type": "Data",
-                    "title": "User Match",
-                    "field": "userMatch",
-                    "required": true,
-                    "renderOptions": {
-                      "type": "Standard"
-                    }
-                  }
-                ],
+                "childRefId": "/ExpressionForm",
                 "renderOptions": {
                   "type": "Standard"
                 },
-                "id": "Expression",
                 "defaultValue": null
               }
             ],

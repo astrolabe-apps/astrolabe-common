@@ -33,6 +33,7 @@ import {
   FormNode,
   FormRenderer,
   FormTree,
+  FormTreeLookup,
   getAllReferencedClasses,
   IconPlacement,
   LabelType,
@@ -53,6 +54,7 @@ import {
 } from "@mhsdesign/jit-browser-tailwindcss";
 import defaultEditorControls from "./ControlDefinition.json";
 import defaultSchemaEditorControls from "./SchemaField.json";
+import expressionFormControls from "./ExpressionForm.json";
 import { createView, getTabTitle, getViewAndParams } from "./views";
 import {
   Actions,
@@ -96,6 +98,7 @@ export interface BasicFormEditorProps<A extends string> {
   extensions?: ControlDefinitionExtension[];
   editorControls?: ControlDefinition[];
   schemaEditorControls?: ControlDefinition[];
+  externalForms?: Record<string, ControlDefinition[]>;
   previewOptions?: ControlRenderOptions;
   setupPreview?: (previewData: Control<PreviewData>) => void;
   tailwindConfig?: TailwindConfig;
@@ -140,6 +143,7 @@ export function BasicFormEditor<A extends string = string>({
   extensions: _extensions,
   editorControls,
   schemaEditorControls,
+  externalForms: _externalForms,
   previewOptions,
   setupPreview,
   tailwindConfig,
@@ -196,7 +200,14 @@ export function BasicFormEditor<A extends string = string>({
   }, [schemaEditorControls, controlSchemas, defaultSchemaEditorControls]);
 
   const editorTree: FormTree = useMemo(() => {
-    const tree = new EditorFormTree(editorControls ?? defaultEditorControls);
+    const mergedExternalForms: Record<string, ControlDefinition[]> = {
+      ExpressionForm: expressionFormControls,
+      ...(_externalForms ?? {}),
+    };
+    const tree = new EditorFormTree(
+      editorControls ?? defaultEditorControls,
+      mergedExternalForms,
+    );
     const extraGroups: EditorGroup[] = extensions.flatMap((x) =>
       Object.values(x).flatMap((ro) =>
         Array.isArray(ro)
@@ -217,8 +228,14 @@ export function BasicFormEditor<A extends string = string>({
       tree.getRootDefinitions().value,
       (m) => console.warn(m),
     );
-    return createFormTree(allNodes);
-  }, [editorControls, controlSchemas, defaultEditorControls]);
+    const formLookup: FormTreeLookup = {
+      getForm(formId: string) {
+        const controls = mergedExternalForms[formId];
+        return controls ? createFormTree(controls, this) : undefined;
+      },
+    };
+    return createFormTree(allNodes, formLookup);
+  }, [editorControls, controlSchemas, defaultEditorControls, _externalForms]);
 
   const genStyles = useMemo(
     () =>

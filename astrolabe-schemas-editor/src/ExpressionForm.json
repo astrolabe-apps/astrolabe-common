@@ -45,5 +45,14 @@
     "renderOptions": {
       "type": "Standard"
     }
+  },
+  {
+    "type": "Data",
+    "title": "Inner Expression",
+    "field": "innerExpression",
+    "childRefId": "/ExpressionForm",
+    "renderOptions": {
+      "type": "Standard"
+    }
   }
 ]

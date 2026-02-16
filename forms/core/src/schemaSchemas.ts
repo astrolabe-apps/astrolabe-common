@@ -351,6 +351,7 @@ export interface EntityExpressionForm {
   value: any;
   empty: boolean | null;
   userMatch: string;
+  innerExpression: EntityExpressionForm;
 }
 
 export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
@@ -393,7 +394,7 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
   }),
   expression: makeScalarField({
     type: FieldType.String,
-    onlyForTypes: ["Jsonata", "Not"],
+    onlyForTypes: ["Jsonata"],
     notNullable: true,
     required: true,
     displayName: "Expression",
@@ -425,6 +426,13 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
     notNullable: true,
     required: true,
     displayName: "User Match",
+  }),
+  innerExpression: makeCompoundField({
+    treeChildren: true,
+    onlyForTypes: ["Not"],
+    notNullable: true,
+    displayName: "Inner Expression",
+    tags: ["_ControlRef:/ExpressionForm"],
   }),
 });
 
@@ -855,7 +863,7 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     onlyForTypes: ["SelectChild"],
     notNullable: true,
     displayName: "Child Index Expression",
-    tags: ["_ControlRef:Expression"],
+    tags: ["_ControlRef:/ExpressionForm"],
   }),
   defaultExpanded: makeScalarField({
     type: FieldType.Bool,
@@ -1243,7 +1251,7 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["ElementSelected"],
     notNullable: true,
     displayName: "Element Expression",
-    tags: ["_ControlRef:Expression"],
+    tags: ["_ControlRef:/ExpressionForm"],
   }),
   bottomActionId: makeScalarField({
     type: FieldType.String,

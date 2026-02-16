@@ -314,7 +314,7 @@ public record HtmlEditorRenderOptions(bool AllowImages)
 public record IconMapping(string Value, string? MaterialIcon);
 
 public record ElementSelectedRenderOptions(
-    [property: SchemaTag(SchemaTags.ControlRef + "Expression")] EntityExpression ElementExpression
+    [property: SchemaTag(SchemaTags.ControlRef + "/ExpressionForm")] EntityExpression ElementExpression
 ) : RenderOptions(nameof(DataRenderType.ElementSelected));
 
 public record ScrollListRenderOptions(string? BottomActionId, string? RefreshActionId)
@@ -439,7 +439,7 @@ public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)
     : GroupRenderOptions(nameof(GroupRenderType.GroupElement));
 
 public record SelectChildRenderer(
-    [property: SchemaTag(SchemaTags.ControlRef + "Expression")]
+    [property: SchemaTag(SchemaTags.ControlRef + "/ExpressionForm")]
         EntityExpression ChildIndexExpression
 ) : GroupRenderOptions(nameof(GroupRenderType.SelectChild));
 

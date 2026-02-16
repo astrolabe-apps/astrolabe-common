@@ -37,7 +37,7 @@ public static class EntityExpressionExtensions
     {
         return expression switch
         {
-            NotExpression expr => !DefaultEvalBool(expr.Expression, data, context),
+            NotExpression expr => !DefaultEvalBool(expr.InnerExpression, data, context),
             DataMatchExpression expr => ControlEquals(context.Field(expr.Field).Traverse(data), expr.Value),
             JsonataExpression expr => RunJsonata(expr.Expression),
             _ => throw new ArgumentOutOfRangeException(nameof(expression), expression, null)

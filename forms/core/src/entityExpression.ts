@@ -41,5 +41,5 @@ export interface UserMatchExpression extends EntityExpression {
 
 export interface NotExpression extends EntityExpression {
   type: ExpressionType.Not;
-  expression: EntityExpression;
+  innerExpression: EntityExpression;
 }

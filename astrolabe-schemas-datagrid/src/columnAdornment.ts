@@ -93,11 +93,11 @@ export const ColumnOptionsFields = buildSchema<ColumnOptions>({
   sortField: stringField("Custom sort field"),
   visible: compoundField("Column visibility", [], {
     schemaRef: "EntityExpression",
-    tags: [makeParamTag(SchemaTags.ControlRef, "Expression")],
+    tags: [makeParamTag(SchemaTags.ControlRef, "/ExpressionForm")],
   }),
   rowSpan: compoundField("Row Span", [], {
     schemaRef: "EntityExpression",
-    tags: [makeParamTag(SchemaTags.ControlRef, "Expression")],
+    tags: [makeParamTag(SchemaTags.ControlRef, "/ExpressionForm")],
   }),
   groupedColumn: boolField("Grouped Column"),
 });

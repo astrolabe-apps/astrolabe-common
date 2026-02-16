@@ -222,8 +222,8 @@ export const emptyGroupDefinition: GroupedControlsDefinition = {
   groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
 };
 
-export function notExpr(expression: EntityExpression): NotExpression {
-  return { type: ExpressionType.Not, expression };
+export function notExpr(innerExpression: EntityExpression): NotExpression {
+  return { type: ExpressionType.Not, innerExpression };
 }
 
 export function withScripts<T extends ControlDefinition>(

@@ -120,7 +120,7 @@ public static class ReactiveExpressionExtensions
             actualCoerce = prevCoerce != null
                 ? r => prevCoerce(Negate(r))
                 : Negate;
-            actualExpr = notExpr.Expression;
+            actualExpr = notExpr.InnerExpression;
         }
 
         // Evaluate expression with callback that updates the target control

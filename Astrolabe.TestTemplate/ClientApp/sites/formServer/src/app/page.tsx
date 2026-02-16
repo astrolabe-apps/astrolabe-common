@@ -63,8 +63,11 @@ import {
   ControlDefinition as CD,
   SearchStateClient,
 } from "../client";
-import controlsJson from "../ControlDefinition.json";
-import schemaFieldJson from "../SchemaField.json";
+import {
+  defaultEditorControlsJson as controlsJson,
+  defaultExpressionFormJson as expressionFormJson,
+  defaultSchemaFieldJson as schemaFieldJson,
+} from "@astroapps/schemas-editor";
 import testSchemaControls from "../forms/TestSchema.json";
 import allControls from "../forms/AllControls.json";
 import { useMemo, useState } from "react";
@@ -355,6 +358,11 @@ export default function Editor() {
                 schemaName: "SchemaFieldSchema",
                 controls: schemaFieldJson,
               };
+            case "ExpressionForm":
+              return {
+                schemaName: "EntityExpression",
+                controls: expressionFormJson,
+              };
             case "TestSchema":
               return { schemaName: c, controls: testSchemaControls.controls };
             case "TabSchema":
@@ -373,6 +381,7 @@ export default function Editor() {
           ["AllControls", "All Controls"],
           ["EditorControls", "EditorControls"],
           ["SchemaField", "SchemaField"],
+          ["ExpressionForm", "ExpressionForm"],
           ["CarInfo", "Pdf test"],
           ["TestSchema", "Test"],
           ["GridSchema", "Grid"],
@@ -398,6 +407,8 @@ export default function Editor() {
             await new CodeGenClient().editControlDefinition(controls);
           } else if (formId === "SchemaField") {
             await new CodeGenClient().editSchemaFieldDefinition(controls);
+          } else if (formId === "ExpressionForm") {
+            await new CodeGenClient().editExpressionForm(controls);
           } else {
             await new SearchStateClient().editControlDefinition(formId, {
               controls,

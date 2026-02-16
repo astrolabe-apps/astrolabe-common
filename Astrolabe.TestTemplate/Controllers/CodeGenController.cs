@@ -30,25 +30,32 @@ public class CodeGenController : ControllerBase
         [FromServices] IWebHostEnvironment environment
     )
     {
-        var path = Path.Join(
-            environment.ContentRootPath,
-            $"ClientApp/sites/formServer/src/ControlDefinition.json"
-        );
-        await System.IO.File.WriteAllTextAsync(
-            path,
-            JsonSerializer.Serialize(formData, new JsonSerializerOptions { WriteIndented = true })
-        );
+        await WriteEditorJson(environment, "ControlDefinition.json", formData);
     }
-    
+
     [HttpPut("SchemaField")]
     public async Task EditSchemaFieldDefinition(
         JsonElement formData,
         [FromServices] IWebHostEnvironment environment
     )
     {
+        await WriteEditorJson(environment, "SchemaField.json", formData);
+    }
+
+    [HttpPut("ExpressionForm")]
+    public async Task EditExpressionForm(
+        JsonElement formData,
+        [FromServices] IWebHostEnvironment environment
+    )
+    {
+        await WriteEditorJson(environment, "ExpressionForm.json", formData);
+    }
+
+    private static async Task WriteEditorJson(IWebHostEnvironment environment, string fileName, JsonElement formData)
+    {
         var path = Path.Join(
             environment.ContentRootPath,
-            $"ClientApp/sites/formServer/src/SchemaField.json"
+            $"../astrolabe-schemas-editor/src/{fileName}"
         );
         await System.IO.File.WriteAllTextAsync(
             path,
