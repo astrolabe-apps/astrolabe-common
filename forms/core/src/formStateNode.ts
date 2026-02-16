@@ -127,7 +127,7 @@ function buildLegacyScripts(
       case DynamicPropertyType.Visible:
         rootScripts["hidden"] = {
           type: ExpressionType.Not,
-          expression: dp.expr,
+          innerExpression: dp.expr,
         } as EntityExpression;
         break;
       case DynamicPropertyType.Readonly:
