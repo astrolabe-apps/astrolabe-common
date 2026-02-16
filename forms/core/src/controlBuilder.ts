@@ -126,22 +126,22 @@ export function htmlDisplayControl(
   };
 }
 
-/** @deprecated Use scripts: { defaultValue: expr } instead */
+/** @deprecated Use withScripts(def, { defaultValue: expr }) instead */
 export function dynamicDefaultValue(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.DefaultValue, expr };
 }
 
-/** @deprecated Use scripts: { readonly: expr } instead */
+/** @deprecated Use withScripts(def, { readonly: expr }) instead */
 export function dynamicReadonly(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.Readonly, expr };
 }
 
-/** @deprecated Use scripts: { hidden: notExpr(expr) } instead */
+/** @deprecated Use withScripts(def, { hidden: notExpr(expr) }) instead */
 export function dynamicVisibility(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.Visible, expr };
 }
 
-/** @deprecated Use scripts: { disabled: expr } instead */
+/** @deprecated Use withScripts(def, { disabled: expr }) instead */
 export function dynamicDisabled(expr: EntityExpression): DynamicProperty {
   return { type: DynamicPropertyType.Disabled, expr };
 }
@@ -230,5 +230,5 @@ export function withScripts<T extends ControlDefinition>(
   def: T,
   scripts: Record<string, EntityExpression>,
 ): T {
-  return { ...def, scripts };
+  return { ...def, ["$scripts"]: scripts } as T;
 }

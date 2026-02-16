@@ -379,7 +379,7 @@ function DataGridControlRenderer({
       .filter((x) => x.visible)
       .map((cn, i) => {
         const d = cn.meta.original as ControlDefinition;
-        const colOptions = d.adornments?.find(isColumnAdornment);
+        const colOptions = cn.definition.adornments?.find(isColumnAdornment);
         const headerOptions = getColumnHeaderFromOptions(
           colOptions,
           d,

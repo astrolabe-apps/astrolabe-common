@@ -295,8 +295,8 @@ function withScriptedHidden(
   const state = testNodeState(
     {
       ...c,
-      scripts: { hidden: { type: "Anything" } },
-    },
+      ["$scripts"]: { hidden: { type: "Anything" } },
+    } as ControlDefinition,
     schema,
     {
       data,

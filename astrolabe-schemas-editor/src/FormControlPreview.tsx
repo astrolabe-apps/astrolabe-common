@@ -235,7 +235,7 @@ function EditorDetails({
   const { dynamic } = control;
   const hasVisibilityScripting = dynamic?.some(
     (x) => x.type === DynamicPropertyType.Visible,
-  ) || !!control.scripts?.hidden;
+  ) || !!(control as any)["$scripts"]?.hidden;
 
   const fieldName = !arrayElement
     ? isDataControl(control)

@@ -106,7 +106,7 @@ export function FormControlEditor({
     editorNode,
   );
   return (
-    <ScriptEditContext.Provider value={{ definitionControl, allFields, renderer, schemaNode: controlNode.schema }}>
+    <ScriptEditContext.Provider value={{ allFields, renderer, schemaNode: controlNode.schema }}>
       <RenderEditor />
     </ScriptEditContext.Provider>
   );

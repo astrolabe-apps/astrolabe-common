@@ -1,6 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   actionControl,
+  ControlAdornment,
   ControlAdornmentType,
   ControlDefinition,
   createFormStateNode,
@@ -33,7 +34,7 @@ import {
   createSyncEffect,
   newControl,
 } from "@astroapps/controls";
-import { changePromise, testNodeState } from "./nodeTester";
+import { changePromise, testNodeState, withScript } from "./nodeTester";
 import { intField, stringField } from "../src/schemaBuilder";
 
 /**
@@ -375,7 +376,7 @@ describe("dynamic properties", () => {
       expect(state.definition.style).toEqual(styleObj);
     });
 
-    it("dynamic Style coerces non-objects to undefined", () => {
+    it("dynamic Style passes through any value (Any type)", () => {
       const schema = stringField("Name")("name");
       const state = testNodeState(
         dataControl("name", "Name", {
@@ -386,7 +387,8 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult("not an object"),
         },
       );
-      expect(state.definition.style).toBeUndefined();
+      // style is FieldType.Any in ControlDefinitionSchema, so no coercion
+      expect(state.definition.style).toBe("not an object");
     });
 
     it("dynamic Style responds to reactive changes", () => {
@@ -419,7 +421,7 @@ describe("dynamic properties", () => {
       expect(state.definition.layoutStyle).toEqual(layoutObj);
     });
 
-    it("dynamic LayoutStyle coerces non-objects to undefined", () => {
+    it("dynamic LayoutStyle passes through any value (Any type)", () => {
       const schema = stringField("Name")("name");
       const state = testNodeState(
         dataControl("name", "Name", {
@@ -430,7 +432,8 @@ describe("dynamic properties", () => {
           evalExpression: (_, ctx) => ctx.returnResult(123),
         },
       );
-      expect(state.definition.layoutStyle).toBeUndefined();
+      // layoutStyle is FieldType.Any in ControlDefinitionSchema, so no coercion
+      expect(state.definition.layoutStyle).toBe(123);
     });
 
     it("dynamic AllowedOptions filters fieldOptions", () => {
@@ -958,6 +961,313 @@ describe("dynamic properties", () => {
         () => (displayChild.definition as any).displayData?.text,
       );
       expect(result).toBe("Hello World");
+    });
+  });
+
+  describe("$scripts (co-located scripts)", () => {
+    it("root-level $scripts.hidden overrides hidden", () => {
+      const schema = stringField("Name")("name");
+      const state = testNodeState(
+        withScript(dataControl("name", "Name"), "hidden"),
+        schema,
+        {
+          evalExpression: (_, ctx) => ctx.returnResult(true),
+        },
+      );
+      expect(state.visible).toBe(false);
+    });
+
+    it("root-level $scripts.title overrides title", () => {
+      const schema = stringField("Name")("name");
+      const state = testNodeState(
+        withScript(dataControl("name", "Original Title"), "title"),
+        schema,
+        {
+          evalExpression: (_, ctx) => ctx.returnResult("Scripted Title"),
+        },
+      );
+      expect(state.definition.title).toBe("Scripted Title");
+    });
+
+    it("root-level $scripts.readonly overrides readonly", () => {
+      const schema = stringField("Name")("name");
+      const state = testNodeState(
+        withScript(dataControl("name", "Name"), "readonly"),
+        schema,
+        {
+          evalExpression: (_, ctx) => ctx.returnResult(true),
+        },
+      );
+      expect(!!state.definition.readonly).toBe(true);
+    });
+
+    it("root-level $scripts.disabled overrides disabled", () => {
+      const schema = stringField("Name")("name");
+      const state = testNodeState(
+        withScript(dataControl("name", "Name"), "disabled"),
+        schema,
+        {
+          evalExpression: (_, ctx) => ctx.returnResult(true),
+        },
+      );
+      expect(!!state.definition.disabled).toBe(true);
+    });
+
+    it("root-level $scripts.style sets style object", () => {
+      const schema = stringField("Name")("name");
+      const styleObj = { color: "red" };
+      const state = testNodeState(
+        withScript(dataControl("name", "Name"), "style"),
+        schema,
+        {
+          evalExpression: (_, ctx) => ctx.returnResult(styleObj),
+        },
+      );
+      expect(state.definition.style).toEqual(styleObj);
+    });
+
+    it("root-level $scripts respond to reactive changes", () => {
+      const schema = stringField("Name")("name");
+      const dynValue = newControl<any>("First");
+      const state = testNodeState(
+        withScript(dataControl("name", "Original"), "title"),
+        schema,
+        {
+          evalExpression: reactiveEval(dynValue),
+        },
+      );
+      expect(state.definition.title).toBe("First");
+      dynValue.value = "Second";
+      expect(state.definition.title).toBe("Second");
+    });
+
+    it("nested $scripts on displayData.text", () => {
+      const schema = stringField("Test")("test");
+      const def = {
+        ...textDisplayControl("original text"),
+        displayData: {
+          type: "Text" as const,
+          text: "original text",
+          ["$scripts"]: { text: { type: "Anything" } },
+        },
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: (_, ctx) => ctx.returnResult("scripted text"),
+      });
+      const displayData = (state.definition as any).displayData;
+      expect(displayData.text).toBe("scripted text");
+    });
+
+    it("nested $scripts on displayData.html", () => {
+      const schema = stringField("Test")("test");
+      const def = {
+        ...htmlDisplayControl("<b>original</b>"),
+        displayData: {
+          type: "Html" as const,
+          html: "<b>original</b>",
+          ["$scripts"]: { html: { type: "Anything" } },
+        },
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: (_, ctx) => ctx.returnResult("<i>scripted</i>"),
+      });
+      const displayData = (state.definition as any).displayData;
+      expect(displayData.html).toBe("<i>scripted</i>");
+    });
+
+    it("nested $scripts on groupOptions.columns", () => {
+      const schema = stringField("Test")("test");
+      const def = {
+        ...groupedControl([], "Grid Group", {
+          groupOptions: {
+            type: GroupRenderType.Grid,
+            columns: 2,
+            ["$scripts"]: { columns: { type: "Anything" } },
+          } as any,
+        }),
+      };
+      const state = testNodeState(def, schema, {
+        evalExpression: (_, ctx) => ctx.returnResult(5),
+      });
+      const groupOptions = (state.definition as GroupedControlsDefinition)
+        .groupOptions as GridRendererOptions;
+      expect(groupOptions.columns).toBe(5);
+    });
+
+    it("nested $scripts respond to reactive changes", () => {
+      const schema = stringField("Test")("test");
+      const dynValue = newControl<any>("initial");
+      const def = {
+        ...textDisplayControl("original"),
+        displayData: {
+          type: "Text" as const,
+          text: "original",
+          ["$scripts"]: { text: { type: "Anything" } },
+        },
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: reactiveEval(dynValue),
+      });
+      expect((state.definition as any).displayData.text).toBe("initial");
+      dynValue.value = "updated";
+      expect((state.definition as any).displayData.text).toBe("updated");
+    });
+
+    it("nested $scripts coerce values per field type", () => {
+      const schema = stringField("Test")("test");
+      const def = {
+        ...groupedControl([], "Grid", {
+          groupOptions: {
+            type: GroupRenderType.Grid,
+            columns: 2,
+            ["$scripts"]: { columns: { type: "Anything" } },
+          } as any,
+        }),
+      };
+      // Columns is Int, should coerce non-number to undefined
+      const state = testNodeState(def, schema, {
+        evalExpression: (_, ctx) => ctx.returnResult("not a number"),
+      });
+      const groupOptions = (state.definition as GroupedControlsDefinition)
+        .groupOptions as GridRendererOptions;
+      expect(groupOptions.columns).toBeUndefined();
+    });
+
+    it("multiple $scripts at different nesting levels", () => {
+      const schema = stringField("Test")("test");
+      const def = {
+        ...textDisplayControl("original"),
+        displayData: {
+          type: "Text" as const,
+          text: "original",
+          ["$scripts"]: { text: { type: "DisplayExpr" } },
+        },
+        ["$scripts"]: { title: { type: "TitleExpr" } },
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: (e, ctx) => {
+          if (e.type === "TitleExpr") ctx.returnResult("New Title");
+          else if (e.type === "DisplayExpr")
+            ctx.returnResult("New Display Text");
+        },
+      });
+      expect(state.definition.title).toBe("New Title");
+      expect((state.definition as any).displayData.text).toBe(
+        "New Display Text",
+      );
+    });
+
+    it("$scripts without matching schema field is ignored", () => {
+      const schema = stringField("Name")("name");
+      const def = {
+        ...dataControl("name", "Name"),
+        ["$scripts"]: { nonExistentField: { type: "Anything" } },
+      } as ControlDefinition;
+      // Should not throw, just ignore the unknown script key
+      const state = testNodeState(def, schema, {
+        evalExpression: (_, ctx) => ctx.returnResult("value"),
+      });
+      expect(state.definition.title).toBe("Name");
+    });
+
+    it("empty $scripts object is a no-op", () => {
+      const schema = stringField("Name")("name");
+      const def = {
+        ...dataControl("name", "Name"),
+        ["$scripts"]: {},
+      } as ControlDefinition;
+      const state = testNodeState(def, schema);
+      expect(state.definition.title).toBe("Name");
+    });
+
+    it("$scripts on collection elements (adornments[0].title)", () => {
+      const schema = stringField("Name")("name");
+      const def = {
+        ...dataControl("name", "Name"),
+        adornments: [
+          {
+            type: ControlAdornmentType.Accordion,
+            title: "Original Title",
+            ["$scripts"]: { title: { type: "Anything" } },
+          } as unknown as ControlAdornment,
+        ],
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: (_, ctx) => ctx.returnResult("Scripted Title"),
+      });
+      const adornments = state.definition.adornments!;
+      expect(adornments).toHaveLength(1);
+      expect((adornments[0] as any).title).toBe("Scripted Title");
+    });
+
+    it("$scripts on collection elements respond to reactive changes", () => {
+      const schema = stringField("Name")("name");
+      const dynValue = newControl<any>("First");
+      const def = {
+        ...dataControl("name", "Name"),
+        adornments: [
+          {
+            type: ControlAdornmentType.Accordion,
+            title: "Original",
+            ["$scripts"]: { title: { type: "Anything" } },
+          } as unknown as ControlAdornment,
+        ],
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: reactiveEval(dynValue),
+      });
+      expect((state.definition.adornments![0] as any).title).toBe("First");
+      dynValue.value = "Second";
+      expect((state.definition.adornments![0] as any).title).toBe("Second");
+    });
+
+    it("collection elements without $scripts pass through unchanged", () => {
+      const schema = stringField("Name")("name");
+      const def = {
+        ...dataControl("name", "Name"),
+        adornments: [
+          {
+            type: ControlAdornmentType.Accordion,
+            title: "Static Title",
+          } as unknown as ControlAdornment,
+          {
+            type: ControlAdornmentType.Accordion,
+            title: "Original",
+            ["$scripts"]: { title: { type: "Anything" } },
+          } as unknown as ControlAdornment,
+        ],
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: (_, ctx) => ctx.returnResult("Dynamic"),
+      });
+      const adornments = state.definition.adornments!;
+      expect(adornments).toHaveLength(2);
+      expect((adornments[0] as any).title).toBe("Static Title");
+      expect((adornments[1] as any).title).toBe("Dynamic");
+    });
+
+    it("legacy dynamic and $scripts both apply (legacy first, then $scripts)", () => {
+      const schema = stringField("Name")("name");
+      // Both legacy dynamic (Label) and $scripts (disabled) should work together
+      const def = {
+        ...dataControl("name", "Original", {
+          dynamic: [
+            {
+              type: DynamicPropertyType.Label,
+              expr: { type: "LabelExpr" },
+            },
+          ],
+        }),
+        ["$scripts"]: { disabled: { type: "DisExpr" } },
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: (e, ctx) => {
+          if (e.type === "LabelExpr") ctx.returnResult("Dynamic Label");
+          else if (e.type === "DisExpr") ctx.returnResult(true);
+        },
+      });
+      expect(state.definition.title).toBe("Dynamic Label");
+      expect(!!state.definition.disabled).toBe(true);
     });
   });
 });

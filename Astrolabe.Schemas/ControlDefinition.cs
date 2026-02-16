@@ -61,8 +61,6 @@ public abstract record ControlDefinition(
     [DefaultValue(false)]
     public bool? NoSelection { get; set; }
 
-    public IDictionary<string, EntityExpression>? Scripts { get; set; }
-
     public IDictionary<string, object?>? Style { get; set; }
 
     public IDictionary<string, object?>? LayoutStyle { get; set; }

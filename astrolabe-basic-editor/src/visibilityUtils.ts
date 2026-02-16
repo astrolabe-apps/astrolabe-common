@@ -62,8 +62,8 @@ function readVisibilityExpr(
 export function readVisibilityCondition(
   def: ControlDefinition,
 ): SimpleVisibilityCondition | undefined {
-  // Check scripts.hidden first (wrapped in Not)
-  const hiddenExpr = def.scripts?.["hidden"];
+  // Check $scripts.hidden first (wrapped in Not)
+  const hiddenExpr = (def as any)["$scripts"]?.["hidden"];
   if (hiddenExpr) {
     if (hiddenExpr.type === ExpressionType.Not) {
       return readVisibilityExpr((hiddenExpr as NotExpression).expression);
@@ -95,20 +95,22 @@ function buildVisibilityExpr(
 export function writeVisibilityCondition(
   def: ControlDefinition,
   condition: SimpleVisibilityCondition | undefined,
-): Pick<ControlDefinition, "scripts" | "dynamic"> {
+): Pick<ControlDefinition, "dynamic"> & {
+  $scripts?: Record<string, EntityExpression>;
+} {
   // Remove legacy dynamic Visible entries
   const nonVisible = (def.dynamic ?? []).filter(
     (d) => d.type !== DynamicPropertyType.Visible,
   );
   const cleanDynamic = nonVisible.length > 0 ? nonVisible : null;
 
-  // Build new scripts, removing hidden if no condition
-  const { hidden, ...otherScripts } = def.scripts ?? {};
-  const scripts = condition
+  // Build new $scripts, removing hidden if no condition
+  const { hidden, ...otherScripts } = (def as any)["$scripts"] ?? {};
+  const newScripts = condition
     ? { ...otherScripts, hidden: notExpr(buildVisibilityExpr(condition)) }
     : Object.keys(otherScripts).length > 0
       ? otherScripts
-      : null;
+      : undefined;
 
-  return { scripts, dynamic: cleanDynamic };
+  return { dynamic: cleanDynamic, $scripts: newScripts };
 }

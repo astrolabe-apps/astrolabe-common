@@ -1357,7 +1357,6 @@ export interface ControlDefinitionForm {
   placement: string | null;
   children: ControlDefinitionForm[] | null;
   noSelection: boolean | null;
-  scripts: any | null;
   style: any | null;
   layoutStyle: any | null;
   allowedOptions: any | null;
@@ -1480,10 +1479,6 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     type: FieldType.Bool,
     defaultValue: false,
     displayName: "No Selection",
-  }),
-  scripts: makeScalarField({
-    type: FieldType.Any,
-    displayName: "Scripts",
   }),
   style: makeScalarField({
     type: FieldType.Any,

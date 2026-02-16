@@ -35,7 +35,6 @@ import {
 import expressionFormChildren from "../ExpressionForm.json";
 
 export interface ScriptEditContextValue {
-  definitionControl: Control<ControlDefinition>;
   allFields: SchemaField[];
   renderer: FormRenderer;
   schemaNode: SchemaNode;
@@ -56,16 +55,19 @@ const resolvedChildren = addMissingControlsForSchema(
 const expressionFormTree = createFormTree(resolvedChildren);
 
 function ScriptExpressionDialog({
-  fieldPath,
+  fieldName,
+  parentControl,
   close,
 }: {
-  fieldPath: string;
+  fieldName: string;
+  parentControl: Control<any>;
   close: () => void;
 }) {
   const ctx = useContext(ScriptEditContext)!;
-  const currentExpr = ctx.definitionControl.current.value.scripts?.[
-    fieldPath
-  ] as EntityExpression | undefined;
+  const parentValue = parentControl.current.value;
+  const currentExpr = parentValue?.["$scripts"]?.[fieldName] as
+    | EntityExpression
+    | undefined;
 
   const editControl = useControl<Partial<EntityExpression>>(currentExpr ?? {});
 
@@ -74,35 +76,40 @@ function ScriptExpressionDialog({
     [editControl],
   );
 
-  const scriptsControl = ctx.definitionControl.fields.scripts;
-
-  function setScripts(scripts: Record<string, EntityExpression>) {
-    const hasKeys = Object.keys(scripts).length > 0;
-    scriptsControl.value = hasKeys ? scripts : null;
-  }
-
   function save() {
     const value = editControl.current.value;
-    const newScripts = { ...ctx.definitionControl.current.value.scripts };
+    const current = parentControl.current.value;
+    const currentScripts = { ...(current?.["$scripts"] ?? {}) };
     if (value.type) {
-      newScripts[fieldPath] = value as EntityExpression;
+      currentScripts[fieldName] = value as EntityExpression;
     } else {
-      delete newScripts[fieldPath];
+      delete currentScripts[fieldName];
     }
-    setScripts(newScripts);
+    const hasKeys = Object.keys(currentScripts).length > 0;
+    parentControl.value = {
+      ...current,
+      $scripts: hasKeys ? currentScripts : undefined,
+    };
     close();
   }
 
   function remove() {
-    const newScripts = { ...ctx.definitionControl.current.value.scripts };
-    delete newScripts[fieldPath];
-    setScripts(newScripts);
+    const current = parentControl.current.value;
+    const currentScripts = { ...(current?.["$scripts"] ?? {}) };
+    delete currentScripts[fieldName];
+    const hasKeys = Object.keys(currentScripts).length > 0;
+    parentControl.value = {
+      ...current,
+      $scripts: hasKeys ? currentScripts : undefined,
+    };
     close();
   }
 
   return (
     <>
-      <h3 className="text-lg font-semibold mb-4">Edit Script: {fieldPath}</h3>
+      <h3 className="text-lg font-semibold mb-4">
+        Edit Script: {fieldName}
+      </h3>
       <div className="mb-4">
         <RenderForm
           data={dataNode}
@@ -137,14 +144,21 @@ function ScriptExpressionDialog({
   );
 }
 
-function ScriptButton({ fieldPath }: { fieldPath: string }) {
+function ScriptButton({
+  fieldName,
+  parentControl,
+}: {
+  fieldName: string;
+  parentControl: Control<any>;
+}) {
   const ctx = useContext(ScriptEditContext);
   const [isOpen, setIsOpen] = useState(false);
   if (!ctx) return null;
 
-  const currentExpr = ctx.definitionControl.current.value.scripts?.[
-    fieldPath
-  ] as EntityExpression | undefined;
+  const parentValue = parentControl.current.value;
+  const currentExpr = parentValue?.["$scripts"]?.[fieldName] as
+    | EntityExpression
+    | undefined;
   const hasScript = !!currentExpr;
 
   return (
@@ -166,7 +180,11 @@ function ScriptButton({ fieldPath }: { fieldPath: string }) {
         <Modal className="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full">
           <Dialog className="outline-none">
             {({ close }) => (
-              <ScriptExpressionDialog fieldPath={fieldPath} close={close} />
+              <ScriptExpressionDialog
+                fieldName={fieldName}
+                parentControl={parentControl}
+                close={close}
+              />
             )}
           </Dialog>
         </Modal>
@@ -196,12 +214,23 @@ export function scriptAdjustLayout(
   const dataNode = context.dataNode;
   if (!dataNode) return layout;
 
-  const fieldPath = getJsonPath(dataNode).join(".");
+  const jsonPath = getJsonPath(dataNode);
+  const fieldPath = jsonPath.join(".");
   if (!resolveFieldPath(fieldPath, controlDefinitionSchemaNode)) return layout;
+
+  // The field name is the last segment of the path
+  const fieldName = String(jsonPath[jsonPath.length - 1]);
+  // The parent control is the control for the parent object that owns this field
+  const parentControl = dataNode.parent
+    ? dataNode.parent.control
+    : dataNode.control;
 
   const adornment = {
     priority: 0,
-    apply: appendMarkup("labelEnd", <ScriptButton fieldPath={fieldPath} />),
+    apply: appendMarkup(
+      "labelEnd",
+      <ScriptButton fieldName={fieldName} parentControl={parentControl} />,
+    ),
   };
   return {
     ...layout,

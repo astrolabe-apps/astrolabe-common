@@ -35,8 +35,12 @@ import {
 import { ChildNodeSpec, ChildResolverFunc } from "./resolveChildren";
 import { setupValidation } from "./validators";
 import { groupedControl } from "./controlBuilder";
-import { ControlDefinitionScriptFields } from "./controlDefinitionSchemas";
-import { createScriptedProxy, type EvalExpr } from "./scriptedProxy";
+import { ControlDefinitionSchema } from "./schemaSchemas";
+import {
+  createScriptedProxy,
+  type EvalExpr,
+  type ScriptProvider,
+} from "./scriptedProxy";
 export type { EvalExpr } from "./scriptedProxy";
 
 export type VariablesFunc = (
@@ -104,81 +108,86 @@ export interface FormStateNode extends FormStateBase, FormNodeOptions {
   setForceDisabled(forceDisable: boolean): void;
 }
 /**
- * Converts legacy `dynamic[]` entries to the new `scripts` format,
- * then merges with any explicit `scripts` entries (which take precedence).
+ * Build a Map from object identity to legacy scripts derived from `dynamic[]`.
+ * This avoids spreading/copying the definition or its nested objects.
  */
-export function getMergedScripts(
+function buildLegacyScripts(
   def: ControlDefinition,
-): Record<string, EntityExpression> {
-  const scripts: Record<string, EntityExpression> = {};
+): Map<any, Record<string, EntityExpression>> {
+  const map = new Map<any, Record<string, EntityExpression>>();
+  if (!def.dynamic?.length) return map;
 
-  // Convert legacy dynamic[] entries
-  if (def.dynamic) {
-    for (const dp of def.dynamic) {
-      if (!dp.expr?.type) continue;
-      switch (dp.type) {
-        case DynamicPropertyType.Visible:
-          // Visible inverts → hidden with Not wrapper
-          scripts["hidden"] = {
-            type: ExpressionType.Not,
-            expression: dp.expr,
-          } as EntityExpression;
-          break;
-        case DynamicPropertyType.Readonly:
-          scripts["readonly"] = dp.expr;
-          break;
-        case DynamicPropertyType.Disabled:
-          scripts["disabled"] = dp.expr;
-          break;
-        case DynamicPropertyType.Label:
-          scripts["title"] = dp.expr;
-          break;
-        case DynamicPropertyType.DefaultValue:
-          scripts["defaultValue"] = dp.expr;
-          break;
-        case DynamicPropertyType.ActionData:
-          scripts["actionData"] = dp.expr;
-          break;
-        case DynamicPropertyType.Style:
-          scripts["style"] = dp.expr;
-          break;
-        case DynamicPropertyType.LayoutStyle:
-          scripts["layoutStyle"] = dp.expr;
-          break;
-        case DynamicPropertyType.AllowedOptions:
-          scripts["allowedOptions"] = dp.expr;
-          break;
-        case DynamicPropertyType.Display:
-          // Map to displayData.text or displayData.html based on display type
-          if (isDisplayControl(def)) {
-            if (isTextDisplay(def.displayData)) {
-              scripts["displayData.text"] = dp.expr;
-            } else if (isHtmlDisplay(def.displayData)) {
-              scripts["displayData.html"] = dp.expr;
-            }
+  const rootScripts: Record<string, EntityExpression> = {};
+
+  for (const dp of def.dynamic) {
+    if (!dp.expr?.type) continue;
+    switch (dp.type) {
+      case DynamicPropertyType.Visible:
+        rootScripts["hidden"] = {
+          type: ExpressionType.Not,
+          expression: dp.expr,
+        } as EntityExpression;
+        break;
+      case DynamicPropertyType.Readonly:
+        rootScripts["readonly"] = dp.expr;
+        break;
+      case DynamicPropertyType.Disabled:
+        rootScripts["disabled"] = dp.expr;
+        break;
+      case DynamicPropertyType.Label:
+        rootScripts["title"] = dp.expr;
+        break;
+      case DynamicPropertyType.DefaultValue:
+        rootScripts["defaultValue"] = dp.expr;
+        break;
+      case DynamicPropertyType.ActionData:
+        rootScripts["actionData"] = dp.expr;
+        break;
+      case DynamicPropertyType.Style:
+        rootScripts["style"] = dp.expr;
+        break;
+      case DynamicPropertyType.LayoutStyle:
+        rootScripts["layoutStyle"] = dp.expr;
+        break;
+      case DynamicPropertyType.AllowedOptions:
+        rootScripts["allowedOptions"] = dp.expr;
+        break;
+      case DynamicPropertyType.Display:
+        if (isDisplayControl(def)) {
+          if (isTextDisplay(def.displayData) && def.displayData) {
+            const existing = map.get(def.displayData) ?? {};
+            existing["text"] = dp.expr;
+            map.set(def.displayData, existing);
+          } else if (isHtmlDisplay(def.displayData) && def.displayData) {
+            const existing = map.get(def.displayData) ?? {};
+            existing["html"] = dp.expr;
+            map.set(def.displayData, existing);
           }
-          break;
-        case DynamicPropertyType.GridColumns:
-          // Map to groupOptions.columns or renderOptions.groupOptions.columns
-          if (isGroupControl(def)) {
-            scripts["groupOptions.columns"] = dp.expr;
-          } else if (
-            isDataControl(def) &&
-            isDataGroupRenderer(def.renderOptions)
-          ) {
-            scripts["renderOptions.groupOptions.columns"] = dp.expr;
-          }
-          break;
-      }
+        }
+        break;
+      case DynamicPropertyType.GridColumns:
+        if (isGroupControl(def) && def.groupOptions) {
+          const existing = map.get(def.groupOptions) ?? {};
+          existing["columns"] = dp.expr;
+          map.set(def.groupOptions, existing);
+        } else if (
+          isDataControl(def) &&
+          isDataGroupRenderer(def.renderOptions) &&
+          def.renderOptions.groupOptions
+        ) {
+          const existing = map.get(def.renderOptions.groupOptions) ?? {};
+          existing["columns"] = dp.expr;
+          map.set(def.renderOptions.groupOptions, existing);
+        }
+        break;
     }
   }
 
-  // Explicit scripts take precedence
-  if (def.scripts) {
-    Object.assign(scripts, def.scripts);
+  if (Object.keys(rootScripts).length > 0) {
+    map.set(def, rootScripts);
   }
 
-  return scripts;
+  return map;
 }
 
 export function createEvaluatedDefinition(
@@ -186,13 +195,18 @@ export function createEvaluatedDefinition(
   evalExpr: EvalExpr,
   scope: CleanupScope,
 ): ControlDefinition {
-  const scripts = getMergedScripts(def);
+  const legacyMap = buildLegacyScripts(def);
+  const getScripts: ScriptProvider = (target) => {
+    const explicit = target?.["$scripts"] ?? {};
+    const legacy = legacyMap.get(target) ?? {};
+    return { ...legacy, ...explicit };
+  };
   const { proxy } = createScriptedProxy(
     def,
-    scripts,
-    ControlDefinitionScriptFields,
+    ControlDefinitionSchema,
     evalExpr,
     scope,
+    getScripts,
   );
 
   return proxy;

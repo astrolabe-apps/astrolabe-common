@@ -87,18 +87,25 @@ public static class DynamicPropertyHelpers
     }
 
     /// <summary>
-    /// Finds the expression for a given script key, checking Scripts first
-    /// then falling back to legacy Dynamic.
+    /// Finds the expression for a given script key, checking $scripts (from Extensions)
+    /// first then falling back to legacy Dynamic.
     /// </summary>
     public static EntityExpression? FindScriptExpression(
         ControlDefinition definition,
         string scriptKey,
         DynamicPropertyType? legacyType = null)
     {
-        if (definition.Scripts != null &&
-            definition.Scripts.TryGetValue(scriptKey, out var scriptExpr))
+        if (definition.Extensions != null &&
+            definition.Extensions.TryGetValue("$scripts", out var scriptsObj) &&
+            scriptsObj is JsonElement scriptsElement &&
+            scriptsElement.ValueKind == JsonValueKind.Object &&
+            scriptsElement.TryGetProperty(scriptKey, out var exprElement))
         {
-            return scriptExpr;
+            var expr = JsonSerializer.Deserialize<EntityExpression>(exprElement.GetRawText());
+            if (expr != null)
+            {
+                return expr;
+            }
         }
         if (legacyType != null)
         {

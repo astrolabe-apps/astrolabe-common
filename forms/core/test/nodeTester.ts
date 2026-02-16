@@ -87,8 +87,8 @@ export function withScript(
 ): ControlDefinition {
   return {
     ...c,
-    scripts: { ...c.scripts, [key]: expr ?? { type: "Anything" } },
-  };
+    ["$scripts"]: { ...(c as any)["$scripts"], [key]: expr ?? { type: "Anything" } },
+  } as ControlDefinition;
 }
 
 export function notNullPromise<A>(f: () => A | null | undefined) {
