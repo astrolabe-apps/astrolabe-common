@@ -164,7 +164,10 @@ describe("validator types", () => {
           );
 
           const value = data[schema.field];
-          expect(state.valid).toBe(value >= minDate && value <= maxDate);
+          const valueMs = new Date(value).getTime();
+          const minMs = new Date(minDate).getTime();
+          const maxMs = new Date(maxDate).getTime();
+          expect(state.valid).toBe(valueMs >= minMs && valueMs <= maxMs);
         },
       ),
     );

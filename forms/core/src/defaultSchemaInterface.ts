@@ -16,7 +16,7 @@ export class DefaultSchemaInterface implements SchemaInterface {
     protected boolStrings: [string, string] = ["No", "Yes"],
     protected parseDateTime: (s: string) => number = (s) => {
       try {
-        return pdt(s).toDate("UTC").getTime();
+        return pdt(s.replace(/Z$/, "")).toDate("UTC").getTime();
       } catch (e) {
         return Number.NaN;
       }
