@@ -385,11 +385,15 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
         name: "UUID",
         value: "UUID",
       },
+      {
+        name: "Not",
+        value: "Not",
+      },
     ],
   }),
   expression: makeScalarField({
     type: FieldType.String,
-    onlyForTypes: ["Jsonata"],
+    onlyForTypes: ["Jsonata", "Not"],
     notNullable: true,
     required: true,
     displayName: "Expression",

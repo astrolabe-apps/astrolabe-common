@@ -111,18 +111,35 @@ public static class ReactiveExpressionExtensions
         ControlEditor editor,
         Func<object?, object?>? coerce = null)
     {
+        // Unwrap NotExpression at this level so it works with any evaluator
+        var actualExpr = expression;
+        var actualCoerce = coerce;
+        while (actualExpr is NotExpression notExpr)
+        {
+            var prevCoerce = actualCoerce;
+            actualCoerce = prevCoerce != null
+                ? r => prevCoerce(Negate(r))
+                : Negate;
+            actualExpr = notExpr.Expression;
+        }
+
         // Evaluate expression with callback that updates the target control
         return ReactiveExpressionEvaluators.Evaluate(
-            expression,
+            actualExpr,
             context,
             result =>
             {
                 // Apply optional coercion
-                var finalResult = coerce != null ? coerce(result) : result;
+                var finalResult = actualCoerce != null ? actualCoerce(result) : result;
 
                 // Update the target control with the result
                 editor.SetValue(targetControl, finalResult);
             }
         );
+    }
+
+    private static object? Negate(object? value)
+    {
+        return value is bool b ? !b : value;
     }
 }
