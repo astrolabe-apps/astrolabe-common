@@ -32,7 +32,7 @@ import { SchemaFieldEditor } from "./views/SchemaFieldEditor";
 import { createClassSelectionRenderer } from "./renderer/ClassSelectionRenderer";
 import {
   ScriptEditContext,
-  scriptAdjustLayout,
+  createScriptAdjustLayout,
 } from "./components/ScriptLabelRenderer";
 
 type ExtensionTypeFilterMap = { [key: string]: (n: SchemaNode) => boolean };
@@ -101,12 +101,12 @@ export function FormControlEditor({
     renderer,
     {
       schemaInterface,
-      adjustLayout: scriptAdjustLayout,
+      adjustLayout: createScriptAdjustLayout(editorFields),
     },
     editorNode,
   );
   return (
-    <ScriptEditContext.Provider value={{ allFields, renderer, schemaNode: controlNode.schema }}>
+    <ScriptEditContext.Provider value={{ allFields, renderer, schemaNode: controlNode.schema, controlDefinitionSchema: editorFields }}>
       <RenderEditor />
     </ScriptEditContext.Provider>
   );

@@ -43,6 +43,7 @@ import {
   SchemaDataNode,
   SchemaField,
   SchemaInterface,
+  SchemaNode,
   ValidatorType,
 } from "@astroapps/forms-core";
 import {
@@ -248,6 +249,8 @@ export interface FormRenderer {
   renderLabelText: (props: ReactNode) => ReactNode;
 
   html: HtmlComponents;
+
+  controlDefinitionSchema?: SchemaNode;
 
   resolveChildren(c: FormStateNode): ChildNodeSpec[];
 }
@@ -491,6 +494,7 @@ export interface ControlRenderOptions extends ControlClasses {
   stateKey?: string;
   schemaInterface?: SchemaInterface;
   variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
+  controlDefinitionSchema?: SchemaNode;
 }
 
 export function defaultDataProps(

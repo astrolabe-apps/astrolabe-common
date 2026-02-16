@@ -38,6 +38,7 @@ export interface ScriptEditContextValue {
   allFields: SchemaField[];
   renderer: FormRenderer;
   schemaNode: SchemaNode;
+  controlDefinitionSchema: SchemaNode;
 }
 
 export const ScriptEditContext = createContext<
@@ -46,7 +47,6 @@ export const ScriptEditContext = createContext<
 
 const schemaLookup = createSchemaLookup(ControlDefinitionSchemaMap);
 const expressionSchemaNode = schemaLookup.getSchema("EntityExpression");
-const controlDefinitionSchemaNode = schemaLookup.getSchema("ControlDefinition");
 
 const resolvedChildren = addMissingControlsForSchema(
   expressionSchemaNode,
@@ -207,33 +207,35 @@ function resolveFieldPath(path: string, schema: SchemaNode): boolean {
   return true;
 }
 
-export function scriptAdjustLayout(
-  context: ControlDataContext,
-  layout: ControlLayoutProps,
-): ControlLayoutProps {
-  const dataNode = context.dataNode;
-  if (!dataNode) return layout;
+export function createScriptAdjustLayout(controlDefinitionSchema: SchemaNode) {
+  return function scriptAdjustLayout(
+    context: ControlDataContext,
+    layout: ControlLayoutProps,
+  ): ControlLayoutProps {
+    const dataNode = context.dataNode;
+    if (!dataNode) return layout;
 
-  const jsonPath = getJsonPath(dataNode);
-  const fieldPath = jsonPath.join(".");
-  if (!resolveFieldPath(fieldPath, controlDefinitionSchemaNode)) return layout;
+    const jsonPath = getJsonPath(dataNode);
+    const fieldPath = jsonPath.join(".");
+    if (!resolveFieldPath(fieldPath, controlDefinitionSchema)) return layout;
 
-  // The field name is the last segment of the path
-  const fieldName = String(jsonPath[jsonPath.length - 1]);
-  // The parent control is the control for the parent object that owns this field
-  const parentControl = dataNode.parent
-    ? dataNode.parent.control
-    : dataNode.control;
+    // The field name is the last segment of the path
+    const fieldName = String(jsonPath[jsonPath.length - 1]);
+    // The parent control is the control for the parent object that owns this field
+    const parentControl = dataNode.parent
+      ? dataNode.parent.control
+      : dataNode.control;
 
-  const adornment = {
-    priority: 0,
-    apply: appendMarkup(
-      "labelEnd",
-      <ScriptButton fieldName={fieldName} parentControl={parentControl} />,
-    ),
-  };
-  return {
-    ...layout,
-    adornments: [...(layout.adornments ?? []), adornment],
+    const adornment = {
+      priority: 0,
+      apply: appendMarkup(
+        "labelEnd",
+        <ScriptButton fieldName={fieldName} parentControl={parentControl} />,
+      ),
+    };
+    return {
+      ...layout,
+      adornments: [...(layout.adornments ?? []), adornment],
+    };
   };
 }

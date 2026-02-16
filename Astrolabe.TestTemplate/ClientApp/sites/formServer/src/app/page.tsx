@@ -402,6 +402,7 @@ export default function Editor() {
             await new SearchStateClient().editControlDefinition(formId, {
               controls,
               config: null,
+              fields: [],
             });
           }
         }}

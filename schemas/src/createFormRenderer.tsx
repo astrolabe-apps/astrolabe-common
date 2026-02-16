@@ -27,6 +27,7 @@ import {
 } from "./renderers";
 import {
   ChildNodeSpec,
+  createSchemaLookup,
   DataRenderType,
   defaultResolveChildNodes,
   FormStateNode,
@@ -35,6 +36,11 @@ import {
   SchemaDataNode,
 } from "@astroapps/forms-core";
 import { ActionRendererProps } from "./types";
+import {
+  applyExtensionsToSchema,
+  ControlDefinitionExtension,
+} from "./controlBuilder";
+import { ControlDefinitionSchemaMap } from "@astroapps/forms-core";
 
 export function createFormRenderer(
   customRenderers: RendererRegistration[] = [],
@@ -55,6 +61,16 @@ export function createFormRenderer(
   const visibilityRenderer =
     allRenderers.find(isVisibilityRegistration) ?? defaultRenderers.visibility;
 
+  const extensions = allRenderers
+    .map((x) => x.schemaExtension)
+    .filter((x): x is ControlDefinitionExtension => x != null);
+  const controlDefinitionSchema =
+    extensions.length > 0
+      ? createSchemaLookup(
+          applyExtensionsToSchema(ControlDefinitionSchemaMap, extensions),
+        ).getSchema("ControlDefinition")
+      : undefined;
+
   const formRenderers: FormRenderer = {
     renderAction,
     renderData,
@@ -67,6 +83,7 @@ export function createFormRenderer(
     renderVisibility,
     renderLabelText,
     html: defaultRenderers.html,
+    controlDefinitionSchema,
     resolveChildren(c: FormStateNode): ChildNodeSpec[] {
       const def = c.definition;
       if (isDataControl(def)) {

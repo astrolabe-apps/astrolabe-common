@@ -4,7 +4,8 @@ import {
   createScopedEffect,
   updateComputedValue,
 } from "@astroapps/controls";
-import { isCompoundField, SchemaField, SchemaTags } from "./schemaField";
+import { isCompoundField, SchemaTags } from "./schemaField";
+import { SchemaNode } from "./schemaNode";
 import { createOverrideProxy } from "./overrideProxy";
 import { createScoped } from "./util";
 import { EntityExpression } from "./entityExpression";
@@ -34,18 +35,21 @@ interface OverrideLevel {
  * Recursively create override controls for non-collection compound fields.
  */
 function buildOverrideLevels(
-  schema: SchemaField[],
+  schemaNode: SchemaNode,
   scope: CleanupScope,
 ): OverrideLevel {
   const overrides = createScoped<Record<string, any>>(scope, {});
   const children = new Map<string, OverrideLevel>();
-  for (const field of schema) {
+  for (const field of schemaNode.getResolvedFields()) {
     if (
       isCompoundField(field) &&
       field.children?.length > 0 &&
       !field.collection
     ) {
-      children.set(field.field, buildOverrideLevels(field.children, scope));
+      children.set(
+        field.field,
+        buildOverrideLevels(schemaNode.createChildNode(field), scope),
+      );
     }
   }
   return { overrides, children };
@@ -58,16 +62,17 @@ function buildOverrideLevels(
 function evaluateScripts(
   target: any,
   level: OverrideLevel,
-  schema: SchemaField[],
+  schemaNode: SchemaNode,
   evalExpr: EvalExpr,
   getScripts: ScriptProvider,
 ): void {
   const scripts: Record<string, EntityExpression> = getScripts(target);
+  const resolvedFields = schemaNode.getResolvedFields();
 
   const scriptedKeys = new Set<string>();
 
   for (const [key, expr] of Object.entries(scripts)) {
-    const field = schema.find((f) => f.field === key);
+    const field = resolvedFields.find((f) => f.field === key);
     if (!field) continue;
 
     scriptedKeys.add(key);
@@ -87,7 +92,7 @@ function evaluateScripts(
 
   // For ScriptNullInit fields with no script, init the override to the coerced
   // static value so the proxy doesn't fall through to raw undefined/null.
-  for (const field of schema) {
+  for (const field of resolvedFields) {
     if (
       hasSchemaTag(field, SchemaTags.ScriptNullInit) &&
       !scriptedKeys.has(field.field)
@@ -111,6 +116,37 @@ function evaluateScripts(
 }
 
 /**
+ * Check if an element or any of its nested compound children have scripts.
+ */
+function hasAnyScripts(
+  target: any,
+  schemaNode: SchemaNode,
+  getScripts: ScriptProvider,
+): boolean {
+  if (target == null) return false;
+  const scripts = getScripts(target);
+  if (scripts && typeof scripts === "object" && Object.keys(scripts).length > 0)
+    return true;
+  for (const field of schemaNode.getResolvedFields()) {
+    if (!isCompoundField(field) || !field.children?.length) continue;
+    const childNode = schemaNode.createChildNode(field);
+    const childTarget = target[field.field];
+    if (field.collection) {
+      if (
+        Array.isArray(childTarget) &&
+        childTarget.some((elem: any) =>
+          hasAnyScripts(elem, childNode, getScripts),
+        )
+      )
+        return true;
+    } else {
+      if (hasAnyScripts(childTarget, childNode, getScripts)) return true;
+    }
+  }
+  return false;
+}
+
+/**
  * Recursively wire updateComputedValue for compound fields and evaluate their $scripts.
  * For non-collection compound fields, creates an override proxy for the nested object.
  * For collection compound fields, maps each array element through createScriptedProxy.
@@ -118,14 +154,15 @@ function evaluateScripts(
 function wireProxies(
   target: any,
   level: OverrideLevel,
-  schema: SchemaField[],
+  schemaNode: SchemaNode,
   evalExpr: EvalExpr,
   scope: CleanupScope,
   getScripts: ScriptProvider,
 ): void {
-  for (const field of schema) {
+  for (const field of schemaNode.getResolvedFields()) {
     if (!isCompoundField(field) || !field.children?.length) continue;
 
+    const childNode = schemaNode.createChildNode(field);
     const parentFields = level.overrides.fields as Record<
       string,
       Control<any>
@@ -138,16 +175,10 @@ function wireProxies(
         const arr = target?.[field.field];
         if (!Array.isArray(arr)) return arr;
         return arr.map((elem: any) => {
-          const elemScripts = getScripts(elem);
-          if (
-            !elemScripts ||
-            typeof elemScripts !== "object" ||
-            Object.keys(elemScripts).length === 0
-          )
-            return elem;
+          if (!hasAnyScripts(elem, childNode, getScripts)) return elem;
           return createScriptedProxy(
             elem,
-            field.children,
+            childNode,
             evalExpr,
             scope,
             getScripts,
@@ -169,7 +200,7 @@ function wireProxies(
       evaluateScripts(
         childTarget,
         childLevel,
-        field.children,
+        childNode,
         evalExpr,
         getScripts,
       );
@@ -178,7 +209,7 @@ function wireProxies(
       wireProxies(
         childTarget ?? {},
         childLevel,
-        field.children,
+        childNode,
         evalExpr,
         scope,
         getScripts,
@@ -188,21 +219,21 @@ function wireProxies(
 }
 
 /**
- * Build an override/proxy hierarchy automatically from any SchemaField[],
+ * Build an override/proxy hierarchy automatically from any SchemaNode,
  * reading `$scripts` from the target object at each level.
  */
 export function createScriptedProxy<T extends object>(
   target: T,
-  schema: SchemaField[],
+  schemaNode: SchemaNode,
   evalExpr: EvalExpr,
   scope: CleanupScope,
   getScripts: ScriptProvider = defaultScriptProvider,
 ): { proxy: T; rootOverrides: Control<Record<string, any>> } {
-  const root = buildOverrideLevels(schema, scope);
-  wireProxies(target, root, schema, evalExpr, scope, getScripts);
+  const root = buildOverrideLevels(schemaNode, scope);
+  wireProxies(target, root, schemaNode, evalExpr, scope, getScripts);
 
   // Evaluate root-level $scripts
-  evaluateScripts(target, root, schema, evalExpr, getScripts);
+  evaluateScripts(target, root, schemaNode, evalExpr, getScripts);
 
   return {
     proxy: createOverrideProxy(target, root.overrides),

@@ -96,12 +96,28 @@
                 "renderOptions": {
                   "type": "Checkbox"
                 }
+              },
+              {
+                "type": "Data",
+                "field": "hidden",
+                "renderOptions": {
+                  "type": "Checkbox"
+                },
+                "title": "Hidden"
+              },
+              {
+                "type": "Data",
+                "title": "No Selection",
+                "field": "noSelection",
+                "renderOptions": {
+                  "type": "Checkbox"
+                }
               }
             ],
             "groupOptions": {
-              "type": "Flex",
+              "type": "Grid",
               "hideTitle": true,
-              "gap": "3em"
+              "columns": 3
             }
           },
           {

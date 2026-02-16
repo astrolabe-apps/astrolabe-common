@@ -35,7 +35,8 @@ import {
 import { ChildNodeSpec, ChildResolverFunc } from "./resolveChildren";
 import { setupValidation } from "./validators";
 import { groupedControl } from "./controlBuilder";
-import { ControlDefinitionSchema } from "./schemaSchemas";
+import { ControlDefinitionSchemaMap } from "./schemaSchemas";
+import { createSchemaLookup, SchemaNode } from "./schemaNode";
 import {
   createScriptedProxy,
   type EvalExpr,
@@ -58,6 +59,7 @@ export interface FormGlobalOptions {
   resolveChildren(c: FormStateNode): ChildNodeSpec[];
   runAsync: (af: () => void) => void;
   clearHidden: boolean;
+  controlDefinitionSchema?: SchemaNode;
 }
 
 export interface ResolvedDefinition {
@@ -190,10 +192,15 @@ function buildLegacyScripts(
   return map;
 }
 
+const DefaultControlDefinitionSchemaNode = createSchemaLookup(
+  ControlDefinitionSchemaMap,
+).getSchema("ControlDefinition");
+
 export function createEvaluatedDefinition(
   def: ControlDefinition,
   evalExpr: EvalExpr,
   scope: CleanupScope,
+  schema: SchemaNode = DefaultControlDefinitionSchemaNode,
 ): ControlDefinition {
   const legacyMap = buildLegacyScripts(def);
   const getScripts: ScriptProvider = (target) => {
@@ -203,7 +210,7 @@ export function createEvaluatedDefinition(
   };
   const { proxy } = createScriptedProxy(
     def,
-    ControlDefinitionSchema,
+    schema,
     evalExpr,
     scope,
     getScripts,
@@ -240,6 +247,7 @@ export function createFormStateNode(
     runAsync: options.runAsync,
     resolveChildren: options.resolveChildren,
     clearHidden: options.clearHidden,
+    controlDefinitionSchema: options.controlDefinitionSchema,
   });
   return new FormStateNodeImpl(
     "ROOT",
@@ -471,7 +479,9 @@ function initFormState(
 
   const { dataNode, readonly, disabled, visible } = base.fields;
 
-  const definition = createEvaluatedDefinition(def, evalExpr, scope);
+  const controlDefinitionSchema =
+    impl.globals.fields.controlDefinitionSchema.value ?? DefaultControlDefinitionSchemaNode;
+  const definition = createEvaluatedDefinition(def, evalExpr, scope, controlDefinitionSchema);
   rd.value = definition;
 
   updateComputedValue(dataNode, () => lookupDataNode(definition, parent));

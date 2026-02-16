@@ -771,6 +771,10 @@ export interface ControlDefinition {
     labelTextClass: string | null;
     placement: string | null;
     children: ControlDefinition[] | null;
+    noSelection: boolean | null;
+    style: { [key: string]: any; } | null;
+    layoutStyle: { [key: string]: any; } | null;
+    allowedOptions: any | null;
 
     [key: string]: any;
 }

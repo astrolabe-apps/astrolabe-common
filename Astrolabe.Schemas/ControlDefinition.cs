@@ -61,10 +61,13 @@ public abstract record ControlDefinition(
     [DefaultValue(false)]
     public bool? NoSelection { get; set; }
 
+    [SchemaTag(SchemaTags.NoControl)]
     public IDictionary<string, object?>? Style { get; set; }
 
+    [SchemaTag(SchemaTags.NoControl)]
     public IDictionary<string, object?>? LayoutStyle { get; set; }
 
+    [SchemaTag(SchemaTags.NoControl)]
     public object? AllowedOptions { get; set; }
 
     [JsonExtensionData]

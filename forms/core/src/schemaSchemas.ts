@@ -1483,14 +1483,17 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
   style: makeScalarField({
     type: FieldType.Any,
     displayName: "Style",
+    tags: ["_NoControl"],
   }),
   layoutStyle: makeScalarField({
     type: FieldType.Any,
     displayName: "Layout Style",
+    tags: ["_NoControl"],
   }),
   allowedOptions: makeScalarField({
     type: FieldType.Any,
     displayName: "Allowed Options",
+    tags: ["_NoControl"],
   }),
   field: makeScalarField({
     type: FieldType.String,

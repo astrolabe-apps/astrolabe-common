@@ -67,6 +67,8 @@ export function RenderForm({
     evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
     resolveChildren: renderer.resolveChildren,
     clearHidden: !!clearHidden,
+    controlDefinitionSchema:
+      options.controlDefinitionSchema ?? renderer.controlDefinitionSchema,
   };
   const state = useMemo(
     () =>
