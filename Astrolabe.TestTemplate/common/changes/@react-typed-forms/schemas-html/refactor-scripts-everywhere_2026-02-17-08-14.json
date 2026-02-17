@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas-html",
+      "comment": "Update for compatibility with @react-typed-forms/schemas breaking changes.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas-html"
+}

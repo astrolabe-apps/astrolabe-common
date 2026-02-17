@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas",
+      "comment": "BREAKING: Remove ResolvedDefinition.display/style/layoutStyle fields, remove DisplayRendererProps.display, change createEvaluatedDefinition signature, remove FormStateBaseImpl.allowedOptions, lazy children initialization via ensureChildren(), checkbox inline label rendering. Add schema form types from schemas-editor, withScripts/notExpr helpers, new ControlDefinition fields (noSelection, style, layoutStyle, allowedOptions), controlDefinitionSchema option.",
+      "type": "major"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas"
+}

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/forms-core",
+      "comment": "Add createScriptedProxy, ScriptProvider, and defaultScriptProvider for scripted definition proxy support. ",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/forms-core"
+}

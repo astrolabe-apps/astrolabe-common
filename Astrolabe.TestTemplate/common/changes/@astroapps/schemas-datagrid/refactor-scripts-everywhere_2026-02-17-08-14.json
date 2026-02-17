@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/schemas-datagrid",
+      "comment": "Update for compatibility with @react-typed-forms/schemas breaking changes.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@astroapps/schemas-datagrid"
+}
