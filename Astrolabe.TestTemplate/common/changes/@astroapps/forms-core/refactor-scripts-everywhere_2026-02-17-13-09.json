@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/forms-core",
+      "comment": "Clear child nodes when parent datanode changes",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@astroapps/forms-core"
+}

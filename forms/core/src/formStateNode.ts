@@ -491,8 +491,14 @@ function initFormState(
   const { dataNode, readonly, disabled, visible } = base.fields;
 
   const controlDefinitionSchema =
-    impl.globals.fields.controlDefinitionSchema.value ?? DefaultControlDefinitionSchemaNode;
-  const definition = createEvaluatedDefinition(def, evalExpr, scope, controlDefinitionSchema);
+    impl.globals.fields.controlDefinitionSchema.value ??
+    DefaultControlDefinitionSchemaNode;
+  const definition = createEvaluatedDefinition(
+    def,
+    evalExpr,
+    scope,
+    controlDefinitionSchema,
+  );
   rd.value = definition;
 
   updateComputedValue(dataNode, () => lookupDataNode(definition, parent));
@@ -621,10 +627,18 @@ export function combineVariables(
 
 function initChildren(formImpl: FormStateNodeImpl) {
   const childMap = new Map<any, Control<FormStateBaseImpl>>();
+  let lastParent: SchemaDataNode | undefined;
   createSyncEffect(() => {
     const { base, resolveChildren } = formImpl;
     const children = base.fields.children;
     const kids = resolveChildren(formImpl);
+    // If the parent data context changed, children hold stale parent references
+    // so we must recreate them rather than reusing from the cache.
+    const currentParent = base.fields.dataNode.value;
+    if (lastParent !== currentParent) {
+      childMap.clear();
+    }
+    lastParent = currentParent;
     const scope = base;
     const detached = updateElements(children, () =>
       kids.map(({ childKey, create }, childIndex) => {
