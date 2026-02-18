@@ -21,6 +21,7 @@ export type EvalExpr = <A>(
 
 export type ScriptProvider = (
   target: any,
+  path: string,
 ) => Record<string, EntityExpression>;
 
 export const defaultScriptProvider: ScriptProvider = (target) =>
@@ -40,7 +41,8 @@ function buildOverrideLevels(
 ): OverrideLevel {
   const overrides = createScoped<Record<string, any>>(scope, {});
   const children = new Map<string, OverrideLevel>();
-  for (const field of schemaNode.getResolvedFields()) {
+  const resolved = schemaNode.getResolvedFields();
+  for (const field of resolved) {
     if (
       isCompoundField(field) &&
       field.children?.length > 0 &&
@@ -65,8 +67,9 @@ function evaluateScripts(
   schemaNode: SchemaNode,
   evalExpr: EvalExpr,
   getScripts: ScriptProvider,
+  path: string,
 ): void {
-  const scripts: Record<string, EntityExpression> = getScripts(target);
+  const scripts: Record<string, EntityExpression> = getScripts(target, path);
   const resolvedFields = schemaNode.getResolvedFields();
 
   const scriptedKeys = new Set<string>();
@@ -122,9 +125,10 @@ function hasAnyScripts(
   target: any,
   schemaNode: SchemaNode,
   getScripts: ScriptProvider,
+  path: string,
 ): boolean {
   if (target == null) return false;
-  const scripts = getScripts(target);
+  const scripts = getScripts(target, path);
   if (scripts && typeof scripts === "object" && Object.keys(scripts).length > 0)
     return true;
   for (const field of schemaNode.getResolvedFields()) {
@@ -132,15 +136,18 @@ function hasAnyScripts(
     const childNode = schemaNode.createChildNode(field);
     const childTarget = target[field.field];
     if (field.collection) {
+      // Collection elements start a new proxy context
       if (
         Array.isArray(childTarget) &&
         childTarget.some((elem: any) =>
-          hasAnyScripts(elem, childNode, getScripts),
+          hasAnyScripts(elem, childNode, defaultScriptProvider, ""),
         )
       )
         return true;
     } else {
-      if (hasAnyScripts(childTarget, childNode, getScripts)) return true;
+      const childPath = path ? path + "." + field.field : field.field;
+      if (hasAnyScripts(childTarget, childNode, getScripts, childPath))
+        return true;
     }
   }
   return false;
@@ -158,6 +165,7 @@ function wireProxies(
   evalExpr: EvalExpr,
   scope: CleanupScope,
   getScripts: ScriptProvider,
+  path: string,
 ): void {
   for (const field of schemaNode.getResolvedFields()) {
     if (!isCompoundField(field) || !field.children?.length) continue;
@@ -170,18 +178,20 @@ function wireProxies(
     const fieldControl = parentFields[field.field];
 
     if (field.collection) {
-      // For collection compound fields, map each element through createScriptedProxy
+      // For collection compound fields, map each element through createScriptedProxy.
+      // Collection elements start a new proxy context with defaultScriptProvider.
       updateComputedValue(fieldControl, () => {
         const arr = target?.[field.field];
         if (!Array.isArray(arr)) return arr;
         return arr.map((elem: any) => {
-          if (!hasAnyScripts(elem, childNode, getScripts)) return elem;
+          if (!hasAnyScripts(elem, childNode, defaultScriptProvider, ""))
+            return elem;
           return createScriptedProxy(
             elem,
             childNode,
             evalExpr,
             scope,
-            getScripts,
+            defaultScriptProvider,
           ).proxy;
         });
       });
@@ -189,7 +199,7 @@ function wireProxies(
       const childLevel = level.children.get(field.field);
       if (!childLevel) continue;
       const childTarget = target?.[field.field];
-
+      const childPath = path ? path + "." + field.field : field.field;
       updateComputedValue(fieldControl, () =>
         childTarget != null
           ? createOverrideProxy(childTarget, childLevel.overrides)
@@ -203,6 +213,7 @@ function wireProxies(
         childNode,
         evalExpr,
         getScripts,
+        childPath,
       );
 
       // Recurse into deeper compound children
@@ -213,6 +224,7 @@ function wireProxies(
         evalExpr,
         scope,
         getScripts,
+        childPath,
       );
     }
   }
@@ -230,10 +242,10 @@ export function createScriptedProxy<T extends object>(
   getScripts: ScriptProvider = defaultScriptProvider,
 ): { proxy: T; rootOverrides: Control<Record<string, any>> } {
   const root = buildOverrideLevels(schemaNode, scope);
-  wireProxies(target, root, schemaNode, evalExpr, scope, getScripts);
+  wireProxies(target, root, schemaNode, evalExpr, scope, getScripts, "");
 
   // Evaluate root-level $scripts
-  evaluateScripts(target, root, schemaNode, evalExpr, getScripts);
+  evaluateScripts(target, root, schemaNode, evalExpr, getScripts, "");
 
   return {
     proxy: createOverrideProxy(target, root.overrides),

@@ -110,14 +110,14 @@ function ScriptExpressionDialog({
       <h3 className="text-lg font-semibold mb-4">
         Edit Script: {fieldName}
       </h3>
-      <div className="mb-4">
+      <div className="flex-1 overflow-y-auto mb-4">
         <RenderForm
           data={dataNode}
           form={expressionFormTree.rootNode}
           renderer={ctx.renderer}
         />
       </div>
-      <div className="flex gap-2 justify-end">
+      <div className="flex gap-2 justify-end flex-shrink-0">
         <button
           type="button"
           className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -177,8 +177,8 @@ function ScriptButton({
         {"\u{1D453}"}
       </Button>
       <ModalOverlay className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center">
-        <Modal className="bg-white rounded-lg shadow-xl p-6 max-w-lg w-full">
-          <Dialog className="outline-none">
+        <Modal className="bg-white rounded-lg shadow-xl p-6 w-[800px] h-[600px] flex flex-col">
+          <Dialog className="outline-none flex flex-col flex-1 overflow-hidden">
             {({ close }) => (
               <ScriptExpressionDialog
                 fieldName={fieldName}

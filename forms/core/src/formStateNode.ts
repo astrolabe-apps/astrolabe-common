@@ -110,13 +110,14 @@ export interface FormStateNode extends FormStateBase, FormNodeOptions {
   setForceDisabled(forceDisable: boolean): void;
 }
 /**
- * Build a Map from object identity to legacy scripts derived from `dynamic[]`.
- * This avoids spreading/copying the definition or its nested objects.
+ * Build a Map from schema field path to legacy scripts derived from `dynamic[]`.
+ * Uses path strings (e.g., "", "displayData", "renderOptions.groupOptions") as keys
+ * instead of object identity, so it works correctly with tracked/proxied values.
  */
 function buildLegacyScripts(
   def: ControlDefinition,
-): Map<any, Record<string, EntityExpression>> {
-  const map = new Map<any, Record<string, EntityExpression>>();
+): Map<string, Record<string, EntityExpression>> {
+  const map = new Map<string, Record<string, EntityExpression>>();
   if (!def.dynamic?.length) return map;
 
   const rootScripts: Record<string, EntityExpression> = {};
@@ -157,36 +158,36 @@ function buildLegacyScripts(
       case DynamicPropertyType.Display:
         if (isDisplayControl(def)) {
           if (isTextDisplay(def.displayData) && def.displayData) {
-            const existing = map.get(def.displayData) ?? {};
+            const existing = map.get("displayData") ?? {};
             existing["text"] = dp.expr;
-            map.set(def.displayData, existing);
+            map.set("displayData", existing);
           } else if (isHtmlDisplay(def.displayData) && def.displayData) {
-            const existing = map.get(def.displayData) ?? {};
+            const existing = map.get("displayData") ?? {};
             existing["html"] = dp.expr;
-            map.set(def.displayData, existing);
+            map.set("displayData", existing);
           }
         }
         break;
       case DynamicPropertyType.GridColumns:
         if (isGroupControl(def) && def.groupOptions) {
-          const existing = map.get(def.groupOptions) ?? {};
+          const existing = map.get("groupOptions") ?? {};
           existing["columns"] = dp.expr;
-          map.set(def.groupOptions, existing);
+          map.set("groupOptions", existing);
         } else if (
           isDataControl(def) &&
           isDataGroupRenderer(def.renderOptions) &&
           def.renderOptions.groupOptions
         ) {
-          const existing = map.get(def.renderOptions.groupOptions) ?? {};
+          const existing = map.get("renderOptions.groupOptions") ?? {};
           existing["columns"] = dp.expr;
-          map.set(def.renderOptions.groupOptions, existing);
+          map.set("renderOptions.groupOptions", existing);
         }
         break;
     }
   }
 
   if (Object.keys(rootScripts).length > 0) {
-    map.set(def, rootScripts);
+    map.set("", rootScripts);
   }
 
   return map;
@@ -203,9 +204,9 @@ export function createEvaluatedDefinition(
   schema: SchemaNode = DefaultControlDefinitionSchemaNode,
 ): ControlDefinition {
   const legacyMap = buildLegacyScripts(def);
-  const getScripts: ScriptProvider = (target) => {
+  const getScripts: ScriptProvider = (target, path) => {
     const explicit = target?.["$scripts"] ?? {};
-    const legacy = legacyMap.get(target) ?? {};
+    const legacy = legacyMap.get(path) ?? {};
     return { ...legacy, ...explicit };
   };
   const { proxy } = createScriptedProxy(
