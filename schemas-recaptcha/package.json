@@ -27,8 +27,8 @@
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^4.4.0",
-    "@react-typed-forms/schemas": "^16.0.0"
+    "@react-typed-forms/core": "workspace:^*",
+    "@react-typed-forms/schemas": "workspace:^*"
   },
   "dependencies": {
     "react-google-recaptcha": "^3.1.0",
@@ -36,8 +36,8 @@
   },
   "devDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^4.4.0",
-    "@react-typed-forms/schemas": "^17.0.0",
+    "@react-typed-forms/core": "workspace:^*",
+    "@react-typed-forms/schemas": "workspace:^*",
     "@types/react-google-recaptcha": "^2.1.9",
     "microbundle": "^0.15.1",
     "@react-typed-forms/transform": "^0.2.0",

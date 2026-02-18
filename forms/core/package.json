@@ -32,10 +32,10 @@
     "@internationalized/date": "^3.10.0"
   },
   "peerDependencies": {
-    "@astroapps/controls": "^1.4.0"
+    "@astroapps/controls": "workspace:^*"
   },
   "devDependencies": {
-    "@astroapps/controls": "^1.4.0",
+    "@astroapps/controls": "workspace:^*",
     "jest": "^29.7.0",
     "tsx": "^4.19.1",
     "fast-check": "^3.23.2",

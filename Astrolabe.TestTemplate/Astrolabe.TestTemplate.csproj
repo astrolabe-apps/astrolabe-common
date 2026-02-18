@@ -62,6 +62,10 @@
       <_ContentIncludedByDefault Remove="ClientApp\nativeapp\starter-base\package.json" />
       <_ContentIncludedByDefault Remove="ClientApp\nativeapp\starter-base\tsconfig.json" />
       <_ContentIncludedByDefault Remove="ClientApp\nativeapp\turbo.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\test\cypress\fixtures\example.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\test\package.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\test\src\FireInitial.json" />
+      <_ContentIncludedByDefault Remove="ClientApp\sites\test\tsconfig.json" />
     </ItemGroup>
     
 </Project>

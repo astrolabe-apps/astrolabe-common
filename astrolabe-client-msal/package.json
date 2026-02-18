@@ -30,8 +30,8 @@
     "@azure/msal-react": "^2.1.1"
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^4.0.0",
-    "@astroapps/client": "^2.0.1",
+    "@react-typed-forms/core": "workspace:^*",
+    "@astroapps/client": "workspace:^*",
     "react": "^18.2.0 || ^19"
   },
   "devDependencies": {

@@ -1,0 +1,12 @@
+packages:
+  - "core"
+  - "schemas"
+  - "schemas-*"
+  - "mui"
+  - "forms/*"
+  - "aria-*"
+  - "astrolabe-*"
+  - "Astrolabe.TestTemplate/ClientApp/sites/formServer"
+  - "Astrolabe.TestTemplate/ClientApp/schemas-rn-demo"
+  - "Astrolabe.TestTemplate/ClientApp/expoapp"
+  - "Astrolabe.TestTemplate/ClientApp/sites/test"

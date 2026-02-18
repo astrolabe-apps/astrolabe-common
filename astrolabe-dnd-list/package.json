@@ -19,10 +19,9 @@
   "publishConfig": {
     "access": "public"
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "peerDependencies": {
-    "@react-typed-forms/core": "^4.0.0",
+    "@react-typed-forms/core": "workspace:^*",
     "react": "^18.2.0 || ^19",
     "react-dnd": "^16.0.1"
   },

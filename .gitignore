@@ -82,5 +82,8 @@ common/autoinstallers/*/.npmrc
 
 *.tsbuildinfo
 
+# Turborepo
+.turbo
+
 *.DotSettings.user
 

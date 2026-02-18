@@ -20,7 +20,7 @@ export const renderer = createFormRenderer(
       ),
     },
     action: {
-      className: "border text-primary-600 p-3 border-neutral-400 font-bold",
+      buttonClass: "border text-primary-600 p-3 border-neutral-400 font-bold",
     },
     data: {
       ...defaultRnTailwindTheme.data,
@@ -44,13 +44,13 @@ export const renderer = createFormRenderer(
     },
     group: {
       ...defaultRnTailwindTheme.group,
-      defaultGridColumns: 1,
+      grid: { defaultColumns: 1 },
       defaultFlexGap: "1em",
     },
     adornment: {
       accordion: {
         className: "flex flex-row items-center gap-2 my-2 p-0",
-        titleClass: "cursor-pointer font-bold text-black",
+        titleTextClass: "cursor-pointer font-bold text-black",
         iconOpen: fontAwesomeIcon("chevron-up"),
         iconClosed: fontAwesomeIcon("chevron-down"),
       },

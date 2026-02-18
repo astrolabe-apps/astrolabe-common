@@ -25,8 +25,8 @@
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^4.4.0",
-    "@react-typed-forms/schemas": "^17.0.0"
+    "@react-typed-forms/core": "workspace:^*",
+    "@react-typed-forms/schemas": "workspace:^*"
   },
   "devDependencies": {
     "react": "^18.2.0 || ^19",

@@ -1,0 +1,47 @@
+{
+  "name": "astrolabe-common",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "dev": "turbo run dev",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "publish-packages": "turbo run build && changeset publish"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "@changesets/cli": "^2.27.0"
+  },
+  "packageManager": "pnpm@9.15.0",
+  "pnpm": {
+    "overrides": {
+      "caniuse-lite": "1.0.30001769",
+      "react-dnd": "16.0.1",
+      "react": "^19.0.0",
+      "react-dom": "^19.0.0",
+      "@types/react-dom": "^19.0.0",
+      "@types/react": "^19.0.0",
+      "@astroapps/forms-core": "workspace:*",
+      "@astroapps/client": "workspace:*",
+      "@astroapps/client-localusers": "workspace:*",
+      "@astroapps/controls": "workspace:*",
+      "@react-typed-forms/core": "workspace:*",
+      "@react-typed-forms/schemas": "workspace:*",
+      "@react-typed-forms/schemas-html": "workspace:*",
+      "@astroapps/aria-base": "workspace:*",
+      "@astroapps/aria-datepicker": "workspace:*",
+      "@astroapps/schemas-datepicker": "workspace:*",
+      "@astroapps/schemas-editor": "workspace:*",
+      "@astroapps/schemas-datagrid": "workspace:*",
+      "@astroapps/datagrid": "workspace:*",
+      "@astroapps/evaluator": "workspace:*",
+      "@astroapps/codemirror-evaluator": "workspace:*"
+    },
+    "patchedDependencies": {
+      "@mhsdesign/jit-browser-tailwindcss@0.4.2": "Astrolabe.TestTemplate/common/pnpm-patches/@mhsdesign__jit-browser-tailwindcss@0.4.2.patch"
+    }
+  }
+}

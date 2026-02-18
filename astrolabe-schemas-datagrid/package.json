@@ -30,19 +30,19 @@
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^4.0.0",
-    "@react-typed-forms/schemas": "^17.0.0",
+    "@react-typed-forms/core": "workspace:^*",
+    "@react-typed-forms/schemas": "workspace:^*",
     "@radix-ui/react-popover": "^1.0.7",
-    "@astroapps/datagrid": "^1.2.0",
-    "@astroapps/searchstate": "^2.0.0"
+    "@astroapps/datagrid": "workspace:^*",
+    "@astroapps/searchstate": "workspace:^*"
   },
   "devDependencies": {
     "react": "^18.2.0",
     "@radix-ui/react-popover": "^1.1.6",
-    "@astroapps/datagrid": "^1.2.0",
-    "@astroapps/searchstate": "^2.0.0",
-    "@react-typed-forms/core": "^4.4.0",
-    "@react-typed-forms/schemas": "^17.0.0",
+    "@astroapps/datagrid": "workspace:^*",
+    "@astroapps/searchstate": "workspace:^*",
+    "@react-typed-forms/core": "workspace:^*",
+    "@react-typed-forms/schemas": "workspace:^*",
     "@react-typed-forms/transform": "^0.2.0",
     "@babel/core": "^7.23.7",
     "@babel/cli": "^7.23.4",
