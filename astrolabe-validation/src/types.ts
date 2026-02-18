@@ -13,16 +13,16 @@ export interface Failure {
  * Validation metadata accumulated during rule evaluation.
  * Stored in ValueExpr.data and collected at the end.
  */
-export interface ValidationData {
+export type ValidationData = {
   failures: Failure[];
   message?: string;
   properties?: Record<string, unknown>;
-}
+};
 
 /**
  * Complete validation result for a single rule.
  */
-export interface EvaluatedRule {
+export type EvaluatedRule = {
   /** The data path that was validated */
   path: Path;
   /** The actual value at the path */
@@ -39,7 +39,7 @@ export interface EvaluatedRule {
   dependentData: Path[];
   /** Metadata properties (set via WithProperty) */
   properties: Record<string, unknown>;
-}
+};
 
 /**
  * Type guard to check if an object is ValidationData.

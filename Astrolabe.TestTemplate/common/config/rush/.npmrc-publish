@@ -20,4 +20,4 @@
 #
 
 //registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}
-//localhost:4873/:_authToken=${VERDACCIO_TOKEN}
+//192.168.50.43/:_authToken=${VERDACCIO_TOKEN}

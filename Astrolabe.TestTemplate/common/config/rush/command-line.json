@@ -19,14 +19,14 @@
        "incremental": true,
        "allowWarningsInSuccessfulBuild": true
      },
-     {
-       "commandKind": "bulk",
-       "name": "rebuild",
-       "summary": "Clean and rebuild all projects",
-       "enableParallelism": true,
-       "incremental": false,
-       "allowWarningsInSuccessfulBuild": true
-     },
+//     {
+//       "commandKind": "bulk",
+//       "name": "rebuild",
+//       "summary": "Clean and rebuild all projects",
+//       "enableParallelism": true,
+//       "incremental": false,
+//       "allowWarningsInSuccessfulBuild": true
+//     },
      {
        "commandKind": "bulk",
        "summary": "Watch for changes",

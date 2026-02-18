@@ -94,16 +94,12 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
 
   async function runJsonata(effect: AsyncEffect<any>, signal: AbortSignal) {
     const trackedVars = variables?.(effect.collectUsage);
+    const fullExpr = parsedJsonata.fields.fullExpr.current.value;
+    const data = trackedValue(rootData, effect.collectUsage);
     const evalResult = await parsedJsonata.fields.expr.value.evaluate(
-      trackedValue(rootData, effect.collectUsage),
+      data,
       trackedVars,
     );
-    // console.log(
-    //   rootData,
-    //   parsedJsonata.fields.fullExpr.current.value,
-    //   evalResult,
-    //   trackedVars,
-    // );
     collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 
