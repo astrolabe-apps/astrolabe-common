@@ -10,14 +10,14 @@
    *
    * See https://rushjs.io/pages/maintainer/build_cache/ for details about this experimental feature.
    */
-  "buildCacheEnabled": false,
+  "buildCacheEnabled": true,
 
   /**
    * (Required) Choose where project build outputs will be cached.
    *
    * Possible values: "local-only", "azure-blob-storage", "amazon-s3"
    */
-  "cacheProvider": "local-only",
+  "cacheProvider": "azure-blob-storage",
 
   /**
    * Setting this property overrides the cache entry ID.  If this property is set, it must contain
@@ -39,29 +39,29 @@
     /**
      * (Required) The name of the the Azure storage account to use for build cache.
      */
-    // "storageAccountName": "example",
+    "storageAccountName": "devstoreaccount1",
 
     /**
      * (Required) The name of the container in the Azure storage account to use for build cache.
      */
-    // "storageContainerName": "my-container",
+    "storageContainerName": "rush-build-cache",
 
     /**
      * The Azure environment the storage account exists in. Defaults to AzurePublicCloud.
      *
      * Possible values: "AzurePublicCloud", "AzureChina", "AzureGermany", "AzureGovernment"
      */
-    // "azureEnvironment": "AzurePublicCloud",
+    "azureEnvironment": "AzurePublicCloud",
 
     /**
      * An optional prefix for cache item blob names.
      */
-    // "blobPrefix": "my-prefix",
+    "blobPrefix": "office",
 
     /**
      * If set to true, allow writing to the cache. Defaults to false.
      */
-    // "isCacheWriteAllowed": true
+    "isCacheWriteAllowed": true
   },
 
   /**

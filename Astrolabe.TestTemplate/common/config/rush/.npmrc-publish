@@ -20,3 +20,7 @@
 #
 
 //registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}
+//192.168.50.43/:_authToken=${VERDACCIO_TOKEN}
+//192.168.50.43:80/:_authToken=${VERDACCIO_TOKEN}
+registry=https://registry.npmjs.org/
+@astroapps:registry=http://192.168.50.43:80
