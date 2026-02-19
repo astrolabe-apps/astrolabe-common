@@ -51,6 +51,14 @@
        "description": "Runs rush publish --include-all -b main --publish with XDG_CONFIG_HOME preserved so browser authentication works correctly",
        "shellCommand": "XDG_CONFIG_HOME=\"${XDG_CONFIG_HOME:-$HOME/.config}\" rush publish --include-all -b main --publish",
        "safeForSimultaneousRushProcesses": true
+     },
+     {
+       "commandKind": "global",
+       "name": "publish-prerelease",
+       "summary": "Publish pre-release packages to local Verdaccio registry",
+       "description": "Publishes all packages to the local Verdaccio registry (http://192.168.50.43) with a timestamped pre-release version and configurable dist-tag. Reverts package.json changes after publishing.",
+       "shellCommand": "bash common/scripts/publish-prerelease.sh",
+       "safeForSimultaneousRushProcesses": true
      }
     // {
     //   /**
@@ -223,6 +231,14 @@
    * For example, you might define a "--production" parameter for the "rush build" command.
    */
   "parameters": [
+     {
+       "parameterKind": "string",
+       "longName": "--tag",
+       "description": "The npm dist-tag for the pre-release packages (default: dev)",
+       "associatedCommands": ["publish-prerelease"],
+       "argumentName": "TAG",
+       "required": false
+     },
     // {
     //   /**
     //    * (Required) Determines the type of custom parameter.
