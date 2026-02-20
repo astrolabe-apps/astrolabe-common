@@ -205,7 +205,7 @@ function EditModeCanvas() {
               isRoot
             />
           </SortableContext>
-          <DragOverlay>
+          <DragOverlay dropAnimation={null}>
             {activeNode ? (
               <div
                 style={{

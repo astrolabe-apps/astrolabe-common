@@ -226,12 +226,11 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           ? {}
           : {
               transform: CSS.Transform.toString(adjustedTransform) || undefined,
-              transition: transition || undefined,
               opacity: isDragging ? 0.3 : undefined,
             }),
       }}
       {...mouseCapture}
-      className={className!}
+      className={className! + (!isRootNode ? " group/drag" : "")}
     >
       {!isRootNode && (
         <DragHandle attributes={attributes} listeners={listeners} />
@@ -269,6 +268,7 @@ function DragHandle({
       data-drag-handle
       {...attributes}
       {...listeners}
+      className="opacity-0 group-hover/drag:opacity-100"
       style={{
         position: "absolute",
         left: 2,
@@ -278,9 +278,12 @@ function DragHandle({
         padding: 4,
         display: "flex",
         alignItems: "center",
-        opacity: 0.4,
         color: "#7c6dd8",
+        backgroundColor: "white",
+        borderRadius: 4,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         zIndex: 1,
+        transition: "opacity 0.15s",
       }}
     >
       <svg
