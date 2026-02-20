@@ -7,6 +7,7 @@ import {
 } from "@react-typed-forms/core";
 import {
   ControlDefinition,
+  FormNode,
   isDataControl,
   isGroupControl,
   SchemaField,
@@ -122,7 +123,67 @@ export function useFieldActions(state: Control<BasicEditorState>) {
     [state],
   );
 
-  return { addField, deleteField, selectField };
+  const moveField = useCallback(
+    (sourceNodeId: string, targetContainerId: string, targetIndex: number) => {
+      const { formTree } = state.value;
+      if (!formTree) return;
+
+      // Find source node's parent and index within that parent.
+      // We capture the index during traversal because FormNode.definition
+      // is a trackedValue Proxy, so === comparison with raw array values fails.
+      let sourceParent: FormNode | undefined;
+      let sourceIndex = -1;
+      formTree.rootNode.visit((x) => {
+        const children = x.getUnresolvedChildNodes();
+        for (let i = 0; i < children.length; i++) {
+          if (children[i].id === sourceNodeId) {
+            sourceParent = x;
+            sourceIndex = i;
+            return true;
+          }
+        }
+        return undefined;
+      });
+      if (!sourceParent || sourceIndex < 0) return;
+
+      // Find target container node
+      const targetContainer =
+        targetContainerId === formTree.rootNode.id
+          ? formTree.rootNode
+          : formTree.rootNode.visit((x) =>
+              x.id === targetContainerId ? x : undefined,
+            );
+      if (!targetContainer) return;
+
+      const sourceChildren = formTree.getEditableChildren(sourceParent);
+      const targetChildren = formTree.getEditableChildren(targetContainer);
+      if (!sourceChildren || !targetChildren) return;
+
+      groupedChanges(() => {
+        if (sourceParent!.id === targetContainer.id) {
+          // Same container: reorder
+          const items = [...sourceChildren.value!];
+          const [item] = items.splice(sourceIndex, 1);
+          const adjustedIndex =
+            targetIndex > sourceIndex ? targetIndex - 1 : targetIndex;
+          items.splice(adjustedIndex, 0, item);
+          sourceChildren.value = items;
+        } else {
+          // Cross-container: remove from source, insert into target
+          const sourceItems = [...sourceChildren.value!];
+          const [item] = sourceItems.splice(sourceIndex, 1);
+          sourceChildren.value = sourceItems;
+          const targetItems = [...targetChildren.value!];
+          targetItems.splice(targetIndex, 0, item);
+          targetChildren.value = targetItems;
+        }
+      });
+
+    },
+    [state],
+  );
+
+  return { addField, deleteField, selectField, moveField };
 }
 
 function findInsertIndex(

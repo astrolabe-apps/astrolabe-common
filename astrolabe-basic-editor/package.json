@@ -24,6 +24,9 @@
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsx React --jsxImportSource react"
   },
   "peerDependencies": {
+    "@dnd-kit/core": "^6.0.8",
+    "@dnd-kit/sortable": "^7.0.2",
+    "@dnd-kit/utilities": "^3.2.1",
     "@react-typed-forms/core": "^4.4.2",
     "@react-typed-forms/schemas": "^17.1.0",
     "@react-typed-forms/schemas-html": "^5.1.0",
@@ -33,6 +36,9 @@
     "clsx": "^2"
   },
   "devDependencies": {
+    "@dnd-kit/core": "^6.0.8",
+    "@dnd-kit/sortable": "^7.0.2",
+    "@dnd-kit/utilities": "^3.2.1",
     "@react-typed-forms/core": "^4.4.2",
     "@react-typed-forms/schemas": "^17.0.0",
     "@react-typed-forms/schemas-html": "^5.1.0",

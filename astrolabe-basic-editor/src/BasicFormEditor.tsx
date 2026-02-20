@@ -79,7 +79,8 @@ export function BasicFormEditor<A>({
     }
   }, [formId]);
 
-  const { addField, deleteField, selectField } = useFieldActions(state);
+  const { addField, deleteField, selectField, moveField } =
+    useFieldActions(state);
 
   async function handleSave() {
     const { formTree, formFields, config } = state.value;
@@ -101,6 +102,7 @@ export function BasicFormEditor<A>({
     addField,
     deleteField,
     selectField,
+    moveField,
   };
 
   const loaded = state.fields.loaded.value;

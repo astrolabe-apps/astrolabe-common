@@ -9,6 +9,11 @@ export interface BasicEditorContextValue {
   addField: (type: BasicFieldType) => void;
   deleteField: (fieldId: string) => void;
   selectField: (fieldId: string | undefined) => void;
+  moveField: (
+    sourceNodeId: string,
+    targetContainerId: string,
+    targetIndex: number,
+  ) => void;
 }
 
 const BasicEditorCtx = createContext<BasicEditorContextValue | null>(null);
