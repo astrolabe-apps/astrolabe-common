@@ -169,13 +169,20 @@ export function useFieldActions(state: Control<BasicEditorState>) {
           items.splice(adjustedIndex, 0, item);
           sourceChildren.value = items;
         } else {
-          // Cross-container: remove from source, insert into target
-          const sourceItems = [...sourceChildren.value!];
-          const [item] = sourceItems.splice(sourceIndex, 1);
-          sourceChildren.value = sourceItems;
-          const targetItems = [...targetChildren.value!];
+          // Cross-container: insert into target first, then remove from source.
+          // Order matters because setting sourceChildren.value triggers
+          // position-based element Control reuse (updateFromValue), which can
+          // shift which definition each element Control wraps. Inserting first
+          // ensures targetChildren still references the correct container.
+          const item = sourceChildren.value![sourceIndex];
+          const targetItems = [...(targetChildren.value ?? [])];
           targetItems.splice(targetIndex, 0, item);
           targetChildren.value = targetItems;
+          // Re-read source after target insert (childValueChange may have
+          // propagated back, updating the source array value in-place)
+          const sourceItems = [...sourceChildren.value!];
+          sourceItems.splice(sourceIndex, 1);
+          sourceChildren.value = sourceItems;
         }
       });
 

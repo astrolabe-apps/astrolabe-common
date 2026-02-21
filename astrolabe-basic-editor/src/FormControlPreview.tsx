@@ -11,7 +11,7 @@ import {
 import React, { HTMLAttributes, useMemo } from "react";
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useDroppable } from "@dnd-kit/core";
+import { useDroppable, useDndContext } from "@dnd-kit/core";
 import {
   ChildNodeSpec,
   ChildResolverFunc,
@@ -236,8 +236,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         <DragHandle attributes={attributes} listeners={listeners} />
       )}
       {child}
-      {isGroupNode && childIds.length === 0 && (
-        <EmptyGroupDropTarget containerId={node.id} />
+      {isGroupNode && (
+        <GroupDropTarget containerId={node.id} hasChildren={childIds.length > 0} />
       )}
     </div>
   );
@@ -303,16 +303,23 @@ function DragHandle({
   );
 }
 
-function EmptyGroupDropTarget({ containerId }: { containerId: string }) {
+function GroupDropTarget({ containerId, hasChildren }: { containerId: string; hasChildren: boolean }) {
+  const { active } = useDndContext();
+  const isDragActive = !!active;
   const { setNodeRef, isOver } = useDroppable({
-    id: `empty-${containerId}`,
-    data: { containerId, isEmptyContainer: true },
+    id: `drop-${containerId}`,
+    data: { containerId, isContainerDropZone: true },
   });
+
+  if (hasChildren && !isDragActive) {
+    return null;
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={{
-        minHeight: 40,
+        minHeight: hasChildren ? 24 : 40,
         border: "2px dashed",
         borderColor: isOver ? "#7c6dd8" : "#e2e8f0",
         borderRadius: 8,
@@ -321,7 +328,7 @@ function EmptyGroupDropTarget({ containerId }: { containerId: string }) {
         justifyContent: "center",
         color: "#94a3b8",
         fontSize: 12,
-        margin: "8px 0",
+        margin: hasChildren ? "4px 0" : "8px 0",
         transition: "border-color 0.2s",
       }}
     >

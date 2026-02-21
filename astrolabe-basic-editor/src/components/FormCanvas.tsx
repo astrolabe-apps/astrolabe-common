@@ -4,6 +4,7 @@ import {
   createSchemaDataNode,
   defaultSchemaInterface,
   FormNode,
+  isGroupControl,
   RenderForm,
 } from "@react-typed-forms/schemas";
 import {
@@ -131,10 +132,10 @@ function EditModeCanvas() {
       if (!over || active.id === over.id) return;
 
       const activeData = active.data.current as
-        | { containerId?: string }
+        | { containerId?: string; node?: FormPreviewStateNode }
         | undefined;
       const overData = over.data.current as
-        | { containerId?: string; isEmptyContainer?: boolean }
+        | { containerId?: string; isContainerDropZone?: boolean; node?: FormPreviewStateNode }
         | undefined;
 
       const sourceContainerId = activeData?.containerId ?? rootNode.id;
@@ -142,30 +143,48 @@ function EditModeCanvas() {
       let targetContainerId: string;
       let targetIndex: number;
 
-      if (overData?.isEmptyContainer) {
-        // Dropping on an empty group's drop target
+      if (overData?.isContainerDropZone) {
+        // Dropping on a group's drop zone — append to the end of the container
         targetContainerId = overData.containerId ?? rootNode.id;
-        targetIndex = 0;
-      } else {
-        targetContainerId = overData?.containerId ?? rootNode.id;
-
-        // Find the index of the over item in its container
         const containerChildren = findContainerChildren(
           formTree,
           targetContainerId,
         );
-        const overIndex = containerChildren.indexOf(over.id as string);
-        targetIndex = overIndex >= 0 ? overIndex : containerChildren.length;
+        targetIndex = containerChildren.length;
+      } else {
+        // Check if the over item is a group and the active item isn't already inside it
+        const overNode = overData?.node;
+        const overIsGroup = overNode && isGroupControl(overNode.definition);
 
-        if (sourceContainerId === targetContainerId) {
-          // Same container: find active index and determine direction
-          const activeIndex = containerChildren.indexOf(active.id as string);
-          if (activeIndex >= 0 && activeIndex < targetIndex) {
+        if (overIsGroup && sourceContainerId !== (over.id as string)) {
+          // Dropping onto a non-empty group from outside — insert into the group
+          targetContainerId = over.id as string;
+          const containerChildren = findContainerChildren(
+            formTree,
+            targetContainerId,
+          );
+          targetIndex = containerChildren.length;
+        } else {
+          targetContainerId = overData?.containerId ?? rootNode.id;
+
+          // Find the index of the over item in its container
+          const containerChildren = findContainerChildren(
+            formTree,
+            targetContainerId,
+          );
+          const overIndex = containerChildren.indexOf(over.id as string);
+          targetIndex = overIndex >= 0 ? overIndex : containerChildren.length;
+
+          if (sourceContainerId === targetContainerId) {
+            // Same container: find active index and determine direction
+            const activeIndex = containerChildren.indexOf(active.id as string);
+            if (activeIndex >= 0 && activeIndex < targetIndex) {
+              targetIndex += 1;
+            }
+          } else {
+            // Cross-container: insert after the over item
             targetIndex += 1;
           }
-        } else {
-          // Cross-container: insert after the over item
-          targetIndex += 1;
         }
       }
 
