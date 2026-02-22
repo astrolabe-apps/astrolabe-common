@@ -17,7 +17,10 @@ import { useBasicEditorContext } from "../BasicEditorContext";
 import {
   DndContext,
   closestCenter,
+  pointerWithin,
+  CollisionDetection,
   DragEndEvent,
+  DragOverEvent,
   DragOverlay,
   DragStartEvent,
   PointerSensor,
@@ -64,6 +67,31 @@ function findContainerChildren(
   return container.getChildNodes().map((c) => c.id);
 }
 
+const dropZoneFirstCollision: CollisionDetection = (args) => {
+  // Exclude the drop zone of the container that the active item belongs to,
+  // so dragging OUT of a group isn't blocked by its own drop zone.
+  const activeContainerId = args.active.data.current?.containerId;
+  const dropZones = args.droppableContainers.filter(
+    (c) =>
+      c.data.current?.isContainerDropZone &&
+      c.data.current?.containerId !== activeContainerId,
+  );
+
+  // Check if the pointer is within any group drop zone
+  if (dropZones.length > 0) {
+    const dropZoneCollisions = pointerWithin({
+      ...args,
+      droppableContainers: dropZones,
+    });
+    if (dropZoneCollisions.length > 0) {
+      return dropZoneCollisions;
+    }
+  }
+
+  // Fall back to closestCenter for normal sortable reordering
+  return closestCenter(args);
+};
+
 function EditModeCanvas() {
   const { state, formRenderer, selectField, moveField } =
     useBasicEditorContext();
@@ -74,6 +102,8 @@ function EditModeCanvas() {
   >;
 
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
+  const [dropAfter, setDropAfter] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -85,8 +115,11 @@ function EditModeCanvas() {
     () => ({
       selected: selectedControl,
       renderer: formRenderer,
+      overId,
+      activeId,
+      dropAfter,
     }),
-    [formRenderer, selectedControl],
+    [formRenderer, selectedControl, overId, activeId, dropAfter],
   );
 
   const rootNode = formTree?.rootNode;
@@ -123,11 +156,27 @@ function EditModeCanvas() {
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
+    setOverId(null);
+  }, []);
+
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const overId = event.over ? (event.over.id as string) : null;
+    setOverId(overId);
+    if (event.over && event.active) {
+      const activeRect = event.active.rect.current.initial;
+      const overRect = event.over.rect;
+      if (activeRect && overRect) {
+        const activeCenter = activeRect.top + activeRect.height / 2;
+        const overCenter = overRect.top + overRect.height / 2;
+        setDropAfter(activeCenter < overCenter);
+      }
+    }
   }, []);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       setActiveId(null);
+      setOverId(null);
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
@@ -152,39 +201,26 @@ function EditModeCanvas() {
         );
         targetIndex = containerChildren.length;
       } else {
-        // Check if the over item is a group and the active item isn't already inside it
-        const overNode = overData?.node;
-        const overIsGroup = overNode && isGroupControl(overNode.definition);
+        targetContainerId = overData?.containerId ?? rootNode.id;
 
-        if (overIsGroup && sourceContainerId !== (over.id as string)) {
-          // Dropping onto a non-empty group from outside — insert into the group
-          targetContainerId = over.id as string;
-          const containerChildren = findContainerChildren(
-            formTree,
-            targetContainerId,
-          );
-          targetIndex = containerChildren.length;
-        } else {
-          targetContainerId = overData?.containerId ?? rootNode.id;
+        const containerChildren = findContainerChildren(
+          formTree,
+          targetContainerId,
+        );
+        const overIndex = containerChildren.indexOf(over.id as string);
+        targetIndex = overIndex >= 0 ? overIndex : containerChildren.length;
 
-          // Find the index of the over item in its container
-          const containerChildren = findContainerChildren(
-            formTree,
-            targetContainerId,
-          );
-          const overIndex = containerChildren.indexOf(over.id as string);
-          targetIndex = overIndex >= 0 ? overIndex : containerChildren.length;
+        // Determine drop position based on visual indicator
+        const activeRect = active.rect.current.initial;
+        const overRect = over.rect;
+        const isAfter =
+          activeRect && overRect
+            ? activeRect.top + activeRect.height / 2 <
+              overRect.top + overRect.height / 2
+            : false;
 
-          if (sourceContainerId === targetContainerId) {
-            // Same container: find active index and determine direction
-            const activeIndex = containerChildren.indexOf(active.id as string);
-            if (activeIndex >= 0 && activeIndex < targetIndex) {
-              targetIndex += 1;
-            }
-          } else {
-            // Cross-container: insert after the over item
-            targetIndex += 1;
-          }
+        if (isAfter) {
+          targetIndex += 1;
         }
       }
 
@@ -195,6 +231,7 @@ function EditModeCanvas() {
 
   const handleDragCancel = useCallback(() => {
     setActiveId(null);
+    setOverId(null);
   }, []);
 
   const activeNode = activeId
@@ -209,8 +246,9 @@ function EditModeCanvas() {
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-[0_4px_20px_rgba(44,43,61,0.04),0_1px_4px_rgba(44,43,61,0.02)] border border-violet-100/60 p-6 min-h-[200px]">
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCenter}
+          collisionDetection={dropZoneFirstCollision}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
           onDragCancel={handleDragCancel}
         >

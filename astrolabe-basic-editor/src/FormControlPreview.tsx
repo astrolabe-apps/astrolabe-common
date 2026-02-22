@@ -8,9 +8,8 @@ import {
   updateElements,
   useComputed,
 } from "@react-typed-forms/core";
-import React, { HTMLAttributes, useMemo } from "react";
+import React, { Fragment, HTMLAttributes, useMemo } from "react";
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 import {
   ChildNodeSpec,
@@ -57,6 +56,9 @@ export interface FormControlPreviewProps {
 export interface FormControlPreviewContext {
   selected: Control<string | undefined>;
   renderer: FormRenderer;
+  overId?: string | null;
+  activeId?: string | null;
+  dropAfter?: boolean;
 }
 
 export function FormControlPreview(props: FormControlPreviewProps) {
@@ -84,8 +86,6 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     attributes,
     listeners,
     setNodeRef,
-    transform,
-    transition,
     isDragging,
   } = useSortable({
     id: node.id,
@@ -209,37 +209,40 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     return child;
   }
 
-  const adjustedTransform = transform
-    ? { ...transform, scaleX: 1, scaleY: 1 }
-    : null;
+  const isDropTarget = !isRootNode && context.overId === node.id && context.activeId !== node.id;
+  const dropBefore = isDropTarget && !context.dropAfter;
+  const dropAfterThis = isDropTarget && !!context.dropAfter;
 
   let result = (
-    <div
-      ref={isRootNode ? undefined : setNodeRef}
-      style={{
-        ...style,
-        outline: isSelected ? "2px solid #7c6dd8" : undefined,
-        backgroundColor: isSelected ? "rgba(124, 109, 216, 0.04)" : undefined,
-        position: "relative",
-        cursor: "pointer",
-        ...(isRootNode
-          ? {}
-          : {
-              transform: CSS.Transform.toString(adjustedTransform) || undefined,
-              opacity: isDragging ? 0.3 : undefined,
-            }),
-      }}
-      {...mouseCapture}
-      className={className! + (!isRootNode ? " group/drag" : "")}
-    >
-      {!isRootNode && (
-        <DragHandle attributes={attributes} listeners={listeners} />
-      )}
-      {child}
-      {isGroupNode && (
-        <GroupDropTarget containerId={node.id} hasChildren={childIds.length > 0} />
-      )}
-    </div>
+    <>
+      {dropBefore && <DropIndicator />}
+      <div
+        ref={isRootNode ? undefined : setNodeRef}
+        style={{
+          ...style,
+          outline: isSelected ? "2px solid #7c6dd8" : undefined,
+          backgroundColor: isSelected ? "rgba(124, 109, 216, 0.04)" : undefined,
+          position: "relative",
+          cursor: "pointer",
+          ...(isRootNode
+            ? {}
+            : {
+                opacity: isDragging ? 0.3 : undefined,
+              }),
+        }}
+        {...mouseCapture}
+        className={className! + (!isRootNode ? " group/drag" : "")}
+      >
+        {!isRootNode && (
+          <DragHandle attributes={attributes} listeners={listeners} />
+        )}
+        {child}
+        {isGroupNode && (
+          <GroupDropTarget containerId={node.id} hasChildren={childIds.length > 0} />
+        )}
+      </div>
+      {dropAfterThis && <DropIndicator />}
+    </>
   );
 
   if (isGroupNode) {
@@ -254,6 +257,19 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   }
 
   return result;
+}
+
+function DropIndicator() {
+  return (
+    <div
+      style={{
+        height: 2,
+        backgroundColor: "#7c6dd8",
+        borderRadius: 1,
+        margin: "2px 0",
+      }}
+    />
+  );
 }
 
 function DragHandle({

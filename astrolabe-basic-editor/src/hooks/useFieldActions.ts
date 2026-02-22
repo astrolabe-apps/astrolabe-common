@@ -4,6 +4,7 @@ import {
   Control,
   groupedChanges,
   removeElement,
+  updateElements,
 } from "@react-typed-forms/core";
 import {
   ControlDefinition,
@@ -159,30 +160,30 @@ export function useFieldActions(state: Control<BasicEditorState>) {
       const targetChildren = formTree.getEditableChildren(targetContainer);
       if (!sourceChildren || !targetChildren) return;
 
+      const draggedControl = sourceChildren.elements[sourceIndex];
+
       groupedChanges(() => {
         if (sourceParent!.id === targetContainer.id) {
           // Same container: reorder
-          const items = [...sourceChildren.value!];
-          const [item] = items.splice(sourceIndex, 1);
-          const adjustedIndex =
-            targetIndex > sourceIndex ? targetIndex - 1 : targetIndex;
-          items.splice(adjustedIndex, 0, item);
-          sourceChildren.value = items;
+          updateElements(sourceChildren, (childList) => {
+            const result = childList.filter((x) => x !== draggedControl);
+            const adjustedIndex =
+              targetIndex > sourceIndex ? targetIndex - 1 : targetIndex;
+            result.splice(adjustedIndex, 0, draggedControl);
+            return result;
+          });
         } else {
-          // Cross-container: insert into target first, then remove from source.
-          // Order matters because setting sourceChildren.value triggers
-          // position-based element Control reuse (updateFromValue), which can
-          // shift which definition each element Control wraps. Inserting first
-          // ensures targetChildren still references the correct container.
-          const item = sourceChildren.value![sourceIndex];
-          const targetItems = [...(targetChildren.value ?? [])];
-          targetItems.splice(targetIndex, 0, item);
-          targetChildren.value = targetItems;
-          // Re-read source after target insert (childValueChange may have
-          // propagated back, updating the source array value in-place)
-          const sourceItems = [...sourceChildren.value!];
-          sourceItems.splice(sourceIndex, 1);
-          sourceChildren.value = sourceItems;
+          // Cross-container: use updateElements to move the actual element
+          // control rather than setting .value (which triggers updateFromValue
+          // and can overwrite nested children).
+          updateElements(sourceChildren, (childList) =>
+            childList.filter((x) => x !== draggedControl),
+          );
+          updateElements(targetChildren, (childList) => {
+            const result = [...childList];
+            result.splice(targetIndex, 0, draggedControl);
+            return result;
+          });
         }
       });
 
