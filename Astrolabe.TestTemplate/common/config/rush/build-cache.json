@@ -15,7 +15,7 @@
   /**
    * (Required) Choose where project build outputs will be cached.
    *
-   * Possible values: "local-only", "azure-blob-storage", "amazon-s3"
+   * Possible values: "local-only", "azure-blob-storage", "amazon-s3", "http"
    */
   "cacheProvider": "http",
 
@@ -39,29 +39,29 @@
     /**
      * (Required) The name of the the Azure storage account to use for build cache.
      */
-    "storageAccountName": "devstoreaccount1",
+    // "storageAccountName": "example",
 
     /**
      * (Required) The name of the container in the Azure storage account to use for build cache.
      */
-    "storageContainerName": "rush-build-cache",
+    // "storageContainerName": "my-container",
 
     /**
      * The Azure environment the storage account exists in. Defaults to AzurePublicCloud.
      *
      * Possible values: "AzurePublicCloud", "AzureChina", "AzureGermany", "AzureGovernment"
      */
-    "azureEnvironment": "AzurePublicCloud",
+    // "azureEnvironment": "AzurePublicCloud",
 
     /**
      * An optional prefix for cache item blob names.
      */
-    "blobPrefix": "office",
+    // "blobPrefix": "my-prefix",
 
     /**
      * If set to true, allow writing to the cache. Defaults to false.
      */
-    "isCacheWriteAllowed": true
+    // "isCacheWriteAllowed": true
   },
 
   /**
@@ -106,6 +106,7 @@
      * (Required) The URL of the server that stores the caches.
      * Example: "https://build-cacches.example.com/"
      */
+    // TODO: Replace this temporary ngrok URL with a permanent cache server endpoint
     "url": "https://astro-registry.ngrok.app/cache/",
 
     /**
