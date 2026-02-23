@@ -60,6 +60,7 @@ export interface FormControlPreviewContext {
   overId?: string | null;
   activeId?: string | null;
   dropAfter?: boolean;
+  pageMode?: boolean;
 }
 
 export function FormControlPreview(props: FormControlPreviewProps) {
@@ -253,6 +254,53 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       >
         {result}
       </SortableContext>
+    );
+  }
+
+  // Page mode visual treatment for root-level groups
+  if (context.pageMode && isGroupNode && !isRootNode && node.parentNode && !node.parentNode.parentNode) {
+    const pageTitle = (definition as any).title || `Page ${node.childIndex + 1}`;
+    result = (
+      <>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            margin: node.childIndex === 0 ? "0 0 8px 0" : "16px 0 8px 0",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: "#7c6dd8",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {pageTitle}
+          </div>
+          <div
+            style={{
+              flex: 1,
+              height: 1,
+              backgroundColor: "#e2d4f5",
+            }}
+          />
+        </div>
+        <div
+          style={{
+            border: "1px solid #e8e0f3",
+            borderRadius: 12,
+            padding: 8,
+            backgroundColor: "#faf8ff",
+          }}
+        >
+          {result}
+        </div>
+      </>
     );
   }
 

@@ -1,22 +1,33 @@
 import React from "react";
-import { useComputed } from "@react-typed-forms/core";
+import {useComputed, Finput, Fcheckbox, Control} from "@react-typed-forms/core";
 import {
   ControlDefinition,
   DataControlDefinition,
   DataRenderType,
+  FormNode,
+  GroupedControlsDefinition,
   isDataControl,
   isGroupControl,
   SchemaField,
 } from "@react-typed-forms/schemas";
-import { useBasicEditorContext } from "../BasicEditorContext";
 import { getBasicFieldType, getFieldTypeConfig } from "../fieldTypes";
 import { OptionsEditor } from "./OptionsEditor";
 import { VisibilityConditionEditor } from "./VisibilityConditionEditor";
+import { EditorFormTree } from "../EditorFormTree";
+import { EditorSchemaTree } from "../EditorSchemaTree";
 
-export function PropertiesPanel() {
-  const { state, deleteField } = useBasicEditorContext();
+export interface PropertiesPanelProps {
+  selectedField: Control<FormNode | undefined>;
+  formTree: EditorFormTree;
+  schemaTree: EditorSchemaTree;
+  schemaFields: Control<SchemaField[]>;
+  formFields: Control<SchemaField[]>;
+  deleteField: () => void;
+}
+
+export function PropertiesPanel(props: PropertiesPanelProps) {
   const selectedField = useComputed(
-    () => state.fields.selectedField.value,
+    () => props.selectedField.value,
   );
 
   if (!selectedField.value) {
@@ -27,21 +38,26 @@ export function PropertiesPanel() {
     );
   }
 
-  return <PropertiesPanelContent />;
+  return <PropertiesPanelContent {...props} />;
 }
 
-function PropertiesPanelContent() {
-  const { state, deleteField } = useBasicEditorContext();
-
-  const formTree = state.fields.formTree.value;
-  const schemaTree = state.fields.schemaTree.value;
-  const formNode = state.fields.selectedField.value;
-  if (!formTree || !schemaTree || !formNode) return null;
+function PropertiesPanelContent({
+  selectedField,
+  formTree,
+  schemaTree,
+  schemaFields,
+  formFields,
+  deleteField,
+}: PropertiesPanelProps) {
+  const formNode = selectedField.value;
+  if (!formNode) return null;
 
   const defControl = formTree.getEditableDefinition(formNode);
   if (!defControl) return null;
 
   const def = defControl.value;
+  const dataDefControl : Control<DataControlDefinition> = defControl.as();
+  const groupDefControl : Control<GroupedControlsDefinition> = defControl.as();
   const fieldType = getBasicFieldType(def);
   const fieldConfig = fieldType ? getFieldTypeConfig(fieldType) : undefined;
   const isData = isDataControl(def);
@@ -61,8 +77,8 @@ function PropertiesPanelContent() {
     : undefined;
 
   const allSchemaFields = [
-    ...(state.fields.schemaFields.value?.value ?? []),
-    ...(state.fields.formFields.value?.value ?? []),
+    ...(schemaFields.value ?? []),
+    ...(formFields.value ?? []),
   ];
 
   return (
@@ -93,12 +109,9 @@ function PropertiesPanelContent() {
           <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.5px] mb-1.5">
             Label
           </label>
-          <input
+          <Finput
+            control={defControl.fields.title.as<string>()}
             className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
-            value={def.title ?? ""}
-            onChange={(e) =>
-              defControl.setValue((d) => ({ ...d, title: e.target.value }))
-            }
             placeholder="Field label"
           />
         </div>
@@ -131,16 +144,9 @@ function PropertiesPanelContent() {
 
         {isData && (
           <div className="flex items-center gap-2.5">
-            <input
-              type="checkbox"
+            <Fcheckbox
+              control={dataDefControl.fields.required}
               id="required-toggle"
-              checked={!!dataDef?.required}
-              onChange={(e) =>
-                defControl.setValue((d) => ({
-                  ...d,
-                  required: e.target.checked || null,
-                }))
-              }
               className="rounded accent-violet-600"
             />
             <label htmlFor="required-toggle" className="text-sm text-slate-600">
@@ -149,11 +155,24 @@ function PropertiesPanelContent() {
           </div>
         )}
 
+        {isGroup && (
+          <div className="flex items-center gap-2.5">
+            <Fcheckbox
+              control={groupDefControl.fields.groupOptions.fields.hideTitle}
+              id="hide-title-toggle"
+              className="rounded accent-violet-600"
+            />
+            <label htmlFor="hide-title-toggle" className="text-sm text-slate-600">
+              Hide title
+            </label>
+          </div>
+        )}
+
         {showOptions && schemaField && (
           <OptionsEditor options={schemaField.fields.options} />
         )}
 
-        {isData && (
+        {(isData || isGroup) && (
           <VisibilityConditionEditor
             definition={defControl}
             allFields={allSchemaFields}

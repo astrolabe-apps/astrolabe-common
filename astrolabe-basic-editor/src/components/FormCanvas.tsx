@@ -1,11 +1,10 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { useControl } from "@react-typed-forms/core";
+import { Control, useControl } from "@react-typed-forms/core";
 import {
   createSchemaDataNode,
   defaultSchemaInterface,
   FormNode,
-  isGroupControl,
-  RenderForm,
+  FormRenderer,
 } from "@react-typed-forms/schemas";
 import {
   createPreviewNode,
@@ -13,7 +12,8 @@ import {
   FormControlPreviewContext,
   FormPreviewStateNode,
 } from "../FormControlPreview";
-import { useBasicEditorContext } from "../BasicEditorContext";
+import { EditorFormTree } from "../EditorFormTree";
+import { EditorSchemaTree } from "../EditorSchemaTree";
 import {
   DndContext,
   closestCenter,
@@ -32,13 +32,18 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
-export function FormCanvas() {
-  const { state } = useBasicEditorContext();
-  const previewMode = state.fields.previewMode.value;
-  if (previewMode) {
-    return <PreviewModeCanvas />;
-  }
-  return <EditModeCanvas />;
+export interface FormCanvasProps {
+  formTree: EditorFormTree;
+  schemaTree: EditorSchemaTree;
+  selectedField: Control<FormNode | undefined>;
+  formRenderer: FormRenderer;
+  selectField: (node: FormNode | undefined) => void;
+  moveField: (
+    sourceNode: FormNode,
+    targetContainer: FormNode,
+    insertBefore: FormNode | null,
+  ) => void;
+  pageMode?: boolean;
 }
 
 function findPreviewNode(
@@ -53,18 +58,14 @@ function findPreviewNode(
   return undefined;
 }
 
-function findContainerChildren(
-  formTree: { rootNode: FormNode },
+function findContainerNode(
+  rootNode: FormNode,
   containerId: string,
-): string[] {
-  const container =
-    containerId === formTree.rootNode.id
-      ? formTree.rootNode
-      : formTree.rootNode.visit((x) =>
-          x.id === containerId ? x : undefined,
-        );
-  if (!container) return [];
-  return container.getChildNodes().map((c) => c.id);
+): FormNode | undefined {
+  if (containerId === rootNode.id) return rootNode;
+  return rootNode.visit((x) =>
+    x.id === containerId ? x : undefined,
+  );
 }
 
 const dropZoneFirstCollision: CollisionDetection = (args) => {
@@ -92,12 +93,17 @@ const dropZoneFirstCollision: CollisionDetection = (args) => {
   return closestCenter(args);
 };
 
-function EditModeCanvas() {
-  const { state, formRenderer, selectField, moveField } =
-    useBasicEditorContext();
-  const formTree = state.fields.formTree.value;
-  const schemaTree = state.fields.schemaTree.value;
-  const selectedControl = state.fields.selectedField;
+export function FormCanvas({
+  formTree,
+  schemaTree,
+  selectedField,
+  formRenderer,
+  selectField,
+  moveField,
+  pageMode,
+}: FormCanvasProps) {
+  const rootNode = formTree.rootNode;
+  const schemaRootNode = schemaTree.rootNode;
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
@@ -111,24 +117,15 @@ function EditModeCanvas() {
 
   const previewContext: FormControlPreviewContext = useMemo(
     () => ({
-      selected: selectedControl,
+      selected: selectedField,
       renderer: formRenderer,
       overId,
       activeId,
       dropAfter,
+      pageMode,
     }),
-    [formRenderer, selectedControl, overId, activeId, dropAfter],
+    [formRenderer, selectedField, overId, activeId, dropAfter, pageMode],
   );
-
-  const rootNode = formTree?.rootNode;
-  const schemaRootNode = schemaTree?.rootNode;
-  if (!rootNode || !schemaRootNode) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-slate-400">
-        Loading...
-      </div>
-    );
-  }
 
   const dataControl = useControl({});
   const dataNode = useMemo(
@@ -148,9 +145,7 @@ function EditModeCanvas() {
     [rootNode, dataNode, formRenderer],
   );
 
-  const rootChildIds = rootNode
-    .getChildNodes()
-    .map((c) => c.id);
+  const rootChildIds = rootNode.getChildNodes().map((c) => c.id);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     setActiveId(event.active.id as string);
@@ -178,51 +173,57 @@ function EditModeCanvas() {
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
-      const activeData = active.data.current as
-        | { containerId?: string; node?: FormPreviewStateNode }
-        | undefined;
+      // Resolve source FormNode
+      const sourceFound = formTree.findNodeWithParent(active.id as string);
+      if (!sourceFound) return;
+      const sourceNode = sourceFound.node;
+
       const overData = over.data.current as
-        | { containerId?: string; isContainerDropZone?: boolean; node?: FormPreviewStateNode }
+        | {
+            containerId?: string;
+            isContainerDropZone?: boolean;
+            node?: FormPreviewStateNode;
+          }
         | undefined;
 
-      const sourceContainerId = activeData?.containerId ?? rootNode.id;
-
-      let targetContainerId: string;
-      let targetIndex: number;
+      let targetContainer: FormNode | undefined;
+      let insertBefore: FormNode | null = null;
 
       if (overData?.isContainerDropZone) {
-        // Dropping on a group's drop zone — append to the end of the container
-        targetContainerId = overData.containerId ?? rootNode.id;
-        const containerChildren = findContainerChildren(
-          formTree,
-          targetContainerId,
-        );
-        targetIndex = containerChildren.length;
+        // Dropping on a group's drop zone — append to the end
+        const targetContainerId = overData.containerId ?? rootNode.id;
+        targetContainer = findContainerNode(rootNode, targetContainerId);
+        insertBefore = null;
       } else {
-        targetContainerId = overData?.containerId ?? rootNode.id;
+        const targetContainerId = overData?.containerId ?? rootNode.id;
+        targetContainer = findContainerNode(rootNode, targetContainerId);
+        if (!targetContainer) return;
 
-        const containerChildren = findContainerChildren(
-          formTree,
-          targetContainerId,
+        const targetChildNodes = targetContainer.getChildNodes();
+        const overNode = targetChildNodes.find(
+          (c) => c.id === (over.id as string),
         );
-        const overIndex = containerChildren.indexOf(over.id as string);
-        targetIndex = overIndex >= 0 ? overIndex : containerChildren.length;
 
-        // Determine drop position based on visual indicator
-        const activeRect = active.rect.current.initial;
-        const overRect = over.rect;
-        const isAfter =
-          activeRect && overRect
-            ? activeRect.top + activeRect.height / 2 <
-              overRect.top + overRect.height / 2
-            : false;
+        if (overNode) {
+          const overIndex = targetChildNodes.indexOf(overNode);
+          const activeRect = active.rect.current.initial;
+          const overRect = over.rect;
+          const isAfter =
+            activeRect && overRect
+              ? activeRect.top + activeRect.height / 2 <
+                overRect.top + overRect.height / 2
+              : false;
 
-        if (isAfter) {
-          targetIndex += 1;
+          if (isAfter) {
+            insertBefore = targetChildNodes[overIndex + 1] ?? null;
+          } else {
+            insertBefore = overNode;
+          }
         }
       }
 
-      moveField(active.id as string, targetContainerId, targetIndex);
+      if (!targetContainer) return;
+      moveField(sourceNode, targetContainer, insertBefore);
     },
     [formTree, rootNode, moveField],
   );
@@ -282,40 +283,6 @@ function EditModeCanvas() {
             ) : null}
           </DragOverlay>
         </DndContext>
-      </div>
-    </div>
-  );
-}
-
-function PreviewModeCanvas() {
-  const { state, formRenderer } = useBasicEditorContext();
-  const formTree = state.fields.formTree.value;
-  const schemaTree = state.fields.schemaTree.value;
-  const previewData = useControl({});
-
-  const rootNode = formTree?.rootNode;
-  const schemaRootNode = schemaTree?.rootNode;
-  if (!rootNode || !schemaRootNode) {
-    return (
-      <div className="flex-1 flex items-center justify-center text-slate-400">
-        Loading...
-      </div>
-    );
-  }
-
-  const dataNode = useMemo(
-    () => createSchemaDataNode(schemaRootNode, previewData),
-    [schemaRootNode],
-  );
-
-  return (
-    <div className="flex-1 overflow-auto p-6 bg-slate-50">
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-[0_4px_20px_rgba(44,43,61,0.04),0_1px_4px_rgba(44,43,61,0.02)] border border-violet-100/60 p-6 min-h-[200px]">
-        <RenderForm
-          data={dataNode}
-          form={rootNode}
-          renderer={formRenderer}
-        />
       </div>
     </div>
   );
