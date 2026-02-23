@@ -62,10 +62,25 @@ export class EditorFormTree extends FormTree {
     return this.getEditableChildren(this.rootNode)!.as();
   }
 
-  addNode(parent: FormNode, child: ControlDefinition): FormNode {
+  findNodeWithParent(
+    nodeId: string,
+  ): { node: FormNode; parent: FormNode; indexInParent: number } | undefined {
+    return this.rootNode.visit((x) => {
+      const children = x.getUnresolvedChildNodes();
+      for (let i = 0; i < children.length; i++) {
+        if (children[i].id === nodeId) {
+          return { node: children[i], parent: x, indexInParent: i };
+        }
+      }
+      return undefined;
+    });
+  }
+
+  addNode(parent: FormNode, child: ControlDefinition, afterNode?: FormNode, insertAfter?: boolean): FormNode {
     const childrenControl = this.getEditableChildren(parent)!;
-    const newIndex = childrenControl.elements.length;
-    const childControl = addElement(childrenControl, child);
+    const insertControl = afterNode ? this.getEditableDefinition(afterNode) : undefined;
+    const childControl = addElement(childrenControl, child, insertControl, insertAfter);
+    const newIndex = childrenControl.elements.indexOf(childControl);
     return parent.createChildNode(
       newIndex.toString(),
       trackedValue(childControl),

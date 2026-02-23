@@ -15,11 +15,11 @@ import { VisibilityConditionEditor } from "./VisibilityConditionEditor";
 
 export function PropertiesPanel() {
   const { state, deleteField } = useBasicEditorContext();
-  const selectedId = useComputed(
-    () => state.fields.selectedFieldId.value,
+  const selectedField = useComputed(
+    () => state.fields.selectedField.value,
   );
 
-  if (!selectedId.value) {
+  if (!selectedField.value) {
     return (
       <div className="w-80 border-l border-violet-100 bg-white flex-shrink-0 p-4 text-slate-400 text-sm">
         Select a field to edit its properties
@@ -35,13 +35,8 @@ function PropertiesPanelContent() {
 
   const formTree = state.fields.formTree.value;
   const schemaTree = state.fields.schemaTree.value;
-  const selectedId = state.fields.selectedFieldId.value;
-  if (!formTree || !schemaTree || !selectedId) return null;
-
-  const formNode = formTree.rootNode.visit((x) =>
-    x.id === selectedId ? x : undefined,
-  );
-  if (!formNode) return null;
+  const formNode = state.fields.selectedField.value;
+  if (!formTree || !schemaTree || !formNode) return null;
 
   const defControl = formTree.getEditableDefinition(formNode);
   if (!defControl) return null;
@@ -85,7 +80,7 @@ function PropertiesPanelContent() {
             </span>
           </div>
           <button
-            onClick={() => deleteField(selectedId)}
+            onClick={() => deleteField()}
             className="text-slate-400 hover:text-red-500 text-sm transition-colors"
             title="Delete field"
           >

@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
-import { Control, useControl } from "@react-typed-forms/core";
+import { useControl } from "@react-typed-forms/core";
 import {
   createSchemaDataNode,
   defaultSchemaInterface,
@@ -97,9 +97,7 @@ function EditModeCanvas() {
     useBasicEditorContext();
   const formTree = state.fields.formTree.value;
   const schemaTree = state.fields.schemaTree.value;
-  const selectedControl = state.fields.selectedFieldId as unknown as Control<
-    string | undefined
-  >;
+  const selectedControl = state.fields.selectedField;
 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);

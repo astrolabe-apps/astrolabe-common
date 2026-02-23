@@ -1,6 +1,7 @@
 import {
   ControlDefinition,
   ControlRenderOptions,
+  FormNode,
   FormRenderer,
   SchemaField,
 } from "@react-typed-forms/schemas";
@@ -41,7 +42,7 @@ export interface BasicEditorState {
   schemaTree: EditorSchemaTree;
   formFields: Control<SchemaField[]>;
   schemaFields: Control<SchemaField[]>;
-  selectedFieldId: string | undefined;
+  selectedField: FormNode | undefined;
   previewMode: boolean;
   loaded: boolean;
   formTitle: string;

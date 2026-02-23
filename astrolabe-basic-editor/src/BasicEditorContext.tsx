@@ -1,14 +1,14 @@
 import React, { createContext, useContext } from "react";
 import { Control } from "@react-typed-forms/core";
-import { FormRenderer } from "@react-typed-forms/schemas";
+import { FormNode, FormRenderer } from "@react-typed-forms/schemas";
 import { BasicEditorState, BasicFieldType } from "./types";
 
 export interface BasicEditorContextValue {
   state: Control<BasicEditorState>;
   formRenderer: FormRenderer;
   addField: (type: BasicFieldType) => void;
-  deleteField: (fieldId: string) => void;
-  selectField: (fieldId: string | undefined) => void;
+  deleteField: () => void;
+  selectField: (node: FormNode | undefined) => void;
   moveField: (
     sourceNodeId: string,
     targetContainerId: string,

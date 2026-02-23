@@ -41,6 +41,7 @@ import {
   textDisplayControl,
 } from "@react-typed-forms/schemas";
 
+
 export interface FormControlPreviewProps {
   node: FormPreviewStateNode;
   styleClass?: string;
@@ -54,7 +55,7 @@ export interface FormControlPreviewProps {
 }
 
 export interface FormControlPreviewContext {
-  selected: Control<string | undefined>;
+  selected: Control<FormNode | undefined>;
   renderer: FormRenderer;
   overId?: string | null;
   activeId?: string | null;
@@ -98,8 +99,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const childIds = isGroupNode ? childNodes.map((c) => c.id) : [];
 
   const isSelected = useComputed(() => {
-    const selControlId = selected.value;
-    return selControlId !== undefined && node.id == selControlId;
+    return selected.value?.id === node.id;
   }).value;
 
   const dataDefinition = isDataControl(definition) ? definition : undefined;
@@ -178,7 +178,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           if (isDragHandle(e)) return;
           e.preventDefault();
           e.stopPropagation();
-          selected.value = node.id;
+          selected.value = node.form ?? undefined;
         },
       }
     : {
@@ -186,7 +186,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           if (isDragHandle(e)) return;
           e.preventDefault();
           e.stopPropagation();
-          selected.value = node.id;
+          selected.value = node.form ?? undefined;
         },
         onMouseDownCapture: (e) => {
           if (isDragHandle(e)) return;
