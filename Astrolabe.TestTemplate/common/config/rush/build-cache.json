@@ -17,7 +17,7 @@
    *
    * Possible values: "local-only", "azure-blob-storage", "amazon-s3"
    */
-  "cacheProvider": "azure-blob-storage",
+  "cacheProvider": "http",
 
   /**
    * Setting this property overrides the cache entry ID.  If this property is set, it must contain
@@ -106,14 +106,14 @@
      * (Required) The URL of the server that stores the caches.
      * Example: "https://build-cacches.example.com/"
      */
-    // "url": "https://build-cacches.example.com/",
+    "url": "https://astro-registry.ngrok.app/cache/",
 
     /**
      * (Optional) The HTTP method to use when writing to the cache (defaults to PUT).
      * Should be one of PUT, POST, or PATCH.
      * Example: "PUT"
      */
-    // "uploadMethod": "PUT",
+    "uploadMethod": "PUT",
 
     /**
      * (Optional) HTTP headers to pass to the cache server.
@@ -138,6 +138,6 @@
     /**
      * (Optional) If set to true, allow writing to the cache. Defaults to false.
      */
-    // "isCacheWriteAllowed": true
+    "isCacheWriteAllowed": true
   }
 }
