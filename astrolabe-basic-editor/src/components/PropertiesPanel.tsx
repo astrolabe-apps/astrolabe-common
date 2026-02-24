@@ -121,22 +121,9 @@ function PropertiesPanelContent({
             <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.5px] mb-1.5">
               Placeholder
             </label>
-            <input
+            <Finput
+              control={(dataDefControl.fields.renderOptions as Control<any>).fields.placeholder}
               className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
-              value={
-                (dataDef?.renderOptions as any)?.placeholder ?? ""
-              }
-              onChange={(e) => {
-                defControl.setValue((d) => ({
-                  ...d,
-                  renderOptions: {
-                    ...((d as DataControlDefinition).renderOptions ?? {
-                      type: DataRenderType.Textfield,
-                    }),
-                    placeholder: e.target.value || null,
-                  },
-                }));
-              }}
               placeholder="Placeholder text"
             />
           </div>

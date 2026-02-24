@@ -57,9 +57,9 @@ export interface FormControlPreviewProps {
 export interface FormControlPreviewContext {
   selected: Control<FormNode | undefined>;
   renderer: FormRenderer;
-  overId?: string | null;
-  activeId?: string | null;
-  dropAfter?: boolean;
+  overId: Control<string | null>;
+  activeId: Control<string | null>;
+  dropAfter: Control<boolean>;
   pageMode?: boolean;
 }
 
@@ -210,9 +210,9 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     return child;
   }
 
-  const isDropTarget = !isRootNode && context.overId === node.id && context.activeId !== node.id;
-  const dropBefore = isDropTarget && !context.dropAfter;
-  const dropAfterThis = isDropTarget && !!context.dropAfter;
+  const isDropTarget = !isRootNode && context.overId.value === node.id && context.activeId.value !== node.id;
+  const dropBefore = isDropTarget && !context.dropAfter.value;
+  const dropAfterThis = isDropTarget && !!context.dropAfter.value;
 
   let result = (
     <>

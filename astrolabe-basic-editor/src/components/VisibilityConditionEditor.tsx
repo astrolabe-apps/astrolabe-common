@@ -35,7 +35,8 @@ export function VisibilityConditionEditor({
 
   function updateCondition(c: SimpleVisibilityCondition | undefined) {
     const updates = writeVisibilityCondition(def, c);
-    definition.setValue((d) => ({ ...d, ...updates }));
+    definition.fields.dynamic.value = updates.dynamic;
+    (definition.fields as any).$scripts.value = updates.$scripts;
   }
 
   return (

@@ -35,11 +35,9 @@ export function OptionsEditor({ options }: OptionsEditorProps) {
                 value={opt.name}
                 onChange={(e) => {
                   const name = e.target.value;
-                  optControl.setValue((v) => ({
-                    ...v,
-                    name,
-                    value: toKebabCase(name),
-                  }));
+                  const { name: nameField, value: valueField } = optControl.fields;
+                  nameField.value = name;
+                  valueField.value = toKebabCase(name);
                 }}
                 placeholder="Option name"
               />

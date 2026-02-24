@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Control, useControl } from "@react-typed-forms/core";
 import {
   createSchemaDataNode,
@@ -105,9 +105,9 @@ export function FormCanvas({
   const rootNode = formTree.rootNode;
   const schemaRootNode = schemaTree.rootNode;
 
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [overId, setOverId] = useState<string | null>(null);
-  const [dropAfter, setDropAfter] = useState(false);
+  const activeId = useControl<string | null>(null);
+  const overId = useControl<string | null>(null);
+  const dropAfter = useControl(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -124,7 +124,7 @@ export function FormCanvas({
       dropAfter,
       pageMode,
     }),
-    [formRenderer, selectedField, overId, activeId, dropAfter, pageMode],
+    [formRenderer, selectedField, pageMode],
   );
 
   const dataControl = useControl({});
@@ -148,28 +148,27 @@ export function FormCanvas({
   const rootChildIds = rootNode.getChildNodes().map((c) => c.id);
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
-    setActiveId(event.active.id as string);
-    setOverId(null);
+    activeId.value = event.active.id as string;
+    overId.value = null;
   }, []);
 
   const handleDragOver = useCallback((event: DragOverEvent) => {
-    const overId = event.over ? (event.over.id as string) : null;
-    setOverId(overId);
+    overId.value = event.over ? (event.over.id as string) : null;
     if (event.over && event.active) {
       const activeRect = event.active.rect.current.initial;
       const overRect = event.over.rect;
       if (activeRect && overRect) {
         const activeCenter = activeRect.top + activeRect.height / 2;
         const overCenter = overRect.top + overRect.height / 2;
-        setDropAfter(activeCenter < overCenter);
+        dropAfter.value = activeCenter < overCenter;
       }
     }
   }, []);
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
-      setActiveId(null);
-      setOverId(null);
+      activeId.value = null;
+      overId.value = null;
       const { active, over } = event;
       if (!over || active.id === over.id) return;
 
@@ -229,12 +228,12 @@ export function FormCanvas({
   );
 
   const handleDragCancel = useCallback(() => {
-    setActiveId(null);
-    setOverId(null);
+    activeId.value = null;
+    overId.value = null;
   }, []);
 
-  const activeNode = activeId
-    ? findPreviewNode(previewNode, activeId)
+  const activeNode = activeId.value
+    ? findPreviewNode(previewNode, activeId.value)
     : undefined;
 
   return (
