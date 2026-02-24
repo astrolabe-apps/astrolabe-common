@@ -1,4 +1,3 @@
-export { createBasicEditorRenderer } from "./createBasicEditorRenderer";
 export { FieldPalette } from "./components/FieldPalette";
 export type { FieldPaletteProps } from "./components/FieldPalette";
 export { FormCanvas } from "./components/FormCanvas";

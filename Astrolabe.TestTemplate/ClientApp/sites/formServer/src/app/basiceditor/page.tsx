@@ -1,10 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  BasicFormEditor,
-  createBasicEditorRenderer,
-} from "@astroapps/basic-editor";
+import { BasicFormEditor } from "@astroapps/basic-editor";
 import { readOnlySchemas } from "@astroapps/schemas-editor";
 import {
   boolField,
@@ -59,7 +56,7 @@ export default function BasicEditorPage() {
   const [container, setContainer] = useState<HTMLElement | null>(null);
   const formId = useControl("SampleSchema");
 
-  const renderer = useMemo(() => createBasicEditorRenderer(), [container]);
+  const renderer = useMemo(() => createStdFormRenderer(container), [container]);
 
   return (
     <div className="h-screen flex flex-col">
