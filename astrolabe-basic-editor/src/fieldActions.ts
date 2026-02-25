@@ -6,48 +6,84 @@ import {
   updateElements,
 } from "@react-typed-forms/core";
 import {
+  ControlDefinition,
   FormNode,
   isDataControl,
   isGroupControl,
   SchemaField,
 } from "@react-typed-forms/schemas";
 import { BasicFieldType } from "./types";
-import { generateFieldName, getFieldTypeConfig } from "./fieldTypes";
+import { generateFieldName, getFieldTypeConfig, toCamelCase } from "./fieldTypes";
 import { EditorFormTree } from "./EditorFormTree";
 
 export function addFieldToForm(
   formTree: EditorFormTree,
-  formFields: Control<SchemaField[]>,
   schemaFields: Control<SchemaField[]>,
   selectedField: Control<FormNode | undefined>,
   type: BasicFieldType,
+  pageMode?: boolean,
 ) {
   const config = getFieldTypeConfig(type);
-  const existingFields = [
-    ...(schemaFields.value ?? []),
-    ...(formFields.value ?? []),
-  ];
+  const existingFields = schemaFields.value ?? [];
   const fieldName = generateFieldName(existingFields);
   const controlDef = config.createControl(fieldName);
   const schemaField = config.createSchemaField(fieldName);
 
+  // Determine parent and afterNode based on selection context
+  let parent: FormNode;
+  let afterNode: FormNode | undefined;
+
+  const selected = selectedField.value;
+
+  if (type === BasicFieldType.Page) {
+    // Pages always go at root level, at the end
+    parent = formTree.rootNode;
+    afterNode = undefined;
+  } else if (!selected) {
+    // No selection: add to root at end
+    parent = formTree.rootNode;
+    afterNode = undefined;
+  } else if (isGroupControl(selected.definition)) {
+    // Selected is a group: add inside it at the end
+    parent = selected;
+    afterNode = undefined;
+  } else {
+    // Selected is a regular field: add after it in same parent
+    const found = formTree.findNodeWithParent(selected.id);
+    if (found) {
+      parent = found.parent;
+      afterNode = selected;
+    } else {
+      parent = formTree.rootNode;
+      afterNode = undefined;
+    }
+  }
+
   groupedChanges(() => {
     if (schemaField) {
-      addElement(formFields, schemaField);
+      addElement(schemaFields, schemaField);
     }
-    const newNode = formTree.addNode(
-      formTree.rootNode,
-      controlDef,
-      selectedField.value,
-      true,
-    );
+    const newNode = formTree.addNode(parent, controlDef, afterNode, true);
     selectedField.value = newNode;
   });
 }
 
+function collectFieldNames(def: ControlDefinition): string[] {
+  const names: string[] = [];
+  if (isDataControl(def)) {
+    names.push(def.field);
+  }
+  if (def.children) {
+    for (const child of def.children) {
+      names.push(...collectFieldNames(child));
+    }
+  }
+  return names;
+}
+
 export function deleteFieldFromForm(
   formTree: EditorFormTree,
-  formFields: Control<SchemaField[]>,
+  schemaFields: Control<SchemaField[]>,
   selectedField: Control<FormNode | undefined>,
 ) {
   const node = selectedField.value;
@@ -61,13 +97,13 @@ export function deleteFieldFromForm(
   if (!defControl) return;
 
   groupedChanges(() => {
-    if (isDataControl(def)) {
-      const fieldName = def.field;
-      const fieldEl = formFields.elements.find(
+    const fieldNames = collectFieldNames(def);
+    for (const fieldName of fieldNames) {
+      const fieldEl = schemaFields.elements.find(
         (el) => el.value.field === fieldName,
       );
       if (fieldEl) {
-        removeElement(formFields, fieldEl);
+        removeElement(schemaFields, fieldEl);
       }
     }
 
@@ -77,6 +113,41 @@ export function deleteFieldFromForm(
     }
 
     selectedField.value = undefined;
+  });
+}
+
+export function renameFieldInForm(
+  schemaFields: Control<SchemaField[]>,
+  fieldControl: Control<string>,
+  title: string,
+) {
+  const newBase = toCamelCase(title);
+  if (!newBase) return;
+
+  const oldName = fieldControl.value;
+  if (newBase === oldName) return;
+
+  const existingNames = new Set(
+    schemaFields.value.map((f) => f.field).filter((n) => n !== oldName),
+  );
+
+  let newName = newBase;
+  let counter = 2;
+  while (existingNames.has(newName)) {
+    newName = newBase + counter;
+    counter++;
+  }
+
+  const schemaFieldEl = schemaFields.elements.find(
+    (el) => el.value.field === oldName,
+  );
+
+  groupedChanges(() => {
+    fieldControl.value = newName;
+    if (schemaFieldEl) {
+      schemaFieldEl.fields.field.value = newName;
+      schemaFieldEl.fields.displayName.value = newName;
+    }
   });
 }
 

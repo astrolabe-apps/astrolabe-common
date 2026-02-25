@@ -232,14 +232,15 @@ export function FormControlPreview(props: FormControlPreviewProps) {
               }),
         }}
         {...mouseCapture}
-        className={className! + (!isRootNode ? " group/drag" : "")}
+        {...(!isRootNode ? { "data-drag-wrapper": true } : {})}
+        className={className!}
       >
         {!isRootNode && (
           <DragHandle attributes={attributes} listeners={listeners} />
         )}
         {child}
         {isGroupNode && (
-          <GroupDropTarget containerId={node.id} hasChildren={childIds.length > 0} />
+          <GroupDropTarget containerId={node.form?.id ?? node.id} hasChildren={childIds.length > 0} onlyGroups={isRootNode && !!context.pageMode} />
         )}
       </div>
       {dropAfterThis && <DropIndicator />}
@@ -332,12 +333,10 @@ function DragHandle({
       data-drag-handle
       {...attributes}
       {...listeners}
-      className="opacity-0 group-hover/drag:opacity-100"
       style={{
         position: "absolute",
-        left: 2,
-        top: "50%",
-        transform: "translateY(-50%)",
+        right: 2,
+        top: 2,
         cursor: "grab",
         padding: 4,
         display: "flex",
@@ -347,6 +346,7 @@ function DragHandle({
         borderRadius: 4,
         boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
         zIndex: 1,
+        opacity: 0,
         transition: "opacity 0.15s",
       }}
     >
@@ -367,7 +367,7 @@ function DragHandle({
   );
 }
 
-function GroupDropTarget({ containerId, hasChildren }: { containerId: string; hasChildren: boolean }) {
+function GroupDropTarget({ containerId, hasChildren, onlyGroups }: { containerId: string; hasChildren: boolean; onlyGroups?: boolean }) {
   const { active } = useDndContext();
   const isDragActive = !!active;
   const { setNodeRef, isOver } = useDroppable({
@@ -377,6 +377,13 @@ function GroupDropTarget({ containerId, hasChildren }: { containerId: string; ha
 
   if (hasChildren && !isDragActive) {
     return null;
+  }
+
+  if (onlyGroups && active) {
+    const activeNode = active.data.current?.node as FormPreviewStateNode | undefined;
+    if (activeNode && !isGroupControl(activeNode.definition)) {
+      return null;
+    }
   }
 
   return (

@@ -1,5 +1,11 @@
 import React from "react";
-import {useComputed, Finput, Fcheckbox, Control} from "@react-typed-forms/core";
+import {
+  useComputed,
+  useControlEffect,
+  Finput,
+  Fcheckbox,
+  Control,
+} from "@react-typed-forms/core";
 import {
   ControlDefinition,
   DataControlDefinition,
@@ -11,6 +17,7 @@ import {
   SchemaField,
 } from "@react-typed-forms/schemas";
 import { getBasicFieldType, getFieldTypeConfig } from "../fieldTypes";
+import { renameFieldInForm } from "../fieldActions";
 import { OptionsEditor } from "./OptionsEditor";
 import { VisibilityConditionEditor } from "./VisibilityConditionEditor";
 import { EditorFormTree } from "../EditorFormTree";
@@ -21,14 +28,11 @@ export interface PropertiesPanelProps {
   formTree: EditorFormTree;
   schemaTree: EditorSchemaTree;
   schemaFields: Control<SchemaField[]>;
-  formFields: Control<SchemaField[]>;
   deleteField: () => void;
 }
 
 export function PropertiesPanel(props: PropertiesPanelProps) {
-  const selectedField = useComputed(
-    () => props.selectedField.value,
-  );
+  const selectedField = useComputed(() => props.selectedField.value);
 
   if (!selectedField.value) {
     return (
@@ -46,7 +50,6 @@ function PropertiesPanelContent({
   formTree,
   schemaTree,
   schemaFields,
-  formFields,
   deleteField,
 }: PropertiesPanelProps) {
   const formNode = selectedField.value;
@@ -56,8 +59,8 @@ function PropertiesPanelContent({
   if (!defControl) return null;
 
   const def = defControl.value;
-  const dataDefControl : Control<DataControlDefinition> = defControl.as();
-  const groupDefControl : Control<GroupedControlsDefinition> = defControl.as();
+  const dataDefControl: Control<DataControlDefinition> = defControl.as();
+  const groupDefControl: Control<GroupedControlsDefinition> = defControl.as();
   const fieldType = getBasicFieldType(def);
   const fieldConfig = fieldType ? getFieldTypeConfig(fieldType) : undefined;
   const isData = isDataControl(def);
@@ -76,10 +79,16 @@ function PropertiesPanelContent({
     ? findSchemaFieldControl(schemaTree, dataDef.field)
     : undefined;
 
-  const allSchemaFields = [
-    ...(schemaFields.value ?? []),
-    ...(formFields.value ?? []),
-  ];
+  const allSchemaFields = schemaFields.value ?? [];
+
+  useControlEffect(
+    () => defControl.fields.title.value,
+    (title) => {
+      if (isData && title != null) {
+        renameFieldInForm(schemaFields, dataDefControl.fields.field, title);
+      }
+    },
+  );
 
   return (
     <div className="w-80 border-l border-violet-100 bg-white flex-shrink-0 overflow-y-auto">
@@ -122,7 +131,10 @@ function PropertiesPanelContent({
               Placeholder
             </label>
             <Finput
-              control={(dataDefControl.fields.renderOptions as Control<any>).fields.placeholder}
+              control={
+                (dataDefControl.fields.renderOptions as Control<any>).fields
+                  .placeholder
+              }
               className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
               placeholder="Placeholder text"
             />
@@ -149,7 +161,10 @@ function PropertiesPanelContent({
               id="hide-title-toggle"
               className="rounded accent-violet-600"
             />
-            <label htmlFor="hide-title-toggle" className="text-sm text-slate-600">
+            <label
+              htmlFor="hide-title-toggle"
+              className="text-sm text-slate-600"
+            >
               Hide title
             </label>
           </div>
@@ -170,10 +185,7 @@ function PropertiesPanelContent({
   );
 }
 
-function findSchemaFieldControl(
-  schemaTree: any,
-  fieldName: string,
-) {
+function findSchemaFieldControl(schemaTree: any, fieldName: string) {
   const formFields = schemaTree.getFormFields?.();
   if (formFields) {
     const found = formFields.elements.find(
@@ -182,7 +194,5 @@ function findSchemaFieldControl(
     if (found) return found;
   }
   const rootFields = schemaTree.getRootFields();
-  return rootFields.elements.find(
-    (el: any) => el.value.field === fieldName,
-  );
+  return rootFields.elements.find((el: any) => el.value.field === fieldName);
 }

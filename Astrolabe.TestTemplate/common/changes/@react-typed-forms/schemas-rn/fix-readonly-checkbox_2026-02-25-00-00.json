@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas-rn",
+      "comment": "Fix readonly support for checkbox renderer.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas-rn"
+}

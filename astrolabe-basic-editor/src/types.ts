@@ -12,4 +12,5 @@ export enum BasicFieldType {
   DatePicker = "DatePicker",
   Dropdown = "Dropdown",
   SectionHeader = "SectionHeader",
+  Page = "Page",
 }

@@ -1,7 +1,7 @@
 import React from "react";
 import { BasicFieldType } from "../types";
 import { getAllFieldTypes, getFieldTypeConfig } from "../fieldTypes";
-import { FormNode } from "@react-typed-forms/schemas";
+import { FormNode, isGroupControl } from "@react-typed-forms/schemas";
 
 export interface FieldPaletteProps {
   addField: (type: BasicFieldType) => void;
@@ -16,32 +16,32 @@ export function FieldPalette({
   selectedField,
   rootNode,
 }: FieldPaletteProps) {
-  // In page mode, determine if we're at root level
-  const atRootLevel =
+  // In page mode, determine if we're inside a page:
+  // either selected is a child of a page, or selected IS a page (root-level group)
+  const insidePage =
     pageMode &&
-    (!selectedField ||
-      (rootNode && selectedField.parent?.id === rootNode.id));
+    selectedField &&
+    rootNode &&
+    (selectedField.parent?.id !== rootNode.id ||
+      isGroupControl(selectedField.definition));
 
   const fieldTypes = getAllFieldTypes().filter((type) => {
+    if (type === BasicFieldType.Page) return !!pageMode;
     if (!pageMode) return true;
-    if (atRootLevel) {
-      // At root level in page mode, only allow SectionHeader (pages)
-      return type === BasicFieldType.SectionHeader;
-    }
-    // Inside a page, allow everything except SectionHeader (no nested pages)
-    return type !== BasicFieldType.SectionHeader;
+    // Page mode: field types only available when inside a page
+    return !!insidePage;
   });
 
   return (
     <div className="w-60 border-r border-violet-100 bg-white overflow-y-auto flex-shrink-0">
       <div className="p-4">
         <h3 className="text-[10.5px] font-bold text-slate-400 uppercase tracking-[1px] mb-3 ml-1">
-          {atRootLevel ? "Add Pages" : "Add Fields"}
+          {pageMode && !insidePage ? "Add Pages" : "Add Fields"}
         </h3>
         <div className="space-y-0.5">
           {fieldTypes.map((type) => {
             const config = getFieldTypeConfig(type);
-            const label = pageMode && type === BasicFieldType.SectionHeader ? "Page" : config.label;
+            const label = config.label;
             return (
               <button
                 key={type}

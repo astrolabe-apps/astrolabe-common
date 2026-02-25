@@ -8,6 +8,7 @@ export {
   addFieldToForm,
   deleteFieldFromForm,
   moveFieldInForm,
+  renameFieldInForm,
 } from "./fieldActions";
 export type { SimpleVisibilityCondition } from "./types";
 export { BasicFieldType } from "./types";
@@ -18,6 +19,7 @@ export {
   getAllFieldTypes,
   getBasicFieldType,
   generateFieldName,
+  toCamelCase,
 } from "./fieldTypes";
 export {
   readVisibilityCondition,

@@ -122,6 +122,7 @@ function CheckBoxSelected({
       style={props.style}
       className={rendererClass(props.className, options.checkClass)}
       renderer={renderer}
+      readOnly={props.readonly}
     />
   );
 }
@@ -143,6 +144,7 @@ function CheckBox({
       style={props.style}
       className={rendererClass(props.className, options.checkClass)}
       renderer={renderer}
+      readOnly={props.readonly}
     />
   );
 }
@@ -152,6 +154,7 @@ export function Fcheckbox({
   type = "checkbox",
   notValue = false,
   renderer,
+  readOnly,
   ...others
 }: HtmlInputProperties & {
   control: Control<boolean | null | undefined>;
@@ -166,10 +169,14 @@ export function Fcheckbox({
       {...theseProps}
       checked={!!value !== notValue}
       inputRef={(r) => (control.element = r)}
-      onChangeChecked={(e) => {
-        control.touched = true;
-        control.value = e !== notValue;
-      }}
+      onChangeChecked={
+        readOnly
+          ? () => {}
+          : (e) => {
+              control.touched = true;
+              control.value = e !== notValue;
+            }
+      }
       type={type}
       {...others}
     />

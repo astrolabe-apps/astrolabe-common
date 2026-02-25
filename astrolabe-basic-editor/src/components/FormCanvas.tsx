@@ -241,6 +241,7 @@ export function FormCanvas({
       className="flex-1 overflow-auto p-6 bg-slate-50"
       onClick={() => selectField(undefined)}
     >
+      <style>{`[data-drag-wrapper]:hover > [data-drag-handle] { opacity: 1 !important; }`}</style>
       <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-[0_4px_20px_rgba(44,43,61,0.04),0_1px_4px_rgba(44,43,61,0.02)] border border-violet-100/60 p-6 min-h-[200px]">
         <DndContext
           sensors={sensors}

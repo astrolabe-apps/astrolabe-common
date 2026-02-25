@@ -15,7 +15,11 @@ export function createMultilineFieldRenderer(className?: string) {
   ));
 }
 
-export function MultilineTextfield({ control, className }: DataRendererProps) {
+export function MultilineTextfield({
+  control,
+  className,
+  readonly,
+}: DataRendererProps) {
   const codeRef = useRef<HTMLElement | null>(null);
   useControlEffect(
     () => control.value,
@@ -29,7 +33,7 @@ export function MultilineTextfield({ control, className }: DataRendererProps) {
   );
   return (
     <code
-      contentEditable={!control.disabled}
+      contentEditable={!control.disabled && !readonly}
       className={className}
       onInput={(t) => (control.value = t.currentTarget.textContent)}
       ref={codeRef}
