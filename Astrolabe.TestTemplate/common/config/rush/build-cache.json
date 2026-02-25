@@ -128,7 +128,7 @@
      * the monorepo.
      * Example: { "exec": "node", "args": ["common/scripts/auth.js"] }
      */
-    // "tokenHandler": { "exec": "node", "args": ["common/scripts/auth.js"] },
+    "tokenHandler": { "exec": "node", "args": ["common/scripts/build-cache-auth.js"] },
 
     /**
      * (Optional) Prefix for cache keys.
