@@ -526,7 +526,11 @@ function DataGridControlRenderer({
               }
               clear={
                 !renderOptions.disableClear
-                  ? () => (filters.value = {})
+                  ? () =>
+                      groupedChanges(() => {
+                        filters.value = {};
+                        offset.value = 0;
+                      })
                   : undefined
               }
               clearClass={classes.clearFilterClass ?? ""}
