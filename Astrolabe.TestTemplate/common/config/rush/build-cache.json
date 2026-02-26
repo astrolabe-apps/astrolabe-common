@@ -10,14 +10,14 @@
    *
    * See https://rushjs.io/pages/maintainer/build_cache/ for details about this experimental feature.
    */
-  "buildCacheEnabled": false,
+  "buildCacheEnabled": true,
 
   /**
    * (Required) Choose where project build outputs will be cached.
    *
-   * Possible values: "local-only", "azure-blob-storage", "amazon-s3"
+   * Possible values: "local-only", "azure-blob-storage", "amazon-s3", "http"
    */
-  "cacheProvider": "local-only",
+  "cacheProvider": "http",
 
   /**
    * Setting this property overrides the cache entry ID.  If this property is set, it must contain
@@ -106,14 +106,15 @@
      * (Required) The URL of the server that stores the caches.
      * Example: "https://build-cacches.example.com/"
      */
-    // "url": "https://build-cacches.example.com/",
+    // TODO: Replace this temporary ngrok URL with a permanent cache server endpoint
+    "url": "https://astro-registry.ngrok.app/cache/",
 
     /**
      * (Optional) The HTTP method to use when writing to the cache (defaults to PUT).
      * Should be one of PUT, POST, or PATCH.
      * Example: "PUT"
      */
-    // "uploadMethod": "PUT",
+    "uploadMethod": "PUT",
 
     /**
      * (Optional) HTTP headers to pass to the cache server.
@@ -127,7 +128,7 @@
      * the monorepo.
      * Example: { "exec": "node", "args": ["common/scripts/auth.js"] }
      */
-    // "tokenHandler": { "exec": "node", "args": ["common/scripts/auth.js"] },
+    "tokenHandler": { "exec": "node", "args": ["common/scripts/build-cache-auth.js"] },
 
     /**
      * (Optional) Prefix for cache keys.
@@ -138,6 +139,6 @@
     /**
      * (Optional) If set to true, allow writing to the cache. Defaults to false.
      */
-    // "isCacheWriteAllowed": true
+    "isCacheWriteAllowed": true
   }
 }
