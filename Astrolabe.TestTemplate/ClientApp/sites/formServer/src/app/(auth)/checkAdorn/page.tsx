@@ -6,14 +6,14 @@ import {
   createSchemaLookup,
   RenderForm,
 } from "@react-typed-forms/schemas";
-import { createStdFormRenderer } from "../../renderers";
+import { createStdFormRenderer } from "../../../renderers";
 import { Button } from "@astrolabe/ui/Button";
 import { getAccordionState } from "@react-typed-forms/schemas-html";
 import {
   Form,
   SchemaFields,
   TestOptionSchema,
-} from "../../setup/testOptionTree";
+} from "../../../setup/testOptionTree";
 import { createFormTree } from "@astroapps/forms-core";
 
 const renderer = createStdFormRenderer(null);

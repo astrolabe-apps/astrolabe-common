@@ -10,7 +10,7 @@ import {
   makeSchemaDataNode,
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
-import { createStdFormRenderer } from "../../renderers";
+import { createStdFormRenderer } from "../../../renderers";
 import { Button } from "@astrolabe/ui/Button";
 import {
   getTrustedFrame,

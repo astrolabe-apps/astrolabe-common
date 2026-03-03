@@ -1,4 +1,5 @@
 using Astrolabe.Annotation;
+using Astrolabe.TestTemplate.Service;
 using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.TestTemplate.Workflow;
@@ -30,4 +31,5 @@ public enum ItemStatus
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<CarItem> Cars { get; set; }
+    public DbSet<AppUser> Users { get; set; }
 }

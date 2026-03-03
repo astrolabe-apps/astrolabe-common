@@ -23,7 +23,7 @@ import {
 import React, { useCallback, useState } from "react";
 import sample from "./sample.json";
 import { useApiClient } from "@astroapps/client";
-import { EvalClient, EvalResult, ErrorWithLocation } from "../../client";
+import { EvalClient, EvalResult, ErrorWithLocation } from "../../../client";
 import { basicSetup, EditorView } from "codemirror";
 import { evalCompletions, Evaluator } from "@astroapps/codemirror-evaluator";
 import { autocompletion } from "@codemirror/autocomplete";
