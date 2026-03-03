@@ -1,4 +1,4 @@
-using Astrolabe.LocalUsers.Oidc;
+using Astrolabe.OIDC;
 
 namespace Astrolabe.TestTemplate.Service;
 

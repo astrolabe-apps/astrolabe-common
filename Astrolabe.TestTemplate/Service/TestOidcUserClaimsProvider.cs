@@ -1,6 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Astrolabe.LocalUsers.Oidc;
+using Astrolabe.OIDC;
 using Astrolabe.Web.Common;
 using Microsoft.IdentityModel.Tokens;
 

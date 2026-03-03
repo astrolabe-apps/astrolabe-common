@@ -1,7 +1,7 @@
 using System.Reflection;
 using Astrolabe.JSON.Extensions;
 using Astrolabe.LocalUsers;
-using Astrolabe.LocalUsers.Oidc;
+using Astrolabe.OIDC;
 using Astrolabe.TestTemplate.Service;
 using Astrolabe.TestTemplate.Workflow;
 using Astrolabe.Web.Common;
