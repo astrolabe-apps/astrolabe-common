@@ -182,9 +182,8 @@ public abstract class OidcEndpoints
         };
         await store.StoreAuthorizationCode(authCode);
 
-        // Build redirect URL with code and state
-        var separator = authorizeRequest.RedirectUri.Contains('?') ? "&" : "?";
-        var redirectUrl = $"{authorizeRequest.RedirectUri}{separator}code={Uri.EscapeDataString(code)}&state={Uri.EscapeDataString(authorizeRequest.State)}";
+        // Build redirect URL with code and state in hash fragment (MSAL expects fragment response mode)
+        var redirectUrl = $"{authorizeRequest.RedirectUri}#code={Uri.EscapeDataString(code)}&state={Uri.EscapeDataString(authorizeRequest.State)}";
 
         return Results.Json(new AuthorizeCompleteResponse(redirectUrl));
     }
@@ -246,21 +245,18 @@ public abstract class OidcEndpoints
             Scope = authCode.Scope
         };
 
-        // Issue refresh token if offline_access scope was requested
-        if (authCode.Scope.Contains("offline_access"))
+        // Always issue refresh tokens for PKCE-protected clients
+        var refreshTokenValue = GenerateRandomString();
+        var refreshToken = new RefreshToken
         {
-            var refreshTokenValue = GenerateRandomString();
-            var refreshToken = new RefreshToken
-            {
-                Token = refreshTokenValue,
-                ClientId = clientId,
-                Claims = authCode.Claims,
-                Scope = authCode.Scope,
-                ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.RefreshTokenLifetimeSeconds)
-            };
-            await store.StoreRefreshToken(refreshToken);
-            response.RefreshToken = refreshTokenValue;
-        }
+            Token = refreshTokenValue,
+            ClientId = clientId,
+            Claims = authCode.Claims,
+            Scope = authCode.Scope,
+            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.RefreshTokenLifetimeSeconds)
+        };
+        await store.StoreRefreshToken(refreshToken);
+        response.RefreshToken = refreshTokenValue;
 
         return Results.Json(response);
     }

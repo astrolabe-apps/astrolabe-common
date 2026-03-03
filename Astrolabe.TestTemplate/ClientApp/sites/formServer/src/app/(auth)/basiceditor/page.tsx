@@ -16,9 +16,9 @@ import {
   stringOptionsField,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
-import { createStdFormRenderer } from "../../renderers";
-import { SchemaMap } from "../../schemas";
-import { FormDefinitions } from "../../forms";
+import { createStdFormRenderer } from "../../../renderers";
+import { SchemaMap } from "../../../schemas";
+import { FormDefinitions } from "../../../forms";
 import { useControl } from "@react-typed-forms/core";
 
 interface SampleForm {

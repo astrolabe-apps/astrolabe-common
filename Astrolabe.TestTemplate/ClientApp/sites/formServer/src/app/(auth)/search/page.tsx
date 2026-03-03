@@ -1,7 +1,7 @@
 "use client";
 
 import { useApiClient } from "@astroapps/client";
-import { CarClient, CarEdit, CarInfo } from "../../client";
+import { CarClient, CarEdit, CarInfo } from "../../../client";
 import { useEffect, useMemo } from "react";
 import {
   Control,
@@ -15,13 +15,13 @@ import {
   SchemaDataNode,
   SchemaNode,
 } from "@react-typed-forms/schemas";
-import { FormDefinitions } from "../../forms";
+import { FormDefinitions } from "../../../forms";
 import {
   CarSearchPageForm,
   defaultCarSearchPageForm,
   SchemaMap,
-} from "../../schemas";
-import { createStdFormRenderer } from "../../renderers";
+} from "../../../schemas";
+import { createStdFormRenderer } from "../../../renderers";
 import {
   defaultSearchOptions,
   useClientSearching,

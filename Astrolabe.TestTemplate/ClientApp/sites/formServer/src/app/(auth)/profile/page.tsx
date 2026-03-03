@@ -37,7 +37,7 @@ import {
   EditorFormTree,
 } from "@astroapps/schemas-editor";
 import { ViewContext, SelectedControlNode } from "@astroapps/schemas-editor";
-import controlsJson from "../../ControlDefinition.json";
+import controlsJson from "../../../ControlDefinition.json";
 import { ValueForFieldExtension } from "@react-typed-forms/schemas-html";
 
 // Simple test schema to act as the "form schema" for the selected control

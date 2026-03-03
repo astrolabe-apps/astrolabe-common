@@ -1360,6 +1360,8 @@ importers:
       '@astroapps/aria-datepicker': workspace:*
       '@astroapps/basic-editor': workspace:*
       '@astroapps/client': workspace:*
+      '@astroapps/client-localusers': workspace:*
+      '@astroapps/client-msal': workspace:*
       '@astroapps/client-nextjs': workspace:*
       '@astroapps/codemirror-evaluator': workspace:*
       '@astroapps/controls': workspace:*
@@ -1377,6 +1379,8 @@ importers:
       '@astroapps/searchstate': workspace:*
       '@astroapps/swc-controls-plugin': 1.1.0-next15-2
       '@astrolabe/ui': workspace:*
+      '@azure/msal-browser': ^3.25.0
+      '@azure/msal-react': ^2.1.1
       '@codemirror/autocomplete': ^6.18.6
       '@codemirror/commands': ^6.10.0
       '@codemirror/view': ^6.39.2
@@ -1414,6 +1418,8 @@ importers:
       '@astroapps/aria-datepicker': link:../../../../aria-datepicker
       '@astroapps/basic-editor': link:../../../../astrolabe-basic-editor
       '@astroapps/client': link:../../../../astrolabe-client
+      '@astroapps/client-localusers': link:../../../../astrolabe-client-localusers
+      '@astroapps/client-msal': link:../../../../astrolabe-client-msal
       '@astroapps/client-nextjs': link:../../../../astrolabe-client-nextjs
       '@astroapps/codemirror-evaluator': link:../../../../astrolabe-codemirror-evaluator
       '@astroapps/controls': link:../../../../astrolabe-controls
@@ -1430,6 +1436,8 @@ importers:
       '@astroapps/schemas-turnstile': link:../../../../schemas-turnstile
       '@astroapps/searchstate': link:../../../../astrolabe-searchstate
       '@astrolabe/ui': link:../../../../astrolabe-ui
+      '@azure/msal-browser': 3.26.1
+      '@azure/msal-react': 2.1.1_uvviyu74ziyfzsrz3l2zd276ga
       '@codemirror/autocomplete': 6.18.6
       '@codemirror/commands': 6.10.0
       '@codemirror/view': 6.39.2

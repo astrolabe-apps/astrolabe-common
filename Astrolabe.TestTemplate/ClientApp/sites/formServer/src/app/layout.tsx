@@ -2,16 +2,9 @@
 
 import "./globals.css";
 import "react-quill-new/dist/quill.snow.css";
-import { useNextNavigationService } from "@astroapps/client-nextjs";
-import { AppContextProvider, useControlTokenSecurity } from "@astroapps/client";
+import { ReactNode } from "react";
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const navigation = useNextNavigationService();
-  const security = useControlTokenSecurity();
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -20,9 +13,7 @@ export default function RootLayout({
           src="https://api.quickstream.support.qvalent.com/rest/v1/quickstream-api-1.0.min.js"
         ></script>
       </head>
-      <AppContextProvider value={{ navigation, security }}>
-        <body className="h-screen">{children}</body>
-      </AppContextProvider>
+      <body className="h-screen">{children}</body>
     </html>
   );
 }

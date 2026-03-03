@@ -60,23 +60,23 @@ import {
   CodeGenClient,
   ControlDefinition as CD,
   SearchStateClient,
-} from "../client";
-import controlsJson from "../ControlDefinition.json";
-import schemaFieldJson from "../SchemaField.json";
-import testSchemaControls from "../forms/TestSchema.json";
-import allControls from "../forms/AllControls.json";
+} from "../../client";
+import controlsJson from "../../ControlDefinition.json";
+import schemaFieldJson from "../../SchemaField.json";
+import testSchemaControls from "../../forms/TestSchema.json";
+import allControls from "../../forms/AllControls.json";
 import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
 import { SignatureExtension } from "@astroapps/schemas-signature";
 import { TurnstileExtension } from "@astroapps/schemas-turnstile";
 import { RecaptchaExtension } from "@astroapps/schemas-recaptcha";
-import { FormDefinitions } from "../forms";
-import { createStdFormRenderer } from "../renderers";
+import { FormDefinitions } from "../../forms";
+import { createStdFormRenderer } from "../../renderers";
 import { QuickstreamExtension } from "@astroapps/schemas-quickstream";
 import { RechartsExtension } from "@astroapps/schemas-rechart";
-import { SchemaMap } from "../schemas";
+import { SchemaMap } from "../../schemas";
 import { Button } from "@astrolabe/ui/Button";
-import { SchemaFields as AllControlsSchema } from "../setup/allControls";
+import { SchemaFields as AllControlsSchema } from "../../setup/allControls";
 import useBreakpoint from "use-breakpoint";
 
 // ControlMetricsRegistry.enableStackTraceCapture();

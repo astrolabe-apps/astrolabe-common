@@ -11,7 +11,7 @@ import {
   isDataControl,
   ResolvedDefinition,
 } from "@astroapps/forms-core";
-// import { Form, SchemaFields } from "../../setup/basicForm";
+// import { Form, SchemaFields } from "../../../setup/basicForm";
 import {
   createPreviewNode,
   FormControlPreview,
@@ -37,8 +37,8 @@ import {
   createDefaultRenderers,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
-import CarJson from "../../forms/CarSearch.json";
-import { SchemaMap } from "../../schemas";
+import CarJson from "../../../forms/CarSearch.json";
+import { SchemaMap } from "../../../schemas";
 import { createDataGridRenderer } from "@astroapps/schemas-datagrid";
 
 const SchemaFields = SchemaMap.CarSearchPage;
