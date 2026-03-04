@@ -2,6 +2,7 @@ using System.Reflection;
 using Astrolabe.JSON.Extensions;
 using Astrolabe.LocalUsers;
 using Astrolabe.OIDC;
+using Astrolabe.OIDC.EF;
 using Astrolabe.TestTemplate.Service;
 using Astrolabe.TestTemplate.Workflow;
 using Astrolabe.Web.Common;
@@ -121,10 +122,15 @@ var oidcConfig = new OidcProviderConfig
             PostLogoutRedirectUris = ["https://localhost:5001/"]
         }
     ],
-    LoginPageUrl = "/locallogin"
+    LoginPageUrl = "/locallogin",
+    ExternalProviders = builder.Configuration.GetSection("Oidc:ExternalProviders").Exists()
+        ? builder.Configuration.GetSection("Oidc:ExternalProviders").Get<List<ExternalOidcProviderConfig>>() ?? []
+        : []
 };
+builder.Services.AddEfOidcTokenStore<AppDbContext>();
 builder.Services.AddOidcEndpoints<TestOidcEndpoints>(oidcConfig);
 builder.Services.AddScoped<IOidcUserClaimsProvider, TestOidcUserClaimsProvider>();
+builder.Services.AddScoped<IExternalUserLinker, TestExternalUserLinker>();
 
 var app = builder.Build();
 

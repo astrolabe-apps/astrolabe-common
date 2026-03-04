@@ -21,7 +21,29 @@ public static class PkceValidator
         return string.Equals(computed, codeChallenge, StringComparison.Ordinal);
     }
 
-    private static string Base64UrlEncode(byte[] bytes)
+    /// <summary>
+    /// Generates a PKCE code verifier and its S256 challenge.
+    /// </summary>
+    public static (string CodeVerifier, string CodeChallenge) GenerateS256Pkce()
+    {
+        var verifier = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32))
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+        var challenge = ComputeS256Challenge(verifier);
+        return (verifier, challenge);
+    }
+
+    /// <summary>
+    /// Computes the S256 code challenge for a given code verifier.
+    /// </summary>
+    public static string ComputeS256Challenge(string codeVerifier)
+    {
+        var hash = SHA256.HashData(Encoding.ASCII.GetBytes(codeVerifier));
+        return Base64UrlEncode(hash);
+    }
+
+    internal static string Base64UrlEncode(byte[] bytes)
     {
         return Convert.ToBase64String(bytes)
             .TrimEnd('=')

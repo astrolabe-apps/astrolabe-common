@@ -11,12 +11,14 @@ type LoginFormProps = {
   className?: string;
   control: Control<LoginFormData>;
   authenticate: () => Promise<boolean>;
+  children?: React.ReactNode;
 };
 
 export function LoginForm({
   className,
   control,
   authenticate,
+  children,
 }: LoginFormProps) {
   const { Link } = useNavigationService();
   const {
@@ -74,6 +76,7 @@ export function LoginForm({
         </div>
         {error && <p className="text-danger">{error}</p>}
         {disabled && <CircularProgress />}
+        {children}
         <Button className="w-full" type="submit" disabled={disabled}>
           Login
         </Button>

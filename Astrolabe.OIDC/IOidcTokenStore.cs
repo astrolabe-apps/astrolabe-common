@@ -15,4 +15,12 @@ public interface IOidcTokenStore
 
     Task StoreAuthorizeRequest(string requestId, AuthorizeRequest request);
     Task<AuthorizeRequest?> GetAndRemoveAuthorizeRequest(string requestId);
+
+    /// <summary>
+    /// Non-destructive peek at an authorize request. Used by external login to validate the request exists.
+    /// </summary>
+    Task<AuthorizeRequest?> GetAuthorizeRequest(string requestId);
+
+    Task StoreExternalAuthState(ExternalAuthState state);
+    Task<ExternalAuthState?> GetAndRemoveExternalAuthState(string stateValue);
 }

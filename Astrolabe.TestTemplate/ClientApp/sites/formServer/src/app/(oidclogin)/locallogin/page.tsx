@@ -47,7 +47,19 @@ export default function LocalLoginPage() {
         control={control}
         authenticate={handleAuthenticate}
         className="w-[600px]"
-      />
+      >
+        {oidcRequestId && (
+          <div className="flex flex-col items-center gap-2">
+            <div className="text-sm text-gray-500">or</div>
+            <a
+              href={`/oidc/external/login?provider=microsoft&oidc_request_id=${encodeURIComponent(oidcRequestId)}`}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Login with Microsoft
+            </a>
+          </div>
+        )}
+      </LoginForm>
     </div>
   );
 }

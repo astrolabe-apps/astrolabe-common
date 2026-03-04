@@ -1,4 +1,5 @@
 using Astrolabe.Annotation;
+using Astrolabe.OIDC.EF;
 using Astrolabe.TestTemplate.Service;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,8 +29,11 @@ public enum ItemStatus
     Published,
 }
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IOidcStoreDbContext
 {
     public DbSet<CarItem> Cars { get; set; }
     public DbSet<AppUser> Users { get; set; }
+    public DbSet<OidcStoreEntry> OidcTokens { get; set; }
+
+    public DbSet<OidcStoreEntry> GetOidcStoreEntries() => OidcTokens;
 }

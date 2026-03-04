@@ -23,6 +23,13 @@ public static class OidcEndpointsExtensions
         // Register in-memory store as default; consumers can replace with their own implementation
         services.TryAddSingleton<IOidcTokenStore, InMemoryOidcTokenStore>();
 
+        // Register external OIDC federation services when external providers are configured
+        if (config.ExternalProviders.Count > 0)
+        {
+            services.AddHttpClient("OidcExternal");
+            services.TryAddSingleton<ExternalOidcDiscoveryCache>();
+        }
+
         services.AddScoped<TEndpoints>();
         return services;
     }

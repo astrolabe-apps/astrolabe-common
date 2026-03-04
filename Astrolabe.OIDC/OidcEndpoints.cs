@@ -1,8 +1,13 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Astrolabe.OIDC;
 
@@ -42,6 +47,15 @@ public abstract class OidcEndpoints
     protected OidcTokenSigner GetTokenSigner(HttpContext context) =>
         context.RequestServices.GetRequiredService<OidcTokenSigner>();
 
+    protected IExternalUserLinker GetExternalUserLinker(HttpContext context) =>
+        context.RequestServices.GetRequiredService<IExternalUserLinker>();
+
+    protected ExternalOidcDiscoveryCache GetDiscoveryCache(HttpContext context) =>
+        context.RequestServices.GetRequiredService<ExternalOidcDiscoveryCache>();
+
+    protected IHttpClientFactory GetHttpClientFactory(HttpContext context) =>
+        context.RequestServices.GetRequiredService<IHttpClientFactory>();
+
     /// <summary>
     /// Maps all enabled OIDC endpoints to the route group.
     /// </summary>
@@ -59,6 +73,16 @@ public abstract class OidcEndpoints
             MapToken(group);
         if (Options.EnableEndSession)
             MapEndSession(group);
+
+        if (Config.ExternalProviders.Count > 0)
+        {
+            if (Options.EnableExternalProviders)
+                MapExternalProviders(group);
+            if (Options.EnableExternalLogin)
+                MapExternalLogin(group);
+            if (Options.EnableExternalCallback)
+                MapExternalCallback(group);
+        }
     }
 
     #region Handler Methods
@@ -328,6 +352,249 @@ public abstract class OidcEndpoints
         return Results.Ok();
     }
 
+    protected virtual IResult HandleExternalProviders(HttpContext context)
+    {
+        var providers = Config.ExternalProviders.Select(p => new
+        {
+            name = p.Name,
+            displayName = p.DisplayName ?? p.Name
+        });
+        return Results.Json(providers);
+    }
+
+    protected virtual async Task<IResult> HandleExternalLogin(HttpContext context)
+    {
+        var query = context.Request.Query;
+        var providerName = query["provider"].FirstOrDefault();
+        var oidcRequestId = query["oidc_request_id"].FirstOrDefault();
+
+        if (string.IsNullOrEmpty(providerName) || string.IsNullOrEmpty(oidcRequestId))
+        {
+            return Results.Json(new { error = "invalid_request", error_description = "Missing provider or oidc_request_id." }, statusCode: 400);
+        }
+
+        // Validate the provider exists
+        var provider = Config.ExternalProviders.FirstOrDefault(p => p.Name == providerName);
+        if (provider == null)
+        {
+            return Results.Json(new { error = "invalid_request", error_description = "Unknown external provider." }, statusCode: 400);
+        }
+
+        // Validate the authorize request exists (non-destructive peek)
+        var store = GetTokenStore(context);
+        var authorizeRequest = await store.GetAuthorizeRequest(oidcRequestId);
+        if (authorizeRequest == null)
+        {
+            return Results.Json(new { error = "invalid_request", error_description = "Invalid or expired OIDC request." }, statusCode: 400);
+        }
+
+        // Generate state and nonce
+        var state = GenerateRandomString();
+        var nonce = GenerateRandomString();
+
+        // Generate PKCE if enabled
+        string? codeVerifier = null;
+        string? codeChallenge = null;
+        if (provider.UsePkce)
+        {
+            (codeVerifier, codeChallenge) = PkceValidator.GenerateS256Pkce();
+        }
+
+        // Store external auth state
+        var externalState = new ExternalAuthState
+        {
+            State = state,
+            OidcRequestId = oidcRequestId,
+            ProviderName = providerName,
+            CodeVerifier = codeVerifier,
+            Nonce = nonce,
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10)
+        };
+        await store.StoreExternalAuthState(externalState);
+
+        // Fetch external provider's discovery document
+        var discoveryCache = GetDiscoveryCache(context);
+        var externalConfig = await discoveryCache.GetConfiguration(provider.Authority);
+
+        // Build the external authorize URL
+        var callbackUrl = $"{Config.Issuer.TrimEnd('/')}/external/callback";
+        var authorizeUrl = externalConfig.AuthorizationEndpoint
+            + $"?client_id={Uri.EscapeDataString(provider.ClientId)}"
+            + $"&redirect_uri={Uri.EscapeDataString(callbackUrl)}"
+            + $"&response_type=code"
+            + $"&scope={Uri.EscapeDataString(provider.Scopes)}"
+            + $"&state={Uri.EscapeDataString(state)}"
+            + $"&nonce={Uri.EscapeDataString(nonce)}";
+
+        if (provider.UsePkce && codeChallenge != null)
+        {
+            authorizeUrl += $"&code_challenge={Uri.EscapeDataString(codeChallenge)}"
+                + $"&code_challenge_method=S256";
+        }
+
+        return Results.Redirect(authorizeUrl);
+    }
+
+    protected virtual async Task<IResult> HandleExternalCallback(HttpContext context)
+    {
+        var query = context.Request.Query;
+        var code = query["code"].FirstOrDefault();
+        var stateValue = query["state"].FirstOrDefault();
+        var error = query["error"].FirstOrDefault();
+
+        if (!string.IsNullOrEmpty(error))
+        {
+            var errorDescription = query["error_description"].FirstOrDefault() ?? "External authentication failed.";
+            return Results.Json(new { error, error_description = errorDescription }, statusCode: 400);
+        }
+
+        if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(stateValue))
+        {
+            return Results.Json(new { error = "invalid_request", error_description = "Missing code or state." }, statusCode: 400);
+        }
+
+        // Retrieve and validate external auth state
+        var store = GetTokenStore(context);
+        var externalState = await store.GetAndRemoveExternalAuthState(stateValue);
+        if (externalState == null)
+        {
+            return Results.Json(new { error = "invalid_request", error_description = "Invalid or expired external auth state." }, statusCode: 400);
+        }
+
+        // Find the provider
+        var provider = Config.ExternalProviders.FirstOrDefault(p => p.Name == externalState.ProviderName);
+        if (provider == null)
+        {
+            return Results.Json(new { error = "server_error", error_description = "External provider configuration not found." }, statusCode: 500);
+        }
+
+        // Exchange code for tokens with external provider
+        var discoveryCache = GetDiscoveryCache(context);
+        var externalConfig = await discoveryCache.GetConfiguration(provider.Authority);
+        var callbackUrl = $"{Config.Issuer.TrimEnd('/')}/external/callback";
+
+        var httpClientFactory = GetHttpClientFactory(context);
+        var httpClient = httpClientFactory.CreateClient("OidcExternal");
+
+        var tokenRequestParams = new Dictionary<string, string>
+        {
+            ["grant_type"] = "authorization_code",
+            ["code"] = code,
+            ["redirect_uri"] = callbackUrl,
+            ["client_id"] = provider.ClientId
+        };
+
+        if (!string.IsNullOrEmpty(provider.ClientSecret))
+        {
+            tokenRequestParams["client_secret"] = provider.ClientSecret;
+        }
+
+        if (provider.UsePkce && externalState.CodeVerifier != null)
+        {
+            tokenRequestParams["code_verifier"] = externalState.CodeVerifier;
+        }
+
+        var tokenRequest = new HttpRequestMessage(HttpMethod.Post, externalConfig.TokenEndpoint)
+        {
+            Content = new FormUrlEncodedContent(tokenRequestParams)
+        };
+        tokenRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        var tokenResponse = await httpClient.SendAsync(tokenRequest);
+        var tokenResponseBody = await tokenResponse.Content.ReadAsStringAsync();
+        var externalTokenResponse = JsonSerializer.Deserialize<ExternalTokenResponse>(tokenResponseBody);
+
+        if (externalTokenResponse == null || !string.IsNullOrEmpty(externalTokenResponse.Error))
+        {
+            var desc = externalTokenResponse?.ErrorDescription ?? "Failed to exchange code with external provider.";
+            return Results.Json(new { error = "server_error", error_description = desc }, statusCode: 500);
+        }
+
+        if (string.IsNullOrEmpty(externalTokenResponse.IdToken))
+        {
+            return Results.Json(new { error = "server_error", error_description = "External provider did not return an id_token." }, statusCode: 500);
+        }
+
+        // Validate the external id_token
+        var externalClaims = await ValidateExternalIdToken(externalTokenResponse.IdToken, provider, externalConfig, externalState.Nonce);
+        if (externalClaims == null)
+        {
+            return Results.Json(new { error = "server_error", error_description = "External id_token validation failed." }, statusCode: 500);
+        }
+
+        // Link external identity to local user
+        var linker = GetExternalUserLinker(context);
+        var localClaims = await linker.LinkExternalUser(externalState.ProviderName, externalClaims);
+        if (localClaims == null)
+        {
+            return Results.Json(new { error = "access_denied", error_description = "External user could not be linked to a local account." }, statusCode: 403);
+        }
+
+        // Retrieve the original authorize request (consume it now)
+        var authorizeRequest = await store.GetAndRemoveAuthorizeRequest(externalState.OidcRequestId);
+        if (authorizeRequest == null)
+        {
+            return Results.Json(new { error = "invalid_request", error_description = "Original OIDC request has expired." }, statusCode: 400);
+        }
+
+        // Create authorization code and redirect back to the OIDC client (same as local flow)
+        var authCode = GenerateRandomString();
+        var authorizationCode = new AuthorizationCode
+        {
+            Code = authCode,
+            ClientId = authorizeRequest.ClientId,
+            RedirectUri = authorizeRequest.RedirectUri,
+            CodeChallenge = authorizeRequest.CodeChallenge,
+            CodeChallengeMethod = authorizeRequest.CodeChallengeMethod,
+            Claims = localClaims,
+            Scope = authorizeRequest.Scope,
+            Nonce = authorizeRequest.Nonce,
+            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.AuthorizationCodeLifetimeSeconds)
+        };
+        await store.StoreAuthorizationCode(authorizationCode);
+
+        // Redirect back to OIDC client with code and state
+        var redirectUrl = $"{authorizeRequest.RedirectUri}#code={Uri.EscapeDataString(authCode)}&state={Uri.EscapeDataString(authorizeRequest.State)}";
+        return Results.Redirect(redirectUrl);
+    }
+
+    protected virtual Task<IEnumerable<Claim>?> ValidateExternalIdToken(
+        string idToken,
+        ExternalOidcProviderConfig provider,
+        Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectConfiguration externalConfig,
+        string expectedNonce)
+    {
+        try
+        {
+            var validationParameters = new TokenValidationParameters
+            {
+                ValidIssuer = externalConfig.Issuer,
+                ValidAudience = provider.ClientId,
+                IssuerSigningKeys = externalConfig.SigningKeys,
+                ValidateIssuerSigningKey = true,
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true
+            };
+
+            var handler = new JwtSecurityTokenHandler();
+            var principal = handler.ValidateToken(idToken, validationParameters, out _);
+
+            // Validate nonce
+            var nonceClaim = principal.FindFirst("nonce");
+            if (nonceClaim == null || nonceClaim.Value != expectedNonce)
+            {
+                return Task.FromResult<IEnumerable<Claim>?>(null);
+            }
+
+            return Task.FromResult<IEnumerable<Claim>?>(principal.Claims);
+        }
+        catch
+        {
+            return Task.FromResult<IEnumerable<Claim>?>(null);
+        }
+    }
+
     #endregion
 
     #region Mapping Methods
@@ -361,6 +628,21 @@ public abstract class OidcEndpoints
         group
             .MapGet("logout", (HttpContext context) => HandleEndSession(context))
             .WithName("OidcEndSession");
+
+    protected virtual RouteHandlerBuilder MapExternalProviders(RouteGroupBuilder group) =>
+        group
+            .MapGet("external/providers", (HttpContext context) => HandleExternalProviders(context))
+            .WithName("OidcExternalProviders");
+
+    protected virtual RouteHandlerBuilder MapExternalLogin(RouteGroupBuilder group) =>
+        group
+            .MapGet("external/login", (Delegate)(async (HttpContext context) => await HandleExternalLogin(context)))
+            .WithName("OidcExternalLogin");
+
+    protected virtual RouteHandlerBuilder MapExternalCallback(RouteGroupBuilder group) =>
+        group
+            .MapGet("external/callback", (Delegate)(async (HttpContext context) => await HandleExternalCallback(context)))
+            .WithName("OidcExternalCallback");
 
     #endregion
 

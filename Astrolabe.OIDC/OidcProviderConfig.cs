@@ -44,6 +44,11 @@ public class OidcProviderConfig
     /// Lifetime of refresh tokens in seconds. Default: 86400 (24 hours).
     /// </summary>
     public int RefreshTokenLifetimeSeconds { get; set; } = 86400;
+
+    /// <summary>
+    /// External OIDC providers for federation. When configured, users can authenticate via these providers.
+    /// </summary>
+    public List<ExternalOidcProviderConfig> ExternalProviders { get; set; } = [];
 }
 
 /// <summary>

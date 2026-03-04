@@ -25,6 +25,7 @@
       <ProjectReference Include="..\Astrolabe.Validation\Astrolabe.Validation.csproj" />
       <ProjectReference Include="..\Astrolabe.LocalUsers\Astrolabe.LocalUsers.csproj" />
       <ProjectReference Include="..\Astrolabe.OIDC\Astrolabe.OIDC.csproj" />
+      <ProjectReference Include="..\Astrolabe.OIDC.EF\Astrolabe.OIDC.EF.csproj" />
       <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
       <ProjectReference Include="..\Astrolabe.Workflow\Astrolabe.Workflow.csproj" />
     </ItemGroup>
