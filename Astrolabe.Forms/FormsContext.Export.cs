@@ -21,7 +21,8 @@ public partial class FormsContext<
             .Select(x => new ExportDefinitionData(
                 ExportDefinitions
                     .Where(ed => ed.TableDefinitionId == x.Id)
-                    .Select(ed => new ExportDefinitionInfo(ed.Id, ed.Name)),
+                    .Select(ed => new ExportDefinitionInfo(ed.Id, ed.Name))
+                    .ToList(),
                 x.Name!,
                 x.Id
             ))

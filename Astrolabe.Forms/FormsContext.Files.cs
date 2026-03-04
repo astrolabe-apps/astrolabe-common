@@ -9,6 +9,15 @@ public partial class FormsContext<
 {
     protected virtual IFileStorage<TItemFile>? FileStorage => null;
 
+    public async Task<DownloadResponse?> DownloadFile(Guid personId, Guid? itemId, Guid fileId)
+    {
+        var fileStorage = FileStorage ?? throw new InvalidOperationException("FileStorage not configured");
+        var file = await GetFile(personId, itemId, fileId);
+        if (file == null) return null;
+        var download = await fileStorage.DownloadFile(file);
+        return download is null ? null : download with { FileName = file.Filename };
+    }
+
     public async Task<FormUpload> UploadFile(Guid personId, Guid? itemId, Stream stream, string fileName)
     {
         var fileStorage = FileStorage ?? throw new InvalidOperationException("FileStorage not configured");

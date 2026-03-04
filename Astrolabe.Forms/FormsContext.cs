@@ -9,6 +9,7 @@ namespace Astrolabe.Forms;
 public abstract partial class FormsContext<
     TItem, TFormData, TPerson, TFormDef, TTableDef,
     TAuditEvent, TItemTag, TItemNote, TItemFile, TExportDef>
+    : IFormsContext
     where TItem : class, IItem<TPerson, TFormData, TItemTag, TItemNote>, new()
     where TFormData : class, IFormData<TPerson, TFormDef>, new()
     where TPerson : class, IPerson, new()

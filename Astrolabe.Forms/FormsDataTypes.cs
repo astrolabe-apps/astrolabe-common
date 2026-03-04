@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Astrolabe.Schemas.ExportCsv;
 using Astrolabe.SearchState;
 
@@ -69,6 +70,14 @@ public record ExportDefinitionEdit(
     string Name,
     IEnumerable<ExportColumn> ExportColumns
 );
+
+public record FullEdit(string? Action, JsonElement Metadata);
+
+public record ItemNoteEdit(string Message, bool Internal);
+
+public record ExportRecordsEdit(IEnumerable<Guid>? RecordIds, Guid? DefinitionId, SearchOptions? All);
+
+public record ExportRecordsDefinitionEdit(IEnumerable<Guid>? RecordIds, SearchOptions? All);
 
 public static class AuditEventHelper
 {

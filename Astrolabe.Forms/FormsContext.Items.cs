@@ -136,6 +136,13 @@ public partial class FormsContext<
         );
     }
 
+    Task<Guid> IFormsContext.PerformActions(
+        IEnumerable<ItemAction> actions,
+        Guid? id,
+        Guid userId,
+        IList<string> roles,
+        Guid? formType) => PerformActions(actions, id, userId, roles, formType);
+
     public async Task<Guid> PerformActions(
         IEnumerable<ItemAction> actions,
         Guid? id,
@@ -245,6 +252,29 @@ public partial class FormsContext<
         };
         ItemNotes.Add(note);
         await SaveChanges();
+    }
+
+    public async Task<Guid> CreateItem(Guid formType, FullEdit edit, Guid userId, IList<string> roles)
+    {
+        List<ItemAction> actions = [EditMetadataAction.Sync(o =>
+            edit.Metadata.Deserialize(o.GetType(), FormDataJson.Options)!)];
+        if (edit.Action is { } v) actions.Add(new SimpleWorkflowAction(v));
+        return await PerformActions(actions, null, userId, roles, formType);
+    }
+
+    public async Task EditItem(Guid id, FullEdit edit, Guid userId, IList<string> roles)
+    {
+        List<ItemAction> actions = [EditMetadataAction.Sync(o =>
+            edit.Metadata.Deserialize(o.GetType(), FormDataJson.Options)!)];
+        if (edit.Action is { } v) actions.Add(new SimpleWorkflowAction(v));
+        await PerformActions(actions, id, userId, roles);
+    }
+
+    public async Task<FullItem> NewItem(Guid formType, Guid userId, IList<string> roles)
+    {
+        List<ItemAction> actions = [EditMetadataAction.Sync(o => o)];
+        var id = await PerformActions(actions, null, userId, roles, formType);
+        return await GetFullItem(id, userId, roles);
     }
 
     public async Task<List<Guid>> GetPreviewItemIdsByType(Guid type)

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.Forms;
@@ -6,6 +7,8 @@ public partial class FormsContext<
     TItem, TFormData, TPerson, TFormDef, TTableDef,
     TAuditEvent, TItemTag, TItemNote, TItemFile, TExportDef>
 {
+    public abstract Task<FormsUser> ResolveUser(ClaimsPrincipal principal);
+
     public async Task<TPerson> GetOrCreatePerson(Guid externalId, string firstName,
         string lastName, string? email)
     {
