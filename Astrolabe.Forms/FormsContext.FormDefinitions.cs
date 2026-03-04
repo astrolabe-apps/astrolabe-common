@@ -29,15 +29,7 @@ public partial class FormsContext<
     {
         var formDef = await FormDefinitions
             .Where(x => x.Id == formId)
-            .Select(x => new
-            {
-                x.ShortId,
-                x.Name,
-                x.GroupId,
-                x.TableId,
-                x.Definition,
-                x.Table,
-            })
+            .Include(x => x.Table)
             .AsNoTracking()
             .SingleOrDefaultAsync();
         NotFoundException.ThrowIfNull(formDef);
@@ -49,7 +41,7 @@ public partial class FormsContext<
         };
         return new FormAndSchemas(
             DbJson.FromJson<IEnumerable<object>>(formDef.Definition),
-            GetFormConfig(formDef.Table!),
+            GetFormConfig(formDef),
             tableDef.ShortId!,
             schemas
         );
@@ -58,7 +50,7 @@ public partial class FormsContext<
     /// <summary>
     /// Override to provide form-specific config (e.g. layout mode, navigation style).
     /// </summary>
-    protected virtual object? GetFormConfig(TTableDef tableDef) => null;
+    protected virtual object? GetFormConfig(TFormDef formDef) => null;
 
     public async Task DeleteForm(Guid id)
     {
