@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.9"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8"/>
@@ -22,6 +23,8 @@
       <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
       <ProjectReference Include="..\Astrolabe.SearchState\Astrolabe.SearchState.csproj" />
       <ProjectReference Include="..\Astrolabe.Validation\Astrolabe.Validation.csproj" />
+      <ProjectReference Include="..\Astrolabe.LocalUsers\Astrolabe.LocalUsers.csproj" />
+      <ProjectReference Include="..\Astrolabe.OIDC\Astrolabe.OIDC.csproj" />
       <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
       <ProjectReference Include="..\Astrolabe.Workflow\Astrolabe.Workflow.csproj" />
     </ItemGroup>
