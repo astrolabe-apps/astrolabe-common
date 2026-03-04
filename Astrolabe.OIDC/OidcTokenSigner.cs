@@ -42,6 +42,19 @@ public class OidcTokenSigner
         _signingCredentials = new SigningCredentials(_securityKey, SecurityAlgorithms.RsaSha256);
     }
 
+    public RsaSecurityKey GetSecurityKey() => _securityKey;
+
+    public TokenValidationParameters GetTokenValidationParameters() => new()
+    {
+        IssuerSigningKey = _securityKey,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = _config.Issuer,
+        ValidateIssuer = true,
+        ValidAudiences = _config.Clients.Select(c => c.ClientId).ToList(),
+        ValidateAudience = true,
+        ValidateLifetime = true
+    };
+
     public string CreateIdToken(IEnumerable<Claim> claims, string audience, string? nonce)
     {
         var allClaims = new List<Claim>(claims);

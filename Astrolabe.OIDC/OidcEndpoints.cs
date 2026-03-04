@@ -107,6 +107,12 @@ public abstract class OidcEndpoints
         return Results.Json(signer.GetJwksDocument());
     }
 
+    protected virtual string GetLoginRedirectUrl(AuthorizeRequest request, string requestId)
+    {
+        var separator = Config.LoginPageUrl.Contains('?') ? "&" : "?";
+        return $"{Config.LoginPageUrl}{separator}oidc_request_id={Uri.EscapeDataString(requestId)}";
+    }
+
     protected virtual async Task<IResult> HandleAuthorize(HttpContext context)
     {
         var query = context.Request.Query;
@@ -167,10 +173,8 @@ public abstract class OidcEndpoints
         var store = GetTokenStore(context);
         await store.StoreAuthorizeRequest(requestId, authorizeRequest);
 
-        // Redirect to SPA login page
-        var separator = Config.LoginPageUrl.Contains('?') ? "&" : "?";
-        var loginUrl = $"{Config.LoginPageUrl}{separator}oidc_request_id={Uri.EscapeDataString(requestId)}";
-        return Results.Redirect(loginUrl);
+        // Redirect to login page
+        return Results.Redirect(GetLoginRedirectUrl(authorizeRequest, requestId));
     }
 
     protected virtual async Task<IResult> HandleAuthorizeComplete(AuthorizeCompleteRequest request, HttpContext context)
@@ -572,12 +576,13 @@ public abstract class OidcEndpoints
                 ValidAudience = provider.ClientId,
                 IssuerSigningKeys = externalConfig.SigningKeys,
                 ValidateIssuerSigningKey = true,
-                ValidateIssuer = true,
+                ValidateIssuer = provider.ValidateIssuer,
                 ValidateAudience = true,
                 ValidateLifetime = true
             };
 
             var handler = new JwtSecurityTokenHandler();
+            handler.InboundClaimTypeMap.Clear();
             var principal = handler.ValidateToken(idToken, validationParameters, out _);
 
             // Validate nonce

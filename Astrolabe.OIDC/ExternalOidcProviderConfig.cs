@@ -40,4 +40,11 @@ public class ExternalOidcProviderConfig
     /// Whether to use PKCE when authenticating with the external provider. Default: true.
     /// </summary>
     public bool UsePkce { get; set; } = true;
+
+    /// <summary>
+    /// Whether to validate the issuer claim in tokens from this provider. Default: true.
+    /// Set to false for multi-tenant providers (e.g., Azure AD "common" endpoint) where
+    /// the discovery document issuer contains placeholders that don't match actual token issuers.
+    /// </summary>
+    public bool ValidateIssuer { get; set; } = true;
 }
