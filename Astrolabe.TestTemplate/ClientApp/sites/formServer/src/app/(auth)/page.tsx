@@ -62,14 +62,14 @@ import {
   CodeGenClient,
   ControlDefinition as CD,
   SearchStateClient,
-} from "../client";
+} from "../../client";
 import {
   defaultEditorControlsJson as controlsJson,
   defaultExpressionFormJson as expressionFormJson,
   defaultSchemaFieldJson as schemaFieldJson,
 } from "@astroapps/schemas-editor";
-import testSchemaControls from "../forms/TestSchema.json";
-import allControls from "../forms/AllControls.json";
+import testSchemaControls from "../../forms/TestSchema.json";
+import allControls from "../../forms/AllControls.json";
 import { useMemo, useState } from "react";
 import { DataGridExtension, PagerExtension } from "@astroapps/schemas-datagrid";
 import { SignatureExtension } from "@astroapps/schemas-signature";
