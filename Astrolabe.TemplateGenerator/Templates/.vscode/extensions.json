@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "ms-dotnettools.csharp",
+    "ms-mssql.mssql",
+    "ms-mssql.sql-database-projects-vscode",
+    "ms-mssql.sql-bindings-vscode",
+    "bradlc.vscode-tailwindcss",
+    "ms-mssql.data-workspace-vscode"
+  ]
+}
