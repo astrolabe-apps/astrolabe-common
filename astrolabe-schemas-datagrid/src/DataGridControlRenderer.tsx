@@ -51,9 +51,11 @@ import {
 } from "@react-typed-forms/core";
 import React, { Fragment, ReactNode } from "react";
 import {
+  DataGridAdornmentDefinition,
   getColumnHeaderFromOptions,
   isColumnAdornment,
 } from "./columnAdornment";
+import { DataGridGroupDefinition } from "./DataGridGroup";
 import { FilterPopover } from "./FilterPopover";
 import {
   findSortField,
@@ -231,6 +233,11 @@ export function createDataGridRenderer(
     {
       renderType: DataGridDefinition.value,
       collection: true,
+      schemaExtension: {
+        RenderOptions: DataGridDefinition,
+        ControlAdornment: DataGridAdornmentDefinition,
+        GroupRenderOptions: DataGridGroupDefinition,
+      },
       resolveChildren: (c): ChildNodeSpec[] => {
         return [
           {
@@ -379,7 +386,7 @@ function DataGridControlRenderer({
       .filter((x) => x.visible)
       .map((cn, i) => {
         const d = cn.meta.original as ControlDefinition;
-        const colOptions = d.adornments?.find(isColumnAdornment);
+        const colOptions = cn.definition.adornments?.find(isColumnAdornment);
         const headerOptions = getColumnHeaderFromOptions(
           colOptions,
           d,
@@ -416,7 +423,7 @@ function DataGridControlRenderer({
         return {
           ...headerOptions,
           id: "c" + i,
-          title: headerOptions?.title ?? d.title ?? "Column " + i,
+          title: headerOptions?.title ?? cn.definition.title ?? "Column " + i,
           data: {
             dataContext,
             definition: d,
@@ -519,7 +526,11 @@ function DataGridControlRenderer({
               }
               clear={
                 !renderOptions.disableClear
-                  ? () => (filters.value = {})
+                  ? () =>
+                      groupedChanges(() => {
+                        filters.value = {};
+                        offset.value = 0;
+                      })
                   : undefined
               }
               clearClass={classes.clearFilterClass ?? ""}

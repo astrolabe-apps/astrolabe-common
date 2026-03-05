@@ -6,6 +6,7 @@ import {
   JsonataExpression,
   NotEmptyExpression,
 } from "./entityExpression";
+import type { NotExpression } from "./entityExpression";
 import {
   AsyncEffect,
   ChangeListenerFunc,
@@ -93,16 +94,12 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
 
   async function runJsonata(effect: AsyncEffect<any>, signal: AbortSignal) {
     const trackedVars = variables?.(effect.collectUsage);
+    const fullExpr = parsedJsonata.fields.fullExpr.current.value;
+    const data = trackedValue(rootData, effect.collectUsage);
     const evalResult = await parsedJsonata.fields.expr.value.evaluate(
-      trackedValue(rootData, effect.collectUsage),
+      data,
       trackedVars,
     );
-    // console.log(
-    //   rootData,
-    //   parsedJsonata.fields.fullExpr.current.value,
-    //   evalResult,
-    //   trackedVars,
-    // );
     collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 
@@ -135,9 +132,20 @@ export function createEvalExpr(
   ): boolean {
     nk.value = init;
     if (e?.type) {
-      evalExpression(e, {
+      // Unwrap NotExpression at this level so it works with any evaluator
+      let actualExpr = e;
+      let actualCoerce = coerce;
+      while (actualExpr?.type === ExpressionType.Not) {
+        const inner = (actualExpr as NotExpression).innerExpression;
+        if (!inner) break;
+        const prevCoerce = actualCoerce;
+        actualCoerce = (r: unknown) => prevCoerce(!r);
+        actualExpr = inner;
+      }
+      if (!actualExpr?.type) return false;
+      evalExpression(actualExpr, {
         returnResult: (r) => {
-          nk.value = coerce(r);
+          nk.value = actualCoerce(r);
         },
         scope,
         ...context,

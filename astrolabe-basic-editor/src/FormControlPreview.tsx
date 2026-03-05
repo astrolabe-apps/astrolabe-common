@@ -8,7 +8,9 @@ import {
   updateElements,
   useComputed,
 } from "@react-typed-forms/core";
-import React, { HTMLAttributes, ReactNode, useMemo } from "react";
+import React, { Fragment, HTMLAttributes, useMemo } from "react";
+import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useDroppable, useDndContext } from "@dnd-kit/core";
 import {
   ChildNodeSpec,
   ChildResolverFunc,
@@ -18,7 +20,6 @@ import {
   createScopedComputed,
   defaultDataProps,
   defaultValueForField,
-  DynamicPropertyType,
   elementValueForField,
   fieldPathForDefinition,
   FormNode,
@@ -40,6 +41,7 @@ import {
   textDisplayControl,
 } from "@react-typed-forms/schemas";
 
+
 export interface FormControlPreviewProps {
   node: FormPreviewStateNode;
   styleClass?: string;
@@ -48,11 +50,17 @@ export interface FormControlPreviewProps {
   displayOnly?: boolean;
   context: FormControlPreviewContext;
   inline?: boolean;
+  isRoot?: boolean;
+  containerId?: string;
 }
 
 export interface FormControlPreviewContext {
-  selected: Control<string | undefined>;
+  selected: Control<FormNode | undefined>;
   renderer: FormRenderer;
+  overId: Control<string | null>;
+  activeId: Control<string | null>;
+  dropAfter: Control<boolean>;
+  pageMode?: boolean;
 }
 
 export function FormControlPreview(props: FormControlPreviewProps) {
@@ -64,6 +72,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     displayOnly: dOnly,
     context,
     inline,
+    isRoot,
+    containerId,
   } = props;
   const { definition, schemaInterface, parent, dataNode } = node;
   const { selected, renderer } = context;
@@ -73,9 +83,24 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       isGroupControl(definition) && definition.groupOptions?.displayOnly,
     );
 
+  const isRootNode = !!isRoot;
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    isDragging,
+  } = useSortable({
+    id: node.id,
+    disabled: isRootNode,
+    data: { node, containerId },
+  });
+
+  const isGroupNode = isGroupControl(definition);
+  const childNodes = node.getChildNodes() as FormPreviewStateNode[];
+  const childIds = isGroupNode ? childNodes.map((c) => c.id) : [];
+
   const isSelected = useComputed(() => {
-    const selControlId = selected.value;
-    return selControlId !== undefined && node.id == selControlId;
+    return selected.value?.id === node.id;
   }).value;
 
   const dataDefinition = isDataControl(definition) ? definition : undefined;
@@ -127,6 +152,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
           displayOnly={c?.displayOnly || displayOnly}
           inline={c?.inline}
           context={context}
+          containerId={node.form?.id ?? node.id}
         />
       );
     },
@@ -141,6 +167,8 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     runExpression: () => {},
     designMode: true,
   });
+  const isDragHandle = (e: React.SyntheticEvent) =>
+    (e.target as HTMLElement).closest?.("[data-drag-handle]");
   const mouseCapture: Pick<
     HTMLAttributes<HTMLDivElement>,
     "onClick" | "onClickCapture" | "onMouseDownCapture"
@@ -148,18 +176,21 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   (isDataControl(definition) && (definition.children?.length ?? 0) > 0)
     ? {
         onClick: (e) => {
+          if (isDragHandle(e)) return;
           e.preventDefault();
           e.stopPropagation();
-          selected.value = node.id;
+          selected.value = node.form ?? undefined;
         },
       }
     : {
         onClickCapture: (e) => {
+          if (isDragHandle(e)) return;
           e.preventDefault();
           e.stopPropagation();
-          selected.value = node.id;
+          selected.value = node.form ?? undefined;
         },
         onMouseDownCapture: (e) => {
+          if (isDragHandle(e)) return;
           e.stopPropagation();
           e.preventDefault();
         },
@@ -178,19 +209,201 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   if (showInline) {
     return child;
   }
+
+  const isDropTarget = !isRootNode && context.overId.value === node.id && context.activeId.value !== node.id;
+  const dropBefore = isDropTarget && !context.dropAfter.value;
+  const dropAfterThis = isDropTarget && !!context.dropAfter.value;
+
+  let result = (
+    <>
+      {dropBefore && <DropIndicator />}
+      <div
+        ref={isRootNode ? undefined : setNodeRef}
+        style={{
+          ...style,
+          outline: isSelected ? "2px solid #7c6dd8" : undefined,
+          backgroundColor: isSelected ? "rgba(124, 109, 216, 0.04)" : undefined,
+          position: "relative",
+          cursor: "pointer",
+          ...(isRootNode
+            ? {}
+            : {
+                opacity: isDragging ? 0.3 : undefined,
+              }),
+        }}
+        {...mouseCapture}
+        {...(!isRootNode ? { "data-drag-wrapper": true } : {})}
+        className={className!}
+      >
+        {!isRootNode && (
+          <DragHandle attributes={attributes} listeners={listeners} />
+        )}
+        {child}
+        {isGroupNode && (
+          <GroupDropTarget containerId={node.form?.id ?? node.id} hasChildren={childIds.length > 0} onlyGroups={isRootNode && !!context.pageMode} />
+        )}
+      </div>
+      {dropAfterThis && <DropIndicator />}
+    </>
+  );
+
+  if (isGroupNode) {
+    result = (
+      <SortableContext
+        items={childIds}
+        strategy={verticalListSortingStrategy}
+      >
+        {result}
+      </SortableContext>
+    );
+  }
+
+  // Page mode visual treatment for root-level groups
+  if (context.pageMode && isGroupNode && !isRootNode && node.parentNode && !node.parentNode.parentNode) {
+    const pageTitle = (definition as any).title || `Page ${node.childIndex + 1}`;
+    result = (
+      <>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            margin: node.childIndex === 0 ? "0 0 8px 0" : "16px 0 8px 0",
+          }}
+        >
+          <div
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              color: "#7c6dd8",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {pageTitle}
+          </div>
+          <div
+            style={{
+              flex: 1,
+              height: 1,
+              backgroundColor: "#e2d4f5",
+            }}
+          />
+        </div>
+        <div
+          style={{
+            border: "1px solid #e8e0f3",
+            borderRadius: 12,
+            padding: 8,
+            backgroundColor: "#faf8ff",
+          }}
+        >
+          {result}
+        </div>
+      </>
+    );
+  }
+
+  return result;
+}
+
+function DropIndicator() {
   return (
     <div
       style={{
-        ...style,
-        outline: isSelected ? "2px solid #7c6dd8" : undefined,
-        backgroundColor: isSelected ? "rgba(124, 109, 216, 0.04)" : undefined,
-        position: "relative",
-        cursor: "pointer",
+        height: 2,
+        backgroundColor: "#7c6dd8",
+        borderRadius: 1,
+        margin: "2px 0",
       }}
-      {...mouseCapture}
-      className={className!}
+    />
+  );
+}
+
+function DragHandle({
+  attributes,
+  listeners,
+}: {
+  attributes: Record<string, any>;
+  listeners: Record<string, any> | undefined;
+}) {
+  return (
+    <div
+      data-drag-handle
+      {...attributes}
+      {...listeners}
+      style={{
+        position: "absolute",
+        right: 2,
+        top: 2,
+        cursor: "grab",
+        padding: 4,
+        display: "flex",
+        alignItems: "center",
+        color: "#7c6dd8",
+        backgroundColor: "white",
+        borderRadius: 4,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+        zIndex: 1,
+        opacity: 0,
+        transition: "opacity 0.15s",
+      }}
     >
-      {child}
+      <svg
+        width="12"
+        height="16"
+        viewBox="0 0 12 16"
+        fill="currentColor"
+      >
+        <circle cx="3" cy="2" r="1.5" />
+        <circle cx="9" cy="2" r="1.5" />
+        <circle cx="3" cy="8" r="1.5" />
+        <circle cx="9" cy="8" r="1.5" />
+        <circle cx="3" cy="14" r="1.5" />
+        <circle cx="9" cy="14" r="1.5" />
+      </svg>
+    </div>
+  );
+}
+
+function GroupDropTarget({ containerId, hasChildren, onlyGroups }: { containerId: string; hasChildren: boolean; onlyGroups?: boolean }) {
+  const { active } = useDndContext();
+  const isDragActive = !!active;
+  const { setNodeRef, isOver } = useDroppable({
+    id: `drop-${containerId}`,
+    data: { containerId, isContainerDropZone: true },
+  });
+
+  if (hasChildren && !isDragActive) {
+    return null;
+  }
+
+  if (onlyGroups && active) {
+    const activeNode = active.data.current?.node as FormPreviewStateNode | undefined;
+    if (activeNode && !isGroupControl(activeNode.definition)) {
+      return null;
+    }
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        minHeight: hasChildren ? 24 : 40,
+        border: "2px dashed",
+        borderColor: isOver ? "#7c6dd8" : "#e2e8f0",
+        borderRadius: 8,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#94a3b8",
+        fontSize: 12,
+        margin: hasChildren ? "4px 0" : "8px 0",
+        transition: "border-color 0.2s",
+      }}
+    >
+      Drop fields here
     </div>
   );
 }

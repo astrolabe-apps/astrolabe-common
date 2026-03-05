@@ -499,6 +499,44 @@ export class CodeGenClient {
         }
         return Promise.resolve<void>(null as any);
     }
+
+    /**
+     * @param body (optional) 
+     * @return OK
+     */
+    editExpressionForm(body: any | undefined): Promise<void> {
+        let url_ = this.baseUrl + "/api/CodeGen/ExpressionForm";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processEditExpressionForm(_response);
+        });
+    }
+
+    protected processEditExpressionForm(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
 }
 
 export class EvalClient {
@@ -1063,6 +1101,9 @@ export interface ControlDefinition {
     placement: string | null;
     children: ControlDefinition[] | null;
     noSelection: boolean | null;
+    style: { [key: string]: any; } | null;
+    layoutStyle: { [key: string]: any; } | null;
+    allowedOptions: any | null;
 
     [key: string]: any;
 }
@@ -1432,6 +1473,12 @@ export interface LengthValidator extends SchemaValidator {
 export interface NotEmptyExpression extends EntityExpression {
     field: string;
     empty: boolean | null;
+
+    [key: string]: any;
+}
+
+export interface NotExpression extends EntityExpression {
+    expression: EntityExpression;
 
     [key: string]: any;
 }

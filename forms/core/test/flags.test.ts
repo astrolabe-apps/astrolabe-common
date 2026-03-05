@@ -1,7 +1,12 @@
 import { describe, expect, it } from "@jest/globals";
 import fc from "fast-check";
 import { schemaAndControl } from "./gen";
-import { allChildren, testNodeState, withDynamic } from "./nodeTester";
+import {
+  allChildren,
+  testNodeState,
+  withDynamic,
+  withScript,
+} from "./nodeTester";
 import { dataControl, DynamicPropertyType, groupedControl } from "../src";
 import { rootCompound } from "./gen-schema";
 
@@ -87,6 +92,54 @@ describe("form state flags", () => {
       fc.property(schemaAndControl(), fc.boolean(), (c, readonly) => {
         const firstChild = testNodeState(
           withDynamic(c.control, DynamicPropertyType.Readonly),
+          c.schema,
+          { evalExpression: (_, ctx) => ctx.returnResult(readonly) },
+        );
+        return (
+          !!firstChild.definition.readonly === readonly &&
+          allChildren(firstChild).every((x) => x.readonly === readonly)
+        );
+      }),
+    );
+  });
+
+  it("scripted hidden on all definitions", () => {
+    fc.assert(
+      fc.property(schemaAndControl(), fc.boolean(), (c, hidden) => {
+        const firstChild = testNodeState(
+          withScript(c.control, "hidden"),
+          c.schema,
+          { evalExpression: (_, ctx) => ctx.returnResult(hidden) },
+        );
+        return (
+          !!firstChild.definition.hidden === hidden &&
+          allChildren(firstChild).every((x) => x.visible === !hidden)
+        );
+      }),
+    );
+  });
+
+  it("scripted disabled on all definitions", () => {
+    fc.assert(
+      fc.property(schemaAndControl(), fc.boolean(), (c, disabled) => {
+        const firstChild = testNodeState(
+          withScript(c.control, "disabled"),
+          c.schema,
+          { evalExpression: (_, ctx) => ctx.returnResult(disabled) },
+        );
+        return (
+          !!firstChild.definition.disabled === disabled &&
+          allChildren(firstChild).every((x) => x.disabled === disabled)
+        );
+      }),
+    );
+  });
+
+  it("scripted readonly on data definitions", () => {
+    fc.assert(
+      fc.property(schemaAndControl(), fc.boolean(), (c, readonly) => {
+        const firstChild = testNodeState(
+          withScript(c.control, "readonly"),
           c.schema,
           { evalExpression: (_, ctx) => ctx.returnResult(readonly) },
         );

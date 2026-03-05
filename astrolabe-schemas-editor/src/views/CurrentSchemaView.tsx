@@ -13,7 +13,7 @@ import {
 import { InactiveView } from "./InactiveView";
 import { EditableForm, FormEditContext, ViewContext } from "../types";
 import { TreeApi } from "react-arborist";
-import { defaultSchemaFieldForm } from "../schemaSchemas";
+import { defaultSchemaFieldForm } from "@react-typed-forms/schemas";
 
 export function CurrentSchemaView({
   context,

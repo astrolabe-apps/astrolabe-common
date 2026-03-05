@@ -10,6 +10,7 @@ import {
   fieldOptionAdornment,
   FormRenderer,
   HtmlInputProperties,
+  LabelType,
   rendererClass,
   setIncluded,
 } from "@react-typed-forms/schemas";
@@ -72,7 +73,7 @@ export function createCheckboxRenderer(options: CheckRendererOptions = {}) {
   return createDataRenderer(
     (props, renderer) => (p) => ({
       ...p,
-      label: undefined,
+      label: p.label ? { ...p.label, type: LabelType.Inline } : undefined,
       children: (
         <CheckBox p={p} renderer={renderer} options={options} props={props} />
       ),
@@ -87,7 +88,7 @@ export function createElementSelectedRenderer(
   return createDataRenderer(
     (props, renderer) => (p) => ({
       ...p,
-      label: undefined,
+      label: p.label ? { ...p.label, type: LabelType.Inline } : undefined,
       children: (
         <CheckBoxSelected
           p={p}
@@ -104,7 +105,6 @@ export function createElementSelectedRenderer(
 }
 
 function CheckBoxSelected({
-  p,
   props,
   renderer,
   options,
@@ -114,24 +114,20 @@ function CheckBoxSelected({
   renderer: FormRenderer;
   options: CheckRendererOptions;
 }) {
-  const { Div } = renderer.html;
   const selControl = useElementSelectedRenderer(props);
   return (
-    <Div className={rendererClass(props.className, options.entryClass)}>
-      <Fcheckbox
-        id={props.id}
-        control={selControl}
-        style={props.style}
-        className={options.checkClass}
-        renderer={renderer}
-      />
-      {p.label?.label && renderer.renderLabel(p.label, undefined, undefined)}
-    </Div>
+    <Fcheckbox
+      id={props.id}
+      control={selControl}
+      style={props.style}
+      className={rendererClass(props.className, options.checkClass)}
+      renderer={renderer}
+      readOnly={props.readonly}
+    />
   );
 }
 
 function CheckBox({
-  p,
   props,
   renderer,
   options,
@@ -141,18 +137,15 @@ function CheckBox({
   renderer: FormRenderer;
   options: CheckRendererOptions;
 }) {
-  const { Div } = renderer.html;
   return (
-    <Div className={rendererClass(props.className, options.entryClass)}>
-      <Fcheckbox
-        id={props.id}
-        control={props.control.as()}
-        style={props.style}
-        className={options.checkClass}
-        renderer={renderer}
-      />
-      {p.label && renderer.renderLabel(p.label, undefined, undefined)}
-    </Div>
+    <Fcheckbox
+      id={props.id}
+      control={props.control.as()}
+      style={props.style}
+      className={rendererClass(props.className, options.checkClass)}
+      renderer={renderer}
+      readOnly={props.readonly}
+    />
   );
 }
 
@@ -161,6 +154,7 @@ export function Fcheckbox({
   type = "checkbox",
   notValue = false,
   renderer,
+  readOnly,
   ...others
 }: HtmlInputProperties & {
   control: Control<boolean | null | undefined>;
@@ -175,10 +169,14 @@ export function Fcheckbox({
       {...theseProps}
       checked={!!value !== notValue}
       inputRef={(r) => (control.element = r)}
-      onChangeChecked={(e) => {
-        control.touched = true;
-        control.value = e !== notValue;
-      }}
+      onChangeChecked={
+        readOnly
+          ? () => {}
+          : (e) => {
+              control.touched = true;
+              control.value = e !== notValue;
+            }
+      }
       type={type}
       {...others}
     />

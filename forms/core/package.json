@@ -49,7 +49,8 @@
     "nswag": "^13.18.2",
     "prettier": "^3.0.3",
     "rimraf": "^3.0.2",
-    "typescript": "^5.6.2"
+    "typescript": "^5.6.2",
+    "http-request-cli": "^0.2.0"
   },
   "scripts": {
     "prepack": "npm run build",
@@ -57,6 +58,7 @@
     "watch": "microbundle -f modern,cjs --no-compress",
     "test": "jest --coverage",
     "play": "tsx test/play.ts",
-    "update-readme": "md-magic --path README.md"
+    "update-readme": "md-magic --path README.md",
+    "genschemas": "cat src/schemaSchemas.imports.ts > src/schemaSchemas.ts && h get http://localhost:5000/api/CodeGen/Schemas >> src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts"
   }
 }

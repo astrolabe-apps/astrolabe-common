@@ -11,6 +11,20 @@ import { schemaDataForFieldPath, SchemaDataNode } from "./schemaDataNode";
 
 export type ControlMap = { [k: string]: ControlDefinition };
 
+export function parseChildRefId(childRefId: string): {
+  formId?: string;
+  localId?: string;
+} {
+  if (!childRefId.startsWith("/")) return { localId: childRefId };
+  const rest = childRefId.substring(1);
+  const slashIdx = rest.indexOf("/");
+  if (slashIdx < 0) return { formId: rest };
+  return {
+    formId: rest.substring(0, slashIdx),
+    localId: rest.substring(slashIdx + 1),
+  };
+}
+
 export class FormNode {
   constructor(
     public id: string,
@@ -32,8 +46,23 @@ export class FormNode {
 
   getResolvedChildren(): ControlDefinition[] {
     const childRefId = this.definition.childRefId;
-    const parent = childRefId ? this.tree.getByRefId(childRefId) : undefined;
-    return (parent ?? this.definition)?.children ?? [];
+    if (childRefId) {
+      const parsed = parseChildRefId(childRefId);
+      if (parsed.formId) {
+        const externalTree = this.tree.getForm(parsed.formId);
+        if (externalTree) {
+          if (parsed.localId) {
+            const ref = externalTree.getByRefId(parsed.localId);
+            return ref?.children ?? [];
+          }
+          return externalTree.rootNode.getResolvedChildren();
+        }
+        return [];
+      }
+      const parent = this.tree.getByRefId(childRefId);
+      return parent?.children ?? [];
+    }
+    return this.definition.children ?? [];
   }
 
   createChildNode(childId: string, childDef: ControlDefinition) {

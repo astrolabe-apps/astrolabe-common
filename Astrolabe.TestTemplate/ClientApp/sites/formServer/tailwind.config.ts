@@ -8,6 +8,7 @@ const config: Config = {
     "node_modules/@react-typed-forms/schemas/lib/*.js",
     "node_modules/@react-typed-forms/schemas-html/lib/*.js",
     "node_modules/@astroapps/schemas-editor/lib/*.js",
+    "node_modules/@astroapps/basic-editor/lib/*.js",
     "./**/node_modules/@astroapps/ui-tree/*.js",
     "node_modules/@astroapps/aria-datepicker/lib/*.js",
     "node_modules/@astroapps/aria-base/lib/*.js",

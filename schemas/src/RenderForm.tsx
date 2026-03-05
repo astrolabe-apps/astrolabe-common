@@ -67,6 +67,8 @@ export function RenderForm({
     evalExpression: (e, ctx) => defaultEvaluators[e.type]?.(e, ctx),
     resolveChildren: renderer.resolveChildren,
     clearHidden: !!clearHidden,
+    controlDefinitionSchema:
+      options.controlDefinitionSchema ?? renderer.controlDefinitionSchema,
   };
   const state = useMemo(
     () =>
@@ -187,7 +189,7 @@ export function RenderFormNode({
     dataContext,
     control: dataContext.dataNode?.control,
     schemaInterface,
-    style: state.resolved.style,
+    style: state.definition.style as React.CSSProperties,
     customDisplay: options.customDisplay,
     actionOnClick: options.actionOnClick,
     styleClass: styleClass,
@@ -210,7 +212,7 @@ export function RenderFormNode({
     ...labelAndChildren,
     adornments,
     className: rendererClass(options.layoutClass, definition.layoutClass),
-    style: state.resolved.layoutStyle,
+    style: state.definition.layoutStyle as React.CSSProperties,
   };
   const renderedControl = renderer.renderLayout(
     options.adjustLayout?.(dataContext, layoutProps) ?? layoutProps,

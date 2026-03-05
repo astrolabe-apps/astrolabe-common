@@ -27,6 +27,7 @@ import {
   SetFieldAdornment,
 } from "@astroapps/forms-core";
 import { ActionRendererProps } from "./types";
+import { ControlDefinitionExtension } from "./controlBuilder";
 
 export interface DefaultRenderers {
   data: DataRendererRegistration;
@@ -44,6 +45,7 @@ export interface DefaultRenderers {
 
 export interface LayoutRendererRegistration {
   type: "layout";
+  schemaExtension?: ControlDefinitionExtension;
   match?: (props: ControlLayoutProps) => boolean;
   render: (
     props: ControlLayoutProps,
@@ -52,6 +54,7 @@ export interface LayoutRendererRegistration {
 }
 export interface DataRendererRegistration {
   type: "data";
+  schemaExtension?: ControlDefinitionExtension;
   schemaType?: string | string[];
   renderType?: string | string[];
   options?: boolean;
@@ -66,6 +69,7 @@ export interface DataRendererRegistration {
 
 export interface LabelRendererRegistration {
   type: "label";
+  schemaExtension?: ControlDefinitionExtension;
   labelType?: LabelType | LabelType[];
   render: (
     labelProps: LabelRendererProps,
@@ -77,6 +81,7 @@ export interface LabelRendererRegistration {
 
 export interface ActionRendererRegistration {
   type: "action";
+  schemaExtension?: ControlDefinitionExtension;
   actionType?: string | string[];
   render: (props: ActionRendererProps, renderers: FormRenderer) => ReactElement;
   resolveChildren?: ChildResolverFunc;
@@ -84,11 +89,13 @@ export interface ActionRendererRegistration {
 
 export interface ArrayRendererRegistration {
   type: "array";
+  schemaExtension?: ControlDefinitionExtension;
   render: (props: ArrayRendererProps, renderers: FormRenderer) => ReactElement;
 }
 
 export interface GroupRendererRegistration {
   type: "group";
+  schemaExtension?: ControlDefinitionExtension;
   renderType?: string | string[];
   render: (
     props: GroupRendererProps,
@@ -99,6 +106,7 @@ export interface GroupRendererRegistration {
 
 export interface DisplayRendererRegistration {
   type: "display";
+  schemaExtension?: ControlDefinitionExtension;
   renderType?: string | string[];
   render: (
     props: DisplayRendererProps,
@@ -109,12 +117,14 @@ export interface DisplayRendererRegistration {
 
 export interface AdornmentRendererRegistration {
   type: "adornment";
+  schemaExtension?: ControlDefinitionExtension;
   adornmentType?: string | string[];
   render: (props: AdornmentProps, renderers: FormRenderer) => AdornmentRenderer;
 }
 
 export interface VisibilityRendererRegistration {
   type: "visibility";
+  schemaExtension?: ControlDefinitionExtension;
   render: (props: VisibilityRendererProps, renderer: FormRenderer) => ReactNode;
 }
 

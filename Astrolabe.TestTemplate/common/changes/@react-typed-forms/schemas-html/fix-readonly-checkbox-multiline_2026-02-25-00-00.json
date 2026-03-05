@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas-html",
+      "comment": "Fix readonly support for checkbox and multiline textfield renderers.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas-html"
+}

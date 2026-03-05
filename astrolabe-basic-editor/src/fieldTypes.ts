@@ -118,6 +118,15 @@ const fieldTypeConfigs: Record<BasicFieldType, FieldTypeConfig> = {
       }),
     createSchemaField: () => undefined,
   },
+  [BasicFieldType.Page]: {
+    label: "Page",
+    icon: "\uD83D\uDCC4",
+    createControl: (_field) =>
+      groupedControl([], "Page", {
+        groupOptions: { type: GroupRenderType.Standard, hideTitle: false },
+      }),
+    createSchemaField: () => undefined,
+  },
 };
 
 export function getFieldTypeConfig(type: BasicFieldType): FieldTypeConfig {
@@ -140,6 +149,20 @@ export function generateFieldName(
     name = `field${fieldCounter}`;
   }
   return name;
+}
+
+export function toCamelCase(title: string): string {
+  return title
+    .replace(/[^a-zA-Z0-9\s]/g, "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word, i) =>
+      i === 0
+        ? word.toLowerCase()
+        : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase(),
+    )
+    .join("");
 }
 
 export function getBasicFieldType(

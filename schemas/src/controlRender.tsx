@@ -43,6 +43,7 @@ import {
   SchemaDataNode,
   SchemaField,
   SchemaInterface,
+  SchemaNode,
   ValidatorType,
 } from "@astroapps/forms-core";
 import {
@@ -249,6 +250,8 @@ export interface FormRenderer {
 
   html: HtmlComponents;
 
+  controlDefinitionSchema?: SchemaNode;
+
   resolveChildren(c: FormStateNode): ChildNodeSpec[];
 }
 
@@ -305,6 +308,7 @@ export interface RenderedLayout {
   style?: React.CSSProperties;
   wrapLayout: (layout: ReactElement) => ReactElement;
   inline?: boolean;
+  inlineLabel?: boolean;
 }
 
 export interface RenderedControl {
@@ -349,6 +353,11 @@ export enum LabelType {
    * Label for text.
    */
   Text,
+
+  /**
+   * Label rendered inline after the control (e.g. checkboxes).
+   */
+  Inline,
 }
 
 /**
@@ -400,11 +409,6 @@ export interface DisplayRendererProps {
    * The data to be displayed.
    */
   data: DisplayData;
-
-  /**
-   * A control with dynamic value for display.
-   */
-  display?: Control<string | undefined>;
 
   /**
    * The context for the control data.
@@ -490,6 +494,7 @@ export interface ControlRenderOptions extends ControlClasses {
   stateKey?: string;
   schemaInterface?: SchemaInterface;
   variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
+  controlDefinitionSchema?: SchemaNode;
 }
 
 export function defaultDataProps(
@@ -754,6 +759,7 @@ type MarkupKeys = keyof Omit<
   | "readonly"
   | "disabled"
   | "inline"
+  | "inlineLabel"
   | "errorId"
 >;
 export function appendMarkup(
@@ -842,6 +848,9 @@ export function renderLayoutParts(
     label && !label.hide
       ? renderer.renderLabel(label, layout.labelStart, layout.labelEnd)
       : undefined;
+  if (label?.type === LabelType.Inline) {
+    layout.inlineLabel = true;
+  }
   return layout;
 }
 

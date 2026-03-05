@@ -1,5 +1,6 @@
 export * from "./controlDefinition";
 export * from "./controlBuilder";
+export * from "./controlDefinitionSchemas";
 export * from "./entityExpression";
 export * from "./schemaNode";
 export * from "./schemaBuilder";
@@ -13,4 +14,7 @@ export * from "./formStateNode";
 export * from "./evalExpression";
 export * from "./util";
 export * from "./overrideProxy";
+export * from "./scriptedProxy";
 export * from "./resolveChildren";
+export * from "./defaultValues";
+export * from "./schemaSchemas";

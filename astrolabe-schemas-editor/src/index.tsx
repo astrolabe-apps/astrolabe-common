@@ -1,5 +1,4 @@
 export * from "./util";
-export * from "./schemaSchemas";
 export * from "./BasicFormEditor";
 export * from "./FormControlEditor";
 export * from "./FormPreview";
@@ -19,3 +18,6 @@ export { InactiveView } from "./views/InactiveView";
 export { FieldPropertiesView } from "./views/FieldPropertiesView";
 export { EditorFormTree } from "./EditorFormTree";
 export { EditorSchemaTree } from "./EditorSchemaTree";
+export { default as defaultEditorControlsJson } from "./ControlDefinition.json";
+export { default as defaultExpressionFormJson } from "./ExpressionForm.json";
+export { default as defaultSchemaFieldJson } from "./SchemaField.json";

@@ -22,7 +22,13 @@
               },
               "enabledFilter": true,
               "enabledSort": true,
-              "visible": {}
+              "visible": {},
+              "$scripts": {
+                "columnTemplate": {
+                  "type": "Jsonata",
+                  "expression": "\u0027auto\u0027"
+                }
+              }
             }
           ],
           "defaultValue": null

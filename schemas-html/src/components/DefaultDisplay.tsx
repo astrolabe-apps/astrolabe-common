@@ -1,7 +1,6 @@
 import React from "react";
 import clsx from "clsx";
 import {
-  coerceToString,
   CustomDisplay,
   DisplayDataType,
   DisplayRendererProps,
@@ -39,7 +38,7 @@ export function DefaultDisplay({
   options: DefaultDisplayRendererOptions;
   renderer: FormRenderer;
 }) {
-  const { data, display, className, textClass, style } = displayProps;
+  const { data, className, textClass, style } = displayProps;
   const { I, Div, B, H1, Span } = renderer.html;
   switch (data.type) {
     case DisplayDataType.Icon:
@@ -49,22 +48,19 @@ export function DefaultDisplay({
           style={style}
           className={clsx(
             getOverrideClass(className),
-            display ? display.value : iconDisplay.iconClass,
+            iconDisplay.iconClass,
           )}
-          iconName={display ? display.value : iconDisplay.icon?.name}
+          iconName={iconDisplay.icon?.name}
           iconLibrary={iconDisplay.icon?.library}
         />
       );
     case DisplayDataType.Text:
-      const text = display
-        ? coerceToString(display.value)
-        : (data as TextDisplay).text;
       return (
         <Div
           style={style}
           className={rendererClass(className, options.textClassName)}
           textClass={rendererClass(textClass, options.textTextClass)}
-          text={text}
+          text={(data as TextDisplay).text}
           inline={displayProps.inline}
         />
       );
@@ -74,9 +70,7 @@ export function DefaultDisplay({
           style={style}
           className={rendererClass(className, options.htmlClassName)}
           inline={displayProps.inline}
-          html={
-            display ? coerceToString(display.value) : (data as HtmlDisplay).html
-          }
+          html={(data as HtmlDisplay).html}
         />
       );
     case DisplayDataType.Custom:

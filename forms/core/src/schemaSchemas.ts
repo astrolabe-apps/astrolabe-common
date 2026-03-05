@@ -1,30 +1,27 @@
 import {
   ActionStyle,
   AdornmentPlacement,
-  applyDefaultValues,
-  buildSchema,
   ControlAdornment,
   ControlDefinition,
   ControlDisableType,
-  DateComparison,
-  defaultValueForFields,
   DisplayData,
   DynamicProperty,
-  EntityExpression,
-  FieldOption,
-  FieldType,
   GroupRenderOptions,
   IconMapping,
   IconPlacement,
   IconReference,
+  RenderOptions,
+  SyncTextType,
+} from "./controlDefinition";
+import { applyDefaultValues, defaultValueForFields } from "./defaultValues";
+import {
+  buildSchema,
   makeCompoundField,
   makeScalarField,
-  RenderOptions,
-  SchemaField,
-  SchemaValidator,
-  SyncTextType,
-} from "@react-typed-forms/schemas";
-
+} from "./schemaBuilder";
+import { FieldOption, FieldType, SchemaField } from "./schemaField";
+import { DateComparison, SchemaValidator } from "./schemaValidator";
+import { EntityExpression } from "./entityExpression";
 export interface FieldOptionForm {
   name: string;
   value: any;
@@ -354,6 +351,7 @@ export interface EntityExpressionForm {
   value: any;
   empty: boolean | null;
   userMatch: string;
+  innerExpression: EntityExpressionForm;
 }
 
 export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
@@ -387,6 +385,10 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
       {
         name: "UUID",
         value: "UUID",
+      },
+      {
+        name: "Not",
+        value: "Not",
       },
     ],
   }),
@@ -424,6 +426,13 @@ export const EntityExpressionSchema = buildSchema<EntityExpressionForm>({
     notNullable: true,
     required: true,
     displayName: "User Match",
+  }),
+  innerExpression: makeCompoundField({
+    treeChildren: true,
+    onlyForTypes: ["Not"],
+    notNullable: true,
+    displayName: "Inner Expression",
+    tags: ["_ControlRef:/ExpressionForm"],
   }),
 });
 
@@ -713,12 +722,12 @@ export interface GroupRenderOptionsForm {
   displayOnly: boolean | null;
   contentClass: string | null;
   title: string | null;
+  portalHost: string | null;
   direction: string | null;
   gap: string | null;
   columns: number | null;
   rowClass: string | null;
   cellClass: string | null;
-  portalHost: string | null;
   value: any;
   childIndexExpression: EntityExpressionForm;
   defaultExpanded: boolean | null;
@@ -813,7 +822,7 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
   portalHost: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["Dialog"],
-    displayName: "PortalHost",
+    displayName: "Portal Host",
   }),
   direction: makeScalarField({
     type: FieldType.String,
@@ -854,7 +863,7 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     onlyForTypes: ["SelectChild"],
     notNullable: true,
     displayName: "Child Index Expression",
-    tags: ["_ControlRef:Expression"],
+    tags: ["_ControlRef:/ExpressionForm"],
   }),
   defaultExpanded: makeScalarField({
     type: FieldType.Bool,
@@ -923,7 +932,6 @@ export interface RenderOptionsForm {
   listEntryClass: string | null;
   chipContainerClass: string | null;
   chipCloseButtonClass: string | null;
-  childOverrideClass: string | null;
   placeholder: string | null;
   multiline: boolean | null;
   groupOptions: GroupRenderOptionsForm;
@@ -940,6 +948,7 @@ export interface RenderOptionsForm {
   allowImages: boolean;
   elementExpression: EntityExpressionForm;
   bottomActionId: string | null;
+  refreshActionId: string | null;
 }
 
 export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
@@ -1094,11 +1103,6 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["Array"],
     displayName: "Edit External",
   }),
-  childOverrideClass: makeScalarField({
-    type: FieldType.String,
-    onlyForTypes: ["Array"],
-    displayName: "Child Class",
-  }),
   showInline: makeScalarField({
     type: FieldType.Bool,
     onlyForTypes: ["ArrayElement"],
@@ -1247,12 +1251,17 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
     onlyForTypes: ["ElementSelected"],
     notNullable: true,
     displayName: "Element Expression",
-    tags: ["_ControlRef:Expression"],
+    tags: ["_ControlRef:/ExpressionForm"],
   }),
   bottomActionId: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["ScrollList"],
     displayName: "Bottom Action Id",
+  }),
+  refreshActionId: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["ScrollList"],
+    displayName: "Refresh Action Id",
   }),
 });
 
@@ -1359,6 +1368,10 @@ export interface ControlDefinitionForm {
   labelTextClass: string | null;
   placement: string | null;
   children: ControlDefinitionForm[] | null;
+  noSelection: boolean | null;
+  style: any | null;
+  layoutStyle: any | null;
+  allowedOptions: any | null;
   field: string;
   hideTitle: boolean | null;
   required: boolean | null;
@@ -1376,7 +1389,6 @@ export interface ControlDefinitionForm {
   actionStyle: ActionStyle | null;
   iconPlacement: IconPlacement | null;
   disableType: ControlDisableType | null;
-  noSelection: boolean | null;
 }
 
 export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
@@ -1426,6 +1438,7 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     type: FieldType.Bool,
     defaultValue: false,
     displayName: "Hidden",
+    tags: ["_ScriptNullInit"],
   }),
   readonly: makeScalarField({
     type: FieldType.Bool,
@@ -1472,6 +1485,26 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     treeChildren: true,
     collection: true,
     displayName: "Children",
+    tags: ["_NoControl"],
+  }),
+  noSelection: makeScalarField({
+    type: FieldType.Bool,
+    defaultValue: false,
+    displayName: "No Selection",
+  }),
+  style: makeScalarField({
+    type: FieldType.Any,
+    displayName: "Style",
+    tags: ["_NoControl"],
+  }),
+  layoutStyle: makeScalarField({
+    type: FieldType.Any,
+    displayName: "Layout Style",
+    tags: ["_NoControl"],
+  }),
+  allowedOptions: makeScalarField({
+    type: FieldType.Any,
+    displayName: "Allowed Options",
     tags: ["_NoControl"],
   }),
   field: makeScalarField({
@@ -1618,10 +1651,6 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
         value: "Global",
       },
     ],
-  }),
-  noSelection: makeScalarField({
-    type: FieldType.Bool,
-    displayName: "No Selection",
   }),
 });
 

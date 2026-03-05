@@ -30,10 +30,14 @@ export interface ControlDefinition {
   labelClass?: string | null;
   labelTextClass?: string | null;
   placement?: string | null;
+  /** @deprecated Use $scripts instead */
   dynamic?: DynamicProperty[] | null;
   adornments?: ControlAdornment[] | null;
   children?: ControlDefinition[] | null;
   noSelection?: boolean | null;
+  style?: Record<string, any> | null;
+  layoutStyle?: Record<string, any> | null;
+  allowedOptions?: any;
 }
 
 export enum ControlDefinitionType {
@@ -43,11 +47,13 @@ export enum ControlDefinitionType {
   Action = "Action",
 }
 
+/** @deprecated Use $scripts instead */
 export interface DynamicProperty {
   type: string;
   expr: EntityExpression;
 }
 
+/** @deprecated Use $scripts instead */
 export enum DynamicPropertyType {
   Visible = "Visible",
   DefaultValue = "DefaultValue",

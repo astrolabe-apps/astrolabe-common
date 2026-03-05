@@ -1,25 +1,40 @@
 import React from "react";
-import { useComputed } from "@react-typed-forms/core";
+import {
+  useComputed,
+  useControlEffect,
+  Finput,
+  Fcheckbox,
+  Control,
+} from "@react-typed-forms/core";
 import {
   ControlDefinition,
   DataControlDefinition,
   DataRenderType,
+  FormNode,
+  GroupedControlsDefinition,
   isDataControl,
   isGroupControl,
   SchemaField,
 } from "@react-typed-forms/schemas";
-import { useBasicEditorContext } from "../BasicEditorContext";
 import { getBasicFieldType, getFieldTypeConfig } from "../fieldTypes";
+import { renameFieldInForm } from "../fieldActions";
 import { OptionsEditor } from "./OptionsEditor";
 import { VisibilityConditionEditor } from "./VisibilityConditionEditor";
+import { EditorFormTree } from "../EditorFormTree";
+import { EditorSchemaTree } from "../EditorSchemaTree";
 
-export function PropertiesPanel() {
-  const { state, deleteField } = useBasicEditorContext();
-  const selectedId = useComputed(
-    () => state.fields.selectedFieldId.value,
-  );
+export interface PropertiesPanelProps {
+  selectedField: Control<FormNode | undefined>;
+  formTree: EditorFormTree;
+  schemaTree: EditorSchemaTree;
+  schemaFields: Control<SchemaField[]>;
+  deleteField: () => void;
+}
 
-  if (!selectedId.value) {
+export function PropertiesPanel(props: PropertiesPanelProps) {
+  const selectedField = useComputed(() => props.selectedField.value);
+
+  if (!selectedField.value) {
     return (
       <div className="w-80 border-l border-violet-100 bg-white flex-shrink-0 p-4 text-slate-400 text-sm">
         Select a field to edit its properties
@@ -27,26 +42,25 @@ export function PropertiesPanel() {
     );
   }
 
-  return <PropertiesPanelContent />;
+  return <PropertiesPanelContent {...props} />;
 }
 
-function PropertiesPanelContent() {
-  const { state, deleteField } = useBasicEditorContext();
-
-  const formTree = state.fields.formTree.value;
-  const schemaTree = state.fields.schemaTree.value;
-  const selectedId = state.fields.selectedFieldId.value;
-  if (!formTree || !schemaTree || !selectedId) return null;
-
-  const formNode = formTree.rootNode.visit((x) =>
-    x.id === selectedId ? x : undefined,
-  );
+function PropertiesPanelContent({
+  selectedField,
+  formTree,
+  schemaTree,
+  schemaFields,
+  deleteField,
+}: PropertiesPanelProps) {
+  const formNode = selectedField.value;
   if (!formNode) return null;
 
   const defControl = formTree.getEditableDefinition(formNode);
   if (!defControl) return null;
 
   const def = defControl.value;
+  const dataDefControl: Control<DataControlDefinition> = defControl.as();
+  const groupDefControl: Control<GroupedControlsDefinition> = defControl.as();
   const fieldType = getBasicFieldType(def);
   const fieldConfig = fieldType ? getFieldTypeConfig(fieldType) : undefined;
   const isData = isDataControl(def);
@@ -65,10 +79,16 @@ function PropertiesPanelContent() {
     ? findSchemaFieldControl(schemaTree, dataDef.field)
     : undefined;
 
-  const allSchemaFields = [
-    ...(state.fields.schemaFields.value?.value ?? []),
-    ...(state.fields.formFields.value?.value ?? []),
-  ];
+  const allSchemaFields = schemaFields.value ?? [];
+
+  useControlEffect(
+    () => defControl.fields.title.value,
+    (title) => {
+      if (isData && title != null) {
+        renameFieldInForm(schemaFields, dataDefControl.fields.field, title);
+      }
+    },
+  );
 
   return (
     <div className="w-80 border-l border-violet-100 bg-white flex-shrink-0 overflow-y-auto">
@@ -85,7 +105,7 @@ function PropertiesPanelContent() {
             </span>
           </div>
           <button
-            onClick={() => deleteField(selectedId)}
+            onClick={() => deleteField()}
             className="text-slate-400 hover:text-red-500 text-sm transition-colors"
             title="Delete field"
           >
@@ -98,12 +118,9 @@ function PropertiesPanelContent() {
           <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.5px] mb-1.5">
             Label
           </label>
-          <input
+          <Finput
+            control={defControl.fields.title.as<string>()}
             className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
-            value={def.title ?? ""}
-            onChange={(e) =>
-              defControl.setValue((d) => ({ ...d, title: e.target.value }))
-            }
             placeholder="Field label"
           />
         </div>
@@ -113,22 +130,12 @@ function PropertiesPanelContent() {
             <label className="block text-[11px] font-semibold text-slate-500 uppercase tracking-[0.5px] mb-1.5">
               Placeholder
             </label>
-            <input
-              className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
-              value={
-                (dataDef?.renderOptions as any)?.placeholder ?? ""
+            <Finput
+              control={
+                (dataDefControl.fields.renderOptions as Control<any>).fields
+                  .placeholder
               }
-              onChange={(e) => {
-                defControl.setValue((d) => ({
-                  ...d,
-                  renderOptions: {
-                    ...((d as DataControlDefinition).renderOptions ?? {
-                      type: DataRenderType.Textfield,
-                    }),
-                    placeholder: e.target.value || null,
-                  },
-                }));
-              }}
+              className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
               placeholder="Placeholder text"
             />
           </div>
@@ -136,16 +143,9 @@ function PropertiesPanelContent() {
 
         {isData && (
           <div className="flex items-center gap-2.5">
-            <input
-              type="checkbox"
+            <Fcheckbox
+              control={dataDefControl.fields.required}
               id="required-toggle"
-              checked={!!dataDef?.required}
-              onChange={(e) =>
-                defControl.setValue((d) => ({
-                  ...d,
-                  required: e.target.checked || null,
-                }))
-              }
               className="rounded accent-violet-600"
             />
             <label htmlFor="required-toggle" className="text-sm text-slate-600">
@@ -154,11 +154,27 @@ function PropertiesPanelContent() {
           </div>
         )}
 
+        {isGroup && (
+          <div className="flex items-center gap-2.5">
+            <Fcheckbox
+              control={groupDefControl.fields.groupOptions.fields.hideTitle}
+              id="hide-title-toggle"
+              className="rounded accent-violet-600"
+            />
+            <label
+              htmlFor="hide-title-toggle"
+              className="text-sm text-slate-600"
+            >
+              Hide title
+            </label>
+          </div>
+        )}
+
         {showOptions && schemaField && (
           <OptionsEditor options={schemaField.fields.options} />
         )}
 
-        {isData && (
+        {(isData || isGroup) && (
           <VisibilityConditionEditor
             definition={defControl}
             allFields={allSchemaFields}
@@ -169,10 +185,7 @@ function PropertiesPanelContent() {
   );
 }
 
-function findSchemaFieldControl(
-  schemaTree: any,
-  fieldName: string,
-) {
+function findSchemaFieldControl(schemaTree: any, fieldName: string) {
   const formFields = schemaTree.getFormFields?.();
   if (formFields) {
     const found = formFields.elements.find(
@@ -181,7 +194,5 @@ function findSchemaFieldControl(
     if (found) return found;
   }
   const rootFields = schemaTree.getRootFields();
-  return rootFields.elements.find(
-    (el: any) => el.value.field === fieldName,
-  );
+  return rootFields.elements.find((el: any) => el.value.field === fieldName);
 }

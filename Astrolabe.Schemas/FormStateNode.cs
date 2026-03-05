@@ -255,9 +255,8 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeStyle(ControlDefinition originalDefinition)
     {
-        var styleExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.Style);
+        var styleExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "style", DynamicPropertyType.Style);
 
         if (styleExpression == null) return;
 
@@ -267,9 +266,8 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeLayoutStyle(ControlDefinition originalDefinition)
     {
-        var layoutStyleExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.LayoutStyle);
+        var layoutStyleExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "layoutStyle", DynamicPropertyType.LayoutStyle);
 
         if (layoutStyleExpression == null) return;
 
@@ -279,9 +277,8 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeAllowedOptions(ControlDefinition originalDefinition)
     {
-        var allowedOptionsExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.AllowedOptions);
+        var allowedOptionsExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "allowedOptions", DynamicPropertyType.AllowedOptions);
 
         if (allowedOptionsExpression == null) return;
 
@@ -291,27 +288,37 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeHiddenDynamic(ControlDefinition originalDefinition)
     {
+        var hiddenField = _definitionControl.Field(x => x.Hidden);
+
+        // Check scripts first (direct hidden value, no inversion)
+        var hiddenExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "hidden");
+        if (hiddenExpression != null)
+        {
+            SetupDynamic(hiddenField, hiddenExpression, result =>
+                (bool?)DynamicPropertyHelpers.CoerceBool(result));
+            return;
+        }
+
+        // Fall back to legacy Visible (inverted)
         var visibleExpression = DynamicPropertyHelpers.FindDynamicExpression(
             originalDefinition,
             DynamicPropertyType.Visible);
 
-        var hiddenField = _definitionControl.Field(x => x.Hidden);
         if (visibleExpression == null)
         {
             _editor.SetValue(hiddenField, DynamicPropertyHelpers.CoerceBool(originalDefinition.Hidden));
             return;
         }
 
-        // Invert because expression is "Visible" but we're setting "Hidden"
-        SetupDynamic(hiddenField, visibleExpression, result => 
+        SetupDynamic(hiddenField, visibleExpression, result =>
             !DynamicPropertyHelpers.CoerceBool(result));
     }
 
     private void InitializeReadonlyDynamic(ControlDefinition originalDefinition)
     {
-        var readonlyExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.Readonly);
+        var readonlyExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "readonly", DynamicPropertyType.Readonly);
 
         if (readonlyExpression == null) return;
 
@@ -326,9 +333,8 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeDisabledDynamic(ControlDefinition originalDefinition)
     {
-        var disabledExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.Disabled);
+        var disabledExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "disabled", DynamicPropertyType.Disabled);
 
         if (disabledExpression == null) return;
 
@@ -349,10 +355,8 @@ public class FormStateNode : IFormStateNode
     
     private void InitializeTitle(ControlDefinition originalDefinition)
     {
-        // Look for Label dynamic property in original definition
-        var labelExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.Label);
+        var labelExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "title", DynamicPropertyType.Label);
 
         if (labelExpression == null) return;
         var titleField = _definitionControl.Field(x => x.Title);
@@ -361,9 +365,8 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeDefaultValue(ControlDefinition originalDefinition)
     {
-        var defaultValueExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.DefaultValue);
+        var defaultValueExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "defaultValue", DynamicPropertyType.DefaultValue);
 
         if (defaultValueExpression == null) return;
         var defaultValueField = _definitionControl.SubField<DataControlDefinition, object?>(x => x.DefaultValue);
@@ -373,9 +376,8 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeActionData(ControlDefinition originalDefinition)
     {
-        var actionDataExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.ActionData);
+        var actionDataExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "actionData", DynamicPropertyType.ActionData);
 
         if (actionDataExpression == null || originalDefinition is not ActionControlDefinition) return;
         var actionDataField = _definitionControl
@@ -385,9 +387,8 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeGridColumns(ControlDefinition originalDefinition)
     {
-        var gridColumnsExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.GridColumns);
+        var gridColumnsExpression = DynamicPropertyHelpers.FindScriptExpression(
+            originalDefinition, "groupOptions.columns", DynamicPropertyType.GridColumns);
 
         if (gridColumnsExpression == null) return;
 
@@ -419,33 +420,35 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeDisplay(ControlDefinition originalDefinition)
     {
-        var displayExpression = DynamicPropertyHelpers.FindDynamicExpression(
-            originalDefinition,
-            DynamicPropertyType.Display);
-
-        if (displayExpression == null || originalDefinition is not DisplayControlDefinition displayControl)
+        if (originalDefinition is not DisplayControlDefinition displayControl)
             return;
 
         switch (displayControl.DisplayData)
         {
-            // Handle TextDisplay
             case TextDisplay:
             {
+                var textExpression = DynamicPropertyHelpers.FindScriptExpression(
+                    originalDefinition, "displayData.text", DynamicPropertyType.Display);
+                if (textExpression == null) return;
+
                 var textField = _definitionControl
                     .SubField<DisplayControlDefinition, DisplayData?>(x => x.DisplayData)
                     .SubField<TextDisplay, string>(x => x.Text);
 
-                SetupDynamic(textField, displayExpression, DynamicPropertyHelpers.CoerceString);
+                SetupDynamic(textField, textExpression, DynamicPropertyHelpers.CoerceString);
                 break;
             }
-            // Handle HtmlDisplay
             case HtmlDisplay:
             {
+                var htmlExpression = DynamicPropertyHelpers.FindScriptExpression(
+                    originalDefinition, "displayData.html", DynamicPropertyType.Display);
+                if (htmlExpression == null) return;
+
                 var htmlField = _definitionControl
                     .SubField<DisplayControlDefinition, DisplayData?>(x => x.DisplayData)
                     .SubField<HtmlDisplay, string>(x => x.Html);
 
-                SetupDynamic(htmlField, displayExpression, DynamicPropertyHelpers.CoerceString);
+                SetupDynamic(htmlField, htmlExpression, DynamicPropertyHelpers.CoerceString);
                 break;
             }
         }
