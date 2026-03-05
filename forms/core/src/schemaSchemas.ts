@@ -732,6 +732,8 @@ export interface GroupRenderOptionsForm {
   childIndexExpression: EntityExpressionForm;
   defaultExpanded: boolean | null;
   expandStateField: string | null;
+  showSteps: boolean | null;
+  pageIndexField: string | null;
 }
 
 export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
@@ -874,6 +876,17 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     type: FieldType.String,
     onlyForTypes: ["Accordion"],
     displayName: "Expand State Field",
+  }),
+  showSteps: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Wizard"],
+    displayName: "Show Steps",
+  }),
+  pageIndexField: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["Wizard"],
+    displayName: "Page Index Field",
+    tags: ["_SchemaField"],
   }),
 });
 
@@ -1384,7 +1397,7 @@ export interface ControlDefinitionForm {
   groupOptions: GroupRenderOptionsForm | null;
   displayData: DisplayDataForm;
   actionId: string;
-  actionData: string | null;
+  actionData: any | null;
   icon: IconReferenceForm | null;
   actionStyle: ActionStyle | null;
   iconPlacement: IconPlacement | null;
@@ -1581,7 +1594,7 @@ export const ControlDefinitionSchema = buildSchema<ControlDefinitionForm>({
     displayName: "Action Id",
   }),
   actionData: makeScalarField({
-    type: FieldType.String,
+    type: FieldType.Any,
     onlyForTypes: ["Action"],
     displayName: "Action Data",
   }),

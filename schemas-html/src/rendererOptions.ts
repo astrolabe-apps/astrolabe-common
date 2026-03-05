@@ -21,6 +21,16 @@ import {
 // SHARED TYPES AND INTERFACES
 // ============================================================================
 
+// Step info for wizard stepper
+export interface WizardStepInfo {
+  index: number;
+  title: string;
+  visible: boolean;
+  active: boolean;
+  completed: boolean;
+  valid: boolean;
+}
+
 // Custom navigation props for wizard renderer
 export interface CustomNavigationProps {
   className?: string;
@@ -30,6 +40,7 @@ export interface CustomNavigationProps {
   prev: ActionRendererProps;
   formRenderer: FormRenderer;
   validatePage: () => Promise<boolean>;
+  steps: WizardStepInfo[];
 }
 
 
@@ -99,6 +110,12 @@ export interface DefaultWizardRenderOptions {
     className?: string;
     navContainerClass?: string;
     contentClass?: string;
+    stepsContainerClass?: string;
+    stepClass?: string;
+    activeStepClass?: string;
+    completedStepClass?: string;
+    stepLabelClass?: string;
+    stepNumberClass?: string;
   };
   actions?: {
     nextText?: string;
@@ -108,6 +125,11 @@ export interface DefaultWizardRenderOptions {
     prevIcon?: IconReference;
     prevValidate?: boolean;
   };
+  defaultShowSteps?: boolean;
+  renderSteps?: (
+    steps: WizardStepInfo[],
+    formRenderer: FormRenderer,
+  ) => ReactNode;
   renderNavigation?: (props: CustomNavigationProps) => ReactNode;
 }
 

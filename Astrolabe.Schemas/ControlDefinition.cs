@@ -109,7 +109,7 @@ public record DisplayControlDefinition(DisplayData DisplayData)
 
 public record ActionControlDefinition(
     string ActionId,
-    string? ActionData,
+    object? ActionData,
     IconReference? Icon,
     ActionStyle? ActionStyle,
     IconPlacement? IconPlacement,
@@ -314,7 +314,8 @@ public record HtmlEditorRenderOptions(bool AllowImages)
 public record IconMapping(string Value, string? MaterialIcon);
 
 public record ElementSelectedRenderOptions(
-    [property: SchemaTag(SchemaTags.ControlRef + "/ExpressionForm")] EntityExpression ElementExpression
+    [property: SchemaTag(SchemaTags.ControlRef + "/ExpressionForm")]
+        EntityExpression ElementExpression
 ) : RenderOptions(nameof(DataRenderType.ElementSelected));
 
 public record ScrollListRenderOptions(string? BottomActionId, string? RefreshActionId)
@@ -397,7 +398,7 @@ public enum GroupRenderType
 [JsonSubType("Tabs", typeof(TabsRenderOptions))]
 [JsonSubType("SelectChild", typeof(SelectChildRenderer))]
 [JsonSubType("Inline", typeof(SimpleGroupRenderOptions))]
-[JsonSubType("Wizard", typeof(SimpleGroupRenderOptions))]
+[JsonSubType("Wizard", typeof(WizardRenderOptions))]
 [JsonSubType("Contents", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("Dialog", typeof(DialogRenderOptions))]
 [JsonSubType("Accordion", typeof(AccordionRenderer))]
@@ -445,6 +446,11 @@ public record SelectChildRenderer(
 
 public record AccordionRenderer(bool? DefaultExpanded, string? ExpandStateField)
     : GroupRenderOptions(nameof(GroupRenderType.Accordion));
+
+public record WizardRenderOptions(
+    bool? ShowSteps,
+    [property: SchemaTag(SchemaTags.SchemaField)] string? PageIndexField
+) : GroupRenderOptions(nameof(GroupRenderType.Wizard));
 
 [JsonString]
 public enum AdornmentPlacement

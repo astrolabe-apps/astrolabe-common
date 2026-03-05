@@ -433,7 +433,7 @@ export default function Editor() {
               lc.value = false;
             }
             console.log("Clicked", aid, data);
-            await ctx.runAction("closeDialog");
+            if (aid !== "closeDialog") await ctx.runAction("closeDialog");
           },
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
           variables: () => ({ breakpoint: breakpointControl.value }),

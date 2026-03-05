@@ -248,6 +248,9 @@ export interface FormRenderer {
    */
   renderLabelText: (props: ReactNode) => ReactNode;
 
+  /**
+   *  @deprecated: Just use normal html / react-native tags
+   */
   html: HtmlComponents;
 
   controlDefinitionSchema?: SchemaNode;

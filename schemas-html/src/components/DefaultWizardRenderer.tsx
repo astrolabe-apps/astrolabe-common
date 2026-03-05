@@ -10,17 +10,30 @@ import {
   IconPlacement,
   IconReference,
   rendererClass,
+  schemaDataForFieldRef,
+  WizardRenderOptions,
 } from "@react-typed-forms/schemas";
-import { CustomNavigationProps, DefaultWizardRenderOptions } from "../rendererOptions";
-import { useComputed, useControl } from "@react-typed-forms/core";
-import { Fragment, ReactNode } from "react";
-
+import {
+  CustomNavigationProps,
+  DefaultWizardRenderOptions,
+  WizardStepInfo,
+} from "../rendererOptions";
+import { Control, useComputed, useControl } from "@react-typed-forms/core";
+import { Fragment } from "react";
 
 const defaultOptions = {
   classes: {
     className: undefined,
     contentClass: "min-h-96 overflow-auto",
     navContainerClass: "flex justify-between gap-4 my-2",
+    stepsContainerClass: "flex items-center gap-2 mb-4",
+    stepClass:
+      "flex items-center gap-2 px-3 py-2 rounded text-sm text-gray-500",
+    activeStepClass: "font-semibold text-blue-600 bg-blue-50",
+    completedStepClass: "text-green-600",
+    stepLabelClass: "",
+    stepNumberClass:
+      "flex items-center justify-center w-6 h-6 rounded-full border text-xs",
   },
   actions: {
     nextText: "Next",
@@ -30,6 +43,7 @@ const defaultOptions = {
     prevIcon: fontAwesomeIcon("chevron-left"),
     prevValidate: false,
   },
+  defaultShowSteps: false,
   renderNavigation: defaultNavigationRender,
 } satisfies DefaultWizardRenderOptions;
 
@@ -82,7 +96,17 @@ function WizardRenderer({
     defaultOptions,
   );
   const {
-    classes: { className, contentClass, navContainerClass },
+    classes: {
+      className,
+      contentClass,
+      navContainerClass,
+      stepsContainerClass,
+      stepClass,
+      activeStepClass,
+      completedStepClass,
+      stepLabelClass,
+      stepNumberClass,
+    },
     actions: {
       nextText,
       nextIcon,
@@ -91,16 +115,27 @@ function WizardRenderer({
       nextValidate,
       prevValidate,
     },
+    defaultShowSteps,
     renderNavigation,
   } = mergedOptions;
+
+  const wizardOptions = props.renderOptions as WizardRenderOptions;
+  const showSteps = wizardOptions.showSteps ?? defaultShowSteps;
+
+  const { pageIndexField } = wizardOptions;
+  const pageFieldNode = pageIndexField
+    ? schemaDataForFieldRef(pageIndexField, props.dataContext.parentNode)
+    : null;
+  const internalPage = useControl(0);
+  const page: Control<number> =
+    pageFieldNode?.control.as<number>() ?? internalPage;
+
   const { formNode, designMode, renderChild } = props;
-  const {
-    html: { Div },
-  } = formRenderer;
   const childrenLength = formNode.getChildCount();
-  const page = useControl(0);
   const currentPage = page.value;
   const isValid = useComputed(() => isPageValid());
+
+  const steps = buildSteps();
 
   const next = createAction("nav", () => nav(1, nextValidate), nextText, {
     hidden: !designMode && nextVisibleInDirection(1) == null,
@@ -121,23 +156,76 @@ function WizardRenderer({
     next: next,
     className: navContainerClass,
     validatePage: async () => validatePage(),
+    steps,
   });
+
+  const customRenderSteps = options?.renderSteps;
+  const stepsElement = showSteps
+    ? customRenderSteps
+      ? customRenderSteps(steps, formRenderer)
+      : defaultStepsRender()
+    : null;
+
   const content = designMode ? (
-    <Div>{formNode.children.map((child) => renderChild(child))}</Div>
+    <div>{formNode.children.map((child) => renderChild(child))}</div>
   ) : currentPage < childrenLength ? (
-    <Div className={contentClass}>
+    <div className={contentClass}>
       {renderChild(formNode.getChild(currentPage)!)}
-    </Div>
+    </div>
   ) : (
     <Fragment />
   );
 
   return (
-    <Div className={rendererClass(props.className, className)}>
+    <div className={rendererClass(props.className, className)}>
+      {stepsElement}
       {content}
       {navElement}
-    </Div>
+    </div>
   );
+
+  function buildSteps(): WizardStepInfo[] {
+    const result: WizardStepInfo[] = [];
+    let visibleIndex = 0;
+    for (let i = 0; i < childrenLength; i++) {
+      const child = formNode.getChild(i)!;
+      const visible = !!child.visible;
+      result.push({
+        index: visibleIndex,
+        title: child.definition.title ?? `Step ${visibleIndex + 1}`,
+        visible,
+        active: i === currentPage,
+        completed: visible && i < currentPage,
+        valid: child.valid,
+      });
+      if (visible) visibleIndex++;
+    }
+    return result;
+  }
+
+  function defaultStepsRender() {
+    const visibleSteps = steps.filter((s) => s.visible);
+    return (
+      <div className={stepsContainerClass}>
+        {visibleSteps.map((step, i) => (
+          <div
+            key={i}
+            className={rendererClass(
+              stepClass,
+              step.active
+                ? activeStepClass
+                : step.completed
+                  ? completedStepClass
+                  : undefined,
+            )}
+          >
+            <span className={stepNumberClass}>{step.index + 1}</span>
+            <span className={stepLabelClass}>{step.title}</span>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   function countVisibleUntil(untilPage: number) {
     let count = 0;
@@ -181,6 +269,6 @@ function WizardRenderer({
   }
 
   function isPageValid() {
-    return formNode.getChild(currentPage)!.valid;
+    return formNode.getChild(currentPage)?.valid ?? false;
   }
 }

@@ -1,9 +1,5 @@
-import {
-  createDefaultDisplayRenderer,
-} from "./components/DefaultDisplay";
-import {
-  createDefaultLayoutRenderer,
-} from "./components/DefaultLayout";
+import { createDefaultDisplayRenderer } from "./components/DefaultDisplay";
+import { createDefaultLayoutRenderer } from "./components/DefaultLayout";
 import { createDefaultVisibilityRenderer } from "./components/DefaultVisibility";
 import React, {
   Fragment,
@@ -12,9 +8,7 @@ import React, {
   ReactNode,
 } from "react";
 import clsx from "clsx";
-import {
-  createSelectRenderer,
-} from "./components/SelectDataRenderer";
+import { createSelectRenderer } from "./components/SelectDataRenderer";
 import { DefaultDisplayOnly } from "./components/DefaultDisplayOnly";
 import { Control, useControlEffect } from "@react-typed-forms/core";
 import { ControlInput, createInputConversion } from "./components/ControlInput";
@@ -91,28 +85,14 @@ import {
   DefaultLayoutRendererOptions,
   SelectRendererOptions,
 } from "./rendererOptions";
-import {
-  createDefaultGroupRenderer,
-} from "./components/DefaultGroupRenderer";
-import {
-  createAutocompleteRenderer,
-} from "./components/AutocompleteRenderer";
-import {
-  createOptionalAdornment,
-} from "./adornments/optionalAdornment";
+import { createDefaultGroupRenderer } from "./components/DefaultGroupRenderer";
+import { createAutocompleteRenderer } from "./components/AutocompleteRenderer";
+import { createOptionalAdornment } from "./adornments/optionalAdornment";
 
-import {
-  createArrayElementRenderer,
-} from "./components/ArrayElementRenderer";
-import {
-  createButtonActionRenderer,
-} from "./createButtonActionRenderer";
-import {
-  createScrollListRenderer,
-} from "./components/ScrollListRenderer";
+import { createArrayElementRenderer } from "./components/ArrayElementRenderer";
+import { createButtonActionRenderer } from "./createButtonActionRenderer";
+import { createScrollListRenderer } from "./components/ScrollListRenderer";
 import { HtmlCheckButtons } from "./components/HtmlCheckButtons";
-
-
 
 export function createDefaultDataRenderer(
   options: DefaultDataRendererOptions = {},
@@ -240,7 +220,7 @@ export function createDefaultDataRenderer(
       case DataRenderType.ElementSelected:
         return elementSelectedRenderer.render(props, renderers);
     }
-    if (fieldType == FieldType.Any) {
+    if (fieldType == FieldType.Any && !isTextfieldRenderer(renderOptions)) {
       return (
         <>
           Can't render field: {field.displayName ?? field.field} ({renderType})
@@ -269,9 +249,6 @@ export function createDefaultDataRenderer(
     );
   });
 }
-
-
-
 
 export function createDefaultAdornmentRenderer(
   options: DefaultAdornmentRendererOptions = {},
@@ -338,7 +315,6 @@ export function createDefaultAdornmentRenderer(
     },
   };
 }
-
 
 function SetFieldWrapper({
   children,

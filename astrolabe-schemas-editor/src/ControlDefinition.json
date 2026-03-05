@@ -134,7 +134,7 @@
             "title": "Action Data",
             "field": "actionData",
             "renderOptions": {
-              "type": "Standard"
+              "type": "Textfield"
             }
           },
           {
@@ -521,6 +521,22 @@
                 "field": "value",
                 "renderOptions": {
                   "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Show Steps",
+                "field": "showSteps",
+                "renderOptions": {
+                  "type": "Standard"
+                }
+              },
+              {
+                "type": "Data",
+                "title": "Page Index Field",
+                "field": "pageIndexField",
+                "renderOptions": {
+                  "type": "FieldSelection"
                 }
               }
             ],

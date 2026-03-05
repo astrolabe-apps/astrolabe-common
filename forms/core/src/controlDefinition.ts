@@ -405,6 +405,8 @@ export interface TabsRenderOptions extends GroupRenderOptions {
 
 export interface WizardRenderOptions extends GroupRenderOptions {
   type: GroupRenderType.Wizard;
+  showSteps?: boolean | null;
+  pageIndexField?: string | null;
 }
 
 export interface SelectChildRenderer extends GroupRenderOptions {
