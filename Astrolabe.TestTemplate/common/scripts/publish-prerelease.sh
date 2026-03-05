@@ -28,7 +28,7 @@ fi
 
 TIMESTAMP=$(date +%s)
 
-echo "Publishing pre-release (version suffix: $TIMESTAMP, dist-tag: $TAG) to http://192.168.50.43"
+echo "Publishing pre-release (version suffix: $TIMESTAMP, dist-tag: $TAG) to https://astro-registry.ngrok.app"
 
 # Stage 1: Apply prerelease version bumps to package.json files
 rush publish \
@@ -42,7 +42,7 @@ XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}" rush publish \
   --include-all \
   --publish \
   --tag "$TAG" \
-  --registry http://192.168.50.43 || PUBLISH_EXIT=$?
+  --registry https://astro-registry.ngrok.app || PUBLISH_EXIT=$?
 
 # Revert package.json changes made by rush publish
 echo "Reverting package.json changes..."
