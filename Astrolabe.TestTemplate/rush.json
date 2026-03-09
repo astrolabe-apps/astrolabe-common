@@ -558,6 +558,11 @@
       "shouldPublish": false
     },
     {
+      "packageName": "@astroapps/forms-app",
+      "projectFolder": "../forms-app",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@astroapps/schemas-quickstream",
       "projectFolder": "../astrolabe-schemas-quickstream"
     },
