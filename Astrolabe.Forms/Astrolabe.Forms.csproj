@@ -20,12 +20,12 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Astrolabe.Workflow\Astrolabe.Workflow.csproj" />
+        <PackageReference Include="Astrolabe.Workflow" Version="1.3.0" />
         <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
-        <ProjectReference Include="..\Astrolabe.SearchState\Astrolabe.SearchState.csproj" />
-        <ProjectReference Include="..\Astrolabe.EF.Search\Astrolabe.EF.Search.csproj" />
-        <ProjectReference Include="..\Astrolabe.Schemas.ExportCsv\Astrolabe.Schemas.ExportCsv.csproj" />
-        <ProjectReference Include="..\Astrolabe.FileStorage\Astrolabe.FileStorage.csproj" />
+        <PackageReference Include="Astrolabe.SearchState" Version="4.1.0" />
+        <PackageReference Include="Astrolabe.EF.Search" Version="1.0.1" />
+        <PackageReference Include="Astrolabe.Schemas.ExportCsv" Version="1.0.0" />
+        <PackageReference Include="Astrolabe.FileStorage" Version="0.1.0" />
     </ItemGroup>
 
 </Project>
