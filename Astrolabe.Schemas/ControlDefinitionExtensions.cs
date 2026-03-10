@@ -1,6 +1,5 @@
 using System.Text.Json.Nodes;
 using Astrolabe.JSON;
-using Astrolabe.Controls;
 
 namespace Astrolabe.Schemas;
 
@@ -27,20 +26,6 @@ public static class ControlDefinitionExtensions
         };
     }
 
-    public static bool IsVisible(
-        this ControlDefinition definition,
-        IControl data,
-        JsonPathSegments context,
-        ExprEvalBool? evalBool = null
-    )
-    {
-        var dynamicVisibility = definition.Dynamic?.FirstOrDefault(x => x.Type == VisibilityType);
-        if (dynamicVisibility == null)
-            return true;
-        evalBool ??= EntityExpressionExtensions.DefaultEvalBool;
-        return evalBool(dynamicVisibility.Expr, data, context);
-    }
-
     public static string? GetControlFieldRef(this ControlDefinition definition)
     {
         return definition switch
@@ -49,22 +34,5 @@ public static class ControlDefinitionExtensions
             GroupedControlsDefinition { CompoundField: { } field } => field,
             _ => null
         };
-    }
-
-    public static (IControl?, SchemaField)? FindChildField(
-        this ControlDefinition definition,
-        IControl data,
-        IEnumerable<SchemaField> fields
-    )
-    {
-        var childField = definition.GetControlFieldRef();
-        if (
-            childField != null
-            && fields.FirstOrDefault(x => x.Field == childField) is { } childSchema
-        )
-        {
-            return (data[childField], childSchema);
-        }
-        return null;
     }
 }

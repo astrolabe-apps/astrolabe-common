@@ -1,9 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Astrolabe.Annotation;
-using Astrolabe.Controls;
 using Astrolabe.Schemas;
-using Astrolabe.Schemas.PDF;
 using Astrolabe.SearchState;
 using Astrolabe.TestTemplate.Forms;
 using Astrolabe.TestTemplate.Service;
@@ -11,8 +9,6 @@ using Astrolabe.TestTemplate.Workflow;
 using Astrolabe.Workflow;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using QuestPDF.Fluent;
-using QuestPDF.Infrastructure;
 
 namespace Astrolabe.TestTemplate.Controllers;
 
@@ -124,34 +120,8 @@ public class CarController(AppDbContext dbContext, CarService carService) : Cont
             .ToListAsync();
     }
 
-    [HttpPost("pdf")]
-    [ProducesResponseType(typeof(FileResult), 200)]
-    public async Task<FileResult> GeneratePdf([FromBody] PdfData pdfData)
-    {
-        var rootFormNode = FormLookup.Create(_ => pdfData.Controls).GetForm("")!;
-        var rootSchemaNode = carService.SchemaLookup.GetSchema(pdfData.SchemaName)!;
-        var rootSchemaData = rootSchemaNode.WithData(JsonSerializer.SerializeToNode(pdfData.Data));
-
-        // Build the FormStateNode tree once
-        var editor = new ControlEditor();
-        var formStateTree = FormStateNodeBuilder.CreateFormStateNode(
-            rootFormNode,
-            rootSchemaData,
-            editor,
-            DefaultSchemaInterface.Instance
-        );
-
-        var doc = Document.Create(dc =>
-        {
-            var pdfContext = new PdfFormContext(formStateTree);
-            dc.Page(p => pdfContext.RenderContent(p.Content()));
-        });
-        return File(doc.GeneratePdf(), "application/pdf");
-    }
 }
 
 public record CarEdit(string Make, string Model, int Year);
 
 public record CarInfo(string Make, string Model, int Year, ItemStatus Status);
-
-public record PdfData(ControlDefinition[] Controls, string SchemaName, JsonElement Data);

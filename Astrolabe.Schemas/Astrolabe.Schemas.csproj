@@ -20,7 +20,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Astrolabe.Controls\Astrolabe.Controls.csproj" />
         <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
     </ItemGroup>
 

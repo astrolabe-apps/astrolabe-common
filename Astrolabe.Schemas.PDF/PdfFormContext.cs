@@ -49,4 +49,12 @@ public static class PdfFormStateExtensions
     {
         return node.Children.Where(child => child.Visible != false);
     }
+
+    public static string GetTitle(this IFormStateNode node)
+    {
+        return node.Definition.Title
+            ?? node.DataNode?.Schema.Field.DisplayName
+            ?? node.DataNode?.Schema.Field.Field
+            ?? "<untitled>";
+    }
 }

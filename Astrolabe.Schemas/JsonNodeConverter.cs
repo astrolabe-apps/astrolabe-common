@@ -1,26 +1,16 @@
 using System.Text.Json.Nodes;
-using Astrolabe.Controls;
 
 namespace Astrolabe.Schemas;
 
 public static class JsonNodeConverter
 {
     /// <summary>
-    /// Converts a JsonNode to an IControl by first converting to plain C# objects
-    /// </summary>
-    public static IControl JsonNodeToControl(JsonNode? jsonNode)
-    {
-        var data = JsonNodeToObject(jsonNode);
-        return Control.Create(data);
-    }
-
-    /// <summary>
     /// Recursively converts JsonNode to plain C# objects:
-    /// - JsonObject → IDictionary<string, object?>
-    /// - JsonArray → IList<object?>
+    /// - JsonObject → IDictionary&lt;string, object?&gt;
+    /// - JsonArray → IList&lt;object?&gt;
     /// - JsonValue → primitives
     /// </summary>
-    private static object? JsonNodeToObject(JsonNode? node)
+    public static object? JsonNodeToObject(JsonNode? node)
     {
         return node switch
         {
@@ -54,7 +44,6 @@ public static class JsonNodeConverter
 
     private static object? ConvertValue(JsonValue val)
     {
-        // Try to get the actual primitive value
         if (val.TryGetValue<string>(out var strVal)) return strVal;
         if (val.TryGetValue<long>(out var longVal)) return longVal;
         if (val.TryGetValue<int>(out var intVal)) return intVal;
@@ -62,7 +51,6 @@ public static class JsonNodeConverter
         if (val.TryGetValue<bool>(out var boolVal)) return boolVal;
         if (val.TryGetValue<decimal>(out var decimalVal)) return decimalVal;
         if (val.TryGetValue<DateTime>(out var dateVal)) return dateVal;
-
         return val.ToString();
     }
 }
