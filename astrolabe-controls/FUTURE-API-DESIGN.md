@@ -1,12 +1,12 @@
-# Future API Design: Explicit Reactivity & Transactions
+# Future API Design: Explicit Reactivity & Write Context
 
-This document captures a proposed future direction for `@astroapps/controls` that removes global variables and makes reactivity and transactions explicit.
+This document captures a proposed future direction for `@astroapps/controls` that removes global variables and makes reactivity and writes explicit.
 
 ## Goals
 
-- **No global variables** — no module-level transaction state, no ambient dependency tracking
-- **Explicit reactivity** — reading a control property only subscribes if you do it through a tracker
-- **Explicit transactions** — mutations are batched via a scheduler; subscribers only notified at end
+- **No global variables** — no module-level state, no ambient dependency tracking
+- **Explicit reactivity** — reading a control property only subscribes if you do it through a readContext
+- **Explicit writes** — all mutations go through a `WriteContext` which controls when subscribers are notified
 - **C# portability** — the design maps cleanly to C# interfaces without proxy/getter magic
 
 ## Core Concepts
@@ -24,83 +24,101 @@ control.disabledNow
 control.errorNow
 ```
 
-### Tracker (reactive read context)
+### ReadContext (reactive read context)
 
-A `Tracker` is an explicit reactive context. Reading through a tracker registers a dependency:
+A `ReadContext` is an explicit reactive context. Reading through a readContext registers a dependency:
 
 ```typescript
-interface Tracker {
-  value<V>(control: Control<V>): V
-  valid(control: Control<unknown>): boolean
-  touched(control: Control<unknown>): boolean
-  dirty(control: Control<unknown>): boolean
-  disabled(control: Control<unknown>): boolean
-  error(control: Control<unknown>): string | null | undefined
-  hidden(control: Control<unknown>): boolean
-  elements<V>(control: Control<V[]>): Control<V[number]>[]
+interface ReadContext {
+  getValue<V>(control: Control<V>): V
+  isValid(control: Control<unknown>): boolean
+  isTouched(control: Control<unknown>): boolean
+  isDirty(control: Control<unknown>): boolean
+  isDisabled(control: Control<unknown>): boolean
+  getError(control: Control<unknown>): string | null | undefined
+  getElements<V>(control: Control<V[]>): Control<V>[]
   // ...
 }
 ```
 
-The creator of the tracker decides when to re-run and when to update subscriptions. Different tracker implementations have different strategies:
+The creator of the readContext decides when to re-run and when to update subscriptions. Different readContext implementations have different strategies:
 
-- **React render tracker** — records `(control, property)` pairs during render, subscribes, re-renders on change
-- **Effect tracker** — re-runs a compute function when any dependency changes
-- **Noop tracker** — returns current values with no subscriptions (tests, one-shot reads)
-- **Snapshot tracker** — freezes values at a point in time
+- **React render readContext** — records `(control, property)` pairs during render, subscribes, re-renders on change
+- **Effect readContext** — re-runs a compute function when any dependency changes
+- **Noop readContext** — returns current values with no subscriptions (tests, one-shot reads)
+- **Snapshot readContext** — freezes values at a point in time
 
-### Scheduler (transaction context)
+### WriteContext (explicit write context)
 
-The `Scheduler` owns transaction state, replacing the current module-level globals (`transactionCount`, `runListenerList`, `afterChangesCallbacks`):
+A `WriteContext` is the counterpart to `ReadContext`. All mutations go through it rather than on `Control` directly. It accumulates changes and exposes `runSubscribers()` to notify them when ready:
 
 ```typescript
-interface Scheduler {
-  batch<T>(fn: () => T): T           // subscribers only notified at end
-  afterChanges(cb: () => void): void
-  newControl<V>(value: V, setup?: ControlSetup<V>): Control<V>
+interface WriteContext {
+  // Value mutations
+  setValue<V>(control: Control<V>, value: V): void
+  setValueAndInitial<V>(control: Control<V>, value: V, initial: V): void
+  setInitialValue<V>(control: Control<V>, value: V): void
+  markAsClean(control: Control<unknown>): void
+
+  // State mutations
+  setTouched(control: Control<unknown>, touched: boolean, notChildren?: boolean): void
+  setDisabled(control: Control<unknown>, disabled: boolean, notChildren?: boolean): void
+  setError(control: Control<unknown>, key: string, error?: string | null): void
+  setErrors(control: Control<unknown>, errors?: Record<string, string | null | undefined> | null): void
+  clearErrors(control: Control<unknown>): void
+
+  // Array mutations
+  addElement<V>(control: Control<V[]>, child: V, index?: number): Control<V>
+  removeElement<V>(control: Control<V[]>, child: number | Control<V>): void
+  updateElements<V>(control: Control<V[]>, cb: (elems: Control<V>[]) => Control<V>[]): Control<V>[]
 }
 ```
 
-For React, a single scheduler is created at app root and provided via context. Tests create their own isolated scheduler.
+`runSubscribers()` is not part of the interface — only the instantiator holds the concrete object and decides when to notify. This is analogous to how `Promise` keeps `resolve`/`reject` separate from the promise itself.
 
 ## Subscription Storage
-
-Subscriptions are stored as a bidirectional map between controls and trackers:
-
-```
-Control  ->  Map<Tracker, ControlChange>   // which trackers watch this, combined mask
-Tracker  ->  Map<Control, ControlChange>   // which controls this watches, combined mask
-```
-
-Each tracker contributes at most one entry per control (with a combined bitmask across all properties it accessed on that control). When a tracker re-runs it diffs old vs new dependency maps and updates only what changed.
 
 ## Contrast with Current API
 
 | Concern | Current | Proposed |
 |---------|---------|----------|
-| Reactive read | `control.value` (implicit, magic) | `tracker.value(control)` (explicit) |
+| Reactive read | `control.value` (implicit, magic) | `readContext.getValue(control)` (explicit) |
 | Snapshot read | `control.value` (ambiguous) | `control.valueNow` (unambiguous) |
-| Transaction state | Module-level globals | Owned by `Scheduler` instance |
-| Dependency tracking | Global `collectChange` callback | `Tracker` object, no globals |
+| Mutation | `control.setValue(x)` (on Control) | `wc.setValue(control, x)` (explicit write context) |
+| Subscriber notification | Module-level globals | `runSubscribers()` on the concrete impl, not the interface |
+| Dependency tracking | Global `collectChange` callback | `ReadContext` object, no globals |
 
 ## C# Alignment
 
-The tracker interface maps directly to a plain C# interface — no proxy or getter magic needed:
+The readContext interface maps directly to a plain C# interface — no proxy or getter magic needed:
 
 ```csharp
-interface ITracker {
-    T Value<T>(IControl<T> control);
-    bool Valid(IControl control);
-    bool Touched(IControl control);
-    bool Hidden(IControl control);
+interface IReadContext {
+    T GetValue<T>(IControl<T> control);
+    bool IsValid(IControl control);
+    bool IsTouched(IControl control);
+    bool IsDirty(IControl control);
+    bool IsDisabled(IControl control);
+    string? GetError(IControl control);
     // ...
 }
 ```
 
-The scheduler maps to the existing `ControlEditor` pattern (explicit write context), so the C# port gains an explicit read context (`ITracker`) to complement it.
+The `WriteContext` maps directly to the existing `ControlEditor` pattern:
+
+```csharp
+interface IWriteContext {
+    void SetValue<T>(IControl<T> control, T value);
+    void SetTouched(IControl control, bool touched);
+    void SetDisabled(IControl control, bool disabled);
+    void SetError(IControl control, string key, string? error);
+    // ...
+}
+```
 
 ## Open Questions
 
-- Who creates and vends trackers? (React context? Scheduler? Standalone?)
-- How do computed/derived controls fit in — are they trackers that write to a control?
-- How does the React integration layer change (likely `useTracker()` hook backed by `useSyncExternalStore`)?
+- Who creates and vends readContexts? (React context? Standalone factory?)
+- How do computed/derived controls fit in — are they readContexts that write to a control?
+- How does the React integration layer change (likely `useReadContext()` hook backed by `useSyncExternalStore`)?
+- Where does `newControl` live? (standalone factory function)
