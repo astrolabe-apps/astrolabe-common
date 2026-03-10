@@ -10,9 +10,11 @@ import {
   createSchemaTree,
   dataControl,
   dataExpr,
+  DataRenderType,
   defaultEvaluators,
   defaultResolveChildNodes,
   defaultSchemaInterface,
+  displayOnlyOptions,
   DynamicProperty,
   DynamicPropertyType,
   EntityExpression,
@@ -344,6 +346,38 @@ describe("dynamic properties", () => {
       );
       const displayData = (state.definition as any).displayData;
       expect(displayData.html).toBe("<b>dynamic</b>");
+    });
+
+    it("dynamic Display updates renderOptions.overrideText for DisplayOnly data control", () => {
+      const schema = stringField("Test")("test");
+      const state = testNodeState(
+        dataControl("test", "Test Field", {
+          ...displayOnlyOptions({}),
+          dynamic: [dynamicProperty(DynamicPropertyType.Display)],
+        }),
+        schema,
+        {
+          evalExpression: (_, ctx) => ctx.returnResult("overridden text"),
+        },
+      );
+      const renderOptions = (state.definition as any).renderOptions;
+      expect(renderOptions.overrideText).toBe("overridden text");
+    });
+
+    it("dynamic Display on DisplayOnly responds to reactive changes", () => {
+      const schema = stringField("Test")("test");
+      const dynValue = newControl<any>("first");
+      const state = testNodeState(
+        dataControl("test", "Test Field", {
+          ...displayOnlyOptions({}),
+          dynamic: [dynamicProperty(DynamicPropertyType.Display)],
+        }),
+        schema,
+        { evalExpression: reactiveEval(dynValue) },
+      );
+      expect((state.definition as any).renderOptions.overrideText).toBe("first");
+      dynValue.value = "second";
+      expect((state.definition as any).renderOptions.overrideText).toBe("second");
     });
 
     it("dynamic Display responds to reactive changes", () => {
@@ -1244,6 +1278,42 @@ describe("dynamic properties", () => {
       expect(adornments).toHaveLength(2);
       expect((adornments[0] as any).title).toBe("Static Title");
       expect((adornments[1] as any).title).toBe("Dynamic");
+    });
+
+    it("nested $scripts on renderOptions.overrideText for DisplayOnly", () => {
+      const schema = stringField("Test")("test");
+      const def = {
+        ...dataControl("test", "Test Field", {
+          renderOptions: {
+            ...displayOnlyOptions({}).renderOptions,
+            ["$scripts"]: { overrideText: { type: "Anything" } },
+          } as any,
+        }),
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: (_, ctx) => ctx.returnResult("scripted override"),
+      });
+      const renderOptions = (state.definition as any).renderOptions;
+      expect(renderOptions.overrideText).toBe("scripted override");
+    });
+
+    it("nested $scripts on renderOptions.overrideText responds to reactive changes", () => {
+      const schema = stringField("Test")("test");
+      const dynValue = newControl<any>("first");
+      const def = {
+        ...dataControl("test", "Test Field", {
+          renderOptions: {
+            ...displayOnlyOptions({}).renderOptions,
+            ["$scripts"]: { overrideText: { type: "Anything" } },
+          } as any,
+        }),
+      } as ControlDefinition;
+      const state = testNodeState(def, schema, {
+        evalExpression: reactiveEval(dynValue),
+      });
+      expect((state.definition as any).renderOptions.overrideText).toBe("first");
+      dynValue.value = "second";
+      expect((state.definition as any).renderOptions.overrideText).toBe("second");
     });
 
     it("legacy dynamic and $scripts both apply (legacy first, then $scripts)", () => {

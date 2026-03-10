@@ -188,6 +188,11 @@ export function createDefaultDataRenderer(
                   ? renderOptions.emptyText
                   : defaultEmptyText
               }
+              overrideText={
+                isDisplayOnlyRenderer(renderOptions)
+                  ? renderOptions.overrideText
+                  : undefined
+              }
               noSelection={props.definition.noSelection}
             />
           ),

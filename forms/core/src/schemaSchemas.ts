@@ -950,6 +950,7 @@ export interface RenderOptionsForm {
   groupOptions: GroupRenderOptionsForm;
   emptyText: string | null;
   sampleText: string | null;
+  overrideText: string | null;
   noGroups: boolean;
   noUsers: boolean;
   format: string | null;
@@ -1182,7 +1183,13 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
   sampleText: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["DisplayOnly"],
-    displayName: "Sample Text",
+    displayName: "Sample Text (deprecated)",
+    tags: ["_NoControl"],
+  }),
+  overrideText: makeScalarField({
+    type: FieldType.String,
+    onlyForTypes: ["DisplayOnly"],
+    displayName: "Override Text",
   }),
   noGroups: makeScalarField({
     type: FieldType.Bool,

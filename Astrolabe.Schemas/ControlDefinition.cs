@@ -280,8 +280,11 @@ public record DataGroupRenderOptions(
     [property: SchemaTag(SchemaTags.NoControl)] GroupRenderOptions GroupOptions
 ) : RenderOptions(DataRenderType.Group.ToString());
 
-public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText)
-    : RenderOptions(DataRenderType.DisplayOnly.ToString());
+public record DisplayOnlyRenderOptions(
+    string? EmptyText,
+    [property: Obsolete("Use OverrideText instead"), SchemaTag(SchemaTags.NoControl)] string? SampleText,
+    string? OverrideText
+) : RenderOptions(DataRenderType.DisplayOnly.ToString());
 
 public record UserSelectionRenderOptions(bool NoGroups, bool NoUsers)
     : RenderOptions(DataRenderType.UserSelection.ToString());

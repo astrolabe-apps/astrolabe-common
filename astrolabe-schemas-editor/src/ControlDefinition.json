@@ -187,8 +187,8 @@
               },
               {
                 "type": "Data",
-                "title": "Sample Text",
-                "field": "sampleText",
+                "title": "Override Text",
+                "field": "overrideText",
                 "renderOptions": {
                   "type": "Standard"
                 }

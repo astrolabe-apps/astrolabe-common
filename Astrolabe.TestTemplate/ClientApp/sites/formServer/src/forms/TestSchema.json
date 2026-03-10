@@ -3,26 +3,22 @@
     {
       "type": "Data",
       "title": "New",
-      "children": [
-        {
-          "type": "Group",
-          "title": "New",
-          "dynamic": [
-            {
-              "type": "Label",
-              "expr": {
-                "type": "Jsonata",
-                "expression": "\u0022Index \u0022 \u0026 $i"
-              }
-            }
-          ]
-        }
-      ],
-      "field": "stuff",
+      "field": "number",
       "renderOptions": {
-        "type": "Standard"
-      }
+        "type": "DisplayOnly",
+        "sampleText": "",
+        "overrideText": "",
+        "emptyText": "EMP",
+        "$scripts": {
+          "overrideText": {
+            "type": "Jsonata",
+            "expression": "\u0027$\u0027 \u0026 number"
+          }
+        }
+      },
+      "defaultValue": null
     }
   ],
-  "config": null
+  "config": null,
+  "fields": []
 }

@@ -28,6 +28,7 @@ import {
   isDataControl,
   isDataGroupRenderer,
   isDisplayControl,
+  isDisplayOnlyRenderer,
   isGroupControl,
   isHtmlDisplay,
   isTextDisplay,
@@ -166,6 +167,14 @@ function buildLegacyScripts(
             existing["html"] = dp.expr;
             map.set("displayData", existing);
           }
+        } else if (
+          isDataControl(def) &&
+          def.renderOptions &&
+          isDisplayOnlyRenderer(def.renderOptions)
+        ) {
+          const existing = map.get("renderOptions") ?? {};
+          existing["overrideText"] = dp.expr;
+          map.set("renderOptions", existing);
         }
         break;
       case DynamicPropertyType.GridColumns:

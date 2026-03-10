@@ -11,6 +11,7 @@ export function DefaultDisplayOnly({
   dataNode,
   className,
   emptyText,
+  overrideText,
   noSelection,
   schemaInterface,
   style,
@@ -27,10 +28,11 @@ export function DefaultDisplayOnly({
   inline: boolean;
   renderer: FormRenderer;
   emptyText?: string | null;
+  overrideText?: string | null;
   noSelection?: boolean | null;
   state: FormStateNode;
 }) {
-  const text =
+  const text = (overrideText ? overrideText : null) ??
     (schemaInterface.isEmptyValue(
       dataNode.schema.field,
       dataNode.control.value,

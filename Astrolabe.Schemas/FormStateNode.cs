@@ -512,45 +512,61 @@ public class FormStateNode : IFormStateNode
 
     private void InitializeDisplay(ControlDefinition originalDefinition)
     {
-        if (originalDefinition is not DisplayControlDefinition displayControl)
-            return;
-
-        switch (displayControl.DisplayData)
+        if (originalDefinition is DisplayControlDefinition displayControl)
         {
-            case TextDisplay:
+            switch (displayControl.DisplayData)
             {
-                var textExpression = DynamicPropertyHelpers.FindScriptExpression(
-                    originalDefinition,
-                    "displayData.text",
-                    DynamicPropertyType.Display
-                );
-                if (textExpression == null)
-                    return;
+                case TextDisplay:
+                {
+                    var textExpression = DynamicPropertyHelpers.FindScriptExpression(
+                        originalDefinition,
+                        "displayData.text",
+                        DynamicPropertyType.Display
+                    );
+                    if (textExpression == null)
+                        return;
 
-                var textField = _definitionControl
-                    .SubField<DisplayControlDefinition, DisplayData?>(x => x.DisplayData)
-                    .SubField<TextDisplay, string>(x => x.Text);
+                    var textField = _definitionControl
+                        .SubField<DisplayControlDefinition, DisplayData?>(x => x.DisplayData)
+                        .SubField<TextDisplay, string>(x => x.Text);
 
-                SetupDynamic(textField, textExpression, DynamicPropertyHelpers.CoerceString);
-                break;
+                    SetupDynamic(textField, textExpression, DynamicPropertyHelpers.CoerceString);
+                    break;
+                }
+                case HtmlDisplay:
+                {
+                    var htmlExpression = DynamicPropertyHelpers.FindScriptExpression(
+                        originalDefinition,
+                        "displayData.html",
+                        DynamicPropertyType.Display
+                    );
+                    if (htmlExpression == null)
+                        return;
+
+                    var htmlField = _definitionControl
+                        .SubField<DisplayControlDefinition, DisplayData?>(x => x.DisplayData)
+                        .SubField<HtmlDisplay, string>(x => x.Html);
+
+                    SetupDynamic(htmlField, htmlExpression, DynamicPropertyHelpers.CoerceString);
+                    break;
+                }
             }
-            case HtmlDisplay:
-            {
-                var htmlExpression = DynamicPropertyHelpers.FindScriptExpression(
-                    originalDefinition,
-                    "displayData.html",
-                    DynamicPropertyType.Display
-                );
-                if (htmlExpression == null)
-                    return;
+        }
+        else if (originalDefinition is DataControlDefinition { RenderOptions: DisplayOnlyRenderOptions })
+        {
+            var overrideExpression = DynamicPropertyHelpers.FindScriptExpression(
+                originalDefinition,
+                "renderOptions.overrideText",
+                DynamicPropertyType.Display
+            );
+            if (overrideExpression == null)
+                return;
 
-                var htmlField = _definitionControl
-                    .SubField<DisplayControlDefinition, DisplayData?>(x => x.DisplayData)
-                    .SubField<HtmlDisplay, string>(x => x.Html);
+            var overrideField = _definitionControl
+                .SubField<DataControlDefinition, RenderOptions?>(x => x.RenderOptions)
+                .SubField<DisplayOnlyRenderOptions, string?>(x => x.OverrideText);
 
-                SetupDynamic(htmlField, htmlExpression, DynamicPropertyHelpers.CoerceString);
-                break;
-            }
+            SetupDynamic(overrideField, overrideExpression, DynamicPropertyHelpers.CoerceString);
         }
     }
 

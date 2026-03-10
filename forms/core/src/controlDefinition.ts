@@ -238,6 +238,7 @@ export interface DisplayOnlyRenderOptions extends RenderOptions {
   type: DataRenderType.DisplayOnly;
   emptyText?: string | null;
   sampleText?: string | null;
+  overrideText?: string | null;
 }
 export interface IconMapping {
   value: string;
