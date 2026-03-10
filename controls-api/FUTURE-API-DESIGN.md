@@ -1,4 +1,8 @@
-# Future API Design: Explicit Reactivity & Write Context
+# controls-api
+
+A standalone experimental Next.js project for prototyping and validating a new controls API design. This project serves as a sandbox to iterate on the ideas below — building working implementations, testing React integration patterns, and answering the open questions — before bringing the design back into `@astroapps/controls`.
+
+## API Design: Explicit Reactivity & Write Context
 
 This document captures a proposed future direction for `@astroapps/controls` that removes global variables and makes reactivity and writes explicit.
 
@@ -90,7 +94,7 @@ interface WriteContext {
 }
 ```
 
-`runSubscribers()` is not part of the interface — only the instantiator holds the concrete object and decides when to notify subscribers.
+`WriteContext` is transient — it only exists for the duration of a callback passed to `update()`. This ensures mutations are always batched and subscribers only run after all writes in a batch are complete.
 
 ## Contrast with Current API
 
@@ -98,8 +102,8 @@ interface WriteContext {
 |---------|---------|----------|
 | Reactive read | `control.value` (implicit, magic) | `rc.getValue(control)` (explicit) |
 | Snapshot read | `control.value` (ambiguous) | `control.valueNow` (unambiguous) |
-| Mutation | `control.setValue(x)` (on Control) | `wc.setValue(control, x)` (explicit) |
-| Subscriber notification | Module-level globals | `runSubscribers()` on the concrete impl, not the interface |
+| Mutation | `control.setValue(x)` (on Control) | `update(wc => wc.setValue(control, x))` (explicit, batched) |
+| Subscriber notification | Module-level globals | `update()` flushes subscribers after callback completes |
 | Dependency tracking | Global `collectChange` callback | `ReadContext` object, no globals |
 
 ## C# Alignment
@@ -146,9 +150,94 @@ interface IWriteContext {
 }
 ```
 
+## React Integration: `controls()` wrapper
+
+### Decision
+
+Rather than a `useControls()` hook (which can't know when render finishes to finalize dependency tracking) or a Babel plugin (like `@react-typed-forms/transform`), components are wrapped with a `controls()` function that injects `rc` (ReadContext) and `update` (a callback to run writes) as arguments:
+
+```typescript
+const MyForm = controls(function MyForm({ rc, update, name }) {
+  const value = rc.getValue(name);
+  return (
+    <input
+      value={value}
+      onChange={(e) => update(wc => wc.setValue(name, e.target.value))}
+    />
+  );
+});
+```
+
+### Why `controls()` and not a hook
+
+The problem with `const { rc, update } = useControls()` is that the `ReadContext` needs to know when the render function finishes executing so it can finalize the dependency set and subscribe. A hook runs at the top of the component but has no way to know when the return statement is reached. The Babel plugin (`@react-typed-forms/transform`) solved this by injecting try/finally around the component body, but we want to avoid build tooling dependencies.
+
+`controls()` solves this naturally — it calls the wrapped function directly, so it knows exactly when it returns. At that point it has the complete set of `(control, property)` pairs that were read, and can diff against the previous set and update subscriptions.
+
+### How it works
+
+1. `controls()` returns a `React.memo` component
+2. On each render, it creates/resets a tracking `ReadContext`, calls the inner function
+3. When the function returns, the dep set is complete
+4. Deps are compared to the previous set; subscriptions are updated
+5. When a tracked dependency changes, the component re-renders
+
+### Component naming
+
+`controls()` supports both named functions and an explicit string name to ensure components aren't anonymous in React DevTools:
+
+```typescript
+// Named function — displayName inferred from fn.name
+const MyForm = controls(function MyForm({ rc, update }) { ... });
+
+// Explicit string name
+const MyForm = controls("MyForm", ({ rc, update }) => ...);
+
+// Anonymous — works but no displayName
+const MyForm = controls(({ rc, update }) => ...);
+```
+
+### Passing props
+
+Custom props are typed via a generic and merged with the injected `rc`/`update`:
+
+```typescript
+type UpdateFn = (cb: (wc: WriteContext) => void) => void;
+type ControlsRender<P> = (props: P & { rc: ReadContext; update: UpdateFn }) => ReactNode;
+
+function controls<P>(render: ControlsRender<P>): React.FC<P>;
+function controls<P>(name: string, render: ControlsRender<P>): React.FC<P>;
+```
+
+Parents pass only their own props; `rc` and `update` are injected by the wrapper:
+
+```typescript
+const MyField = controls<{ label: string }>(function MyField({ rc, update, label }) {
+  return <label>{label}: ...</label>;
+});
+
+// usage
+<MyField label="Name" />
+```
+
+### WriteContext scoping and batching
+
+The `WriteContext` is scoped to a single control tree root and is transient — it only exists for the duration of an `update()` callback. This ensures:
+
+1. **No subscribers during render** — `update()` is only called from event handlers, never during render
+2. **Automatic batching** — all mutations within one `update()` call are batched; subscribers run once after the callback completes
+3. **No stale references** — you can't hold onto a `WriteContext` across an `await` boundary and accidentally flush at a bad time
+
+```typescript
+// Multiple writes, one subscriber notification
+onClick={() => update(wc => {
+  wc.setValue(firstNameControl, "");
+  wc.setValue(lastNameControl, "");
+  wc.setTouched(formControl, false);
+})}
+```
+
 ## Open Questions
 
-- Who creates and vends `ReadContext` instances? (React context? Standalone factory?)
 - How do computed/derived controls fit in — are they `ReadContext` implementations that write to a control via `WriteContext`?
-- How does the React integration layer change (likely `useReadContext()` hook backed by `useSyncExternalStore`)?
 - Where does `newControl` live? (standalone factory function)
