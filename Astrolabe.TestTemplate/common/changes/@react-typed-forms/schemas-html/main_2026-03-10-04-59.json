@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "comment": "Fix ValueForFieldRenderer to reset meta flag and clear value on field change",
+      "type": "patch",
+      "packageName": "@react-typed-forms/schemas-html"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas-html",
+  "email": "doolse@gmail.com"
+}

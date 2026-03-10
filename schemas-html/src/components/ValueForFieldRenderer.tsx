@@ -24,7 +24,7 @@ import {
   stringField,
 } from "@react-typed-forms/schemas";
 import { ValueForFieldRenderOptions, ValueForFieldOptions } from "../rendererOptions";
-import React, { Fragment, useMemo } from "react";
+import React, { Fragment, useEffect, useMemo, useRef } from "react";
 
 const RenderType = "ValueForField";
 
@@ -94,6 +94,13 @@ function ValueForField({
   const value = useControl({ default: undefined }, undefined, (e) =>
     setFields(e, { default: control }),
   );
+  const prevFieldRef = useRef(schemaField);
+  useEffect(() => {
+    if (prevFieldRef.current !== schemaField) {
+      prevFieldRef.current = schemaField;
+      control.value = undefined;
+    }
+  }, [schemaField]);
   const [controls, rootSchema] = useMemo(() => {
     const adjustedField: SchemaField = {
       ...schemaField,
@@ -104,6 +111,7 @@ function ValueForField({
       notNullable: false,
       onlyForTypes: null,
       defaultValue: undefined,
+      meta: undefined,
     };
     const control: DataControlDefinition = {
       ...defaultControlForField(adjustedField),
@@ -115,6 +123,7 @@ function ValueForField({
 
   return (
     <RenderForm
+      key={schemaField.field + ":" + schemaField.type}
       form={controls.rootNode}
       renderer={renderer}
       data={createSchemaDataNode(rootSchema, value)}

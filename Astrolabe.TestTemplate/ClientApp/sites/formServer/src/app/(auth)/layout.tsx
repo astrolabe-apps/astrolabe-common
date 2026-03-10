@@ -22,6 +22,7 @@ const routes: Record<string, RouteData<PageSecurity>> = {
     forwardAuthenticated: true,
   },
   logout: { label: "Logout", allowGuests: true },
+  "": { allowGuests: true },
 };
 
 const defaultRoute: RouteData<PageSecurity> = {};
