@@ -30,6 +30,8 @@ When a parent's value is set:
 
 **Important**: Only already-created children are synced. Uncreated fields pick up correct values lazily when first accessed.
 
+**Null parent materialisation**: Accessing a field on a null parent lazily creates a child with `undefined` value — this is construction only, no upward propagation occurs, and the parent stays null. When a child's value is actually *set* to something new, `childValueChange` fires. Upward propagation shallow-copies the parent via `copy()`, which creates `{}` (or `[]` for arrays) when the parent is null, then inserts *only the changed child's key*. Other lazily-created children with `undefined` values do NOT appear as keys in the parent — `copy()` copies from the parent's value, not from the set of existing children. Example: access `fields.a` and `fields.b` on a null parent, then set A to `"hello"` → parent becomes `{ a: "hello" }` (no `b` key). Setting B to `"world"` later → parent becomes `{ a: "hello", b: "world" }`.
+
 ## B. Value Propagation (Upward)
 
 When a child's value changes:
@@ -179,7 +181,18 @@ During init (`attach` / `initControl`):
 
 5. **afterCreate**: run user callback
 
-## J. Cleanup
+## J. Validate
+
+`validate()` — imperatively triggers all validators in the subtree.
+
+1. Wrapped in `groupedChanges` (all notifications batched)
+2. Recurse: call `validate()` on all existing children (depth-first)
+3. Fire `ControlChange.Validate` to own subscribers — this re-runs any validator that subscribed to `Value | Validate` (see section I)
+4. Return `isValid()` after the batch completes
+
+This is how validators that were set up during init get re-triggered on demand (e.g. a "Validate" button). The `Validate` change flag is separate from `Value` — it lets validators distinguish between "value changed" and "explicit validation requested".
+
+## K. Cleanup
 
 `cleanup()`:
 1. Run registered cleanup callbacks

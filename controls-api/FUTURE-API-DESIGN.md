@@ -259,30 +259,130 @@ This separation means the core package is a pure TypeScript library with no `rea
 
 Architecture decisions from the prototyping phase, to guide the clean-room implementation.
 
-### 1. No ControlLogic class hierarchy
+### 1. No ControlLogic class hierarchy — fields and elements coexist
 
-The old `@astroapps/controls` design uses `ControlLogic` / `ObjectLogic` / `ArrayLogic` strategy classes attached to each `ControlImpl`. This adds indirection and makes it hard to follow control flow.
+The old `@astroapps/controls` design uses `ControlLogic` / `ObjectLogic` / `ArrayLogic` strategy classes attached to each `ControlImpl`. This adds indirection and makes it hard to follow control flow. It also means that once a control promotes to ObjectLogic, accessing elements throws (and vice versa) — so a control whose value changes between object and array types at runtime will crash.
 
-**Clean design:** `ControlImpl` holds `_fields` and `_elems` directly. Field/element creation is handled by inline methods on `ControlImpl` itself. Mutation logic lives in free functions (`applyValue`, `applyTouched`, etc.) that operate on the impl directly.
+**Clean design:** `ControlImpl` holds `_fields` and `_elems` directly. Both can coexist on the same control — there's no exclusive object-or-array state. Field/element creation is handled by inline methods on `ControlImpl` itself.
 
-### 2. No globals — TransactionState threaded through callbacks
+**Shape change semantics:** When a control's value changes type (e.g. object → array or vice versa), existing child controls of the "wrong" shape become stale — their values won't be synced from the parent since downward propagation only syncs fields for object values and elements for array values. The exact semantics of what happens to stale children (detach? leave as-is? cleanup?) is an open question — see Open Questions below.
 
-Transaction batching state (`transactionCount`, `runListenerList`, `afterChangesCallbacks`) lives in a `TransactionState` instance rather than module-level variables.
+### 2. No globals — NotifyFn callback pattern
 
-- Created per `update()` call (transient, never stored)
-- Threaded through: `update()` → `WriteContextImpl(tx)` → `apply*(tx, impl, ...)` → `tx.runTransaction(...)` → listeners receive `tx` as optional 3rd param → validators can call `apply*(tx, ...)`
-- `ChangeListenerFunc` gains optional `tx?: TransactionScope` parameter
-- `initControl` bypasses transactions (sets errors directly, no subscribers exist yet)
-- `validate()` creates its own temporary `TransactionState`
+The old design has `ControlImpl` calling `runTransaction(this, ...)` which manages global transaction counters and listener queues. The new design inverts this: **ControlImpl is transaction-agnostic**. Mutation methods take a `NotifyFn` callback, and the caller manages batching.
+
+```typescript
+type NotifyFn = (control: ControlImpl) => void;
+```
+
+`NotifyFn` takes only the control — no change flags. It simply means "this control's state may have changed, add it to the flush set".
+
+**How it works:**
+- Mutation methods on `ControlImpl` (e.g. `setValueImpl`, `setTouched`, `childValueChange`, `validityChanged`) accept a `notify: NotifyFn` parameter
+- When a mutation causes a change, the impl calls `notify(this)` instead of managing transactions itself
+- The `notify` callback is passed through the entire propagation chain (parent ↔ child), alongside the existing `from?: ControlImpl` parameter
+- `initControl` passes a no-op `notify` (no subscribers exist yet)
+- `validate()` creates its own ephemeral pending set and drains it
 - Only remaining module-level `let`: `uniqueIdCounter` (stateless monotonic counter)
 
-### 3. Control is read-only interface, mutations via free functions
+**Change detection is ControlImpl's own concern**, not the caller's. Two categories:
+
+1. **Flag-based changes** (dirty, valid, touched, disabled): detected at flush time by `runListeners()`, which calls `getChangeState()` to recompute the current boolean state and XORs against the stored `changeState` from subscription time. Only bits that actually flipped trigger listeners. This handles cases like dirty→clean→dirty within a batch (net no change, no notification).
+
+2. **Event-style changes** (Value, InitialValue, Error, Structure): cannot be derived from current state alone (the subscription list doesn't have the previous value). Mutations call `_subscriptions.applyChange(change)` directly to record that an event occurred. At flush time, `runListeners()` picks these up via the same XOR mechanism.
+
+This separation means `NotifyFn` doesn't need change flags — the control's subscription bookkeeping (`applyChange`) handles what changed, and `NotifyFn` just ensures the control gets flushed.
+
+### Listener WriteContext access
+
+Listeners need write access during flush — the key use case is validators, which fire during flush and need to set errors on the control. The `ChangeListenerFunc` signature gains an optional `WriteContext`:
+
+```typescript
+type ChangeListenerFunc<V> = (
+  control: Control<V>,
+  change: ControlChange,
+  wc?: WriteContext,
+) => void;
+```
+
+Listeners that don't need write access (e.g. `forceRender` in React's `controls()` wrapper) ignore the parameter. Validators use it:
+
+```typescript
+// validator listener
+(control, change, wc) => {
+  const error = validateFn(control.current.value);
+  wc?.setError(control, "validate", error);
+}
+```
+
+Writes from within a listener route through the same `NotifyFn`, adding more controls to the pending set. This naturally handles cascading changes (e.g. a validator setting an error triggers validity propagation up the tree).
+
+### afterChanges callbacks
+
+`WriteContext` supports registering callbacks that run after all listeners have been drained:
+
+```typescript
+interface WriteContext {
+  // ... existing mutation methods ...
+  afterChanges(cb: () => void): void;
+}
+```
+
+This is for work that needs the tree fully settled — all mutations applied, all listeners run, all validators re-run.
+
+### WriteContext batching and drain loop
+
+```typescript
+class WriteContextImpl {
+  private pending = new Set<ControlImpl>();
+  private afterChangesCbs: (() => void)[] = [];
+
+  private notify: NotifyFn = (control) => {
+    this.pending.add(control);
+  };
+
+  setValue(control, value) {
+    toImpl(control).setValueImpl(value, this.notify);
+  }
+
+  afterChanges(cb: () => void) {
+    this.afterChangesCbs.push(cb);
+  }
+
+  flush() {
+    // Drain loop — listeners may queue more controls via writes
+    while (this.pending.size > 0) {
+      const batch = [...this.pending];
+      this.pending.clear();
+      for (const control of batch) {
+        control.runListeners(this);  // pass WriteContext to listeners
+      }
+    }
+    // After all listeners have settled
+    for (const cb of this.afterChangesCbs) {
+      cb();
+    }
+  }
+}
+```
+
+### 3. Control is read-only interface, mutations on ControlImpl
 
 `Control<V>` exposes only read and subscription operations:
 - `uniqueId`, `current` (snapshot), `fields`, `elements`, `subscribe`, `unsubscribe`, `validate`, `cleanup`, `meta`, `as`, `lookupControl`
 - No `value` setter, no `set*` methods on Control
 
-Write API is free functions: `applyValue(tx, impl, v)`, `applyTouched(tx, impl, touched)`, etc. `WriteContext` wraps these for the user-facing API.
+Mutation methods live on `ControlImpl` (not on the `Control` interface). They take a `NotifyFn` parameter so the caller controls when listeners run:
+- `setValueImpl(v, notify, from?)` — also calls `_subscriptions.applyChange(Value)`
+- `setInitialValueImpl(v, notify, from?)` — also calls `_subscriptions.applyChange(InitialValue)`
+- `setTouched(touched, notify, notChildren?)`
+- `setDisabled(disabled, notify, notChildren?)`
+- `setError(key, error, notify)` — also calls `_subscriptions.applyChange(Error)`
+- `setErrors(errors, notify)` — also calls `_subscriptions.applyChange(Error)`
+- `clearErrors(notify)`
+- `markAsClean(notify)`
+
+`WriteContext` wraps these for the user-facing API, providing its own `NotifyFn` that collects controls into a pending set for batched flush.
 
 ### 4. No `collectChange` global
 
@@ -294,6 +394,7 @@ The old design uses a module-level `collectChange` callback for implicit reactiv
 
 - How do computed/derived controls fit in — are they `ReadContext` implementations that write to a control via `WriteContext`?
 - How does the React layer discover/share the control tree root's `update()` function — React context, prop drilling, or a root-level provider?
+- **Shape change semantics**: When a control's value changes from object → array (or vice versa), what happens to existing child controls of the old shape? Options: (a) detach them (clear parent link, leave them orphaned), (b) leave them as-is with stale values (they re-sync if the shape changes back), (c) cleanup/dispose them. The practical question is whether anyone holds references to them.
 
 ### Resolved
 
