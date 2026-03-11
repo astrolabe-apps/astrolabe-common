@@ -216,4 +216,72 @@ describe("general", () => {
       ),
     );
   });
+
+  describe("deepEquals with Map", () => {
+    it("equal maps", () => {
+      const a = new Map([["x", 1], ["y", 2]]);
+      const b = new Map([["x", 1], ["y", 2]]);
+      expect(deepEquals(a, b)).toBe(true);
+    });
+
+    it("different values", () => {
+      const a = new Map([["x", 1]]);
+      const b = new Map([["x", 2]]);
+      expect(deepEquals(a, b)).toBe(false);
+    });
+
+    it("different sizes", () => {
+      const a = new Map([["x", 1]]);
+      const b = new Map([["x", 1], ["y", 2]]);
+      expect(deepEquals(a, b)).toBe(false);
+    });
+
+    it("different keys", () => {
+      const a = new Map([["x", 1]]);
+      const b = new Map([["y", 1]]);
+      expect(deepEquals(a, b)).toBe(false);
+    });
+
+    it("nested objects in map", () => {
+      const a = new Map([["x", { a: 1 }]]);
+      const b = new Map([["x", { a: 1 }]]);
+      expect(deepEquals(a, b)).toBe(true);
+    });
+
+    it("map vs plain object", () => {
+      const a = new Map([["x", 1]]);
+      const b = { x: 1 };
+      expect(deepEquals(a, b)).toBe(false);
+    });
+  });
+
+  describe("deepEquals with Set", () => {
+    it("equal sets", () => {
+      const a = new Set([1, 2, 3]);
+      const b = new Set([1, 2, 3]);
+      expect(deepEquals(a, b)).toBe(true);
+    });
+
+    it("different sizes", () => {
+      const a = new Set([1, 2]);
+      const b = new Set([1, 2, 3]);
+      expect(deepEquals(a, b)).toBe(false);
+    });
+
+    it("different values", () => {
+      const a = new Set([1, 2]);
+      const b = new Set([1, 3]);
+      expect(deepEquals(a, b)).toBe(false);
+    });
+
+    it("empty sets", () => {
+      expect(deepEquals(new Set(), new Set())).toBe(true);
+    });
+
+    it("set vs array", () => {
+      const a = new Set([1, 2]);
+      const b = [1, 2];
+      expect(deepEquals(a, b)).toBe(false);
+    });
+  });
 });
