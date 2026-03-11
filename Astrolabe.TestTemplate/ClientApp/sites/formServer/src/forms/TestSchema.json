@@ -1,22 +1,47 @@
 {
   "controls": [
     {
-      "type": "Data",
+      "type": "Group",
       "title": "New",
-      "field": "number",
-      "renderOptions": {
-        "type": "DisplayOnly",
-        "sampleText": "",
-        "overrideText": "",
-        "emptyText": "EMP",
-        "$scripts": {
-          "overrideText": {
-            "type": "Jsonata",
-            "expression": "\u0027$\u0027 \u0026 number"
+      "children": [
+        {
+          "type": "Display",
+          "title": "Child 1",
+          "displayData": {
+            "type": "Text",
+            "text": "WOW"
+          }
+        },
+        {
+          "type": "Display",
+          "title": "Child 2",
+          "displayData": {
+            "type": "Text",
+            "text": "Cool"
+          }
+        },
+        {
+          "type": "Action",
+          "title": "Cancel",
+          "placement": "rightNav"
+        },
+        {
+          "type": "Action",
+          "title": "Save",
+          "placement": "middleNav",
+          "$scripts": {
+            "hidden": {
+              "type": "Jsonata",
+              "expression": "number != 1"
+            }
           }
         }
-      },
-      "defaultValue": null
+      ],
+      "groupOptions": {
+        "type": "Wizard",
+        "showSteps": true,
+        "pageIndexField": "number"
+      }
     }
   ],
   "config": null,

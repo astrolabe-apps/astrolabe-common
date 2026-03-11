@@ -19,7 +19,7 @@ import {
   WizardStepInfo,
 } from "../rendererOptions";
 import { Control, useComputed, useControl } from "@react-typed-forms/core";
-import { Fragment } from "react";
+import { Fragment, ReactNode } from "react";
 
 const defaultOptions = {
   classes: {
@@ -34,6 +34,9 @@ const defaultOptions = {
     stepLabelClass: "",
     stepNumberClass:
       "flex items-center justify-center w-6 h-6 rounded-full border text-xs",
+    leftNavClass: "flex gap-2",
+    rightNavClass: "flex gap-2",
+    middleNavClass: "flex gap-2",
   },
   actions: {
     nextText: "Next",
@@ -42,6 +45,9 @@ const defaultOptions = {
     prevText: "Prev",
     prevIcon: fontAwesomeIcon("chevron-left"),
     prevValidate: false,
+    navActionId: "nav",
+    hidePrevious: false,
+    hideNext: false,
   },
   defaultShowSteps: false,
   renderNavigation: defaultNavigationRender,
@@ -52,17 +58,27 @@ function defaultNavigationRender({
   prev,
   next,
   className,
+  leftNav,
+  middleNav,
+  rightNav,
+  leftNavClass,
+  rightNavClass,
+  middleNavClass,
 }: CustomNavigationProps) {
   {
-    const {
-      html: { Div },
-      renderAction,
-    } = formRenderer;
+    const { renderAction } = formRenderer;
     return (
-      <Div className={className}>
-        {renderAction(prev)}
-        {renderAction(next)}
-      </Div>
+      <div className={className}>
+        <div className={leftNavClass}>
+          {renderAction(prev)}
+          {leftNav}
+        </div>
+        <div className={middleNavClass}>{middleNav}</div>
+        <div className={rightNavClass}>
+          {rightNav}
+          {renderAction(next)}
+        </div>
+      </div>
     );
   }
 }
@@ -106,6 +122,9 @@ function WizardRenderer({
       completedStepClass,
       stepLabelClass,
       stepNumberClass,
+      leftNavClass,
+      rightNavClass,
+      middleNavClass,
     },
     actions: {
       nextText,
@@ -114,6 +133,9 @@ function WizardRenderer({
       prevIcon,
       nextValidate,
       prevValidate,
+      navActionId,
+      hidePrevious,
+      hideNext,
     },
     defaultShowSteps,
     renderNavigation,
@@ -131,23 +153,63 @@ function WizardRenderer({
     pageFieldNode?.control.as<number>() ?? internalPage;
 
   const { formNode, designMode, renderChild } = props;
-  const childrenLength = formNode.getChildCount();
+
+  const allChildren = formNode.children;
+  const leftNavChildren = allChildren.filter(
+    (x) => x.definition.placement === "leftNav",
+  );
+  const middleNavChildren = allChildren.filter(
+    (x) => x.definition.placement === "middleNav",
+  );
+  const rightNavChildren = allChildren.filter(
+    (x) => x.definition.placement === "rightNav",
+  );
+  const pageChildren = allChildren.filter(
+    (x) => !x.definition.placement || x.definition.placement === "content",
+  );
+  const childrenLength = pageChildren.length;
   const currentPage = page.value;
   const isValid = useComputed(() => isPageValid());
 
   const steps = buildSteps();
 
-  const next = createAction("nav", () => nav(1, nextValidate), nextText, {
-    hidden: !designMode && nextVisibleInDirection(1) == null,
-    disabled: !isValid.value,
-    icon: nextIcon,
-    iconPlacement: IconPlacement.AfterText,
-  });
+  const noNext = !designMode && nextVisibleInDirection(1) == null;
+  const noPrev = !designMode && nextVisibleInDirection(-1) == null;
 
-  const prev = createAction("nav", () => nav(-1, prevValidate), prevText, {
-    disabled: !designMode && nextVisibleInDirection(-1) == null,
-    icon: prevIcon,
-  });
+  const next = createAction(
+    navActionId,
+    designMode ? () => {} : () => nav(1, nextValidate),
+    nextText,
+    {
+      hidden: noNext && hideNext,
+      disabled: noNext || !isValid.value,
+      icon: nextIcon,
+      actionData: 1,
+      iconPlacement: IconPlacement.AfterText,
+    },
+  );
+
+  const prev = createAction(
+    navActionId,
+    designMode ? () => {} : () => nav(-1, prevValidate),
+    prevText,
+    {
+      hidden: noPrev && hidePrevious,
+      disabled: noPrev,
+      actionData: -1,
+      icon: prevIcon,
+    },
+  );
+  const leftNav: ReactNode = leftNavChildren.length
+    ? leftNavChildren.map((child) => renderChild(child))
+    : undefined;
+  const middleNav: ReactNode = middleNavChildren.length
+    ? middleNavChildren.map((child) => renderChild(child))
+    : undefined;
+  const rightNav: ReactNode = rightNavChildren.length
+    ? rightNavChildren.map((child) => renderChild(child))
+    : undefined;
+
   const navElement = renderNavigation({
     formRenderer,
     page: countVisibleUntil(currentPage),
@@ -157,6 +219,12 @@ function WizardRenderer({
     className: navContainerClass,
     validatePage: async () => validatePage(),
     steps,
+    leftNav,
+    middleNav,
+    rightNav,
+    leftNavClass,
+    middleNavClass,
+    rightNavClass,
   });
 
   const customRenderSteps = options?.renderSteps;
@@ -167,11 +235,9 @@ function WizardRenderer({
     : null;
 
   const content = designMode ? (
-    <div>{formNode.children.map((child) => renderChild(child))}</div>
+    <div>{pageChildren.map((child) => renderChild(child))}</div>
   ) : currentPage < childrenLength ? (
-    <div className={contentClass}>
-      {renderChild(formNode.getChild(currentPage)!)}
-    </div>
+    <div className={contentClass}>{renderChild(pageChildren[currentPage])}</div>
   ) : (
     <Fragment />
   );
@@ -188,7 +254,7 @@ function WizardRenderer({
     const result: WizardStepInfo[] = [];
     let visibleIndex = 0;
     for (let i = 0; i < childrenLength; i++) {
-      const child = formNode.getChild(i)!;
+      const child = pageChildren[i];
       const visible = !!child.visible;
       result.push({
         index: visibleIndex,
@@ -230,7 +296,7 @@ function WizardRenderer({
   function countVisibleUntil(untilPage: number) {
     let count = 0;
     for (let i = 0; i < untilPage && i < childrenLength; i++) {
-      if (formNode.getChild(i)!.visible) {
+      if (pageChildren[i].visible) {
         count++;
       }
     }
@@ -250,7 +316,7 @@ function WizardRenderer({
   function nextVisibleInDirection(dir: number): number | null {
     let next = currentPage + dir;
     while (next >= 0 && next < childrenLength) {
-      if (formNode.getChild(next)!.visible) {
+      if (pageChildren[next].visible) {
         return next;
       }
       next += dir;
@@ -259,7 +325,7 @@ function WizardRenderer({
   }
 
   function validatePage() {
-    const pageNode = formNode.getChild(currentPage);
+    const pageNode = pageChildren[currentPage];
     if (pageNode) {
       const valid = pageNode.validate();
       pageNode.setTouched(true);
@@ -269,6 +335,6 @@ function WizardRenderer({
   }
 
   function isPageValid() {
-    return formNode.getChild(currentPage)?.valid ?? false;
+    return pageChildren[currentPage]?.valid ?? false;
   }
 }

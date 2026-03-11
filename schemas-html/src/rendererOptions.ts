@@ -34,6 +34,9 @@ export interface WizardStepInfo {
 // Custom navigation props for wizard renderer
 export interface CustomNavigationProps {
   className?: string;
+  leftNavClass?: string;
+  rightNavClass?: string;
+  middleNavClass?: string;
   page: number;
   totalPages: number;
   next: ActionRendererProps;
@@ -41,6 +44,9 @@ export interface CustomNavigationProps {
   formRenderer: FormRenderer;
   validatePage: () => Promise<boolean>;
   steps: WizardStepInfo[];
+  leftNav?: ReactNode;
+  middleNav?: ReactNode;
+  rightNav?: ReactNode;
 }
 
 // ============================================================================
@@ -115,6 +121,9 @@ export interface DefaultWizardRenderOptions {
     completedStepClass?: string;
     stepLabelClass?: string;
     stepNumberClass?: string;
+    leftNavClass?: string;
+    rightNavClass?: string;
+    middleNavClass?: string;
   };
   actions?: {
     nextText?: string;
@@ -123,6 +132,9 @@ export interface DefaultWizardRenderOptions {
     prevText?: string;
     prevIcon?: IconReference;
     prevValidate?: boolean;
+    navActionId?: string;
+    hidePrevious?: boolean;
+    hideNext?: boolean;
   };
   defaultShowSteps?: boolean;
   renderSteps?: (
