@@ -43,7 +43,6 @@ export interface CustomNavigationProps {
   steps: WizardStepInfo[];
 }
 
-
 // ============================================================================
 // INDIVIDUAL COMPONENT OPTIONS INTERFACES
 // ============================================================================
@@ -280,6 +279,7 @@ export interface DefaultDataRendererOptions {
   booleanOptions?: FieldOption[];
   optionRenderer?: DataRendererRegistration;
   multilineClass?: string;
+  multilineContentEditable?: boolean;
   jsonataClass?: string;
   arrayOptions?: ArrayActionOptions;
   defaultEmptyText?: string;
