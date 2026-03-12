@@ -5,16 +5,54 @@
       "title": "New",
       "children": [
         {
-          "type": "Display",
-          "title": "Child 1",
-          "displayData": {
-            "type": "Text",
-            "text": "WOW"
-          }
+          "type": "Group",
+          "title": "Page 1",
+          "children": [
+            {
+              "type": "Data",
+              "title": "Hide group?",
+              "field": "bool",
+              "renderOptions": {
+                "type": "Standard"
+              }
+            },
+            {
+              "type": "Group",
+              "children": [
+                {
+                  "type": "Data",
+                  "title": "Child 1",
+                  "renderOptions": {
+                    "type": "Standard"
+                  },
+                  "field": "nested/data",
+                  "required": true,
+                  "defaultValue": null,
+                  "validators": [
+                    {
+                      "type": "Jsonata",
+                      "expression": "nested.data != \u0027correct\u0027 ? \u0027error\u0027 : null"
+                    }
+                  ]
+                }
+              ],
+              "title": "Group with child",
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              },
+              "$scripts": {
+                "hidden": {
+                  "type": "Data",
+                  "field": "bool"
+                }
+              }
+            }
+          ]
         },
         {
           "type": "Display",
-          "title": "Child 2",
+          "title": "Page 2",
           "displayData": {
             "type": "Text",
             "text": "Cool"
@@ -39,8 +77,7 @@
       ],
       "groupOptions": {
         "type": "Wizard",
-        "showSteps": true,
-        "pageIndexField": "number"
+        "showSteps": true
       }
     }
   ],
