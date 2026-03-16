@@ -2,83 +2,120 @@
   "controls": [
     {
       "type": "Group",
-      "title": "New",
+      "title": "Personal Details",
       "children": [
         {
           "type": "Group",
-          "title": "Page 1",
+          "title": "Above 16",
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "Jsonata",
+                "expression": "age \u003E= 16"
+              }
+            }
+          ],
+          "styleClass": "@ flex flex-col gap-[24px]",
           "children": [
             {
               "type": "Data",
-              "title": "Hide group?",
-              "field": "bool",
+              "title": "Will you and your guardian attend Service Tasmania in person? WORKS",
+              "field": "guardianConsent/guardianWillAttend",
               "renderOptions": {
-                "type": "Standard"
-              }
+                "type": "Radio",
+                "options": [
+                  {
+                    "name": "Yes, we will attend in person with original documents",
+                    "value": true
+                  },
+                  {
+                    "name": "No, I am an interstate applicant",
+                    "value": false
+                  }
+                ]
+              },
+              "required": true,
+              "textClass": "body",
+              "requiredErrorText": "Please select an option",
+              "dynamic": [
+                {
+                  "type": "AllowedOptions",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "[{\u0022name\u0022:\u0022Yes, we will attend in person with original documents\u0022, \u0022value\u0022:true}, {\u0022name\u0022:\u0022No, I am a remote applicant\u0022, \u0022value\u0022:false}]"
+                  }
+                }
+              ],
+              "layoutClass": "@ flex flex-col gap-[16px]"
             },
             {
-              "type": "Group",
+              "type": "Data",
+              "title": "Guardian Consent Section",
+              "dynamic": [
+                {
+                  "type": "Visible",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "age \u003E= 16 and age \u003C=17"
+                  }
+                }
+              ],
+              "styleClass": "@ flex flex-col gap-[12px]",
+              "renderOptions": {
+                "type": "Group"
+              },
+              "defaultValue": null,
+              "field": "guardianConsent",
+              "hideTitle": true,
               "children": [
                 {
                   "type": "Data",
-                  "title": "Child 1",
+                  "title": "Will you and your guardian attend Service Tasmania in person? DOESNT WORK",
+                  "field": "guardianWillAttend",
                   "renderOptions": {
-                    "type": "Standard"
+                    "type": "Radio",
+                    "options": [
+                      {
+                        "name": "Yes, we will attend in person with original documents",
+                        "value": true
+                      },
+                      {
+                        "name": "No, I am an interstate applicant",
+                        "value": false
+                      }
+                    ]
                   },
-                  "field": "nested/data",
                   "required": true,
-                  "defaultValue": null,
-                  "validators": [
+                  "textClass": "body",
+                  "requiredErrorText": "Please select an option",
+                  "dynamic": [
                     {
-                      "type": "Jsonata",
-                      "expression": "nested.data != \u0027correct\u0027 ? \u0027error\u0027 : null"
+                      "type": "AllowedOptions",
+                      "expr": {
+                        "type": "Jsonata",
+                        "expression": "[{\u0022name\u0022:\u0022Yes, we will attend in person with original documents\u0022, \u0022value\u0022:true}, {\u0022name\u0022:\u0022No, I am a remote applicant\u0022, \u0022value\u0022:false}]"
+                      }
                     }
-                  ]
+                  ],
+                  "layoutClass": "@ flex flex-col gap-[16px]"
                 }
-              ],
-              "title": "Group with child",
-              "groupOptions": {
-                "type": "Standard",
-                "hideTitle": true
-              },
-              "$scripts": {
-                "hidden": {
-                  "type": "Data",
-                  "field": "bool"
-                }
-              }
+
+              ]
             }
-          ]
-        },
-        {
-          "type": "Display",
-          "title": "Page 2",
-          "displayData": {
-            "type": "Text",
-            "text": "Cool"
-          }
-        },
-        {
-          "type": "Action",
-          "title": "Cancel",
-          "placement": "rightNav"
-        },
-        {
-          "type": "Action",
-          "title": "Save",
-          "placement": "middleNav",
-          "$scripts": {
-            "hidden": {
-              "type": "Jsonata",
-              "expression": "number != 1"
-            }
+          ],
+          "groupOptions": {
+            "hideTitle": true
           }
         }
       ],
       "groupOptions": {
-        "type": "Wizard",
-        "showSteps": true
-      }
+        "hideTitle": false,
+        "type": "Standard"
+      },
+      "layoutClass": "px-[16px] py-[24px] bg-white flex flex-col gap-[16px]",
+      "labelTextClass": "@ title1",
+      "styleClass": "@ flex flex-col gap-[24px]"
     }
   ],
   "config": null,

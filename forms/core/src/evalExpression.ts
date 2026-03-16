@@ -83,7 +83,9 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
 
   const parsedJsonata = createScopedComputed(scope, () => {
     const jExpr = expr.expression;
-    const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
+    const fullExpr = pathString
+      ? `(${pathString} ?? {}).(${jExpr})`
+      : jExpr;
     try {
       return { expr: jsonata(fullExpr ? fullExpr : "null"), fullExpr };
     } catch (e) {

@@ -129,6 +129,9 @@ interface TestSchema {
   stuff: DisabledStuff[];
   number: number;
   nested: NestedSchema;
+  hideBool: boolean;
+  age: number;
+  guardianConsent: { guardianWillAttend: boolean };
 }
 
 const TestSchema = buildSchema<TestSchema & { metaField: string }>({
@@ -254,6 +257,14 @@ const TestSchema = buildSchema<TestSchema & { metaField: string }>({
     }),
   ),
   metaField: stringField("Meta Field", { meta: true }),
+  hideBool: boolField("Hide Bool"),
+  age: intField("Age"),
+  guardianConsent: compoundField(
+    "Guardian Consent",
+    buildSchema<TestSchema["guardianConsent"]>({
+      guardianWillAttend: boolField(""),
+    }),
+  ),
 });
 
 interface SearchResult extends CarEdit {}
