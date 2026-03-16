@@ -408,6 +408,7 @@ export interface WizardRenderOptions extends GroupRenderOptions {
   type: GroupRenderType.Wizard;
   showSteps?: boolean | null;
   pageIndexField?: string | null;
+  manualNavigation?: boolean | null;
 }
 
 export interface SelectChildRenderer extends GroupRenderOptions {

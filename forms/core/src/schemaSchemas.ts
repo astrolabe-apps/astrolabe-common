@@ -734,6 +734,7 @@ export interface GroupRenderOptionsForm {
   expandStateField: string | null;
   showSteps: boolean | null;
   pageIndexField: string | null;
+  manualNavigation: boolean | null;
 }
 
 export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
@@ -887,6 +888,11 @@ export const GroupRenderOptionsSchema = buildSchema<GroupRenderOptionsForm>({
     onlyForTypes: ["Wizard"],
     displayName: "Page Index Field",
     tags: ["_SchemaField"],
+  }),
+  manualNavigation: makeScalarField({
+    type: FieldType.Bool,
+    onlyForTypes: ["Wizard"],
+    displayName: "Manual Navigation",
   }),
 });
 
@@ -1183,7 +1189,7 @@ export const RenderOptionsSchema = buildSchema<RenderOptionsForm>({
   sampleText: makeScalarField({
     type: FieldType.String,
     onlyForTypes: ["DisplayOnly"],
-    displayName: "Sample Text (deprecated)",
+    displayName: "Sample Text",
     tags: ["_NoControl"],
   }),
   overrideText: makeScalarField({

@@ -143,6 +143,7 @@ function WizardRenderer({
 
   const wizardOptions = props.renderOptions as WizardRenderOptions;
   const showSteps = wizardOptions.showSteps ?? defaultShowSteps;
+  const manualNavigation = wizardOptions.manualNavigation ?? false;
 
   const { pageIndexField } = wizardOptions;
   const pageFieldNode = pageIndexField
@@ -169,7 +170,6 @@ function WizardRenderer({
   );
   const childrenLength = pageChildren.length;
   const currentPage = page.value;
-  const isValid = useComputed(() => isPageValid());
 
   const steps = buildSteps();
 
@@ -181,8 +181,8 @@ function WizardRenderer({
     designMode ? () => {} : () => nav(1, nextValidate),
     nextText,
     {
-      hidden: noNext && hideNext,
-      disabled: noNext || !isValid.value,
+      hidden: manualNavigation || (noNext && hideNext),
+      disabled: noNext,
       icon: nextIcon,
       actionData: 1,
       iconPlacement: IconPlacement.AfterText,
@@ -194,7 +194,7 @@ function WizardRenderer({
     designMode ? () => {} : () => nav(-1, prevValidate),
     prevText,
     {
-      hidden: noPrev && hidePrevious,
+      hidden: manualNavigation || (noPrev && hidePrevious),
       disabled: noPrev,
       actionData: -1,
       icon: prevIcon,
@@ -215,7 +215,7 @@ function WizardRenderer({
     page: countVisibleUntil(currentPage),
     totalPages: countVisibleUntil(childrenLength),
     prev,
-    next: next,
+    next,
     className: navContainerClass,
     validatePage: async () => validatePage(),
     steps,

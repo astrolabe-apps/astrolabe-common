@@ -452,7 +452,8 @@ public record AccordionRenderer(bool? DefaultExpanded, string? ExpandStateField)
 
 public record WizardRenderOptions(
     bool? ShowSteps,
-    [property: SchemaTag(SchemaTags.SchemaField)] string? PageIndexField
+    [property: SchemaTag(SchemaTags.SchemaField)] string? PageIndexField,
+    bool? ManualNavigation
 ) : GroupRenderOptions(nameof(GroupRenderType.Wizard));
 
 [JsonString]
