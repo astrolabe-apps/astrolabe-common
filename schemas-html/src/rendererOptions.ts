@@ -110,6 +110,13 @@ export interface DefaultTabsRenderOptions {
   contentClass?: string;
 }
 
+export interface WizardNavActionOptions {
+  text?: string;
+  icon?: IconReference;
+  validate?: boolean;
+  hide?: boolean;
+}
+
 export interface DefaultWizardRenderOptions {
   classes?: {
     className?: string;
@@ -126,15 +133,9 @@ export interface DefaultWizardRenderOptions {
     middleNavClass?: string;
   };
   actions?: {
-    nextText?: string;
-    nextIcon?: IconReference;
-    nextValidate?: boolean;
-    prevText?: string;
-    prevIcon?: IconReference;
-    prevValidate?: boolean;
+    next?: WizardNavActionOptions;
+    prev?: WizardNavActionOptions;
     navActionId?: string;
-    hidePrevious?: boolean;
-    hideNext?: boolean;
   };
   defaultShowSteps?: boolean;
   renderSteps?: (

@@ -39,15 +39,19 @@ const defaultOptions = {
     middleNavClass: "flex gap-2",
   },
   actions: {
-    nextText: "Next",
-    nextIcon: fontAwesomeIcon("chevron-right"),
-    nextValidate: true,
-    prevText: "Prev",
-    prevIcon: fontAwesomeIcon("chevron-left"),
-    prevValidate: false,
+    next: {
+      text: "Next",
+      icon: fontAwesomeIcon("chevron-right"),
+      validate: true,
+      hide: false,
+    },
+    prev: {
+      text: "Prev",
+      icon: fontAwesomeIcon("chevron-left"),
+      validate: false,
+      hide: false,
+    },
     navActionId: "nav",
-    hidePrevious: false,
-    hideNext: false,
   },
   defaultShowSteps: false,
   renderNavigation: defaultNavigationRender,
@@ -127,15 +131,9 @@ function WizardRenderer({
       middleNavClass,
     },
     actions: {
-      nextText,
-      nextIcon,
-      prevText,
-      prevIcon,
-      nextValidate,
-      prevValidate,
+      next: nextAction,
+      prev: prevAction,
       navActionId,
-      hidePrevious,
-      hideNext,
     },
     defaultShowSteps,
     renderNavigation,
@@ -178,12 +176,12 @@ function WizardRenderer({
 
   const next = createAction(
     navActionId,
-    designMode ? () => {} : () => nav(1, nextValidate),
-    nextText,
+    designMode ? () => {} : () => nav(1, nextAction.validate),
+    nextAction.text,
     {
-      hidden: manualNavigation || (noNext && hideNext),
+      hidden: manualNavigation || (noNext && nextAction.hide),
       disabled: noNext,
-      icon: nextIcon,
+      icon: nextAction.icon,
       actionData: 1,
       iconPlacement: IconPlacement.AfterText,
     },
@@ -191,13 +189,13 @@ function WizardRenderer({
 
   const prev = createAction(
     navActionId,
-    designMode ? () => {} : () => nav(-1, prevValidate),
-    prevText,
+    designMode ? () => {} : () => nav(-1, prevAction.validate),
+    prevAction.text,
     {
-      hidden: manualNavigation || (noPrev && hidePrevious),
+      hidden: manualNavigation || (noPrev && prevAction.hide),
       disabled: noPrev,
       actionData: -1,
-      icon: prevIcon,
+      icon: prevAction.icon,
     },
   );
   const leftNav: ReactNode = leftNavChildren.length

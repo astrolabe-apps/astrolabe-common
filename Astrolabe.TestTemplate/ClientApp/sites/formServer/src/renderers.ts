@@ -55,8 +55,8 @@ export function createStdFormRenderer(container: HTMLElement | null) {
           group: {
             wizard: {
               actions: {
-                hidePrevious: true,
-                hideNext: true,
+                prev: { hide: true },
+                next: { hide: true },
               },
             },
           },
