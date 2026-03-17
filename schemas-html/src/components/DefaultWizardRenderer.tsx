@@ -200,7 +200,7 @@ function WizardRenderer({
   ): Partial<ActionRendererProps> {
     return {
       hidden: manualNavigation || (disabled && hide),
-      disabled,
+      disabled: disabled || props.formNode.disabled,
       ...others,
     };
   }
