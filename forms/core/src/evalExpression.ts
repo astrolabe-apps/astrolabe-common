@@ -22,7 +22,30 @@ import { SchemaInterface } from "./schemaInterface";
 import jsonata from "jsonata";
 import { getJsonPath, getRootDataNode } from "./controlDefinition";
 import { v4 as uuidv4 } from "uuid";
-import { createScopedComputed, jsonPathString } from "./util";
+import { createScopedComputed, JsonPath, jsonPathString } from "./util";
+
+/**
+ * Wraps data with a proxy that returns {} for null values along a specific path,
+ * allowing jsonata to navigate through null compound fields without using the
+ * broken ?? operator (jsonata issue 773). Preserves the navigation chain so
+ * the % parent operator works correctly.
+ */
+function ensurePathNavigable(data: any, path: JsonPath[]): any {
+  if (path.length === 0 || data == null || typeof data !== "object")
+    return data;
+  const segment = String(path[0]);
+  const rest = path.slice(1);
+  return new Proxy(data, {
+    get(target, p, receiver) {
+      const val = Reflect.get(target, p, receiver);
+      if (typeof p === "string" && p === segment) {
+        if (val == null) return ensurePathNavigable({}, rest);
+        return ensurePathNavigable(val, rest);
+      }
+      return val;
+    },
+  });
+}
 
 export interface ExpressionEvalContext {
   scope: CleanupScope;
@@ -83,9 +106,7 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
 
   const parsedJsonata = createScopedComputed(scope, () => {
     const jExpr = expr.expression;
-    const fullExpr = pathString
-      ? `(${pathString} ?? {}).(${jExpr})`
-      : jExpr;
+    const fullExpr = pathString ? `${pathString}.(${jExpr})` : jExpr;
     try {
       return { expr: jsonata(fullExpr ? fullExpr : "null"), fullExpr };
     } catch (e) {
@@ -97,7 +118,10 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
   async function runJsonata(effect: AsyncEffect<any>, signal: AbortSignal) {
     const trackedVars = variables?.(effect.collectUsage);
     const fullExpr = parsedJsonata.fields.fullExpr.current.value;
-    const data = trackedValue(rootData, effect.collectUsage);
+    const data = ensurePathNavigable(
+      trackedValue(rootData, effect.collectUsage),
+      path,
+    );
     const evalResult = await parsedJsonata.fields.expr.value.evaluate(
       data,
       trackedVars,
