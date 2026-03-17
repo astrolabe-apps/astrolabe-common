@@ -7,6 +7,7 @@
         <Version>0.1.0</Version>
         <Description>Schema-driven forms platform with workflow, search, export, and audit trail</Description>
         <PackageTags>forms, workflow, schema</PackageTags>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
