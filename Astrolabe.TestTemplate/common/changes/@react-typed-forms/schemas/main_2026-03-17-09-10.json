@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas",
+      "comment": "Replace `actionOnClick` with `actionHandler` across components for improved clarity and consistency.",
+      "type": "major"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas"
+}

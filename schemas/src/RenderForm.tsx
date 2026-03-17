@@ -164,14 +164,14 @@ export function RenderFormNode({
     renderer,
     renderChild: (child, options) => {
       const overrideClasses = getGroupClassOverrides(definition);
-      const { actionOnClick, ...renderOptions } = options ?? {};
+      const { actionHandler, ...renderOptions } = options ?? {};
       const allChildOptions = {
         ...childOptions,
         ...overrideClasses,
         ...renderOptions,
-        actionOnClick: actionHandlers(
-          actionOnClick,
-          childOptions.actionOnClick,
+        actionHandler: actionHandlers(
+          actionHandler,
+          childOptions.actionHandler ?? childOptions.actionOnClick,
         ),
       };
       return (
@@ -191,7 +191,7 @@ export function RenderFormNode({
     schemaInterface,
     style: state.definition.style as React.CSSProperties,
     customDisplay: options.customDisplay,
-    actionOnClick: options.actionOnClick,
+    actionHandler: options.actionHandler ?? options.actionOnClick,
     styleClass: styleClass,
     labelClass: labelClass,
     labelTextClass: labelTextClass,

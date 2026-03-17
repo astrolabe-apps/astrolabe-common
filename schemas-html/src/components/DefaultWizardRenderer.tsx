@@ -312,7 +312,7 @@ function WizardRenderer({
     if (validate) {
       const syncValid = validatePage();
       const validator = validateActionId
-        ? props.actionOnClick?.(
+        ? props.actionHandler?.(
             validateActionId,
             { current: page.current.value, dir },
             props.dataContext,

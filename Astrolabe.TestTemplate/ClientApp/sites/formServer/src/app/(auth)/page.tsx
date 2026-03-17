@@ -3,8 +3,10 @@
 import "flexlayout-react/style/light.css";
 import { saveAs } from "file-saver";
 import {
+  actionHandlers,
   ControlDefinitionSchema,
   ControlDefinitionSchemaMap,
+  makeActionHandler,
   SchemaFieldSchema,
 } from "@react-typed-forms/schemas";
 import {
@@ -348,6 +350,28 @@ export default function Editor() {
   );
   // const evalHook = useMemo(() => makeEvalExpressionHook(evalExpr), [roles]);
   if (!qc.fields.isReady.value) return <></>;
+  const actionHandler = actionHandlers(
+    makeActionHandler({
+      validate: async () => {
+        await new Promise((r) => setTimeout(r, 1000));
+        return true;
+      },
+      loadMore: async (_, _c, dataContext) => {
+        const stuffArray = dataContext.dataNode!.control.as<DisabledStuff[]>();
+        const lc = getLoadingControl(stuffArray);
+        lc.value = true;
+        await new Promise((r) => setTimeout(r, 1000));
+        addElement<DisabledStuff>(
+          stuffArray,
+          elementValueForField(dataContext.dataNode!.schema.field),
+        );
+        lc.value = false;
+      },
+    }),
+    (actionId, actionData, dataContext) => () => {
+      console.log("ACTION", actionId, actionData, dataContext);
+    },
+  );
   return (
     <DndProvider backend={HTML5Backend}>
       <div id="dialog_container" ref={setContainer} />
@@ -429,24 +453,7 @@ export default function Editor() {
           }
         }}
         previewOptions={{
-          actionOnClick: (aid, data, dataContext) => async (ctx) => {
-            await new Promise((r) => setTimeout(r, 1000));
-            if (aid === "validate") return false;
-            if (aid === "loadMore") {
-              const stuffArray =
-                dataContext.dataNode!.control.as<DisabledStuff[]>();
-              const lc = getLoadingControl(stuffArray);
-              lc.value = true;
-              await new Promise((r) => setTimeout(r, 1000));
-              addElement<DisabledStuff>(
-                stuffArray,
-                elementValueForField(dataContext.dataNode!.schema.field),
-              );
-              lc.value = false;
-            }
-            console.log("Clicked", aid, data);
-            if (aid !== "closeDialog") await ctx.runAction("closeDialog");
-          },
+          actionHandler,
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
           variables: () => ({ breakpoint: breakpointControl.value }),
           // useEvalExpressionHook: evalHook,
@@ -471,6 +478,22 @@ export default function Editor() {
       />
     </DndProvider>
   );
+
+  // function actionOnClick(aId: string, actionData: any, dataContext: ControlDataContext) {
+  //   switch (aId) {
+  //     case "validate":
+  //
+  //   }
+  //   actionOnClick: (aid, data, dataContext) => async (ctx) => {
+  //     await new Promise((r) => setTimeout(r, 1000));
+  //     if (aid === "validate") return false;
+  //     if (aid === "loadMore") {
+  //     }
+  //     console.log("Clicked", aid, data);
+  //     if (aid !== "closeDialog") await ctx.runAction("closeDialog");
+  //   },
+  //
+  // }
 
   async function genPdf(c: FormNode, data: Control<any>) {
     const file = await carClient.generatePdf({

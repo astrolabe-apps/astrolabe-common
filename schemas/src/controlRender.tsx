@@ -442,7 +442,7 @@ export interface ParentRendererProps {
   dataContext: ControlDataContext;
   runExpression: RunExpression;
   designMode?: boolean;
-  actionOnClick?: ControlActionHandler;
+  actionHandler?: ControlActionHandler;
 }
 
 export interface GroupRendererProps extends ParentRendererProps {
@@ -479,7 +479,9 @@ export type CreateDataProps = (
 
 export interface ControlRenderOptions extends ControlClasses {
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
+  /** @deprecated Use actionHandler instead */
   actionOnClick?: ControlActionHandler;
+  actionHandler?: ControlActionHandler;
   customDisplay?: (
     customId: string,
     displayProps: DisplayRendererProps,
@@ -549,7 +551,7 @@ export interface ChildRendererOptions {
   layoutClass?: string;
   labelClass?: string;
   labelTextClass?: string;
-  actionOnClick?: ControlActionHandler;
+  actionHandler?: ControlActionHandler;
 }
 
 export type ChildRenderer = (
@@ -567,7 +569,7 @@ export interface RenderLayoutProps {
   style?: React.CSSProperties;
   runExpression: RunExpression;
 
-  actionOnClick?: ControlActionHandler;
+  actionHandler?: ControlActionHandler;
   schemaInterface?: SchemaInterface;
   designMode?: boolean;
   customDisplay?: (
@@ -599,7 +601,7 @@ export function renderControlLayout(
     styleClass,
     textClass,
     formNode,
-    actionOnClick,
+    actionHandler,
     inline,
     displayOnly,
   } = props;
@@ -630,7 +632,7 @@ export function renderControlLayout(
         textClass: rendererClass(textClass, c.textClass),
         style,
         designMode,
-        actionOnClick,
+        actionHandler,
       }),
       label: {
         label: c.title,
@@ -646,7 +648,7 @@ export function renderControlLayout(
     const actionStyle = c.actionStyle ?? ActionStyle.Button;
     const actionContent =
       actionStyle == ActionStyle.Group ? renderActionGroup() : undefined;
-    const handler = props.actionOnClick?.(c.actionId, actionData, dataContext);
+    const handler = props.actionHandler?.(c.actionId, actionData, dataContext);
     return {
       inline,
       children: renderer.renderAction({
@@ -672,7 +674,7 @@ export function renderControlLayout(
                   actionId: string,
                   actionData?: any,
                 ): void | Promise<any> {
-                  const h = props.actionOnClick?.(
+                  const h = props.actionHandler?.(
                     actionId,
                     actionData,
                     dataContext,
