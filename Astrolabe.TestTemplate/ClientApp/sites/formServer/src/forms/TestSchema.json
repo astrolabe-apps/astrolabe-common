@@ -100,18 +100,25 @@
                   ],
                   "layoutClass": "@ flex flex-col gap-[16px]"
                 }
-
               ]
             }
           ],
           "groupOptions": {
             "hideTitle": true
           }
+        },
+        {
+          "type": "Group",
+          "title": "Page 2"
+        },
+        {
+          "type": "Group",
+          "title": "Page 3"
         }
       ],
       "groupOptions": {
         "hideTitle": false,
-        "type": "Standard"
+        "type": "Wizard"
       },
       "layoutClass": "px-[16px] py-[24px] bg-white flex flex-col gap-[16px]",
       "labelTextClass": "@ title1",

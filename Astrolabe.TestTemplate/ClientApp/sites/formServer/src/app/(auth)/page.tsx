@@ -431,6 +431,7 @@ export default function Editor() {
         previewOptions={{
           actionOnClick: (aid, data, dataContext) => async (ctx) => {
             await new Promise((r) => setTimeout(r, 1000));
+            if (aid === "validate") return false;
             if (aid === "loadMore") {
               const stuffArray =
                 dataContext.dataNode!.control.as<DisabledStuff[]>();

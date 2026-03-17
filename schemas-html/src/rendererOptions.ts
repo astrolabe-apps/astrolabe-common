@@ -110,9 +110,8 @@ export interface DefaultTabsRenderOptions {
   contentClass?: string;
 }
 
-export interface WizardNavActionOptions {
+export interface WizardNavActionOptions extends Partial<ActionRendererProps> {
   text?: string;
-  icon?: IconReference;
   validate?: boolean;
   hide?: boolean;
 }
@@ -136,6 +135,7 @@ export interface DefaultWizardRenderOptions {
     next?: WizardNavActionOptions;
     prev?: WizardNavActionOptions;
     navActionId?: string;
+    validateActionId?: string;
   };
   defaultShowSteps?: boolean;
   renderSteps?: (

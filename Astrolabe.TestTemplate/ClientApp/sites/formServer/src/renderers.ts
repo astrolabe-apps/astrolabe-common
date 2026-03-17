@@ -57,6 +57,7 @@ export function createStdFormRenderer(container: HTMLElement | null) {
               actions: {
                 prev: { hide: true },
                 next: { hide: true },
+                validateActionId: "validate",
               },
             },
           },

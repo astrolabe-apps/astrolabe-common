@@ -8,7 +8,7 @@ import {
   GroupRendererProps,
   GroupRenderType,
   IconPlacement,
-  IconReference,
+  NoOpControlActionContext,
   rendererClass,
   schemaDataForFieldRef,
   WizardRenderOptions,
@@ -16,9 +16,10 @@ import {
 import {
   CustomNavigationProps,
   DefaultWizardRenderOptions,
+  WizardNavActionOptions,
   WizardStepInfo,
 } from "../rendererOptions";
-import { Control, useComputed, useControl } from "@react-typed-forms/core";
+import { Control, useControl } from "@react-typed-forms/core";
 import { Fragment, ReactNode } from "react";
 
 const defaultOptions = {
@@ -44,14 +45,18 @@ const defaultOptions = {
       icon: fontAwesomeIcon("chevron-right"),
       validate: true,
       hide: false,
+      actionData: 1,
+      iconPlacement: IconPlacement.AfterText,
     },
     prev: {
       text: "Prev",
       icon: fontAwesomeIcon("chevron-left"),
       validate: false,
       hide: false,
+      actionData: -1,
     },
     navActionId: "nav",
+    validateActionId: undefined,
   },
   defaultShowSteps: false,
   renderNavigation: defaultNavigationRender,
@@ -134,6 +139,7 @@ function WizardRenderer({
       next: nextAction,
       prev: prevAction,
       navActionId,
+      validateActionId,
     },
     defaultShowSteps,
     renderNavigation,
@@ -147,9 +153,6 @@ function WizardRenderer({
   const pageFieldNode = pageIndexField
     ? schemaDataForFieldRef(pageIndexField, props.dataContext.parentNode)
     : null;
-  const internalPage = useControl(0);
-  const page: Control<number> =
-    pageFieldNode?.control.as<number>() ?? internalPage;
 
   const { formNode, designMode, renderChild } = props;
 
@@ -167,6 +170,9 @@ function WizardRenderer({
     (x) => !x.definition.placement || x.definition.placement === "content",
   );
   const childrenLength = pageChildren.length;
+  const internalPage = useControl(pageChildren.findIndex((x) => x.visible));
+  const page: Control<number> =
+    pageFieldNode?.control.as<number>() ?? internalPage;
   const currentPage = page.value;
 
   const steps = buildSteps();
@@ -178,26 +184,27 @@ function WizardRenderer({
     navActionId,
     designMode ? () => {} : () => nav(1, nextAction.validate),
     nextAction.text,
-    {
-      hidden: manualNavigation || (noNext && nextAction.hide),
-      disabled: noNext,
-      icon: nextAction.icon,
-      actionData: 1,
-      iconPlacement: IconPlacement.AfterText,
-    },
+    makeActionProps(nextAction, noNext),
   );
 
   const prev = createAction(
     navActionId,
     designMode ? () => {} : () => nav(-1, prevAction.validate),
     prevAction.text,
-    {
-      hidden: manualNavigation || (noPrev && prevAction.hide),
-      disabled: noPrev,
-      actionData: -1,
-      icon: prevAction.icon,
-    },
+    makeActionProps(prevAction, noPrev),
   );
+
+  function makeActionProps(
+    { hide, text, validate, ...others }: WizardNavActionOptions,
+    disabled: boolean,
+  ): Partial<ActionRendererProps> {
+    return {
+      hidden: manualNavigation || (disabled && hide),
+      disabled,
+      ...others,
+    };
+  }
+
   const leftNav: ReactNode = leftNavChildren.length
     ? leftNavChildren.map((child) => renderChild(child))
     : undefined;
@@ -301,9 +308,20 @@ function WizardRenderer({
     return count;
   }
 
-  function nav(dir: number, validate: boolean) {
-    if (validate && !validatePage()) {
-      return;
+  async function nav(dir: number, validate: boolean) {
+    if (validate) {
+      const syncValid = validatePage();
+      const validator = validateActionId
+        ? props.actionOnClick?.(
+            validateActionId,
+            { current: page.current.value, dir },
+            props.dataContext,
+          )
+        : undefined;
+      const validateResult = await validator?.(NoOpControlActionContext);
+      if (!syncValid || validateResult === false) {
+        return;
+      }
     }
     const next = nextVisibleInDirection(dir);
     if (next != null) {
