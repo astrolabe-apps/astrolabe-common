@@ -114,6 +114,13 @@
         {
           "type": "Group",
           "title": "Page 3"
+        },
+        {
+          "type": "Action",
+          "title": "Very slow",
+          "placement": "middleNav",
+          "actionId": "slowAction",
+          "disableType": "Global"
         }
       ],
       "groupOptions": {

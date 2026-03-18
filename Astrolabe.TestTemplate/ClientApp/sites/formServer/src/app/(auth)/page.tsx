@@ -4,37 +4,16 @@ import "flexlayout-react/style/light.css";
 import { saveAs } from "file-saver";
 import {
   actionHandlers,
-  ControlDefinitionSchema,
-  ControlDefinitionSchemaMap,
-  makeActionHandler,
-  SchemaFieldSchema,
-} from "@react-typed-forms/schemas";
-import {
-  BasicFormEditor,
-  FieldSelectionExtension,
-  readOnlySchemas,
-  Snippet,
-} from "@astroapps/schemas-editor";
-import {
-  addElement,
-  Control,
-  ControlMetricsRegistry,
-  ensureSelectableValues,
-  Fcheckbox,
-  RenderElements,
-  updateElements,
-  useControl,
-  useSelectableArray,
-} from "@react-typed-forms/core";
-import {
   boolField,
   buildSchema,
   compoundField,
+  ControlDefinitionSchema,
+  ControlDefinitionSchemaMap,
+  ControlDisableType,
   createIconLibraryExtension,
   dataControl,
   dateField,
   dateTimeField,
-  defaultValueForField,
   doubleField,
   elementValueForField,
   FormNode,
@@ -43,13 +22,33 @@ import {
   groupedControl,
   GroupRenderType,
   intField,
+  makeActionHandler,
   SchemaField,
+  SchemaFieldSchema,
   SchemaTags,
   stringField,
   stringOptionsField,
   timeField,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
+import {
+  BasicFormEditor,
+  defaultEditorControlsJson as controlsJson,
+  defaultExpressionFormJson as expressionFormJson,
+  defaultSchemaFieldJson as schemaFieldJson,
+  FieldSelectionExtension,
+  readOnlySchemas,
+  Snippet,
+} from "@astroapps/schemas-editor";
+import {
+  addElement,
+  Control,
+  ensureSelectableValues,
+  Fcheckbox,
+  RenderElements,
+  useControl,
+  useSelectableArray,
+} from "@react-typed-forms/core";
 import {
   OptStringParam,
   useApiClient,
@@ -65,11 +64,6 @@ import {
   ControlDefinition as CD,
   SearchStateClient,
 } from "../../client";
-import {
-  defaultEditorControlsJson as controlsJson,
-  defaultExpressionFormJson as expressionFormJson,
-  defaultSchemaFieldJson as schemaFieldJson,
-} from "@astroapps/schemas-editor";
 import testSchemaControls from "../../forms/TestSchema.json";
 import allControls from "../../forms/AllControls.json";
 import { useMemo, useState } from "react";
@@ -352,6 +346,9 @@ export default function Editor() {
   if (!qc.fields.isReady.value) return <></>;
   const actionHandler = actionHandlers(
     makeActionHandler({
+      slowAction: async (_, ctx) => {
+        await new Promise((r) => setTimeout(r, 2000));
+      },
       validate: async () => {
         await new Promise((r) => setTimeout(r, 1000));
         return true;
