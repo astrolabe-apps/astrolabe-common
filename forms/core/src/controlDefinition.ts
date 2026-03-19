@@ -553,9 +553,9 @@ export function isFlexRenderer(
 }
 
 export function isDisplayOnlyRenderer(
-  options: RenderOptions,
+  options: RenderOptions | undefined | null,
 ): options is DisplayOnlyRenderOptions {
-  return options.type === DataRenderType.DisplayOnly;
+  return options?.type === DataRenderType.DisplayOnly;
 }
 
 export function isTextfieldRenderer(

@@ -20,7 +20,7 @@ export function FormListView({
   return (
     <div className="flex flex-col h-full">
       {context.listHeader}
-      <div ref={ref} className="grow overflow-auto">
+      <div ref={ref} className="grow">
         <Tree<FormListNode>
           width={width}
           height={height}

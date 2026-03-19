@@ -20,6 +20,7 @@ import {
   defaultValueForField,
   DynamicPropertyType,
   elementValueForField,
+  FieldType,
   fieldPathForDefinition,
   FormNode,
   FormNodeUi,
@@ -67,6 +68,35 @@ export interface FormControlPreviewDataProps extends FormControlPreviewProps {
 
 const defaultLayoutChange = "position";
 
+function sampleValueForField(
+  sampleText: string | undefined | null,
+  field: { type: string; collection?: boolean | null } | undefined,
+): any {
+  if (!field) return sampleText;
+  if (field.collection) {
+    return [sampleValueForField(sampleText, { type: field.type })];
+  }
+  if (sampleText) return sampleText;
+  switch (field.type) {
+    case FieldType.String:
+      return "Sample Data";
+    case FieldType.Bool:
+      return undefined;
+    case FieldType.Int:
+      return 42;
+    case FieldType.Double:
+      return 3.14;
+    case FieldType.Date:
+      return "1980-04-22";
+    case FieldType.DateTime:
+      return new Date(0).toISOString();
+    case FieldType.Time:
+      return "12:00";
+    default:
+      return undefined;
+  }
+}
+
 export function FormControlPreview(props: FormControlPreviewProps) {
   const {
     node,
@@ -95,7 +125,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const sampleData = useMemo(
     () =>
       displayOptions
-        ? (displayOptions.sampleText ?? "Sample Data")
+        ? sampleValueForField(displayOptions.sampleText, field)
         : field &&
           (dataNode?.elementIndex == null
             ? field.collection
@@ -233,9 +263,9 @@ function EditorDetails({
 }) {
   const { VisibilityIcon } = context;
   const { dynamic } = control;
-  const hasVisibilityScripting = dynamic?.some(
-    (x) => x.type === DynamicPropertyType.Visible,
-  ) || !!(control as any)["$scripts"]?.hidden;
+  const hasVisibilityScripting =
+    dynamic?.some((x) => x.type === DynamicPropertyType.Visible) ||
+    !!(control as any)["$scripts"]?.hidden;
 
   const fieldName = !arrayElement
     ? isDataControl(control)
