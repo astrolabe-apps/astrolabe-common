@@ -1,3 +1,4 @@
+import { Control } from "@react-typed-forms/core";
 import {
   ControlActionContext,
   ControlActionHandler,
@@ -7,7 +8,206 @@ import {
   RendererRegistration,
   SchemaField,
 } from "@react-typed-forms/schemas";
-import { ReactElement, ReactNode } from "react";
+import { ComponentType, ReactElement, ReactNode } from "react";
+
+// --- Item types (matching Astrolabe.Forms/FormsDataTypes.cs) ---
+
+/**
+ * Full item detail for view/edit pages.
+ */
+export interface ItemViewData {
+  actions: string[];
+  formType: string;
+  metadata: any;
+  status: string;
+  createdAt: string;
+  submittedAt: string | null;
+  events?: ItemEventData[] | null;
+  notes?: ItemNoteResultData[] | null;
+}
+
+/**
+ * Audit event on an item.
+ */
+export interface ItemEventData {
+  eventType: string;
+  timestamp: string;
+  message: string;
+  personName: string | null;
+  oldStatus?: string | null;
+  newStatus?: string | null;
+}
+
+/**
+ * Note displayed on an item.
+ */
+export interface ItemNoteResultData {
+  message: string;
+  personName: string | null;
+  timestamp: string;
+}
+
+/**
+ * Note submission payload.
+ */
+export interface ItemNoteEditData {
+  message: string;
+  internal: boolean;
+}
+
+/**
+ * Item edit payload (metadata + optional workflow action).
+ */
+export interface FullEditData {
+  action: string | null;
+  metadata: any;
+}
+
+// --- Form types ---
+
+/**
+ * Form + schemas returned from API for dynamic rendering.
+ */
+export interface FormRenderData {
+  controls: ControlDefinition[];
+  config: FormConfigData;
+  schemaName: string;
+  schemas: Record<string, SchemaField[]>;
+}
+
+/**
+ * Form layout configuration.
+ */
+export interface FormConfigData {
+  layoutMode: FormLayoutMode;
+  navigationStyle: PageNavigationStyle;
+  public?: boolean;
+  published?: boolean;
+}
+
+/**
+ * Form info for listing.
+ */
+export interface FormInfoData {
+  id: string;
+  name: string;
+  folder: string;
+}
+
+/**
+ * Form definition for creation/editing.
+ */
+export interface FormDefinitionEditData {
+  shortId: string;
+  name: string;
+  groupId: string;
+  tableId: string | null;
+  controls: any[];
+  config: FormConfigData;
+}
+
+/**
+ * File upload result.
+ */
+export interface FormUploadData {
+  id: string;
+  filename: string;
+  length: number;
+}
+
+// --- Table types ---
+
+/**
+ * Table definition for creation/editing.
+ */
+export interface TableDefinitionEditData {
+  shortId: string | null;
+  name: string | null;
+  groupId: string | null;
+  nameField: string | null;
+  fields: any[];
+  tags: string[];
+}
+
+/**
+ * Named entity with scope.
+ */
+export interface ScopedNameIdData {
+  name: string;
+  id: string | null;
+  scope: string;
+}
+
+// --- Export types ---
+
+/**
+ * Export definition for creation/editing.
+ */
+export interface ExportDefinitionEditData {
+  id: string | null;
+  tableDefinitionId: string;
+  name: string;
+  exportColumns: ExportColumnData[];
+}
+
+/**
+ * Export column mapping.
+ */
+export interface ExportColumnData {
+  field: string;
+  columnName: string;
+  expression: string | null;
+}
+
+// --- String constants (matching Astrolabe.Forms) ---
+
+export const WorkflowActions = {
+  Submit: "Submit",
+  Approve: "Approve",
+  Reject: "Reject",
+  Export: "Export",
+  ForceReindex: "ForceReindex",
+} as const;
+
+export const WorkflowStatuses = {
+  NotStarted: "NotStarted",
+  Draft: "Draft",
+  Submitted: "Submitted",
+  Approved: "Approved",
+  Rejected: "Rejected",
+} as const;
+
+export const AuditEventTypes = {
+  FormEdited: "FormEdited",
+  StatusChange: "StatusChange",
+  Note: "Note",
+  ExportForm: "ExportForm",
+} as const;
+
+export enum FormLayoutMode {
+  SinglePage = "SinglePage",
+  MultiPage = "MultiPage",
+}
+
+export enum PageNavigationStyle {
+  Wizard = "Wizard",
+  Stepper = "Stepper",
+  Tabs = "Tabs",
+}
+
+// --- File operations (injected by consumer) ---
+
+/**
+ * File operations for dynamic form rendering.
+ * Consumer provides implementations backed by their API client.
+ */
+export interface FileOperations {
+  downloadFile: (file: { id: string }) => Promise<void>;
+  uploadFile: (file: File) => Promise<FormUploadData>;
+  deleteFile: (file: { id: string }) => Promise<void>;
+}
+
+// --- Existing types below ---
 
 /**
  * Generic search options matching the SearchOptions DTO pattern.
@@ -92,7 +292,7 @@ export interface FormsAppApi {
   getExportDefinitions(
     edit: ExportRecordsDefinitionData,
   ): Promise<ExportDefinitionGroupData[]>;
-  exportRecord(edit: ExportRecordRequest): Promise<FileData>;
+  exportRecord(edit: ExportRecordRequest): Promise<FileData | void>;
 }
 
 /**
@@ -169,6 +369,12 @@ export interface FormsAppUIComponents {
     onClick?: () => void;
     children?: ReactNode;
   }) => ReactNode;
+  Textfield: ComponentType<{
+    control: Control<string | null | undefined>;
+    label: string;
+    inputClass?: string;
+  }>;
+  CircularProgress: () => ReactNode;
 }
 
 export type ActionHandler<A> = (

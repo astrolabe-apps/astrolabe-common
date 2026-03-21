@@ -1,4 +1,6 @@
+using Astrolabe.Annotation;
 using Astrolabe.Common.Exceptions;
+using Astrolabe.Schemas;
 using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.Forms;
@@ -77,7 +79,7 @@ public record TableDefinitionEdit(
     string? ShortId,
     string? Name,
     string? GroupId,
-    string? NameField,
+    [property: SchemaTag(SchemaTags.SchemaField)] string? NameField,
     IEnumerable<object> Fields,
     IEnumerable<string> Tags
 );

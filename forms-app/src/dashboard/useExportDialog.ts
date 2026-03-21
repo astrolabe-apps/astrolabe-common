@@ -99,7 +99,7 @@ export function useExportDialog(
               definitionId: exportDefinitionId,
               ...exportRecordsDefinitionEdit.value,
             });
-            saveAs(file.data, file.fileName);
+            if (file) saveAs(file.data, file.fileName);
           } catch (e) {}
         }),
       );

@@ -31,11 +31,11 @@ public interface IFormsContext
     // Items — convenience CRUD
     Task<Guid> CreateItem(Guid formType, FullEdit edit, Guid userId, IList<string> roles);
     Task EditItem(Guid id, FullEdit edit, Guid userId, IList<string> roles);
-    Task<FullItem> NewItem(Guid formType, Guid userId, IList<string> roles);
+    Task<ItemView> NewItem(Guid formType, Guid userId, IList<string> roles);
 
     // Items — detail & actions
-    Task<FullItem> GetFullItem(Guid id, Guid userId, IList<string> roles);
-    Task<FullItem> GetUserItem(Guid id, Guid userId, IList<string> roles);
+    Task<ItemView> GetItemView(Guid id, Guid userId, IList<string> roles);
+    Task<ItemView> GetUserItem(Guid id, Guid userId, IList<string> roles);
     Task<IEnumerable<string>> GetUserActions(Guid id, Guid userId, IList<string> roles);
     Task DeleteItem(Guid id);
     Task<Guid> PerformActions(IEnumerable<ItemAction> actions, Guid? id, Guid userId, IList<string> roles, Guid? formType = null);
@@ -48,13 +48,13 @@ public interface IFormsContext
     Task<DownloadResponse?> DownloadFile(Guid personId, Guid? itemId, Guid fileId);
 
     // Export Definitions
-    Task<IEnumerable<ExportDefinitionData>> ListExportDefinitions();
+    Task<IEnumerable<ExportDefinitionGroup>> ListExportDefinitions();
     Task<ExportDefinitionEdit> GetExportDefinition(Guid? id);
     Task CreateOrUpdateExportDefinition(ExportDefinitionEdit edit);
     Task DeleteExportDefinition(Guid id);
 
     // Export CSV
-    Task<IEnumerable<ExportDefinitionData>> GetExportDefinitionOfForms(IEnumerable<Guid> formItemIds);
+    Task<IEnumerable<ExportDefinitionGroup>> GetExportDefinitionOfForms(IEnumerable<Guid> formItemIds);
     Task<List<Guid>> GetExportableItemIds(SearchOptions searchOptions);
     Task<string?> GetCsvText(IEnumerable<ExportColumn> exportColumns, IEnumerable<Guid> itemIds,
         Guid tableDefinitionId, Guid userId, IList<string> roles);

@@ -26,8 +26,11 @@
   "peerDependencies": {
     "@react-typed-forms/core": "^4.4.2",
     "@react-typed-forms/schemas": "^17.1.0",
+    "@react-typed-forms/schemas-html": "^17.1.0",
+    "@astroapps/basic-editor": "^1.0.0",
     "@astroapps/client": "^2.6.0",
     "@astroapps/searchstate": "^2.0.0",
+    "clsx": "^2.1.1",
     "react": "^18.2.0 || ^19"
   },
   "dependencies": {
@@ -36,8 +39,11 @@
   "devDependencies": {
     "@react-typed-forms/core": "^4.4.2",
     "@react-typed-forms/schemas": "workspace:*",
+    "@react-typed-forms/schemas-html": "workspace:*",
+    "@astroapps/basic-editor": "workspace:*",
     "@astroapps/client": "^2.6.0",
     "@astroapps/searchstate": "^2.0.0",
+    "clsx": "^2.1.1",
     "react": "^18.2.0 || ^19",
     "react-dom": "^18.2.0 || ^19",
     "@types/react": "^18.2.28 || ^19",

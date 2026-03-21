@@ -8,12 +8,12 @@ public partial class FormsContext<
     TItem, TFormData, TPerson, TFormDef, TTableDef,
     TAuditEvent, TItemTag, TItemNote, TItemFile, TExportDef>
 {
-    public async Task<IEnumerable<ExportDefinitionData>> ListExportDefinitions()
+    public async Task<IEnumerable<ExportDefinitionGroup>> ListExportDefinitions()
     {
         return await ExportDefinitions
             .Include(x => x.TableDefinition)
             .GroupBy(x => x.TableDefinitionId)
-            .Select(group => new ExportDefinitionData(
+            .Select(group => new ExportDefinitionGroup(
                 group.Select(x => new ExportDefinitionInfo(x.Id, x.Name)),
                 group.First().TableDefinition.Name ?? "",
                 group.Key

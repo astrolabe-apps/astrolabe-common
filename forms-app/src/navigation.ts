@@ -6,6 +6,9 @@ export type NavigationIntent =
   | { type: "viewItem"; itemId: string }
   | { type: "editItem"; itemId: string }
   | { type: "dashboard" }
+  | { type: "exportDashboard" }
+  | { type: "exportCreate" }
+  | { type: "exportEdit"; definitionId: string }
   | { type: "custom"; data: any };
 
 /**

@@ -14,7 +14,7 @@ public record ItemInfo(
     DateTime? SubmittedOn
 );
 
-public record FullItem(
+public record ItemView(
     IEnumerable<string> Actions,
     Guid FormType,
     object Metadata,
@@ -58,7 +58,7 @@ public record FormUpload
 
 public record ExportDefinitionInfo(Guid Id, string Name);
 
-public record ExportDefinitionData(
+public record ExportDefinitionGroup(
     IEnumerable<ExportDefinitionInfo> Infos,
     string TableDefinitionName,
     Guid TableDefinitionId

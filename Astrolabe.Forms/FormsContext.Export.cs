@@ -11,14 +11,14 @@ public partial class FormsContext<
     TItem, TFormData, TPerson, TFormDef, TTableDef,
     TAuditEvent, TItemTag, TItemNote, TItemFile, TExportDef>
 {
-    public async Task<IEnumerable<ExportDefinitionData>> GetExportDefinitionOfForms(
+    public async Task<IEnumerable<ExportDefinitionGroup>> GetExportDefinitionOfForms(
         IEnumerable<Guid> formItemIds)
     {
         return await Items
             .Where(x => formItemIds.Contains(x.Id) && x.FormData.Definition.Table != null)
             .Select(x => x.FormData.Definition.Table!)
             .Distinct()
-            .Select(x => new ExportDefinitionData(
+            .Select(x => new ExportDefinitionGroup(
                 ExportDefinitions
                     .Where(ed => ed.TableDefinitionId == x.Id)
                     .Select(ed => new ExportDefinitionInfo(ed.Id, ed.Name))
