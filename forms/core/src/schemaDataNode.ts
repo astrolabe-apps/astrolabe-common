@@ -95,6 +95,46 @@ export class SchemaDataTreeImpl extends SchemaDataTree {
   }
 }
 
+export class IsolatedSchemaDataTree extends SchemaDataTree {
+  rootNode: SchemaDataNode;
+
+  constructor(rootSchema: SchemaNode) {
+    super();
+    this.rootNode = new SchemaDataNode(
+      "",
+      rootSchema,
+      undefined,
+      newControl({}),
+      this,
+    );
+  }
+
+  getChild(parent: SchemaDataNode, childNode: SchemaNode): SchemaDataNode {
+    return new SchemaDataNode(
+      parent.id + "/" + childNode.field.field,
+      childNode,
+      undefined,
+      newControl(undefined),
+      this,
+      parent,
+    );
+  }
+
+  getChildElement(
+    parent: SchemaDataNode,
+    elementIndex: number,
+  ): SchemaDataNode {
+    return new SchemaDataNode(
+      parent.id + "_" + elementIndex,
+      parent.schema,
+      elementIndex,
+      newControl(undefined),
+      this,
+      parent,
+    );
+  }
+}
+
 /**
  * @deprecated Use createSchemaDataNode instead.
  */
