@@ -58,7 +58,7 @@ export interface ItemNoteEditData {
 /**
  * Item edit payload (metadata + optional workflow action).
  */
-export interface FullEditData {
+export interface ItemEditData {
   action: string | null;
   metadata: any;
 }

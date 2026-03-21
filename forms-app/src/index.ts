@@ -28,7 +28,7 @@ export type {
   ItemEventData,
   ItemNoteResultData,
   ItemNoteEditData,
-  FullEditData,
+  ItemEditData,
   FormRenderData,
   FormConfigData,
   FormInfoData,

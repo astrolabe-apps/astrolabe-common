@@ -71,7 +71,7 @@ public record ExportDefinitionEdit(
     IEnumerable<ExportColumn> ExportColumns
 );
 
-public record FullEdit(string? Action, JsonElement Metadata);
+public record ItemEdit(string? Action, JsonElement Metadata);
 
 public record ItemNoteEdit(string Message, bool Internal);
 

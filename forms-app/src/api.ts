@@ -4,7 +4,7 @@ import {
   FormDefinitionEditData,
   FormInfoData,
   FormRenderData,
-  FullEditData,
+  ItemEditData,
   ItemNoteEditData,
   ItemViewData,
   ScopedNameIdData,
@@ -26,7 +26,7 @@ export interface ItemViewApi {
  */
 export interface ItemEditApi {
   getItemView(id: string): Promise<ItemViewData>;
-  editItem(id: string, edit: FullEditData): Promise<void>;
+  editItem(id: string, edit: ItemEditData): Promise<void>;
   getFormForRender(formId: string): Promise<FormRenderData>;
 }
 

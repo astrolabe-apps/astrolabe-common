@@ -107,14 +107,14 @@ public static class FormsEndpoints
             await ctx.DeleteItem(id)).WithName("DeleteItem");
 
         itemGroup.MapPost("{formType}", async (TContext ctx, ClaimsPrincipal principal,
-            Guid formType, [FromBody] FullEdit edit) =>
+            Guid formType, [FromBody] ItemEdit edit) =>
         {
             var user = await GetUser(ctx, principal);
             return await ctx.CreateItem(formType, edit, user.PersonId, user.Roles);
         }).WithName("CreateItem");
 
         itemGroup.MapPut("{id}", async (TContext ctx, ClaimsPrincipal principal,
-            Guid id, [FromBody] FullEdit edit) =>
+            Guid id, [FromBody] ItemEdit edit) =>
         {
             var user = await GetUser(ctx, principal);
             await ctx.EditItem(id, edit, user.PersonId, user.Roles);

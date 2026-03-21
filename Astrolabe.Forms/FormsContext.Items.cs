@@ -254,7 +254,7 @@ public partial class FormsContext<
         await SaveChanges();
     }
 
-    public async Task<Guid> CreateItem(Guid formType, FullEdit edit, Guid userId, IList<string> roles)
+    public async Task<Guid> CreateItem(Guid formType, ItemEdit edit, Guid userId, IList<string> roles)
     {
         List<ItemAction> actions = [EditMetadataAction.Sync(o =>
             edit.Metadata.Deserialize(o.GetType(), FormDataJson.Options)!)];
@@ -262,7 +262,7 @@ public partial class FormsContext<
         return await PerformActions(actions, null, userId, roles, formType);
     }
 
-    public async Task EditItem(Guid id, FullEdit edit, Guid userId, IList<string> roles)
+    public async Task EditItem(Guid id, ItemEdit edit, Guid userId, IList<string> roles)
     {
         List<ItemAction> actions = [EditMetadataAction.Sync(o =>
             edit.Metadata.Deserialize(o.GetType(), FormDataJson.Options)!)];

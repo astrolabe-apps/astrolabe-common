@@ -29,8 +29,8 @@ public interface IFormsContext
     Task<Dictionary<string, IEnumerable<FieldOption>>> GetFilterOptions();
 
     // Items — convenience CRUD
-    Task<Guid> CreateItem(Guid formType, FullEdit edit, Guid userId, IList<string> roles);
-    Task EditItem(Guid id, FullEdit edit, Guid userId, IList<string> roles);
+    Task<Guid> CreateItem(Guid formType, ItemEdit edit, Guid userId, IList<string> roles);
+    Task EditItem(Guid id, ItemEdit edit, Guid userId, IList<string> roles);
     Task<ItemView> NewItem(Guid formType, Guid userId, IList<string> roles);
 
     // Items — detail & actions
