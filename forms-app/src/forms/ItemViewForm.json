@@ -1,0 +1,86 @@
+{
+  "controls": [
+    {
+      "type": "Group",
+      "title": "Item View Container",
+      "children": [
+        {
+          "type": "Group",
+          "title": "Tabs",
+          "children": [
+            {
+              "type": "Group",
+              "title": "Form Data",
+              "children": [
+                {
+                  "type": "Display",
+                  "displayData": {
+                    "type": "Custom",
+                    "customId": "itemForm"
+                  }
+                }
+              ],
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              }
+            },
+            {
+              "type": "Data",
+              "title": "Form Notes",
+              "styleClass": "flex flex-col gap-4",
+              "children": [
+                {
+                  "type": "Group",
+                  "title": "Form Note Container",
+                  "styleClass": "flex flex-col bg-white rounded-lg shadow-lg px-4 py-6",
+                  "children": [
+                    {
+                      "type": "Data",
+                      "field": "timestamp",
+                      "hideTitle": false,
+                      "renderOptions": {
+                        "type": "DisplayOnly"
+                      }
+                    },
+                    {
+                      "type": "Data",
+                      "field": "message",
+                      "hideTitle": false,
+                      "renderOptions": {
+                        "type": "DisplayOnly"
+                      }
+                    }
+                  ],
+                  "groupOptions": {
+                    "type": "Standard",
+                    "hideTitle": true
+                  }
+                }
+              ],
+              "field": "notes",
+              "hideTitle": true,
+              "renderOptions": {
+                "type": "Array",
+                "noAdd": true,
+                "noRemove": true,
+                "noReorder": true
+              }
+            }
+          ],
+          "groupOptions": {
+            "type": "Tabs",
+            "hideTitle": true
+          }
+        }
+      ],
+      "groupOptions": {
+        "type": "Standard",
+        "hideTitle": true
+      },
+      "styleClass": "pb-6"
+    }
+  ],
+  "config": {},
+  "fields": []
+}

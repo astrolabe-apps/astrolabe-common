@@ -1,0 +1,55 @@
+{
+  "controls": [
+    {
+      "type": "Data",
+      "title": "New",
+      "children": [
+        {
+          "type": "Group",
+          "title": "container",
+          "styleClass": "@ ",
+          "children": [
+            {
+              "type": "Data",
+              "field": "exportDefinitionId",
+              "hideTitle": false,
+              "renderOptions": {
+                "type": "Dropdown"
+              },
+              "required": true,
+              "styleClass": "",
+              "title": "Table Definition Name",
+              "defaultValue": null,
+              "dynamic": [
+                {
+                  "type": "Label",
+                  "expr": {
+                    "type": "Data",
+                    "field": "tableDefinitionName"
+                  }
+                }
+              ],
+              "labelTextClass": "font-bold"
+            }
+          ],
+          "groupOptions": {
+            "type": "Standard",
+            "hideTitle": true
+          }
+        }
+      ],
+      "field": "exportDefinitions",
+      "hideTitle": true,
+      "renderOptions": {
+        "type": "Array",
+        "noAdd": true,
+        "noRemove": true,
+        "noReorder": true
+      },
+      "layoutClass": "",
+      "styleClass": "flex flex-col gap-4"
+    }
+  ],
+  "config": {},
+  "fields": []
+}

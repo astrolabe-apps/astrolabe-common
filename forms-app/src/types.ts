@@ -225,8 +225,12 @@ export interface SearchOptions {
  */
 export interface ItemInfo {
   id: string;
+  firstName: string;
+  lastName: string;
+  createdOn: string;
   status: string;
-  [key: string]: any;
+  formType: string;
+  submittedOn: string | null;
 }
 
 /**
@@ -235,6 +239,66 @@ export interface ItemInfo {
 export interface ItemSearchResults {
   total: number | null;
   entries: ItemInfo[];
+}
+
+// --- Dashboard / page composition types ---
+
+/**
+ * Dashboard data for the public item list (with create dialog).
+ */
+export interface ItemDashboardData {
+  request: SearchOptions;
+  results: ItemSearchResults | null;
+  createType: string | null;
+}
+
+/**
+ * Dashboard data for the admin item list.
+ */
+export interface AdminItemDashboardData {
+  request: SearchOptions;
+  results: ItemSearchResults | null;
+}
+
+/**
+ * Export definition info shown in the dashboard.
+ */
+export interface ExportDefinitionDashboardInfoData {
+  id: string;
+  name: string;
+  tableDefinitionName: string;
+  tableDefinitionId: string;
+}
+
+/**
+ * Dashboard data for export definitions.
+ */
+export interface ExportDefinitionDashboardData {
+  request: SearchOptions;
+  definitionInfos: ExportDefinitionDashboardInfoData[] | null;
+}
+
+/**
+ * Export definition selection entry.
+ */
+export interface ExportDefinitionSelectionData {
+  tableDefinitionName: string | null;
+  tableDefinitionId: string;
+  exportDefinitionId: string;
+}
+
+/**
+ * Collection of export definition selections.
+ */
+export interface ExportDefinitionSelectionsData {
+  exportDefinitions: ExportDefinitionSelectionData[];
+}
+
+/**
+ * Table definition selection form data.
+ */
+export interface TableDefinitionSelectionData {
+  tableDefinitionId: string;
 }
 
 /**

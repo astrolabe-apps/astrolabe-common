@@ -14,16 +14,26 @@ import {
 } from "@react-typed-forms/schemas-html";
 import clsx from "clsx";
 import { FormConfigData, FormLayoutMode, PageNavigationStyle } from "../types";
+import React from "react";
 
 /**
  * Wraps controls in a wizard/tabs container based on form config.
- * Returns controls unchanged if layout is SinglePage.
+ * SinglePage forms are wrapped as a single-page wizard so that
+ * the wizard navigation renderer (and its action buttons) still fires.
  */
 export function wrapFormControls(
   controls: ControlDefinition[],
   config: FormConfigData,
 ): ControlDefinition[] {
-  if (config.layoutMode !== FormLayoutMode.MultiPage) return controls;
+  if (config.layoutMode !== FormLayoutMode.MultiPage) {
+    return [
+      groupedControl(
+        [groupedControl(controls, "", { groupOptions: { type: GroupRenderType.Standard } })],
+        "",
+        { groupOptions: { type: GroupRenderType.Wizard } },
+      ),
+    ];
+  }
   const type =
     config.navigationStyle === PageNavigationStyle.Tabs
       ? GroupRenderType.Tabs
