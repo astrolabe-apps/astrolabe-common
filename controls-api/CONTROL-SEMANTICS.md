@@ -142,6 +142,30 @@ Reuses existing children by index:
 - `key`: current index (updated on reorder)
 - `origKey`: index when element was part of initial value (set when `initial=true`)
 
+## F′. Value Type Changes (object ↔ array ↔ primitive) `[core]` — **PROPOSAL**
+
+A control's value may change from one structural type to another (e.g. object → array, array → primitive, primitive → object). Fields and elements have different semantics under type changes:
+
+### Fields are sticky
+
+Fields are accessed by explicit name (developer intent). When the parent value changes to a type where `value[key]` yields `undefined` (e.g. a primitive or an array without that key), existing field children simply receive `undefined` as their value via the normal downward sync (section B step 4). They remain linked to the parent.
+
+If the value later becomes an object with that key again, the field picks up the correct value through the same sync path. No special handling is needed — the existing propagation rules already produce the right result.
+
+### Elements are transient
+
+Elements are positional (derived from data, not developer intent). When the parent value stops being an array:
+
+1. `syncElementsOnValueChange` checks `Array.isArray(newValue)`
+2. If not an array, treat as empty array: all existing elements are detached (surplus children logic from section F) and `_elems` is cleared
+3. If the value later becomes an array again, fresh elements are created lazily on next access
+
+This means a cycle like `object → array → object` detaches all elements on the first transition, creates fresh ones for the array, then detaches them again. No stale element references survive a type change.
+
+### InitialValue type changes
+
+Same rules apply: fields get `initialValue[key]` (undefined if not indexable), elements are trimmed to 0 if initialValue is not an array.
+
 ## G. Touched/Disabled Propagation `[core]`
 
 **Cascade downward by default.** `notChildren` parameter opts out.

@@ -38,10 +38,10 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 **Lazy creation**:
 - `get fields` → Proxy calling `getField(key)` which creates, caches, links parent, returns child
 - `get elements` → `getOrCreateElements()` creates from `_value` array
-- `syncElementsOnValueChange(notify)` — reuse/create/trim existing elements
-- `syncElementsOnInitialValueChange(notify)` — update initialValue, re-key origKey
+- `syncElementsOnValueChange(notify)` — if `!Array.isArray(newValue)`, trim all elements to 0 (detach + clear `_elems`); otherwise reuse/create/trim existing elements
+- `syncElementsOnInitialValueChange(notify)` — if `!Array.isArray(newInitialValue)`, trim all elements; otherwise update initialValue, re-key origKey
 
-**Other**: `isDirty()`, `isValid()`, `getChangeState(mask)`, `runListeners(wc)`, `subscribe/unsubscribe`, `validate`
+**Other**: `getChangeState(mask)`, `runListeners(wc)`, `subscribe/unsubscribe`, `validate`
 
 ### 4. `src/lib/writeContextImpl.ts`
 - `WriteContextImpl` with `pending: Set<ControlImpl>`, `afterChangesCbs`, `notify: NotifyFn`
@@ -60,19 +60,21 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - `update(cb)` — creates WriteContextImpl, calls cb, flushes
 - `buildChildFactory(setup, equals)` — recursive factory that creates children with correct sub-setup
 - `initControl(control, setup)` — validator subscription, eager creation, meta, afterCreate
-- `registerTracker(reconciler)` — adds to active set, cancels any pending deferred cleanup
-- `unregisterTracker(reconciler)` — removes from active set, schedules `queueMicrotask` cleanup; if re-registered before microtask fires (React strict mode), cleanup is cancelled
+- `markTrackerDead(reconciler)` — sets `alive = false` on the reconciler, adds it to the dead tracker set
+- `reviveTracker(reconciler)` — sets `alive = true`, removes from dead set (React strict mode: unmount/remount before sweep runs)
+- **Lazy cleanup sweep**: a single `setTimeout` (scheduled on first dead tracker, reset on each new death) walks the dead set and unsubscribes any trackers still marked dead
 
 ### 7. `src/lib/controlsImpl.tsx`
 - `ControlContextReact` — React.createContext for ControlContext
 - `ControlContextProvider` — provider component
 - `controls()` implementation:
   1. Get ControlContext from React context
-  2. useRef for TrackingReadContext + SubscriptionReconciler
+  2. useRef for TrackingReadContext + SubscriptionReconciler (reconciler has `alive` flag, starts `true`)
   3. Reset tracker, call render with `(props, { rc, update, controlContext })`
   4. After return, **always reconcile subscriptions** (during render, not in effect)
-  5. `useEffect` registers reconciler via `controlContext.registerTracker()`; cleanup calls `controlContext.unregisterTracker()`
-  6. Not wrapped in React.memo — Controls are stable mutable references, so shallow prop comparison can't determine re-render need
+  5. Subscription listener checks `alive` flag — if `false`, listener is a no-op (no `setState`, no re-render)
+  6. `useEffect` calls `controlContext.reviveTracker(reconciler)` on mount; cleanup calls `controlContext.markTrackerDead(reconciler)`
+  7. Not wrapped in React.memo — Controls are stable mutable references, so shallow prop comparison can't determine re-render need
 
 ### 8. Update `src/app/page.tsx`
 - Import from implementation files instead of type specs
@@ -87,7 +89,7 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - **Tree-level equality**: Equality function accessed via `_controlContext` rather than stored separately on each control
 - **Validator init**: Run immediately with `noopNotify`, then subscribe for `Value | Validate`
 - **`noopNotify`**: Used during init when no subscribers exist
-- **Deferred tracker cleanup**: `ControlContext` defers subscription cleanup via `queueMicrotask` on unregister. Re-registering before the microtask cancels cleanup (React strict mode safe)
+- **Alive/dead listeners**: Subscription listeners check an `alive` flag before triggering re-renders — dead listeners are immediate no-ops. `ControlContext` owns a lazy sweep timeout that unsubscribes any trackers still dead when it fires. React strict mode safe: unmount sets `alive = false`, remount sets it back to `true` before the sweep runs
 - **No React.memo**: Components re-render via subscriptions, not prop identity changes. Controls are stable mutable references whose identity doesn't reflect value changes
 
 ## Verification
