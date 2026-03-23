@@ -39,12 +39,6 @@ export function AppFormRenderer({
   const { formDefinitions, formLookup, schemaLookup, rendererConfig } =
     useFormsApp();
 
-  if (!formDefinitions || !formLookup || !schemaLookup || !rendererConfig) {
-    throw new Error(
-      "AppFormRenderer requires formDefinitions, schemaMap, and rendererConfig in FormsAppProvider",
-    );
-  }
-
   const { schemaName } = formDefinitions[formType];
   const schemaInterface = useMemo(
     () => new DynamicOptionsSchemaInterface(),

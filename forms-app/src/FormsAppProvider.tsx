@@ -13,6 +13,8 @@ import {
   SchemaRegistry,
   RendererConfig,
 } from "./types";
+import { DefaultFormDefinitions } from "./formdefs";
+import { DefaultSchemaMap } from "./schemas";
 
 export interface FormsAppConfig {
   api: FormsAppApi;
@@ -20,13 +22,15 @@ export interface FormsAppConfig {
   navigationHandler: NavigationHandler;
   formDefinitions?: FormDefinitionRegistry;
   schemaMap?: SchemaRegistry;
-  rendererConfig?: RendererConfig;
+  rendererConfig: RendererConfig;
   submittedStatus?: string;
 }
 
 interface FormsAppContextValue extends FormsAppConfig {
-  formLookup?: FormTreeLookup;
-  schemaLookup?: SchemaTreeLookup;
+  formDefinitions: FormDefinitionRegistry;
+  schemaMap: SchemaRegistry;
+  formLookup: FormTreeLookup;
+  schemaLookup: SchemaTreeLookup;
 }
 
 const FormsAppContext = createContext<FormsAppContextValue | null>(null);
@@ -39,20 +43,22 @@ export function FormsAppProvider({
   children: ReactNode;
 }) {
   const value = useMemo<FormsAppContextValue>(() => {
-    const formLookup = config.formDefinitions
-      ? createFormLookup(
-          Object.fromEntries(
-            Object.entries(config.formDefinitions).map(([k, v]) => [
-              k,
-              v.controls,
-            ]),
-          ),
-        )
-      : undefined;
-    const schemaLookup = config.schemaMap
-      ? createSchemaLookup(config.schemaMap)
-      : undefined;
-    return { ...config, formLookup, schemaLookup };
+    const formDefinitions =
+      config.formDefinitions ?? DefaultFormDefinitions;
+    const schemaMap = config.schemaMap ?? DefaultSchemaMap;
+    const formLookup = createFormLookup(
+      Object.fromEntries(
+        Object.entries(formDefinitions).map(([k, v]) => [k, v.controls]),
+      ),
+    );
+    const schemaLookup = createSchemaLookup(schemaMap);
+    return {
+      ...config,
+      formDefinitions,
+      schemaMap,
+      formLookup,
+      schemaLookup,
+    };
   }, [
     config.formDefinitions,
     config.schemaMap,

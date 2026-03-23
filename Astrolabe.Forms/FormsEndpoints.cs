@@ -13,11 +13,16 @@ namespace Astrolabe.Forms;
 
 public static class FormsEndpoints
 {
-    public static RouteGroupBuilder MapFormsEndpoints<TContext>(this IEndpointRouteBuilder endpoints)
+    public static RouteGroupBuilder MapFormsEndpoints<TContext>(this IEndpointRouteBuilder endpoints,
+        string? authorizationPolicy = null)
         where TContext : IFormsContext
     {
         var group = endpoints.MapGroup("api");
         group.AddEndpointFilter<FormsExceptionFilter>();
+        if (authorizationPolicy != null)
+            group.RequireAuthorization(authorizationPolicy);
+        else
+            group.RequireAuthorization();
 
         MapFormEndpoints<TContext>(group);
         MapTableEndpoints<TContext>(group);
@@ -37,7 +42,7 @@ public static class FormsEndpoints
     private static void MapFormEndpoints<TContext>(RouteGroupBuilder group)
         where TContext : IFormsContext
     {
-        var formGroup = group.MapGroup("form").WithTags("Form").RequireAuthorization();
+        var formGroup = group.MapGroup("form").WithTags("Form");
 
         formGroup.MapGet("", async (TContext ctx, bool? forPublic, bool? published) =>
             await ctx.ListForms(forPublic, published)).WithName("ListForms");
@@ -52,7 +57,7 @@ public static class FormsEndpoints
     private static void MapTableEndpoints<TContext>(RouteGroupBuilder group)
         where TContext : IFormsContext
     {
-        var tableGroup = group.MapGroup("table").WithTags("Table").RequireAuthorization();
+        var tableGroup = group.MapGroup("table").WithTags("Table");
 
         tableGroup.MapGet("", async (TContext ctx) =>
             await ctx.ListTables()).WithName("ListTables");
@@ -67,7 +72,7 @@ public static class FormsEndpoints
     private static void MapItemEndpoints<TContext>(RouteGroupBuilder group)
         where TContext : IFormsContext
     {
-        var itemGroup = group.MapGroup("item").WithTags("Item").RequireAuthorization();
+        var itemGroup = group.MapGroup("item").WithTags("Item");
 
         itemGroup.MapPost("search", async (TContext ctx, ClaimsPrincipal principal,
             [FromBody] SearchOptions request, bool? includeTotal) =>
@@ -145,7 +150,7 @@ public static class FormsEndpoints
     private static void MapItemFileEndpoints<TContext>(RouteGroupBuilder group)
         where TContext : IFormsContext
     {
-        var fileGroup = group.MapGroup("itemfile").WithTags("ItemFile").RequireAuthorization();
+        var fileGroup = group.MapGroup("itemfile").WithTags("ItemFile");
 
         fileGroup.MapPost("file", async (TContext ctx, ClaimsPrincipal principal,
             Guid? itemId, IFormFile file) =>
@@ -174,7 +179,7 @@ public static class FormsEndpoints
     private static void MapExportEndpoints<TContext>(RouteGroupBuilder group)
         where TContext : IFormsContext
     {
-        var exportGroup = group.MapGroup("export").WithTags("Export").RequireAuthorization();
+        var exportGroup = group.MapGroup("export").WithTags("Export");
 
         exportGroup.MapGet("definition", async (TContext ctx) =>
             await ctx.ListExportDefinitions()).WithName("ListExportDefinitions");
