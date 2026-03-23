@@ -57,6 +57,11 @@ public partial class FormsContext<
     /// </summary>
     protected virtual void SetFormConfig(TFormDef formDef, FormConfig config) { }
 
+    /// <summary>
+    /// Override to validate form definition edits before create/update. Throw <see cref="FormsValidationException"/> on failure.
+    /// </summary>
+    protected virtual Task ValidateFormEdit(FormDefinitionEdit edit) => Task.CompletedTask;
+
     public async Task<FormDefinitionEdit> GetFormEdit(Guid formId)
     {
         var form = await FormDefinitions
@@ -76,6 +81,7 @@ public partial class FormsContext<
 
     public async Task<Guid> CreateForm(FormDefinitionEdit edit)
     {
+        await ValidateFormEdit(edit);
         var form = new TFormDef
         {
             Id = Guid.NewGuid(),
@@ -94,6 +100,7 @@ public partial class FormsContext<
 
     public async Task EditForm(Guid formId, FormDefinitionEdit edit)
     {
+        await ValidateFormEdit(edit);
         var form = await FormDefinitions
             .Where(x => x.Id == formId)
             .Include(x => x.Table)
@@ -116,6 +123,13 @@ public partial class FormsContext<
             FormDefinitions.Remove(form);
             await SaveChanges();
         }
+    }
+
+    public async Task<Guid?> LookupForm(string formName)
+    {
+        return await QueryFormDefForFullScope(formName)
+            .Select(x => (Guid?)x.Id)
+            .SingleOrDefaultAsync();
     }
 
     public IQueryable<TFormDef> QueryFormDefForFullScope(string formName)

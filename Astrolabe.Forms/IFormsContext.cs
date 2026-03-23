@@ -20,6 +20,7 @@ public interface IFormsContext
     Task<Guid> CreateForm(FormDefinitionEdit edit);
     Task EditForm(Guid formId, FormDefinitionEdit edit);
     Task DeleteForm(Guid id);
+    Task<Guid?> LookupForm(string formName);
 
     // Table Definitions
     Task<IEnumerable<ScopedNameId>> ListTables();
@@ -27,6 +28,7 @@ public interface IFormsContext
     Task<Guid> CreateTable(TableDefinitionEdit edit);
     Task EditTable(Guid tableId, TableDefinitionEdit edit);
     Task DeleteTable(Guid tableId);
+    Task<Guid?> LookupTable(string tableName);
 
     // Items — search
     Task<SearchResults<ItemInfo>> SearchItems(SearchOptions request, bool includeTotal, Guid currentUserId);

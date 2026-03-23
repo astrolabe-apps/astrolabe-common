@@ -48,6 +48,13 @@ public partial class FormsContext<
             .SingleOrDefaultAsync();
     }
 
+    public async Task<Guid?> LookupTable(string tableName)
+    {
+        return await QueryTableDefForFullScope(tableName)
+            .Select(x => (Guid?)x.Id)
+            .SingleOrDefaultAsync();
+    }
+
     public IQueryable<TTableDef> QueryTableDefForFullScope(string fullTableId)
     {
         var (groupId, shortId) = Scopes.SplitGroupScopedId(fullTableId);
@@ -64,8 +71,14 @@ public partial class FormsContext<
         return await TableDefinitions.Where(x => x.Id == tableId).SingleOrDefaultAsync();
     }
 
+    /// <summary>
+    /// Override to validate table definition edits before create/update. Throw <see cref="FormsValidationException"/> on failure.
+    /// </summary>
+    protected virtual Task ValidateTableEdit(TableDefinitionEdit edit) => Task.CompletedTask;
+
     public async Task<Guid> CreateTable(TableDefinitionEdit edit)
     {
+        await ValidateTableEdit(edit);
         var table = new TTableDef
         {
             Id = Guid.NewGuid(),
@@ -83,6 +96,7 @@ public partial class FormsContext<
 
     public async Task EditTable(Guid tableId, TableDefinitionEdit edit)
     {
+        await ValidateTableEdit(edit);
         var table = await TableDefinitions
             .Where(x => x.Id == tableId)
             .SingleOrDefaultAsync();

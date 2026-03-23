@@ -59,6 +59,9 @@ public static class FormsEndpoints
         formGroup.MapPut("{formId}", async Task (TContext ctx, Guid formId, [FromBody] FormDefinitionEdit edit) =>
             await ctx.EditForm(formId, edit)).WithName("EditForm");
 
+        formGroup.MapGet("lookup/{formName}", async (TContext ctx, string formName) =>
+            await ctx.LookupForm(formName)).WithName("LookupForm");
+
         formGroup.MapDelete("{formId}", async (TContext ctx, Guid formId) =>
             await ctx.DeleteForm(formId)).WithName("DeleteForm");
     }
@@ -79,6 +82,9 @@ public static class FormsEndpoints
 
         tableGroup.MapPut("{tableId}", async Task (TContext ctx, Guid tableId, [FromBody] TableDefinitionEdit edit) =>
             await ctx.EditTable(tableId, edit)).WithName("EditTable");
+
+        tableGroup.MapGet("lookup/{tableName}", async (TContext ctx, string tableName) =>
+            await ctx.LookupTable(tableName)).WithName("LookupTable");
 
         tableGroup.MapDelete("{tableId}", async (TContext ctx, Guid tableId) =>
             await ctx.DeleteTable(tableId)).WithName("DeleteTable");
