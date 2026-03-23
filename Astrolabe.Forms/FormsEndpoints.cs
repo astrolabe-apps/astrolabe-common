@@ -50,6 +50,15 @@ public static class FormsEndpoints
         formGroup.MapGet("{formId}/forRender", async (TContext ctx, Guid formId) =>
             await ctx.GetFormAndSchemas(formId)).AllowAnonymous().WithName("GetFormForRender");
 
+        formGroup.MapGet("{formId}/edit", async (TContext ctx, Guid formId) =>
+            await ctx.GetFormEdit(formId)).WithName("GetForm");
+
+        formGroup.MapPost("", async Task<Guid> (TContext ctx, [FromBody] FormDefinitionEdit edit) =>
+            await ctx.CreateForm(edit)).WithName("CreateForm");
+
+        formGroup.MapPut("{formId}", async Task (TContext ctx, Guid formId, [FromBody] FormDefinitionEdit edit) =>
+            await ctx.EditForm(formId, edit)).WithName("EditForm");
+
         formGroup.MapDelete("{formId}", async (TContext ctx, Guid formId) =>
             await ctx.DeleteForm(formId)).WithName("DeleteForm");
     }
@@ -64,6 +73,12 @@ public static class FormsEndpoints
 
         tableGroup.MapGet("{tableId}", async (TContext ctx, Guid tableId) =>
             await ctx.GetTable(tableId)).WithName("GetTable");
+
+        tableGroup.MapPost("", async Task<Guid> (TContext ctx, [FromBody] TableDefinitionEdit edit) =>
+            await ctx.CreateTable(edit)).WithName("CreateTable");
+
+        tableGroup.MapPut("{tableId}", async Task (TContext ctx, Guid tableId, [FromBody] TableDefinitionEdit edit) =>
+            await ctx.EditTable(tableId, edit)).WithName("EditTable");
 
         tableGroup.MapDelete("{tableId}", async (TContext ctx, Guid tableId) =>
             await ctx.DeleteTable(tableId)).WithName("DeleteTable");

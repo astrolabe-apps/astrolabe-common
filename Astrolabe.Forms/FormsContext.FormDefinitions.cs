@@ -52,6 +52,62 @@ public partial class FormsContext<
     /// </summary>
     protected virtual object? GetFormConfig(TFormDef formDef) => null;
 
+    /// <summary>
+    /// Override to apply form-specific config to the entity.
+    /// </summary>
+    protected virtual void SetFormConfig(TFormDef formDef, FormConfig config) { }
+
+    public async Task<FormDefinitionEdit> GetFormEdit(Guid formId)
+    {
+        var form = await FormDefinitions
+            .Where(x => x.Id == formId)
+            .AsNoTracking()
+            .SingleOrDefaultAsync();
+        NotFoundException.ThrowIfNull(form);
+        return new FormDefinitionEdit(
+            form.ShortId!,
+            form.Name!,
+            form.GroupId!,
+            form.TableId,
+            DbJson.FromJson<IEnumerable<object>>(form.Definition),
+            (FormConfig)(GetFormConfig(form) ?? new FormConfig())
+        );
+    }
+
+    public async Task<Guid> CreateForm(FormDefinitionEdit edit)
+    {
+        var form = new TFormDef
+        {
+            Id = Guid.NewGuid(),
+            ShortId = edit.ShortId,
+            Name = edit.Name,
+            GroupId = edit.GroupId,
+            TableId = edit.TableId,
+            Definition = DbJson.ToJson(edit.Controls),
+            Version = 1,
+        };
+        SetFormConfig(form, edit.Config);
+        FormDefinitions.Add(form);
+        await SaveChanges();
+        return form.Id;
+    }
+
+    public async Task EditForm(Guid formId, FormDefinitionEdit edit)
+    {
+        var form = await FormDefinitions
+            .Where(x => x.Id == formId)
+            .Include(x => x.Table)
+            .SingleOrDefaultAsync();
+        NotFoundException.ThrowIfNull(form);
+        form.ShortId = edit.ShortId;
+        form.Name = edit.Name;
+        form.GroupId = edit.GroupId;
+        form.TableId = edit.TableId;
+        form.Definition = DbJson.ToJson(edit.Controls);
+        SetFormConfig(form, edit.Config);
+        await SaveChanges();
+    }
+
     public async Task DeleteForm(Guid id)
     {
         var form = await FormDefinitions.FirstOrDefaultAsync(x => x.Id == id);

@@ -64,6 +64,38 @@ public partial class FormsContext<
         return await TableDefinitions.Where(x => x.Id == tableId).SingleOrDefaultAsync();
     }
 
+    public async Task<Guid> CreateTable(TableDefinitionEdit edit)
+    {
+        var table = new TTableDef
+        {
+            Id = Guid.NewGuid(),
+            ShortId = edit.ShortId,
+            Name = edit.Name,
+            GroupId = edit.GroupId,
+            NameField = edit.NameField,
+            Fields = DbJson.ToJson(edit.Fields),
+            Updated = DateTime.UtcNow,
+        };
+        TableDefinitions.Add(table);
+        await SaveChanges();
+        return table.Id;
+    }
+
+    public async Task EditTable(Guid tableId, TableDefinitionEdit edit)
+    {
+        var table = await TableDefinitions
+            .Where(x => x.Id == tableId)
+            .SingleOrDefaultAsync();
+        NotFoundException.ThrowIfNull(table);
+        table.ShortId = edit.ShortId;
+        table.Name = edit.Name;
+        table.GroupId = edit.GroupId;
+        table.NameField = edit.NameField;
+        table.Fields = DbJson.ToJson(edit.Fields);
+        table.Updated = DateTime.UtcNow;
+        await SaveChanges();
+    }
+
     public async Task DeleteTable(Guid tableId)
     {
         var table = await TableDefinitions.Where(x => x.Id == tableId).SingleOrDefaultAsync();

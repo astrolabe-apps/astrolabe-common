@@ -16,11 +16,16 @@ public interface IFormsContext
     // Form Definitions
     Task<IEnumerable<FormInfo>> ListForms(bool? forPublic = null, bool? published = null);
     Task<FormAndSchemas> GetFormAndSchemas(Guid formId);
+    Task<FormDefinitionEdit> GetFormEdit(Guid formId);
+    Task<Guid> CreateForm(FormDefinitionEdit edit);
+    Task EditForm(Guid formId, FormDefinitionEdit edit);
     Task DeleteForm(Guid id);
 
     // Table Definitions
     Task<IEnumerable<ScopedNameId>> ListTables();
     Task<TableDefinitionEdit> GetTable(Guid tableId);
+    Task<Guid> CreateTable(TableDefinitionEdit edit);
+    Task EditTable(Guid tableId, TableDefinitionEdit edit);
     Task DeleteTable(Guid tableId);
 
     // Items — search
