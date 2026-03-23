@@ -60,6 +60,8 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - `update(cb)` — creates WriteContextImpl, calls cb, flushes
 - `buildChildFactory(setup, equals)` — recursive factory that creates children with correct sub-setup
 - `initControl(control, setup)` — validator subscription, eager creation, meta, afterCreate
+- `registerTracker(reconciler)` — adds to active set, cancels any pending deferred cleanup
+- `unregisterTracker(reconciler)` — removes from active set, schedules `queueMicrotask` cleanup; if re-registered before microtask fires (React strict mode), cleanup is cancelled
 
 ### 7. `src/lib/controlsImpl.tsx`
 - `ControlContextReact` — React.createContext for ControlContext
@@ -68,9 +70,9 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
   1. Get ControlContext from React context
   2. useRef for TrackingReadContext + SubscriptionReconciler
   3. Reset tracker, call render with `(props, { rc, update, controlContext })`
-  4. After return, reconcile subscriptions with forceRender listener
-  5. useEffect cleanup
-  6. Wrapped in React.memo
+  4. After return, **always reconcile subscriptions** (during render, not in effect)
+  5. `useEffect` registers reconciler via `controlContext.registerTracker()`; cleanup calls `controlContext.unregisterTracker()`
+  6. Not wrapped in React.memo — Controls are stable mutable references, so shallow prop comparison can't determine re-render need
 
 ### 8. Update `src/app/page.tsx`
 - Import from implementation files instead of type specs
@@ -85,6 +87,8 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - **Tree-level equality**: Equality function accessed via `_controlContext` rather than stored separately on each control
 - **Validator init**: Run immediately with `noopNotify`, then subscribe for `Value | Validate`
 - **`noopNotify`**: Used during init when no subscribers exist
+- **Deferred tracker cleanup**: `ControlContext` defers subscription cleanup via `queueMicrotask` on unregister. Re-registering before the microtask cancels cleanup (React strict mode safe)
+- **No React.memo**: Components re-render via subscriptions, not prop identity changes. Controls are stable mutable references whose identity doesn't reflect value changes
 
 ## Verification
 

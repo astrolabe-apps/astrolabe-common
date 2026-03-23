@@ -192,6 +192,12 @@ export interface ControlContext {
   // (for reactive dependency tracking during renders/effects) is planned
   // but the exact API is TBD.
 
+  /** Register a tracker for deferred cleanup on unmount */
+  registerTracker(tracker: { cleanup(): void }): void;
+
+  /** Unregister a tracker; cleanup is deferred via queueMicrotask (cancelled if re-registered) */
+  unregisterTracker(tracker: { cleanup(): void }): void;
+
   /** The equality function used for value comparison across this tree */
   readonly equals: (a: unknown, b: unknown) => boolean;
 }
