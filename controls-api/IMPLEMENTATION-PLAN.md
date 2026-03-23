@@ -20,7 +20,7 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 ### 3. `src/lib/controlImpl.ts` — **the core**
 `ControlImpl` class implementing `Control<V>`. Single flat class (no ControlLogic hierarchy).
 
-**Internal state**: `_value`, `_initialValue`, `_flags` (bitmask), `_errors`, `_fields` (lazy Record), `_elems` (lazy array), `_parents` (ParentLink[]), `_subscriptions` (lazy), `_cleanups`, `uniqueId`, `meta`, `_equals` (from context)
+**Internal state**: `_value`, `_initialValue`, `_flags` (bitmask), `_errors`, `_fields` (lazy Record), `_elems` (lazy array), `_parents` (ParentLink[]), `_subscriptions` (lazy), `uniqueId`, `meta`, `_controlContext`
 
 **Key internal types**:
 - `NotifyFn = (control: ControlImpl) => void`
@@ -41,7 +41,7 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - `syncElementsOnValueChange(notify)` — reuse/create/trim existing elements
 - `syncElementsOnInitialValueChange(notify)` — update initialValue, re-key origKey
 
-**Other**: `isDirty()`, `isValid()`, `getChangeState(mask)`, `runListeners(wc)`, `subscribe/unsubscribe`, `cleanup`, `validate`
+**Other**: `isDirty()`, `isValid()`, `getChangeState(mask)`, `runListeners(wc)`, `subscribe/unsubscribe`, `validate`
 
 ### 4. `src/lib/writeContextImpl.ts`
 - `WriteContextImpl` with `pending: Set<ControlImpl>`, `afterChangesCbs`, `notify: NotifyFn`
@@ -82,7 +82,7 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - **No globals**: All state on ControlImpl instances and transient WriteContext
 - **NotifyFn pattern**: Mutations don't manage transactions — they call `notify(this)`, caller controls batching
 - **Single class**: No ControlLogic/ObjectLogic/ArrayLogic hierarchy — fields and elements coexist
-- **Tree-level equality**: `_equals` stored on each ControlImpl, passed from ControlContext during creation
+- **Tree-level equality**: Equality function accessed via `_controlContext` rather than stored separately on each control
 - **Validator init**: Run immediately with `noopNotify`, then subscribe for `Value | Validate`
 - **`noopNotify`**: Used during init when no subscribers exist
 

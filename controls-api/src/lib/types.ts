@@ -100,10 +100,6 @@ export interface Control<V> {
 
   // Metadata
   meta: Record<string, unknown>;
-
-  // Cleanup
-  cleanup(): void;
-  addCleanup(cb: () => void): void;
 }
 
 export type ControlValue<C> = C extends Control<infer V> ? V : never;

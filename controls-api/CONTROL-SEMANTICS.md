@@ -243,13 +243,13 @@ When set, value changes (section B step 3) do NOT auto-clear errors. This preven
 
 This is how validators that were set up during init get re-triggered on demand (e.g. a "Validate" button). The `Validate` change flag is separate from `Value` — it lets validators distinguish between "value changed" and "explicit validation requested".
 
-## L. Cleanup `[core]`
+## L. Cleanup `[core]` — candidate for removal
 
-`cleanup()`:
-1. Run registered cleanup callbacks
-2. For each existing child: cleanup only if child has exactly 1 parent (shared children survive)
+> **Note:** The existing `@react-typed-forms/core` library has `cleanup()` and `addCleanup()` on controls, but we should probably remove them from the new API. Controls are long-lived and tied to the component tree via React's own lifecycle (`useEffect` cleanup in `controls()` already handles unsubscribing). Explicit cleanup on the control itself adds unnecessary complexity at this stage. Removing it would be a breaking change from the existing library.
 
-Parent links removed via `updateParentLink(parent, undefined)` — filters the entry from the child's parents array.
+Previous semantics (for reference):
+- `cleanup()`: run registered cleanup callbacks, then recurse into children that have exactly 1 parent (shared children survive)
+- Parent links removed via `updateParentLink(parent, undefined)`
 
 ## M. Subscription Mechanics `[core]`
 
@@ -404,7 +404,7 @@ Hooks (`useControl`, `useComputed`, `useControlEffect`, `useValidator`, etc.), f
 4. Disabled/Touched inherited at creation + cascade down on set
 5. Validity propagates upward; isValid() lazily recomputes via childrenValid()
 6. Transactions batch listener notifications to outermost boundary
-7. Cleanup is conditional on single-parent children
+7. ~~Cleanup is conditional on single-parent children~~ (candidate for removal — see section L)
 8. Errors stored as `Record<string, string> | undefined` — never an empty object
 9. `isNull` uses loose equality (`== null`) — both null and undefined are "null"
 10. Transaction errors are caught and logged, never thrown — the drain loop always completes
