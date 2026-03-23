@@ -2,6 +2,16 @@
 
 Reference document for clean-room implementation. Extracted from `astrolabe-controls` source.
 
+## Implementation Split
+
+Each section is tagged to indicate where it lives:
+
+- **`[core]`** — Implemented in `@astroapps/controls`. No globals, no React dependency. `ControlContext` is the central object providing `newControl()`, `update()`, read context creation, and tree-level configuration (equality). Mutations go through `WriteContext` (which uses `NotifyFn` internally). Reads are snapshot-only (`*Now` properties) or via `ReadContext`.
+- **`[react]`** — Implemented in `@astroapps/controls-react`. Clean React adapter. Contains only the `controls()` wrapper that bridges core's `ReadContext`/`WriteContext` to React's render lifecycle. Depends on `[core]` but NOT `[patch]`.
+- **`[patch]`** — Implemented by `@react-typed-forms/core` monkey-patching `Control`. Adds reactive property getters (`.value`, `.touched`, etc.) with implicit `collectChange` tracking, direct mutation methods on `Control` (`.setValue()`, `.setError()`, etc.), global transaction machinery (`runTransaction`, `groupedChanges`, `runPendingChanges`), all existing hooks, and form components.
+
+The `[patch]` package may optionally depend on `[react]` to reuse clean React primitives (e.g. `controls()`), but `[react]` does NOT depend on `[patch]`. Both can coexist on the same control tree. The underlying **semantics** are identical — the patch and the react adapter are alternative entry points to the same core operations.
+
 ## Tree Structure
 
 A control tree is a hierarchy of nodes. Each node holds:
@@ -14,16 +24,25 @@ A control tree is a hierarchy of nodes. Each node holds:
 
 Children are created lazily on first access. A control may have multiple parents (shared children).
 
-## A. Value Propagation (Downward)
+## A. Value Equality `[core]`
+
+Equality checks use a deep equals by default:
+- `null`/`undefined`: `a == null ? a === b` (both null and undefined are "null")
+- Objects: constructor must match, then recursive deep equals on entries
+- Special handling for `Map`, `Set`, arrays, and NaN (`a !== a && b !== b`)
+
+Equality is configured at the tree level via `ControlContext` (not per-control). All controls created by a context share the same equality function. `@react-typed-forms/core` provides a default context with `deepEquals` behind its standalone `newControl()` function.
+
+## B. Value Propagation (Downward) `[core]`
 
 When a parent's value is set:
 
-1. Equality check — if equal (deep or custom), stop
+1. Equality check — if equal, stop
 2. Store new value
-3. If not DontClearError, clear own errors
+3. If not DontClearError, clear own errors (via `setErrors(null)`)
 4. **Sync existing fields down**: for each already-created field `k`, set `child.value = parentValue[k]` (with `from=parent` to prevent upward bounce)
 5. **Sync existing elements down**: reuse/create/trim element children to match new array length. Existing children get their values updated. New children are created. Surplus children are detached.
-6. Propagate to parents (upward, see B)
+6. Propagate to parents (upward, see C)
 7. Notify subscribers: Value change (+ Structure if null transition)
 
 **Structure change**: flagged when value transitions between null/non-null, or when array length changes.
@@ -32,7 +51,23 @@ When a parent's value is set:
 
 **Null parent materialisation**: Accessing a field on a null parent lazily creates a child with `undefined` value — this is construction only, no upward propagation occurs, and the parent stays null. When a child's value is actually *set* to something new, `childValueChange` fires. Upward propagation shallow-copies the parent via `copy()`, which creates `{}` (or `[]` for arrays) when the parent is null, then inserts *only the changed child's key*. Other lazily-created children with `undefined` values do NOT appear as keys in the parent — `copy()` copies from the parent's value, not from the set of existing children. Example: access `fields.a` and `fields.b` on a null parent, then set A to `"hello"` → parent becomes `{ a: "hello" }` (no `b` key). Setting B to `"world"` later → parent becomes `{ a: "hello", b: "world" }`.
 
-## B. Value Propagation (Upward)
+### isNull
+
+`isNull` uses `== null` (loose equality), so both `null` and `undefined` are considered null. Tracked as a Structure change for subscription purposes.
+
+### markAsClean `[core]`
+
+Sets `initialValue = value` via the normal initialValue propagation path. This makes `dirty` false for the control and propagates the new initialValue down to existing children.
+
+### setValue callback form `[patch]`
+
+`setValue(cb)` calls `cb(current.value)` synchronously and uses the return value as the new value. The callback runs before any transaction — it's just a convenience for read-modify-write.
+
+### setValueAndInitial `[patch]`
+
+Batched in a single `groupedChanges` transaction — both value and initialValue are set together, subscribers notified once after both complete.
+
+## C. Value Propagation (Upward) `[core]`
 
 When a child's value changes:
 
@@ -45,7 +80,7 @@ When a child's value changes:
 - `from` parameter: child skips the parent that triggered it
 - Equality check: when parent pushes the same value back to the originating child, the equality check at the top exits early
 
-## C. Initial Value Propagation
+## D. Initial Value Propagation `[core]`
 
 **Downward only** — no upward propagation.
 
@@ -58,7 +93,7 @@ When initialValue is set:
 
 Dirty = `!isEqual(value, initialValue)`. Dirty change detection is computed lazily by `getChangeState()` during listener notification.
 
-## D. Field Creation (Lazy)
+## E. Field Creation (Lazy) `[core]`
 
 On `control.fields.someField` (first access):
 
@@ -70,7 +105,7 @@ On `control.fields.someField` (first access):
 6. Run init (validators, eager sub-fields, afterCreate)
 7. Cache in fields map
 
-## E. Element Creation and Sync
+## F. Element Creation and Sync `[core]`
 
 ### First access
 
@@ -107,7 +142,7 @@ Reuses existing children by index:
 - `key`: current index (updated on reorder)
 - `origKey`: index when element was part of initial value (set when `initial=true`)
 
-## F. Touched/Disabled Propagation
+## G. Touched/Disabled Propagation `[core]`
 
 **Cascade downward by default.** `notChildren` parameter opts out.
 
@@ -116,13 +151,13 @@ Reuses existing children by index:
 
 **At child creation**: Disabled and Touched flags inherited from parent. ChildInvalid and DontClearError are NOT inherited.
 
-## G. Error/Validity Propagation
+## H. Error/Validity Propagation `[core]`
 
 ### Setting errors
 
-- `setError(key, error)`: set/remove a single keyed error, propagate validity if error-presence changes
-- `setErrors(errors)`: bulk replace, propagate validity if changed
-- `clearErrors()`: recurse to all existing children first, then clear own errors
+- `setError(key, error)`: set/remove a single keyed error. Early return if value unchanged. When removing the last error, `_errors` becomes `undefined` (not empty object). Propagates validity upward only if error *presence* changes (had errors → no errors, or vice versa), not on every error value change.
+- `setErrors(errors)`: bulk replace. Filters out null/undefined values from the input. Compares via deepEquals against current errors — only propagates if the resulting error object actually changed. `null`/empty input results in `undefined` errors (not empty object).
+- `clearErrors()`: recurse to all existing children first, then clear own errors via `setErrors(null)`
 
 ### Validity propagation (upward)
 
@@ -141,36 +176,44 @@ When a child's error presence changes (had errors -> no errors, or vice versa):
 
 **Note**: Only checks existing (already-created) children. Uncreated fields with validators aren't considered until accessed.
 
-## H. Transaction Batching
+## I. Transaction Batching
 
-**Purpose**: defer subscriber notifications until all mutations in a batch complete.
+Batching exists in two forms with identical semantics:
 
-### runTransaction(control, fn)
+### Core batching (`WriteContext`) `[core]`
 
-1. Increment transaction count
-2. Run mutation callback
+`WriteContext` owns a `pending: Set<ControlImpl>` and a `NotifyFn` callback. Mutations on `ControlImpl` accept `NotifyFn` — when a mutation causes a change, it calls `notify(this)` to add itself to the pending set. After the callback completes, `WriteContext.flush()` drains the pending set, running listeners. Listeners may cause further mutations (via the same `WriteContext`), adding more controls to the pending set — the drain loop continues until settled. `afterChanges` callbacks run after all listeners have drained.
+
+No global state. Each `ControlContext.update()` call creates a fresh `WriteContext`. This is also what `@astroapps/controls-react`'s `controls()` wrapper uses — the `update` function passed to components calls `ControlContext.update()` directly.
+
+### Global batching (`runTransaction` / `groupedChanges`) `[patch]`
+
+The monkey patch adds module-level transaction state for the legacy API:
+
+**runTransaction(control, fn)**:
+1. Increment global transaction count
+2. Run mutation callback — **errors are caught, logged to console, and execution continues** (does not throw)
 3. If nested (count > 1): queue control for later listener run
 4. If outermost (count = 1): run listeners now (fast path if only this control) or drain queue
 
-### groupedChanges(fn)
+**groupedChanges(fn)**: Increment count, run callback, decrement, drain. Individual mutations inside handle their own queueing.
 
-Increment count, run callback, decrement, drain. Individual mutations inside handle their own queueing.
-
-### Drain loop (runPendingChanges)
-
+**Drain loop (runPendingChanges)**:
 While count=0 and items pending:
 1. Enter temp transaction (count=1) to prevent re-entrance
 2. Priority: run queued listeners before afterChanges callbacks
 3. Snapshot queue, clear it, run all
 4. Loop continues if running listeners queued new items
 
-## I. Control Setup (Validators)
+**afterChanges callbacks**: A separate queue of callbacks that run after all listener notifications have drained. Listeners always have priority — afterChanges callbacks only run when the listener queue is empty.
 
-During init (`attach` / `initControl`):
+## J. Control Setup (Validators) `[core]`
+
+During init (`attach` / `initControl`), in this order:
 
 1. **Validator**: if configured:
-   - Run immediately (validate initial value)
-   - Subscribe to Value | Validate changes for re-running
+   - Run immediately (validate initial value), error stored under key `"default"`
+   - Subscribe to `Value | Validate` changes for re-running
    - Set DontClearError flag (value changes don't auto-clear validator errors)
 
 2. **Eager field creation**: for any field with a validator, create it now (triggers the field's own validator)
@@ -179,9 +222,17 @@ During init (`attach` / `initControl`):
 
 4. **Meta**: copy metadata from setup
 
-5. **afterCreate**: run user callback
+5. **afterCreate**: run user callback (runs after all other setup)
 
-## J. Validate
+### DontClearError flag
+
+Can be set two ways:
+- Automatically when a validator is configured (see above)
+- Explicitly via `ControlSetup.dontClearError` option
+
+When set, value changes (section B step 3) do NOT auto-clear errors. This prevents validators from losing their error state when the value changes — the validator re-runs via its subscription and sets the appropriate error.
+
+## K. Validate `[core]`
 
 `validate()` — imperatively triggers all validators in the subtree.
 
@@ -192,13 +243,158 @@ During init (`attach` / `initControl`):
 
 This is how validators that were set up during init get re-triggered on demand (e.g. a "Validate" button). The `Validate` change flag is separate from `Value` — it lets validators distinguish between "value changed" and "explicit validation requested".
 
-## K. Cleanup
+## L. Cleanup `[core]`
 
 `cleanup()`:
 1. Run registered cleanup callbacks
 2. For each existing child: cleanup only if child has exactly 1 parent (shared children survive)
 
 Parent links removed via `updateParentLink(parent, undefined)` — filters the entry from the child's parents array.
+
+## M. Subscription Mechanics `[core]`
+
+### Bitmask-based change detection
+
+Each `Subscription` has a `mask` (which `ControlChange` flags it cares about) and a stored `changeState` (the last-seen state when the listener was notified or subscribed).
+
+Changes fall into two categories:
+
+1. **Flag-based changes** (Dirty, Valid, Touched, Disabled): detected at flush time by recomputing current boolean state via `getChangeState()` and XORing against the stored `changeState`. Only bits that actually flipped trigger listeners. This handles cases like dirty→clean→dirty within a batch (net no change, no notification).
+
+2. **Event-style changes** (Value, InitialValue, Error, Structure): cannot be derived from current state alone. Mutations call `applyChange(change)` directly to set bits in `changeState`. At flush time, `runListeners()` picks these up via the same XOR mechanism.
+
+### Subscribe
+
+On `subscribe(listener, mask)`:
+1. Lazily creates the `Subscriptions` object if this is the first subscription
+2. Computes current state for flag-based changes via `getChangeState(mask)`
+3. Stores this as the subscription's initial `changeState` so the first notification only fires on actual changes
+
+### Property access tracking (collectChange) `[patch]`
+
+The monkey patch adds reactive property getters to `Control` (`.value`, `.touched`, `.dirty`, `.disabled`, `.valid`, `.error`, `.errors`, `.elements`, `.isNull`). Each getter calls a global `collectChange?.(this, ControlChange.XXX)` before returning the snapshot value. This is how implicit dependency tracking works — the change collector records which `(control, changeFlag)` pairs were accessed during a render or effect.
+
+The core library has NO `collectChange` — its `*Now` properties return snapshot values without side effects. The `ReadContext` handles explicit dependency tracking instead (see FUTURE-API-DESIGN.md).
+
+### Explicit dependency tracking (tracking `ReadContext`) `[core]` used by `[react]`
+
+`@astroapps/controls-react`'s `controls()` wrapper creates a tracking `ReadContext` per component instance. During render, each `rc.getValue(control)`, `rc.isDirty(control)`, etc. call records the `(control, ControlChange flag)` pair. After the render function returns, the tracked set is diffed against the previous subscription set and `subscribe`/`unsubscribe` are called to reconcile. On unmount, all subscriptions are cleaned up.
+
+This is the explicit equivalent of `[patch]`'s `collectChange` global — same subscription primitives underneath, but scoped to a single component's tracking read context instead of a module-level variable. The exact implementation mechanism (e.g. a `SubscriptionTracker` class) is TBD.
+
+## N. Array Mutation APIs `[core]`
+
+### updateElements(control, cb)
+
+The primary array mutation API. Takes a callback that receives the current element controls and returns the new element list:
+
+1. Call `cb(oldElements)` to get new element list
+2. Identify detached elements (in old but not in new)
+3. Re-key all new elements to their new indices
+4. Detach removed elements (clear parent link)
+5. Clear ChildInvalid flag, propagate validity
+6. Reconstruct parent value from element values
+7. Signal Structure change
+8. Return the detached elements
+
+### addElement(control, value, index?)
+
+Creates a new child element and inserts it at the given index (or appends if no index). Delegates to `updateElements` internally.
+
+### newElement(control, value)
+
+Creates a child control with the given value (value and initialValue both set to it) but does NOT add it to the parent. Used to create elements that are later added via `updateElements`.
+
+## O. Utility APIs `[core]`
+
+### lookupControl(path)
+
+Traverses the control tree given an array of `(string | number)` path segments. Strings are treated as field keys, numbers as element indices. Returns `undefined` if any segment fails to resolve.
+
+### controlGroup(fields)
+
+Creates a parent control from a map of `{ fieldName: Control }`. The parent's value is constructed from the children's values. Uses `setFields` internally.
+
+### setFields(control, fields)
+
+Merges new field controls into an existing control. Detaches all existing fields, attaches the new ones, then reconstructs the parent value and initialValue from the field values via `setValueAndInitial`.
+
+## P. Monkey Patch Surface `[patch]`
+
+Summary of everything `@react-typed-forms/core` adds to `Control`:
+
+### Reactive property getters (read + track)
+
+Added to `Control.prototype`. Each calls `collectChange?.(this, flag)` then returns the snapshot value:
+- `.value` → `ControlChange.Value`
+- `.initialValue` → `ControlChange.InitialValue`
+- `.dirty` → `ControlChange.Dirty`
+- `.touched` → `ControlChange.Touched`
+- `.disabled` → `ControlChange.Disabled`
+- `.valid` → `ControlChange.Valid`
+- `.error` → `ControlChange.Error`
+- `.errors` → `ControlChange.Error`
+- `.elements` → `ControlChange.Structure`
+- `.isNull` → `ControlChange.Structure`
+
+### Property setters (write + transact)
+
+- `.value = v` → `runTransaction(this, () => setValueImpl(v))`
+- `.initialValue = v` → `runTransaction(this, () => setInitialValueImpl(v))`
+- `.touched = b` → delegates to `setTouched(b)`
+- `.disabled = b` → delegates to `setDisabled(b)`
+- `.error = s` → delegates to `setError("default", s)`
+
+### Direct mutation methods on Control
+
+These wrap the core `ControlImpl` mutations with `runTransaction`:
+- `setValue(cb)` — read-modify-write convenience
+- `setValueAndInitial(v, iv)` — batched via `groupedChanges`
+- `setInitialValue(v)`
+- `setTouched(touched, notChildren?)`
+- `setDisabled(disabled, notChildren?)`
+- `setError(key, error?)`
+- `setErrors(errors?)`
+- `clearErrors()`
+- `markAsClean()`
+
+### `.current` property
+
+Returns a `ControlProperties<V>` snapshot — same values as the `*Now` properties but through the legacy interface. Non-reactive (no `collectChange` call).
+
+### Global functions
+
+- `setChangeCollector(fn)` — set/clear the global change collector
+- `runTransaction(control, fn)` — global batched mutation
+- `groupedChanges(fn)` — batch multiple mutations
+- `runPendingChanges()` — force drain the notification queue
+- `addAfterChangesCallback(fn)` — queue a callback for after listeners settle
+- `unsafeFreezeCountEdit(dir)` — directly manipulate transaction count (used by React render tracking)
+
+## Q. Clean React Adapter Surface `[react]`
+
+`@astroapps/controls-react` is intentionally minimal — just the React render lifecycle bridge:
+
+### `controls(render)` / `controls(name, render)`
+
+Wraps a render function with explicit `ReadContext`/`WriteContext` injection:
+
+1. Gets `ControlContext` from React context
+2. Creates a tracking `ReadContext` per component instance
+3. On each render, calls the render function with `(props, { rc, update, controlContext })`
+4. After the function returns, reconciles subscriptions
+5. On unmount, cleans up all subscriptions
+6. Component is wrapped with `React.memo`
+
+### Types
+
+- `UpdateFn` — `(cb: (wc: WriteContext) => void) => void`
+- `ControlsContext` — `{ rc: ReadContext; update: UpdateFn; controlContext: ControlContext }`
+- `ControlsRender<P>` — `(props: P, ctx: ControlsContext) => ReactNode`
+
+### What's NOT here (yet)
+
+Hooks (`useControl`, `useComputed`, `useControlEffect`, `useValidator`, etc.), form components (`Finput`, `Fcheckbox`, `Fselect`), and render helpers (`RenderOptional`, `RenderElements`) remain in `@react-typed-forms/core` for now. The `controls()` pattern may enable a better API than hooks in future.
 
 ## Key Invariants
 
@@ -209,3 +405,6 @@ Parent links removed via `updateParentLink(parent, undefined)` — filters the e
 5. Validity propagates upward; isValid() lazily recomputes via childrenValid()
 6. Transactions batch listener notifications to outermost boundary
 7. Cleanup is conditional on single-parent children
+8. Errors stored as `Record<string, string> | undefined` — never an empty object
+9. `isNull` uses loose equality (`== null`) — both null and undefined are "null"
+10. Transaction errors are caught and logged, never thrown — the drain loop always completes

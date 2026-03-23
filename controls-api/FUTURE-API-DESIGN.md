@@ -14,6 +14,56 @@ This document captures a proposed future direction for `@astroapps/controls` tha
 - **C# portability** — the design maps cleanly to C# interfaces without proxy/getter magic
 - **React-agnostic core** — the core library (`Control`, `ReadContext`, `WriteContext`, subscription management) must have zero React dependency. React integration (`controls()` wrapper, hooks) lives in a separate layer that consumes well-defined primitives from the core. This enables use in Node/server contexts, testing without jsdom, and future framework adapters (Solid, Svelte, etc.)
 
+## Package Architecture
+
+Three independent packages with a shared core:
+
+```
+@astroapps/controls              (core, no React, no globals)
+       ^                                ^
+       |                                |
+       |                     @astroapps/controls-react
+       |                        (clean React adapter)
+       |                        (depends on controls + react)
+       |                                ^
+       |                                | (optional)
+       +------- @react-typed-forms/core -+
+                (legacy compat, monkey-patch)
+                (depends on controls + react, optionally controls-react)
+```
+
+`@react-typed-forms/core` may depend on `@astroapps/controls-react` to reuse clean React primitives (e.g. `controls()`) alongside its legacy API. Both packages can coexist on the same control tree because they share the same underlying `@astroapps/controls` subscription mechanism.
+
+### `@astroapps/controls` (core)
+
+Pure TypeScript, no React, no globals. Contains:
+- `Control<V>` with `*Now` snapshot reads
+- `ReadContext` / `WriteContext` interfaces
+- `ControlContext` — tree-level configuration and factory for all core operations (see "ControlContext" below)
+- `SubscriptionTracker`, subscription bitmask system (`ControlChange`, `Subscription`)
+- All tree semantics (value propagation, lazy children, validity, etc.)
+
+### `@astroapps/controls-react` (clean React adapter)
+
+Thin React adapter. Currently contains only the `controls()` wrapper, which provides a `ControlsContext` (with `rc: ReadContext`, `update: UpdateFn`, and `controlContext: ControlContext`) as the second argument to the render function. The `ControlContext` is obtained from React context. No globals, no build plugins required.
+
+Depends on `@astroapps/controls` + `react`.
+
+Hooks and form components remain in `@react-typed-forms/core` for now — the `controls()` pattern may enable a better API than hooks in future.
+
+### `@react-typed-forms/core` (legacy compatibility)
+
+Monkey-patches `@astroapps/controls` to add the implicit-reactivity API. Contains:
+- Reactive property getters/setters (`.value`, `.touched`, etc.) with global `collectChange` tracking
+- Direct mutation methods on `Control`
+- Global transaction machinery (`runTransaction`, `groupedChanges`, `runPendingChanges`)
+- `newControl()` standalone function — uses a default `ControlContext` instance (with `deepEquals`)
+- `useComponentTracking()` and SWC/Babel plugin support
+- All existing hooks (`useControl`, `useComputed`, `useControlEffect`, `useValidator`, etc.)
+- Form components (`Finput`, `Fcheckbox`, `Fselect`) and render helpers
+
+Re-exports everything from `@astroapps/controls`.
+
 ## Core Concepts
 
 ### Control (read-only data container)
@@ -81,6 +131,7 @@ A `WriteContext` is the counterpart to `ReadContext`. All mutations go through i
 interface WriteContext {
   // Value mutations
   setValue<V>(control: Control<V>, value: V): void
+  updateValue<V>(control: Control<V>, cb: (current: V) => V): void
   setValueAndInitial<V>(control: Control<V>, value: V, initial: V): void
   setInitialValue<V>(control: Control<V>, value: V): void
   markAsClean(control: Control<unknown>): void
@@ -99,7 +150,42 @@ interface WriteContext {
 }
 ```
 
-`WriteContext` is transient — it only exists for the duration of a callback passed to `update()`. This ensures mutations are always batched and subscribers only run after all writes in a batch are complete.
+`WriteContext` is transient — it only exists for the duration of a callback passed to `ControlContext.update()`. This ensures mutations are always batched and subscribers only run after all writes in a batch are complete.
+
+### ControlContext (tree-level configuration and factory)
+
+`ControlContext` is the central object in the core — it holds tree-level configuration and provides factory methods for creating controls, read contexts, and write contexts. There are no standalone `newControl()` or `update()` functions in the core; everything goes through a context:
+
+```typescript
+interface ControlContext {
+  // Control creation
+  newControl<V>(value: V, setup?: ControlSetup<V>): Control<V>
+
+  // Write batching — creates a transient WriteContext, flushes after callback
+  update(cb: (wc: WriteContext) => void): void
+
+  // Read context creation — exact API TBD
+
+  // Configuration
+  readonly equals: (a: unknown, b: unknown) => boolean
+}
+```
+
+Tree-level settings (configured on the context, not per-control):
+- **Equality function** — used for value comparison across the entire tree (default: `deepEquals`)
+
+The core provides `createControlContext(options?)` to create context instances. `@react-typed-forms/core` provides a default context and re-exports standalone convenience functions (`newControl`, `update`, etc.) for backward compatibility:
+
+```typescript
+// Core — explicit context
+const ctx = createControlContext({ equals: deepEquals })
+const control = ctx.newControl({ name: "", age: 0 })
+ctx.update(wc => wc.setValue(control, { name: "Alice", age: 30 }))
+
+// @react-typed-forms/core — convenience, uses default context
+import { newControl, update } from "@react-typed-forms/core"
+const control = newControl({ name: "", age: 0 })
+```
 
 ## Contrast with Current API
 
@@ -113,7 +199,7 @@ interface WriteContext {
 
 ## C# Alignment
 
-All three interfaces map directly to plain C# interfaces — no proxy or getter magic needed:
+All four interfaces map directly to plain C# interfaces — no proxy or getter magic needed:
 
 ```csharp
 interface IControl<T> {
@@ -142,6 +228,7 @@ interface IReadContext {
 
 interface IWriteContext {
     void SetValue<T>(IControl<T> control, T value);
+    void UpdateValue<T>(IControl<T> control, Func<T, T> cb);
     void SetValueAndInitial<T>(IControl<T> control, T value, T initial);
     void SetInitialValue<T>(IControl<T> control, T value);
     void MarkAsClean(IControl control);
@@ -153,16 +240,24 @@ interface IWriteContext {
     IControl<T> AddElement<T>(IControl<IList<T>> control, T child, int? index = null);
     void RemoveElement<T>(IControl<IList<T>> control, IControl<T> child);
 }
+
+interface IControlContext {
+    IControl<T> NewControl<T>(T value);
+    void Update(Action<IWriteContext> cb);
+    // Read context creation — exact API TBD
+}
 ```
 
-## React Integration: `controls()` wrapper
+## React Integration: `controls()` wrapper (`@astroapps/controls-react`)
+
+The `controls()` wrapper, `UpdateFn`, `ControlsContext`, and `ControlsRender` types live in `@astroapps/controls-react`.
 
 ### Decision
 
-Rather than a `useControls()` hook (which can't know when render finishes to finalize dependency tracking) or a Babel plugin (like `@react-typed-forms/transform`), components are wrapped with a `controls()` function that injects `rc` (ReadContext) and `update` (a callback to run writes) as arguments:
+Rather than a `useControls()` hook (which can't know when render finishes to finalize dependency tracking) or a Babel plugin (like `@react-typed-forms/transform`), components are wrapped with a `controls()` function. The render function receives two arguments: the component's own props, and a `ControlsContext` providing `rc` (ReadContext), `update` (write batching), and `controlContext` (the tree-level `ControlContext`):
 
 ```typescript
-const MyForm = controls(function MyForm({ rc, update, name }) {
+const MyForm = controls(function MyForm({ name }, { rc, update }) {
   const value = rc.getValue(name);
   return (
     <input
@@ -173,6 +268,8 @@ const MyForm = controls(function MyForm({ rc, update, name }) {
 });
 ```
 
+The `ControlContext` is obtained from React context (not passed explicitly to `controls()`).
+
 ### Why `controls()` and not a hook
 
 The problem with `const { rc, update } = useControls()` is that the `ReadContext` needs to know when the render function finishes executing so it can finalize the dependency set and subscribe. A hook runs at the top of the component but has no way to know when the return statement is reached. The Babel plugin (`@react-typed-forms/transform`) solved this by injecting try/finally around the component body, but we want to avoid build tooling dependencies.
@@ -182,10 +279,11 @@ The problem with `const { rc, update } = useControls()` is that the `ReadContext
 ### How it works
 
 1. `controls()` returns a `React.memo` component
-2. On each render, it creates/resets a tracking `ReadContext`, calls the inner function
-3. When the function returns, the dep set is complete
-4. Deps are compared to the previous set; subscriptions are updated
-5. When a tracked dependency changes, the component re-renders
+2. The `ControlContext` is obtained from React context
+3. On each render, it creates/resets a tracking `ReadContext`, calls the inner function with `(props, { rc, update, controlContext })`
+4. When the function returns, the dep set is complete
+5. Deps are compared to the previous set; subscriptions are updated
+6. When a tracked dependency changes, the component re-renders
 
 ### Component naming
 
@@ -193,31 +291,38 @@ The problem with `const { rc, update } = useControls()` is that the `ReadContext
 
 ```typescript
 // Named function — displayName inferred from fn.name
-const MyForm = controls(function MyForm({ rc, update }) { ... });
+const MyForm = controls(function MyForm(props, { rc, update }) { ... });
 
 // Explicit string name
-const MyForm = controls("MyForm", ({ rc, update }) => ...);
+const MyForm = controls("MyForm", (props, { rc, update }) => ...);
 
 // Anonymous — works but no displayName
-const MyForm = controls(({ rc, update }) => ...);
+const MyForm = controls((props, { rc, update }) => ...);
 ```
 
-### Passing props
+### Type signatures
 
-Custom props are typed via a generic and merged with the injected `rc`/`update`:
+The render function receives props as the first argument and a `ControlsContext` as the second:
 
 ```typescript
 type UpdateFn = (cb: (wc: WriteContext) => void) => void;
-type ControlsRender<P> = (props: P & { rc: ReadContext; update: UpdateFn }) => ReactNode;
+
+interface ControlsContext {
+  rc: ReadContext;
+  update: UpdateFn;
+  controlContext: ControlContext;
+}
+
+type ControlsRender<P> = (props: P, ctx: ControlsContext) => ReactNode;
 
 function controls<P>(render: ControlsRender<P>): React.FC<P>;
 function controls<P>(name: string, render: ControlsRender<P>): React.FC<P>;
 ```
 
-Parents pass only their own props; `rc` and `update` are injected by the wrapper:
+Parents pass only their own props; `ControlsContext` is injected by the wrapper:
 
 ```typescript
-const MyField = controls<{ label: string }>(function MyField({ rc, update, label }) {
+const MyField = controls<{ label: string }>(function MyField({ label }, { rc, update }) {
   return <label>{label}: ...</label>;
 });
 
@@ -242,18 +347,18 @@ onClick={() => update(wc => {
 })}
 ```
 
-## React-Agnostic Core: Primitives for the React Layer
+## React-Agnostic Core (`@astroapps/controls`): Primitives for Framework Layers
 
-The core library must expose enough primitives that a React (or other framework) layer can build its integration without reaching into internals. Key primitives to define:
+The core library exposes all the primitives needed by framework adapters, with no React import. `ControlContext` is the central object — it provides `newControl()`, `update()`, read context creation, and tree-level configuration. All pure TypeScript with no framework dependency:
 
-- **Subscribe/unsubscribe on Control** — the existing bitmask-based subscription mechanism from `@astroapps/controls` is retained directly on the `Control` interface. This is the low-level primitive that everything else builds on. `ReadContext` implementations use `control.subscribe()` / `control.unsubscribe()` internally to manage their dependency tracking — they are a higher-level abstraction over the subscription API, not a replacement for it.
-- **ReadContext as subscription manager** — a tracking `ReadContext` records `(control, property)` pairs during execution, then after the function returns, diffs against the previous dependency set and calls `subscribe`/`unsubscribe` to reconcile. A no-op `ReadContext` just returns snapshot values without subscribing.
-- **ReadContext lifecycle** — the framework layer manages the lifecycle: create/reset a tracking `ReadContext` before a render or effect, execute the function, finalize the dependency set after it returns, and dispose (unsubscribe all) when the component unmounts or effect is torn down. The React `controls()` wrapper orchestrates this per-render.
-- **WriteContext / `update()` factory** — a way to create a transient `WriteContext`, execute a batch of mutations, and flush subscriber notifications. Batching uses the same transaction-count + queue + drain pattern as the current library, but scoped to the control tree root rather than module-level globals. This is framework-agnostic; React just calls it from event handlers.
-- **Control tree creation** — `newControl()` or equivalent factory that creates the control tree. No React dependency needed.
+- **Subscribe/unsubscribe on Control** — the existing bitmask-based subscription mechanism is retained directly on the `Control` interface. This is the low-level primitive that everything else builds on. `ReadContext` implementations use `control.subscribe()` / `control.unsubscribe()` internally to manage their dependency tracking — they are a higher-level abstraction over the subscription API, not a replacement for it.
+- **ControlContext** — the central object. Holds tree-level configuration (equality) and provides `newControl()` and `update()`. Framework adapters receive a `ControlContext` and use it to create controls and manage read/write lifecycles. The exact API for creating tracking read contexts is TBD.
+- **ReadContext as subscription manager** — a tracking `ReadContext` records `(control, property)` pairs during execution, then after the function returns, diffs against the previous dependency set and calls `subscribe`/`unsubscribe` to reconcile.
+- **ReadContext lifecycle** — the framework layer manages the lifecycle: create/reset a tracking `ReadContext` before a render or effect, execute the function, finalize the dependency set after it returns, and dispose (unsubscribe all) when the component unmounts or effect is torn down. `@astroapps/controls-react`'s `controls()` wrapper orchestrates this per-render.
+- **WriteContext / `update()`** — `ControlContext.update()` creates a transient `WriteContext`, executes a batch of mutations, and flushes subscriber notifications. Framework-agnostic; React just calls it from event handlers.
 - **Effect primitive** — a `ReadContext` implementation that re-executes its function when a subscribed dependency changes. Pure core-level, no React dependency. React `useEffect`-style cleanup is layered on top.
 
-This separation means the core package is a pure TypeScript library with no `react` import. The React layer is a thin adapter (~`controls()` wrapper + a hook or two) that creates `ReadContext` instances tied to React's render lifecycle and calls `update()` from event handlers. Raw `subscribe`/`unsubscribe` remains available for non-`ReadContext` use cases (bridging to external systems, tests, etc.).
+The `@astroapps/controls-react` package is a thin adapter — just the `controls()` wrapper — that creates tracking `ReadContext` instances tied to React's render lifecycle and provides `ControlsContext` (with `rc`, `update`, and `controlContext`) to components. Raw `subscribe`/`unsubscribe` remains available for non-`ReadContext` use cases (bridging to external systems, tests, etc.).
 
 ## Implementation Architecture
 
@@ -295,13 +400,13 @@ This separation means `NotifyFn` doesn't need change flags — the control's sub
 
 ### Listener WriteContext access
 
-Listeners need write access during flush — the key use case is validators, which fire during flush and need to set errors on the control. The `ChangeListenerFunc` signature gains an optional `WriteContext`:
+Listeners need write access during flush — the key use case is validators, which fire during flush and need to set errors on the control. Since listeners always run during `WriteContext.flush()`, the `WriteContext` is always available:
 
 ```typescript
 type ChangeListenerFunc<V> = (
   control: Control<V>,
   change: ControlChange,
-  wc?: WriteContext,
+  wc: WriteContext,
 ) => void;
 ```
 
@@ -310,8 +415,8 @@ Listeners that don't need write access (e.g. `forceRender` in React's `controls(
 ```typescript
 // validator listener
 (control, change, wc) => {
-  const error = validateFn(control.current.value);
-  wc?.setError(control, "validate", error);
+  const error = validateFn(control.valueNow);
+  wc.setError(control, "validate", error);
 }
 ```
 
@@ -390,6 +495,67 @@ The old design uses a module-level `collectChange` callback for implicit reactiv
 
 **New design:** `ReadContext` explicitly tracks subscriptions. No global `collectChange` needed. Property access on `Control` returns snapshot values without triggering any side effects.
 
+## Migration Strategy: Three-Package Architecture
+
+### Package roles
+
+| Package | Role | Globals | React |
+|---------|------|---------|-------|
+| `@astroapps/controls` | Clean core | None | No |
+| `@astroapps/controls-react` | Clean React adapter (`controls()` wrapper) | None | Yes |
+| `@react-typed-forms/core` | Legacy compat (monkey-patch + hooks) | Yes | Yes |
+
+### What the monkey patch adds (`@react-typed-forms/core`)
+
+`@react-typed-forms/core` augments `Control.prototype` (or equivalent) with:
+
+- **`.value` getter/setter** — the getter calls into the global `collectChange` / change collector to register implicit reactive reads (same mechanism as today). The setter calls through to the underlying mutation + global transaction batching.
+- **`.initialValue`, `.dirty`, `.touched`, `.disabled`, `.valid`, `.error`, `.errors`, `.isNull`** — reactive property accessors that participate in implicit dependency tracking via the global collector.
+- **`.current`** — returns a `ControlProperties<V>` snapshot (non-reactive reads, same as the `*Now` properties).
+- **Direct mutation methods on Control** — `.setValue()`, `.setError()`, `.setErrors()`, `.setTouched()`, `.setDisabled()`, `.markAsClean()`, `.clearErrors()`, `.setValueAndInitial()`, `.setInitialValue()` — these delegate to the global transaction/batching mechanism.
+- **Global transaction machinery** — `runTransaction`, `groupedChanges`, `runPendingChanges`, `setChangeCollector`, `unsafeFreezeCountEdit` — module-level state that the implicit API requires.
+- **All existing hooks** — `useControl`, `useComputed`, `useControlEffect`, `useValidator`, `useAsyncValidator`, `useValueChangeEffect`, `useSelectableArray`, `useControlGroup`, `usePreviousValue`, `controlValues`, `useComponentTracking`, `useTrackedComponent`.
+- **Form components** — `Finput`, `Fcheckbox`, `Fselect`, `RenderControl`, `RenderOptional`, `RenderElements`, `RenderArrayElements`.
+
+Hooks and form components stay in `@react-typed-forms/core` for now — the `controls()` pattern may enable a better API than hooks in future.
+
+### What stays in `@astroapps/controls` (clean core)
+
+- `Control<V>` with only `*Now` snapshot reads, `fields`, `elements`, `subscribe`/`unsubscribe`, `meta`, `uniqueId`
+- `ReadContext` / `WriteContext` interfaces
+- `newControl()` factory
+- Subscription bitmask system (`ControlChange`, `Subscription`, `ChangeListenerFunc`)
+- All tree semantics (value propagation, lazy children, validity, etc.)
+- No globals, no implicit reactivity
+
+### What lives in `@astroapps/controls-react` (clean React adapter)
+
+- `controls()` wrapper — provides `ControlsContext` (`rc`, `update`, `controlContext`) as second arg to render function
+- `UpdateFn`, `ControlsContext`, and `ControlsRender<P>` types
+
+That's it for now. This package is intentionally minimal — just the React render lifecycle bridge.
+
+### Why this split
+
+- **Clean core stays clean** — `@astroapps/controls` has no global state, is testable without jsdom, portable to C#, and usable in non-React contexts (Node, server, other frameworks).
+- **Legacy compat lives where it's needed** — the implicit reactivity (global change collector, module-level transactions) only exists in `@react-typed-forms/core`, which is already React-specific and already manages component render tracking.
+- **Clean React adapter is minimal** — `@astroapps/controls-react` is a thin bridge between the core's `ReadContext`/`WriteContext` and React's render lifecycle. No globals, no build plugins. Future hooks or components can be added here when a better-than-hooks API is designed.
+- **Incremental migration** — existing code using `control.value`, `control.touched = true`, etc. keeps working via the monkey patch. New code can use the explicit `ReadContext`/`WriteContext` API via `controls()`. Components can mix both styles during migration.
+- **Single implementation** — the monkey-patched methods delegate to the same `ControlImpl` internals, so there's one source of truth for behavior. The patch just adds an alternative (implicit) entry point to the same underlying operations.
+
+### React integration coexistence
+
+All three React patterns work on the same control tree:
+
+- **Legacy**: `useComponentTracking()` + SWC/Babel transform + implicit `.value` reads (`@react-typed-forms/core`)
+- **New**: `controls()` wrapper with explicit `rc` / `update` (`@astroapps/controls-react`)
+
+A component using `controls()` and a component using `useComponentTracking()` can share the same `Control` instances. The subscription system is the same underneath — only the mechanism for registering dependencies differs (explicit `ReadContext` vs global change collector).
+
+### Prototype note
+
+The current prototype `writeContext.ts` delegates to the monkey-patch API (`control.value = value`, `groupedChanges`). The final implementation should use the `NotifyFn`-based `WriteContextImpl` described in the Implementation Architecture section, with no dependency on global transaction state.
+
 ## Open Questions
 
 - How do computed/derived controls fit in — are they `ReadContext` implementations that write to a control via `WriteContext`?
@@ -398,6 +564,6 @@ The old design uses a module-level `collectChange` callback for implicit reactiv
 
 ### Resolved
 
-- **Where does `newControl` live?** — Standalone factory function, not a method on any class.
-- **Should the tracking `ReadContext` be reusable?** — Yes, reusable. Reset between renders via `SubscriptionTracker`. More allocation-friendly and the `controls()` wrapper manages the lifecycle cleanly.
-- **How does `update()` find the tree root for batching?** — It doesn't need to. `update()` creates a fresh `TransactionState` per call. No tree-root discovery needed.
+- **Where does `newControl` live?** — On `ControlContext` in core, which holds tree-level configuration (equality, etc.). `@react-typed-forms/core` provides standalone `newControl()` and `update()` functions that use a default `ControlContext` with `deepEquals`.
+- **Should the tracking `ReadContext` be reusable?** — Yes, reusable. Reset between renders. More allocation-friendly and the `controls()` wrapper manages the lifecycle cleanly. The exact creation API is TBD.
+- **How does `update()` find the tree root for batching?** — It doesn't need to. `ControlContext.update()` creates a fresh `WriteContext` per call. No tree-root discovery needed.
