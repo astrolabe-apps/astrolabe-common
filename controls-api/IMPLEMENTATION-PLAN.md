@@ -41,11 +41,12 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - `syncElementsOnValueChange(notify)` — if `!Array.isArray(newValue)`, trim all elements to 0 (detach + clear `_elems`); otherwise reuse/create/trim existing elements
 - `syncElementsOnInitialValueChange(notify)` — if `!Array.isArray(newInitialValue)`, trim all elements; otherwise update initialValue, re-key origKey
 
-**Other**: `getChangeState(mask)`, `runListeners(wc)`, `subscribe/unsubscribe`, `validate`
+**Other**: `getChangeState(mask)`, `runListeners(wc)`, `subscribe/unsubscribe`, `validate(notify, wc)` (internal, used by WriteContextImpl)
 
 ### 4. `src/lib/writeContextImpl.ts`
 - `WriteContextImpl` with `pending: Set<ControlImpl>`, `afterChangesCbs`, `notify: NotifyFn`
 - All WriteContext methods delegate to `toImpl(control).xxxImpl(..., this.notify)`
+- `validate(control)` — delegates to `toImpl(control).validate(this.notify, this)`, returns `isValid()`
 - `flush()`: drain loop (pending → runListeners → repeat), then afterChanges callbacks
 - `updateElements` logic ported from existing `arrayControl.ts`
 

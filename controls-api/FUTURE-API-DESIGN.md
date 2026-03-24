@@ -147,6 +147,9 @@ interface WriteContext {
   addElement<V>(control: Control<V[]>, child: V, index?: number): Control<V>
   removeElement<V>(control: Control<V[]>, child: number | Control<V>): void
   updateElements<V>(control: Control<V[]>, cb: (elems: Control<V>[]) => Control<V>[]): Control<V>[]
+
+  // Validation
+  validate(control: Control<unknown>): boolean
 }
 ```
 
@@ -239,6 +242,7 @@ interface IWriteContext {
     void ClearErrors(IControl control);
     IControl<T> AddElement<T>(IControl<IList<T>> control, T child, int? index = null);
     void RemoveElement<T>(IControl<IList<T>> control, IControl<T> child);
+    bool Validate(IControl control);
 }
 
 interface IControlContext {
@@ -474,7 +478,8 @@ class WriteContextImpl {
 ### 3. Control is read-only interface, mutations on ControlImpl
 
 `Control<V>` exposes only read and subscription operations:
-- `uniqueId`, `current` (snapshot), `fields`, `elements`, `subscribe`, `unsubscribe`, `validate`, `cleanup`, `meta`, `as`, `lookupControl`
+- `uniqueId`, `current` (snapshot), `fields`, `elements`, `subscribe`, `unsubscribe`, `cleanup`, `meta`, `as`, `lookupControl`
+- `validate` lives on `WriteContext` (not `Control`) — it needs a write batch to set errors. `@react-typed-forms/core` monkey-patches a convenience `control.validate()` for legacy compat
 - No `value` setter, no `set*` methods on Control
 
 Mutation methods live on `ControlImpl` (not on the `Control` interface). They take a `NotifyFn` parameter so the caller controls when listeners run:

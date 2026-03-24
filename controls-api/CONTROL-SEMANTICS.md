@@ -258,14 +258,22 @@ When set, value changes (section B step 3) do NOT auto-clear errors. This preven
 
 ## K. Validate `[core]`
 
-`validate()` — imperatively triggers all validators in the subtree.
+`wc.validate(control)` — imperatively triggers all validators in the subtree. Lives on `WriteContext` (not `Control`) because it needs a write batch to set errors.
 
-1. Wrapped in `groupedChanges` (all notifications batched)
-2. Recurse: call `validate()` on all existing children (depth-first)
-3. Fire `ControlChange.Validate` to own subscribers — this re-runs any validator that subscribed to `Value | Validate` (see section I)
-4. Return `isValid()` after the batch completes
+1. Recurse: call validate on all existing children (depth-first)
+2. Fire `ControlChange.Validate` to own subscribers — this re-runs any validator that subscribed to `Value | Validate` (see section I)
+3. Return `isValid()` after listeners have run
+
+Called from within an `update()` callback:
+```typescript
+update(wc => {
+  const isValid = wc.validate(formControl);
+});
+```
 
 This is how validators that were set up during init get re-triggered on demand (e.g. a "Validate" button). The `Validate` change flag is separate from `Value` — it lets validators distinguish between "value changed" and "explicit validation requested".
+
+> **Legacy compat (`@react-typed-forms/core`):** The monkey-patch layer will add a convenience `control.validate()` method that creates its own write batch internally, matching the existing API.
 
 ## L. Cleanup `[core]` — candidate for removal
 

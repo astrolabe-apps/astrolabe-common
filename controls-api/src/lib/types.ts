@@ -156,6 +156,7 @@ export interface WriteContext {
     errors?: Record<string, string | null | undefined> | null,
   ): void;
   clearErrors(control: Control<unknown>): void;
+  validate(control: Control<unknown>): boolean;
 
   addElement<V>(
     control: Control<V[]>,
