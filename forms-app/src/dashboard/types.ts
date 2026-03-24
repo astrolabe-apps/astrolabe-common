@@ -1,6 +1,6 @@
 import { ReactElement } from "react";
 import { DisplayRendererProps, RendererRegistration } from "@react-typed-forms/schemas";
-import { ActionHandler, SearchOptions } from "../types";
+import { ActionHandler, DashboardPageApi, SearchOptions } from "../types";
 
 export interface DashboardActionHandlers {
   view?: ActionHandler<string>;
@@ -14,6 +14,8 @@ export interface DashboardActionHandlers {
 }
 
 export interface DashboardPageProps {
+  api: DashboardPageApi;
+  submittedStatus?: string;
   formType?: string;
   onAction?: DashboardActionHandlers;
   customDisplay?: (

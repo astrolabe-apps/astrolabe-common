@@ -8,7 +8,7 @@ export {
 } from "./types";
 export type {
   ActionHandler,
-  FormsAppApi,
+  DashboardPageApi,
   FormDefinitionEntry,
   FormDefinitionRegistry,
   SchemaRegistry,
@@ -80,8 +80,6 @@ export {
   ItemViewForm,
   DefaultFormDefinitions,
 } from "./formdefs";
-
-export type { NavigationIntent, NavigationHandler } from "./navigation";
 
 export type {
   ItemViewApi,

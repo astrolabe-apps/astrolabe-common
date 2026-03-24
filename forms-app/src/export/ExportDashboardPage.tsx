@@ -3,7 +3,6 @@ import { useControl } from "@react-typed-forms/core";
 import { ControlDataContext } from "@react-typed-forms/schemas";
 import { defaultSearchOptions } from "@astroapps/searchstate";
 import { useToast } from "@astroapps/client";
-import { useFormsApp } from "../FormsAppProvider";
 import { AppFormRenderer } from "../AppFormRenderer";
 import { ExportDashboardApi } from "../api";
 import { ExportDefinitionGroupData } from "../types";
@@ -34,7 +33,6 @@ export function ExportDashboardPage({
   formType = "ExportDefinitionDashboard",
   onAction,
 }: ExportDashboardPageProps) {
-  const { navigationHandler } = useFormsApp();
   const toast = useToast();
 
   const dashboardForm = useControl<{
@@ -89,13 +87,10 @@ export function ExportDashboardPage({
     return async () => {
       switch (actionId) {
         case "createExportDefinition":
-          navigationHandler({ type: "exportCreate" });
+          api.goToCreateExport();
           return;
         case "editExportDefinition":
-          navigationHandler({
-            type: "exportEdit",
-            definitionId: actionData,
-          });
+          api.goToEditExport(actionData);
           return;
         case "deleteExportDefinition":
           await deleteExportDefinition(actionData);

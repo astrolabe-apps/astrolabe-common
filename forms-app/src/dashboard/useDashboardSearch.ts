@@ -3,12 +3,12 @@ import { FieldOption } from "@react-typed-forms/schemas";
 import { useEffect } from "react";
 import { defaultSearchOptions } from "@astroapps/searchstate";
 import { useToast } from "@astroapps/client";
-import { FormsAppApi, SearchOptions } from "../types";
+import { DashboardPageApi, SearchOptions } from "../types";
 
 const fieldPrefix = "/results/entries/";
 
 export interface UseDashboardSearchOptions {
-  api: FormsAppApi;
+  api: DashboardPageApi;
   initialRequest?: Partial<SearchOptions>;
 }
 

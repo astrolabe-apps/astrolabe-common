@@ -41,7 +41,7 @@ export function ItemEditPage({
   filterActions = defaultFilterActions,
   hideSave,
 }: ItemEditPageProps) {
-  const { ui, navigationHandler } = useFormsApp();
+  const { ui } = useFormsApp();
   const toast = useToast();
 
   const editItem = useControl<ItemViewData>();
@@ -51,7 +51,7 @@ export function ItemEditPage({
     () => [
       createActionWizardNavigation(
         createWorkflowActions(actions, filterActions, doAction, {
-          doCancel: () => navigationHandler({ type: "dashboard" }),
+          doCancel: () => api.goToDashboard(),
           hideSave,
         }),
       ),
@@ -97,7 +97,7 @@ export function ItemEditPage({
         action: action ?? null,
       });
       toast.addToast("Saved successfully", { type: "success" });
-      navigationHandler({ type: "dashboard" });
+      api.goToDashboard();
     } catch (e) {
       toast.addToast("Failed to save", { type: "error" });
       console.error(e);

@@ -19,6 +19,7 @@ export interface ItemViewApi {
   performAction(id: string, action: string): Promise<void>;
   addItemNote(id: string, note: ItemNoteEditData): Promise<void>;
   getFormForRender(formId: string): Promise<FormRenderData>;
+  goToDashboard(): void;
 }
 
 /**
@@ -28,6 +29,7 @@ export interface ItemEditApi {
   getItemView(id: string): Promise<ItemViewData>;
   editItem(id: string, edit: ItemEditData): Promise<void>;
   getFormForRender(formId: string): Promise<FormRenderData>;
+  goToDashboard(): void;
 }
 
 /**
@@ -36,6 +38,8 @@ export interface ItemEditApi {
 export interface ExportDashboardApi {
   listExportDefinitions(): Promise<ExportDefinitionGroupData[]>;
   deleteExportDefinition(id: string): Promise<void>;
+  goToCreateExport(): void;
+  goToEditExport(definitionId: string): void;
 }
 
 /**
@@ -46,6 +50,7 @@ export interface ExportEditApi {
   saveExportDefinition(edit: ExportDefinitionEditData): Promise<void>;
   listTables(): Promise<ScopedNameIdData[]>;
   getTable(id: string): Promise<TableDefinitionEditData>;
+  goToExportDashboard(): void;
 }
 
 /**

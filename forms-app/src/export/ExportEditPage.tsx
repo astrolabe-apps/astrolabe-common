@@ -39,7 +39,7 @@ export function ExportEditPage({
   editFormType = "ExportDefinitionEditForm",
   createFieldSelectionRenderer,
 }: ExportEditPageProps) {
-  const { ui, navigationHandler } = useFormsApp();
+  const { ui } = useFormsApp();
   const toast = useToast();
 
   const definitionEditForm = useControl<ExportDefinitionEditData>();
@@ -71,7 +71,7 @@ export function ExportEditPage({
       if (id != null && id !== "") {
         loadExportDefinition(id);
       } else if (id === "") {
-        navigationHandler({ type: "exportDashboard" });
+        api.goToExportDashboard();
       } else {
         loadTableDefinitionList();
       }
@@ -208,7 +208,7 @@ export function ExportEditPage({
           `Add export definition: "${name.value}" successfully`,
           { type: "success" },
         );
-        navigationHandler({ type: "exportDashboard" });
+        api.goToExportDashboard();
       }
     } catch (e) {
       console.error(e);

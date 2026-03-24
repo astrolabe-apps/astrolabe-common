@@ -346,7 +346,7 @@ export interface ExportRecordRequest {
 /**
  * Flat API interface that consumers implement to adapt their NSwag clients.
  */
-export interface FormsAppApi {
+export interface DashboardPageApi {
   searchItems(
     includeTotal: boolean,
     request: SearchOptions,
@@ -357,6 +357,8 @@ export interface FormsAppApi {
     edit: ExportRecordsDefinitionData,
   ): Promise<ExportDefinitionGroupData[]>;
   exportRecord(edit: ExportRecordRequest): Promise<FileData | void>;
+  goToViewItem(itemId: string): void;
+  goToEditItem(itemId: string): void;
 }
 
 /**

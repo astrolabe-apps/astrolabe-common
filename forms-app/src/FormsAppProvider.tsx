@@ -5,9 +5,7 @@ import {
   FormTreeLookup,
   SchemaTreeLookup,
 } from "@react-typed-forms/schemas";
-import { NavigationHandler } from "./navigation";
 import {
-  FormsAppApi,
   FormsAppUIComponents,
   FormDefinitionRegistry,
   SchemaRegistry,
@@ -17,13 +15,10 @@ import { DefaultFormDefinitions } from "./formdefs";
 import { DefaultSchemaMap } from "./schemas";
 
 export interface FormsAppConfig {
-  api: FormsAppApi;
   ui: FormsAppUIComponents;
-  navigationHandler: NavigationHandler;
   formDefinitions?: FormDefinitionRegistry;
   schemaMap?: SchemaRegistry;
   rendererConfig: RendererConfig;
-  submittedStatus?: string;
 }
 
 interface FormsAppContextValue extends FormsAppConfig {
@@ -62,11 +57,8 @@ export function FormsAppProvider({
   }, [
     config.formDefinitions,
     config.schemaMap,
-    config.api,
     config.ui,
-    config.navigationHandler,
     config.rendererConfig,
-    config.submittedStatus,
   ]);
 
   return (

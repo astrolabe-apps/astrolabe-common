@@ -1,7 +1,7 @@
 import { useControl } from "@react-typed-forms/core";
 import { saveAs } from "file-saver";
 import {
-  FormsAppApi,
+  DashboardPageApi,
   FormsAppUIComponents,
   ExportDefinitionGroupData,
   ExportRecordsDefinitionData,
@@ -14,7 +14,7 @@ const DefaultExportRecordsDefinitionData: ExportRecordsDefinitionData = {
 };
 
 export function useExportDialog(
-  api: FormsAppApi,
+  api: DashboardPageApi,
   useDialog: FormsAppUIComponents["useDialog"],
 ) {
   const exportDefinitions = useControl<ExportDefinitionGroupData[]>([]);

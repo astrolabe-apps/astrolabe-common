@@ -56,7 +56,7 @@ export function ItemViewPage({
   filterActions = defaultFilterActions,
   onAction,
 }: ItemViewPageProps) {
-  const { ui, navigationHandler } = useFormsApp();
+  const { ui } = useFormsApp();
   const toast = useToast();
 
   const editItem = useControl<ItemViewData>();
@@ -66,7 +66,7 @@ export function ItemViewPage({
     () => [
       createActionWizardNavigation(
         createWorkflowActions(actions, filterActions, doAction, {
-          doCancel: () => navigationHandler({ type: "dashboard" }),
+          doCancel: () => api.goToDashboard(),
           hideSave: true,
         }),
       ),

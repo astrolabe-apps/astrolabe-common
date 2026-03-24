@@ -15,6 +15,8 @@ import { SelectionCheckbox } from "./SelectionCheckbox";
 import { DashboardPageProps } from "./types";
 
 export function DashboardPage({
+  api,
+  submittedStatus = "Submitted",
   formType = "AdminItemDashboard",
   onAction,
   customDisplay: customDisplayProp,
@@ -23,7 +25,7 @@ export function DashboardPage({
   showExport = true,
   exportFormType = "ExportDefinitionSelectionsForm",
 }: DashboardPageProps) {
-  const { api, ui, navigationHandler, submittedStatus = "Submitted" } = useFormsApp();
+  const { ui } = useFormsApp();
   const { useConfirmDialog, Button } = ui;
   const toastService = useToast();
 
@@ -55,10 +57,10 @@ export function DashboardPage({
           customDisplay,
           actionOnClick: makeActions({
             view: (actionData) => {
-              navigationHandler({ type: "viewItem", itemId: actionData });
+              api.goToViewItem(actionData);
             },
             edit: (actionData) => {
-              navigationHandler({ type: "editItem", itemId: actionData });
+              api.goToEditItem(actionData);
             },
             toggleAll: () => {
               selectedItems.setValue(
