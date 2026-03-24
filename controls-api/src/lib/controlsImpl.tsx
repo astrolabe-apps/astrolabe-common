@@ -1,7 +1,13 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
-import type { ControlContext } from "./types";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import type { ControlContext, WriteContext } from "./types";
 import type { ControlsRender } from "./react-types";
 import { TrackingReadContext, SubscriptionReconciler } from "./readContextImpl";
 
@@ -76,7 +82,7 @@ export function controls<P extends object>(
     // Reset tracker for this render
     rc.reset();
 
-    const update = (cb: (wc: import("./types").WriteContext) => void) =>
+    const update = (cb: (wc: WriteContext) => void) =>
       controlContext.update(cb);
 
     // Call the render function

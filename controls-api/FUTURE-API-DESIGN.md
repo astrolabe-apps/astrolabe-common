@@ -42,10 +42,16 @@ Pure TypeScript, no React, no globals. Contains:
 - `ControlContext` — tree-level configuration and factory for all core operations (see "ControlContext" below)
 - `SubscriptionTracker`, subscription bitmask system (`ControlChange`, `Subscription`)
 - All tree semantics (value propagation, lazy children, validity, etc.)
+- `computed(ctx, target, compute)` — reactive computation built on `TrackingReadContext` + `SubscriptionReconciler`
+- `effect(ctx, fn)` — reactive side effect with same tracking primitives
+- `asyncEffect(ctx, process, onResult)` — async reactive effect with abort/dedup
+- Standalone utility functions: `lookupControl`, `getControlPath`, `getElementIndex`
 
 ### `@astroapps/controls-react` (clean React adapter)
 
-Thin React adapter. Currently contains only the `controls()` wrapper, which provides a `ControlsContext` (with `rc: ReadContext`, `update: UpdateFn`, and `controlContext: ControlContext`) as the second argument to the render function. The `ControlContext` is obtained from React context. No globals, no build plugins required.
+Thin React adapter. The `controls()` wrapper provides a `ControlsContext` (with `rc: ReadContext`, `update: UpdateFn`, `controlContext: ControlContext`, and `useComputed: UseComputed`) as the second argument to the render function. The `ControlContext` is obtained from React context. No globals, no build plugins required.
+
+`useComputed` is a React hook (passed via context) that wraps core `computed()` with `useRef` lifecycle and `markTrackerDead`/`reviveTracker` for strict mode safety.
 
 Depends on `@astroapps/controls` + `react`.
 
@@ -310,11 +316,13 @@ The render function receives props as the first argument and a `ControlsContext`
 
 ```typescript
 type UpdateFn = (cb: (wc: WriteContext) => void) => void;
+type UseComputed = <V>(compute: (rc: ReadContext) => V) => Control<V>;
 
 interface ControlsContext {
   rc: ReadContext;
   update: UpdateFn;
   controlContext: ControlContext;
+  useComputed: UseComputed;
 }
 
 type ControlsRender<P> = (props: P, ctx: ControlsContext) => ReactNode;

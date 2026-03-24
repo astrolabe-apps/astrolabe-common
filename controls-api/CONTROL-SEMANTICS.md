@@ -275,9 +275,83 @@ This is how validators that were set up during init get re-triggered on demand (
 
 > **Legacy compat (`@react-typed-forms/core`):** The monkey-patch layer will add a convenience `control.validate()` method that creates its own write batch internally, matching the existing API.
 
-## L. Cleanup `[core]` — candidate for removal
+## L. Computed Values `[core]`
 
-> **Note:** The existing `@react-typed-forms/core` library has `cleanup()` and `addCleanup()` on controls, but we should probably remove them from the new API. Controls are long-lived and tied to the component tree via React's own lifecycle (`useEffect` cleanup in `controls()` already handles unsubscribing). Explicit cleanup on the control itself adds unnecessary complexity at this stage. Removing it would be a breaking change from the existing library.
+`computed(ctx, target, compute)` — creates a reactive computation that tracks dependencies via `ReadContext` and writes the result to a target control. Returns a `SubscriptionReconciler` for lifecycle management.
+
+```typescript
+function computed<V>(
+  ctx: ControlContext,
+  target: Control<V>,
+  compute: (rc: ReadContext) => V,
+): SubscriptionReconciler
+```
+
+**Lifecycle:**
+1. Creates a `TrackingReadContext` + `SubscriptionReconciler` internally
+2. Initial run: reset tracker, execute `compute(rc)`, reconcile subscriptions, write result to `target` via `ctx.update()`
+3. When a dependency changes: reconciler listener fires → re-runs compute, reconciles, writes new value
+4. Returns the `SubscriptionReconciler` — caller manages lifecycle
+
+**Disposal:**
+- Non-React callers: call `reconciler.cleanup()` directly to unsubscribe all
+- React callers: use `controlContext.markTrackerDead(reconciler)` / `reviveTracker(reconciler)` for strict mode safety (same pattern as `controls()` wrapper)
+
+Built entirely on existing primitives (`TrackingReadContext`, `SubscriptionReconciler`, `ControlContext.update`). No new subscription mechanisms needed.
+
+### React hook: `useComputed` `[react]`
+
+Provided to `controls()` render functions via `ControlsContext`:
+
+```typescript
+const MyComponent = controls(function MyComponent({ items }, { rc, useComputed }) {
+  const total = useComputed((rc) => {
+    return rc.getElements(items).reduce((sum, el) => sum + rc.getValue(el), 0);
+  });
+  return <div>Total: {rc.getValue(total)}</div>;
+});
+```
+
+Implementation wraps the core `computed()`:
+1. `useRef` to hold target control + reconciler (created once)
+2. Calls core `computed(ctx, target, compute)` — replaces previous computation
+3. `useEffect` cleanup calls `markTrackerDead(reconciler)`; mount calls `reviveTracker(reconciler)` (strict mode safe)
+
+> **Legacy compat (`@react-typed-forms/core`):** `useComputed(compute)` and `updateComputedValue(control, compute)` delegate to core `computed()`, storing the reconciler on `control.meta` for idempotent replacement.
+
+## L′. Effects `[core]`
+
+`effect(ctx, fn)` — creates a reactive effect that tracks dependencies and re-runs on changes. Like `computed` but for side effects — no target control, no return value written.
+
+```typescript
+function effect(
+  ctx: ControlContext,
+  fn: (rc: ReadContext) => (() => void) | void,
+): SubscriptionReconciler
+```
+
+- Same tracking/reconcile lifecycle as `computed`
+- If `fn` returns a cleanup function, it's called before each re-run and on dispose
+- Returns `SubscriptionReconciler` for lifecycle management (same disposal patterns as `computed`)
+
+### `asyncEffect` `[core]`
+
+```typescript
+function asyncEffect<V>(
+  ctx: ControlContext,
+  process: (rc: ReadContext, signal: AbortSignal) => Promise<V>,
+  onResult: (value: V) => void,
+): SubscriptionReconciler
+```
+
+- Tracking happens during `process()` execution (works across `await` boundaries since `ReadContext` is an explicit object, not a global)
+- If deps change while in-flight: abort current (`AbortSignal`), queue one re-run (not N)
+- `onResult` called with resolved value — typically calls `ctx.update()` to write results
+- Returns `SubscriptionReconciler` for lifecycle management
+
+## L″. Cleanup — candidate for removal
+
+> **Note:** The existing `@react-typed-forms/core` library has `cleanup()` and `addCleanup()` on controls. With the new `computed`/`effect` APIs returning `SubscriptionReconciler` for explicit lifecycle management, and React integration using `markTrackerDead`/`reviveTracker`, control-level cleanup may no longer be needed. The caller owns disposal, not the control.
 
 Previous semantics (for reference):
 - `cleanup()`: run registered cleanup callbacks, then recurse into children that have exactly 1 parent (shared children survive)
@@ -434,15 +508,27 @@ Wraps a render function with explicit `ReadContext`/`WriteContext` injection:
 5. On unmount, cleans up all subscriptions
 6. Component is wrapped with `React.memo`
 
+### `useComputed` hook (via `ControlsContext`)
+
+Passed to `controls()` render functions as part of `ControlsContext`. Wraps the core `computed()` primitive with React lifecycle management:
+
+```typescript
+const total = useComputed((rc) => rc.getValue(a) + rc.getValue(b));
+// total is a Control<number> — read it reactively via rc.getValue(total)
+```
+
+Uses `useRef` internally (React hook rules apply). Strict mode safe via `markTrackerDead`/`reviveTracker`.
+
 ### Types
 
 - `UpdateFn` — `(cb: (wc: WriteContext) => void) => void`
-- `ControlsContext` — `{ rc: ReadContext; update: UpdateFn; controlContext: ControlContext }`
+- `UseComputed` — `<V>(compute: (rc: ReadContext) => V) => Control<V>`
+- `ControlsContext` — `{ rc: ReadContext; update: UpdateFn; controlContext: ControlContext; useComputed: UseComputed }`
 - `ControlsRender<P>` — `(props: P, ctx: ControlsContext) => ReactNode`
 
 ### What's NOT here (yet)
 
-Hooks (`useControl`, `useComputed`, `useControlEffect`, `useValidator`, etc.), form components (`Finput`, `Fcheckbox`, `Fselect`), and render helpers (`RenderOptional`, `RenderElements`) remain in `@react-typed-forms/core` for now. The `controls()` pattern may enable a better API than hooks in future.
+Hooks (`useControl`, `useControlEffect`, `useValidator`, etc.), form components (`Finput`, `Fcheckbox`, `Fselect`), and render helpers (`RenderOptional`, `RenderElements`) remain in `@react-typed-forms/core` for now. The `controls()` pattern may enable a better API than hooks in future.
 
 ## Key Invariants
 

@@ -61,6 +61,25 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - `TrackingReadContext` — records `Map<ControlImpl, ControlChange>` during reads, exposes `reset()`, `getTracked()`
 - `SubscriptionReconciler` — reconciles tracked set against active subscriptions (subscribe new, unsubscribe removed, update changed masks)
 
+### 5b. `src/lib/computed.ts` — reactive computation primitives
+Built entirely on `TrackingReadContext` + `SubscriptionReconciler`. No new subscription mechanisms.
+
+- `computed(ctx, target, compute)` → `SubscriptionReconciler`
+  - Creates `TrackingReadContext` + `SubscriptionReconciler` internally
+  - Initial run: reset tracker, execute `compute(rc)`, reconcile, write result to target via `ctx.update()`
+  - On dep change: reconciler listener fires → re-runs compute, reconciles, writes new value
+  - Returns reconciler for caller to manage lifecycle
+
+- `effect(ctx, fn)` → `SubscriptionReconciler`
+  - Same as `computed` but no target control — runs `fn(rc)` for side effects
+  - If `fn` returns a cleanup function, called before each re-run and on dispose
+
+- `asyncEffect(ctx, process, onResult)` → `SubscriptionReconciler`
+  - `process(rc, signal)` returns a Promise — tracking works across `await` (explicit `rc` object, not global)
+  - Reconciliation happens after promise resolves (`.finally()`)
+  - If deps change while in-flight: abort current via `AbortSignal`, queue one re-run
+  - `onResult(value)` called with resolved value
+
 ### 6. `src/lib/controlContextImpl.ts`
 - `createControlContext(options?)` → `ControlContextImpl`
 - `newControl(value, setup?)` — builds ChildFactory from setup, creates ControlImpl, runs init (validator, eager fields, eager elems, meta, afterCreate)
@@ -77,11 +96,16 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - `controls()` implementation:
   1. Get ControlContext from React context
   2. useRef for TrackingReadContext + SubscriptionReconciler (reconciler has `alive` flag, starts `true`)
-  3. Reset tracker, call render with `(props, { rc, update, controlContext })`
+  3. Reset tracker, call render with `(props, { rc, update, controlContext, useComputed })`
   4. After return, **always reconcile subscriptions** (during render, not in effect)
   5. Subscription listener checks `alive` flag — if `false`, listener is a no-op (no `setState`, no re-render)
   6. `useEffect` calls `controlContext.reviveTracker(reconciler)` on mount; cleanup calls `controlContext.markTrackerDead(reconciler)`
   7. Not wrapped in React.memo — Controls are stable mutable references, so shallow prop comparison can't determine re-render need
+- `useComputed` hook (constructed per component, passed via ControlsContext):
+  1. `useRef` holds target `Control<V>` + `SubscriptionReconciler` (created once via core `computed()`)
+  2. Each render: calls core `computed(ctx, target, compute)` to replace computation if function changed
+  3. `useEffect` cleanup: `markTrackerDead(reconciler)`; mount: `reviveTracker(reconciler)` (strict mode safe)
+  4. Returns the target `Control<V>` — read reactively via `rc.getValue()`
 
 ### 8. Update `src/app/page.tsx`
 - Import from implementation files instead of type specs
