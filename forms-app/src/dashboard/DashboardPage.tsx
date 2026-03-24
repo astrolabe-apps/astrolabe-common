@@ -66,9 +66,7 @@ export function DashboardPage({
               selectedItems.setValue(
                 (curSel) =>
                   results.fields.entries.elements
-                    .filter(
-                      (x) => x.fields.status.value == submittedStatus,
-                    )
+                    .filter((x) => x.fields.status.value == submittedStatus)
                     .map((x) => x.fields.id.value) ?? curSel,
               );
             },
@@ -101,44 +99,44 @@ export function DashboardPage({
         }}
         customRenderers={customRenderers}
       />
-      {showExport && (
-        <Dialog
-          actions={[
-            <Button
-              key={"export"}
-              disabled={
-                !selectedExportDefinitions.valid || exporting.value
-              }
-              onClick={exportRecords}
-            >
-              Export
-            </Button>,
-          ]}
-          title={"Export Form(s)"}
-          onCancel={resetDialog}
-        >
-          <AppFormRenderer
-            control={selectedExportDefinitions}
-            formType={exportFormType}
-            dynamicDataOptions={(node) => {
-              const paths = getJsonPath(node);
-              const index = paths.at(1) as number;
-              return (
-                exportDefinitions.elements
-                  .at(index)
-                  ?.fields?.infos?.value?.map(
-                    (x: { id: string; name: string }) =>
-                      ({ value: x.id, name: x.name }) as FieldOption,
-                  ) ?? []
-              );
-            }}
-          />
-        </Dialog>
-      )}
+      {showExport && renderExportDialog()}
       {confirmDialog}
     </>
   );
 
+  function renderExportDialog() {
+    return (
+      <Dialog
+        actions={[
+          <Button
+            key={"export"}
+            disabled={!selectedExportDefinitions.valid || exporting.value}
+            onClick={exportRecords}
+          >
+            Export
+          </Button>,
+        ]}
+        title={"Export Form(s)"}
+        onCancel={resetDialog}
+      >
+        <AppFormRenderer
+          control={selectedExportDefinitions}
+          formType={exportFormType}
+          dynamicDataOptions={(node) => {
+            const paths = getJsonPath(node);
+            const index = paths.at(1) as number;
+            const tableElem = exportDefinitions.elements.at(index);
+            return (
+              tableElem?.fields?.infos?.value?.map(
+                (x: { id: string; name: string }) =>
+                  ({ value: x.id, name: x.name }) as FieldOption,
+              ) ?? []
+            );
+          }}
+        />
+      </Dialog>
+    );
+  }
   function customDisplay(
     customId: string,
     ctx: DisplayRendererProps,
@@ -160,5 +158,4 @@ export function DashboardPage({
         return <></>;
     }
   }
-
 }

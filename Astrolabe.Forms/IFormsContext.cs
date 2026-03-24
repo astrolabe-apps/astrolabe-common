@@ -31,7 +31,11 @@ public interface IFormsContext
     Task<Guid?> LookupTable(string tableName);
 
     // Items — search
-    Task<SearchResults<ItemInfo>> SearchItems(SearchOptions request, bool includeTotal, Guid currentUserId);
+    Task<SearchResults<ItemInfo>> SearchItems(
+        SearchOptions request,
+        bool includeTotal,
+        Guid currentUserId
+    );
     Task<SearchResults<ItemInfo>> SearchItemsAdmin(SearchOptions request, bool includeTotal);
     Task<Dictionary<string, IEnumerable<FieldOption>>> GetFilterOptions();
 
@@ -45,7 +49,13 @@ public interface IFormsContext
     Task<ItemView> GetUserItem(Guid id, Guid userId, IList<string> roles);
     Task<IEnumerable<string>> GetUserActions(Guid id, Guid userId, IList<string> roles);
     Task DeleteItem(Guid id);
-    Task<Guid> PerformActions(IEnumerable<ItemAction> actions, Guid? id, Guid userId, IList<string> roles, Guid? formType = null);
+    Task<Guid> PerformActions(
+        IEnumerable<ItemAction> actions,
+        Guid? id,
+        Guid userId,
+        IList<string> roles,
+        Guid? formType = null
+    );
     Task BulkPerformActions(List<ItemAction> actions, Guid userId, IList<string> roles);
     Task AddItemNote(Guid itemId, string message, bool isInternal, Guid userId);
 
@@ -61,8 +71,16 @@ public interface IFormsContext
     Task DeleteExportDefinition(Guid id);
 
     // Export CSV
-    Task<IEnumerable<ExportDefinitionGroup>> GetExportDefinitionOfForms(IEnumerable<Guid> formItemIds);
+    Task<IEnumerable<ExportDefinitionGroup>> GetExportDefinitionOfForms(
+        IEnumerable<Guid> formItemIds
+    );
     Task<List<Guid>> GetExportableItemIds(SearchOptions searchOptions);
-    Task<string?> GetCsvText(IEnumerable<ExportColumn> exportColumns, IEnumerable<Guid> itemIds,
-        Guid tableDefinitionId, Guid userId, IList<string> roles);
+    Task WriteCsvText(
+        IEnumerable<ExportColumn> exportColumns,
+        IEnumerable<Guid> itemIds,
+        Guid tableDefinitionId,
+        Guid userId,
+        IList<string> roles,
+        Stream stream
+    );
 }

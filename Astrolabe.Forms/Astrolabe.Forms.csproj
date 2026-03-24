@@ -26,6 +26,7 @@
         <PackageReference Include="Astrolabe.EF.Search" Version="1.0.1" />
         <PackageReference Include="Astrolabe.Schemas.ExportCsv" Version="1.0.0" />
         <PackageReference Include="Astrolabe.FileStorage" Version="0.1.0" />
+        <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
     </ItemGroup>
 
 </Project>

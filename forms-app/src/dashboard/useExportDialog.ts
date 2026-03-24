@@ -2,9 +2,10 @@ import { useControl } from "@react-typed-forms/core";
 import { saveAs } from "file-saver";
 import {
   DashboardPageApi,
-  FormsAppUIComponents,
   ExportDefinitionGroupData,
+  ExportDefinitionSelectionsData,
   ExportRecordsDefinitionData,
+  FormsAppUIComponents,
   SearchOptions,
 } from "../types";
 
@@ -18,16 +19,8 @@ export function useExportDialog(
   useDialog: FormsAppUIComponents["useDialog"],
 ) {
   const exportDefinitions = useControl<ExportDefinitionGroupData[]>([]);
-  const selectedExportDefinitions = useControl<
-    | {
-        exportDefinitions: {
-          tableDefinitionId: string;
-          tableDefinitionName: string | null;
-          exportDefinitionId: string;
-        }[];
-      }
-    | undefined
-  >();
+  const selectedExportDefinitions =
+    useControl<ExportDefinitionSelectionsData>();
   const exportRecordsDefinitionEdit = useControl<ExportRecordsDefinitionData>(
     DefaultExportRecordsDefinitionData,
   );
@@ -50,38 +43,35 @@ export function useExportDialog(
     exportRecordIds?: string[] | null,
     all?: SearchOptions | null,
   ) {
-    try {
-      exportRecordsDefinitionEdit.setInitialValue({
-        recordIds: exportRecordIds ?? [],
-        all: all ?? null,
-      });
+    exportRecordsDefinitionEdit.setInitialValue({
+      recordIds: exportRecordIds ?? [],
+      all: all ?? null,
+    });
 
-      if (
-        all == null &&
-        (exportRecordIds == null || exportRecordIds?.length == 0)
-      )
-        return;
+    if (
+      all == null &&
+      (exportRecordIds == null || exportRecordIds?.length == 0)
+    )
+      return;
 
-      const exportDefinitionData = await api.getExportDefinitions(
-        exportRecordsDefinitionEdit.value,
-      );
+    const exportDefinitionData = await api.getExportDefinitions(
+      exportRecordsDefinitionEdit.value,
+    );
 
-      if (exportDefinitionData.length == 0) {
-        return;
-      }
+    if (exportDefinitionData.length == 0) {
+      return;
+    }
 
-      exportDefinitions.setInitialValue(exportDefinitionData);
+    exportDefinitions.setInitialValue(exportDefinitionData);
 
-      selectedExportDefinitions.setInitialValue({
-        exportDefinitions: exportDefinitionData.map((x) => ({
-          tableDefinitionId: x.tableDefinitionId,
-          tableDefinitionName: x.tableDefinitionName,
-          exportDefinitionId: "",
-        })),
-      });
+    selectedExportDefinitions.setInitialValue({
+      exportDefinitions: exportDefinitionData.map((x) => ({
+        tableDefinitionId: x.tableDefinitionId,
+        tableDefinitionName: x.tableDefinitionName,
+      })),
+    });
 
-      openDialog(true);
-    } catch (e) {}
+    openDialog(true);
   }
 
   async function exportRecords() {
@@ -96,17 +86,20 @@ export function useExportDialog(
         exportDefinitionIds.map(async (exportDefinitionId) => {
           try {
             const file = await api.exportRecord({
-              definitionId: exportDefinitionId,
+              definitionId: exportDefinitionId!,
               ...exportRecordsDefinitionEdit.value,
             });
             if (file) saveAs(file.data, file.fileName);
-          } catch (e) {}
+          } catch (e) {
+            console.error(e);
+          }
         }),
       );
 
       openDialog(false);
       await resetDialog();
-    } catch (_) {
+    } catch (e) {
+      console.error(e);
     } finally {
       exporting.value = false;
     }

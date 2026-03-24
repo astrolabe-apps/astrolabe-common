@@ -284,7 +284,7 @@ export interface ExportDefinitionDashboardData {
 export interface ExportDefinitionSelectionData {
   tableDefinitionName: string | null;
   tableDefinitionId: string;
-  exportDefinitionId: string;
+  exportDefinitionId?: string | null;
 }
 
 /**
@@ -356,7 +356,7 @@ export interface DashboardPageApi {
   getExportDefinitions(
     edit: ExportRecordsDefinitionData,
   ): Promise<ExportDefinitionGroupData[]>;
-  exportRecord(edit: ExportRecordRequest): Promise<FileData | void>;
+  exportRecord(edit: ExportRecordRequest): Promise<FileData>;
   goToViewItem(itemId: string): void;
   goToEditItem(itemId: string): void;
 }
@@ -388,9 +388,7 @@ export type SchemaRegistry = Record<string, SchemaField[]>;
  * Configuration for creating a form renderer.
  */
 export interface RendererConfig {
-  createRenderer: (
-    customRenderers?: RendererRegistration[],
-  ) => FormRenderer;
+  createRenderer: (customRenderers?: RendererRegistration[]) => FormRenderer;
 }
 
 /**
@@ -426,10 +424,7 @@ export interface FormsAppUIComponents {
     (open: boolean) => void,
     (props: FormsAppDialogProps) => ReactNode,
   ];
-  useConfirmDialog: () => [
-    (props: FormsAppConfirmData) => void,
-    ReactElement,
-  ];
+  useConfirmDialog: () => [(props: FormsAppConfirmData) => void, ReactElement];
   Button: (props: {
     disabled?: boolean;
     onClick?: () => void;

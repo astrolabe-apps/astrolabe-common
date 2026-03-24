@@ -8,11 +8,21 @@ using Microsoft.EntityFrameworkCore;
 namespace Astrolabe.Forms;
 
 public partial class FormsContext<
-    TItem, TFormData, TPerson, TFormDef, TTableDef,
-    TAuditEvent, TItemTag, TItemNote, TItemFile, TExportDef>
+    TItem,
+    TFormData,
+    TPerson,
+    TFormDef,
+    TTableDef,
+    TAuditEvent,
+    TItemTag,
+    TItemNote,
+    TItemFile,
+    TExportDef
+>
 {
     public async Task<IEnumerable<ExportDefinitionGroup>> GetExportDefinitionOfForms(
-        IEnumerable<Guid> formItemIds)
+        IEnumerable<Guid> formItemIds
+    )
     {
         return await Items
             .Where(x => formItemIds.Contains(x.Id) && x.FormData.Definition.Table != null)
@@ -29,23 +39,25 @@ public partial class FormsContext<
             .ToListAsync();
     }
 
-    public async Task<string?> GetCsvText(
+    public async Task WriteCsvText(
         IEnumerable<ExportColumn> exportColumns,
         IEnumerable<Guid> itemIds,
         Guid tableDefinitionId,
         Guid userId,
-        IList<string> roles)
+        IList<string> roles,
+        Stream stream
+    )
     {
         var allIds = await Items
             .Where(x =>
                 x.FormData.Definition.Table != null
                 && x.FormData.Definition.Table.Id == tableDefinitionId
-                && itemIds.Contains(x.Id))
+                && itemIds.Contains(x.Id)
+            )
             .Select(x => x.Id)
             .ToListAsync();
 
-        await using var ms = new MemoryStream();
-        await using var writer = new StreamWriter(ms);
+        await using var writer = new StreamWriter(stream);
         await using var csvWriter = new CsvWriter(
             writer,
             new CsvConfiguration(CultureInfo.InvariantCulture) { HasHeaderRecord = false }
@@ -57,7 +69,18 @@ public partial class FormsContext<
         var actions = new List<ItemAction>
         {
             new LoadMetadataAction(),
-            new ExportCsvAction<ItemEditContext<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote>>(
+            new ExportCsvAction<
+                ItemEditContext<
+                    TItem,
+                    TFormData,
+                    TPerson,
+                    TFormDef,
+                    TTableDef,
+                    TAuditEvent,
+                    TItemTag,
+                    TItemNote
+                >
+            >(
                 o =>
                     csvWriter.ExportRecord(
                         columns,
@@ -77,8 +100,5 @@ public partial class FormsContext<
         }
 
         await csvWriter.FlushAsync();
-        ms.Position = 0;
-        using var reader = new StreamReader(ms);
-        return await reader.ReadToEndAsync();
     }
 }
