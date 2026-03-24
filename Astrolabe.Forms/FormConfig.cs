@@ -1,8 +1,8 @@
 namespace Astrolabe.Forms;
 
-public class FormConfig
-{
-    public FormLayoutMode LayoutMode { get; set; }
-
-    public PageNavigationStyle NavigationStyle { get; set; }
-}
+public record FormConfig(
+    bool Public,
+    bool Published,
+    FormLayoutMode LayoutMode,
+    PageNavigationStyle NavigationStyle
+);

@@ -81,8 +81,8 @@ export interface FormRenderData {
 export interface FormConfigData {
   layoutMode: FormLayoutMode;
   navigationStyle: PageNavigationStyle;
-  public?: boolean;
-  published?: boolean;
+  public: boolean;
+  published: boolean;
 }
 
 /**

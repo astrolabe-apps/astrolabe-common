@@ -5,12 +5,22 @@ using Microsoft.EntityFrameworkCore;
 namespace Astrolabe.Forms;
 
 public partial class FormsContext<
-    TItem, TFormData, TPerson, TFormDef, TTableDef,
-    TAuditEvent, TItemTag, TItemNote, TItemFile, TExportDef>
+    TItem,
+    TFormData,
+    TPerson,
+    TFormDef,
+    TTableDef,
+    TAuditEvent,
+    TItemTag,
+    TItemNote,
+    TItemFile,
+    TExportDef
+>
 {
     public async Task<IEnumerable<FormInfo>> ListForms(
         bool? forPublic = null,
-        bool? published = null)
+        bool? published = null
+    )
     {
         var q = FormDefinitions.AsQueryable();
         if (forPublic.HasValue)
@@ -41,21 +51,11 @@ public partial class FormsContext<
         };
         return new FormAndSchemas(
             DbJson.FromJson<IEnumerable<object>>(formDef.Definition),
-            GetFormConfig(formDef),
             tableDef.ShortId!,
-            schemas
+            schemas,
+            formDef.GetFormConfig()
         );
     }
-
-    /// <summary>
-    /// Override to provide form-specific config (e.g. layout mode, navigation style).
-    /// </summary>
-    protected virtual object? GetFormConfig(TFormDef formDef) => null;
-
-    /// <summary>
-    /// Override to apply form-specific config to the entity.
-    /// </summary>
-    protected virtual void SetFormConfig(TFormDef formDef, FormConfig config) { }
 
     /// <summary>
     /// Override to validate form definition edits before create/update. Throw <see cref="FormsValidationException"/> on failure.
@@ -75,7 +75,7 @@ public partial class FormsContext<
             form.GroupId!,
             form.TableId,
             DbJson.FromJson<IEnumerable<object>>(form.Definition),
-            (FormConfig)(GetFormConfig(form) ?? new FormConfig())
+            form.GetFormConfig()
         );
     }
 
@@ -92,7 +92,7 @@ public partial class FormsContext<
             Definition = DbJson.ToJson(edit.Controls),
             Version = 1,
         };
-        SetFormConfig(form, edit.Config);
+        form.SetFormConfig(edit.Config);
         FormDefinitions.Add(form);
         await SaveChanges();
         return form.Id;
@@ -111,7 +111,7 @@ public partial class FormsContext<
         form.GroupId = edit.GroupId;
         form.TableId = edit.TableId;
         form.Definition = DbJson.ToJson(edit.Controls);
-        SetFormConfig(form, edit.Config);
+        form.SetFormConfig(edit.Config);
         await SaveChanges();
     }
 

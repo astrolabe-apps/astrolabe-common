@@ -175,6 +175,8 @@ export function FormsEditorPage({
           name,
           shortId,
           config: {
+            public: false,
+            published: false,
             layoutMode: FormLayoutMode.SinglePage,
             navigationStyle: PageNavigationStyle.Wizard,
           },
