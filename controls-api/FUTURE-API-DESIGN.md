@@ -478,7 +478,7 @@ class WriteContextImpl {
 ### 3. Control is read-only interface, mutations on ControlImpl
 
 `Control<V>` exposes only read and subscription operations:
-- `uniqueId`, `current` (snapshot), `fields`, `elements`, `subscribe`, `unsubscribe`, `cleanup`, `meta`, `as`, `lookupControl`
+- `uniqueId`, `current` (snapshot), `fields`, `elements`, `subscribe`, `unsubscribe`, `cleanup`, `meta`, `as`
 - `validate` lives on `WriteContext` (not `Control`) — it needs a write batch to set errors. `@react-typed-forms/core` monkey-patches a convenience `control.validate()` for legacy compat
 - No `value` setter, no `set*` methods on Control
 

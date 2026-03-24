@@ -339,9 +339,25 @@ Creates a child control with the given value (value and initialValue both set to
 
 ## O. Utility APIs `[core]`
 
-### lookupControl(path)
+All utility functions are standalone (not methods on `Control`) to keep the `Control` interface minimal. They access internal `_parents` data where needed.
 
-Traverses the control tree given an array of `(string | number)` path segments. Strings are treated as field keys, numbers as element indices. Returns `undefined` if any segment fails to resolve.
+### lookupControl(control, path)
+
+`lookupControl(control: Control<any>, path: (string | number)[]): Control<any> | undefined`
+
+Traverses the control tree given an array of path segments. Strings are treated as field keys, numbers as element indices. Returns `undefined` if any segment fails to resolve. Uses snapshot reads only (no tracking).
+
+### getControlPath(control, untilParent?)
+
+`getControlPath(control: Control<any>, untilParent?: Control<any>): (string | number)[]`
+
+Walks the `_parents` chain upward from `control`, collecting each `ParentLink.key`. Stops at the root (no parent) or at `untilParent` if provided. Returns the path segments in root-to-leaf order. Uses `_parents[0]` at each step (first parent link).
+
+### getElementIndex(child, parent?)
+
+`getElementIndex(child: Control<any>, parent?: Control<any[]>): { index: number; initialIndex: number | undefined } | undefined`
+
+Returns the current index (`ParentLink.key`) and initial index (`ParentLink.origKey`) of an array element control. If `parent` is provided, finds the link to that specific parent; otherwise uses the first parent link. Returns `undefined` if the control has no parent link (detached).
 
 ### controlGroup(fields)
 

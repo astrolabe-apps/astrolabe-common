@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "jest --coverage"
   },
   "dependencies": {
     "next": "16.1.6",
@@ -14,14 +15,18 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@jest/globals": "^30.3.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "fast-check": "^4.6.0",
+    "jest": "^30.3.0",
+    "prettier": "^3",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "prettier": "^3"
+    "ts-jest": "^29.4.6",
+    "typescript": "^5"
   }
 }

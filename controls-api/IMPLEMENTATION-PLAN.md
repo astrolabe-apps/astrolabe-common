@@ -50,6 +50,12 @@ The `controls-api` project has type specs (`types.ts`, `react-types.ts`) and des
 - `flush()`: drain loop (pending → runListeners → repeat), then afterChanges callbacks
 - `updateElements` logic ported from existing `arrayControl.ts`
 
+### 4b. `src/lib/controlUtils.ts` — standalone utility functions
+- All three are standalone exported functions (not on `Control` interface) to keep the interface minimal
+- `lookupControl(control, path)` — walks `fields`/`elements` by `(string | number)[]` path segments. Uses public `Control` API only (no internals needed). Returns `undefined` if any segment fails to resolve
+- `getControlPath(control, untilParent?)` — walks `_parents[0].key` upward, collects keys, reverses to root-to-leaf order. Needs `toImpl()` to access `_parents`
+- `getElementIndex(child, parent?)` — reads `ParentLink.key` (current index) and `ParentLink.origKey` (initial index). Needs `toImpl()` to access `_parents`. Returns `undefined` for detached elements
+
 ### 5. `src/lib/readContextImpl.ts`
 - `NoopReadContext` — returns `*Now` values directly, no tracking
 - `TrackingReadContext` — records `Map<ControlImpl, ControlChange>` during reads, exposes `reset()`, `getTracked()`
