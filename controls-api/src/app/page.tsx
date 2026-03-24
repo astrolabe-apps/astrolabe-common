@@ -2,7 +2,8 @@
 
 import { useRef } from "react";
 import type { Control } from "@/lib/types";
-import { controls } from "@/lib/react-types";
+import { controls, ControlContextProvider } from "@/lib/controlsImpl";
+import { createControlContext } from "@/lib/controlContextImpl";
 
 interface FormData {
   firstName: string;
@@ -125,6 +126,8 @@ const initialData: FormData = {
   email: "",
 };
 
+const controlContext = createControlContext();
+
 const Home = controls(function Home({}, { controlContext }) {
   const formRef = useRef<Control<FormData> | null>(null);
   if (!formRef.current) {
@@ -140,4 +143,10 @@ const Home = controls(function Home({}, { controlContext }) {
   );
 });
 
-export default Home;
+export default function Page() {
+  return (
+    <ControlContextProvider value={controlContext}>
+      <Home />
+    </ControlContextProvider>
+  );
+}
