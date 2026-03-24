@@ -591,7 +591,6 @@ interface FormStateNodeState {
   readonly: boolean;
   children: FormStateNodeState[];
   dataNode: SchemaDataNode | undefined;
-  definitionOverrides: Record<string, any>;
   busy: boolean;
   childIndex: number;
 }
@@ -638,7 +637,7 @@ getState(rc: ReadContext): FormStateNodeState {
 
 When `getDefinition(rc)` is called, it returns a proxy that resolves property access through up to three layers:
 
-1. **Script override layer** — checks `stateControl.fields.definitionOverrides` via `rc`. Script computeds cache their results in these controls (e.g. a `hidden` script writes its result into `definitionOverrides.fields.hidden`). Reading through `rc` subscribes the caller to the cached result.
+1. **Script override layer** — checks the script layer's override controls via `rc`. Script computeds cache their results in these controls (e.g. a `hidden` script writes its result into `overrides.fields.hidden`). Reading through `rc` subscribes the caller to the cached result.
 
 2. **Editor layer** (optional) — if the base definition is backed by a `Control<ControlDefinition>` (e.g. in a form editor's preview mode), property access reads through `rc`, subscribing to editor changes.
 
@@ -648,22 +647,26 @@ The proxy is created fresh per `getDefinition(rc)` call — it holds no state an
 
 ### Script Override Lifecycle
 
-Script computeds are the only part of the definition resolution that has lifecycle:
+Script computeds are the only part of the definition resolution that has lifecycle.
+
+**Important:** The override controls are **not part of `FormStateNodeState`**. They are an internal implementation detail of the script layer, owned and managed separately. This avoids the problem of stale `_fields` children accumulating when scripts are torn down and recreated (e.g. when the definition changes in editor mode).
+
+The script layer creates a fresh `Control<Record<string, any>>` for the overrides and a list of cleanup functions for the script computeds. When the base definition changes, the entire set is torn down — override control and all — and rebuilt from scratch. `getDefinition(rc)` holds an internal reference to the current override control.
 
 ```
-stateControl (Control<FormStateNodeState>)
-  └─ fields.definitionOverrides (Control<Record<string, any>>)
+Script layer (internal to FormStateNode, not in stateControl)
+  └─ overrides: Control<Record<string, any>>  (recreated on definition change)
        ├─ computed: evaluate "hidden" script → write result to overrides.fields.hidden
        ├─ computed: evaluate "disabled" script → write result to overrides.fields.disabled
        └─ computed: evaluate "label" script → write result to overrides.fields.label
 ```
 
-- Script computeds are created during `initFormState()`, scoped to `stateControl`
+- Script computeds are created during `initFormState()`, with cleanup registered on the FormStateNode
 - Each script computed tracks its own dependencies (data controls referenced by the expression) and writes its cached result into the corresponding override control
 - When a dependency changes, only that script re-evaluates
 - On cleanup, all script computeds are torn down (unsubscribe from dependencies)
 
-**Editor mode coarse invalidation:** When the base definition is a `Control<ControlDefinition>` (editor mode), a single tracked computation reads the entire definition. If any property changes, all script computeds are torn down and recreated. This is acceptable — editor preview doesn't need fine-grained reactivity.
+**Editor mode coarse invalidation:** When the base definition is a `Control<ControlDefinition>` (editor mode), a single tracked computation reads the entire definition. If any property changes, the override control is discarded, a fresh one is created, and all script computeds are rebuilt. This is acceptable — editor preview doesn't need fine-grained reactivity.
 
 ### Computed Properties
 
@@ -697,12 +700,14 @@ Children are managed by an effect on `stateControl.fields.children`:
 
 ```
 FormStateNode.cleanup()
-  └─ stateControl.cleanup()
-       ├─ All computed properties stop tracking (visible, disabled, readonly, dataNode)
-       ├─ All sync effects unsubscribe (disabled sync, touched sync, error sync, defaults)
-       ├─ All script computeds unsubscribe (definitionOverrides children)
-       ├─ Children elements cleaned up recursively (each child's stateControl)
-       └─ Validation effects torn down
+  ├─ stateControl.cleanup()
+  │    ├─ All computed properties stop tracking (visible, disabled, readonly, dataNode)
+  │    ├─ All sync effects unsubscribe (disabled sync, touched sync, error sync, defaults)
+  │    ├─ Children elements cleaned up recursively (each child's stateControl)
+  │    └─ Validation effects torn down
+  └─ Script layer cleanup
+       ├─ All script computeds unsubscribe
+       └─ Override control discarded
 ```
 
 ### Cascade Rules
@@ -713,12 +718,11 @@ FormStateNode.cleanup()
 
 ## Open Questions
 
-- How do computed/derived controls fit in — are they `ReadContext` implementations that write to a control via `WriteContext`?
-- How does the React layer discover/share the control tree root's `update()` function — React context, prop drilling, or a root-level provider?
-- **Shape change semantics**: When a control's value changes from object → array (or vice versa), what happens to existing child controls of the old shape? Options: (a) detach them (clear parent link, leave them orphaned), (b) leave them as-is with stale values (they re-sync if the shape changes back), (c) cleanup/dispose them. The practical question is whether anyone holds references to them.
-
 ### Resolved
 
 - **Where does `newControl` live?** — On `ControlContext` in core, which holds tree-level configuration (equality, etc.). `@react-typed-forms/core` provides standalone `newControl()` and `update()` functions that use a default `ControlContext` with `deepEquals`.
 - **Should the tracking `ReadContext` be reusable?** — Yes, reusable. Reset between renders. More allocation-friendly and the `controls()` wrapper manages the lifecycle cleanly. The exact creation API is TBD.
 - **How does `update()` find the tree root for batching?** — It doesn't need to. `ControlContext.update()` creates a fresh `WriteContext` per call. No tree-root discovery needed.
+- **How do computed/derived controls fit in?** — `computed(ctx, target, compute)` uses a tracking `ReadContext` internally to record dependencies, then writes the result to the target control via `WriteContext`. Implemented in `computed.ts`.
+- **How does the React layer discover/share `update()`?** — The `ControlContext` is obtained from React context. The `controls()` wrapper provides it to components via `ControlsContext`.
+- **Shape change semantics** — Fields and elements coexist on the same `ControlImpl` (see "No ControlLogic class hierarchy" in Implementation Architecture). When a value changes type, child controls of the old shape remain with stale values and re-sync if the shape changes back.
