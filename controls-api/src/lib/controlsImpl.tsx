@@ -7,9 +7,10 @@ import React, {
   useRef,
   useState,
 } from "react";
-import type { ControlContext, WriteContext } from "./types";
+import type { Control, ControlContext, ReadContext, WriteContext } from "./types";
 import type { ControlsRender } from "./react-types";
 import { TrackingReadContext, SubscriptionReconciler } from "./readContextImpl";
+import { computed, ComputedRef } from "./computed";
 
 // ── React Context ───────────────────────────────────────────────────
 
@@ -85,8 +86,27 @@ export function controls<P extends object>(
     const update = (cb: (wc: WriteContext) => void) =>
       controlContext.update(cb);
 
+    const useComputed = <V,>(compute: (rc: ReadContext) => V): Control<V> => {
+      const ref = useRef<{ control: Control<V>; reconciler: ComputedRef } | null>(null);
+      if (!ref.current) {
+        const control: Control<V> = controlContext.newControl<V>(undefined as V);
+        const reconciler = computed(controlContext, control, compute);
+        ref.current = { control, reconciler };
+      } else {
+        ref.current.reconciler.replaceCompute(compute);
+      }
+      const { reconciler } = ref.current;
+
+      useEffect(() => {
+        controlContext.reviveTracker(reconciler);
+        return () => controlContext.markTrackerDead(reconciler);
+      }, [reconciler]);
+
+      return ref.current.control;
+    };
+
     // Call the render function
-    const result = renderFn(props, { rc, update, controlContext });
+    const result = renderFn(props, { rc, update, controlContext, useComputed });
 
     // Reconcile subscriptions (during render, not in effect)
     reconciler.reconcile(rc.tracked);

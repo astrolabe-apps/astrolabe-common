@@ -70,13 +70,16 @@ export class WriteContextImpl implements WriteContext {
 
   // ── Array methods ─────────────────────────────────────────────
 
-  addElement<V>(control: Control<V[]>, child: V, index?: number): Control<V> {
+  addElement<V>(control: Control<V[]>, child: V, index?: number | Control<V>, insertAfter?: boolean): Control<V> {
     const c = toImpl(control);
     const elems = c.getOrCreateElements();
     const newChild = c._ctx.createChild(child, child, ControlFlags.None);
+    if (typeof index === "object") {
+      index = elems.indexOf(toImpl(index as Control<V>));
+    }
     const newElems = [...elems];
-    if (index !== undefined && index < elems.length) {
-      newElems.splice(index, 0, newChild);
+    if (typeof index === "number" && index < elems.length) {
+      newElems.splice(index + (insertAfter ? 1 : 0), 0, newChild);
     } else {
       newElems.push(newChild);
     }

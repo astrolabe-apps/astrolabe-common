@@ -6,14 +6,16 @@
  */
 
 import type { ReactNode } from "react";
-import type { ReadContext, WriteContext, ControlContext } from "./types";
+import type { Control, ReadContext, WriteContext, ControlContext } from "./types";
 
 export type UpdateFn = (cb: (wc: WriteContext) => void) => void;
+export type UseComputed = <V>(compute: (rc: ReadContext) => V) => Control<V>;
 
 export interface ControlsContext {
   rc: ReadContext;
   update: UpdateFn;
   controlContext: ControlContext;
+  useComputed: UseComputed;
 }
 
 export type ControlsRender<P> = (

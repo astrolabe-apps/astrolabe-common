@@ -2,7 +2,9 @@ import { describe, expect, it } from "@jest/globals";
 import fc from "fast-check";
 import { Control, ControlChange } from "../src/lib/types";
 import { lookupControl, getControlPath } from "../src/lib/controlUtils";
-import { makeCtx } from "./index";
+import { computed } from "../src/lib/computed";
+import { deepEquals } from "../src/lib/deepEquals";
+import { makeCtx, expectChanges } from "./index";
 import { arbitraryParentChild } from "./gen";
 
 describe("general", () => {
@@ -96,6 +98,99 @@ describe("general", () => {
           }
           const controlPath = getControlPath(base);
           expect(controlPath).toEqual(actualPath);
+        },
+      ),
+    );
+  });
+
+  it("getControlPath works with __proto__ as field key", () => {
+    const ctx = makeCtx();
+    const root = ctx.newControl<any>({});
+    const first = root.fields["first"];
+    const proto = first.fields["__proto__"];
+    ctx.update((wc) => wc.setValue(proto, [1]));
+    ctx.update((wc) => wc.setValue(proto, [1]));
+    const elem = proto.elements[0];
+    expect(getControlPath(proto)).toEqual(["first", "__proto__"]);
+    expect(getControlPath(elem)).toEqual(["first", "__proto__", 0]);
+  });
+
+  it("can set computation", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.integer()),
+        fc.array(fc.integer()),
+        (numbers1, numbers2) => {
+          const ctx = makeCtx();
+          const changes: ControlChange[] = [];
+          const numberControls = ctx.newControl(numbers1);
+          const resultControl = ctx.newControl(-1);
+          resultControl.subscribe(
+            (a, c) => changes.push(c),
+            ControlChange.Value,
+          );
+          let sumCalled = 0;
+          const sum = (rc: any) => {
+            sumCalled++;
+            return rc
+              .getElements(numberControls)
+              .reduce((a: number, b: any) => a + rc.getValue(b), 0);
+          };
+          const max = (rc: any) =>
+            rc
+              .getElements(numberControls)
+              .reduce((a: number, b: any) => Math.max(a, rc.getValue(b)), 0);
+          const ref = computed(ctx, resultControl, sum);
+          // Same function — replaceCompute should no-op
+          ref.replaceCompute(sum);
+          expect(sumCalled).toBe(1);
+          expectChanges(changes, [ControlChange.Value]);
+          expect(resultControl.valueNow).toStrictEqual(
+            numbers1.reduce((a, b) => a + b, 0),
+          );
+          ctx.update((wc) => wc.setValue(numberControls, numbers2));
+          expectChanges(
+            changes,
+            deepEquals(numbers1, numbers2) ? [] : [ControlChange.Value],
+          );
+          expect(resultControl.valueNow).toStrictEqual(
+            numbers2.reduce((a, b) => a + b, 0),
+          );
+          ref.replaceCompute(max);
+          expect(resultControl.valueNow).toStrictEqual(
+            numbers2.reduce((a, b) => Math.max(a, b), 0),
+          );
+          ref.cleanup();
+        },
+      ),
+    );
+  });
+
+  it("cleaned up computation stops re-running", () => {
+    fc.assert(
+      fc.property(
+        fc.array(fc.integer()),
+        fc.array(fc.integer({ min: 1 }), { minLength: 1 }),
+        (numbers1, numbers2) => {
+          const ctx = makeCtx();
+          const changes: ControlChange[] = [];
+          const numberControls = ctx.newControl(numbers1);
+          const newNumbers = [...numbers1, ...numbers2];
+          const resultControl = ctx.newControl(-1);
+          resultControl.subscribe(
+            (a, c) => changes.push(c),
+            ControlChange.Value,
+          );
+          const sum = (rc: any) =>
+            rc
+              .getElements(numberControls)
+              .reduce((a: number, b: any) => a + rc.getValue(b), 0);
+          const actualSum = numbers1.reduce((a, b) => a + b, 0);
+          const ref = computed(ctx, resultControl, sum);
+          expect(resultControl.valueNow).toStrictEqual(actualSum);
+          ref.cleanup();
+          ctx.update((wc) => wc.setValue(numberControls, newNumbers));
+          expect(resultControl.valueNow).toStrictEqual(actualSum);
         },
       ),
     );

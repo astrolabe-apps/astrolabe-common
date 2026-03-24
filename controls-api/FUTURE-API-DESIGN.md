@@ -150,7 +150,7 @@ interface WriteContext {
   clearErrors(control: Control<unknown>): void
 
   // Array mutations
-  addElement<V>(control: Control<V[]>, child: V, index?: number): Control<V>
+  addElement<V>(control: Control<V[]>, child: V, index?: number | Control<V>, insertAfter?: boolean): Control<V>
   removeElement<V>(control: Control<V[]>, child: number | Control<V>): void
   updateElements<V>(control: Control<V[]>, cb: (elems: Control<V>[]) => Control<V>[]): Control<V>[]
 

@@ -123,8 +123,7 @@ describe("array", () => {
         expect(control.valueNow).toStrictEqual([...numArray, 0]);
         ctx.update((wc) => wc.addElement(control, -1, 0));
         expect(control.valueNow).toStrictEqual([-1, ...numArray, 0]);
-        // insertAfter equivalent: insert at index 1 (after index 0)
-        ctx.update((wc) => wc.addElement(control, -2, 1));
+        ctx.update((wc) => wc.addElement(control, -2, 0, true));
         expect(control.valueNow).toStrictEqual([-1, -2, ...numArray, 0]);
         ctx.update((wc) => wc.setValue(control.elements[0], 1));
         expect(control.valueNow).toStrictEqual([1, -2, ...numArray, 0]);
@@ -160,7 +159,7 @@ describe("array", () => {
         ctx.update((wc) => wc.setValue(control, [childValue]));
         expect(child.valueNow).toStrictEqual(childValue + "b");
         // should update parent value, leave child initial value unchanged
-        ctx.update((wc) => wc.updateElements(control, () => [child]));
+        ctx.update((wc) => wc.updateElements(control as any, () => [child]));
         expect(child.valueNow).toStrictEqual(childValue + "b");
         expect(child.initialValueNow).toStrictEqual(childValue + "c");
         expect(control.valueNow).toStrictEqual([childValue + "b"]);

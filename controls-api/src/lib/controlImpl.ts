@@ -135,7 +135,11 @@ export class ControlImpl<V = unknown> implements Control<V> {
   ): Subscription {
     this._subscriptions ??= new Subscriptions();
     const currentChanges = this.getChangeState(mask);
-    return this._subscriptions.subscribe(listener as ChangeListenerFunc<any>, currentChanges, mask);
+    return this._subscriptions.subscribe(
+      listener as ChangeListenerFunc<any>,
+      currentChanges,
+      mask,
+    );
   }
 
   unsubscribe(subscription: Subscription): void {
@@ -204,17 +208,21 @@ export class ControlImpl<V = unknown> implements Control<V> {
     const pv = parent._value;
     let copied: any;
     if (Array.isArray(pv)) {
-      copied = pv == null ? [] : [...pv];
+      copied = [...(pv ?? [])];
+      copied[link.key] = this._value;
     } else {
-      copied = pv == null ? {} : { ...pv };
+      copied = { ...(pv as any), [link.key]: this._value };
     }
-    copied[link.key] = this._value;
     parent.setValueImpl(copied, notify, this);
   }
 
   // ── Touched / Disabled ────────────────────────────────────────
 
-  setTouchedImpl(touched: boolean, notify: NotifyFn, notChildren?: boolean): void {
+  setTouchedImpl(
+    touched: boolean,
+    notify: NotifyFn,
+    notChildren?: boolean,
+  ): void {
     if (touched) {
       this._flags |= ControlFlags.Touched;
     } else {
@@ -226,7 +234,11 @@ export class ControlImpl<V = unknown> implements Control<V> {
     }
   }
 
-  setDisabledImpl(disabled: boolean, notify: NotifyFn, notChildren?: boolean): void {
+  setDisabledImpl(
+    disabled: boolean,
+    notify: NotifyFn,
+    notChildren?: boolean,
+  ): void {
     if (disabled) {
       this._flags |= ControlFlags.Disabled;
     } else {
@@ -240,7 +252,11 @@ export class ControlImpl<V = unknown> implements Control<V> {
 
   // ── Errors / Validity ─────────────────────────────────────────
 
-  setErrorImpl(key: string, error: string | null | undefined, notify: NotifyFn): void {
+  setErrorImpl(
+    key: string,
+    error: string | null | undefined,
+    notify: NotifyFn,
+  ): void {
     const hadErrors = this._errors != null;
     if (!error) error = null;
     const exE = this._errors;
@@ -315,7 +331,8 @@ export class ControlImpl<V = unknown> implements Control<V> {
     if (!this._elems) {
       const v = (this._value as unknown[] | null) ?? [];
       const iv = (this._initialValue as unknown[] | null) ?? [];
-      const flags = this._flags & (ControlFlags.Disabled | ControlFlags.Touched);
+      const flags =
+        this._flags & (ControlFlags.Disabled | ControlFlags.Touched);
       if (Array.isArray(v)) {
         this._elems = v.map((x, i) => {
           const child = this._ctx.createChild(x, iv[i], flags);
@@ -404,10 +421,14 @@ export class ControlImpl<V = unknown> implements Control<V> {
 
   getChangeState(mask: ControlChange): ControlChange {
     let flags = ControlChange.None;
-    if (mask & ControlChange.Dirty && this.dirtyNow) flags |= ControlChange.Dirty;
-    if (mask & ControlChange.Valid && this.isValid()) flags |= ControlChange.Valid;
-    if (mask & ControlChange.Disabled && this.disabledNow) flags |= ControlChange.Disabled;
-    if (mask & ControlChange.Touched && this.touchedNow) flags |= ControlChange.Touched;
+    if (mask & ControlChange.Dirty && this.dirtyNow)
+      flags |= ControlChange.Dirty;
+    if (mask & ControlChange.Valid && this.isValid())
+      flags |= ControlChange.Valid;
+    if (mask & ControlChange.Disabled && this.disabledNow)
+      flags |= ControlChange.Disabled;
+    if (mask & ControlChange.Touched && this.touchedNow)
+      flags |= ControlChange.Touched;
     return flags;
   }
 

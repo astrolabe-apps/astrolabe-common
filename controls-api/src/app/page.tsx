@@ -43,12 +43,17 @@ const TextInput = controls<{
 
 const MyForm = controls<{ form: Control<FormData> }>(function MyForm(
   { form },
-  { rc, update },
+  { rc, update, useComputed },
 ) {
   const dirty = rc.isDirty(form);
   const valid = rc.isValid(form);
   const fields = form.fields;
-  console.log(rc.getValue(form), rc.getInitialValue(form));
+
+  const fullName = useComputed((rc) => {
+    const first = rc.getValue(fields.firstName);
+    const last = rc.getValue(fields.lastName);
+    return [first, last].filter(Boolean).join(" ") || "(empty)";
+  });
   return (
     <div className="flex flex-col gap-6">
       <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
@@ -59,6 +64,10 @@ const MyForm = controls<{ form: Control<FormData> }>(function MyForm(
         <TextInput control={fields.firstName} label="First Name" />
         <TextInput control={fields.lastName} label="Last Name" />
         <TextInput control={fields.email} label="Email" />
+      </div>
+
+      <div className="text-sm text-zinc-500 dark:text-zinc-400">
+        Full name: {rc.getValue(fullName)}
       </div>
 
       <div className="flex items-center gap-4 text-sm">

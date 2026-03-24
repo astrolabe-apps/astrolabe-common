@@ -161,7 +161,8 @@ export interface WriteContext {
   addElement<V>(
     control: Control<V[]>,
     child: V,
-    index?: number,
+    index?: number | Control<V>,
+    insertAfter?: boolean,
   ): Control<V>;
   removeElement<V>(
     control: Control<V[]>,

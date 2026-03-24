@@ -403,9 +403,9 @@ The primary array mutation API. Takes a callback that receives the current eleme
 7. Signal Structure change
 8. Return the detached elements
 
-### addElement(control, value, index?)
+### addElement(control, value, index?, insertAfter?)
 
-Creates a new child element and inserts it at the given index (or appends if no index). Delegates to `updateElements` internally.
+Creates a new child element and inserts it at the given index (or appends if no index). The `index` parameter can be a numeric index or a `Control` reference (resolved to its position in the array). When `insertAfter` is true, the element is inserted after the given index rather than before it. Delegates to `updateElements` internally.
 
 ### newElement(control, value)
 
