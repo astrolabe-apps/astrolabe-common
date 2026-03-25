@@ -1,3 +1,4 @@
+export { defaultDashboardActionRenderers } from "./defaultActionRenderers";
 export { DashboardPage } from "./DashboardPage";
 export { SelectionCheckbox } from "./SelectionCheckbox";
 export { useDashboardSearch } from "./useDashboardSearch";

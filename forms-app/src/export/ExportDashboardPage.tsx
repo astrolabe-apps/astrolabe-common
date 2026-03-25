@@ -7,6 +7,7 @@ import { AppFormRenderer } from "../AppFormRenderer";
 import { ExportDashboardApi } from "../api";
 import { ExportDefinitionGroupData } from "../types";
 import { DashboardActionHandlers } from "../dashboard/types";
+import { defaultDashboardActionRenderers } from "../dashboard";
 
 /**
  * Flattened export definition info for the dashboard form.
@@ -54,6 +55,7 @@ export function ExportDashboardPage({
       formType={formType}
       control={dashboardForm}
       renderOptions={{ actionOnClick: formActions }}
+      customRenderers={defaultDashboardActionRenderers}
     />
   );
 

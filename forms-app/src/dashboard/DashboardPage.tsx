@@ -1,4 +1,4 @@
-import React, { ReactElement } from "react";
+import React, { ReactElement, useMemo } from "react";
 import { useControl } from "@react-typed-forms/core";
 import {
   DisplayRendererProps,
@@ -13,6 +13,7 @@ import { useDashboardSearch } from "./useDashboardSearch";
 import { useExportDialog } from "./useExportDialog";
 import { SelectionCheckbox } from "./SelectionCheckbox";
 import { DashboardPageProps } from "./types";
+import { defaultDashboardActionRenderers } from "./defaultActionRenderers";
 
 export function DashboardPage({
   api,
@@ -46,6 +47,11 @@ export function DashboardPage({
   } = useExportDialog(api, ui.useDialog);
 
   const [openConfirm, confirmDialog] = useConfirmDialog();
+
+  const allRenderers = useMemo(
+    () => [...(customRenderers ?? []), ...defaultDashboardActionRenderers],
+    [customRenderers],
+  );
 
   return (
     <>
@@ -97,7 +103,7 @@ export function DashboardPage({
             ...onAction,
           }),
         }}
-        customRenderers={customRenderers}
+        customRenderers={allRenderers}
       />
       {showExport && renderExportDialog()}
       {confirmDialog}

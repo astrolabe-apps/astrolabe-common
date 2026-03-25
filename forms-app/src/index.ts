@@ -103,6 +103,7 @@ export {
   SelectionCheckbox,
   useDashboardSearch,
   useExportDialog,
+  defaultDashboardActionRenderers,
 } from "./dashboard";
 export type {
   DashboardActionHandlers,
