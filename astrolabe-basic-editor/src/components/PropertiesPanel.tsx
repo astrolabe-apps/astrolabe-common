@@ -36,7 +36,7 @@ export function PropertiesPanel(props: PropertiesPanelProps) {
 
   if (!selectedField.value) {
     return (
-      <div className="w-80 border-l border-violet-100 bg-white flex-shrink-0 p-4 text-slate-400 text-sm">
+      <div className="w-80 border-l border-primary-100 bg-white flex-shrink-0 p-4 text-slate-400 text-sm">
         Select a field to edit its properties
       </div>
     );
@@ -91,12 +91,12 @@ function PropertiesPanelContent({
   );
 
   return (
-    <div className="w-80 border-l border-violet-100 bg-white flex-shrink-0 overflow-y-auto">
-      <div className="px-4 py-3 border-b border-violet-100 bg-violet-50/60">
+    <div className="w-80 border-l border-primary-100 bg-white flex-shrink-0 overflow-y-auto">
+      <div className="px-4 py-3 border-b border-primary-100 bg-primary-50/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             {fieldConfig && (
-              <span className="text-violet-500 font-mono text-lg">
+              <span className="text-primary-500 font-mono text-lg">
                 {fieldConfig.icon}
               </span>
             )}
@@ -120,7 +120,7 @@ function PropertiesPanelContent({
           </label>
           <Finput
             control={defControl.fields.title.as<string>()}
-            className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
+            className="w-full text-sm border border-primary-200 rounded-lg px-3 py-1.5 bg-primary-50/50 text-slate-800 focus:border-primary-500 focus:outline-none"
             placeholder="Field label"
           />
         </div>
@@ -135,7 +135,7 @@ function PropertiesPanelContent({
                 (dataDefControl.fields.renderOptions as Control<any>).fields
                   .placeholder
               }
-              className="w-full text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
+              className="w-full text-sm border border-primary-200 rounded-lg px-3 py-1.5 bg-primary-50/50 text-slate-800 focus:border-primary-500 focus:outline-none"
               placeholder="Placeholder text"
             />
           </div>
@@ -146,7 +146,7 @@ function PropertiesPanelContent({
             <Fcheckbox
               control={dataDefControl.fields.required}
               id="required-toggle"
-              className="rounded accent-violet-600"
+              className="rounded accent-primary-600"
             />
             <label htmlFor="required-toggle" className="text-sm text-slate-600">
               Required field
@@ -159,7 +159,7 @@ function PropertiesPanelContent({
             <Fcheckbox
               control={groupDefControl.fields.groupOptions.fields.hideTitle}
               id="hide-title-toggle"
-              className="rounded accent-violet-600"
+              className="rounded accent-primary-600"
             />
             <label
               htmlFor="hide-title-toggle"

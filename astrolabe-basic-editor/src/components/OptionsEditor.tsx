@@ -31,7 +31,7 @@ export function OptionsEditor({ options }: OptionsEditorProps) {
           return (
             <div key={i} className="flex items-center gap-1.5">
               <input
-                className="flex-1 text-sm border border-violet-200 rounded-lg px-3 py-1.5 bg-violet-50/50 text-slate-800 focus:border-violet-500 focus:outline-none"
+                className="flex-1 text-sm border border-primary-200 rounded-lg px-3 py-1.5 bg-primary-50/50 text-slate-800 focus:border-primary-500 focus:outline-none"
                 value={opt.name}
                 onChange={(e) => {
                   const name = e.target.value;
@@ -60,7 +60,7 @@ export function OptionsEditor({ options }: OptionsEditorProps) {
             value: `option${idx}`,
           });
         }}
-        className="mt-2 text-[12.5px] text-violet-600 border border-dashed border-violet-300 rounded-lg px-3 py-1.5 hover:bg-violet-50 hover:border-violet-500 transition-colors"
+        className="mt-2 text-[12.5px] text-primary-600 border border-dashed border-primary-300 rounded-lg px-3 py-1.5 hover:bg-primary-50 hover:border-primary-500 transition-colors"
       >
         + Add option
       </button>

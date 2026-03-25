@@ -359,7 +359,7 @@ export function FormsEditorPage({
                 <li
                   key={form.id}
                   className={`flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-                    selectedForm?.id === form.id ? "bg-violet-100" : ""
+                    selectedForm?.id === form.id ? "bg-primary-100" : ""
                   }`}
                 >
                   <span
@@ -428,7 +428,7 @@ export function FormsEditorPage({
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="px-4 py-1.5 text-sm rounded-md font-semibold text-white bg-gradient-to-r from-violet-600 to-violet-500 shadow-sm hover:shadow-md transition-all disabled:opacity-50"
+                  className="px-4 py-1.5 text-sm rounded-md font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-500 shadow-sm hover:shadow-md transition-all disabled:opacity-50"
                 >
                   {saving ? "Saving..." : isDirty.value ? "Save *" : "Save"}
                 </button>
