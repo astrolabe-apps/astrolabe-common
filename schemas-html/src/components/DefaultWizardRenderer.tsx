@@ -173,7 +173,7 @@ function WizardRenderer({
   const internalPage = useControl(pageChildren.findIndex((x) => x.visible));
   const page: Control<number> =
     pageFieldNode?.control.as<number>() ?? internalPage;
-  const currentPage = page.value;
+  const currentPage = page.value ?? 0;
 
   const steps = buildSteps();
 

@@ -12,7 +12,6 @@ import {
   rendererClass,
 } from "@react-typed-forms/schemas";
 import { Pressable, View } from "react-native";
-import { formControlProps } from "@react-typed-forms/core";
 
 export function createRNCheckboxRenderer(options: CheckRendererOptions = {}) {
   return createDataRenderer(
@@ -44,14 +43,14 @@ function CheckBoxRenderer({
   options: CheckRendererOptions;
 }) {
   const control = props.control.as<boolean | null | undefined>();
-  const { value } = formControlProps(control);
+  const value = control.value;
 
   function onCheckboxPressed() {
     control.touched = true;
     control.value = !value;
   }
 
-  const { disabled } = formControlProps(control);
+  const disabled = props.formNode.disabled;
   const checkboxDisabled = disabled || props.readonly;
 
   return (

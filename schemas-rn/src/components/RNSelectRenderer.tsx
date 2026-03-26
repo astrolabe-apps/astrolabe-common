@@ -34,6 +34,7 @@ export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
         <RNSelectRenderer
           className={rendererClass(props.className, options.className)}
           state={props.control}
+          disabled={props.formNode.disabled}
           id={props.id}
           readonly={props.readonly}
           options={props.options ?? []}
@@ -63,6 +64,7 @@ export function RNSelectRenderer({
   requiredText = "Please select",
   portalHost,
   readonly,
+  disabled,
   ...props
 }: SelectDataRendererProps & ExtendedDropdown) {
   const insets = useSafeAreaInsets();
@@ -75,7 +77,7 @@ export function RNSelectRenderer({
     left: 12,
     right: 12,
   };
-  const { value, disabled } = state;
+  const { value } = state;
   // const showEmpty = useControl(!required || value == null);
   const optionStringMap = useMemo(
     () => Object.fromEntries(options.map((x) => [convert(x.value), x.value])),
@@ -298,3 +300,15 @@ function SelectSeparator({
     />
   );
 }
+
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+  type Option,
+};

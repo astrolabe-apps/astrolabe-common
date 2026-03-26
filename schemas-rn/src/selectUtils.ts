@@ -16,6 +16,7 @@ export interface SelectDataRendererProps {
   requiredText?: string;
   readonly: boolean;
   required: boolean;
+  disabled?: boolean;
   state: Control<any>;
   convert: SelectConversion;
 }
