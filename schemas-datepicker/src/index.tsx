@@ -69,6 +69,7 @@ export function createDatePickerRenderer(
           }}
           className={rendererClass(p.className, className)}
           control={p.control.as()}
+          disabled={p.formNode.disabled}
           readonly={p.readonly}
           designMode={p.designMode}
           options={p.renderOptions as DateTimeRenderOptions}
@@ -98,12 +99,14 @@ function DatePickerRenderer({
   className,
   id,
   control,
+  disabled,
   readonly,
   designMode,
   options = {},
   pickerOptions,
 }: {
   control: Control<string | null>;
+  disabled?: boolean;
   className?: string;
   readonly?: boolean;
   designMode?: boolean;
@@ -120,7 +123,6 @@ function DatePickerRenderer({
     defaultYearRange,
     ...classes
   } = pickerOptions ?? {};
-  const disabled = control.disabled;
   let dateValue: CalendarDateTime | null = null;
   try {
     dateValue = !control.value

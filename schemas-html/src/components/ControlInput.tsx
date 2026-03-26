@@ -14,6 +14,7 @@ export interface ControlInputProps {
   id?: string;
   errorId?: string;
   readOnly?: boolean;
+  disabled?: boolean;
   placeholder?: string;
   control: Control<any>;
   convert: InputConversion;
@@ -24,9 +25,10 @@ export function ControlInput({
   convert,
   renderer,
   errorId,
+  disabled,
   ...props
 }: ControlInputProps) {
-  const { errorText, value, onChange, ref, ...inputProps } =
+  const { errorText, value, onChange, ref, disabled: _controlDisabled, ...inputProps } =
     formControlProps(control);
   const textValue = useControl(() => toText(value));
   useControlEffect(
@@ -37,6 +39,7 @@ export function ControlInput({
   return (
     <Input
       {...inputProps}
+      disabled={disabled}
       inputRef={ref}
       type={convert[0]}
       value={textValue.value}

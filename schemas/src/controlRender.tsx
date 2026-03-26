@@ -143,6 +143,7 @@ export interface CheckButtonsProps {
   className?: string;
   options?: FieldOption[] | null;
   control: Control<any>;
+  disabled?: boolean;
   classes: CheckRendererOptions;
   controlClasses?: CheckEntryClasses;
   readonly?: boolean;

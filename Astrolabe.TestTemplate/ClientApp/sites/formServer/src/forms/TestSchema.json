@@ -1,135 +1,38 @@
 {
   "controls": [
     {
-      "type": "Group",
-      "title": "Personal Details",
-      "children": [
-        {
-          "type": "Group",
-          "title": "Above 16",
-          "dynamic": [
-            {
-              "type": "Visible",
-              "expr": {
-                "type": "Jsonata",
-                "expression": "age \u003E= 16"
-              }
-            }
-          ],
-          "styleClass": "@ flex flex-col gap-[24px]",
-          "children": [
-            {
-              "type": "Data",
-              "title": "Will you and your guardian attend Service Tasmania in person? WORKS",
-              "field": "guardianConsent/guardianWillAttend",
-              "renderOptions": {
-                "type": "Radio",
-                "options": [
-                  {
-                    "name": "Yes, we will attend in person with original documents",
-                    "value": true
-                  },
-                  {
-                    "name": "No, I am an interstate applicant",
-                    "value": false
-                  }
-                ]
-              },
-              "required": true,
-              "textClass": "body",
-              "requiredErrorText": "Please select an option",
-              "dynamic": [
-                {
-                  "type": "AllowedOptions",
-                  "expr": {
-                    "type": "Jsonata",
-                    "expression": "[{\u0022name\u0022:\u0022Yes, we will attend in person with original documents\u0022, \u0022value\u0022:true}, {\u0022name\u0022:\u0022No, I am a remote applicant\u0022, \u0022value\u0022:false}]"
-                  }
-                }
-              ],
-              "layoutClass": "@ flex flex-col gap-[16px]"
-            },
-            {
-              "type": "Data",
-              "title": "Guardian Consent Section",
-              "dynamic": [
-                {
-                  "type": "Visible",
-                  "expr": {
-                    "type": "Jsonata",
-                    "expression": "age \u003E= 16 and age \u003C=17"
-                  }
-                }
-              ],
-              "styleClass": "@ flex flex-col gap-[12px]",
-              "renderOptions": {
-                "type": "Group"
-              },
-              "defaultValue": null,
-              "field": "guardianConsent",
-              "hideTitle": true,
-              "children": [
-                {
-                  "type": "Data",
-                  "title": "Will you and your guardian attend Service Tasmania in person? DOESNT WORK",
-                  "field": "guardianWillAttend",
-                  "renderOptions": {
-                    "type": "Radio",
-                    "options": [
-                      {
-                        "name": "Yes, we will attend in person with original documents",
-                        "value": true
-                      },
-                      {
-                        "name": "No, I am an interstate applicant",
-                        "value": false
-                      }
-                    ]
-                  },
-                  "required": true,
-                  "textClass": "body",
-                  "requiredErrorText": "Please select an option",
-                  "dynamic": [
-                    {
-                      "type": "AllowedOptions",
-                      "expr": {
-                        "type": "Jsonata",
-                        "expression": "[{\u0022name\u0022:\u0022Yes, we will attend in person with original documents\u0022, \u0022value\u0022:true}, {\u0022name\u0022:\u0022No, I am a remote applicant\u0022, \u0022value\u0022:false}]"
-                      }
-                    }
-                  ],
-                  "layoutClass": "@ flex flex-col gap-[16px]"
-                }
-              ]
-            }
-          ],
-          "groupOptions": {
-            "hideTitle": true
-          }
-        },
-        {
-          "type": "Group",
-          "title": "Page 2"
-        },
-        {
-          "type": "Group",
-          "title": "Page 3"
-        },
-        {
-          "type": "Action",
-          "title": "Very slow",
-          "placement": "middleNav",
-          "actionId": "slowAction",
-          "disableType": "Global"
-        }
-      ],
-      "groupOptions": {
-        "hideTitle": false,
-        "type": "Wizard"
+      "type": "Data",
+      "title": "Date",
+      "field": "date",
+      "renderOptions": {
+        "type": "Standard"
       },
-      "layoutClass": "px-[16px] py-[24px] bg-white flex flex-col gap-[16px]",
-      "labelTextClass": "@ title1",
-      "styleClass": "@ flex flex-col gap-[24px]"
+      "disabled": true
+    },
+    {
+      "type": "Data",
+      "title": "New",
+      "field": "date",
+      "renderOptions": {
+        "type": "DisplayOnly"
+      }
+    },
+    {
+      "type": "Data",
+      "title": "New",
+      "renderOptions": {
+        "type": "Standard"
+      },
+      "field": "metaField",
+      "disabled": true
+    },
+    {
+      "type": "Data",
+      "title": "New",
+      "field": "metaField",
+      "renderOptions": {
+        "type": "DisplayOnly"
+      }
     }
   ],
   "config": null,

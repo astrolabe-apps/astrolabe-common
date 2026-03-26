@@ -35,6 +35,7 @@ function TextareaMultilineTextfield({
   control,
   readonly,
   className,
+  formNode,
   ...props
 }: DataRendererProps) {
   const { renderOptions } = props;
@@ -46,7 +47,7 @@ function TextareaMultilineTextfield({
       className={className}
       onChange={(t) => (control.value = t.currentTarget.value)}
       placeholder={placeholder ?? ""}
-      disabled={control.disabled}
+      disabled={formNode.disabled}
       readOnly={readonly}
     />
   );
@@ -56,6 +57,7 @@ function ContentEditableMultilineTextfield({
   control,
   readonly,
   className,
+  formNode,
   ...props
 }: DataRendererProps) {
   const { renderOptions } = props;
@@ -73,11 +75,11 @@ function ContentEditableMultilineTextfield({
   );
   return (
     <code
-      contentEditable={!control.disabled && !readonly}
+      contentEditable={!formNode.disabled && !readonly}
       className={className}
       onInput={(t) => (control.value = t.currentTarget.textContent)}
       ref={codeRef}
-      aria-disabled={control.disabled}
+      aria-disabled={formNode.disabled}
       aria-readonly={readonly}
       aria-placeholder={placeholder ?? ""}
       role={"textbox"}
