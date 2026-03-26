@@ -48,6 +48,14 @@
   },
   {
     "type": "Data",
+    "title": "Empty",
+    "field": "empty",
+    "renderOptions": {
+      "type": "Standard"
+    }
+  },
+  {
+    "type": "Data",
     "title": "Inner Expression",
     "field": "innerExpression",
     "childRefId": "/ExpressionForm",
