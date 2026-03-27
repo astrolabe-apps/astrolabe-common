@@ -15,21 +15,15 @@ import {
   ActionRendererProps,
   ControlDataContext,
   OptionalAdornment,
+  WizardStepInfo,
+  WizardNavActionOptions,
 } from "@react-typed-forms/schemas";
+
+export type { WizardStepInfo, WizardNavActionOptions };
 
 // ============================================================================
 // SHARED TYPES AND INTERFACES
 // ============================================================================
-
-// Step info for wizard stepper
-export interface WizardStepInfo {
-  index: number;
-  title: string;
-  visible: boolean;
-  active: boolean;
-  completed: boolean;
-  valid: boolean;
-}
 
 // Custom navigation props for wizard renderer
 export interface CustomNavigationProps {
@@ -108,12 +102,6 @@ export interface DefaultTabsRenderOptions {
   activeClass?: string;
   inactiveClass?: string;
   contentClass?: string;
-}
-
-export interface WizardNavActionOptions extends Partial<ActionRendererProps> {
-  text?: string;
-  validate?: boolean;
-  hide?: boolean;
 }
 
 export interface DefaultWizardRenderOptions {

@@ -1,6 +1,4 @@
 import {
-  ActionRendererProps,
-  createAction,
   createGroupRenderer,
   deepMerge,
   fontAwesomeIcon,
@@ -8,18 +6,14 @@ import {
   GroupRendererProps,
   GroupRenderType,
   IconPlacement,
-  NoOpControlActionContext,
   rendererClass,
-  schemaDataForFieldRef,
-  WizardRenderOptions,
+  useWizardRenderer,
+  WizardStepInfo,
 } from "@react-typed-forms/schemas";
 import {
   CustomNavigationProps,
   DefaultWizardRenderOptions,
-  WizardNavActionOptions,
-  WizardStepInfo,
 } from "../rendererOptions";
-import { Control, useControl } from "@react-typed-forms/core";
 import { Fragment, ReactNode } from "react";
 
 const defaultOptions = {
@@ -135,75 +129,32 @@ function WizardRenderer({
       rightNavClass,
       middleNavClass,
     },
-    actions: {
-      next: nextAction,
-      prev: prevAction,
-      navActionId,
-      validateActionId,
-    },
+    actions,
     defaultShowSteps,
     renderNavigation,
   } = mergedOptions;
 
-  const wizardOptions = props.renderOptions as WizardRenderOptions;
-  const showSteps = wizardOptions.showSteps ?? defaultShowSteps;
-  const manualNavigation = wizardOptions.manualNavigation ?? false;
+  const { designMode, renderChild } = props;
 
-  const { pageIndexField } = wizardOptions;
-  const pageFieldNode = pageIndexField
-    ? schemaDataForFieldRef(pageIndexField, props.dataContext.parentNode)
-    : null;
+  const wizard = useWizardRenderer(props, {
+    actions,
+    defaultShowSteps,
+  });
 
-  const { formNode, designMode, renderChild } = props;
-
-  const allChildren = formNode.children;
-  const leftNavChildren = allChildren.filter(
-    (x) => x.definition.placement === "leftNav",
-  );
-  const middleNavChildren = allChildren.filter(
-    (x) => x.definition.placement === "middleNav",
-  );
-  const rightNavChildren = allChildren.filter(
-    (x) => x.definition.placement === "rightNav",
-  );
-  const pageChildren = allChildren.filter(
-    (x) => !x.definition.placement || x.definition.placement === "content",
-  );
-  const childrenLength = pageChildren.length;
-  const internalPage = useControl(pageChildren.findIndex((x) => x.visible));
-  const page: Control<number> =
-    pageFieldNode?.control.as<number>() ?? internalPage;
-  const currentPage = page.value ?? 0;
-
-  const steps = buildSteps();
-
-  const noNext = !designMode && nextVisibleInDirection(1) == null;
-  const noPrev = !designMode && nextVisibleInDirection(-1) == null;
-
-  const next = createAction(
-    navActionId,
-    designMode ? () => {} : () => nav(1, nextAction.validate),
-    nextAction.text,
-    makeActionProps(nextAction, noNext),
-  );
-
-  const prev = createAction(
-    navActionId,
-    designMode ? () => {} : () => nav(-1, prevAction.validate),
-    prevAction.text,
-    makeActionProps(prevAction, noPrev),
-  );
-
-  function makeActionProps(
-    { hide, text, validate, ...others }: WizardNavActionOptions,
-    disabled: boolean,
-  ): Partial<ActionRendererProps> {
-    return {
-      hidden: manualNavigation || (disabled && hide),
-      disabled: disabled || props.formNode.disabled,
-      ...others,
-    };
-  }
+  const {
+    currentPage,
+    pageChildren,
+    steps,
+    page,
+    totalPages,
+    next,
+    prev,
+    validatePage,
+    showSteps,
+    leftNavChildren,
+    middleNavChildren,
+    rightNavChildren,
+  } = wizard;
 
   const leftNav: ReactNode = leftNavChildren.length
     ? leftNavChildren.map((child) => renderChild(child))
@@ -217,8 +168,8 @@ function WizardRenderer({
 
   const navElement = renderNavigation({
     formRenderer,
-    page: countVisibleUntil(currentPage),
-    totalPages: countVisibleUntil(childrenLength),
+    page,
+    totalPages,
     prev,
     next,
     className: navContainerClass,
@@ -239,10 +190,11 @@ function WizardRenderer({
       : defaultStepsRender()
     : null;
 
+  const currentChild = pageChildren[currentPage];
   const content = designMode ? (
     <div>{pageChildren.map((child) => renderChild(child))}</div>
-  ) : currentPage < childrenLength ? (
-    <div className={contentClass}>{renderChild(pageChildren[currentPage])}</div>
+  ) : currentChild ? (
+    <div className={contentClass}>{renderChild(currentChild)}</div>
   ) : (
     <Fragment />
   );
@@ -254,25 +206,6 @@ function WizardRenderer({
       {navElement}
     </div>
   );
-
-  function buildSteps(): WizardStepInfo[] {
-    const result: WizardStepInfo[] = [];
-    let visibleIndex = 0;
-    for (let i = 0; i < childrenLength; i++) {
-      const child = pageChildren[i];
-      const visible = !!child.visible;
-      result.push({
-        index: visibleIndex,
-        title: child.definition.title ?? `Step ${visibleIndex + 1}`,
-        visible,
-        active: i === currentPage,
-        completed: visible && i < currentPage,
-        valid: child.valid,
-      });
-      if (visible) visibleIndex++;
-    }
-    return result;
-  }
 
   function defaultStepsRender() {
     const visibleSteps = steps.filter((s) => s.visible);
@@ -296,61 +229,5 @@ function WizardRenderer({
         ))}
       </div>
     );
-  }
-
-  function countVisibleUntil(untilPage: number) {
-    let count = 0;
-    for (let i = 0; i < untilPage && i < childrenLength; i++) {
-      if (pageChildren[i].visible) {
-        count++;
-      }
-    }
-    return count;
-  }
-
-  async function nav(dir: number, validate: boolean) {
-    if (validate) {
-      const syncValid = validatePage();
-      const validator = validateActionId
-        ? props.actionHandler?.(
-            validateActionId,
-            { current: page.current.value, dir },
-            props.dataContext,
-          )
-        : undefined;
-      const validateResult = await validator?.(NoOpControlActionContext);
-      if (!syncValid || validateResult === false) {
-        return;
-      }
-    }
-    const next = nextVisibleInDirection(dir);
-    if (next != null) {
-      page.value = next;
-    }
-  }
-
-  function nextVisibleInDirection(dir: number): number | null {
-    let next = currentPage + dir;
-    while (next >= 0 && next < childrenLength) {
-      if (pageChildren[next].visible) {
-        return next;
-      }
-      next += dir;
-    }
-    return null;
-  }
-
-  function validatePage() {
-    const pageNode = pageChildren[currentPage];
-    if (pageNode) {
-      const valid = pageNode.validate();
-      pageNode.setTouched(true);
-      return valid;
-    }
-    return false;
-  }
-
-  function isPageValid() {
-    return pageChildren[currentPage]?.valid ?? false;
   }
 }

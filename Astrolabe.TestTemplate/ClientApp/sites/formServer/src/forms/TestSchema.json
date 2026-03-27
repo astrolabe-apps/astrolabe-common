@@ -1,37 +1,46 @@
 {
   "controls": [
     {
-      "type": "Data",
-      "title": "Date",
-      "field": "date",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "disabled": true
-    },
-    {
-      "type": "Data",
+      "type": "Group",
       "title": "New",
-      "field": "date",
-      "renderOptions": {
-        "type": "DisplayOnly"
-      }
-    },
-    {
-      "type": "Data",
-      "title": "New",
-      "renderOptions": {
-        "type": "Standard"
-      },
-      "field": "metaField",
-      "disabled": true
-    },
-    {
-      "type": "Data",
-      "title": "New",
-      "field": "metaField",
-      "renderOptions": {
-        "type": "DisplayOnly"
+      "children": [
+        {
+          "type": "Data",
+          "title": "Date",
+          "field": "date",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "disabled": true
+        },
+        {
+          "type": "Data",
+          "title": "New",
+          "field": "date",
+          "renderOptions": {
+            "type": "DisplayOnly"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "New",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "field": "metaField",
+          "disabled": true
+        },
+        {
+          "type": "Data",
+          "title": "New",
+          "field": "metaField",
+          "renderOptions": {
+            "type": "DisplayOnly"
+          }
+        }
+      ],
+      "groupOptions": {
+        "type": "Wizard"
       }
     }
   ],
