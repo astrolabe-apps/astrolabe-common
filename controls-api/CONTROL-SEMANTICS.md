@@ -388,6 +388,19 @@ The core library has NO `collectChange` — its `*Now` properties return snapsho
 
 This is the explicit equivalent of `[patch]`'s `collectChange` global — same subscription primitives underneath, but scoped to a single component's tracking read context instead of a module-level variable. The exact implementation mechanism (e.g. a `SubscriptionTracker` class) is TBD.
 
+### `getValueRx` — deep reactive proxy `[core]`
+
+`ReadContext.getValueRx(control)` returns the control's value wrapped in a recursive `Proxy` that routes property access through child controls. This gives the same fine-grained reactivity as `[patch]`'s implicit `.value` getters, but through an explicit `ReadContext`:
+
+- **null/undefined**: tracks Structure, returns value
+- **Primitives**: tracks Value, returns value
+- **Objects**: tracks Structure on parent, returns Proxy where `proxy[key]` → `getValueRx(control.fields[key])`
+- **Arrays**: tracks Structure on parent, returns Proxy where `proxy[i]` → `getValueRx(control.elements[i])`, `proxy.length` → element count
+
+Only accessed properties create subscriptions — `proxy.name` subscribes to `control.fields.name`, but does not subscribe to `control.fields.email`. The proxy is recursive, so `proxy.address.city` traverses `control.fields.address.fields.city`.
+
+**Caveat:** The proxy recurses into all object-typed values. If a control value contains domain objects (class instances, opaque references), their properties will be incorrectly routed through lazy child controls. For mixed-type state objects, destructure only the plain data fields from the proxy and read domain object fields separately via `rc.getValue()`.
+
 ## N. Array Mutation APIs `[core]`
 
 ### updateElements(control, cb)

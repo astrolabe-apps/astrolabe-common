@@ -43,3 +43,57 @@ export function computed<V>(
 
   return reconciler;
 }
+
+export interface EffectRef extends SubscriptionReconciler {
+  replaceEffect(newFn: (rc: ReadContext) => (() => void) | void): void;
+}
+
+/**
+ * Creates a reactive effect that tracks dependencies via ReadContext and
+ * re-runs when any dependency changes. Like computed() but for side effects —
+ * no target control, no return value written.
+ *
+ * If the effect function returns a cleanup function, it's called before each
+ * re-run and on dispose.
+ */
+export function effect(
+  ctx: ControlContext,
+  fn: (rc: ReadContext) => (() => void) | void,
+): EffectRef {
+  const rc = new TrackingReadContext();
+  const reconciler = new SubscriptionReconciler() as EffectRef;
+
+  let currentFn = fn;
+  let cleanupFn: (() => void) | void;
+
+  function run() {
+    if (cleanupFn) {
+      cleanupFn();
+      cleanupFn = undefined;
+    }
+    rc.reset();
+    cleanupFn = currentFn(rc);
+    reconciler.reconcile(rc.tracked);
+  }
+
+  reconciler.replaceEffect = (newFn: (rc: ReadContext) => (() => void) | void) => {
+    if (newFn !== currentFn) {
+      currentFn = newFn;
+      run();
+    }
+  };
+
+  const origCleanup = reconciler.cleanup.bind(reconciler);
+  reconciler.cleanup = () => {
+    if (cleanupFn) {
+      cleanupFn();
+      cleanupFn = undefined;
+    }
+    origCleanup();
+  };
+
+  reconciler.setListener(() => run());
+  run();
+
+  return reconciler;
+}

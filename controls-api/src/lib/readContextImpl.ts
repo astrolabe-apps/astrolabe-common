@@ -2,6 +2,58 @@ import { ControlImpl, toImpl } from "./controlImpl";
 import { ControlChange } from "./types";
 import type { Control, ReadContext, Subscription } from "./types";
 
+// ── getValueRx implementation ───────────────────────────────────────
+
+/**
+ * Recursively creates a reactive proxy over a control's value.
+ * Object/array property access is routed through child controls,
+ * giving fine-grained dependency tracking.
+ *
+ * This works well for **pure data trees** where the control structure
+ * mirrors the data shape (e.g. `{name: "Alice", address: {city: "NYC"}}`).
+ * It does NOT work for controls whose values contain domain objects
+ * (e.g. `SchemaDataNode`) — those objects' properties would be incorrectly
+ * routed through lazy child controls that don't represent real data fields.
+ */
+function createValueRxProxy<V>(control: Control<V>, rc: ReadContext): V {
+  const value = control.valueNow;
+  if (value == null) {
+    rc.isNull(control); // track Structure
+    return value;
+  }
+  if (typeof value !== "object") {
+    rc.getValue(control); // track Value for primitives
+    return value;
+  }
+  // Object or array — track Structure (for null transitions / array length),
+  // return a proxy that recurses into child controls
+  if (Array.isArray(value)) {
+    const elements = rc.getElements(control as unknown as Control<unknown[]>);
+    return new Proxy(value, {
+      get(target, p, receiver) {
+        if (p === "length") return elements.length;
+        if (typeof p === "symbol" || typeof p !== "string")
+          return Reflect.get(target, p, receiver);
+        const idx = Number(p);
+        if (Number.isInteger(idx) && idx >= 0 && idx < elements.length) {
+          return createValueRxProxy(elements[idx], rc);
+        }
+        return Reflect.get(target, p, receiver);
+      },
+    }) as V;
+  }
+  // Plain object — proxy field access through control.fields
+  rc.isNull(control); // track Structure for null transitions
+  return new Proxy(value as object, {
+    get(target, p, receiver) {
+      if (typeof p === "symbol") return Reflect.get(target, p, receiver);
+      const child = (control.fields as Record<string, Control<any>>)[p];
+      if (child) return createValueRxProxy(child, rc);
+      return Reflect.get(target, p, receiver);
+    },
+  }) as V;
+}
+
 // ── NoopReadContext ─────────────────────────────────────────────────
 
 export const noopReadContext: ReadContext = {
@@ -34,6 +86,9 @@ export const noopReadContext: ReadContext = {
   },
   getElements<V>(control: Control<V[]>): Control<V>[] {
     return control.elements as unknown as Control<V>[];
+  },
+  getValueRx<V>(control: Control<V>): V {
+    return createValueRxProxy(control, this);
   },
 };
 
@@ -103,6 +158,10 @@ export class TrackingReadContext implements ReadContext {
   getElements<V>(control: Control<V[]>): Control<V>[] {
     const c = this.track(control, ControlChange.Structure);
     return c.getOrCreateElements() as unknown as Control<V>[];
+  }
+
+  getValueRx<V>(control: Control<V>): V {
+    return createValueRxProxy(control, this);
   }
 }
 

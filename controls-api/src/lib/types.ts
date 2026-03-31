@@ -121,6 +121,26 @@ export interface ReadContext {
   getError(control: Control<unknown>): string | null | undefined;
   getErrors(control: Control<unknown>): Record<string, string>;
   getElements<V>(control: Control<V[]>): Control<V>[];
+
+  /**
+   * Returns a deep reactive proxy over the control's value.
+   *
+   * - For null/undefined: tracks Structure, returns the value
+   * - For primitives: tracks Value, returns the value
+   * - For objects: tracks Structure, returns a Proxy where property access
+   *   recurses through `control.fields[prop]` → `getValueRx(child)`
+   * - For arrays: tracks Structure, returns a Proxy where index access
+   *   recurses through `control.elements[i]` → `getValueRx(elem)`
+   *
+   * This gives fine-grained reactivity: reading `proxy.name` only subscribes
+   * to the `name` child control, not the entire parent.
+   *
+   * **Important:** Only use on controls whose value is a pure data tree
+   * (plain objects/arrays/primitives). If the control's value contains
+   * domain objects (e.g. class instances, opaque references), the proxy
+   * will incorrectly route their property access through lazy child controls.
+   */
+  getValueRx<V>(control: Control<V>): V;
 }
 
 // ── WriteContext ──────────────────────────────────────────────────────
