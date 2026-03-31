@@ -25,7 +25,7 @@ import {
   SchemaField,
   schemaForFieldPath,
   SchemaNode,
-  SchemaTags
+  SchemaTags,
 } from "@astroapps/forms-core";
 import { MutableRefObject, useRef } from "react";
 import clsx from "clsx";
@@ -37,9 +37,15 @@ import {
   ensureMetaValue,
   getElementIndex,
   newControl,
-  useControl
+  useControl,
 } from "@react-typed-forms/core";
-import { ActionRendererProps, ControlActionHandler, RunExpression } from "./types";
+import {
+  ActionRendererProps,
+  ControlActionContext,
+  ControlActionHandler,
+  ControlDataContext,
+  RunExpression,
+} from "./types";
 
 /**
  * Interface representing the classes for a control.
@@ -699,6 +705,26 @@ export function actionHandlers(
       const res = nonNullHandlers[i](actionId, actionData, ctx);
       if (res) return res;
     }
+    return undefined;
+  };
+}
+
+/**
+ * Creates a ControlActionHandler from a map of action ID to handler function.
+ */
+export function makeActionHandler(
+  handlerMap: Record<
+    string,
+    (
+      actionData: any,
+      actionCtx: ControlActionContext,
+      dataCtx: ControlDataContext,
+    ) => void | Promise<any>
+  >,
+): ControlActionHandler {
+  return (actionId, actionData, dataCtx) => {
+    const h = handlerMap[actionId];
+    if (h) return (actionCtx) => h(actionData, actionCtx, dataCtx);
     return undefined;
   };
 }

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas-html",
+      "comment": "Add multilineContentEditable option",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas-html"
+}

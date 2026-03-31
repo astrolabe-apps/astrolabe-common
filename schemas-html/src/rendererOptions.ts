@@ -34,6 +34,9 @@ export interface WizardStepInfo {
 // Custom navigation props for wizard renderer
 export interface CustomNavigationProps {
   className?: string;
+  leftNavClass?: string;
+  rightNavClass?: string;
+  middleNavClass?: string;
   page: number;
   totalPages: number;
   next: ActionRendererProps;
@@ -41,8 +44,10 @@ export interface CustomNavigationProps {
   formRenderer: FormRenderer;
   validatePage: () => Promise<boolean>;
   steps: WizardStepInfo[];
+  leftNav?: ReactNode;
+  middleNav?: ReactNode;
+  rightNav?: ReactNode;
 }
-
 
 // ============================================================================
 // INDIVIDUAL COMPONENT OPTIONS INTERFACES
@@ -105,6 +110,12 @@ export interface DefaultTabsRenderOptions {
   contentClass?: string;
 }
 
+export interface WizardNavActionOptions extends Partial<ActionRendererProps> {
+  text?: string;
+  validate?: boolean;
+  hide?: boolean;
+}
+
 export interface DefaultWizardRenderOptions {
   classes?: {
     className?: string;
@@ -116,14 +127,15 @@ export interface DefaultWizardRenderOptions {
     completedStepClass?: string;
     stepLabelClass?: string;
     stepNumberClass?: string;
+    leftNavClass?: string;
+    rightNavClass?: string;
+    middleNavClass?: string;
   };
   actions?: {
-    nextText?: string;
-    nextIcon?: IconReference;
-    nextValidate?: boolean;
-    prevText?: string;
-    prevIcon?: IconReference;
-    prevValidate?: boolean;
+    next?: WizardNavActionOptions;
+    prev?: WizardNavActionOptions;
+    navActionId?: string;
+    validateActionId?: string;
   };
   defaultShowSteps?: boolean;
   renderSteps?: (
@@ -280,6 +292,7 @@ export interface DefaultDataRendererOptions {
   booleanOptions?: FieldOption[];
   optionRenderer?: DataRendererRegistration;
   multilineClass?: string;
+  multilineContentEditable?: boolean;
   jsonataClass?: string;
   arrayOptions?: ArrayActionOptions;
   defaultEmptyText?: string;

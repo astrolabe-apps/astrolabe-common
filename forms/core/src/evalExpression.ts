@@ -20,9 +20,50 @@ import {
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
 import { SchemaInterface } from "./schemaInterface";
 import jsonata from "jsonata";
-import { getJsonPath, getRootDataNode } from "./controlDefinition";
+import { getRootDataNode, traverseParents } from "./controlDefinition";
 import { v4 as uuidv4 } from "uuid";
-import { createScopedComputed, jsonPathString } from "./util";
+import { createScopedComputed, JsonPath, jsonPathString } from "./util";
+
+interface PathSegment {
+  key: JsonPath;
+  collection?: boolean | null;
+}
+
+/**
+ * Wraps data with a proxy that returns empty values for null fields along a
+ * specific path, allowing jsonata to navigate through null compound fields
+ * without using the broken ?? operator (jsonata issue 773). Uses schema info
+ * to return [] for collection fields and {} for compound fields. Preserves
+ * the navigation chain so the % parent operator works correctly.
+ */
+function ensurePathNavigable(data: any, path: PathSegment[]): any {
+  if (path.length === 0 || data == null || typeof data !== "object")
+    return data;
+  const { key, collection } = path[0];
+  const segment = String(key);
+  const rest = path.slice(1);
+  return new Proxy(data, {
+    get(target, p, receiver) {
+      const val = Reflect.get(target, p, receiver);
+      if (typeof p === "string" && p === segment) {
+        if (val == null) return ensurePathNavigable(collection ? [] : {}, rest);
+        return ensurePathNavigable(val, rest);
+      }
+      return val;
+    },
+  });
+}
+
+function getSchemaPath(dataNode: SchemaDataNode): PathSegment[] {
+  return traverseParents(
+    dataNode,
+    (d): PathSegment => ({
+      key: d.elementIndex == null ? d.schema.field.field : d.elementIndex,
+      collection: d.schema.field.collection,
+    }),
+    (x) => !x.parent,
+  );
+}
 
 export interface ExpressionEvalContext {
   scope: CleanupScope;
@@ -77,13 +118,14 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
   expr,
   { scope, returnResult, dataNode, variables, runAsync },
 ) => {
-  const path = getJsonPath(dataNode);
+  const pathSegments = getSchemaPath(dataNode);
+  const path = pathSegments.map((s) => s.key);
   const pathString = jsonPathString(path, (x) => `#$i[${x}]`);
   const rootData = getRootDataNode(dataNode).control;
 
   const parsedJsonata = createScopedComputed(scope, () => {
     const jExpr = expr.expression;
-    const fullExpr = pathString ? pathString + ".(" + jExpr + ")" : jExpr;
+    const fullExpr = pathString ? `${pathString}.(${jExpr})` : jExpr;
     try {
       return { expr: jsonata(fullExpr ? fullExpr : "null"), fullExpr };
     } catch (e) {
@@ -95,11 +137,20 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
   async function runJsonata(effect: AsyncEffect<any>, signal: AbortSignal) {
     const trackedVars = variables?.(effect.collectUsage);
     const fullExpr = parsedJsonata.fields.fullExpr.current.value;
-    const data = trackedValue(rootData, effect.collectUsage);
-    const evalResult = await parsedJsonata.fields.expr.value.evaluate(
-      data,
-      trackedVars,
+    const data = ensurePathNavigable(
+      trackedValue(rootData, effect.collectUsage),
+      pathSegments,
     );
+    let evalResult = undefined;
+    try {
+      evalResult = await parsedJsonata.fields.expr.value.evaluate(
+        data,
+        trackedVars,
+      );
+    } catch (e) {
+      console.error(`Error in Jsonata expression: ${fullExpr}`, e);
+      evalResult = undefined;
+    }
     collectChanges(effect.collectUsage, () => returnResult(evalResult));
   }
 

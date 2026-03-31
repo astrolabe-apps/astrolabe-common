@@ -104,6 +104,7 @@ export function createDefaultDataRenderer(
   const nullToggler = createNullToggleRenderer();
   const multilineRenderer = createMultilineFieldRenderer(
     options.multilineClass,
+    options.multilineContentEditable,
   );
   const checkboxRenderer = createCheckboxRenderer(
     options.checkboxOptions ?? options.checkOptions,

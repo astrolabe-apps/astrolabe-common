@@ -23,12 +23,16 @@ const defaultOptions = {
     navContainerClass: "flex justify-between gap-4 my-2",
   },
   actions: {
-    nextText: "Next",
-    nextIcon: fontAwesomeIcon("chevron-right"),
-    nextValidate: true,
-    prevText: "Prev",
-    prevIcon: fontAwesomeIcon("chevron-left"),
-    prevValidate: false,
+    next: {
+      text: "Next",
+      icon: fontAwesomeIcon("chevron-right"),
+      validate: true,
+    },
+    prev: {
+      text: "Prev",
+      icon: fontAwesomeIcon("chevron-left"),
+      validate: false,
+    },
   },
   renderNavigation: defaultNavigationRender,
 } satisfies DefaultWizardRenderOptions;
@@ -84,12 +88,8 @@ function WizardRenderer({
   const {
     classes: { className, contentClass, navContainerClass },
     actions: {
-      nextText,
-      nextIcon,
-      prevText,
-      prevIcon,
-      nextValidate,
-      prevValidate,
+      next: nextAction,
+      prev: prevAction,
     },
     renderNavigation,
   } = mergedOptions;
@@ -102,16 +102,16 @@ function WizardRenderer({
   const currentPage = page.value;
   const isValid = useComputed(() => isPageValid());
 
-  const next = createAction("nav", () => nav(1, nextValidate), nextText, {
+  const next = createAction("nav", () => nav(1, nextAction.validate), nextAction.text, {
     hidden: !designMode && nextVisibleInDirection(1) == null,
     disabled: !isValid.value,
-    icon: nextIcon,
+    icon: nextAction.icon,
     iconPlacement: IconPlacement.AfterText,
   });
 
-  const prev = createAction("nav", () => nav(-1, prevValidate), prevText, {
+  const prev = createAction("nav", () => nav(-1, prevAction.validate), prevAction.text, {
     disabled: !designMode && nextVisibleInDirection(-1) == null,
-    icon: prevIcon,
+    icon: prevAction.icon,
   });
   const navElement = renderNavigation({
     formRenderer,

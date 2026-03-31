@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas-html",
+      "comment": "Add support for validation in wizard navigation actions + overridding all ActionRendererProps for nav buttons",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas-html"
+}

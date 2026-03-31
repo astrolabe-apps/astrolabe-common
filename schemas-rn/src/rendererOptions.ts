@@ -110,6 +110,13 @@ export interface DefaultTabsRenderOptions {
   contentClass?: string;
 }
 
+export interface WizardNavActionOptions {
+  text?: string;
+  icon?: IconReference;
+  validate?: boolean;
+  hide?: boolean;
+}
+
 export interface DefaultWizardRenderOptions {
   classes?: {
     className?: string;
@@ -117,12 +124,8 @@ export interface DefaultWizardRenderOptions {
     contentClass?: string;
   };
   actions?: {
-    nextText?: string;
-    nextIcon?: IconReference;
-    nextValidate?: boolean;
-    prevText?: string;
-    prevIcon?: IconReference;
-    prevValidate?: boolean;
+    next?: WizardNavActionOptions;
+    prev?: WizardNavActionOptions;
   };
   renderNavigation?: (props: CustomNavigationProps) => ReactNode;
 }

@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "comment": "Support manual navigation",
+      "type": "patch",
+      "packageName": "@react-typed-forms/schemas-html"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas-html",
+  "email": "doolse@gmail.com"
+}

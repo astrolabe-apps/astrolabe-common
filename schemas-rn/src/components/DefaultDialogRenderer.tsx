@@ -68,7 +68,7 @@ export function DefaultDialogRenderer({
   const { width } = useWindowDimensions();
   const maxWidth = useMemo(() => Math.min(width - 32, 1024), [width]);
 
-  const actionOnClick: ControlActionHandler = (action) => {
+  const actionHandler: ControlActionHandler = (action) => {
     switch (action) {
       case "closeDialog":
         return () => {
@@ -96,7 +96,7 @@ export function DefaultDialogRenderer({
         dialogOpen.value = o;
       }}
     >
-      {triggerChildren.map((x) => props.renderChild(x, { actionOnClick }))}
+      {triggerChildren.map((x) => props.renderChild(x, { actionHandler }))}
       <DialogContent
         closeOnOutsidePress={false}
         className={cn("min-w-[200px] min-h-[200px] z-10", containerClass)}
@@ -130,7 +130,7 @@ export function DefaultDialogRenderer({
                   !x.definition.placement ||
                   x.definition.placement === "dialog",
               )
-              .map((x, i) => props.renderChild(x, { actionOnClick }))}
+              .map((x, i) => props.renderChild(x, { actionHandler }))}
           </View>
         </ScrollView>
       </DialogContent>

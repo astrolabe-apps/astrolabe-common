@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas",
+      "comment": "Add makeActionHandler utility for mapping action IDs to handler functions",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas"
+}

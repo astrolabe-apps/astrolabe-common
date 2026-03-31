@@ -9,7 +9,11 @@ import {
   useComputed,
 } from "@react-typed-forms/core";
 import React, { Fragment, HTMLAttributes, useMemo } from "react";
-import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  useSortable,
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { useDroppable, useDndContext } from "@dnd-kit/core";
 import {
   ChildNodeSpec,
@@ -21,6 +25,7 @@ import {
   defaultDataProps,
   defaultValueForField,
   elementValueForField,
+  FieldType,
   fieldPathForDefinition,
   FormNode,
   FormNodeUi,
@@ -40,7 +45,6 @@ import {
   SchemaInterface,
   textDisplayControl,
 } from "@react-typed-forms/schemas";
-
 
 export interface FormControlPreviewProps {
   node: FormPreviewStateNode;
@@ -63,6 +67,29 @@ export interface FormControlPreviewContext {
   pageMode?: boolean;
 }
 
+function sampleValueForField(
+  field: { type: string } | undefined,
+): any {
+  if (!field) return undefined;
+  switch (field.type) {
+    case FieldType.String:
+      return "Sample Data";
+    case FieldType.Bool:
+      return true;
+    case FieldType.Int:
+      return 42;
+    case FieldType.Double:
+      return 3.14;
+    case FieldType.Date:
+    case FieldType.DateTime:
+      return new Date(0).toISOString();
+    case FieldType.Time:
+      return "12:00";
+    default:
+      return undefined;
+  }
+}
+
 export function FormControlPreview(props: FormControlPreviewProps) {
   const {
     node,
@@ -79,17 +106,10 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const { selected, renderer } = context;
   const displayOnly =
     dOnly ||
-    Boolean(
-      isGroupControl(definition) && definition.groupOptions?.displayOnly,
-    );
+    Boolean(isGroupControl(definition) && definition.groupOptions?.displayOnly);
 
   const isRootNode = !!isRoot;
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    isDragging,
-  } = useSortable({
+  const { attributes, listeners, setNodeRef, isDragging } = useSortable({
     id: node.id,
     disabled: isRootNode,
     data: { node, containerId },
@@ -108,18 +128,17 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const isRequired = !!dataDefinition?.required;
   const displayOptions = getDisplayOnlyOptions(definition);
   const field = childNode?.field;
-  const sampleData = useMemo(
-    () =>
-      displayOptions
-        ? (displayOptions.sampleText ?? "Sample Data")
-        : field &&
-          (dataNode?.elementIndex == null
-            ? field.collection
-              ? [undefined]
-              : defaultValueForField(field, isRequired)
-            : elementValueForField(field)),
-    [displayOptions?.sampleText, field, isRequired],
-  );
+  const sampleData = useMemo(() => {
+    const sampleValue = displayOptions?.sampleText ?? sampleValueForField(field);
+    if (!field) return sampleValue;
+    if (dataNode?.elementIndex != null) {
+      return sampleValue ?? elementValueForField(field);
+    }
+    if (field.collection) {
+      return sampleValue != null ? [sampleValue] : [undefined];
+    }
+    return sampleValue ?? defaultValueForField(field, isRequired);
+  }, [displayOptions?.sampleText, field, isRequired]);
   if (dataNode && field && (field.collection || !isCompoundField(field))) {
     dataNode.control.value = sampleData;
   }
@@ -210,7 +229,10 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     return child;
   }
 
-  const isDropTarget = !isRootNode && context.overId.value === node.id && context.activeId.value !== node.id;
+  const isDropTarget =
+    !isRootNode &&
+    context.overId.value === node.id &&
+    context.activeId.value !== node.id;
   const dropBefore = isDropTarget && !context.dropAfter.value;
   const dropAfterThis = isDropTarget && !!context.dropAfter.value;
 
@@ -240,7 +262,11 @@ export function FormControlPreview(props: FormControlPreviewProps) {
         )}
         {child}
         {isGroupNode && (
-          <GroupDropTarget containerId={node.form?.id ?? node.id} hasChildren={childIds.length > 0} onlyGroups={isRootNode && !!context.pageMode} />
+          <GroupDropTarget
+            containerId={node.form?.id ?? node.id}
+            hasChildren={childIds.length > 0}
+            onlyGroups={isRootNode && !!context.pageMode}
+          />
         )}
       </div>
       {dropAfterThis && <DropIndicator />}
@@ -249,18 +275,22 @@ export function FormControlPreview(props: FormControlPreviewProps) {
 
   if (isGroupNode) {
     result = (
-      <SortableContext
-        items={childIds}
-        strategy={verticalListSortingStrategy}
-      >
+      <SortableContext items={childIds} strategy={verticalListSortingStrategy}>
         {result}
       </SortableContext>
     );
   }
 
   // Page mode visual treatment for root-level groups
-  if (context.pageMode && isGroupNode && !isRootNode && node.parentNode && !node.parentNode.parentNode) {
-    const pageTitle = (definition as any).title || `Page ${node.childIndex + 1}`;
+  if (
+    context.pageMode &&
+    isGroupNode &&
+    !isRootNode &&
+    node.parentNode &&
+    !node.parentNode.parentNode
+  ) {
+    const pageTitle =
+      (definition as any).title || `Page ${node.childIndex + 1}`;
     result = (
       <>
         <div
@@ -350,12 +380,7 @@ function DragHandle({
         transition: "opacity 0.15s",
       }}
     >
-      <svg
-        width="12"
-        height="16"
-        viewBox="0 0 12 16"
-        fill="currentColor"
-      >
+      <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
         <circle cx="3" cy="2" r="1.5" />
         <circle cx="9" cy="2" r="1.5" />
         <circle cx="3" cy="8" r="1.5" />
@@ -367,7 +392,15 @@ function DragHandle({
   );
 }
 
-function GroupDropTarget({ containerId, hasChildren, onlyGroups }: { containerId: string; hasChildren: boolean; onlyGroups?: boolean }) {
+function GroupDropTarget({
+  containerId,
+  hasChildren,
+  onlyGroups,
+}: {
+  containerId: string;
+  hasChildren: boolean;
+  onlyGroups?: boolean;
+}) {
   const { active } = useDndContext();
   const isDragActive = !!active;
   const { setNodeRef, isOver } = useDroppable({
@@ -380,7 +413,9 @@ function GroupDropTarget({ containerId, hasChildren, onlyGroups }: { containerId
   }
 
   if (onlyGroups && active) {
-    const activeNode = active.data.current?.node as FormPreviewStateNode | undefined;
+    const activeNode = active.data.current?.node as
+      | FormPreviewStateNode
+      | undefined;
     if (activeNode && !isGroupControl(activeNode.definition)) {
       return null;
     }

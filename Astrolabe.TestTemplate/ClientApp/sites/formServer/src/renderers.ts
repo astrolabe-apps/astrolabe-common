@@ -1,4 +1,4 @@
-import { createFormRenderer } from "@react-typed-forms/schemas";
+import { createFormRenderer, deepMerge } from "@react-typed-forms/schemas";
 import {
   createDataGridRenderer,
   createPagerRenderer,
@@ -10,6 +10,7 @@ import {
 } from "@astroapps/schemas-datepicker";
 import {
   createDefaultRenderers,
+  DefaultRendererOptions,
   defaultTailwindTheme,
 } from "@react-typed-forms/schemas-html";
 import { createQuickstreamCC } from "@astroapps/schemas-quickstream";
@@ -45,12 +46,24 @@ export function createStdFormRenderer(container: HTMLElement | null) {
         containerClass: "w-full",
       } as DatePickerOptions),
     ],
-    createDefaultRenderers({
-      ...defaultTailwindTheme,
-      data: {
-        ...defaultTailwindTheme.data,
-        defaultEmptyText: "<empty>",
-      },
-    }),
+    createDefaultRenderers(
+      deepMerge<DefaultRendererOptions>(
+        {
+          data: {
+            defaultEmptyText: "<empty>",
+          },
+          group: {
+            wizard: {
+              actions: {
+                prev: { hide: true },
+                next: { hide: true },
+                validateActionId: "validate",
+              },
+            },
+          },
+        },
+        defaultTailwindTheme,
+      ),
+    ),
   );
 }

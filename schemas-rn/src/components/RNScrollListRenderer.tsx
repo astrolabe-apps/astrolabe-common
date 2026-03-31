@@ -50,7 +50,7 @@ function RNScrollListRenderer({
     formNode,
     renderChild,
     dataNode,
-    actionOnClick,
+    actionHandler,
     renderOptions,
     dataContext,
     className,
@@ -72,10 +72,10 @@ function RNScrollListRenderer({
   const hasMoreControl = getHasMoreControl(dataNode.control);
   const refreshingControl = getRefreshingControl(dataNode.control);
   const handleLoadMore = bottomActionId
-    ? actionOnClick?.(bottomActionId, undefined, dataContext)
+    ? actionHandler?.(bottomActionId, undefined, dataContext)
     : undefined;
   const handleRefresh = refreshActionId
-    ? actionOnClick?.(refreshActionId, undefined, dataContext)
+    ? actionHandler?.(refreshActionId, undefined, dataContext)
     : undefined;
 
   return (

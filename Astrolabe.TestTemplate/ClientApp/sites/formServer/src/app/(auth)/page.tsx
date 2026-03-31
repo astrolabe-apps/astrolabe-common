@@ -3,36 +3,17 @@
 import "flexlayout-react/style/light.css";
 import { saveAs } from "file-saver";
 import {
-  ControlDefinitionSchema,
-  ControlDefinitionSchemaMap,
-  SchemaFieldSchema,
-} from "@react-typed-forms/schemas";
-import {
-  BasicFormEditor,
-  FieldSelectionExtension,
-  readOnlySchemas,
-  Snippet,
-} from "@astroapps/schemas-editor";
-import {
-  addElement,
-  Control,
-  ControlMetricsRegistry,
-  ensureSelectableValues,
-  Fcheckbox,
-  RenderElements,
-  updateElements,
-  useControl,
-  useSelectableArray,
-} from "@react-typed-forms/core";
-import {
+  actionHandlers,
   boolField,
   buildSchema,
   compoundField,
+  ControlDefinitionSchema,
+  ControlDefinitionSchemaMap,
+  ControlDisableType,
   createIconLibraryExtension,
   dataControl,
   dateField,
   dateTimeField,
-  defaultValueForField,
   doubleField,
   elementValueForField,
   FormNode,
@@ -41,13 +22,33 @@ import {
   groupedControl,
   GroupRenderType,
   intField,
+  makeActionHandler,
   SchemaField,
+  SchemaFieldSchema,
   SchemaTags,
   stringField,
   stringOptionsField,
   timeField,
   withScalarOptions,
 } from "@react-typed-forms/schemas";
+import {
+  BasicFormEditor,
+  defaultEditorControlsJson as controlsJson,
+  defaultExpressionFormJson as expressionFormJson,
+  defaultSchemaFieldJson as schemaFieldJson,
+  FieldSelectionExtension,
+  readOnlySchemas,
+  Snippet,
+} from "@astroapps/schemas-editor";
+import {
+  addElement,
+  Control,
+  ensureSelectableValues,
+  Fcheckbox,
+  RenderElements,
+  useControl,
+  useSelectableArray,
+} from "@react-typed-forms/core";
 import {
   OptStringParam,
   useApiClient,
@@ -63,11 +64,6 @@ import {
   ControlDefinition as CD,
   SearchStateClient,
 } from "../../client";
-import {
-  defaultEditorControlsJson as controlsJson,
-  defaultExpressionFormJson as expressionFormJson,
-  defaultSchemaFieldJson as schemaFieldJson,
-} from "@astroapps/schemas-editor";
 import testSchemaControls from "../../forms/TestSchema.json";
 import allControls from "../../forms/AllControls.json";
 import { useMemo, useState } from "react";
@@ -129,6 +125,9 @@ interface TestSchema {
   stuff: DisabledStuff[];
   number: number;
   nested: NestedSchema;
+  hideBool: boolean;
+  age: number;
+  guardianConsent: { guardianWillAttend: boolean };
 }
 
 const TestSchema = buildSchema<TestSchema & { metaField: string }>({
@@ -254,6 +253,14 @@ const TestSchema = buildSchema<TestSchema & { metaField: string }>({
     }),
   ),
   metaField: stringField("Meta Field", { meta: true }),
+  hideBool: boolField("Hide Bool"),
+  age: intField("Age"),
+  guardianConsent: compoundField(
+    "Guardian Consent",
+    buildSchema<TestSchema["guardianConsent"]>({
+      guardianWillAttend: boolField(""),
+    }),
+  ),
 });
 
 interface SearchResult extends CarEdit {}
@@ -337,6 +344,31 @@ export default function Editor() {
   );
   // const evalHook = useMemo(() => makeEvalExpressionHook(evalExpr), [roles]);
   if (!qc.fields.isReady.value) return <></>;
+  const actionHandler = actionHandlers(
+    makeActionHandler({
+      slowAction: async (_, ctx) => {
+        await new Promise((r) => setTimeout(r, 2000));
+      },
+      validate: async () => {
+        await new Promise((r) => setTimeout(r, 1000));
+        return true;
+      },
+      loadMore: async (_, _c, dataContext) => {
+        const stuffArray = dataContext.dataNode!.control.as<DisabledStuff[]>();
+        const lc = getLoadingControl(stuffArray);
+        lc.value = true;
+        await new Promise((r) => setTimeout(r, 1000));
+        addElement<DisabledStuff>(
+          stuffArray,
+          elementValueForField(dataContext.dataNode!.schema.field),
+        );
+        lc.value = false;
+      },
+    }),
+    (actionId, actionData, dataContext) => () => {
+      console.log("ACTION", actionId, actionData, dataContext);
+    },
+  );
   return (
     <DndProvider backend={HTML5Backend}>
       <div id="dialog_container" ref={setContainer} />
@@ -418,23 +450,7 @@ export default function Editor() {
           }
         }}
         previewOptions={{
-          actionOnClick: (aid, data, dataContext) => async (ctx) => {
-            await new Promise((r) => setTimeout(r, 1000));
-            if (aid === "loadMore") {
-              const stuffArray =
-                dataContext.dataNode!.control.as<DisabledStuff[]>();
-              const lc = getLoadingControl(stuffArray);
-              lc.value = true;
-              await new Promise((r) => setTimeout(r, 1000));
-              addElement<DisabledStuff>(
-                stuffArray,
-                elementValueForField(dataContext.dataNode!.schema.field),
-              );
-              lc.value = false;
-            }
-            console.log("Clicked", aid, data);
-            if (aid !== "closeDialog") await ctx.runAction("closeDialog");
-          },
+          actionHandler,
           customDisplay: (customId) => <div>DIS ME CUSTOMID: {customId}</div>,
           variables: () => ({ breakpoint: breakpointControl.value }),
           // useEvalExpressionHook: evalHook,
@@ -459,6 +475,22 @@ export default function Editor() {
       />
     </DndProvider>
   );
+
+  // function actionOnClick(aId: string, actionData: any, dataContext: ControlDataContext) {
+  //   switch (aId) {
+  //     case "validate":
+  //
+  //   }
+  //   actionOnClick: (aid, data, dataContext) => async (ctx) => {
+  //     await new Promise((r) => setTimeout(r, 1000));
+  //     if (aid === "validate") return false;
+  //     if (aid === "loadMore") {
+  //     }
+  //     console.log("Clicked", aid, data);
+  //     if (aid !== "closeDialog") await ctx.runAction("closeDialog");
+  //   },
+  //
+  // }
 
   async function genPdf(c: FormNode, data: Control<any>) {
     const file = await carClient.generatePdf({
