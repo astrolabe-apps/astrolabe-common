@@ -87,7 +87,14 @@ interface DataGridOptions
   disableClear?: boolean;
 }
 
-interface DataGridClasses {
+export interface DataGridHeaderContentProps {
+  column: ColumnDef<FormStateNode, DataGridColumnExtension>;
+  title: ReactNode;
+  filter: ReactNode;
+  sort: ReactNode;
+}
+
+export interface DataGridClasses {
   className?: string;
   popoverClass?: string;
   titleContainerClass?: string;
@@ -99,9 +106,10 @@ interface DataGridClasses {
   bodyCellClass?: string;
   clearFilterClass?: string;
   clearFilterText?: string;
+  renderHeaderContent?: (props: DataGridHeaderContentProps) => ReactNode;
 }
 
-interface DataGridColumnExtension {
+export interface DataGridColumnExtension {
   dataContext: ControlDataContext;
   definition: ControlDefinition;
 }
@@ -558,6 +566,14 @@ function DataGridControlRenderer({
           );
         }
       }
+    }
+    if (classes.renderHeaderContent) {
+      return classes.renderHeaderContent({
+        column: col,
+        title,
+        filter: filtered,
+        sort: sorted,
+      });
     }
     return (
       <div className={classes.titleContainerClass}>
