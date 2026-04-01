@@ -30,6 +30,7 @@ export function createRadioRenderer(options: CheckRendererOptions = {}) {
           c.value = o.value;
         }}
         control={p.control}
+        disabled={p.formNode.disabled}
         type="radio"
         entryAdornment={fieldOptionAdornment(p)}
         renderer={renderer}
@@ -58,6 +59,7 @@ export function createCheckListRenderer(options: CheckRendererOptions = {}) {
           c.setValue((x) => setIncluded(x ?? [], o.value, checked));
         }}
         control={p.control}
+        disabled={p.formNode.disabled}
         type="checkbox"
         entryAdornment={fieldOptionAdornment(p)}
         renderer={renderer}

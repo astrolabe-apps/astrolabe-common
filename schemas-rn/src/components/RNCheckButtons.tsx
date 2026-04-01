@@ -19,7 +19,7 @@ export function RNCheckButtons(props: CheckButtonsProps) {
     renderer,
   } = props;
   const { Button, Input, Label, Div } = renderer.html;
-  const { disabled } = control;
+  const { disabled } = props;
   const name = "r" + control.uniqueId;
   return (
     <Div className={className} id={id}>

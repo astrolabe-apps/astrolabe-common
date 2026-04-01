@@ -106,7 +106,7 @@ function SignatureRenderer({
     readOnly: readonly,
     name: options.name || renderOptions.formName,
     onDraw: options?.onDraw,
-    disabled: control.disabled,
+    disabled: props.formNode.disabled,
     required: required,
     onDrawEnd(details) {
       control.value = details.paths;
@@ -124,7 +124,7 @@ function SignatureRenderer({
             {api.paths.map((path, i) => (
               <path
                 className={clsx(
-                  control.disabled ? disabledSegmentPath : segmentPath
+                  props.formNode.disabled ? disabledSegmentPath : segmentPath
                 )}
                 key={i}
                 {...api.getSegmentPathProps({ path })}

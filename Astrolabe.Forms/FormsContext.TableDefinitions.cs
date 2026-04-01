@@ -1,4 +1,6 @@
+using Astrolabe.Annotation;
 using Astrolabe.Common.Exceptions;
+using Astrolabe.Schemas;
 using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.Forms;
@@ -46,6 +48,13 @@ public partial class FormsContext<
             .SingleOrDefaultAsync();
     }
 
+    public async Task<Guid?> LookupTable(string tableName)
+    {
+        return await QueryTableDefForFullScope(tableName)
+            .Select(x => (Guid?)x.Id)
+            .SingleOrDefaultAsync();
+    }
+
     public IQueryable<TTableDef> QueryTableDefForFullScope(string fullTableId)
     {
         var (groupId, shortId) = Scopes.SplitGroupScopedId(fullTableId);
@@ -60,6 +69,45 @@ public partial class FormsContext<
     public async Task<TTableDef?> GetTableDef(Guid tableId)
     {
         return await TableDefinitions.Where(x => x.Id == tableId).SingleOrDefaultAsync();
+    }
+
+    /// <summary>
+    /// Override to validate table definition edits before create/update. Throw <see cref="FormsValidationException"/> on failure.
+    /// </summary>
+    protected virtual Task ValidateTableEdit(TableDefinitionEdit edit) => Task.CompletedTask;
+
+    public async Task<Guid> CreateTable(TableDefinitionEdit edit)
+    {
+        await ValidateTableEdit(edit);
+        var table = new TTableDef
+        {
+            Id = Guid.NewGuid(),
+            ShortId = edit.ShortId,
+            Name = edit.Name,
+            GroupId = edit.GroupId,
+            NameField = edit.NameField,
+            Fields = DbJson.ToJson(edit.Fields),
+            Updated = DateTime.UtcNow,
+        };
+        TableDefinitions.Add(table);
+        await SaveChanges();
+        return table.Id;
+    }
+
+    public async Task EditTable(Guid tableId, TableDefinitionEdit edit)
+    {
+        await ValidateTableEdit(edit);
+        var table = await TableDefinitions
+            .Where(x => x.Id == tableId)
+            .SingleOrDefaultAsync();
+        NotFoundException.ThrowIfNull(table);
+        table.ShortId = edit.ShortId;
+        table.Name = edit.Name;
+        table.GroupId = edit.GroupId;
+        table.NameField = edit.NameField;
+        table.Fields = DbJson.ToJson(edit.Fields);
+        table.Updated = DateTime.UtcNow;
+        await SaveChanges();
     }
 
     public async Task DeleteTable(Guid tableId)
@@ -77,7 +125,7 @@ public record TableDefinitionEdit(
     string? ShortId,
     string? Name,
     string? GroupId,
-    string? NameField,
+    [property: SchemaTag(SchemaTags.SchemaField)] string? NameField,
     IEnumerable<object> Fields,
     IEnumerable<string> Tags
 );

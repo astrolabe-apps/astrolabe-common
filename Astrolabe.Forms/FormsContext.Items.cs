@@ -164,7 +164,7 @@ public partial class FormsContext<
         return finishedItems[0].Item.Id;
     }
 
-    public async Task<FullItem> GetFullItem(Guid id, Guid userId, IList<string> roles)
+    public async Task<ItemView> GetItemView(Guid id, Guid userId, IList<string> roles)
     {
         var entityKey = AuditEventHelper.EntityKeyForItemId(id);
         var data = (await LoadItemData([id], [], userId, roles, null, true)).FirstOrDefault();
@@ -193,7 +193,7 @@ public partial class FormsContext<
             ))
             .OrderByDescending(x => x.Timestamp);
 
-        return new FullItem(
+        return new ItemView(
             await GetUserActions(id, userId, roles),
             data.Item.FormData.Type,
             data.Metadata!,
@@ -205,7 +205,7 @@ public partial class FormsContext<
         );
     }
 
-    public async Task<FullItem> GetUserItem(Guid id, Guid userId, IList<string> roles)
+    public async Task<ItemView> GetUserItem(Guid id, Guid userId, IList<string> roles)
     {
         var data = (await LoadItemData([id], [], userId, roles, null, true)).FirstOrDefault();
         NotFoundException.ThrowIfNull(data);
@@ -217,7 +217,7 @@ public partial class FormsContext<
             .Select(n => new ItemNoteResult(Message: n.Message, PersonName: null, n.Timestamp))
             .OrderByDescending(x => x.Timestamp);
 
-        return new FullItem(
+        return new ItemView(
             await GetUserActions(id, userId, roles),
             data.Item.FormData.Type,
             data.Metadata!,
@@ -254,7 +254,7 @@ public partial class FormsContext<
         await SaveChanges();
     }
 
-    public async Task<Guid> CreateItem(Guid formType, FullEdit edit, Guid userId, IList<string> roles)
+    public async Task<Guid> CreateItem(Guid formType, ItemEdit edit, Guid userId, IList<string> roles)
     {
         List<ItemAction> actions = [EditMetadataAction.Sync(o =>
             edit.Metadata.Deserialize(o.GetType(), FormDataJson.Options)!)];
@@ -262,7 +262,7 @@ public partial class FormsContext<
         return await PerformActions(actions, null, userId, roles, formType);
     }
 
-    public async Task EditItem(Guid id, FullEdit edit, Guid userId, IList<string> roles)
+    public async Task EditItem(Guid id, ItemEdit edit, Guid userId, IList<string> roles)
     {
         List<ItemAction> actions = [EditMetadataAction.Sync(o =>
             edit.Metadata.Deserialize(o.GetType(), FormDataJson.Options)!)];
@@ -270,11 +270,11 @@ public partial class FormsContext<
         await PerformActions(actions, id, userId, roles);
     }
 
-    public async Task<FullItem> NewItem(Guid formType, Guid userId, IList<string> roles)
+    public async Task<ItemView> NewItem(Guid formType, Guid userId, IList<string> roles)
     {
         List<ItemAction> actions = [EditMetadataAction.Sync(o => o)];
         var id = await PerformActions(actions, null, userId, roles, formType);
-        return await GetFullItem(id, userId, roles);
+        return await GetItemView(id, userId, roles);
     }
 
     public async Task<List<Guid>> GetPreviewItemIdsByType(Guid type)

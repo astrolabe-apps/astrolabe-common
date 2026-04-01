@@ -1,10 +1,10 @@
 import React, { useCallback, useMemo } from "react";
 import { Control, useControl } from "@react-typed-forms/core";
 import {
-  createSchemaDataNode,
   defaultSchemaInterface,
   FormNode,
   FormRenderer,
+  IsolatedSchemaDataTree,
 } from "@react-typed-forms/schemas";
 import {
   createPreviewNode,
@@ -127,22 +127,16 @@ export function FormCanvas({
     [formRenderer, selectedField, pageMode],
   );
 
-  const dataControl = useControl({});
-  const dataNode = useMemo(
-    () => createSchemaDataNode(schemaRootNode, dataControl),
-    [schemaRootNode],
-  );
-
   const previewNode = useMemo(
     () =>
       createPreviewNode(
         "root",
         defaultSchemaInterface,
         rootNode,
-        dataNode,
+        new IsolatedSchemaDataTree(schemaRootNode).rootNode,
         formRenderer,
       ),
-    [rootNode, dataNode, formRenderer],
+    [rootNode, schemaRootNode, formRenderer],
   );
 
   const rootChildIds = rootNode.getChildNodes().map((c) => c.id);
@@ -242,7 +236,7 @@ export function FormCanvas({
       onClick={() => selectField(undefined)}
     >
       <style>{`[data-drag-wrapper]:hover > [data-drag-handle] { opacity: 1 !important; }`}</style>
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-[0_4px_20px_rgba(44,43,61,0.04),0_1px_4px_rgba(44,43,61,0.02)] border border-violet-100/60 p-6 min-h-[200px]">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-[0_4px_20px_rgba(44,43,61,0.04),0_1px_4px_rgba(44,43,61,0.02)] border border-primary-100/60 p-6 min-h-[200px]">
         <DndContext
           sensors={sensors}
           collisionDetection={dropZoneFirstCollision}

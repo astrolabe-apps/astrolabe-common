@@ -1,6 +1,5 @@
 import {
   Control,
-  newControl,
   RenderOptional,
   useControl,
   useControlEffect,
@@ -14,6 +13,7 @@ import {
   ControlDefinition,
   createSchemaDataNode,
   groupedControl,
+  IsolatedSchemaDataTree,
   NewControlRenderer,
   defaultSchemaInterface,
 } from "@react-typed-forms/schemas";
@@ -172,7 +172,7 @@ function RenderFormDesign({
       "ROOT",
       defaultSchemaInterface,
       rootNode,
-      createSchemaDataNode(schema.rootNode, newControl({})),
+      new IsolatedSchemaDataTree(schema.rootNode).rootNode,
       formRenderer,
     );
   }, []);

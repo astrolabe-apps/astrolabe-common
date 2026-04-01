@@ -13,8 +13,8 @@ public abstract partial class FormsContext<
     where TItem : class, IItem<TPerson, TFormData, TItemTag, TItemNote>, new()
     where TFormData : class, IFormData<TPerson, TFormDef>, new()
     where TPerson : class, IPerson, new()
-    where TFormDef : class, IFormDefinition<TTableDef>
-    where TTableDef : class, ITableDefinition
+    where TFormDef : class, IFormDefinition<TTableDef>, new()
+    where TTableDef : class, ITableDefinition, new()
     where TAuditEvent : class, IAuditEvent<TPerson>, new()
     where TItemTag : class, IItemTag, new()
     where TItemNote : class, IItemNote<TPerson>, new()

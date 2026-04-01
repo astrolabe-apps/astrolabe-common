@@ -17,7 +17,7 @@ export function HtmlCheckButtons(props: CheckButtonsProps) {
     classes,
     controlClasses = {},
   } = props;
-  const { disabled } = control;
+  const disabled = props.disabled ?? false;
   const name = "r" + control.uniqueId;
   return (
     <div role="group" className={className} id={id}>

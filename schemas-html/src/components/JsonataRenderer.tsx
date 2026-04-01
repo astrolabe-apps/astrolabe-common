@@ -31,6 +31,7 @@ export function createJsonataRenderer(className?: string) {
         dataNode={p.dataNode}
         dataContext={p.dataContext}
         control={p.control}
+        disabled={p.formNode.disabled}
         readonly={p.readonly}
         runExpression={p.runExpression}
       />
@@ -41,6 +42,7 @@ export function createJsonataRenderer(className?: string) {
 
 export function JsonataRenderer({
   control,
+  disabled,
   renderOptions,
   readonly,
   className,
@@ -49,6 +51,7 @@ export function JsonataRenderer({
   runExpression,
 }: {
   control: Control<any>;
+  disabled?: boolean;
   renderOptions: JsonataRenderOptions;
   className?: string;
   dataContext: ControlDataContext;
@@ -59,7 +62,7 @@ export function JsonataRenderer({
   const bindings = (changes: ChangeListenerFunc<any>) => ({
     value: trackedValue(control, changes),
     readonly,
-    disabled: control.disabled,
+    disabled: disabled ?? false,
     dataPath: getJsonPath(dataNode),
   });
   const rendered = useExpression(

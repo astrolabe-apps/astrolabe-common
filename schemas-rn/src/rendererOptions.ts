@@ -13,7 +13,10 @@ import {
   ActionRendererProps,
   ControlDataContext,
   OptionalAdornment,
+  WizardNavActionOptions,
 } from "@react-typed-forms/schemas";
+
+export type { WizardNavActionOptions };
 import {
   MixedStyleDeclaration,
   MixedStyleRecord,
@@ -108,13 +111,6 @@ export interface DefaultTabsRenderOptions {
   activeClass?: string;
   inactiveClass?: string;
   contentClass?: string;
-}
-
-export interface WizardNavActionOptions {
-  text?: string;
-  icon?: IconReference;
-  validate?: boolean;
-  hide?: boolean;
 }
 
 export interface DefaultWizardRenderOptions {

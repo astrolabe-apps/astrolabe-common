@@ -11,7 +11,12 @@ public interface IFormDefinition<TTableDef>
     Guid? TableId { get; set; }
     string? Definition { get; set; }
     bool Public { get; set; }
+
     bool Published { get; set; }
+
+    FormConfig GetFormConfig();
+
+    void SetFormConfig(FormConfig config);
 
     TTableDef? Table { get; set; }
 }

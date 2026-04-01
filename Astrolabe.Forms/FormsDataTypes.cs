@@ -14,7 +14,7 @@ public record ItemInfo(
     DateTime? SubmittedOn
 );
 
-public record FullItem(
+public record ItemView(
     IEnumerable<string> Actions,
     Guid FormType,
     object Metadata,
@@ -40,9 +40,9 @@ public record FormInfo(Guid Id, string Name, string Folder);
 
 public record FormAndSchemas(
     IEnumerable<object> Controls,
-    object? Config,
     string SchemaName,
-    IDictionary<string, IEnumerable<object>> Schemas
+    IDictionary<string, IEnumerable<object>> Schemas,
+    FormConfig Config
 );
 
 public record NameId(string Name, Guid? Id);
@@ -58,7 +58,7 @@ public record FormUpload
 
 public record ExportDefinitionInfo(Guid Id, string Name);
 
-public record ExportDefinitionData(
+public record ExportDefinitionGroup(
     IEnumerable<ExportDefinitionInfo> Infos,
     string TableDefinitionName,
     Guid TableDefinitionId
@@ -71,11 +71,15 @@ public record ExportDefinitionEdit(
     IEnumerable<ExportColumn> ExportColumns
 );
 
-public record FullEdit(string? Action, JsonElement Metadata);
+public record ItemEdit(string? Action, JsonElement Metadata);
 
 public record ItemNoteEdit(string Message, bool Internal);
 
-public record ExportRecordsEdit(IEnumerable<Guid>? RecordIds, Guid? DefinitionId, SearchOptions? All);
+public record ExportRecordsEdit(
+    IEnumerable<Guid>? RecordIds,
+    Guid? DefinitionId,
+    SearchOptions? All
+);
 
 public record ExportRecordsDefinitionEdit(IEnumerable<Guid>? RecordIds, SearchOptions? All);
 

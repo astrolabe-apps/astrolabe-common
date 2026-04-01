@@ -5,12 +5,22 @@ using Microsoft.EntityFrameworkCore;
 namespace Astrolabe.Forms;
 
 public partial class FormsContext<
-    TItem, TFormData, TPerson, TFormDef, TTableDef,
-    TAuditEvent, TItemTag, TItemNote, TItemFile, TExportDef>
+    TItem,
+    TFormData,
+    TPerson,
+    TFormDef,
+    TTableDef,
+    TAuditEvent,
+    TItemTag,
+    TItemNote,
+    TItemFile,
+    TExportDef
+>
 {
     public async Task<IEnumerable<FormInfo>> ListForms(
         bool? forPublic = null,
-        bool? published = null)
+        bool? published = null
+    )
     {
         var q = FormDefinitions.AsQueryable();
         if (forPublic.HasValue)
@@ -41,16 +51,69 @@ public partial class FormsContext<
         };
         return new FormAndSchemas(
             DbJson.FromJson<IEnumerable<object>>(formDef.Definition),
-            GetFormConfig(formDef),
             tableDef.ShortId!,
-            schemas
+            schemas,
+            formDef.GetFormConfig()
         );
     }
 
     /// <summary>
-    /// Override to provide form-specific config (e.g. layout mode, navigation style).
+    /// Override to validate form definition edits before create/update. Throw <see cref="FormsValidationException"/> on failure.
     /// </summary>
-    protected virtual object? GetFormConfig(TFormDef formDef) => null;
+    protected virtual Task ValidateFormEdit(FormDefinitionEdit edit) => Task.CompletedTask;
+
+    public async Task<FormDefinitionEdit> GetFormEdit(Guid formId)
+    {
+        var form = await FormDefinitions
+            .Where(x => x.Id == formId)
+            .AsNoTracking()
+            .SingleOrDefaultAsync();
+        NotFoundException.ThrowIfNull(form);
+        return new FormDefinitionEdit(
+            form.ShortId!,
+            form.Name!,
+            form.GroupId!,
+            form.TableId,
+            DbJson.FromJson<IEnumerable<object>>(form.Definition),
+            form.GetFormConfig()
+        );
+    }
+
+    public async Task<Guid> CreateForm(FormDefinitionEdit edit)
+    {
+        await ValidateFormEdit(edit);
+        var form = new TFormDef
+        {
+            Id = Guid.NewGuid(),
+            ShortId = edit.ShortId,
+            Name = edit.Name,
+            GroupId = edit.GroupId,
+            TableId = edit.TableId,
+            Definition = DbJson.ToJson(edit.Controls),
+            Version = 1,
+        };
+        form.SetFormConfig(edit.Config);
+        FormDefinitions.Add(form);
+        await SaveChanges();
+        return form.Id;
+    }
+
+    public async Task EditForm(Guid formId, FormDefinitionEdit edit)
+    {
+        await ValidateFormEdit(edit);
+        var form = await FormDefinitions
+            .Where(x => x.Id == formId)
+            .Include(x => x.Table)
+            .SingleOrDefaultAsync();
+        NotFoundException.ThrowIfNull(form);
+        form.ShortId = edit.ShortId;
+        form.Name = edit.Name;
+        form.GroupId = edit.GroupId;
+        form.TableId = edit.TableId;
+        form.Definition = DbJson.ToJson(edit.Controls);
+        form.SetFormConfig(edit.Config);
+        await SaveChanges();
+    }
 
     public async Task DeleteForm(Guid id)
     {
@@ -60,6 +123,13 @@ public partial class FormsContext<
             FormDefinitions.Remove(form);
             await SaveChanges();
         }
+    }
+
+    public async Task<Guid?> LookupForm(string formName)
+    {
+        return await QueryFormDefForFullScope(formName)
+            .Select(x => (Guid?)x.Id)
+            .SingleOrDefaultAsync();
     }
 
     public IQueryable<TFormDef> QueryFormDefForFullScope(string formName)

@@ -21,6 +21,7 @@ export function createSelectRenderer(options: SelectRendererOptions = {}) {
         <SelectDataRenderer
           className={rendererClass(props.className, options.className)}
           state={props.control}
+          disabled={props.formNode.disabled}
           id={props.id}
           readonly={props.readonly}
           options={props.options ?? []}
@@ -47,6 +48,7 @@ export interface SelectDataRendererProps {
   requiredText?: string;
   readonly: boolean;
   required: boolean;
+  disabled?: boolean;
   state: Control<any>;
   convert: SelectConversion;
 }
@@ -60,9 +62,10 @@ export function SelectDataRenderer({
   emptyText = "N/A",
   requiredText = "<please select>",
   readonly,
+  disabled,
   ...props
 }: SelectDataRendererProps) {
-  const { value, disabled } = state;
+  const { value } = state;
   const showEmpty = useMemo(
     () => !required || value == null,
     [required, value],

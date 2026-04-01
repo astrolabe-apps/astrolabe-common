@@ -1,0 +1,205 @@
+{
+  "controls": [
+    {
+      "type": "Group",
+      "title": "Admin Item View Container",
+      "children": [
+        {
+          "type": "Group",
+          "title": "Tabs",
+          "children": [
+            {
+              "type": "Group",
+              "title": "Form Data",
+              "children": [
+                {
+                  "type": "Display",
+                  "title": "",
+                  "displayData": {
+                    "type": "Custom",
+                    "customId": "itemForm"
+                  }
+                }
+              ],
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              }
+            },
+            {
+              "type": "Group",
+              "title": "Form Events",
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              },
+              "children": [
+                {
+                  "type": "Data",
+                  "title": "",
+                  "children": [
+                    {
+                      "type": "Group",
+                      "title": "Form Event Container",
+                      "groupOptions": {
+                        "type": "Standard",
+                        "hideTitle": true
+                      },
+                      "children": [
+                        {
+                          "type": "Data",
+                          "field": "eventType",
+                          "hideTitle": false,
+                          "renderOptions": {
+                            "type": "DisplayOnly"
+                          }
+                        },
+                        {
+                          "type": "Data",
+                          "field": "timestamp",
+                          "hideTitle": false,
+                          "renderOptions": {
+                            "type": "DisplayOnly"
+                          }
+                        },
+                        {
+                          "type": "Data",
+                          "field": "message",
+                          "hideTitle": false,
+                          "renderOptions": {
+                            "type": "DisplayOnly"
+                          }
+                        },
+                        {
+                          "type": "Data",
+                          "field": "personName",
+                          "hideTitle": false,
+                          "renderOptions": {
+                            "type": "DisplayOnly"
+                          }
+                        },
+                        {
+                          "type": "Data",
+                          "children": [
+                            {
+                              "type": "Data",
+                              "field": "oldStatus",
+                              "hideTitle": false,
+                              "renderOptions": {
+                                "type": "DisplayOnly"
+                              }
+                            },
+                            {
+                              "type": "Data",
+                              "field": "newStatus",
+                              "hideTitle": false,
+                              "renderOptions": {
+                                "type": "DisplayOnly"
+                              }
+                            }
+                          ],
+                          "field": "data",
+                          "hideTitle": true,
+                          "renderOptions": {
+                            "type": "Group",
+                            "groupOptions": {
+                              "type": "Standard"
+                            }
+                          }
+                        }
+                      ],
+                      "styleClass": "flex flex-col bg-white rounded-lg shadow-lg px-4 py-6"
+                    }
+                  ],
+                  "field": "events",
+                  "hideTitle": true,
+                  "renderOptions": {
+                    "type": "Array",
+                    "noAdd": true,
+                    "noRemove": true,
+                    "noReorder": true
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Group",
+              "title": "Form Notes",
+              "groupOptions": {
+                "type": "Standard",
+                "hideTitle": true
+              },
+              "children": [
+                {
+                  "type": "Action",
+                  "title": "Add Note",
+                  "styleClass": "w-fit",
+                  "icon": {},
+                  "actionId": "addNote",
+                  "actionStyle": "Button"
+                },
+                {
+                  "type": "Data",
+                  "children": [
+                    {
+                      "type": "Group",
+                      "title": "Form Note Container",
+                      "groupOptions": {
+                        "type": "Standard",
+                        "hideTitle": true
+                      },
+                      "children": [
+                        {
+                          "type": "Data",
+                          "field": "personName",
+                          "renderOptions": {
+                            "type": "DisplayOnly"
+                          }
+                        },
+                        {
+                          "type": "Data",
+                          "field": "timestamp",
+                          "renderOptions": {
+                            "type": "DisplayOnly"
+                          }
+                        },
+                        {
+                          "type": "Data",
+                          "field": "message",
+                          "renderOptions": {
+                            "type": "DisplayOnly"
+                          }
+                        }
+                      ],
+                      "styleClass": "flex flex-col bg-white rounded-lg shadow-lg px-4 py-6 "
+                    }
+                  ],
+                  "field": "notes",
+                  "hideTitle": true,
+                  "renderOptions": {
+                    "type": "Array",
+                    "noAdd": true,
+                    "noRemove": true,
+                    "noReorder": true
+                  },
+                  "styleClass": "flex flex-col gap-4"
+                }
+              ]
+            }
+          ],
+          "groupOptions": {
+            "type": "Tabs",
+            "hideTitle": true
+          }
+        }
+      ],
+      "groupOptions": {
+        "type": "Standard",
+        "hideTitle": true
+      },
+      "styleClass": "pb-6"
+    }
+  ],
+  "config": {},
+  "fields": []
+}

@@ -9,6 +9,7 @@ import {
   useComputed,
 } from "@react-typed-forms/core";
 import React, { Fragment, HTMLAttributes, useMemo } from "react";
+import clsx from "clsx";
 import {
   useSortable,
   SortableContext,
@@ -68,19 +69,25 @@ export interface FormControlPreviewContext {
 }
 
 function sampleValueForField(
-  field: { type: string } | undefined,
+  sampleText: string | undefined | null,
+  field: { type: string; collection?: boolean | null } | undefined,
 ): any {
-  if (!field) return undefined;
+  if (!field) return sampleText;
+  if (field.collection) {
+    return [sampleValueForField(sampleText, { type: field.type })];
+  }
+  if (sampleText) return sampleText;
   switch (field.type) {
     case FieldType.String:
       return "Sample Data";
     case FieldType.Bool:
-      return true;
+      return undefined;
     case FieldType.Int:
       return 42;
     case FieldType.Double:
       return 3.14;
     case FieldType.Date:
+      return "1980-04-22";
     case FieldType.DateTime:
       return new Date(0).toISOString();
     case FieldType.Time:
@@ -128,17 +135,18 @@ export function FormControlPreview(props: FormControlPreviewProps) {
   const isRequired = !!dataDefinition?.required;
   const displayOptions = getDisplayOnlyOptions(definition);
   const field = childNode?.field;
-  const sampleData = useMemo(() => {
-    const sampleValue = displayOptions?.sampleText ?? sampleValueForField(field);
-    if (!field) return sampleValue;
-    if (dataNode?.elementIndex != null) {
-      return sampleValue ?? elementValueForField(field);
-    }
-    if (field.collection) {
-      return sampleValue != null ? [sampleValue] : [undefined];
-    }
-    return sampleValue ?? defaultValueForField(field, isRequired);
-  }, [displayOptions?.sampleText, field, isRequired]);
+  const sampleData = useMemo(
+    () =>
+      displayOptions
+        ? sampleValueForField(displayOptions.sampleText, field)
+        : field &&
+          (dataNode?.elementIndex == null
+            ? field.collection
+              ? [undefined]
+              : defaultValueForField(field, isRequired)
+            : elementValueForField(field)),
+    [displayOptions?.sampleText, field, isRequired],
+  );
   if (dataNode && field && (field.collection || !isCompoundField(field))) {
     dataNode.control.value = sampleData;
   }
@@ -241,21 +249,15 @@ export function FormControlPreview(props: FormControlPreviewProps) {
       {dropBefore && <DropIndicator />}
       <div
         ref={isRootNode ? undefined : setNodeRef}
-        style={{
-          ...style,
-          outline: isSelected ? "2px solid #7c6dd8" : undefined,
-          backgroundColor: isSelected ? "rgba(124, 109, 216, 0.04)" : undefined,
-          position: "relative",
-          cursor: "pointer",
-          ...(isRootNode
-            ? {}
-            : {
-                opacity: isDragging ? 0.3 : undefined,
-              }),
-        }}
+        style={style}
         {...mouseCapture}
         {...(!isRootNode ? { "data-drag-wrapper": true } : {})}
-        className={className!}
+        className={clsx(
+          className,
+          "relative cursor-pointer",
+          isSelected && "outline-2 outline-primary-500 bg-primary-500/5",
+          !isRootNode && isDragging && "opacity-30",
+        )}
       >
         {!isRootNode && (
           <DragHandle attributes={attributes} listeners={listeners} />
@@ -294,41 +296,17 @@ export function FormControlPreview(props: FormControlPreviewProps) {
     result = (
       <>
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            margin: node.childIndex === 0 ? "0 0 8px 0" : "16px 0 8px 0",
-          }}
+          className={clsx(
+            "flex items-center gap-2",
+            node.childIndex === 0 ? "mb-2" : "mt-4 mb-2",
+          )}
         >
-          <div
-            style={{
-              fontSize: 11,
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              color: "#7c6dd8",
-              whiteSpace: "nowrap",
-            }}
-          >
+          <div className="text-[11px] font-bold uppercase tracking-wide text-primary-500 whitespace-nowrap">
             {pageTitle}
           </div>
-          <div
-            style={{
-              flex: 1,
-              height: 1,
-              backgroundColor: "#e2d4f5",
-            }}
-          />
+          <div className="flex-1 h-px bg-primary-200" />
         </div>
-        <div
-          style={{
-            border: "1px solid #e8e0f3",
-            borderRadius: 12,
-            padding: 8,
-            backgroundColor: "#faf8ff",
-          }}
-        >
+        <div className="border border-primary-200 rounded-xl p-2 bg-primary-50">
           {result}
         </div>
       </>
@@ -339,16 +317,7 @@ export function FormControlPreview(props: FormControlPreviewProps) {
 }
 
 function DropIndicator() {
-  return (
-    <div
-      style={{
-        height: 2,
-        backgroundColor: "#7c6dd8",
-        borderRadius: 1,
-        margin: "2px 0",
-      }}
-    />
-  );
+  return <div className="h-0.5 bg-primary-500 rounded-sm my-0.5" />;
 }
 
 function DragHandle({
@@ -363,22 +332,7 @@ function DragHandle({
       data-drag-handle
       {...attributes}
       {...listeners}
-      style={{
-        position: "absolute",
-        right: 2,
-        top: 2,
-        cursor: "grab",
-        padding: 4,
-        display: "flex",
-        alignItems: "center",
-        color: "#7c6dd8",
-        backgroundColor: "white",
-        borderRadius: 4,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-        zIndex: 1,
-        opacity: 0,
-        transition: "opacity 0.15s",
-      }}
+      className="absolute right-0.5 top-0.5 cursor-grab p-1 flex items-center text-primary-500 bg-white rounded shadow-sm z-[1] opacity-0 transition-opacity duration-150"
     >
       <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor">
         <circle cx="3" cy="2" r="1.5" />
@@ -424,19 +378,11 @@ function GroupDropTarget({
   return (
     <div
       ref={setNodeRef}
-      style={{
-        minHeight: hasChildren ? 24 : 40,
-        border: "2px dashed",
-        borderColor: isOver ? "#7c6dd8" : "#e2e8f0",
-        borderRadius: 8,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#94a3b8",
-        fontSize: 12,
-        margin: hasChildren ? "4px 0" : "8px 0",
-        transition: "border-color 0.2s",
-      }}
+      className={clsx(
+        "border-2 border-dashed rounded-lg flex items-center justify-center text-slate-400 text-xs transition-colors duration-200",
+        hasChildren ? "min-h-6 my-1" : "min-h-10 my-2",
+        isOver ? "border-primary-500" : "border-slate-200",
+      )}
     >
       Drop fields here
     </div>

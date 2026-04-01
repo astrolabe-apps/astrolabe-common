@@ -247,6 +247,7 @@ export function createDefaultDataRenderer(
         id={props.id}
         errorId={props.errorId}
         readOnly={props.readonly}
+        disabled={props.formNode.disabled}
         control={props.control}
         placeholder={placeholder ?? undefined}
         convert={createInputConversion(props.field.type)}

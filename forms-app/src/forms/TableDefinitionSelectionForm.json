@@ -1,0 +1,15 @@
+{
+  "controls": [
+    {
+      "type": "Data",
+      "title": "Table definition",
+      "field": "tableDefinitionId",
+      "required": true,
+      "renderOptions": {
+        "type": "Dropdown"
+      }
+    }
+  ],
+  "config": {},
+  "fields": []
+}

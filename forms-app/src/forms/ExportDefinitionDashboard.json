@@ -1,0 +1,167 @@
+{
+  "controls": [
+    {
+      "type": "Data",
+      "title": "Search",
+      "field": "request/query",
+      "renderOptions": {
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Group",
+      "children": [
+        {
+          "type": "Action",
+          "title": "Create Definition",
+          "actionId": "createExportDefinition",
+          "icon": {}
+        }
+      ],
+      "groupOptions": {
+        "type": "Flex"
+      },
+      "styleClass": "flex flex-col w-fit gap-2"
+    },
+    {
+      "type": "Data",
+      "title": "Results",
+      "field": "definitionInfos",
+      "children": [
+        {
+          "type": "Data",
+          "title": "Name",
+          "field": "name",
+          "renderOptions": {
+            "type": "DisplayOnly"
+          },
+          "hideTitle": true
+        },
+        {
+          "type": "Data",
+          "title": "Table Definition Name",
+          "field": "tableDefinitionName",
+          "hideTitle": true,
+          "renderOptions": {
+            "type": "DisplayOnly"
+          }
+        },
+        {
+          "type": "Group",
+          "title": "Actions",
+          "children": [
+            {
+              "type": "Action",
+              "title": "Edit",
+              "dynamic": [
+                {
+                  "type": "ActionData",
+                  "expr": {
+                    "type": "Data",
+                    "field": "id"
+                  }
+                }
+              ],
+              "actionId": "editExportDefinition",
+              "icon": {}
+            },
+            {
+              "type": "Action",
+              "title": "Delete",
+              "dynamic": [
+                {
+                  "type": "ActionData",
+                  "expr": {
+                    "type": "Data",
+                    "field": "id"
+                  }
+                }
+              ],
+              "actionId": "deleteExportDefinition",
+              "icon": {},
+              "styleClass": "bg-danger-500"
+            }
+          ],
+          "groupOptions": {
+            "type": "Flex",
+            "hideTitle": true
+          },
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "columnTemplate": "15em",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "visible": {}
+            }
+          ]
+        }
+      ],
+      "hideTitle": true,
+      "renderOptions": {
+        "type": "DataGrid",
+        "searchField": "request"
+      },
+      "readonly": true,
+      "styleClass": "bg-white rounded-lg p-4 drop-shadow-lg"
+    },
+    {
+      "type": "Group",
+      "styleClass": "justify-between",
+      "children": [
+        {
+          "type": "Group",
+          "styleClass": "items-end",
+          "children": [
+            {
+              "type": "Data",
+              "field": "request",
+              "hideTitle": true,
+              "renderOptions": {
+                "type": "Pager"
+              },
+              "title": "Pager",
+              "dynamic": [
+                {
+                  "type": "Visible",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "results.total > request.length"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Data",
+              "title": "Results",
+              "dynamic": [
+                {
+                  "type": "AllowedOptions",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "[{\"name\": \"25 per page\", \"value\": 25},\n{\"name\": \"50 per page\", \"value\": 50},\n{\"name\": \"100 per page\", \"value\": 100}]"
+                  }
+                }
+              ],
+              "field": "request/length",
+              "hideTitle": true,
+              "required": true,
+              "renderOptions": {
+                "type": "Standard"
+              }
+            }
+          ],
+          "groupOptions": {
+            "type": "Flex"
+          }
+        }
+      ],
+      "groupOptions": {
+        "type": "Flex"
+      }
+    }
+  ],
+  "config": {},
+  "fields": []
+}

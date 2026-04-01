@@ -68,6 +68,7 @@ export function createValueForFieldRenderer(options: ValueForFieldOptions) {
           renderer={renderer}
           schemaField={schemaField}
           control={o.control}
+          disabled={o.formNode.disabled}
           noOptions={noOptions}
         />
       ) : (
@@ -84,11 +85,13 @@ function ValueForField({
   schemaField,
   renderer,
   control,
+  disabled,
   noOptions,
 }: {
   schemaField: SchemaField;
   renderer: FormRenderer;
   control: Control<any>;
+  disabled?: boolean;
   noOptions?: boolean;
 }) {
   const value = useControl({ default: undefined }, undefined, (e) =>
@@ -127,7 +130,7 @@ function ValueForField({
       form={controls.rootNode}
       renderer={renderer}
       data={createSchemaDataNode(rootSchema, value)}
-      options={{ disabled: control.disabled }}
+      options={{ disabled }}
     />
   );
 }
