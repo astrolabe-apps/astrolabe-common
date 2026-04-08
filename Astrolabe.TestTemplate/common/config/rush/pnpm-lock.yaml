@@ -109,7 +109,7 @@ importers:
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/schemas-html': workspace:*
-      '@react-typed-forms/transform': ^0.2.0
+      '@react-typed-forms/transform': ^0.4.0
       '@types/react': ^19.0.0
       clsx: ^2
       microbundle: ^0.15.1
@@ -127,7 +127,7 @@ importers:
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/schemas': link:../schemas
       '@react-typed-forms/schemas-html': link:../schemas-html
-      '@react-typed-forms/transform': 0.2.0
+      '@react-typed-forms/transform': 0.4.0
       '@types/react': 19.1.10
       microbundle: 0.15.1
       prettier: 3.8.1
@@ -802,12 +802,13 @@ importers:
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/schemas-html': workspace:*
-      '@react-typed-forms/transform': ^0.2.0
+      '@react-typed-forms/transform': ^0.4.0
       '@types/file-saver': ^2.0.7
       '@types/react': ^19.0.0
       clsx: ^2.1.1
       file-saver: ^2.0.5
       microbundle: ^0.15.1
+      prettier: ^3.0.3
       react: ^19.0.0
       react-dom: ^19.0.0
       rimraf: ^5.0.5
@@ -821,11 +822,12 @@ importers:
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/schemas': link:../schemas
       '@react-typed-forms/schemas-html': link:../schemas-html
-      '@react-typed-forms/transform': 0.2.0
+      '@react-typed-forms/transform': 0.4.0
       '@types/file-saver': 2.0.7
       '@types/react': 19.1.10
       clsx: 2.1.1
       microbundle: 0.15.1
+      prettier: 3.8.1
       react: 19.0.0
       react-dom: 19.0.0_react@19.0.0
       rimraf: 5.0.10

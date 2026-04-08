@@ -28,10 +28,13 @@ export function createStdFormRenderer(container: HTMLElement | null) {
         },
       }),
       createPagerRenderer(),
-      createDataGridRenderer({
-        addText: "Add",
-        removeText: "Delete",
-      }),
+      createDataGridRenderer(
+        {
+          addText: "Add",
+          removeText: "Delete",
+        },
+        { rowClass: "group contents", cellClass: "group-hover:bg-gray-100" },
+      ),
       createSignatureRenderer({}),
       createRechartsRenderer(),
       createTurnstileRenderer({

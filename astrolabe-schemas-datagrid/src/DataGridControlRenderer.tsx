@@ -104,6 +104,7 @@ export interface DataGridClasses {
   headerCellClass?: string;
   cellClass?: string;
   bodyCellClass?: string;
+  rowClass?: string;
   clearFilterClass?: string;
   clearFilterText?: string;
   renderHeaderContent?: (props: DataGridHeaderContentProps) => ReactNode;
@@ -479,7 +480,12 @@ function DataGridControlRenderer({
           const c = rows.getChild(rowIndex)!;
           return (
             <RenderControl key={c.uniqueId}>
-              {() => render(c, rowIndex)}
+              {() => {
+                const row = render(c, rowIndex);
+                if (classes.rowClass)
+                  return <div className={classes.rowClass}>{row}</div>;
+                return row;
+              }}
             </RenderControl>
           );
         }}
