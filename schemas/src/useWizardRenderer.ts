@@ -98,7 +98,10 @@ export function useWizardRenderer(
   );
   const childrenLength = pageChildren.length;
   const internalPage = useControl(
-    Math.max(0, pageChildren.findIndex((x) => x.visible)),
+    Math.max(
+      0,
+      pageChildren.findIndex((x) => x.visible),
+    ),
   );
   const pageControl: Control<number> =
     pageFieldNode?.control.as<number>() ?? internalPage;
@@ -107,7 +110,6 @@ export function useWizardRenderer(
     childrenLength === 0
       ? 0
       : Math.max(0, Math.min(rawPage, childrenLength - 1));
-  if (pageControl.value !== currentPage) pageControl.value = currentPage;
 
   const steps = buildSteps();
 
@@ -201,7 +203,7 @@ export function useWizardRenderer(
       const validator = validateActionId
         ? props.actionHandler?.(
             validateActionId,
-            { current: pageControl.current.value, dir },
+            { current: currentPage, dir },
             props.dataContext,
           )
         : undefined;
