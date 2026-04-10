@@ -1,4 +1,5 @@
 using Astrolabe.Common.Exceptions;
+using Astrolabe.FormDesigner;
 using Astrolabe.Schemas;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,19 +18,6 @@ public partial class FormsContext<
     TExportDef
 >
 {
-    public async Task<IEnumerable<FormInfo>> ListForms(
-        bool? forPublic = null,
-        bool? published = null
-    )
-    {
-        var q = FormDefinitions.AsQueryable();
-        if (forPublic.HasValue)
-            q = q.Where(x => x.Public == forPublic.Value);
-        if (published.HasValue)
-            q = q.Where(x => x.Published == published.Value);
-        return await q.Select(x => new FormInfo(x.Id, x.Name!, x.GroupId!)).ToListAsync();
-    }
-
     public async Task<TFormDef?> GetFormDefinition(Guid formId)
     {
         return await FormDefinitions.Where(x => x.Id == formId).SingleOrDefaultAsync();
@@ -45,15 +33,16 @@ public partial class FormsContext<
         NotFoundException.ThrowIfNull(formDef);
         var tableDef = formDef.Table;
         NotFoundException.ThrowIfNull(tableDef);
+        var schemaName = tableDef.Name ?? tableDef.Id.ToString();
         var schemas = new Dictionary<string, IEnumerable<object>>
         {
-            { tableDef.ShortId!, DbJson.FromJson<IEnumerable<SchemaField>>(tableDef.Fields) },
+            { schemaName, DbJson.FromJson<IEnumerable<SchemaField>>(tableDef.Fields) },
         };
         return new FormAndSchemas(
             DbJson.FromJson<IEnumerable<object>>(formDef.Definition),
-            tableDef.ShortId!,
+            schemaName,
             schemas,
-            formDef.GetFormConfig()
+            new FormConfig(formDef.Public, formDef.Published, formDef.LayoutMode, formDef.NavigationStyle)
         );
     }
 
@@ -70,12 +59,13 @@ public partial class FormsContext<
             .SingleOrDefaultAsync();
         NotFoundException.ThrowIfNull(form);
         return new FormDefinitionEdit(
-            form.ShortId!,
             form.Name!,
-            form.GroupId!,
             form.TableId,
             DbJson.FromJson<IEnumerable<object>>(form.Definition),
-            form.GetFormConfig()
+            form.Public,
+            form.Published,
+            form.LayoutMode,
+            form.NavigationStyle
         );
     }
 
@@ -85,14 +75,15 @@ public partial class FormsContext<
         var form = new TFormDef
         {
             Id = Guid.NewGuid(),
-            ShortId = edit.ShortId,
             Name = edit.Name,
-            GroupId = edit.GroupId,
             TableId = edit.TableId,
             Definition = DbJson.ToJson(edit.Controls),
             Version = 1,
+            Public = edit.Public,
+            Published = edit.Published,
+            LayoutMode = edit.LayoutMode,
+            NavigationStyle = edit.NavigationStyle,
         };
-        form.SetFormConfig(edit.Config);
         FormDefinitions.Add(form);
         await SaveChanges();
         return form.Id;
@@ -106,12 +97,13 @@ public partial class FormsContext<
             .Include(x => x.Table)
             .SingleOrDefaultAsync();
         NotFoundException.ThrowIfNull(form);
-        form.ShortId = edit.ShortId;
         form.Name = edit.Name;
-        form.GroupId = edit.GroupId;
         form.TableId = edit.TableId;
         form.Definition = DbJson.ToJson(edit.Controls);
-        form.SetFormConfig(edit.Config);
+        form.Public = edit.Public;
+        form.Published = edit.Published;
+        form.LayoutMode = edit.LayoutMode;
+        form.NavigationStyle = edit.NavigationStyle;
         await SaveChanges();
     }
 
@@ -123,18 +115,5 @@ public partial class FormsContext<
             FormDefinitions.Remove(form);
             await SaveChanges();
         }
-    }
-
-    public async Task<Guid?> LookupForm(string formName)
-    {
-        return await QueryFormDefForFullScope(formName)
-            .Select(x => (Guid?)x.Id)
-            .SingleOrDefaultAsync();
-    }
-
-    public IQueryable<TFormDef> QueryFormDefForFullScope(string formName)
-    {
-        var (groupId, shortId) = Scopes.SplitGroupScopedId(formName);
-        return FormDefinitions.Where(x => x.GroupId == groupId && x.ShortId == shortId);
     }
 }

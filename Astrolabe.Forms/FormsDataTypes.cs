@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Astrolabe.Schemas.ExportCsv;
 using Astrolabe.SearchState;
 
 namespace Astrolabe.Forms;
@@ -36,18 +35,12 @@ public record ItemEvent(
 
 public record ItemNoteResult(string Message, string? PersonName, DateTime Timestamp);
 
-public record FormInfo(Guid Id, string Name, string Folder);
-
 public record FormAndSchemas(
     IEnumerable<object> Controls,
     string SchemaName,
     IDictionary<string, IEnumerable<object>> Schemas,
     FormConfig Config
 );
-
-public record NameId(string Name, Guid? Id);
-
-public record ScopedNameId(string Name, Guid? Id, string Scope) : NameId(Name, Id);
 
 public record FormUpload
 {
@@ -62,13 +55,6 @@ public record ExportDefinitionGroup(
     IEnumerable<ExportDefinitionInfo> Infos,
     string TableDefinitionName,
     Guid TableDefinitionId
-);
-
-public record ExportDefinitionEdit(
-    Guid? Id,
-    Guid TableDefinitionId,
-    string Name,
-    IEnumerable<ExportColumn> ExportColumns
 );
 
 public record ItemEdit(string? Action, JsonElement Metadata);
@@ -88,19 +74,5 @@ public static class AuditEventHelper
     public static string EntityKeyForItemId(Guid id)
     {
         return "I" + id;
-    }
-}
-
-public static class Scopes
-{
-    public static string GroupScopedId(string? groupId, string? shortId)
-    {
-        return string.IsNullOrEmpty(groupId) ? shortId ?? "" : groupId + "." + shortId;
-    }
-
-    public static (string, string) SplitGroupScopedId(string fullId)
-    {
-        var dot = fullId.IndexOf('.');
-        return dot >= 0 ? (fullId[..dot], fullId[(dot + 1)..]) : ("", fullId);
     }
 }

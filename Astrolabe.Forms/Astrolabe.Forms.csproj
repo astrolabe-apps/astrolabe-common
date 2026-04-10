@@ -21,6 +21,7 @@
 
     <ItemGroup>
         <PackageReference Include="Astrolabe.Workflow" Version="1.3.0" />
+        <ProjectReference Include="..\Astrolabe.FormDesigner\Astrolabe.FormDesigner.csproj" />
         <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
         <PackageReference Include="Astrolabe.SearchState" Version="4.1.0" />
         <PackageReference Include="Astrolabe.EF.Search" Version="1.0.1" />

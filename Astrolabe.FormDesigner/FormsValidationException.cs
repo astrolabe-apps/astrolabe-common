@@ -1,4 +1,4 @@
-namespace Astrolabe.Forms;
+namespace Astrolabe.FormDesigner;
 
 public record FormsValidationError(string PropertyName, string ErrorMessage, string? ErrorCode = null);
 

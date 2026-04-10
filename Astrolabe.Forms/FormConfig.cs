@@ -1,3 +1,5 @@
+using Astrolabe.FormDesigner;
+
 namespace Astrolabe.Forms;
 
 public record FormConfig(

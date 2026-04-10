@@ -1,4 +1,5 @@
 using Astrolabe.Common.Exceptions;
+using Astrolabe.FormDesigner;
 using Astrolabe.Schemas.ExportCsv;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,49 +9,44 @@ public partial class FormsContext<
     TItem, TFormData, TPerson, TFormDef, TTableDef,
     TAuditEvent, TItemTag, TItemNote, TItemFile, TExportDef>
 {
-    public async Task<IEnumerable<ExportDefinitionGroup>> ListExportDefinitions()
-    {
-        return await ExportDefinitions
-            .Include(x => x.TableDefinition)
-            .GroupBy(x => x.TableDefinitionId)
-            .Select(group => new ExportDefinitionGroup(
-                group.Select(x => new ExportDefinitionInfo(x.Id, x.Name)),
-                group.First().TableDefinition.Name ?? "",
-                group.Key
-            ))
-            .ToListAsync();
-    }
-
-    public async Task CreateOrUpdateExportDefinition(ExportDefinitionEdit exportDefinitionEdit)
-    {
-        var dbDefinition = exportDefinitionEdit.Id.HasValue
-            ? await ExportDefinitions.FindAsync(exportDefinitionEdit.Id.Value)
-            : null;
-
-        if (dbDefinition is null)
-        {
-            dbDefinition = new TExportDef();
-            ExportDefinitions.Add(dbDefinition);
-        }
-
-        dbDefinition.TableDefinitionId = exportDefinitionEdit.TableDefinitionId;
-        dbDefinition.Name = exportDefinitionEdit.Name;
-        dbDefinition.ExportColumns = exportDefinitionEdit.ExportColumns;
-
-        await SaveChanges();
-    }
-
-    public async Task<ExportDefinitionEdit> GetExportDefinition(Guid? id)
+    public async Task<ExportDefinitionEdit> GetExportDefinition(Guid id)
     {
         var dbDefinition = await ExportDefinitions.FindAsync(id);
         NotFoundException.ThrowIfNull(dbDefinition);
 
         return new ExportDefinitionEdit(
-            dbDefinition.Id,
             dbDefinition.TableDefinitionId,
             dbDefinition.Name,
-            dbDefinition.ExportColumns
+            dbDefinition.ExportColumns.Select(x =>
+                new Astrolabe.FormDesigner.ExportColumn(x.Field, x.ColumnName, x.Expression))
         );
+    }
+
+    public async Task<Guid> CreateExportDefinition(ExportDefinitionEdit edit)
+    {
+        var dbDefinition = new TExportDef
+        {
+            Id = Guid.NewGuid(),
+            TableDefinitionId = edit.TableDefinitionId,
+            Name = edit.Name,
+            ExportColumns = edit.ExportColumns.Select(x =>
+                new Astrolabe.Schemas.ExportCsv.ExportColumn(x.Field, x.ColumnName, x.Expression)),
+        };
+        ExportDefinitions.Add(dbDefinition);
+        await SaveChanges();
+        return dbDefinition.Id;
+    }
+
+    public async Task EditExportDefinition(Guid id, ExportDefinitionEdit edit)
+    {
+        var dbDefinition = await ExportDefinitions.FindAsync(id);
+        NotFoundException.ThrowIfNull(dbDefinition);
+
+        dbDefinition.TableDefinitionId = edit.TableDefinitionId;
+        dbDefinition.Name = edit.Name;
+        dbDefinition.ExportColumns = edit.ExportColumns.Select(x =>
+            new Astrolabe.Schemas.ExportCsv.ExportColumn(x.Field, x.ColumnName, x.Expression));
+        await SaveChanges();
     }
 
     public async Task DeleteExportDefinition(Guid id)

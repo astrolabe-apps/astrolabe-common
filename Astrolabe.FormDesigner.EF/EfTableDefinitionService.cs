@@ -1,13 +1,25 @@
 using Astrolabe.Common.Exceptions;
-using Astrolabe.FormDesigner;
+using Astrolabe.SearchState;
 using Microsoft.EntityFrameworkCore;
 
-namespace Astrolabe.Forms;
+namespace Astrolabe.FormDesigner.EF;
 
-public partial class FormsContext<
-    TItem, TFormData, TPerson, TFormDef, TTableDef,
-    TAuditEvent, TItemTag, TItemNote, TItemFile, TExportDef>
+public class EfTableDefinitionService<TTableDef>(DbContext dbContext) : ITableDefinitionService
+    where TTableDef : class, ITableDefinitionEntity, new()
 {
+    private DbSet<TTableDef> TableDefinitions => dbContext.Set<TTableDef>();
+
+    private static readonly Searcher<TTableDef, NameId> TableSearcher =
+        SearchHelper.CreateSearcher<TTableDef, NameId>(
+            async q => await q.Select(x => new NameId(x.Name!, x.Id)).ToListAsync(),
+            async q => await q.CountAsync()
+        );
+
+    public async Task<SearchResults<NameId>> SearchTables(SearchOptions request, bool includeTotal)
+    {
+        return await TableSearcher(TableDefinitions, request, includeTotal);
+    }
+
     public async Task<TableDefinitionEdit> GetTable(Guid tableId)
     {
         var table = await TableDefinitions
@@ -23,19 +35,8 @@ public partial class FormsContext<
         );
     }
 
-    public async Task<TTableDef?> GetTableDef(Guid tableId)
-    {
-        return await TableDefinitions.Where(x => x.Id == tableId).SingleOrDefaultAsync();
-    }
-
-    /// <summary>
-    /// Override to validate table definition edits before create/update. Throw <see cref="FormsValidationException"/> on failure.
-    /// </summary>
-    protected virtual Task ValidateTableEdit(TableDefinitionEdit edit) => Task.CompletedTask;
-
     public async Task<Guid> CreateTable(TableDefinitionEdit edit)
     {
-        await ValidateTableEdit(edit);
         var table = new TTableDef
         {
             Id = Guid.NewGuid(),
@@ -45,13 +46,12 @@ public partial class FormsContext<
             Updated = DateTime.UtcNow,
         };
         TableDefinitions.Add(table);
-        await SaveChanges();
+        await dbContext.SaveChangesAsync();
         return table.Id;
     }
 
     public async Task EditTable(Guid tableId, TableDefinitionEdit edit)
     {
-        await ValidateTableEdit(edit);
         var table = await TableDefinitions
             .Where(x => x.Id == tableId)
             .SingleOrDefaultAsync();
@@ -60,16 +60,16 @@ public partial class FormsContext<
         table.NameField = edit.NameField;
         table.Fields = DbJson.ToJson(edit.Fields);
         table.Updated = DateTime.UtcNow;
-        await SaveChanges();
+        await dbContext.SaveChangesAsync();
     }
 
     public async Task DeleteTable(Guid tableId)
     {
-        var table = await TableDefinitions.Where(x => x.Id == tableId).SingleOrDefaultAsync();
+        var table = await TableDefinitions.FirstOrDefaultAsync(x => x.Id == tableId);
         if (table != null)
         {
             TableDefinitions.Remove(table);
-            await SaveChanges();
+            await dbContext.SaveChangesAsync();
         }
     }
 }

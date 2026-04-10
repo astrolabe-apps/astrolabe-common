@@ -1,6 +1,7 @@
 using System.Net.Mime;
 using System.Security.Claims;
 using System.Text;
+using Astrolabe.FormDesigner;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.ExportCsv;
 using Astrolabe.SearchState;
@@ -28,7 +29,6 @@ public static class FormsEndpoints
             group.RequireAuthorization();
 
         MapFormEndpoints<TContext>(group);
-        MapTableEndpoints<TContext>(group);
         MapItemEndpoints<TContext>(group);
         MapItemFileEndpoints<TContext>(group);
         MapExportEndpoints<TContext>(group);
@@ -49,100 +49,11 @@ public static class FormsEndpoints
 
         formGroup
             .MapGet(
-                "",
-                async (TContext ctx, bool? forPublic, bool? published) =>
-                    await ctx.ListForms(forPublic, published)
-            )
-            .WithName("ListForms");
-
-        formGroup
-            .MapGet(
                 "{formId}/forRender",
                 async (TContext ctx, Guid formId) => await ctx.GetFormAndSchemas(formId)
             )
             .AllowAnonymous()
             .WithName("GetFormForRender");
-
-        formGroup
-            .MapGet(
-                "{formId}/edit",
-                async (TContext ctx, Guid formId) => await ctx.GetFormEdit(formId)
-            )
-            .WithName("GetForm");
-
-        formGroup
-            .MapPost(
-                "",
-                async Task<Guid> (TContext ctx, [FromBody] FormDefinitionEdit edit) =>
-                    await ctx.CreateForm(edit)
-            )
-            .WithName("CreateForm");
-
-        formGroup
-            .MapPut(
-                "{formId}",
-                async Task (TContext ctx, Guid formId, [FromBody] FormDefinitionEdit edit) =>
-                    await ctx.EditForm(formId, edit)
-            )
-            .WithName("EditForm");
-
-        formGroup
-            .MapGet(
-                "lookup/{formName}",
-                async (TContext ctx, string formName) => await ctx.LookupForm(formName)
-            )
-            .WithName("LookupForm");
-
-        formGroup
-            .MapDelete(
-                "{formId}",
-                async (TContext ctx, Guid formId) => await ctx.DeleteForm(formId)
-            )
-            .WithName("DeleteForm");
-    }
-
-    private static void MapTableEndpoints<TContext>(RouteGroupBuilder group)
-        where TContext : IFormsContext
-    {
-        var tableGroup = group.MapGroup("table").WithTags("Table");
-
-        tableGroup
-            .MapGet("", async (TContext ctx) => await ctx.ListTables())
-            .WithName("ListTables");
-
-        tableGroup
-            .MapGet("{tableId}", async (TContext ctx, Guid tableId) => await ctx.GetTable(tableId))
-            .WithName("GetTable");
-
-        tableGroup
-            .MapPost(
-                "",
-                async Task<Guid> (TContext ctx, [FromBody] TableDefinitionEdit edit) =>
-                    await ctx.CreateTable(edit)
-            )
-            .WithName("CreateTable");
-
-        tableGroup
-            .MapPut(
-                "{tableId}",
-                async Task (TContext ctx, Guid tableId, [FromBody] TableDefinitionEdit edit) =>
-                    await ctx.EditTable(tableId, edit)
-            )
-            .WithName("EditTable");
-
-        tableGroup
-            .MapGet(
-                "lookup/{tableName}",
-                async (TContext ctx, string tableName) => await ctx.LookupTable(tableName)
-            )
-            .WithName("LookupTable");
-
-        tableGroup
-            .MapDelete(
-                "{tableId}",
-                async (TContext ctx, Guid tableId) => await ctx.DeleteTable(tableId)
-            )
-            .WithName("DeleteTable");
     }
 
     private static void MapItemEndpoints<TContext>(RouteGroupBuilder group)
@@ -358,32 +269,6 @@ public static class FormsEndpoints
         var exportGroup = group.MapGroup("export").WithTags("Export");
 
         exportGroup
-            .MapGet("definition", async (TContext ctx) => await ctx.ListExportDefinitions())
-            .WithName("ListExportDefinitions");
-
-        exportGroup
-            .MapPost(
-                "definition",
-                async (TContext ctx, [FromBody] ExportDefinitionEdit edit) =>
-                    await ctx.CreateOrUpdateExportDefinition(edit)
-            )
-            .WithName("SaveExportDefinition");
-
-        exportGroup
-            .MapGet(
-                "definition/{id:guid}",
-                async (TContext ctx, Guid id) => await ctx.GetExportDefinition(id)
-            )
-            .WithName("GetExportDefinition");
-
-        exportGroup
-            .MapDelete(
-                "definition/{id:guid}",
-                async (TContext ctx, Guid id) => await ctx.DeleteExportDefinition(id)
-            )
-            .WithName("DeleteExportDefinition");
-
-        exportGroup
             .MapPost(
                 "definition/ids",
                 async (
@@ -409,6 +294,7 @@ public static class FormsEndpoints
                 async (
                     TContext ctx,
                     ClaimsPrincipal principal,
+                    IExportDefinitionService exportService,
                     [FromBody] ExportRecordsEdit data
                 ) =>
                 {
@@ -419,17 +305,17 @@ public static class FormsEndpoints
                     if (data.All != null)
                         itemIds = await ctx.GetExportableItemIds(data.All);
 
-                    var (_, tableDefinitionId, exportName, exportColumns) =
-                        await ctx.GetExportDefinition(data.DefinitionId);
+                    var exportDef = await exportService.GetExportDefinition(data.DefinitionId.Value);
 
                     return new WriteHttpStreamResult(
                         MediaTypeNames.Text.Csv,
-                        $"{exportName}.csv",
+                        $"{exportDef.Name}.csv",
                         stream =>
                             ctx.WriteCsvText(
-                                exportColumns,
+                                exportDef.ExportColumns.Select(x =>
+                                    new Astrolabe.Schemas.ExportCsv.ExportColumn(x.Field, x.ColumnName, x.Expression)),
                                 itemIds,
-                                tableDefinitionId,
+                                exportDef.TableDefinitionId,
                                 user.PersonId,
                                 user.Roles,
                                 stream

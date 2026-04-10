@@ -1,6 +1,6 @@
 using Astrolabe.Annotation;
 
-namespace Astrolabe.Forms;
+namespace Astrolabe.FormDesigner;
 
 [JsonString]
 public enum PageNavigationStyle

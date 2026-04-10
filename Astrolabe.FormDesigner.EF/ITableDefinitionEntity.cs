@@ -1,6 +1,6 @@
-namespace Astrolabe.Forms;
+namespace Astrolabe.FormDesigner.EF;
 
-public interface ITableDefinition
+public interface ITableDefinitionEntity
 {
     Guid Id { get; set; }
     string? Name { get; set; }

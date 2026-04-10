@@ -1,9 +1,6 @@
-using Astrolabe.FormDesigner;
+namespace Astrolabe.FormDesigner.EF;
 
-namespace Astrolabe.Forms;
-
-public interface IFormDefinition<TTableDef>
-    where TTableDef : class, ITableDefinition
+public interface IFormDefinitionEntity
 {
     Guid Id { get; set; }
     string? Name { get; set; }
@@ -14,6 +11,4 @@ public interface IFormDefinition<TTableDef>
     bool Published { get; set; }
     FormLayoutMode LayoutMode { get; set; }
     PageNavigationStyle NavigationStyle { get; set; }
-
-    TTableDef? Table { get; set; }
 }

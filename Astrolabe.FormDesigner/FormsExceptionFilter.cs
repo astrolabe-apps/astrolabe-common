@@ -1,7 +1,7 @@
 using Astrolabe.Common.Exceptions;
 using Microsoft.AspNetCore.Http;
 
-namespace Astrolabe.Forms;
+namespace Astrolabe.FormDesigner;
 
 public class FormsExceptionFilter : IEndpointFilter
 {

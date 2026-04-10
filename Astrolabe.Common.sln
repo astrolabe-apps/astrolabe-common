@@ -67,6 +67,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.OIDC.EF", "Astrol
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Forms", "Astrolabe.Forms\Astrolabe.Forms.csproj", "{619E0243-BB76-4429-9CA1-D7B6144FDB0D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.FormDesigner", "Astrolabe.FormDesigner\Astrolabe.FormDesigner.csproj", "{E195F109-AD42-4449-A532-9FE354697802}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.FormDesigner.EF", "Astrolabe.FormDesigner.EF\Astrolabe.FormDesigner.EF.csproj", "{9A305CA2-CE2A-4248-81E5-7905A1B3791B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -205,5 +209,13 @@ Global
 		{619E0243-BB76-4429-9CA1-D7B6144FDB0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{619E0243-BB76-4429-9CA1-D7B6144FDB0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{619E0243-BB76-4429-9CA1-D7B6144FDB0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E195F109-AD42-4449-A532-9FE354697802}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E195F109-AD42-4449-A532-9FE354697802}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E195F109-AD42-4449-A532-9FE354697802}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E195F109-AD42-4449-A532-9FE354697802}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9A305CA2-CE2A-4248-81E5-7905A1B3791B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9A305CA2-CE2A-4248-81E5-7905A1B3791B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9A305CA2-CE2A-4248-81E5-7905A1B3791B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9A305CA2-CE2A-4248-81E5-7905A1B3791B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
