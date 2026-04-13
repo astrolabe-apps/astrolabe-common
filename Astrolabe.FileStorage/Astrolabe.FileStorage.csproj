@@ -7,20 +7,8 @@
         <IsPackable>true</IsPackable>
         <Nullable>enable</Nullable>
         <Version>0.1.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>File storage abstraction</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>file storage</PackageTags>
-        <Copyright>Copyright ©2025 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-
-    <ItemGroup>
-      <None Update="README.md">
-        <Pack>true</Pack>
-        <PackagePath>/</PackagePath>
-      </None>
-    </ItemGroup>
 
 </Project>

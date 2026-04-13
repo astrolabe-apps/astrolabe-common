@@ -15,7 +15,11 @@ import {
   ActionRendererProps,
   ControlDataContext,
   OptionalAdornment,
+  WizardStepInfo,
+  WizardNavActionOptions,
 } from "@react-typed-forms/schemas";
+
+export type { WizardStepInfo, WizardNavActionOptions };
 
 // ============================================================================
 // SHARED TYPES AND INTERFACES
@@ -24,14 +28,20 @@ import {
 // Custom navigation props for wizard renderer
 export interface CustomNavigationProps {
   className?: string;
+  leftNavClass?: string;
+  rightNavClass?: string;
+  middleNavClass?: string;
   page: number;
   totalPages: number;
   next: ActionRendererProps;
   prev: ActionRendererProps;
   formRenderer: FormRenderer;
   validatePage: () => Promise<boolean>;
+  steps: WizardStepInfo[];
+  leftNav?: ReactNode;
+  middleNav?: ReactNode;
+  rightNav?: ReactNode;
 }
-
 
 // ============================================================================
 // INDIVIDUAL COMPONENT OPTIONS INTERFACES
@@ -99,15 +109,27 @@ export interface DefaultWizardRenderOptions {
     className?: string;
     navContainerClass?: string;
     contentClass?: string;
+    stepsContainerClass?: string;
+    stepClass?: string;
+    activeStepClass?: string;
+    completedStepClass?: string;
+    stepLabelClass?: string;
+    stepNumberClass?: string;
+    leftNavClass?: string;
+    rightNavClass?: string;
+    middleNavClass?: string;
   };
   actions?: {
-    nextText?: string;
-    nextIcon?: IconReference;
-    nextValidate?: boolean;
-    prevText?: string;
-    prevIcon?: IconReference;
-    prevValidate?: boolean;
+    next?: WizardNavActionOptions;
+    prev?: WizardNavActionOptions;
+    navActionId?: string;
+    validateActionId?: string;
   };
+  defaultShowSteps?: boolean;
+  renderSteps?: (
+    steps: WizardStepInfo[],
+    formRenderer: FormRenderer,
+  ) => ReactNode;
   renderNavigation?: (props: CustomNavigationProps) => ReactNode;
 }
 
@@ -258,6 +280,7 @@ export interface DefaultDataRendererOptions {
   booleanOptions?: FieldOption[];
   optionRenderer?: DataRendererRegistration;
   multilineClass?: string;
+  multilineContentEditable?: boolean;
   jsonataClass?: string;
   arrayOptions?: ArrayActionOptions;
   defaultEmptyText?: string;

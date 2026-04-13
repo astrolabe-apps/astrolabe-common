@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas-html",
+      "comment": "Add support for navigation children via placement and allow disappearing of nav buttons",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas-html"
+}

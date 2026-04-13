@@ -33,6 +33,7 @@ import {
   DefaultAdornmentRendererOptions,
 } from "../rendererOptions";
 import { createDialogRenderer } from "./DefaultDialogRenderer";
+import { RNDiv } from "../StdComponents";
 
 interface StyleProps {
   className?: string;
@@ -118,7 +119,6 @@ export function createDefaultGroupRenderer(
       : isInlineRenderer(renderOptions)
         ? ({ className: inlineClass } as StyleProps)
         : ({ className: standardClassName } as StyleProps);
-    const { Div } = renderer.html;
     const inline = renderOptions.type == GroupRenderType.Inline;
     const children = formNode.children.map((c, i) =>
       renderChild(c, {
@@ -126,14 +126,15 @@ export function createDefaultGroupRenderer(
       }),
     );
     return (
-      <Div
+      <RNDiv
         className={rendererClass(props.className, clsx(className, gcn))}
         textClass={props.textClass}
         style={style}
         inline={inline}
+        selectable={inline && !props.definition.noSelection}
       >
         {children}
-      </Div>
+      </RNDiv>
     );
   }
 

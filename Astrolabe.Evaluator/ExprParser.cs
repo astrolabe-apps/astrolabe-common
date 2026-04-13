@@ -199,7 +199,7 @@ public class ExprParser
             return node.Symbol.Type switch
             {
                 AstroExprParser.Identifier => new PropertyExpr(node.GetText(), location),
-                AstroExprParser.Number => new ValueExpr(double.Parse(node.GetText()), null, null, location),
+                AstroExprParser.Number => new ValueExpr(ParseNumber(node.GetText()), null, null, location),
                 AstroExprParser.False => new ValueExpr(false, null, null, location),
                 AstroExprParser.True => new ValueExpr(true, null, null, location),
                 AstroExprParser.Null => new ValueExpr(null, null, null, location),
@@ -239,5 +239,17 @@ public class ExprParser
     public static ValueExpr StringValue(string escaped, SourceLocation? location = null)
     {
         return new ValueExpr(StringUnescape.UnescapeJsString(escaped), null, null, location);
+    }
+
+    /// <summary>
+    /// Parse a number string, returning long for integers and double for decimals.
+    /// </summary>
+    private static object ParseNumber(string text)
+    {
+        if (text.Contains('.') || text.Contains('e') || text.Contains('E'))
+        {
+            return double.Parse(text);
+        }
+        return long.Parse(text);
     }
 }

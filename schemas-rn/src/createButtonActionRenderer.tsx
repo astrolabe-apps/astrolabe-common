@@ -1,14 +1,14 @@
-import React, { Fragment, ReactNode } from "react";
+import React, { Fragment } from "react";
 import {
   ActionRendererProps,
   ActionRendererRegistration,
   ActionStyle,
   createActionRenderer,
   IconPlacement,
-  IconReference,
   rendererClass,
 } from "@react-typed-forms/schemas";
 import { DefaultActionRendererOptions } from "./rendererOptions";
+import { Text } from "react-native";
 
 export function createButtonActionRenderer(
   actionId: string | string[] | undefined,
@@ -45,7 +45,7 @@ export function createButtonActionRenderer(
         IconPlacement.ReplaceText;
       const iconPlacement = busyIcon ? busyPlacement : stdIconPlacement;
 
-      const { Button, I, Span } = renderer.html;
+      const { Button, I } = renderer.html;
       const isLink = actionStyle == ActionStyle.Link;
       const isGroup = actionStyle == ActionStyle.Group;
       const classNames = rendererClass(
@@ -89,7 +89,7 @@ export function createButtonActionRenderer(
 
       const textElement =
         actionContent ??
-        (actionText && <Span className={textClassNames}>{actionText}</Span>);
+        (actionText && <Text className={textClassNames}>{actionText}</Text>);
 
       return (
         <Button

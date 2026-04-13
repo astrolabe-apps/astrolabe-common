@@ -29,6 +29,7 @@ export const DefaultModalDialogClasses: ModalDialogClasses = {
 export interface ModalProps extends AriaModalOverlayProps, ModalClasses {
   state: OverlayTriggerState;
   children: React.ReactElement;
+  portalContainer?: Element;
 }
 
 export interface ModalDialogTriggerProps
@@ -51,6 +52,7 @@ export function Modal({
   isDismissable,
   isKeyboardDismissDisabled,
   shouldCloseOnInteractOutside,
+  portalContainer,
   ...props
 }: ModalProps) {
   let ref = React.useRef(null);
@@ -66,7 +68,7 @@ export function Modal({
   };
 
   return (
-    <Overlay>
+    <Overlay portalContainer={portalContainer}>
       <div className={underlayClass} {...underlayProps}>
         <div {...modalProps} ref={ref} className={containerClass}>
           {children}

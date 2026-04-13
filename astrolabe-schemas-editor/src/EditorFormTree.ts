@@ -1,5 +1,6 @@
 import {
   ControlDefinition,
+  createFormTree,
   FormNode,
   FormTree,
   groupedControl,
@@ -14,7 +15,11 @@ import {
 
 export class EditorFormTree extends FormTree {
   control: Control<ControlDefinition>;
-  constructor(rootNodes: ControlDefinition[]) {
+  private externalFormTrees: Record<string, FormTree> = {};
+  constructor(
+    rootNodes: ControlDefinition[],
+    private externalForms?: Record<string, ControlDefinition[]>,
+  ) {
     super();
     this.control = newControl(groupedControl(rootNodes));
   }
@@ -33,7 +38,14 @@ export class EditorFormTree extends FormTree {
     );
   }
   getForm(formId: string): FormTree | undefined {
-    throw new Error("Method not implemented.");
+    if (this.externalFormTrees[formId]) return this.externalFormTrees[formId];
+    const controls = this.externalForms?.[formId];
+    if (controls) {
+      const tree = createFormTree(controls, this);
+      this.externalFormTrees[formId] = tree;
+      return tree;
+    }
+    return undefined;
   }
 
   getChildId(

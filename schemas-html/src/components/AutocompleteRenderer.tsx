@@ -20,6 +20,7 @@ import clsx from "clsx";
 export interface AutocompleteProps<A, Multiple extends boolean>
   extends UseAutocompleteProps<A, Multiple, false, true> {
   control: Control<any>;
+  disabled?: boolean;
   className?: string;
   classes: AutocompleteRendererOptions;
   controlClasses?: AutocompleteClasses;
@@ -37,6 +38,7 @@ export function createAutocompleteRenderer(
         <MultipleAutocomplete
           options={p.options ?? []}
           control={p.control}
+          disabled={p.formNode.disabled}
           className={rendererClass(p.className, options.className)}
           classes={options}
           controlClasses={p.renderOptions as AutocompleteClasses}
@@ -47,6 +49,7 @@ export function createAutocompleteRenderer(
         <SingleAutocomplete
           options={p.options ?? []}
           control={p.control}
+          disabled={p.formNode.disabled}
           className={rendererClass(p.className, options.className)}
           classes={options}
           controlClasses={p.renderOptions as AutocompleteClasses}
@@ -64,8 +67,7 @@ export function createAutocompleteRenderer(
 function SingleAutocomplete({
   ...props
 }: AutocompleteProps<FieldOption | string, false>) {
-  const { id, control, className, readOnly, classes, controlClasses } = props;
-  const { disabled } = control;
+  const { id, control, className, readOnly, classes, controlClasses, disabled } = props;
 
   const inputControl = useControl<string>("");
   const selectedOptionControl = useControl<string | FieldOption | null>(null);
@@ -180,8 +182,7 @@ function SingleAutocomplete({
 function MultipleAutocomplete({
   ...props
 }: AutocompleteProps<FieldOption, true>) {
-  const { id, control, className, readOnly, classes, controlClasses } = props;
-  const { disabled } = control;
+  const { id, control, className, readOnly, classes, controlClasses, disabled } = props;
 
   const inputControl = useControl<string>("");
   const selectedOptionsControl = useControl<(string | FieldOption)[] | null>(

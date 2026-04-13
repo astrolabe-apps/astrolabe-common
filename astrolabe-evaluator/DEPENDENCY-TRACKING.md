@@ -156,7 +156,7 @@ value ?? fallback
 
 ### Array Aggregation
 
-**Functions:** `sum`, `min`, `max`, `count`
+**Functions:** `sum`, `min`, `max`
 
 Tracks all consumed elements:
 
@@ -164,6 +164,16 @@ Tracks all consumed elements:
 // Data: { values: [1, 2, 3] }
 $sum(values)
 // deps = ["values[0]", "values[1]", "values[2]"]
+```
+
+**Function:** `count`
+
+Tracks only the array reference, not individual elements:
+
+```javascript
+// Data: { values: [1, 2, 3] }
+$count(values)
+// deps = ["values"]  (the array path only)
 ```
 
 ---
@@ -295,9 +305,18 @@ $lower(name)                 // deps = ["name"]
 
 **`object`:** Creates object from key-value pairs
 
+Each property value in a constructed object retains its own dependencies. When you
+access a property, only that property's deps are returned (not deps from other properties).
+
 ```javascript
-$object("sum", x + y, "product", x * y)
-// deps = ["x", "y"]
+// Data: { x: 5, y: 10, a: 3, b: 7 }
+
+// Creating an object - each property tracks its own deps
+let $obj := $object("sum", x + y, "product", a * b)
+
+// Accessing a property returns ONLY that property's deps
+$obj.sum       // deps = ["x", "y"] (NOT ["x", "y", "a", "b"])
+$obj.product   // deps = ["a", "b"] (NOT ["x", "y", "a", "b"])
 ```
 
 **`array`:** Flattens and combines
@@ -384,13 +403,14 @@ config[$string("theme_", mode)]
 |----------|------|------|-------|
 | **Arithmetic** | No | Data refs only | `a + 5` → deps = `["a"]` |
 | **Conditionals** | No | Cond + taken branch | `a ? b : c` |
-| **Aggregations** | No | All elements | `$sum(array)` |
+| **Aggregations** | No | All elements | `$sum`, `$min`, `$max` |
+| **Count** | No | Array only | `$count(array)` → deps = `["array"]` |
 | **Transformations** | Per element | Per element | `$map`, `filter` |
 | **Constant access** | Yes | None | `array[0]`, `obj.x` |
 | **Dynamic access** | Yes | Index/key | `$elem(array, idx)` |
 | **Search** | Element | Evaluated only | `$first`, `$any` |
 | **Property** | Yes | Parent + child | `user.name` |
-| **Construction** | No | All inputs | `$object(...)` |
+| **Construction** | No | Per-property | `$object(...)` - access returns only that property's deps |
 
 ---
 

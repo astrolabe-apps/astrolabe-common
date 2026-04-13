@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Version>0.1.0</Version>
+        <Description>Schema-driven forms platform with workflow, search, export, and audit trail</Description>
+        <PackageTags>forms, workflow, schema</PackageTags>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Astrolabe.Workflow\Astrolabe.Workflow.csproj" />
+        <ProjectReference Include="..\Astrolabe.FormDesigner\Astrolabe.FormDesigner.csproj" />
+        <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+        <ProjectReference Include="..\Astrolabe.SearchState\Astrolabe.SearchState.csproj" />
+        <ProjectReference Include="..\Astrolabe.EF.Search\Astrolabe.EF.Search.csproj" />
+        <ProjectReference Include="..\Astrolabe.Schemas.ExportCsv\Astrolabe.Schemas.ExportCsv.csproj" />
+        <ProjectReference Include="..\Astrolabe.FileStorage\Astrolabe.FileStorage.csproj" />
+        <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
+    </ItemGroup>
+
+</Project>

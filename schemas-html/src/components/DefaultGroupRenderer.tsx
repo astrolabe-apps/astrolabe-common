@@ -18,31 +18,21 @@ import {
   useExpression,
 } from "@react-typed-forms/schemas";
 import {
-  DefaultAccordionRendererOptions,
-  DefaultDialogRenderOptions,
-  DefaultGridRenderOptions,
-  DefaultGroupRendererOptions,
-  DefaultTabsRenderOptions,
-  DefaultWizardRenderOptions,
   DefaultAdornmentRendererOptions,
+  DefaultGroupRendererOptions,
 } from "../rendererOptions";
 import clsx from "clsx";
 import React, { CSSProperties, ReactElement } from "react";
 import { createTabsRenderer } from "./TabsRenderer";
 import { createGridRenderer } from "./GridRenderer";
-import {
-  createWizardRenderer,
-} from "./DefaultWizardRenderer";
-import {
-  createDialogRenderer,
-} from "./DefaultDialogRenderer";
+import { createWizardRenderer } from "./DefaultWizardRenderer";
+import { createDialogRenderer } from "./DefaultDialogRenderer";
 import { createAccordionGroupRenderer } from "./DefaultAccordion";
 
 interface StyleProps {
   className?: string;
   style?: CSSProperties;
 }
-
 
 export function createDefaultGroupRenderer(
   options?: DefaultGroupRendererOptions,

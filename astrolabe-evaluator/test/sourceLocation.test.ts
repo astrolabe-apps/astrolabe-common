@@ -1,14 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { parseEval } from "../src/parseEval";
 import type {
-  CallExpr,
-  VarExpr,
-  ValueExpr,
-  PropertyExpr,
   ArrayExpr,
-  LetExpr,
+  CallExpr,
   LambdaExpr,
-  SourceLocation,
+  LetExpr,
+  PropertyExpr,
+  ValueExpr,
+  VarExpr,
 } from "../src/ast";
 
 /**

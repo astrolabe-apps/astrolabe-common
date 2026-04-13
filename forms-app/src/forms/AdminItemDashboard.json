@@ -1,0 +1,387 @@
+{
+  "controls": [
+    {
+      "type": "Data",
+      "title": "Search",
+      "field": "request/query",
+      "renderOptions": {
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Group",
+      "children": [
+        {
+          "title": "Total:",
+          "type": "Data",
+          "field": "results/total",
+          "renderOptions": {
+            "type": "DisplayOnly",
+            "sampleText": "Sample Data"
+          }
+        },
+        {
+          "type": "Action",
+          "title": "Toggle All",
+          "actionId": "toggleAll"
+        },
+        {
+          "type": "Action",
+          "title": "Export Selected",
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "UserMatch",
+                "userMatch": "RTOAdmin,Admin"
+              }
+            }
+          ],
+          "actionId": "exportSelected"
+        },
+        {
+          "type": "Action",
+          "title": "Export All",
+          "dynamic": [
+            {
+              "type": "Visible",
+              "expr": {
+                "type": "UserMatch",
+                "userMatch": "RTOAdmin,Admin"
+              }
+            }
+          ],
+          "actionId": "exportAll"
+        }
+      ],
+      "groupOptions": {
+        "type": "Flex"
+      }
+    },
+    {
+      "type": "Data",
+      "title": "Results",
+      "field": "results/entries",
+      "children": [
+        {
+          "type": "Display",
+          "title": "",
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "columnTemplate": "2em",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "visible": {}
+            }
+          ],
+          "displayData": {
+            "type": "Custom",
+            "customId": "check"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "First Name",
+          "field": "firstName",
+          "required": true,
+          "renderOptions": {
+            "type": "DisplayOnly"
+          },
+          "hideTitle": true,
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "columnTemplate": "10em",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "visible": {}
+            }
+          ]
+        },
+        {
+          "type": "Data",
+          "title": "Last Name",
+          "field": "lastName",
+          "required": true,
+          "renderOptions": {
+            "type": "DisplayOnly"
+          },
+          "hideTitle": true,
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "columnTemplate": "10em",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "visible": {}
+            }
+          ]
+        },
+        {
+          "type": "Data",
+          "title": "Application Type",
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "enabledFilter": true,
+              "enabledSort": true,
+              "visible": {},
+              "rowSpan": {}
+            }
+          ],
+          "field": "formType",
+          "hideTitle": true,
+          "renderOptions": {
+            "type": "DisplayOnly"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Submitted on",
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "columnTemplate": "12em",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "visible": {}
+            }
+          ],
+          "field": "submittedOn",
+          "hideTitle": true,
+          "required": true,
+          "renderOptions": {
+            "type": "DisplayOnly"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Status",
+          "field": "status",
+          "required": true,
+          "renderOptions": {
+            "type": "DisplayOnly"
+          },
+          "hideTitle": true,
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "enabledFilter": true,
+              "enabledSort": true,
+              "visible": {},
+              "columnTemplate": "8em",
+              "rowSpan": {}
+            }
+          ]
+        },
+        {
+          "title": "Exported At",
+          "type": "Data",
+          "field": "exportedAt",
+          "hideTitle": true,
+          "renderOptions": {
+            "type": "DisplayOnly"
+          },
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "columnTemplate": "10em",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "visible": {}
+            }
+          ]
+        },
+        {
+          "type": "Group",
+          "title": "Actions",
+          "children": [
+            {
+              "type": "Action",
+              "title": "Edit",
+              "dynamic": [
+                {
+                  "type": "ActionData",
+                  "expr": {
+                    "type": "Data",
+                    "field": "id"
+                  }
+                }
+              ],
+              "actionId": "edit",
+              "icon": {}
+            },
+            {
+              "type": "Action",
+              "title": "Export",
+              "dynamic": [
+                {
+                  "type": "ActionData",
+                  "expr": {
+                    "type": "Data",
+                    "field": "id"
+                  }
+                }
+              ],
+              "actionId": "export",
+              "icon": {}
+            },
+            {
+              "type": "Action",
+              "title": "Delete",
+              "dynamic": [
+                {
+                  "type": "ActionData",
+                  "expr": {
+                    "type": "Data",
+                    "field": "id"
+                  }
+                }
+              ],
+              "actionId": "delete",
+              "icon": {}
+            },
+            {
+              "type": "Action",
+              "title": "View",
+              "dynamic": [
+                {
+                  "type": "ActionData",
+                  "expr": {
+                    "type": "Data",
+                    "field": "id"
+                  }
+                }
+              ],
+              "actionId": "view",
+              "icon": {}
+            }
+          ],
+          "groupOptions": {
+            "type": "Flex",
+            "hideTitle": true
+          },
+          "adornments": [
+            {
+              "type": "ColumnOptions",
+              "columnTemplate": "15em",
+              "renderOptions": {
+                "type": "Standard"
+              },
+              "visible": {}
+            }
+          ]
+        }
+      ],
+      "hideTitle": true,
+      "renderOptions": {
+        "type": "DataGrid",
+        "searchField": "request"
+      },
+      "readonly": true,
+      "styleClass": "bg-white rounded-lg p-4 drop-shadow-lg"
+    },
+    {
+      "type": "Group",
+      "styleClass": "justify-between",
+      "children": [
+        {
+          "type": "Group",
+          "children": [
+            {
+              "type": "Data",
+              "title": "Total:",
+              "field": "results/total",
+              "renderOptions": {
+                "type": "DisplayOnly"
+              }
+            },
+            {
+              "type": "Action",
+              "title": "Toggle All",
+              "actionId": "toggleAll"
+            },
+            {
+              "type": "Action",
+              "title": "Export Selected",
+              "actionId": "exportSelected",
+              "icon": {}
+            },
+            {
+              "type": "Action",
+              "title": "Export All",
+              "actionId": "exportAll",
+              "icon": {}
+            }
+          ],
+          "groupOptions": {
+            "type": "Flex"
+          }
+        },
+        {
+          "type": "Group",
+          "styleClass": "items-end",
+          "children": [
+            {
+              "type": "Data",
+              "field": "request",
+              "hideTitle": true,
+              "renderOptions": {
+                "type": "Pager"
+              },
+              "title": "Pager",
+              "dynamic": [
+                {
+                  "type": "Visible",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "results.total > request.length"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "Data",
+              "title": "Results",
+              "dynamic": [
+                {
+                  "type": "AllowedOptions",
+                  "expr": {
+                    "type": "Jsonata",
+                    "expression": "[{\"name\": \"25 per page\", \"value\": 25},\n{\"name\": \"50 per page\", \"value\": 50},\n{\"name\": \"100 per page\", \"value\": 100}]"
+                  }
+                }
+              ],
+              "field": "request/length",
+              "hideTitle": true,
+              "required": true,
+              "renderOptions": {
+                "type": "Standard"
+              }
+            }
+          ],
+          "groupOptions": {
+            "type": "Flex"
+          }
+        }
+      ],
+      "groupOptions": {
+        "type": "Flex"
+      }
+    }
+  ],
+  "config": {},
+  "fields": []
+}

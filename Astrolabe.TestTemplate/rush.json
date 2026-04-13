@@ -15,7 +15,7 @@
    * path segment in the "$schema" field for all your Rush config files.  This will ensure
    * correct error-underlining and tab-completion for editors such as VS Code.
    */
-  "rushVersion": "5.153.2",
+  "rushVersion": "5.167.0",
   /**
    * The next field selects which package manager should be installed and determines its version.
    * Rush installs its own local copy of the package manager to ensure that your build process
@@ -487,6 +487,16 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/schemas-turnstile",
+      "projectFolder": "../schemas-turnstile",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@astroapps/schemas-recaptcha",
+      "projectFolder": "../schemas-recaptcha",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@react-typed-forms/schemas-html",
       "projectFolder": "../schemas-html",
       "shouldPublish": true
@@ -543,6 +553,16 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/basic-editor",
+      "projectFolder": "../astrolabe-basic-editor",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "@astroapps/forms-app",
+      "projectFolder": "../forms-app",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@astroapps/schemas-quickstream",
       "projectFolder": "../astrolabe-schemas-quickstream"
     },
@@ -560,6 +580,11 @@
       "packageName": "@astroapps/controls",
       "projectFolder": "../astrolabe-controls",
       "shouldPublish": true
+    },
+    {
+      "packageName": "@astroapps/validation",
+      "projectFolder": "../astrolabe-validation",
+      "shouldPublish": false
     },
 //    {
 //      "packageName": "tsup",

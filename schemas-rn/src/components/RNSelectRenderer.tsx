@@ -34,6 +34,7 @@ export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
         <RNSelectRenderer
           className={rendererClass(props.className, options.className)}
           state={props.control}
+          disabled={props.formNode.disabled}
           id={props.id}
           readonly={props.readonly}
           options={props.options ?? []}
@@ -63,6 +64,7 @@ export function RNSelectRenderer({
   requiredText = "Please select",
   portalHost,
   readonly,
+  disabled,
   ...props
 }: SelectDataRendererProps & ExtendedDropdown) {
   const insets = useSafeAreaInsets();
@@ -75,7 +77,7 @@ export function RNSelectRenderer({
     left: 12,
     right: 12,
   };
-  const { value, disabled } = state;
+  const { value } = state;
   // const showEmpty = useControl(!required || value == null);
   const optionStringMap = useMemo(
     () => Object.fromEntries(options.map((x) => [convert(x.value), x.value])),
@@ -188,13 +190,15 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-row h-10 native:h-12 items-center text-sm justify-between border border-[#E7E7E8] bg-background px-3 py-2 [&>span]:line-clamp-1 min-w-[128px]",
+        "flex flex-row min-h-10 native:min-h-12 items-center text-sm justify-between border border-[#E7E7E8] bg-background px-3 py-2 [&>span]:line-clamp-1 min-w-[128px]",
         props.disabled && "opacity-50",
         className,
       )}
       {...props}
     >
-      <Pressable pointerEvents={"none"}>{children}</Pressable>
+      <Pressable pointerEvents={"none"} className={"flex-1"}>
+        {children}
+      </Pressable>
       <Icon name={"chevron-down"} className={"!text-[12px] text-accent"} />
     </SelectPrimitive.Trigger>
   );
@@ -296,3 +300,15 @@ function SelectSeparator({
     />
   );
 }
+
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+  type Option,
+};

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Library</OutputType>
+    <IsPackable>true</IsPackable>
+    <Version>1.0.1</Version>
+    <Description>OpenID Connect provider implementation with authorization code flow, PKCE, token signing, and discovery endpoints.</Description>
+    <PackageTags>oidc openid connect</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.5.1" />
+    <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="7.5.1" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.1" />
+  </ItemGroup>
+</Project>

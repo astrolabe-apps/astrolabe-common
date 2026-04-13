@@ -155,49 +155,63 @@ export function segmentPath(segment: string | number, parent?: Path) {
   return { segment, parent: parent ?? EmptyPath };
 }
 
-export type EnvValue<T> = [EvalEnv, T];
-
-export interface EvalEnvState {
-  data: EvalData;
-  current: ValueExpr;
-  localVars: Record<string, ValueExpr>;
-  parent?: EvalEnvState;
-  errors: string[];
-  compare: (v1: unknown, v2: unknown) => number;
-}
-
 /**
- * Look up a variable in the scope chain.
- * Walks from current scope up through parents until found.
- * O(depth) complexity where depth is typically 2-5 scopes.
+ * Abstract base class for expression evaluation environments.
+ * Concrete implementations (BasicEvalEnv, PartialEvalEnv) handle
+ * scoping, caching, and evaluation strategy.
  */
-export function lookupVar(
-  state: EvalEnvState,
-  name: string,
-): ValueExpr | undefined {
-  if (name in state.localVars) {
-    return state.localVars[name];
-  }
-  return state.parent ? lookupVar(state.parent, name) : undefined;
-}
-
-export interface EvalData {
-  root: ValueExpr;
-  getProperty(object: ValueExpr, property: string): ValueExpr;
-}
-
 export abstract class EvalEnv {
-  abstract data: EvalData;
-  abstract current: ValueExpr;
-  abstract errors: string[];
-  abstract state: EvalEnvState;
-  abstract getVariable(name: string): ValueExpr | undefined;
   abstract compare(v1: unknown, v2: unknown): number;
-  abstract withVariables(vars: [string, EvalExpr][]): EvalEnv;
-  abstract withVariable(name: string, expr: EvalExpr): EvalEnv;
-  abstract withCurrent(path: ValueExpr): EvalEnv;
-  abstract evaluate(expr: EvalExpr): EnvValue<ValueExpr>;
-  abstract withError(error: string): EvalEnv;
+
+  /**
+   * Create a new scope with the given variable bindings.
+   * Bindings are stored unevaluated and evaluated lazily on first access.
+   *
+   * @param vars - Variable bindings (name -> unevaluated expression)
+   * @returns New environment with the variables in scope
+   */
+  abstract newScope(vars: Record<string, EvalExpr>): EvalEnv;
+
+  /**
+   * Evaluate an expression and return the result.
+   * Errors are attached to the ValueExpr via the errors field.
+   *
+   * @param expr - The expression to evaluate
+   * @returns The evaluated expression (ValueExpr for full evaluation, EvalExpr for partial)
+   */
+  abstract evaluateExpr(expr: EvalExpr): EvalExpr;
+
+  /**
+   * Get the current data context value (_).
+   * Returns EvalExpr if defined, undefined otherwise.
+   *
+   * @returns The current value as EvalExpr, or undefined if not available
+   */
+  abstract getCurrentValue(): EvalExpr | undefined;
+  /**
+   * Attach dependencies to a ValueExpr result.
+   * Dependencies are used for reactive updates and error collection.
+   *
+   * @param result - The ValueExpr to attach dependencies to
+   * @param deps - Array of dependency expressions (only ValueExpr deps are attached)
+   * @returns ValueExpr with dependencies attached
+   */
+  withDeps(result: ValueExpr, deps: EvalExpr[]): ValueExpr {
+    // Filter to only ValueExpr deps and skip if empty
+    const valueDeps = deps.filter((d): d is ValueExpr => d.type === "value");
+    if (valueDeps.length === 0) {
+      return result;
+    }
+
+    // Merge with existing deps if present
+    const existingDeps = result.deps || [];
+    const allDeps = [...existingDeps, ...valueDeps];
+
+    return {
+      ...result,
+      deps: allDeps,
+    };
+  }
 }
 
 export type EvalExpr =
@@ -213,6 +227,7 @@ export interface VarExpr {
   type: "var";
   variable: string;
   location?: SourceLocation;
+  data?: Record<string, unknown>;
 }
 
 export interface LetExpr {
@@ -220,11 +235,13 @@ export interface LetExpr {
   variables: [VarExpr, EvalExpr][];
   expr: EvalExpr;
   location?: SourceLocation;
+  data?: Record<string, unknown>;
 }
 export interface ArrayExpr {
   type: "array";
   values: EvalExpr[];
   location?: SourceLocation;
+  data?: Record<string, unknown>;
 }
 
 export interface CallExpr {
@@ -232,6 +249,7 @@ export interface CallExpr {
   function: string;
   args: EvalExpr[];
   location?: SourceLocation;
+  data?: Record<string, unknown>;
 }
 
 export interface ValueExpr {
@@ -247,6 +265,8 @@ export interface ValueExpr {
   function?: FunctionValue;
   path?: Path;
   deps?: ValueExpr[];
+  error?: string;
+  data?: Record<string, unknown>;
   location?: SourceLocation;
 }
 
@@ -254,6 +274,7 @@ export interface PropertyExpr {
   type: "property";
   property: string;
   location?: SourceLocation;
+  data?: Record<string, unknown>;
 }
 
 export interface LambdaExpr {
@@ -261,10 +282,11 @@ export interface LambdaExpr {
   variable: string;
   expr: EvalExpr;
   location?: SourceLocation;
+  data?: Record<string, unknown>;
 }
 
 export interface FunctionValue {
-  eval: (env: EvalEnv, args: CallExpr) => EnvValue<ValueExpr>;
+  eval: (env: EvalEnv, args: CallExpr) => EvalExpr;
   getType: (env: CheckEnv, args: CallExpr) => CheckValue<EvalType>;
 }
 
@@ -273,10 +295,7 @@ export function concatPath(path1: Path, path2: Path): Path {
   return { ...path2, parent: concatPath(path1, path2.parent!) };
 }
 
-export function varExpr(
-  variable: string,
-  location?: SourceLocation,
-): VarExpr {
+export function varExpr(variable: string, location?: SourceLocation): VarExpr {
   return { type: "var", variable, location };
 }
 
@@ -361,16 +380,6 @@ export function callExpr(
   return { type: "call", function: name, args, location };
 }
 
-export function functionValue(
-  evaluate: (e: EvalEnv, call: CallExpr) => EnvValue<ValueExpr>,
-  getType: (e: CheckEnv, call: CallExpr) => CheckValue<EvalType>,
-): ValueExpr {
-  return {
-    type: "value",
-    function: { eval: evaluate, getType },
-  };
-}
-
 export function constGetType(
   type: EvalType,
 ): (env: CheckEnv, call: CallExpr) => CheckValue<EvalType> {
@@ -382,58 +391,14 @@ export function flatmapExpr(left: EvalExpr, right: EvalExpr) {
   return callExpr(".", [left, right]);
 }
 
-export function mapEnv<T, T2>(
-  envVal: EnvValue<T>,
-  func: (v: T) => T2,
-  envFunc?: (e: EvalEnv) => EvalEnv,
-): EnvValue<T2> {
-  const [e, v] = envVal;
-  return [envFunc?.(e) ?? e, func(v)];
-}
-
-export function alterEnv<T>(
-  envVal: EnvValue<T>,
-  envFunc: (e: EvalEnv) => EvalEnv,
-): EnvValue<T> {
-  return [envFunc(envVal[0]), envVal[1]];
-}
-
-export function flatmapEnv<T, T2>(
-  envVal: EnvValue<T>,
-  func: (env: EvalEnv, v: T) => EnvValue<T2>,
-): EnvValue<T2> {
-  return func(envVal[0], envVal[1]);
-}
-
-export function withEnvValue<T, T2>(
-  env: EnvValue<T>,
-  func: (e: EvalEnv, t: T) => T2,
-): T2 {
-  return func(env[0], env[1]);
-}
-
-export function envEffect<T>(env: EnvValue<T>, func: (t: T) => any): EvalEnv {
-  func(env[1]);
-  return env[0];
-}
-export function mapAllEnv<T, T2>(
-  env: EvalEnv,
-  array: T[],
-  func: (env: EvalEnv, value: T, ind: number) => EnvValue<T2>,
-): EnvValue<T2[]> {
-  const accArray: T2[] = [];
-  const outEnv = array.reduce(
-    (acc, x, ind) => envEffect(func(acc, x, ind), (nx) => accArray.push(nx)),
-    env,
-  );
-  return [outEnv, accArray];
-}
-
-function compareSignificantDigits(
+export function compareSignificantDigits(
   digits: number,
 ): (v1: unknown, v2: unknown) => number {
   const multiplier = Math.pow(10, digits);
   return (v1, v2) => {
+    // Handle null comparisons explicitly to match C# behavior
+    if (v1 == null && v2 == null) return 0;
+    if (v1 == null || v2 == null) return 1;
     switch (typeof v1) {
       case "number":
         return (
@@ -472,41 +437,33 @@ export function toValue(path: Path | undefined, value: unknown): ValueExpr {
   return valueExpr(value, path);
 }
 
-export function emptyEnvState(root: unknown): EvalEnvState {
-  const data: EvalData = {
-    root: toValue(EmptyPath, root),
-    getProperty(object: ValueExpr, property: string): ValueExpr {
-      const propPath = object.path
-        ? segmentPath(property, object.path)
-        : undefined;
-      const value = object.value;
-      if (typeof value === "object" && value != null && !Array.isArray(value)) {
-        const objValue = value as Record<string, ValueExpr>;
-        const propValue = objValue[property];
-        if (propValue) {
-          // Preserve dependencies from parent object when accessing properties
-          const combinedDeps: ValueExpr[] = [
-            ...(object.deps || []),
-            ...(propValue.deps || []),
-          ];
-          return {
-            ...propValue,
-            path: propPath,
-            deps: combinedDeps.length > 0 ? combinedDeps : undefined
-          };
-        }
-      }
-      return valueExpr(null, propPath);
-    },
-  };
-  return {
-    data,
-    current: data.root,
-    localVars: {},
-    parent: undefined,
-    errors: [],
-    compare: compareSignificantDigits(5),
-  };
+/**
+ * Get property from a ValueExpr object.
+ * Handles path tracking and dependency preservation.
+ */
+export function getPropertyFromValue(
+  object: ValueExpr,
+  property: string,
+): ValueExpr {
+  const propPath = object.path ? segmentPath(property, object.path) : undefined;
+  const value = object.value;
+  if (typeof value === "object" && value != null && !Array.isArray(value)) {
+    const objValue = value as Record<string, ValueExpr>;
+    const propValue = objValue[property];
+    if (propValue) {
+      // Preserve dependencies from parent object when accessing properties
+      const combinedDeps: ValueExpr[] = [
+        ...(object.deps || []),
+        ...(propValue.deps || []),
+      ];
+      return {
+        ...propValue,
+        path: propPath,
+        deps: combinedDeps.length > 0 ? combinedDeps : undefined,
+      };
+    }
+  }
+  return valueExpr(null, propPath);
 }
 
 function toExpressions(expr: EvalExpr) {
@@ -534,4 +491,199 @@ export function toNative(value: ValueExpr): unknown {
     return result;
   }
   return value.value;
+}
+
+/**
+ * Recursively collects all errors from a ValueExpr and its dependencies.
+ * Handles circular references via visited set.
+ *
+ * @param expr - The expression to collect errors from
+ * @returns Array of all error messages found
+ */
+export function collectAllErrors(expr: EvalExpr): string[] {
+  if (expr.type !== "value") return [];
+
+  const errors: string[] = [];
+  const visited = new Set<ValueExpr>();
+
+  function walk(e: ValueExpr) {
+    if (visited.has(e)) return;
+    visited.add(e);
+
+    if (e.error) {
+      errors.push(e.error);
+    }
+
+    if (e.deps) {
+      for (const dep of e.deps) {
+        walk(dep);
+      }
+    }
+  }
+
+  walk(expr);
+  return errors;
+}
+
+/**
+ * Checks if a ValueExpr or any of its dependencies has errors.
+ *
+ * @param expr - The expression to check
+ * @returns true if any errors exist
+ */
+export function hasErrors(expr: EvalExpr): boolean {
+  if (expr.type !== "value") return false;
+
+  const visited = new Set<ValueExpr>();
+
+  function check(e: ValueExpr): boolean {
+    if (visited.has(e)) return false;
+    visited.add(e);
+
+    if (e.error) return true;
+
+    if (e.deps) {
+      for (const dep of e.deps) {
+        if (check(dep)) return true;
+      }
+    }
+
+    return false;
+  }
+
+  return check(expr);
+}
+
+/**
+ * Creates a ValueExpr with an error message attached.
+ *
+ * @param value - The value (typically null for error cases)
+ * @param error - Error message
+ * @param opts - Optional location information
+ * @returns ValueExpr with error field populated
+ */
+export function valueExprWithError(
+  value: unknown,
+  error: string,
+  opts?: {
+    location?: SourceLocation;
+  },
+): ValueExpr {
+  return {
+    type: "value",
+    value: value as any,
+    error,
+    location: opts?.location,
+  };
+}
+
+/**
+ * Creates a ValueExpr with an error, copying the location from the source expression.
+ *
+ * @param expr - The source expression (provides location)
+ * @param error - The error message
+ * @returns ValueExpr with null value, error message, and location from expr
+ */
+export function exprWithError(expr: EvalExpr, error: string): ValueExpr {
+  return {
+    type: "value",
+    value: null,
+    error,
+    location: expr.location,
+  };
+}
+
+/**
+ * Represents an error with its source location and dependent errors.
+ */
+export interface ErrorWithLocation {
+  message: string;
+  location?: SourceLocation;
+  deps: ErrorWithLocation[];
+}
+
+/**
+ * Collects all errors from a ValueExpr with their locations and dependent errors.
+ * Returns a hierarchical structure where each error contains its dependent errors.
+ *
+ * @param expr - The expression to collect errors from
+ * @returns Array of errors with location info and dependent errors
+ */
+export function collectErrorsWithLocations(expr: EvalExpr): ErrorWithLocation[] {
+  if (expr.type !== "value") return [];
+
+  const visited = new Set<ValueExpr>();
+
+  function collect(e: ValueExpr): ErrorWithLocation[] {
+    if (visited.has(e)) return [];
+    visited.add(e);
+
+    // Recursively collect errors from dependencies
+    const depErrors = e.deps?.flatMap(collect) ?? [];
+
+    if (e.error) {
+      return [
+        {
+          message: e.error,
+          location: e.location,
+          deps: depErrors,
+        },
+      ];
+    }
+
+    return depErrors;
+  }
+
+  return collect(expr);
+}
+
+/**
+ * Get a typed value from an expression's data dictionary.
+ *
+ * @param expr - The expression to get data from
+ * @param key - The key to look up
+ * @returns The value cast to type T, or undefined if not present
+ */
+export function getExprData<T>(expr: EvalExpr, key: string): T | undefined {
+  return expr.data?.[key] as T | undefined;
+}
+
+/**
+ * Check if an expression has data for a specific key.
+ *
+ * @param expr - The expression to check
+ * @param key - The key to look for
+ * @returns true if the key exists in the data dictionary
+ */
+export function hasExprData(expr: EvalExpr, key: string): boolean {
+  return expr.data !== undefined && key in expr.data;
+}
+
+/**
+ * Create a new expression with a key-value pair added to its data dictionary.
+ *
+ * @param expr - The expression to add data to
+ * @param key - The key to set
+ * @param value - The value to store
+ * @returns A new expression with the data added
+ */
+export function withExprData<E extends EvalExpr>(
+  expr: E,
+  key: string,
+  value: unknown,
+): E {
+  return { ...expr, data: { ...expr.data, [key]: value } };
+}
+
+/**
+ * Create a new expression with a key removed from its data dictionary.
+ *
+ * @param expr - The expression to remove data from
+ * @param key - The key to remove
+ * @returns A new expression with the key removed (or undefined data if empty)
+ */
+export function withoutExprData<E extends EvalExpr>(expr: E, key: string): E {
+  if (!expr.data || !(key in expr.data)) return expr;
+  const { [key]: _, ...rest } = expr.data;
+  return { ...expr, data: Object.keys(rest).length > 0 ? rest : undefined };
 }

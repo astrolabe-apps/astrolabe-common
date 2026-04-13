@@ -5,21 +5,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>1.0.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>Library for editing data from JSON PATCH requests</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageTags>email sending</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageTags>json patch</PackageTags>
     </PropertyGroup>
-
-    <ItemGroup>
-      <None Update="README.md">
-        <Pack>true</Pack>
-        <PackagePath>/</PackagePath>
-      </None>
-    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />

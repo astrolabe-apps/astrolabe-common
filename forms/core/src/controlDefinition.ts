@@ -30,9 +30,14 @@ export interface ControlDefinition {
   labelClass?: string | null;
   labelTextClass?: string | null;
   placement?: string | null;
+  /** @deprecated Use $scripts instead */
   dynamic?: DynamicProperty[] | null;
   adornments?: ControlAdornment[] | null;
   children?: ControlDefinition[] | null;
+  noSelection?: boolean | null;
+  style?: Record<string, any> | null;
+  layoutStyle?: Record<string, any> | null;
+  allowedOptions?: any;
 }
 
 export enum ControlDefinitionType {
@@ -42,11 +47,13 @@ export enum ControlDefinitionType {
   Action = "Action",
 }
 
+/** @deprecated Use $scripts instead */
 export interface DynamicProperty {
   type: string;
   expr: EntityExpression;
 }
 
+/** @deprecated Use $scripts instead */
 export enum DynamicPropertyType {
   Visible = "Visible",
   DefaultValue = "DefaultValue",
@@ -231,6 +238,7 @@ export interface DisplayOnlyRenderOptions extends RenderOptions {
   type: DataRenderType.DisplayOnly;
   emptyText?: string | null;
   sampleText?: string | null;
+  overrideText?: string | null;
 }
 export interface IconMapping {
   value: string;
@@ -398,6 +406,9 @@ export interface TabsRenderOptions extends GroupRenderOptions {
 
 export interface WizardRenderOptions extends GroupRenderOptions {
   type: GroupRenderType.Wizard;
+  showSteps?: boolean | null;
+  pageIndexField?: string | null;
+  manualNavigation?: boolean | null;
 }
 
 export interface SelectChildRenderer extends GroupRenderOptions {
@@ -542,9 +553,9 @@ export function isFlexRenderer(
 }
 
 export function isDisplayOnlyRenderer(
-  options: RenderOptions,
+  options: RenderOptions | undefined | null,
 ): options is DisplayOnlyRenderOptions {
-  return options.type === DataRenderType.DisplayOnly;
+  return options?.type === DataRenderType.DisplayOnly;
 }
 
 export function isTextfieldRenderer(

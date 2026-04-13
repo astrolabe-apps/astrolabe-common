@@ -6,7 +6,8 @@ import { fontAwesomeIcon } from "@react-typed-forms/schemas";
 export const defaultTailwindTheme = {
   label: {
     groupLabelClass: "font-bold",
-    requiredElement: ({ Span }) => React.createElement(Span, { className: "text-red-500" }, " *"),
+    requiredElement: ({ Span }) =>
+      React.createElement(Span, { className: "text-red-500" }, " *"),
   },
   array: {
     removableClass: "grid grid-cols-[1fr_auto] items-center gap-x-2",
@@ -28,8 +29,7 @@ export const defaultTailwindTheme = {
       tabListClass:
         "flex flex-wrap text-sm font-medium text-center text-gray-500 border-b border-gray-200",
       tabClass: "me-2",
-      labelClass:
-        "flex items-center justify-center p-4 border-b-2",
+      labelClass: "flex items-center justify-center p-4 border-b-2",
       inactiveClass:
         "border-transparent rounded-t-lg text-gray-600 border-gray-300",
       activeClass:
@@ -38,10 +38,10 @@ export const defaultTailwindTheme = {
     },
   },
   action: {
-    buttonClass:
-      "rounded-lg p-3 text-white disabled:opacity-75",
+    buttonClass: "rounded-lg p-3 text-white disabled:opacity-75",
     primaryClass: "bg-primary-500",
     secondaryClass: "bg-secondary-500",
+    linkTextClass: "text-primary-500 underline",
     iconBeforeClass: "px-2",
     iconAfterClass: "px-2",
     busyIcon: fontAwesomeIcon("spinner fa-spin"),
@@ -54,7 +54,7 @@ export const defaultTailwindTheme = {
     inputClass: "border rounded p-2",
     displayOnlyClass: "flex flex-row items-center gap-2",
     checkOptions: {
-      className: "flex items-center gap-4",
+      className: "flex gap-4",
       entryClass: "flex items-center gap-1",
     },
     selectOptions: { emptyText: "<select>" },
@@ -65,8 +65,7 @@ export const defaultTailwindTheme = {
         "w-full flex gap-[5px] pr-[5px] overflow-hidden rounded-lg bg-white border border-solid border-gray-200 min-h-[48px] py-1",
       listContainerClass:
         "w-full text-sm p-1.5 my-3 mx-0 min-w-[120px] rounded-xl max-h-[300px] bg-white border border-solid border-surface-200 text-surface-900",
-      listEntryClass:
-        "p-2 rounded-lg bg-primary-100 text-primary-900",
+      listEntryClass: "p-2 rounded-lg bg-primary-100 text-primary-900",
       chipContainerClass:
         "flex flex-row items-center px-3 py-1 rounded-full bg-surface-100 m-1 gap-2",
       chipCloseButtonClass:

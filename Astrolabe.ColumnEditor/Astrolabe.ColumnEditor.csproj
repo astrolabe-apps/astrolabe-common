@@ -5,14 +5,9 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <Version>1.1.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
-        <Description>Library for editing/validating/processing data via column definitions, 
+        <Description>Library for editing/validating/processing data via column definitions,
             particular useful for synchronising EF and JSON versions of your data model.</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>json EF</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,12 +16,5 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="README.md">
-        <Pack>true</Pack>
-        <PackagePath>/</PackagePath>
-      </None>
     </ItemGroup>
 </Project>

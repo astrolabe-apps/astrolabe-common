@@ -1,10 +1,20 @@
-﻿using System.Collections;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Astrolabe.Annotation;
 
 namespace Astrolabe.Evaluator;
 
 public record SourceLocation(int Start, int End, string? SourceFile = null);
+
+/// <summary>
+/// Represents an error with its source location and dependent errors.
+/// </summary>
+public record ErrorWithLocation(
+    string Message,
+    SourceLocation? Location,
+    IReadOnlyList<ErrorWithLocation> Deps
+);
 
 [JsonString]
 public enum InbuiltFunction
@@ -44,17 +54,30 @@ public static class InbuiltFunctions
             InbuiltFunction.GtEq => ">=",
             InbuiltFunction.Ne => "!=",
             InbuiltFunction.NotEmpty => "notEmpty",
-            _ => throw new ArgumentException("Not an Inbuilt:" + func)
+            _ => throw new ArgumentException("Not an Inbuilt:" + func),
         };
     }
 }
 
-public interface EvalExpr;
+public interface EvalExpr
+{
+    /// <summary>
+    /// Source location for error reporting and debugging.
+    /// </summary>
+    SourceLocation? Location { get; }
+
+    /// <summary>
+    /// Generic metadata dictionary for internal use by evaluation environments.
+    /// Used for tracking inlined variables (InlineData) and other metadata.
+    /// </summary>
+    IReadOnlyDictionary<string, object?>? Data { get; }
+}
 
 public record LetExpr(
     IEnumerable<(VarExpr, EvalExpr)> Vars,
     EvalExpr In,
-    SourceLocation? Location = null
+    SourceLocation? Location = null,
+    IReadOnlyDictionary<string, object?>? Data = null
 ) : EvalExpr
 {
     public static LetExpr AddVar(LetExpr? letExpr, VarExpr varExpr, EvalExpr expr)
@@ -66,55 +89,32 @@ public record LetExpr(
     }
 }
 
-public record PropertyExpr(string Property, SourceLocation? Location = null) : EvalExpr;
+public record PropertyExpr(
+    string Property,
+    SourceLocation? Location = null,
+    IReadOnlyDictionary<string, object?>? Data = null
+) : EvalExpr;
 
-public record LambdaExpr(string Variable, EvalExpr Value, SourceLocation? Location = null)
-    : EvalExpr;
+public record LambdaExpr(
+    string Variable,
+    EvalExpr Value,
+    SourceLocation? Location = null,
+    IReadOnlyDictionary<string, object?>? Data = null
+) : EvalExpr;
 
-public delegate EnvironmentValue<T> CallHandler<T>(EvalEnvironment environment, CallExpr callExpr);
-
-public record FunctionHandler(CallHandler<ValueExpr> Evaluate)
-{
-    public static FunctionHandler DefaultEvalArgs(
-        Func<EvalEnvironment, List<ValueExpr>, ValueExpr> eval
-    ) =>
-        new(
-            (e, call) =>
-                e.EvalSelect(call.Args, (e2, x) => e2.Evaluate(x))
-                    .Map(args => eval(e, args.ToList()))
-        );
-
-    public static FunctionHandler DefaultEval(Func<EvalEnvironment, List<object?>, object?> eval) =>
-        DefaultEvalArgs(
-            (e, args) => ValueExpr.WithDeps(eval(e, args.Select(x => x.Value).ToList()), args)
-        );
-
-    public static FunctionHandler DefaultEval(Func<IList<object?>, object?> eval) =>
-        DefaultEval((_, a) => eval(a));
-
-    public static FunctionHandler BinFunctionHandler(
-        string name,
-        Func<EvalEnvironment, EvalExpr, EvalExpr, EnvironmentValue<ValueExpr>> handle
-    )
-    {
-        return new FunctionHandler(
-            (env, call) =>
-                call.Args switch
-                {
-                    [var a1, var a2] => handle(env, a1, a2),
-                    var a
-                        => env.WithError($"{name} expects 2 arguments, received {a.Count}")
-                            .WithNull()
-                }
-        );
-    }
-}
+/// <summary>
+/// Function handler that takes an EvalEnv and CallExpr, returns EvalExpr directly.
+/// Used by the EvalEnv-based evaluation system.
+/// </summary>
+public delegate EvalExpr FunctionHandler(EvalEnv env, CallExpr call);
 
 public record ValueExpr(
     object? Value,
     DataPath? Path = null,
     IEnumerable<ValueExpr>? Deps = null,
-    SourceLocation? Location = null
+    SourceLocation? Location = null,
+    IReadOnlyDictionary<string, object?>? Data = null,
+    string? Error = null
 ) : EvalExpr
 {
     public static readonly ValueExpr Null = new((object?)null);
@@ -127,14 +127,18 @@ public record ValueExpr(
 
     public static readonly ValueExpr Undefined = new(UndefinedValue);
 
+    /// <summary>
+    /// Create a ValueExpr with an error message attached.
+    /// </summary>
+    public static ValueExpr WithError(object? value, string error)
+    {
+        return new ValueExpr(value, Error: error);
+    }
+
     public static ValueExpr WithDeps(object? value, IEnumerable<ValueExpr> others)
     {
         var othersList = others.ToList();
-        return new ValueExpr(
-            value,
-            null,
-            othersList.Count > 0 ? othersList : null
-        );
+        return new ValueExpr(value, null, othersList.Count > 0 ? othersList : null);
     }
 
     /// <summary>
@@ -148,9 +152,11 @@ public record ValueExpr(
 
         void Extract(ValueExpr ve)
         {
-            if (!seen.Add(ve)) return;  // Already seen, avoid cycles
+            if (!seen.Add(ve))
+                return; // Already seen, avoid cycles
 
-            if (ve.Path != null) paths.Add(ve.Path);
+            if (ve.Path != null)
+                paths.Add(ve.Path);
             if (ve.Deps != null)
             {
                 // Recursively extract paths from all dependency ValueExprs
@@ -165,6 +171,61 @@ public record ValueExpr(
         return paths;
     }
 
+    /// <summary>
+    /// Recursively collect all errors from a ValueExpr and its dependencies.
+    /// Handles circular references via visited set.
+    /// </summary>
+    public static IEnumerable<string> CollectAllErrors(ValueExpr expr)
+    {
+        var errors = new List<string>();
+        var seen = new HashSet<ValueExpr>();
+
+        void Collect(ValueExpr ve)
+        {
+            if (!seen.Add(ve))
+                return; // Already seen, avoid cycles
+
+            if (ve.Error != null)
+                errors.Add(ve.Error);
+            if (ve.Deps != null)
+            {
+                foreach (var dep in ve.Deps)
+                {
+                    Collect(dep);
+                }
+            }
+        }
+
+        Collect(expr);
+        return errors;
+    }
+
+    /// <summary>
+    /// Collects all errors from a ValueExpr with their locations and dependent errors.
+    /// Returns a hierarchical structure where each error contains its dependent errors.
+    /// </summary>
+    public static IEnumerable<ErrorWithLocation> CollectErrorsWithLocations(ValueExpr expr)
+    {
+        var seen = new HashSet<ValueExpr>();
+        return Collect(expr);
+
+        IReadOnlyList<ErrorWithLocation> Collect(ValueExpr ve)
+        {
+            if (!seen.Add(ve))
+                return [];
+
+            // Recursively collect errors from dependencies
+            var depErrors = ve.Deps?.SelectMany(Collect).ToList() ?? [];
+
+            if (ve.Error != null)
+            {
+                return [new ErrorWithLocation(ve.Error, ve.Location, depErrors)];
+            }
+
+            return depErrors;
+        }
+    }
+
     public static double AsDouble(object? v)
     {
         return v switch
@@ -172,7 +233,7 @@ public record ValueExpr(
             int i => i,
             long l => l,
             double d => d,
-            _ => throw new ArgumentException("Value is not a number: " + (v ?? "null"))
+            _ => throw new ArgumentException("Value is not a number: " + (v ?? "null")),
         };
     }
 
@@ -187,7 +248,7 @@ public record ValueExpr(
         {
             int i => i,
             long l => l,
-            _ => null
+            _ => null,
         };
     }
 
@@ -203,7 +264,7 @@ public record ValueExpr(
             int i => i,
             long l => (int)l,
             double d => (int)d,
-            _ => null
+            _ => null,
         };
     }
 
@@ -214,7 +275,7 @@ public record ValueExpr(
             int i => i,
             long l => l,
             double d => d,
-            _ => null
+            _ => null,
         };
     }
 
@@ -242,7 +303,7 @@ public record ValueExpr(
     {
         return new ValueExpr(v);
     }
-    
+
     public static ValueExpr From(double? v)
     {
         return new ValueExpr(v);
@@ -251,6 +312,27 @@ public record ValueExpr(
     public static ValueExpr From(decimal? v)
     {
         return new ValueExpr((double?)v);
+    }
+
+    public static ValueExpr FromNative(object? obj)
+    {
+        return obj switch
+        {
+            null => Null,
+            short s => From((int)s),
+            decimal d => From(d),
+            ValueExpr ve => ve,
+            JsonNode jn => JsonDataLookup.ToValue(DataPath.Empty, jn),
+            JsonElement je => JsonDataLookup.ToValue(DataPath.Empty, je),
+            string str => new ValueExpr(str),
+            IEnumerable<KeyValuePair<string, object?>> kvs => new ValueExpr(
+                new ObjectValue(kvs.ToDictionary(kv => kv.Key, kv => FromNative(kv.Value)))
+            ),
+            System.Collections.IEnumerable enumerable => new ValueExpr(
+                new ArrayValue(enumerable.Cast<object?>().Select(FromNative))
+            ),
+            _ => new ValueExpr(obj),
+        };
     }
 
     public object? ToNative()
@@ -263,8 +345,11 @@ public record ValueExpr(
         return v switch
         {
             ArrayValue av => av.Values.Select(x => x.ToNative()),
-            ObjectValue ov => ov.Properties.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToNative()),
-            _ => v
+            ObjectValue ov => ov.Properties.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.ToNative()
+            ),
+            _ => v,
         };
     }
 
@@ -279,13 +364,16 @@ public record ValueExpr(
             ArrayValue av => av.Values.SelectMany(child => child.AllValues(this)),
             _ => parent?.Deps is { } parentDeps && parentDeps.Any()
                 ? [this with { Deps = (Deps ?? Enumerable.Empty<ValueExpr>()).Concat([parent]) }]
-                : [this]
+                : [this],
         };
     }
-
 }
 
-public record ArrayExpr(IEnumerable<EvalExpr> Values, SourceLocation? Location = null) : EvalExpr
+public record ArrayExpr(
+    IEnumerable<EvalExpr> Values,
+    SourceLocation? Location = null,
+    IReadOnlyDictionary<string, object?>? Data = null
+) : EvalExpr
 {
     public override string ToString()
     {
@@ -293,8 +381,12 @@ public record ArrayExpr(IEnumerable<EvalExpr> Values, SourceLocation? Location =
     }
 }
 
-public record CallExpr(string Function, IList<EvalExpr> Args, SourceLocation? Location = null)
-    : EvalExpr
+public record CallExpr(
+    string Function,
+    IList<EvalExpr> Args,
+    SourceLocation? Location = null,
+    IReadOnlyDictionary<string, object?>? Data = null
+) : EvalExpr
 {
     public override string ToString()
     {
@@ -322,7 +414,11 @@ public record CallExpr(string Function, IList<EvalExpr> Args, SourceLocation? Lo
     }
 }
 
-public record VarExpr(string Name, SourceLocation? Location = null) : EvalExpr
+public record VarExpr(
+    string Name,
+    SourceLocation? Location = null,
+    IReadOnlyDictionary<string, object?>? Data = null
+) : EvalExpr
 {
     private static int _indexCount;
 
@@ -353,6 +449,14 @@ public record ObjectValue(IDictionary<string, ValueExpr> Properties);
 
 public static class ValueExtensions
 {
+    /// <summary>
+    /// Creates a ValueExpr with an error, copying the location from the source expression.
+    /// </summary>
+    public static ValueExpr WithError(this EvalExpr expr, string error)
+    {
+        return new ValueExpr(null, Location: expr.Location, Error: error);
+    }
+
     public static bool IsData(this EvalExpr expr)
     {
         return expr is ValueExpr { Value: DataPath dp };
@@ -398,7 +502,7 @@ public static class ValueExtensions
         return v.Value switch
         {
             ArrayValue av => av,
-            _ => new ArrayValue([v])
+            _ => new ArrayValue([v]),
         };
     }
 
@@ -413,7 +517,7 @@ public static class ValueExtensions
         {
             double d => (int)d,
             long l => (int)l,
-            int i => i
+            int i => i,
         };
     }
 
@@ -423,7 +527,7 @@ public static class ValueExtensions
         {
             double d => (long)d,
             long l => l,
-            int i => i
+            int i => i,
         };
     }
 
@@ -437,18 +541,62 @@ public static class ValueExtensions
         return v.Value == null;
     }
 
-    public static bool IsTrue(this ValueExpr v)
+    public static bool IsTrue(this EvalExpr v)
     {
-        return v.Value is true;
+        return v is ValueExpr { Value: true };
     }
 
-    public static bool IsFalse(this ValueExpr v)
+    public static bool IsFalse(this EvalExpr v)
     {
-        return v.Value is false;
+        return v is ValueExpr { Value: false };
     }
 
     public static string AsString(this ValueExpr v)
     {
         return (string)v.Value!;
     }
+}
+
+public static class EvalExprDataExtensions
+{
+    public static T? GetData<T>(this EvalExpr expr, string key)
+        where T : class => expr.Data?.TryGetValue(key, out var value) == true ? value as T : null;
+
+    public static bool HasData(this EvalExpr expr, string key) =>
+        expr.Data?.ContainsKey(key) == true;
+
+    public static EvalExpr WithData(this EvalExpr expr, string key, object? value)
+    {
+        var newData =
+            expr.Data != null
+                ? new Dictionary<string, object?>(expr.Data) { [key] = value }
+                : new Dictionary<string, object?> { [key] = value };
+        return SetDataDirect(expr, newData);
+    }
+
+    public static EvalExpr WithoutData(this EvalExpr expr, string key)
+    {
+        if (expr.Data == null || !expr.Data.ContainsKey(key))
+            return expr;
+        var newData = expr
+            .Data.Where(kvp => kvp.Key != key)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        return SetDataDirect(expr, newData.Count > 0 ? newData : null);
+    }
+
+    private static EvalExpr SetDataDirect(
+        EvalExpr expr,
+        IReadOnlyDictionary<string, object?>? data
+    ) =>
+        expr switch
+        {
+            ValueExpr v => v with { Data = data },
+            VarExpr vr => vr with { Data = data },
+            CallExpr c => c with { Data = data },
+            ArrayExpr a => a with { Data = data },
+            LetExpr l => l with { Data = data },
+            PropertyExpr p => p with { Data = data },
+            LambdaExpr lm => lm with { Data = data },
+            _ => expr,
+        };
 }

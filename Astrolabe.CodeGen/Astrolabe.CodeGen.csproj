@@ -5,26 +5,12 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>1.4.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>Library for using C# reflection and a (very) basic Typescript AST</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>typescript codegen</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-
 
     <ItemGroup>
         <PackageReference Include="Namotion.Reflection" Version="3.0.0" />
-    </ItemGroup>
-
-
-    <ItemGroup>
-      <None Update="README.md">
-        <Pack>true</Pack>
-        <PackagePath>/</PackagePath>
-      </None>
     </ItemGroup>
     
 </Project>

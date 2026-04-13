@@ -85,7 +85,7 @@ export function DataArrayRenderer({
       noAdd,
       noRemove,
       readonly,
-      disabled: control.disabled,
+      disabled: formNode.disabled,
       designMode,
       editExternal,
     }),

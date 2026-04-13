@@ -489,6 +489,20 @@ export function deepEquals(
       if (a.length != b.length) return false;
       return a.every((x, i) => childEquals()(x, b[i]));
     }
+    if (a instanceof Map) {
+      if (a.size !== b.size) return false;
+      for (const [key, val] of a) {
+        if (!b.has(key) || !childEquals(key)(val, b.get(key))) return false;
+      }
+      return true;
+    }
+    if (a instanceof Set) {
+      if (a.size !== b.size) return false;
+      for (const val of a) {
+        if (!b.has(val)) return false;
+      }
+      return true;
+    }
     if (a.constructor !== objConst) return false;
     keys = Object.keys(a);
     length = keys.length;

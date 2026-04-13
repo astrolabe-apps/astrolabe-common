@@ -104,4 +104,5 @@ public static class SchemaTags
     public const string ThemeList = "_ThemeList";
     public const string DefaultValue = "_DefaultValue";
     public const string HtmlEditor = "_HtmlEditor";
+    public const string ScriptNullInit = "_ScriptNullInit";
 }

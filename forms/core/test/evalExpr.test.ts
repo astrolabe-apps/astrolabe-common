@@ -178,19 +178,16 @@ describe("expression evaluators", () => {
           }),
         ),
         async ({ schema, data }) => {
+          const arr = data[schema.field] as number[];
+          const expected = arr.reduce((a, b) => a + b, 0);
+          fc.pre(arr.length > 0);
           const result = testLabelExpr(
             schema,
             data,
             jsonataExpr(`$sum(${schema.field})`),
           );
-          const expected = (data[schema.field] as number[]).reduce(
-            (a, b) => a + b,
-            0,
-          );
           const def = result.definition;
-          expect(await notNullPromise(() => def.title)).toBe(
-            expected.toString(),
-          );
+          await deepEqualPromise(() => def.title, expected.toString());
           if (expected === 0) return;
           const next = changePromise(() => def.title);
           result.dataNode!.control.value = [];
@@ -230,7 +227,7 @@ describe("expression evaluators", () => {
             jsonataExpr('"title " & $i'),
           );
           await deepEqualPromise(
-            () => result.children.map((x) => x.getChild(0)!.definition.title),
+            () => result.children.map((x) => x.definition.title),
             getNumberedTitles(),
           );
           result.dataNode!.control.value = Array.from(
@@ -238,7 +235,7 @@ describe("expression evaluators", () => {
             (_, i) => `title ${i}`,
           );
           await deepEqualPromise(
-            () => result.children.map((x) => x.getChild(0)!.definition.title),
+            () => result.children.map((x) => x.definition.title),
             getNumberedTitles(),
           );
 

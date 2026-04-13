@@ -10,12 +10,17 @@ import {
   IconReference,
   AdornmentPlacement,
   IconPlacement,
-  RenderOptions,
-  SchemaNode,
   ActionRendererProps,
   ControlDataContext,
   OptionalAdornment,
+  WizardNavActionOptions,
 } from "@react-typed-forms/schemas";
+
+export type { WizardNavActionOptions };
+import {
+  MixedStyleDeclaration,
+  MixedStyleRecord,
+} from "react-native-render-html";
 
 // ============================================================================
 // SHARED TYPES AND INTERFACES
@@ -78,6 +83,9 @@ export interface DefaultDisplayRendererOptions {
   textClassName?: string;
   textTextClass?: string;
   htmlClassName?: string;
+  baseStyle?: MixedStyleDeclaration;
+  tagsStyles?: MixedStyleRecord;
+  systemFonts?: string[];
 }
 
 export interface DefaultGridRenderOptions {
@@ -112,12 +120,8 @@ export interface DefaultWizardRenderOptions {
     contentClass?: string;
   };
   actions?: {
-    nextText?: string;
-    nextIcon?: IconReference;
-    nextValidate?: boolean;
-    prevText?: string;
-    prevIcon?: IconReference;
-    prevValidate?: boolean;
+    next?: WizardNavActionOptions;
+    prev?: WizardNavActionOptions;
   };
   renderNavigation?: (props: CustomNavigationProps) => ReactNode;
 }

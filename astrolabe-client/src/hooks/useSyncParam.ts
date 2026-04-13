@@ -2,7 +2,6 @@ import { Control, useControl, useControlEffect } from "@react-typed-forms/core";
 import { compareAsSet } from "../util/arrays";
 import { QueryControl, useNavigationService } from "../service/navigation";
 import { useRef } from "react";
-import { queryToString } from "../util/query";
 
 interface ConvertParam<A, P extends string | string[] | undefined> {
   normalise: (q: string | string[] | undefined) => P;
@@ -27,10 +26,8 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
   paramName: string,
   convert: ConvertParam<A, P>,
   use?: Control<A>,
-  debounce = 200,
 ): Control<A> {
-  const nav = useNavigationService();
-  const currentQuery = nav.query;
+  const currentQuery = useNavigationService().query;
   const { query, pathname } = queryControl.fields;
   const control = useControl(
     () => convert.fromParam(convert.normalise(currentQuery[paramName])),
@@ -41,7 +38,7 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
   useControlEffect(
     () => convert.normalise(query.value[paramName]),
     (param) => {
-      // Only update if the paths match or if updateForAnyPath is true
+      // Only update if the paths match
       if (originalPathname.current === pathname.current.value) {
         control.value = convert.fromParam(param);
       }
@@ -59,20 +56,16 @@ export function useSyncParam<A, P extends string | string[] | undefined>(
           newValue,
         )
       ) {
-        setTimeout(() => {
-          if (originalPathname.current === pathname.current.value) {
-            const nq = { ...query.current.value };
-            if (newValue !== undefined) {
-              nq[paramName] = newValue;
-            } else {
-              delete nq[paramName];
-            }
-
-            nav.replace(pathname.value + "?" + queryToString(nq), {
-              scroll: false,
-            });
+        // Only update queryControl if pathname still matches
+        if (originalPathname.current === pathname.current.value) {
+          const nq = { ...query.current.value };
+          if (newValue !== undefined) {
+            nq[paramName] = newValue;
+          } else {
+            delete nq[paramName];
           }
-        }, debounce);
+          query.value = nq;
+        }
       }
     },
   );

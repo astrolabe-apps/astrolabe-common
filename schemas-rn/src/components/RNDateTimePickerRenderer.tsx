@@ -30,6 +30,7 @@ export type RNDateTimeProps = Pick<
   "mode" | "locale" | "maximumDate" | "minimumDate" | "is24Hour"
 > & {
   control: Control<string | null>;
+  disabled?: boolean;
   readonly?: boolean;
   className?: string;
   placeholder?: string;
@@ -51,6 +52,7 @@ export function createRNDateTimePickerRenderer(
         <RNDateTimePicker
           {...p}
           control={p.control.as()}
+          disabled={p.formNode.disabled}
           mode={mode}
           className={options.inputClass}
         />
@@ -65,13 +67,13 @@ export function createRNDateTimePickerRenderer(
 
 function RNDateTimePicker({
   control,
+  disabled,
   mode,
   locale = "en-AU",
   is24Hour = true,
   className,
   ...props
 }: RNDateTimeProps) {
-  const disabled = control.disabled;
   const { maximumDate, minimumDate } = props;
   const isVisible = useControl(false);
 

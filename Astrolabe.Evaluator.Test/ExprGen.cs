@@ -7,7 +7,7 @@ public static class ExprGen
 {
     private static Gen<string> GenString => ArbMap.Default.GeneratorFor<string>();
     
-    private static readonly Gen<ValueExpr> GenValueExpr =
+    private static readonly Gen<ValueExpr> GenSimpleValue =
         Gen.OneOf(
             Gen.Constant(ValueExpr.Null),
             Gen.Constant(ValueExpr.False),
@@ -15,6 +15,25 @@ public static class ExprGen
             ArbMap.Default.GeneratorFor<string>().Select(ValueExpr.From),
             ArbMap.Default.GeneratorFor<int?>().Select(ValueExpr.From),
             ArbMap.Default.GeneratorFor<double?>().Where(x => x is not {} d || (!double.IsInfinity(d) && !double.IsNaN(d))).Select(ValueExpr.From));
+
+    private static Gen<ValueExpr> GenArrayValue(Gen<ValueExpr> elemGen) =>
+        elemGen.ListOf().Select(values => new ValueExpr(new ArrayValue(values)));
+
+    private static Gen<ValueExpr> GenObjectValue(Gen<ValueExpr> elemGen) =>
+        GenString.SelectMany(key => elemGen.Select(value => (key, value)))
+            .ListOf()
+            .Select(props => new ValueExpr(new ObjectValue(
+                props.GroupBy(p => p.key).ToDictionary(g => g.Key, g => g.First().value))));
+
+    private static Gen<ValueExpr> SafeValueExpr(int size)
+    {
+        if (size == 0)
+            return GenSimpleValue;
+        var elemGen = SafeValueExpr(size / 2);
+        return Gen.OneOf(GenSimpleValue, GenArrayValue(elemGen), GenObjectValue(elemGen));
+    }
+
+    private static readonly Gen<ValueExpr> GenValueExpr = Gen.Sized(SafeValueExpr);
 
     private static readonly Gen<EvalExpr> GenVarExpr =
         GenString.Select(EvalExpr (x) => new VarExpr(x));

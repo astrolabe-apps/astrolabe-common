@@ -1,0 +1,53 @@
+{
+  "controls": [
+    {
+      "type": "Data",
+      "title": "Name",
+      "field": "name",
+      "required": true,
+      "renderOptions": {
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Data",
+      "title": "Export Columns",
+      "field": "exportColumns",
+      "children": [
+        {
+          "type": "Data",
+          "title": "Column Name",
+          "field": "columnName",
+          "required": true,
+          "renderOptions": {
+            "type": "Standard"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Field",
+          "field": "field",
+          "required": true,
+          "renderOptions": {
+            "type": "FieldSelection"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "Expression",
+          "field": "expression",
+          "renderOptions": {
+            "type": "Textfield",
+            "multiline": true
+          }
+        }
+      ],
+      "renderOptions": {
+        "type": "Array"
+      },
+      "styleClass": ""
+    }
+  ],
+  "config": {},
+  "fields": []
+}

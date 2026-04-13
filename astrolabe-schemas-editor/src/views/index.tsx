@@ -7,7 +7,7 @@ import { FormListView } from "./FormListView";
 import { HelpView } from "./HelpView";
 import { SnippetsView } from "./SnippetsView";
 import { SchemaJsonView } from "./SchemaJsonView";
-import { ViewContext } from "../types";
+import { BasicFormEditorViewContext } from "../types";
 import { FieldPropertiesView } from "./FieldPropertiesView";
 
 export function getTabTitle(viewType: string, viewParams?: string): string {
@@ -33,7 +33,7 @@ export function getTabTitle(viewType: string, viewParams?: string): string {
 
 export function createView(
   viewId: string,
-  context: ViewContext,
+  context: BasicFormEditorViewContext,
 ): { title: string; content: ReactElement; closable: boolean } {
   const [viewType, viewParams] = getViewAndParams(viewId);
   return { title: title(), content: element(), closable: closable() };

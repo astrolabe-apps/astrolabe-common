@@ -1,9 +1,16 @@
 {
   "name": "@astroapps/aria-datepicker",
-  "version": "1.4.2",
+  "version": "1.6.0",
   "description": "",
-  "main": "lib/index.js",
+  "type": "module",
+  "main": "lib/index.cjs",
+  "module": "lib/index.js",
   "types": "lib/index.d.ts",
+  "exports": {
+    "types": "./lib/index.d.ts",
+    "require": "./lib/index.cjs",
+    "default": "./lib/index.js"
+  },
   "author": "Astrolabe Enterprises",
   "license": "ISC",
   "bugs": {
@@ -15,15 +22,18 @@
   },
   "scripts": {
     "prepack": "npm run build",
-    "build": "rimraf ./lib/ && microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle -f cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
+    "build": "rimraf ./lib/ && microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "dependencies": {
     "react-stately": "^3.40.0",
     "react-aria": "^3.42.0",
     "clsx": "^2",
-    "@internationalized/date": "^3.8.2",
-    "@astroapps/aria-base": "workspace:^1.1.0"
+    "@internationalized/date": "^3.10.0",
+    "@astroapps/aria-base": "^1.5.0",
+    "react-aria-components": "^1.8.0",
+    "tailwind-variants": "^3.2.2",
+    "tailwind-merge": "^3.4.0"
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19",

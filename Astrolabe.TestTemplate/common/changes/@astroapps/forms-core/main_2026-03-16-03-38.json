@@ -1,0 +1,11 @@
+{
+  "changes": [
+    {
+      "comment": "Support manual navigation",
+      "type": "patch",
+      "packageName": "@astroapps/forms-core"
+    }
+  ],
+  "packageName": "@astroapps/forms-core",
+  "email": "doolse@gmail.com"
+}

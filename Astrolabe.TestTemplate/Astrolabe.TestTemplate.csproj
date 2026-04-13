@@ -4,23 +4,28 @@
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.3"/>
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.9"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8"/>
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2"/>
-        <PackageReference Include="Astrolabe.JSON" Version="1.2.1" />
-        <PackageReference Include="Astrolabe.Common" Version="1.1.0" />
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
       <ProjectReference Include="..\Astrolabe.Evaluator\Astrolabe.Evaluator.csproj" />
+      <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
       <ProjectReference Include="..\Astrolabe.Schemas.PDF\Astrolabe.Schemas.PDF.csproj" />
       <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
       <ProjectReference Include="..\Astrolabe.SearchState\Astrolabe.SearchState.csproj" />
       <ProjectReference Include="..\Astrolabe.Validation\Astrolabe.Validation.csproj" />
+      <ProjectReference Include="..\Astrolabe.LocalUsers\Astrolabe.LocalUsers.csproj" />
+      <ProjectReference Include="..\Astrolabe.OIDC\Astrolabe.OIDC.csproj" />
+      <ProjectReference Include="..\Astrolabe.OIDC.EF\Astrolabe.OIDC.EF.csproj" />
       <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
       <ProjectReference Include="..\Astrolabe.Workflow\Astrolabe.Workflow.csproj" />
     </ItemGroup>

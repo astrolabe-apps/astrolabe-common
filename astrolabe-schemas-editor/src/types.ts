@@ -48,37 +48,59 @@ export interface Snippet {
 }
 
 export interface ViewContext {
-  formList: FormInfo[];
-  listHeader?: ReactNode;
-  currentForm: Control<string | undefined>;
-  getForm: (formId: string) => Control<EditableForm | undefined>;
-  getCurrentForm: () => Control<EditableForm | undefined> | undefined;
+  // Infrastructure (created by the hook)
   editorControls: FormTree;
   schemaEditorControls: FormTree;
   editorFields: SchemaNode;
   schemaEditorFields: SchemaNode;
   createEditorRenderer: (registrations: RendererRegistration[]) => FormRenderer;
-  extensions?: ControlDefinitionExtension[];
+  editorFormRenderer: FormRenderer;
   button: (onClick: () => void, action: string, actionId?: string) => ReactNode;
   checkbox: (
     control: Control<boolean | undefined | null>,
     label: string,
   ) => ReactNode;
-  previewOptions?: ControlRenderOptions;
-  setupPreview?: (previewData: Control<PreviewData>) => void;
-  validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
+  extensions?: ControlDefinitionExtension[];
+  editorPanelClass?: string;
+
+  // Core form access
+  getCurrentForm: () => Control<EditableForm | undefined> | undefined;
+  getSchemaForForm(form: Control<EditableForm>): EditorSchemaTree;
+}
+
+export interface FormListContext {
+  formList: FormInfo[];
+  listHeader?: ReactNode;
+  currentForm: Control<string | undefined>;
   openForm: (formId: string) => void;
+}
+
+export interface FormEditContext {
+  getForm: (formId: string) => Control<EditableForm | undefined>;
+  saveForm(c: Control<EditableForm>): void;
+  saveSchema?(c: Control<EditableForm>): void;
+  updateTabTitle: (tabId: string, title: string) => void;
+}
+
+export interface PreviewContext {
+  previewOptions?: ControlRenderOptions;
+  validation?: (data: Control<any>, controls: FormNode) => Promise<any>;
+  setupPreview?: (previewData: Control<PreviewData>) => void;
   extraPreviewControls?:
     | ReactNode
     | ((c: FormNode, data: Control<any>) => ReactNode);
-  updateTabTitle: (tabId: string, title: string) => void;
-  editorPanelClass?: string;
-  saveForm(c: Control<EditableForm>): void;
-  saveSchema?(c: Control<EditableForm>): void;
-  editorFormRenderer: FormRenderer;
-  snippets?: Snippet[];
-  getSchemaForForm(form: Control<EditableForm>): EditorSchemaTree;
 }
+
+export interface SnippetsContext {
+  snippets?: Snippet[];
+}
+
+export interface BasicFormEditorViewContext
+  extends ViewContext,
+    FormListContext,
+    FormEditContext,
+    PreviewContext,
+    SnippetsContext {}
 
 export interface FormInfo {
   id: string;

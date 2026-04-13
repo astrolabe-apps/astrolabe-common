@@ -5,13 +5,8 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>1.0.1</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>Library for indexing classes annotated with Azure.Search.Documents annotations into Entity Framework compatible data</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>azure search, entity framework</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
 
     <ItemGroup>
@@ -20,13 +15,6 @@
         <PackageReference Include="Astrolabe.JSON" Version="1.0.0"/>
         <PackageReference Include="Azure.Search.Documents" Version="11.5.1"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Update="README.md">
-        <Pack>true</Pack>
-        <PackagePath>/</PackagePath>
-      </None>
     </ItemGroup>
 
 </Project>

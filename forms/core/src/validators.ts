@@ -6,7 +6,11 @@ import {
   SchemaValidator,
   ValidatorType,
 } from "./schemaValidator";
-import { ControlDefinition, isDataControl } from "./controlDefinition";
+import {
+  ControlDefinition,
+  isDataControl,
+  isDisplayOnlyRenderer,
+} from "./controlDefinition";
 import { SchemaDataNode } from "./schemaDataNode";
 import {
   CleanupScope,
@@ -51,8 +55,10 @@ export const jsonataValidator: ValidatorEval<JsonataValidator> = (
       dataNode: context.parentData,
       returnResult: (v) => {
         trackControlChange(context.data.control, ControlChange.Validate);
-        // console.log("Setting jsonata error", v);
-        context.data.control.setError("jsonata", v?.toString());
+        context.data.control.setError(
+          "jsonata",
+          context.validationEnabled.value ? v?.toString() : undefined,
+        );
       },
       schemaInterface: context.schemaInterface,
       variables: context.variables,
@@ -146,7 +152,7 @@ export function createValidators(
 ): void {
   if (isDataControl(def)) {
     const { schemaInterface } = context;
-    if (def.required) {
+    if (def.required && !isDisplayOnlyRenderer(def.renderOptions)) {
       context.addSync((v) => {
         const field = context.data.schema.field;
         return schemaInterface.isEmptyValue(field, v)
@@ -167,6 +173,7 @@ export function createValidators(
 
 export function setupValidation(
   scope: CleanupScope,
+  uniqueId: string,
   variables: VariablesFunc | undefined,
   definition: ControlDefinition,
   dataNode: Control<SchemaDataNode | undefined>,
@@ -211,7 +218,7 @@ export function setupValidation(
             return error;
           },
           (e) => {
-            dn.control.setError("default", e);
+            dn.control.setError(uniqueId + "default", e);
           },
           validatorsScope,
         );

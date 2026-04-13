@@ -24,7 +24,7 @@ import {
   stringField,
 } from "@react-typed-forms/schemas";
 import { ValueForFieldRenderOptions, ValueForFieldOptions } from "../rendererOptions";
-import React, { Fragment, useMemo } from "react";
+import React, { Fragment, useEffect, useMemo, useRef } from "react";
 
 const RenderType = "ValueForField";
 
@@ -68,6 +68,7 @@ export function createValueForFieldRenderer(options: ValueForFieldOptions) {
           renderer={renderer}
           schemaField={schemaField}
           control={o.control}
+          disabled={o.formNode.disabled}
           noOptions={noOptions}
         />
       ) : (
@@ -84,16 +85,25 @@ function ValueForField({
   schemaField,
   renderer,
   control,
+  disabled,
   noOptions,
 }: {
   schemaField: SchemaField;
   renderer: FormRenderer;
   control: Control<any>;
+  disabled?: boolean;
   noOptions?: boolean;
 }) {
   const value = useControl({ default: undefined }, undefined, (e) =>
     setFields(e, { default: control }),
   );
+  const prevFieldRef = useRef(schemaField);
+  useEffect(() => {
+    if (prevFieldRef.current !== schemaField) {
+      prevFieldRef.current = schemaField;
+      control.value = undefined;
+    }
+  }, [schemaField]);
   const [controls, rootSchema] = useMemo(() => {
     const adjustedField: SchemaField = {
       ...schemaField,
@@ -104,6 +114,7 @@ function ValueForField({
       notNullable: false,
       onlyForTypes: null,
       defaultValue: undefined,
+      meta: undefined,
     };
     const control: DataControlDefinition = {
       ...defaultControlForField(adjustedField),
@@ -115,10 +126,11 @@ function ValueForField({
 
   return (
     <RenderForm
+      key={schemaField.field + ":" + schemaField.type}
       form={controls.rootNode}
       renderer={renderer}
       data={createSchemaDataNode(rootSchema, value)}
-      options={{ disabled: control.disabled }}
+      options={{ disabled }}
     />
   );
 }

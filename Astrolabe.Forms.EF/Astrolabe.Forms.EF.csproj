@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Version>0.1.0</Version>
+        <Description>Entity Framework Core implementation of Astrolabe.Forms runtime (items, workflow, files, export)</Description>
+        <PackageTags>forms, workflow, ef-core</PackageTags>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
+        <PackageReference Include="CsvHelper" Version="33.0.1" />
+        <ProjectReference Include="..\Astrolabe.EF.Search\Astrolabe.EF.Search.csproj" />
+        <ProjectReference Include="..\Astrolabe.Schemas.ExportCsv\Astrolabe.Schemas.ExportCsv.csproj" />
+        <ProjectReference Include="..\Astrolabe.FileStorage\Astrolabe.FileStorage.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Astrolabe.Forms\Astrolabe.Forms.csproj" />
+        <ProjectReference Include="..\Astrolabe.FormDesigner.EF\Astrolabe.FormDesigner.EF.csproj" />
+        <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
+    </ItemGroup>
+
+</Project>

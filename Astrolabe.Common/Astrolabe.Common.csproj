@@ -5,16 +5,8 @@
         <LangVersion>10</LangVersion>
         <Nullable>enable</Nullable>
         <Version>1.1.0</Version>
-        <Authors>doolse</Authors>
-        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
         <Description>Core common utility functions which only depend on the SDK</Description>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageTags>utility functions</PackageTags>
-        <Copyright>Copyright ©2024 Astrolabe Enterprises</Copyright>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
     </PropertyGroup>
-    
-    <ItemGroup>
-      <None Include="README.md" Pack="true" PackagePath="/"/>
-    </ItemGroup>
+
 </Project>

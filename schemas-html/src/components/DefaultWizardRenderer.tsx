@@ -1,6 +1,4 @@
 import {
-  ActionRendererProps,
-  createAction,
   createGroupRenderer,
   deepMerge,
   fontAwesomeIcon,
@@ -8,28 +6,53 @@ import {
   GroupRendererProps,
   GroupRenderType,
   IconPlacement,
-  IconReference,
   rendererClass,
+  useWizardRenderer,
+  WizardStepInfo,
 } from "@react-typed-forms/schemas";
-import { CustomNavigationProps, DefaultWizardRenderOptions } from "../rendererOptions";
-import { useComputed, useControl } from "@react-typed-forms/core";
+import {
+  CustomNavigationProps,
+  DefaultWizardRenderOptions,
+} from "../rendererOptions";
 import { Fragment, ReactNode } from "react";
-
 
 const defaultOptions = {
   classes: {
     className: undefined,
     contentClass: "min-h-96 overflow-auto",
     navContainerClass: "flex justify-between gap-4 my-2",
+    stepsContainerClass: "flex items-center gap-2 mb-4",
+    stepClass:
+      "flex items-center gap-2 px-3 py-2 rounded text-sm text-gray-500",
+    activeStepClass: "font-semibold text-blue-600 bg-blue-50",
+    completedStepClass: "text-green-600",
+    stepLabelClass: "",
+    stepNumberClass:
+      "flex items-center justify-center w-6 h-6 rounded-full border text-xs",
+    leftNavClass: "flex gap-2",
+    rightNavClass: "flex gap-2",
+    middleNavClass: "flex gap-2",
   },
   actions: {
-    nextText: "Next",
-    nextIcon: fontAwesomeIcon("chevron-right"),
-    nextValidate: true,
-    prevText: "Prev",
-    prevIcon: fontAwesomeIcon("chevron-left"),
-    prevValidate: false,
+    next: {
+      text: "Next",
+      icon: fontAwesomeIcon("chevron-right"),
+      validate: true,
+      hide: false,
+      actionData: 1,
+      iconPlacement: IconPlacement.AfterText,
+    },
+    prev: {
+      text: "Prev",
+      icon: fontAwesomeIcon("chevron-left"),
+      validate: false,
+      hide: false,
+      actionData: -1,
+    },
+    navActionId: "nav",
+    validateActionId: undefined,
   },
+  defaultShowSteps: false,
   renderNavigation: defaultNavigationRender,
 } satisfies DefaultWizardRenderOptions;
 
@@ -38,17 +61,27 @@ function defaultNavigationRender({
   prev,
   next,
   className,
+  leftNav,
+  middleNav,
+  rightNav,
+  leftNavClass,
+  rightNavClass,
+  middleNavClass,
 }: CustomNavigationProps) {
   {
-    const {
-      html: { Div },
-      renderAction,
-    } = formRenderer;
+    const { renderAction } = formRenderer;
     return (
-      <Div className={className}>
-        {renderAction(prev)}
-        {renderAction(next)}
-      </Div>
+      <div className={className}>
+        <div className={leftNavClass}>
+          {renderAction(prev)}
+          {leftNav}
+        </div>
+        <div className={middleNavClass}>{middleNav}</div>
+        <div className={rightNavClass}>
+          {rightNav}
+          {renderAction(next)}
+        </div>
+      </div>
     );
   }
 }
@@ -82,105 +115,119 @@ function WizardRenderer({
     defaultOptions,
   );
   const {
-    classes: { className, contentClass, navContainerClass },
-    actions: {
-      nextText,
-      nextIcon,
-      prevText,
-      prevIcon,
-      nextValidate,
-      prevValidate,
+    classes: {
+      className,
+      contentClass,
+      navContainerClass,
+      stepsContainerClass,
+      stepClass,
+      activeStepClass,
+      completedStepClass,
+      stepLabelClass,
+      stepNumberClass,
+      leftNavClass,
+      rightNavClass,
+      middleNavClass,
     },
+    actions,
+    defaultShowSteps,
     renderNavigation,
   } = mergedOptions;
-  const { formNode, designMode, renderChild } = props;
+
+  const { designMode, renderChild } = props;
+
+  const wizard = useWizardRenderer(props, {
+    actions,
+    defaultShowSteps,
+  });
+
   const {
-    html: { Div },
-  } = formRenderer;
-  const childrenLength = formNode.getChildCount();
-  const page = useControl(0);
-  const currentPage = page.value;
-  const isValid = useComputed(() => isPageValid());
+    currentPage,
+    pageChildren,
+    steps,
+    page,
+    totalPages,
+    next,
+    prev,
+    validatePage,
+    showSteps,
+    leftNavChildren,
+    middleNavChildren,
+    rightNavChildren,
+  } = wizard;
 
-  const next = createAction("nav", () => nav(1, nextValidate), nextText, {
-    hidden: !designMode && nextVisibleInDirection(1) == null,
-    disabled: !isValid.value,
-    icon: nextIcon,
-    iconPlacement: IconPlacement.AfterText,
-  });
+  const leftNav: ReactNode = leftNavChildren.length
+    ? leftNavChildren.map((child) => renderChild(child))
+    : undefined;
+  const middleNav: ReactNode = middleNavChildren.length
+    ? middleNavChildren.map((child) => renderChild(child))
+    : undefined;
+  const rightNav: ReactNode = rightNavChildren.length
+    ? rightNavChildren.map((child) => renderChild(child))
+    : undefined;
 
-  const prev = createAction("nav", () => nav(-1, prevValidate), prevText, {
-    disabled: !designMode && nextVisibleInDirection(-1) == null,
-    icon: prevIcon,
-  });
   const navElement = renderNavigation({
     formRenderer,
-    page: countVisibleUntil(currentPage),
-    totalPages: countVisibleUntil(childrenLength),
+    page,
+    totalPages,
     prev,
-    next: next,
+    next,
     className: navContainerClass,
     validatePage: async () => validatePage(),
+    steps,
+    leftNav,
+    middleNav,
+    rightNav,
+    leftNavClass,
+    middleNavClass,
+    rightNavClass,
   });
+
+  const customRenderSteps = options?.renderSteps;
+  const stepsElement = showSteps
+    ? customRenderSteps
+      ? customRenderSteps(steps, formRenderer)
+      : defaultStepsRender()
+    : null;
+
+  const currentChild = pageChildren[currentPage];
   const content = designMode ? (
-    <Div>{formNode.children.map((child) => renderChild(child))}</Div>
-  ) : currentPage < childrenLength ? (
-    <Div className={contentClass}>
-      {renderChild(formNode.getChild(currentPage)!)}
-    </Div>
+    <div>{pageChildren.map((child) => renderChild(child))}</div>
+  ) : currentChild ? (
+    <div className={contentClass}>{renderChild(currentChild)}</div>
   ) : (
     <Fragment />
   );
 
   return (
-    <Div className={rendererClass(props.className, className)}>
+    <div className={rendererClass(props.className, className)}>
+      {stepsElement}
       {content}
       {navElement}
-    </Div>
+    </div>
   );
 
-  function countVisibleUntil(untilPage: number) {
-    let count = 0;
-    for (let i = 0; i < untilPage && i < childrenLength; i++) {
-      if (formNode.getChild(i)!.visible) {
-        count++;
-      }
-    }
-    return count;
-  }
-
-  function nav(dir: number, validate: boolean) {
-    if (validate && !validatePage()) {
-      return;
-    }
-    const next = nextVisibleInDirection(dir);
-    if (next != null) {
-      page.value = next;
-    }
-  }
-
-  function nextVisibleInDirection(dir: number): number | null {
-    let next = currentPage + dir;
-    while (next >= 0 && next < childrenLength) {
-      if (formNode.getChild(next)!.visible) {
-        return next;
-      }
-      next += dir;
-    }
-    return null;
-  }
-
-  function validatePage() {
-    const pageNode = formNode.getChild(currentPage);
-    if (pageNode) {
-      const valid = pageNode.validate();
-      pageNode.setTouched(true);
-      return valid;
-    }
-    return false;
-  }
-
-  function isPageValid() {
-    return formNode.getChild(currentPage)!.valid;
+  function defaultStepsRender() {
+    const visibleSteps = steps.filter((s) => s.visible);
+    return (
+      <div className={stepsContainerClass}>
+        {visibleSteps.map((step, i) => (
+          <div
+            key={i}
+            className={rendererClass(
+              stepClass,
+              step.active
+                ? activeStepClass
+                : step.completed
+                  ? completedStepClass
+                  : undefined,
+            )}
+          >
+            <span className={stepNumberClass}>{step.index + 1}</span>
+            <span className={stepLabelClass}>{step.title}</span>
+          </div>
+        ))}
+      </div>
+    );
   }
 }

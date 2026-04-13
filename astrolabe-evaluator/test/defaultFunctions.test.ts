@@ -1,37 +1,17 @@
 import { describe, expect, test } from "vitest";
 import { basicEnv } from "../src/defaultFunctions";
 import { parseEval } from "../src/parseEval";
-import { toNative } from "../src/ast";
+import {
+  evalExpr,
+  evalExprNative,
+  evalToArray,
+  evalWithErrors,
+} from "./testHelpers";
 
 /**
  * Comprehensive tests for all default functions in the TypeScript evaluator.
  * Tests the actual behavior and edge cases of each of the 37 default functions.
  */
-
-function evalExpr(expr: string, data: unknown = {}): unknown {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  return result.value;
-}
-
-function evalExprNative(expr: string, data: unknown = {}): unknown {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  return toNative(result);
-}
-
-function evalToArray(expr: string, data: unknown = {}): unknown[] {
-  const env = basicEnv(data);
-  const parsed = parseEval(expr);
-  const [_, result] = env.evaluate(parsed);
-  const nativeResult = toNative(result);
-  if (!Array.isArray(nativeResult)) {
-    throw new Error("Expected array result");
-  }
-  return nativeResult as unknown[];
-}
 
 describe("Mathematical Operations", () => {
   test("Addition with integers", () => {
@@ -523,6 +503,13 @@ describe("Array Mapping Functions", () => {
     });
     expect(result).toEqual([1, 2, 3]);
   });
+
+  test("FlatMap - preserves null values", () => {
+    const result = evalToArray("items . value", {
+      items: [{ value: 1 }, { value: null }, { value: 3 }],
+    });
+    expect(result).toEqual([1, null, 3]);
+  });
 });
 
 describe("String Functions", () => {
@@ -677,9 +664,9 @@ describe("Object Functions", () => {
   test("Merge - no arguments returns error", () => {
     const env = basicEnv({});
     const parsed = parseEval("$merge()");
-    const [nextEnv, result] = env.evaluate(parsed);
+    const { result, errors } = evalWithErrors(env, parsed);
     expect(result.value).toBeNull();
-    expect(nextEnv.errors.length).toBeGreaterThan(0);
+    expect(errors.length).toBeGreaterThan(0);
   });
 
   test("Merge - skips non-object arguments", () => {
@@ -887,6 +874,71 @@ describe("Math Rounding Functions", () => {
 
   test("Ceil - null returns null", () => {
     const result = evalExpr("$ceil(missing)", {});
+    expect(result).toBeNull();
+  });
+
+  test("Round - round up with precision 2", () => {
+    const result = evalExpr("$round(num, 2, true)", { num: 3.456 });
+    expect(result).toBe(3.46);
+  });
+
+  test("Round - round down with precision 2", () => {
+    const result = evalExpr("$round(num, 2, false)", { num: 3.456 });
+    expect(result).toBe(3.45);
+  });
+
+  test("Round - round up with precision 0", () => {
+    const result = evalExpr("$round(num, 0, true)", { num: 3.2 });
+    expect(result).toBe(4);
+  });
+
+  test("Round - round down with precision 0", () => {
+    const result = evalExpr("$round(num, 0, false)", { num: 3.7 });
+    expect(result).toBe(3);
+  });
+
+  test("Round - negative number round up", () => {
+    const result = evalExpr("$round(num, 1, true)", { num: -3.45 });
+    expect(result).toBe(-3.4);
+  });
+
+  test("Round - negative number round down", () => {
+    const result = evalExpr("$round(num, 1, false)", { num: -3.45 });
+    expect(result).toBe(-3.5);
+  });
+
+  test("Round - integer unchanged", () => {
+    const result = evalExpr("$round(num, 2, true)", { num: 5 });
+    expect(result).toBe(5);
+  });
+
+  test("Round - null number returns null", () => {
+    const result = evalExpr("$round(missing, 2, true)", {});
+    expect(result).toBeNull();
+  });
+
+  test("Round - default rounds normally", () => {
+    const result = evalExpr("$round(num, 2)", { num: 3.456 });
+    expect(result).toBe(3.46);
+  });
+
+  test("Round - default rounds down at midpoint below .5", () => {
+    const result = evalExpr("$round(num, 1)", { num: 3.44 });
+    expect(result).toBe(3.4);
+  });
+
+  test("Round - default rounds up at .5", () => {
+    const result = evalExpr("$round(num, 1)", { num: 3.45 });
+    expect(result).toBe(3.5);
+  });
+
+  test("Round - negative midpoint rounds toward positive infinity", () => {
+    const result = evalExpr("$round(num, 0)", { num: -2.5 });
+    expect(result).toBe(-2);
+  });
+
+  test("Round - wrong arg count returns null", () => {
+    const result = evalExpr("$round(num)", { num: 3.5 });
     expect(result).toBeNull();
   });
 });

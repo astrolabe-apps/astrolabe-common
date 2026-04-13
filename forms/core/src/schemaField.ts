@@ -141,6 +141,7 @@ export enum SchemaTags {
   ControlGroup = "_ControlGroup:",
   ControlRef = "_ControlRef:",
   IdField = "_IdField:",
+  ScriptNullInit = "_ScriptNullInit",
 }
 
 export function getTagParam(

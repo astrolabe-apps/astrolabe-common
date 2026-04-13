@@ -51,9 +51,11 @@ import {
 } from "@react-typed-forms/core";
 import React, { Fragment, ReactNode } from "react";
 import {
+  DataGridAdornmentDefinition,
   getColumnHeaderFromOptions,
   isColumnAdornment,
 } from "./columnAdornment";
+import { DataGridGroupDefinition } from "./DataGridGroup";
 import { FilterPopover } from "./FilterPopover";
 import {
   findSortField,
@@ -85,7 +87,14 @@ interface DataGridOptions
   disableClear?: boolean;
 }
 
-interface DataGridClasses {
+export interface DataGridHeaderContentProps {
+  column: ColumnDef<FormStateNode, DataGridColumnExtension>;
+  title: ReactNode;
+  filter: ReactNode;
+  sort: ReactNode;
+}
+
+export interface DataGridClasses {
   className?: string;
   popoverClass?: string;
   titleContainerClass?: string;
@@ -95,11 +104,13 @@ interface DataGridClasses {
   headerCellClass?: string;
   cellClass?: string;
   bodyCellClass?: string;
+  rowClass?: string;
   clearFilterClass?: string;
   clearFilterText?: string;
+  renderHeaderContent?: (props: DataGridHeaderContentProps) => ReactNode;
 }
 
-interface DataGridColumnExtension {
+export interface DataGridColumnExtension {
   dataContext: ControlDataContext;
   definition: ControlDefinition;
 }
@@ -231,6 +242,11 @@ export function createDataGridRenderer(
     {
       renderType: DataGridDefinition.value,
       collection: true,
+      schemaExtension: {
+        RenderOptions: DataGridDefinition,
+        ControlAdornment: DataGridAdornmentDefinition,
+        GroupRenderOptions: DataGridGroupDefinition,
+      },
       resolveChildren: (c): ChildNodeSpec[] => {
         return [
           {
@@ -379,7 +395,7 @@ function DataGridControlRenderer({
       .filter((x) => x.visible)
       .map((cn, i) => {
         const d = cn.meta.original as ControlDefinition;
-        const colOptions = d.adornments?.find(isColumnAdornment);
+        const colOptions = cn.definition.adornments?.find(isColumnAdornment);
         const headerOptions = getColumnHeaderFromOptions(
           colOptions,
           d,
@@ -416,7 +432,7 @@ function DataGridControlRenderer({
         return {
           ...headerOptions,
           id: "c" + i,
-          title: headerOptions?.title ?? d.title ?? "Column " + i,
+          title: headerOptions?.title ?? cn.definition.title ?? "Column " + i,
           data: {
             dataContext,
             definition: d,
@@ -464,7 +480,12 @@ function DataGridControlRenderer({
           const c = rows.getChild(rowIndex)!;
           return (
             <RenderControl key={c.uniqueId}>
-              {() => render(c, rowIndex)}
+              {() => {
+                const row = render(c, rowIndex);
+                if (classes.rowClass)
+                  return <div className={classes.rowClass}>{row}</div>;
+                return row;
+              }}
             </RenderControl>
           );
         }}
@@ -519,7 +540,11 @@ function DataGridControlRenderer({
               }
               clear={
                 !renderOptions.disableClear
-                  ? () => (filters.value = {})
+                  ? () =>
+                      groupedChanges(() => {
+                        filters.value = {};
+                        offset.value = 0;
+                      })
                   : undefined
               }
               clearClass={classes.clearFilterClass ?? ""}
@@ -547,6 +572,14 @@ function DataGridControlRenderer({
           );
         }
       }
+    }
+    if (classes.renderHeaderContent) {
+      return classes.renderHeaderContent({
+        column: col,
+        title,
+        filter: filtered,
+        sort: sorted,
+      });
     }
     return (
       <div className={classes.titleContainerClass}>

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Globalization;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -93,11 +94,32 @@ public static class SearchHelper
             var member = props.GetValueOrDefault(field.ToLower());
             if (member == null)
                 return null;
-            Func<string, object>? convert = member.PropertyType.IsEnum
-                ? s => Enum.Parse(member.PropertyType, s)
-                : null;
-            return new FilterableMember(member, convert);
+            return new FilterableMember(member, ConverterFor(member.PropertyType));
         };
+    }
+
+    private static Func<string, object>? ConverterFor(Type type)
+    {
+        var target = Nullable.GetUnderlyingType(type) ?? type;
+        if (target == typeof(string))
+            return null;
+        if (target.IsEnum)
+            return s => Enum.Parse(target, s, ignoreCase: true);
+        if (target == typeof(bool))
+            return s => bool.Parse(s);
+        if (target == typeof(Guid))
+            return s => Guid.Parse(s);
+        if (target == typeof(DateTime))
+            return s => DateTime.Parse(s, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        if (target == typeof(DateTimeOffset))
+            return s => DateTimeOffset.Parse(s, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+        if (target == typeof(DateOnly))
+            return s => DateOnly.Parse(s, CultureInfo.InvariantCulture);
+        if (target == typeof(TimeOnly))
+            return s => TimeOnly.Parse(s, CultureInfo.InvariantCulture);
+        if (target.IsPrimitive || target == typeof(decimal))
+            return s => Convert.ChangeType(s, target, CultureInfo.InvariantCulture);
+        return null;
     }
 
     public static FieldGetter<T> CreatePropertyGetterLookup<T>()

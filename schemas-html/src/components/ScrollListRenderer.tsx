@@ -40,7 +40,7 @@ function ScrollListRenderer({
     formNode,
     renderChild,
     dataNode,
-    actionOnClick,
+    actionHandler,
     renderOptions,
     dataContext,
     className,
@@ -56,7 +56,7 @@ function ScrollListRenderer({
   const loadingControl = getLoadingControl(dataNode.control);
   const hasMoreControl = getHasMoreControl(dataNode.control);
   const handler = bottomActionId
-    ? actionOnClick?.(bottomActionId, undefined, dataContext)
+    ? actionHandler?.(bottomActionId, undefined, dataContext)
     : undefined;
   const { I } = renderer.html;
   const { loadingIcon, spinnerClass, iconClass } = deepMerge(

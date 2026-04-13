@@ -5,8 +5,8 @@ import {
   TextfieldRenderOptions,
 } from "@react-typed-forms/schemas";
 import { cn } from "../utils";
-import { formControlProps } from "@react-typed-forms/core";
 import * as React from "react";
+
 import { TextInput, type TextInputProps } from "react-native";
 
 export interface ExtendedTextInput {
@@ -20,8 +20,8 @@ export function createRNTextInputRenderer(
 ) {
   return createDataRenderer(
     (p) => {
-      const { renderOptions, control, readonly, ...rest } = p;
-      const { disabled } = formControlProps(control);
+      const { renderOptions, control, readonly, formNode, ...rest } = p;
+      const disabled = formNode.disabled;
       const { placeholder, multiline, keyboardType, autoComplete } =
         renderOptions as TextfieldRenderOptions & ExtendedTextInput;
 

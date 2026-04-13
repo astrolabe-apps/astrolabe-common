@@ -65,6 +65,7 @@ export function createFieldSelectionRenderer({
           control={props.control as Control<string | undefined>}
           edit={edit}
           formRenderer={formRenderer}
+          clearable={!props.required}
         />
       );
     },
@@ -79,11 +80,13 @@ export function FieldSelection({
   control,
   edit,
   formRenderer,
+  clearable,
 }: {
   parentNode: SchemaNode;
   control: Control<string | undefined>;
   edit?: (n: SchemaNode) => ReactNode;
   formRenderer: FormRenderer;
+  clearable?: boolean;
 }) {
   const parentDataNode = {
     node: parentNode,
@@ -112,7 +115,7 @@ export function FieldSelection({
     <>
       <div
         className={
-          "w-full border-primary-500 border rounded p-2 hover:cursor-pointer min-h-[42px]"
+          "w-full border-primary-500 border rounded p-2 hover:cursor-pointer min-h-[42px] flex items-center"
         }
         onClick={() => (open.value = true)}
         ref={triggerRef}
@@ -122,11 +125,22 @@ export function FieldSelection({
           notDefined={<span className={"text-gray-500"}>Please select</span>}
         >
           {(c) => (
-            <span>
+            <span className="flex-1">
               {selNode.node.field.displayName} ({c.value})
             </span>
           )}
         </RenderOptional>
+        {clearable && control.value != null && (
+          <button
+            className="ml-2 text-gray-400 hover:text-gray-600"
+            onClick={(e) => {
+              e.stopPropagation();
+              control.value = undefined;
+            }}
+          >
+            <i className="fa-solid fa-xmark" />
+          </button>
+        )}
       </div>
       {open.value && (
         <Popover

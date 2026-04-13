@@ -40,9 +40,13 @@ public static class NormalString
             string s => $"\"{Escape(s, Quote)}\"",
             bool b => b ? "t" : "f",
             int i => i.ToString(),
+            long l => l.ToString(),
             double d => "d"+d.ToString(CultureInfo.InvariantCulture),
             decimal d => "d"+((double)d).ToString(CultureInfo.InvariantCulture),
             short s => s.ToString(),
+            ArrayValue av => "[" + string.Concat(av.Values.SelectMany(x => new[] { ",", x.ToNormalString() })) + "]",
+            ObjectValue ov => "(object" + string.Concat(ov.Properties.SelectMany(kv =>
+                new[] { ",", new ValueExpr(kv.Key).ToNormalString(), ",", kv.Value.ToNormalString() })) + ")",
             _ => throw new ArgumentOutOfRangeException(nameof(evalExpr)),
         };
     }
@@ -105,7 +109,7 @@ public static class NormalString
         if (numberEnd == -1)
             numberEnd = source.Length;
         var numSpan = source[..numberEnd];
-        object result = !fp ? int.Parse(numSpan) : double.Parse(numSpan);
+        object result = !fp ? long.Parse(numSpan) : double.Parse(numSpan);
         return new ParseResult<EvalExpr>(source[numberEnd..], new ValueExpr(result));
     }
 

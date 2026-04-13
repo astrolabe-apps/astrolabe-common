@@ -57,7 +57,7 @@ export function DefaultDialogRenderer({
   const open = useControl(false);
   const overlayState = createOverlayState(open);
 
-  const actionOnClick: ControlActionHandler = (action) => {
+  const actionHandler: ControlActionHandler = (action) => {
     switch (action) {
       case "closeDialog":
         return () => overlayState.close();
@@ -80,13 +80,13 @@ export function DefaultDialogRenderer({
         .filter(
           (x) => !x.definition.placement || x.definition.placement === "dialog",
         )
-        .map((x, i) => props.renderChild(x, { actionOnClick }))}
+        .map((x, i) => props.renderChild(x, { actionHandler }))}
     </Dialog>
   );
 
   return (
     <>
-      {triggerChildren.map((x, i) => props.renderChild(x, { actionOnClick }))}
+      {triggerChildren.map((x, i) => props.renderChild(x, { actionHandler }))}
       {props.designMode
         ? designContent()
         : open.value && (

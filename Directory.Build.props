@@ -1,0 +1,16 @@
+<Project>
+    <PropertyGroup>
+        <Authors>doolse</Authors>
+        <RepositoryUrl>https://github.com/astrolabe-apps/astrolabe-common</RepositoryUrl>
+        <Copyright>Copyright ©2025 Astrolabe Enterprises</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="Exists('README.md')">
+        <PackageReadmeFile>README.md</PackageReadmeFile>
+    </PropertyGroup>
+
+    <ItemGroup Condition="Exists('README.md')">
+        <None Include="README.md" Pack="true" PackagePath="/" />
+    </ItemGroup>
+</Project>

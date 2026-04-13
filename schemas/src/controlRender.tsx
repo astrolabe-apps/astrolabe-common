@@ -43,6 +43,7 @@ import {
   SchemaDataNode,
   SchemaField,
   SchemaInterface,
+  SchemaNode,
   ValidatorType,
 } from "@astroapps/forms-core";
 import {
@@ -131,6 +132,7 @@ export interface CheckRendererOptions {
   entryClass?: string;
   checkClass?: string;
   labelClass?: string;
+  labelTextClass?: string;
   entryWrapperClass?: string;
   selectedClass?: string;
   notSelectedClass?: string;
@@ -141,6 +143,7 @@ export interface CheckButtonsProps {
   className?: string;
   options?: FieldOption[] | null;
   control: Control<any>;
+  disabled?: boolean;
   classes: CheckRendererOptions;
   controlClasses?: CheckEntryClasses;
   readonly?: boolean;
@@ -246,7 +249,12 @@ export interface FormRenderer {
    */
   renderLabelText: (props: ReactNode) => ReactNode;
 
+  /**
+   *  @deprecated: Just use normal html / react-native tags
+   */
   html: HtmlComponents;
+
+  controlDefinitionSchema?: SchemaNode;
 
   resolveChildren(c: FormStateNode): ChildNodeSpec[];
 }
@@ -304,6 +312,7 @@ export interface RenderedLayout {
   style?: React.CSSProperties;
   wrapLayout: (layout: ReactElement) => ReactElement;
   inline?: boolean;
+  inlineLabel?: boolean;
 }
 
 export interface RenderedControl {
@@ -348,6 +357,11 @@ export enum LabelType {
    * Label for text.
    */
   Text,
+
+  /**
+   * Label rendered inline after the control (e.g. checkboxes).
+   */
+  Inline,
 }
 
 /**
@@ -401,11 +415,6 @@ export interface DisplayRendererProps {
   data: DisplayData;
 
   /**
-   * A control with dynamic value for display.
-   */
-  display?: Control<string | undefined>;
-
-  /**
    * The context for the control data.
    */
   dataContext: ControlDataContext;
@@ -422,6 +431,7 @@ export interface DisplayRendererProps {
    */
   style?: React.CSSProperties;
   inline?: boolean;
+  noSelection?: boolean | null;
 }
 
 export interface ParentRendererProps {
@@ -433,7 +443,7 @@ export interface ParentRendererProps {
   dataContext: ControlDataContext;
   runExpression: RunExpression;
   designMode?: boolean;
-  actionOnClick?: ControlActionHandler;
+  actionHandler?: ControlActionHandler;
 }
 
 export interface GroupRendererProps extends ParentRendererProps {
@@ -470,7 +480,9 @@ export type CreateDataProps = (
 
 export interface ControlRenderOptions extends ControlClasses {
   useDataHook?: (c: ControlDefinition) => CreateDataProps;
+  /** @deprecated Use actionHandler instead */
   actionOnClick?: ControlActionHandler;
+  actionHandler?: ControlActionHandler;
   customDisplay?: (
     customId: string,
     displayProps: DisplayRendererProps,
@@ -488,6 +500,7 @@ export interface ControlRenderOptions extends ControlClasses {
   stateKey?: string;
   schemaInterface?: SchemaInterface;
   variables?: (changes: ChangeListenerFunc<any>) => Record<string, any>;
+  controlDefinitionSchema?: SchemaNode;
 }
 
 export function defaultDataProps(
@@ -539,7 +552,7 @@ export interface ChildRendererOptions {
   layoutClass?: string;
   labelClass?: string;
   labelTextClass?: string;
-  actionOnClick?: ControlActionHandler;
+  actionHandler?: ControlActionHandler;
 }
 
 export type ChildRenderer = (
@@ -557,7 +570,7 @@ export interface RenderLayoutProps {
   style?: React.CSSProperties;
   runExpression: RunExpression;
 
-  actionOnClick?: ControlActionHandler;
+  actionHandler?: ControlActionHandler;
   schemaInterface?: SchemaInterface;
   designMode?: boolean;
   customDisplay?: (
@@ -589,7 +602,7 @@ export function renderControlLayout(
     styleClass,
     textClass,
     formNode,
-    actionOnClick,
+    actionHandler,
     inline,
     displayOnly,
   } = props;
@@ -620,7 +633,7 @@ export function renderControlLayout(
         textClass: rendererClass(textClass, c.textClass),
         style,
         designMode,
-        actionOnClick,
+        actionHandler,
       }),
       label: {
         label: c.title,
@@ -636,7 +649,7 @@ export function renderControlLayout(
     const actionStyle = c.actionStyle ?? ActionStyle.Button;
     const actionContent =
       actionStyle == ActionStyle.Group ? renderActionGroup() : undefined;
-    const handler = props.actionOnClick?.(c.actionId, actionData, dataContext);
+    const handler = props.actionHandler?.(c.actionId, actionData, dataContext);
     return {
       inline,
       children: renderer.renderAction({
@@ -662,7 +675,7 @@ export function renderControlLayout(
                   actionId: string,
                   actionData?: any,
                 ): void | Promise<any> {
-                  const h = props.actionOnClick?.(
+                  const h = props.actionHandler?.(
                     actionId,
                     actionData,
                     dataContext,
@@ -696,13 +709,14 @@ export function renderControlLayout(
   }
   if (isDisplayControl(c)) {
     const data = c.displayData ?? {};
-    const displayProps = {
+    const displayProps: DisplayRendererProps = {
       data,
       className: rendererClass(styleClass, c.styleClass),
       textClass: rendererClass(textClass, c.textClass),
       style,
       dataContext,
       inline,
+      noSelection: c.noSelection,
     };
     if (data.type === DisplayDataType.Custom && customDisplay) {
       return {
@@ -751,6 +765,7 @@ type MarkupKeys = keyof Omit<
   | "readonly"
   | "disabled"
   | "inline"
+  | "inlineLabel"
   | "errorId"
 >;
 export function appendMarkup(
@@ -839,6 +854,9 @@ export function renderLayoutParts(
     label && !label.hide
       ? renderer.renderLabel(label, layout.labelStart, layout.labelEnd)
       : undefined;
+  if (label?.type === LabelType.Inline) {
+    layout.inlineLabel = true;
+  }
   return layout;
 }
 

@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <Version>0.1.0</Version>
+        <Description>Form, table, and export definition CRUD abstractions with search and minimal API endpoints</Description>
+        <PackageTags>forms, definitions, schema</PackageTags>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Astrolabe.SearchState\Astrolabe.SearchState.csproj" />
+        <ProjectReference Include="..\Astrolabe.Common\Astrolabe.Common.csproj" />
+        <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+    </ItemGroup>
+
+</Project>

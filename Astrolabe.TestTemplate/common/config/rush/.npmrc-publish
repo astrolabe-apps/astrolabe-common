@@ -20,3 +20,7 @@
 #
 
 //registry.npmjs.org/:_authToken=${NPM_AUTH_TOKEN}
+//astro-registry.ngrok.app/:_authToken=${VERDACCIO_TOKEN}
+registry=https://registry.npmjs.org/
+@react-typed-forms:registry=https://astro-registry.ngrok.app
+@astroapps:registry=https://astro-registry.ngrok.app

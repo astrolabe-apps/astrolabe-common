@@ -105,15 +105,15 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
         return token;
     }
 
-    public async Task<string> MfaVerifyAccount(MfaAuthenticateRequest mfaAuthenticateRequest)
+    public async Task<string> VerifyAccountWithMfa(MfaAuthenticateRequest mfaAuthenticateRequest)
     {
-        var token = await MfaVerifyAccountForUserId(mfaAuthenticateRequest);
+        var token = await VerifyAccountWithMfaForUserId(mfaAuthenticateRequest);
         if (token == null)
             throw new UnauthorizedException();
         return token;
     }
 
-    protected abstract Task<string?> MfaVerifyAccountForUserId(
+    protected abstract Task<string?> VerifyAccountWithMfaForUserId(
         MfaAuthenticateRequest mfaAuthenticateRequest
     );
 
@@ -128,7 +128,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
         await SetResetCodeAndEmail(email, resetCode);
     }
 
-    public async Task SendMfaCode(MfaCodeRequest mfaCodeRequest)
+    public async Task SendAuthenticationMfaCode(MfaCodeRequest mfaCodeRequest)
     {
         var validator = new MfaCodeValidator();
         await ApplyMfaCodeRules(mfaCodeRequest, validator);
@@ -142,7 +142,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
 
     protected abstract Task<bool> SendCode(TUserId userId, string? number = null);
 
-    public async Task<string> MfaAuthenticate(MfaAuthenticateRequest mfaAuthenticateRequest)
+    public async Task<string> CompleteAuthentication(MfaAuthenticateRequest mfaAuthenticateRequest)
     {
         var token = await VerifyMfaCode(
             mfaAuthenticateRequest.Token,
@@ -196,7 +196,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
         string oldHashedPassword
     );
 
-    public async Task ChangeMfaNumber(ChangeMfaNumber change, Func<TUserId> userId)
+    public async Task InitiateMfaNumberChange(ChangeMfaNumber change, Func<TUserId> userId)
     {
         var hashedPassword = _passwordHasher.Hash(change.Password);
         var validator = new ChangeMfaNumberValidator();
@@ -212,13 +212,13 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
         string newNumber
     );
 
-    public async Task MfaChangeMfaNumber(MfaChangeNumber change, Func<TUserId> userId)
+    public async Task CompleteMfaNumberChange(MfaChangeNumber change, Func<TUserId> userId)
     {
         if (!await VerifyMfaCode(userId(), change.Code, change.Number))
             throw new UnauthorizedException();
     }
 
-    public async Task SendMfaCode(string number, Func<TUserId> userId)
+    public async Task SendMfaCodeToNumber(string number, Func<TUserId> userId)
     {
         await SendCode(userId(), number);
     }

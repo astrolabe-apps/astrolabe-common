@@ -1,28 +1,49 @@
 {
   "controls": [
     {
-      "type": "Data",
+      "type": "Group",
       "title": "New",
       "children": [
         {
-          "type": "Group",
+          "type": "Data",
+          "title": "Date",
+          "field": "date",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "disabled": true
+        },
+        {
+          "type": "Data",
           "title": "New",
-          "dynamic": [
-            {
-              "type": "Label",
-              "expr": {
-                "type": "Jsonata",
-                "expression": "\u0022Index \u0022 \u0026 $i"
-              }
-            }
-          ]
+          "field": "date",
+          "renderOptions": {
+            "type": "DisplayOnly"
+          }
+        },
+        {
+          "type": "Data",
+          "title": "New",
+          "renderOptions": {
+            "type": "Standard"
+          },
+          "field": "metaField",
+          "disabled": true
+        },
+        {
+          "type": "Data",
+          "title": "New",
+          "field": "metaField",
+          "renderOptions": {
+            "type": "DisplayOnly"
+          }
         }
       ],
-      "field": "stuff",
-      "renderOptions": {
-        "type": "Standard"
+      "groupOptions": {
+        "type": "Wizard"
       }
     }
   ],
-  "config": null
+  "config": null,
+  "fields": []
 }

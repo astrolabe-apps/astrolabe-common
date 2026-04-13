@@ -1,7 +1,6 @@
 import React from "react";
 import clsx from "clsx";
 import {
-  coerceToString,
   CustomDisplay,
   DisplayDataType,
   DisplayRendererProps,
@@ -14,6 +13,8 @@ import {
   TextDisplay,
 } from "@react-typed-forms/schemas";
 import { DefaultDisplayRendererOptions } from "../rendererOptions";
+import { RNHtmlRenderer } from "./RNHtmlRenderer";
+import { RNDiv } from "../StdComponents";
 
 export function createDefaultDisplayRenderer(
   options: DefaultDisplayRendererOptions = {},
@@ -39,8 +40,8 @@ export function DefaultDisplay({
   options: DefaultDisplayRendererOptions;
   renderer: FormRenderer;
 }) {
-  const { data, display, className, textClass, style } = displayProps;
-  const { I, Div, B, H1, Span } = renderer.html;
+  const { data, className, textClass, style } = displayProps;
+  const { I, Div, B, H1 } = renderer.html;
   switch (data.type) {
     case DisplayDataType.Icon:
       const iconDisplay = data as IconDisplay;
@@ -49,34 +50,32 @@ export function DefaultDisplay({
           style={style}
           className={clsx(
             getOverrideClass(className),
-            display ? display.value : iconDisplay.iconClass,
+            iconDisplay.iconClass,
           )}
-          iconName={display ? display.value : iconDisplay.icon?.name}
+          iconName={iconDisplay.icon?.name}
           iconLibrary={iconDisplay.icon?.library}
         />
       );
     case DisplayDataType.Text:
-      const text = display
-        ? coerceToString(display.value)
-        : (data as TextDisplay).text;
       return (
-        <Div
+        <RNDiv
           style={style}
           className={rendererClass(className, options.textClassName)}
           textClass={rendererClass(textClass, options.textTextClass)}
-          text={text}
+          text={(data as TextDisplay).text}
           inline={displayProps.inline}
+          selectable={!displayProps.noSelection}
         />
       );
     case DisplayDataType.Html:
+      const { htmlClassName, ...props } = options;
       return (
-        <Div
+        <RNHtmlRenderer
           style={style}
-          className={rendererClass(className, options.htmlClassName)}
-          inline={displayProps.inline}
-          html={
-            display ? coerceToString(display.value) : (data as HtmlDisplay).html
-          }
+          className={rendererClass(className, htmlClassName)}
+          noSelection={displayProps.noSelection}
+          html={(data as HtmlDisplay).html}
+          {...props}
         />
       );
     case DisplayDataType.Custom:

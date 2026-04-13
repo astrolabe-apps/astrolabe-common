@@ -6,7 +6,12 @@ import useResizeObserver from "use-resize-observer";
 import { NodeRendererProps, Tree } from "react-arborist";
 import { StdTreeNode } from "../StdTreeNode";
 import clsx from "clsx";
-import { SelectedControlNode, Snippet, ViewContext } from "../types";
+import {
+  SelectedControlNode,
+  Snippet,
+  SnippetsContext,
+  ViewContext,
+} from "../types";
 import { EditorFormTree } from "../EditorFormTree";
 
 interface SnippetTreeNode {
@@ -24,7 +29,11 @@ interface SnippetsTreeProps {
   tree: EditorFormTree;
 }
 
-export function SnippetsView({ context }: { context: ViewContext }) {
+export function SnippetsView({
+  context,
+}: {
+  context: ViewContext & SnippetsContext;
+}) {
   const cf = controlNotNull(context.getCurrentForm());
   if (!cf) return <InactiveView>No form selected</InactiveView>;
 

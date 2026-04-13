@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-editor",
-  "version": "18.0.0",
+  "version": "18.2.0",
   "type": "module",
   "main": "lib/index.cjs",
   "module": "lib/index.js",
@@ -23,12 +23,11 @@
     "prepack": "npm run build",
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsx React --jsxImportSource react",
     "watch": "microbundle -f modern,cjs --no-compress --jsx React --jsxImportSource react",
-    "genschemas": "h get http://localhost:5000/api/CodeGen/Schemas > src/schemaSchemas.ts && prettier -w src/schemaSchemas.ts",
     "test": "vitest run"
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^17.0.0",
+    "@react-typed-forms/schemas": "^17.1.0",
     "@react-typed-forms/schemas-html": "^5.0.0",
     "@astroapps/client": "^2.0.0",
     "react": "^18.2.0 || ^19",
@@ -66,7 +65,6 @@
     "rimraf": "^5.0.5",
     "typescript": "^5.6.2",
     "prettier": "^3.0.3",
-    "http-request-cli": "^0.2.0",
     "microbundle": "^0.15.1",
     "@testing-library/react": "^16.0.0",
     "vitest": "^2.0.0",

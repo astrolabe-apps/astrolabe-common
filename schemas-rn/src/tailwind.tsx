@@ -8,7 +8,7 @@ export const defaultRnTailwindTheme = deepMerge<DefaultRendererOptions>(
     data: {
       checkOptions: {
         entryClass: "flex flex-row items-center gap-[8px]",
-        labelClass: "flex-1",
+        labelClass: "body shrink",
       },
       selectOptions: { emptyText: "select" },
     },

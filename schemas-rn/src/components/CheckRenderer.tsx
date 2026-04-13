@@ -23,6 +23,7 @@ export function createRadioRenderer(options: CheckRendererOptions = {}) {
         controlClasses={p.renderOptions as CheckEntryClasses}
         {...p}
         className={rendererClass(p.className, options.className)}
+        disabled={p.formNode.disabled}
         isChecked={(control, o) => control.value == o.value}
         setChecked={(c, o) => {
           c.setTouched(true);
@@ -48,6 +49,7 @@ export function createCheckListRenderer(options: CheckRendererOptions = {}) {
         controlClasses={p.renderOptions as CheckEntryClasses}
         {...p}
         className={rendererClass(p.className, options.className)}
+        disabled={p.formNode.disabled}
         isChecked={(control, o) => {
           const v = control.value;
           return Array.isArray(v) ? v.includes(o.value) : false;
@@ -125,6 +127,8 @@ function CheckBoxSelected({
         style={props.style}
         className={options.checkClass}
         renderer={renderer}
+        readOnly={props.readonly}
+        disabled={props.formNode.disabled}
       />
       {p.label?.label && renderer.renderLabel(p.label, undefined, undefined)}
     </Div>
@@ -151,6 +155,8 @@ function CheckBox({
         style={props.style}
         className={options.checkClass}
         renderer={renderer}
+        readOnly={props.readonly}
+        disabled={props.formNode.disabled}
       />
       {p.label && renderer.renderLabel(p.label, undefined, undefined)}
     </Div>
@@ -162,24 +168,32 @@ export function Fcheckbox({
   type = "checkbox",
   notValue = false,
   renderer,
+  readOnly,
+  disabled,
   ...others
 }: HtmlInputProperties & {
   control: Control<boolean | null | undefined>;
   renderer: FormRenderer;
   notValue?: boolean;
+  disabled?: boolean;
 }) {
   const { Input } = renderer.html;
-  const { value, onChange, errorText, ref, ...theseProps } =
+  const { value, onChange, errorText, ref, disabled: _, ...theseProps } =
     formControlProps(control);
   return (
     <Input
       {...theseProps}
+      disabled={disabled}
       checked={!!value !== notValue}
       inputRef={(r) => (control.element = r)}
-      onChangeChecked={(e) => {
-        control.touched = true;
-        control.value = e !== notValue;
-      }}
+      onChangeChecked={
+        readOnly
+          ? () => {}
+          : (e) => {
+              control.touched = true;
+              control.value = e !== notValue;
+            }
+      }
       type={type}
       {...others}
     />

@@ -33,6 +33,7 @@ public abstract record ControlDefinition(
     public bool? Disabled { get; set; }
 
     [DefaultValue(false)]
+    [SchemaTag(SchemaTags.ScriptNullInit)]
     public bool? Hidden { get; set; }
 
     [DefaultValue(false)]
@@ -56,6 +57,18 @@ public abstract record ControlDefinition(
 
     [SchemaTag(SchemaTags.NoControl)]
     public IEnumerable<ControlDefinition>? Children { get; set; }
+
+    [DefaultValue(false)]
+    public bool? NoSelection { get; set; }
+
+    [SchemaTag(SchemaTags.NoControl)]
+    public IDictionary<string, object?>? Style { get; set; }
+
+    [SchemaTag(SchemaTags.NoControl)]
+    public IDictionary<string, object?>? LayoutStyle { get; set; }
+
+    [SchemaTag(SchemaTags.NoControl)]
+    public object? AllowedOptions { get; set; }
 
     [JsonExtensionData]
     public IDictionary<string, object?>? Extensions { get; set; }
@@ -96,7 +109,7 @@ public record DisplayControlDefinition(DisplayData DisplayData)
 
 public record ActionControlDefinition(
     string ActionId,
-    string? ActionData,
+    object? ActionData,
     IconReference? Icon,
     ActionStyle? ActionStyle,
     IconPlacement? IconPlacement,
@@ -267,8 +280,11 @@ public record DataGroupRenderOptions(
     [property: SchemaTag(SchemaTags.NoControl)] GroupRenderOptions GroupOptions
 ) : RenderOptions(DataRenderType.Group.ToString());
 
-public record DisplayOnlyRenderOptions(string? EmptyText, string? SampleText)
-    : RenderOptions(DataRenderType.DisplayOnly.ToString());
+public record DisplayOnlyRenderOptions(
+    string? EmptyText,
+    [property: Obsolete("Use OverrideText instead"), SchemaTag(SchemaTags.NoControl)] string? SampleText,
+    string? OverrideText
+) : RenderOptions(DataRenderType.DisplayOnly.ToString());
 
 public record UserSelectionRenderOptions(bool NoGroups, bool NoUsers)
     : RenderOptions(DataRenderType.UserSelection.ToString());
@@ -301,7 +317,8 @@ public record HtmlEditorRenderOptions(bool AllowImages)
 public record IconMapping(string Value, string? MaterialIcon);
 
 public record ElementSelectedRenderOptions(
-    [property: SchemaTag(SchemaTags.ControlRef + "Expression")] EntityExpression ElementExpression
+    [property: SchemaTag(SchemaTags.ControlRef + "/ExpressionForm")]
+        EntityExpression ElementExpression
 ) : RenderOptions(nameof(DataRenderType.ElementSelected));
 
 public record ScrollListRenderOptions(string? BottomActionId, string? RefreshActionId)
@@ -384,7 +401,7 @@ public enum GroupRenderType
 [JsonSubType("Tabs", typeof(TabsRenderOptions))]
 [JsonSubType("SelectChild", typeof(SelectChildRenderer))]
 [JsonSubType("Inline", typeof(SimpleGroupRenderOptions))]
-[JsonSubType("Wizard", typeof(SimpleGroupRenderOptions))]
+[JsonSubType("Wizard", typeof(WizardRenderOptions))]
 [JsonSubType("Contents", typeof(SimpleGroupRenderOptions))]
 [JsonSubType("Dialog", typeof(DialogRenderOptions))]
 [JsonSubType("Accordion", typeof(AccordionRenderer))]
@@ -426,12 +443,18 @@ public record GroupElementRenderer([property: SchemaTag(SchemaTags.DefaultValue)
     : GroupRenderOptions(nameof(GroupRenderType.GroupElement));
 
 public record SelectChildRenderer(
-    [property: SchemaTag(SchemaTags.ControlRef + "Expression")]
+    [property: SchemaTag(SchemaTags.ControlRef + "/ExpressionForm")]
         EntityExpression ChildIndexExpression
 ) : GroupRenderOptions(nameof(GroupRenderType.SelectChild));
 
 public record AccordionRenderer(bool? DefaultExpanded, string? ExpandStateField)
     : GroupRenderOptions(nameof(GroupRenderType.Accordion));
+
+public record WizardRenderOptions(
+    bool? ShowSteps,
+    [property: SchemaTag(SchemaTags.SchemaField)] string? PageIndexField,
+    bool? ManualNavigation
+) : GroupRenderOptions(nameof(GroupRenderType.Wizard));
 
 [JsonString]
 public enum AdornmentPlacement
