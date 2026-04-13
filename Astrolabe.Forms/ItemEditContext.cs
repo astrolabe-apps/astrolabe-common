@@ -21,14 +21,14 @@ public record ItemEditContext<TItem, TFormData, TPerson, TFormDef, TTableDef,
 ) : IItemWorkflowContext, IFormEditContextInfo,
     IWorkflowActionList<ItemEditContext<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote>, ItemAction>,
     IFormRuleContext
-    where TItem : class, IItem<TPerson, TFormData, TItemTag, TItemNote>, new()
-    where TFormData : class, IFormData<TPerson, TFormDef>, new()
+    where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
+    where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
     where TPerson : class, IPerson, new()
-    where TFormDef : class, IFormDefinition<TTableDef>
+    where TFormDef : class, IFormDefinitionEntity<TTableDef>
     where TTableDef : class, ITableDefinition
-    where TAuditEvent : class, IAuditEvent<TPerson>, new()
+    where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
     where TItemTag : class, IItemTag, new()
-    where TItemNote : class, IItemNote<TPerson>, new()
+    where TItemNote : class, IItemNoteEntity<TPerson>, new()
 {
     // IItemWorkflowContext
     public string Status => Item.Status;

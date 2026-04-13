@@ -1,10 +1,6 @@
 namespace Astrolabe.Forms;
 
-public interface IItem<TPerson, TFormData, TItemTag, TItemNote>
-    where TPerson : class, IPerson
-    where TFormData : class
-    where TItemTag : class, IItemTag
-    where TItemNote : class
+public interface IItem
 {
     Guid Id { get; set; }
     Guid FormDataId { get; set; }
@@ -13,7 +9,14 @@ public interface IItem<TPerson, TFormData, TItemTag, TItemNote>
     string Status { get; set; }
     DateTime CreatedAt { get; set; }
     DateTime? SubmittedAt { get; set; }
+}
 
+public interface IItemEntity<TPerson, TFormData, TItemTag, TItemNote> : IItem
+    where TPerson : class, IPerson
+    where TFormData : class
+    where TItemTag : class, IItemTag
+    where TItemNote : class
+{
     TPerson Person { get; set; }
     TFormData FormData { get; set; }
     IList<TItemTag> Tags { get; set; }

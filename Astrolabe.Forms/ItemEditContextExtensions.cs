@@ -6,14 +6,14 @@ public static class ItemEditContextExtensions
         ModifyItem<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote>(
             this ItemEditContext<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote> context,
             Action<TItem> changeItem)
-        where TItem : class, IItem<TPerson, TFormData, TItemTag, TItemNote>, new()
-        where TFormData : class, IFormData<TPerson, TFormDef>, new()
+        where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
+        where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
         where TPerson : class, IPerson, new()
-        where TFormDef : class, IFormDefinition<TTableDef>
+        where TFormDef : class, IFormDefinitionEntity<TTableDef>
         where TTableDef : class, ITableDefinition
-        where TAuditEvent : class, IAuditEvent<TPerson>, new()
+        where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
         where TItemTag : class, IItemTag, new()
-        where TItemNote : class, IItemNote<TPerson>, new()
+        where TItemNote : class, IItemNoteEntity<TPerson>, new()
     {
         changeItem(context.Item);
         return context;
@@ -23,14 +23,14 @@ public static class ItemEditContextExtensions
         ModifyStatus<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote>(
             this ItemEditContext<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote> context,
             string status)
-        where TItem : class, IItem<TPerson, TFormData, TItemTag, TItemNote>, new()
-        where TFormData : class, IFormData<TPerson, TFormDef>, new()
+        where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
+        where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
         where TPerson : class, IPerson, new()
-        where TFormDef : class, IFormDefinition<TTableDef>
+        where TFormDef : class, IFormDefinitionEntity<TTableDef>
         where TTableDef : class, ITableDefinition
-        where TAuditEvent : class, IAuditEvent<TPerson>, new()
+        where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
         where TItemTag : class, IItemTag, new()
-        where TItemNote : class, IItemNote<TPerson>, new()
+        where TItemNote : class, IItemNoteEntity<TPerson>, new()
     {
         return context
             .AddEvent(
@@ -42,14 +42,14 @@ public static class ItemEditContextExtensions
     public static ItemEditContext<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote>
         SetSubmittedAt<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote>(
             this ItemEditContext<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote> context)
-        where TItem : class, IItem<TPerson, TFormData, TItemTag, TItemNote>, new()
-        where TFormData : class, IFormData<TPerson, TFormDef>, new()
+        where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
+        where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
         where TPerson : class, IPerson, new()
-        where TFormDef : class, IFormDefinition<TTableDef>
+        where TFormDef : class, IFormDefinitionEntity<TTableDef>
         where TTableDef : class, ITableDefinition
-        where TAuditEvent : class, IAuditEvent<TPerson>, new()
+        where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
         where TItemTag : class, IItemTag, new()
-        where TItemNote : class, IItemNote<TPerson>, new()
+        where TItemNote : class, IItemNoteEntity<TPerson>, new()
     {
         return context.ModifyItem(x => x.SubmittedAt = DateTime.Now);
     }
@@ -60,14 +60,14 @@ public static class ItemEditContextExtensions
             string eventType,
             string message,
             Action<TAuditEvent>? customise = null)
-        where TItem : class, IItem<TPerson, TFormData, TItemTag, TItemNote>, new()
-        where TFormData : class, IFormData<TPerson, TFormDef>, new()
+        where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
+        where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
         where TPerson : class, IPerson, new()
-        where TFormDef : class, IFormDefinition<TTableDef>
+        where TFormDef : class, IFormDefinitionEntity<TTableDef>
         where TTableDef : class, ITableDefinition
-        where TAuditEvent : class, IAuditEvent<TPerson>, new()
+        where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
         where TItemTag : class, IItemTag, new()
-        where TItemNote : class, IItemNote<TPerson>, new()
+        where TItemNote : class, IItemNoteEntity<TPerson>, new()
     {
         var currentEvents = context.Events ?? [];
         var newEvent = new TAuditEvent
@@ -86,14 +86,14 @@ public static class ItemEditContextExtensions
         AddAction<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote>(
             this ItemEditContext<TItem, TFormData, TPerson, TFormDef, TTableDef, TAuditEvent, TItemTag, TItemNote> context,
             string action)
-        where TItem : class, IItem<TPerson, TFormData, TItemTag, TItemNote>, new()
-        where TFormData : class, IFormData<TPerson, TFormDef>, new()
+        where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
+        where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
         where TPerson : class, IPerson, new()
-        where TFormDef : class, IFormDefinition<TTableDef>
+        where TFormDef : class, IFormDefinitionEntity<TTableDef>
         where TTableDef : class, ITableDefinition
-        where TAuditEvent : class, IAuditEvent<TPerson>, new()
+        where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
         where TItemTag : class, IItemTag, new()
-        where TItemNote : class, IItemNote<TPerson>, new()
+        where TItemNote : class, IItemNoteEntity<TPerson>, new()
     {
         return context with { Actions = context.Actions.Append(new SimpleWorkflowAction(action)) };
     }

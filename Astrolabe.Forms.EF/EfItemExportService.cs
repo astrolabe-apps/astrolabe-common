@@ -1,13 +1,15 @@
 using System.Globalization;
+using Astrolabe.Forms;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.ExportCsv;
+using Astrolabe.SearchState;
 using CsvHelper;
 using CsvHelper.Configuration;
 using Microsoft.EntityFrameworkCore;
 
-namespace Astrolabe.Forms;
+namespace Astrolabe.Forms.EF;
 
-public partial class FormsContext<
+public class EfItemExportService<
     TItem,
     TFormData,
     TPerson,
@@ -16,10 +18,62 @@ public partial class FormsContext<
     TAuditEvent,
     TItemTag,
     TItemNote,
-    TItemFile,
     TExportDef
->
+> : IItemExportService
+    where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
+    where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
+    where TPerson : class, IPerson, new()
+    where TFormDef : class, IFormDefinitionEntity<TTableDef>, new()
+    where TTableDef : class, ITableDefinition, new()
+    where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
+    where TItemTag : class, IItemTag, new()
+    where TItemNote : class, IItemNoteEntity<TPerson>, new()
+    where TExportDef : class, IExportDefinitionEntity<TTableDef>, new()
 {
+    private readonly DbContext _dbContext;
+    private readonly EfItemService<
+        TItem,
+        TFormData,
+        TPerson,
+        TFormDef,
+        TTableDef,
+        TAuditEvent,
+        TItemTag,
+        TItemNote
+    > _itemService;
+
+    public EfItemExportService(
+        DbContext dbContext,
+        EfItemService<
+            TItem,
+            TFormData,
+            TPerson,
+            TFormDef,
+            TTableDef,
+            TAuditEvent,
+            TItemTag,
+            TItemNote
+        > itemService
+    )
+    {
+        _dbContext = dbContext;
+        _itemService = itemService;
+    }
+
+    private DbSet<TItem> Items => _dbContext.Set<TItem>();
+    private DbSet<TExportDef> ExportDefinitions => _dbContext.Set<TExportDef>();
+
+    public async Task<List<Guid>> GetExportableItemIds(SearchOptions searchOptions)
+    {
+        var q = Items.AsQueryable();
+        q = _itemService.ItemFilter(searchOptions.Filters, q);
+        q = _itemService.ApplySearchQuery(q, searchOptions.Query);
+        q = _itemService.ItemSort(searchOptions.Sort, q);
+        return await q.Where(x => x.Status == WorkflowStatuses.Submitted)
+            .Select(x => x.Id)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<ExportDefinitionGroup>> GetExportDefinitionOfForms(
         IEnumerable<Guid> formItemIds
     )
@@ -69,18 +123,16 @@ public partial class FormsContext<
         var actions = new List<ItemAction>
         {
             new LoadMetadataAction(),
-            new ExportCsvAction<
-                ItemEditContext<
-                    TItem,
-                    TFormData,
-                    TPerson,
-                    TFormDef,
-                    TTableDef,
-                    TAuditEvent,
-                    TItemTag,
-                    TItemNote
-                >
-            >(
+            new ExportCsvAction<ItemEditContext<
+                TItem,
+                TFormData,
+                TPerson,
+                TFormDef,
+                TTableDef,
+                TAuditEvent,
+                TItemTag,
+                TItemNote
+            >>(
                 o =>
                     csvWriter.ExportRecord(
                         columns,
@@ -93,10 +145,10 @@ public partial class FormsContext<
             ),
         };
 
-        var items = await LoadItemData(allIds, actions, userId, roles, null, true);
+        var items = await _itemService.LoadItemData(allIds, actions, userId, roles, null, true);
         foreach (var item in items)
         {
-            await ApplyItemChanges(item);
+            await _itemService.ApplyItemChanges(item);
         }
 
         await csvWriter.FlushAsync();

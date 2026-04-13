@@ -1,8 +1,6 @@
 using System.Net.Mime;
 using System.Security.Claims;
-using System.Text;
 using Astrolabe.FormDesigner;
-using Astrolabe.Schemas;
 using Astrolabe.Schemas.ExportCsv;
 using Astrolabe.SearchState;
 using Astrolabe.Web.Common;
@@ -15,11 +13,10 @@ namespace Astrolabe.Forms;
 
 public static class FormsEndpoints
 {
-    public static RouteGroupBuilder MapFormsEndpoints<TContext>(
+    public static RouteGroupBuilder MapFormsEndpoints(
         this IEndpointRouteBuilder endpoints,
         string? authorizationPolicy = null
     )
-        where TContext : IFormsContext
     {
         var group = endpoints.MapGroup("api");
         group.AddEndpointFilter<FormsExceptionFilter>();
@@ -28,36 +25,31 @@ public static class FormsEndpoints
         else
             group.RequireAuthorization();
 
-        MapFormEndpoints<TContext>(group);
-        MapItemEndpoints<TContext>(group);
-        MapItemFileEndpoints<TContext>(group);
-        MapExportEndpoints<TContext>(group);
+        MapFormEndpoints(group);
+        MapItemEndpoints(group);
+        MapItemFileEndpoints(group);
+        MapExportEndpoints(group);
 
         return group;
     }
 
-    private static async Task<FormsUser> GetUser<TContext>(TContext ctx, ClaimsPrincipal principal)
-        where TContext : IFormsContext
-    {
-        return await ctx.ResolveUser(principal);
-    }
+    private static Task<FormsUser> GetUser(IFormsUserResolver resolver, ClaimsPrincipal principal) =>
+        resolver.ResolveUser(principal);
 
-    private static void MapFormEndpoints<TContext>(RouteGroupBuilder group)
-        where TContext : IFormsContext
+    private static void MapFormEndpoints(RouteGroupBuilder group)
     {
         var formGroup = group.MapGroup("form").WithTags("Form");
 
         formGroup
             .MapGet(
                 "{formId}/forRender",
-                async (TContext ctx, Guid formId) => await ctx.GetFormAndSchemas(formId)
+                async (IFormRenderingService svc, Guid formId) => await svc.GetFormAndSchemas(formId)
             )
             .AllowAnonymous()
             .WithName("GetFormForRender");
     }
 
-    private static void MapItemEndpoints<TContext>(RouteGroupBuilder group)
-        where TContext : IFormsContext
+    private static void MapItemEndpoints(RouteGroupBuilder group)
     {
         var itemGroup = group.MapGroup("item").WithTags("Item");
 
@@ -65,14 +57,15 @@ public static class FormsEndpoints
             .MapPost(
                 "search",
                 async (
-                    TContext ctx,
+                    IItemService items,
+                    IFormsUserResolver users,
                     ClaimsPrincipal principal,
                     [FromBody] SearchOptions request,
                     bool? includeTotal
                 ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    return await ctx.SearchItems(request, includeTotal ?? false, user.PersonId);
+                    var user = await GetUser(users, principal);
+                    return await items.SearchItems(request, includeTotal ?? false, user.PersonId);
                 }
             )
             .WithName("SearchItems");
@@ -81,28 +74,29 @@ public static class FormsEndpoints
             .MapPost(
                 "searchadmin",
                 async (
-                    TContext ctx,
-                    ClaimsPrincipal principal,
+                    IItemService items,
                     [FromBody] SearchOptions request,
                     bool? includeTotal
-                ) =>
-                {
-                    return await ctx.SearchItemsAdmin(request, includeTotal ?? false);
-                }
+                ) => await items.SearchItemsAdmin(request, includeTotal ?? false)
             )
             .WithName("SearchItemsAdmin");
 
         itemGroup
-            .MapGet("filterOptions", async (TContext ctx) => await ctx.GetFilterOptions())
+            .MapGet("filterOptions", async (IItemService items) => await items.GetFilterOptions())
             .WithName("GetFilterOptions");
 
         itemGroup
             .MapGet(
                 "actions",
-                async (TContext ctx, ClaimsPrincipal principal, Guid id) =>
+                async (
+                    IItemService items,
+                    IFormsUserResolver users,
+                    ClaimsPrincipal principal,
+                    Guid id
+                ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    return await ctx.GetUserActions(id, user.PersonId, user.Roles);
+                    var user = await GetUser(users, principal);
+                    return await items.GetUserActions(id, user.PersonId, user.Roles);
                 }
             )
             .WithName("GetUserActions");
@@ -110,10 +104,15 @@ public static class FormsEndpoints
         itemGroup
             .MapGet(
                 "admin/{id:guid}",
-                async (TContext ctx, ClaimsPrincipal principal, Guid id) =>
+                async (
+                    IItemService items,
+                    IFormsUserResolver users,
+                    ClaimsPrincipal principal,
+                    Guid id
+                ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    return await ctx.GetItemView(id, user.PersonId, user.Roles);
+                    var user = await GetUser(users, principal);
+                    return await items.GetItemView(id, user.PersonId, user.Roles);
                 }
             )
             .WithName("GetItemView");
@@ -121,30 +120,36 @@ public static class FormsEndpoints
         itemGroup
             .MapGet(
                 "{id:guid}",
-                async (TContext ctx, ClaimsPrincipal principal, Guid id) =>
+                async (
+                    IItemService items,
+                    IFormsUserResolver users,
+                    ClaimsPrincipal principal,
+                    Guid id
+                ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    return await ctx.GetUserItem(id, user.PersonId, user.Roles);
+                    var user = await GetUser(users, principal);
+                    return await items.GetUserItem(id, user.PersonId, user.Roles);
                 }
             )
             .WithName("GetUserItem");
 
         itemGroup
-            .MapDelete("{id}", async (TContext ctx, Guid id) => await ctx.DeleteItem(id))
+            .MapDelete("{id}", async (IItemService items, Guid id) => await items.DeleteItem(id))
             .WithName("DeleteItem");
 
         itemGroup
             .MapPost(
                 "{formType}",
                 async (
-                    TContext ctx,
+                    IItemService items,
+                    IFormsUserResolver users,
                     ClaimsPrincipal principal,
                     Guid formType,
                     [FromBody] ItemEdit edit
                 ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    return await ctx.CreateItem(formType, edit, user.PersonId, user.Roles);
+                    var user = await GetUser(users, principal);
+                    return await items.CreateItem(formType, edit, user.PersonId, user.Roles);
                 }
             )
             .WithName("CreateItem");
@@ -153,14 +158,15 @@ public static class FormsEndpoints
             .MapPut(
                 "{id}",
                 async (
-                    TContext ctx,
+                    IItemService items,
+                    IFormsUserResolver users,
                     ClaimsPrincipal principal,
                     Guid id,
                     [FromBody] ItemEdit edit
                 ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    await ctx.EditItem(id, edit, user.PersonId, user.Roles);
+                    var user = await GetUser(users, principal);
+                    await items.EditItem(id, edit, user.PersonId, user.Roles);
                 }
             )
             .WithName("EditItem");
@@ -168,10 +174,15 @@ public static class FormsEndpoints
         itemGroup
             .MapGet(
                 "new/{formType}",
-                async (TContext ctx, ClaimsPrincipal principal, Guid formType) =>
+                async (
+                    IItemService items,
+                    IFormsUserResolver users,
+                    ClaimsPrincipal principal,
+                    Guid formType
+                ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    return await ctx.NewItem(formType, user.PersonId, user.Roles);
+                    var user = await GetUser(users, principal);
+                    return await items.NewItem(formType, user.PersonId, user.Roles);
                 }
             )
             .WithName("NewItem");
@@ -180,15 +191,16 @@ public static class FormsEndpoints
             .MapPut(
                 "{id}/action",
                 async (
-                    TContext ctx,
+                    IItemService items,
+                    IFormsUserResolver users,
                     ClaimsPrincipal principal,
                     Guid id,
                     [FromBody] string action
                 ) =>
                 {
-                    var user = await GetUser(ctx, principal);
+                    var user = await GetUser(users, principal);
                     List<ItemAction> actions = [new SimpleWorkflowAction(action)];
-                    await ctx.PerformActions(actions, id, user.PersonId, user.Roles);
+                    await items.PerformActions(actions, id, user.PersonId, user.Roles);
                 }
             )
             .WithName("PerformAction");
@@ -197,14 +209,15 @@ public static class FormsEndpoints
             .MapPost(
                 "note/{itemId:guid}",
                 async (
-                    TContext ctx,
+                    IItemService items,
+                    IFormsUserResolver users,
                     ClaimsPrincipal principal,
                     Guid itemId,
                     [FromBody] ItemNoteEdit noteEdit
                 ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    await ctx.AddItemNote(
+                    var user = await GetUser(users, principal);
+                    await items.AddItemNote(
                         itemId,
                         noteEdit.Message,
                         noteEdit.Internal,
@@ -215,18 +228,23 @@ public static class FormsEndpoints
             .WithName("AddItemNote");
     }
 
-    private static void MapItemFileEndpoints<TContext>(RouteGroupBuilder group)
-        where TContext : IFormsContext
+    private static void MapItemFileEndpoints(RouteGroupBuilder group)
     {
         var fileGroup = group.MapGroup("itemfile").WithTags("ItemFile");
 
         fileGroup
             .MapPost(
                 "file",
-                async (TContext ctx, ClaimsPrincipal principal, Guid? itemId, IFormFile file) =>
+                async (
+                    IItemFileService files,
+                    IFormsUserResolver users,
+                    ClaimsPrincipal principal,
+                    Guid? itemId,
+                    IFormFile file
+                ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    return await ctx.UploadFile(
+                    var user = await GetUser(users, principal);
+                    return await files.UploadFile(
                         user.PersonId,
                         itemId,
                         file.OpenReadStream(),
@@ -240,10 +258,16 @@ public static class FormsEndpoints
         fileGroup
             .MapDelete(
                 "file/{fileId:guid}",
-                async (TContext ctx, ClaimsPrincipal principal, Guid? itemId, Guid fileId) =>
+                async (
+                    IItemFileService files,
+                    IFormsUserResolver users,
+                    ClaimsPrincipal principal,
+                    Guid? itemId,
+                    Guid fileId
+                ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    await ctx.DeleteFile(user.PersonId, itemId, fileId);
+                    var user = await GetUser(users, principal);
+                    await files.DeleteFile(user.PersonId, itemId, fileId);
                 }
             )
             .WithName("DeleteFile");
@@ -251,10 +275,16 @@ public static class FormsEndpoints
         fileGroup
             .MapGet(
                 "file/{fileId:guid}",
-                async (TContext ctx, ClaimsPrincipal principal, Guid? itemId, Guid fileId) =>
+                async (
+                    IItemFileService files,
+                    IFormsUserResolver users,
+                    ClaimsPrincipal principal,
+                    Guid? itemId,
+                    Guid fileId
+                ) =>
                 {
-                    var user = await GetUser(ctx, principal);
-                    var download = await ctx.DownloadFile(user.PersonId, itemId, fileId);
+                    var user = await GetUser(users, principal);
+                    var download = await files.DownloadFile(user.PersonId, itemId, fileId);
                     if (download == null)
                         return Results.NotFound();
                     return Results.File(download.Content, download.ContentType, download.FileName);
@@ -263,8 +293,7 @@ public static class FormsEndpoints
             .WithName("GetFile");
     }
 
-    private static void MapExportEndpoints<TContext>(RouteGroupBuilder group)
-        where TContext : IFormsContext
+    private static void MapExportEndpoints(RouteGroupBuilder group)
     {
         var exportGroup = group.MapGroup("export").WithTags("Export");
 
@@ -272,18 +301,19 @@ public static class FormsEndpoints
             .MapPost(
                 "definition/ids",
                 async (
-                    TContext ctx,
+                    IItemExportService export,
+                    IFormsUserResolver users,
                     ClaimsPrincipal principal,
                     [FromBody] ExportRecordsDefinitionEdit data
                 ) =>
                 {
-                    var user = await GetUser(ctx, principal);
+                    var user = await GetUser(users, principal);
                     var itemIds = data.RecordIds?.ToList() ?? [];
                     if (data.All == null && itemIds.Count == 0)
                         throw new Exception("Not enough required data");
                     if (data.All != null)
-                        itemIds = await ctx.GetExportableItemIds(data.All);
-                    return await ctx.GetExportDefinitionOfForms(itemIds);
+                        itemIds = await export.GetExportableItemIds(data.All);
+                    return await export.GetExportDefinitionOfForms(itemIds);
                 }
             )
             .WithName("GetExportDefinitionOfForms");
@@ -292,18 +322,19 @@ public static class FormsEndpoints
             .MapPost(
                 "",
                 async (
-                    TContext ctx,
+                    IItemExportService export,
+                    IFormsUserResolver users,
                     ClaimsPrincipal principal,
                     IExportDefinitionService exportService,
                     [FromBody] ExportRecordsEdit data
                 ) =>
                 {
-                    var user = await GetUser(ctx, principal);
+                    var user = await GetUser(users, principal);
                     var itemIds = data.RecordIds?.ToList() ?? [];
                     if ((data.All == null && itemIds.Count == 0) || data.DefinitionId == null)
                         throw new Exception("Not enough required data");
                     if (data.All != null)
-                        itemIds = await ctx.GetExportableItemIds(data.All);
+                        itemIds = await export.GetExportableItemIds(data.All);
 
                     var exportDef = await exportService.GetExportDefinition(data.DefinitionId.Value);
 
@@ -311,9 +342,14 @@ public static class FormsEndpoints
                         MediaTypeNames.Text.Csv,
                         $"{exportDef.Name}.csv",
                         stream =>
-                            ctx.WriteCsvText(
+                            export.WriteCsvText(
                                 exportDef.ExportColumns.Select(x =>
-                                    new Astrolabe.Schemas.ExportCsv.ExportColumn(x.Field, x.ColumnName, x.Expression)),
+                                    new Astrolabe.Schemas.ExportCsv.ExportColumn(
+                                        x.Field,
+                                        x.ColumnName,
+                                        x.Expression
+                                    )
+                                ),
                                 itemIds,
                                 exportDef.TableDefinitionId,
                                 user.PersonId,
