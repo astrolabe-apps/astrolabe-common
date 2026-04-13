@@ -212,10 +212,6 @@ export const ExportColumnSchema = buildSchema<ExportColumnData>({
 
 export const ExportDefinitionEditSchema =
   buildSchema<ExportDefinitionEditData>({
-    id: makeScalarField({
-      type: FieldType.String,
-      displayName: "Id",
-    }),
     tableDefinitionId: makeScalarField({
       type: FieldType.String,
       notNullable: true,

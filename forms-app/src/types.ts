@@ -98,12 +98,13 @@ export interface FormInfoData {
  * Form definition for creation/editing.
  */
 export interface FormDefinitionEditData {
-  shortId: string;
   name: string;
-  groupId: string;
   tableId: string | null;
   controls: any[];
-  config: FormConfigData;
+  layoutMode: FormLayoutMode;
+  navigationStyle: PageNavigationStyle;
+  public: boolean;
+  published: boolean;
 }
 
 /**
@@ -121,9 +122,7 @@ export interface FormUploadData {
  * Table definition for creation/editing.
  */
 export interface TableDefinitionEditData {
-  shortId: string | null;
   name: string | null;
-  groupId: string | null;
   nameField: string | null;
   fields: any[];
   tags: string[];
@@ -144,7 +143,6 @@ export interface ScopedNameIdData {
  * Export definition for creation/editing.
  */
 export interface ExportDefinitionEditData {
-  id: string | null;
   tableDefinitionId: string;
   name: string;
   exportColumns: ExportColumnData[];

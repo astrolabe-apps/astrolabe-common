@@ -27,7 +27,11 @@ import {
 } from "../types";
 import { FormsEditorApi } from "../api";
 import { FormsEditorComponents } from "./types";
-import { BasicFieldType, EditorFormTree, EditorSchemaTree } from "@astroapps/basic-editor";
+import {
+  BasicFieldType,
+  EditorFormTree,
+  EditorSchemaTree,
+} from "@astroapps/basic-editor";
 import { FormConfigSettings } from "./FormConfigSettings";
 import { DraggableDebugWindow } from "./DraggableDebugWindow";
 import { wrapFormControls } from "../item/workflowActions";
@@ -41,7 +45,10 @@ interface SelectedForm {
 interface FormEditState {
   controls: ControlDefinition[];
   schemaFields: SchemaField[];
-  config: FormConfigData;
+  layoutMode: FormLayoutMode;
+  navigationStyle: PageNavigationStyle;
+  public: boolean;
+  published: boolean;
 }
 
 interface EditorData {
@@ -100,8 +107,7 @@ export function FormsEditorPage({
   const [openConfirm, confirmDialog] = ui.useConfirmDialog();
 
   const pageMode =
-    editorData?.editState.fields.config.fields.layoutMode.value ===
-    FormLayoutMode.MultiPage;
+    editorData?.editState.fields.layoutMode.value === FormLayoutMode.MultiPage;
   const isDirty = useComputed(() => editorData?.editState.dirty ?? false);
 
   async function loadForms() {
@@ -137,9 +143,8 @@ export function FormsEditorPage({
       if (cancelled) return;
 
       const editState = newControl<FormEditState>({
-        controls: form.controls as ControlDefinition[],
+        ...form,
         schemaFields: table.fields as SchemaField[],
-        config: form.config,
       });
       const formTree = createEditorFormTree(editState.fields.controls);
       const schemaTree = createEditorSchemaTree(
@@ -159,27 +164,20 @@ export function FormsEditorPage({
       action: async () => {
         const name = newFormName.value.trim();
         if (!name) return;
-        const shortId = name.toLowerCase().replace(/\s+/g, "-");
         const newTableId = await api.createTable({
-          shortId,
           fields: [],
           name: name + " Table",
-          groupId: "",
           nameField: "",
           tags: [],
         });
         await api.createForm({
           tableId: newTableId,
-          groupId: "",
           controls: [],
           name,
-          shortId,
-          config: {
-            public: false,
-            published: false,
-            layoutMode: FormLayoutMode.SinglePage,
-            navigationStyle: PageNavigationStyle.Wizard,
-          },
+          public: false,
+          published: false,
+          layoutMode: FormLayoutMode.SinglePage,
+          navigationStyle: PageNavigationStyle.Wizard,
         });
         newFormName.value = "";
         await loadForms();
@@ -248,16 +246,13 @@ export function FormsEditorPage({
     if (!editorData || !selectedForm) return;
     setSaving(true);
     try {
-      const {
-        controls,
-        schemaFields: fields,
-        config,
-      } = editorData.editState.value;
+      const { schemaFields: fields, ...formData } = editorData.editState.value;
+      console.log(formData.controls);
       const form = await api.getForm(selectedForm.id);
       await api.editForm(selectedForm.id, {
-        ...form,
-        controls,
-        config,
+        name: form.name,
+        tableId: form.tableId,
+        ...formData,
       });
       if (form.tableId) {
         const table = await api.getTable(form.tableId);
@@ -319,7 +314,7 @@ export function FormsEditorPage({
     }
     if (!editorData) return;
 
-    const { controls, schemaFields, config } = editorData.editState.value;
+    const { controls, schemaFields, ...config } = editorData.editState.value;
     const formControls = wrapFormControls(controls, config);
     const formTree = createFormTree(formControls);
     const schemaTree = createSchemaTree(schemaFields);
@@ -395,7 +390,7 @@ export function FormsEditorPage({
                   <Popover
                     content={
                       <FormConfigSettings
-                        configControl={editorData.editState.fields.config}
+                        configControl={editorData.editState}
                         editorComponents={editorComponents}
                       />
                     }
