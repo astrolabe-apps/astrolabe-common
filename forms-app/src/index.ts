@@ -112,24 +112,13 @@ export type {
 } from "./dashboard";
 
 export {
-  DynamicFormRenderer,
   wrapFormControls,
   createActionWizardNavigation,
   createWorkflowActions,
-  ItemViewPage,
-  ItemEditPage,
-} from "./item";
-export type {
-  DynamicFormRendererProps,
-  ItemViewPageProps,
-  ItemEditPageProps,
 } from "./item";
 
 export { ExportDashboardPage, ExportEditPage } from "./export";
-export type {
-  ExportDashboardPageProps,
-  ExportEditPageProps,
-} from "./export";
+export type { ExportDashboardPageProps, ExportEditPageProps } from "./export";
 
 export {
   FormsEditorPage,

@@ -90,6 +90,38 @@ public static class ItemEndpoints
             )
             .WithName("DeleteItem");
 
+        group
+            .MapGet(
+                "new/{formDefinitionId:guid}",
+                async (
+                    IItemFormService svc,
+                    IItemUserResolver users,
+                    ClaimsPrincipal principal,
+                    Guid formDefinitionId
+                ) =>
+                {
+                    var security = await users.Resolve(principal);
+                    return await svc.NewItemForm(formDefinitionId, security);
+                }
+            )
+            .WithName("NewItemForm");
+
+        group
+            .MapGet(
+                "{id:guid}/form",
+                async (
+                    IItemFormService svc,
+                    IItemUserResolver users,
+                    ClaimsPrincipal principal,
+                    Guid id
+                ) =>
+                {
+                    var security = await users.Resolve(principal);
+                    return await svc.GetItemForm(id, security);
+                }
+            )
+            .WithName("GetItemForm");
+
         return group;
     }
 }

@@ -29,8 +29,9 @@ public static class FormsServiceExtensions
             sp.GetRequiredService<EfItemService>()
         ));
 
-        services.AddScoped<IFormRenderingService>(sp => new EfFormRenderingService(
-            sp.GetRequiredService<TDbContext>()
+        services.AddScoped<IItemFormService>(sp => new EfItemFormService(
+            sp.GetRequiredService<TDbContext>(),
+            sp.GetRequiredService<EfItemService>()
         ));
 
         services.AddScoped<EfPersonService>(sp => new EfPersonService(

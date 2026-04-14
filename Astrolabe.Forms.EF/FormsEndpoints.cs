@@ -1,6 +1,7 @@
 using System.Net.Mime;
 using System.Security.Claims;
 using Astrolabe.FormDesigner;
+using Astrolabe.FormItems;
 using Astrolabe.Schemas.ExportCsv;
 using Astrolabe.SearchState;
 using Astrolabe.Web.Common;
@@ -25,7 +26,6 @@ public static class FormsEndpoints
         else
             group.RequireAuthorization();
 
-        MapFormEndpoints(group);
         MapItemEndpoints(group);
         MapItemFileEndpoints(group);
         MapExportEndpoints(group);
@@ -33,21 +33,10 @@ public static class FormsEndpoints
         return group;
     }
 
-    private static Task<FormsUser> GetUser(IFormsUserResolver resolver, ClaimsPrincipal principal) =>
-        resolver.ResolveUser(principal);
-
-    private static void MapFormEndpoints(RouteGroupBuilder group)
-    {
-        var formGroup = group.MapGroup("form").WithTags("Form");
-
-        formGroup
-            .MapGet(
-                "{formId}/forRender",
-                async (IFormRenderingService svc, Guid formId) => await svc.GetFormAndSchemas(formId)
-            )
-            .AllowAnonymous()
-            .WithName("GetFormForRender");
-    }
+    private static async Task<ItemSecurityContext> GetUser(
+        IItemUserResolver resolver,
+        ClaimsPrincipal principal
+    ) => await resolver.Resolve(principal);
 
     private static void MapItemEndpoints(RouteGroupBuilder group)
     {
@@ -58,14 +47,14 @@ public static class FormsEndpoints
                 "search",
                 async (
                     IItemService items,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     [FromBody] SearchOptions request,
                     bool? includeTotal
                 ) =>
                 {
                     var user = await GetUser(users, principal);
-                    return await items.SearchItems(request, includeTotal ?? false, user.PersonId);
+                    return await items.SearchItems(request, includeTotal ?? false, user.UserId);
                 }
             )
             .WithName("SearchItems");
@@ -90,13 +79,13 @@ public static class FormsEndpoints
                 "actions",
                 async (
                     IItemService items,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     Guid id
                 ) =>
                 {
                     var user = await GetUser(users, principal);
-                    return await items.GetUserActions(id, user.PersonId, user.Roles);
+                    return await items.GetUserActions(id, user.UserId, user.Roles);
                 }
             )
             .WithName("GetUserActions");
@@ -106,13 +95,13 @@ public static class FormsEndpoints
                 "admin/{id:guid}",
                 async (
                     IItemService items,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     Guid id
                 ) =>
                 {
                     var user = await GetUser(users, principal);
-                    return await items.GetItemView(id, user.PersonId, user.Roles);
+                    return await items.GetItemView(id, user.UserId, user.Roles);
                 }
             )
             .WithName("GetItemView");
@@ -122,51 +111,30 @@ public static class FormsEndpoints
                 "{id:guid}",
                 async (
                     IItemService items,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     Guid id
                 ) =>
                 {
                     var user = await GetUser(users, principal);
-                    return await items.GetUserItem(id, user.PersonId, user.Roles);
+                    return await items.GetUserItem(id, user.UserId, user.Roles);
                 }
             )
             .WithName("GetUserItem");
-
-        itemGroup
-            .MapGet(
-                "new/{formType}",
-                async (
-                    IItemService items,
-                    IFormsUserResolver users,
-                    ClaimsPrincipal principal,
-                    Guid formType
-                ) =>
-                {
-                    var user = await GetUser(users, principal);
-                    return await items.NewItem(formType, user.PersonId, user.Roles);
-                }
-            )
-            .WithName("NewItem");
 
         itemGroup
             .MapPost(
                 "note/{itemId:guid}",
                 async (
                     IItemService items,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     Guid itemId,
                     [FromBody] ItemNoteEdit noteEdit
                 ) =>
                 {
                     var user = await GetUser(users, principal);
-                    await items.AddItemNote(
-                        itemId,
-                        noteEdit.Message,
-                        noteEdit.Internal,
-                        user.PersonId
-                    );
+                    await items.AddItemNote(itemId, noteEdit.Message, noteEdit.Internal, user.UserId);
                 }
             )
             .WithName("AddItemNote");
@@ -181,7 +149,7 @@ public static class FormsEndpoints
                 "file",
                 async (
                     IItemFileService files,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     Guid? itemId,
                     IFormFile file
@@ -189,7 +157,7 @@ public static class FormsEndpoints
                 {
                     var user = await GetUser(users, principal);
                     return await files.UploadFile(
-                        user.PersonId,
+                        user.UserId,
                         itemId,
                         file.OpenReadStream(),
                         file.FileName
@@ -204,14 +172,14 @@ public static class FormsEndpoints
                 "file/{fileId:guid}",
                 async (
                     IItemFileService files,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     Guid? itemId,
                     Guid fileId
                 ) =>
                 {
                     var user = await GetUser(users, principal);
-                    await files.DeleteFile(user.PersonId, itemId, fileId);
+                    await files.DeleteFile(user.UserId, itemId, fileId);
                 }
             )
             .WithName("DeleteFile");
@@ -221,14 +189,14 @@ public static class FormsEndpoints
                 "file/{fileId:guid}",
                 async (
                     IItemFileService files,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     Guid? itemId,
                     Guid fileId
                 ) =>
                 {
                     var user = await GetUser(users, principal);
-                    var download = await files.DownloadFile(user.PersonId, itemId, fileId);
+                    var download = await files.DownloadFile(user.UserId, itemId, fileId);
                     if (download == null)
                         return Results.NotFound();
                     return Results.File(download.Content, download.ContentType, download.FileName);
@@ -246,7 +214,7 @@ public static class FormsEndpoints
                 "definition/ids",
                 async (
                     IItemExportService export,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     [FromBody] ExportRecordsDefinitionEdit data
                 ) =>
@@ -267,7 +235,7 @@ public static class FormsEndpoints
                 "",
                 async (
                     IItemExportService export,
-                    IFormsUserResolver users,
+                    IItemUserResolver users,
                     ClaimsPrincipal principal,
                     IExportDefinitionService exportService,
                     [FromBody] ExportRecordsEdit data
@@ -296,7 +264,7 @@ public static class FormsEndpoints
                                 ),
                                 itemIds,
                                 exportDef.TableDefinitionId,
-                                user.PersonId,
+                                user.UserId,
                                 user.Roles,
                                 stream
                             )

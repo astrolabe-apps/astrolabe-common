@@ -23,19 +23,24 @@ import React from "react";
  */
 export function wrapFormControls(
   controls: ControlDefinition[],
-  config: FormConfigData,
+  layoutMode: FormLayoutMode,
+  navigationStyle: PageNavigationStyle,
 ): ControlDefinition[] {
-  if (config.layoutMode !== FormLayoutMode.MultiPage) {
+  if (layoutMode !== FormLayoutMode.MultiPage) {
     return [
       groupedControl(
-        [groupedControl(controls, "", { groupOptions: { type: GroupRenderType.Standard } })],
+        [
+          groupedControl(controls, "", {
+            groupOptions: { type: GroupRenderType.Standard },
+          }),
+        ],
         "",
         { groupOptions: { type: GroupRenderType.Wizard } },
       ),
     ];
   }
   const type =
-    config.navigationStyle === PageNavigationStyle.Tabs
+    navigationStyle === PageNavigationStyle.Tabs
       ? GroupRenderType.Tabs
       : GroupRenderType.Wizard;
   return [groupedControl(controls, "", { groupOptions: { type } })];
@@ -80,10 +85,7 @@ export function createActionWizardNavigation(
  */
 export function createWorkflowActions(
   actions: Control<string[] | undefined>,
-  filterActions: (
-    action: string,
-    navProps: CustomNavigationProps,
-  ) => boolean,
+  filterActions: (action: string, navProps: CustomNavigationProps) => boolean,
   doAction: (action: string | null) => void,
   options?: { doCancel?: () => void; hideSave?: boolean },
 ) {

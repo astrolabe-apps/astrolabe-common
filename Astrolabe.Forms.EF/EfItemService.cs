@@ -540,6 +540,13 @@ public class EfItemService : IItemService, IItemActionService
             : context;
     }
 
+    /// <summary>
+    /// Dispatches a single action (with rule check) against the given context.
+    /// Used by services that compose on top of EfItemService (e.g. EfItemFormService).
+    /// </summary>
+    public Task<ItemEditContext> PerformItemAction(ItemEditContext context, IItemAction action) =>
+        _executor.PerformAction(context, action);
+
     public async Task<ItemEditContext> ApplyItemChanges(ItemEditContext context)
     {
         context = await context.PerformActions(_executor.PerformAction);

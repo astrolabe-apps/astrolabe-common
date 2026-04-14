@@ -315,7 +315,11 @@ export function FormsEditorPage({
     if (!editorData) return;
 
     const { controls, schemaFields, ...config } = editorData.editState.value;
-    const formControls = wrapFormControls(controls, config);
+    const formControls = wrapFormControls(
+      controls,
+      config.layoutMode,
+      config.navigationStyle,
+    );
     const formTree = createFormTree(formControls);
     const schemaTree = createSchemaTree(schemaFields);
     previewData.value = {};

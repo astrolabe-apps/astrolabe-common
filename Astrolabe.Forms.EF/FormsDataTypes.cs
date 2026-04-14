@@ -35,13 +35,6 @@ public record ItemEvent(
 
 public record ItemNoteResult(string Message, string? PersonName, DateTime Timestamp);
 
-public record FormAndSchemas(
-    IEnumerable<object> Controls,
-    string SchemaName,
-    IDictionary<string, IEnumerable<object>> Schemas,
-    FormConfig Config
-);
-
 public record FormUpload
 {
     public Guid Id { get; set; }

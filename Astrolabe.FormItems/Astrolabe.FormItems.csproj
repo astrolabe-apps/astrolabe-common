@@ -16,6 +16,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Astrolabe.Workflow\Astrolabe.Workflow.csproj" />
+        <ProjectReference Include="..\Astrolabe.FormDesigner\Astrolabe.FormDesigner.csproj" />
     </ItemGroup>
 
 </Project>
