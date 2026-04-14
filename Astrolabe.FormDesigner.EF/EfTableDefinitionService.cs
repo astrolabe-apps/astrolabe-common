@@ -4,13 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.FormDesigner.EF;
 
-public class EfTableDefinitionService<TTableDef>(DbContext dbContext) : ITableDefinitionService
-    where TTableDef : class, ITableDefinitionEntity, new()
+public class EfTableDefinitionService(DbContext dbContext) : ITableDefinitionService
 {
-    private DbSet<TTableDef> TableDefinitions => dbContext.Set<TTableDef>();
+    private DbSet<TableDefinition> TableDefinitions => dbContext.Set<TableDefinition>();
 
-    private static readonly Searcher<TTableDef, NameId> TableSearcher =
-        SearchHelper.CreateSearcher<TTableDef, NameId>(
+    private static readonly Searcher<TableDefinition, NameId> TableSearcher =
+        SearchHelper.CreateSearcher<TableDefinition, NameId>(
             async q => await q.Select(x => new NameId(x.Name!, x.Id)).ToListAsync(),
             async q => await q.CountAsync()
         );
@@ -37,7 +36,7 @@ public class EfTableDefinitionService<TTableDef>(DbContext dbContext) : ITableDe
 
     public async Task<Guid> CreateTable(TableDefinitionEdit edit)
     {
-        var table = new TTableDef
+        var table = new TableDefinition
         {
             Id = Guid.NewGuid(),
             Name = edit.Name,

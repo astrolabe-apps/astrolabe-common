@@ -32,12 +32,17 @@ public static class WorkflowRules
 
 public record WorkflowRuleList<TAction, T>(IEnumerable<IWorkflowRule<TAction, T>> Rules) where TAction : notnull
 {
-    private IDictionary<TAction, IWorkflowRule<TAction, T>>? _actionMap;
-    
-    public IDictionary<TAction, IWorkflowRule<TAction, T>> ActionMap => _actionMap ??= Rules.ToDictionary(x => x.Action);
+    private ILookup<TAction, IWorkflowRule<TAction, T>>? _actionMap;
+
+    /// <summary>
+    /// Rules indexed by action. Multiple rules with the same action are OR'd:
+    /// a context is permitted for the action if any of its rules matches.
+    /// A missing action key yields an empty group (deny).
+    /// </summary>
+    public ILookup<TAction, IWorkflowRule<TAction, T>> ActionMap => _actionMap ??= Rules.ToLookup(x => x.Action);
 
     public IEnumerable<TAction> GetMatchingActions(T context)
     {
-        return Rules.Where(x => x.RuleMatch(context)).Select(x => x.Action);
+        return Rules.Where(x => x.RuleMatch(context)).Select(x => x.Action).Distinct();
     }
-} 
+}

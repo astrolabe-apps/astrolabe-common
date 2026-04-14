@@ -1,8 +1,7 @@
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Astrolabe.Common.Exceptions;
+using Astrolabe.FormDesigner.EF;
 using Astrolabe.EF.Search;
-using Astrolabe.Forms;
 using Astrolabe.JSON.Extensions;
 using Astrolabe.Schemas;
 using Astrolabe.SearchState;
@@ -11,28 +10,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.Forms.EF;
 
-public class EfItemService<
-    TItem,
-    TFormData,
-    TPerson,
-    TFormDef,
-    TTableDef,
-    TAuditEvent,
-    TItemTag,
-    TItemNote
-> : IItemService
-    where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
-    where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
-    where TPerson : class, IPerson, new()
-    where TFormDef : class, IFormDefinitionEntity<TTableDef>, new()
-    where TTableDef : class, ITableDefinition, new()
-    where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
-    where TItemTag : class, IItemTag, new()
-    where TItemNote : class, IItemNoteEntity<TPerson>, new()
+public class EfItemService : IItemService, IItemActionService
 {
     private readonly DbContext _dbContext;
     private readonly List<FormRule> _formRules;
     private readonly WorkflowRuleList<string, IItemWorkflowContext> _workflowRules;
+    private readonly Executor _executor;
 
     public EfItemService(
         DbContext dbContext,
@@ -42,16 +25,17 @@ public class EfItemService<
     {
         _dbContext = dbContext;
         _formRules = formRules?.ToList() ?? new List<FormRule>();
-        _workflowRules = workflowRules ?? DefaultWorkflowRules.Default;
+        _workflowRules = workflowRules ?? DefaultItemRules.Default;
+        _executor = new Executor(this, _workflowRules);
     }
 
-    protected DbSet<TItem> Items => _dbContext.Set<TItem>();
-    protected DbSet<TFormData> FormDataSet => _dbContext.Set<TFormData>();
-    protected DbSet<TPerson> Persons => _dbContext.Set<TPerson>();
-    protected DbSet<TFormDef> FormDefinitions => _dbContext.Set<TFormDef>();
-    protected DbSet<TAuditEvent> AuditEvents => _dbContext.Set<TAuditEvent>();
-    protected DbSet<TItemTag> ItemTags => _dbContext.Set<TItemTag>();
-    protected DbSet<TItemNote> ItemNotes => _dbContext.Set<TItemNote>();
+    protected DbSet<Item> Items => _dbContext.Set<Item>();
+    protected DbSet<FormData> FormDataSet => _dbContext.Set<FormData>();
+    protected DbSet<Person> Persons => _dbContext.Set<Person>();
+    protected DbSet<FormDefinition> FormDefinitions => _dbContext.Set<FormDefinition>();
+    protected DbSet<AuditEvent> AuditEvents => _dbContext.Set<AuditEvent>();
+    protected DbSet<ItemTag> ItemTags => _dbContext.Set<ItemTag>();
+    protected DbSet<ItemNote> ItemNotes => _dbContext.Set<ItemNote>();
 
     protected Task<int> SaveChanges() => _dbContext.SaveChangesAsync();
 
@@ -61,7 +45,7 @@ public class EfItemService<
 
     // --- Search ---
 
-    private static async Task<List<ItemInfo>> GetSearchPage(IQueryable<TItem> query)
+    private static async Task<List<ItemInfo>> GetSearchPage(IQueryable<Item> query)
     {
         return await query
             .Select(x => new ItemInfo(
@@ -77,7 +61,7 @@ public class EfItemService<
             .ToListAsync();
     }
 
-    protected virtual ApplyGetter<TItem>? ItemSorts(string field, ApplyGetter<TItem> apply)
+    protected virtual ApplyGetter<Item>? ItemSorts(string field, ApplyGetter<Item> apply)
     {
         return field switch
         {
@@ -86,7 +70,7 @@ public class EfItemService<
         };
     }
 
-    protected virtual FieldFilter<TItem>? ItemFilterer(string field)
+    protected virtual FieldFilter<Item>? ItemFilterer(string field)
     {
         return field switch
         {
@@ -96,34 +80,31 @@ public class EfItemService<
         };
     }
 
-    private Searcher<TItem, ItemInfo>? _itemSearcher;
-    private Searcher<TItem, ItemInfo> ItemSearcher =>
-        _itemSearcher ??= SearchHelper.CreateSearcher<TItem, ItemInfo>(
+    private Searcher<Item, ItemInfo>? _itemSearcher;
+    private Searcher<Item, ItemInfo> ItemSearcher =>
+        _itemSearcher ??= SearchHelper.CreateSearcher<Item, ItemInfo>(
             GetSearchPage,
             q => q.CountAsync(),
-            SearchHelper.MakeSorter<TItem>(ItemSorts),
-            SearchHelper.MakeFilterer<TItem>(ItemFilterer),
+            SearchHelper.MakeSorter<Item>(ItemSorts),
+            SearchHelper.MakeFilterer<Item>(ItemFilterer),
             maxLength: 100
         );
 
-    private QueryFilterer<TItem>? _itemFilter;
-    public QueryFilterer<TItem> ItemFilter =>
-        _itemFilter ??= SearchHelper.MakeFilterer<TItem>(ItemFilterer);
+    private QueryFilterer<Item>? _itemFilter;
+    public QueryFilterer<Item> ItemFilter =>
+        _itemFilter ??= SearchHelper.MakeFilterer<Item>(ItemFilterer);
 
-    private QuerySorter<TItem>? _itemSort;
-    public QuerySorter<TItem> ItemSort =>
-        _itemSort ??= SearchHelper.MakeSorter<TItem>(ItemSorts);
+    private QuerySorter<Item>? _itemSort;
+    public QuerySorter<Item> ItemSort => _itemSort ??= SearchHelper.MakeSorter<Item>(ItemSorts);
 
     public async Task<Dictionary<string, IEnumerable<FieldOption>>> GetFilterOptions()
     {
-        var names = await FormDefinitions
-            .Select(x => new FieldOption(x.Name, x.Id))
-            .ToListAsync();
+        var names = await FormDefinitions.Select(x => new FieldOption(x.Name, x.Id)).ToListAsync();
 
         return new Dictionary<string, IEnumerable<FieldOption>> { { "formType", names } };
     }
 
-    public IQueryable<TItem> ApplySearchQuery(IQueryable<TItem> q, string? query)
+    public IQueryable<Item> ApplySearchQuery(IQueryable<Item> q, string? query)
     {
         if (!string.IsNullOrWhiteSpace(query))
             q = q.Where(x =>
@@ -157,80 +138,64 @@ public class EfItemService<
 
     // --- Actions / CRUD ---
 
-    public async Task<IEnumerable<string>> GetUserActions(
-        Guid id,
-        Guid userId,
-        IList<string> roles
-    )
+    public async Task<IEnumerable<string>> GetUserActions(Guid id, Guid userId, IList<string> roles)
     {
-        var existingItem = await Items
-            .Where(x => x.Id == id)
-            .AsNoTracking()
-            .SingleOrDefaultAsync();
+        var existingItem = await Items.Where(x => x.Id == id).AsNoTracking().SingleOrDefaultAsync();
         NotFoundException.ThrowIfNull(existingItem);
 
         return _workflowRules.GetMatchingActions(
             new SimpleItemWorkflowContext(
                 existingItem.Status,
-                existingItem.CreatedAt,
-                existingItem.SubmittedAt,
-                userId,
+                userId == existingItem.PersonId,
                 roles
             )
         );
     }
 
-    Task<Guid> IItemService.PerformActions(
-        IEnumerable<ItemAction> actions,
-        Guid? id,
-        Guid userId,
-        IList<string> roles,
-        Guid? formType
-    ) => PerformActions(actions, id, userId, roles, formType);
-
-    public async Task<Guid> PerformActions(
-        IEnumerable<ItemAction> actions,
-        Guid? id,
-        Guid userId,
-        IList<string> roles,
-        Guid? formType = null,
-        bool saveChanges = true,
-        TPerson? creator = null
+    public async Task<List<Guid>> PerformActions(
+        List<Guid?> itemIds,
+        List<IItemAction> actions,
+        ItemSecurityContext security
     )
     {
-        var items = await LoadItemData(
-            id is { } g ? [g] : [],
+        var ids = await PerformActionsInternal(
+            itemIds,
             actions,
-            userId,
-            roles,
-            formType,
-            false,
-            creator
+            security.UserId,
+            security.Roles,
+            false
         );
-        List<ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        >> finishedItems = [];
+        await SaveChanges();
+        return ids;
+    }
+
+    /// <summary>
+    /// Internal entry point allowing callers that manage their own save-changes
+    /// boundary (e.g. code that needs a specific creator entity).
+    /// </summary>
+    public async Task<List<Guid>> PerformActionsInternal(
+        List<Guid?> itemIds,
+        List<IItemAction> actions,
+        Guid userId,
+        IList<string> roles,
+        bool forLoad,
+        Person? creator = null
+    )
+    {
+        var items = await LoadItemData(itemIds, actions, userId, roles, forLoad, creator);
+        var resolved = new List<Guid>();
         foreach (var itemContext in items)
         {
-            finishedItems.Add(await ApplyItemChanges(itemContext));
+            var finished = await ApplyItemChanges(itemContext);
+            resolved.Add(finished.Item.Id);
         }
-
-        if (saveChanges)
-            await SaveChanges();
-        return finishedItems[0].Item.Id;
+        return resolved;
     }
 
     public async Task<ItemView> GetItemView(Guid id, Guid userId, IList<string> roles)
     {
         var entityKey = AuditEventHelper.EntityKeyForItemId(id);
-        var data = (await LoadItemData([id], [], userId, roles, null, true)).FirstOrDefault();
+        var data = (await LoadItemData([id], [], userId, roles, true)).FirstOrDefault();
         NotFoundException.ThrowIfNull(data);
 
         var events = await AuditEvents
@@ -246,7 +211,7 @@ public class EfItemService<
             ))
             .AsNoTracking()
             .ToListAsync();
-        data = await PerformItemAction(data, new LoadMetadataAction());
+        data = await _executor.PerformAction(data, new LoadMetadataAction());
 
         var notes = data
             .Item.Notes.Select(n => new ItemNoteResult(
@@ -270,10 +235,10 @@ public class EfItemService<
 
     public async Task<ItemView> GetUserItem(Guid id, Guid userId, IList<string> roles)
     {
-        var data = (await LoadItemData([id], [], userId, roles, null, true)).FirstOrDefault();
+        var data = (await LoadItemData([id], [], userId, roles, true)).FirstOrDefault();
         NotFoundException.ThrowIfNull(data);
 
-        data = await PerformItemAction(data, new LoadMetadataAction());
+        data = await _executor.PerformAction(data, new LoadMetadataAction());
 
         var notes = data
             .Item.Notes.Where(x => !x.Internal)
@@ -293,23 +258,19 @@ public class EfItemService<
     }
 
     public async Task BulkPerformActions(
-        List<ItemAction> actions,
+        List<IItemAction> actions,
         Guid userId,
         IList<string> roles
     )
     {
-        var allIds = await Items.Select(x => x.Id).ToListAsync();
-        var items = await LoadItemData(allIds, actions, userId, roles, null, false);
-        foreach (var itemContext in items)
-        {
-            await ApplyItemChanges(itemContext);
-        }
+        var allIds = await Items.Select(x => x.Id).Cast<Guid?>().ToListAsync();
+        await PerformActionsInternal(allIds, actions, userId, roles, false);
         await SaveChanges();
     }
 
     public async Task AddItemNote(Guid itemId, string message, bool isInternal, Guid userId)
     {
-        var note = new TItemNote
+        var note = new ItemNote
         {
             Message = message,
             PersonId = userId,
@@ -321,301 +282,207 @@ public class EfItemService<
         await SaveChanges();
     }
 
-    public async Task<Guid> CreateItem(
-        Guid formType,
-        ItemEdit edit,
-        Guid userId,
-        IList<string> roles
-    )
-    {
-        List<ItemAction> actions =
-        [
-            EditMetadataAction.Sync(o => edit.Metadata.Deserialize(o.GetType(), FormDataJson.Options)!),
-        ];
-        if (edit.Action is { } v)
-            actions.Add(new SimpleWorkflowAction(v));
-        return await PerformActions(actions, null, userId, roles, formType);
-    }
-
-    public async Task EditItem(Guid id, ItemEdit edit, Guid userId, IList<string> roles)
-    {
-        List<ItemAction> actions =
-        [
-            EditMetadataAction.Sync(o => edit.Metadata.Deserialize(o.GetType(), FormDataJson.Options)!),
-        ];
-        if (edit.Action is { } v)
-            actions.Add(new SimpleWorkflowAction(v));
-        await PerformActions(actions, id, userId, roles);
-    }
-
     public async Task<ItemView> NewItem(Guid formType, Guid userId, IList<string> roles)
     {
-        List<ItemAction> actions = [EditMetadataAction.Sync(o => o)];
-        var id = await PerformActions(actions, null, userId, roles, formType);
-        return await GetItemView(id, userId, roles);
+        // Build an item with its default metadata shape so a subsequent GET renders the empty form.
+        List<IItemAction> actions =
+        [
+            new CreateItemAction(formType),
+            new EditMetadataAction(JsonSerializer.SerializeToElement(new { }, FormDataJson.Options)),
+        ];
+        var ids = await PerformActions([null], actions, new ItemSecurityContext(userId, roles));
+        return await GetItemView(ids[0], userId, roles);
     }
 
     public async Task<List<Guid>> GetPreviewItemIdsByType(Guid type)
     {
-        return await Items.Where(x => x.FormData.Type == type).Select(x => x.Id).Take(10).ToListAsync();
-    }
-
-    public async Task DeleteItem(Guid id)
-    {
-        var item = await Items
-            .Where(x => x.Id == id)
-            .Include(x => x.FormData)
-            .SingleOrDefaultAsync();
-        if (item != null)
-        {
-            Items.Remove(item);
-            FormDataSet.Remove(item.FormData);
-            await SaveChanges();
-        }
+        return await Items
+            .Where(x => x.FormData.Type == type)
+            .Select(x => x.Id)
+            .Take(10)
+            .ToListAsync();
     }
 
     // --- Workflow engine (shared with EfItemExportService) ---
 
-    public async Task<IEnumerable<ItemEditContext<
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote
-    >>> LoadItemData(
-        ICollection<Guid> itemIds,
-        IEnumerable<ItemAction> actions,
+    public async Task<IEnumerable<ItemEditContext>> LoadItemData(
+        IEnumerable<Guid?> itemIds,
+        IEnumerable<IItemAction> actions,
         Guid userId,
         IList<string> roles,
-        Guid? formType,
         bool forLoad,
-        TPerson? creator = null
+        Person? creator = null
     )
     {
-        if (itemIds.Count == 0)
-        {
-            var item = new TItem
-            {
-                Status = WorkflowStatuses.Draft,
-                CreatedAt = DateTime.UtcNow,
-                PersonId = userId,
-                SearchText = "",
-            };
-            var formData = new TFormData
-            {
-                Type = formType!.Value,
-                Data = "{}",
-                CreatorId = userId,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-            };
-            item.FormData = formData;
-            Items.Add(item);
-            creator ??= await Persons.Where(x => x.Id == userId).SingleAsync();
-            return
-            [
-                new ItemEditContext<
-                    TItem,
-                    TFormData,
-                    TPerson,
-                    TFormDef,
-                    TTableDef,
-                    TAuditEvent,
-                    TItemTag,
-                    TItemNote
-                >(
-                    item,
-                    [],
-                    creator,
-                    userId,
-                    roles,
-                    actions,
-                    _formRules,
-                    true,
-                    forLoad
-                ),
-            ];
-        }
+        var idList = itemIds.ToList();
+        var realIds = idList.Where(i => i.HasValue).Select(i => i!.Value).ToList();
+        var needsCreatorFetch = idList.Any(i => !i.HasValue) && creator is null;
 
-        var itemQuery = Items.Where(x => itemIds.Contains(x.Id));
-        var items = await itemQuery
-            .Include(x => x.FormData)
-            .ThenInclude(x => x.Definition)
-            .ThenInclude(x => x!.Table)
-            .Include(x => x.Notes)
-            .ThenInclude(x => x.Person)
-            .Select(x => new
+        var loaded =
+            realIds.Count > 0
+                ? await Items
+                    .Where(x => realIds.Contains(x.Id))
+                    .Include(x => x.FormData)
+                    .ThenInclude(x => x.Definition)
+                    .ThenInclude(x => x!.Table)
+                    .Include(x => x.Notes)
+                    .ThenInclude(x => x.Person)
+                    .Select(x => new
+                    {
+                        Item = x,
+                        x.FormData.Creator,
+                        Metadata = x.FormData.Data,
+                    })
+                    .ToListAsync()
+                : [];
+        var loadedLookup = loaded.ToDictionary(x => x.Item.Id);
+
+        var tags =
+            realIds.Count > 0
+                ? (await ItemTags.Where(x => realIds.Contains(x.ItemId)).ToListAsync()).ToLookup(x =>
+                    x.ItemId
+                )
+                : Enumerable.Empty<ItemTag>().ToLookup(x => x.ItemId);
+
+        if (needsCreatorFetch)
+            creator = await Persons.Where(x => x.Id == userId).SingleAsync();
+
+        var contexts = new List<ItemEditContext>();
+        foreach (var id in idList)
+        {
+            if (id is { } g)
             {
-                Item = x,
-                x.FormData.Creator,
-                Metadata = x.FormData.Data,
-            })
-            .ToListAsync();
-        var tags = await ItemTags.Where(x => itemIds.Contains(x.ItemId)).ToListAsync();
-        var tagLookup = tags.ToLookup(x => x.ItemId);
-        return items.Select(x => new ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        >(
-            x.Item,
-            tagLookup[x.Item.Id].ToList(),
-            x.Creator,
-            userId,
-            roles,
-            actions,
-            _formRules,
-            false,
-            forLoad,
-            Metadata: JsonSerializer.Deserialize<object>(x.Metadata, FormDataJson.Options)
-        ));
+                var x = loadedLookup[g];
+                contexts.Add(
+                    new ItemEditContext(
+                        x.Item,
+                        tags[x.Item.Id].ToList(),
+                        x.Creator,
+                        userId,
+                        roles,
+                        actions,
+                        _formRules,
+                        false,
+                        forLoad,
+                        Metadata: JsonSerializer.Deserialize<object>(
+                            x.Metadata,
+                            FormDataJson.Options
+                        )
+                    )
+                );
+            }
+            else
+            {
+                // Placeholder item — CreateItemAction populates it and stages the insert.
+                var item = new Item();
+                contexts.Add(
+                    new ItemEditContext(item, [], creator!, userId, roles, actions, _formRules, true, forLoad)
+                );
+            }
+        }
+        return contexts;
     }
 
-    public virtual Task<ItemEditContext<
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote
-    >> PerformItemAction(
-        ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        > context,
-        ItemAction action
+    // --- Action handlers (called via the nested Executor after its rule check) ---
+
+    /// <summary>
+    /// Materialise a fresh item entity on the placeholder carried by the context
+    /// and stage the insert. Subclasses can override to customise defaults.
+    /// </summary>
+    protected virtual Task<ItemEditContext> PerformCreate(
+        ItemEditContext context,
+        CreateItemAction action
+    )
+    {
+        var item = context.Item;
+        item.Status = ItemStatus.Draft;
+        item.CreatedAt = DateTime.UtcNow;
+        item.PersonId = context.CurrentUser;
+        item.SearchText = "";
+        item.FormData = new FormData
+        {
+            Type = action.FormType,
+            Data = "{}",
+            CreatorId = context.CurrentUser,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+        };
+        Items.Add(item);
+        return Task.FromResult(context);
+    }
+
+    protected virtual Task<ItemEditContext> PerformEditMetadata(
+        ItemEditContext context,
+        EditMetadataAction action
+    )
+    {
+        return RunMetadataActions(
+            context,
+            initial =>
+            {
+                var targetType = initial?.GetType() ?? typeof(object);
+                return Task.FromResult(
+                    action.Metadata.Deserialize(targetType, FormDataJson.Options)!
+                );
+            },
+            addEvent: true
+        );
+    }
+
+    protected virtual Task<ItemEditContext> PerformSimpleWorkflow(
+        ItemEditContext context,
+        SimpleWorkflowAction action
+    )
+    {
+        return action.Action switch
+        {
+            ItemWorkflowAction.Approve => Task.FromResult(context.ModifyStatus(ItemStatus.Approved)),
+            ItemWorkflowAction.Submit => Task.FromResult(
+                context.ModifyStatus(ItemStatus.Submitted).SetSubmittedAt()
+            ),
+            ItemWorkflowAction.Reject => Task.FromResult(context.ModifyStatus(ItemStatus.Draft)),
+            _ => throw new ArgumentOutOfRangeException(nameof(action)),
+        };
+    }
+
+    /// <summary>
+    /// Hard-deletes the item and its form data. Override to soft-delete or to
+    /// add cascade/audit semantics.
+    /// </summary>
+    protected virtual Task<ItemEditContext> PerformDelete(
+        ItemEditContext context,
+        DeleteItemAction action
+    )
+    {
+        Items.Remove(context.Item);
+        FormDataSet.Remove(context.Item.FormData);
+        return Task.FromResult(context);
+    }
+
+    /// <summary>
+    /// Routes Forms-layer actions (<see cref="LoadMetadataAction"/>,
+    /// <see cref="ExportCsvAction{T}"/>) and throws for anything else.
+    /// Subclasses can override for consumer-defined actions.
+    /// </summary>
+    protected virtual Task<ItemEditContext> HandleUnknownAction(
+        ItemEditContext context,
+        IItemAction action
     )
     {
         return action switch
         {
-            EditMetadataAction(var editFunc, var addEvent) => RunMetadataActions(
-                context,
-                editFunc,
-                addEvent
-            ),
             LoadMetadataAction => RunMetadataActions(context, null, false),
-            SimpleWorkflowAction(var workflowAction) => PerformWorkflowAction(
-                context,
-                workflowAction
+            ExportCsvAction<ItemEditContext>(var exportFunc, var addEvent)
+                => RunExportCsvAction(context, exportFunc, addEvent),
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(action),
+                $"Unknown action type: {action.GetType().Name}"
             ),
-            ExportCsvAction<ItemEditContext<
-                TItem,
-                TFormData,
-                TPerson,
-                TFormDef,
-                TTableDef,
-                TAuditEvent,
-                TItemTag,
-                TItemNote
-            >>(var exportFunc, var addEvent) => RunExportCsvAction(context, exportFunc, addEvent),
-            _ => HandleUnknownAction(context, action),
         };
     }
 
-    protected virtual Task<ItemEditContext<
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote
-    >> HandleUnknownAction(
-        ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        > context,
-        ItemAction action
-    )
-    {
-        throw new ArgumentOutOfRangeException(
-            nameof(action),
-            $"Unknown action type: {action.GetType().Name}"
-        );
-    }
-
-    private Task<ItemEditContext<
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote
-    >> PerformWorkflowAction(
-        ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        > context,
-        string workflowAction
-    )
-    {
-        if (!_workflowRules.ActionMap[workflowAction].RuleMatch(context))
-            throw new UnauthorizedException();
-
-        return workflowAction switch
-        {
-            WorkflowActions.Approve => Task.FromResult(
-                context.ModifyStatus(WorkflowStatuses.Approved)
-            ),
-            WorkflowActions.Submit => Task.FromResult(
-                context.ModifyStatus(WorkflowStatuses.Submitted).SetSubmittedAt()
-            ),
-            WorkflowActions.Reject => Task.FromResult(context.ModifyStatus(WorkflowStatuses.Draft)),
-            _ => throw new ArgumentOutOfRangeException(nameof(workflowAction)),
-        };
-    }
-
-    private async Task<ItemEditContext<
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote
-    >> RunMetadataActions(
-        ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        > context,
+    private async Task<ItemEditContext> RunMetadataActions(
+        ItemEditContext context,
         Func<object, Task<object>>? editFunc,
         bool addEvent
     )
@@ -653,16 +520,7 @@ public class EfItemService<
                 );
             }
         );
-        var finishedContext = (ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        >)finished;
+        var finishedContext = (ItemEditContext)finished;
         if (finishedContext.MetadataChanged && addEvent)
         {
             return finishedContext.AddEvent(AuditEventTypes.FormEdited, "Form data edited");
@@ -670,93 +528,25 @@ public class EfItemService<
         return finishedContext;
     }
 
-    private async Task<ItemEditContext<
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote
-    >> RunExportCsvAction(
-        ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        > context,
-        Func<
-            ItemEditContext<
-                TItem,
-                TFormData,
-                TPerson,
-                TFormDef,
-                TTableDef,
-                TAuditEvent,
-                TItemTag,
-                TItemNote
-            >,
-            Task
-        > exportFunc,
+    private async Task<ItemEditContext> RunExportCsvAction(
+        ItemEditContext context,
+        Func<ItemEditContext, Task> exportFunc,
         bool addEvent
     )
     {
         await exportFunc(context);
-        return addEvent ? context.AddEvent(AuditEventTypes.ExportForm, "Form data exported") : context;
+        return addEvent
+            ? context.AddEvent(AuditEventTypes.ExportForm, "Form data exported")
+            : context;
     }
 
-    public async Task<ItemEditContext<
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote
-    >> ApplyItemChanges(
-        ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        > context
-    )
+    public async Task<ItemEditContext> ApplyItemChanges(ItemEditContext context)
     {
-        context = await context.PerformActions(PerformItemAction);
+        context = await context.PerformActions(_executor.PerformAction);
         return await AfterItemActions(context);
     }
 
-    protected virtual async Task<ItemEditContext<
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote
-    >> AfterItemActions(
-        ItemEditContext<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        > context
-    )
+    protected virtual async Task<ItemEditContext> AfterItemActions(ItemEditContext context)
     {
         var item = context.Item;
         var itemId = item.Id;
@@ -779,7 +569,7 @@ public class EfItemService<
                 existing,
                 fields,
                 i => FieldValue.FromString(i.Tag),
-                fv => new TItemTag { ItemId = itemId, Tag = fv.ToString() }
+                fv => new ItemTag { ItemId = itemId, Tag = fv.ToString() }
             );
         }
 
@@ -787,12 +577,60 @@ public class EfItemService<
             AuditEvents.AddRange(context.Events);
         return context with { Events = null };
     }
+
+    /// <summary>
+    /// Nested executor that owns the rule-list + dispatch logic. Each concrete
+    /// handler delegates back to a virtual method on the enclosing service so
+    /// subclasses of <see cref="EfItemService"/> keep their usual extension points.
+    /// </summary>
+    private sealed class Executor
+        : AbstractItemExecutor<ItemEditContext, object?, IItemWorkflowContext>
+    {
+        private readonly EfItemService _svc;
+
+        public Executor(
+            EfItemService svc,
+            WorkflowRuleList<string, IItemWorkflowContext>? rules
+        )
+            : base(rules)
+        {
+            _svc = svc;
+        }
+
+        public override Task<IEnumerable<ItemEditContext>> LoadData(object? loadContext) =>
+            throw new NotSupportedException(
+                "Use EfItemService.LoadItemData directly; the nested executor is only a dispatch helper."
+            );
+
+        protected override IItemWorkflowContext GetWorkflowContext(ItemEditContext context) =>
+            context;
+
+        protected override Task<ItemEditContext> PerformCreate(
+            ItemEditContext context,
+            CreateItemAction action
+        ) => _svc.PerformCreate(context, action);
+
+        protected override Task<ItemEditContext> PerformEditMetadata(
+            ItemEditContext context,
+            EditMetadataAction action
+        ) => _svc.PerformEditMetadata(context, action);
+
+        protected override Task<ItemEditContext> PerformSimpleWorkflow(
+            ItemEditContext context,
+            SimpleWorkflowAction action
+        ) => _svc.PerformSimpleWorkflow(context, action);
+
+        protected override Task<ItemEditContext> PerformDelete(
+            ItemEditContext context,
+            DeleteItemAction action
+        ) => _svc.PerformDelete(context, action);
+
+        protected override Task<ItemEditContext> HandleUnknownAction(
+            ItemEditContext context,
+            IItemAction action
+        ) => _svc.HandleUnknownAction(context, action);
+    }
 }
 
-public record SimpleItemWorkflowContext(
-    string Status,
-    DateTime CreatedAt,
-    DateTime? SubmittedAt,
-    Guid CurrentUser,
-    IList<string> Roles
-) : IItemWorkflowContext;
+public record SimpleItemWorkflowContext(string Status, bool Owner, IList<string> Roles)
+    : IItemWorkflowContext;

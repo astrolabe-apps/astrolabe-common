@@ -5,7 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <Version>0.1.0</Version>
-        <Description>Entity Framework Core implementation of Astrolabe.Forms runtime (items, workflow, files, export)</Description>
+        <Description>Astrolabe Forms: concrete EF entities, item workflow, search, export, files, endpoints</Description>
         <PackageTags>forms, workflow, ef-core</PackageTags>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
@@ -17,15 +17,20 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.2" />
         <PackageReference Include="CsvHelper" Version="33.0.1" />
-        <ProjectReference Include="..\Astrolabe.EF.Search\Astrolabe.EF.Search.csproj" />
-        <ProjectReference Include="..\Astrolabe.Schemas.ExportCsv\Astrolabe.Schemas.ExportCsv.csproj" />
-        <ProjectReference Include="..\Astrolabe.FileStorage\Astrolabe.FileStorage.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Astrolabe.Forms\Astrolabe.Forms.csproj" />
+        <ProjectReference Include="..\Astrolabe.FormItems\Astrolabe.FormItems.csproj" />
+        <ProjectReference Include="..\Astrolabe.Workflow\Astrolabe.Workflow.csproj" />
+        <ProjectReference Include="..\Astrolabe.FormDesigner\Astrolabe.FormDesigner.csproj" />
         <ProjectReference Include="..\Astrolabe.FormDesigner.EF\Astrolabe.FormDesigner.EF.csproj" />
+        <ProjectReference Include="..\Astrolabe.Schemas\Astrolabe.Schemas.csproj" />
+        <ProjectReference Include="..\Astrolabe.Schemas.ExportCsv\Astrolabe.Schemas.ExportCsv.csproj" />
+        <ProjectReference Include="..\Astrolabe.SearchState\Astrolabe.SearchState.csproj" />
+        <ProjectReference Include="..\Astrolabe.EF.Search\Astrolabe.EF.Search.csproj" />
+        <ProjectReference Include="..\Astrolabe.Web.Common\Astrolabe.Web.Common.csproj" />
         <ProjectReference Include="..\Astrolabe.JSON\Astrolabe.JSON.csproj" />
+        <ProjectReference Include="..\Astrolabe.FileStorage\Astrolabe.FileStorage.csproj" />
     </ItemGroup>
 
 </Project>

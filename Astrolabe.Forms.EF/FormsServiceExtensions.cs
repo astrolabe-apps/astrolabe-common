@@ -1,4 +1,6 @@
-using Astrolabe.Forms;
+using Astrolabe.FileStorage;
+using Astrolabe.FormItems;
+using Astrolabe.Workflow;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -6,104 +8,32 @@ namespace Astrolabe.Forms.EF;
 
 public static class FormsServiceExtensions
 {
-    public static IServiceCollection AddFormsServices<
-        TDbContext,
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote,
-        TItemFile,
-        TExportDef
-    >(this IServiceCollection services)
+    public static IServiceCollection AddFormsServices<TDbContext>(this IServiceCollection services)
         where TDbContext : DbContext
-        where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
-        where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
-        where TPerson : class, IPerson, new()
-        where TFormDef : class, IFormDefinitionEntity<TTableDef>, new()
-        where TTableDef : class, ITableDefinition, new()
-        where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
-        where TItemTag : class, IItemTag, new()
-        where TItemNote : class, IItemNoteEntity<TPerson>, new()
-        where TItemFile : class, IItemFile
-        where TExportDef : class, IExportDefinitionEntity<TTableDef>, new()
     {
-        services.AddScoped<
-            EfItemService<
-                TItem,
-                TFormData,
-                TPerson,
-                TFormDef,
-                TTableDef,
-                TAuditEvent,
-                TItemTag,
-                TItemNote
-            >
-        >(sp => new EfItemService<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        >(
+        services.AddScoped<EfItemService>(sp => new EfItemService(
             sp.GetRequiredService<TDbContext>(),
             sp.GetService<IEnumerable<FormRule>>(),
-            sp.GetService<Astrolabe.Workflow.WorkflowRuleList<string, IItemWorkflowContext>>()
+            sp.GetService<WorkflowRuleList<string, IItemWorkflowContext>>()
         ));
-        services.AddScoped<IItemService>(sp =>
-            sp.GetRequiredService<EfItemService<
-                TItem,
-                TFormData,
-                TPerson,
-                TFormDef,
-                TTableDef,
-                TAuditEvent,
-                TItemTag,
-                TItemNote
-            >>()
-        );
+        services.AddScoped<IItemService>(sp => sp.GetRequiredService<EfItemService>());
+        services.AddScoped<IItemActionService>(sp => sp.GetRequiredService<EfItemService>());
 
-        services.AddScoped<IItemFileService>(sp => new EfItemFileService<TItemFile>(
+        services.AddScoped<IItemFileService>(sp => new EfItemFileService(
             sp.GetRequiredService<TDbContext>(),
-            sp.GetService<Astrolabe.FileStorage.IFileStorage<TItemFile>>()
+            sp.GetService<IFileStorage<ItemFile>>()
         ));
 
-        services.AddScoped<IItemExportService>(sp => new EfItemExportService<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote,
-            TExportDef
-        >(
+        services.AddScoped<IItemExportService>(sp => new EfItemExportService(
             sp.GetRequiredService<TDbContext>(),
-            sp.GetRequiredService<EfItemService<
-                TItem,
-                TFormData,
-                TPerson,
-                TFormDef,
-                TTableDef,
-                TAuditEvent,
-                TItemTag,
-                TItemNote
-            >>()
+            sp.GetRequiredService<EfItemService>()
         ));
 
-        services.AddScoped<IFormRenderingService>(sp => new EfFormRenderingService<
-            TFormDef,
-            TTableDef
-        >(sp.GetRequiredService<TDbContext>()));
+        services.AddScoped<IFormRenderingService>(sp => new EfFormRenderingService(
+            sp.GetRequiredService<TDbContext>()
+        ));
 
-        services.AddScoped<EfPersonService<TPerson>>(sp => new EfPersonService<TPerson>(
+        services.AddScoped<EfPersonService>(sp => new EfPersonService(
             sp.GetRequiredService<TDbContext>()
         ));
 

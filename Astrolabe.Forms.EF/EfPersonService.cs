@@ -1,10 +1,8 @@
-using Astrolabe.Forms;
 using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.Forms.EF;
 
-public class EfPersonService<TPerson>
-    where TPerson : class, IPerson, new()
+public class EfPersonService
 {
     private readonly DbContext _dbContext;
 
@@ -13,9 +11,9 @@ public class EfPersonService<TPerson>
         _dbContext = dbContext;
     }
 
-    private DbSet<TPerson> Persons => _dbContext.Set<TPerson>();
+    private DbSet<Person> Persons => _dbContext.Set<Person>();
 
-    public async Task<TPerson> GetOrCreatePerson(
+    public async Task<Person> GetOrCreatePerson(
         Guid externalId,
         string firstName,
         string lastName,
@@ -26,7 +24,7 @@ public class EfPersonService<TPerson>
 
         if (person == null)
         {
-            person = new TPerson
+            person = new Person
             {
                 ExternalId = externalId,
                 EmailAddress = email,
@@ -41,7 +39,7 @@ public class EfPersonService<TPerson>
         return person;
     }
 
-    public IEnumerable<string> RolesFromPerson(TPerson person)
+    public IEnumerable<string> RolesFromPerson(Person person)
     {
         return person.Roles.Split(",").Where(x => !string.IsNullOrWhiteSpace(x));
     }

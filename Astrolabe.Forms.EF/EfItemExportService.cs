@@ -1,5 +1,5 @@
 using System.Globalization;
-using Astrolabe.Forms;
+using Astrolabe.FormDesigner.EF;
 using Astrolabe.Schemas;
 using Astrolabe.Schemas.ExportCsv;
 using Astrolabe.SearchState;
@@ -9,59 +9,19 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.Forms.EF;
 
-public class EfItemExportService<
-    TItem,
-    TFormData,
-    TPerson,
-    TFormDef,
-    TTableDef,
-    TAuditEvent,
-    TItemTag,
-    TItemNote,
-    TExportDef
-> : IItemExportService
-    where TItem : class, IItemEntity<TPerson, TFormData, TItemTag, TItemNote>, new()
-    where TFormData : class, IFormDataEntity<TPerson, TFormDef>, new()
-    where TPerson : class, IPerson, new()
-    where TFormDef : class, IFormDefinitionEntity<TTableDef>, new()
-    where TTableDef : class, ITableDefinition, new()
-    where TAuditEvent : class, IAuditEventEntity<TPerson>, new()
-    where TItemTag : class, IItemTag, new()
-    where TItemNote : class, IItemNoteEntity<TPerson>, new()
-    where TExportDef : class, IExportDefinitionEntity<TTableDef>, new()
+public class EfItemExportService : IItemExportService
 {
     private readonly DbContext _dbContext;
-    private readonly EfItemService<
-        TItem,
-        TFormData,
-        TPerson,
-        TFormDef,
-        TTableDef,
-        TAuditEvent,
-        TItemTag,
-        TItemNote
-    > _itemService;
+    private readonly EfItemService _itemService;
 
-    public EfItemExportService(
-        DbContext dbContext,
-        EfItemService<
-            TItem,
-            TFormData,
-            TPerson,
-            TFormDef,
-            TTableDef,
-            TAuditEvent,
-            TItemTag,
-            TItemNote
-        > itemService
-    )
+    public EfItemExportService(DbContext dbContext, EfItemService itemService)
     {
         _dbContext = dbContext;
         _itemService = itemService;
     }
 
-    private DbSet<TItem> Items => _dbContext.Set<TItem>();
-    private DbSet<TExportDef> ExportDefinitions => _dbContext.Set<TExportDef>();
+    private DbSet<Item> Items => _dbContext.Set<Item>();
+    private DbSet<ExportDefinition> ExportDefinitions => _dbContext.Set<ExportDefinition>();
 
     public async Task<List<Guid>> GetExportableItemIds(SearchOptions searchOptions)
     {
@@ -69,7 +29,7 @@ public class EfItemExportService<
         q = _itemService.ItemFilter(searchOptions.Filters, q);
         q = _itemService.ApplySearchQuery(q, searchOptions.Query);
         q = _itemService.ItemSort(searchOptions.Sort, q);
-        return await q.Where(x => x.Status == WorkflowStatuses.Submitted)
+        return await q.Where(x => x.Status == ItemStatus.Submitted)
             .Select(x => x.Id)
             .ToListAsync();
     }
@@ -120,19 +80,10 @@ public class EfItemExportService<
         var columns = exportColumns.ToList();
         await csvWriter.CreateExportHeader(columns);
 
-        var actions = new List<ItemAction>
+        var actions = new List<IItemAction>
         {
             new LoadMetadataAction(),
-            new ExportCsvAction<ItemEditContext<
-                TItem,
-                TFormData,
-                TPerson,
-                TFormDef,
-                TTableDef,
-                TAuditEvent,
-                TItemTag,
-                TItemNote
-            >>(
+            new ExportCsvAction<ItemEditContext>(
                 o =>
                     csvWriter.ExportRecord(
                         columns,
@@ -145,7 +96,13 @@ public class EfItemExportService<
             ),
         };
 
-        var items = await _itemService.LoadItemData(allIds, actions, userId, roles, null, true);
+        var items = await _itemService.LoadItemData(
+            allIds.Cast<Guid?>(),
+            actions,
+            userId,
+            roles,
+            true
+        );
         foreach (var item in items)
         {
             await _itemService.ApplyItemChanges(item);

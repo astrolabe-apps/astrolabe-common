@@ -4,13 +4,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.FormDesigner.EF;
 
-public class EfFormDefinitionService<TFormDef>(DbContext dbContext) : IFormDefinitionService
-    where TFormDef : class, IFormDefinitionEntity, new()
+public class EfFormDefinitionService(DbContext dbContext) : IFormDefinitionService
 {
-    private DbSet<TFormDef> FormDefinitions => dbContext.Set<TFormDef>();
+    private DbSet<FormDefinition> FormDefinitions => dbContext.Set<FormDefinition>();
 
-    private static readonly Searcher<TFormDef, NameId> FormSearcher =
-        SearchHelper.CreateSearcher<TFormDef, NameId>(
+    private static readonly Searcher<FormDefinition, NameId> FormSearcher =
+        SearchHelper.CreateSearcher<FormDefinition, NameId>(
             async q => await q.Select(x => new NameId(x.Name!, x.Id)).ToListAsync(),
             async q => await q.CountAsync()
         );
@@ -40,7 +39,7 @@ public class EfFormDefinitionService<TFormDef>(DbContext dbContext) : IFormDefin
 
     public async Task<Guid> CreateForm(FormDefinitionEdit edit)
     {
-        var form = new TFormDef
+        var form = new FormDefinition
         {
             Id = Guid.NewGuid(),
             Name = edit.Name,

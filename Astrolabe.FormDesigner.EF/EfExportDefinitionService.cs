@@ -4,18 +4,20 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.FormDesigner.EF;
 
-public class EfExportDefinitionService<TExportDef>(DbContext dbContext) : IExportDefinitionService
-    where TExportDef : class, IExportDefinitionEntity, new()
+public class EfExportDefinitionService(DbContext dbContext) : IExportDefinitionService
 {
-    private DbSet<TExportDef> ExportDefinitions => dbContext.Set<TExportDef>();
+    private DbSet<ExportDefinition> ExportDefinitions => dbContext.Set<ExportDefinition>();
 
-    private static readonly Searcher<TExportDef, NameId> ExportSearcher =
-        SearchHelper.CreateSearcher<TExportDef, NameId>(
+    private static readonly Searcher<ExportDefinition, NameId> ExportSearcher =
+        SearchHelper.CreateSearcher<ExportDefinition, NameId>(
             async q => await q.Select(x => new NameId(x.Name, x.Id)).ToListAsync(),
             async q => await q.CountAsync()
         );
 
-    public async Task<SearchResults<NameId>> SearchExportDefinitions(SearchOptions request, bool includeTotal)
+    public async Task<SearchResults<NameId>> SearchExportDefinitions(
+        SearchOptions request,
+        bool includeTotal
+    )
     {
         return await ExportSearcher(ExportDefinitions, request, includeTotal);
     }
@@ -24,16 +26,12 @@ public class EfExportDefinitionService<TExportDef>(DbContext dbContext) : IExpor
     {
         var def = await ExportDefinitions.FindAsync(id);
         NotFoundException.ThrowIfNull(def);
-        return new ExportDefinitionEdit(
-            def.TableDefinitionId,
-            def.Name,
-            def.ExportColumns
-        );
+        return new ExportDefinitionEdit(def.TableDefinitionId, def.Name, def.ExportColumns);
     }
 
     public async Task<Guid> CreateExportDefinition(ExportDefinitionEdit edit)
     {
-        var def = new TExportDef
+        var def = new ExportDefinition
         {
             Id = Guid.NewGuid(),
             TableDefinitionId = edit.TableDefinitionId,

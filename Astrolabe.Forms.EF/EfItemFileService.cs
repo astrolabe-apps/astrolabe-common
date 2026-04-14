@@ -1,22 +1,20 @@
 using Astrolabe.FileStorage;
-using Astrolabe.Forms;
 using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.Forms.EF;
 
-public class EfItemFileService<TItemFile> : IItemFileService
-    where TItemFile : class, IItemFile
+public class EfItemFileService : IItemFileService
 {
     private readonly DbContext _dbContext;
-    private readonly IFileStorage<TItemFile>? _fileStorage;
+    private readonly IFileStorage<ItemFile>? _fileStorage;
 
-    public EfItemFileService(DbContext dbContext, IFileStorage<TItemFile>? fileStorage = null)
+    public EfItemFileService(DbContext dbContext, IFileStorage<ItemFile>? fileStorage = null)
     {
         _dbContext = dbContext;
         _fileStorage = fileStorage;
     }
 
-    private DbSet<TItemFile> ItemFiles => _dbContext.Set<TItemFile>();
+    private DbSet<ItemFile> ItemFiles => _dbContext.Set<ItemFile>();
 
     public async Task<DownloadResponse?> DownloadFile(Guid personId, Guid? itemId, Guid fileId)
     {
@@ -66,7 +64,7 @@ public class EfItemFileService<TItemFile> : IItemFileService
         }
     }
 
-    public async Task<TItemFile?> GetFile(Guid personId, Guid? itemId, Guid fileId)
+    public async Task<ItemFile?> GetFile(Guid personId, Guid? itemId, Guid fileId)
     {
         return await ItemFiles.FirstOrDefaultAsync(x =>
             x.Id == fileId && x.ItemId == itemId && x.PersonId == personId

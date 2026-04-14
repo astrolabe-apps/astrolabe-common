@@ -1,14 +1,11 @@
 using Astrolabe.Common.Exceptions;
 using Astrolabe.FormDesigner.EF;
-using Astrolabe.Forms;
 using Astrolabe.Schemas;
 using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.Forms.EF;
 
-public class EfFormRenderingService<TFormDef, TTableDef> : IFormRenderingService
-    where TFormDef : class, IFormDefinitionEntity<TTableDef>, new()
-    where TTableDef : class, ITableDefinition, new()
+public class EfFormRenderingService : IFormRenderingService
 {
     private readonly DbContext _dbContext;
 
@@ -17,7 +14,7 @@ public class EfFormRenderingService<TFormDef, TTableDef> : IFormRenderingService
         _dbContext = dbContext;
     }
 
-    private DbSet<TFormDef> FormDefinitions => _dbContext.Set<TFormDef>();
+    private DbSet<FormDefinition> FormDefinitions => _dbContext.Set<FormDefinition>();
 
     public async Task<FormAndSchemas> GetFormAndSchemas(Guid formId)
     {
