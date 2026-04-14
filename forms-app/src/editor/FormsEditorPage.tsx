@@ -113,7 +113,7 @@ export function FormsEditorPage({
   async function loadForms() {
     setLoading(true);
     try {
-      const list = await api.listForms(undefined, undefined);
+      const list = await api.listForms();
       setForms(list);
     } finally {
       setLoading(false);

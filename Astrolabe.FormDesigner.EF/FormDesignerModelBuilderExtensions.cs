@@ -25,6 +25,13 @@ public static class FormDesignerModelBuilderExtensions
                     c => c.ToList()
                 )
             );
+        modelBuilder
+            .Entity<FormDefinition>()
+            .Property(x => x.LayoutMode).HasConversion<string>();
+
+        modelBuilder
+            .Entity<FormDefinition>()
+            .Property(x => x.NavigationStyle).HasConversion<string>();
 
         return modelBuilder;
     }

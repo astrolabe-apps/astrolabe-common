@@ -88,10 +88,9 @@ export interface FormConfigData {
 /**
  * Form info for listing.
  */
-export interface FormInfoData {
+export interface NameIdData {
   id: string;
   name: string;
-  folder: string;
 }
 
 /**
@@ -126,15 +125,6 @@ export interface TableDefinitionEditData {
   nameField: string | null;
   fields: any[];
   tags: string[];
-}
-
-/**
- * Named entity with scope.
- */
-export interface ScopedNameIdData {
-  name: string;
-  id: string | null;
-  scope: string;
 }
 
 // --- Export types ---

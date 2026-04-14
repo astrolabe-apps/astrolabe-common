@@ -31,11 +31,10 @@ export type {
   ItemEditData,
   FormRenderData,
   FormConfigData,
-  FormInfoData,
+  NameIdData,
   FormDefinitionEditData,
   FormUploadData,
   TableDefinitionEditData,
-  ScopedNameIdData,
   ExportDefinitionEditData,
   ExportColumnData,
   FileOperations,
@@ -81,13 +80,7 @@ export {
   DefaultFormDefinitions,
 } from "./formdefs";
 
-export type {
-  ItemViewApi,
-  ItemEditApi,
-  ExportDashboardApi,
-  ExportEditApi,
-  FormsEditorApi,
-} from "./api";
+export type { ExportDashboardApi, ExportEditApi, FormsEditorApi } from "./api";
 
 export { FormsAppProvider, useFormsApp } from "./FormsAppProvider";
 export type { FormsAppConfig } from "./FormsAppProvider";
@@ -115,6 +108,7 @@ export {
   wrapFormControls,
   createActionWizardNavigation,
   createWorkflowActions,
+  ItemForm,
 } from "./item";
 
 export { ExportDashboardPage, ExportEditPage } from "./export";
