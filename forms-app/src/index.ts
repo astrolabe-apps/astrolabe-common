@@ -82,7 +82,7 @@ export {
 
 export type { ExportDashboardApi, ExportEditApi, FormsEditorApi } from "./api";
 
-export { FormLoaderServiceImpl, useFormLoaderService } from "./service/formLoader";
+export { useFormLoaderService, useFormLoader } from "./service/formLoader";
 export type {
   FormLoaderApi,
   FormLoaderService,

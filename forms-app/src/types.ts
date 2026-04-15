@@ -377,7 +377,7 @@ export type SchemaRegistry = Record<string, SchemaField[]>;
  * Configuration for creating a form renderer.
  */
 export interface RendererConfig {
-  createRenderer: (customRenderers?: RendererRegistration[]) => FormRenderer;
+  createRenderer: (customRenderers: RendererRegistration[]) => FormRenderer;
 }
 
 /**

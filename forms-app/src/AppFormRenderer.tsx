@@ -6,9 +6,9 @@ import {
   FieldOption,
   getSchemaNodePathString,
   RendererRegistration,
+  RenderForm,
   SchemaDataNode,
   SchemaNode,
-  useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
 import { useFormsApp } from "./service/formsApp";
@@ -46,23 +46,23 @@ export function AppFormRenderer({
   );
 
   const renderer = useMemo(() => {
-    return rendererConfig.createRenderer(customRenderers);
+    return rendererConfig.createRenderer(customRenderers ?? []);
   }, [customRenderers, rendererConfig]);
 
   schemaInterface.dynamicOptions = dynamicFieldOptions ?? {};
   schemaInterface.dynamicDataOptions = dynamicDataOptions;
 
-  const Render = useControlRendererComponent(
-    formLookup.getForm(formType)!.rootNode,
-    renderer,
-    { schemaInterface, ...renderOptions },
-    createSchemaDataNode(
-      schemaLookup.getSchemaTree(schemaName)!.rootNode,
-      control,
-    ),
+  return (
+    <RenderForm
+      renderer={renderer}
+      form={formLookup.getForm(formType)!.rootNode}
+      data={createSchemaDataNode(
+        schemaLookup.getSchemaTree(schemaName)!.rootNode,
+        control,
+      )}
+      options={{ schemaInterface, ...renderOptions }}
+    />
   );
-
-  return <Render />;
 }
 
 class DynamicOptionsSchemaInterface extends DefaultSchemaInterface {

@@ -4,15 +4,7 @@ import {
   TableDefinitionEditData,
 } from "../types";
 import { AppContext } from "@astroapps/client";
-import { useContext, useEffect } from "react";
-import { Control, useControl } from "@react-typed-forms/core";
-import {
-  createFormTree,
-  createSchemaLookup,
-  FormTree,
-  SchemaTree,
-} from "@react-typed-forms/schemas";
-import { wrapFormControls } from "../item";
+import { useContext, useMemo } from "react";
 
 /**
  * Minimal API surface needed to load form definitions and their schemas.
@@ -33,16 +25,22 @@ export interface FormLoaderService {
   invalidateTable(tableId: string): void;
 }
 
-export function useFormLoaderService() {
+export function useFormLoader(): FormLoaderService {
   const fl = useContext(AppContext).formLoader;
   if (!fl) throw new Error("FormLoaderService not available");
   return fl;
+}
+
+export function useFormLoaderService(api: FormLoaderApi): FormLoaderService {
+  return useMemo(() => {
+    return new FormLoaderServiceImpl(api);
+  }, [api]);
 }
 /**
  * Loads and caches form render data (controls + schema) by form definition ID.
  * Table schemas are also cached independently so forms sharing a table don't re-fetch.
  */
-export class FormLoaderServiceImpl implements FormLoaderService {
+class FormLoaderServiceImpl implements FormLoaderService {
   private formCache = new Map<string, Promise<FormRenderData>>();
   private tableCache = new Map<string, Promise<TableDefinitionEditData>>();
 
@@ -102,29 +100,5 @@ export class FormLoaderServiceImpl implements FormLoaderService {
       this.tableCache.set(tableId, cached);
     }
     return cached;
-  }
-}
-
-export interface ResolvedForm {
-  formTree: FormTree;
-  schemaTree: SchemaTree;
-}
-
-export function useLoadForm(formId: string): Control<ResolvedForm | undefined> {
-  const loader = useFormLoaderService();
-  const resolved = useControl<ResolvedForm>();
-  useEffect(() => {
-    loadForm(formId);
-  }, [formId]);
-  return resolved;
-
-  async function loadForm(formId: string) {
-    const { controls, layoutMode, navigationStyle, schemas, schemaName } =
-      await loader.getFormRenderData(formId);
-    const formTree = createFormTree(
-      wrapFormControls(controls, layoutMode, navigationStyle),
-    );
-    const schemaTree = createSchemaLookup(schemas).getSchema(schemaName);
-    return { formTree, schemaTree };
   }
 }
