@@ -2,8 +2,7 @@ import {
   ExportDefinitionEditData,
   ExportDefinitionGroupData,
   FormDefinitionEditData,
-  FormInfoData,
-  ScopedNameIdData,
+  NameIdData,
   TableDefinitionEditData,
 } from "./types";
 
@@ -23,7 +22,7 @@ export interface ExportDashboardApi {
 export interface ExportEditApi {
   getExportDefinition(id: string): Promise<ExportDefinitionEditData>;
   saveExportDefinition(edit: ExportDefinitionEditData): Promise<void>;
-  listTables(): Promise<ScopedNameIdData[]>;
+  listTables(): Promise<NameIdData[]>;
   getTable(id: string): Promise<TableDefinitionEditData>;
   goToExportDashboard(): void;
 }
@@ -32,7 +31,7 @@ export interface ExportEditApi {
  * API for the forms editor page.
  */
 export interface FormsEditorApi {
-  listForms(): Promise<FormInfoData[]>;
+  listForms(): Promise<NameIdData[]>;
   createForm(form: FormDefinitionEditData): Promise<string>;
   getForm(formId: string): Promise<FormDefinitionEditData>;
   editForm(formId: string, form: FormDefinitionEditData): Promise<void>;

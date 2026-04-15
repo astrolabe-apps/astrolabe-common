@@ -11,7 +11,7 @@ import {
   useControlRendererComponent,
 } from "@react-typed-forms/schemas";
 import { Control } from "@react-typed-forms/core";
-import { useFormsApp } from "./FormsAppProvider";
+import { useFormsApp } from "./service/formsApp";
 
 export type DynamicFieldOptions = {
   pathOptions?: Record<string, Control<FieldOption[]>>;

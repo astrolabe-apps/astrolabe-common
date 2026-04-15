@@ -82,8 +82,23 @@ export {
 
 export type { ExportDashboardApi, ExportEditApi, FormsEditorApi } from "./api";
 
-export { FormsAppProvider, useFormsApp } from "./FormsAppProvider";
-export type { FormsAppConfig } from "./FormsAppProvider";
+export { FormLoaderServiceImpl, useFormLoaderService } from "./service/formLoader";
+export type {
+  FormLoaderApi,
+  FormLoaderService,
+  FormLoaderContext,
+} from "./service/formLoader";
+
+export {
+  createFormsAppService,
+  useFormsAppService,
+  useFormsApp,
+} from "./service/formsApp";
+export type {
+  FormsAppConfig,
+  FormsAppService,
+  FormsAppContext,
+} from "./service/formsApp";
 
 export { AppFormRenderer } from "./AppFormRenderer";
 export type {

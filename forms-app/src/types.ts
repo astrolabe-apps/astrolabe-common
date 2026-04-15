@@ -70,7 +70,8 @@ export interface ItemEditData {
  */
 export interface FormRenderData {
   controls: ControlDefinition[];
-  config: FormConfigData;
+  layoutMode: FormLayoutMode;
+  navigationStyle: PageNavigationStyle;
   schemaName: string;
   schemas: Record<string, SchemaField[]>;
 }
@@ -99,7 +100,7 @@ export interface NameIdData {
 export interface FormDefinitionEditData {
   name: string;
   tableId: string | null;
-  controls: any[];
+  controls: ControlDefinition[];
   layoutMode: FormLayoutMode;
   navigationStyle: PageNavigationStyle;
   public: boolean;
@@ -123,7 +124,7 @@ export interface FormUploadData {
 export interface TableDefinitionEditData {
   name: string | null;
   nameField: string | null;
-  fields: any[];
+  fields: SchemaField[];
   tags: string[];
 }
 
@@ -389,7 +390,6 @@ export interface FormsAppDialogProps {
   onCancel?: () => void;
   children: ReactNode;
   actions: ReactNode;
-  [key: string]: any;
 }
 
 /**
@@ -400,7 +400,6 @@ export interface FormsAppConfirmData {
   title: string;
   action: () => void;
   children: ReactNode;
-  [key: string]: any;
 }
 
 /**

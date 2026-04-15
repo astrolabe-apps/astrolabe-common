@@ -17,7 +17,7 @@ import {
   FormTree,
   SchemaDataNode,
 } from "@react-typed-forms/schemas";
-import { useFormsApp } from "../FormsAppProvider";
+import { useFormsApp } from "../service/formsApp";
 import {
   FormConfigData,
   FormDefinitionEditData,

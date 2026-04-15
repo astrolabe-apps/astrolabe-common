@@ -30,7 +30,6 @@ public static class FormsServiceExtensions
         ));
 
         services.AddScoped<IItemFormService>(sp => new EfItemFormService(
-            sp.GetRequiredService<TDbContext>(),
             sp.GetRequiredService<EfItemService>()
         ));
 

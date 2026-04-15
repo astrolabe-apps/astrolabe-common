@@ -1,33 +1,19 @@
 using System.Text.Json;
 using Astrolabe.Common.Exceptions;
-using Astrolabe.FormDesigner;
-using Astrolabe.FormDesigner.EF;
 using Astrolabe.FormItems;
-using Astrolabe.Schemas;
-using Microsoft.EntityFrameworkCore;
 
 namespace Astrolabe.Forms.EF;
 
-public class EfItemFormService(DbContext dbContext, EfItemService itemService) : IItemFormService
+public class EfItemFormService(EfItemService itemService) : IItemFormService
 {
-    private DbSet<FormDefinition> FormDefinitions => dbContext.Set<FormDefinition>();
-
     public async Task<ItemFormView> NewItemForm(
         Guid formDefinitionId,
         ItemSecurityContext security
     )
     {
-        var (controls, schemaName, schemas, layoutMode, navStyle) =
-            await LoadFormSchema(formDefinitionId);
-
         return new ItemFormView(
             JsonSerializer.SerializeToElement(new { }, FormDataJson.Options),
-            [],
-            controls,
-            schemaName,
-            schemas,
-            layoutMode,
-            navStyle
+            []
         );
     }
 
@@ -52,51 +38,11 @@ public class EfItemFormService(DbContext dbContext, EfItemService itemService) :
             security.Roles
         );
 
-        var (controls, schemaName, schemas, layoutMode, navStyle) =
-            await LoadFormSchema(data.Item.FormData.Type);
-
         var itemData = JsonSerializer.SerializeToElement(data.Metadata, FormDataJson.Options);
 
         return new ItemFormView(
             itemData,
-            userActions.ToList(),
-            controls,
-            schemaName,
-            schemas,
-            layoutMode,
-            navStyle
-        );
-    }
-
-    private async Task<(
-        IEnumerable<object> Controls,
-        string SchemaName,
-        IDictionary<string, IEnumerable<object>> Schemas,
-        FormLayoutMode LayoutMode,
-        PageNavigationStyle NavigationStyle
-    )> LoadFormSchema(Guid formDefinitionId)
-    {
-        var formDef = await FormDefinitions
-            .Where(x => x.Id == formDefinitionId)
-            .Include(x => x.Table)
-            .AsNoTracking()
-            .SingleOrDefaultAsync();
-        NotFoundException.ThrowIfNull(formDef);
-        var tableDef = formDef.Table;
-        NotFoundException.ThrowIfNull(tableDef);
-
-        var schemaName = tableDef.Name ?? tableDef.Id.ToString();
-        var schemas = new Dictionary<string, IEnumerable<object>>
-        {
-            { schemaName, DbJson.FromJson<IEnumerable<SchemaField>>(tableDef.Fields) },
-        };
-
-        return (
-            DbJson.FromJson<IEnumerable<object>>(formDef.Definition),
-            schemaName,
-            schemas,
-            formDef.LayoutMode,
-            formDef.NavigationStyle
+            userActions.ToList()
         );
     }
 }

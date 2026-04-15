@@ -6,7 +6,7 @@ import {
   getJsonPath,
 } from "@react-typed-forms/schemas";
 import { useToast } from "@astroapps/client";
-import { useFormsApp } from "../FormsAppProvider";
+import { useFormsApp } from "../service/formsApp";
 import { makeActions } from "../types";
 import { AppFormRenderer } from "../AppFormRenderer";
 import { useDashboardSearch } from "./useDashboardSearch";
