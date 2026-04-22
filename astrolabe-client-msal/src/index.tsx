@@ -79,7 +79,7 @@ export function useMsalSecurityService(
             loggedIn: false,
             accessToken: undefined,
           }));
-          return null;
+          await new Promise((r) => setTimeout(r, 10000));
         }
         throw e;
       }
@@ -163,13 +163,5 @@ export function wrapWithMsalContext<A extends { children: ReactNode }>(
 function isReAuthRequired(e: unknown): boolean {
   if (e instanceof InteractionRequiredAuthError) return true;
   if (e instanceof ServerError && e.errorCode === "invalid_grant") return true;
-  if (e instanceof BrowserAuthError) {
-    return [
-      "monitor_window_timeout",
-      "monitor_window_hash_timeout",
-      "silent_prompt_value_error",
-      "empty_hash_error",
-    ].includes(e.errorCode);
-  }
-  return false;
+  return e instanceof BrowserAuthError;
 }
