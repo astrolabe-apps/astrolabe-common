@@ -8,9 +8,12 @@ import { MsalProvider, useMsal } from "@azure/msal-react";
 import React, { FC, ReactNode, useEffect } from "react";
 import {
   AuthenticationResult,
+  BrowserAuthError,
+  InteractionRequiredAuthError,
   IPublicClientApplication,
   PopupRequest,
   RedirectRequest,
+  ServerError,
   SilentRequest,
 } from "@azure/msal-browser";
 
@@ -64,13 +67,23 @@ export function useMsalSecurityService(
   }, [inProgress]);
   return {
     currentUser,
-    fetch: createAccessTokenFetcher(
-      async () =>
-        currentUser.current.fields.busy.value || !msal.getActiveAccount()
-          ? null
-          : getTokenFromResult(await msal.acquireTokenSilent(silentRequest)),
-      adjustRequest,
-    ),
+    fetch: createAccessTokenFetcher(async () => {
+      if (currentUser.current.fields.busy.value || !msal.getActiveAccount())
+        return null;
+      try {
+        return getTokenFromResult(await msal.acquireTokenSilent(silentRequest));
+      } catch (e) {
+        if (isReAuthRequired(e)) {
+          currentUser.setValue((cu) => ({
+            ...cu,
+            loggedIn: false,
+            accessToken: undefined,
+          }));
+          return null;
+        }
+        throw e;
+      }
+    }, adjustRequest),
     login,
     logout: async () => {
       await msal.logout();
@@ -125,7 +138,15 @@ export function useMsalSecurityService(
       const token = await msal.acquireTokenSilent(silentRequest);
       await loginWithToken(token);
     } catch (e) {
-      console.error(e);
+      currentUser.setValue((cu) => ({
+        ...cu,
+        busy: false,
+        loggedIn: false,
+        accessToken: undefined,
+      }));
+      if (!isReAuthRequired(e)) {
+        console.error(e);
+      }
     }
   }
 }
@@ -137,4 +158,18 @@ export function wrapWithMsalContext<A extends { children: ReactNode }>(
   return (props: A) => (
     <MsalProvider instance={msalInstance} children={<Component {...props} />} />
   );
+}
+
+function isReAuthRequired(e: unknown): boolean {
+  if (e instanceof InteractionRequiredAuthError) return true;
+  if (e instanceof ServerError && e.errorCode === "invalid_grant") return true;
+  if (e instanceof BrowserAuthError) {
+    return [
+      "monitor_window_timeout",
+      "monitor_window_hash_timeout",
+      "silent_prompt_value_error",
+      "empty_hash_error",
+    ].includes(e.errorCode);
+  }
+  return false;
 }
