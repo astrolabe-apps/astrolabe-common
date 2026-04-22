@@ -76,7 +76,7 @@ export function DownloadLink({
       onClick={() => downloadFile?.(file.value)}
       className={clsx(downloadFile && downloadClass)}
     >
-      {file.value.filename}
+      {file.value?.filename ?? "file.txt"}
     </div>
   );
 }

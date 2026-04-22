@@ -42,6 +42,21 @@
       "groupOptions": {
         "type": "Wizard"
       }
+    },
+    {
+      "type": "Data",
+      "title": "New",
+      "field": "file",
+      "renderOptions": {
+        "type": "Standard"
+      }
+    },
+    {
+      "type": "Data",
+      "field": "files",
+      "renderOptions": {
+        "type": "Standard"
+      }
     }
   ],
   "config": null,

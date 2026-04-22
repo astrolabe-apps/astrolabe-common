@@ -23,6 +23,7 @@ import {
   GroupRenderType,
   intField,
   makeActionHandler,
+  makeScalarField,
   SchemaField,
   SchemaFieldSchema,
   SchemaTags,
@@ -79,6 +80,7 @@ import { SchemaMap } from "../../schemas";
 import { Button } from "@astrolabe/ui/Button";
 import { SchemaFields as AllControlsSchema } from "../../setup/allControls";
 import useBreakpoint from "use-breakpoint";
+import { FormUpload } from "@astroapps/schemas-fileupload";
 
 // ControlMetricsRegistry.enableStackTraceCapture();
 
@@ -128,9 +130,13 @@ interface TestSchema {
   hideBool: boolean;
   age: number;
   guardianConsent: { guardianWillAttend: boolean };
+  file: FormUpload;
+  files: FormUpload[];
 }
 
-const TestSchema = buildSchema<TestSchema & { metaField: string }>({
+const TestSchema = buildSchema<TestSchema & { metaField: string }, "File">({
+  file: makeScalarField({ type: "File" }),
+  files: makeScalarField({ type: "File", collection: true }),
   date: dateField("Date"),
   dateTime: dateTimeField("Date Time"),
   time: timeField("Time", { tags: [SchemaTags.ControlGroup + "Nested"] }),

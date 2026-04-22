@@ -18,6 +18,7 @@ import { createSignatureRenderer } from "@astroapps/schemas-signature";
 import { createRechartsRenderer } from "@astroapps/schemas-rechart";
 import { createTurnstileRenderer } from "@astroapps/schemas-turnstile";
 import { createRecaptchaRenderer } from "@astroapps/schemas-recaptcha";
+import { createFileUploadRenderer } from "@astroapps/schemas-fileupload";
 
 export function createStdFormRenderer(container: HTMLElement | null) {
   return createFormRenderer(
@@ -48,6 +49,7 @@ export function createStdFormRenderer(container: HTMLElement | null) {
         portalContainer: container ? container : undefined,
         containerClass: "w-full",
       } as DatePickerOptions),
+      createFileUploadRenderer(),
     ],
     createDefaultRenderers(
       deepMerge<DefaultRendererOptions>(
