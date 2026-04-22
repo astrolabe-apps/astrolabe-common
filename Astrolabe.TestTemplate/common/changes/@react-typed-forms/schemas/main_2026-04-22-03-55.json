@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/schemas",
+      "comment": "Support collection=null for renderers who can do both",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@react-typed-forms/schemas"
+}

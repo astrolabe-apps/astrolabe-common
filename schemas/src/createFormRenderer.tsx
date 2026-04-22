@@ -154,8 +154,9 @@ export function createFormRenderer(
       const noMatch = x.match ? !x.match(formState, renderOptions) : undefined;
       if (noMatch === true) return false;
       const matchCollection =
+        x.collection === null ||
         (x.collection ?? false) ===
-        (dataNode.elementIndex == null && (field.collection ?? false));
+          (dataNode.elementIndex == null && (field.collection ?? false));
       const isSchemaAllowed =
         !!x.schemaType && renderType == DataRenderType.Standard
           ? isOneOf(x.schemaType, field.type)

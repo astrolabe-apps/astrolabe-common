@@ -37,6 +37,7 @@
     "@astroapps/schemas-turnstile": "workspace:*",
     "@astroapps/schemas-recaptcha": "workspace:*",
     "@astroapps/schemas-quickstream": "workspace:*",
+    "@astroapps/schemas-fileupload": "workspace:*",
     "@astrolabe/ui": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

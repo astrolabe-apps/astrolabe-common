@@ -58,7 +58,7 @@ export interface DataRendererRegistration {
   schemaType?: string | string[];
   renderType?: string | string[];
   options?: boolean;
-  collection?: boolean;
+  collection?: boolean | null;
   match?: (props: FormStateNode, renderOptions: RenderOptions) => boolean;
   render: (
     props: DataRendererProps,
