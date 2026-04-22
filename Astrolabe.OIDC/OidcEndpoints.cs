@@ -3,10 +3,8 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Astrolabe.OIDC;
@@ -96,7 +94,7 @@ public abstract class OidcEndpoints
             AuthorizationEndpoint = $"{issuer}/authorize",
             TokenEndpoint = $"{issuer}/token",
             JwksUri = $"{issuer}/.well-known/keys",
-            EndSessionEndpoint = $"{issuer}/logout"
+            EndSessionEndpoint = $"{issuer}/logout",
         };
         return Results.Json(document);
     }
@@ -126,33 +124,80 @@ public abstract class OidcEndpoints
         var codeChallengeMethod = query["code_challenge_method"].FirstOrDefault();
 
         // Validate required params
-        if (string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(redirectUri) ||
-            string.IsNullOrEmpty(responseType) || string.IsNullOrEmpty(state) ||
-            string.IsNullOrEmpty(codeChallenge) || string.IsNullOrEmpty(codeChallengeMethod))
+        if (
+            string.IsNullOrEmpty(clientId)
+            || string.IsNullOrEmpty(redirectUri)
+            || string.IsNullOrEmpty(responseType)
+            || string.IsNullOrEmpty(state)
+            || string.IsNullOrEmpty(codeChallenge)
+            || string.IsNullOrEmpty(codeChallengeMethod)
+        )
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Missing required parameters." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_request",
+                    error_description = "Missing required parameters.",
+                },
+                statusCode: 400
+            );
         }
 
         if (responseType != "code")
         {
-            return Results.Json(new { error = "unsupported_response_type", error_description = "Only 'code' response type is supported." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "unsupported_response_type",
+                    error_description = "Only 'code' response type is supported.",
+                },
+                statusCode: 400
+            );
         }
 
         if (codeChallengeMethod != "S256")
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Only S256 code challenge method is supported." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_request",
+                    error_description = "Only S256 code challenge method is supported.",
+                },
+                statusCode: 400
+            );
         }
 
         // Validate client
         var client = Config.Clients.FirstOrDefault(c => c.ClientId == clientId);
         if (client == null)
         {
-            return Results.Json(new { error = "unauthorized_client", error_description = "Unknown client_id." }, statusCode: 400);
+            return Results.Json(
+                new { error = "unauthorized_client", error_description = "Unknown client_id." },
+                statusCode: 400
+            );
         }
 
         if (!client.RedirectUris.Contains(redirectUri))
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Invalid redirect_uri." }, statusCode: 400);
+            return Results.Json(
+                new { error = "invalid_request", error_description = "Invalid redirect_uri." },
+                statusCode: 400
+            );
+        }
+
+        // prompt=none OIDC Core 3.1.2.1
+        var prompt = query[OpenIdConnectParameterNames.Prompt].FirstOrDefault();
+        if (prompt == OpenIdConnectPrompt.None)
+        {
+            var errUrl = QueryHelpers.AddQueryString(
+                redirectUri,
+                new Dictionary<string, string?>
+                {
+                    [OpenIdConnectParameterNames.Error] = "login_required",
+                    [OpenIdConnectParameterNames.State] = state,
+                }
+            );
+            return Results.Redirect(errUrl);
         }
 
         // Store authorize request
@@ -167,7 +212,7 @@ public abstract class OidcEndpoints
             Nonce = nonce,
             CodeChallenge = codeChallenge,
             CodeChallengeMethod = codeChallengeMethod,
-            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10)
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
         };
 
         var store = GetTokenStore(context);
@@ -177,13 +222,23 @@ public abstract class OidcEndpoints
         return Results.Redirect(GetLoginRedirectUrl(authorizeRequest, requestId));
     }
 
-    protected virtual async Task<IResult> HandleAuthorizeComplete(AuthorizeCompleteRequest request, HttpContext context)
+    protected virtual async Task<IResult> HandleAuthorizeComplete(
+        AuthorizeCompleteRequest request,
+        HttpContext context
+    )
     {
         var store = GetTokenStore(context);
         var authorizeRequest = await store.GetAndRemoveAuthorizeRequest(request.OidcRequestId);
         if (authorizeRequest == null)
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Invalid or expired OIDC request." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_request",
+                    error_description = "Invalid or expired OIDC request.",
+                },
+                statusCode: 400
+            );
         }
 
         // Get user claims from the user token
@@ -191,7 +246,10 @@ public abstract class OidcEndpoints
         var claims = await claimsProvider.GetClaimsFromUserToken(request.UserToken);
         if (claims == null)
         {
-            return Results.Json(new { error = "access_denied", error_description = "Invalid user token." }, statusCode: 400);
+            return Results.Json(
+                new { error = "access_denied", error_description = "Invalid user token." },
+                statusCode: 400
+            );
         }
 
         // Create and store authorization code
@@ -206,12 +264,13 @@ public abstract class OidcEndpoints
             Claims = claims,
             Scope = authorizeRequest.Scope,
             Nonce = authorizeRequest.Nonce,
-            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.AuthorizationCodeLifetimeSeconds)
+            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.AuthorizationCodeLifetimeSeconds),
         };
         await store.StoreAuthorizationCode(authCode);
 
         // Build redirect URL with code and state in hash fragment (MSAL expects fragment response mode)
-        var redirectUrl = $"{authorizeRequest.RedirectUri}#code={Uri.EscapeDataString(code)}&state={Uri.EscapeDataString(authorizeRequest.State)}";
+        var redirectUrl =
+            $"{authorizeRequest.RedirectUri}#code={Uri.EscapeDataString(code)}&state={Uri.EscapeDataString(authorizeRequest.State)}";
 
         return Results.Json(new AuthorizeCompleteResponse(redirectUrl));
     }
@@ -225,40 +284,84 @@ public abstract class OidcEndpoints
         {
             "authorization_code" => await HandleAuthorizationCodeGrant(form, context),
             "refresh_token" => await HandleRefreshTokenGrant(form, context),
-            _ => Results.Json(new { error = "unsupported_grant_type", error_description = "Unsupported grant_type." }, statusCode: 400)
+            _ => Results.Json(
+                new
+                {
+                    error = "unsupported_grant_type",
+                    error_description = "Unsupported grant_type.",
+                },
+                statusCode: 400
+            ),
         };
     }
 
-    protected virtual async Task<IResult> HandleAuthorizationCodeGrant(IFormCollection form, HttpContext context)
+    protected virtual async Task<IResult> HandleAuthorizationCodeGrant(
+        IFormCollection form,
+        HttpContext context
+    )
     {
         var code = form["code"].FirstOrDefault();
         var redirectUri = form["redirect_uri"].FirstOrDefault();
         var clientId = form["client_id"].FirstOrDefault();
         var codeVerifier = form["code_verifier"].FirstOrDefault();
 
-        if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(redirectUri) ||
-            string.IsNullOrEmpty(clientId) || string.IsNullOrEmpty(codeVerifier))
+        if (
+            string.IsNullOrEmpty(code)
+            || string.IsNullOrEmpty(redirectUri)
+            || string.IsNullOrEmpty(clientId)
+            || string.IsNullOrEmpty(codeVerifier)
+        )
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Missing required parameters." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_request",
+                    error_description = "Missing required parameters.",
+                },
+                statusCode: 400
+            );
         }
 
         var store = GetTokenStore(context);
         var authCode = await store.GetAndRemoveAuthorizationCode(code);
         if (authCode == null)
         {
-            return Results.Json(new { error = "invalid_grant", error_description = "Invalid or expired authorization code." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_grant",
+                    error_description = "Invalid or expired authorization code.",
+                },
+                statusCode: 400
+            );
         }
 
         // Validate client and redirect URI match
         if (authCode.ClientId != clientId || authCode.RedirectUri != redirectUri)
         {
-            return Results.Json(new { error = "invalid_grant", error_description = "Client ID or redirect URI mismatch." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_grant",
+                    error_description = "Client ID or redirect URI mismatch.",
+                },
+                statusCode: 400
+            );
         }
 
         // Validate PKCE
-        if (!PkceValidator.Validate(codeVerifier, authCode.CodeChallenge, authCode.CodeChallengeMethod))
+        if (
+            !PkceValidator.Validate(
+                codeVerifier,
+                authCode.CodeChallenge,
+                authCode.CodeChallengeMethod
+            )
+        )
         {
-            return Results.Json(new { error = "invalid_grant", error_description = "PKCE validation failed." }, statusCode: 400);
+            return Results.Json(
+                new { error = "invalid_grant", error_description = "PKCE validation failed." },
+                statusCode: 400
+            );
         }
 
         var signer = GetTokenSigner(context);
@@ -270,7 +373,7 @@ public abstract class OidcEndpoints
             AccessToken = accessToken,
             IdToken = idToken,
             ExpiresIn = Config.AccessTokenLifetimeSeconds,
-            Scope = authCode.Scope
+            Scope = authCode.Scope,
         };
 
         // Always issue refresh tokens for PKCE-protected clients
@@ -281,7 +384,7 @@ public abstract class OidcEndpoints
             ClientId = clientId,
             Claims = authCode.Claims,
             Scope = authCode.Scope,
-            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.RefreshTokenLifetimeSeconds)
+            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.RefreshTokenLifetimeSeconds),
         };
         await store.StoreRefreshToken(refreshToken);
         response.RefreshToken = refreshTokenValue;
@@ -289,30 +392,54 @@ public abstract class OidcEndpoints
         return Results.Json(response);
     }
 
-    protected virtual async Task<IResult> HandleRefreshTokenGrant(IFormCollection form, HttpContext context)
+    protected virtual async Task<IResult> HandleRefreshTokenGrant(
+        IFormCollection form,
+        HttpContext context
+    )
     {
         var refreshTokenValue = form["refresh_token"].FirstOrDefault();
         var clientId = form["client_id"].FirstOrDefault();
 
         if (string.IsNullOrEmpty(refreshTokenValue) || string.IsNullOrEmpty(clientId))
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Missing required parameters." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_request",
+                    error_description = "Missing required parameters.",
+                },
+                statusCode: 400
+            );
         }
 
         var store = GetTokenStore(context);
         var refreshToken = await store.GetRefreshToken(refreshTokenValue);
         if (refreshToken == null)
         {
-            return Results.Json(new { error = "invalid_grant", error_description = "Invalid or expired refresh token." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_grant",
+                    error_description = "Invalid or expired refresh token.",
+                },
+                statusCode: 400
+            );
         }
 
         if (refreshToken.ClientId != clientId)
         {
-            return Results.Json(new { error = "invalid_grant", error_description = "Client ID mismatch." }, statusCode: 400);
+            return Results.Json(
+                new { error = "invalid_grant", error_description = "Client ID mismatch." },
+                statusCode: 400
+            );
         }
 
         var signer = GetTokenSigner(context);
-        var accessToken = signer.CreateAccessToken(refreshToken.Claims, clientId, refreshToken.Scope);
+        var accessToken = signer.CreateAccessToken(
+            refreshToken.Claims,
+            clientId,
+            refreshToken.Scope
+        );
         var idToken = signer.CreateIdToken(refreshToken.Claims, clientId, null);
 
         // Refresh token rotation — issue new token, remove old one
@@ -323,7 +450,7 @@ public abstract class OidcEndpoints
             ClientId = clientId,
             Claims = refreshToken.Claims,
             Scope = refreshToken.Scope,
-            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.RefreshTokenLifetimeSeconds)
+            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.RefreshTokenLifetimeSeconds),
         };
         await store.ReplaceRefreshToken(refreshTokenValue, newRefreshToken);
 
@@ -333,7 +460,7 @@ public abstract class OidcEndpoints
             IdToken = idToken,
             RefreshToken = newRefreshTokenValue,
             ExpiresIn = Config.AccessTokenLifetimeSeconds,
-            Scope = refreshToken.Scope
+            Scope = refreshToken.Scope,
         };
 
         return Results.Json(response);
@@ -341,12 +468,16 @@ public abstract class OidcEndpoints
 
     protected virtual IResult HandleEndSession(HttpContext context)
     {
-        var postLogoutRedirectUri = context.Request.Query["post_logout_redirect_uri"].FirstOrDefault();
+        var postLogoutRedirectUri = context
+            .Request.Query["post_logout_redirect_uri"]
+            .FirstOrDefault();
 
         if (!string.IsNullOrEmpty(postLogoutRedirectUri))
         {
             // Validate the redirect URI belongs to a registered client
-            var isValid = Config.Clients.Any(c => c.PostLogoutRedirectUris.Contains(postLogoutRedirectUri));
+            var isValid = Config.Clients.Any(c =>
+                c.PostLogoutRedirectUris.Contains(postLogoutRedirectUri)
+            );
             if (isValid)
             {
                 return Results.Redirect(postLogoutRedirectUri);
@@ -361,7 +492,7 @@ public abstract class OidcEndpoints
         var providers = Config.ExternalProviders.Select(p => new
         {
             name = p.Name,
-            displayName = p.DisplayName ?? p.Name
+            displayName = p.DisplayName ?? p.Name,
         });
         return Results.Json(providers);
     }
@@ -374,14 +505,24 @@ public abstract class OidcEndpoints
 
         if (string.IsNullOrEmpty(providerName) || string.IsNullOrEmpty(oidcRequestId))
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Missing provider or oidc_request_id." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_request",
+                    error_description = "Missing provider or oidc_request_id.",
+                },
+                statusCode: 400
+            );
         }
 
         // Validate the provider exists
         var provider = Config.ExternalProviders.FirstOrDefault(p => p.Name == providerName);
         if (provider == null)
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Unknown external provider." }, statusCode: 400);
+            return Results.Json(
+                new { error = "invalid_request", error_description = "Unknown external provider." },
+                statusCode: 400
+            );
         }
 
         // Validate the authorize request exists (non-destructive peek)
@@ -389,7 +530,14 @@ public abstract class OidcEndpoints
         var authorizeRequest = await store.GetAuthorizeRequest(oidcRequestId);
         if (authorizeRequest == null)
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Invalid or expired OIDC request." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_request",
+                    error_description = "Invalid or expired OIDC request.",
+                },
+                statusCode: 400
+            );
         }
 
         // Generate state and nonce
@@ -412,7 +560,7 @@ public abstract class OidcEndpoints
             ProviderName = providerName,
             CodeVerifier = codeVerifier,
             Nonce = nonce,
-            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10)
+            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
         };
         await store.StoreExternalAuthState(externalState);
 
@@ -422,17 +570,19 @@ public abstract class OidcEndpoints
 
         // Build the external authorize URL
         var callbackUrl = $"{Config.Issuer.TrimEnd('/')}/external/callback";
-        var authorizeUrl = externalConfig.AuthorizationEndpoint
+        var authorizeUrl =
+            externalConfig.AuthorizationEndpoint
             + $"?client_id={Uri.EscapeDataString(provider.ClientId)}"
             + $"&redirect_uri={Uri.EscapeDataString(callbackUrl)}"
-            + $"&response_type=code"
+            + "&response_type=code"
             + $"&scope={Uri.EscapeDataString(provider.Scopes)}"
             + $"&state={Uri.EscapeDataString(state)}"
             + $"&nonce={Uri.EscapeDataString(nonce)}";
 
         if (provider.UsePkce && codeChallenge != null)
         {
-            authorizeUrl += $"&code_challenge={Uri.EscapeDataString(codeChallenge)}"
+            authorizeUrl +=
+                $"&code_challenge={Uri.EscapeDataString(codeChallenge)}"
                 + $"&code_challenge_method=S256";
         }
 
@@ -448,13 +598,20 @@ public abstract class OidcEndpoints
 
         if (!string.IsNullOrEmpty(error))
         {
-            var errorDescription = query["error_description"].FirstOrDefault() ?? "External authentication failed.";
-            return Results.Json(new { error, error_description = errorDescription }, statusCode: 400);
+            var errorDescription =
+                query["error_description"].FirstOrDefault() ?? "External authentication failed.";
+            return Results.Json(
+                new { error, error_description = errorDescription },
+                statusCode: 400
+            );
         }
 
         if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(stateValue))
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Missing code or state." }, statusCode: 400);
+            return Results.Json(
+                new { error = "invalid_request", error_description = "Missing code or state." },
+                statusCode: 400
+            );
         }
 
         // Retrieve and validate external auth state
@@ -462,14 +619,30 @@ public abstract class OidcEndpoints
         var externalState = await store.GetAndRemoveExternalAuthState(stateValue);
         if (externalState == null)
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Invalid or expired external auth state." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_request",
+                    error_description = "Invalid or expired external auth state.",
+                },
+                statusCode: 400
+            );
         }
 
         // Find the provider
-        var provider = Config.ExternalProviders.FirstOrDefault(p => p.Name == externalState.ProviderName);
+        var provider = Config.ExternalProviders.FirstOrDefault(p =>
+            p.Name == externalState.ProviderName
+        );
         if (provider == null)
         {
-            return Results.Json(new { error = "server_error", error_description = "External provider configuration not found." }, statusCode: 500);
+            return Results.Json(
+                new
+                {
+                    error = "server_error",
+                    error_description = "External provider configuration not found.",
+                },
+                statusCode: 500
+            );
         }
 
         // Exchange code for tokens with external provider
@@ -485,7 +658,7 @@ public abstract class OidcEndpoints
             ["grant_type"] = "authorization_code",
             ["code"] = code,
             ["redirect_uri"] = callbackUrl,
-            ["client_id"] = provider.ClientId
+            ["client_id"] = provider.ClientId,
         };
 
         if (!string.IsNullOrEmpty(provider.ClientSecret))
@@ -500,30 +673,56 @@ public abstract class OidcEndpoints
 
         var tokenRequest = new HttpRequestMessage(HttpMethod.Post, externalConfig.TokenEndpoint)
         {
-            Content = new FormUrlEncodedContent(tokenRequestParams)
+            Content = new FormUrlEncodedContent(tokenRequestParams),
         };
         tokenRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         var tokenResponse = await httpClient.SendAsync(tokenRequest);
         var tokenResponseBody = await tokenResponse.Content.ReadAsStringAsync();
-        var externalTokenResponse = JsonSerializer.Deserialize<ExternalTokenResponse>(tokenResponseBody);
+        var externalTokenResponse = JsonSerializer.Deserialize<ExternalTokenResponse>(
+            tokenResponseBody
+        );
 
         if (externalTokenResponse == null || !string.IsNullOrEmpty(externalTokenResponse.Error))
         {
-            var desc = externalTokenResponse?.ErrorDescription ?? "Failed to exchange code with external provider.";
-            return Results.Json(new { error = "server_error", error_description = desc }, statusCode: 500);
+            var desc =
+                externalTokenResponse?.ErrorDescription
+                ?? "Failed to exchange code with external provider.";
+            return Results.Json(
+                new { error = "server_error", error_description = desc },
+                statusCode: 500
+            );
         }
 
         if (string.IsNullOrEmpty(externalTokenResponse.IdToken))
         {
-            return Results.Json(new { error = "server_error", error_description = "External provider did not return an id_token." }, statusCode: 500);
+            return Results.Json(
+                new
+                {
+                    error = "server_error",
+                    error_description = "External provider did not return an id_token.",
+                },
+                statusCode: 500
+            );
         }
 
         // Validate the external id_token
-        var externalClaims = await ValidateExternalIdToken(externalTokenResponse.IdToken, provider, externalConfig, externalState.Nonce);
+        var externalClaims = await ValidateExternalIdToken(
+            externalTokenResponse.IdToken,
+            provider,
+            externalConfig,
+            externalState.Nonce
+        );
         if (externalClaims == null)
         {
-            return Results.Json(new { error = "server_error", error_description = "External id_token validation failed." }, statusCode: 500);
+            return Results.Json(
+                new
+                {
+                    error = "server_error",
+                    error_description = "External id_token validation failed.",
+                },
+                statusCode: 500
+            );
         }
 
         // Link external identity to local user
@@ -531,14 +730,30 @@ public abstract class OidcEndpoints
         var localClaims = await linker.LinkExternalUser(externalState.ProviderName, externalClaims);
         if (localClaims == null)
         {
-            return Results.Json(new { error = "access_denied", error_description = "External user could not be linked to a local account." }, statusCode: 403);
+            return Results.Json(
+                new
+                {
+                    error = "access_denied",
+                    error_description = "External user could not be linked to a local account.",
+                },
+                statusCode: 403
+            );
         }
 
         // Retrieve the original authorize request (consume it now)
-        var authorizeRequest = await store.GetAndRemoveAuthorizeRequest(externalState.OidcRequestId);
+        var authorizeRequest = await store.GetAndRemoveAuthorizeRequest(
+            externalState.OidcRequestId
+        );
         if (authorizeRequest == null)
         {
-            return Results.Json(new { error = "invalid_request", error_description = "Original OIDC request has expired." }, statusCode: 400);
+            return Results.Json(
+                new
+                {
+                    error = "invalid_request",
+                    error_description = "Original OIDC request has expired.",
+                },
+                statusCode: 400
+            );
         }
 
         // Create authorization code and redirect back to the OIDC client (same as local flow)
@@ -553,20 +768,22 @@ public abstract class OidcEndpoints
             Claims = localClaims,
             Scope = authorizeRequest.Scope,
             Nonce = authorizeRequest.Nonce,
-            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.AuthorizationCodeLifetimeSeconds)
+            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.AuthorizationCodeLifetimeSeconds),
         };
         await store.StoreAuthorizationCode(authorizationCode);
 
         // Redirect back to OIDC client with code and state
-        var redirectUrl = $"{authorizeRequest.RedirectUri}#code={Uri.EscapeDataString(authCode)}&state={Uri.EscapeDataString(authorizeRequest.State)}";
+        var redirectUrl =
+            $"{authorizeRequest.RedirectUri}#code={Uri.EscapeDataString(authCode)}&state={Uri.EscapeDataString(authorizeRequest.State)}";
         return Results.Redirect(redirectUrl);
     }
 
     protected virtual Task<IEnumerable<Claim>?> ValidateExternalIdToken(
         string idToken,
         ExternalOidcProviderConfig provider,
-        Microsoft.IdentityModel.Protocols.OpenIdConnect.OpenIdConnectConfiguration externalConfig,
-        string expectedNonce)
+        OpenIdConnectConfiguration externalConfig,
+        string expectedNonce
+    )
     {
         try
         {
@@ -578,7 +795,7 @@ public abstract class OidcEndpoints
                 ValidateIssuerSigningKey = true,
                 ValidateIssuer = provider.ValidateIssuer,
                 ValidateAudience = true,
-                ValidateLifetime = true
+                ValidateLifetime = true,
             };
 
             var handler = new JwtSecurityTokenHandler();
@@ -606,7 +823,10 @@ public abstract class OidcEndpoints
 
     protected virtual RouteHandlerBuilder MapDiscovery(RouteGroupBuilder group) =>
         group
-            .MapGet(".well-known/openid-configuration", (HttpContext context) => HandleDiscovery(context))
+            .MapGet(
+                ".well-known/openid-configuration",
+                (HttpContext context) => HandleDiscovery(context)
+            )
             .WithName("OidcDiscovery");
 
     protected virtual RouteHandlerBuilder MapJwks(RouteGroupBuilder group) =>
@@ -616,12 +836,19 @@ public abstract class OidcEndpoints
 
     protected virtual RouteHandlerBuilder MapAuthorize(RouteGroupBuilder group) =>
         group
-            .MapGet("authorize", (Delegate)(async (HttpContext context) => await HandleAuthorize(context)))
+            .MapGet(
+                "authorize",
+                (Delegate)(async (HttpContext context) => await HandleAuthorize(context))
+            )
             .WithName("OidcAuthorize");
 
     protected virtual RouteHandlerBuilder MapAuthorizeComplete(RouteGroupBuilder group) =>
         group
-            .MapPost("authorize/complete", (AuthorizeCompleteRequest request, HttpContext context) => HandleAuthorizeComplete(request, context))
+            .MapPost(
+                "authorize/complete",
+                (AuthorizeCompleteRequest request, HttpContext context) =>
+                    HandleAuthorizeComplete(request, context)
+            )
             .WithName("OidcAuthorizeComplete");
 
     protected virtual RouteHandlerBuilder MapToken(RouteGroupBuilder group) =>
@@ -641,12 +868,18 @@ public abstract class OidcEndpoints
 
     protected virtual RouteHandlerBuilder MapExternalLogin(RouteGroupBuilder group) =>
         group
-            .MapGet("external/login", (Delegate)(async (HttpContext context) => await HandleExternalLogin(context)))
+            .MapGet(
+                "external/login",
+                (Delegate)(async (HttpContext context) => await HandleExternalLogin(context))
+            )
             .WithName("OidcExternalLogin");
 
     protected virtual RouteHandlerBuilder MapExternalCallback(RouteGroupBuilder group) =>
         group
-            .MapGet("external/callback", (Delegate)(async (HttpContext context) => await HandleExternalCallback(context)))
+            .MapGet(
+                "external/callback",
+                (Delegate)(async (HttpContext context) => await HandleExternalCallback(context))
+            )
             .WithName("OidcExternalCallback");
 
     #endregion
