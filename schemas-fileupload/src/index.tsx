@@ -1,4 +1,4 @@
-import React, { ChangeEvent, DragEvent, useRef } from "react";
+import React, { ChangeEvent, DragEvent, ReactNode, useRef } from "react";
 import {
   ArrayRendererProps,
   createAction,
@@ -39,8 +39,15 @@ export interface FileUploadClasses {
   downloadClass?: string;
   errorClass?: string;
   pendingClass?: string;
+  pendingContentClass?: string;
+  pendingNameClass?: string;
   progressClass?: string;
   progressBarClass?: string;
+  renderProgress?: (
+    progress: number,
+    total: number,
+    classes: FileUploadClasses,
+  ) => ReactNode;
 }
 
 export interface FileUploadRendererOptions {
@@ -158,6 +165,20 @@ export function UploadDropZone({
   );
 }
 
+function defaultRenderProgressBar(
+  loaded: number,
+  total: number,
+  classes: FileUploadClasses,
+) {
+  const pct = total > 0 ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+
+  return (
+    <div className={classes.progressClass}>
+      <div className={classes.progressBarClass} style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
 export function PendingUploadRow({
   pending,
   classes,
@@ -169,24 +190,26 @@ export function PendingUploadRow({
   actionRenderer: FormRenderer["renderAction"];
   onCancel: () => void;
 }) {
+  const {
+    pendingClass,
+    pendingContentClass,
+    pendingNameClass,
+    errorClass,
+    renderProgress = defaultRenderProgressBar,
+  } = classes;
+
   const { file, loaded, total, error } = pending.fields;
   const errV = error.value;
-  const totalV = total.value;
-  const pct =
-    totalV > 0 ? Math.min(100, Math.round((loaded.value / totalV) * 100)) : 0;
   return (
-    <div className={classes.pendingClass}>
-      <div>{file.value.name}</div>
-      {errV ? (
-        <span className={classes.errorClass}>{errV}</span>
-      ) : (
-        <div className={classes.progressClass}>
-          <div
-            className={classes.progressBarClass}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-      )}
+    <div className={pendingClass}>
+      <div className={pendingContentClass}>
+        <div className={pendingNameClass}>{file.value.name}</div>
+        {errV ? (
+          <span className={errorClass}>{errV}</span>
+        ) : (
+          renderProgress(loaded.value, total.value, classes)
+        )}
+      </div>
       {actionRenderer(createAction(errV ? "Dismiss" : "Cancel", onCancel))}
     </div>
   );
