@@ -70,10 +70,48 @@ function logEntry(action: string, file: string) {
   });
 }
 
-const UPLOAD_FAILURE_RATE = 0.5;
+const UPLOAD_FAILURE_RATE = 0.2;
 
-async function mockUpload(f: File): Promise<FormUpload | null> {
-  await new Promise((r) => setTimeout(r, 600));
+function waitWithAbort(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Aborted", "AbortError"));
+      return;
+    }
+    const onAbort = () => {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onAbort);
+      reject(new DOMException("Aborted", "AbortError"));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener("abort", onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener("abort", onAbort);
+  });
+}
+
+async function mockUpload(
+  f: File,
+  onProgress?: (loaded: number, total: number) => void,
+  signal?: AbortSignal,
+): Promise<FormUpload | null> {
+  const duration = 2000 + Math.random() * 2000;
+  const steps = 20;
+  const stepMs = duration / steps;
+  const total = f.size || 1000;
+  onProgress?.(0, total);
+  try {
+    for (let i = 1; i <= steps; i++) {
+      await waitWithAbort(stepMs, signal);
+      onProgress?.(Math.round((i / steps) * total), total);
+    }
+  } catch (e) {
+    if (signal?.aborted) {
+      logEntry("cancelled", f.name);
+    }
+    throw e;
+  }
   if (Math.random() < UPLOAD_FAILURE_RATE) {
     logEntry("FAILED", f.name);
     throw new Error("Failed for unknown reason");

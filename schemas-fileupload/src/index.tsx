@@ -12,6 +12,8 @@ import {
 import {
   addElement,
   Control,
+  removeElement,
+  RenderElements,
   RenderOptional,
   useControl,
 } from "@react-typed-forms/core";
@@ -23,15 +25,30 @@ export interface FormUpload {
   length: number;
 }
 
+export interface PendingUpload {
+  id: string;
+  file: File;
+  loaded: number;
+  total: number;
+  error?: string | null;
+}
+
 export interface FileUploadClasses {
   uploadClass?: string;
   fileClass?: string;
   downloadClass?: string;
   errorClass?: string;
+  pendingClass?: string;
+  progressClass?: string;
+  progressBarClass?: string;
 }
 
 export interface FileUploadRendererOptions {
-  uploadFile?: (f: File) => Promise<FormUpload | null>;
+  uploadFile?: (
+    f: File,
+    onProgress?: (loaded: number, total: number) => void,
+    signal?: AbortSignal,
+  ) => Promise<FormUpload | null>;
   deleteFile?: (f: FormUpload) => Promise<any>;
   downloadFile?: (f: FormUpload) => Promise<any>;
   translateError?: (e: unknown) => string | undefined | null;
@@ -45,6 +62,9 @@ const defaultOptions = {
     fileClass: "flex space-x-4 items-center my-2",
     downloadClass: "cursor-pointer text-blue-500 underline",
     errorClass: "text-sm text-red-500",
+    pendingClass: "flex space-x-4 items-center my-2",
+    progressClass: "flex-1 h-2 bg-gray-200 rounded overflow-hidden",
+    progressBarClass: "h-full bg-blue-500 transition-all",
   },
 } satisfies FileUploadRendererOptions;
 
@@ -138,6 +158,40 @@ export function UploadDropZone({
   );
 }
 
+export function PendingUploadRow({
+  pending,
+  classes,
+  actionRenderer,
+  onCancel,
+}: {
+  pending: Control<PendingUpload>;
+  classes: FileUploadClasses;
+  actionRenderer: FormRenderer["renderAction"];
+  onCancel: () => void;
+}) {
+  const { file, loaded, total, error } = pending.fields;
+  const errV = error.value;
+  const totalV = total.value;
+  const pct =
+    totalV > 0 ? Math.min(100, Math.round((loaded.value / totalV) * 100)) : 0;
+  return (
+    <div className={classes.pendingClass}>
+      <div>{file.value.name}</div>
+      {errV ? (
+        <span className={classes.errorClass}>{errV}</span>
+      ) : (
+        <div className={classes.progressClass}>
+          <div
+            className={classes.progressBarClass}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
+      {actionRenderer(createAction(errV ? "Dismiss" : "Cancel", onCancel))}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Renderer
 // ---------------------------------------------------------------------------
@@ -179,12 +233,15 @@ function FormUploadArray({
     translateError = defaultTranslateError,
   } = mergeOptions(options);
   const arrayControl = control.as<FormUpload[]>();
+  const pending = useControl<PendingUpload[]>([]);
+  const abortControllers = useRef(new Map<string, AbortController>());
   const length = formNode.getChildCount();
   const lengthRestrictions = getLengthRestrictions(definition);
-  const uploadError = useControl<string | null>();
   const { max } = lengthRestrictions;
   const disabled = formNode.disabled;
-  const canAdd = !readonly && !disabled && (max == null || length < max);
+  const pendingCount = pending.elements.length;
+  const canAdd =
+    !readonly && !disabled && (max == null || length + pendingCount < max);
 
   const baseActions = createArrayActions(
     arrayControl,
@@ -232,29 +289,71 @@ function FormUploadArray({
       }}
     >
       {renderer.renderArray(arrayProps)}
+      <RenderElements control={pending}>
+        {(pendingCtrl) => (
+          <PendingUploadRow
+            pending={pendingCtrl}
+            classes={classes}
+            actionRenderer={renderer.renderAction}
+            onCancel={() => cancelPending(pendingCtrl)}
+          />
+        )}
+      </RenderElements>
       {canAdd && (
         <UploadDropZone
           uploadFile={doUpload}
           readonly={readonly}
           title={"Add a file..."}
           classes={classes}
-          error={uploadError.value}
         />
       )}
     </div>
   );
 
+  function cancelPending(pendingCtrl: Control<PendingUpload>) {
+    const id = pendingCtrl.fields.id.value;
+    const controller = abortControllers.current.get(id);
+    if (controller && !pendingCtrl.fields.error.value) {
+      controller.abort();
+    } else {
+      abortControllers.current.delete(id);
+      removeElement(pending, pendingCtrl);
+    }
+  }
+
   async function doUpload(f: File) {
     if (!uploadFile) throw "Must supply an uploadFile()";
-    let err: string | null | undefined = null;
+    const id = crypto.randomUUID();
+    const controller = new AbortController();
+    abortControllers.current.set(id, controller);
+    const pendingCtrl = addElement(pending, {
+      id,
+      file: f,
+      loaded: 0,
+      total: f.size,
+      error: null,
+    });
     try {
-      const result = await uploadFile(f);
+      const result = await uploadFile(
+        f,
+        (loaded, total) => {
+          pendingCtrl.fields.loaded.value = loaded;
+          pendingCtrl.fields.total.value = total;
+        },
+        controller.signal,
+      );
+      abortControllers.current.delete(id);
+      removeElement(pending, pendingCtrl);
       if (result) addElement(arrayControl, result);
     } catch (e) {
-      err = translateError(e);
+      abortControllers.current.delete(id);
+      if (controller.signal.aborted) {
+        removeElement(pending, pendingCtrl);
+      } else {
+        pendingCtrl.fields.error.value = translateError(e) ?? "Upload failed";
+      }
     }
     arrayControl.touched = true;
-    uploadError.value = err;
   }
 }
 
@@ -276,41 +375,87 @@ function FormUploader({
     classes,
     translateError = defaultTranslateError,
   } = mergeOptions(options);
+  const pending = useControl<PendingUpload | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   return (
     <RenderOptional
-      control={control}
+      control={pending}
       notDefined={
-        <UploadDropZone
-          uploadFile={doUpload}
-          readonly={readonly}
-          classes={classes}
+        <RenderOptional
+          control={control}
+          notDefined={
+            <UploadDropZone
+              uploadFile={doUpload}
+              readonly={readonly}
+              classes={classes}
+            />
+          }
+          children={(c) => (
+            <UploadedFileRow
+              file={c}
+              downloadFile={downloadFile}
+              classes={classes}
+              divRef={(e) => {
+                control.element = e;
+              }}
+              actionRenderer={actionRenderer}
+              deleteFile={!readonly ? doDeleteFile : undefined}
+            />
+          )}
         />
       }
-      children={(c) => (
-        <UploadedFileRow
-          file={c}
-          downloadFile={downloadFile}
+      children={(p) => (
+        <PendingUploadRow
+          pending={p}
           classes={classes}
-          divRef={(e) => {
-            control.element = e;
-          }}
           actionRenderer={actionRenderer}
-          deleteFile={!readonly ? doDeleteFile : undefined}
+          onCancel={cancelPending}
         />
       )}
     />
   );
 
+  function cancelPending() {
+    if (pending.value?.error) {
+      pending.value = null;
+    } else {
+      abortControllerRef.current?.abort();
+    }
+  }
+
   async function doUpload(f: File) {
     if (!uploadFile) throw "Must supply an uploadFile()";
-    let err: string | null | undefined = null;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    pending.value = {
+      id: crypto.randomUUID(),
+      file: f,
+      loaded: 0,
+      total: f.size,
+      error: null,
+    };
     try {
-      control.value = await uploadFile(f);
+      const result = await uploadFile(
+        f,
+        (loaded, total) => {
+          if (!pending.value) return;
+          pending.fields.loaded.value = loaded;
+          pending.fields.total.value = total;
+        },
+        controller.signal,
+      );
+      pending.value = null;
+      control.value = result;
     } catch (e) {
-      err = translateError(e);
+      if (controller.signal.aborted) {
+        pending.value = null;
+      } else if (pending.value) {
+        pending.fields.error.value = translateError(e) ?? "Upload failed";
+      }
     }
+    abortControllerRef.current = null;
     control.touched = true;
-    control.setError("upload", err);
   }
 
   async function doDeleteFile(f: FormUpload) {

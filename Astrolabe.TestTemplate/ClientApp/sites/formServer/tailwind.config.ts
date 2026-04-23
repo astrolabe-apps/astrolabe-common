@@ -17,6 +17,7 @@ const config: Config = {
     "node_modules/@astrolabe/ui/src/table/*.tsx",
     "node_modules/@astroapps/schemas-datepicker/lib/*.js",
     "node_modules/@astroapps/schemas-datagrid/lib/*.js",
+    "node_modules/@astroapps/schemas-fileupload/lib/*.js",
   ],
   presets: [ti],
   theme: {
