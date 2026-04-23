@@ -1,8 +1,8 @@
-import React, { ChangeEvent, DragEvent, ReactNode, useRef } from "react";
+import React, { ChangeEvent, DragEvent, useRef } from "react";
 import {
   ArrayRendererProps,
-  createArrayActions,
   createAction,
+  createArrayActions,
   createDataRenderer,
   DataRendererProps,
   deepMerge,
@@ -46,8 +46,8 @@ export interface FileUploadClasses {
 export interface FileUploadRendererOptions {
   uploadFile?: (
     f: File,
-    onProgress?: (loaded: number, total: number) => void,
-    signal?: AbortSignal,
+    onProgress: (loaded: number, total: number) => void,
+    signal: AbortSignal,
   ) => Promise<FormUpload | null>;
   deleteFile?: (f: FormUpload) => Promise<any>;
   downloadFile?: (f: FormUpload) => Promise<any>;
