@@ -58,7 +58,7 @@ export interface FileUploadRendererOptions {
 const defaultOptions = {
   classes: {
     uploadClass:
-      "border border-black border-dashed w-full mb-2 p-2 text-center",
+      "border border-black border-dashed w-full my-2 p-2 text-center",
     fileClass: "flex space-x-4 items-center my-2",
     downloadClass: "cursor-pointer text-blue-500 underline",
     errorClass: "text-sm text-red-500",
