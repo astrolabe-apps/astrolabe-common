@@ -17,7 +17,8 @@ public record FormDefinitionEdit(
     bool Public,
     bool Published,
     FormLayoutMode LayoutMode,
-    PageNavigationStyle NavigationStyle
+    PageNavigationStyle NavigationStyle,
+    string? SystemId = null
 )
 {
     [JsonExtensionData]

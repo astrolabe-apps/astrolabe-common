@@ -33,7 +33,8 @@ public class EfFormDefinitionService(DbContext dbContext) : IFormDefinitionServi
             form.Public,
             form.Published,
             form.LayoutMode,
-            form.NavigationStyle
+            form.NavigationStyle,
+            form.SystemId
         );
     }
 
@@ -44,12 +45,13 @@ public class EfFormDefinitionService(DbContext dbContext) : IFormDefinitionServi
             Id = Guid.NewGuid(),
             Name = edit.Name,
             TableId = edit.TableId,
-            Definition = DbJson.ToJson(edit.Controls),
+            Definition = edit.SystemId != null ? "[]" : DbJson.ToJson(edit.Controls),
             Version = 1,
             Public = edit.Public,
             Published = edit.Published,
             LayoutMode = edit.LayoutMode,
             NavigationStyle = edit.NavigationStyle,
+            SystemId = edit.SystemId,
         };
         FormDefinitions.Add(form);
         await dbContext.SaveChangesAsync();
@@ -64,7 +66,7 @@ public class EfFormDefinitionService(DbContext dbContext) : IFormDefinitionServi
         NotFoundException.ThrowIfNull(form);
         form.Name = edit.Name;
         form.TableId = edit.TableId;
-        form.Definition = DbJson.ToJson(edit.Controls);
+        form.Definition = form.SystemId != null ? "[]" : DbJson.ToJson(edit.Controls);
         form.Public = edit.Public;
         form.Published = edit.Published;
         form.LayoutMode = edit.LayoutMode;

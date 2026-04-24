@@ -12,6 +12,9 @@ public class FormDefinition
     [StringLength(255)]
     public string? Name { get; set; }
 
+    [StringLength(255)]
+    public string? SystemId { get; set; }
+
     public int Version { get; set; }
 
     public TableDefinition? Table { get; set; }
