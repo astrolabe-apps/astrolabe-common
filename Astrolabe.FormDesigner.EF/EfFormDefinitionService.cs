@@ -83,4 +83,30 @@ public class EfFormDefinitionService(DbContext dbContext) : IFormDefinitionServi
             await dbContext.SaveChangesAsync();
         }
     }
+
+    public async Task<Guid> GetOrCreateSystemForm(string systemId)
+    {
+        var existing = await FormDefinitions
+            .Where(x => x.SystemId == systemId)
+            .Select(x => (Guid?)x.Id)
+            .FirstOrDefaultAsync();
+        if (existing.HasValue)
+            return existing.Value;
+
+        var form = new FormDefinition
+        {
+            Id = Guid.NewGuid(),
+            Name = systemId,
+            SystemId = systemId,
+            Definition = "[]",
+            Version = 1,
+            Public = false,
+            Published = true,
+            LayoutMode = FormLayoutMode.SinglePage,
+            NavigationStyle = PageNavigationStyle.Wizard,
+        };
+        FormDefinitions.Add(form);
+        await dbContext.SaveChangesAsync();
+        return form.Id;
+    }
 }

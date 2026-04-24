@@ -9,4 +9,5 @@ public interface IFormDefinitionService
     Task<Guid> CreateForm(FormDefinitionEdit edit);
     Task EditForm(Guid formId, FormDefinitionEdit edit);
     Task DeleteForm(Guid formId);
+    Task<Guid> GetOrCreateSystemForm(string systemId);
 }
