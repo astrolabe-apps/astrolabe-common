@@ -21,6 +21,7 @@ export class DefaultSchemaInterface implements SchemaInterface {
         return Number.NaN;
       }
     },
+    protected arraySeparator: string = ", ",
   ) {}
 
   parseToMillis(field: SchemaField, v: string): number {
@@ -101,6 +102,13 @@ export class DefaultSchemaInterface implements SchemaInterface {
     element?: boolean | undefined,
     options?: FieldOption[] | null,
   ): string | undefined {
+    if (field.collection && !element) {
+      if (!Array.isArray(value)) return undefined;
+      return value
+        .map((v) => this.textValue(field, v, true, options))
+        .filter((x): x is string => Boolean(x))
+        .join(this.arraySeparator);
+    }
     const actualOptions = options ?? this.getOptions(field);
     const option = actualOptions?.find((x) => x.value === value);
     if (option) return option.name;

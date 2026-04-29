@@ -408,6 +408,14 @@
           "groupOptions": {
             "type": "Standard"
           }
+        },
+        {
+          "type": "Data",
+          "title": "Display strings",
+          "field": "stringArray",
+          "renderOptions": {
+            "type": "DisplayOnly"
+          }
         }
       ],
       "groupOptions": {
