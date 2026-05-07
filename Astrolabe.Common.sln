@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# 
+#
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Common", "Astrolabe.Common\Astrolabe.Common.csproj", "{89795D0C-1C96-4DB4-B663-5D0529A43CFA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.TestTemplate", "Astrolabe.TestTemplate\Astrolabe.TestTemplate.csproj", "{8241904A-41CC-4237-938E-8D46871CDDA0}"
@@ -64,8 +64,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.OIDC", "Astrolabe.OIDC\Astrolabe.OIDC.csproj", "{08F0A1D2-AF76-457C-A65D-023DDBF1382C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.OIDC.EF", "Astrolabe.OIDC.EF\Astrolabe.OIDC.EF.csproj", "{EFEB1794-7E42-4479-8065-14471BD7E409}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.Forms", "Astrolabe.Forms\Astrolabe.Forms.csproj", "{619E0243-BB76-4429-9CA1-D7B6144FDB0D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Astrolabe.FormDesigner", "Astrolabe.FormDesigner\Astrolabe.FormDesigner.csproj", "{E195F109-AD42-4449-A532-9FE354697802}"
 EndProject
@@ -205,10 +203,6 @@ Global
 		{EFEB1794-7E42-4479-8065-14471BD7E409}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EFEB1794-7E42-4479-8065-14471BD7E409}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EFEB1794-7E42-4479-8065-14471BD7E409}.Release|Any CPU.Build.0 = Release|Any CPU
-		{619E0243-BB76-4429-9CA1-D7B6144FDB0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{619E0243-BB76-4429-9CA1-D7B6144FDB0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{619E0243-BB76-4429-9CA1-D7B6144FDB0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{619E0243-BB76-4429-9CA1-D7B6144FDB0D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E195F109-AD42-4449-A532-9FE354697802}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E195F109-AD42-4449-A532-9FE354697802}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E195F109-AD42-4449-A532-9FE354697802}.Release|Any CPU.ActiveCfg = Release|Any CPU
