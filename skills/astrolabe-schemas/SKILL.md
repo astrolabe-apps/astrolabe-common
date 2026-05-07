@@ -263,24 +263,27 @@ var emailField = new SimpleSchemaField(FieldType.String.ToString(), "email")
 };
 ```
 
-### Exporting Schemas to TypeScript
+### Generating TypeScript Schemas from C# Types
+
+Schemas are not built by hand from `SimpleSchemaField` for TypeScript export — that pattern is for runtime use only. To emit `.ts` files consumable by `@react-typed-forms/schemas`, use `SchemaFieldsGenerator` from `Astrolabe.Schemas.CodeGen`.
 
 ```csharp
+using Astrolabe.CodeGen.Typescript;
 using Astrolabe.Schemas;
-using System.Text.Json;
+using Astrolabe.Schemas.CodeGen;
 
-// Serialize schema to JSON for TypeScript consumption
-var schema = SchemaBuilder.Build<UserProfile>(/* ... */);
-
-var json = JsonSerializer.Serialize(schema, new JsonSerializerOptions
-{
-    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    WriteIndented = true
-});
-
-// Write to file or API response
-await File.WriteAllTextAsync("schemas/userProfile.json", json);
+// Emit a .ts module with `buildSchema<T>(...)` calls for each registered type.
+var gen = new SchemaFieldsGenerator(new SchemaFieldsGeneratorOptions("./client"));
+var allGenSchemas = gen
+    .CollectDataForTypes(typeof(UserProfile), typeof(OtherForm))
+    .ToList();
+var file = TsFile.FromDeclarations(
+    GeneratedSchema.ToDeclarations(allGenSchemas, "SchemaMap").ToList()
+);
+var sourceText = file.ToSource(); // write to schemas.ts
 ```
+
+The companion API is `FormBuilder<TConfig>.Form<TSchema>(value, name, config)` and `FormDefinition.GenerateFormModule(...)` — these emit a TypeScript module that ties each schema to a `ControlDefinition[]` JSON. See the [appforms-bootstrap](../appforms-bootstrap/SKILL.md) skill for the full controller and codegen flow.
 
 ## Best Practices
 
@@ -341,12 +344,12 @@ new SimpleSchemaField(FieldType.String.ToString(), "firstName")
 - **Solution**: Ensure the enum is a standard C# enum type and properly referenced in the schema builder
 
 **Issue: TypeScript can't import schema JSON**
-- **Cause**: Schema not serialized with camelCase naming
-- **Solution**: Use `JsonNamingPolicy.CamelCase` when serializing
+- **Cause**: Schema not generated through `SchemaFieldsGenerator` / `GeneratedSchema.ToDeclarations`
+- **Solution**: Don't hand-serialize `SchemaField` records — emit a `.ts` module via the CodeGen pipeline so the output uses the `buildSchema`/`makeScalarField` helpers from `@react-typed-forms/schemas`.
 
 **Issue: Nested objects not rendering correctly**
 - **Cause**: Compound field not properly defined
-- **Solution**: Use `builder.Compound()` for nested objects, not regular `Field()`
+- **Solution**: Use `CompoundField` (with a `Children` collection) for nested objects, not `SimpleSchemaField`.
 
 ## Project Structure Location
 

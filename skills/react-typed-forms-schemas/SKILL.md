@@ -42,21 +42,25 @@ Type-safe helper for defining schemas from TypeScript interfaces, ensuring consi
 
 ### Basic Schema-Driven Form
 
-```typescript
+```tsx
 import { useControl } from "@react-typed-forms/core";
 import {
   buildSchema,
-  createDefaultRenderers,
   createFormRenderer,
-  defaultFormEditHooks,
-  defaultTailwindTheme,
+  createFormTree,
+  createSchemaDataNode,
+  createSchemaTree,
   defaultValueForFields,
   FormRenderer,
   intField,
-  renderControl,
+  RenderForm,
   stringField,
   useControlDefinitionForSchema,
 } from "@react-typed-forms/schemas";
+import {
+  createDefaultRenderers,
+  defaultTailwindTheme,
+} from "@react-typed-forms/schemas-html";
 
 // 1. Define your form interface
 interface SimpleForm {
@@ -72,37 +76,40 @@ const simpleSchema = buildSchema<SimpleForm>({
   yearOfBirth: intField("Year of birth", { defaultValue: 1980 }),
 });
 
-// 3. Create renderer (Tailwind-based)
+// 3. Create renderer (Tailwind-based, lives in @react-typed-forms/schemas-html)
 const renderer: FormRenderer = createFormRenderer(
   [],
   createDefaultRenderers(defaultTailwindTheme),
 );
 
-// 4. Use in component
-export default function SimpleSchemasExample() {
-  // Create form state with default values from schema
-  const data = useControl<SimpleForm>(() =>
-    defaultValueForFields(simpleSchema),
-  );
+// 4. Build the schema tree once at module scope
+const schemaTree = createSchemaTree(simpleSchema);
 
-  // Generate control definition from schema
+// 5. Use in component
+export default function SimpleSchemasExample() {
+  const data = useControl<SimpleForm>(() => defaultValueForFields(simpleSchema));
+
+  // Auto-generate a GroupedControlsDefinition from the schema (one Data control per field)
   const controlDefinition = useControlDefinitionForSchema(simpleSchema);
+  const formTree = useMemo(
+    () => createFormTree([controlDefinition]),
+    [controlDefinition],
+  );
 
   return (
     <div className="container my-4 max-w-2xl">
-      {/* Render the form */}
-      {renderControl(controlDefinition, data, {
-        fields: simpleSchema,
-        renderer,
-        hooks: defaultFormEditHooks,
-      })}
-
-      {/* Show current values */}
+      <RenderForm
+        data={createSchemaDataNode(schemaTree.rootNode, data)}
+        form={formTree.rootNode}
+        renderer={renderer}
+      />
       <pre>{JSON.stringify(data.value, null, 2)}</pre>
     </div>
   );
 }
 ```
+
+> **Note:** The legacy `renderControl(definition, control, { fields, renderer, hooks })` function and the `defaultFormEditHooks` export no longer exist. Rendering now goes through the `<RenderForm>` React component (or `<RenderFormNode>` if you have a pre-built `FormStateNode`). Internally `RenderForm` builds the `FormStateNode` for you from `data` (a `SchemaDataNode`) and `form` (a `FormNode`).
 
 ### Field Types and Options
 
@@ -195,55 +202,56 @@ const userSchema = buildSchema<UserForm>({
 });
 ```
 
-### Custom Renderers for Different UI Frameworks
+### Custom Renderers
 
-```typescript
-import {
-  createFormRenderer,
-  createDefaultRenderers,
-  DataRendererRegistration,
-  FieldType,
-  DataRenderType,
-} from "@react-typed-forms/schemas";
+Use `createDataRenderer` (or the matching `createGroupRenderer`, `createDisplayRenderer`, `createActionRenderer`, `createAdornmentRenderer`, `createLayoutRenderer`) to register a custom renderer keyed on `schemaType`, `renderType`, or a `match(node, renderOptions)` predicate. The render function receives `(props, renderers)` — labels, visibility, and validation are handled by the surrounding layout pipeline, not by the renderer.
 
-// Material-UI TextField renderer
+```tsx
 import { TextField } from "@mui/material";
+import {
+  createDataRenderer,
+  createFormRenderer,
+  DataRendererProps,
+  FieldType,
+} from "@react-typed-forms/schemas";
+import { createDefaultRenderers, defaultTailwindTheme }
+  from "@react-typed-forms/schemas-html";
 
-const muiTextFieldRenderer: DataRendererRegistration = {
-  type: "data",
-  schemaType: FieldType.String,
-  renderType: DataRenderType.Standard,
-  render: (props, makeLabel, { renderVisibility }) => {
-    const { title, required } = makeLabel();
+const muiTextFieldRenderer = createDataRenderer(
+  (props: DataRendererProps) => (
+    <TextField
+      fullWidth
+      required={props.required}
+      value={props.control.value ?? ""}
+      onChange={(e) => props.control.setValue(e.target.value)}
+      error={!!props.control.error}
+      helperText={props.control.error}
+    />
+  ),
+  { schemaType: FieldType.String, renderType: "Standard" },
+);
 
-    return renderVisibility(
-      props.visible,
-      <TextField
-        fullWidth
-        required={required}
-        label={title}
-        value={props.control.value ?? ""}
-        onChange={(e) => props.control.setValue(e.target.value)}
-        error={!!props.control.error}
-        helperText={props.control.error}
-      />,
-    );
-  },
-};
-
-// Create renderer with custom MUI renderer
 const muiRenderer = createFormRenderer(
   [muiTextFieldRenderer],
   createDefaultRenderers(defaultTailwindTheme),
 );
 ```
 
+Pin to a specific `renderOptions.type` (e.g. `renderType: "Switch"` for a custom toggle) by setting it on the schema's render options or in the form JSON. See the [appforms-bootstrap](../appforms-bootstrap/SKILL.md) skill for the full renderer wiring.
+
 ### Consuming C# Generated Schemas
 
-```typescript
+```tsx
 import { useControl } from "@react-typed-forms/core";
-import { renderControl, useControlDefinitionForSchema } from "@react-typed-forms/schemas";
-import userProfileSchema from "./schemas/userProfile.json";
+import {
+  createFormTree,
+  createSchemaDataNode,
+  createSchemaLookup,
+  defaultValueForFields,
+  RenderForm,
+  useControlDefinitionForSchema,
+} from "@react-typed-forms/schemas";
+import { SchemaMap } from "./schemas"; // generated by SchemaFieldsGenerator
 
 interface UserProfile {
   firstName: string;
@@ -253,34 +261,48 @@ interface UserProfile {
   role: string;
 }
 
+const schemaLookup = createSchemaLookup(SchemaMap);
+const userProfileTree = schemaLookup.getSchema("UserProfile")!;
+const userProfileFields = SchemaMap.UserProfile;
+
 function UserProfileForm() {
-  // Use schema from C# Astrolabe.Schemas
   const data = useControl<UserProfile>(() =>
-    defaultValueForFields(userProfileSchema),
+    defaultValueForFields(userProfileFields),
+  );
+  const controlDefinition = useControlDefinitionForSchema(userProfileFields);
+  const formTree = useMemo(
+    () => createFormTree([controlDefinition]),
+    [controlDefinition],
   );
 
-  const controlDefinition = useControlDefinitionForSchema(userProfileSchema);
-
   return (
-    <div>
-      {renderControl(controlDefinition, data, {
-        fields: userProfileSchema,
-        renderer: myRenderer,
-      })}
-    </div>
+    <RenderForm
+      data={createSchemaDataNode(userProfileTree, data)}
+      form={formTree.rootNode}
+      renderer={myRenderer}
+    />
   );
 }
 ```
 
+> When you generated `schemas.ts` via `SchemaFieldsGenerator`, the `SchemaMap` constant contains a `SchemaField[]` for each registered C# type. `createSchemaLookup(SchemaMap).getSchema(name)` returns the `SchemaNode` to root your form on; `SchemaMap[name]` gives the raw `SchemaField[]` for `defaultValueForFields` and `useControlDefinitionForSchema`.
+
 ### Custom Control Definitions (Layout)
 
-```typescript
+Use the `dataControl` / `groupedControl` builder helpers — they're tagged with the right `type` discriminants (`"Data"` / `"Group"`, capitalised) and play nicely with TypeScript without casts.
+
+```tsx
 import {
   buildSchema,
-  stringField,
+  createFormTree,
+  createSchemaDataNode,
+  createSchemaTree,
+  dataControl,
+  defaultValueForFields,
+  groupedControl,
   intField,
-  GroupedControlsDefinition,
-  DataControlDefinition,
+  RenderForm,
+  stringField,
 } from "@react-typed-forms/schemas";
 
 interface EmployeeForm {
@@ -299,40 +321,35 @@ const employeeSchema = buildSchema<EmployeeForm>({
   salary: intField("Salary"),
 });
 
-// Custom layout with groups
-const customLayout: GroupedControlsDefinition = {
-  type: "group",
-  title: "Employee Information",
-  children: [
-    // Personal info group
-    {
-      type: "group",
-      title: "Personal Information",
-      children: [
-        { type: "data", field: "firstName" } as DataControlDefinition,
-        { type: "data", field: "lastName" } as DataControlDefinition,
-        { type: "data", field: "email" } as DataControlDefinition,
-      ],
-    },
-    // Employment info group
-    {
-      type: "group",
-      title: "Employment Information",
-      children: [
-        { type: "data", field: "department" } as DataControlDefinition,
-        { type: "data", field: "salary" } as DataControlDefinition,
-      ],
-    },
+const employeeSchemaTree = createSchemaTree(employeeSchema);
+
+const customLayout = groupedControl(
+  [
+    groupedControl(
+      [dataControl("firstName"), dataControl("lastName"), dataControl("email")],
+      "Personal Information",
+    ),
+    groupedControl(
+      [dataControl("department"), dataControl("salary")],
+      "Employment Information",
+    ),
   ],
-};
+  "Employee Information",
+);
 
-function EmployeeForm() {
-  const data = useControl<EmployeeForm>(defaultValueForFields(employeeSchema));
+const employeeFormTree = createFormTree([customLayout]);
 
-  return renderControl(customLayout, data, {
-    fields: employeeSchema,
-    renderer: myRenderer,
-  });
+function EmployeeFormView() {
+  const data = useControl<EmployeeForm>(() =>
+    defaultValueForFields(employeeSchema),
+  );
+  return (
+    <RenderForm
+      data={createSchemaDataNode(employeeSchemaTree.rootNode, data)}
+      form={employeeFormTree.rootNode}
+      renderer={myRenderer}
+    />
+  );
 }
 ```
 
@@ -445,7 +462,7 @@ yearOfBirth: intField("Year of Birth") // Defaults to 0
 
 **Issue: Validation not working from schema**
 - **Cause**: Validation defined in schema but not connected to control
-- **Solution**: Use `useControlDefinitionForSchema` which automatically applies schema validation
+- **Solution**: `useControlDefinitionForSchema(fields)` produces a `GroupedControlsDefinition` that wires schema-level validators (`required`, regex, etc.) into the rendered controls — feed it through `createFormTree` and `<RenderForm>`.
 
 **Issue: Default values not applying**
 - **Cause**: Not using `defaultValueForFields`

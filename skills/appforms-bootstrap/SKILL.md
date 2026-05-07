@@ -369,7 +369,7 @@ import {
   createSchemaDataNode,
   createSchemaLookup,
   FormRenderer,
-  RenderForm, 
+  RenderForm,
   SchemaField,
 } from "@react-typed-forms/schemas";
 import { FormDefinitions } from "./formDefs";
@@ -378,7 +378,9 @@ import { formRenderer } from "./renderer";
 
 export type FormType = keyof typeof FormDefinitions;
 
-export const schemaLookup = createSchemaLookup(SchemaMap  as Record<string, SchemaField[]>);
+export const schemaLookup = createSchemaLookup(
+  SchemaMap as Record<string, SchemaField[]>,
+);
 
 interface AppFormProps<T> {
   formType: FormType;
@@ -389,17 +391,20 @@ interface AppFormProps<T> {
 export function AppForm<T>({ formType, data, renderer }: AppFormProps<T>) {
   const formDef = FormDefinitions[formType];
   const formTree = useMemo(() => createFormTree(formDef.controls), [formDef]);
-  const schemaTree = schemaLookup.getSchemaTree(formDef.schemaName);
+  // `!` because every generated FormDefinition references a registered schema name.
+  const schemaNode = schemaLookup.getSchema(formDef.schemaName)!;
 
   return (
     <RenderForm
-      data={createSchemaDataNode(schemaTree.rootNode, data)}
+      data={createSchemaDataNode(schemaNode, data)}
       form={formTree.rootNode}
       renderer={renderer ?? formRenderer}
     />
   );
 }
 ```
+
+> `createSchemaLookup` returns a `SchemaTreeLookup`. Use `.getSchema(name)` for a single `SchemaNode` (what `createSchemaDataNode` wants); use `.getSchemaTree(name)` if you need the full `SchemaTree` (e.g. for cross-schema references or when feeding async-loaded fields).
 
 ### Step 4: Create Feature Components
 
