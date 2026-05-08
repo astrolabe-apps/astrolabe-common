@@ -2,6 +2,21 @@
   "name": "@react-typed-forms/schemas-mui",
   "entries": [
     {
+      "version": "11.0.1",
+      "tag": "@react-typed-forms/schemas-mui_v11.0.1",
+      "date": "Fri, 08 May 2026 00:59:16 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.0.0` to `18.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.0.0` to `18.0.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "9.0.4",
       "tag": "@react-typed-forms/schemas-mui_v9.0.4",
       "date": "Tue, 25 Feb 2025 09:07:22 GMT",

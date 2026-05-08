@@ -25,8 +25,8 @@
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^17.1.0",
-    "@react-typed-forms/schemas-html": "^17.1.0",
+    "@react-typed-forms/schemas": "^18.0.0",
+    "@react-typed-forms/schemas-html": "^5.2.0",
     "@astroapps/basic-editor": "^1.0.0",
     "@astroapps/client": "^2.6.0",
     "@astroapps/searchstate": "^2.0.0",

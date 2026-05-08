@@ -2,6 +2,34 @@
   "name": "@react-typed-forms/schemas",
   "entries": [
     {
+      "version": "18.0.0",
+      "tag": "@react-typed-forms/schemas_v18.0.0",
+      "date": "Fri, 08 May 2026 00:59:16 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Add makeActionHandler utility for mapping action IDs to handler functions"
+          },
+          {
+            "comment": "Support collection=null for renderers who can do both"
+          }
+        ],
+        "major": [
+          {
+            "comment": "Replace `actionOnClick` with `actionHandler` across components for improved clarity and consistency."
+          },
+          {
+            "comment": "BREAKING: Remove ResolvedDefinition.display/style/layoutStyle fields, remove DisplayRendererProps.display, change createEvaluatedDefinition signature, remove FormStateBaseImpl.allowedOptions, lazy children initialization via ensureChildren(), checkbox inline label rendering. Add schema form types from schemas-editor, withScripts/notExpr helpers, new ControlDefinition fields (noSelection, style, layoutStyle, allowedOptions), controlDefinitionSchema option."
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@astroapps/forms-core\" from `^2.1.0` to `2.2.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "15.0.0",
       "tag": "@react-typed-forms/schemas_v15.0.0",
       "date": "Tue, 25 Feb 2025 09:07:22 GMT",

@@ -2,6 +2,46 @@
   "name": "@react-typed-forms/schemas-html",
   "entries": [
     {
+      "version": "5.2.0",
+      "tag": "@react-typed-forms/schemas-html_v5.2.0",
+      "date": "Fri, 08 May 2026 00:59:16 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix readonly support for checkbox and multiline textfield renderers."
+          },
+          {
+            "comment": "Fix ValueForFieldRenderer to reset meta flag and clear value on field change"
+          },
+          {
+            "comment": "Support manual navigation"
+          },
+          {
+            "comment": "Update for compatibility with @react-typed-forms/schemas breaking changes."
+          }
+        ],
+        "minor": [
+          {
+            "comment": "Add multilineContentEditable option"
+          },
+          {
+            "comment": "Add support for navigation children via placement and allow disappearing of nav buttons"
+          },
+          {
+            "comment": "Add support for validation in wizard navigation actions + overridding all ActionRendererProps for nav buttons"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.1.0` to `18.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.1.0` to `18.0.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "3.0.0",
       "tag": "@react-typed-forms/schemas-html_v3.0.0",
       "date": "Tue, 25 Feb 2025 09:07:22 GMT",

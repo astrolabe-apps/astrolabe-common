@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/schemas-turnstile",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Cloudflare Turnstile captcha control for @react-typed-forms/schemas",
   "type": "module",
   "main": "lib/index.cjs",
@@ -28,7 +28,7 @@
   "peerDependencies": {
     "react": "^18.2.0 || ^19",
     "@react-typed-forms/core": "^4.4.0",
-    "@react-typed-forms/schemas": "^16.0.0"
+    "@react-typed-forms/schemas": "^18.0.0"
   },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.1.0",
@@ -37,7 +37,7 @@
   "devDependencies": {
     "react": "^18.2.0 || ^19",
     "@react-typed-forms/core": "^4.4.0",
-    "@react-typed-forms/schemas": "^17.0.0",
+    "@react-typed-forms/schemas": "^18.0.0",
     "microbundle": "^0.15.1",
     "@react-typed-forms/transform": "^0.2.0",
     "typescript": "^5.6.2",

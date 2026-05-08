@@ -1,0 +1,20 @@
+{
+  "name": "@astroapps/schemas-rechart",
+  "entries": [
+    {
+      "version": "1.0.1",
+      "tag": "@astroapps/schemas-rechart_v1.0.1",
+      "date": "Fri, 08 May 2026 00:59:16 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.0.0` to `18.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^16.0.0` to `18.0.0`"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@astroapps/forms-core",
+  "entries": [
+    {
+      "version": "2.2.0",
+      "tag": "@astroapps/forms-core_v2.2.0",
+      "date": "Fri, 08 May 2026 00:59:16 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Upgrade to jsonata 2.1.0 so that the null coalescing operator exists"
+          },
+          {
+            "comment": "Support manual navigation"
+          },
+          {
+            "comment": "Clear child nodes when parent datanode changes"
+          }
+        ],
+        "minor": [
+          {
+            "comment": "Add createScriptedProxy, ScriptProvider, and defaultScriptProvider for scripted definition proxy support. "
+          }
+        ]
+      }
+    }
+  ]
+}

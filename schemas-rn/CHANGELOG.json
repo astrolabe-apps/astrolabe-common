@@ -1,0 +1,28 @@
+{
+  "name": "@react-typed-forms/schemas-rn",
+  "entries": [
+    {
+      "version": "2.2.5",
+      "tag": "@react-typed-forms/schemas-rn_v2.2.5",
+      "date": "Fri, 08 May 2026 00:59:16 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix readonly support for checkbox renderer."
+          },
+          {
+            "comment": "Update for compatibility with @react-typed-forms/schemas breaking changes."
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.1.0` to `18.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.2.2` to `18.0.0`"
+          }
+        ]
+      }
+    }
+  ]
+}

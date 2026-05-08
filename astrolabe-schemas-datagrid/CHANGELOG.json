@@ -2,6 +2,31 @@
   "name": "@astroapps/schemas-datagrid",
   "entries": [
     {
+      "version": "8.2.0",
+      "tag": "@astroapps/schemas-datagrid_v8.2.0",
+      "date": "Fri, 08 May 2026 00:59:16 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Support row class"
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Update for compatibility with @react-typed-forms/schemas breaking changes."
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.0.0` to `18.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.0.0` to `18.0.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "6.0.0",
       "tag": "@astroapps/schemas-datagrid_v6.0.0",
       "date": "Tue, 25 Feb 2025 09:07:22 GMT",

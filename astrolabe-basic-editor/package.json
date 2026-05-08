@@ -28,8 +28,8 @@
     "@dnd-kit/sortable": "^7.0.2",
     "@dnd-kit/utilities": "^3.2.1",
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^17.1.0",
-    "@react-typed-forms/schemas-html": "^5.1.0",
+    "@react-typed-forms/schemas": "^18.0.0",
+    "@react-typed-forms/schemas-html": "^5.2.0",
     "react": "^18.2.0 || ^19"
   },
   "dependencies": {
@@ -40,8 +40,8 @@
     "@dnd-kit/sortable": "^7.0.2",
     "@dnd-kit/utilities": "^3.2.1",
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^17.0.0",
-    "@react-typed-forms/schemas-html": "^5.1.0",
+    "@react-typed-forms/schemas": "^18.0.0",
+    "@react-typed-forms/schemas-html": "^5.2.0",
     "@react-typed-forms/transform": "^0.4.0",
     "react": "^18.2.0 || ^19",
     "react-dom": "^18.2.0 || ^19",

@@ -1,22 +1,12 @@
-# Change Log - @astroapps/schemas-datagrid
+# Change Log - @react-typed-forms/schemas-rn
 
 This log was last generated on Fri, 08 May 2026 00:59:16 GMT and should not be manually modified.
 
-## 8.2.0
+## 2.2.5
 Fri, 08 May 2026 00:59:16 GMT
-
-### Minor changes
-
-- Support row class
 
 ### Patches
 
+- Fix readonly support for checkbox renderer.
 - Update for compatibility with @react-typed-forms/schemas breaking changes.
-
-## 6.0.0
-Tue, 25 Feb 2025 09:07:22 GMT
-
-### Breaking changes
-
-- Nicer editor UI
 
