@@ -98,8 +98,10 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
 
     public async Task<string> Authenticate(AuthenticateRequest authenticateRequest)
     {
-        var hashed = _passwordHasher.Hash(authenticateRequest.Password);
-        var token = await AuthenticatedHashed(authenticateRequest, hashed);
+        var token = await AuthenticateUser(
+            authenticateRequest,
+            stored => _passwordHasher.Verify(authenticateRequest.Password, stored)
+        );
         if (token == null)
             throw new UnauthorizedException();
         return token;
@@ -117,9 +119,9 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
         MfaAuthenticateRequest mfaAuthenticateRequest
     );
 
-    protected abstract Task<string?> AuthenticatedHashed(
+    protected abstract Task<string?> AuthenticateUser(
         AuthenticateRequest authenticateRequest,
-        string hashedPassword
+        Func<string, bool> verifyPassword
     );
 
     public async Task ForgotPassword(string email)
@@ -165,14 +167,18 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
         var validator = new ChangeEmailValidator(sameEmail, _localUserMessages);
         await ApplyChangeEmailRules(change, validator);
         await validator.ValidateAndThrowAsync(change);
-        var hashedPassword = _passwordHasher.Hash(change.Password);
-        if (!await EmailChangeForUserId(userId(), hashedPassword, change.NewEmail))
+        var ok = await EmailChangeForUserId(
+            userId(),
+            stored => _passwordHasher.Verify(change.Password, stored),
+            change.NewEmail
+        );
+        if (!ok)
             throw new UnauthorizedException();
     }
 
     protected abstract Task<bool> EmailChangeForUserId(
         TUserId userId,
-        string hashedPassword,
+        Func<string, bool> verifyPassword,
         string newEmail
     );
 
@@ -180,7 +186,7 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
     {
         var (passwordOk, applyChange) = await PasswordChangeForUserId(
             userId(),
-            _passwordHasher.Hash(change.OldPassword)
+            stored => _passwordHasher.Verify(change.OldPassword, stored)
         );
         if (applyChange == null)
             throw new NotFoundException();
@@ -193,22 +199,26 @@ public abstract class AbstractLocalUserService<TNewUser, TUserId>
 
     protected abstract Task<(bool, Func<string, Task<string>>?)> PasswordChangeForUserId(
         TUserId userId,
-        string oldHashedPassword
+        Func<string, bool> verifyOldPassword
     );
 
     public async Task InitiateMfaNumberChange(ChangeMfaNumber change, Func<TUserId> userId)
     {
-        var hashedPassword = _passwordHasher.Hash(change.Password);
         var validator = new ChangeMfaNumberValidator();
         await ApplyChangeNumberRules(change, validator);
         await validator.ValidateAndThrowAsync(change);
-        if (!await ChangeMfaNumberForUserId(userId(), hashedPassword, change.NewNumber))
+        var ok = await ChangeMfaNumberForUserId(
+            userId(),
+            stored => _passwordHasher.Verify(change.Password, stored),
+            change.NewNumber
+        );
+        if (!ok)
             throw new UnauthorizedException();
     }
 
     protected abstract Task<bool> ChangeMfaNumberForUserId(
         TUserId userId,
-        string hashedPassword,
+        Func<string, bool> verifyPassword,
         string newNumber
     );
 

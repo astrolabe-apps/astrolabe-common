@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
     <IsPackable>true</IsPackable>
-    <Version>5.0.1</Version>
+    <Version>6.0.0</Version>
     <Description>Abstractions / base classes useful for implementing local user management,
             account creation including email verification, password authentication, password reset.
         </Description>

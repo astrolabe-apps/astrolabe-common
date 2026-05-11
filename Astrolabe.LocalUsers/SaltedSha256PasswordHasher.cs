@@ -16,4 +16,12 @@ public class SaltedSha256PasswordHasher : IPasswordHasher
     {
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(_salt + password)));
     }
+
+    public bool Verify(string password, string storedHash)
+    {
+        return CryptographicOperations.FixedTimeEquals(
+            Encoding.ASCII.GetBytes(Hash(password)),
+            Encoding.ASCII.GetBytes(storedHash)
+        );
+    }
 }

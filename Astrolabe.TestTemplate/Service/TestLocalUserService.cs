@@ -43,15 +43,15 @@ public class TestLocalUserService(
         return Task.CompletedTask;
     }
 
-    protected override async Task<string?> AuthenticatedHashed(
+    protected override async Task<string?> AuthenticateUser(
         AuthenticateRequest authenticateRequest,
-        string hashedPassword
+        Func<string, bool> verifyPassword
     )
     {
         var user = await context.Users.FirstOrDefaultAsync(u =>
-            u.Email == authenticateRequest.Username && u.PasswordHash == hashedPassword
+            u.Email == authenticateRequest.Username
         );
-        if (user == null)
+        if (user == null || !verifyPassword(user.PasswordHash))
             return null;
         return GenerateToken(user);
     }
@@ -101,18 +101,18 @@ public class TestLocalUserService(
 
     protected override Task<bool> EmailChangeForUserId(
         Guid userId,
-        string hashedPassword,
+        Func<string, bool> verifyPassword,
         string newEmail
     ) => throw new NotSupportedException();
 
     protected override Task<(bool, Func<string, Task<string>>?)> PasswordChangeForUserId(
         Guid userId,
-        string oldHashedPassword
+        Func<string, bool> verifyOldPassword
     ) => throw new NotSupportedException();
 
     protected override Task<bool> ChangeMfaNumberForUserId(
         Guid userId,
-        string hashedPassword,
+        Func<string, bool> verifyPassword,
         string newNumber
     ) => throw new NotSupportedException();
 }

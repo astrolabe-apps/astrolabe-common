@@ -166,8 +166,9 @@ protected abstract Task<string?> VerifyAccountCode(string code);
 // MFA verification for account creation
 protected abstract Task<string?> VerifyAccountWithMfaForUserId(MfaAuthenticateRequest mfaAuthenticateRequest);
 
-// Authenticate with username/password and return JWT token (or MFA token)
-protected abstract Task<string?> AuthenticatedHashed(AuthenticateRequest authenticateRequest, string hashedPassword);
+// Authenticate with username/password and return JWT token (or MFA token).
+// Load the user by username, then call verifyPassword(user.PasswordHash) to check credentials.
+protected abstract Task<string?> AuthenticateUser(AuthenticateRequest authenticateRequest, Func<string, bool> verifyPassword);
 
 // Send an MFA code via SMS/phone
 protected abstract Task<bool> SendCode(MfaCodeRequest mfaCodeRequest);
@@ -180,15 +181,15 @@ protected abstract Task<bool> VerifyMfaCode(TUserId userId, string code, string?
 // Set reset code for password reset
 protected abstract Task SetResetCodeAndEmail(string email, string resetCode);
 
-// Change email for a user
-protected abstract Task<bool> EmailChangeForUserId(TUserId userId, string hashedPassword, string newEmail);
+// Change email for a user — load the user, call verifyPassword(user.PasswordHash) before changing
+protected abstract Task<bool> EmailChangeForUserId(TUserId userId, Func<string, bool> verifyPassword, string newEmail);
 
-// Change password
-protected abstract Task<(bool, Func<string, Task<string>>?)> PasswordChangeForUserId(TUserId userId, string hashedPassword);
+// Change password — return (passwordOk, applyChange). Call verifyOldPassword(user.PasswordHash) to set passwordOk.
+protected abstract Task<(bool, Func<string, Task<string>>?)> PasswordChangeForUserId(TUserId userId, Func<string, bool> verifyOldPassword);
 protected abstract Task<Func<string, Task>?> PasswordResetForResetCode(string resetCode);
 
-// Change MFA phone number
-protected abstract Task<bool> ChangeMfaNumberForUserId(TUserId userId, string hashedPassword, string newNumber);
+// Change MFA phone number — verify the current password against the stored hash before changing
+protected abstract Task<bool> ChangeMfaNumberForUserId(TUserId userId, Func<string, bool> verifyPassword, string newNumber);
 ```
 
 ## Customization
@@ -304,17 +305,27 @@ protected override Task ApplyCreationRules(CreateUserRequest user, AbstractValid
 
 ## Secure Password Storage
 
-The library includes a `SaltedSha256PasswordHasher` implementation, but you can create your own by implementing the `IPasswordHasher` interface:
+The library includes a `SaltedSha256PasswordHasher` implementation, but you can create your own by implementing the `IPasswordHasher` interface. The interface has two methods:
+
+- `Hash(password)` — produce the value to store
+- `Verify(password, storedHash)` — check a plaintext password against a stored hash
+
+The `Verify` method is required because algorithms like bcrypt/argon2/scrypt embed a random salt in the hash output, so the same password produces a different hash on each call and cannot be compared by string equality.
+
+### Bcrypt example
 
 ```csharp
 public class BcryptPasswordHasher : IPasswordHasher
 {
     public string Hash(string password)
-    {
-        return BCrypt.Net.BCrypt.HashPassword(password);
-    }
+        => BCrypt.Net.BCrypt.HashPassword(password);
+
+    public bool Verify(string password, string storedHash)
+        => BCrypt.Net.BCrypt.Verify(password, storedHash);
 }
 ```
+
+Make sure the column you store the hash in is wide enough for the format you choose (bcrypt is 60 chars, argon2 can be longer).
 
 ## API Endpoints
 
@@ -347,6 +358,62 @@ The endpoints are organized by resource with sensible OpenAPI operation IDs:
 |--------|------|--------------|---------------|-------------|
 | POST | `/password/forgot` | ForgotPassword | No | Initiate password reset |
 | POST | `/password/reset` | ResetPassword | No | Reset password with code |
+
+## Migration Guide (v5.x to v6.x)
+
+This version changes `IPasswordHasher` and `AbstractLocalUserService` so that hashers with embedded salts (bcrypt, argon2, scrypt) can be plugged in.
+
+### Breaking Changes
+
+#### 1. `IPasswordHasher` adds `Verify`
+
+```csharp
+public interface IPasswordHasher
+{
+    string Hash(string password);
+    bool Verify(string password, string storedHash); // new
+}
+```
+
+Custom implementations must add a `Verify` method. For deterministic hashers, `Verify` is just `Hash(password) == storedHash` (use `CryptographicOperations.FixedTimeEquals` for constant-time comparison).
+
+#### 2. Four abstract methods on `AbstractLocalUserService` changed signature
+
+The framework no longer pre-hashes the user's password and passes the digest. It now passes a `Func<string, bool>` that verifies a plaintext password against a stored hash. Load the user, then call the verifier with the stored hash.
+
+| Old (v5.x) | New (v6.x) |
+|---|---|
+| `AuthenticatedHashed(req, string hashedPassword)` | `AuthenticateUser(req, Func<string, bool> verifyPassword)` |
+| `EmailChangeForUserId(id, string hashedPassword, newEmail)` | `EmailChangeForUserId(id, Func<string, bool> verifyPassword, newEmail)` |
+| `PasswordChangeForUserId(id, string oldHashedPassword)` | `PasswordChangeForUserId(id, Func<string, bool> verifyOldPassword)` |
+| `ChangeMfaNumberForUserId(id, string hashedPassword, newNumber)` | `ChangeMfaNumberForUserId(id, Func<string, bool> verifyPassword, newNumber)` |
+
+**Before:**
+```csharp
+protected override async Task<string?> AuthenticatedHashed(
+    AuthenticateRequest req, string hashedPassword)
+{
+    var user = await _ctx.Users.FirstOrDefaultAsync(u =>
+        u.Email == req.Username && u.PasswordHash == hashedPassword);
+    return user == null ? null : GenerateToken(user);
+}
+```
+
+**After:**
+```csharp
+protected override async Task<string?> AuthenticateUser(
+    AuthenticateRequest req, Func<string, bool> verifyPassword)
+{
+    var user = await _ctx.Users.FirstOrDefaultAsync(u => u.Email == req.Username);
+    if (user == null || !verifyPassword(user.PasswordHash))
+        return null;
+    return GenerateToken(user);
+}
+```
+
+#### 3. Column width
+
+If you switch to bcrypt/argon2, widen your password-hash column — bcrypt is 60 chars, argon2 can be longer. SHA-256 hex was 64.
 
 ## Migration Guide (v4.x to v5.x)
 
