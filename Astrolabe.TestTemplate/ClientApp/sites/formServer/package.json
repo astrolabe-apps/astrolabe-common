@@ -39,6 +39,8 @@
     "@astroapps/schemas-quickstream": "workspace:*",
     "@astroapps/schemas-fileupload": "workspace:*",
     "@astrolabe/ui": "workspace:*",
+    "@react-typed-forms/fluent-ui": "workspace:*",
+    "@fluentui/react-components": "^9.69.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "next": "^15.4.6",

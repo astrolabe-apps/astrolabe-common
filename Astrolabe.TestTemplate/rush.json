@@ -522,6 +522,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@react-typed-forms/fluent-ui",
+      "projectFolder": "../fluent-ui",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@astroapps/aria-base",
       "projectFolder": "../aria-base",
       "shouldPublish": true
