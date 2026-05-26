@@ -1,0 +1,21 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/rush/v5/rush.schema.json",
+  "rushVersion": "5.153.2",
+  "pnpmVersion": "9.15.0",
+  "nodeSupportedVersionRange": ">=22.0.0",
+  "projectFolderMaxDepth": 5,
+  "projects": [
+    {
+      "packageName": "client-common",
+      "projectFolder": "client-common"
+    },
+    {
+      "packageName": "@astrolabe/ui",
+      "projectFolder": "astrolabe-ui"
+    },
+    {
+      "packageName": "__SiteName__",
+      "projectFolder": "sites/__SiteName__"
+    }
+  ]
+}
