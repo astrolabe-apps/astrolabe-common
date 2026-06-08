@@ -6,18 +6,17 @@ import {
   DataRendererProps,
   DataRenderType,
   ExternalEditAction,
-  FormNode,
   FormRenderer,
+  FormStateNode,
   getExternalEditData,
+  createSchemaDataNode,
   GroupedControlsDefinition,
   GroupRenderType,
-  makeSchemaDataNode,
+  RenderForm,
   rendererClass,
-  validationVisitor,
-  visitFormDataInContext,
 } from "@react-typed-forms/schemas";
 import { ArrayElementRendererOptions } from "../rendererOptions";
-import React, { Fragment } from "react";
+import React, { useRef } from "react";
 import { Dialog, Modal } from "@astroapps/aria-base";
 import { useOverlayTriggerState } from "@react-stately/overlays";
 import { RenderElements } from "@react-typed-forms/core";
@@ -48,8 +47,9 @@ function ArrayElementRenderer({
   formRenderer: FormRenderer;
   renderOptions: ArrayElementRenderOptions;
 }) {
-  const { control, formNode, renderChild, designMode } = dataProps;
+  const { control, formNode, designMode, dataNode } = dataProps;
   const extData = getExternalEditData(control);
+  const draftStateRef = useRef<FormStateNode | null>(null);
   const overlayState = useOverlayTriggerState({
     isOpen: true,
     onOpenChange: () => {
@@ -58,21 +58,36 @@ function ArrayElementRenderer({
   });
 
   if (designMode || extData.value !== undefined) {
-    const parentDataNode = makeSchemaDataNode(
-      dataProps.dataNode.schema,
-      extData.fields.data,
-    );
-    // TODO
-    // const elementGroup: FormNode = formNode.createChildNode("group", {
-    //   type: ControlDefinitionType.Group,
-    //   groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
-    //   children: formNode.getResolvedChildren(),
-    // } as GroupedControlsDefinition);
+    // The staged-edit session stores its draft as a single-element array (see
+    // createArrayActions). Render element 0 of that draft against a standalone
+    // form built from the array's element template, so the dialog edits the
+    // draft — not the live array element — until Apply commits it.
+    const draftData = extData.fields.data;
+    const hasDraft =
+      Array.isArray(draftData.value) && draftData.value.length > 0;
+
+    const elementForm = formNode.form?.createChildNode("draft", {
+      type: ControlDefinitionType.Group,
+      children: formNode.form.getResolvedChildren(),
+      groupOptions: { type: GroupRenderType.Standard, hideTitle: true },
+    } as GroupedControlsDefinition);
+
+    const draftForm =
+      hasDraft && elementForm ? (
+        <RenderForm
+          form={elementForm}
+          renderer={formRenderer}
+          data={createSchemaDataNode(
+            dataNode.schema,
+            draftData,
+          ).getChildElement(0)}
+          stateRef={draftStateRef}
+        />
+      ) : null;
+
     const editContent = (
       <div className={rendererClass(dataProps.className, options.className)}>
-        {/*{renderChild("", elementGroup, {*/}
-        {/*  parentDataNode,*/}
-        {/*})}*/}
+        {draftForm}
         <div className={options.actionsClass}>
           <RenderElements control={extData.fields.actions}>
             {(c) => formRenderer.renderAction(applyValidation(c.value))}
@@ -89,16 +104,13 @@ function ArrayElementRenderer({
     );
 
     function runValidation(onClick: () => void) {
-      // TODO
-      // let hasErrors = false;
-      // visitFormDataInContext(
-      //   parentDataNode,
-      //   elementGroup,
-      //   validationVisitor(() => {
-      //     hasErrors = true;
-      //   }),
-      // );
-      // if (!hasErrors) onClick();
+      const draftState = draftStateRef.current;
+      if (!draftState) {
+        onClick();
+        return;
+      }
+      draftState.setTouched(true);
+      if (draftState.validate()) onClick();
     }
     function applyValidation({
       action,
