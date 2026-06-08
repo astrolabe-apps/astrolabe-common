@@ -2,6 +2,18 @@
   "name": "@react-typed-forms/schemas-html",
   "entries": [
     {
+      "version": "5.2.1",
+      "tag": "@react-typed-forms/schemas-html_v5.2.1",
+      "date": "Mon, 08 Jun 2026 11:54:21 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix the ArrayElementRenderer for new version"
+          }
+        ]
+      }
+    },
+    {
       "version": "5.2.0",
       "tag": "@react-typed-forms/schemas-html_v5.2.0",
       "date": "Fri, 08 May 2026 00:59:16 GMT",

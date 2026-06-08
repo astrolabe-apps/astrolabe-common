@@ -28,7 +28,7 @@
   "peerDependencies": {
     "@react-typed-forms/core": "^4.4.2",
     "@react-typed-forms/schemas": "^18.0.0",
-    "@react-typed-forms/schemas-html": "^5.2.0",
+    "@react-typed-forms/schemas-html": "^5.2.1",
     "@astroapps/client": "^2.0.0",
     "react": "^18.2.0 || ^19",
     "@dnd-kit/core": "^6.0.5"
@@ -51,7 +51,7 @@
   "devDependencies": {
     "@react-typed-forms/core": "^4.4.2",
     "@react-typed-forms/schemas": "^18.0.0",
-    "@react-typed-forms/schemas-html": "^5.2.0",
+    "@react-typed-forms/schemas-html": "^5.2.1",
     "@astroapps/searchstate": "^2.0.0",
     "@radix-ui/react-popover": "^1.0.7",
     "@astroapps/client": "^2.0.2",

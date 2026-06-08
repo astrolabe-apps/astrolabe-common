@@ -1,6 +1,13 @@
 # Change Log - @react-typed-forms/schemas-html
 
-This log was last generated on Fri, 08 May 2026 00:59:16 GMT and should not be manually modified.
+This log was last generated on Mon, 08 Jun 2026 11:54:21 GMT and should not be manually modified.
+
+## 5.2.1
+Mon, 08 Jun 2026 11:54:21 GMT
+
+### Patches
+
+- Fix the ArrayElementRenderer for new version
 
 ## 5.2.0
 Fri, 08 May 2026 00:59:16 GMT
