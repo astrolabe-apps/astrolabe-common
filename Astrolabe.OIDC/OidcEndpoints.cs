@@ -212,7 +212,7 @@ public abstract class OidcEndpoints
             Nonce = nonce,
             CodeChallenge = codeChallenge,
             CodeChallengeMethod = codeChallengeMethod,
-            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
+            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.AuthorizeRequestLifetimeSeconds),
         };
 
         var store = GetTokenStore(context);
@@ -560,7 +560,9 @@ public abstract class OidcEndpoints
             ProviderName = providerName,
             CodeVerifier = codeVerifier,
             Nonce = nonce,
-            ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(10),
+            ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(
+                provider.AuthStateLifetimeSeconds ?? Config.ExternalAuthStateLifetimeSeconds
+            ),
         };
         await store.StoreExternalAuthState(externalState);
 

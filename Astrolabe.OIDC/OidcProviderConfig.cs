@@ -46,6 +46,19 @@ public class OidcProviderConfig
     public int RefreshTokenLifetimeSeconds { get; set; } = 86400;
 
     /// <summary>
+    /// Lifetime of pending authorize requests in seconds, i.e. how long a user has to complete
+    /// login after being redirected to the login page. Default: 600 (10 minutes).
+    /// </summary>
+    public int AuthorizeRequestLifetimeSeconds { get; set; } = 600;
+
+    /// <summary>
+    /// Lifetime of external auth state in seconds, i.e. how long a user has to complete
+    /// login at an external provider before the callback is rejected. Default: 600 (10 minutes).
+    /// Can be overridden per provider via <see cref="ExternalOidcProviderConfig.AuthStateLifetimeSeconds"/>.
+    /// </summary>
+    public int ExternalAuthStateLifetimeSeconds { get; set; } = 600;
+
+    /// <summary>
     /// External OIDC providers for federation. When configured, users can authenticate via these providers.
     /// </summary>
     public List<ExternalOidcProviderConfig> ExternalProviders { get; set; } = [];

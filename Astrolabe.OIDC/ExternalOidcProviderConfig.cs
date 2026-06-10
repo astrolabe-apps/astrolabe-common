@@ -47,4 +47,11 @@ public class ExternalOidcProviderConfig
     /// the discovery document issuer contains placeholders that don't match actual token issuers.
     /// </summary>
     public bool ValidateIssuer { get; set; } = true;
+
+    /// <summary>
+    /// Lifetime of external auth state in seconds for this provider, i.e. how long a user has to
+    /// complete login at this provider before the callback is rejected. When not set, falls back
+    /// to <see cref="OidcProviderConfig.ExternalAuthStateLifetimeSeconds"/>.
+    /// </summary>
+    public int? AuthStateLifetimeSeconds { get; set; }
 }
