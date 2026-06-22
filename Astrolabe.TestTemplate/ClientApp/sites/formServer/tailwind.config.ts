@@ -18,6 +18,7 @@ const config: Config = {
     "node_modules/@astroapps/schemas-datepicker/lib/*.js",
     "node_modules/@astroapps/schemas-datagrid/lib/*.js",
     "node_modules/@astroapps/schemas-fileupload/lib/*.js",
+    "node_modules/@astroapps/schemas-signature/lib/*.js",
   ],
   presets: [ti],
   theme: {
