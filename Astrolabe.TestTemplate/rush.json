@@ -560,12 +560,12 @@
     {
       "packageName": "@astroapps/basic-editor",
       "projectFolder": "../astrolabe-basic-editor",
-      "shouldPublish": false
+      "shouldPublish": true
     },
     {
       "packageName": "@astroapps/forms-app",
       "projectFolder": "../forms-app",
-      "shouldPublish": false
+      "shouldPublish": true
     },
     {
       "packageName": "@astroapps/schemas-quickstream",
