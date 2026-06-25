@@ -7,7 +7,6 @@
         <Version>0.1.0</Version>
         <Description>Form, table, and export definition CRUD abstractions with search and minimal API endpoints</Description>
         <PackageTags>forms, definitions, schema</PackageTags>
-        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>

@@ -7,7 +7,6 @@
         <Version>0.1.0</Version>
         <Description>Entity Framework Core implementation of Astrolabe.FormDesigner storage</Description>
         <PackageTags>forms, definitions, ef-core</PackageTags>
-        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
