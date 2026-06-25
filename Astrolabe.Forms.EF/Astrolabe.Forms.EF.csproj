@@ -4,7 +4,7 @@
         <TargetFramework>net8.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <Version>0.1.0</Version>
+        <Version>0.1.1</Version>
         <Description>Astrolabe Forms: concrete EF entities, item workflow, search, export, files, endpoints</Description>
         <PackageTags>forms, workflow, ef-core</PackageTags>
     </PropertyGroup>
