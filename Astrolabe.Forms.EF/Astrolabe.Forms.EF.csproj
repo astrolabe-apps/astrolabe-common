@@ -7,7 +7,6 @@
         <Version>0.1.0</Version>
         <Description>Astrolabe Forms: concrete EF entities, item workflow, search, export, files, endpoints</Description>
         <PackageTags>forms, workflow, ef-core</PackageTags>
-        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
