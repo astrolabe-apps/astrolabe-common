@@ -2,6 +2,18 @@
   "name": "@react-typed-forms/schemas-rn",
   "entries": [
     {
+      "version": "2.2.6",
+      "tag": "@react-typed-forms/schemas-rn_v2.2.6",
+      "date": "Wed, 08 Jul 2026 02:36:27 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Add multi-slot navigation (left/middle/right) to the RN wizard renderer, laid out vertically for mobile"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.2.5",
       "tag": "@react-typed-forms/schemas-rn_v2.2.5",
       "date": "Fri, 08 May 2026 00:59:16 GMT",
