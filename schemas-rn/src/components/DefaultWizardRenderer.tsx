@@ -9,15 +9,22 @@ import {
   rendererClass,
   useWizardRenderer,
 } from "@react-typed-forms/schemas";
-import { CustomNavigationProps, DefaultWizardRenderOptions } from "../rendererOptions";
-import { Fragment } from "react";
+import {
+  CustomNavigationProps,
+  DefaultWizardRenderOptions,
+} from "../rendererOptions";
+import { Fragment, ReactNode } from "react";
 
 
 const defaultOptions = {
   classes: {
     className: undefined,
     contentClass: "min-h-96 overflow-auto",
-    navContainerClass: "flex justify-between gap-4 my-2",
+    // Buttons stack vertically for mobile.
+    navContainerClass: "flex flex-col gap-2 my-2",
+    leftNavClass: "flex flex-col gap-2",
+    middleNavClass: "flex flex-col gap-2",
+    rightNavClass: "flex flex-col gap-2",
   },
   actions: {
     next: {
@@ -40,6 +47,12 @@ function defaultNavigationRender({
   prev,
   next,
   className,
+  leftNav,
+  middleNav,
+  rightNav,
+  leftNavClass,
+  middleNavClass,
+  rightNavClass,
 }: CustomNavigationProps) {
   {
     const {
@@ -48,8 +61,15 @@ function defaultNavigationRender({
     } = formRenderer;
     return (
       <Div className={className}>
-        {renderAction(prev)}
-        {renderAction(next)}
+        <Div className={leftNavClass}>
+          {renderAction(prev)}
+          {leftNav}
+        </Div>
+        <Div className={middleNavClass}>{middleNav}</Div>
+        <Div className={rightNavClass}>
+          {rightNav}
+          {renderAction(next)}
+        </Div>
       </Div>
     );
   }
@@ -84,7 +104,14 @@ function WizardRenderer({
     defaultOptions,
   );
   const {
-    classes: { className, contentClass, navContainerClass },
+    classes: {
+      className,
+      contentClass,
+      navContainerClass,
+      leftNavClass,
+      middleNavClass,
+      rightNavClass,
+    },
     actions,
     renderNavigation,
   } = mergedOptions;
@@ -103,7 +130,20 @@ function WizardRenderer({
     next,
     prev,
     validatePage,
+    leftNavChildren,
+    middleNavChildren,
+    rightNavChildren,
   } = wizard;
+
+  const leftNav: ReactNode = leftNavChildren.length
+    ? leftNavChildren.map((child) => renderChild(child))
+    : undefined;
+  const middleNav: ReactNode = middleNavChildren.length
+    ? middleNavChildren.map((child) => renderChild(child))
+    : undefined;
+  const rightNav: ReactNode = rightNavChildren.length
+    ? rightNavChildren.map((child) => renderChild(child))
+    : undefined;
 
   const navElement = renderNavigation({
     formRenderer,
@@ -113,6 +153,12 @@ function WizardRenderer({
     next,
     className: navContainerClass,
     validatePage: async () => validatePage(),
+    leftNav,
+    middleNav,
+    rightNav,
+    leftNavClass,
+    middleNavClass,
+    rightNavClass,
   });
 
   const currentChild = pageChildren[currentPage];

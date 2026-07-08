@@ -29,12 +29,18 @@ import {
 // Custom navigation props for wizard renderer
 export interface CustomNavigationProps {
   className?: string;
+  leftNavClass?: string;
+  rightNavClass?: string;
+  middleNavClass?: string;
   page: number;
   totalPages: number;
   next: ActionRendererProps;
   prev: ActionRendererProps;
   formRenderer: FormRenderer;
   validatePage: () => Promise<boolean>;
+  leftNav?: ReactNode;
+  middleNav?: ReactNode;
+  rightNav?: ReactNode;
 }
 
 // Optional render props for optional adornment (React Native)
@@ -118,6 +124,9 @@ export interface DefaultWizardRenderOptions {
     className?: string;
     navContainerClass?: string;
     contentClass?: string;
+    leftNavClass?: string;
+    rightNavClass?: string;
+    middleNavClass?: string;
   };
   actions?: {
     next?: WizardNavActionOptions;
