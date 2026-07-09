@@ -552,10 +552,10 @@ function initFormState(
           .map((x) =>
             typeof x === "object"
               ? x
-              : (fieldOptions?.find((y) => y.value == x) ?? {
+              : fieldOptions?.find((y) => y.value == x) ?? {
                   name: x.toString(),
                   value: x,
-                }),
+                },
           )
           .filter((x) => x != null)
       : fieldOptions;
@@ -578,7 +578,8 @@ function initFormState(
   createSyncEffect(() => {
     const dn = dataNode.value;
     if (dn) {
-      base.touched = dn.control.touched;
+      // only sync the immediate form state node from the control
+      base.setTouched(dn.control.touched, true);
     }
   }, scope);
 
