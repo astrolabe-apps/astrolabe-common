@@ -502,6 +502,9 @@ public abstract class OidcEndpoints
         var query = context.Request.Query;
         var providerName = query["provider"].FirstOrDefault();
         var oidcRequestId = query["oidc_request_id"].FirstOrDefault();
+        // Optional OIDC login_hint, forwarded to the external provider so it can
+        // pre-fill the username field (e.g. the email entered on the login page).
+        var loginHint = query["login_hint"].FirstOrDefault();
 
         if (string.IsNullOrEmpty(providerName) || string.IsNullOrEmpty(oidcRequestId))
         {
@@ -580,6 +583,11 @@ public abstract class OidcEndpoints
             + $"&scope={Uri.EscapeDataString(provider.Scopes)}"
             + $"&state={Uri.EscapeDataString(state)}"
             + $"&nonce={Uri.EscapeDataString(nonce)}";
+
+        if (!string.IsNullOrEmpty(loginHint))
+        {
+            authorizeUrl += $"&login_hint={Uri.EscapeDataString(loginHint)}";
+        }
 
         if (provider.UsePkce && codeChallenge != null)
         {
