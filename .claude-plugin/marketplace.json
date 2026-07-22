@@ -1,0 +1,17 @@
+{
+  "name": "astrolabe",
+  "owner": {
+    "name": "Astrolabe Apps",
+    "email": "jolse@astrolabeenterprises.com.au"
+  },
+  "metadata": {
+    "description": "Claude Code marketplace for the Astrolabe framework. Skills are maintained alongside the library code in this repo."
+  },
+  "plugins": [
+    {
+      "name": "astrolabe",
+      "description": "Skills for consuming the Astrolabe .NET and TypeScript/React libraries (schemas, workflow, file storage, local users, search, @react-typed-forms/*, @astroapps/*).",
+      "source": "./"
+    }
+  ]
+}

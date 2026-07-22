@@ -1,0 +1,11 @@
+{
+  "name": "astrolabe",
+  "description": "Skills for consuming the Astrolabe framework: .NET libraries (schemas, workflow, file storage, local users, search) and TypeScript/React packages (@react-typed-forms/*, @astroapps/*). Skills load on demand when Claude detects relevant work.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Astrolabe Apps"
+  },
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common",
+  "repository": "https://github.com/astrolabe-apps/astrolabe-common",
+  "license": "MIT"
+}
