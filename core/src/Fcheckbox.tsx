@@ -1,5 +1,5 @@
 import React from "react";
-import { formControlProps, useControlEffect } from "./hooks";
+import { useControlEffect, useFormControlProps } from "./hooks";
 import { Control } from "@astroapps/controls";
 
 export type FcheckboxProps = React.InputHTMLAttributes<HTMLInputElement> & {
@@ -19,11 +19,13 @@ export function Fcheckbox({
     () => control.error,
     (s) => (control.element as HTMLInputElement)?.setCustomValidity(s ?? ""),
   );
-  const { value, onChange, errorText, ...theseProps } =
-    formControlProps(control);
+  const { value, onChange, errorText, readOnly, ...theseProps } =
+    useFormControlProps(control);
   return (
     <input
       {...theseProps}
+      // native checkbox ignores readOnly, so lock it via disabled instead
+      disabled={theseProps.disabled || !!readOnly}
       checked={!!value !== notValue}
       ref={(r) => {
         control.element = r;
