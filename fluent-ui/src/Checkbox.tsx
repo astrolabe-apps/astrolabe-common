@@ -24,8 +24,8 @@ export function CCheckbox({ control, ...rest }: CCheckboxProps) {
       onBlur={() => {
         control.touched = true;
       }}
-      {...rest}
       disabled={disabled}
+      {...rest}
     />
   );
 }

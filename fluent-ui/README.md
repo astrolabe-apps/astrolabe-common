@@ -208,6 +208,17 @@ the context can only add locks, never remove them. The
 `useControlEdit(control, supportsReadOnly)` hook performs this merge and is
 exported for building your own wrappers.
 
+An explicit `disabled` / `readOnly` prop on a component is a deliberate escape
+hatch — it overrides both the control and the cascading context:
+
+```tsx
+// Stays read-only even when nothing above it is read-only
+<FInput control={data.fields.name} readOnly />
+
+// Stays editable even inside a <FormEditProvider disabled>
+<FInput control={data.fields.name} disabled={false} />
+```
+
 ### Validation
 
 Validation messages come from `control.error` and are shown on the `Field`

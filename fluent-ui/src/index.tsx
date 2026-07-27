@@ -20,18 +20,29 @@ export {
   type FSwitchProps,
 } from "./Switch";
 export {
+  type SelectOption,
+  type SelectBaseProps,
+  type SelectControl,
+  type OptionKeyProp,
+} from "./select";
+export {
   CDropdown,
   type CDropdownProps,
   FDropdown,
   type FDropdownProps,
-  type FDropdownOption,
 } from "./Dropdown";
+export {
+  CCombobox,
+  type CComboboxProps,
+  FCombobox,
+  type FComboboxProps,
+  type ComboboxFreeformProp,
+} from "./Combobox";
 export {
   CRadioGroup,
   type CRadioGroupProps,
   FRadioGroup,
   type FRadioGroupProps,
-  type FRadioGroupOption,
 } from "./RadioGroup";
 export {
   CSearchBox,

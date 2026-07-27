@@ -24,9 +24,9 @@ export function CSpinButton({ control, ...rest }: CSpinButtonProps) {
       onBlur={() => {
         control.touched = true;
       }}
-      {...rest}
       disabled={disabled}
       readOnly={readOnly}
+      {...rest}
     />
   );
 }

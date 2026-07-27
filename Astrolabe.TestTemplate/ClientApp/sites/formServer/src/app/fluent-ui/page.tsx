@@ -145,18 +145,18 @@ export default function FluentUiShowcase() {
                     label="Role"
                     placeholder="Select a role"
                     options={[
-                      { value: "admin", label: "Administrator" },
-                      { value: "editor", label: "Editor" },
-                      { value: "viewer", label: "Viewer" },
+                      { value: "admin", text: "Administrator" },
+                      { value: "editor", text: "Editor" },
+                      { value: "viewer", text: "Viewer" },
                     ]}
                   />
                   <FRadioGroup<Size>
                     control={data.fields.size}
                     label="T-shirt size"
                     options={[
-                      { value: "s", label: "Small" },
-                      { value: "m", label: "Medium" },
-                      { value: "l", label: "Large" },
+                      { value: "s", text: "Small" },
+                      { value: "m", text: "Medium" },
+                      { value: "l", text: "Large" },
                     ]}
                   />
                 </section>
@@ -172,6 +172,26 @@ export default function FluentUiShowcase() {
                     control={data.fields.reminderAt}
                     label="Reminder"
                     withTime
+                  />
+                </section>
+
+                <section className="border rounded p-4 space-y-3">
+                  <h2 className="text-lg font-semibold">Prop overrides</h2>
+                  <p className="text-sm text-gray-600">
+                    An explicit <code>disabled</code>/<code>readOnly</code> prop
+                    on the component wins over the cascading{" "}
+                    <code>FormEditState</code>. These two ignore the global
+                    toggles above.
+                  </p>
+                  <FInput
+                    control={data.fields.name}
+                    label="Always read-only (readOnly)"
+                    readOnly
+                  />
+                  <FInput
+                    control={data.fields.search}
+                    label="Always editable (disabled={false})"
+                    disabled={false}
                   />
                 </section>
               </div>

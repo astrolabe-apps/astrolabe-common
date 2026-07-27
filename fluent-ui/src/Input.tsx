@@ -19,19 +19,24 @@ export function CInput({ control, ...rest }: CInputProps) {
       onBlur={() => {
         control.touched = true;
       }}
-      {...rest}
       disabled={disabled}
       readOnly={readOnly}
+      {...rest}
     />
   );
 }
 
 export interface FInputProps
-  extends CInputProps,
-    Pick<FFieldProps, "label" | "required" | "hint"> {}
+  extends CInputProps, Pick<FFieldProps, "label" | "required" | "hint"> {}
 
 /** {@link CInput} wrapped in {@link FField} for label + validation. */
-export function FInput({ control, label, required, hint, ...rest }: FInputProps) {
+export function FInput({
+  control,
+  label,
+  required,
+  hint,
+  ...rest
+}: FInputProps) {
   return (
     <FField control={control} label={label} required={required} hint={hint}>
       <CInput control={control} {...rest} />

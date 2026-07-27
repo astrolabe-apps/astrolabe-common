@@ -23,8 +23,8 @@ export function CSwitch({ control, ...rest }: CSwitchProps) {
       onBlur={() => {
         control.touched = true;
       }}
-      {...rest}
       disabled={disabled}
+      {...rest}
     />
   );
 }

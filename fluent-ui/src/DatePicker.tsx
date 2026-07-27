@@ -35,9 +35,9 @@ export function CDatePicker({ control, withTime, ...rest }: CDatePickerProps) {
       onBlur={() => {
         control.touched = true;
       }}
-      {...rest}
       disabled={disabled}
       readOnly={readOnly}
+      {...rest}
     />
   );
 }

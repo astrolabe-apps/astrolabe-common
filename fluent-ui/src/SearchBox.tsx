@@ -20,9 +20,9 @@ export function CSearchBox({ control, ...rest }: CSearchBoxProps) {
       onBlur={() => {
         control.touched = true;
       }}
-      {...rest}
       disabled={disabled}
       readOnly={readOnly}
+      {...rest}
     />
   );
 }

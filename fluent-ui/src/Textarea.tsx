@@ -20,9 +20,9 @@ export function CTextarea({ control, ...rest }: CTextareaProps) {
       onBlur={() => {
         control.touched = true;
       }}
-      {...rest}
       disabled={disabled}
       readOnly={readOnly}
+      {...rest}
     />
   );
 }
