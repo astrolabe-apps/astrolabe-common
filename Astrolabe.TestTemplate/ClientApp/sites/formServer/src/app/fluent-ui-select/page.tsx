@@ -53,12 +53,33 @@ const priorityOptions: SelectOption<number>[] = [
   { value: 3, text: "High" },
 ];
 
+// `content` renders custom React in the option row, while `text` stays the
+// display/search string (type-ahead still matches "australia", etc.).
+function countryOption(
+  value: string,
+  flag: string,
+  name: string,
+  capital: string,
+): SelectOption<string> {
+  return {
+    value,
+    text: name,
+    content: (
+      <span style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+        <span style={{ fontSize: 18 }}>{flag}</span>
+        <span style={{ fontWeight: 600 }}>{name}</span>
+        <span style={{ color: "#888", fontSize: 12 }}>{capital}</span>
+      </span>
+    ),
+  };
+}
+
 const countryOptions: SelectOption<string>[] = [
-  { value: "au", text: "Australia" },
-  { value: "nz", text: "New Zealand" },
-  { value: "us", text: "United States" },
-  { value: "gb", text: "United Kingdom" },
-  { value: "ca", text: "Canada" },
+  countryOption("au", "🇦🇺", "Australia", "Canberra"),
+  countryOption("nz", "🇳🇿", "New Zealand", "Wellington"),
+  countryOption("us", "🇺🇸", "United States", "Washington, D.C."),
+  countryOption("gb", "🇬🇧", "United Kingdom", "London"),
+  countryOption("ca", "🇨🇦", "Canada", "Ottawa"),
 ];
 
 const languageOptions: SelectOption<string>[] = [
@@ -69,13 +90,35 @@ const languageOptions: SelectOption<string>[] = [
   { value: "ja", text: "Japanese", group: "Other" },
 ];
 
-// Number values -> getOptionKey required; one option disabled.
+// Number values -> getOptionKey required; one option disabled. `content` shows
+// the rating as stars while `text` stays a plain label.
+function ratingOption(
+  value: number,
+  label: string,
+  disabled?: boolean,
+): SelectOption<number> {
+  return {
+    value,
+    text: `${value} — ${label}`,
+    disabled,
+    content: (
+      <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ color: "#f5a623", letterSpacing: 2 }}>
+          {"★".repeat(value)}
+          <span style={{ color: "#ccc" }}>{"★".repeat(5 - value)}</span>
+        </span>
+        <span>{label}</span>
+      </span>
+    ),
+  };
+}
+
 const ratingOptions: SelectOption<number>[] = [
-  { value: 1, text: "1 — Poor" },
-  { value: 2, text: "2 — Fair" },
-  { value: 3, text: "3 — Good" },
-  { value: 4, text: "4 — Great" },
-  { value: 5, text: "5 — Excellent (disabled)", disabled: true },
+  ratingOption(1, "Poor"),
+  ratingOption(2, "Fair"),
+  ratingOption(3, "Good"),
+  ratingOption(4, "Great"),
+  ratingOption(5, "Excellent (disabled)", true),
 ];
 
 export default function FluentSelectShowcase() {
@@ -153,7 +196,7 @@ export default function FluentSelectShowcase() {
                   <h2 className="text-lg font-semibold">Combobox</h2>
                   <FCombobox<string>
                     control={data.fields.country}
-                    label="Country (type to filter, clearable)"
+                    label="Country (custom content: flag + capital, filter, clearable)"
                     placeholder="Search countries"
                     clearable
                     options={countryOptions}
@@ -182,7 +225,7 @@ export default function FluentSelectShowcase() {
                   <h2 className="text-lg font-semibold">RadioGroup</h2>
                   <FRadioGroup<number>
                     control={data.fields.rating}
-                    label="Rating (number values — needs getOptionKey, one disabled)"
+                    label="Rating (custom content: stars — number values, one disabled)"
                     getOptionKey={(v) => String(v)}
                     options={ratingOptions}
                   />
