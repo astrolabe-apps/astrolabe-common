@@ -32,6 +32,11 @@ export interface SecurityService {
 
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
 
+  /**
+   * Get an access token for the current user, throwing if one can't be obtained.
+   */
+  getAccessToken(): Promise<string>;
+
   login(): Promise<void>;
 
   logout(): Promise<void>;
@@ -60,6 +65,9 @@ const guestUserState = newControl<UserState>({ busy: true, loggedIn: false });
 export const guestSecurityService: SecurityService = {
   currentUser: guestUserState,
   fetch: typeof window === "undefined" ? fetch : window.fetch.bind(window),
+  async getAccessToken(): Promise<string> {
+    throw new Error("No access token available for guest users");
+  },
   async logout() {},
   async login() {},
 };
@@ -102,6 +110,11 @@ export function useControlTokenSecurity(
     fetch: createAccessTokenFetcher(
       async () => user.fields.accessToken.current.value,
     ),
+    async getAccessToken() {
+      const accessToken = user.fields.accessToken.current.value;
+      if (!accessToken) throw new Error("Not logged in");
+      return accessToken;
+    },
     async logout() {
       tokens.removeItem("token");
       user.value = { busy: false, accessToken: null, loggedIn: false };

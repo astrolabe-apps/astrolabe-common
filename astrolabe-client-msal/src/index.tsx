@@ -70,25 +70,30 @@ export function useMsalSecurityService(
     fetch: createAccessTokenFetcher(async () => {
       if (currentUser.current.fields.busy.value || !msal.getActiveAccount())
         return null;
-      try {
-        return getTokenFromResult(await msal.acquireTokenSilent(silentRequest));
-      } catch (e) {
-        if (isReAuthRequired(e)) {
-          currentUser.setValue((cu) => ({
-            ...cu,
-            loggedIn: false,
-            accessToken: undefined,
-          }));
-          await new Promise((r) => setTimeout(r, 10000));
-        }
-        throw e;
-      }
+      return await getAccessToken();
     }, adjustRequest),
+    getAccessToken,
     login,
     logout: async () => {
       await msal.logout();
     },
   };
+
+  async function getAccessToken(): Promise<string> {
+    try {
+      return getTokenFromResult(await msal.acquireTokenSilent(silentRequest));
+    } catch (e) {
+      if (isReAuthRequired(e)) {
+        currentUser.setValue((cu) => ({
+          ...cu,
+          loggedIn: false,
+          accessToken: undefined,
+        }));
+        await new Promise((r) => setTimeout(r, 10000));
+      }
+      throw e;
+    }
+  }
 
   async function login() {
     const afterLogin =
