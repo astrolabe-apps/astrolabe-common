@@ -10,7 +10,7 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@astroapps/client": "^2.5.2",
+    "@astroapps/client": "^2.7.0",
     "@astroapps/controls": "^1.4.0",
     "@astroapps/forms-core": "^2.2.0",
     "@astroapps/searchstate": "^2.0.0",

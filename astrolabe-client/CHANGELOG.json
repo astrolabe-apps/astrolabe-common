@@ -2,6 +2,18 @@
   "name": "@astroapps/client",
   "entries": [
     {
+      "version": "2.7.0",
+      "tag": "@astroapps/client_v2.7.0",
+      "date": "Wed, 29 Jul 2026 02:36:51 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Support getting the access token from the SecurityService"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.2.1",
       "tag": "@astroapps/client_v2.2.1",
       "date": "Tue, 18 Feb 2025 09:38:31 GMT",

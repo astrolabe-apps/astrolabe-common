@@ -1,0 +1,25 @@
+{
+  "name": "@astroapps/client-msal",
+  "entries": [
+    {
+      "version": "3.0.5",
+      "tag": "@astroapps/client-msal_v3.0.5",
+      "date": "Wed, 29 Jul 2026 02:36:51 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Support getting the access token from the SecurityService"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@astroapps/client\" from `^2.6.0` to `2.7.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/client\" from `^2.0.1` to `2.7.0`"
+          }
+        ]
+      }
+    }
+  ]
+}

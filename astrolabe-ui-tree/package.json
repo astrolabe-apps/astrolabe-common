@@ -1,6 +1,6 @@
 {
 	"name": "@astroapps/ui-tree",
-	"version": "3.0.2",
+	"version": "3.0.3",
 	"type": "module",
 	"main": "lib/index.cjs",
 	"module": "lib/index.js",
@@ -35,7 +35,7 @@
 		"@dnd-kit/utilities": "^3.2.1",
 		"@dnd-kit/sortable": "^7.0.2",
 		"@react-typed-forms/core": "^4.0.0",
-		"@astroapps/client": "^2.0.0"
+		"@astroapps/client": "^2.7.0"
 	},
 	"devDependencies": {
 		"react": "^18.2.0 || ^19",

@@ -1,0 +1,20 @@
+{
+  "name": "@astroapps/client-localusers",
+  "entries": [
+    {
+      "version": "1.1.0",
+      "tag": "@astroapps/client-localusers_v1.1.0",
+      "date": "Wed, 29 Jul 2026 02:36:51 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@astroapps/client\" from `^2.3.0` to `2.7.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/client\" from `^2.3.0` to `2.7.0`"
+          }
+        ]
+      }
+    }
+  ]
+}
