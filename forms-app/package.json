@@ -25,8 +25,8 @@
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^18.0.0",
-    "@react-typed-forms/schemas-html": "^5.2.1",
+    "@react-typed-forms/schemas": "^18.0.1",
+    "@react-typed-forms/schemas-html": "^5.2.2",
     "@astroapps/basic-editor": "^1.0.0",
     "@astroapps/client": "^2.7.0",
     "@astroapps/searchstate": "^2.0.0",
@@ -38,8 +38,8 @@
   },
   "devDependencies": {
     "@react-typed-forms/core": "^4.4.2",
-    "@react-typed-forms/schemas": "^18.0.0",
-    "@react-typed-forms/schemas-html": "^5.2.1",
+    "@react-typed-forms/schemas": "^18.0.1",
+    "@react-typed-forms/schemas-html": "^5.2.2",
     "@astroapps/basic-editor": "workspace:*",
     "@astroapps/client": "^2.7.0",
     "@astroapps/searchstate": "^2.0.0",

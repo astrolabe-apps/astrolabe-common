@@ -16,7 +16,7 @@ import {
   rendererClass,
 } from "@react-typed-forms/schemas";
 import { ArrayElementRendererOptions } from "../rendererOptions";
-import React, { useRef } from "react";
+import React, { Fragment, useRef } from "react";
 import { Dialog, Modal } from "@astroapps/aria-base";
 import { useOverlayTriggerState } from "@react-stately/overlays";
 import { RenderElements } from "@react-typed-forms/core";
@@ -123,5 +123,5 @@ function ArrayElementRenderer({
             onClick: () => runValidation(action.onClick),
           };
     }
-  } else return <></>;
+  } else return <Fragment></Fragment>;
 }

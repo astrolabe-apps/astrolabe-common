@@ -1,6 +1,13 @@
 # Change Log - @react-typed-forms/schemas
 
-This log was last generated on Fri, 08 May 2026 00:59:16 GMT and should not be manually modified.
+This log was last generated on Wed, 29 Jul 2026 23:41:04 GMT and should not be manually modified.
+
+## 18.0.1
+Wed, 29 Jul 2026 23:41:04 GMT
+
+### Patches
+
+- Validate can't get response synchronously, wait 100ms
 
 ## 18.0.0
 Fri, 08 May 2026 00:59:16 GMT

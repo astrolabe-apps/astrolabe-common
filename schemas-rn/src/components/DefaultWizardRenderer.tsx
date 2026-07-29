@@ -15,7 +15,6 @@ import {
 } from "../rendererOptions";
 import { Fragment, ReactNode } from "react";
 
-
 const defaultOptions = {
   classes: {
     className: undefined,
@@ -152,7 +151,7 @@ function WizardRenderer({
     prev,
     next,
     className: navContainerClass,
-    validatePage: async () => validatePage(),
+    validatePage,
     leftNav,
     middleNav,
     rightNav,
@@ -165,9 +164,7 @@ function WizardRenderer({
   const content = designMode ? (
     <Div>{props.formNode.children.map((child) => renderChild(child))}</Div>
   ) : currentChild ? (
-    <Div className={contentClass}>
-      {renderChild(currentChild)}
-    </Div>
+    <Div className={contentClass}>{renderChild(currentChild)}</Div>
   ) : (
     <Fragment />
   );

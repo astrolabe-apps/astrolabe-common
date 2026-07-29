@@ -2,6 +2,18 @@
   "name": "@react-typed-forms/schemas",
   "entries": [
     {
+      "version": "18.0.1",
+      "tag": "@react-typed-forms/schemas_v18.0.1",
+      "date": "Wed, 29 Jul 2026 23:41:04 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Validate can't get response synchronously, wait 100ms"
+          }
+        ]
+      }
+    },
+    {
       "version": "18.0.0",
       "tag": "@react-typed-forms/schemas_v18.0.0",
       "date": "Fri, 08 May 2026 00:59:16 GMT",

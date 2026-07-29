@@ -45,7 +45,7 @@ export interface WizardRendererState {
   prev: ActionRendererProps;
   hasNext: boolean;
   hasPrev: boolean;
-  validatePage: () => boolean;
+  validatePage: () => Promise<boolean>;
   isPageValid: () => boolean;
   nav: (dir: number, validate: boolean) => Promise<void>;
   goToPage: (index: number) => void;
@@ -199,7 +199,7 @@ export function useWizardRenderer(
 
   async function nav(dir: number, validate: boolean) {
     if (validate) {
-      const syncValid = validatePage();
+      const syncValid = await validatePage();
       const validator = validateActionId
         ? props.actionHandler?.(
             validateActionId,
@@ -229,12 +229,13 @@ export function useWizardRenderer(
     return null;
   }
 
-  function validatePage() {
+  async function validatePage() {
     const pageNode = pageChildren[currentPage];
     if (pageNode) {
-      const valid = pageNode.validate();
+      pageNode.validate();
       pageNode.setTouched(true);
-      return valid;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      return pageNode.valid;
     }
     return false;
   }

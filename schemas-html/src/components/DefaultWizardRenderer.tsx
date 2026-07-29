@@ -173,7 +173,7 @@ function WizardRenderer({
     prev,
     next,
     className: navContainerClass,
-    validatePage: async () => validatePage(),
+    validatePage,
     steps,
     leftNav,
     middleNav,

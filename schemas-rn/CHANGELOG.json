@@ -2,6 +2,26 @@
   "name": "@react-typed-forms/schemas-rn",
   "entries": [
     {
+      "version": "2.2.7",
+      "tag": "@react-typed-forms/schemas-rn_v2.2.7",
+      "date": "Wed, 29 Jul 2026 23:41:04 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Validate can't get response synchronously, wait 100ms"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^18.0.0` to `18.0.1`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^18.0.0` to `18.0.1`"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.2.6",
       "tag": "@react-typed-forms/schemas-rn_v2.2.6",
       "date": "Wed, 08 Jul 2026 02:36:27 GMT",
