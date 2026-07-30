@@ -26,7 +26,7 @@
     "test": "vitest run"
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^4.4.2",
+    "@react-typed-forms/core": "^4.6.0",
     "@react-typed-forms/schemas": "^18.0.1",
     "@react-typed-forms/schemas-html": "^5.2.2",
     "@astroapps/client": "^2.7.0",
@@ -49,7 +49,7 @@
     "tailwind-variants": "^1.0.0"
   },
   "devDependencies": {
-    "@react-typed-forms/core": "^4.4.2",
+    "@react-typed-forms/core": "^4.6.0",
     "@react-typed-forms/schemas": "^18.0.1",
     "@react-typed-forms/schemas-html": "^5.2.2",
     "@astroapps/searchstate": "^2.0.0",

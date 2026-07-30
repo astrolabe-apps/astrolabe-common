@@ -24,7 +24,7 @@
     "build": "rimraf ./lib/ node_modules/.cache && microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^4.4.2",
+    "@react-typed-forms/core": "^4.6.0",
     "@react-typed-forms/schemas": "^18.0.1",
     "@react-typed-forms/schemas-html": "^5.2.2",
     "@astroapps/basic-editor": "^1.0.0",
@@ -37,7 +37,7 @@
     "file-saver": "^2.0.5"
   },
   "devDependencies": {
-    "@react-typed-forms/core": "^4.4.2",
+    "@react-typed-forms/core": "^4.6.0",
     "@react-typed-forms/schemas": "^18.0.1",
     "@react-typed-forms/schemas-html": "^5.2.2",
     "@astroapps/basic-editor": "workspace:*",

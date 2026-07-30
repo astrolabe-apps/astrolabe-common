@@ -2,6 +2,21 @@
   "name": "@astroapps/dnd-list",
   "entries": [
     {
+      "version": "1.0.2",
+      "tag": "@astroapps/dnd-list_v1.0.2",
+      "date": "Thu, 30 Jul 2026 23:33:06 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" to `4.6.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/core\" from `^4.0.0` to `4.6.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "1.0.1",
       "tag": "@astroapps/dnd-list_v1.0.1",
       "date": "Thu, 27 Feb 2025 00:21:07 GMT",

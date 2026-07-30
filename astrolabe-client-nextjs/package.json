@@ -25,7 +25,7 @@
   },
   "peerDependencies": {
     "@astroapps/client": "^2.7.0",
-    "@react-typed-forms/core": "^4.0.3",
+    "@react-typed-forms/core": "^4.6.0",
     "next": "^14.0.1 || ^15",
     "react": "^18.2.0 || ^19"
   },
@@ -35,7 +35,7 @@
     "watch": "microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "devDependencies": {
-    "@react-typed-forms/core": "^4.0.0",
+    "@react-typed-forms/core": "^4.6.0",
     "@astroapps/client": "^2.7.0",
     "next": "^14.0.1 || ^15",
     "react": "^18.2.0 || ^19",

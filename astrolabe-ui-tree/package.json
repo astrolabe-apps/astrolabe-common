@@ -34,7 +34,7 @@
 		"@dnd-kit/core": "^6.0.8",
 		"@dnd-kit/utilities": "^3.2.1",
 		"@dnd-kit/sortable": "^7.0.2",
-		"@react-typed-forms/core": "^4.0.0",
+		"@react-typed-forms/core": "^4.6.0",
 		"@astroapps/client": "^2.7.0"
 	},
 	"devDependencies": {
@@ -42,8 +42,8 @@
 		"@dnd-kit/core": "^6.0.8",
 		"@dnd-kit/utilities": "^3.2.1",
 		"@dnd-kit/sortable": "^7.0.2",
-		"@react-typed-forms/core": "workspace:*",
-		"@astroapps/client": "workspace:*",
+		"@react-typed-forms/core": "^4.5.3",
+		"@astroapps/client": "^2.6.0",
 		"@react-typed-forms/transform": "^0.2.0",
 		"microbundle": "^0.15.1",
 		"rimraf": "^3.0.2",

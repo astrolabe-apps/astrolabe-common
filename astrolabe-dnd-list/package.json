@@ -22,7 +22,7 @@
   "dependencies": {
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^4.0.0",
+    "@react-typed-forms/core": "^4.6.0",
     "react": "^18.2.0 || ^19",
     "react-dnd": "^16.0.1"
   },
@@ -32,7 +32,7 @@
     "watch": "microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment"
   },
   "devDependencies": {
-    "@react-typed-forms/core": "workspace:*",
+    "@react-typed-forms/core": "^4.5.3",
     "react": "^18.2.0 || ^19",
     "react-dnd": "^16.0.1",
     "@react-typed-forms/transform": "^0.2.0",

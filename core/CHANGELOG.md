@@ -1,6 +1,13 @@
 # Change Log - @react-typed-forms/core
 
-This log was last generated on Thu, 27 Feb 2025 00:21:07 GMT and should not be manually modified.
+This log was last generated on Thu, 30 Jul 2026 23:33:06 GMT and should not be manually modified.
+
+## 4.6.0
+Thu, 30 Jul 2026 23:33:06 GMT
+
+### Minor changes
+
+- Add support for global disabled/readonly
 
 ## 4.2.4
 Thu, 27 Feb 2025 00:21:07 GMT
