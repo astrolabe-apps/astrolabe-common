@@ -1,5 +1,5 @@
 import React from "react";
-import { formControlProps, useControlEffect } from "./hooks";
+import { useControlEffect, useFormControlProps } from "./hooks";
 import {Control} from "@astroapps/controls";
 
 // Only allow strings and numbers
@@ -13,11 +13,13 @@ export function Fselect({ control, children, ...others }: FselectProps) {
     () => control.error,
     (s) => (control.element as HTMLSelectElement)?.setCustomValidity(s ?? "")
   );
-  const { errorText, ...theseProps } = formControlProps(control);
+  const { errorText, readOnly, ...theseProps } = useFormControlProps(control);
 
   return (
     <select
       {...theseProps}
+      // native select has no readOnly, so lock it via disabled instead
+      disabled={theseProps.disabled || !!readOnly}
       ref={(r) => {
         control.element = r;
         if (r) r.setCustomValidity(control.current.error ?? "");

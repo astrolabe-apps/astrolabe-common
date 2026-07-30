@@ -10,13 +10,14 @@ import {
   FDatePicker,
   FDropdown,
   FInput,
-  FNumberInput,
+  FSpinButton,
   FRadioGroup,
-  FSearch,
+  FSearchBox,
   FSwitch,
   FTextarea,
 } from "@react-typed-forms/fluent-ui";
 import {
+  FormEditProvider,
   RenderControl,
   useControl,
   useControlEffect,
@@ -54,6 +55,8 @@ export default function FluentUiShowcase() {
   });
 
   const disabled = useControl(false);
+  const globalDisabled = useControl(false);
+  const globalReadonly = useControl(false);
 
   useControlEffect(
     () => disabled.value,
@@ -79,76 +82,122 @@ export default function FluentUiShowcase() {
             Showcase of every FluentUI v9 control bound to a
             <code className="mx-1">Control</code>
             from <code>@react-typed-forms/core</code>. Toggle the disabled
-            switch to see how each control reflects the bound control state,
-            and press <em>Validate</em> to surface field errors.
+            switch to see how each control reflects the bound control state, and
+            press <em>Validate</em> to surface field errors.
           </p>
         </header>
 
-        <section className="border rounded p-4">
-          <FSwitch control={disabled} label="Disable all fields" />
-        </section>
-
         <section className="border rounded p-4 space-y-3">
-          <h2 className="text-lg font-semibold">Text inputs</h2>
-          <FInput
-            control={data.fields.name}
-            label="Name"
-            required
-            placeholder="Jane Doe"
-          />
-          <FTextarea
-            control={data.fields.bio}
-            label="Bio"
-            placeholder="Tell us about yourself"
-          />
-          <FSearch control={data.fields.search} label="Search" />
-        </section>
-
-        <section className="border rounded p-4 space-y-3">
-          <h2 className="text-lg font-semibold">Toggles</h2>
-          <FCheckbox
-            control={data.fields.agree}
-            label="I agree to the terms"
+          <h2 className="text-lg font-semibold">Global flags</h2>
+          <FSwitch
+            control={disabled}
+            label="Disable all fields (control.disabled)"
           />
           <FSwitch
-            control={data.fields.notifications}
-            label="Send me email notifications"
+            control={globalDisabled}
+            label="Global disabled (FormEditState context)"
+          />
+          <FSwitch
+            control={globalReadonly}
+            label="Global readonly (FormEditState context)"
           />
         </section>
 
-        <section className="border rounded p-4 space-y-3">
-          <h2 className="text-lg font-semibold">Choices</h2>
-          <FDropdown<Role>
-            control={data.fields.role}
-            label="Role"
-            placeholder="Select a role"
-            options={[
-              { value: "admin", label: "Administrator" },
-              { value: "editor", label: "Editor" },
-              { value: "viewer", label: "Viewer" },
-            ]}
-          />
-          <FRadioGroup<Size>
-            control={data.fields.size}
-            label="T-shirt size"
-            options={[
-              { value: "s", label: "Small" },
-              { value: "m", label: "Medium" },
-              { value: "l", label: "Large" },
-            ]}
-          />
-        </section>
+        <RenderControl>
+          {() => (
+            <FormEditProvider
+              disabled={globalDisabled.value}
+              readonly={globalReadonly.value}
+            >
+              <div className="space-y-6">
+                <section className="border rounded p-4 space-y-3">
+                  <h2 className="text-lg font-semibold">Text inputs</h2>
+                  <FInput
+                    control={data.fields.name}
+                    label="Name"
+                    required
+                    placeholder="Jane Doe"
+                  />
+                  <FTextarea
+                    control={data.fields.bio}
+                    label="Bio"
+                    placeholder="Tell us about yourself"
+                  />
+                  <FSearchBox control={data.fields.search} label="Search" />
+                </section>
 
-        <section className="border rounded p-4 space-y-3">
-          <h2 className="text-lg font-semibold">Numbers &amp; dates</h2>
-          <FNumberInput control={data.fields.age} label="Age" required />
-          <FDatePicker control={data.fields.birthday} label="Birthday" />
-          <FDatePicker
-            control={data.fields.reminderAt}
-            label="Reminder"
-            withTime
-          />
-        </section>
+                <section className="border rounded p-4 space-y-3">
+                  <h2 className="text-lg font-semibold">Toggles</h2>
+                  <FCheckbox
+                    control={data.fields.agree}
+                    label="I agree to the terms"
+                  />
+                  <FSwitch
+                    control={data.fields.notifications}
+                    label="Send me email notifications"
+                  />
+                </section>
+
+                <section className="border rounded p-4 space-y-3">
+                  <h2 className="text-lg font-semibold">Choices</h2>
+                  <FDropdown<Role>
+                    control={data.fields.role}
+                    label="Role"
+                    placeholder="Select a role"
+                    options={[
+                      { value: "admin", text: "Administrator" },
+                      { value: "editor", text: "Editor" },
+                      { value: "viewer", text: "Viewer" },
+                    ]}
+                  />
+                  <FRadioGroup<Size>
+                    control={data.fields.size}
+                    label="T-shirt size"
+                    options={[
+                      { value: "s", text: "Small" },
+                      { value: "m", text: "Medium" },
+                      { value: "l", text: "Large" },
+                    ]}
+                  />
+                </section>
+
+                <section className="border rounded p-4 space-y-3">
+                  <h2 className="text-lg font-semibold">Numbers &amp; dates</h2>
+                  <FSpinButton control={data.fields.age} label="Age" required />
+                  <FDatePicker
+                    control={data.fields.birthday}
+                    label="Birthday"
+                  />
+                  <FDatePicker
+                    control={data.fields.reminderAt}
+                    label="Reminder"
+                    withTime
+                  />
+                </section>
+
+                <section className="border rounded p-4 space-y-3">
+                  <h2 className="text-lg font-semibold">Prop overrides</h2>
+                  <p className="text-sm text-gray-600">
+                    An explicit <code>disabled</code>/<code>readOnly</code> prop
+                    on the component wins over the cascading{" "}
+                    <code>FormEditState</code>. These two ignore the global
+                    toggles above.
+                  </p>
+                  <FInput
+                    control={data.fields.name}
+                    label="Always read-only (readOnly)"
+                    readOnly
+                  />
+                  <FInput
+                    control={data.fields.search}
+                    label="Always editable (disabled={false})"
+                    disabled={false}
+                  />
+                </section>
+              </div>
+            </FormEditProvider>
+          )}
+        </RenderControl>
 
         <section className="flex gap-2">
           <Button

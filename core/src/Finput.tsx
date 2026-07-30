@@ -1,5 +1,5 @@
 import React from "react";
-import { formControlProps, useControlEffect } from "./hooks";
+import { useControlEffect, useFormControlProps } from "./hooks";
 import { Control } from "@astroapps/controls";
 
 // Only allow strings and numbers
@@ -17,7 +17,7 @@ export function Finput<V extends string | number>({
     () => control.error,
     (s) => (control.element as HTMLInputElement)?.setCustomValidity(s ?? ""),
   );
-  const { errorText, value, ...inputProps } = formControlProps(control);
+  const { errorText, value, ...inputProps } = useFormControlProps(control);
   return (
     <input
       {...inputProps}
