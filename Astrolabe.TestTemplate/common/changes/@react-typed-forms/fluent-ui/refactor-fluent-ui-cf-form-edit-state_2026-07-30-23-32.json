@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/fluent-ui",
+      "comment": "Initial release",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@react-typed-forms/fluent-ui"
+}

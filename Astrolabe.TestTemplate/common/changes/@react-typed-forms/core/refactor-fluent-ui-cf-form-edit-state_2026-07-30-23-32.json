@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@react-typed-forms/core",
+      "comment": "Add support for global disabled/readonly",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@react-typed-forms/core"
+}
