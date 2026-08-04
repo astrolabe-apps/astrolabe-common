@@ -36,8 +36,6 @@ export interface GridSearchOptions<T, D = unknown> {
    */
   getColumnFilter?: GetColumnFilter<T, D>;
   sort?: SortOptions;
-  /** Zero `offset` when sort or filters change. Defaults to true. */
-  resetPaging?: boolean;
   maxFilterOptions?: number;
 }
 
@@ -68,7 +66,6 @@ export function useGridSearch<
     data,
     getColumnFilter,
     sort: sortOptions,
-    resetPaging = true,
     maxFilterOptions,
   } = options;
 
@@ -82,8 +79,8 @@ export function useGridSearch<
 
   // Built fresh every render on purpose: both read `.value`, which is what
   // registers the dependency so the header re-renders when the search changes.
-  const sort = makeGridSort(state, { ...sortOptions, resetPaging });
-  const filter = makeGridFilter<T, D, S>(state, { filterFor, resetPaging });
+  const sort = makeGridSort(state, sortOptions);
+  const filter = makeGridFilter<T, D, S>(state, { filterFor });
 
   return {
     // `S` extends SearchOptions and nothing here writes a whole value — sort,

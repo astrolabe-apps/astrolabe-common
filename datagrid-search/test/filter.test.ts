@@ -220,13 +220,12 @@ describe("makeGridFilter", () => {
     expect(state.fields.offset.value).toBe(0);
   });
 
-  it("leaves paging alone when told to", () => {
+  it("does not reset paging for a direct write to the state", () => {
+    // The escape hatch for a caller that manages paging itself: only interaction
+    // through GridFilter resets, so writing the field directly stays untouched.
+    // That's what an out-of-grid filter control does.
     const state = stateWith({ offset: 40 });
-    makeGridFilter<Row>(state, { resetPaging: false }).toggle(
-      "kind",
-      "doc",
-      true,
-    );
+    state.fields.filters.value = { kind: ["doc"] };
     expect(state.fields.offset.value).toBe(40);
   });
 

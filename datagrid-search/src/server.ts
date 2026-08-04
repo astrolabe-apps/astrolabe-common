@@ -35,14 +35,20 @@ export interface ServerDataOptions<T, S extends SearchOptions = SearchOptions> {
    * they arrive and the total fills in when it lands. Only used when `fetch`
    * didn't return a `total` itself.
    *
-   * **Counted once per search.** The key excludes `offset`, `length` and `sort`,
-   * none of which can change a count, so paging and sorting never ask again.
+   * The rule is **"no total? ask for one; a change of search clears it."** So
+   * paging never re-counts — paging isn't a change of search, since offset, length
+   * and sort are excluded from what counts as one.
    *
-   * That means in normal use the request happens at `offset` 0, because changing
-   * the query or a filter resets paging — but "the search changed" is the
-   * condition, not "we're on the first page". Guarding on `offset === 0` would
-   * leave a restored URL like `?offset=30` with no total at all, and would skip a
-   * genuinely-changed count when `resetPaging` is off.
+   * Because it runs in parallel it starts before the page lands, so it can't know
+   * in advance whether the page will bring a total of its own. If it does, the
+   * in-flight count is aborted and ignored. Passing `fetchTotal` therefore asserts
+   * that your page fetch doesn't count; an endpoint that sometimes does will see a
+   * cancelled count request.
+   *
+   * In normal use that means the request lands at `offset` 0, since changing the
+   * query or a filter resets paging. But "the search changed" is the condition,
+   * not "we're on the first page": guarding on `offset === 0` would leave a
+   * restored URL like `?offset=30` with no total at all.
    */
   fetchTotal?: (options: S, signal: AbortSignal) => Promise<number>;
   /** Debounce for `query` only. Defaults to 300ms; 0 disables it. */
@@ -127,39 +133,49 @@ export function useServerData<T, S extends SearchOptions = SearchOptions>(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchOptions, reloadCount, keepPrevious, ...(deps ?? [])]);
 
-  // --- The count, when asked for separately -------------------------------
+  // --- The count ----------------------------------------------------------
   //
-  // Keyed on everything a count can actually depend on, written as an *exclusion*
-  // of offset/length/sort rather than a list of query+filters: a state that
-  // extends SearchOptions with filtering of its own is then included
-  // automatically, and forgetting one would mean serving a stale count.
+  // The rule: **if there's no total, ask for one; a change of search clears it.**
   //
-  // The effect reads the current options from a ref, since paging may have moved
-  // on since the key last changed and is irrelevant to counting anyway.
-  const countKey =
-    fetchTotal &&
-    JSON.stringify(
-      (({ offset, length, sort, ...rest }) => rest)(searchOptions),
-    );
-  const [count, setCount] = useState<{ key?: string; value?: number }>({});
+  // So a page that carries its own total costs no count request at all — which
+  // matters for an API that returns one only when it's cheap — and paging never
+  // re-counts, because paging isn't a change of search.
+  //
+  // `searchKey` is what "a change of search" means: everything except offset,
+  // length and sort, none of which can alter a count. Written as an exclusion so a
+  // state extending SearchOptions is covered without naming its fields. Keying the
+  // attempt, rather than testing `total === undefined` alone, is also what stops a
+  // failed count retrying forever — the attempt is recorded against the search, so
+  // it isn't repeated until the search moves. `reload()` folds in so it re-counts.
+  const pageTotal = result.page?.total;
+  const havePageTotal = pageTotal !== undefined;
+  const searchKey = useMemo(() => {
+    const { offset, length, sort, ...search } = searchOptions;
+    return `${reloadCount}:${JSON.stringify(search)}`;
+  }, [searchOptions, reloadCount]);
+
+  const [count, setCount] = useState<{ key: string; value?: number }>();
+  const counted = count?.key === searchKey;
 
   useEffect(() => {
     const request = fetchTotalRef.current;
-    if (!countKey || !request) return;
+    if (!request || havePageTotal || counted) return;
     const controller = new AbortController();
+    // Reads the current options from a ref: paging may have moved on since the key
+    // last changed, and is irrelevant to counting anyway.
     request(optionsRef.current, controller.signal).then(
       (value) => {
-        if (!controller.signal.aborted) setCount({ key: countKey, value });
+        if (!controller.signal.aborted) setCount({ key: searchKey, value });
       },
       () => {
-        // A failed count must not break the grid: fall back to not knowing the
-        // total, which the pager already handles.
-        if (!controller.signal.aborted) setCount({ key: countKey });
+        // A failed count must not break the grid: record the attempt so it isn't
+        // retried, and fall back to not knowing the total, which the pager handles.
+        if (!controller.signal.aborted) setCount({ key: searchKey });
       },
     );
     return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [countKey, reloadCount, ...(deps ?? [])]);
+  }, [searchKey, counted, havePageTotal, ...(deps ?? [])]);
 
   const reload = useMemo(() => () => setReloadCount((n) => n + 1), []);
 
@@ -170,11 +186,8 @@ export function useServerData<T, S extends SearchOptions = SearchOptions>(
       error: result.error,
       reload,
     });
-    // A page's own total wins; otherwise use the separate count, but only once
-    // it matches the current query+filters — a stale count is worse than none.
-    if (data.total === undefined && countKey && count.key === countKey) {
-      return { ...data, total: count.value };
-    }
-    return data;
-  }, [result, reload, countKey, count]);
+    // A separately-fetched count only applies to the search it was made for; a
+    // stale total is worse than none.
+    return havePageTotal || !counted ? data : { ...data, total: count?.value };
+  }, [result, reload, havePageTotal, counted, count]);
 }

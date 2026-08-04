@@ -473,7 +473,6 @@ export interface SortOptions {
   mode?: "single" | "multiple" | "shift";
   /** Include rotateSort's third "unsorted" step. Default false. */
   cycleUnsorted?: boolean;
-  resetPaging?: boolean;   // default true
 }
 
 export function makeGridSort(
@@ -492,8 +491,8 @@ it belongs to the client source, and its absence is how a server source says
 "already ordered". `FluentSortState`/`columnIdSort`/`controlSort` are deleted;
 `sortField` already defaults from the column id in `initColumn`.
 
-Paging reset lives here and in `makeGridFilter`, so the three separate
-`resetPaging` options collapse into one grid-level flag threaded to both.
+Paging reset lives here and in `makeGridFilter`, replacing the three separate
+`resetPaging` options — and it is **not configurable** (§11.4).
 
 ### 5.3 Filters
 
@@ -1153,6 +1152,41 @@ once with the stale query, once with the new. Fixed by keying the returned
 identity on everything *except* the query, so it only changes when the settled
 query lands or something else actually moves. Caught by the existing
 stale-response test, which is the kind of thing those tests are for.
+
+---
+
+### 11.4 `resetPaging` removed (D11)
+
+Sorting or filtering now **always** returns to the first page; the option is gone.
+
+It came from the old API — three separate `resetPaging` options that Phase 1
+collapsed into one — not from a use. Nothing but its own tests ever passed `false`,
+and neither case it would serve holds up: after re-sorting, "page 5" of a different
+order shows unrelated rows, and after filtering an old offset may be past the end
+of the result set entirely.
+
+The escape hatch already exists and is better: **the reset only fires on
+interaction through `GridSort`/`GridFilter`.** A caller writing
+`state.fields.filters.value` directly — which is what an out-of-grid filter control
+does — is managing the search itself and is left alone. That's now a test rather
+than an accident.
+
+### 11.5 The count rule (D12)
+
+Restated from a keyed cache to an invariant: **"no total? ask for one; a change of
+search clears it."** Two things fell out:
+
+- A page carrying its own total costs no count. The previous version fired the
+  request regardless and discarded the answer, so an endpoint that returns a total
+  only when it's cheap paid for a pointless query every time.
+- Because the count runs *in parallel* with the page, it starts before the page
+  lands and so can't know in advance whether one is coming. If the page brings a
+  total, the in-flight count is aborted. Passing `fetchTotal` therefore asserts
+  that your page fetch doesn't count; an endpoint that sometimes does will see a
+  cancelled request. Documented rather than papered over.
+
+Also dropped the `if (offset.value !== 0)` guards around the paging reset: a
+`Control` doesn't notify when handed the value it already holds.
 
 ---
 

@@ -541,9 +541,9 @@ describe("useServerData with an optional count", () => {
     expect(seen.current.total).toBe(40);
   });
 
-  it("counts on a search change even when paging isn't reset", async () => {
-    // The other case an `offset === 0` guard would break: with resetPaging off,
-    // a filter change leaves the offset alone, and the count still moved.
+  it("counts on a search change that left the offset alone", async () => {
+    // The other case an `offset === 0` guard would break: a filter written
+    // straight to the state doesn't reset paging, and the count still moved.
     const fetchTotal = jest.fn(async () => 2);
     const state = stateWith({ length: 10, offset: 20 });
     renderData(() =>
@@ -562,14 +562,77 @@ describe("useServerData with an optional count", () => {
     expect(fetchTotal).toHaveBeenCalledTimes(2);
   });
 
-  it("prefers a total the page carried over a separate count", async () => {
-    const fetchTotal = jest.fn(async () => 99);
+  it("abandons the count when the page turns out to carry a total", async () => {
+    // The count starts in parallel with the page — that's the point of it — so at
+    // mount it can't know whether the page will bring a total. When the page
+    // arrives with one, the speculative count is aborted and its value ignored.
+    const signals: AbortSignal[] = [];
     const state = stateWith({ length: 2 });
     const { seen } = renderData(() =>
-      useServerData(state, { fetch: stubFetch(), fetchTotal, debounce: 0 }),
+      useServerData(state, {
+        fetch: stubFetch(),
+        fetchTotal: async (_o, signal) => {
+          signals.push(signal);
+          return 99;
+        },
+        debounce: 0,
+      }),
     );
     await act(async () => {});
     expect(seen.current.total).toBe(4);
+    expect(signals[0].aborted).toBe(true);
+  });
+
+  it("keeps the page's total when it has one, on every page", async () => {
+    // An endpoint that counts only on the first page: page 1 uses its own total,
+    // page 2 falls back to the separate count.
+    const state = stateWith({ length: 2 });
+    const { seen } = renderData(() =>
+      useServerData(state, {
+        fetch: async (options) => ({
+          rows: allRows.slice(options.offset, options.offset + options.length),
+          ...(options.offset === 0 && { total: 4 }),
+        }),
+        fetchTotal: async () => 4,
+        debounce: 0,
+      }),
+    );
+    await act(async () => {});
+    expect(seen.current.total).toBe(4);
+
+    await act(async () => {
+      state.fields.offset.value = 2;
+    });
+    await act(async () => {});
+    expect(seen.current.total).toBe(4);
+  });
+
+  it("does not retry a failed count until the search moves", async () => {
+    const fetchTotal = jest.fn(async () => {
+      throw new Error("count timed out");
+    });
+    const state = stateWith({ length: 2 });
+    renderData(() =>
+      useServerData(state, {
+        fetch: fetchUncounted(),
+        fetchTotal,
+        debounce: 0,
+      }),
+    );
+    await act(async () => {});
+    expect(fetchTotal).toHaveBeenCalledTimes(1);
+
+    // Paging doesn't re-ask, even though there's still no total — otherwise a
+    // failing count would retry on every interaction.
+    await act(async () => {
+      state.fields.offset.value = 2;
+    });
+    expect(fetchTotal).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      state.fields.filters.value = { kind: ["doc"] };
+    });
+    expect(fetchTotal).toHaveBeenCalledTimes(2);
   });
 
   it("survives a failed count", async () => {

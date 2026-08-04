@@ -168,8 +168,6 @@ export interface GridFilter<T = any, D = unknown> {
 export interface GridFilterOptions<T, D> {
   /** From `columnFilterResolver`. Defaults to uncached resolution. */
   filterFor?: (column: ColumnDef<T, D>) => ColumnFilter<T> | undefined;
-  /** Zero `offset` when a filter changes. Defaults to true. */
-  resetPaging?: boolean;
 }
 
 /**
@@ -192,7 +190,7 @@ export function makeGridFilter<
   D = unknown,
   S extends SearchOptions = SearchOptions,
 >(state: Control<S>, options: GridFilterOptions<T, D> = {}): GridFilter<T, D> {
-  const { filterFor = defaultGetColumnFilter, resetPaging = true } = options;
+  const { filterFor = defaultGetColumnFilter } = options;
   // Cast because `S` is only constrained to extend SearchOptions, so
   // `fields.filters` resolves to a union that can't be indexed by an arbitrary
   // field name. The constraint guarantees the shape; this states it.
@@ -221,10 +219,21 @@ export function makeGridFilter<
       }
       return { ...from, [field]: next };
     });
-    if (resetPaging) {
-      const offset = state.fields.offset;
-      if (offset.value !== 0) offset.value = 0;
-    }
+    resetPaging();
+  }
+
+  /**
+   * Filtering changes which rows exist, so an offset into the old result set is
+   * meaningless and may be past the end entirely. Always back to the first page.
+   *
+   * Only interaction through this object resets: a caller writing
+   * `state.fields.filters.value` directly is managing the search itself, and this
+   * stays out of the way.
+   */
+  function resetPaging() {
+    // Unguarded: a Control doesn't notify when the value it's given is the one it
+    // already has.
+    state.fields.offset.value = 0;
   }
 
   return {
@@ -255,10 +264,7 @@ export function makeGridFilter<
       }
       if (Object.keys(current).length === 0) return;
       filters.value = {};
-      if (resetPaging) {
-        const offset = state.fields.offset;
-        if (offset.value !== 0) offset.value = 0;
-      }
+      resetPaging();
     },
   };
 }

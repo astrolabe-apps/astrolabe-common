@@ -33,8 +33,6 @@ export interface SortOptions {
    * ascending ↔ descending like Fluent's DataGrid.
    */
   cycleUnsorted?: boolean;
-  /** Zero `offset` when the sort changes. Defaults to true. */
-  resetPaging?: boolean;
 }
 
 export interface GridSort {
@@ -97,11 +95,7 @@ export function makeGridSort<S extends SearchOptions>(
   state: Control<S>,
   options: SortOptions = {},
 ): GridSort {
-  const {
-    mode = "single",
-    cycleUnsorted = false,
-    resetPaging = true,
-  } = options;
+  const { mode = "single", cycleUnsorted = false } = options;
   const sortControl = state.fields.sort;
   const sorts = sortControl.value ?? [];
 
@@ -130,11 +124,11 @@ export function makeGridSort<S extends SearchOptions>(
       const multiple =
         mode === "multiple" || (mode === "shift" && !!ev?.shiftKey);
       sortControl.value = applySortField(sorts, field, next, multiple);
-      if (resetPaging) {
-        const offset = state.fields.offset;
-        // Guarded so an already-zero offset doesn't fire a change notification.
-        if (offset.value !== 0) offset.value = 0;
-      }
+      // Re-sorting makes the current page meaningless — "page 5" of a different
+      // order shows unrelated rows — so paging always goes back to the start.
+      // Unguarded: a Control doesn't notify when the value it's given is the one
+      // it already has.
+      state.fields.offset.value = 0;
     },
   };
 }

@@ -181,12 +181,6 @@ describe("makeGridSort", () => {
     expect(state.fields.offset.value).toBe(0);
   });
 
-  it("leaves paging alone when told to", () => {
-    const state = stateWith({ offset: 40 });
-    makeGridSort(state, { resetPaging: false }).toggle(file);
-    expect(state.fields.offset.value).toBe(40);
-  });
-
   it("ignores a click on an unsortable column", () => {
     const state = stateWith({ offset: 40 });
     makeGridSort(state).toggle(actions);

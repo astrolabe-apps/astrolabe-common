@@ -172,5 +172,5 @@ of `1-10 of 42`, and enables Next while the page comes back full. See
 | `controlSelection`                                 | `makeGridSelection`                                                   |
 | `useFilterValues` prop                             | `getColumnFilter(column).options`, or the data source                 |
 | `totalRows` control + `loading` prop               | `search.data.total` / `.loading`                                      |
-| `resetPaging` (three places)                       | one `resetPaging` on `useGridSearch`                                  |
+| `resetPaging` (three places)                       | gone — sorting or filtering always returns to the first page          |
 | _(none)_                                           | pager, query debounce, `reload()`, `error`, server facets, multi-sort |
