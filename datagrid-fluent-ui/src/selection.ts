@@ -85,10 +85,14 @@ export interface ControlSelectionOptions<T> {
 }
 
 /**
- * `GridSelection` backed by a `Control<string[]>`. Reads `.value`, so call it
- * during render.
+ * `GridSelection` backed by a `Control<string[]>`.
+ *
+ * Deliberately not named `use*`: it contains no hooks, and it reads `.value` when
+ * called, so it must run on every render and is safe to call conditionally — the
+ * opposite of what a `use*` name would promise. Same reasoning as `makeGridSort`
+ * and `makeGridFilter`.
  */
-export function useSelectionControl<T>({
+export function makeGridSelection<T>({
   selected,
   rows,
   getId,

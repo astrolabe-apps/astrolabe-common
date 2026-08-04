@@ -972,7 +972,37 @@ exercise the whole stack: `useClientData` → `useGridSearch` → renderer → D
   from a render callback outside any component, so a control read there needs a
   component to live in — and it scopes the read to one cell rather than the grid.
 
-### Phase 5 — demo harness + READMEs
+### Phase 5 — demo harness + READMEs ✅ **done**
+`page.tsx` rewired to the new API; new `fluentgrid/features/page.tsx` with the
+feature tour; both READMEs rewritten. `next build` clean — both routes render.
+
+**Split into two routes** rather than one 1,400-line page: `/fluentgrid` keeps the
+Fluent-vs-astrolabe pixel comparison and the computed-style diff panel (now driven
+through `useClientData`/`useGridSearch`, with the old `FluentDataTable` pane
+replaced by a `FluentDataGrid` one), and `/fluentgrid/features` carries the seven
+feature sections.
+
+**Notes:**
+
+- **`@tanstack/react-query` is a real dependency of the demo site**, and section 7
+  uses the real `useQuery`. An earlier draft of this page used a hand-rolled stand-in;
+  that defeated the purpose, since the thing worth proving is the flag mapping —
+  `isFetching`, not `isPending`, because with `placeholderData` there *is* data
+  during a refetch and `isPending` would report nothing was happening. Neither
+  library gained a dependency.
+- **`makeGridSelection`, renamed from `useSelectionControl`.** It contains no
+  hooks and is legitimately called conditionally — the demo does exactly that —
+  so a `use*` name promised the opposite of the truth. Now consistent with
+  `makeGridSort`/`makeGridFilter`.
+- **The `columnId` sort model is gone from the harness** along with its
+  `?sortmodel=` deep link, since `controlSort`/`FluentSortState` no longer exist.
+- **Fluent's own `DataGrid` is aliased `FluentUIDataGrid`** in the comparison page,
+  as this package now exports a `FluentDataGrid` of its own.
+- The client/server toggle is two sibling components keyed by mode over one shared
+  state control, per D5 — which also discards the stale page and in-flight request
+  on switch.
+
+Original scope for reference:
 `.../formServer/src/app/fluentgrid/page.tsx` currently imports
 `FluentDataTable`, `FluentSortState`, `controlSort`, `controlSearchStateSort`,
 `controlSelection`, `useFluentDataGrid` — all gone. Rewrite, and add:

@@ -19,7 +19,8 @@ import clsx from "clsx";
 import {
   Avatar,
   Button,
-  DataGrid as FluentDataGrid,
+  // Aliased because this package now exports a `FluentDataGrid` of its own.
+  DataGrid as FluentUIDataGrid,
   DataGridBody,
   DataGridCell,
   DataGridHeader,
@@ -44,17 +45,15 @@ import {
   columnDefinitions,
 } from "@astroapps/datagrid";
 import {
+  FluentDataGrid,
   FluentDataGridSize,
-  FluentDataTable,
-  FluentSortState,
-  controlSearchStateSort,
-  controlSelection,
-  controlSort,
   fluentDataGridClassNames,
   useFluentDataGrid,
+  makeGridSelection,
 } from "@astroapps/datagrid-fluent-ui";
+import { useClientData, useGridSearch } from "@astroapps/datagrid-search";
 import { SearchOptions, defaultSearchOptions } from "@astroapps/searchstate";
-import { useControl } from "@react-typed-forms/core";
+import { Control, useControl } from "@react-typed-forms/core";
 
 // ---------------------------------------------------------------------------
 // Data
@@ -153,8 +152,6 @@ function cellContent(row: FileRow, columnId: string): ReactNode {
       return <TableCellLayout truncate>{row.category}</TableCellLayout>;
   }
 }
-
-type SortModel = "searchstate" | "columnId";
 
 /**
  * Columns for the `FluentDataTable` pane. `getter` + `sortField` + `filterField`
@@ -427,6 +424,83 @@ function unusedWidth(
 }
 
 // ---------------------------------------------------------------------------
+// The searchstate-driven pane, using the batteries-included component
+// ---------------------------------------------------------------------------
+
+/**
+ * `FluentDataGrid` over the same rows, driven entirely by a
+ * `Control<SearchOptions>`.
+ *
+ * Two lines of wiring: a data source, then the search. Sort arrows appear for
+ * columns with a `sortField`, funnels for Author and Category (which have a
+ * `filterField`, so the client source can derive their options), and the pager
+ * once there's more than one page.
+ */
+function ViewPane({
+  gridSize,
+  state,
+  loading,
+  empty,
+  page,
+}: {
+  gridSize: FluentDataGridSize;
+  state: Control<SearchOptions>;
+  loading: Control<boolean>;
+  empty: Control<boolean>;
+  page: ReturnType<typeof usePageStyles>;
+}) {
+  const data = useClientData(state, {
+    rows: empty.value ? [] : rows,
+    columns: TABLE_COLUMNS,
+    loading: loading.value,
+  });
+  const search = useGridSearch(state, { columns: TABLE_COLUMNS, data });
+
+  return (
+    <div className={page.pane}>
+      <div style={typographyStyles.subtitle2 as any}>
+        FluentDataGrid — searchstate-driven, client-side
+      </div>
+      <p style={typographyStyles.caption1 as any}>
+        Sorting, free-text query, per-column filters and paging all come from one{" "}
+        <code>Control&lt;SearchOptions&gt;</code>. Swapping{" "}
+        <code>useClientData</code> for <code>useServerData</code> is the only
+        change needed to move this server-side — see the features page.
+      </p>
+      <div className={page.knobs}>
+        <SearchBox
+          placeholder="Query"
+          value={state.fields.query.value ?? ""}
+          onChange={(_, d) => (state.fields.query.value = d.value)}
+        />
+        <Switch
+          label="Loading"
+          checked={loading.value}
+          onChange={(_, d) => (loading.value = d.checked)}
+        />
+        <Switch
+          label="No data"
+          checked={empty.value}
+          onChange={(_, d) => (empty.value = d.checked)}
+        />
+        <span className={page.state} data-testid="view-state">
+          sort={JSON.stringify(state.fields.sort.value)} filters=
+          {JSON.stringify(state.fields.filters.value)} rows={data.total}
+        </span>
+      </div>
+      <div className={page.paneBody}>
+        <FluentDataGrid<FileRow>
+          search={search}
+          size={gridSize}
+          rowKey={(r) => r.id}
+          pageSizes={[3, 5, 10]}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page
 // ---------------------------------------------------------------------------
 
@@ -437,27 +511,22 @@ export default function FluentGridComparison() {
   const multiselect = useControl(true);
   const sortable = useControl(true);
   const fixedWidths = useControl(true);
-  const sortModel = useControl<SortModel>("searchstate");
   const cycleUnsorted = useControl(false);
-  // Two ways of holding sort state, to exercise both library adapters:
-  // @astroapps/searchstate's "a"/"d"-prefixed sort fields...
+  // One sort model now: searchstate's "a"/"d"-prefixed sort fields. The old
+  // {columnId, direction} adapter is gone — two wire formats for one concept.
   const searchState = useControl<SearchOptions>({
     ...defaultSearchOptions,
+    length: rows.length,
     sort: ["afile"],
-  });
-  // ...and a plain single-column {columnId, direction}.
-  const columnSortState = useControl<FluentSortState>({
-    columnId: "file",
-    direction: "ascending",
   });
   const selectedIds = useControl<string[]>([]);
   const diff = useControl<DiffGroup[]>([]);
-  // State for the FluentDataTable pane below.
+  // State for the searchstate-driven pane below.
   const viewState = useControl<SearchOptions>({
     ...defaultSearchOptions,
+    length: 3,
     sort: ["afile"],
   });
-  const viewTotal = useControl(0);
   const viewLoading = useControl(false);
   const viewEmpty = useControl(false);
 
@@ -470,23 +539,6 @@ export default function FluentGridComparison() {
   const selectionMode = multiselect.value ? "multiselect" : undefined;
   const isSortable = sortable.value;
   const useFixedWidths = fixedWidths.value;
-  const model = sortModel.value;
-
-  // --- Library wiring ----------------------------------------------------
-  const sort =
-    model === "searchstate"
-      ? controlSearchStateSort(searchState, {
-          cycleUnsorted: cycleUnsorted.value,
-        })
-      : controlSort(columnSortState);
-
-  const selection = selectionMode
-    ? controlSelection<FileRow>({
-        selected: selectedIds,
-        rows,
-        getId: (r) => r.id,
-      })
-    : undefined;
 
   const dataColumns = columnDefinitions<FileRow>(
     ...COLUMNS.map((c, i): ColumnDefInit<FileRow> => ({
@@ -505,24 +557,44 @@ export default function FluentGridComparison() {
     })),
   );
 
-  const astroRows = sort.sortRows(rows, dataColumns);
+  // --- Library wiring ----------------------------------------------------
+  // The client-side source does the sorting now; `GridSort` no longer carries a
+  // `sortRows`, since its absence is how a server source says "already ordered".
+  const astroData = useClientData(searchState, {
+    rows,
+    columns: dataColumns,
+    paged: false,
+  });
+  const search = useGridSearch(searchState, {
+    columns: dataColumns,
+    data: astroData,
+    sort: { cycleUnsorted: cycleUnsorted.value },
+  });
+  const astroRows = astroData.rows;
 
-  const fluent = useFluentDataGrid<FileRow>({
+  const selection = selectionMode
+    ? makeGridSelection<FileRow>({
+        selected: selectedIds,
+        rows: astroRows,
+        getId: (r) => r.id,
+      })
+    : undefined;
+
+  const fluent = useFluentDataGrid(search, {
     size: gridSize,
-    rows: astroRows,
     rowKey: (r) => r.id,
-    sort,
     selection,
-    header: isSortable ? undefined : { isSortable: () => false },
+    sortable: isSortable,
+    // No filters on this pane: it exists to compare pixels with Fluent's own
+    // DataGrid, which has no filter affordance to compare against.
+    filterable: false,
   });
 
-  const astroColumns = fluent.selectionColumn
-    ? [...columnDefinitions<FileRow>(fluent.selectionColumn), ...dataColumns]
-    : dataColumns;
-
-  // --- Fluent side, driven from the same FluentSort ------------------------
-  const sortedColumn = dataColumns.find((c) => sort.direction(c));
-  const sortDirection = sortedColumn && sort.direction(sortedColumn);
+  // --- Fluent side, driven from the same GridSort -------------------------
+  const sortedColumn = dataColumns.find((c) => search.sort.direction(c));
+  const sortDir = sortedColumn && search.sort.direction(sortedColumn);
+  const sortDirection =
+    sortDir === "asc" ? "ascending" : sortDir === "desc" ? "descending" : undefined;
 
   const fluentColumns: TableColumnDefinition<FileRow>[] = COLUMNS.map((c) =>
     createTableColumn<FileRow>({
@@ -617,8 +689,6 @@ export default function FluentGridComparison() {
     const bool = (k: string) => (p.has(k) ? p.get(k) !== "0" : undefined);
     const s = p.get("size") as FluentDataGridSize | null;
     if (s) size.value = s;
-    const sm = p.get("sortmodel") as SortModel | null;
-    if (sm) sortModel.value = sm;
     const d = bool("dark");
     if (d !== undefined) dark.value = d;
     const sel = bool("select");
@@ -661,7 +731,6 @@ export default function FluentGridComparison() {
     selectionMode,
     isSortable,
     useFixedWidths,
-    model,
     sortedColumn?.id,
     sortDirection,
     selectedIds.value.length,
@@ -724,34 +793,18 @@ export default function FluentGridComparison() {
               </Button>
             ),
           )}
-          {(["searchstate", "columnId"] as SortModel[]).map((m) => (
-            <Button
-              key={m}
-              size="small"
-              appearance={model === m ? "primary" : "secondary"}
-              onClick={() => (sortModel.value = m)}
-            >
-              sort: {m}
-            </Button>
-          ))}
           <Button size="small" onClick={runMeasure}>
             Re-measure
           </Button>
         </div>
 
         <div className={page.state}>
-          {model === "searchstate" ? (
-            <>
-              searchstate: sort={JSON.stringify(searchState.fields.sort.value)}{" "}
-              offset={searchState.fields.offset.value} — header clicks cycle{" "}
-              {cycleUnsorted.value
-                ? "asc → desc → unsorted (rotateSort's own cycle)"
-                : "asc ↔ desc (like Fluent's)"}
-              , and reset offset
-            </>
-          ) : (
-            <>columnId: {JSON.stringify(columnSortState.value)}</>
-          )}
+          sort={JSON.stringify(searchState.fields.sort.value)} offset=
+          {searchState.fields.offset.value} — header clicks cycle{" "}
+          {cycleUnsorted.value
+            ? "asc → desc → unsorted (rotateSort's own cycle)"
+            : "asc ↔ desc (like Fluent's)"}
+          , and reset offset
         </div>
 
         <div
@@ -765,7 +818,7 @@ export default function FluentGridComparison() {
               Fluent v9 DataGrid
             </div>
             <div className={page.paneBody} ref={fluentRef}>
-              <FluentDataGrid
+              <FluentUIDataGrid
                 items={rows}
                 columns={fluentColumns}
                 getRowId={(r) => r.id}
@@ -783,10 +836,10 @@ export default function FluentGridComparison() {
                 }}
                 onSortChange={(_, next) => {
                   const col = dataColumns.find((c) => c.id === next.sortColumn);
-                  // Toggling through the shared FluentSort keeps one source of
+                  // Toggling through the shared GridSort keeps one source of
                   // truth, so both grids agree even where Fluent's own cycle
                   // differs (searchstate's has an extra "unsorted" step).
-                  if (col) sort.toggle(col);
+                  if (col) search.sort.toggle(col);
                 }}
                 selectionMode={selectionMode}
                 selectedItems={selectedIds.value}
@@ -820,7 +873,7 @@ export default function FluentGridComparison() {
                     </DataGridRow>
                   )}
                 </DataGridBody>
-              </FluentDataGrid>
+              </FluentUIDataGrid>
             </div>
           </div>
 
@@ -832,57 +885,25 @@ export default function FluentGridComparison() {
               <DataGrid<FileRow>
                 {...fluent.gridProps}
                 rows={astroRows}
-                columns={astroColumns}
+                columns={fluent.columns}
               />
             </div>
           </div>
         </div>
 
-        <div className={page.pane}>
-          <div style={typographyStyles.subtitle2 as any}>
-            FluentDataTableView — searchstate-driven, via FluentDataTable
-          </div>
-          <p style={typographyStyles.caption1 as any}>
-            Sorting, free-text query and per-column filters all come from{" "}
-            <code>@astroapps/searchstate</code>; the only glue is{" "}
-            <code>columnSearching</code>, which turns the columns into the
-            accessors it wants. Author and Category have a{" "}
-            <code>filterField</code>, so they get a filter popover.
-          </p>
-          <div className={page.knobs}>
-            <SearchBox
-              placeholder="Query"
-              value={viewState.fields.query.value ?? ""}
-              onChange={(_, d) => (viewState.fields.query.value = d.value)}
-            />
-            <Switch
-              label="Loading"
-              checked={viewLoading.value}
-              onChange={(_, d) => (viewLoading.value = d.checked)}
-            />
-            <Switch
-              label="No data"
-              checked={viewEmpty.value}
-              onChange={(_, d) => (viewEmpty.value = d.checked)}
-            />
-            <span className={page.state} data-testid="view-state">
-              sort={JSON.stringify(viewState.fields.sort.value)} filters=
-              {JSON.stringify(viewState.fields.filters.value)} rows=
-              {viewTotal.value}
-            </span>
-          </div>
-          <div className={page.paneBody}>
-            <FluentDataTable<FileRow>
-              state={viewState}
-              data={viewEmpty.value ? [] : rows}
-              columns={TABLE_COLUMNS}
-              size={gridSize}
-              loading={viewLoading.value}
-              totalRows={viewTotal}
-              rowId={(r) => r.id}
-            />
-          </div>
-        </div>
+        <ViewPane
+          gridSize={gridSize}
+          state={viewState}
+          loading={viewLoading}
+          empty={viewEmpty}
+          page={page}
+        />
+
+        <p style={typographyStyles.body1 as any}>
+          Feature demos — the client/server swap, async filter options, a custom
+          range popup and a react-query-driven grid — live at{" "}
+          <a href="/fluentgrid/features">/fluentgrid/features</a>.
+        </p>
 
         <div className={page.diff}>
           <div style={typographyStyles.subtitle2 as any}>

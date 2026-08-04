@@ -8,7 +8,7 @@ export {
 } from "./styles";
 export {
   arraySelection,
-  useSelectionControl,
+  makeGridSelection,
   type ArraySelectionOptions,
   type ControlSelectionOptions,
   type GridSelection,

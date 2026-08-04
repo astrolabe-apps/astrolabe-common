@@ -1517,6 +1517,7 @@ importers:
       '@astroapps/controls': workspace:*
       '@astroapps/datagrid': workspace:*
       '@astroapps/datagrid-fluent-ui': workspace:*
+      '@astroapps/datagrid-search': workspace:*
       '@astroapps/evaluator': workspace:*
       '@astroapps/forms-core': workspace:*
       '@astroapps/schemas-datagrid': workspace:*
@@ -1545,6 +1546,7 @@ importers:
       '@react-typed-forms/schemas': workspace:*
       '@react-typed-forms/schemas-html': workspace:*
       '@tailwindcss/forms': ^0.5.7
+      '@tanstack/react-query': ^5.59.0
       '@types/file-saver': ^2.0.7
       '@types/node': ^20.8.4
       '@types/react': ^19.0.0
@@ -1580,6 +1582,7 @@ importers:
       '@astroapps/controls': link:../../../../astrolabe-controls
       '@astroapps/datagrid': link:../../../../astrolabe-datagrid
       '@astroapps/datagrid-fluent-ui': link:../../../../datagrid-fluent-ui
+      '@astroapps/datagrid-search': link:../../../../datagrid-search
       '@astroapps/evaluator': link:../../../../astrolabe-evaluator
       '@astroapps/forms-core': link:../../../../forms/core
       '@astroapps/schemas-datagrid': link:../../../../astrolabe-schemas-datagrid
@@ -1606,6 +1609,7 @@ importers:
       '@react-typed-forms/fluent-ui': link:../../../../fluent-ui
       '@react-typed-forms/schemas': link:../../../../schemas
       '@react-typed-forms/schemas-html': link:../../../../schemas-html
+      '@tanstack/react-query': 5.101.4_react@19.0.0
       clsx: 2.1.1
       codemirror: 6.0.1
       file-saver: 2.0.5
@@ -18324,6 +18328,19 @@ packages:
       mini-svg-data-uri: 1.4.4
       tailwindcss: 3.4.14
     dev: true
+
+  /@tanstack/query-core/5.101.4:
+    resolution: {integrity: sha512-gNwcvOJcRbLWPOLG/2OBm+zM+Yv+MKsXKEOWC57USuZDEsI71hEErQsiEGx5wX9rzWWkfwM0fVSPoiIFSsxfiw==}
+    dev: false
+
+  /@tanstack/react-query/5.101.4_react@19.0.0:
+    resolution: {integrity: sha512-yRg2pfOCxIs4ZJW3XYYHU/WgtD04FHSnfHlpRT7h7pR77hwkdRG4wxbKe4aq6P0RvXUTBSQpQeadS1SUYUe+KA==}
+    peerDependencies:
+      react: ^18 || ^19
+    dependencies:
+      '@tanstack/query-core': 5.101.4
+      react: 19.0.0
+    dev: false
 
   /@technote-space/anchor-markdown-header/1.1.42:
     resolution: {integrity: sha512-iJ5qu1EO3kZDthq9zbMQ9ufB4jd0XwhHJ+4RNpTUEVTIZFitCV++IUfH1YCACGasct41pQRxGmWQNoaRZmn7EQ==}

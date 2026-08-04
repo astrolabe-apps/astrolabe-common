@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { newControl } from "@react-typed-forms/core";
-import { arraySelection, useSelectionControl } from "../src";
+import { arraySelection, makeGridSelection } from "../src";
 
 interface Row {
   id: string;
@@ -114,10 +114,10 @@ describe("page scoping (the bug this replaced)", () => {
   });
 });
 
-describe("useSelectionControl", () => {
+describe("makeGridSelection", () => {
   it("reads and writes a Control<string[]>", () => {
     const selected = newControl<string[]>(["b"]);
-    const sel = useSelectionControl({ selected, rows: page1, getId });
+    const sel = makeGridSelection({ selected, rows: page1, getId });
     expect(sel.isSelected(page1[1])).toBe(true);
     sel.toggle(page1[0]);
     expect(selected.value).toEqual(["b", "a"]);
@@ -125,7 +125,7 @@ describe("useSelectionControl", () => {
 
   it("copes with a null-ish initial value", () => {
     const selected = newControl<string[]>(undefined as unknown as string[]);
-    const sel = useSelectionControl({ selected, rows: page1, getId });
+    const sel = makeGridSelection({ selected, rows: page1, getId });
     expect(sel.someSelected).toBe(false);
     sel.toggleAll();
     expect(selected.value).toEqual(["a", "b", "c"]);
