@@ -31,3 +31,9 @@ export {
   type FilterOptionListProps,
 } from "./FilterOptionList";
 export { FluentPager, type FluentPagerProps } from "./Pager";
+export {
+  useFluentDataGrid,
+  type FluentDataGridBundle,
+  type UseFluentDataGridOptions,
+} from "./useFluentDataGrid";
+export { FluentDataGrid, type FluentDataGridProps } from "./FluentDataGrid";

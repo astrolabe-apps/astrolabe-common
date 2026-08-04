@@ -938,11 +938,39 @@ it actually exists; it was never checkable here.
   other's selection intact.
 - `selection.ts` imports no `@fluentui`, keeping the §3.8 door open.
 
-### Phase 4 — composition
-`useFluentDataGrid.ts` and `FluentDataGrid.tsx` — purely additive now that Phase 3
-removed the old composition files and left the package green.
-**Acceptance:** a grid whose columns carry no `sortField` and no
-`getColumnFilter` renders plain — no arrows, no funnels, no pager.
+### Phase 4 — composition ✅ **done**
+`useFluentDataGrid.tsx` (→ `gridProps`, columns with the selection column
+prepended, `parts`) and `FluentDataGrid.tsx` (the entry point). 25 tests in this
+package, `tsc --noEmit` and `rush build` clean.
+
+**Acceptance met:** a grid whose columns carry no `sortField` and no filter
+config renders plain — no `aria-sort`, no sort icon, no funnel, no pager, no
+selection column — and the same columns with `sortField`/`filterField` get exactly
+one funnel (the filterable column), `aria-sort` on the sorted one, a pager once
+`total > length`, and "No data" when a query matches nothing. 12 tests, which
+exercise the whole stack: `useClientData` → `useGridSearch` → renderer → DOM.
+
+**Notes:**
+
+- **Test reactivity is limited to first render.** ts-jest doesn't apply
+  `@react-typed-forms/transform`, so the harness installs
+  `useComponentTracking()` by hand — but only for the component that calls it, and
+  React renders children after a parent returns, so nested components in the
+  package's own tree aren't tracked under test. That's enough to assert *what a
+  render produces*, which is the acceptance criterion; click-to-sort belongs to the
+  demo harness (Phase 5), which runs through the real build. Worth knowing before
+  writing an interaction test here and being puzzled.
+- **`FluentDataGridBundle`** is the name of `useFluentDataGrid`'s return type, since
+  `FluentDataGrid` is the component.
+- **The pager hides itself** when `total <= length` and `offset === 0`, rather than
+  rendering a dead prev/next pair. `pager={false}` suppresses it outright and
+  `pager={<MyPager/>}` replaces it (D4).
+- **The selection column isn't memoised.** `selection` is rebuilt every render by
+  design — it reads `.value` — so a memo keyed on it would never hit; building one
+  column is cheaper than the bookkeeping to avoid it.
+- **`wrapBodyContent` still wraps cells in `RenderControl`.** Cell content comes
+  from a render callback outside any component, so a control read there needs a
+  component to live in — and it scopes the read to one cell rather than the grid.
 
 ### Phase 5 — demo harness + READMEs
 `.../formServer/src/app/fluentgrid/page.tsx` currently imports

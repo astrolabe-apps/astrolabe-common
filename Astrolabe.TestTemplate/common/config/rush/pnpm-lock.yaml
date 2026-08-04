@@ -804,6 +804,7 @@ importers:
       '@jest/globals': ^29.7.0
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/transform': ^0.4.0
+      '@testing-library/react': ^16.0.0
       '@types/react': ^19.0.0
       clsx: ^1 || ^2
       jest: ^29.7.0
@@ -825,6 +826,7 @@ importers:
       '@jest/globals': 29.7.0
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/transform': 0.4.0
+      '@testing-library/react': 16.3.0_gd4ggzpzqm6sxwt7vsylqzqd3u
       '@types/react': 19.1.10
       jest: 29.7.0
       jest-environment-jsdom: 29.7.0
