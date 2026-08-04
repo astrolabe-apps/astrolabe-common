@@ -521,6 +521,47 @@ describe("useServerData with an optional count", () => {
     expect(fetchTotal).toHaveBeenCalledTimes(2);
   });
 
+  it("counts once per search, at whatever offset the search started from", async () => {
+    // In-session the count always happens at offset 0, because changing the
+    // query or filters resets paging. But a restored URL can mount straight into
+    // the middle of a result set, and it still needs a total — for "41-50 of N"
+    // and to know whether Next should be live. So the condition is "the search
+    // changed", not "offset is 0".
+    const fetchTotal = jest.fn(async () => 40);
+    const state = stateWith({ length: 10, offset: 30 });
+    const { seen } = renderData(() =>
+      useServerData(state, {
+        fetch: fetchUncounted(),
+        fetchTotal,
+        debounce: 0,
+      }),
+    );
+    await act(async () => {});
+    expect(fetchTotal).toHaveBeenCalledTimes(1);
+    expect(seen.current.total).toBe(40);
+  });
+
+  it("counts on a search change even when paging isn't reset", async () => {
+    // The other case an `offset === 0` guard would break: with resetPaging off,
+    // a filter change leaves the offset alone, and the count still moved.
+    const fetchTotal = jest.fn(async () => 2);
+    const state = stateWith({ length: 10, offset: 20 });
+    renderData(() =>
+      useServerData(state, {
+        fetch: fetchUncounted(),
+        fetchTotal,
+        debounce: 0,
+      }),
+    );
+    await act(async () => {});
+    expect(fetchTotal).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      state.fields.filters.value = { kind: ["doc"] };
+    });
+    expect(fetchTotal).toHaveBeenCalledTimes(2);
+  });
+
   it("prefers a total the page carried over a separate count", async () => {
     const fetchTotal = jest.fn(async () => 99);
     const state = stateWith({ length: 2 });

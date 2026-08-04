@@ -213,9 +213,12 @@ is optional and `GridData.total` may be `undefined`. Three ways to handle it:
 | `fetchTotal`                 | runs **in parallel**; rows render first, "of N" fills in after | two requests                                                          |
 | Neither                      | pager shows `1-10` and infers Next from a full page            | Next is enabled once too often, at an exact multiple of the page size |
 
-`fetchTotal` re-runs only when something that can change a count changes — it
-excludes `offset`, `length` and `sort`, so paging and sorting never pay for it
-again. A failed count degrades to "uncounted" rather than failing the grid.
+`fetchTotal` is **counted once per search**: the key excludes `offset`, `length`
+and `sort`, none of which can change a count, so paging and sorting never ask
+again. In normal use that request lands at `offset` 0, because changing the query
+or a filter resets paging — but the condition is "the search changed", not "we're
+on the first page", so a restored URL like `?offset=30` still gets its total. A
+failed count degrades to "uncounted" rather than failing the grid.
 
 `undefined` and `0` are different answers: the first means "not counted", the
 second "counted, nothing matched". Use `pageInfo(options, data)` rather than

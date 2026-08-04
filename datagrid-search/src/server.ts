@@ -35,8 +35,14 @@ export interface ServerDataOptions<T, S extends SearchOptions = SearchOptions> {
    * they arrive and the total fills in when it lands. Only used when `fetch`
    * didn't return a `total` itself.
    *
-   * It re-runs only when `query` or `filters` change — a count doesn't depend on
-   * `offset`, `length` or `sort`, so paging and sorting don't pay for it again.
+   * **Counted once per search.** The key excludes `offset`, `length` and `sort`,
+   * none of which can change a count, so paging and sorting never ask again.
+   *
+   * That means in normal use the request happens at `offset` 0, because changing
+   * the query or a filter resets paging — but "the search changed" is the
+   * condition, not "we're on the first page". Guarding on `offset === 0` would
+   * leave a restored URL like `?offset=30` with no total at all, and would skip a
+   * genuinely-changed count when `resetPaging` is off.
    */
   fetchTotal?: (options: S, signal: AbortSignal) => Promise<number>;
   /** Debounce for `query` only. Defaults to 300ms; 0 disables it. */
