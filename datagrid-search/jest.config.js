@@ -25,7 +25,10 @@ const workspaceCjs = {
 export default {
   testEnvironment: "jsdom",
   transform: {
-    "^.+.tsx?$": ["ts-jest", {}],
+    // tsconfig.json sets `jsx: "preserve"`, which is what microbundle wants but
+    // leaves JSX in ts-jest's output for jest to choke on. Overridden here rather
+    // than changed there, so the build keeps its own setting.
+    "^.+.tsx?$": ["ts-jest", { tsconfig: { jsx: "react-jsx" } }],
   },
   moduleNameMapper: workspaceCjs,
 };

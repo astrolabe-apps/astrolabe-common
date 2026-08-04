@@ -42,6 +42,18 @@ export interface GridData<T> {
   reload(): void;
   /** Spread onto `<DataGrid>`. */
   rowProps: GridRowProps<T>;
+  /**
+   * Filter options the source can supply without being asked per column, used
+   * when a column declares no `options` of its own. Two shapes, because the two
+   * modes have different raw material:
+   *
+   * - `facets` — already computed per field, as a server returns them.
+   * - `optionRows` — rows for a field's options to be derived from, as the
+   *   client-side source has. It takes the field so it can exclude that field's
+   *   own filter, which is what makes a multi-select column behave like Excel's.
+   */
+  facets?: Record<string, FilterOption[]>;
+  optionRows?: (field: string) => T[];
 }
 
 export interface GridRowProps<T> {

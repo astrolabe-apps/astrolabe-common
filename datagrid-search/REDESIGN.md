@@ -797,12 +797,15 @@ This document moved here from `datagrid-fluent-ui/`.
 
 Four notes from doing it:
 
-- **No `.babelrc`.** `datagrid-fluent-ui` has one applying
-  `@react-typed-forms/transform`, the SWC/Babel control-tracking plugin. This
-  package deliberately omits it: it ships no components, so it must never depend on
-  the consumer's build setup for reactivity. `useComputed` is used explicitly
-  instead — the same reasoning as D6 and the comment at
-  `FluentFilterPopover.tsx:65-68`.
+- ~~**No `.babelrc`.**~~ **Wrong — corrected in Phase 2.** It applies
+  `@react-typed-forms/transform` like every other library here. The original
+  reasoning ("ships no components, so it must not depend on the consumer's build
+  setup") confused two different builds: `.babelrc` governs *this* package's own
+  compilation by microbundle. And the substitute it named was not one —
+  `useComputed` keeps a derived control's value fresh, but turning a `.value` read
+  into a re-render is `useComponentTracking()`'s job, which is precisely what the
+  transform injects. Phase 2's hooks read state, so the omission broke them
+  outright; the types-only Phase 0 just never exercised it.
 - **Tests import from `@jest/globals`,** matching the repo convention
   (`core/test/dirty.test.ts:1`) rather than ambient `@types/jest`. It also needs
   declaring in `devDependencies` — pnpm's strict isolation doesn't hoist it, so
@@ -851,11 +854,44 @@ columns-change (the §8 refetch-loop guard). Plus `git status` showing
 `astrolabe-datagrid` and `astrolabe-ui` still clean — the standing check that this
 work stays inside its two packages (§3.5).
 
-### Phase 2 — the hooks: data seam and options *(datagrid-search)*
-`client.ts`, `server.ts`, `interop.ts`, `options` hook, `search.ts` — the whole
-right-hand column of §3.2, i.e. everything that needs React.
-Includes `useFilterOptions` (re-sliced from Phase 1) with its cache, abort and
-resolution-order tests, and `useGridSearch` memoising `columnFilterResolver`.
+### Phase 2 — the hooks: data seam and options ✅ **done**
+`client.ts`, `server.ts`, `interop.ts`, `useFilterOptions.ts`, `search.ts` — the
+right-hand column of §3.2. 147 tests total, 99.4% line coverage, `tsc --noEmit`
+clean, build clean.
+
+**Acceptance met**, including the headline: `useClientData` and a stub-backed
+`useServerData` produce identical `GridData` across six searches (defaults, sort,
+filter, query, second page, all at once). Also covered: one fetch per keystroke
+burst; sort/filter/paging bypassing the debounce; a stale response never winning;
+abort on change and on unmount; `keepPrevious` on and off; async options not
+fetching until the popup mounts, caching across close/reopen, and refetching when
+another column's filter changes.
+
+**Corrections and decisions:**
+
+- **`.babelrc` added** — see the Phase 0 note above for why omitting it was wrong.
+  Tests are compiled by ts-jest, which doesn't apply the transform, so the test
+  probes call `useComponentTracking()` by hand. That's exactly what the transform
+  injects, so the tests exercise the real path rather than a shim.
+- **`GridData.filterOptions` replaced by `facets` + `optionRows`.** The plan had a
+  single `FilterOptionSource<T>`, which can't express server facets — those are
+  already computed *per field*, while client options need the column's accessor
+  applied to rows. So the data source supplies raw material in whichever form it
+  has, and `useFilterOptions` resolves. `optionRows(field)` takes the field so the
+  client source can exclude that field's own filter.
+- **`useFilterOptions` takes the column, not the field.** It needs the column
+  anyway for the value accessor; passing the field would have meant a lookup.
+- **`ServerDataOptions.fetch` is held in a ref and is not a refetch trigger.**
+  Otherwise an inline `fetch={(o, s) => api.search(o, s)}` — the obvious way to
+  write it — would refetch on every render forever. Refetching is driven by the
+  search state plus `deps`. There's a test for exactly this.
+- **Stale responses are rejected by request sequence, not by abort alone,** since
+  an abort can lose the race against a `.then` already queued as a microtask.
+- **`canFilter(column)`** added to `GridSearch`, so the renderer can decide whether
+  to show a funnel without mounting a popup to find out.
+- **A column's option source *kind* must not change between renders** — the
+  `{ hook }` variant is invoked as a hook, so switching kinds would reorder hooks.
+  Documented on `useFilterOptions`; true of every real use, not enforced.
 **Acceptance:** given the same `SearchOptions` and equivalent data, all three
 producers — `useClientData`, a stub-backed `useServerData`, and `makeGridData`
 fed a hand-built query-shaped object — yield identical `GridData` (rows, total,
