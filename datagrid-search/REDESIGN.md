@@ -477,13 +477,17 @@ export interface SortOptions {
 }
 
 export function makeGridSort(
-  state: Control<FilterAndSortState & Partial<SearchPagingState>>,
+  state: Control<SearchOptions>,
   o?: SortOptions,
 ): GridSort;
 ```
 
-Structurally typed on the state so `Control<SearchOptions>` fits, as
-`controlSearchStateSort` already does. `sortRows` comes **off** the interface —
+Takes `Control<SearchOptions>` outright. An earlier draft had it structurally
+typed as `Control<FilterAndSortState & Partial<SearchPagingState>>`, as
+`controlSearchStateSort` was — dropped as speculative generality, since
+`SearchOptions` being *the* state shape is the premise of the whole design, and
+`Control<V>` is invariant in `V` so the wider type buys less than it looks.
+`sortRows` comes **off** the interface —
 it belongs to the client source, and its absence is how a server source says
 "already ordered". `FluentSortState`/`columnIdSort`/`controlSort` are deleted;
 `sortField` already defaults from the column id in `initColumn`.
@@ -497,46 +501,66 @@ Storage stays `SearchFilters` — i.e. `Record<string, unknown[]>`, unchanged, f
 the NSwag reason in D2. The string typing is a *view* applied at this boundary:
 
 ```ts
-export interface GridFilter {
-  isFilterable(col: ColumnDef<any, any>): boolean;
-  field(col: ColumnDef<any, any>): string | undefined;
-  /** Two-way binding for one column — what a custom popup owns. */
-  selected(field: string): Control<string[]>;
+export interface GridFilter<T = any, D = unknown> {
+  filterFor(col: ColumnDef<T, D>): ColumnFilter<T> | undefined;   // cached
+  isFilterable(col: ColumnDef<T, D>): boolean;
+  field(col: ColumnDef<T, D>): string | undefined;
+  /** Stable, writable control for one field — what a custom popup owns. */
+  selected(field: string): Control<string[] | undefined>;
+  /** `selected(field).value` coerced to strings. */
+  values(field: string): string[];
+  /** Replaces a field's values, removing the key entirely when empty. */
+  setValues(field: string, next: string[]): void;
+  toggle(field: string, value: string, on: boolean): void;
   active(field: string): boolean;
   clear(field?: string): void;   // omit ⇒ clear all
+  activeFields(): string[];      // for a chip bar / "clear all"
 }
 ```
 
-`selected(field)` is `state.fields.filters.fields[field]`.
-`ControlFields<Record<string, unknown[]>>` maps to
-`{[k: string]: Control<unknown[]>}`, so the lookup itself typechecks; the
-narrowing to `string[]` is one deliberate cast inside `makeGridFilter`.
+**What the spike settled** (§8's first risk, now closed). `filters.fields[key]` for
+an absent key:
 
-Three details that follow from the storage being `unknown[]`:
+- **does** return a control, created lazily, with **stable identity** across reads
+  — so it's safe as a memo dep;
+- reads `undefined`, not `[]`;
+- **reading it does not touch the parent value** — merely rendering a popover
+  can't mutate the search state;
+- but **writing `[]` through it does** add an empty array to `filters`.
 
-- **`Control.as()` can't do it.** `as<V2>()` is `V extends V2 ? Control<V2> : never`,
-  so it widens (`Control<string[]>.as<unknown[]>()`) but won't narrow —
-  `Control<unknown[]>.as<string[]>()` resolves to `never`. It has to be an
-  unchecked cast, which is why it belongs in one place rather than at call sites.
-- **Writes need no cast at all,** which is a small improvement on today:
-  `setFilterValue(column, value, set)` already takes `unknown`. The existing cast
-  at `astrolabe-ui/src/table/FilterPopover.tsx:49` exists only because
-  `SearchingState` declares `string[]` while searchstate declares `unknown[]` —
-  using `SearchOptions` directly removes that mismatch.
-- **The default `matches` predicate coerces:**
-  `values.map(String).includes(filterValue(row)[0])`. Necessary because state
-  hydrated from a URL or the API may legitimately hold numbers or booleans, so
-  the `string[]` view is a claim about what the *grid* writes, not a guarantee
-  about what's there. Coercing on read keeps a hydrated `2` matching a rendered
-  `"2"` instead of silently filtering everything out.
+That last point rules out the eager normalisation the earlier draft assumed. An
+empty array is functionally harmless (`makeFilterFunc` skips empty entries) but it
+is a visible difference in a URL and a *different react-query key for an identical
+search*. So nothing is seeded. Instead:
 
-**Implementation note:** a field control for an absent key reads `undefined`, not
-`[]` — normalise here, or every custom popup needs `?? []`. See §8.
+- `selected(field)` is typed honestly as `Control<string[] | undefined>`;
+- `values(field)` is the read path, and it **coerces to strings** —
+  `stored.every(v => typeof v === "string") ? stored : stored.map(String)`,
+  returning the original array when it can so callers keep referential stability;
+- `setValues`/`toggle` **delete the key** when the result is empty.
 
-Giving a custom popup a `Control<string[]>` scoped to its own column is the
-centre of the filtering design: a date-range popup writes
-`["2026-01-01..2026-03-01"]`, a numeric one writes `[">100"]`, and neither learns
-that a shared filters map exists — or that it's `unknown[]` underneath.
+Coercing at the read boundary rather than in each predicate is a change from the
+earlier draft, and a better one: it makes the `string[]` claim true everywhere at
+once. Necessary because `SearchFilters` is `unknown[]` (D2), so state hydrated from
+a URL or an API can hold numbers or booleans — without it a hydrated `2` would
+never match a rendered `"2"` and the filter would silently exclude everything.
+
+Two related notes:
+
+- **`Control.as()` can't do the narrowing.** `as<V2>()` is
+  `V extends V2 ? Control<V2> : never`, so it widens
+  (`Control<string[]>.as<unknown[]>()`) but not narrows —
+  `Control<unknown[]>.as<string[]>()` is `never`. One unchecked cast inside
+  `makeGridFilter`, which is why it belongs there and not at call sites.
+- **Writes need no cast,** a small improvement on today: `setFilterValue` already
+  takes `unknown`. The cast at `astrolabe-ui/src/table/FilterPopover.tsx:49` only
+  exists because `SearchingState` declares `string[]` where searchstate declares
+  `unknown[]`; using `SearchOptions` directly removes the mismatch.
+
+Giving a custom popup a control scoped to its own column is the centre of the
+filtering design: a date-range popup writes `["2026-01-01..2026-03-01"]`, a numeric
+one writes `[">100"]`, and neither learns that a shared filters map exists — or
+that it's `unknown[]` underneath.
 
 ### 5.4 `getColumnFilter` — per-column behaviour, no `ColumnDef` change
 
@@ -793,11 +817,30 @@ Four notes from doing it:
   asserts a `GridData` can be built by hand, which is the claim §4.4's react-query
   interop rests on.
 
-### Phase 1 — columns glue, sort, filter, options *(datagrid-search)*
-`types.ts`, `columns.ts`, `sort.ts`, `filter.ts`, `options.ts`.
-`columns.ts` is the searchstate glue authored fresh (§3.6) — the rolled-back
-`searching.ts` is a useful reference for it (`git stash show -p stash@{0}`), but
-most of it becomes internal rather than public API this time.
+### Phase 1 — columns glue, sort, filter, options ✅ **done**
+`columns.ts`, `sort.ts`, `filter.ts`, `options.ts` (`types.ts` landed in Phase 0).
+90 tests, 100% line coverage, `tsc --noEmit` clean.
+
+**Re-sliced:** `useFilterOptions` — the caching/aborting hook — moved to Phase 2.
+Phase 1 is now *entirely pure functions with no React import at all*, which is the
+left-hand column of §3.2 exactly, and is why its tests need no DOM or renderer.
+The async cache, abort and resolution-order-with-`data.filterOptions` tests move
+with it, since they can't be written without the hook.
+
+**Also settled while implementing:**
+
+- `makeGridSort` and `makeGridFilter` are plain functions, not `use*` hooks. They
+  read `.value` at call time, so they must run on every render and must *not* be
+  memoised — naming them `use*` would have implied the opposite. The only thing
+  worth memoising is `columnFilterResolver`, and that belongs in `useGridSearch`.
+- `columnSearching` takes an optional `getFilterValue` override. Needed because
+  `getColumnFilter` decides a column's filter field and predicate, so the filter
+  layer has to be able to supply the accessor rather than have `filterField`
+  assumed. Without it, a column whose `field` differs from its `filterField`, or
+  which uses `matches`, would silently not filter client-side.
+- `deriveFilterOptions`' `max` bounds *distinct values* and stops scanning there,
+  so counts only cover rows up to the cap. Same trade the previous implementation
+  made; now pinned by a test so it's a decision rather than a surprise.
 **Acceptance:** unit tests, no DOM needed (§3.2) — the sort cycle
 (single/multiple/shift × `cycleUnsorted` × `defaultSort: "desc"`), absent-key
 normalisation in `GridFilter.selected`, a filter hydrated with `[2, true]`
@@ -808,8 +851,11 @@ columns-change (the §8 refetch-loop guard). Plus `git status` showing
 `astrolabe-datagrid` and `astrolabe-ui` still clean — the standing check that this
 work stays inside its two packages (§3.5).
 
-### Phase 2 — the data seam *(datagrid-search)*
-`client.ts`, `server.ts`, `interop.ts`, `search.ts`.
+### Phase 2 — the hooks: data seam and options *(datagrid-search)*
+`client.ts`, `server.ts`, `interop.ts`, `options` hook, `search.ts` — the whole
+right-hand column of §3.2, i.e. everything that needs React.
+Includes `useFilterOptions` (re-sliced from Phase 1) with its cache, abort and
+resolution-order tests, and `useGridSearch` memoising `columnFilterResolver`.
 **Acceptance:** given the same `SearchOptions` and equivalent data, all three
 producers — `useClientData`, a stub-backed `useServerData`, and `makeGridData`
 fed a hand-built query-shaped object — yield identical `GridData` (rows, total,
@@ -871,11 +917,11 @@ is the last phase.
 
 ## 8. Risks
 
-- **`Control<Record<string, string[]>>.fields[key]` for an absent key.** §5.3
-  leans hard on this. The types map the index signature through correctly, but I
-  haven't verified runtime creation-on-demand. **Worth a 10-line spike before
-  Phase 1** — the fallback is `GridFilter.selected()` synthesising a proxy
-  control, which is noticeably more code.
+- ~~**`Control<Record<string, unknown[]>>.fields[key]` for an absent key.**~~
+  **Closed by the Phase 1 spike** — see §5.3. The control is created lazily with
+  stable identity, reading doesn't mutate the parent, and no proxy control was
+  needed. The one surprise was that *writing* `[]` adds an empty array to the
+  state, which is why nothing is seeded and `setValues` deletes instead.
 - **Server mode has real concurrency.** Debounce, abort, out-of-order responses
   and `keepPrevious` are where the bugs will live, and they're invisible in the
   client path — a stale response must never win. Phase 2's tests are the
