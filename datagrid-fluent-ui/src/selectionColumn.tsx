@@ -3,50 +3,7 @@ import clsx from "clsx";
 import { Checkbox } from "@fluentui/react-components";
 import { type ColumnDefInit, defaultRenderCell } from "@astroapps/datagrid";
 import { fluentDataGridClassNames, type FluentDataGridParts } from "./styles";
-
-/**
- * Selection state, consumed by both the selection column and the row wrapper so
- * a selected row is painted as well as ticked. Build one with
- * `arraySelection` (plain state) or `controlSelection` (react-typed-forms).
- */
-export interface FluentSelection<T> {
-  isSelected(row: T): boolean;
-  toggle(row: T): void;
-  allSelected: boolean;
-  someSelected: boolean;
-  toggleAll(): void;
-}
-
-export interface ArraySelectionOptions<T> {
-  rows: T[];
-  getId: (row: T) => string;
-  selectedIds: string[];
-  onChange: (selectedIds: string[]) => void;
-}
-
-/** `FluentSelection` over a plain array of selected ids. */
-export function arraySelection<T>({
-  rows,
-  getId,
-  selectedIds,
-  onChange,
-}: ArraySelectionOptions<T>): FluentSelection<T> {
-  const allSelected = rows.length > 0 && selectedIds.length >= rows.length;
-  return {
-    isSelected: (row) => selectedIds.includes(getId(row)),
-    toggle: (row) => {
-      const id = getId(row);
-      onChange(
-        selectedIds.includes(id)
-          ? selectedIds.filter((x) => x !== id)
-          : [...selectedIds, id],
-      );
-    },
-    allSelected,
-    someSelected: selectedIds.length > 0 && !allSelected,
-    toggleAll: () => onChange(allSelected ? [] : rows.map(getId)),
-  };
-}
+import type { GridSelection } from "./selection";
 
 export interface FluentSelectionColumnOptions {
   /** Column id, only matters if it would clash with a data column. */
@@ -60,11 +17,11 @@ export interface FluentSelectionColumnOptions {
 }
 
 /**
- * A leading checkbox column matching Fluent's selection cell. Pass the result
- * to `columnDefinitions`.
+ * A leading checkbox column matching Fluent's selection cell. Pass the result to
+ * `columnDefinitions`, or let the composition hook prepend it.
  */
 export function fluentSelectionColumn<T>(
-  selection: FluentSelection<T>,
+  selection: GridSelection<T>,
   parts: FluentDataGridParts,
   options: FluentSelectionColumnOptions = {},
 ): ColumnDefInit<T> {
@@ -72,7 +29,7 @@ export function fluentSelectionColumn<T>(
     id = "__fluentSelect",
     columnTemplate = "44px",
     rowAriaLabel = "Select row",
-    allAriaLabel = "Select all rows",
+    allAriaLabel = "Select all rows on this page",
     hideSelectAll,
   } = options;
   const names = fluentDataGridClassNames;
@@ -86,7 +43,7 @@ export function fluentSelectionColumn<T>(
     render: (row) => (
       <Checkbox
         checked={selection.isSelected(row)}
-        onChange={() => selection.toggle(row)}
+        onChange={(_, d) => selection.toggle(row, !!d.checked)}
         aria-label={rowAriaLabel}
       />
     ),
@@ -106,6 +63,7 @@ export function fluentSelectionColumn<T>(
                   : false
             }
             onChange={() => selection.toggleAll()}
+            // "on this page" because that's the scope — see selection.ts.
             aria-label={allAriaLabel}
           />
         ),

@@ -1,14 +1,14 @@
 import React, { type Key, type ReactNode } from "react";
 import clsx from "clsx";
 import { fluentDataGridClassNames, type FluentDataGridParts } from "./styles";
-import type { FluentSelection } from "./selection";
+import type { GridSelection } from "./selection";
 
 export interface FluentRowWrapperOptions<T> {
   rows?: T[];
   /** Alternative to `rows`, for virtualised/lazy grids. */
   getRow?: (index: number) => T;
   rowKey?: (row: T, index: number) => Key;
-  selection?: FluentSelection<T>;
+  selection?: GridSelection<T>;
   /** Overrides `selection` if you track selected rows some other way. */
   isSelected?: (row: T, index: number) => boolean;
 }

@@ -12,6 +12,7 @@
  * `makeGridFilter` reads `.value` when called, so **call it during render**, like
  * `makeGridSort`.
  */
+import type { ReactNode } from "react";
 import type { Control } from "@react-typed-forms/core";
 import type { SearchFilters, SearchOptions } from "@astroapps/searchstate";
 import type { ColumnDef } from "@astroapps/datagrid";
@@ -35,8 +36,14 @@ export interface ColumnFilter<T> {
    * **Client-side only** — a server has to implement the equivalent itself.
    */
   matches?: (row: T, values: string[]) => boolean;
-  /** Replaces the popup body, keeping the standard trigger and shell. */
-  render?: (props: FilterPopupProps<T>) => unknown;
+  /**
+   * Replaces the popup body, keeping the standard trigger and shell.
+   *
+   * `ReactNode` is the one React type this package's contracts expose — it's what
+   * the renderer fulfils, and typing it `unknown` only pushes a cast into every
+   * renderer.
+   */
+  render?: (props: FilterPopupProps<T>) => ReactNode;
   /** Defaults to true. */
   multiple?: boolean;
   /** Show an options-search box. Defaults to on past ~12 options. */

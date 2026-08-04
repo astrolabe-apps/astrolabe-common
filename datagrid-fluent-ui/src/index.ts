@@ -8,40 +8,26 @@ export {
 } from "./styles";
 export {
   arraySelection,
-  fluentSelectionColumn,
+  useSelectionControl,
   type ArraySelectionOptions,
-  type FluentSelection,
-  type FluentSelectionColumnOptions,
+  type ControlSelectionOptions,
+  type GridSelection,
 } from "./selection";
+export {
+  fluentSelectionColumn,
+  type FluentSelectionColumnOptions,
+} from "./selectionColumn";
+export { fluentRowWrapper, type FluentRowWrapperOptions } from "./rows";
+export {
+  fluentHeaderContent,
+  type FluentHeaderContentOptions,
+} from "./HeaderCell";
 export {
   FluentFilterPopover,
   type FluentFilterPopoverProps,
-} from "./FluentFilterPopover";
+} from "./FilterPopover";
 export {
-  FluentDataTableView,
-  type FluentDataTableViewProps,
-} from "./FluentDataTableView";
-export { FluentDataTable, type FluentDataTableProps } from "./FluentDataTable";
-export {
-  columnIdSort,
-  fluentHeaderContent,
-  searchStateSort,
-  type FluentHeaderContentOptions,
-  type FluentSort,
-  type FluentSortDirection,
-  type FluentSortState,
-  type SearchStateSortOptions,
-} from "./sorting";
-export { fluentRowWrapper, type FluentRowWrapperOptions } from "./rows";
-export {
-  useFluentDataGrid,
-  type FluentDataGrid,
-  type UseFluentDataGridOptions,
-} from "./useFluentDataGrid";
-export {
-  controlSearchStateSort,
-  controlSelection,
-  controlSort,
-  type ControlSearchStateSortOptions,
-  type ControlSelectionOptions,
-} from "./controls";
+  FilterOptionList,
+  type FilterOptionListProps,
+} from "./FilterOptionList";
+export { FluentPager, type FluentPagerProps } from "./Pager";

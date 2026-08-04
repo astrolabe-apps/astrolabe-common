@@ -797,32 +797,42 @@ importers:
   ../../../datagrid-fluent-ui:
     specifiers:
       '@astroapps/datagrid': workspace:*
+      '@astroapps/datagrid-search': workspace:*
       '@astroapps/searchstate': workspace:*
       '@fluentui/react-components': ^9.69.0
       '@fluentui/react-icons': ^2.0.270
+      '@jest/globals': ^29.7.0
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/transform': ^0.4.0
       '@types/react': ^19.0.0
       clsx: ^1 || ^2
+      jest: ^29.7.0
+      jest-environment-jsdom: ^29.7.0
       microbundle: ^0.15.1
       prettier: ^3.0.3
       react: ^19.0.0
       rimraf: ^3.0.2
+      ts-jest: ^29.2.5
       typescript: ^5.6.2
     dependencies:
       clsx: 2.1.1
     devDependencies:
       '@astroapps/datagrid': link:../astrolabe-datagrid
+      '@astroapps/datagrid-search': link:../datagrid-search
       '@astroapps/searchstate': link:../astrolabe-searchstate
       '@fluentui/react-components': 9.73.8_gd4ggzpzqm6sxwt7vsylqzqd3u
       '@fluentui/react-icons': 2.0.327_react@19.0.0
+      '@jest/globals': 29.7.0
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/transform': 0.4.0
       '@types/react': 19.1.10
+      jest: 29.7.0
+      jest-environment-jsdom: 29.7.0
       microbundle: 0.15.1
       prettier: 3.8.1
       react: 19.0.0
       rimraf: 3.0.2
+      ts-jest: 29.2.5_p2l723askb4mwtytbayecowzii
       typescript: 5.9.3
 
   ../../../datagrid-search:

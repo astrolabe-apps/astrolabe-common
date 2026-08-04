@@ -22,6 +22,8 @@ export const fluentDataGridClassNames = {
   row: "astro-FluentDataGrid__row",
   sortButton: "astro-FluentDataGrid__sortButton",
   sortIcon: "astro-FluentDataGrid__sortIcon",
+  sortPriority: "astro-FluentDataGrid__sortPriority",
+  filterButton: "astro-FluentDataGrid__filterButton",
 } as const;
 
 /**
@@ -36,6 +38,10 @@ export interface FluentDataGridParts {
   sortButton: string;
   sortButtonLabel: string;
   sortIcon: string;
+  /** The "sorted 2nd" badge, shown only in multi-sort. */
+  sortPriority: string;
+  filterButton: string;
+  filterButtonActive: string;
 }
 
 export interface FluentDataGridStyleOptions {
@@ -181,6 +187,23 @@ const useStyles = makeStyles({
     width: "12px",
     "& svg": { width: "12px", height: "12px" },
   },
+  // Fluent's own DataGrid is single-sort and so has no equivalent; this follows
+  // its caption sizing rather than inventing a look.
+  sortPriority: {
+    ...typographyStyles.caption2,
+    color: tokens.colorNeutralForeground3,
+    flexShrink: 0,
+  },
+  filterButton: {
+    // Sits outside the sort button, since nesting interactive elements is
+    // invalid. Sized to the 20px icon slot so it doesn't grow the 32px header.
+    minWidth: "20px",
+    maxWidth: "20px",
+    height: "20px",
+    padding: 0,
+    flexShrink: 0,
+  },
+  filterButtonActive: { color: tokens.colorBrandForeground1 },
 });
 
 export interface FluentDataGridStyles {
@@ -228,6 +251,9 @@ export function useFluentDataGridStyles(
       sortButton: s.sortButton,
       sortButtonLabel: s.sortButtonLabel,
       sortIcon: s.sortIcon,
+      sortPriority: s.sortPriority,
+      filterButton: s.filterButton,
+      filterButtonActive: s.filterButtonActive,
     },
   };
 }

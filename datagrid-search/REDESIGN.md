@@ -900,20 +900,47 @@ aborted fetch never sets state; a stale response never wins; `keepPrevious` hold
 rows across a refetch; and `useDebouncedSearchOptions` delays only `query`,
 passing sort/filter/paging changes through immediately.
 
-### Phase 3 — Fluent renderer
+### Phase 3 — Fluent renderer ✅ **done**
 `HeaderCell.tsx`, `FilterPopover.tsx`, `FilterOptionList.tsx`, `selection.ts`,
-`selectionColumn.tsx`, `Pager.tsx`; `styles.ts` moves across unchanged, `rows.tsx`
-nearly so. Delete `sorting.tsx`, `controls.ts`, `FluentFilterPopover.tsx`.
-**Acceptance:** the demo page's computed-style diff panel still reports zero
-mismatches against the real Fluent DataGrid. Plus, for the selection rewrite
-(§3.8): selecting rows on one page must leave the next page's header checkbox
-unchecked, and toggling it there must not clear the first page's selection —
-both of which today's `arraySelection` gets wrong. And a grep proving
-`selection.ts` imports no `@fluentui`.
+`selectionColumn.tsx`, `Pager.tsx`; `styles.ts` gained three classes, `rows.tsx`
+took the new selection type. Deleted `sorting.tsx`, `controls.ts`,
+`FluentFilterPopover.tsx` — **and** `FluentDataTable.tsx`,
+`FluentDataTableView.tsx`, `useFluentDataGrid.tsx`, which Phase 4 was going to
+remove (see the re-slice below).
+
+**`datagrid-fluent-ui` compiles again** — `tsc --noEmit` and `rush build` clean,
+14 selection tests passing. Jest was added to this package too, mirroring
+`datagrid-search`'s config.
+
+**Re-sliced:** Phase 3 now ends with a *green* package rather than a set of parts,
+so the old composition files had to go with it — they import the deleted modules,
+and leaving them would have kept the build red through another phase. Phase 4 is
+therefore purely additive: `useFluentDataGrid` + `FluentDataGrid` on top of green
+parts. The style-diff acceptance moves to Phase 5, where the demo page that runs
+it actually exists; it was never checkable here.
+
+**Notes:**
+
+- **`ColumnFilter.render` returns `ReactNode`, not `unknown`.** Phase 1 typed it
+  `unknown` to keep React out of the headless package; §3.1 had said `ReactNode`
+  was the one type allowed to cross, and it was right — `unknown` only pushes a
+  cast into every renderer, and it broke the build the first time a renderer used
+  it. `react` is already a peer dep and the import is type-only.
+- **The popup body is a separate component** (`FilterPopoverBody`), mounted by
+  `PopoverSurface` only when open. That's what makes an async option source lazy;
+  it's structural, not arranged.
+- **`styles.ts` gained `sortPriority`, `filterButton`, `filterButtonActive`.**
+  The first has no Fluent counterpart, since Fluent's DataGrid is single-sort — it
+  follows Fluent's caption sizing rather than inventing a look.
+- **Selection page-scoping is now pinned by three tests** named after the bug
+  they'd catch (§3.8): an unchecked header on a page with nothing selected,
+  `toggleAll` adding rather than replacing, and clearing one page leaving the
+  other's selection intact.
+- `selection.ts` imports no `@fluentui`, keeping the §3.8 door open.
 
 ### Phase 4 — composition
-`useFluentDataGrid.ts`, `FluentDataGrid.tsx`, new `index.ts`. Delete
-`FluentDataTableView.tsx`, `FluentDataTable.tsx`.
+`useFluentDataGrid.ts` and `FluentDataGrid.tsx` — purely additive now that Phase 3
+removed the old composition files and left the package green.
 **Acceptance:** a grid whose columns carry no `sortField` and no
 `getColumnFilter` renders plain — no arrows, no funnels, no pager.
 
