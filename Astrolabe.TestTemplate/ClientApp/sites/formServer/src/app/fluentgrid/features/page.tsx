@@ -32,6 +32,7 @@ import { Control, useControl } from "@react-typed-forms/core";
 import { columnDefinitions } from "@astroapps/datagrid";
 import {
   FilterOption,
+  FilterOptionsContext,
   FilterPopupProps,
   GetColumnFilter,
   GridPage,
@@ -113,10 +114,16 @@ const columns = columnDefinitions<FileRow, ColumnMeta>(
 
 const searching = columnSearching(columns);
 
-/** Stands in for an API: same search semantics, with latency and facets. */
+/**
+ * Stands in for an API: same search semantics, with latency and facets.
+ *
+ * `withTotal` models the real choice — returning a count means a second query
+ * over the whole filtered set, which many endpoints won't pay for.
+ */
 async function fakeSearch(
   options: SearchOptions,
   signal: AbortSignal,
+  withTotal = true,
 ): Promise<GridPage<FileRow>> {
   await new Promise((resolve) => setTimeout(resolve, 350));
   if (signal.aborted) throw new Error("aborted");
@@ -134,7 +141,7 @@ async function fakeSearch(
   }
   return {
     rows: getPageOfResults(options.offset, options.length, matched),
-    total: matched.length,
+    ...(withTotal && { total: matched.length }),
     facets,
   };
 }
@@ -216,15 +223,38 @@ function ClientGrid({ state }: { state: Control<SearchOptions> }) {
 }
 
 /** Server-side: one page at a time. Identical below this line. */
-function ServerGrid({ state }: { state: Control<SearchOptions> }) {
-  const data = useServerData(state, { fetch: fakeSearch });
+function ServerGrid({
+  state,
+  counting,
+}: {
+  state: Control<SearchOptions>;
+  counting: "with-page" | "separately" | "never";
+}) {
+  const data = useServerData(state, {
+    fetch: (options, signal) =>
+      fakeSearch(options, signal, counting === "with-page"),
+    // A count is often a second query over the whole filtered set, so it runs in
+    // parallel with the page: rows appear first, "of N" fills in after. It only
+    // re-runs when query or filters change, never on paging or sorting.
+    fetchTotal:
+      counting === "separately"
+        ? async (options, signal) => {
+            await new Promise((r) => setTimeout(r, 900));
+            if (signal.aborted) throw new Error("aborted");
+            return makeClientSortAndFilter(searching)(options, rows).length;
+          }
+        : undefined,
+  });
   const search = useGridSearch(state, { columns, data });
   return <FluentDataGrid search={search} rowKey={(r) => r.id} />;
 }
 
+type Counting = "with-page" | "separately" | "never";
+
 function SwapSection() {
   const styles = useStyles();
   const serverSide = useControl(false);
+  const counting = useControl<Counting>("with-page");
   const state = useControl<SearchOptions>(newState());
   const mode = serverSide.value ? "server" : "client";
 
@@ -250,13 +280,44 @@ function SwapSection() {
           {state.fields.offset.value}
         </span>
       </div>
+      {serverSide.value && (
+        <div className={styles.knobs}>
+          {(
+            [
+              ["with-page", "total with the page"],
+              ["separately", "count fetched separately (900ms)"],
+              ["never", "never counted"],
+            ] as [Counting, string][]
+          ).map(([value, label]) => (
+            <Button
+              key={value}
+              size="small"
+              appearance={counting.value === value ? "primary" : "secondary"}
+              onClick={() => (counting.value = value)}
+            >
+              {label}
+            </Button>
+          ))}
+          <span className={styles.state}>
+            {counting.value === "never"
+              ? "no total: the pager shows 1-5 and infers Next from a full page"
+              : counting.value === "separately"
+                ? "rows arrive first, “of N” fills in when the count lands"
+                : "one request carries both"}
+          </span>
+        </div>
+      )}
       {/*
         The two hooks can't alternate inside one component, so the mode switch
         remounts. That also discards the stale page and any in-flight request,
         which is the behaviour you'd want anyway.
       */}
       {serverSide.value ? (
-        <ServerGrid key="server" state={state} />
+        <ServerGrid
+          key={`server-${counting.value}`}
+          state={state}
+          counting={counting.value}
+        />
       ) : (
         <ClientGrid key="client" state={state} />
       )}
@@ -396,9 +457,34 @@ function sizeMatches(row: FileRow, values: string[]) {
 }
 
 /** Fetches a field's values, as a server-backed dropdown would. */
-async function fetchAuthorOptions(): Promise<FilterOption[]> {
+async function fetchFieldOptions(field: string): Promise<FilterOption[]> {
   await new Promise((resolve) => setTimeout(resolve, 600));
-  return AUTHORS.map((value) => ({ value, label: `${value} (fetched)` }));
+  const values = field === "author" ? AUTHORS : CATEGORIES;
+  return values.map((value) => ({ value, label: `${value} (fetched)` }));
+}
+
+/**
+ * Options through react-query.
+ *
+ * This package caches nothing itself — the popup unmounts on close, so a plain
+ * async source refetches every time it opens. That's the recommended way to get
+ * caching, deduping and retries instead: the `{ hook }` variant hands the whole
+ * job to the query library you already have. Open the Author funnel, close it,
+ * open it again: the second open is instant.
+ */
+function useQueriedOptions({ field, signal }: FilterOptionsContext) {
+  const query = useQuery({
+    queryKey: ["facets", field],
+    queryFn: () => fetchFieldOptions(field),
+    staleTime: 5 * 60 * 1000,
+  });
+  void signal; // react-query manages its own cancellation
+  return makeFilterOptions({
+    options: query.data,
+    loading: query.isPending,
+    error: query.error,
+    reload: query.refetch,
+  });
 }
 
 /**
@@ -410,8 +496,8 @@ const getColumnFilter: GetColumnFilter<FileRow, ColumnMeta> = (column) => {
   switch (column.data?.kind) {
     case "enum":
       return column.id === "author"
-        ? // Async, fetched when the popover opens and cached after.
-          { options: fetchAuthorOptions, searchable: true }
+        ? // Fetched through react-query, so the query library owns the caching.
+          { options: { hook: useQueriedOptions }, searchable: true }
         : // Derived from the rows on screen, with counts.
           {};
     case "number":
@@ -430,7 +516,7 @@ function FilterConfigSection() {
   return (
     <Section
       title="4–6. Async options, patterned config, and a custom popup"
-      blurb="getColumnFilter switches on column.data.kind rather than listing fields. Author's options are fetched (open its funnel and watch it load, then reopen — cached); Category's are derived from the rows with counts; Size gets a range popup that writes one string like '20..60' and a matches predicate to interpret it."
+      blurb="getColumnFilter switches on column.data.kind rather than listing fields. Author's options come from react-query through a { hook } source — open its funnel, close it, open it again and the second one is instant, because the query library caches and this package doesn't. Category's are derived from the rows with counts. Size gets a range popup that writes one string like '20..60' plus a matches predicate to interpret it."
     >
       <div className={styles.knobs}>
         <Button
@@ -450,7 +536,92 @@ function FilterConfigSection() {
 }
 
 // ---------------------------------------------------------------------------
-// 7. react-query, with no dependency in either library
+// 7. Filtering that lives outside the grid
+// ---------------------------------------------------------------------------
+
+/**
+ * Most real search pages have filters that aren't column filters — a date range,
+ * a tenant, a "show archived" toggle. Put them in the same state and every hook
+ * carries them: `fetch` receives them, the refetch key includes them, and the
+ * count key includes them too (it excludes only paging and sort, which can't
+ * change a count).
+ */
+interface FilesSearch extends SearchOptions {
+  minSize: number;
+}
+
+function ExternalFilterSection() {
+  const styles = useStyles();
+  const state = useControl<FilesSearch>({ ...newState(), minSize: 0 });
+  const serverSide = useControl(false);
+  const minSize = state.fields.minSize.value;
+
+  return (
+    <Section
+      title="7. Filtering from outside the grid"
+      blurb="The state extends SearchOptions with a minSize field that no column owns. Server-side it reaches the API for free, because fetch is handed the whole state. Client-side the rows have to be tested locally, since the library can't know what the field means — that's what additionalFilter is for."
+    >
+      <div className={styles.knobs}>
+        <Switch
+          label="Server-side"
+          checked={serverSide.value}
+          onChange={(_, d) => (serverSide.value = d.checked)}
+        />
+        <Text size={200}>Minimum size (MB)</Text>
+        <input
+          type="range"
+          min={0}
+          max={90}
+          value={minSize}
+          aria-label="Minimum size"
+          onChange={(e) => {
+            state.fields.minSize.value = Number(e.target.value);
+            // The grid resets paging for its own controls; an external one has to
+            // do it itself, or you land on a page that no longer exists.
+            state.fields.offset.value = 0;
+          }}
+        />
+        <span className={styles.state} data-testid="external-state">
+          minSize={minSize}
+        </span>
+      </div>
+      {serverSide.value ? (
+        <ExternalServerGrid key="server" state={state} />
+      ) : (
+        <ExternalClientGrid key="client" state={state} />
+      )}
+    </Section>
+  );
+}
+
+function ExternalClientGrid({ state }: { state: Control<FilesSearch> }) {
+  const minSize = state.fields.minSize.value;
+  const data = useClientData(state, {
+    rows,
+    columns,
+    getColumnFilter,
+    additionalFilter: (row) => row.size >= minSize,
+  });
+  const search = useGridSearch(state, { columns, data, getColumnFilter });
+  return <FluentDataGrid search={search} rowKey={(r) => r.id} />;
+}
+
+function ExternalServerGrid({ state }: { state: Control<FilesSearch> }) {
+  const data = useServerData(state, {
+    // `options.minSize` is here without any extra wiring, and changing it
+    // refetches — it's part of the state, so it's part of the key.
+    fetch: async (options, signal) => {
+      const page = await fakeSearch(options, signal);
+      const big = page.rows.filter((r) => r.size >= options.minSize);
+      return { ...page, rows: big, total: undefined };
+    },
+  });
+  const search = useGridSearch(state, { columns, data, getColumnFilter });
+  return <FluentDataGrid search={search} rowKey={(r) => r.id} />;
+}
+
+// ---------------------------------------------------------------------------
+// 8. react-query, with no dependency in either library
 // ---------------------------------------------------------------------------
 
 function QuerySection() {
@@ -482,7 +653,7 @@ function QuerySection() {
 
   return (
     <Section
-      title="7. Driven by react-query"
+      title="8. Driven by react-query"
       blurb="GridData is a plain interface, so anything that can produce one drives the grid — no fetching hook from this package involved, and neither library depends on react-query. makeGridData maps a useQuery result in one line and picks filter options up from the response's facets."
     >
       <div className={styles.knobs}>
@@ -527,6 +698,7 @@ export default function FluentGridFeatures() {
           <SwapSection />
           <MetadataSection />
           <FilterConfigSection />
+          <ExternalFilterSection />
           <QuerySection />
         </div>
       </FluentProvider>

@@ -24,11 +24,7 @@ import {
   type GridFilter,
 } from "./filter";
 import type { FilterOptions } from "./options";
-import {
-  hasFilterOptions,
-  useFilterOptions,
-  useFilterOptionsCache,
-} from "./useFilterOptions";
+import { hasFilterOptions, useFilterOptions } from "./useFilterOptions";
 
 export interface GridSearchOptions<T, D = unknown> {
   columns: ColumnDef<T, D>[];
@@ -62,10 +58,11 @@ export interface GridSearch<T, D = unknown> {
   useFilterOptions(column: ColumnDef<T, D>): FilterOptions;
 }
 
-export function useGridSearch<T, D = unknown>(
-  state: Control<SearchOptions>,
-  options: GridSearchOptions<T, D>,
-): GridSearch<T, D> {
+export function useGridSearch<
+  T,
+  D = unknown,
+  S extends SearchOptions = SearchOptions,
+>(state: Control<S>, options: GridSearchOptions<T, D>): GridSearch<T, D> {
   const {
     columns,
     data,
@@ -83,15 +80,17 @@ export function useGridSearch<T, D = unknown>(
     [columns, getColumnFilter],
   );
 
-  const cache = useFilterOptionsCache();
-
   // Built fresh every render on purpose: both read `.value`, which is what
   // registers the dependency so the header re-renders when the search changes.
   const sort = makeGridSort(state, { ...sortOptions, resetPaging });
-  const filter = makeGridFilter<T, D>(state, { filterFor, resetPaging });
+  const filter = makeGridFilter<T, D, S>(state, { filterFor, resetPaging });
 
   return {
-    state,
+    // `S` extends SearchOptions and nothing here writes a whole value — sort,
+    // filter and the pager all set individual fields — so a renderer that only
+    // knows about SearchOptions can drive it safely. The cast keeps GridSearch to
+    // two type parameters instead of leaking `S` into every renderer's props.
+    state: state as unknown as Control<SearchOptions>,
     columns,
     sort,
     filter,
@@ -105,8 +104,7 @@ export function useGridSearch<T, D = unknown>(
         column,
         filter: filterFor(column),
         data,
-        state,
-        cache,
+        state: state as unknown as Control<SearchOptions>,
         maxFilterOptions,
       }),
   };

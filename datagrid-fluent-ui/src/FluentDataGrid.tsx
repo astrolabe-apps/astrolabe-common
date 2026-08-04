@@ -6,7 +6,7 @@ import {
   typographyStyles,
 } from "@fluentui/react-components";
 import { DataGrid, type DataGridClasses } from "@astroapps/datagrid";
-import type { GridSearch } from "@astroapps/datagrid-search";
+import { pageInfo, type GridSearch } from "@astroapps/datagrid-search";
 import {
   useFluentDataGrid,
   type UseFluentDataGridOptions,
@@ -123,11 +123,10 @@ export function FluentDataGrid<T, D = unknown>(
   function renderPager() {
     if (pager === false) return null;
     if (pager !== true) return pager;
-    // Nothing to page through: one page's worth or fewer.
-    const length = state.fields.length.value;
-    if (data.total <= length && state.fields.offset.value === 0) return null;
-    return (
-      <FluentPager state={state} total={data.total} pageSizes={pageSizes} />
-    );
+    // Nothing to page through: on the first page with no further one. Works for
+    // an uncounted source too, where `hasMore` is inferred from a full page.
+    const { hasPrevious, hasMore } = pageInfo(state.value, data);
+    if (!hasPrevious && !hasMore) return null;
+    return <FluentPager state={state} data={data} pageSizes={pageSizes} />;
   }
 }

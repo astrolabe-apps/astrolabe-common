@@ -42,7 +42,9 @@ export function makeGridData<T>(o: MakeGridDataOptions<T>): GridData<T> {
   const rows = page?.rows ?? [];
   return {
     rows,
-    total: page?.total ?? 0,
+    // Passed through rather than defaulted to 0: a source that doesn't count says
+    // `undefined`, and claiming 0 would make the grid look empty to a pager.
+    total: page?.total,
     loading,
     error,
     reload: reload ?? (() => {}),
@@ -79,20 +81,20 @@ export function makeFilterOptions(o: MakeFilterOptionsArgs): FilterOptions {
  * Reads the state's fields during render, so control tracking re-renders the
  * caller when the search changes.
  */
-export function useDebouncedSearchOptions(
-  state: Control<SearchOptions>,
+export function useDebouncedSearchOptions<S extends SearchOptions>(
+  state: Control<S>,
   ms = 300,
-): SearchOptions {
-  // Read per field rather than `state.value`: each is referentially stable until
-  // it actually changes, which is what makes the memo dependencies below
-  // meaningful. `@react-typed-forms/transform` (see .babelrc) makes these reads
-  // tracked, so a change re-renders the caller.
-  const fields = state.fields;
-  const query = fields.query.value;
-  const sort = fields.sort.value;
-  const filters = fields.filters.value;
-  const offset = fields.offset.value;
-  const length = fields.length.value;
+): S {
+  // The whole value, not selected fields: a caller whose state extends
+  // SearchOptions with its own filtering — a date range, a tenant, a "show
+  // archived" toggle — needs those carried through to `fetch` and into the query
+  // key. Picking fields out would silently drop them.
+  //
+  // `@react-typed-forms/transform` (see .babelrc) makes this read tracked, so a
+  // change re-renders the caller. The value is referentially stable between
+  // changes, which is what makes the memo below meaningful.
+  const value = state.value;
+  const query = value.query;
 
   const [settledQuery, setSettledQuery] = useState(query);
 
@@ -111,8 +113,21 @@ export function useDebouncedSearchOptions(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, ms]);
 
+  // Everything except the query, serialised, as the identity of "the search apart
+  // from the text box". Without this the returned object would change the instant
+  // a keystroke landed — before the debounce settled — and a consumer keyed on it
+  // would fetch twice per keystroke: once with the stale query, once with the new.
+  const restKey = useMemo(() => {
+    const { query: _ignored, ...rest } = value;
+    return JSON.stringify(rest);
+  }, [value]);
+
+  // Everything as it is, with only `query` lagging. `value` is deliberately not a
+  // dependency: it changes on every keystroke, and `restKey` is what says whether
+  // anything a consumer should react to has actually moved.
   return useMemo(
-    () => ({ query: settledQuery, sort, filters, offset, length }),
-    [settledQuery, sort, filters, offset, length],
+    () => ({ ...value, query: settledQuery }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [restKey, settledQuery],
   );
 }

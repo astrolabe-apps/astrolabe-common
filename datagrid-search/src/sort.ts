@@ -93,8 +93,8 @@ export function applySortField(
   return next;
 }
 
-export function makeGridSort(
-  state: Control<SearchOptions>,
+export function makeGridSort<S extends SearchOptions>(
+  state: Control<S>,
   options: SortOptions = {},
 ): GridSort {
   const {

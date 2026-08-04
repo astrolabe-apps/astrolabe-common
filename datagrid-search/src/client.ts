@@ -9,7 +9,7 @@
  * also supports `matches`. Query and sort still come from searchstate.
  */
 import { useMemo } from "react";
-import type { Control } from "@react-typed-forms/core";
+import type { Control, ControlFields } from "@react-typed-forms/core";
 import type { ColumnDef } from "@astroapps/datagrid";
 import {
   filterByQuery,
@@ -49,6 +49,16 @@ export interface ClientDataOptions<T, D = unknown> {
   getColumnFilter?: GetColumnFilter<T, D>;
   /** Restrict free-text search. Defaults to every leaf column with a `getter`. */
   searchColumns?: (column: ColumnDef<T, D>) => boolean;
+  /**
+   * Filtering that isn't a column filter — a date range or a toggle living
+   * elsewhere on the page, held in fields your state added to `SearchOptions`.
+   * Applied alongside the query and the column filters.
+   *
+   * The server-side counterpart is free: `fetch` receives the whole state, extra
+   * fields included. Client-side the rows have to be tested here, since this
+   * package can't know what those fields mean.
+   */
+  additionalFilter?: (row: T) => boolean;
 }
 
 /** A field's selected values, coerced — see `filter.ts` on why this is needed. */
@@ -96,13 +106,15 @@ function activeMatchers<T, D>(
   return result;
 }
 
-export function useClientData<T, D = unknown>(
-  state: Control<SearchOptions>,
-  options: ClientDataOptions<T, D>,
-): GridData<T> {
+export function useClientData<
+  T,
+  D = unknown,
+  S extends SearchOptions = SearchOptions,
+>(state: Control<S>, options: ClientDataOptions<T, D>): GridData<T> {
   const {
     rows,
     columns,
+    additionalFilter,
     loading = false,
     paged = true,
     optionsIgnoreOwnFilter = true,
@@ -113,7 +125,10 @@ export function useClientData<T, D = unknown>(
   // Read fields individually rather than `state.value`: each is referentially
   // stable until it actually changes, which is what makes the memo deps below
   // meaningful.
-  const fields = state.fields;
+  //
+  // Cast because `S` is only constrained to extend SearchOptions, so its mapped
+  // fields come out optional. The constraint guarantees they're there.
+  const fields = state.fields as unknown as ControlFields<SearchOptions>;
   const query = fields.query.value;
   const sort = fields.sort.value;
   const filters = fields.filters.value;
@@ -137,9 +152,13 @@ export function useClientData<T, D = unknown>(
       const active = excludeField
         ? matchers.filter((m) => m.field !== excludeField)
         : matchers;
-      const predicate = active.length
+      const columnPredicate = active.length
         ? (row: T) => active.every((m) => m.matches(row, m.values))
         : undefined;
+      const predicate =
+        columnPredicate && additionalFilter
+          ? (row: T) => columnPredicate(row) && additionalFilter(row)
+          : (columnPredicate ?? additionalFilter);
       return filterByQuery(searching.getSearchText, query, rows, predicate);
     }
 
@@ -176,6 +195,7 @@ export function useClientData<T, D = unknown>(
     filterFor,
     searching,
     optionsIgnoreOwnFilter,
+    additionalFilter,
   ]);
 
   const pageRows = useMemo(

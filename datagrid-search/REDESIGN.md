@@ -1088,4 +1088,72 @@ is the last phase.
   the `astrolabe-ui` dedup is wanted eventually, it's a separate piece of work
   from this one — it was only entangled because both touched `searching.ts`.
 
+---
+
+## 11. Post-implementation revisions
+
+Three pieces of feedback after Phase 5, each of which changed the design rather
+than just the code.
+
+### 11.1 The total is optional (D8)
+
+`GridPage.total` and `GridData.total` were required. Counting is often a second
+query over the whole filtered set and can cost more than the page, so both are now
+optional, and `pageInfo(options, data)` centralises what a pager needs either way.
+
+- **`fetchTotal`** on `useServerData` fetches the count **in parallel** with the
+  page, so rows aren't gated on it. It re-runs only when something that can change
+  a count changes — written as an *exclusion* of `offset`/`length`/`sort`, so a
+  state with extra filtering of its own is included automatically. A failed count
+  degrades to "uncounted" instead of failing the grid.
+- **Without any total**, the pager shows `1-10` rather than `1-10 of 42` and infers
+  Next from a full page. That over-reports at an exact multiple of the page size —
+  Next is enabled once too often and the following page comes back empty. Pinned by
+  a test named after it; the alternative is fetching `length + 1` and rendering
+  `length`.
+- `makeGridData` no longer defaults `total` to `0`. `undefined` means "not
+  counted"; `0` means "counted, nothing matched", and conflating them makes a grid
+  look empty to a pager.
+
+### 11.2 No filter-options cache (D9)
+
+The async options cache is **removed**. It only bought surviving a popover
+close/reopen, and cost ~60 lines, a serialised cache key, a control threaded
+through `useGridSearch`, and a second caching layer that could disagree with a
+real one. State now lives in `useFilterOptions`, which the popup unmount discards.
+
+The `{ hook }` source is the caching story: it hands the whole job — caching,
+deduping, retries, stale-while-revalidate — to the query library the app already
+has. The demo's Author column uses react-query this way, so "close and reopen is
+instant" is visible rather than asserted.
+
+### 11.3 State that extends `SearchOptions` (D10)
+
+Real search pages have filtering that isn't a column filter — a date range, a
+tenant, a "show archived" toggle. Previously the only route was `deps`, which
+passed nothing to `fetch` and was silent when forgotten.
+
+Every hook is now generic over `S extends SearchOptions`, so:
+
+- `fetch` and `fetchTotal` receive the **whole** state, extra fields included;
+- changing an extra field refetches, because it's part of the state and therefore
+  part of the key — no `deps` wiring to forget;
+- `useClientData` takes **`additionalFilter`**, since client-side the rows have to
+  be tested locally and the library can't know what the extra fields mean.
+
+`GridSearch` stays two type parameters, with one documented cast inside
+`useGridSearch`: nothing in the renderer writes a whole value — sort, filter and
+the pager all set individual fields — so a renderer that only knows `SearchOptions`
+drives an extended state safely, and `S` doesn't leak into every renderer's props.
+
+**One bug this surfaced.** Making `useDebouncedSearchOptions` return the whole
+value initially broke the debounce: a keystroke changed the object's identity
+before the timer settled, so a consumer keyed on it fetched twice per keystroke —
+once with the stale query, once with the new. Fixed by keying the returned
+identity on everything *except* the query, so it only changes when the settled
+query lands or something else actually moves. Caught by the existing
+stale-response test, which is the kind of thing those tests are for.
+
+---
+
 **All decisions are settled; the baseline is clean and the plan is ready to build.**

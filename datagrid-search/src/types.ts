@@ -18,8 +18,16 @@ export interface FilterOption {
 /** One page of results, as returned by a server-side search. */
 export interface GridPage<T> {
   rows: T[];
-  /** Total matching rows, ignoring paging — drives the pager. */
-  total: number;
+  /**
+   * Total matching rows, ignoring paging.
+   *
+   * **Optional**, because counting is often a second query over the whole
+   * filtered set and can cost more than the page itself. Omit it and the grid
+   * pages without knowing where the end is — see `pageInfo`, and
+   * `ServerDataOptions.fetchTotal` for fetching the count separately so rows
+   * aren't blocked on it.
+   */
+  total?: number;
   /**
    * Per-field filter options returned alongside the page. Most search APIs can
    * produce these, which makes server-side filter options free: no second
@@ -35,8 +43,14 @@ export interface GridPage<T> {
 export interface GridData<T> {
   /** The current page, ready to render. */
   rows: T[];
-  /** Filtered total, ignoring paging. */
-  total: number;
+  /**
+   * Filtered total, ignoring paging, or `undefined` when the source doesn't
+   * count. Client-side sources always know it; server-side ones only if asked.
+   *
+   * `undefined` and `0` are different answers: the first means "not counted",
+   * the second "counted, nothing matched".
+   */
+  total?: number;
   loading: boolean;
   error?: unknown;
   reload(): void;

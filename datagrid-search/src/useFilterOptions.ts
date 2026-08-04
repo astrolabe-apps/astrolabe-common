@@ -7,6 +7,21 @@
  * nobody filters. That laziness is structural rather than something this module
  * arranges.
  *
+ * **No caching.** State lives in this hook, so closing the popover discards it and
+ * reopening fetches again. That's deliberate: the only thing a cache here bought
+ * was surviving close/reopen, and a second caching layer can disagree with the
+ * real one. If you want caching — or deduping, retries, stale-while-revalidate —
+ * use the `{ hook }` source and let your query library do it:
+ *
+ * ```tsx
+ * options: {
+ *   hook: ({ field, signal }) =>
+ *     makeFilterOptions(
+ *       useQuery({ queryKey: ["facets", field], queryFn: () => api.facets(field, signal) }),
+ *     ),
+ * }
+ * ```
+ *
  * Resolution order, three deep:
  *   1. the column's own `options`
  *   2. `data.facets[field]` (server) or `data.optionRows(field)` (client)
@@ -14,7 +29,6 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import type { Control } from "@react-typed-forms/core";
-import { useControl } from "@react-typed-forms/core";
 import type { ColumnDef } from "@astroapps/datagrid";
 import type { SearchOptions } from "@astroapps/searchstate";
 import type { FilterOption, GridData } from "./types";
@@ -28,27 +42,19 @@ import {
 import { columnFilterValue } from "./columns";
 import { filterFieldOf, type ColumnFilter } from "./filter";
 
-interface CacheEntry {
-  options?: FilterOption[];
-  loading: boolean;
-  error?: unknown;
-}
-
-/** Async results, so they survive a popover closing and reopening. */
-export type FilterOptionsCache = Control<Record<string, CacheEntry>>;
-
-export function useFilterOptionsCache(): FilterOptionsCache {
-  return useControl<Record<string, CacheEntry>>({});
-}
-
 export interface UseFilterOptionsArgs<T, D> {
   column: ColumnDef<T, D>;
   filter: ColumnFilter<T> | undefined;
   data: GridData<T>;
   state: Control<SearchOptions>;
-  cache: FilterOptionsCache;
   /** Cap on distinct values derived from rows. Defaults to 100. */
   maxFilterOptions?: number;
+}
+
+interface AsyncState {
+  options?: FilterOption[];
+  loading: boolean;
+  error?: unknown;
 }
 
 /**
@@ -61,7 +67,7 @@ export interface UseFilterOptionsArgs<T, D> {
 export function useFilterOptions<T, D = unknown>(
   args: UseFilterOptionsArgs<T, D>,
 ): FilterOptions {
-  const { column, filter, data, state, cache, maxFilterOptions = 100 } = args;
+  const { column, filter, data, state, maxFilterOptions = 100 } = args;
 
   const field = filter ? filterFieldOf(column, filter) : undefined;
   const source = filter?.options;
@@ -71,24 +77,15 @@ export function useFilterOptions<T, D = unknown>(
   const filters = fields.filters.value ?? {};
   const query = fields.query.value;
 
-  // Cascading options depend on the other filters, so they're part of the key —
-  // change one column's selection and a dependent column refetches.
-  const cacheKey = useMemo(
-    () =>
-      kind === "async" && field
-        ? `${field}|${query ?? ""}|${JSON.stringify(filters)}`
-        : undefined,
-    [kind, field, query, filters],
-  );
-
   const [reloadCount, setReloadCount] = useState(0);
-  const entry = cacheKey ? cache.value[cacheKey] : undefined;
+  const [async, setAsync] = useState<AsyncState>({ loading: kind === "async" });
+
+  // Cascading options depend on the other columns' filters, so a change there
+  // refetches. Serialised because `filters` is a fresh object on every change.
+  const searchKey = JSON.stringify({ query: query ?? "", filters });
 
   useEffect(() => {
-    if (!cacheKey || !field || kind !== "async") return;
-    // Already settled for this key: nothing to do until reload() bumps the count.
-    if (entry && !entry.loading && reloadCount === 0) return;
-
+    if (kind !== "async" || !field) return;
     const controller = new AbortController();
     const ctx: FilterOptionsContext = {
       field,
@@ -96,36 +93,23 @@ export function useFilterOptions<T, D = unknown>(
       query,
       signal: controller.signal,
     };
-    cache.setValue((current) => ({
-      ...current,
-      [cacheKey]: { ...current[cacheKey], loading: true, error: undefined },
-    }));
-
+    setAsync({ loading: true });
     (source as (c: FilterOptionsContext) => Promise<FilterOption[]>)(ctx).then(
       (options) => {
-        if (controller.signal.aborted) return;
-        cache.setValue((current) => ({
-          ...current,
-          [cacheKey]: { options, loading: false },
-        }));
+        if (!controller.signal.aborted) setAsync({ options, loading: false });
       },
       (error) => {
-        if (controller.signal.aborted) return;
-        cache.setValue((current) => ({
-          ...current,
-          [cacheKey]: { ...current[cacheKey], loading: false, error },
-        }));
+        if (!controller.signal.aborted) setAsync({ loading: false, error });
       },
     );
-
     return () => controller.abort();
-    // `entry` is intentionally absent: it changes as a *result* of this effect,
-    // and the guard above reads it only to skip already-settled keys.
+    // `filters`/`query` are covered by searchKey; including them directly would
+    // refetch on every unrelated state change.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cacheKey, field, kind, reloadCount]);
+  }, [kind, field, searchKey, reloadCount]);
 
-  // Conditional by design — see the note on this function. Kept last so the
-  // unconditional hooks above always run in the same order.
+  // Conditional by design — see the note on this function. Kept after the
+  // unconditional hooks so those always run in the same order.
   const fromHook =
     kind === "hook" && field
       ? (
@@ -176,9 +160,9 @@ export function useFilterOptions<T, D = unknown>(
   if (fromHook) return fromHook;
   if (kind === "async") {
     return {
-      options: entry?.options ?? [],
-      loading: entry?.loading ?? true,
-      error: entry?.error,
+      options: async.options ?? [],
+      loading: async.loading,
+      error: async.error,
       reload,
     };
   }

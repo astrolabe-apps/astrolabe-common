@@ -187,12 +187,16 @@ function asStrings(stored: unknown[] | undefined): string[] {
     : stored.map((v) => String(v));
 }
 
-export function makeGridFilter<T = any, D = unknown>(
-  state: Control<SearchOptions>,
-  options: GridFilterOptions<T, D> = {},
-): GridFilter<T, D> {
+export function makeGridFilter<
+  T = any,
+  D = unknown,
+  S extends SearchOptions = SearchOptions,
+>(state: Control<S>, options: GridFilterOptions<T, D> = {}): GridFilter<T, D> {
   const { filterFor = defaultGetColumnFilter, resetPaging = true } = options;
-  const filters = state.fields.filters;
+  // Cast because `S` is only constrained to extend SearchOptions, so
+  // `fields.filters` resolves to a union that can't be indexed by an arbitrary
+  // field name. The constraint guarantees the shape; this states it.
+  const filters = state.fields.filters as unknown as Control<SearchFilters>;
   const current = filters.value ?? {};
 
   function selected(field: string): Control<string[] | undefined> {

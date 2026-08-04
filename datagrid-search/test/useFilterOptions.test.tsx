@@ -228,7 +228,10 @@ describe("async options", () => {
     expect(seen.options!.loading).toBe(false);
   });
 
-  it("caches across close and reopen", async () => {
+  it("refetches on reopen, since nothing here caches", async () => {
+    // Deliberate: state lives in the hook, so closing discards it. An internal
+    // cache only bought surviving close/reopen and could disagree with a real
+    // one — use the `{ hook }` source with a query library to get caching.
     const fetchOptions = jest.fn(async () => [{ value: "doc" }]);
     const popup = renderPopup(() => ({ options: fetchOptions }));
     await act(async () => {});
@@ -240,9 +243,41 @@ describe("async options", () => {
     await act(async () => {
       popup.setOpen(true);
     });
-    // The cache lives in useGridSearch, above the popup, so reopening is free.
-    expect(fetchOptions).toHaveBeenCalledTimes(1);
+    expect(fetchOptions).toHaveBeenCalledTimes(2);
     expect(popup.seen.options!.options).toEqual([{ value: "doc" }]);
+  });
+
+  it("lets a hook source do the caching instead", async () => {
+    // The recommended path: whatever the hook wraps owns caching, so reopening
+    // costs nothing even though this package caches nothing.
+    const load = jest.fn(async () => [{ value: "cached" }]);
+    const cache = new Map<string, FilterOption[]>();
+    const popup = renderPopup(() => ({
+      options: {
+        hook: ({ field }) => {
+          const [hit, setHit] = React.useState(() => cache.get(field));
+          React.useEffect(() => {
+            if (hit) return;
+            load().then((options) => {
+              cache.set(field, options);
+              setHit(options);
+            });
+          }, [field, hit]);
+          return makeFilterOptions({ options: hit, loading: !hit });
+        },
+      },
+    }));
+    await act(async () => {});
+    expect(load).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      popup.setOpen(false);
+    });
+    await act(async () => {
+      popup.setOpen(true);
+    });
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(popup.seen.options!.options).toEqual([{ value: "cached" }]);
   });
 
   it("refetches when another column's filter changes, for cascading options", async () => {

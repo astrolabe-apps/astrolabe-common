@@ -39,7 +39,7 @@ search rather than a flag:
 | Sort arrow       | the column has a `sortField`                                    |
 | Multi-sort badge | sort `mode` isn't `"single"` and more than one column is sorted |
 | Filter funnel    | the column's filter options resolve (see datagrid-search)       |
-| Pager            | `data.total` exceeds one page                                   |
+| Pager            | there's a page before or after this one                         |
 | Selection column | a `selection` is passed                                         |
 
 So a grid whose columns carry none of that renders as a plain table. Grid-wide
@@ -155,6 +155,10 @@ Fluent v9 ships no pagination component, so `FluentPager` is built from its
 primitives rather than matching a reference. It renders prev/next over
 `offset`/`length` with an optional page-size selector, and hides itself when
 everything fits on one page.
+
+It copes with a source that doesn't count: without a total it shows `1-10` instead
+of `1-10 of 42`, and enables Next while the page comes back full. See
+`pageInfo` in datagrid-search for why counting is optional.
 
 ## Migrating from the previous API
 

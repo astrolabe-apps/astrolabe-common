@@ -4,6 +4,7 @@ export * from "./sort";
 export * from "./options";
 export * from "./filter";
 export * from "./interop";
+export * from "./paging";
 export * from "./client";
 export * from "./server";
 export * from "./useFilterOptions";

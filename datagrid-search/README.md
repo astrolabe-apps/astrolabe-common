@@ -35,9 +35,29 @@ same `GridData`, so nothing downstream can tell which mode it's in.
 
 Two things are worth internalising:
 
-- **One state shape.** `Control<SearchOptions>` holds query, sort, filters,
-  offset and length. URL sync, persistence and "sort by X" buttons elsewhere on
-  the page all just read and write it.
+- **One state shape, and it's yours to extend.** `Control<SearchOptions>` holds
+  query, sort, filters, offset and length. URL sync, persistence and "sort by X"
+  buttons elsewhere on the page all just read and write it. Real pages usually
+  have filtering that isn't a column filter — a date range, a tenant, a "show
+  archived" toggle — so **put those fields in the same state**:
+
+  ```tsx
+  interface FilesSearch extends SearchOptions {
+    dateFrom: string | null;
+    includeArchived: boolean;
+  }
+  const state = useControl<FilesSearch>({
+    ...defaultSearchOptions,
+    dateFrom: null,
+    includeArchived: false,
+  });
+  ```
+
+  Every hook is generic over the state, so `fetch` receives the whole thing,
+  changing an extra field refetches, and the count key includes it — no `deps`
+  wiring to forget. Client-side, pass `additionalFilter` to `useClientData`, since
+  the library can't know what your fields mean.
+
 - **Affordances follow column metadata.** A column with a `sortField` is
   sortable; a column whose filter options resolve is filterable. There are no
   `enableSorting` flags.
@@ -146,9 +166,26 @@ Resolution order, three deep:
 
 Options load **lazily**, because `useFilterOptions` is called inside the popup
 surface, which only mounts when the popover opens. Nothing is fetched for a
-column nobody filters. Async results are cached (keyed on the field plus the
-other filters, so cascading options refetch when a dependency changes) and
-in-flight requests abort on unmount.
+column nobody filters, and in-flight requests abort on unmount.
+
+**Nothing is cached here.** State lives in the hook, so closing the popover
+discards it and reopening fetches again. An internal cache only bought surviving
+close/reopen, and a second caching layer can disagree with the real one — so if
+you want caching, deduping, retries or stale-while-revalidate, use the `{ hook }`
+source and let your query library do all of it:
+
+```tsx
+options: {
+  hook: ({ field }) =>
+    makeFilterOptions(
+      useQuery({
+        queryKey: ["facets", field],
+        queryFn: () => api.facets(field),
+        staleTime: 5 * 60_000,
+      }),
+    ),
+}
+```
 
 Client-derived options ignore the column's **own** filter by default, so picking
 one value doesn't hide the others — Excel's behaviour. Turn it off with
@@ -164,6 +201,25 @@ const data = useServerData(state, {
   deps: [tenantId], // extra refetch triggers
 });
 ```
+
+### The total is optional
+
+Counting is usually a second query over the whole filtered set, so `GridPage.total`
+is optional and `GridData.total` may be `undefined`. Three ways to handle it:
+
+|                              | How                                                            | Cost                                                                  |
+| ---------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Return `total` with the page | one request                                                    | the count is on the critical path                                     |
+| `fetchTotal`                 | runs **in parallel**; rows render first, "of N" fills in after | two requests                                                          |
+| Neither                      | pager shows `1-10` and infers Next from a full page            | Next is enabled once too often, at an exact multiple of the page size |
+
+`fetchTotal` re-runs only when something that can change a count changes — it
+excludes `offset`, `length` and `sort`, so paging and sorting never pay for it
+again. A failed count degrades to "uncounted" rather than failing the grid.
+
+`undefined` and `0` are different answers: the first means "not counted", the
+second "counted, nothing matched". Use `pageInfo(options, data)` rather than
+reading `total` directly, and the uncounted case is handled for you.
 
 `fetch` is held in a ref and is **not** a refetch trigger, so an inline arrow
 won't loop. What drives refetching is the search state plus `deps`. Stale

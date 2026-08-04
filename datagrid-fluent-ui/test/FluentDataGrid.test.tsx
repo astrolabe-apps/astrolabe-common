@@ -9,6 +9,7 @@ import {
   type SearchOptions,
 } from "@astroapps/searchstate";
 import {
+  makeGridData,
   useClientData,
   useGridSearch,
   type GetColumnFilter,
@@ -144,5 +145,71 @@ describe("a grid with sort and filter available", () => {
   it("reports no data without inventing rows", () => {
     render(<Harness columns={richColumns} over={{ query: "nothing" }} />);
     expect(screen.getByText("No data")).toBeDefined();
+  });
+});
+
+/**
+ * An uncounted source, as a server that won't pay for a COUNT(*) produces. The
+ * pager has to work without knowing where the end is.
+ */
+function UncountedHarness({
+  rowCount,
+  over,
+}: {
+  rowCount: number;
+  over?: Partial<SearchOptions>;
+}) {
+  const stop = useComponentTracking();
+  try {
+    const state = newControl<SearchOptions>({
+      ...defaultSearchOptions,
+      length: 2,
+      ...over,
+    });
+    const page = rows.slice(0, rowCount);
+    const data = makeGridData<Row>({ page: { rows: page } });
+    const search = useGridSearch(state, { columns: richColumns, data });
+    return (
+      <FluentProvider theme={webLightTheme}>
+        <FluentDataGrid search={search} />
+      </FluentProvider>
+    );
+  } finally {
+    stop();
+  }
+}
+
+describe("a grid whose source does not count", () => {
+  it("shows a range without a total", () => {
+    render(<UncountedHarness rowCount={2} />);
+    expect(screen.getByText("1-2")).toBeDefined();
+    expect(screen.queryByText(/ of /)).toBeNull();
+  });
+
+  it("enables Next while the page is full", () => {
+    // A full page might mean more rows, so Next stays usable — the inference
+    // that stands in for a total.
+    render(<UncountedHarness rowCount={2} />);
+    expect(screen.getByLabelText("Next page").hasAttribute("disabled")).toBe(
+      false,
+    );
+  });
+
+  it("renders no pager at all for a single partial page", () => {
+    // Partial first page: nothing before, nothing after, so no pager.
+    render(<UncountedHarness rowCount={1} />);
+    expect(screen.queryByLabelText("Previous page")).toBeNull();
+    expect(screen.queryByLabelText("Next page")).toBeNull();
+  });
+
+  it("disables Next on a later, partial page", () => {
+    render(<UncountedHarness rowCount={1} over={{ offset: 2 }} />);
+    expect(
+      screen.getByLabelText("Previous page").hasAttribute("disabled"),
+    ).toBe(false);
+    expect(screen.getByLabelText("Next page").hasAttribute("disabled")).toBe(
+      true,
+    );
+    expect(screen.getByText("3-3")).toBeDefined();
   });
 });

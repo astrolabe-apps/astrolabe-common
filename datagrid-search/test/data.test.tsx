@@ -433,6 +433,273 @@ describe("useServerData", () => {
   });
 });
 
+describe("useServerData with an optional count", () => {
+  /** A page with no total, as an API that won't pay for COUNT(*) returns. */
+  function fetchUncounted() {
+    return async (options: SearchOptions): Promise<GridPage<Row>> => {
+      const searched = makeClientSortAndFilter(columnSearching(columns))(
+        options,
+        allRows,
+      );
+      return {
+        rows: getPageOfResults(options.offset, options.length, searched),
+      };
+    };
+  }
+
+  it("works with no total at all", async () => {
+    const state = stateWith({ length: 2 });
+    const { seen } = renderData(() =>
+      useServerData(state, { fetch: fetchUncounted(), debounce: 0 }),
+    );
+    await act(async () => {});
+    expect(seen.current.rows).toHaveLength(2);
+    expect(seen.current.total).toBeUndefined();
+  });
+
+  it("fills the total in separately, without holding up the rows", async () => {
+    let releaseCount: ((n: number) => void) | undefined;
+    const state = stateWith({ length: 2 });
+    const { seen } = renderData(() =>
+      useServerData(state, {
+        fetch: fetchUncounted(),
+        fetchTotal: () => new Promise<number>((r) => (releaseCount = r)),
+        debounce: 0,
+      }),
+    );
+
+    // Rows are here; the count isn't. That's the point of running them apart.
+    await act(async () => {});
+    expect(seen.current.rows).toHaveLength(2);
+    expect(seen.current.total).toBeUndefined();
+
+    await act(async () => {
+      releaseCount!(4);
+    });
+    expect(seen.current.total).toBe(4);
+  });
+
+  it("does not re-count when only paging or sorting changes", async () => {
+    // The reason the count is keyed on query+filters alone: it can't change.
+    const fetchTotal = jest.fn(async () => 4);
+    const state = stateWith({ length: 2 });
+    renderData(() =>
+      useServerData(state, {
+        fetch: fetchUncounted(),
+        fetchTotal,
+        debounce: 0,
+      }),
+    );
+    await act(async () => {});
+    expect(fetchTotal).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      state.fields.offset.value = 2;
+    });
+    await act(async () => {
+      state.fields.sort.value = ["dfile"];
+    });
+    expect(fetchTotal).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-counts when a filter changes", async () => {
+    const fetchTotal = jest.fn(async () => 2);
+    const state = stateWith({ length: 10 });
+    renderData(() =>
+      useServerData(state, {
+        fetch: fetchUncounted(),
+        fetchTotal,
+        debounce: 0,
+      }),
+    );
+    await act(async () => {});
+    expect(fetchTotal).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      state.fields.filters.value = { kind: ["doc"] };
+    });
+    expect(fetchTotal).toHaveBeenCalledTimes(2);
+  });
+
+  it("prefers a total the page carried over a separate count", async () => {
+    const fetchTotal = jest.fn(async () => 99);
+    const state = stateWith({ length: 2 });
+    const { seen } = renderData(() =>
+      useServerData(state, { fetch: stubFetch(), fetchTotal, debounce: 0 }),
+    );
+    await act(async () => {});
+    expect(seen.current.total).toBe(4);
+  });
+
+  it("survives a failed count", async () => {
+    // Losing the total must degrade to "uncounted", not break the grid.
+    const state = stateWith({ length: 2 });
+    const { seen } = renderData(() =>
+      useServerData(state, {
+        fetch: fetchUncounted(),
+        fetchTotal: async () => {
+          throw new Error("count timed out");
+        },
+        debounce: 0,
+      }),
+    );
+    await act(async () => {});
+    expect(seen.current.rows).toHaveLength(2);
+    expect(seen.current.total).toBeUndefined();
+    expect(seen.current.error).toBeUndefined();
+  });
+
+  it("drops a stale count when the filters move on", async () => {
+    const resolvers: ((n: number) => void)[] = [];
+    const state = stateWith({ length: 10 });
+    const { seen } = renderData(() =>
+      useServerData(state, {
+        fetch: fetchUncounted(),
+        fetchTotal: () => new Promise<number>((r) => resolvers.push(r)),
+        debounce: 0,
+      }),
+    );
+    await act(async () => {});
+    await act(async () => {
+      state.fields.filters.value = { kind: ["doc"] };
+    });
+    // The first count arrives late, for a search no longer on screen.
+    await act(async () => {
+      resolvers[0](4);
+    });
+    expect(seen.current.total).toBeUndefined();
+
+    await act(async () => {
+      resolvers[1](2);
+    });
+    expect(seen.current.total).toBe(2);
+  });
+});
+
+describe("state that extends SearchOptions", () => {
+  // The common case: filtering that isn't a column filter — a date range, a
+  // tenant, a "show archived" toggle — living in fields the app added.
+  interface Extended extends SearchOptions {
+    archived: boolean;
+  }
+
+  function extendedState(over: Partial<Extended> = {}) {
+    return newControl<Extended>({
+      ...defaultSearchOptions,
+      length: 10,
+      archived: false,
+      ...over,
+    });
+  }
+
+  it("passes the extra fields to fetch", async () => {
+    const seenOptions: Extended[] = [];
+    const state = extendedState({ archived: true });
+    renderData(() =>
+      useServerData(state, {
+        debounce: 0,
+        fetch: async (options) => {
+          seenOptions.push(options);
+          return { rows: allRows, total: 4 };
+        },
+      }),
+    );
+    await act(async () => {});
+    expect(seenOptions[0].archived).toBe(true);
+  });
+
+  it("refetches when an extra field changes, with no deps wiring", async () => {
+    // The reason this is generic rather than something to remember to put in
+    // `deps`: forgetting would serve stale rows silently.
+    const fetch = jest.fn(async () => ({ rows: allRows, total: 4 }));
+    const state = extendedState();
+    renderData(() => useServerData(state, { fetch, debounce: 0 }));
+    await act(async () => {});
+    expect(fetch).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      state.fields.archived.value = true;
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("includes extra fields in the count key", async () => {
+    const fetchTotal = jest.fn(async () => 4);
+    const state = extendedState();
+    renderData(() =>
+      useServerData(state, {
+        fetch: async () => ({ rows: allRows }),
+        fetchTotal,
+        debounce: 0,
+      }),
+    );
+    await act(async () => {});
+    expect(fetchTotal).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      state.fields.archived.value = true;
+    });
+    // An extra field can change the count, so it must re-count — unlike paging.
+    expect(fetchTotal).toHaveBeenCalledTimes(2);
+  });
+
+  it("still debounces only the query", async () => {
+    jest.useFakeTimers();
+    try {
+      const fetch = jest.fn(async () => ({ rows: allRows, total: 4 }));
+      const state = extendedState();
+      renderData(() => useServerData(state, { fetch, debounce: 300 }));
+      await act(async () => {});
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      // An extra field is not the text box: it goes through at once.
+      await act(async () => {
+        state.fields.archived.value = true;
+      });
+      expect(fetch).toHaveBeenCalledTimes(2);
+
+      await act(async () => {
+        state.fields.query.value = "abc";
+      });
+      expect(fetch).toHaveBeenCalledTimes(2);
+      await act(async () => {
+        jest.advanceTimersByTime(300);
+      });
+      expect(fetch).toHaveBeenCalledTimes(3);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it("applies out-of-grid filtering client-side via additionalFilter", async () => {
+    // Client-side can't know what an extra field means, so the caller says.
+    const state = extendedState({ archived: true });
+    const { seen } = renderData(() =>
+      useClientData(state, {
+        rows: allRows,
+        columns,
+        additionalFilter: (row) =>
+          state.fields.archived.value ? row.kind === "doc" : true,
+      }),
+    );
+    expect(seen.current.rows.map((r) => r.file)).toEqual(["notes", "readme"]);
+    expect(seen.current.total).toBe(2);
+  });
+
+  it("combines additionalFilter with column filters and the query", async () => {
+    const state = extendedState({ query: "e", filters: { kind: ["doc"] } });
+    const { seen } = renderData(() =>
+      useClientData(state, {
+        rows: allRows,
+        columns,
+        additionalFilter: (row) => row.size > 2,
+      }),
+    );
+    // kind=doc → notes, readme; query "e" keeps both; size > 2 leaves notes.
+    expect(seen.current.rows.map((r) => r.file)).toEqual(["notes"]);
+  });
+});
+
 describe("client and server agree", () => {
   // The headline claim of the redesign: swapping one line changes nothing the
   // renderer can see. Verified by test rather than by eyeball.
@@ -491,9 +758,16 @@ describe("makeGridData", () => {
   it("copes with no page yet", () => {
     const data = makeGridData<Row>({ page: undefined });
     expect(data.rows).toEqual([]);
-    expect(data.total).toBe(0);
+    expect(data.total).toBeUndefined();
     expect(data.loading).toBe(false);
     expect(() => data.reload()).not.toThrow();
+  });
+
+  it("passes an absent total through as undefined, not 0", () => {
+    // 0 would tell a pager the grid is empty; undefined says "not counted".
+    const data = makeGridData<Row>({ page: { rows: allRows } });
+    expect(data.total).toBeUndefined();
+    expect(data.rows).toHaveLength(4);
   });
 
   it("matches what useServerData produces for the same page", async () => {
