@@ -61,15 +61,6 @@ export interface ClientDataOptions<T, D = unknown> {
   additionalFilter?: (row: T) => boolean;
 }
 
-/** A field's selected values, coerced — see `filter.ts` on why this is needed. */
-function selectedValues(filters: SearchFilters, field: string): string[] {
-  const stored = filters[field];
-  if (!stored || stored.length === 0) return [];
-  return stored.every((v) => typeof v === "string")
-    ? (stored as string[])
-    : stored.map((v) => String(v));
-}
-
 interface FieldMatcher<T> {
   field: string;
   values: string[];
@@ -88,7 +79,7 @@ function activeMatchers<T, D>(
 ): FieldMatcher<T>[] {
   const result: FieldMatcher<T>[] = [];
   for (const field of Object.keys(filters)) {
-    const values = selectedValues(filters, field);
+    const values = filters[field] ?? [];
     if (values.length === 0) continue;
     let filter: ColumnFilter<T> | undefined;
     const column = findColumn(columns, (c) => {

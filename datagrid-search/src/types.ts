@@ -1,8 +1,8 @@
 /**
  * The contracts that everything else in this package is built around. Kept
  * dependency-free on purpose: `GridData` in particular is the interop surface, so
- * anything able to produce one — `useClientData`, `useServerData`, or a
- * react-query call wrapped in `makeGridData` — can drive a grid.
+ * anything able to produce one — `useClientData`, or a react-query call wrapped in
+ * `makeGridData` — can drive a grid.
  */
 
 /** One selectable value in a column's filter. */
@@ -23,9 +23,9 @@ export interface GridPage<T> {
    *
    * **Optional**, because counting is often a second query over the whole
    * filtered set and can cost more than the page itself. Omit it and the grid
-   * pages without knowing where the end is — see `pageInfo`, and
-   * `ServerDataOptions.fetchTotal` for fetching the count separately so rows
-   * aren't blocked on it.
+   * pages without knowing where the end is — see `pageInfo`. The README's
+   * react-query recipe shows how to count once per search (not on every page) by
+   * caching the total on a key that excludes paging.
    */
   total?: number;
   /**

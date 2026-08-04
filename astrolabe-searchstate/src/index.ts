@@ -1,4 +1,4 @@
-export type SearchFilters = { [colKey: string]: unknown[] };
+export type SearchFilters = { [colKey: string]: string[] };
 
 export interface FilterAndSortState {
   query: string | null;
@@ -101,7 +101,7 @@ export function makeFilterFunc<T>(
 
 export function setFilterValue(
   column: string,
-  value: unknown,
+  value: string,
   set: boolean,
 ): (f: SearchFilters | undefined) => SearchFilters {
   return (_filters) => {

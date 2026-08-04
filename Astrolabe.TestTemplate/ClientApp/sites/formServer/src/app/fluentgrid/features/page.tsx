@@ -3,11 +3,11 @@
 /**
  * One section per goal of the datagrid-search redesign.
  *
- * The headline is the client/server toggle: the two grids differ by which data
- * hook they call and nothing else, so flipping it should change nothing visible
- * but the spinner. Because the mode is fixed per call site (they're separate
- * hooks), switching at runtime means remounting — hence `key={mode}` over two
- * sibling components sharing one state control.
+ * The headline is the client/server toggle: the two grids differ only by their
+ * data source — an in-memory `useClientData` vs react-query feeding `makeGridData`
+ * — so flipping it should change nothing visible but the spinner. The two sources
+ * are different hooks, so switching at runtime means remounting — hence `key={mode}`
+ * over two sibling components sharing one state control.
  */
 
 import React, { useState } from "react";
@@ -222,46 +222,42 @@ function ClientGrid({ state }: { state: Control<SearchOptions> }) {
   return <FluentDataGrid search={search} rowKey={(r) => r.id} />;
 }
 
-/** Server-side: one page at a time. Identical below this line. */
+/**
+ * Server-side: one page at a time, via `useServerData` — react-query for the
+ * fetching, plus "count once per search". The count rides the page response
+ * (SearchHelper returns `SearchResults`, i.e. rows + total, in one call), and
+ * `includeTotal` is the server's `needsTotal`: the hook asks for it only when it
+ * hasn't got a total for the current search, caching it on a key that excludes
+ * paging so pages reuse it. Identical below this line.
+ */
 function ServerGrid({
   state,
-  counting,
+  count,
 }: {
   state: Control<SearchOptions>;
-  counting: "with-page" | "separately" | "never";
+  count: boolean;
 }) {
   const data = useServerData(state, {
-    fetch: (options, signal) =>
-      fakeSearch(options, signal, counting === "with-page"),
-    // A count is often a second query over the whole filtered set, so it runs in
-    // parallel with the page: rows appear first, "of N" fills in after. It only
-    // re-runs when query or filters change, never on paging or sorting.
-    fetchTotal:
-      counting === "separately"
-        ? async (options, signal) => {
-            await new Promise((r) => setTimeout(r, 900));
-            if (signal.aborted) throw new Error("aborted");
-            return makeClientSortAndFilter(searching)(options, rows).length;
-          }
-        : undefined,
+    queryKey: "swap",
+    count,
+    search: (options, includeTotal, signal) =>
+      fakeSearch(options, signal, includeTotal),
   });
   const search = useGridSearch(state, { columns, data });
   return <FluentDataGrid search={search} rowKey={(r) => r.id} />;
 }
 
-type Counting = "with-page" | "separately" | "never";
-
 function SwapSection() {
   const styles = useStyles();
   const serverSide = useControl(false);
-  const counting = useControl<Counting>("with-page");
+  const count = useControl(true);
   const state = useControl<SearchOptions>(newState());
   const mode = serverSide.value ? "server" : "client";
 
   return (
     <Section
-      title="1. Client ↔ server, one line apart"
-      blurb="Both grids call useGridSearch with the same columns; only the data hook differs (useClientData vs useServerData). Sort, filter, query and paging behave identically — the server version just has latency, and gets its filter options from the response's facets instead of deriving them from rows."
+      title="1. Client ↔ server, one data source apart"
+      blurb="Both grids call useGridSearch with the same columns; only the data source differs — useClientData over an in-memory array, or react-query + makeGridData over a fetching API. Sort, filter, query and paging behave identically; the server version just has latency, and gets its filter options from the response's facets instead of deriving them from rows."
     >
       <div className={styles.knobs}>
         <Switch
@@ -282,41 +278,28 @@ function SwapSection() {
       </div>
       {serverSide.value && (
         <div className={styles.knobs}>
-          {(
-            [
-              ["with-page", "total with the page"],
-              ["separately", "count fetched separately (900ms)"],
-              ["never", "never counted"],
-            ] as [Counting, string][]
-          ).map(([value, label]) => (
-            <Button
-              key={value}
-              size="small"
-              appearance={counting.value === value ? "primary" : "secondary"}
-              onClick={() => (counting.value = value)}
-            >
-              {label}
-            </Button>
-          ))}
+          <Switch
+            label="Count total"
+            checked={count.value}
+            onChange={(_, d) => (count.value = d.checked)}
+          />
           <span className={styles.state}>
-            {counting.value === "never"
-              ? "no total: the pager shows 1-5 and infers Next from a full page"
-              : counting.value === "separately"
-                ? "rows arrive first, “of N” fills in when the count lands"
-                : "one request carries both"}
+            {count.value
+              ? "counted once per search (includeTotal), reused across pages"
+              : "no total: the pager shows 1-5 and infers Next from a full page"}
           </span>
         </div>
       )}
       {/*
-        The two hooks can't alternate inside one component, so the mode switch
-        remounts. That also discards the stale page and any in-flight request,
-        which is the behaviour you'd want anyway.
+        The two data sources can't alternate inside one component (react-query's
+        hooks vs useClientData), so the mode switch remounts. That also discards
+        the stale page and any in-flight request, which is what you'd want anyway.
       */}
       {serverSide.value ? (
         <ServerGrid
-          key={`server-${counting.value}`}
+          key={`server-${count.value}`}
           state={state}
-          counting={counting.value}
+          count={count.value}
         />
       ) : (
         <ClientGrid key="client" state={state} />
@@ -559,7 +542,7 @@ function ExternalFilterSection() {
   return (
     <Section
       title="7. Filtering from outside the grid"
-      blurb="The state extends SearchOptions with a minSize field that no column owns. Server-side it reaches the API for free, because fetch is handed the whole state. Client-side the rows have to be tested locally, since the library can't know what the field means — that's what additionalFilter is for."
+      blurb="The state extends SearchOptions with a minSize field that no column owns. Server-side it reaches the API for free, because the search is handed the whole state. Client-side the rows have to be tested locally, since the library can't know what the field means — that's what additionalFilter is for."
     >
       <div className={styles.knobs}>
         <Switch
@@ -608,10 +591,14 @@ function ExternalClientGrid({ state }: { state: Control<FilesSearch> }) {
 
 function ExternalServerGrid({ state }: { state: Control<FilesSearch> }) {
   const data = useServerData(state, {
+    queryKey: "external",
+    // minSize is applied client-side below, so the server's total wouldn't match
+    // the rows shown — opt out of counting rather than report a wrong "of N".
+    count: false,
     // `options.minSize` is here without any extra wiring, and changing it
     // refetches — it's part of the state, so it's part of the key.
-    fetch: async (options, signal) => {
-      const page = await fakeSearch(options, signal);
+    search: async (options, _includeTotal, signal) => {
+      const page = await fakeSearch(options, signal, false);
       const big = page.rows.filter((r) => r.size >= options.minSize);
       return { ...page, rows: big, total: undefined };
     },
@@ -636,7 +623,7 @@ function QuerySection() {
     queryKey: ["files", options],
     queryFn: ({ signal }) => fakeSearch(options, signal),
     // Keeps the previous page on screen while the next one loads, so the grid
-    // doesn't flash empty — the same job useServerData's `keepPrevious` does.
+    // doesn't flash empty.
     placeholderData: keepPreviousData,
   });
 

@@ -6,6 +6,6 @@ export * from "./filter";
 export * from "./interop";
 export * from "./paging";
 export * from "./client";
-export * from "./server";
+export * from "./query";
 export * from "./useFilterOptions";
 export * from "./search";

@@ -1,13 +1,12 @@
 /**
  * Filtering over `SearchOptions.filters`.
  *
- * Two things to know about the storage. It is `SearchFilters`, i.e.
- * `Record<string, unknown[]>` — that shape is fixed by the NSwag mapping from the
- * C# side and is not ours to narrow. And a field control for a key that isn't
- * present reads `undefined`, not `[]`, while *writing* `[]` through it would add
- * an empty array to the state — visible in URLs and in react-query keys. So
- * nothing is seeded: reads coerce (`values`), and writes remove the key when the
- * result is empty (`setValues`).
+ * The storage is `SearchFilters`, i.e. `Record<string, string[]>`. A field
+ * control for a key that isn't present reads `undefined`, not `[]`, while
+ * *writing* `[]` through it would add an empty array to the state — visible in
+ * URLs and in react-query keys. So nothing is seeded: reads default an absent key
+ * to `[]` (`values`), and writes remove the key when the result is empty
+ * (`setValues`).
  *
  * `makeGridFilter` reads `.value` when called, so **call it during render**, like
  * `makeGridSort`.
@@ -76,7 +75,7 @@ export interface FilterPopupProps<T = any> {
    * this module's header for why it isn't normalised to `[]`.
    */
   selected: Control<string[] | undefined>;
-  /** `selected.value` coerced to strings, which is what most popups want. */
+  /** `selected.value`, or `[]` when nothing is selected. */
   values: string[];
   options: FilterOptions;
   /** Bound to the options-search box, when `searchable`. */
@@ -153,7 +152,7 @@ export interface GridFilter<T = any, D = unknown> {
    * Reads `undefined` when nothing is selected.
    */
   selected(field: string): Control<string[] | undefined>;
-  /** The selected values, coerced to strings. */
+  /** The selected values, or `[]` when the field has no selection. */
   values(field: string): string[];
   /** Replaces a field's values, removing the key entirely when empty. */
   setValues(field: string, next: string[]): void;
@@ -168,21 +167,6 @@ export interface GridFilter<T = any, D = unknown> {
 export interface GridFilterOptions<T, D> {
   /** From `columnFilterResolver`. Defaults to uncached resolution. */
   filterFor?: (column: ColumnDef<T, D>) => ColumnFilter<T> | undefined;
-}
-
-/**
- * Coerces stored values to strings. Necessary because `SearchFilters` holds
- * `unknown[]`, so state hydrated from a URL or an API can legitimately contain
- * numbers or booleans — without this a hydrated `2` would never match a rendered
- * `"2"` and the filter would silently exclude everything. Returns the original
- * array when it's already all strings, so callers can rely on referential
- * stability in the common case.
- */
-function asStrings(stored: unknown[] | undefined): string[] {
-  if (!stored) return [];
-  return stored.every((v) => typeof v === "string")
-    ? (stored as string[])
-    : stored.map((v) => String(v));
 }
 
 export function makeGridFilter<
@@ -204,7 +188,7 @@ export function makeGridFilter<
   }
 
   function values(field: string): string[] {
-    return asStrings(current[field]);
+    return current[field] ?? [];
   }
 
   function setValues(field: string, next: string[]) {
@@ -254,7 +238,7 @@ export function makeGridFilter<
     },
     active: (field) => values(field).length > 0,
     activeFields: () =>
-      Object.keys(current).filter((f) => asStrings(current[f]).length > 0),
+      Object.keys(current).filter((f) => (current[f]?.length ?? 0) > 0),
     clear: (field) => {
       if (field !== undefined) {
         setValues(field, []);

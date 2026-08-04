@@ -6,7 +6,7 @@
  * client/server choice a visible line at the call site:
  *
  * ```tsx
- * const data   = useClientData(state, { rows, columns });     // or useServerData
+ * const data   = useClientData(state, { rows, columns });  // or makeGridData(query)
  * const search = useGridSearch(state, { columns, data });
  * ```
  */
@@ -28,7 +28,7 @@ import { hasFilterOptions, useFilterOptions } from "./useFilterOptions";
 
 export interface GridSearchOptions<T, D = unknown> {
   columns: ColumnDef<T, D>[];
-  /** From `useClientData`, `useServerData`, or `makeGridData`. */
+  /** From `useClientData` or `makeGridData` (a react-query result, say). */
   data: GridData<T>;
   /**
    * How each column filters. **Must be pure** — see `GetColumnFilter`. Pass the

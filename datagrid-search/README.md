@@ -22,16 +22,16 @@ const state = useControl<SearchOptions>({
   length: 25,
 });
 
-// ── swap this one line to move between client and server ──
+// ── swap the data source to move between client and server ──
 const data = useClientData(state, { rows: allRows, columns });
-// const data = useServerData(state, { fetch: (o, signal) => api.search(o, signal) });
+// const data = useServerData(state, { queryKey: "files", search }); // react-query
 
 const search = useGridSearch(state, { columns, data });
 ```
 
 `search` is everything a renderer consumes: `sort`, `filter`, `data`,
-`canFilter(column)` and `useFilterOptions(column)`. Both data hooks return the
-same `GridData`, so nothing downstream can tell which mode it's in.
+`canFilter(column)` and `useFilterOptions(column)`. Every source produces the same
+`GridData`, so nothing downstream can tell which mode it's in.
 
 Two things are worth internalising:
 
@@ -89,13 +89,12 @@ and its absence is how a server source says "these rows are already ordered".
 
 ## Filtering
 
-`SearchOptions.filters` is `Record<string, unknown[]>`. The `unknown[]` is not
-ours to narrow — the NSwag mapping from the C# side can't produce `string[]` —
-so `GridFilter` applies the string typing as a _view_:
+`SearchOptions.filters` is `Record<string, string[]>` — filter values are always
+strings. `GridFilter` is the typed accessor over it:
 
 ```tsx
 const filter = makeGridFilter(state, { filterFor });
-filter.values(field); // string[], coerced
+filter.values(field); // string[]
 filter.selected(field); // Control<string[] | undefined>, writable
 filter.toggle(field, value, on);
 filter.setValues(field, next); // removes the key when `next` is empty
@@ -103,11 +102,9 @@ filter.clear(); // or clear(field)
 filter.activeFields(); // for a chip bar
 ```
 
-`values()` coerces, which matters: state hydrated from a URL or an API can hold
-`2` where a column renders `"2"`, and without coercion that filter would silently
-match nothing. An emptied filter deletes its key rather than storing `[]`, since
-an empty array is a visible difference in a URL and a different query key for an
-identical search.
+An emptied filter deletes its key rather than storing `[]`, since an empty array
+is a visible difference in a URL and a different query key for an identical
+search.
 
 ### Which columns filter, and how
 
@@ -193,77 +190,79 @@ one value doesn't hide the others — Excel's behaviour. Turn it off with
 
 ## Server-side
 
+`useServerData` is the server counterpart to `useClientData`. It's built on
+**react-query** (a peer dependency), so the fetching — abort on change,
+stale-response ordering, keep-previous, cross-component cache sharing — is the
+query library's, not a reimplementation. You provide a `search`; it returns the
+same `GridData` a client grid does. Wrap the app in a `QueryClientProvider`.
+
 ```tsx
 const data = useServerData(state, {
-  fetch: (options, signal) => api.search(options, signal),
+  queryKey: "files", // cache-key prefix; ["files", tenantId] to scope it
+  search: (options, includeTotal, signal) =>
+    api.search(options, signal, includeTotal), // returns a GridPage
   debounce: 300, // `query` only; sort/filter/paging fetch immediately
   keepPrevious: true, // hold the old page while the next loads
-  deps: [tenantId], // extra refetch triggers
 });
 ```
+
+`search` gets the state's whole value, so a state that extends `SearchOptions` with
+its own filtering is carried through — and because it's part of the query key,
+changing it refetches with no extra wiring.
 
 ### The total is optional
 
 Counting is usually a second query over the whole filtered set, so `GridPage.total`
-is optional and `GridData.total` may be `undefined`. Three ways to handle it:
+is optional and `GridData.total` may be `undefined`. `undefined` and `0` are
+different answers: the first means "not counted", the second "counted, nothing
+matched" — use `pageInfo(options, data)` rather than reading `total` directly, and
+the uncounted case (pager shows `1-10`, infers Next from a full page) is handled
+for you.
 
-|                              | How                                                            | Cost                                                                  |
-| ---------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------- |
-| Return `total` with the page | one request                                                    | the count is on the critical path                                     |
-| `fetchTotal`                 | runs **in parallel**; rows render first, "of N" fills in after | two requests                                                          |
-| Neither                      | pager shows `1-10` and infers Next from a full page            | Next is enabled once too often, at an exact multiple of the page size |
+`useServerData` counts **once per search**, not once per page. `includeTotal` — the
+flag handed to `search` — is true only when there's no total for the current
+search; the total is then cached on a key that excludes `offset`/`length`/`sort`,
+so paging and sorting reuse it and a filter or query change re-counts. That
+condition is "the search changed", not "offset is 0", so a restored URL like
+`?offset=30` still gets its total. Honour it however suits the endpoint:
 
-`fetchTotal` is **counted once per search**: the key excludes `offset`, `length`
-and `sort`, none of which can change a count, so paging and sorting never ask
-again. In normal use that request lands at `offset` 0, because changing the query
-or a filter resets paging — but the condition is "the search changed", not "we're
-on the first page", so a restored URL like `?offset=30` still gets its total. A
-failed count degrades to "uncounted" rather than failing the grid.
+- **Cheap combined count** (`COUNT(*) OVER()`): ignore `includeTotal`, always
+  return `total`. Harmless — it just counts on every page.
+- **Expensive count**: return `total` only when `includeTotal`, and skip it
+  otherwise. This maps straight onto a `SearchHelper`-style endpoint, whose
+  `SearchResults<T>(Total, Entries)` is a `GridPage` and whose `includeTotal` is
+  exactly this flag.
+- **No count**: pass `count: false` and never return a `total`.
 
-`undefined` and `0` are different answers: the first means "not counted", the
-second "counted, nothing matched". Use `pageInfo(options, data)` rather than
-reading `total` directly, and the uncounted case is handled for you.
+A `search` that's asked but returns no `total` is recorded as "asked, none came"
+and not retried until the search moves; an error surfaces as `GridData.error`.
 
-`fetch` is held in a ref and is **not** a refetch trigger, so an inline arrow
-won't loop. What drives refetching is the search state plus `deps`. Stale
-responses are rejected by request sequence, so a slow earlier request can never
-overwrite a fast later one.
-
-Return facets with the page and server-side filter options need no second
-request:
+Return facets with the page and server-side filter options need no second request:
 
 ```ts
 { rows, total, facets: { category: [{ value: "Video", count: 12 }] } }
 ```
 
-## Using another query library
+### Another query library, or none
 
-`GridData` and `FilterOptions` are plain interfaces, so anything able to produce
-one drives a grid:
+`GridData` and `GridPage` are plain interfaces, so `useServerData` isn't the only
+way in. Anything that produces a `GridPage` drives a grid through `makeGridData`,
+and `useDebouncedSearchOptions` — the text-debounce a query library lacks — is
+usable on its own:
 
 ```tsx
 const options = useDebouncedSearchOptions(state, 300);
-const query = useQuery({
-  queryKey: ["files", options],
-  queryFn: ({ signal }) => api.search(options, signal),
-  placeholderData: keepPreviousData,
-});
+const query = useQuery({ queryKey: ["files", options], queryFn: ... });
 const data = makeGridData({
   page: query.data,
-  loading: query.isFetching,
-  error: query.error,
+  loading: query.isFetching, // not isPending: with placeholderData there *is*
+  error: query.error, //         data during a refetch, so isPending is false
   reload: query.refetch,
 });
 ```
 
-`useDebouncedSearchOptions` is the piece a query library doesn't have: it settles
-the text field before it reaches the key while letting sort and paging through
-immediately, and returns a plain object usable as a key directly.
-
-The mapping is explicit rather than a type that accepts a `UseQueryResult`,
-because which loading flag you want is a real decision — with
-`placeholderData` there _is_ data during a refetch, so `isPending` is false and
-only `isFetching` reflects that something is happening.
+Reach for this when you want the count wired your own way, or a library other than
+react-query.
 
 ## What can't be uniform across modes
 
@@ -297,7 +296,7 @@ function RangePopup({ selected, values, close }: FilterPopupProps<Row>) {
 ```
 
 Pair it with a `matches` that interprets whatever string it wrote. The popup never
-learns that a shared filters map exists, or that it holds `unknown[]`.
+learns that a shared filters map exists.
 
 ## Testing
 

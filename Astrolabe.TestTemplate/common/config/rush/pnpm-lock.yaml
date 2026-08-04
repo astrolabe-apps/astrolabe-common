@@ -844,6 +844,7 @@ importers:
       '@jest/globals': ^29.7.0
       '@react-typed-forms/core': workspace:*
       '@react-typed-forms/transform': ^0.4.0
+      '@tanstack/react-query': ^5.59.0
       '@testing-library/react': ^16.0.0
       '@types/react': ^19.0.0
       jest: ^29.7.0
@@ -860,6 +861,7 @@ importers:
       '@jest/globals': 29.7.0
       '@react-typed-forms/core': link:../core
       '@react-typed-forms/transform': 0.4.0
+      '@tanstack/react-query': 5.101.4_react@19.0.0
       '@testing-library/react': 16.3.0_gd4ggzpzqm6sxwt7vsylqzqd3u
       '@types/react': 19.1.10
       jest: 29.7.0
@@ -18331,7 +18333,6 @@ packages:
 
   /@tanstack/query-core/5.101.4:
     resolution: {integrity: sha512-gNwcvOJcRbLWPOLG/2OBm+zM+Yv+MKsXKEOWC57USuZDEsI71hEErQsiEGx5wX9rzWWkfwM0fVSPoiIFSsxfiw==}
-    dev: false
 
   /@tanstack/react-query/5.101.4_react@19.0.0:
     resolution: {integrity: sha512-yRg2pfOCxIs4ZJW3XYYHU/WgtD04FHSnfHlpRT7h7pR77hwkdRG4wxbKe4aq6P0RvXUTBSQpQeadS1SUYUe+KA==}
@@ -18340,7 +18341,6 @@ packages:
     dependencies:
       '@tanstack/query-core': 5.101.4
       react: 19.0.0
-    dev: false
 
   /@technote-space/anchor-markdown-header/1.1.42:
     resolution: {integrity: sha512-iJ5qu1EO3kZDthq9zbMQ9ufB4jd0XwhHJ+4RNpTUEVTIZFitCV++IUfH1YCACGasct41pQRxGmWQNoaRZmn7EQ==}

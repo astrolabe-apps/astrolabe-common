@@ -56,7 +56,7 @@ goals asked for already exist as `state.fields.sort` (`Control<string[]>`,
 | # | Decision | Status |
 |---|---|---|
 | D1 | Where does per-column filter config (options, popup, predicate) live? | **Settled: a grid-level `getColumnFilter(column)` function** (§5.4). Rejected: a `filter?: ColumnFilter<T>` field on `ColumnDef` (two of its seven fields re-spelled the existing `filterField`/`filterValue`; four were popover-UI concerns that don't belong in a layout package), and a `filterConfig` map keyed by `filterField` (enumerates every column; string keys drift silently). The function subsumes the map, sees `column.data` so schema-generated columns can be matched on their metadata, and collapses one level of options resolution. |
-| D2 | Narrow `SearchFilters` to `Record<string, string[]>` in `@astroapps/searchstate`? | **Settled: no, leave it.** It is `Record<string, unknown[]>` because the NSwag type mapping has historically been unable to convert the C# representation to `string[]` — narrowing it would break the generated client contract with the .NET side. Recorded here because from the TypeScript side the `unknown[]` reads as under-specification and invites exactly this "cleanup". §5.3 handles the string-typed view instead. |
+| D2 | Narrow `SearchFilters` to `Record<string, string[]>` in `@astroapps/searchstate`? | **Settled: yes, narrowed.** Filter values are only ever strings, so `SearchFilters` is `Record<string, string[]>`. The earlier reluctance was that NSwag can't emit `string[]` for the C# representation — but that mismatch is a *casting* concern at the generated-client boundary, which is already crossed with `as unknown as` casts (§5.3), not a reason to under-specify the type every consumer sees. Narrowing removes the string-coercion "view" that §5.3 used to describe. |
 | D3 | Does `astrolabe-ui`'s `DataTableView` move onto `datagrid-search`? | **Settled: no — leave `astrolabe-ui` alone.** Not in this work and not planned. Its `src/table` stays as it is; `datagrid-search` is justified on its own terms (§3.4) rather than by a second consumer. |
 | D4 | Should the grid render a pager? | **Settled: yes, suppressible.** `data.total` and `state.fields.offset/length` are right there, and today's split (`DataTableView` renders one, `FluentDataTableView` deliberately doesn't) means the server path silently has no paging UI. `pager={false}` opts out, `pager={<MyPager/>}` replaces. |
 | D5 | Does client↔server need to switch at **runtime**, or only per call site? | **Settled: per call site.** So the two sources are two separate hooks (§4.2) rather than one hook branching on a discriminated union — no dead hook branch, no rules-of-hooks tension. Switching at runtime, if ever needed, means remounting: `key={mode}` on the subtree. |
@@ -283,6 +283,12 @@ hooks being involved at all (§4.4).
 
 ### 4.2 The two hooks
 
+> **Superseded by D13 (§11.6).** `useServerData` still exists, but as a thin
+> react-query binding (`query.ts`) — react-query is now a peer dependency, not a
+> hand-rolled fetch engine. `useClientData` and this section's `GridData` seam
+> stand; the `ServerDataOptions`/`useServerData` (fetch/effect) spec below is
+> retained as the record of the superseded design.
+
 Two hooks rather than one hook over a `ClientSource | ServerSource` union,
 because D5 says the mode is fixed per call site — so there's no reason to carry a
 dead hook branch or fight rules-of-hooks.
@@ -496,8 +502,7 @@ Paging reset lives here and in `makeGridFilter`, replacing the three separate
 
 ### 5.3 Filters
 
-Storage stays `SearchFilters` — i.e. `Record<string, unknown[]>`, unchanged, for
-the NSwag reason in D2. The string typing is a *view* applied at this boundary:
+Storage is `SearchFilters` — i.e. `Record<string, string[]>` (D2). The accessor:
 
 ```ts
 export interface GridFilter<T = any, D = unknown> {
@@ -506,7 +511,7 @@ export interface GridFilter<T = any, D = unknown> {
   field(col: ColumnDef<T, D>): string | undefined;
   /** Stable, writable control for one field — what a custom popup owns. */
   selected(field: string): Control<string[] | undefined>;
-  /** `selected(field).value` coerced to strings. */
+  /** `selected(field).value`, or `[]` when nothing is selected. */
   values(field: string): string[];
   /** Replaces a field's values, removing the key entirely when empty. */
   setValues(field: string, next: string[]): void;
@@ -533,33 +538,23 @@ is a visible difference in a URL and a *different react-query key for an identic
 search*. So nothing is seeded. Instead:
 
 - `selected(field)` is typed honestly as `Control<string[] | undefined>`;
-- `values(field)` is the read path, and it **coerces to strings** —
-  `stored.every(v => typeof v === "string") ? stored : stored.map(String)`,
-  returning the original array when it can so callers keep referential stability;
+- `values(field)` is the read path: `filters[field] ?? []`, defaulting an absent
+  key to `[]` without seeding one;
 - `setValues`/`toggle` **delete the key** when the result is empty.
 
-Coercing at the read boundary rather than in each predicate is a change from the
-earlier draft, and a better one: it makes the `string[]` claim true everywhere at
-once. Necessary because `SearchFilters` is `unknown[]` (D2), so state hydrated from
-a URL or an API can hold numbers or booleans — without it a hydrated `2` would
-never match a rendered `"2"` and the filter would silently exclude everything.
+`SearchFilters` is `string[]` (D2), so no coercion is needed at the read boundary —
+values are strings by the time they reach here, whether hydrated from a URL, an API
+round-trip, or a custom popup.
 
-Two related notes:
-
-- **`Control.as()` can't do the narrowing.** `as<V2>()` is
-  `V extends V2 ? Control<V2> : never`, so it widens
-  (`Control<string[]>.as<unknown[]>()`) but not narrows —
-  `Control<unknown[]>.as<string[]>()` is `never`. One unchecked cast inside
-  `makeGridFilter`, which is why it belongs there and not at call sites.
-- **Writes need no cast,** a small improvement on today: `setFilterValue` already
-  takes `unknown`. The cast at `astrolabe-ui/src/table/FilterPopover.tsx:49` only
-  exists because `SearchingState` declares `string[]` where searchstate declares
-  `unknown[]`; using `SearchOptions` directly removes the mismatch.
+The only cast is at the `S extends SearchOptions` seam: `makeGridFilter`'s state is
+generic, so `state.fields.filters` resolves to a union that can't be indexed by an
+arbitrary field name. One `as unknown as Control<SearchFilters>` inside
+`makeGridFilter` states the shape the constraint guarantees — which is why it
+belongs there and not at call sites.
 
 Giving a custom popup a control scoped to its own column is the centre of the
 filtering design: a date-range popup writes `["2026-01-01..2026-03-01"]`, a numeric
-one writes `[">100"]`, and neither learns that a shared filters map exists — or
-that it's `unknown[]` underneath.
+one writes `[">100"]`, and neither learns that a shared filters map exists.
 
 ### 5.4 `getColumnFilter` — per-column behaviour, no `ColumnDef` change
 
@@ -1037,7 +1032,7 @@ is the last phase.
 
 ## 8. Risks
 
-- ~~**`Control<Record<string, unknown[]>>.fields[key]` for an absent key.**~~
+- ~~**`Control<Record<string, string[]>>.fields[key]` for an absent key.**~~
   **Closed by the Phase 1 spike** — see §5.3. The control is created lazily with
   stable identity, reading doesn't mutate the parent, and no proxy control was
   needed. The one surprise was that *writing* `[]` adds an empty array to the
@@ -1068,11 +1063,10 @@ is the last phase.
 - **Options resolution is three-deep** (§5.5), down from four. Still the most
   likely thing to confuse someone later: one table in the README plus the "no
   source ⇒ no funnel" rule stated explicitly.
-- **The `string[]` view over `unknown[]` storage is a claim, not a guarantee**
-  (§5.3). It holds for anything the grid writes; state hydrated from a URL or the
-  API can hold numbers or booleans. Mitigated by coercing in the default
-  predicate, but a custom `matches` that assumes strings will be wrong on
-  hydrated state — worth a line in the README.
+- ~~**The `string[]` view over `unknown[]` storage is a claim, not a guarantee.**~~
+  **Closed by D2** — `SearchFilters` is `Record<string, string[]>`, so filter
+  values are strings at the type level and there's nothing for a custom `matches`
+  to be surprised by. No read-boundary coercion remains.
 - **`datagrid-fluent-ui`'s current source won't compile until Phase 3.** It
   imports `columnSearching`, `columnComparator`, `rotateColumnSort`,
   `sortDirectionChar`, `sortFieldDirection` and `columnFilterValues` from
@@ -1100,11 +1094,13 @@ than just the code.
 query over the whole filtered set and can cost more than the page, so both are now
 optional, and `pageInfo(options, data)` centralises what a pager needs either way.
 
-- **`fetchTotal`** on `useServerData` fetches the count **in parallel** with the
-  page, so rows aren't gated on it. It re-runs only when something that can change
-  a count changes — written as an *exclusion* of `offset`/`length`/`sort`, so a
-  state with extra filtering of its own is included automatically. A failed count
-  degrades to "uncounted" instead of failing the grid.
+- **The count rides the page fetch.** `fetch` is told `needsTotal` and answers with
+  a `total` — a number, or a `Promise<number>` so the rows aren't gated on the
+  count. `needsTotal` is true only when something that can change a count changes —
+  written as an *exclusion* of `offset`/`length`/`sort`, so a state with extra
+  filtering of its own is included automatically. A `total` promise that rejects
+  degrades to "uncounted" instead of failing the grid. (D12 records why this
+  replaced the earlier separate `fetchTotal` request.)
 - **Without any total**, the pager shows `1-10` rather than `1-10 of 42` and infers
   Next from a full page. That over-reports at an exact multiple of the page size —
   Next is enabled once too often and the following page comes back empty. Pinned by
@@ -1134,7 +1130,8 @@ passed nothing to `fetch` and was silent when forgotten.
 
 Every hook is now generic over `S extends SearchOptions`, so:
 
-- `fetch` and `fetchTotal` receive the **whole** state, extra fields included;
+- `fetch` receives the **whole** state, extra fields included, and they feed the
+  `needsTotal` key too;
 - changing an extra field refetches, because it's part of the state and therefore
   part of the key — no `deps` wiring to forget;
 - `useClientData` takes **`additionalFilter`**, since client-side the rows have to
@@ -1173,21 +1170,89 @@ than an accident.
 
 ### 11.5 The count rule (D12)
 
-Restated from a keyed cache to an invariant: **"no total? ask for one; a change of
-search clears it."** Two things fell out:
+The invariant: **"no total? ask for one; a change of search clears it."** It's
+expressed as a `needsTotal` flag passed into `fetch`, not a separate `fetchTotal`
+request.
 
-- A page carrying its own total costs no count. The previous version fired the
-  request regardless and discarded the answer, so an endpoint that returns a total
-  only when it's cheap paid for a pointless query every time.
-- Because the count runs *in parallel* with the page, it starts before the page
-  lands and so can't know in advance whether one is coming. If the page brings a
-  total, the in-flight count is aborted. Passing `fetchTotal` therefore asserts
-  that your page fetch doesn't count; an endpoint that sometimes does will see a
-  cancelled request. Documented rather than papered over.
+The earlier design had `fetchTotal` as its own function, run *in parallel* with
+the page. That kept rows off the count's critical path, but it forced the "does
+this call count?" decision to be a whole extra request, and it had an awkward seam:
+the count starts before the page lands, so it can't know whether the page will
+bring a total of its own — so a page that *did* count meant a speculative
+`fetchTotal` had to be aborted and discarded.
+
+Folding the count into `fetch` removes that seam. The flag answers "does *this*
+call count?" in-band, and the two questions that were tangled together separate
+cleanly:
+
+- **When to count** — `needsTotal`, true only when the search changed. The key
+  behind it excludes `offset`/`length`/`sort` (an *exclusion*, so a state's extra
+  fields are covered), so paging and sorting don't re-ask. The stored total is kept
+  against that key, so it survives paging and a search change discards it; a
+  declined-or-failed attempt is recorded against the key so it isn't retried until
+  the search moves. `reload()` folds into the key so it re-counts.
+- **Whether counting blocks rows** — the *shape* of the returned `total`. A number
+  is on the critical path; a `Promise<number>` lets the rows render first and the
+  total resolve under the page's own sequence guard (an in-flight count survives
+  paging, since the key is unchanged, but a filter change discards it). So the
+  parallelism `fetchTotal` gave is still available, now as one field of the return
+  rather than a second request.
+
+The one thing given up: "counted once per search on paging" is only automatic if
+`fetch` honours `needsTotal`. A `fetch` that ignores it and always runs an
+expensive count re-counts per page — inherent to folding the count in, and
+consistent with D9's "let the app's query layer own caching". Documented on the
+`fetch` contract and in the README.
 
 Also dropped the `if (offset.value !== 0)` guards around the paging reset: a
 `Control` doesn't notify when handed the value it already holds.
 
+### 11.6 `useServerData` re-implemented over react-query (D13)
+
+**Supersedes §4.2/§5.5's server hook and the count work in §11.1/§11.5.** The
+original `useServerData` was a strict *subset* of react-query minus the dependency:
+its stale-response guard, abort-on-change, keep-previous and refetch-on-key were
+all reimplementations, and react-query does more on top (retry, background
+refetch, cross-component cache sharing, devtools). The `needsTotal` work earlier in
+this session — a flag, promise totals, per-search retention, all to reach parity
+with what a query cache gives for free — was the tell that it was re-deriving a
+solved problem.
+
+So the bespoke fetch engine was deleted and `useServerData` **reintroduced as a
+thin react-query binding** (`query.ts`). react-query is now a **peer dependency**
+(the QueryClient context is a singleton, like React itself), added alongside the
+existing peers; the app supplies a `QueryClientProvider`.
+
+The shape:
+
+- **`useServerData(state, { queryKey, search, count?, debounce?, keepPrevious? })`.**
+  `search(options, includeTotal, signal)` returns a `GridPage`; the hook runs the
+  page query (keyed on the whole search) and returns the same `GridData` as
+  `useClientData`.
+- **Count once per search** is the one thing react-query can't express alone. The
+  total is cached on a key that excludes `offset`/`length`/`sort`; `includeTotal`
+  is true only when that key has no total yet; `null` records "asked, none came" so
+  a decline/failure isn't retried until the search moves. This is `needsTotal` and
+  `setTotal`'s retention, re-expressed in the query cache rather than component
+  state — D9's "let the query layer own caching", applied to the count.
+- **`includeTotal` stays out of the page key** — the rows for a given
+  `(offset, filters, sort)` are identical whether or not you counted, so counting
+  doesn't fragment the page cache. It maps straight onto a `SearchHelper` endpoint
+  (`SearchResults<T>(Total, Entries)` is a `GridPage`, `includeTotal` is the flag).
+- **`GridPage.total` reverts to `number`.** The `number | Promise<number>` variant
+  existed only for the old hook's non-blocking count; react-query resolves the
+  total before `makeGridData` sees it.
+- **`makeGridData` and `useDebouncedSearchOptions` stay** query-library agnostic in
+  `interop.ts` — the "another query library, or none" path in the README still
+  works, and `query.ts` is built on top of them.
+
+The cost accepted: this reverses the original "a server-side grid needs no extra
+dependency" premise (§3.1). react-query wasn't already baseline in this ecosystem,
+so server-grid consumers now bring it — judged worth it against maintaining a
+parallel concurrency implementation. `SearchFilters` → `string[]` (D2) and the
+`SearchResults`↔`GridPage` / `includeTotal`↔`needsTotal` mapping are the groundwork
+kept from this session's earlier iterations.
+
 ---
 
-**All decisions are settled; the baseline is clean and the plan is ready to build.**
+**All decisions are settled; the baseline is clean.**

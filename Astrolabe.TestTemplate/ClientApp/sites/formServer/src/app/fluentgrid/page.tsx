@@ -464,8 +464,9 @@ function ViewPane({
       <p style={typographyStyles.caption1 as any}>
         Sorting, free-text query, per-column filters and paging all come from one{" "}
         <code>Control&lt;SearchOptions&gt;</code>. Swapping{" "}
-        <code>useClientData</code> for <code>useServerData</code> is the only
-        change needed to move this server-side — see the features page.
+        <code>useClientData</code> for a react-query source feeding{" "}
+        <code>makeGridData</code> is the only change needed to move this
+        server-side — see the features page.
       </p>
       <div className={page.knobs}>
         <SearchBox

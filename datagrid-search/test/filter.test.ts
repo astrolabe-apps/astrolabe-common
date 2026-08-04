@@ -131,17 +131,7 @@ describe("makeGridFilter", () => {
     expect(filter.active("size")).toBe(false);
   });
 
-  it("coerces hydrated non-string values", () => {
-    // SearchFilters is unknown[] (D2), so a URL or API round-trip can produce
-    // numbers and booleans. Without coercion a hydrated 2 would never match a
-    // rendered "2" and the filter would exclude everything.
-    const filter = makeGridFilter<Row>(
-      stateWith({ filters: { size: [2, true] } }),
-    );
-    expect(filter.values("size")).toEqual(["2", "true"]);
-  });
-
-  it("returns the stored array itself when already strings", () => {
+  it("returns the stored array itself", () => {
     const filters = { kind: ["doc", "img"] };
     const filter = makeGridFilter<Row>(stateWith({ filters }));
     expect(filter.values("kind")).toBe(filters.kind);
