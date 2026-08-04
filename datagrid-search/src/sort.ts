@@ -2,9 +2,8 @@
  * Sorting over `SearchOptions.sort` — searchstate's `string[]` of `"a"`/`"d"`
  * prefixed field names.
  *
- * `makeGridSort` reads `.value` when called, so **call it during render**: that's
- * what registers the dependency with the calling component's control tracking, so
- * the header re-renders when the sort changes. It is deliberately not memoised.
+ * `makeGridSort` reads `.value` when called, so **call it during render** and
+ * don't memoise it.
  *
  * Note what isn't here: applying the sort to rows. That belongs to the data
  * source, and its absence is how a server source says "these rows are already
@@ -126,8 +125,6 @@ export function makeGridSort<S extends SearchOptions>(
       sortControl.value = applySortField(sorts, field, next, multiple);
       // Re-sorting makes the current page meaningless — "page 5" of a different
       // order shows unrelated rows — so paging always goes back to the start.
-      // Unguarded: a Control doesn't notify when the value it's given is the one
-      // it already has.
       state.fields.offset.value = 0;
     },
   };

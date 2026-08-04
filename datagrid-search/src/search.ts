@@ -77,8 +77,7 @@ export function useGridSearch<
     [columns, getColumnFilter],
   );
 
-  // Built fresh every render on purpose: both read `.value`, which is what
-  // registers the dependency so the header re-renders when the search changes.
+  // Built fresh every render on purpose — neither is memoised.
   const sort = makeGridSort(state, sortOptions);
   const filter = makeGridFilter<T, D, S>(state, { filterFor });
 

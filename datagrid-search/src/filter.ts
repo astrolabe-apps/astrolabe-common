@@ -231,8 +231,6 @@ export function makeGridFilter<
    * stays out of the way.
    */
   function resetPaging() {
-    // Unguarded: a Control doesn't notify when the value it's given is the one it
-    // already has.
     state.fields.offset.value = 0;
   }
 

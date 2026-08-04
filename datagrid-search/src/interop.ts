@@ -78,8 +78,7 @@ export function makeFilterOptions(o: MakeFilterOptionsArgs): FilterOptions {
  * it has no notion of "settle the text field before letting it into the key". The
  * result is a plain object, so it works directly as a query key.
  *
- * Reads the state's fields during render, so control tracking re-renders the
- * caller when the search changes.
+ * Call during render.
  */
 export function useDebouncedSearchOptions<S extends SearchOptions>(
   state: Control<S>,
@@ -89,10 +88,6 @@ export function useDebouncedSearchOptions<S extends SearchOptions>(
   // SearchOptions with its own filtering — a date range, a tenant, a "show
   // archived" toggle — needs those carried through to `fetch` and into the query
   // key. Picking fields out would silently drop them.
-  //
-  // `@react-typed-forms/transform` (see .babelrc) makes this read tracked, so a
-  // change re-renders the caller. The value is referentially stable between
-  // changes, which is what makes the memo below meaningful.
   const value = state.value;
   const query = value.query;
 
