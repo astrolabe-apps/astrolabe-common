@@ -58,6 +58,7 @@ export function toSearchOptionsForm(v: SearchOptions): SearchOptionsForm {
 }
 
 export interface CarInfoForm {
+  id: string;
   make: string;
   model: string;
   year: number;
@@ -65,6 +66,12 @@ export interface CarInfoForm {
 }
 
 export const CarInfoSchema = buildSchema<CarInfoForm>({
+  id: makeScalarField({
+    type: FieldType.String,
+    notNullable: true,
+    required: true,
+    displayName: "Id",
+  }),
   make: makeScalarField({
     type: FieldType.String,
     notNullable: true,

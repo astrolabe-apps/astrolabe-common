@@ -314,7 +314,12 @@ function SwapSection() {
 
 const sortOnlyColumns = columnDefinitions<FileRow>(
   { id: "file", title: "File", sortField: "file", getter: (r) => r.file },
-  { id: "author", title: "Author", sortField: "author", getter: (r) => r.author },
+  {
+    id: "author",
+    title: "Author",
+    sortField: "author",
+    getter: (r) => r.author,
+  },
   { id: "size", title: "Size (MB)", sortField: "size", getter: (r) => r.size },
 );
 
@@ -379,7 +384,11 @@ function MetadataSection() {
 // ---------------------------------------------------------------------------
 
 /** A numeric-range popup: writes one string, and interprets it with `matches`. */
-function SizeRangePopup({ selected, values, close }: FilterPopupProps<FileRow>) {
+function SizeRangePopup({
+  selected,
+  values,
+  close,
+}: FilterPopupProps<FileRow>) {
   const styles = useStyles();
   const [from, to] = (values[0] ?? "..").split("..");
   const min = useControl(from ?? "");
@@ -513,7 +522,11 @@ function FilterConfigSection() {
           filters={JSON.stringify(state.fields.filters.value)}
         </span>
       </div>
-      <FluentDataGrid search={search} rowKey={(r) => r.id} pageSizes={[5, 8, 20]} />
+      <FluentDataGrid
+        search={search}
+        rowKey={(r) => r.id}
+        pageSizes={[5, 8, 20]}
+      />
     </Section>
   );
 }
@@ -678,7 +691,10 @@ export default function FluentGridFeatures() {
               datagrid-search feature tour
             </h1>
             <p style={typographyStyles.body1 as any}>
-              The pixel comparison against Fluent&apos;s own DataGrid is at{" "}
+              Everything here runs against an in-memory array. The same grid
+              against a real endpoint — <code>POST /api/Car/search</code> — is
+              at <a href="/fluentgrid/cars">/fluentgrid/cars</a>, and the pixel
+              comparison against Fluent&apos;s own DataGrid is at{" "}
               <a href="/fluentgrid">/fluentgrid</a>.
             </p>
           </div>
