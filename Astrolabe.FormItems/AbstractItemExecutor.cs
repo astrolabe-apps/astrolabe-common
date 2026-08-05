@@ -55,7 +55,7 @@ public abstract class AbstractItemExecutor<TContext, TLoadContext, TWorkflowCont
         if (key != null)
         {
             var wfContext = GetWorkflowContext(context);
-            var ruleGroup = Rules.ActionMap[key];
+            var ruleGroup = Rules.ActionRules[key];
             if (!ruleGroup.Any(r => r.RuleMatch(wfContext)))
                 throw new UnauthorizedAccessException(
                     $"Action '{key}' is not permitted in the current context."
