@@ -99,7 +99,7 @@ function labelFor(
   if (!showCounts || option.count === undefined) return text;
   return (
     <>
-      {text} <span className={countClass}>{option.count}</span>
+      {text} <span className={countClass}>({option.count})</span>
     </>
   );
 }

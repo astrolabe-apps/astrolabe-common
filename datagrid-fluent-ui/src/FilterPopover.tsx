@@ -1,4 +1,4 @@
-import React, { useState, type ReactNode } from "react";
+import React, { useRef, useState, type ReactNode } from "react";
 import clsx from "clsx";
 import {
   Button,
@@ -16,6 +16,7 @@ import { useControl } from "@react-typed-forms/core";
 import type { ColumnDef } from "@astroapps/datagrid";
 import {
   filterFieldOf,
+  useFilterDraft,
   type FilterPopupProps,
   type GridSearch,
 } from "@astroapps/datagrid-search";
@@ -30,8 +31,43 @@ const useStyles = makeStyles({
     maxHeight: "320px",
     minWidth: "180px",
     maxWidth: "280px",
-    overflowY: "auto",
+    // The options scroll, not the popup: the search box stays reachable at the
+    // top and Clear/Apply stay put at the bottom however many values there are.
+    overflow: "hidden",
     padding: tokens.spacingVerticalS,
+  },
+  /**
+   * Fluent adds the dismiss button to the layout when the box is focused or has
+   * text. The surface is shrink-to-fit, so left alone that widens the whole popup
+   * the moment you click into it. A definite `width` keeps the box out of the
+   * surface's intrinsic width — `0` because a percentage would resolve against a
+   * width the box is itself contributing to — and `minWidth` then fills whatever
+   * the options settled on. The dismiss now eats into the text area instead of
+   * pushing the popup wider.
+   */
+  searchBox: {
+    width: 0,
+    // Fills the surface, with a floor so a popup of short options — years, codes —
+    // doesn't leave the box too cramped to type in once the dismiss takes its
+    // slot. A constant, so it can't reintroduce the jump: the same 200px whether
+    // the dismiss is there or not, and only popups that *have* a search box are
+    // widened by it.
+    minWidth: "max(100%, 200px)",
+  },
+  /** The only part that scrolls. `minHeight: 0` so it can shrink below content. */
+  options: {
+    display: "flex",
+    flexDirection: "column",
+    flexGrow: 1,
+    flexShrink: 1,
+    minHeight: 0,
+    overflowY: "auto",
+    // A list of Fluent checkboxes measures 2px taller than the box it fits in —
+    // `scrollHeight` comes back 2 over `clientHeight` whatever the option count,
+    // rows and gaps all being whole pixels. Without this, two options that plainly
+    // fit still get a scrollbar. Two pixels of padding absorb it exactly (measured;
+    // 1px leaves 1 over), and read as a little breathing room around the ends.
+    paddingBlock: "2px",
   },
   message: {
     display: "flex",
@@ -42,7 +78,10 @@ const useStyles = makeStyles({
   },
   footer: {
     display: "flex",
-    justifyContent: "flex-end",
+    alignItems: "center",
+    gap: tokens.spacingHorizontalS,
+    justifyContent: "space-between",
+    flexShrink: 0,
     borderTopWidth: tokens.strokeWidthThin,
     borderTopStyle: "solid",
     borderTopColor: tokens.colorNeutralStroke2,
@@ -75,6 +114,9 @@ export function FluentFilterPopover<T, D = unknown>({
 }: FluentFilterPopoverProps<T, D>) {
   const styles = useStyles();
   const [open, setOpen] = useState(false);
+  // Focusable (out of tab order) so the body can put focus back on it — see the
+  // Clear button.
+  const surfaceRef = useRef<HTMLDivElement>(null);
 
   const filter = search.filterFor(column);
   if (!filter) return null;
@@ -106,13 +148,14 @@ export function FluentFilterPopover<T, D = unknown>({
           }
         />
       </PopoverTrigger>
-      <PopoverSurface className={styles.surface}>
+      <PopoverSurface ref={surfaceRef} tabIndex={-1} className={styles.surface}>
         <FilterPopoverBody
           search={search}
           column={column}
           field={field}
           renderBody={renderBody}
           close={() => setOpen(false)}
+          surfaceRef={surfaceRef}
         />
       </PopoverSurface>
     </Popover>
@@ -125,24 +168,32 @@ function FilterPopoverBody<T, D>({
   field,
   renderBody,
   close,
+  surfaceRef,
 }: {
   search: GridSearch<T, D>;
   column: ColumnDef<T, D>;
   field: string;
   renderBody?: (props: FilterPopupProps<T>) => ReactNode;
   close: () => void;
+  surfaceRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const styles = useStyles();
   const filter = search.filterFor(column)!;
   const options = search.useFilterOptions(column);
   const searchText = useControl("");
-  const values = search.filter.values(field);
+  // Immediately or on Apply, depending on the grid's `deferApply` — the list and
+  // the footer below just read `values` and call these.
+  const draft = useFilterDraft({ filter, field, gridFilter: search.filter });
+  const values = draft.values;
 
   const props: FilterPopupProps<T> = {
     column: column as ColumnDef<T, any>,
     field,
+    // The real control, not the draft: a custom body has `close()` and decides
+    // for itself when a selection is final, so deferring behind its back would
+    // silently swallow the write it makes before closing.
     selected: search.filter.selected(field),
-    values,
+    values: search.filter.values(field),
     options,
     search: searchText,
     close,
@@ -164,47 +215,72 @@ function FilterPopoverBody<T, D>({
       {searchable && (
         <SearchBox
           size="small"
+          className={styles.searchBox}
           placeholder="Search"
           value={searchText.value}
           onChange={(_, d) => (searchText.value = d.value)}
         />
       )}
-      {options.loading && options.options.length === 0 ? (
-        <span className={styles.message}>
-          <Spinner size="tiny" /> Loading
-        </span>
-      ) : options.error ? (
-        <span className={styles.message}>Couldn&apos;t load values</span>
-      ) : visible.length === 0 ? (
-        <span className={styles.message}>
-          {needle ? "No matches" : "No values"}
-        </span>
-      ) : (
-        <FilterOptionList
-          options={visible}
-          selected={values}
-          multiple={filter.multiple ?? true}
-          onToggle={(value, on) => {
-            if (filter.multiple === false) {
-              search.filter.setValues(field, on ? [value] : []);
-            } else {
-              search.filter.toggle(field, value, on);
-            }
+      <div className={styles.options}>
+        {options.loading && options.options.length === 0 ? (
+          <span className={styles.message}>
+            <Spinner size="tiny" /> Loading
+          </span>
+        ) : options.error ? (
+          <span className={styles.message}>Couldn&apos;t load values</span>
+        ) : visible.length === 0 ? (
+          <span className={styles.message}>
+            {needle ? "No matches" : "No values"}
+          </span>
+        ) : (
+          <FilterOptionList
+            options={visible}
+            selected={values}
+            multiple={filter.multiple ?? true}
+            showCounts={filter.showCounts}
+            onToggle={draft.toggle}
+          />
+        )}
+      </div>
+      {/*
+        The footer itself is always there — disabled rather than absent, so the
+        popup doesn't resize as the first option is ticked.
+
+        Apply only exists where there's something to apply. Immediate mode has
+        already written every click, so a button there would either be a no-op or
+        imply the clicks hadn't counted yet; Escape or a click outside closes, as
+        it did before any of this.
+      */}
+      <div className={styles.footer}>
+        <Button
+          appearance="subtle"
+          size="small"
+          icon={<DismissRegular />}
+          disabled={values.length === 0}
+          onClick={() => {
+            draft.clear();
+            // Clearing disables this button, and a disabled element can't hold
+            // focus — the browser drops it to <body>, from where Escape no longer
+            // reaches the popover and the only way out is a click elsewhere. Hand
+            // focus back to the surface.
+            surfaceRef.current?.focus();
           }}
-        />
-      )}
-      {values.length > 0 && (
-        <div className={styles.footer}>
+        >
+          Clear
+        </Button>
+        {draft.deferred && (
           <Button
-            appearance="subtle"
+            appearance="primary"
             size="small"
-            icon={<DismissRegular />}
-            onClick={() => search.filter.clear(field)}
+            onClick={() => {
+              draft.apply();
+              close();
+            }}
           >
-            Clear
+            Apply
           </Button>
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 }

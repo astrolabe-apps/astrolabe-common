@@ -36,6 +36,8 @@ export interface UseFluentDataGridOptions<T, D = unknown>
   /** Adds a leading checkbox column and paints selected rows. */
   selection?: GridSelection<T>;
   selectionColumn?: FluentSelectionColumnOptions;
+  /** See `FluentRowWrapperOptions.selectOnRowClick`. Defaults to true. */
+  selectOnRowClick?: boolean;
   /** Row keys, so React reorders rather than rebuilds on sort. */
   rowKey?: (row: T, index: number) => Key;
 }
@@ -64,6 +66,7 @@ export function useFluentDataGrid<T, D = unknown>(
   const {
     selection,
     selectionColumn,
+    selectOnRowClick,
     rowKey,
     size,
     defaultColumnTemplate,
@@ -96,7 +99,10 @@ export function useFluentDataGrid<T, D = unknown>(
     gridProps: {
       ...gridClasses,
       renderHeaderContent: fluentHeaderContent(search, parts, headerOptions),
-      wrapBodyRow: fluentRowWrapper<T>({ getRow, rowKey, selection }, parts),
+      wrapBodyRow: fluentRowWrapper<T>(
+        { getRow, rowKey, selection, selectOnRowClick },
+        parts,
+      ),
       // Cell content is produced by a render callback, outside any component, so
       // a control read in there needs a component of its own to be reactive —
       // and this scopes the read to one cell instead of the whole grid.

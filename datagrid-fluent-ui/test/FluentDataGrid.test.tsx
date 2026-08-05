@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "@jest/globals";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
 import { FluentProvider, webLightTheme } from "@fluentui/react-components";
 import { newControl, useComponentTracking } from "@react-typed-forms/core";
@@ -14,7 +14,7 @@ import {
   useGridSearch,
   type GetColumnFilter,
 } from "@astroapps/datagrid-search";
-import { FluentDataGrid } from "../src";
+import { FilterOptionList, FluentDataGrid, makeGridSelection } from "../src";
 
 interface Row {
   file: string;
@@ -145,6 +145,121 @@ describe("a grid with sort and filter available", () => {
   it("reports no data without inventing rows", () => {
     render(<Harness columns={richColumns} over={{ query: "nothing" }} />);
     expect(screen.getByText("No data")).toBeDefined();
+  });
+});
+
+describe("filter option counts", () => {
+  const counted = [
+    { value: "doc", count: 2 },
+    { value: "img", count: 1 },
+  ];
+
+  function renderList(showCounts?: boolean) {
+    render(
+      <FluentProvider theme={webLightTheme}>
+        <FilterOptionList
+          options={counted}
+          selected={[]}
+          onToggle={() => {}}
+          showCounts={showCounts}
+        />
+      </FluentProvider>,
+    );
+  }
+
+  it("brackets the count beside the label", () => {
+    renderList();
+    expect(screen.getByText("(2)")).toBeDefined();
+    expect(screen.getByText("(1)")).toBeDefined();
+  });
+
+  it("omits counts when told to", () => {
+    renderList(false);
+    expect(screen.queryByText("(2)")).toBeNull();
+    // The option itself is still there — only the count went.
+    expect(screen.getByText("doc")).toBeDefined();
+  });
+
+  // `ColumnFilter.showCounts` reaches this list through `FluentFilterPopover`.
+  // Opening that popover isn't testable here — its body calls `useControl`, and
+  // ts-jest doesn't apply the tracking transform to these sources — so the
+  // wiring is covered by the demo pages, which run through the real build.
+});
+
+/** A selectable grid, with the selection held where a page would hold it. */
+function SelectableHarness({
+  selected,
+  selectOnRowClick,
+}: {
+  selected: ReturnType<typeof newControl<string[]>>;
+  selectOnRowClick?: boolean;
+}) {
+  const stop = useComponentTracking();
+  try {
+    const state = newControl<SearchOptions>({
+      ...defaultSearchOptions,
+      length: 10,
+    });
+    const data = useClientData(state, { rows, columns: richColumns });
+    const search = useGridSearch(state, { columns: richColumns, data });
+    const selection = makeGridSelection<Row>({
+      selected,
+      rows: data.rows,
+      getId: (r) => r.file,
+    });
+    return (
+      <FluentProvider theme={webLightTheme}>
+        <FluentDataGrid
+          search={search}
+          selection={selection}
+          selectOnRowClick={selectOnRowClick}
+          rowKey={(r) => r.file}
+        />
+      </FluentProvider>
+    );
+  } finally {
+    stop();
+  }
+}
+
+describe("selecting by clicking the row", () => {
+  it("toggles the row a click landed in", () => {
+    const selected = newControl<string[]>([]);
+    render(<SelectableHarness selected={selected} />);
+    fireEvent.click(screen.getByText("logo"));
+    expect(selected.value).toEqual(["logo"]);
+    fireEvent.click(screen.getByText("logo"));
+    expect(selected.value).toEqual([]);
+  });
+
+  it("leaves the checkbox's own click to the checkbox", () => {
+    // Both would fire for one click, and the row would undo what the box did.
+    const selected = newControl<string[]>([]);
+    render(<SelectableHarness selected={selected} />);
+    fireEvent.click(screen.getAllByLabelText("Select row")[1]);
+    expect(selected.value).toEqual(["logo"]);
+  });
+
+  it("stays out of it when told to", () => {
+    const selected = newControl<string[]>([]);
+    render(<SelectableHarness selected={selected} selectOnRowClick={false} />);
+    fireEvent.click(screen.getByText("logo"));
+    expect(selected.value).toEqual([]);
+    // The checkbox column still works — it's the only way in now.
+    fireEvent.click(screen.getAllByLabelText("Select row")[1]);
+    expect(selected.value).toEqual(["logo"]);
+  });
+
+  it("marks clickable rows as such, and only those", () => {
+    const selected = newControl<string[]>([]);
+    const { unmount } = render(<SelectableHarness selected={selected} />);
+    const cell = screen.getByText("logo");
+    expect(getComputedStyle(cell).cursor).toBe("pointer");
+    unmount();
+    render(<SelectableHarness selected={selected} selectOnRowClick={false} />);
+    expect(getComputedStyle(screen.getByText("logo")).cursor).not.toBe(
+      "pointer",
+    );
   });
 });
 

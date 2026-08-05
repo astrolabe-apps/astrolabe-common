@@ -35,6 +35,8 @@ export interface FluentDataGridParts {
   selectionCell: string;
   row: string;
   rowSelected: string;
+  /** Added to rows that toggle their own selection when clicked. */
+  rowClickable: string;
   sortButton: string;
   sortButtonLabel: string;
   sortIcon: string;
@@ -130,6 +132,11 @@ const useStyles = makeStyles({
     ":active": {
       "& > *": { backgroundColor: tokens.colorSubtleBackgroundPressed },
     },
+  },
+  // Selecting by clicking the row is a click target, so it says so. On the cells
+  // rather than the wrapper, which paints no box of its own.
+  rowClickable: {
+    "& > *": { cursor: "pointer" },
   },
   // Fluent's DataGrid defaults to `selectionAppearance: "brand"`, so a selected
   // row is brand-tinted and hides its divider.
@@ -248,6 +255,7 @@ export function useFluentDataGridStyles(
       selectionCell: s.selectionCell,
       row: s.row,
       rowSelected: s.rowSelected,
+      rowClickable: s.rowClickable,
       sortButton: s.sortButton,
       sortButtonLabel: s.sortButtonLabel,
       sortIcon: s.sortIcon,

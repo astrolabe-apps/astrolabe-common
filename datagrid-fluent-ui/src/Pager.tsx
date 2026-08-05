@@ -22,7 +22,15 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground2,
   },
   range: { flexShrink: 0 },
-  pageSize: { width: "auto" },
+  pageSize: {
+    width: "auto",
+    // Fluent draws the chevron itself, in a sibling icon span. A host stylesheet
+    // that also arrows its selects — `@tailwindcss/forms` sets a background-image
+    // on every `select` — would otherwise show two. Aimed at the native element
+    // inside, since `className` lands on Fluent's wrapper; `.class select` beats a
+    // bare `select`, so no `!important` needed.
+    "& select": { backgroundImage: "none" },
+  },
 });
 
 export interface FluentPagerProps<T = any> {
