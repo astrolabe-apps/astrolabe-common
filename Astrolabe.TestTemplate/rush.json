@@ -425,6 +425,16 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/datagrid-fluent-ui",
+      "projectFolder": "../datagrid-fluent-ui",
+      "shouldPublish": true
+    },
+    {
+      "packageName": "@astroapps/datagrid-search",
+      "projectFolder": "../datagrid-search",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@astroapps/quill-editor",
       "projectFolder": "../astrolabe-quill-editor",
       "shouldPublish": true

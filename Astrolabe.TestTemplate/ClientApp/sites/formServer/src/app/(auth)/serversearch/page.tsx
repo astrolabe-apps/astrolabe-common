@@ -70,7 +70,7 @@ export default function SearchPage() {
   async function doSearch() {
     loading.value = true;
     try {
-      results.value = await carClient.searchCars(request.value);
+      results.value = await carClient.searchCars(true, request.value);
     } finally {
       loading.value = false;
     }

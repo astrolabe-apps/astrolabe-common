@@ -1,0 +1,67 @@
+{
+  "name": "@astroapps/datagrid-fluent-ui",
+  "version": "0.0.0",
+  "description": "Style @astroapps/datagrid to match the FluentUI v9 DataGrid",
+  "type": "module",
+  "main": "lib/index.cjs",
+  "module": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    "types": "./lib/index.d.ts",
+    "require": "./lib/index.cjs",
+    "default": "./lib/index.js"
+  },
+  "author": "Astrolabe Enterprises",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
+  },
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "react",
+    "datagrid",
+    "fluent-ui",
+    "fluentui"
+  ],
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "rimraf lib/ node_modules/.cache && microbundle -f modern,cjs --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle -f modern,cjs --no-compress --jsx React.createElement --jsxFragment React.Fragment",
+    "test": "jest --coverage"
+  },
+  "dependencies": {
+    "clsx": "^1 || ^2"
+  },
+  "peerDependencies": {
+    "@astroapps/datagrid": "^1.2.0",
+    "@astroapps/datagrid-search": "^1.0.0",
+    "@astroapps/searchstate": "^2.0.0",
+    "@fluentui/react-components": "^9.69.0",
+    "@fluentui/react-icons": "^2.0.270",
+    "@react-typed-forms/core": "^4.6.0",
+    "react": "^18.2.0 || ^19"
+  },
+  "devDependencies": {
+    "@astroapps/datagrid": "workspace:*",
+    "@astroapps/datagrid-search": "workspace:*",
+    "@astroapps/searchstate": "workspace:*",
+    "@fluentui/react-components": "^9.69.0",
+    "@fluentui/react-icons": "^2.0.270",
+    "@jest/globals": "^29.7.0",
+    "@react-typed-forms/core": "^4.6.0",
+    "@react-typed-forms/transform": "^0.4.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/react": "^18.2.37",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "microbundle": "^0.15.1",
+    "prettier": "^3.0.3",
+    "react": "^18.2.0 || ^19",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.6.2"
+  }
+}

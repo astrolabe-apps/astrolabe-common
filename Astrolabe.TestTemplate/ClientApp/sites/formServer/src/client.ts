@@ -255,11 +255,16 @@ export class CarClient {
     }
 
     /**
+     * @param includeTotal (optional) 
      * @param body (optional) 
      * @return OK
      */
-    searchCars(body: SearchOptions | undefined): Promise<CarInfoSearchResults> {
-        let url_ = this.baseUrl + "/api/Car/search";
+    searchCars(includeTotal: boolean | undefined, body: SearchOptions | undefined): Promise<CarInfoSearchResults> {
+        let url_ = this.baseUrl + "/api/Car/search?";
+        if (includeTotal === null)
+            throw new Error("The parameter 'includeTotal' cannot be null.");
+        else if (includeTotal !== undefined)
+            url_ += "includeTotal=" + encodeURIComponent("" + includeTotal) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         const content_ = JSON.stringify(body);
@@ -293,6 +298,93 @@ export class CarClient {
             });
         }
         return Promise.resolve<CarInfoSearchResults>(null as any);
+    }
+
+    /**
+     * @param field (optional) 
+     * @param body (optional) 
+     * @return OK
+     */
+    getFilterOptions(field: string | undefined, body: SearchOptions | undefined): Promise<FilterOptionValue[]> {
+        let url_ = this.baseUrl + "/api/Car/filterOptions?";
+        if (field === null)
+            throw new Error("The parameter 'field' cannot be null.");
+        else if (field !== undefined)
+            url_ += "field=" + encodeURIComponent("" + field) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(body);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/plain"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetFilterOptions(_response);
+        });
+    }
+
+    protected processGetFilterOptions(response: Response): Promise<FilterOptionValue[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as FilterOptionValue[];
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FilterOptionValue[]>(null as any);
+    }
+
+    /**
+     * @param count (optional) 
+     * @return OK
+     */
+    seed(count: number | undefined): Promise<number> {
+        let url_ = this.baseUrl + "/api/Car/seed?";
+        if (count === null)
+            throw new Error("The parameter 'count' cannot be null.");
+        else if (count !== undefined)
+            url_ += "count=" + encodeURIComponent("" + count) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+                "Accept": "text/plain"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSeed(_response);
+        });
+    }
+
+    protected processSeed(response: Response): Promise<number> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as number;
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<number>(null as any);
     }
 
     /**
@@ -890,6 +982,105 @@ export class Client {
         }
         return Promise.resolve<void>(null as any);
     }
+
+    /**
+     * @return OK
+     */
+    oidcExternalProviders(): Promise<void> {
+        let url_ = this.baseUrl + "/oidc/external/providers";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processOidcExternalProviders(_response);
+        });
+    }
+
+    protected processOidcExternalProviders(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    oidcExternalLogin(): Promise<void> {
+        let url_ = this.baseUrl + "/oidc/external/login";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processOidcExternalLogin(_response);
+        });
+    }
+
+    protected processOidcExternalLogin(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
+
+    /**
+     * @return OK
+     */
+    oidcExternalCallback(): Promise<void> {
+        let url_ = this.baseUrl + "/oidc/external/callback";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processOidcExternalCallback(_response);
+        });
+    }
+
+    protected processOidcExternalCallback(response: Response): Promise<void> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            return;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<void>(null as any);
+    }
 }
 
 export class SearchStateClient {
@@ -1110,7 +1301,7 @@ export interface ControlDefinition {
 
 export interface ActionControlDefinition extends ControlDefinition {
     actionId: string;
-    actionData: string | null;
+    actionData: any | null;
     icon: IconReference | null;
     actionStyle: ActionStyle | null;
     iconPlacement: IconPlacement | null;
@@ -1188,6 +1379,7 @@ export interface CarEdit {
 }
 
 export interface CarInfo {
+    id: string;
     make: string;
     model: string;
     year: number;
@@ -1325,6 +1517,7 @@ export interface DisplayControlDefinition extends ControlDefinition {
 export interface DisplayOnlyRenderOptions extends RenderOptions {
     emptyText: string | null;
     sampleText: string | null;
+    overrideText: string | null;
 
     [key: string]: any;
 }
@@ -1354,6 +1547,11 @@ export interface EvalResult {
 export interface EvalTestData {
     expression: string;
     data: { [key: string]: any; };
+}
+
+export interface FilterOptionValue {
+    value: string;
+    count: number;
 }
 
 export interface FlexRenderer extends GroupRenderOptions {
@@ -1478,7 +1676,7 @@ export interface NotEmptyExpression extends EntityExpression {
 }
 
 export interface NotExpression extends EntityExpression {
-    expression: EntityExpression;
+    innerExpression: EntityExpression;
 
     [key: string]: any;
 }
@@ -1612,6 +1810,14 @@ export interface UserMatchExpression extends EntityExpression {
 export interface UserSelectionRenderOptions extends RenderOptions {
     noGroups: boolean;
     noUsers: boolean;
+
+    [key: string]: any;
+}
+
+export interface WizardRenderOptions extends GroupRenderOptions {
+    showSteps: boolean | null;
+    pageIndexField: string | null;
+    manualNavigation: boolean | null;
 
     [key: string]: any;
 }
