@@ -15,7 +15,7 @@ import {
   filterByQuery,
   sortBySortFields,
   type SearchFilters,
-  type SearchOptions,
+  type SearchRequest,
 } from "@astroapps/searchstate";
 import type { GridData } from "./types";
 import { columnSearching, findColumn } from "./columns";
@@ -51,7 +51,7 @@ export interface ClientDataOptions<T, D = unknown> {
   searchColumns?: (column: ColumnDef<T, D>) => boolean;
   /**
    * Filtering that isn't a column filter — a date range or a toggle living
-   * elsewhere on the page, held in fields your state added to `SearchOptions`.
+   * elsewhere on the page, held in fields your state added to `SearchRequest`.
    * Applied alongside the query and the column filters.
    *
    * The server-side counterpart is free: `fetch` receives the whole state, extra
@@ -100,7 +100,7 @@ function activeMatchers<T, D>(
 export function useClientData<
   T,
   D = unknown,
-  S extends SearchOptions = SearchOptions,
+  S extends SearchRequest = SearchRequest,
 >(state: Control<S>, options: ClientDataOptions<T, D>): GridData<T> {
   const {
     rows,
@@ -117,9 +117,9 @@ export function useClientData<
   // stable until it actually changes, which is what makes the memo deps below
   // meaningful.
   //
-  // Cast because `S` is only constrained to extend SearchOptions, so its mapped
+  // Cast because `S` is only constrained to extend SearchRequest, so its mapped
   // fields come out optional. The constraint guarantees they're there.
-  const fields = state.fields as unknown as ControlFields<SearchOptions>;
+  const fields = state.fields as unknown as ControlFields<SearchRequest>;
   const query = fields.query.value;
   const sort = fields.sort.value;
   const filters = fields.filters.value;

@@ -7,7 +7,7 @@ import {
 } from "@astroapps/datagrid";
 import {
   defaultSearchOptions,
-  type SearchOptions,
+  type SearchRequest,
 } from "@astroapps/searchstate";
 import { applySortField, makeGridSort, nextSortDirection } from "../src";
 
@@ -28,8 +28,8 @@ const columns = columnDefinitions<Row>(
 );
 const [file, size, actions] = columns;
 
-function stateWith(over: Partial<SearchOptions> = {}) {
-  return newControl<SearchOptions>({ ...defaultSearchOptions, ...over });
+function stateWith(over: Partial<SearchRequest> = {}) {
+  return newControl<SearchRequest>({ ...defaultSearchOptions, ...over });
 }
 
 describe("nextSortDirection", () => {

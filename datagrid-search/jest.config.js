@@ -8,7 +8,7 @@
  * select, so `customExportConditions` can't fix it — map the specifiers straight
  * onto the CJS builds instead.
  *
- * These are the runtime imports only. Type-only imports (`SearchOptions`,
+ * These are the runtime imports only. Type-only imports (`SearchRequest`,
  * `ColumnDef`) are erased at compile time and never resolved.
  */
 const workspaceCjs = {

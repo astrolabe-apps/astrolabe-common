@@ -15,7 +15,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import type { Control } from "@react-typed-forms/core";
-import type { SearchOptions } from "@astroapps/searchstate";
+import type { SearchRequest } from "@astroapps/searchstate";
 import type { FilterOption, GridData, GridPage } from "./types";
 import type { FilterOptions } from "./options";
 
@@ -73,7 +73,7 @@ export function makeFilterOptions(o: MakeFilterOptionsArgs): FilterOptions {
 }
 
 /**
- * `SearchOptions` with only `query` debounced — sort, filter and paging changes
+ * `SearchRequest` with only `query` debounced — sort, filter and paging changes
  * pass through immediately.
  *
  * This is the piece react-query doesn't have: it can dedupe and cache a key, but
@@ -82,12 +82,12 @@ export function makeFilterOptions(o: MakeFilterOptionsArgs): FilterOptions {
  *
  * Call during render.
  */
-export function useDebouncedSearchOptions<S extends SearchOptions>(
+export function useDebouncedSearchRequest<S extends SearchRequest>(
   state: Control<S>,
   ms = 300,
 ): S {
   // The whole value, not selected fields: a caller whose state extends
-  // SearchOptions with its own filtering — a date range, a tenant, a "show
+  // SearchRequest with its own filtering — a date range, a tenant, a "show
   // archived" toggle — needs those carried through to `fetch` and into the query
   // key. Picking fields out would silently drop them.
   const value = state.value;

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/datagrid-fluent-ui",
+      "comment": "Initial release",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/datagrid-fluent-ui"
+}

@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/datagrid-fluent-ui",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "description": "Style @astroapps/datagrid to match the FluentUI v9 DataGrid",
   "type": "module",
   "main": "lib/index.cjs",
@@ -51,7 +51,7 @@
     "@fluentui/react-components": "^9.69.0",
     "@fluentui/react-icons": "^2.0.270",
     "@jest/globals": "^29.7.0",
-    "@react-typed-forms/core": "workspace:*",
+    "@react-typed-forms/core": "^4.6.0",
     "@react-typed-forms/transform": "^0.4.0",
     "@testing-library/react": "^16.0.0",
     "@types/react": "^18.2.37",

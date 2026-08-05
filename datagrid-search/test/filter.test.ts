@@ -3,7 +3,7 @@ import { newControl } from "@react-typed-forms/core";
 import { columnDefinitions } from "@astroapps/datagrid";
 import {
   defaultSearchOptions,
-  type SearchOptions,
+  type SearchRequest,
 } from "@astroapps/searchstate";
 import {
   byFilterField,
@@ -30,8 +30,8 @@ const columns = columnDefinitions<Row>(
 );
 const [file, kind, size] = columns;
 
-function stateWith(over: Partial<SearchOptions> = {}) {
-  return newControl<SearchOptions>({ ...defaultSearchOptions, ...over });
+function stateWith(over: Partial<SearchRequest> = {}) {
+  return newControl<SearchRequest>({ ...defaultSearchOptions, ...over });
 }
 
 describe("defaultGetColumnFilter", () => {

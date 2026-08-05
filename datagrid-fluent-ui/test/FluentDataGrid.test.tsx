@@ -6,7 +6,7 @@ import { newControl, useComponentTracking } from "@react-typed-forms/core";
 import { columnDefinitions, type ColumnDef } from "@astroapps/datagrid";
 import {
   defaultSearchOptions,
-  type SearchOptions,
+  type SearchRequest,
 } from "@astroapps/searchstate";
 import {
   makeGridData,
@@ -46,7 +46,7 @@ function Harness({
   pager,
 }: {
   columns: ColumnDef<Row, unknown>[];
-  over?: Partial<SearchOptions>;
+  over?: Partial<SearchRequest>;
   getColumnFilter?: GetColumnFilter<Row>;
   pager?: boolean;
 }) {
@@ -56,7 +56,7 @@ function Harness({
   // the demo harness, which runs through the real build.
   const stop = useComponentTracking();
   try {
-    const state = newControl<SearchOptions>({
+    const state = newControl<SearchRequest>({
       ...defaultSearchOptions,
       length: 10,
       ...over,
@@ -196,7 +196,7 @@ function SelectableHarness({
 }) {
   const stop = useComponentTracking();
   try {
-    const state = newControl<SearchOptions>({
+    const state = newControl<SearchRequest>({
       ...defaultSearchOptions,
       length: 10,
     });
@@ -272,11 +272,11 @@ function UncountedHarness({
   over,
 }: {
   rowCount: number;
-  over?: Partial<SearchOptions>;
+  over?: Partial<SearchRequest>;
 }) {
   const stop = useComponentTracking();
   try {
-    const state = newControl<SearchOptions>({
+    const state = newControl<SearchRequest>({
       ...defaultSearchOptions,
       length: 2,
       ...over,

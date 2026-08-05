@@ -10,11 +10,11 @@
  * that excludes `offset`/`length`/`sort`, so paging and sorting reuse it instead
  * of re-counting; a real search change is a new key, so it clears.
  *
- * `makeGridData` and `useDebouncedSearchOptions` (interop.ts) stay query-library
+ * `makeGridData` and `useDebouncedSearchRequest` (interop.ts) stay query-library
  * agnostic; this is the react-query binding built over them.
  */
 import type { Control } from "@react-typed-forms/core";
-import type { SearchOptions } from "@astroapps/searchstate";
+import type { SearchRequest } from "@astroapps/searchstate";
 import {
   keepPreviousData,
   skipToken,
@@ -22,9 +22,9 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import type { GridData, GridPage } from "./types";
-import { makeGridData, useDebouncedSearchOptions } from "./interop";
+import { makeGridData, useDebouncedSearchRequest } from "./interop";
 
-export interface ServerDataOptions<T, S extends SearchOptions = SearchOptions> {
+export interface ServerDataOptions<T, S extends SearchRequest = SearchRequest> {
   /**
    * Stable cache-key prefix — `"cars"`, or `["cars", tenantId]`. The page and the
    * total are keyed under it; two grids sharing a prefix share cache.
@@ -32,7 +32,7 @@ export interface ServerDataOptions<T, S extends SearchOptions = SearchOptions> {
   queryKey: unknown[] | string;
   /**
    * Fetches one page. Receives the state's *whole* value, so a state that extends
-   * `SearchOptions` with filtering of its own is carried through without wiring.
+   * `SearchRequest` with filtering of its own is carried through without wiring.
    *
    * `includeTotal` is the request's "should I count?" flag — true only when
    * there's no total for the current search yet. Return the count in the page's
@@ -57,7 +57,7 @@ export interface ServerDataOptions<T, S extends SearchOptions = SearchOptions> {
   keepPrevious?: boolean;
 }
 
-export function useServerData<T, S extends SearchOptions = SearchOptions>(
+export function useServerData<T, S extends SearchRequest = SearchRequest>(
   state: Control<S>,
   options: ServerDataOptions<T, S>,
 ): GridData<T> {
@@ -70,24 +70,24 @@ export function useServerData<T, S extends SearchOptions = SearchOptions>(
   } = options;
   const prefix = Array.isArray(queryKey) ? queryKey : [queryKey];
   const client = useQueryClient();
-  const searchOptions = useDebouncedSearchOptions(state, debounce);
+  const searchRequest = useDebouncedSearchRequest(state, debounce);
 
   // "The search apart from paging and ordering": offset/length/sort can't change a
   // count, so they're excluded from the total's key. Written as an exclusion, so a
-  // state extending SearchOptions is covered without naming its fields — and it's
+  // state extending SearchRequest is covered without naming its fields — and it's
   // what makes the count survive paging and re-run only on a real search change.
-  const { offset, length, sort, ...identity } = searchOptions;
+  const { offset, length, sort, ...identity } = searchRequest;
   const totalKey = [...prefix, "total", identity];
 
   const page = useQuery({
-    queryKey: [...prefix, "page", searchOptions],
+    queryKey: [...prefix, "page", searchRequest],
     queryFn: async ({ signal }) => {
       // Ask for the total only when we've none for this search. Store `null` for
       // "asked, none came" so a decline or failure isn't retried on every page.
       // `includeTotal` stays *out* of the page key — the rows for a given
       // (offset, filters, sort) are the same whether or not we counted.
       const haveTotal = !count || client.getQueryData(totalKey) !== undefined;
-      const result = await search(searchOptions, !haveTotal, signal);
+      const result = await search(searchRequest, !haveTotal, signal);
       if (count && !haveTotal)
         client.setQueryData(totalKey, result.total ?? null);
       return result;

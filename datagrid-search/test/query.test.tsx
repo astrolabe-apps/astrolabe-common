@@ -8,7 +8,7 @@ import {
   defaultSearchOptions,
   getPageOfResults,
   makeClientSortAndFilter,
-  type SearchOptions,
+  type SearchRequest,
 } from "@astroapps/searchstate";
 import {
   columnSearching,
@@ -37,8 +37,8 @@ const columns = columnDefinitions<Row>(
 );
 const searching = columnSearching(columns);
 
-function stateWith(over: Partial<SearchOptions> = {}) {
-  return newControl<SearchOptions>({
+function stateWith(over: Partial<SearchRequest> = {}) {
+  return newControl<SearchRequest>({
     ...defaultSearchOptions,
     length: 2,
     ...over,
@@ -76,7 +76,7 @@ function renderServer(useData: () => GridData<Row>) {
 }
 
 /** One page as a server would return it, counting only when asked. */
-function pageOf(options: SearchOptions, includeTotal: boolean): GridPage<Row> {
+function pageOf(options: SearchRequest, includeTotal: boolean): GridPage<Row> {
   const searched = makeClientSortAndFilter(searching)(options, allRows);
   return {
     rows: getPageOfResults(options.offset, options.length, searched),
@@ -86,7 +86,7 @@ function pageOf(options: SearchOptions, includeTotal: boolean): GridPage<Row> {
 
 /** A `search` that records the `includeTotal` flag each call was made with. */
 function recordingSearch(asked: boolean[]) {
-  return async (options: SearchOptions, includeTotal: boolean) => {
+  return async (options: SearchRequest, includeTotal: boolean) => {
     asked.push(includeTotal);
     return pageOf(options, includeTotal);
   };
@@ -202,7 +202,7 @@ describe("useServerData", () => {
     // Asked, but no total came back (a count that failed or wasn't worth it). The
     // attempt is recorded, so paging doesn't re-ask; a search change does.
     const asked: boolean[] = [];
-    const search = async (options: SearchOptions, includeTotal: boolean) => {
+    const search = async (options: SearchRequest, includeTotal: boolean) => {
       asked.push(includeTotal);
       return pageOf(options, false);
     };

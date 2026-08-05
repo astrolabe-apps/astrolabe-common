@@ -30,7 +30,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Control } from "@react-typed-forms/core";
 import type { ColumnDef } from "@astroapps/datagrid";
-import type { SearchOptions } from "@astroapps/searchstate";
+import type { SearchRequest } from "@astroapps/searchstate";
 import type { FilterOption, GridData } from "./types";
 import {
   deriveFilterOptions,
@@ -46,7 +46,7 @@ export interface UseFilterOptionsArgs<T, D> {
   column: ColumnDef<T, D>;
   filter: ColumnFilter<T> | undefined;
   data: GridData<T>;
-  state: Control<SearchOptions>;
+  state: Control<SearchRequest>;
   /** Cap on distinct values derived from rows. Defaults to 100. */
   maxFilterOptions?: number;
 }

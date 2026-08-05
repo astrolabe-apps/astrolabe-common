@@ -1,5 +1,5 @@
 /**
- * Sorting over `SearchOptions.sort` — searchstate's `string[]` of `"a"`/`"d"`
+ * Sorting over `SearchRequest.sort` — searchstate's `string[]` of `"a"`/`"d"`
  * prefixed field names.
  *
  * `makeGridSort` reads `.value` when called, so **call it during render** and
@@ -10,7 +10,7 @@
  * ordered".
  */
 import type { Control } from "@react-typed-forms/core";
-import type { SearchOptions } from "@astroapps/searchstate";
+import type { SearchRequest } from "@astroapps/searchstate";
 import type { ColumnDef, SortDirection } from "@astroapps/datagrid";
 import { encodeSortField, sortEntryField, sortFieldDirection } from "./columns";
 
@@ -90,7 +90,7 @@ export function applySortField(
   return next;
 }
 
-export function makeGridSort<S extends SearchOptions>(
+export function makeGridSort<S extends SearchRequest>(
   state: Control<S>,
   options: SortOptions = {},
 ): GridSort {

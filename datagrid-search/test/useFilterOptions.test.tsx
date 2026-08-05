@@ -5,7 +5,7 @@ import { newControl, useComponentTracking } from "@react-typed-forms/core";
 import { columnDefinitions, type ColumnDef } from "@astroapps/datagrid";
 import {
   defaultSearchOptions,
-  type SearchOptions,
+  type SearchRequest,
 } from "@astroapps/searchstate";
 import {
   makeFilterOptions,
@@ -39,8 +39,8 @@ const columns = columnDefinitions<Row>(
 const kindColumn = columns[1];
 const fileColumn = columns[0];
 
-function stateWith(over: Partial<SearchOptions> = {}) {
-  return newControl<SearchOptions>({
+function stateWith(over: Partial<SearchRequest> = {}) {
+  return newControl<SearchRequest>({
     ...defaultSearchOptions,
     length: 10,
     ...over,

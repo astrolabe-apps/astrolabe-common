@@ -7,13 +7,13 @@ import {
   defaultSearchOptions,
   getPageOfResults,
   makeClientSortAndFilter,
-  type SearchOptions,
+  type SearchRequest,
 } from "@astroapps/searchstate";
 import {
   columnSearching,
   makeGridData,
   useClientData,
-  useDebouncedSearchOptions,
+  useDebouncedSearchRequest,
   type GridData,
   type GridPage,
 } from "../src";
@@ -37,8 +37,8 @@ const columns = columnDefinitions<Row>(
   { title: "Size", getter: (r) => r.size, sortField: "size" },
 );
 
-function stateWith(over: Partial<SearchOptions> = {}) {
-  return newControl<SearchOptions>({
+function stateWith(over: Partial<SearchRequest> = {}) {
+  return newControl<SearchRequest>({
     ...defaultSearchOptions,
     length: 2,
     ...over,
@@ -81,7 +81,7 @@ function renderData<T>(useData: () => GridData<T>) {
  * is what's under test here, not the fetching around it.
  */
 function searchPage(
-  options: SearchOptions,
+  options: SearchRequest,
   rows: Row[] = allRows,
 ): GridPage<Row> {
   const searched = makeClientSortAndFilter(columnSearching(columns))(
@@ -253,10 +253,10 @@ describe("useClientData", () => {
   });
 });
 
-describe("state that extends SearchOptions", () => {
+describe("state that extends SearchRequest", () => {
   // The common case: filtering that isn't a column filter — a date range, a
   // tenant, a "show archived" toggle — living in fields the app added.
-  interface Extended extends SearchOptions {
+  interface Extended extends SearchRequest {
     archived: boolean;
   }
 
@@ -302,7 +302,7 @@ describe("client and server agree", () => {
   // The headline claim of the redesign: swapping the data source changes nothing
   // the renderer can see. Client-side is `useClientData`; server-side is a fetched
   // page mapped through `makeGridData` — what a react-query `queryFn` produces.
-  const searches: [string, Partial<SearchOptions>][] = [
+  const searches: [string, Partial<SearchRequest>][] = [
     ["defaults", {}],
     ["a sort", { sort: ["dsize"] }],
     ["a filter", { filters: { kind: ["doc"] } }],
@@ -379,12 +379,12 @@ describe("makeGridData", () => {
   });
 });
 
-/** Renders `useDebouncedSearchOptions` and exposes its latest returned value. */
+/** Renders `useDebouncedSearchRequest` and exposes its latest returned value. */
 function renderDebounced(state: ReturnType<typeof stateWith>, ms: number) {
-  const seen: { current: SearchOptions } = { current: undefined as any };
+  const seen: { current: SearchRequest } = { current: undefined as any };
   function Probe() {
     tracked(() => {
-      seen.current = useDebouncedSearchOptions(state, ms);
+      seen.current = useDebouncedSearchRequest(state, ms);
     });
     return null;
   }
@@ -392,7 +392,7 @@ function renderDebounced(state: ReturnType<typeof stateWith>, ms: number) {
   return seen;
 }
 
-describe("useDebouncedSearchOptions", () => {
+describe("useDebouncedSearchRequest", () => {
   it("delays query but passes sort straight through", async () => {
     jest.useFakeTimers();
     try {

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/searchstate",
+      "comment": "Adjust filter type",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/searchstate"
+}

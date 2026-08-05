@@ -1,5 +1,5 @@
 /**
- * Filtering over `SearchOptions.filters`.
+ * Filtering over `SearchRequest.filters`.
  *
  * The storage is `SearchFilters`, i.e. `Record<string, string[]>`. A field
  * control for a key that isn't present reads `undefined`, not `[]`, while
@@ -13,7 +13,7 @@
  */
 import type { ReactNode } from "react";
 import type { Control } from "@react-typed-forms/core";
-import type { SearchFilters, SearchOptions } from "@astroapps/searchstate";
+import type { SearchFilters, SearchRequest } from "@astroapps/searchstate";
 import type { ColumnDef } from "@astroapps/datagrid";
 import type { FilterOption } from "./types";
 import type { FilterOptionSource, FilterOptions } from "./options";
@@ -210,10 +210,10 @@ export interface GridFilterOptions<T, D> {
 export function makeGridFilter<
   T = any,
   D = unknown,
-  S extends SearchOptions = SearchOptions,
+  S extends SearchRequest = SearchRequest,
 >(state: Control<S>, options: GridFilterOptions<T, D> = {}): GridFilter<T, D> {
   const { filterFor = defaultGetColumnFilter, deferApply = false } = options;
-  // Cast because `S` is only constrained to extend SearchOptions, so
+  // Cast because `S` is only constrained to extend SearchRequest, so
   // `fields.filters` resolves to a union that can't be indexed by an arbitrary
   // field name. The constraint guarantees the shape; this states it.
   const filters = state.fields.filters as unknown as Control<SearchFilters>;

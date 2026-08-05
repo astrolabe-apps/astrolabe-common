@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
   defaultSearchOptions,
-  type SearchOptions,
+  type SearchRequest,
 } from "@astroapps/searchstate";
 import { pageInfo, type GridData } from "../src";
 
@@ -16,7 +16,7 @@ function data(rowCount: number, total?: number): GridData<number> {
   };
 }
 
-function options(over: Partial<SearchOptions> = {}): SearchOptions {
+function options(over: Partial<SearchRequest> = {}): SearchRequest {
   return { ...defaultSearchOptions, length: 10, ...over };
 }
 

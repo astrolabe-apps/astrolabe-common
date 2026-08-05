@@ -4,7 +4,7 @@
  * Kept here rather than in each renderer so the "no total" inference is written
  * once, and so a caller building a `GridData` by hand gets it too.
  */
-import type { SearchOptions } from "@astroapps/searchstate";
+import type { SearchRequest } from "@astroapps/searchstate";
 import type { GridData } from "./types";
 
 export interface PageInfo {
@@ -30,7 +30,7 @@ export interface PageInfo {
 }
 
 export function pageInfo<T>(
-  options: SearchOptions,
+  options: SearchRequest,
   data: GridData<T>,
 ): PageInfo {
   const { offset, length } = options;

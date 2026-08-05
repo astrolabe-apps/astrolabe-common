@@ -39,7 +39,7 @@ import {
   makeFilterOptions,
   makeGridData,
   useClientData,
-  useDebouncedSearchOptions,
+  useDebouncedSearchRequest,
   useGridSearch,
   useServerData,
 } from "@astroapps/datagrid-search";
@@ -628,10 +628,10 @@ function QuerySection() {
   const styles = useStyles();
   const state = useControl<SearchOptions>(newState());
 
-  // useDebouncedSearchOptions is the piece react-query lacks: it settles the
+  // useDebouncedSearchRequest is the piece react-query lacks: it settles the
   // text field before it reaches the key, while letting sort and paging through
   // immediately. The result is a plain object, so it works as a query key.
-  const options = useDebouncedSearchOptions(state, 300);
+  const options = useDebouncedSearchRequest(state, 300);
   const query = useQuery({
     queryKey: ["files", options],
     queryFn: ({ signal }) => fakeSearch(options, signal),

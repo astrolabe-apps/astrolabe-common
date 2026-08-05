@@ -4,7 +4,7 @@ import * as React from "react";
 import { newControl, useComponentTracking } from "@react-typed-forms/core";
 import {
   defaultSearchOptions,
-  type SearchOptions,
+  type SearchRequest,
 } from "@astroapps/searchstate";
 import {
   makeGridFilter,
@@ -13,8 +13,8 @@ import {
   type FilterDraft,
 } from "../src";
 
-function stateWith(over: Partial<SearchOptions> = {}) {
-  return newControl<SearchOptions>({ ...defaultSearchOptions, ...over });
+function stateWith(over: Partial<SearchRequest> = {}) {
+  return newControl<SearchRequest>({ ...defaultSearchOptions, ...over });
 }
 
 // See data.test.tsx: ts-jest doesn't apply the control-tracking transform, so

@@ -21,7 +21,7 @@ npm i @astroapps/datagrid-search @astroapps/datagrid-fluent-ui
 ## A whole grid
 
 ```tsx
-const state = useControl<SearchOptions>({
+const state = useControl<SearchRequest>({
   ...defaultSearchOptions,
   length: 25,
 });

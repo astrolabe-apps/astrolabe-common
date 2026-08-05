@@ -11,7 +11,8 @@ export interface SearchPagingState {
   length: number;
 }
 
-export interface SearchOptions extends FilterAndSortState, SearchPagingState {}
+export interface SearchRequest extends FilterAndSortState, SearchPagingState {}
+export type SearchOptions = SearchRequest;
 
 export const defaultSearchOptions: SearchOptions = {
   filters: {},

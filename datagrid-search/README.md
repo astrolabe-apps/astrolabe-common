@@ -4,7 +4,7 @@ Headless sort, filter, paging and filter-option resolution for
 [`@astroapps/datagrid`](../astrolabe-datagrid), over
 [`@astroapps/searchstate`](../astrolabe-searchstate) state.
 
-Renders nothing. It turns a `Control<SearchOptions>` plus a set of columns into
+Renders nothing. It turns a `Control<SearchRequest>` plus a set of columns into
 the things a renderer needs — which column is sorted, what a header click should
 do, which values a filter offers, and the current page of rows.
 [`@astroapps/datagrid-fluent-ui`](../datagrid-fluent-ui) is the Fluent v9
@@ -17,7 +17,7 @@ npm i @astroapps/datagrid-search
 ## The shape of it
 
 ```tsx
-const state = useControl<SearchOptions>({
+const state = useControl<SearchRequest>({
   ...defaultSearchOptions,
   length: 25,
 });
@@ -35,14 +35,14 @@ const search = useGridSearch(state, { columns, data });
 
 Two things are worth internalising:
 
-- **One state shape, and it's yours to extend.** `Control<SearchOptions>` holds
+- **One state shape, and it's yours to extend.** `Control<SearchRequest>` holds
   query, sort, filters, offset and length. URL sync, persistence and "sort by X"
   buttons elsewhere on the page all just read and write it. Real pages usually
   have filtering that isn't a column filter — a date range, a tenant, a "show
   archived" toggle — so **put those fields in the same state**:
 
   ```tsx
-  interface FilesSearch extends SearchOptions {
+  interface FilesSearch extends SearchRequest {
     dateFrom: string | null;
     includeArchived: boolean;
   }
@@ -64,7 +64,7 @@ Two things are worth internalising:
 
 ## Sorting
 
-`SearchOptions.sort` is searchstate's `string[]`, each entry a direction
+`SearchRequest.sort` is searchstate's `string[]`, each entry a direction
 character followed by the field: `["dfile"]` is descending by `file`.
 
 ```tsx
@@ -89,7 +89,7 @@ and its absence is how a server source says "these rows are already ordered".
 
 ## Filtering
 
-`SearchOptions.filters` is `Record<string, string[]>` — filter values are always
+`SearchRequest.filters` is `Record<string, string[]>` — filter values are always
 strings. `GridFilter` is the typed accessor over it:
 
 ```tsx
@@ -237,7 +237,7 @@ const data = useServerData(state, {
 });
 ```
 
-`search` gets the state's whole value, so a state that extends `SearchOptions` with
+`search` gets the state's whole value, so a state that extends `SearchRequest` with
 its own filtering is carried through — and because it's part of the query key,
 changing it refetches with no extra wiring.
 
@@ -285,11 +285,11 @@ Return facets with the page and server-side filter options need no second reques
 
 `GridData` and `GridPage` are plain interfaces, so `useServerData` isn't the only
 way in. Anything that produces a `GridPage` drives a grid through `makeGridData`,
-and `useDebouncedSearchOptions` — the text-debounce a query library lacks — is
+and `useDebouncedSearchRequest` — the text-debounce a query library lacks — is
 usable on its own:
 
 ```tsx
-const options = useDebouncedSearchOptions(state, 300);
+const options = useDebouncedSearchRequest(state, 300);
 const query = useQuery({ queryKey: ["files", options], queryFn: ... });
 const data = makeGridData({
   page: query.data,

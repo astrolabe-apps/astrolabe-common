@@ -13,7 +13,7 @@
 import { useMemo } from "react";
 import type { Control } from "@react-typed-forms/core";
 import type { ColumnDef } from "@astroapps/datagrid";
-import type { SearchOptions } from "@astroapps/searchstate";
+import type { SearchRequest } from "@astroapps/searchstate";
 import type { GridData } from "./types";
 import { makeGridSort, type GridSort, type SortOptions } from "./sort";
 import {
@@ -53,7 +53,7 @@ export interface GridSearchOptions<T, D = unknown> {
 }
 
 export interface GridSearch<T, D = unknown> {
-  state: Control<SearchOptions>;
+  state: Control<SearchRequest>;
   columns: ColumnDef<T, D>[];
   sort: GridSort;
   filter: GridFilter<T, D>;
@@ -72,7 +72,7 @@ export interface GridSearch<T, D = unknown> {
 export function useGridSearch<
   T,
   D = unknown,
-  S extends SearchOptions = SearchOptions,
+  S extends SearchRequest = SearchRequest,
 >(state: Control<S>, options: GridSearchOptions<T, D>): GridSearch<T, D> {
   const {
     columns,
@@ -96,11 +96,11 @@ export function useGridSearch<
   const filter = makeGridFilter<T, D, S>(state, { filterFor, deferApply });
 
   return {
-    // `S` extends SearchOptions and nothing here writes a whole value — sort,
+    // `S` extends SearchRequest and nothing here writes a whole value — sort,
     // filter and the pager all set individual fields — so a renderer that only
-    // knows about SearchOptions can drive it safely. The cast keeps GridSearch to
+    // knows about SearchRequest can drive it safely. The cast keeps GridSearch to
     // two type parameters instead of leaking `S` into every renderer's props.
-    state: state as unknown as Control<SearchOptions>,
+    state: state as unknown as Control<SearchRequest>,
     columns,
     sort,
     filter,
@@ -114,7 +114,7 @@ export function useGridSearch<
         column,
         filter: filterFor(column),
         data,
-        state: state as unknown as Control<SearchOptions>,
+        state: state as unknown as Control<SearchRequest>,
         maxFilterOptions,
       }),
   };

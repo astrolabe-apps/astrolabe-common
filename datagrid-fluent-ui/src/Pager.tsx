@@ -8,7 +8,7 @@ import {
 } from "@fluentui/react-components";
 import { ChevronLeftRegular, ChevronRightRegular } from "@fluentui/react-icons";
 import type { Control } from "@react-typed-forms/core";
-import type { SearchOptions } from "@astroapps/searchstate";
+import type { SearchRequest } from "@astroapps/searchstate";
 import { pageInfo, type GridData } from "@astroapps/datagrid-search";
 
 const useStyles = makeStyles({
@@ -34,7 +34,7 @@ const useStyles = makeStyles({
 });
 
 export interface FluentPagerProps<T = any> {
-  state: Control<SearchOptions>;
+  state: Control<SearchRequest>;
   /** The current page, for its row count and total. */
   data: GridData<T>;
   /** Offer a page-size selector with these options. */

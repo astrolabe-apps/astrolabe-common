@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/schemas-datagrid",
+      "comment": "",
+      "type": "none"
+    }
+  ],
+  "packageName": "@astroapps/schemas-datagrid"
+}
