@@ -37,6 +37,19 @@ export interface GridSearchOptions<T, D = unknown> {
   getColumnFilter?: GetColumnFilter<T, D>;
   sort?: SortOptions;
   maxFilterOptions?: number;
+  /**
+   * Filter popups hold their selection until Apply, instead of searching on every
+   * checkbox. Applying closes the popup; closing any other way discards.
+   *
+   * Worth it against a server, where an immediate filter means a request per
+   * click — three values ticked is three searches, two of them already stale.
+   *
+   * Grid-wide on purpose: which click searches shouldn't vary between one funnel
+   * and the next. A `ColumnFilter.render` of your own is the exception, and
+   * unavoidably so — it gets `selected` and `close`, so when a selection is final
+   * is whatever it decides.
+   */
+  deferApply?: boolean;
 }
 
 export interface GridSearch<T, D = unknown> {
@@ -67,6 +80,7 @@ export function useGridSearch<
     getColumnFilter,
     sort: sortOptions,
     maxFilterOptions,
+    deferApply,
   } = options;
 
   // The one thing worth memoising: `getColumnFilter` is called per column, and a
@@ -79,7 +93,7 @@ export function useGridSearch<
 
   // Built fresh every render on purpose — neither is memoised.
   const sort = makeGridSort(state, sortOptions);
-  const filter = makeGridFilter<T, D, S>(state, { filterFor });
+  const filter = makeGridFilter<T, D, S>(state, { filterFor, deferApply });
 
   return {
     // `S` extends SearchOptions and nothing here writes a whole value — sort,

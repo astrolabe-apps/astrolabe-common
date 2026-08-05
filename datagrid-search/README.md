@@ -141,6 +141,37 @@ and, against an async source, can loop. Results are cached per column id.
 — ranges, dates, free text. **Client-side only**: a server has to implement the
 equivalent itself.
 
+The rest of `ColumnFilter` is presentation, per column: `multiple` (default true)
+for checkboxes vs radios, `searchable` for an options-search box (on past ~12
+options), and `showCounts` (default true) for the `Document (3)` counts beside
+each option. `showCounts: false` only hides a count — to avoid computing one, a
+derived source takes `counts: false`.
+
+### Applying immediately, or on Apply
+
+By default every checkbox searches. `deferApply` holds the selection in the popup
+instead and writes it when Apply is clicked, which also closes the popup:
+
+```tsx
+const search = useGridSearch(state, { columns, data, deferApply: true });
+// three values ticked = one search, not three
+```
+
+**Grid-level, not per column** — which click searches shouldn't vary between one
+funnel and the next. It lands on `search.filter.deferApply`, and `useFilterDraft`
+reads it from there: a renderer asks that hook for `values` and calls
+`toggle`/`clear`/`apply` without knowing which mode it's in.
+
+Worth it against a server, where each click would otherwise be a request, two of
+them already stale before they land. Closing the popup any other way discards —
+there's no cancel to write, because nothing was written. Clear empties the
+selection (the draft when deferred), so removing a deferred filter is Clear then
+Apply.
+
+A `ColumnFilter.render` of your own is the one exception, unavoidably: it gets the
+real `selected` control and `close`, so when a selection is final is its own call —
+which is what the range popup in the demo does by hand.
+
 ## Filter options
 
 Four source shapes, one result:
@@ -219,6 +250,11 @@ matched" — use `pageInfo(options, data)` rather than reading `total` directly,
 the uncounted case (pager shows `1-10`, infers Next from a full page) is handled
 for you.
 
+A page's `total` also accepts `null`, so a generated response type can be returned
+as-is — `SearchResults<T>`'s `int?` becomes `total: number | null`, and a null
+count means the same as an absent one. `makeGridData` folds it to `undefined`, so
+`GridData.total` still has exactly one "not counted" value.
+
 `useServerData` counts **once per search**, not once per page. `includeTotal` — the
 flag handed to `search` — is true only when there's no total for the current
 search; the total is then cached on a key that excludes `offset`/`length`/`sort`,
@@ -232,7 +268,9 @@ condition is "the search changed", not "offset is 0", so a restored URL like
   otherwise. This maps straight onto a `SearchHelper`-style endpoint, whose
   `SearchResults<T>(Total, Entries)` is a `GridPage` and whose `includeTotal` is
   exactly this flag.
-- **No count**: pass `count: false` and never return a `total`.
+- **No count**: pass `count: false`. Nothing is ever asked for and nothing is ever
+  reported — not even a total another grid sharing the key prefix cached, since a
+  grid opts out because a total would be wrong or unwanted for it.
 
 A `search` that's asked but returns no `total` is recorded as "asked, none came"
 and not retried until the search moves; an error surfaces as `GridData.error`.

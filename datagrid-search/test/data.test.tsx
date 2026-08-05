@@ -80,7 +80,10 @@ function renderData<T>(useData: () => GridData<T>) {
  * `queryFn` produces and hands to `makeGridData`. Sync, because the search itself
  * is what's under test here, not the fetching around it.
  */
-function searchPage(options: SearchOptions, rows: Row[] = allRows): GridPage<Row> {
+function searchPage(
+  options: SearchOptions,
+  rows: Row[] = allRows,
+): GridPage<Row> {
   const searched = makeClientSortAndFilter(columnSearching(columns))(
     options,
     rows,
@@ -360,6 +363,20 @@ describe("makeGridData", () => {
     expect(data.rows).toHaveLength(4);
   });
 
+  it("folds a null total into undefined", () => {
+    // A nullable count generated from a server type (`int?` → `number | null`)
+    // arrives as null, and means the same as absent — normalised here so
+    // consumers only ever test for undefined.
+    const data = makeGridData<Row>({ page: { rows: allRows, total: null } });
+    expect(data.total).toBeUndefined();
+  });
+
+  it("keeps a zero total", () => {
+    // "counted, nothing matched" survives the null folding — `?? undefined` and
+    // not `|| undefined`.
+    const data = makeGridData<Row>({ page: { rows: [], total: 0 } });
+    expect(data.total).toBe(0);
+  });
 });
 
 /** Renders `useDebouncedSearchOptions` and exposes its latest returned value. */

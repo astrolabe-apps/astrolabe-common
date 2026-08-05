@@ -174,6 +174,30 @@ describe("useServerData", () => {
     await waitFor(() => expect(asked).toEqual([false, false]));
   });
 
+  it("reports no total when count is false, even if one is cached", async () => {
+    // Two grids on the same prefix: the first counts, the second opted out. A grid
+    // opts out because a total would be wrong for it, so it must not pick up the
+    // one sitting in the cache under the same search identity.
+    const state = stateWith({ length: 2 });
+    const countedTotals: (number | undefined)[] = [];
+    const { seen } = renderServer(() => {
+      countedTotals.push(
+        useServerData(state, { queryKey: "t", search: recordingSearch([]) })
+          .total,
+      );
+      return useServerData(state, {
+        queryKey: "t",
+        count: false,
+        search: recordingSearch([]),
+      });
+    });
+    // The counting grid put a total in the cache for this search...
+    await waitFor(() => expect(countedTotals).toContain(4));
+    // ...and the one that opted out still reports none.
+    expect(seen.current.rows).toHaveLength(2);
+    expect(seen.current.total).toBeUndefined();
+  });
+
   it("does not re-ask for a total the search declined until it moves", async () => {
     // Asked, but no total came back (a count that failed or wasn't worth it). The
     // attempt is recorded, so paging doesn't re-ask; a search change does.

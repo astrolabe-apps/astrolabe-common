@@ -46,7 +46,12 @@ export interface ServerDataOptions<T, S extends SearchOptions = SearchOptions> {
   ) => Promise<GridPage<T>>;
   /** Debounce for `query` only. Defaults to 300ms; 0 disables it. */
   debounce?: number;
-  /** Count once per search. Defaults to true; false never asks for a total. */
+  /**
+   * Count once per search. Defaults to true; false never asks for a total and
+   * never reports one — including a total left in the cache by a grid that shares
+   * the key prefix. A grid opts out because a total would be wrong or unwanted for
+   * it, so borrowing another's would defeat the point.
+   */
   count?: boolean;
   /** Keep the previous page visible while refetching. Defaults to true. */
   keepPrevious?: boolean;
@@ -97,12 +102,12 @@ export function useServerData<T, S extends SearchOptions = SearchOptions>(
     queryKey: totalKey,
     queryFn: skipToken,
   }).data;
+  // Observed unconditionally (it's a hook) but only reported when counting is on.
+  const total =
+    count && typeof cachedTotal === "number" ? cachedTotal : undefined;
 
   return makeGridData({
-    page: page.data && {
-      ...page.data,
-      total: typeof cachedTotal === "number" ? cachedTotal : undefined,
-    },
+    page: page.data && { ...page.data, total },
     loading: page.isFetching,
     error: page.error ?? undefined,
     reload: () => {

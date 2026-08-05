@@ -26,8 +26,13 @@ export interface GridPage<T> {
    * pages without knowing where the end is — see `pageInfo`. The README's
    * react-query recipe shows how to count once per search (not on every page) by
    * caching the total on a key that excludes paging.
+   *
+   * `null` counts as absent, so a response type generated from a nullable field —
+   * `SearchResults<T>`'s `int?` comes out of NSwag as `total: number | null` —
+   * can be handed over as-is. `makeGridData` normalises it, so `GridData.total`
+   * keeps a single "not counted" value.
    */
-  total?: number;
+  total?: number | null;
   /**
    * Per-field filter options returned alongside the page. Most search APIs can
    * produce these, which makes server-side filter options free: no second

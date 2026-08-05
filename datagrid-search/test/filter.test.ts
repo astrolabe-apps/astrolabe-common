@@ -12,6 +12,7 @@ import {
   defaultGetColumnFilter,
   filterFieldOf,
   makeGridFilter,
+  toggledValues,
   type ColumnFilter,
   type GetColumnFilter,
 } from "../src";
@@ -89,6 +90,25 @@ describe("columnFilterResolver", () => {
   });
 });
 
+describe("toggledValues", () => {
+  it("adds and removes in a multi-select", () => {
+    expect(toggledValues(["doc"], "img", true)).toEqual(["doc", "img"]);
+    expect(toggledValues(["doc", "img"], "doc", false)).toEqual(["img"]);
+  });
+
+  it("replaces in a single-select", () => {
+    expect(toggledValues(["doc"], "img", true, false)).toEqual(["img"]);
+    expect(toggledValues(["doc"], "doc", false, false)).toEqual([]);
+  });
+
+  it("returns the same array when nothing changes", () => {
+    // Identity is the caller's cue to skip the write entirely.
+    const values = ["doc"];
+    expect(toggledValues(values, "doc", true)).toBe(values);
+    expect(toggledValues(values, "img", false)).toBe(values);
+  });
+});
+
 describe("columnMatcher", () => {
   const rows: Row[] = [
     { file: "a", kind: "doc", size: 1 },
@@ -122,6 +142,13 @@ describe("columnMatcher", () => {
 });
 
 describe("makeGridFilter", () => {
+  it("carries the grid's deferApply policy, off by default", () => {
+    expect(makeGridFilter<Row>(stateWith()).deferApply).toBe(false);
+    expect(
+      makeGridFilter<Row>(stateWith(), { deferApply: true }).deferApply,
+    ).toBe(true);
+  });
+
   it("reads selected values", () => {
     const filter = makeGridFilter<Row>(
       stateWith({ filters: { kind: ["doc"] } }),

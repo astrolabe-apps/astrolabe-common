@@ -47,6 +47,15 @@ export interface ColumnFilter<T> {
   multiple?: boolean;
   /** Show an options-search box. Defaults to on past ~12 options. */
   searchable?: boolean;
+  /**
+   * Show each option's row count beside it, when its source provided one.
+   * Defaults to true.
+   *
+   * Purely about display: options that carry no `count` show none either way, and
+   * this doesn't stop one being computed — to skip the counting itself, a derived
+   * source takes `counts: false`.
+   */
+  showCounts?: boolean;
 }
 
 /**
@@ -128,6 +137,24 @@ export function columnFilterResolver<T, D>(
 }
 
 /**
+ * One field's values after toggling one of them.
+ *
+ * Multi-select adds and removes; single-select replaces, so turning an option on
+ * drops whatever was selected before. Returns the array unchanged when the toggle
+ * asks for what's already true.
+ */
+export function toggledValues(
+  values: string[],
+  value: string,
+  on: boolean,
+  multiple = true,
+): string[] {
+  if (!multiple) return on ? [value] : [];
+  if (on === values.includes(value)) return values;
+  return on ? [...values, value] : values.filter((v) => v !== value);
+}
+
+/**
  * The row predicate for one column's selected values — its `matches` if it has
  * one, otherwise its `filterValue` against the selection.
  */
@@ -162,11 +189,22 @@ export interface GridFilter<T = any, D = unknown> {
   clear(field?: string): void;
   /** Every field with a selection, for a filter-chip bar or "clear all". */
   activeFields(): string[];
+  /**
+   * Whether a popup holds its selection until Apply rather than searching on every
+   * click — resolved from the grid's `deferApply`, false by default.
+   *
+   * Grid-wide rather than per column: which click searches is a property of the
+   * grid, and a funnel that behaves differently from the one beside it is a bug
+   * from the user's side of the screen. `useFilterDraft` reads it from here.
+   */
+  deferApply: boolean;
 }
 
 export interface GridFilterOptions<T, D> {
   /** From `columnFilterResolver`. Defaults to uncached resolution. */
   filterFor?: (column: ColumnDef<T, D>) => ColumnFilter<T> | undefined;
+  /** See `GridFilter.deferApply`. Defaults to false. */
+  deferApply?: boolean;
 }
 
 export function makeGridFilter<
@@ -174,7 +212,7 @@ export function makeGridFilter<
   D = unknown,
   S extends SearchOptions = SearchOptions,
 >(state: Control<S>, options: GridFilterOptions<T, D> = {}): GridFilter<T, D> {
-  const { filterFor = defaultGetColumnFilter } = options;
+  const { filterFor = defaultGetColumnFilter, deferApply = false } = options;
   // Cast because `S` is only constrained to extend SearchOptions, so
   // `fields.filters` resolves to a union that can't be indexed by an arbitrary
   // field name. The constraint guarantees the shape; this states it.
@@ -220,6 +258,7 @@ export function makeGridFilter<
 
   return {
     filterFor,
+    deferApply,
     isFilterable: (column) => !!filterFor(column),
     field: (column) => {
       const filter = filterFor(column);
@@ -230,11 +269,9 @@ export function makeGridFilter<
     setValues,
     toggle: (field, value, on) => {
       const existing = values(field);
-      if (on === existing.includes(value)) return;
-      setValues(
-        field,
-        on ? [...existing, value] : existing.filter((v) => v !== value),
-      );
+      const next = toggledValues(existing, value, on);
+      // Same array back means the toggle asked for what was already true.
+      if (next !== existing) setValues(field, next);
     },
     active: (field) => values(field).length > 0,
     activeFields: () =>

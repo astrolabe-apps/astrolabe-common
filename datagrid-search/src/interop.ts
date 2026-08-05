@@ -43,8 +43,10 @@ export function makeGridData<T>(o: MakeGridDataOptions<T>): GridData<T> {
   return {
     rows,
     // Passed through rather than defaulted to 0: a source that doesn't count says
-    // `undefined`, and claiming 0 would make the grid look empty to a pager.
-    total: page?.total,
+    // `undefined`, and claiming 0 would make the grid look empty to a pager. A
+    // `null` from a generated client means the same thing and is folded in here,
+    // so consumers only ever test for `undefined`.
+    total: page?.total ?? undefined,
     loading,
     error,
     reload: reload ?? (() => {}),

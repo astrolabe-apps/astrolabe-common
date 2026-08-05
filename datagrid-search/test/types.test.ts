@@ -17,7 +17,10 @@ describe("contracts", () => {
 
     const data: GridData<{ id: string }> = {
       rows: page.rows,
-      total: page.total,
+      // A page's total may be null (a generated nullable count); GridData's has
+      // one absent value, so the fold is the hand-roller's job — `makeGridData`
+      // does it for you.
+      total: page.total ?? undefined,
       loading: false,
       reload: () => {},
       rowProps: {
