@@ -29,7 +29,7 @@
     "@react-typed-forms/schemas-html": "^5.2.2",
     "@astroapps/basic-editor": "^1.0.0",
     "@astroapps/client": "^2.7.0",
-    "@astroapps/searchstate": "^2.0.0",
+    "@astroapps/searchstate": "^2.1.0",
     "clsx": "^2.1.1",
     "react": "^18.2.0 || ^19"
   },
@@ -42,7 +42,7 @@
     "@react-typed-forms/schemas-html": "^5.2.2",
     "@astroapps/basic-editor": "workspace:*",
     "@astroapps/client": "^2.7.0",
-    "@astroapps/searchstate": "^2.0.0",
+    "@astroapps/searchstate": "^2.1.0",
     "clsx": "^2.1.1",
     "react": "^18.2.0 || ^19",
     "react-dom": "^18.2.0 || ^19",

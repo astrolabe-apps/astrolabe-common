@@ -2,6 +2,21 @@
   "name": "@astroapps/schemas-datagrid",
   "entries": [
     {
+      "version": "8.2.1",
+      "tag": "@astroapps/schemas-datagrid_v8.2.1",
+      "date": "Wed, 05 Aug 2026 06:27:19 GMT",
+      "comments": {
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@astroapps/searchstate\" to `2.1.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/searchstate\" from `^2.0.0` to `2.1.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "8.2.0",
       "tag": "@astroapps/schemas-datagrid_v8.2.0",
       "date": "Fri, 08 May 2026 00:59:16 GMT",

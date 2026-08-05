@@ -1,0 +1,31 @@
+{
+  "name": "@astroapps/datagrid-fluent-ui",
+  "entries": [
+    {
+      "version": "0.1.0",
+      "tag": "@astroapps/datagrid-fluent-ui_v0.1.0",
+      "date": "Wed, 05 Aug 2026 06:27:19 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Initial release"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" to `0.1.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/searchstate\" to `2.1.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" from `^1.0.0` to `0.1.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/searchstate\" from `^2.0.0` to `2.1.0`"
+          }
+        ]
+      }
+    }
+  ]
+}

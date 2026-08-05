@@ -1,0 +1,17 @@
+{
+  "name": "@astroapps/searchstate",
+  "entries": [
+    {
+      "version": "2.1.0",
+      "tag": "@astroapps/searchstate_v2.1.0",
+      "date": "Wed, 05 Aug 2026 06:27:19 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Adjust filter type"
+          }
+        ]
+      }
+    }
+  ]
+}
