@@ -336,6 +336,32 @@ function RangePopup({ selected, values, close }: FilterPopupProps<Row>) {
 Pair it with a `matches` that interprets whatever string it wrote. The popup never
 learns that a shared filters map exists.
 
+## Shared by every renderer
+
+Three things here render nothing but exist because more than one renderer needs
+them, and each is somewhere a renderer would otherwise get it subtly wrong on its
+own.
+
+**`makeGridSelection` / `arraySelection`** — page-scoped row selection. The
+header checkbox reflects and acts on the rows currently rendered and never
+disturbs a selection made on another page; a renderer supplies only the checkbox
+column over it. Cross-page "select all N matching" is deliberately absent — it
+needs the filtered total, the live search and a way to fetch every matching id,
+at which point it isn't a renderer's business. Neither function is a hook,
+despite taking a control: they read `.value` when called, so call them during
+render.
+
+**`shouldIgnoreRowClick(event)`** — whether a click that landed on a row was
+aimed at the row. False for two cases that are easy to miss: content that owns
+its own clicks (a checkbox, a link, a `role="button"`, a label wrapping a
+control) and the click that ends a text drag. A row-click handler without this
+looks fine until someone tries to copy a cell.
+
+**`pagerVisible(options, data, { pageSizes })`** — whether a pager is worth
+rendering. One page and nowhere to go means dead prev/next chrome, *unless* the
+pager also carries a page-size selector, which is the only way back from a size
+that fits every row.
+
 ## Testing
 
 Most of the package is plain functions over controls — `makeGridSort`,

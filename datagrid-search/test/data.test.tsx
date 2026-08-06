@@ -125,7 +125,7 @@ describe("useClientData", () => {
     expect(seen.current.total).toBe(4);
   });
 
-  it("honours length by default, unlike the old FluentDataTable", async () => {
+  it("pages by length by default", async () => {
     const state = stateWith({ length: 3 });
     const { seen } = renderData(() =>
       useClientData(state, { rows: allRows, columns }),

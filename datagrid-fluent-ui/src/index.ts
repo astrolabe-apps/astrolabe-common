@@ -6,13 +6,16 @@ export {
   type FluentDataGridStyleOptions,
   type FluentDataGridStyles,
 } from "./styles";
+// Selection is renderer-agnostic and lives in datagrid-search; re-exported here
+// so a caller styling a grid needs one import. The Fluent half is
+// `fluentSelectionColumn`.
 export {
   arraySelection,
   makeGridSelection,
   type ArraySelectionOptions,
   type ControlSelectionOptions,
   type GridSelection,
-} from "./selection";
+} from "@astroapps/datagrid-search";
 export {
   fluentSelectionColumn,
   type FluentSelectionColumnOptions,

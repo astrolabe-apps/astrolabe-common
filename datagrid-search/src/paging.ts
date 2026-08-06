@@ -45,3 +45,28 @@ export function pageInfo<T>(
     totalUnknown: total === undefined,
   };
 }
+
+export interface PagerVisibleOptions {
+  /** The page sizes the pager would offer, if any. */
+  pageSizes?: number[];
+}
+
+/**
+ * Whether a pager is worth rendering at all.
+ *
+ * One page and nowhere to go means the prev/next buttons would be permanent dead
+ * chrome — *unless* the pager also carries a page-size selector, which is the
+ * only way back from a size that fits every row. Hiding it there is a one-way
+ * door: pick 100, or filter down to three rows, and the control that would undo
+ * it has gone with the pager.
+ *
+ * Shared so each renderer's pager can't get this wrong on its own.
+ */
+export function pagerVisible<T>(
+  options: SearchRequest,
+  data: GridData<T>,
+  { pageSizes }: PagerVisibleOptions = {},
+): boolean {
+  const { hasPrevious, hasMore } = pageInfo(options, data);
+  return hasPrevious || hasMore || !!pageSizes?.length;
+}

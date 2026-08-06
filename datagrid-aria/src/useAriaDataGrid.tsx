@@ -3,7 +3,8 @@
  *
  * Everything here is derived from a `GridSearch` — the composition holds no state
  * and makes no decisions about searching, which is what keeps the renderer
- * swappable.
+ * swappable. Same shape as `useFluentDataGrid`, so a composed grid can switch
+ * renderers by changing one call.
  */
 import React, { type Key } from "react";
 import { RenderControl } from "@react-typed-forms/core";
@@ -16,32 +17,29 @@ import type {
 import { columnDefinitions } from "@astroapps/datagrid";
 import type { GridSearch, GridSelection } from "@astroapps/datagrid-search";
 import {
-  useFluentDataGridStyles,
-  type FluentDataGridParts,
-  type FluentDataGridStyleOptions,
+  ariaDataGridClasses,
+  type AriaDataGridParts,
+  type AriaDataGridStyleOptions,
 } from "./styles";
 import {
-  fluentSelectionColumn,
-  type FluentSelectionColumnOptions,
+  ariaSelectionColumn,
+  type AriaSelectionColumnOptions,
 } from "./selectionColumn";
-import {
-  fluentHeaderContent,
-  type FluentHeaderContentOptions,
-} from "./HeaderCell";
-import { fluentRowWrapper } from "./rows";
+import { ariaHeaderContent, type AriaHeaderContentOptions } from "./HeaderCell";
+import { ariaRowWrapper } from "./rows";
 
-export interface UseFluentDataGridOptions<T, D = unknown>
-  extends FluentDataGridStyleOptions, FluentHeaderContentOptions<T, D> {
+export interface UseAriaDataGridOptions<T, D = unknown>
+  extends AriaDataGridStyleOptions, AriaHeaderContentOptions<T, D> {
   /** Adds a leading checkbox column and paints selected rows. */
   selection?: GridSelection<T>;
-  selectionColumn?: FluentSelectionColumnOptions;
-  /** See `FluentRowWrapperOptions.selectOnRowClick`. Defaults to true. */
+  selectionColumn?: AriaSelectionColumnOptions;
+  /** See `AriaRowWrapperOptions.selectOnRowClick`. Defaults to true. */
   selectOnRowClick?: boolean;
   /** Row keys, so React reorders rather than rebuilds on sort. */
   rowKey?: (row: T, index: number) => Key;
 }
 
-export interface FluentDataGridBundle<T, D = unknown> {
+export interface AriaDataGridBundle<T, D = unknown> {
   /** Spread onto `<DataGrid>`: classes, header content, row and cell wrappers. */
   gridProps: DataGridClasses &
     Pick<
@@ -50,18 +48,18 @@ export interface FluentDataGridBundle<T, D = unknown> {
     >;
   /** The search's columns, with the selection column prepended when there is one. */
   columns: ColumnDef<T, D>[];
-  /** Part classes, for building custom cells that still look like Fluent's. */
-  parts: FluentDataGridParts;
+  /** Part classes, for building custom cells that match the rest of the grid. */
+  parts: AriaDataGridParts;
 }
 
 /**
- * Must be called inside a `FluentProvider`, so the theme's token custom
- * properties are in scope.
+ * Not a hook in any meaningful sense — it calls none — but named `use*` to match
+ * `useFluentDataGrid`, which has to be one.
  */
-export function useFluentDataGrid<T, D = unknown>(
+export function useAriaDataGrid<T, D = unknown>(
   search: GridSearch<T, D>,
-  options: UseFluentDataGridOptions<T, D> = {},
-): FluentDataGridBundle<T, D> {
+  options: UseAriaDataGridOptions<T, D> = {},
+): AriaDataGridBundle<T, D> {
   const {
     selection,
     selectionColumn,
@@ -69,11 +67,13 @@ export function useFluentDataGrid<T, D = unknown>(
     rowKey,
     size,
     defaultColumnTemplate,
+    classes,
     ...headerOptions
   } = options;
-  const { gridClasses, parts } = useFluentDataGridStyles({
+  const { gridClasses, parts } = ariaDataGridClasses({
     size,
     defaultColumnTemplate,
+    classes,
   });
 
   const getRow = search.data.rowProps.getBodyRow;
@@ -84,7 +84,7 @@ export function useFluentDataGrid<T, D = unknown>(
   const columns = selection
     ? ([
         ...columnDefinitions<T, D>(
-          fluentSelectionColumn(
+          ariaSelectionColumn(
             selection,
             parts,
             selectionColumn,
@@ -97,8 +97,8 @@ export function useFluentDataGrid<T, D = unknown>(
   return {
     gridProps: {
       ...gridClasses,
-      renderHeaderContent: fluentHeaderContent(search, parts, headerOptions),
-      wrapBodyRow: fluentRowWrapper<T>(
+      renderHeaderContent: ariaHeaderContent(search, parts, headerOptions),
+      wrapBodyRow: ariaRowWrapper<T>(
         { getRow, rowKey, selection, selectOnRowClick },
         parts,
       ),

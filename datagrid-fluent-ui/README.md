@@ -5,9 +5,11 @@ Styles [`@astroapps/datagrid`](../astrolabe-datagrid) to look like the
 behaviour Fluent gets from its row elements.
 
 The searching — sort, filter, paging, filter options, client vs server — belongs
-to [`@astroapps/datagrid-search`](../datagrid-search). This package renders what
-that gives it and adds no logic of its own. Read its README for how the state
-works; this one covers the Fluent side.
+to [`@astroapps/datagrid-search`](../datagrid-search), as does anything else a
+second renderer would need: row selection, and the rules for which row clicks
+count and when a pager is worth showing. This package renders what that gives it
+and adds no logic of its own. Read its README for how the state works; this one
+covers the Fluent side.
 
 Every metric here was measured against a live Fluent v9 `DataGrid` rather than
 copied from docs — see `src/app/fluentgrid/page.tsx` in the `formServer` site for
@@ -39,7 +41,7 @@ search rather than a flag:
 | Sort arrow       | the column has a `sortField`                                    |
 | Multi-sort badge | sort `mode` isn't `"single"` and more than one column is sorted |
 | Filter funnel    | the column's filter options resolve (see datagrid-search)       |
-| Pager            | there's a page before or after this one                         |
+| Pager            | there's a page before or after this one, or `pageSizes` is set   |
 | Selection column | a `selection` is passed                                         |
 
 So a grid whose columns carry none of that renders as a plain table. Grid-wide
@@ -154,23 +156,10 @@ Two structural differences from Fluent worth knowing:
 Fluent v9 ships no pagination component, so `FluentPager` is built from its
 primitives rather than matching a reference. It renders prev/next over
 `offset`/`length` with an optional page-size selector, and hides itself when
-everything fits on one page.
+everything fits on one page — unless `pageSizes` is set, since that selector is
+the only way back from a size that fits every row. Then it stays, with prev/next
+disabled.
 
 It copes with a source that doesn't count: without a total it shows `1-10` instead
 of `1-10 of 42`, and enables Next while the page comes back full. See
 `pageInfo` in datagrid-search for why counting is optional.
-
-## Migrating from the previous API
-
-| Before                                             | Now                                                                   |
-| -------------------------------------------------- | --------------------------------------------------------------------- |
-| `FluentDataTable`                                  | `FluentDataGrid` + `useClientData`                                    |
-| `FluentDataTableView`                              | `FluentDataGrid` + `useServerData`                                    |
-| `useFluentDataGrid({sort, rows, …})`               | `useFluentDataGrid(search, {…})`                                      |
-| `controlSearchStateSort(state)`                    | `useGridSearch(…).sort`                                               |
-| `controlSort` / `FluentSortState` / `columnIdSort` | removed — use `sortField`                                             |
-| `controlSelection`                                 | `makeGridSelection`                                                   |
-| `useFilterValues` prop                             | `getColumnFilter(column).options`, or the data source                 |
-| `totalRows` control + `loading` prop               | `search.data.total` / `.loading`                                      |
-| `resetPaging` (three places)                       | gone — sorting or filtering always returns to the first page          |
-| _(none)_                                           | pager, query debounce, `reload()`, `error`, server facets, multi-sort |

@@ -7,8 +7,9 @@
  * filtered total, the live search and a way to fetch every matching id, at which
  * point selection stops being a renderer concern and belongs next to `GridData`.
  *
- * Kept free of `@fluentui` imports so it can move to `@astroapps/datagrid-search`
- * if that day comes. The Fluent half is `selectionColumn.tsx`.
+ * Lives here rather than in a renderer because there is nothing to render: a
+ * `GridSelection` is state plus page arithmetic. Each renderer builds its own
+ * checkbox column over this (`fluentSelectionColumn`, `ariaSelectionColumn`).
  */
 import type { Control } from "@react-typed-forms/core";
 

@@ -25,6 +25,12 @@
  * The `deferApply` switch is the third thing worth playing with: on, the funnels
  * hold their selection and the request log stays still until Apply; off, every
  * tick is its own search and the Apply button isn't there at all.
+ *
+ * The renderer switch is the fourth. `@astroapps/datagrid-aria` renders the same
+ * `GridSearch` with tailwind classes and react-aria overlays, and the diff to swap
+ * it in is the component name — the search, the columns, the selection and the
+ * data source are all untouched, and the request log doesn't move when you flip
+ * it. A side-by-side of the two over an in-memory array is at /ariagrid.
  */
 
 import React, { useState } from "react";
@@ -41,13 +47,12 @@ import {
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Control, useControl } from "@react-typed-forms/core";
 import { columnDefinitions } from "@astroapps/datagrid";
-import {
-  FluentDataGrid,
-  makeGridSelection,
-} from "@astroapps/datagrid-fluent-ui";
+import { FluentDataGrid } from "@astroapps/datagrid-fluent-ui";
+import { AriaDataGrid } from "@astroapps/datagrid-aria";
 import {
   AsyncFilterOptions,
   GetColumnFilter,
+  makeGridSelection,
   useGridSearch,
   useServerData,
 } from "@astroapps/datagrid-search";
@@ -213,12 +218,15 @@ function CarGrid({
   state,
   count,
   deferApply,
+  aria,
   selectedIds,
   log,
 }: {
   state: Control<SearchOptions>;
   count: boolean;
   deferApply: boolean;
+  /** Render with `@astroapps/datagrid-aria` instead of the Fluent renderer. */
+  aria: boolean;
   /** Selected row ids, or undefined when selection is switched off. */
   selectedIds: Control<string[]> | undefined;
   log: Control<string[]>;
@@ -332,13 +340,29 @@ function CarGrid({
           {selectedIds && ` selected=${selectedIds.value.length}`}
         </span>
       </div>
-      <FluentDataGrid
-        search={search}
-        rowKey={carId}
-        selection={selection}
-        pageSizes={[5, 10, 25]}
-        noData="No cars — hit “Seed 40 cars”."
-      />
+      {/*
+        The two renderers take the same props, which is the whole claim: swapping
+        one for the other is this ternary and nothing else. No second request
+        either — there's one `useServerData` above, and whichever grid renders
+        reads the page it produced.
+      */}
+      {aria ? (
+        <AriaDataGrid
+          search={search}
+          rowKey={carId}
+          selection={selection}
+          pageSizes={[5, 10, 25]}
+          noData="No cars — hit “Seed 40 cars”."
+        />
+      ) : (
+        <FluentDataGrid
+          search={search}
+          rowKey={carId}
+          selection={selection}
+          pageSizes={[5, 10, 25]}
+          noData="No cars — hit “Seed 40 cars”."
+        />
+      )}
       <div className={styles.log} data-testid="cars-log">
         {log.value.map((line, i) => (
           <span key={i}>{line}</span>
@@ -356,6 +380,7 @@ function CarSearchPanel() {
   });
   const count = useControl(true);
   const deferApply = useControl(true);
+  const aria = useControl(false);
   // Above the grid, so it survives the remount the count switch forces — and so
   // "what's selected" is the page's state rather than the grid's, which is where
   // a real app would read it from for a bulk action.
@@ -397,6 +422,18 @@ function CarSearchPanel() {
       </div>
       <div className={styles.knobs}>
         <Switch
+          label="Render with datagrid-aria"
+          checked={aria.value}
+          onChange={(_, d) => (aria.value = d.checked)}
+        />
+        <span className={styles.mono}>
+          {aria.value
+            ? "tailwind classes and react-aria overlays, over the same GridSearch"
+            : "Fluent v9. The switch changes the grid component and nothing else"}
+        </span>
+      </div>
+      <div className={styles.knobs}>
+        <Switch
           label="Selectable rows"
           checked={selectable.value}
           onChange={(_, d) => {
@@ -423,6 +460,7 @@ function CarSearchPanel() {
         state={state}
         count={count.value}
         deferApply={deferApply.value}
+        aria={aria.value}
         selectedIds={selectable.value ? selectedIds : undefined}
         log={log}
       />

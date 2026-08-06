@@ -1,32 +1,15 @@
 import React, { type ReactNode } from "react";
-import {
-  Spinner,
-  makeStyles,
-  tokens,
-  typographyStyles,
-} from "@fluentui/react-components";
 import { DataGrid, type DataGridClasses } from "@astroapps/datagrid";
 import { pagerVisible, type GridSearch } from "@astroapps/datagrid-search";
 import {
-  useFluentDataGrid,
-  type UseFluentDataGridOptions,
-} from "./useFluentDataGrid";
-import { FluentPager } from "./Pager";
+  useAriaDataGrid,
+  type UseAriaDataGridOptions,
+} from "./useAriaDataGrid";
+import { AriaPager } from "./Pager";
+import { resolveIcons } from "./icons";
 
-const useStyles = makeStyles({
-  message: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: tokens.spacingHorizontalS,
-    padding: tokens.spacingVerticalXXL,
-    ...typographyStyles.body1,
-    color: tokens.colorNeutralForeground3,
-  },
-});
-
-export interface FluentDataGridProps<T, D = unknown>
-  extends UseFluentDataGridOptions<T, D>, Partial<DataGridClasses> {
+export interface AriaDataGridProps<T, D = unknown>
+  extends UseAriaDataGridOptions<T, D>, Partial<DataGridClasses> {
   search: GridSearch<T, D>;
   /** Shown in-grid when there are no rows and nothing is loading. */
   noData?: ReactNode;
@@ -45,7 +28,7 @@ export interface FluentDataGridProps<T, D = unknown>
 }
 
 /**
- * A Fluent v9-styled grid over a `GridSearch`.
+ * A tailwind-styled grid over a `GridSearch`.
  *
  * Everything it renders follows from the search: sort arrows appear for columns
  * with a `sortField`, funnels for columns whose filter options resolve, and the
@@ -55,18 +38,17 @@ export interface FluentDataGridProps<T, D = unknown>
  * Client-side or server-side is decided by which hook produced `search.data`, and
  * makes no difference here.
  *
- * Must be rendered inside a `FluentProvider`.
+ * Needs the astrolabe tailwind preset for its colours, and the package listed in
+ * the consuming app's tailwind `content` — see the README.
  */
-export function FluentDataGrid<T, D = unknown>(
-  props: FluentDataGridProps<T, D>,
-) {
+export function AriaDataGrid<T, D = unknown>(props: AriaDataGridProps<T, D>) {
   const {
     search,
     noData = "No data",
     pager = true,
     pageSizes,
-    // DataGridClasses overrides are pulled out so they can win over the Fluent
-    // defaults rather than being passed to the styles hook.
+    // DataGridClasses overrides are pulled out so they can win over the defaults
+    // rather than being passed to the class builder.
     className,
     headerCellClass,
     lastRowClass,
@@ -76,8 +58,8 @@ export function FluentDataGrid<T, D = unknown>(
     defaultColumnTemplate,
     ...gridOptions
   } = props;
-  const styles = useStyles();
-  const fluent = useFluentDataGrid(search, {
+  const icons = resolveIcons(props.icons);
+  const bundle = useAriaDataGrid(search, {
     ...gridOptions,
     defaultColumnTemplate,
   });
@@ -94,9 +76,9 @@ export function FluentDataGrid<T, D = unknown>(
   return (
     <>
       <DataGrid<T, D>
-        {...fluent.gridProps}
+        {...bundle.gridProps}
         {...classOverrides}
-        columns={fluent.columns}
+        columns={bundle.columns}
         bodyRows={data.rowProps.bodyRows}
         getBodyRow={data.rowProps.getBodyRow}
         renderExtraRows={(rowNum) =>
@@ -104,12 +86,10 @@ export function FluentDataGrid<T, D = unknown>(
             <div
               key="__empty"
               style={{ gridRow: rowNum, gridColumn: "1 / -1" }}
-              className={styles.message}
+              className={bundle.parts.message}
             >
               {data.loading ? (
-                <>
-                  <Spinner size="tiny" /> Loading
-                </>
+                <>{icons.loading} Loading</>
               ) : data.error ? (
                 "Couldn't load data"
               ) : (
@@ -129,6 +109,14 @@ export function FluentDataGrid<T, D = unknown>(
     if (pager === false) return null;
     if (pager !== true) return pager;
     if (!pagerVisible(state.value, data, { pageSizes })) return null;
-    return <FluentPager state={state} data={data} pageSizes={pageSizes} />;
+    return (
+      <AriaPager
+        state={state}
+        data={data}
+        pageSizes={pageSizes}
+        parts={bundle.parts}
+        icons={props.icons}
+      />
+    );
   }
 }

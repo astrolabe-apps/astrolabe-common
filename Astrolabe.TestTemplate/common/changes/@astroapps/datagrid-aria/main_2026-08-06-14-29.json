@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/datagrid-aria",
+      "comment": "Initial release: a tailwind-styled renderer for @astroapps/datagrid over a datagrid-search GridSearch, using react-aria-components for the filter popover, checkboxes and radios. Needs the astrolabe tailwind preset for its colours, and the package listed in the consuming app's tailwind content globs",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/datagrid-aria"
+}

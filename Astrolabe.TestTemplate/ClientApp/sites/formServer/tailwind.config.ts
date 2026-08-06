@@ -12,6 +12,7 @@ const config: Config = {
     "./**/node_modules/@astroapps/ui-tree/*.js",
     "node_modules/@astroapps/aria-datepicker/lib/*.js",
     "node_modules/@astroapps/aria-base/lib/*.js",
+    "node_modules/@astroapps/datagrid-aria/lib/*.js",
     "node_modules/@astrolabe/ui/src/*.ts*",
     "node_modules/@astrolabe/ui/src/user/*.tsx",
     "node_modules/@astrolabe/ui/src/table/*.tsx",

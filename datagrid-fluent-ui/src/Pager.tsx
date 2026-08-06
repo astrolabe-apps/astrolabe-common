@@ -37,7 +37,11 @@ export interface FluentPagerProps<T = any> {
   state: Control<SearchRequest>;
   /** The current page, for its row count and total. */
   data: GridData<T>;
-  /** Offer a page-size selector with these options. */
+  /**
+   * Offer a page-size selector with these options. `FluentDataGrid` keeps the
+   * pager visible on a single page when this is set, so a size that fits every
+   * row can still be changed back.
+   */
   pageSizes?: number[];
   /** Overrides the "1-10 of 42" text. `total` is undefined when uncounted. */
   renderRange?: (from: number, to: number, total: number | undefined) => string;

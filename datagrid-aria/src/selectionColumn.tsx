@@ -1,14 +1,12 @@
 import React from "react";
-import clsx from "clsx";
-import { Checkbox } from "@fluentui/react-components";
 import { type ColumnDefInit, defaultRenderCell } from "@astroapps/datagrid";
 import type { GridSelection } from "@astroapps/datagrid-search";
-import { fluentDataGridClassNames, type FluentDataGridParts } from "./styles";
+import { GridCheckbox } from "./Checkbox";
+import { ariaDataGridClassNames, type AriaDataGridParts } from "./styles";
 
-export interface FluentSelectionColumnOptions {
+export interface AriaSelectionColumnOptions {
   /** Column id, only matters if it would clash with a data column. */
   id?: string;
-  /** Fluent's selection column is 44px wide. */
   columnTemplate?: string;
   rowAriaLabel?: string;
   allAriaLabel?: string;
@@ -17,22 +15,22 @@ export interface FluentSelectionColumnOptions {
 }
 
 /**
- * A leading checkbox column matching Fluent's selection cell. Pass the result to
- * `columnDefinitions`, or let the composition hook prepend it.
+ * A leading checkbox column. Pass the result to `columnDefinitions`, or let
+ * `useAriaDataGrid` prepend it.
  */
-export function fluentSelectionColumn<T>(
+export function ariaSelectionColumn<T>(
   selection: GridSelection<T>,
-  parts: FluentDataGridParts,
-  options: FluentSelectionColumnOptions = {},
+  parts: AriaDataGridParts,
+  options: AriaSelectionColumnOptions = {},
 ): ColumnDefInit<T> {
   const {
-    id = "__fluentSelect",
+    id = "__ariaSelect",
     columnTemplate = "44px",
     rowAriaLabel = "Select row",
     allAriaLabel = "Select all rows on this page",
     hideSelectAll,
   } = options;
-  const names = fluentDataGridClassNames;
+  const names = ariaDataGridClassNames;
   return {
     id,
     title: "",
@@ -41,10 +39,11 @@ export function fluentSelectionColumn<T>(
     headerCellClass: names.selectionHeaderCell,
     bodyCellClass: names.selectionCell,
     render: (row) => (
-      <Checkbox
+      <GridCheckbox
         checked={selection.isSelected(row)}
-        onChange={(_, d) => selection.toggle(row, !!d.checked)}
-        aria-label={rowAriaLabel}
+        onChange={(checked) => selection.toggle(row, checked)}
+        ariaLabel={rowAriaLabel}
+        parts={parts}
       />
     ),
     // The header cell renders its own content, so it ignores whatever
@@ -52,19 +51,15 @@ export function fluentSelectionColumn<T>(
     renderHeader: (p) =>
       defaultRenderCell({
         ...p,
-        className: clsx(p.className),
         children: hideSelectAll ? null : (
-          <Checkbox
-            checked={
-              selection.allSelected
-                ? true
-                : selection.someSelected
-                  ? "mixed"
-                  : false
-            }
+          <GridCheckbox
+            checked={selection.allSelected}
+            indeterminate={selection.someSelected}
             onChange={() => selection.toggleAll()}
-            // "on this page" because that's the scope — see selection.ts.
-            aria-label={allAriaLabel}
+            // "on this page" because that's the scope — see the selection docs
+            // in datagrid-search.
+            ariaLabel={allAriaLabel}
+            parts={parts}
           />
         ),
       }),

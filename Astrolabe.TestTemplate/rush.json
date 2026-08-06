@@ -425,6 +425,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/datagrid-aria",
+      "projectFolder": "../datagrid-aria",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@astroapps/datagrid-fluent-ui",
       "projectFolder": "../datagrid-fluent-ui",
       "shouldPublish": true

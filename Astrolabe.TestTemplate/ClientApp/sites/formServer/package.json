@@ -32,6 +32,7 @@
     "@codemirror/commands": "^6.10.0",
     "@astroapps/client-nextjs": "workspace:*",
     "@astroapps/datagrid": "workspace:*",
+    "@astroapps/datagrid-aria": "workspace:*",
     "@astroapps/datagrid-fluent-ui": "workspace:*",
     "@astroapps/schemas-datagrid": "workspace:*",
     "@astroapps/schemas-signature": "workspace:*",

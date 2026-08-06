@@ -3,7 +3,7 @@ import {
   defaultSearchOptions,
   type SearchRequest,
 } from "@astroapps/searchstate";
-import { pageInfo, type GridData } from "../src";
+import { pageInfo, pagerVisible, type GridData } from "../src";
 
 function data(rowCount: number, total?: number): GridData<number> {
   const rows = Array.from({ length: rowCount }, (_, i) => i);
@@ -89,5 +89,41 @@ describe("pageInfo without a total", () => {
   it("distinguishes uncounted from counted-as-zero", () => {
     expect(pageInfo(options(), data(0)).totalUnknown).toBe(true);
     expect(pageInfo(options(), data(0, 0)).totalUnknown).toBe(false);
+  });
+});
+
+describe("pagerVisible", () => {
+  it("shows a pager when there is another page", () => {
+    expect(pagerVisible(options(), data(10, 42))).toBe(true);
+  });
+
+  it("shows a pager when there is a previous page", () => {
+    expect(pagerVisible(options({ offset: 40 }), data(2, 42))).toBe(true);
+  });
+
+  it("hides a pager for a single page", () => {
+    expect(pagerVisible(options(), data(3, 3))).toBe(false);
+  });
+
+  it("hides a pager for an empty result", () => {
+    expect(pagerVisible(options(), data(0, 0))).toBe(false);
+  });
+
+  it("keeps a single-page pager when page sizes are offered", () => {
+    // The size selector is the only way back from a size that fits every row, so
+    // hiding it here would be a one-way door.
+    expect(pagerVisible(options(), data(3, 3), { pageSizes: [10, 25] })).toBe(
+      true,
+    );
+  });
+
+  it("ignores an empty page-size list", () => {
+    expect(pagerVisible(options(), data(3, 3), { pageSizes: [] })).toBe(false);
+  });
+
+  it("follows the uncounted inference", () => {
+    // A full page might mean more rows; a partial one means it doesn't.
+    expect(pagerVisible(options(), data(10))).toBe(true);
+    expect(pagerVisible(options(), data(4))).toBe(false);
   });
 });

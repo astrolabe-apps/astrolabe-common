@@ -44,11 +44,13 @@ function Harness({
   over,
   getColumnFilter,
   pager,
+  pageSizes,
 }: {
   columns: ColumnDef<Row, unknown>[];
   over?: Partial<SearchRequest>;
   getColumnFilter?: GetColumnFilter<Row>;
   pager?: boolean;
+  pageSizes?: number[];
 }) {
   // ts-jest doesn't apply @react-typed-forms/transform, so tracking is installed
   // by hand — the same thing the transform does to the package's own sources.
@@ -65,7 +67,7 @@ function Harness({
     const search = useGridSearch(state, { columns, data, getColumnFilter });
     return (
       <FluentProvider theme={webLightTheme}>
-        <FluentDataGrid search={search} pager={pager} />
+        <FluentDataGrid search={search} pager={pager} pageSizes={pageSizes} />
       </FluentProvider>
     );
   } finally {
@@ -140,6 +142,26 @@ describe("a grid with sort and filter available", () => {
       <Harness columns={richColumns} over={{ length: 2 }} pager={false} />,
     );
     expect(screen.queryByLabelText("Next page")).toBeNull();
+  });
+
+  it("keeps the pager on a single page when page sizes are offered", () => {
+    // A size that fits every row would otherwise hide the only control that can
+    // shrink it again. Prev/next are there but dead.
+    render(<Harness columns={richColumns} pageSizes={[2, 10]} />);
+    expect(screen.getByLabelText("Rows per page")).toBeDefined();
+    expect(screen.getByLabelText("Next page").hasAttribute("disabled")).toBe(
+      true,
+    );
+    expect(
+      screen.getByLabelText("Previous page").hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
+  it("still suppresses the pager on request with page sizes offered", () => {
+    render(
+      <Harness columns={richColumns} pageSizes={[2, 10]} pager={false} />,
+    );
+    expect(screen.queryByLabelText("Rows per page")).toBeNull();
   });
 
   it("reports no data without inventing rows", () => {

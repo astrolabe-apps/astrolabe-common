@@ -5,6 +5,8 @@ export * from "./options";
 export * from "./filter";
 export * from "./interop";
 export * from "./paging";
+export * from "./selection";
+export * from "./rowClick";
 export * from "./client";
 export * from "./query";
 export * from "./useFilterOptions";

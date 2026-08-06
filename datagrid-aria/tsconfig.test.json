@@ -1,0 +1,10 @@
+{
+  "//": "Type-checks the tests too, which the build's tsconfig deliberately doesn't compile. `npm test` runs this first: babel-jest strips types without checking them, so without this step a test could pass while referring to something that doesn't typecheck.",
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "test/**/*.ts",
+    "test/**/*.tsx"
+  ]
+}

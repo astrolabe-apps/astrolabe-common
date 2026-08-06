@@ -1,12 +1,12 @@
 import React, { type Key, type ReactNode } from "react";
-import clsx from "clsx";
+import { mergeClasses } from "./mergeClasses";
 import {
   shouldIgnoreRowClick,
   type GridSelection,
 } from "@astroapps/datagrid-search";
-import { fluentDataGridClassNames, type FluentDataGridParts } from "./styles";
+import { ariaDataGridClassNames, type AriaDataGridParts } from "./styles";
 
-export interface FluentRowWrapperOptions<T> {
+export interface AriaRowWrapperOptions<T> {
   rows?: T[];
   /** Alternative to `rows`, for virtualised/lazy grids. */
   getRow?: (index: number) => T;
@@ -15,10 +15,10 @@ export interface FluentRowWrapperOptions<T> {
   /** Overrides `selection` if you track selected rows some other way. */
   isSelected?: (row: T, index: number) => boolean;
   /**
-   * Clicking anywhere on a row toggles its selection, as Fluent's own DataGrid
-   * does. On by default wherever there's a `selection`; pass false for a grid
-   * whose rows click for some other reason — drilling in, expanding — where
-   * selection should stay the checkbox's job.
+   * Clicking anywhere on a row toggles its selection. On by default wherever
+   * there's a `selection`; pass false for a grid whose rows click for some other
+   * reason — drilling in, expanding — where selection should stay the checkbox's
+   * job.
    *
    * Mouse only: the checkbox column is the keyboard path, already focusable and
    * labelled. Which clicks don't count is `shouldIgnoreRowClick`'s call.
@@ -31,14 +31,14 @@ export interface FluentRowWrapperOptions<T> {
  * `display: contents` element so hover and selection can be painted across the
  * whole row.
  *
- * The wrapper generates no box of its own — that's what keeps the cells as
- * direct grid items with their explicit grid placement — so the styles target
- * its children instead. `:hover` still works because hover applies up the DOM
+ * The wrapper generates no box of its own — that's what keeps the cells as direct
+ * grid items with their explicit grid placement — so the classes target its
+ * children with `[&>*]:`. `:hover` still works because hover applies up the DOM
  * ancestor chain regardless of `display`.
  */
-export function fluentRowWrapper<T>(
-  options: FluentRowWrapperOptions<T>,
-  parts: FluentDataGridParts,
+export function ariaRowWrapper<T>(
+  options: AriaRowWrapperOptions<T>,
+  parts: AriaDataGridParts,
 ): (rowIndex: number, render: (row: T, key: Key) => ReactNode) => ReactNode {
   const {
     rows,
@@ -59,8 +59,10 @@ export function fluentRowWrapper<T>(
       <div
         key={key}
         style={{ display: "contents" }}
-        className={clsx(
-          fluentDataGridClassNames.row,
+        // Merged, not concatenated: a selected row's hover colour has to beat the
+        // unselected one, and tailwind emits them in the losing order.
+        className={mergeClasses(
+          ariaDataGridClassNames.row,
           parts.row,
           clickToSelect && parts.rowClickable,
           selected?.(row, rowIndex) && parts.rowSelected,
