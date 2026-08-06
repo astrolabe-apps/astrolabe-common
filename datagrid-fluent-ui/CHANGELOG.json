@@ -2,6 +2,31 @@
   "name": "@astroapps/datagrid-fluent-ui",
   "entries": [
     {
+      "version": "0.2.0",
+      "tag": "@astroapps/datagrid-fluent-ui_v0.2.0",
+      "date": "Thu, 06 Aug 2026 05:52:07 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Require @astroapps/datagrid-search ^0.2.0: selection now lives there (still re-exported from here, so this package's own API is unchanged), along with the row-click and pager-visibility rules it now calls"
+          }
+        ],
+        "patch": [
+          {
+            "comment": "Fix the pager disappearing on a single page when pageSizes was set, which removed the only control that could return to a smaller page size"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" to `0.2.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" from `^0.2.0` to `0.2.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.1.0",
       "tag": "@astroapps/datagrid-fluent-ui_v0.1.0",
       "date": "Wed, 05 Aug 2026 06:27:19 GMT",

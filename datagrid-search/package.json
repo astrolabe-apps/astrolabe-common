@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/datagrid-search",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Headless sort, filter and paging for @astroapps/datagrid, over @astroapps/searchstate state",
   "type": "module",
   "main": "lib/index.cjs",

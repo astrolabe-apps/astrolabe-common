@@ -1,0 +1,25 @@
+{
+  "name": "@astroapps/datagrid-aria",
+  "entries": [
+    {
+      "version": "0.1.0",
+      "tag": "@astroapps/datagrid-aria_v0.1.0",
+      "date": "Thu, 06 Aug 2026 05:52:07 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Initial release: a tailwind-styled renderer for @astroapps/datagrid over a datagrid-search GridSearch, using react-aria-components for the filter popover, checkboxes and radios. Needs the astrolabe tailwind preset for its colours, and the package listed in the consuming app's tailwind content globs"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" to `0.2.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" from `^0.2.0` to `0.2.0`"
+          }
+        ]
+      }
+    }
+  ]
+}
