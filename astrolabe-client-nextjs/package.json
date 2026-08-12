@@ -26,7 +26,7 @@
   "peerDependencies": {
     "@astroapps/client": "^2.7.0",
     "@react-typed-forms/core": "^4.6.0",
-    "next": "^14.0.1 || ^15",
+    "next": "^14.0.1 || ^15 || ^16",
     "react": "^18.2.0 || ^19"
   },
   "scripts": {
@@ -37,7 +37,7 @@
   "devDependencies": {
     "@react-typed-forms/core": "^4.6.0",
     "@astroapps/client": "^2.7.0",
-    "next": "^14.0.1 || ^15",
+    "next": "^14.0.1 || ^15 || ^16",
     "react": "^18.2.0 || ^19",
     "@react-typed-forms/transform": "^0.2.0",
     "@babel/core": "^7.23.7",
