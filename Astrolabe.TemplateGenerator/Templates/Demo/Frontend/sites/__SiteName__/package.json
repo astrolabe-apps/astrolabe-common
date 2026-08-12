@@ -1,0 +1,52 @@
+{
+  "name": "__SiteName__",
+  "version": "0.1.0",
+  "description": "__SiteName__ front-end application",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p __SpaPort__",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+		"@astrolabe/ui": "workspace:*",
+    "@astroapps/client": "^2.5.2",
+    "@astroapps/client-nextjs": "^2.1.0",
+    "@astroapps/controls": "^1.4.0",
+    "@astroapps/schemas-editor": "^18.0.0",
+    "@astroapps/schemas-datepicker": "^9.0.0",
+    "@astroapps/schemas-datagrid": "^8.0.0",
+    "@astroapps/quill-editor": "^14.0.0",
+    "@astroapps/searchstate": "^2.0.0",
+    "@react-typed-forms/core": "^4.5.0",
+    "@react-typed-forms/schemas": "^17.0.0",
+    "@react-typed-forms/schemas-html": "^5.0.0",
+    "@radix-ui/react-popover": "1.1.15",
+    "@dnd-kit/core": "^6.0.5",
+		"react-dnd": "16.0.1",
+		"react-dnd-html5-backend": "16.0.1",
+    "@astroapps/aria-datepicker": "1.4.2",
+    "client-common": "workspace:*",
+		"flexlayout-react": "^0.8.17",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "next": "^15.0.1",
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@astroapps/swc-controls-plugin": "^1.1.1-next15-2",
+    "@react-typed-forms/transform": "0.4.0",
+    "@types/node": "^22.8.4",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "typescript": "^5.9.3",
+    "autoprefixer": "10.4.21",
+    "postcss": "^8.5.6",
+		"prettier": "^3.6.2",
+    "tailwindcss": "^3.4.1",
+		"nswag": "^14.0.7",
+    "@tailwindcss/forms": "^0.5.10"
+  }
+}
