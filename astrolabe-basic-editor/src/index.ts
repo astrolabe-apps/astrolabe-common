@@ -20,7 +20,9 @@ export {
   getBasicFieldType,
   generateFieldName,
   toCamelCase,
+  registerFieldType,
 } from "./fieldTypes";
+export type { FieldTypeConfig } from "./fieldTypes";
 export {
   readVisibilityCondition,
   writeVisibilityCondition,

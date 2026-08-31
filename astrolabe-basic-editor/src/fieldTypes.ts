@@ -17,7 +17,12 @@ export interface FieldTypeConfig {
   icon: string;
   createControl: (fieldName: string) => ControlDefinition;
   createSchemaField: (fieldName: string) => SchemaField | undefined;
+  matches?: (def: ControlDefinition) => boolean
 }
+
+const extraFieldTypes: Record<string, FieldTypeConfig> = {};
+
+export function registerFieldType(key: string, config: FieldTypeConfig) { extraFieldTypes[key] = config; }
 
 const fieldTypeConfigs: Record<BasicFieldType, FieldTypeConfig> = {
   [BasicFieldType.TextInput]: {
@@ -129,12 +134,12 @@ const fieldTypeConfigs: Record<BasicFieldType, FieldTypeConfig> = {
   },
 };
 
-export function getFieldTypeConfig(type: BasicFieldType): FieldTypeConfig {
-  return fieldTypeConfigs[type];
+export function getFieldTypeConfig(type: string): FieldTypeConfig {
+  return fieldTypeConfigs[type as BasicFieldType] ?? extraFieldTypes[type];
 }
 
-export function getAllFieldTypes(): BasicFieldType[] {
-  return Object.values(BasicFieldType);
+export function getAllFieldTypes(): BasicFieldType | string[] {
+  return [...Object.values(BasicFieldType), ...Object.keys(extraFieldTypes)];
 }
 
 let fieldCounter = 0;
@@ -167,7 +172,11 @@ export function toCamelCase(title: string): string {
 
 export function getBasicFieldType(
   def: ControlDefinition,
-): BasicFieldType | undefined {
+): string | undefined {
+  for (const [key, cfg] of Object.entries(extraFieldTypes)) {
+      if (cfg.matches?.(def)) return key;
+  }
+
   if (def.type === ControlDefinitionType.Group) {
     const group = def as GroupedControlsDefinition;
     if (
