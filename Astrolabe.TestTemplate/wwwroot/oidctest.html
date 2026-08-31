@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>OIDC external logout harness</title>
+    <style>
+      body { font: 14px/1.5 system-ui, sans-serif; margin: 2rem auto; max-width: 55rem; padding: 0 1rem; }
+      h1 { font-size: 1.3rem; }
+      button { font: inherit; padding: .4rem .9rem; margin-right: .5rem; cursor: pointer; }
+      button:disabled { opacity: .5; cursor: default; }
+      pre { background: #f4f4f5; padding: .75rem; overflow-x: auto; border-radius: 4px; }
+      .log div { padding: .15rem 0; border-bottom: 1px solid #eee; }
+      .ok { color: #15803d; } .warn { color: #b45309; } .err { color: #b91c1c; }
+    </style>
+  </head>
+  <body>
+    <h1>OIDC external logout harness</h1>
+    <p>
+      Drives the full authorization code + PKCE flow against this server's OIDC provider, federating
+      to the <code>microsoft</code> external provider, then exercises RP-initiated logout.
+    </p>
+
+    <p>
+      <button id="login">1. Login via Microsoft</button>
+      <button id="refresh" disabled>2. Refresh tokens</button>
+      <button id="logout" disabled>3. Logout</button>
+      <button id="clear">Reset</button>
+    </p>
+
+    <div class="log" id="log"></div>
+    <h2 style="font-size:1rem">id_token claims</h2>
+    <pre id="claims">(none)</pre>
+
+    <script>
+      const CLIENT_ID = "test-spa";
+      const PROVIDER = "microsoft";
+      const REDIRECT_URI = location.origin + location.pathname;
+      const OIDC = location.origin + "/oidc";
+
+      const logEl = document.getElementById("log");
+      const log = (msg, cls) => {
+        const d = document.createElement("div");
+        if (cls) d.className = cls;
+        d.textContent = msg;
+        logEl.appendChild(d);
+      };
+
+      const rand = () => {
+        const b = new Uint8Array(32);
+        crypto.getRandomValues(b);
+        return [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
+      };
+
+      const b64url = (buf) =>
+        btoa(String.fromCharCode(...new Uint8Array(buf)))
+          .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+
+      const challenge = async (verifier) =>
+        b64url(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier)));
+
+      const decodeJwt = (jwt) =>
+        JSON.parse(atob(jwt.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+
+      const store = sessionStorage;
+
+      document.getElementById("clear").onclick = () => {
+        store.clear();
+        location.href = REDIRECT_URI;
+      };
+
+      document.getElementById("login").onclick = async () => {
+        const verifier = rand();
+        const state = rand();
+        store.setItem("verifier", verifier);
+        store.setItem("state", state);
+        const url =
+          `${OIDC}/authorize?client_id=${CLIENT_ID}` +
+          `&redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+          `&response_type=code&scope=${encodeURIComponent("openid profile email")}` +
+          `&state=${state}&nonce=${rand()}` +
+          `&code_challenge=${await challenge(verifier)}&code_challenge_method=S256`;
+        location.href = url;
+      };
+
+      document.getElementById("logout").onclick = () => {
+        const idToken = store.getItem("id_token");
+        const probe = "probe-" + rand().slice(0, 8);
+        store.setItem("logout_probe", probe);
+        location.href =
+          `${OIDC}/logout?id_token_hint=${encodeURIComponent(idToken)}` +
+          `&post_logout_redirect_uri=${encodeURIComponent(REDIRECT_URI)}` +
+          `&state=${probe}`;
+      };
+
+      async function postToken(params) {
+        const res = await fetch(`${OIDC}/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams(params),
+        });
+        return { ok: res.ok, json: await res.json() };
+      }
+
+      document.getElementById("refresh").onclick = async () => {
+        const oldToken = store.getItem("refresh_token");
+        log("Refreshing with the refresh_token grant…");
+        const { ok, json } = await postToken({
+          grant_type: "refresh_token",
+          refresh_token: oldToken,
+          client_id: CLIENT_ID,
+        });
+        if (!ok || json.error) {
+          log(`Refresh failed: ${json.error_description ?? json.error}`, "err");
+          return;
+        }
+        store.setItem("id_token", json.id_token);
+        store.setItem("refresh_token", json.refresh_token ?? "");
+        log("Refreshed, new tokens issued.", "ok");
+        showClaims();
+
+        // The library rotates refresh tokens, so the previous one must now be rejected.
+        const retry = await postToken({
+          grant_type: "refresh_token",
+          refresh_token: oldToken,
+          client_id: CLIENT_ID,
+        });
+        if (retry.json.error === "invalid_grant") {
+          log("Previous refresh_token correctly rejected — rotation works.", "ok");
+        } else {
+          log("Previous refresh_token was still accepted — rotation is broken.", "err");
+        }
+      };
+
+      async function exchangeCode(code) {
+        log("Exchanging authorization code for tokens…");
+        const body = new URLSearchParams({
+          grant_type: "authorization_code",
+          code,
+          redirect_uri: REDIRECT_URI,
+          client_id: CLIENT_ID,
+          code_verifier: store.getItem("verifier") ?? "",
+        });
+        const res = await fetch(`${OIDC}/token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body,
+        });
+        const json = await res.json();
+        if (!res.ok || json.error) {
+          log(`Token exchange failed: ${json.error_description ?? json.error ?? res.status}`, "err");
+          return;
+        }
+        store.setItem("id_token", json.id_token);
+        store.setItem("refresh_token", json.refresh_token ?? "");
+        log(
+          `Got tokens (access_token ${json.access_token ? "yes" : "no"}, ` +
+            `refresh_token ${json.refresh_token ? "yes" : "no"}, expires_in ${json.expires_in}s).`,
+          "ok",
+        );
+        showClaims();
+      }
+
+      function showClaims() {
+        const idToken = store.getItem("id_token");
+        if (!idToken) return;
+        const claims = decodeJwt(idToken);
+        document.getElementById("claims").textContent = JSON.stringify(claims, null, 2);
+        document.getElementById("logout").disabled = false;
+        document.getElementById("refresh").disabled = !store.getItem("refresh_token");
+        if (claims.idp) log(`id_token carries idp="${claims.idp}" — logout will call that provider.`, "ok");
+        else log('id_token has no "idp" claim — logout will stay local.', "warn");
+      }
+
+      async function onLoad() {
+        const query = new URLSearchParams(location.search);
+        const hash = new URLSearchParams(location.hash.slice(1));
+
+        // Hop 1: the authorize endpoint sent us here as the "login page".
+        const requestId = query.get("oidc_request_id");
+        if (requestId) {
+          log("Authorize request received, redirecting to the external provider…");
+          location.href =
+            `${OIDC}/external/login?provider=${PROVIDER}` +
+            `&oidc_request_id=${encodeURIComponent(requestId)}`;
+          return;
+        }
+
+        // Hop 2: back from the external callback with an authorization code in the fragment.
+        const code = hash.get("code");
+        if (code) {
+          if (hash.get("state") !== store.getItem("state")) {
+            log("State mismatch on the authorize response.", "err");
+            return;
+          }
+          history.replaceState(null, "", REDIRECT_URI);
+          await exchangeCode(code);
+          return;
+        }
+
+        // Hop 3: back from logout.
+        const probe = store.getItem("logout_probe");
+        if (probe) {
+          store.removeItem("logout_probe");
+          store.removeItem("id_token");
+          store.removeItem("refresh_token");
+          const returned = query.get("state");
+          if (returned === probe) {
+            log(`Returned from logout with state="${returned}" intact.`, "ok");
+          } else if (returned) {
+            log(`Returned from logout, but state was "${returned}" (expected "${probe}").`, "warn");
+          } else {
+            log("Returned from logout with no state parameter.", "warn");
+          }
+          history.replaceState(null, "", REDIRECT_URI);
+          return;
+        }
+
+        if (query.get("error")) {
+          log(`${query.get("error")}: ${query.get("error_description") ?? ""}`, "err");
+          return;
+        }
+
+        showClaims();
+      }
+
+      onLoad();
+    </script>
+  </body>
+</html>

@@ -9,6 +9,7 @@ import React, { FC, ReactNode, useEffect } from "react";
 import {
   AuthenticationResult,
   BrowserAuthError,
+  EndSessionRequest,
   InteractionRequiredAuthError,
   IPublicClientApplication,
   PopupRequest,
@@ -26,6 +27,12 @@ export interface MsalServiceOptions {
   silentRequest?: SilentRequest;
   popupRequest?: PopupRequest;
   redirectRequest?: RedirectRequest;
+  /**
+   * Overrides for the end session request. By default the active account and
+   * its raw id_token are sent, so the provider can identify the session being
+   * ended; pass `{ idTokenHint: undefined }` to suppress the hint.
+   */
+  logoutRequest?: EndSessionRequest;
   urlStorage?: () => LoginUrlStorage;
   getTokenFromResult?: (result: AuthenticationResult) => string;
   adjustRequest?: (req: Request) => Request;
@@ -54,6 +61,7 @@ export function useMsalSecurityService(
     defaultAfterLogin,
     silentRequest,
     getUserData,
+    logoutRequest,
   } = {
     silentRequest: options?.silentRequest ?? {
       scopes: [msal.getConfiguration().auth.clientId + "/.default"],
@@ -75,7 +83,16 @@ export function useMsalSecurityService(
     getAccessToken,
     login,
     logout: async () => {
-      await msal.logout();
+      // MSAL only sends id_token_hint when the caller supplies it, but
+      // RP-initiated logout needs it for the provider to know whose session to
+      // end — without it a federating provider cannot tell which upstream
+      // identity provider issued the session.
+      const account = msal.getActiveAccount() ?? undefined;
+      await msal.logout({
+        account,
+        idTokenHint: account?.idToken,
+        ...logoutRequest,
+      });
     },
   };
 

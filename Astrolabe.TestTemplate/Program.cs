@@ -118,11 +118,22 @@ var oidcConfig = new OidcProviderConfig
         new OidcClientConfig
         {
             ClientId = "test-spa",
-            RedirectUris = ["https://localhost:5001/"],
-            PostLogoutRedirectUris = ["https://localhost:5001/"]
+            RedirectUris =
+            [
+                "https://localhost:5001/",
+                "https://localhost:5001/oidctest.html",
+                "https://localhost:5001/oidctest"
+            ],
+            PostLogoutRedirectUris =
+            [
+                "https://localhost:5001/",
+                "https://localhost:5001/oidctest.html",
+                "https://localhost:5001/oidctest"
+            ]
         }
     ],
-    LoginPageUrl = "/locallogin",
+    // Set Oidc:LoginPageUrl to /oidctest.html to drive the flow from wwwroot/oidctest.html
+    LoginPageUrl = builder.Configuration["Oidc:LoginPageUrl"] ?? "/locallogin",
     ExternalProviders = builder.Configuration.GetSection("Oidc:ExternalProviders").Exists()
         ? builder.Configuration.GetSection("Oidc:ExternalProviders").Get<List<ExternalOidcProviderConfig>>() ?? []
         : []
@@ -145,6 +156,7 @@ else
     app.UseHttpsRedirection();
 }
 
+app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
