@@ -22,6 +22,7 @@ const routes: Record<string, RouteData<PageSecurity>> = {
     forwardAuthenticated: true,
   },
   logout: { label: "Logout", allowGuests: true },
+  oidctest: { label: "OIDC test bench", allowGuests: true },
   "": { allowGuests: true },
 };
 

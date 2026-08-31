@@ -144,7 +144,64 @@ All endpoints are mapped under the route group prefix (e.g. `/oidc`):
 | GET | `/authorize` | Authorization endpoint (redirects to login page) |
 | POST | `/authorize/complete` | Complete authorization after SPA login |
 | POST | `/token` | Token endpoint (auth code and refresh token grants) |
-| GET | `/logout` | End session (redirects to post-logout URI) |
+| GET | `/logout` | End session (optionally calls the external provider's logout, then redirects to the post-logout URI) |
+
+## Logging Out of the External Provider
+
+When a user signs in through an external provider (`/external/login`), the id_token issued by this
+provider carries an `idp` claim naming that provider. On `/logout`, the `id_token_hint` supplied by
+the client is used to read that claim and, if the provider publishes an `end_session_endpoint` in
+its discovery document, the browser is redirected there before returning to the client's
+`post_logout_redirect_uri`.
+
+**No `id_token_hint` is sent to the external provider.** Without it a provider will typically ask
+the user which account to sign out of, rather than silently ending an SSO session that other
+applications on that machine may still be relying on. Per the RP-Initiated Logout spec, `client_id`
+is sent instead, which is required when `post_logout_redirect_uri` is used without a hint.
+
+No server-side state is stored. The client's post-logout URI and `state` are encoded into the
+`state` parameter sent to the provider, which the RP-Initiated Logout spec requires the provider to
+echo back when it redirects to `/external/logout/callback`. The URI is then re-validated against the
+registered `PostLogoutRedirectUris` before the user is redirected on.
+
+This relies on the provider being spec-compliant about `state`. A provider that drops it signs the
+user out but leaves them at `/external/logout/callback` with no idea where to send them next; that
+case logs a warning.
+
+Set the log level for your endpoints class to `Debug` to see the outbound logout URL, which is the
+quickest way to check it against what the provider has registered:
+
+```json
+"Logging": { "LogLevel": { "MyApp.MyOidcEndpoints": "Debug" } }
+```
+
+If the provider has no `end_session_endpoint`, discovery is unreachable, the `id_token_hint` is
+missing or invalid, or the provider has `EnableRpInitiatedLogout = false`, logout falls back to the
+purely local behaviour of redirecting straight to the client's post-logout URI.
+
+### Provider registration
+
+`{Issuer}/external/logout/callback` must be registered with the external provider as an allowed
+post-logout redirect URI. For Entra ID (Azure AD) that means adding it to the app registration's
+**redirect URI list** — not the "Front-channel logout URL" field, which is for the opposite
+direction. If it isn't registered, the provider signs the user out but strands them on its own page
+instead of redirecting back.
+
+### Per-provider options
+
+```csharp
+new ExternalOidcProviderConfig
+{
+    Name = "microsoft",
+    Authority = "https://login.microsoftonline.com/common/v2.0",
+    ClientId = "...",
+    EnableRpInitiatedLogout = true,               // default; false keeps logout local only
+    AdditionalLogoutParams = { ["logout_hint"] = "..." },
+}
+```
+
+Note that logging out does **not** revoke outstanding refresh tokens; they remain valid until they
+expire.
 
 ## Customization
 
@@ -154,6 +211,7 @@ All endpoints are mapped under the route group prefix (e.g. `/oidc`):
 builder.Services.AddOidcEndpoints<MyOidcEndpoints>(oidcConfig, options =>
 {
     options.EnableEndSession = false;
+    options.EnableExternalLogoutCallback = false;
 });
 ```
 

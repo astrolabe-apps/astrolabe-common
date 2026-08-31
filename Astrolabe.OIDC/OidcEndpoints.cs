@@ -20,6 +20,13 @@ public record AuthorizeCompleteRequest(string OidcRequestId, string UserToken);
 public record AuthorizeCompleteResponse(string RedirectUrl);
 
 /// <summary>
+/// Return information carried across the external provider's logout redirect in the state
+/// parameter. Not signed: it is re-validated against the registered client post-logout URIs on the
+/// way back, so tampering can only select a URI that was already allowed.
+/// </summary>
+public record OidcLogoutState(string? PostLogoutRedirectUri, string? ClientState);
+
+/// <summary>
 /// Abstract base class for OIDC endpoints using Minimal APIs.
 /// Follows the same pattern as <see cref="LocalUserEndpoints{TNewUser,TUserId}"/>:
 /// override handler methods to customize business logic,
@@ -54,6 +61,9 @@ public abstract class OidcEndpoints
     protected IHttpClientFactory GetHttpClientFactory(HttpContext context) =>
         context.RequestServices.GetRequiredService<IHttpClientFactory>();
 
+    protected ILogger GetLogger(HttpContext context) =>
+        context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger(GetType());
+
     /// <summary>
     /// Maps all enabled OIDC endpoints to the route group.
     /// </summary>
@@ -80,6 +90,8 @@ public abstract class OidcEndpoints
                 MapExternalLogin(group);
             if (Options.EnableExternalCallback)
                 MapExternalCallback(group);
+            if (Options.EnableExternalLogoutCallback)
+                MapExternalLogoutCallback(group);
         }
     }
 
@@ -466,25 +478,190 @@ public abstract class OidcEndpoints
         return Results.Json(response);
     }
 
-    protected virtual IResult HandleEndSession(HttpContext context)
+    protected virtual async Task<IResult> HandleEndSession(HttpContext context)
     {
-        var postLogoutRedirectUri = context
-            .Request.Query["post_logout_redirect_uri"]
-            .FirstOrDefault();
+        var query = context.Request.Query;
+        var postLogoutRedirectUri = ValidatePostLogoutRedirectUri(
+            query["post_logout_redirect_uri"].FirstOrDefault()
+        );
+        var clientState = query["state"].FirstOrDefault();
 
-        if (!string.IsNullOrEmpty(postLogoutRedirectUri))
+        // The id_token_hint tells us which external provider (if any) the session came from.
+        var idp = ReadIdpFromIdTokenHint(query["id_token_hint"].FirstOrDefault(), context);
+        var provider = idp == null ? null : FindLogoutProvider(idp);
+        if (provider == null)
         {
-            // Validate the redirect URI belongs to a registered client
-            var isValid = Config.Clients.Any(c =>
-                c.PostLogoutRedirectUris.Contains(postLogoutRedirectUri)
-            );
-            if (isValid)
-            {
-                return Results.Redirect(postLogoutRedirectUri);
-            }
+            return LocalLogoutResult(postLogoutRedirectUri, clientState);
         }
 
-        return Results.Ok();
+        string? endSessionEndpoint;
+        try
+        {
+            var externalConfig = await GetDiscoveryCache(context)
+                .GetConfiguration(provider.Authority);
+            endSessionEndpoint = externalConfig.EndSessionEndpoint;
+        }
+        catch
+        {
+            // Discovery unavailable — a local logout is still better than an error page.
+            return LocalLogoutResult(postLogoutRedirectUri, clientState);
+        }
+
+        if (string.IsNullOrEmpty(endSessionEndpoint))
+        {
+            return LocalLogoutResult(postLogoutRedirectUri, clientState);
+        }
+
+        var logoutUrl = BuildExternalLogoutUrl(
+            provider,
+            endSessionEndpoint,
+            postLogoutRedirectUri,
+            clientState
+        );
+
+        // The post_logout_redirect_uri has to be registered with the provider or it will sign the
+        // user out and then strand them on its own page, usually without reporting an error.
+        GetLogger(context)
+            .LogDebug(
+                "Redirecting to the {Provider} logout endpoint: {LogoutUrl}",
+                provider.Name,
+                logoutUrl
+            );
+
+        return Results.Redirect(logoutUrl);
+    }
+
+    /// <summary>
+    /// Handles the redirect back from the external provider's logout endpoint.
+    /// </summary>
+    protected virtual IResult HandleExternalLogoutCallback(HttpContext context)
+    {
+        var state = DecodeLogoutState(context.Request.Query["state"].FirstOrDefault());
+        if (state == null)
+        {
+            GetLogger(context)
+                .LogWarning(
+                    "External logout callback received no usable state parameter, so the client's "
+                        + "post-logout redirect URI is unknown. The provider may not echo state back."
+                );
+        }
+
+        return LocalLogoutResult(
+            ValidatePostLogoutRedirectUri(state?.PostLogoutRedirectUri),
+            state?.ClientState
+        );
+    }
+
+    /// <summary>
+    /// Returns the URI if it is registered as a post-logout redirect URI for a client, otherwise null.
+    /// </summary>
+    protected virtual string? ValidatePostLogoutRedirectUri(string? postLogoutRedirectUri)
+    {
+        if (string.IsNullOrEmpty(postLogoutRedirectUri))
+            return null;
+        return Config.Clients.Any(c => c.PostLogoutRedirectUris.Contains(postLogoutRedirectUri))
+            ? postLogoutRedirectUri
+            : null;
+    }
+
+    /// <summary>
+    /// Finishes logout locally, redirecting to the client's post-logout URI when one was supplied.
+    /// </summary>
+    protected virtual IResult LocalLogoutResult(string? postLogoutRedirectUri, string? clientState)
+    {
+        if (string.IsNullOrEmpty(postLogoutRedirectUri))
+            return Results.Ok();
+
+        var url = string.IsNullOrEmpty(clientState)
+            ? postLogoutRedirectUri
+            : QueryHelpers.AddQueryString(postLogoutRedirectUri, "state", clientState);
+        return Results.Redirect(url);
+    }
+
+    /// <summary>
+    /// Reads the "idp" claim from an id_token issued by this provider. Lifetime is deliberately
+    /// not validated — the token is usually expired by the time the user logs out.
+    /// Returns null if the hint is missing or fails signature/issuer/audience validation.
+    /// </summary>
+    protected virtual string? ReadIdpFromIdTokenHint(string? idTokenHint, HttpContext context)
+    {
+        if (string.IsNullOrEmpty(idTokenHint))
+            return null;
+
+        try
+        {
+            var parameters = GetTokenSigner(context).GetTokenValidationParameters();
+            parameters.ValidateLifetime = false;
+
+            var handler = new JwtSecurityTokenHandler();
+            handler.InboundClaimTypeMap.Clear();
+            var principal = handler.ValidateToken(idTokenHint, parameters, out _);
+            return principal.FindFirst("idp")?.Value;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    protected virtual ExternalOidcProviderConfig? FindLogoutProvider(string providerName) =>
+        Config.ExternalProviders.FirstOrDefault(p =>
+            p.Name == providerName && p.EnableRpInitiatedLogout
+        );
+
+    /// <summary>
+    /// Builds the RP-initiated logout URL for the external provider. No id_token_hint is sent:
+    /// without it a provider prompts the user to confirm which account to sign out of, rather than
+    /// silently ending an SSO session that other applications may still be using. Per the
+    /// RP-Initiated Logout spec, client_id is required in that case when a post_logout_redirect_uri
+    /// is supplied.
+    /// </summary>
+    protected virtual string BuildExternalLogoutUrl(
+        ExternalOidcProviderConfig provider,
+        string endSessionEndpoint,
+        string? postLogoutRedirectUri,
+        string? clientState
+    )
+    {
+        var callbackUrl = $"{Config.Issuer.TrimEnd('/')}/external/logout/callback";
+        var separator = endSessionEndpoint.Contains('?') ? "&" : "?";
+        var url =
+            endSessionEndpoint
+            + separator
+            + $"client_id={Uri.EscapeDataString(provider.ClientId)}"
+            + $"&post_logout_redirect_uri={Uri.EscapeDataString(callbackUrl)}"
+            + $"&state={Uri.EscapeDataString(EncodeLogoutState(postLogoutRedirectUri, clientState))}";
+
+        foreach (var (key, value) in provider.AdditionalLogoutParams)
+        {
+            url += $"&{Uri.EscapeDataString(key)}={Uri.EscapeDataString(value)}";
+        }
+
+        return url;
+    }
+
+    protected virtual string EncodeLogoutState(
+        string? postLogoutRedirectUri,
+        string? clientState
+    ) =>
+        WebEncoders.Base64UrlEncode(
+            JsonSerializer.SerializeToUtf8Bytes(
+                new OidcLogoutState(postLogoutRedirectUri, clientState)
+            )
+        );
+
+    protected virtual OidcLogoutState? DecodeLogoutState(string? state)
+    {
+        if (string.IsNullOrEmpty(state))
+            return null;
+        try
+        {
+            return JsonSerializer.Deserialize<OidcLogoutState>(WebEncoders.Base64UrlDecode(state));
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     protected virtual IResult HandleExternalProviders(HttpContext context)
@@ -750,6 +927,14 @@ public abstract class OidcEndpoints
             );
         }
 
+        // Record which provider the session came from so the end session endpoint can call its
+        // logout. The linker may already have supplied its own idp claim; don't duplicate it.
+        var claims = localClaims.ToList();
+        if (claims.All(c => c.Type != "idp"))
+        {
+            claims.Add(new Claim("idp", externalState.ProviderName));
+        }
+
         // Retrieve the original authorize request (consume it now)
         var authorizeRequest = await store.GetAndRemoveAuthorizeRequest(
             externalState.OidcRequestId
@@ -775,7 +960,7 @@ public abstract class OidcEndpoints
             RedirectUri = authorizeRequest.RedirectUri,
             CodeChallenge = authorizeRequest.CodeChallenge,
             CodeChallengeMethod = authorizeRequest.CodeChallengeMethod,
-            Claims = localClaims,
+            Claims = claims,
             Scope = authorizeRequest.Scope,
             Nonce = authorizeRequest.Nonce,
             ExpiresAt = DateTimeOffset.UtcNow.AddSeconds(Config.AuthorizationCodeLifetimeSeconds),
@@ -868,7 +1053,10 @@ public abstract class OidcEndpoints
 
     protected virtual RouteHandlerBuilder MapEndSession(RouteGroupBuilder group) =>
         group
-            .MapGet("logout", (HttpContext context) => HandleEndSession(context))
+            .MapGet(
+                "logout",
+                (Delegate)(async (HttpContext context) => await HandleEndSession(context))
+            )
             .WithName("OidcEndSession");
 
     protected virtual RouteHandlerBuilder MapExternalProviders(RouteGroupBuilder group) =>
@@ -891,6 +1079,14 @@ public abstract class OidcEndpoints
                 (Delegate)(async (HttpContext context) => await HandleExternalCallback(context))
             )
             .WithName("OidcExternalCallback");
+
+    protected virtual RouteHandlerBuilder MapExternalLogoutCallback(RouteGroupBuilder group) =>
+        group
+            .MapGet(
+                "external/logout/callback",
+                (HttpContext context) => HandleExternalLogoutCallback(context)
+            )
+            .WithName("OidcExternalLogoutCallback");
 
     #endregion
 

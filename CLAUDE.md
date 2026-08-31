@@ -33,11 +33,17 @@ dotnet build Astrolabe.Common/Astrolabe.Common.csproj
 ```
 
 ### TypeScript/React Packages (Rush Monorepo)
-**Note:** Rush commands must be run from the `Astrolabe.TestTemplate/ClientApp` directory.
+**Note:** The Rush workspace root is `Astrolabe.TestTemplate` — that's where `rush.json` and
+`common/` (config, temp, changes) live. Rush walks up to find `rush.json`, so `rush` commands work
+from that directory or any subdirectory of it, but not from the repository root.
+
+Most of the 41 projects live at the repository root (`astrolabe-client`, `astrolabe-ui`,
+`astrolabe-storybook`, ...) and are referenced from `rush.json` by relative path. The exception is
+the demo sites under `Astrolabe.TestTemplate/ClientApp/sites/`.
 
 ```bash
-# Navigate to rush workspace
-cd Astrolabe.TestTemplate/ClientApp
+# Navigate to the rush workspace
+cd Astrolabe.TestTemplate
 
 # Build all TypeScript packages
 rush build
@@ -54,19 +60,28 @@ rush test
 # Install dependencies for all packages
 rush update
 
-# Development mode
+# Linting
+rush lint
+```
+
+`rushx` runs a package's own scripts and must be run from that package's directory, which for most
+packages is at the repository root:
+
+```bash
 cd astrolabe-storybook && rushx dev        # Next.js dev server
 cd astrolabe-storybook && rushx storybook  # Storybook on port 6007
 
-# Linting
-rush lint
+# The formServer demo site, which Astrolabe.TestTemplate proxies to in development
+cd Astrolabe.TestTemplate/ClientApp/sites/formServer && rushx dev   # Next.js on port 8000
 ```
 
 ### Key Rush Commands
 - `rush build` - Build all TypeScript packages
 - `rush test` - Run tests across all packages with coverage
 - `rush update` - Install/update dependencies for all packages
-- `rushx <command>` - Run package-specific scripts (e.g., `rushx dev`, `rushx storybook`)
+- `rush change` - Record a change file for each modified published package; they land in
+  `Astrolabe.TestTemplate/common/changes/<package>/<branch>_<timestamp>.json` and drive version bumps
+- `rushx <command>` - Run package-specific scripts from a package directory (e.g., `rushx dev`, `rushx storybook`)
 
 ## Project Structure
 

@@ -49,6 +49,19 @@ public class ExternalOidcProviderConfig
     public bool ValidateIssuer { get; set; } = true;
 
     /// <summary>
+    /// Whether the provider's own logout endpoint should be called when a user who logged in
+    /// via this provider hits the end session endpoint. Default: true.
+    /// Requires the provider's discovery document to publish an end_session_endpoint;
+    /// when it doesn't, logout falls back to a purely local logout.
+    /// </summary>
+    public bool EnableRpInitiatedLogout { get; set; } = true;
+
+    /// <summary>
+    /// Extra query parameters to append to the provider's logout URL (e.g. Azure AD's "logout_hint").
+    /// </summary>
+    public Dictionary<string, string> AdditionalLogoutParams { get; set; } = [];
+
+    /// <summary>
     /// Lifetime of external auth state in seconds for this provider, i.e. how long a user has to
     /// complete login at this provider before the callback is rejected. When not set, falls back
     /// to <see cref="OidcProviderConfig.ExternalAuthStateLifetimeSeconds"/>.

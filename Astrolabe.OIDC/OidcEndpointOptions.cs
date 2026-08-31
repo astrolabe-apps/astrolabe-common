@@ -26,4 +26,10 @@ public class OidcEndpointOptions
     /// Enable the external callback endpoint. Only takes effect when ExternalProviders is non-empty.
     /// </summary>
     public bool EnableExternalCallback { get; set; } = true;
+
+    /// <summary>
+    /// Enable the external logout callback endpoint, which the external provider redirects back to
+    /// after its own logout. Only takes effect when ExternalProviders is non-empty.
+    /// </summary>
+    public bool EnableExternalLogoutCallback { get; set; } = true;
 }
