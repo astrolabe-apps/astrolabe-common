@@ -2,6 +2,18 @@
   "name": "@astroapps/datagrid-aria",
   "entries": [
     {
+      "version": "0.2.0",
+      "tag": "@astroapps/datagrid-aria_v0.2.0",
+      "date": "Wed, 02 Sep 2026 23:57:14 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Add renderHeaderExtra to the header options: a (column, search) => ReactNode rendered after the filter control, for header content that isn't sorting or filtering"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.1.0",
       "tag": "@astroapps/datagrid-aria_v0.1.0",
       "date": "Thu, 06 Aug 2026 05:52:07 GMT",
