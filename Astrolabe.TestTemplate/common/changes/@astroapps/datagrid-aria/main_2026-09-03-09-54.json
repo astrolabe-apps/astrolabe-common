@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/datagrid-aria",
+      "comment": "Add renderHeaderExtra to the header options: a (column, search) => ReactNode rendered after the filter control, for header content that isn't sorting or filtering",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/datagrid-aria"
+}

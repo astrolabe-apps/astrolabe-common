@@ -76,6 +76,7 @@ off switches exist for the blunt cases: `sortable={false}`, `filterable={false}`
   icons={{ filter: <MyFunnel /> }}
   renderFilterPopup={(props) => <MyBody {...props} />}
   renderFilterControl={(column, search) => <MyInlineFilter />}
+  renderHeaderExtra={(column) => <ColumnInfo column={column} />}
 />
 ```
 
@@ -195,6 +196,28 @@ count; see `shouldIgnoreRowClick` in datagrid-search.
 `makeGridSelection` is re-exported from datagrid-search for convenience, along
 with `arraySelection` for plain state. Neither is a hook, despite taking a
 control — they read `.value` when called, so call them during render.
+
+## Adding to a header
+
+`renderHeaderExtra` renders after the filter funnel, for anything a column wants
+in its header that sorting and filtering don't cover:
+
+```tsx
+renderHeaderExtra={(column) =>
+  column.id === "margin" ? (
+    <InfoTip className="shrink-0" text="Gross margin, ex-GST" />
+  ) : undefined
+}
+```
+
+It is a sibling of the sort button, not a child, so it can hold interactive
+content — nesting a button inside the sort button would be invalid HTML. The sort
+button is `w-full`, so give the extra `shrink-0` to keep a long title from
+squeezing it out.
+
+To wrap the *whole* cell instead — a tooltip covering the title, arrow and funnel
+together — use the column's own `renderHeader` from `@astroapps/datagrid`, going
+through `defaultRenderCell` so the cell keeps its grid placement.
 
 ## Custom filter popups
 

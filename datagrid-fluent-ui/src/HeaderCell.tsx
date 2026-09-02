@@ -21,6 +21,17 @@ export interface FluentHeaderContentOptions<T, D = unknown> {
     column: ColumnDef<T, D>,
     search: GridSearch<T, D>,
   ) => ReactNode;
+  /**
+   * Appended after the filter control, for anything a column wants in its header
+   * that isn't sorting or filtering — an info tooltip, a units badge, a link.
+   * Return undefined for the columns that want nothing. Sits outside the sort
+   * button, so it may be interactive; give it `shrink-0` so a long title can't
+   * squeeze it away.
+   */
+  renderHeaderExtra?: (
+    column: ColumnDef<T, D>,
+    search: GridSearch<T, D>,
+  ) => ReactNode;
 }
 
 /**
@@ -39,6 +50,7 @@ export function fluentHeaderContent<T, D = unknown>(
     filterable = true,
     renderFilterPopup,
     renderFilterControl,
+    renderHeaderExtra,
   } = options;
   const names = fluentDataGridClassNames;
 
@@ -76,6 +88,7 @@ export function fluentHeaderContent<T, D = unknown>(
           )}
         </button>
         {filterable && renderFilter(column)}
+        {renderHeaderExtra?.(column, search)}
       </>
     );
   };

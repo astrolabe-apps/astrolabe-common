@@ -63,6 +63,7 @@ Must be rendered inside a `FluentProvider`.
   pageSizes={[10, 25, 50]}
   renderFilterPopup={(props) => <MyBody {...props} />}
   renderFilterControl={(column, search) => <MyInlineFilter />}
+  renderHeaderExtra={(column) => <ColumnInfo column={column} />}
 />
 ```
 
@@ -114,6 +115,27 @@ taking a control — they read `.value` when called, so call them during render.
 Cross-page "select all N matching" is deliberately not supported: it needs the
 filtered total, the live search, and a way to fetch every matching id, at which
 point selection stops being a renderer concern.
+
+## Adding to a header
+
+`renderHeaderExtra` renders after the filter funnel, for anything a column wants
+in its header that sorting and filtering don't cover:
+
+```tsx
+renderHeaderExtra={(column) =>
+  column.id === "margin" ? (
+    <InfoTip className="shrink-0" text="Gross margin, ex-GST" />
+  ) : undefined
+}
+```
+
+It is a sibling of the sort button, not a child, so it can hold interactive
+content — nesting a button inside the sort button would be invalid HTML. The sort
+button fills the cell, so an extra that must stay visible needs `flexShrink: 0`.
+
+To wrap the *whole* cell instead — a tooltip covering the title, arrow and funnel
+together — use the column's own `renderHeader` from `@astroapps/datagrid`, going
+through `defaultRenderCell` so the cell keeps its grid placement.
 
 ## Custom filter popups
 

@@ -45,12 +45,14 @@ function Harness({
   getColumnFilter,
   pager,
   pageSizes,
+  renderHeaderExtra,
 }: {
   columns: ColumnDef<Row, unknown>[];
   over?: Partial<SearchRequest>;
   getColumnFilter?: GetColumnFilter<Row>;
   pager?: boolean;
   pageSizes?: number[];
+  renderHeaderExtra?: (column: ColumnDef<Row, unknown>) => React.ReactNode;
 }) {
   // ts-jest doesn't apply @react-typed-forms/transform, so tracking is installed
   // by hand — the same thing the transform does to the package's own sources.
@@ -67,7 +69,12 @@ function Harness({
     const search = useGridSearch(state, { columns, data, getColumnFilter });
     return (
       <FluentProvider theme={webLightTheme}>
-        <FluentDataGrid search={search} pager={pager} pageSizes={pageSizes} />
+        <FluentDataGrid
+          search={search}
+          pager={pager}
+          pageSizes={pageSizes}
+          renderHeaderExtra={renderHeaderExtra}
+        />
       </FluentProvider>
     );
   } finally {
@@ -348,5 +355,45 @@ describe("a grid whose source does not count", () => {
       true,
     );
     expect(screen.getByText("3-3")).toBeDefined();
+  });
+});
+
+describe("additional header content", () => {
+  it("renders it after the filter button, inside the same header cell", () => {
+    render(
+      <Harness
+        columns={richColumns}
+        renderHeaderExtra={(column) => <span>info:{column.title}</span>}
+      />,
+    );
+    const extra = screen.getByText(/^info:Kind$/);
+    const funnel = screen.getByLabelText("Filter");
+    // Siblings, extra last: DOCUMENT_POSITION_FOLLOWING === 4.
+    expect(funnel.parentElement).toBe(extra.parentElement);
+    expect(funnel.compareDocumentPosition(extra) & 4).toBe(4);
+  });
+
+  it("renders it for a column with no filter of its own", () => {
+    render(
+      <Harness
+        columns={richColumns}
+        renderHeaderExtra={(column) => <span>info:{column.title}</span>}
+      />,
+    );
+    // File has neither sortField's funnel nor a filter — the extra still lands.
+    expect(screen.getByText(/^info:File$/)).toBeDefined();
+  });
+
+  it("skips the columns it returns nothing for", () => {
+    render(
+      <Harness
+        columns={richColumns}
+        renderHeaderExtra={(column) =>
+          column.title === "Kind" ? <span>info:Kind</span> : undefined
+        }
+      />,
+    );
+    expect(screen.queryByText(/^info:File$/)).toBeNull();
+    expect(screen.getByText(/^info:Kind$/)).toBeDefined();
   });
 });

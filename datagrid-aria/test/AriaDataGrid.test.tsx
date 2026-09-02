@@ -53,6 +53,7 @@ function Harness({
   getColumnFilter,
   pager,
   pageSizes,
+  renderHeaderExtra,
   deferApply,
   state: ownedState,
 }: {
@@ -61,6 +62,7 @@ function Harness({
   getColumnFilter?: GetColumnFilter<Row>;
   pager?: boolean;
   pageSizes?: number[];
+  renderHeaderExtra?: (column: ColumnDef<Row, unknown>) => React.ReactNode;
   deferApply?: boolean;
   /**
    * A state control owned by the test, for asserting what an interaction wrote.
@@ -89,7 +91,14 @@ function Harness({
       getColumnFilter,
       deferApply,
     });
-    return <AriaDataGrid search={search} pager={pager} pageSizes={pageSizes} />;
+    return (
+      <AriaDataGrid
+        search={search}
+        pager={pager}
+        pageSizes={pageSizes}
+        renderHeaderExtra={renderHeaderExtra}
+      />
+    );
   } finally {
     stop();
   }
@@ -180,6 +189,46 @@ describe("a grid with sort and filter available", () => {
   it("reports no data without inventing rows", () => {
     render(<Harness columns={richColumns} over={{ query: "nothing" }} />);
     expect(screen.getByText("No data")).toBeDefined();
+  });
+});
+
+describe("additional header content", () => {
+  it("renders it after the filter button, inside the same header cell", () => {
+    render(
+      <Harness
+        columns={richColumns}
+        renderHeaderExtra={(column) => <span>info:{column.title}</span>}
+      />,
+    );
+    const extra = screen.getByText(/^info:Kind$/);
+    const funnel = screen.getByLabelText("Filter");
+    // Siblings, extra last: DOCUMENT_POSITION_FOLLOWING === 4.
+    expect(funnel.parentElement).toBe(extra.parentElement);
+    expect(funnel.compareDocumentPosition(extra) & 4).toBe(4);
+  });
+
+  it("renders it for a column with no filter of its own", () => {
+    render(
+      <Harness
+        columns={richColumns}
+        renderHeaderExtra={(column) => <span>info:{column.title}</span>}
+      />,
+    );
+    // File has neither sortField's funnel nor a filter — the extra still lands.
+    expect(screen.getByText(/^info:File$/)).toBeDefined();
+  });
+
+  it("skips the columns it returns nothing for", () => {
+    render(
+      <Harness
+        columns={richColumns}
+        renderHeaderExtra={(column) =>
+          column.title === "Kind" ? <span>info:Kind</span> : undefined
+        }
+      />,
+    );
+    expect(screen.queryByText(/^info:File$/)).toBeNull();
+    expect(screen.getByText(/^info:Kind$/)).toBeDefined();
   });
 });
 

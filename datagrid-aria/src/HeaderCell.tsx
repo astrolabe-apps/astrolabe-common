@@ -21,6 +21,17 @@ export interface AriaHeaderContentOptions<T, D = unknown> {
     column: ColumnDef<T, D>,
     search: GridSearch<T, D>,
   ) => ReactNode;
+  /**
+   * Appended after the filter control, for anything a column wants in its header
+   * that isn't sorting or filtering — an info tooltip, a units badge, a link.
+   * Return undefined for the columns that want nothing. Sits outside the sort
+   * button, so it may be interactive; give it `shrink-0` so a long title can't
+   * squeeze it away.
+   */
+  renderHeaderExtra?: (
+    column: ColumnDef<T, D>,
+    search: GridSearch<T, D>,
+  ) => ReactNode;
   /** Swap any of the inline SVGs for your own icon set. */
   icons?: AriaDataGridIcons;
 }
@@ -43,6 +54,7 @@ export function ariaHeaderContent<T, D = unknown>(
     filterable = true,
     renderFilterPopup,
     renderFilterControl,
+    renderHeaderExtra,
     icons,
   } = options;
   const names = ariaDataGridClassNames;
@@ -84,6 +96,7 @@ export function ariaHeaderContent<T, D = unknown>(
           )}
         </button>
         {filterable && renderFilter(column)}
+        {renderHeaderExtra?.(column, search)}
       </>
     );
   };
