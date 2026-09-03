@@ -1,6 +1,13 @@
 # Change Log - @astroapps/datagrid-search
 
-This log was last generated on Thu, 03 Sep 2026 01:15:33 GMT and should not be manually modified.
+This log was last generated on Thu, 03 Sep 2026 07:35:03 GMT and should not be manually modified.
+
+## 0.3.0
+Thu, 03 Sep 2026 07:35:03 GMT
+
+### Minor changes
+
+- Add filterMode: "immediate" | "apply" | "excel". Excel mode opens an unfiltered column with every value ticked and a select-all, stores no filter when everything is still ticked, and refuses an empty selection (canApply), since the empty array already means unfiltered; clear() re-ticks everything in that mode. useFilterDraft gains excel, setAll, canApply and canClear, and takes the column's loaded options. deferApply is kept as the older spelling of filterMode: "apply"
 
 ## 0.2.1
 Thu, 03 Sep 2026 01:15:33 GMT

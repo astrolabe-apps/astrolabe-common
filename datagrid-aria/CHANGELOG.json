@@ -2,6 +2,26 @@
   "name": "@astroapps/datagrid-aria",
   "entries": [
     {
+      "version": "0.4.0",
+      "tag": "@astroapps/datagrid-aria_v0.4.0",
+      "date": "Thu, 03 Sep 2026 07:35:03 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Render a (Select All) row in filter popups under filterMode: \"excel\", and drive Clear and Apply from the draft's canClear/canApply so an empty excel selection can't be applied. FilterOptionList takes a selectAll prop, with a new optionSelectAll class part"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" to `0.3.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" from `^0.2.1` to `0.3.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.3.0",
       "tag": "@astroapps/datagrid-aria_v0.3.0",
       "date": "Thu, 03 Sep 2026 01:15:33 GMT",

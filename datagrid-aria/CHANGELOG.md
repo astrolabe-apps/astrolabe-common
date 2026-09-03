@@ -1,6 +1,13 @@
 # Change Log - @astroapps/datagrid-aria
 
-This log was last generated on Thu, 03 Sep 2026 01:15:33 GMT and should not be manually modified.
+This log was last generated on Thu, 03 Sep 2026 07:35:03 GMT and should not be manually modified.
+
+## 0.4.0
+Thu, 03 Sep 2026 07:35:03 GMT
+
+### Minor changes
+
+- Render a (Select All) row in filter popups under filterMode: "excel", and drive Clear and Apply from the draft's canClear/canApply so an empty excel selection can't be applied. FilterOptionList takes a selectAll prop, with a new optionSelectAll class part
 
 ## 0.3.0
 Thu, 03 Sep 2026 01:15:33 GMT
