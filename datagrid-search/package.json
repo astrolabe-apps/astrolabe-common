@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/datagrid-search",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Headless sort, filter and paging for @astroapps/datagrid, over @astroapps/searchstate state",
   "type": "module",
   "main": "lib/index.cjs",
@@ -34,7 +34,7 @@
     "test": "jest --coverage"
   },
   "peerDependencies": {
-    "@astroapps/datagrid": "^1.2.0",
+    "@astroapps/datagrid": "^1.3.0",
     "@astroapps/searchstate": "^2.1.0",
     "@react-typed-forms/core": "^4.6.0",
     "@tanstack/react-query": "^5.59.0",

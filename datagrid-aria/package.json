@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/datagrid-aria",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Style @astroapps/datagrid with tailwind, using react-aria for the overlays",
   "type": "module",
   "main": "lib/index.cjs",
@@ -38,8 +38,8 @@
     "tailwind-merge": "^3.4.0"
   },
   "peerDependencies": {
-    "@astroapps/datagrid": "^1.2.0",
-    "@astroapps/datagrid-search": "^0.2.0",
+    "@astroapps/datagrid": "^1.3.0",
+    "@astroapps/datagrid-search": "^0.2.1",
     "@astroapps/searchstate": "^2.1.0",
     "@react-typed-forms/core": "^4.6.0",
     "react": "^18.2.0 || ^19",

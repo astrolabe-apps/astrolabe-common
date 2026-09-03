@@ -1,6 +1,13 @@
 # Change Log - @astroapps/datagrid-fluent-ui
 
-This log was last generated on Wed, 02 Sep 2026 23:57:14 GMT and should not be manually modified.
+This log was last generated on Thu, 03 Sep 2026 01:15:33 GMT and should not be manually modified.
+
+## 0.4.0
+Thu, 03 Sep 2026 01:15:33 GMT
+
+### Minor changes
+
+- Emit data-row-key and data-row-index on the row wrapper, which is display: contents and so unreachable by role; rowAriaLabel on selectionColumn now also accepts (row, index) => string, so each row's checkbox can be named after the row it selects; the filter funnel's accessible name now always includes the column ("Filter (Kind)", and "Filter (Kind, filtered)" when active) rather than a bare "Filter" shared by every filterable column
 
 ## 0.3.0
 Wed, 02 Sep 2026 23:57:14 GMT

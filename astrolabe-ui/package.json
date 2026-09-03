@@ -9,7 +9,7 @@
 		"@react-typed-forms/schemas": "^18.0.1",
 		"@astroapps/client": "^2.7.0",
 		"@astroapps/client-localusers": "^1.0.0",
-		"@astroapps/datagrid": "^1.0.8"
+		"@astroapps/datagrid": "^1.3.0"
 	},
 	"dependencies": {
 		"@mui/base": "^5.0.0-beta.23",
@@ -41,7 +41,7 @@
 		"@react-typed-forms/schemas": "^18.0.1",
 		"@astroapps/client": "^2.7.0",
 		"@astroapps/client-localusers": "^1.0.0",
-		"@astroapps/datagrid": "^1.0.8",
+		"@astroapps/datagrid": "^1.3.0",
 		"typescript": "^5.6.2",
 		"@types/react": "^18.2.33",
 		"@types/shallowequal": "^1.1.2",
