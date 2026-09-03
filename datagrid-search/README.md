@@ -147,26 +147,69 @@ options), and `showCounts` (default true) for the `Document (3)` counts beside
 each option. `showCounts: false` only hides a count — to avoid computing one, a
 derived source takes `counts: false`.
 
-### Applying immediately, or on Apply
+### Filter modes
 
-By default every checkbox searches. `deferApply` holds the selection in the popup
-instead and writes it when Apply is clicked, which also closes the popup:
+`filterMode` decides when a popup's selection reaches the search, and what a tick
+means. Three settings:
+
+| `filterMode`  | unfiltered shows | a click        | Apply |
+| ------------- | ---------------- | -------------- | ----- |
+| `immediate`   | nothing ticked   | searches       | —     |
+| `apply`       | nothing ticked   | edits a draft  | yes   |
+| `excel`       | everything ticked, with a select-all | edits a draft | yes |
 
 ```tsx
-const search = useGridSearch(state, { columns, data, deferApply: true });
+const search = useGridSearch(state, { columns, data, filterMode: "apply" });
 // three values ticked = one search, not three
 ```
 
-**Grid-level, not per column** — which click searches shouldn't vary between one
-funnel and the next. It lands on `search.filter.deferApply`, and `useFilterDraft`
-reads it from there: a renderer asks that hook for `values` and calls
-`toggle`/`clear`/`apply` without knowing which mode it's in.
+**Grid-level, not per column** — which click searches, and what a tick means,
+shouldn't vary between one funnel and the next. It lands on `search.filter.mode`
+(with `search.filter.deferApply` as the derived "not immediate"), and
+`useFilterDraft` reads it from there: a renderer asks that hook for `values`,
+calls `toggle`/`setAll`/`clear`/`apply`, and reads `canApply`/`canClear` for its
+buttons, without knowing which mode it's in.
 
-Worth it against a server, where each click would otherwise be a request, two of
-them already stale before they land. Closing the popup any other way discards —
-there's no cancel to write, because nothing was written. Clear empties the
-selection (the draft when deferred), so removing a deferred filter is Clear then
-Apply.
+`apply` is worth it against a server, where each click would otherwise be a
+request, two of them already stale before they land. Closing the popup any other
+way discards — there's no cancel to write, because nothing was written.
+
+`deferApply: true` is the older spelling of `filterMode: "apply"` and still
+works; `filterMode` wins if both are given.
+
+#### Excel mode
+
+`excel` is `apply` plus Excel's inversion: an unfiltered column opens with every
+value **ticked** rather than none, above a `(Select All)` row that toggles the
+lot. Under an active options-search the select-all covers the matches, as Excel's
+does.
+
+The storage doesn't change — an absent key still means unfiltered — so this is a
+presentation layer over the same `string[]`:
+
+| applied     | opens as             | Apply writes                |
+| ----------- | -------------------- | --------------------------- |
+| absent      | everything ticked    | nothing, if still everything |
+| `["doc"]`   | just `doc` ticked    | `["doc"]`                    |
+| —           | nothing ticked       | refused                      |
+
+Two consequences worth knowing:
+
+- **Applying with everything ticked clears the column.** It isn't narrowing
+  anything, so the field leaves no trace in URLs or query keys and the funnel
+  goes back to idle.
+- **Applying with nothing ticked is refused** (`canApply` is false, and the
+  renderers disable the button). The empty array is already spoken for — it's
+  what an absent filter reads as — so "match none" and "match everything" would
+  be the same stored value. Excel refuses it too. Clear is the way back out of
+  that state: in excel mode it re-ticks everything rather than emptying the
+  selection, which is the same thing said the other way round.
+
+A single-select column (`multiple: false`) keeps the plain behaviour whatever the
+grid is set to — "everything selected" isn't a state a radio group can be in.
+
+In the other modes, Clear empties the selection (the draft when deferred), so
+removing a deferred filter is Clear then Apply.
 
 A `ColumnFilter.render` of your own is the one exception, unavoidably: it gets the
 real `selected` control and `close`, so when a selection is final is its own call —

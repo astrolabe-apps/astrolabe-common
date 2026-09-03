@@ -22,9 +22,16 @@
  *   filter to Ford and the Year funnel offers Ford's years. Status skips the trip —
  *   its two values come off the generated `ItemStatus` enum.
  *
- * The `deferApply` switch is the third thing worth playing with: on, the funnels
- * hold their selection and the request log stays still until Apply; off, every
- * tick is its own search and the Apply button isn't there at all.
+ * The filter-mode radios are the third thing worth playing with. `immediate`
+ * makes every tick its own search, with no Apply button at all; `apply` holds the
+ * selection and the request log stays still until Apply; `excel` defers too, but
+ * opens an unfiltered column with every value *ticked* under a `(Select All)`,
+ * the way Excel's AutoFilter does. That last one is worth watching against a
+ * server: untick one value and Apply and the request carries the rest, but
+ * re-tick everything and Apply and the field vanishes from the request entirely
+ * — everything selected isn't a filter. Apply is disabled with nothing ticked,
+ * because "match none" and "unfiltered" would be the same empty array on the
+ * wire.
  *
  * The renderer switch is the fourth. `@astroapps/datagrid-aria` renders the same
  * `GridSearch` with tailwind classes and react-aria overlays, and the diff to swap
@@ -37,6 +44,8 @@ import React, { useState } from "react";
 import {
   Button,
   FluentProvider,
+  Radio,
+  RadioGroup,
   SearchBox,
   Switch,
   makeStyles,
@@ -51,6 +60,7 @@ import { FluentDataGrid } from "@astroapps/datagrid-fluent-ui";
 import { AriaDataGrid } from "@astroapps/datagrid-aria";
 import {
   AsyncFilterOptions,
+  FilterMode,
   GetColumnFilter,
   makeGridSelection,
   useGridSearch,
@@ -217,14 +227,14 @@ const MAX_LOG = 6;
 function CarGrid({
   state,
   count,
-  deferApply,
+  filterMode,
   aria,
   selectedIds,
   log,
 }: {
   state: Control<SearchOptions>;
   count: boolean;
-  deferApply: boolean;
+  filterMode: FilterMode;
   /** Render with `@astroapps/datagrid-aria` instead of the Fluent renderer. */
   aria: boolean;
   /** Selected row ids, or undefined when selection is switched off. */
@@ -253,15 +263,19 @@ function CarGrid({
     },
   });
   // Grid-wide, so every funnel agrees. Deferring suits an API-backed grid: an
-  // immediate filter is a request per tick, and three makes would be three
-  // searches with the first two stale before they landed. Toggle it above and
+  // immediate filter is a request per tick, and three ticks would be three
+  // searches with the first two stale before they landed. Switch modes above and
   // watch the request log — and the Apply button, which only exists when there's
   // something waiting to be applied.
+  //
+  // `excel` defers too, and is worth watching here for a reason the client-side
+  // demo can't show: applying with every value still ticked sends *no* filter for
+  // that field, so the request looks exactly as it did before the popup opened.
   const search = useGridSearch(state, {
     columns,
     data,
     getColumnFilter,
-    deferApply,
+    filterMode,
   });
 
   // Rebuilt every render on purpose — it reads the control's value when called —
@@ -379,7 +393,7 @@ function CarSearchPanel() {
     length: 10,
   });
   const count = useControl(true);
-  const deferApply = useControl(true);
+  const filterMode = useControl<FilterMode>("apply");
   const aria = useControl(false);
   // Above the grid, so it survives the remount the count switch forces — and so
   // "what's selected" is the page's state rather than the grid's, which is where
@@ -406,18 +420,24 @@ function CarSearchPanel() {
         </span>
       </div>
       <div className={styles.knobs}>
-        <Switch
-          label="Hold filters until Apply"
-          checked={deferApply.value}
+        <RadioGroup
+          layout="horizontal"
+          value={filterMode.value}
           onChange={(_, d) => {
-            deferApply.value = d.checked;
+            filterMode.value = d.value as FilterMode;
             log.value = [];
           }}
-        />
+        >
+          <Radio value="immediate" label="Filter on every tick" />
+          <Radio value="apply" label="Hold until Apply" />
+          <Radio value="excel" label="Excel-style" />
+        </RadioGroup>
         <span className={styles.mono}>
-          {deferApply.value
-            ? "one search per Apply, however many values you tick"
-            : "one search per tick, and no Apply button — the clicks have already landed"}
+          {filterMode.value === "immediate"
+            ? "one search per tick, and no Apply button — the clicks have already landed"
+            : filterMode.value === "apply"
+              ? "one search per Apply, however many values you tick"
+              : "opens all-ticked with a (Select All); apply everything and the field is sent unfiltered"}
         </span>
       </div>
       <div className={styles.knobs}>
@@ -452,14 +472,14 @@ function CarSearchPanel() {
       {/*
         Toggling `count` doesn't change the query key, so nothing would refetch on
         its own — remounting is what makes the switch observable, and it clears the
-        cached total at the same time. `deferApply` needs none of that: it's read
+        cached total at the same time. `filterMode` needs none of that: it's read
         per render, and any open popup closes when you reach for the switch.
       */}
       <CarGrid
         key={`count-${count.value}`}
         state={state}
         count={count.value}
-        deferApply={deferApply.value}
+        filterMode={filterMode.value}
         aria={aria.value}
         selectedIds={selectable.value ? selectedIds : undefined}
         log={log}

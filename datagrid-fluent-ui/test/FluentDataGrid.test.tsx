@@ -51,6 +51,7 @@ function Harness({
   pager,
   pageSizes,
   renderHeaderExtra,
+  state: ownedState,
 }: {
   columns: ColumnDef<Row, unknown>[];
   over?: Partial<SearchRequest>;
@@ -58,6 +59,13 @@ function Harness({
   pager?: boolean;
   pageSizes?: number[];
   renderHeaderExtra?: (column: ColumnDef<Row, unknown>) => React.ReactNode;
+  /**
+   * A state control owned by the test, for asserting what an interaction wrote.
+   * Without one the harness makes a fresh control per render — fine for
+   * first-render assertions, useless for writes, which would land on a control
+   * the next render throws away.
+   */
+  state?: ReturnType<typeof newControl<SearchRequest>>;
 }) {
   // ts-jest doesn't apply @react-typed-forms/transform, so tracking is installed
   // by hand — the same thing the transform does to the package's own sources.
@@ -65,13 +73,19 @@ function Harness({
   // the demo harness, which runs through the real build.
   const stop = useComponentTracking();
   try {
-    const state = newControl<SearchRequest>({
-      ...defaultSearchOptions,
-      length: 10,
-      ...over,
-    });
+    const state =
+      ownedState ??
+      newControl<SearchRequest>({
+        ...defaultSearchOptions,
+        length: 10,
+        ...over,
+      });
     const data = useClientData(state, { rows, columns, getColumnFilter });
-    const search = useGridSearch(state, { columns, data, getColumnFilter });
+    const search = useGridSearch(state, {
+      columns,
+      data,
+      getColumnFilter,
+    });
     return (
       <FluentProvider theme={webLightTheme}>
         <FluentDataGrid
@@ -436,6 +450,102 @@ describe("naming the filter buttons", () => {
     );
     expect(screen.getByLabelText("Filter (Kind, filtered)")).toBeDefined();
     expect(screen.getByLabelText("Filter (File)")).toBeDefined();
+  });
+});
+
+describe("the select-all row", () => {
+  /*
+    Excel mode's behaviour — what's ticked when nothing is filtered, what Apply
+    writes, when it's refused — lives in `useFilterDraft`, and is covered
+    end-to-end in the aria package, which drives the real popover. That isn't
+    possible here: `FluentFilterPopover`'s body calls `useControl`, and ts-jest
+    doesn't apply the tracking transform. What this package owns is the row
+    itself, so that's what's asserted.
+  */
+  const options = [{ value: "doc" }, { value: "img" }];
+
+  function renderList(selectAll?: {
+    checked: boolean;
+    indeterminate: boolean;
+    onToggle?: (on: boolean) => void;
+  }) {
+    render(
+      <FluentProvider theme={webLightTheme}>
+        <FilterOptionList
+          options={options}
+          selected={selectAll?.checked ? ["doc", "img"] : []}
+          onToggle={() => {}}
+          selectAll={
+            selectAll && { ...selectAll, onToggle: selectAll.onToggle ?? (() => {}) }
+          }
+        />
+      </FluentProvider>,
+    );
+  }
+
+  it("is absent unless asked for", () => {
+    renderList();
+    expect(screen.queryByLabelText("(Select All)")).toBeNull();
+    expect(screen.queryByText("(Select All)")).toBeNull();
+  });
+
+  it("is ticked when everything is", () => {
+    renderList({ checked: true, indeterminate: false });
+    expect(screen.getByLabelText("(Select All)")).toHaveProperty(
+      "checked",
+      true,
+    );
+  });
+
+  it("reports a partial selection as mixed", () => {
+    // A native input's `indeterminate` property, which is what Fluent sets and
+    // what assistive tech reads as "mixed".
+    renderList({ checked: false, indeterminate: true });
+    const all = screen.getByLabelText("(Select All)");
+    expect(all).toHaveProperty("checked", false);
+    expect(all).toHaveProperty("indeterminate", true);
+  });
+
+  it("reports the new state when toggled", () => {
+    const toggles: boolean[] = [];
+    renderList({
+      checked: false,
+      indeterminate: false,
+      onToggle: (on) => toggles.push(on),
+    });
+    fireEvent.click(screen.getByLabelText("(Select All)"));
+    expect(toggles).toEqual([true]);
+  });
+
+  it("ticks a mixed select-all rather than clearing it", () => {
+    // Excel's behaviour: from mixed, the click selects everything.
+    const toggles: boolean[] = [];
+    renderList({
+      checked: false,
+      indeterminate: true,
+      onToggle: (on) => toggles.push(on),
+    });
+    fireEvent.click(screen.getByLabelText("(Select All)"));
+    expect(toggles).toEqual([true]);
+  });
+
+  it("is left out of a radio group", () => {
+    render(
+      <FluentProvider theme={webLightTheme}>
+        <FilterOptionList
+          options={options}
+          selected={[]}
+          onToggle={() => {}}
+          multiple={false}
+          selectAll={{
+            checked: true,
+            indeterminate: false,
+            onToggle: () => {},
+          }}
+        />
+      </FluentProvider>,
+    );
+    expect(screen.queryByLabelText("(Select All)")).toBeNull();
   });
 });
 

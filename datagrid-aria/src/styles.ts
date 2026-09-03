@@ -89,6 +89,8 @@ export interface AriaDataGridParts {
   popoverInput: string;
   optionList: string;
   option: string;
+  /** Added to the select-all row, which sits above the values it covers. */
+  optionSelectAll: string;
   optionLabel: string;
   optionCount: string;
   pager: string;
@@ -313,6 +315,10 @@ export function ariaDataGridClasses(
       popoverButtonPrimary: part(
         clsx(
           "h-7 px-2 rounded border-0 cursor-pointer text-sm text-white bg-primary-600 hover:bg-primary-700",
+          // Apply is disabled in excel mode with nothing ticked, so it has to
+          // look it — a filled primary button that ignores clicks otherwise
+          // reads as broken. Fluent's own Button handles this for that renderer.
+          "disabled:bg-surface-200 disabled:text-surface-400 disabled:cursor-default disabled:hover:bg-surface-200",
           focusRing,
         ),
         classes.popoverButtonPrimary,
@@ -328,6 +334,10 @@ export function ariaDataGridClasses(
       option: part(
         "flex items-center gap-2 min-w-0 cursor-pointer rounded px-1 py-0.5 hover:bg-surface-50",
         classes.option,
+      ),
+      optionSelectAll: part(
+        "border-b border-surface-200 pb-1 mb-0.5 font-medium",
+        classes.optionSelectAll,
       ),
       optionLabel: part("grow truncate", classes.optionLabel),
       optionCount: part(

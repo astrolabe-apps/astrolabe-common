@@ -248,6 +248,34 @@ Two small departures from the Fluent renderer, both deliberate:
   and a listbox to pick a number out of five, and the native element is already
   keyboard- and screen-reader-correct.
 
+## Excel-mode filtering
+
+`filterMode` is a `useGridSearch` option, not a prop on this component — the
+funnels read it off the search. Set it to `"excel"` and every filter popup opens
+with each value ticked when the column is unfiltered, above a `(Select All)` row:
+
+```tsx
+const search = useGridSearch(state, { columns, data, filterMode: "excel" });
+```
+
+Applying with everything ticked stores no filter at all, so the funnel goes back
+to idle; applying with nothing ticked is refused, and the Apply button is
+disabled to say so. Clear re-ticks everything, which is the way back out of an
+empty selection. The rules, and why the empty selection can't be stored, are in
+the datagrid-search README.
+
+`FilterOptionList` takes the row as a `selectAll` prop, so a custom popup body
+can keep it:
+
+```tsx
+<FilterOptionList
+  options={options}
+  selected={values}
+  onToggle={draft.toggle}
+  selectAll={{ checked, indeterminate, onToggle }}
+/>
+```
+
 ## Pager
 
 Prev/next over `offset`/`length` with an optional page-size selector, hidden when

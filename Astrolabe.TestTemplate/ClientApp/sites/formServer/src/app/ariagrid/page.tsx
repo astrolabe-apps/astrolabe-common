@@ -21,14 +21,15 @@ import {
   makeGridSelection,
   useClientData,
   useGridSearch,
+  type FilterMode,
   type GetColumnFilter,
 } from "@astroapps/datagrid-search";
-import {
-  AriaDataGrid,
-  type AriaDataGridSize,
-} from "@astroapps/datagrid-aria";
+import { AriaDataGrid, type AriaDataGridSize } from "@astroapps/datagrid-aria";
 import { FluentDataGrid } from "@astroapps/datagrid-fluent-ui";
-import { defaultSearchOptions, type SearchRequest } from "@astroapps/searchstate";
+import {
+  defaultSearchOptions,
+  type SearchRequest,
+} from "@astroapps/searchstate";
 
 interface FileRow {
   id: string;
@@ -86,7 +87,7 @@ export default function AriaGridPage() {
   const [size, setSize] = useState<AriaDataGridSize>("md");
   const [selectable, setSelectable] = useState(true);
   const [multiSort, setMultiSort] = useState(false);
-  const [deferApply, setDeferApply] = useState(false);
+  const [filterMode, setFilterMode] = useState<FilterMode>("immediate");
   const [branded, setBranded] = useState(false);
 
   const state = useControl<SearchRequest>({
@@ -100,7 +101,7 @@ export default function AriaGridPage() {
     columns,
     data,
     getColumnFilter,
-    deferApply,
+    filterMode,
     sort: { mode: multiSort ? "shift" : "single" },
   });
 
@@ -148,9 +149,18 @@ export default function AriaGridPage() {
         <Toggle checked={multiSort} onChange={setMultiSort}>
           Multi-sort (shift-click)
         </Toggle>
-        <Toggle checked={deferApply} onChange={setDeferApply}>
-          Filters apply on Apply
-        </Toggle>
+        <label className="flex items-center gap-2">
+          Filters
+          <select
+            className="h-7 appearance-auto rounded border border-surface-300 bg-white bg-none pl-2 pr-1 py-0"
+            value={filterMode}
+            onChange={(e) => setFilterMode(e.target.value as FilterMode)}
+          >
+            <option value="immediate">immediate</option>
+            <option value="apply">apply</option>
+            <option value="excel">excel</option>
+          </select>
+        </label>
         <Toggle checked={branded} onChange={setBranded}>
           Class overrides
         </Toggle>
@@ -189,7 +199,13 @@ export default function AriaGridPage() {
           <FluentProvider theme={webLightTheme}>
             <FluentDataGrid
               search={search}
-              size={size === "md" ? "medium" : size === "sm" ? "small" : "extra-small"}
+              size={
+                size === "md"
+                  ? "medium"
+                  : size === "sm"
+                    ? "small"
+                    : "extra-small"
+              }
               selection={selection}
               rowKey={(r) => r.id}
               pageSizes={[5, 10, 25]}
@@ -206,13 +222,27 @@ export default function AriaGridPage() {
           <li>
             <strong>Author</strong> has a searchable popup with counts;{" "}
             <strong>Category</strong> has a plain one;{" "}
-            <strong>Size (MB)</strong> has no <code>filterField</code>, so it has
-            no funnel at all.
+            <strong>Size (MB)</strong> has no <code>filterField</code>, so it
+            has no funnel at all.
           </li>
           <li>
-            With <em>apply on Apply</em> on, ticking values writes nothing until
-            you press Apply — the immediate mode has no Apply button, because
+            <strong>Filters: apply</strong> holds ticks in the popup until you
+            press Apply — <em>immediate</em> has no Apply button at all, because
             every click has already landed.
+          </li>
+          <li>
+            <strong>Filters: excel</strong> inverts the display the way
+            Excel&apos;s AutoFilter does: an unfiltered column opens with every
+            value <em>ticked</em>, under a <code>(Select All)</code> row. Untick
+            one and Apply — the funnel lights up. Re-tick everything and Apply,
+            and the column stores no filter at all, so the funnel goes back to
+            idle.
+          </li>
+          <li>
+            In excel mode Apply is <em>disabled</em> with nothing ticked: the
+            stored value for &ldquo;match none&rdquo; would be the same empty
+            array that means &ldquo;unfiltered&rdquo;. Clear is the way back —
+            there it re-ticks everything rather than emptying the list.
           </li>
           <li>
             Clear is present but disabled when there's nothing to clear, so the

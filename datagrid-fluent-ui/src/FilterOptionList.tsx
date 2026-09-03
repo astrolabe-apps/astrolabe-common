@@ -28,7 +28,23 @@ const useStyles = makeStyles({
     color: tokens.colorNeutralForeground3,
     flexShrink: 0,
   },
+  selectAll: {
+    borderBottom: `${tokens.strokeWidthThin} solid ${tokens.colorNeutralStroke2}`,
+    paddingBottom: tokens.spacingVerticalXXS,
+    marginBottom: tokens.spacingVerticalXXS,
+  },
 });
+
+/** A select-all row above the options. Multi-select only. */
+export interface SelectAllProps {
+  /** Every option is ticked. */
+  checked: boolean;
+  /** Some but not all — drawn as a dash, announced as mixed. */
+  indeterminate: boolean;
+  onToggle(on: boolean): void;
+  /** Defaults to "(Select All)", as Excel labels it. */
+  label?: string;
+}
 
 export interface FilterOptionListProps {
   options: FilterOption[];
@@ -39,6 +55,11 @@ export interface FilterOptionListProps {
   multiple?: boolean;
   /** Show per-option row counts when the source provided them. Default true. */
   showCounts?: boolean;
+  /**
+   * Renders a select-all as the first row. Ignored for a radio group, where
+   * "all" isn't a state the control can be in.
+   */
+  selectAll?: SelectAllProps;
 }
 
 /**
@@ -53,6 +74,7 @@ export function FilterOptionList({
   onToggle,
   multiple = true,
   showCounts = true,
+  selectAll,
 }: FilterOptionListProps) {
   const styles = useStyles();
 
@@ -77,6 +99,19 @@ export function FilterOptionList({
 
   return (
     <div className={styles.list}>
+      {selectAll && (
+        // A row like any other, so it scrolls with the list as Excel's does. Its
+        // state is computed over whatever options are visible, so a select-all
+        // under an active search covers the matches rather than the whole list.
+        <Checkbox
+          className={styles.selectAll}
+          checked={
+            selectAll.checked ? true : selectAll.indeterminate ? "mixed" : false
+          }
+          onChange={(_, d) => selectAll.onToggle(!!d.checked)}
+          label={selectAll.label ?? "(Select All)"}
+        />
+      )}
       {options.map((option) => (
         <Checkbox
           key={option.value}

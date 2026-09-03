@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/datagrid-search",
+      "comment": "Add filterMode: \"immediate\" | \"apply\" | \"excel\". Excel mode opens an unfiltered column with every value ticked and a select-all, stores no filter when everything is still ticked, and refuses an empty selection (canApply), since the empty array already means unfiltered; clear() re-ticks everything in that mode. useFilterDraft gains excel, setAll, canApply and canClear, and takes the column's loaded options. deferApply is kept as the older spelling of filterMode: \"apply\"",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/datagrid-search"
+}

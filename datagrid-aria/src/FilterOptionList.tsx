@@ -5,6 +5,17 @@ import type { FilterOption } from "@astroapps/datagrid-search";
 import { GridCheckbox } from "./Checkbox";
 import type { AriaDataGridParts } from "./styles";
 
+/** A select-all row above the options. Multi-select only. */
+export interface SelectAllProps {
+  /** Every option is ticked. */
+  checked: boolean;
+  /** Some but not all — drawn as a dash, announced as mixed. */
+  indeterminate: boolean;
+  onToggle(on: boolean): void;
+  /** Defaults to "(Select All)", as Excel labels it. */
+  label?: string;
+}
+
 export interface FilterOptionListProps {
   options: FilterOption[];
   /** Currently selected values. */
@@ -14,6 +25,11 @@ export interface FilterOptionListProps {
   multiple?: boolean;
   /** Show per-option row counts when the source provided them. Default true. */
   showCounts?: boolean;
+  /**
+   * Renders a select-all as the first row. Ignored for a radio group, where
+   * "all" isn't a state the control can be in.
+   */
+  selectAll?: SelectAllProps;
   parts: AriaDataGridParts;
 }
 
@@ -34,6 +50,7 @@ export function FilterOptionList({
   onToggle,
   multiple = true,
   showCounts = true,
+  selectAll,
   parts,
 }: FilterOptionListProps) {
   if (!multiple) {
@@ -63,6 +80,23 @@ export function FilterOptionList({
 
   return (
     <div className={parts.optionList}>
+      {selectAll && (
+        // A row like any other, so it scrolls with the list as Excel's does. Its
+        // state is computed over whatever options are visible, so a select-all
+        // under an active search covers the matches rather than the whole list.
+        <div className={clsx(parts.option, parts.optionSelectAll)}>
+          <GridCheckbox
+            checked={selectAll.checked}
+            indeterminate={selectAll.indeterminate}
+            onChange={selectAll.onToggle}
+            ariaLabel={selectAll.label ?? "(Select All)"}
+            parts={parts}
+          />
+          <span className={parts.optionLabel}>
+            {selectAll.label ?? "(Select All)"}
+          </span>
+        </div>
+      )}
       {options.map((option) => (
         <div key={option.value} className={parts.option}>
           <GridCheckbox

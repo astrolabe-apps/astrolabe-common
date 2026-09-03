@@ -131,7 +131,12 @@ function FilterPopoverBody<T, D>({
   const searchText = useControl("");
   // Immediately or on Apply, depending on the grid's `deferApply` — the list and
   // the footer below just read `values` and call these.
-  const draft = useFilterDraft({ filter, field, gridFilter: search.filter });
+  const draft = useFilterDraft({
+    filter,
+    field,
+    gridFilter: search.filter,
+    options: options.options,
+  });
   const values = draft.values;
 
   const props: FilterPopupProps<T> = {
@@ -157,6 +162,11 @@ function FilterPopoverBody<T, D>({
         (o.label ?? o.value).toLowerCase().includes(needle),
       )
     : options.options;
+  // Measured over the visible options, not the whole list: under an active
+  // search the select-all covers the matches, as Excel's does.
+  const visibleSelected = visible.filter((o) =>
+    values.includes(o.value),
+  ).length;
 
   return (
     <>
@@ -196,6 +206,20 @@ function FilterPopoverBody<T, D>({
             multiple={filter.multiple ?? true}
             showCounts={filter.showCounts}
             onToggle={draft.toggle}
+            selectAll={
+              draft.excel
+                ? {
+                    checked: visibleSelected === visible.length,
+                    indeterminate:
+                      visibleSelected > 0 && visibleSelected < visible.length,
+                    onToggle: (on) =>
+                      draft.setAll(
+                        visible.map((o) => o.value),
+                        on,
+                      ),
+                  }
+                : undefined
+            }
             parts={parts}
           />
         )}
@@ -211,7 +235,7 @@ function FilterPopoverBody<T, D>({
       */}
       <div className={parts.popoverFooter}>
         <Button
-          isDisabled={values.length === 0}
+          isDisabled={!draft.canClear}
           className={parts.popoverButton}
           onPress={() => {
             draft.clear();
@@ -226,6 +250,9 @@ function FilterPopoverBody<T, D>({
         </Button>
         {draft.deferred && (
           <Button
+            // Excel mode refuses an empty selection: the storage can't tell
+            // "match none" from "unfiltered", so there'd be nothing to write.
+            isDisabled={!draft.canApply}
             className={parts.popoverButtonPrimary}
             onPress={() => {
               draft.apply();

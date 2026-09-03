@@ -11,6 +11,7 @@ import {
   makeGridData,
   useClientData,
   useGridSearch,
+  type FilterMode,
   type GetColumnFilter,
 } from "@astroapps/datagrid-search";
 import {
@@ -55,6 +56,7 @@ function Harness({
   pageSizes,
   renderHeaderExtra,
   deferApply,
+  filterMode,
   state: ownedState,
 }: {
   columns: ColumnDef<Row, unknown>[];
@@ -64,6 +66,7 @@ function Harness({
   pageSizes?: number[];
   renderHeaderExtra?: (column: ColumnDef<Row, unknown>) => React.ReactNode;
   deferApply?: boolean;
+  filterMode?: FilterMode;
   /**
    * A state control owned by the test, for asserting what an interaction wrote.
    * Without one the harness makes a fresh control per render — fine for
@@ -90,6 +93,7 @@ function Harness({
       data,
       getColumnFilter,
       deferApply,
+      filterMode,
     });
     return (
       <AriaDataGrid
@@ -804,6 +808,207 @@ describe("naming the filter buttons", () => {
   });
 });
 
+describe("excel-mode filtering", () => {
+  // Excel inverts the display: unfiltered means every value ticked, not none.
+  // The storage is unchanged — an absent key still means unfiltered — so these
+  // assert both halves, what's shown and what Apply writes.
+  /** Two values, already to hand — as the other popover tests use. */
+  const kindOptions: GetColumnFilter<Row> = (column) =>
+    column.filterField
+      ? { options: [{ value: "doc" }, { value: "img" }] }
+      : undefined;
+
+  const openKindFilter = () =>
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
+
+  const applyButton = () => screen.getByRole("button", { name: "Apply" });
+  const clearButton = () => screen.getByRole("button", { name: /Clear/ });
+
+  function excelGrid(state?: ReturnType<typeof newControl<SearchRequest>>) {
+    return render(
+      <Harness
+        columns={richColumns}
+        filterMode="excel"
+        getColumnFilter={kindOptions}
+        state={state}
+      />,
+    );
+  }
+
+  it("ticks every value when the column is unfiltered", () => {
+    excelGrid();
+    openKindFilter();
+    expect(screen.getByLabelText("doc")).toHaveProperty("checked", true);
+    expect(screen.getByLabelText("img")).toHaveProperty("checked", true);
+  });
+
+  it("ticks only the applied values when the column is filtered", () => {
+    const state = newControl<SearchRequest>({
+      ...defaultSearchOptions,
+      length: 10,
+      filters: { kind: ["doc"] },
+    });
+    excelGrid(state);
+    fireEvent.click(screen.getByLabelText("Filter (Kind, filtered)"));
+    expect(screen.getByLabelText("doc")).toHaveProperty("checked", true);
+    expect(screen.getByLabelText("img")).toHaveProperty("checked", false);
+  });
+
+  it("offers a select-all, checked while everything is", () => {
+    excelGrid();
+    openKindFilter();
+    expect(screen.getByLabelText("(Select All)")).toHaveProperty(
+      "checked",
+      true,
+    );
+  });
+
+  it("reports a partial selection as mixed", () => {
+    excelGrid();
+    openKindFilter();
+    fireEvent.click(screen.getByLabelText("img"));
+    const all = screen.getByLabelText("(Select All)");
+    expect(all).toHaveProperty("checked", false);
+    expect(all).toHaveProperty("indeterminate", true);
+  });
+
+  it("unticks everything through the select-all, then re-ticks it", () => {
+    excelGrid();
+    openKindFilter();
+    fireEvent.click(screen.getByLabelText("(Select All)"));
+    expect(screen.getByLabelText("doc")).toHaveProperty("checked", false);
+    expect(screen.getByLabelText("img")).toHaveProperty("checked", false);
+    fireEvent.click(screen.getByLabelText("(Select All)"));
+    expect(screen.getByLabelText("doc")).toHaveProperty("checked", true);
+  });
+
+  it("writes the ticked subset on Apply", () => {
+    const state = newControl<SearchRequest>({
+      ...defaultSearchOptions,
+      length: 10,
+    });
+    excelGrid(state);
+    openKindFilter();
+    fireEvent.click(screen.getByLabelText("img"));
+    fireEvent.click(applyButton());
+    expect(state.fields.filters.value).toEqual({ kind: ["doc"] });
+  });
+
+  it("writes no filter at all when everything is still ticked", () => {
+    // Everything selected isn't narrowing anything, so it must not leave a key
+    // behind in the URL or the query — and the funnel has to go back to idle.
+    const state = newControl<SearchRequest>({
+      ...defaultSearchOptions,
+      length: 10,
+      filters: { kind: ["doc"] },
+    });
+    excelGrid(state);
+    fireEvent.click(screen.getByLabelText("Filter (Kind, filtered)"));
+    fireEvent.click(screen.getByLabelText("img"));
+    fireEvent.click(applyButton());
+    expect(state.fields.filters.value).toEqual({});
+    expect(screen.getByLabelText("Filter (Kind)")).toBeDefined();
+  });
+
+  it("refuses to apply an empty selection", () => {
+    // "Match none" and "unfiltered" are the same empty array in the storage, so
+    // there is nothing this could write.
+    excelGrid();
+    openKindFilter();
+    fireEvent.click(screen.getByLabelText("(Select All)"));
+    expect(applyButton()).toHaveProperty("disabled", true);
+  });
+
+  it("re-enables Apply as soon as something is ticked again", () => {
+    excelGrid();
+    openKindFilter();
+    fireEvent.click(screen.getByLabelText("(Select All)"));
+    fireEvent.click(screen.getByLabelText("doc"));
+    expect(applyButton()).toHaveProperty("disabled", false);
+  });
+
+  it("resets to everything ticked on Clear", () => {
+    excelGrid();
+    openKindFilter();
+    fireEvent.click(screen.getByLabelText("img"));
+    fireEvent.click(clearButton());
+    expect(screen.getByLabelText("doc")).toHaveProperty("checked", true);
+    expect(screen.getByLabelText("img")).toHaveProperty("checked", true);
+  });
+
+  it("disables Clear while nothing is filtered", () => {
+    excelGrid();
+    openKindFilter();
+    expect(clearButton()).toHaveProperty("disabled", true);
+  });
+
+  it("keeps Clear available with nothing ticked, as the way back", () => {
+    // The one state Apply can't leave — Clear has to.
+    excelGrid();
+    openKindFilter();
+    fireEvent.click(screen.getByLabelText("(Select All)"));
+    expect(clearButton()).toHaveProperty("disabled", false);
+  });
+});
+
+describe("the other filter modes", () => {
+  const kindOptions: GetColumnFilter<Row> = (column) =>
+    column.filterField
+      ? { options: [{ value: "doc" }, { value: "img" }] }
+      : undefined;
+
+  it("leaves an unfiltered column unticked, with no select-all", () => {
+    render(
+      <Harness
+        columns={richColumns}
+        filterMode="apply"
+        getColumnFilter={kindOptions}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
+    expect(screen.getByLabelText("doc")).toHaveProperty("checked", false);
+    expect(screen.queryByLabelText("(Select All)")).toBeNull();
+  });
+
+  it("still honours the older deferApply boolean", () => {
+    render(
+      <Harness
+        columns={richColumns}
+        deferApply
+        getColumnFilter={kindOptions}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
+    // An Apply button at all is what makes it deferred.
+    expect(screen.getByRole("button", { name: "Apply" })).toBeDefined();
+  });
+
+  it("offers no select-all in immediate mode either", () => {
+    render(<Harness columns={richColumns} getColumnFilter={kindOptions} />);
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
+    expect(screen.queryByLabelText("(Select All)")).toBeNull();
+  });
+
+  it("keeps a single-select column on radios under excel mode", () => {
+    // "Everything selected" isn't a state a radio group can be in, so the
+    // column keeps the plain behaviour whatever the grid is set to.
+    render(
+      <Harness
+        columns={richColumns}
+        filterMode="excel"
+        getColumnFilter={(c) =>
+          c.filterField
+            ? { multiple: false, options: [{ value: "doc" }, { value: "img" }] }
+            : undefined
+        }
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
+    expect(screen.queryByLabelText("(Select All)")).toBeNull();
+    expect(screen.getByLabelText("doc")).toHaveProperty("checked", false);
+  });
+});
+
 describe("addressing rows and cells", () => {
   // The grid is one flat CSS grid — no table, and the row wrapper is
   // `display: contents`, so it's not in the accessibility tree either. Data
@@ -891,4 +1096,6 @@ describe("addressing rows and cells", () => {
     expect(screen.getAllByLabelText("Pick")).toHaveLength(3);
   });
 });
+
+
 

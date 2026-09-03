@@ -168,6 +168,23 @@ export function columnMatcher<T, D>(
   return (row, values) => values.includes(value(row).value);
 }
 
+/**
+ * When a popup's selection reaches the search, and what an empty selection means.
+ *
+ * - `immediate` — every click searches. The default.
+ * - `apply` — the selection is held until Apply. Worth it against a server,
+ *   where three ticks would otherwise be three searches, two of them stale.
+ * - `excel` — `apply`, plus Excel's inversion: an unfiltered column shows every
+ *   value *ticked* rather than none, there's a select-all, and applying with
+ *   everything ticked stores no filter at all. Applying with nothing ticked is
+ *   refused, since "match none" isn't a state the storage can express — it's the
+ *   same empty array that means "unfiltered".
+ *
+ * Grid-wide on purpose: which click searches, and what a tick means, shouldn't
+ * vary between one funnel and the next.
+ */
+export type FilterMode = "immediate" | "apply" | "excel";
+
 export interface GridFilter<T = any, D = unknown> {
   /** How this column filters, or undefined if it doesn't. Cached. */
   filterFor(column: ColumnDef<T, D>): ColumnFilter<T> | undefined;
@@ -189,13 +206,11 @@ export interface GridFilter<T = any, D = unknown> {
   clear(field?: string): void;
   /** Every field with a selection, for a filter-chip bar or "clear all". */
   activeFields(): string[];
+  /** See `FilterMode`. `useFilterDraft` reads it from here. */
+  mode: FilterMode;
   /**
-   * Whether a popup holds its selection until Apply rather than searching on every
-   * click — resolved from the grid's `deferApply`, false by default.
-   *
-   * Grid-wide rather than per column: which click searches is a property of the
-   * grid, and a funnel that behaves differently from the one beside it is a bug
-   * from the user's side of the screen. `useFilterDraft` reads it from here.
+   * Whether a popup holds its selection until Apply rather than searching on
+   * every click. Derived: true for every mode but `immediate`.
    */
   deferApply: boolean;
 }
@@ -203,7 +218,9 @@ export interface GridFilter<T = any, D = unknown> {
 export interface GridFilterOptions<T, D> {
   /** From `columnFilterResolver`. Defaults to uncached resolution. */
   filterFor?: (column: ColumnDef<T, D>) => ColumnFilter<T> | undefined;
-  /** See `GridFilter.deferApply`. Defaults to false. */
+  /** See `FilterMode`. Defaults to `immediate`, or `apply` if `deferApply`. */
+  mode?: FilterMode;
+  /** Older spelling of `mode: "apply"`. Ignored when `mode` is given. */
   deferApply?: boolean;
 }
 
@@ -212,7 +229,11 @@ export function makeGridFilter<
   D = unknown,
   S extends SearchRequest = SearchRequest,
 >(state: Control<S>, options: GridFilterOptions<T, D> = {}): GridFilter<T, D> {
-  const { filterFor = defaultGetColumnFilter, deferApply = false } = options;
+  const {
+    filterFor = defaultGetColumnFilter,
+    deferApply = false,
+    mode = deferApply ? "apply" : "immediate",
+  } = options;
   // Cast because `S` is only constrained to extend SearchRequest, so
   // `fields.filters` resolves to a union that can't be indexed by an arbitrary
   // field name. The constraint guarantees the shape; this states it.
@@ -258,7 +279,8 @@ export function makeGridFilter<
 
   return {
     filterFor,
-    deferApply,
+    mode,
+    deferApply: mode !== "immediate",
     isFilterable: (column) => !!filterFor(column),
     field: (column) => {
       const filter = filterFor(column);

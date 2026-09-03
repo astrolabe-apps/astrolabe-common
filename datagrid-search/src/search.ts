@@ -20,6 +20,7 @@ import {
   columnFilterResolver,
   makeGridFilter,
   type ColumnFilter,
+  type FilterMode,
   type GetColumnFilter,
   type GridFilter,
 } from "./filter";
@@ -38,17 +39,21 @@ export interface GridSearchOptions<T, D = unknown> {
   sort?: SortOptions;
   maxFilterOptions?: number;
   /**
-   * Filter popups hold their selection until Apply, instead of searching on every
-   * checkbox. Applying closes the popup; closing any other way discards.
+   * When a popup's selection reaches the search, and what a tick means — see
+   * `FilterMode`. Defaults to `immediate`.
    *
-   * Worth it against a server, where an immediate filter means a request per
-   * click — three values ticked is three searches, two of them already stale.
+   * `apply` is worth it against a server, where an immediate filter means a
+   * request per click: three values ticked is three searches, two of them
+   * already stale. `excel` adds Excel's inversion on top — an unfiltered column
+   * shows every value ticked, with a select-all above them.
    *
    * Grid-wide on purpose: which click searches shouldn't vary between one funnel
    * and the next. A `ColumnFilter.render` of your own is the exception, and
    * unavoidably so — it gets `selected` and `close`, so when a selection is final
    * is whatever it decides.
    */
+  filterMode?: FilterMode;
+  /** Older spelling of `filterMode: "apply"`. Ignored when `filterMode` is set. */
   deferApply?: boolean;
 }
 
@@ -80,6 +85,7 @@ export function useGridSearch<
     getColumnFilter,
     sort: sortOptions,
     maxFilterOptions,
+    filterMode,
     deferApply,
   } = options;
 
@@ -93,7 +99,11 @@ export function useGridSearch<
 
   // Built fresh every render on purpose — neither is memoised.
   const sort = makeGridSort(state, sortOptions);
-  const filter = makeGridFilter<T, D, S>(state, { filterFor, deferApply });
+  const filter = makeGridFilter<T, D, S>(state, {
+    filterFor,
+    mode: filterMode,
+    deferApply,
+  });
 
   return {
     // `S` extends SearchRequest and nothing here writes a whole value — sort,
