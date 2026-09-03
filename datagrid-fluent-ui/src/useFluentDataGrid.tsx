@@ -34,7 +34,7 @@ export interface UseFluentDataGridOptions<T, D = unknown>
   extends FluentDataGridStyleOptions, FluentHeaderContentOptions<T, D> {
   /** Adds a leading checkbox column and paints selected rows. */
   selection?: GridSelection<T>;
-  selectionColumn?: FluentSelectionColumnOptions;
+  selectionColumn?: FluentSelectionColumnOptions<T>;
   /** See `FluentRowWrapperOptions.selectOnRowClick`. Defaults to true. */
   selectOnRowClick?: boolean;
   /** Row keys, so React reorders rather than rebuilds on sort. */

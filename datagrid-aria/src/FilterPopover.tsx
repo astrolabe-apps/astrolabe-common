@@ -62,7 +62,12 @@ export function AriaFilterPopover<T, D = unknown>({
     <DialogTrigger isOpen={open} onOpenChange={setOpen}>
       <Button
         aria-label={
-          active ? `${ariaLabel} (${column.title}, filtered)` : ariaLabel
+          // Always names the column: with several filterable columns, a bare
+          // "Filter" is the same accessible name on every funnel, so neither a
+          // screen reader nor `getByLabelText` can tell them apart.
+          active
+            ? `${ariaLabel} (${column.title}, filtered)`
+            : `${ariaLabel} (${column.title})`
         }
         // Merged, not concatenated: the active colour has to beat the idle one,
         // and tailwind emits `.text-primary-600` before `.text-surface-500`.

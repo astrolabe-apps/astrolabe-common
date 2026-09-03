@@ -5,12 +5,17 @@ import { type ColumnDefInit, defaultRenderCell } from "@astroapps/datagrid";
 import type { GridSelection } from "@astroapps/datagrid-search";
 import { fluentDataGridClassNames, type FluentDataGridParts } from "./styles";
 
-export interface FluentSelectionColumnOptions {
+export interface FluentSelectionColumnOptions<T = unknown> {
   /** Column id, only matters if it would clash with a data column. */
   id?: string;
   /** Fluent's selection column is 44px wide. */
   columnTemplate?: string;
-  rowAriaLabel?: string;
+  /**
+   * Label for each row's checkbox. A constant makes every row's checkbox
+   * identical to assistive tech and to `getByLabelText`, so pass a function to
+   * name the row it selects — `(row) => `Select ${row.name}``.
+   */
+  rowAriaLabel?: string | ((row: T, index: number) => string);
   allAriaLabel?: string;
   /** Omit the "select all" checkbox, e.g. for single-select grids. */
   hideSelectAll?: boolean;
@@ -23,7 +28,7 @@ export interface FluentSelectionColumnOptions {
 export function fluentSelectionColumn<T>(
   selection: GridSelection<T>,
   parts: FluentDataGridParts,
-  options: FluentSelectionColumnOptions = {},
+  options: FluentSelectionColumnOptions<T> = {},
 ): ColumnDefInit<T> {
   const {
     id = "__fluentSelect",
@@ -32,6 +37,8 @@ export function fluentSelectionColumn<T>(
     allAriaLabel = "Select all rows on this page",
     hideSelectAll,
   } = options;
+  const labelForRow = (row: T, index: number) =>
+    typeof rowAriaLabel === "function" ? rowAriaLabel(row, index) : rowAriaLabel;
   const names = fluentDataGridClassNames;
   return {
     id,
@@ -40,11 +47,11 @@ export function fluentSelectionColumn<T>(
     cellClass: parts.selectionCell,
     headerCellClass: names.selectionHeaderCell,
     bodyCellClass: names.selectionCell,
-    render: (row) => (
+    render: (row, rowIndex) => (
       <Checkbox
         checked={selection.isSelected(row)}
         onChange={(_, d) => selection.toggle(row, !!d.checked)}
-        aria-label={rowAriaLabel}
+        aria-label={labelForRow(row, rowIndex)}
       />
     ),
     // The header cell renders its own content, so it ignores whatever

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/datagrid-fluent-ui",
+      "comment": "Emit data-row-key and data-row-index on the row wrapper, which is display: contents and so unreachable by role; rowAriaLabel on selectionColumn now also accepts (row, index) => string, so each row's checkbox can be named after the row it selects; the filter funnel's accessible name now always includes the column (\"Filter (Kind)\", and \"Filter (Kind, filtered)\" when active) rather than a bare \"Filter\" shared by every filterable column",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/datagrid-fluent-ui"
+}

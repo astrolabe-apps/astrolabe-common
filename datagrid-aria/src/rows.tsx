@@ -59,6 +59,12 @@ export function ariaRowWrapper<T>(
       <div
         key={key}
         style={{ display: "contents" }}
+        // The row is `display: contents`, so it's out of the accessibility tree
+        // and can't be found by role — these are how a test names a row. The
+        // key is the caller's `rowKey` where there is one, so it survives sorting
+        // and paging; the index doesn't, and is here for the grids without one.
+        data-row-key={key}
+        data-row-index={rowIndex}
         // Merged, not concatenated: a selected row's hover colour has to beat the
         // unselected one, and tailwind emits them in the losing order.
         className={mergeClasses(

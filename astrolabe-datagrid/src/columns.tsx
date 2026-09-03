@@ -39,6 +39,12 @@ export interface CellRenderProps<T, D = unknown> {
   rowSpan: number;
   lastColumn: boolean;
   children: ReactNode;
+  /**
+   * The 0-based index of the data row, as opposed to `rowNum` which is the
+   * grid line the cell is placed on (and so includes the header rows).
+   * Undefined for header cells.
+   */
+  rowIndex?: number;
 }
 
 export interface ColumnRender<T, D> extends ColumnHeader {
@@ -141,6 +147,7 @@ export function renderBodyCells<T>(
   return (column.renderBody ?? defaultRenderCell)({
     row,
     rowNum,
+    rowIndex,
     className,
     lastColumn,
     column,
@@ -150,6 +157,20 @@ export function renderBodyCells<T>(
   });
 }
 
+/**
+ * Every cell carries `data-column` (the column's id) and, for body cells,
+ * `data-row-index` (the 0-based data row). The grid is a single flat CSS grid
+ * with no table structure to walk, so these are the only way for a test — or a
+ * stylesheet, or the inspector — to name one cell:
+ *
+ * ```
+ * [data-row-index="2"] [data-column="status"]   // by position
+ * [data-row-key="42"] [data-column="status"]    // by identity, see wrapBodyRow
+ * ```
+ *
+ * `data-row-key` is put on the row wrapper rather than here, since only a
+ * wrapper knows the caller's key; `data-row-index` is always available.
+ */
 export function defaultRenderCell(
   {
     className,
@@ -157,6 +178,7 @@ export function defaultRenderCell(
     key,
     column,
     rowNum,
+    rowIndex,
     rowSpan,
     forceCell,
   }: {
@@ -165,6 +187,7 @@ export function defaultRenderCell(
     children: ReactNode;
     key: Key;
     rowNum: number;
+    rowIndex?: number;
     rowSpan: number;
     forceCell?: boolean;
   },
@@ -174,7 +197,13 @@ export function defaultRenderCell(
     return <Fragment key={key}>{children}</Fragment>;
   const gridStyle = gridAreaStyles(column, rowNum, rowSpan, forceCell);
   return (
-    <div key={key} style={{ ...style, ...gridStyle }} className={className}>
+    <div
+      key={key}
+      style={{ ...style, ...gridStyle }}
+      className={className}
+      data-column={column.id}
+      data-row-index={rowIndex}
+    >
       {children}
     </div>
   );

@@ -32,7 +32,7 @@ export interface UseAriaDataGridOptions<T, D = unknown>
   extends AriaDataGridStyleOptions, AriaHeaderContentOptions<T, D> {
   /** Adds a leading checkbox column and paints selected rows. */
   selection?: GridSelection<T>;
-  selectionColumn?: AriaSelectionColumnOptions;
+  selectionColumn?: AriaSelectionColumnOptions<T>;
   /** See `AriaRowWrapperOptions.selectOnRowClick`. Defaults to true. */
   selectOnRowClick?: boolean;
   /** Row keys, so React reorders rather than rebuilds on sort. */

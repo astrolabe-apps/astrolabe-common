@@ -154,6 +154,57 @@ a custom body can keep the standard checkbox list and just add a header.
 The body is a separate component mounted only while the popover is open, which is
 what makes an async option source lazy.
 
+## Finding rows and cells in tests
+
+The grid is a single flat CSS grid: there's no `<table>`, and the row wrapper is
+`display: contents`, which takes it out of the accessibility tree — so neither
+`getByRole("row")` nor DOM walking gets you a cell. Address them by data
+attribute instead:
+
+| Attribute        | Where                | Value                                      |
+| ---------------- | -------------------- | ------------------------------------------ |
+| `data-column`    | every cell           | the column's `id` (its `title` by default) |
+| `data-row-index` | body cells, rows     | 0-based index within the page              |
+| `data-row-key`   | row wrapper          | your `rowKey`, else the index              |
+
+```ts
+// By identity — survives sorting and paging, given a `rowKey`.
+page.locator('[data-row-key="42"] [data-column="status"]');
+// By position.
+page.locator('[data-row-index="2"] [data-column="status"]');
+// A whole column, header included.
+page.locator('[data-column="status"]');
+// The header cell alone.
+page.locator('[data-column="status"]:not([data-row-index])');
+```
+
+`data-row-key` needs a `rowKey`, which is worth passing anyway — React reorders
+rather than rebuilds rows on sort:
+
+```tsx
+<FluentDataGrid search={search} rowKey={(r) => r.id} />
+```
+
+Sort buttons and filter funnels are reachable through the same attributes, and
+each funnel is named after its column — `Filter (Kind)`, or
+`Filter (Kind, filtered)` once something is applied:
+
+```ts
+page.locator('[data-column="status"] button').first(); // the sort button
+page.getByLabel("Filter (Status)");
+```
+
+Row checkboxes are labelled `"Select row"` by default, which makes every row's
+checkbox identical to `getByLabelText`. Name the row instead:
+
+```tsx
+<FluentDataGrid
+  search={search}
+  selection={selection}
+  selectionColumn={{ rowAriaLabel: (r) => `Select ${r.name}` }}
+/>
+```
+
 ## Styling
 
 `useFluentDataGridStyles` returns the classes; the grid contributes no CSS of its

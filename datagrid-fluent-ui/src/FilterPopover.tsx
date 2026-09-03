@@ -135,7 +135,12 @@ export function FluentFilterPopover<T, D = unknown>({
           appearance="transparent"
           size="small"
           aria-label={
-            active ? `${ariaLabel} (${column.title}, filtered)` : ariaLabel
+            // Always names the column: with several filterable columns, a bare
+            // "Filter" is the same accessible name on every funnel, so neither a
+            // screen reader nor `getByLabelText` can tell them apart.
+            active
+              ? `${ariaLabel} (${column.title}, filtered)`
+              : `${ariaLabel} (${column.title})`
           }
           className={clsx(
             fluentDataGridClassNames.filterButton,

@@ -125,7 +125,7 @@ describe("a grid with nothing enabled", () => {
 
   it("renders no filter buttons", () => {
     render(<Harness columns={plainColumns} />);
-    expect(screen.queryByLabelText("Filter")).toBeNull();
+    expect(screen.queryByLabelText(/^Filter/)).toBeNull();
   });
 
   it("renders no pager when everything fits on one page", () => {
@@ -144,7 +144,11 @@ describe("a grid with sort and filter available", () => {
     render(<Harness columns={richColumns} />);
     // One funnel: Kind has a filterField and the client source can derive its
     // options; File has neither.
-    expect(screen.getAllByLabelText("Filter")).toHaveLength(1);
+    expect(
+      screen
+        .getAllByLabelText(/^Filter/)
+        .map((b) => b.getAttribute("aria-label")),
+    ).toEqual(["Filter (Kind)"]);
   });
 
   it("marks the sorted column with aria-sort", () => {
@@ -201,7 +205,7 @@ describe("additional header content", () => {
       />,
     );
     const extra = screen.getByText(/^info:Kind$/);
-    const funnel = screen.getByLabelText("Filter");
+    const funnel = screen.getByLabelText("Filter (Kind)");
     // Siblings, extra last: DOCUMENT_POSITION_FOLLOWING === 4.
     expect(funnel.parentElement).toBe(extra.parentElement);
     expect(funnel.compareDocumentPosition(extra) & 4).toBe(4);
@@ -261,13 +265,13 @@ describe("the filter popover", () => {
     const { calls, getColumnFilter } = countingFilter();
     render(<Harness columns={richColumns} getColumnFilter={getColumnFilter} />);
     expect(calls.count).toBe(0);
-    fireEvent.click(screen.getByLabelText("Filter"));
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
     expect(calls.count).toBeGreaterThan(0);
   });
 
   it("lists the column's values with the standard footer", () => {
     render(<Harness columns={richColumns} getColumnFilter={staticFilter} />);
-    fireEvent.click(screen.getByLabelText("Filter"));
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
     expect(screen.getByRole("dialog")).toBeDefined();
     expect(screen.getByLabelText("doc")).toBeDefined();
     expect(screen.getByLabelText("img")).toBeDefined();
@@ -297,7 +301,7 @@ describe("the filter popover", () => {
         state={state}
       />,
     );
-    fireEvent.click(screen.getByLabelText("Filter"));
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
     fireEvent.click(screen.getByLabelText("doc"));
     // Immediate mode: no Apply button, and the click has already landed.
     expect(screen.queryByRole("button", { name: "Apply" })).toBeNull();
@@ -314,7 +318,7 @@ describe("the filter popover", () => {
         state={state}
       />,
     );
-    fireEvent.click(screen.getByLabelText("Filter"));
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
     fireEvent.click(screen.getByLabelText("doc"));
     expect(state.fields.filters.value ?? {}).toEqual({});
     fireEvent.click(screen.getByRole("button", { name: "Apply" }));
@@ -347,7 +351,7 @@ describe("the filter popover", () => {
     const { unmount } = render(
       <Harness columns={richColumns} getColumnFilter={few} />,
     );
-    fireEvent.click(screen.getByLabelText("Filter"));
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
     expect(screen.queryByLabelText("Search")).toBeNull();
     unmount();
 
@@ -360,7 +364,7 @@ describe("the filter popover", () => {
           }
         : undefined;
     render(<Harness columns={richColumns} getColumnFilter={many} />);
-    fireEvent.click(screen.getByLabelText("Filter"));
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
     expect(screen.getByLabelText("Search")).toBeDefined();
   });
 
@@ -373,7 +377,7 @@ describe("the filter popover", () => {
           }
         : undefined;
     render(<Harness columns={richColumns} getColumnFilter={many} />);
-    fireEvent.click(screen.getByLabelText("Filter"));
+    fireEvent.click(screen.getByLabelText("Filter (Kind)"));
     const box = screen.getByLabelText("Search");
     fireEvent.change(box, { target: { value: "doc" } });
     expect(screen.getByLabelText("document")).toBeDefined();
@@ -440,9 +444,14 @@ describe("filter option counts", () => {
 function SelectableHarness({
   selected,
   selectOnRowClick,
+  noRowKey,
+  rowAriaLabel,
 }: {
   selected: ReturnType<typeof newControl<string[]>>;
   selectOnRowClick?: boolean;
+  /** Drops `rowKey`, so the row wrapper falls back to the index. */
+  noRowKey?: boolean;
+  rowAriaLabel?: string | ((row: Row, index: number) => string);
 }) {
   const stop = useComponentTracking();
   try {
@@ -462,7 +471,8 @@ function SelectableHarness({
         search={search}
         selection={selection}
         selectOnRowClick={selectOnRowClick}
-        rowKey={(r) => r.file}
+        rowKey={noRowKey ? undefined : (r) => r.file}
+        selectionColumn={rowAriaLabel ? { rowAriaLabel } : undefined}
       />
     );
   } finally {
@@ -767,3 +777,118 @@ function drawnBox(label: string, index: number) {
   if (!box) throw new Error(`no drawn box for ${label}[${index}]`);
   return box.className;
 }
+
+describe("naming the filter buttons", () => {
+  // With a bare "Filter" on every funnel, this grid would have two identically
+  // named buttons — ambiguous to a screen reader and to getByLabelText alike.
+  const bothFilterable = columnDefinitions<Row>(
+    { title: "File", getter: (r) => r.file, filterField: "file" },
+    { title: "Kind", getter: (r) => r.kind, filterField: "kind" },
+  );
+
+  it("names the column even when nothing is filtered", () => {
+    render(<Harness columns={bothFilterable} />);
+    expect(screen.getByLabelText("Filter (File)")).toBeDefined();
+    expect(screen.getByLabelText("Filter (Kind)")).toBeDefined();
+  });
+
+  it("keeps the column name once a filter is applied", () => {
+    render(
+      <Harness
+        columns={bothFilterable}
+        over={{ filters: { kind: ["doc"] } }}
+      />,
+    );
+    expect(screen.getByLabelText("Filter (Kind, filtered)")).toBeDefined();
+    expect(screen.getByLabelText("Filter (File)")).toBeDefined();
+  });
+});
+
+describe("addressing rows and cells", () => {
+  // The grid is one flat CSS grid — no table, and the row wrapper is
+  // `display: contents`, so it's not in the accessibility tree either. Data
+  // attributes are the only handle a test or a stylesheet gets.
+  it("names every body cell by column and row index", () => {
+    render(<Harness columns={plainColumns} />);
+    const kinds = Array.from(
+      document.querySelectorAll('[data-column="Kind"][data-row-index]'),
+    );
+    expect(kinds.map((c) => c.textContent)).toEqual(["doc", "img", "doc"]);
+    expect(kinds.map((c) => c.getAttribute("data-row-index"))).toEqual([
+      "0",
+      "1",
+      "2",
+    ]);
+  });
+
+  it("names header cells by column, without a row index", () => {
+    render(<Harness columns={plainColumns} />);
+    const header = document.querySelector(
+      '[data-column="Kind"]:not([data-row-index])',
+    );
+    expect(header?.textContent).toContain("Kind");
+    expect(header?.className).toContain(ariaDataGridClassNames.headerCell);
+  });
+
+  it("finds one cell from a row key and a column", () => {
+    // The query this whole change exists for.
+    const selected = newControl<string[]>([]);
+    render(<SelectableHarness selected={selected} />);
+    const cell = document.querySelector(
+      '[data-row-key="logo"] [data-column="Kind"]',
+    );
+    expect(cell?.textContent).toBe("img");
+  });
+
+  it("keys rows by the caller's rowKey, and indexes them too", () => {
+    const selected = newControl<string[]>([]);
+    render(<SelectableHarness selected={selected} />);
+    const wrappers = Array.from(
+      document.querySelectorAll(`.${ariaDataGridClassNames.row}`),
+    );
+    expect(wrappers.map((r) => r.getAttribute("data-row-key"))).toEqual([
+      "notes",
+      "logo",
+      "readme",
+    ]);
+    expect(wrappers.map((r) => r.getAttribute("data-row-index"))).toEqual([
+      "0",
+      "1",
+      "2",
+    ]);
+  });
+
+  it("falls back to the index when there is no rowKey", () => {
+    const selected = newControl<string[]>([]);
+    render(<SelectableHarness selected={selected} noRowKey />);
+    const wrappers = Array.from(
+      document.querySelectorAll(`.${ariaDataGridClassNames.row}`),
+    );
+    expect(wrappers.map((r) => r.getAttribute("data-row-key"))).toEqual([
+      "0",
+      "1",
+      "2",
+    ]);
+  });
+
+  it("lets the row checkbox be labelled per row", () => {
+    // The default labels every row "Select row", so `getByLabelText` is
+    // ambiguous the moment there's more than one.
+    const selected = newControl<string[]>([]);
+    render(
+      <SelectableHarness
+        selected={selected}
+        rowAriaLabel={(r) => `Select ${r.file}`}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText("Select logo"));
+    expect(selected.value).toEqual(["logo"]);
+  });
+
+  it("still accepts a constant row label", () => {
+    const selected = newControl<string[]>([]);
+    render(<SelectableHarness selected={selected} rowAriaLabel="Pick" />);
+    expect(screen.getAllByLabelText("Pick")).toHaveLength(3);
+  });
+});
+
