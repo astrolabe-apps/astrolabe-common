@@ -1,5 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import {
+  DisplayDataType,
+  withScripts,
   actionControl,
   ControlAdornment,
   ControlAdornmentType,
@@ -1339,5 +1341,64 @@ describe("dynamic properties", () => {
       expect(state.definition.title).toBe("Dynamic Label");
       expect(!!state.definition.disabled).toBe(true);
     });
+  });
+});
+
+describe("withScripts nested paths", () => {
+  const schema: SchemaField = {
+    field: "name",
+    type: FieldType.String,
+    displayName: "Name",
+  };
+
+  it("dotted keys build nested $scripts instead of a literal key", () => {
+    const def = withScripts(textDisplayControl("base"), {
+      "displayData.text": { type: "TextExpr" },
+      styleClass: { type: "ClassExpr" },
+    });
+    expect((def as any)["$scripts"]).toEqual({
+      styleClass: { type: "ClassExpr" },
+    });
+    expect((def.displayData as any)["$scripts"]).toEqual({
+      text: { type: "TextExpr" },
+    });
+  });
+
+  it("a nested script actually applies to the resolved definition", () => {
+    const def = withScripts(textDisplayControl("base"), {
+      "displayData.text": { type: "TextExpr" },
+    });
+    const state = testNodeState(def, schema, {
+      evalExpression: (e, ctx) => {
+        if (e.type === "TextExpr") ctx.returnResult("scripted");
+      },
+    });
+    expect((state.definition as any).displayData.text).toBe("scripted");
+  });
+
+  it("merges with existing scripts rather than replacing them", () => {
+    const once = withScripts(textDisplayControl("base"), {
+      styleClass: { type: "ClassExpr" },
+      "displayData.text": { type: "TextExpr" },
+    });
+    const twice = withScripts(once, {
+      hidden: { type: "HiddenExpr" },
+      "displayData.text": { type: "OverrideExpr" },
+    });
+    expect((twice as any)["$scripts"]).toEqual({
+      styleClass: { type: "ClassExpr" },
+      hidden: { type: "HiddenExpr" },
+    });
+    expect((twice.displayData as any)["$scripts"]).toEqual({
+      text: { type: "OverrideExpr" },
+    });
+  });
+
+  it("keeps the nested object's other fields intact", () => {
+    const def = withScripts(textDisplayControl("base"), {
+      "displayData.text": { type: "TextExpr" },
+    });
+    expect((def.displayData as any).type).toBe(DisplayDataType.Text);
+    expect((def.displayData as any).text).toBe("base");
   });
 });

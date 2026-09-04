@@ -226,9 +226,48 @@ export function notExpr(innerExpression: EntityExpression): NotExpression {
   return { type: ExpressionType.Not, innerExpression };
 }
 
-export function withScripts<T extends ControlDefinition>(
+/**
+ * Attach `$scripts` to a definition.
+ *
+ * `$scripts` is resolved per *object level* - the keys of a `$scripts` object
+ * are matched against the fields of the object it sits on. To script a field of
+ * a nested object you therefore need `$scripts` on that nested object.
+ *
+ * Keys here may use dotted paths to say that directly, and the nesting is built
+ * for you:
+ *
+ * ```ts
+ * withScripts(textDisplayControl("x"), {
+ *   "displayData.text": jsonataExpr("..."),  // -> displayData.$scripts.text
+ *   styleClass: jsonataExpr("..."),          // -> $scripts.styleClass
+ * });
+ * ```
+ *
+ * Existing scripts are merged rather than replaced, at every level.
+ */
+export function withScripts<T extends object>(
   def: T,
   scripts: Record<string, EntityExpression>,
 ): T {
-  return { ...def, ["$scripts"]: scripts } as T;
+  const result: any = { ...def };
+  const rootScripts: Record<string, EntityExpression> = {
+    ...(result["$scripts"] as Record<string, EntityExpression> | undefined),
+  };
+  const nested: Record<string, Record<string, EntityExpression>> = {};
+
+  for (const [key, expr] of Object.entries(scripts)) {
+    const dot = key.indexOf(".");
+    if (dot < 0) {
+      rootScripts[key] = expr;
+    } else {
+      const head = key.substring(0, dot);
+      (nested[head] ??= {})[key.substring(dot + 1)] = expr;
+    }
+  }
+
+  for (const [field, childScripts] of Object.entries(nested)) {
+    result[field] = withScripts(result[field] ?? {}, childScripts);
+  }
+  if (Object.keys(rootScripts).length > 0) result["$scripts"] = rootScripts;
+  return result as T;
 }

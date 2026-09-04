@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/forms-core",
+      "comment": "withScripts now accepts dotted paths (e.g. \"displayData.text\") and builds the per-object-level $scripts nesting they imply, and merges with any existing scripts instead of replacing them. Previously a dotted key was taken literally, matched no schema field and was silently dropped, so scripts intended for a nested object never ran",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/forms-core"
+}
