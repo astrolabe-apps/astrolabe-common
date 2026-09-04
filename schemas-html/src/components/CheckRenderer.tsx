@@ -125,6 +125,7 @@ function CheckBoxSelected({
       className={rendererClass(props.className, options.checkClass)}
       renderer={renderer}
       readOnly={props.readonly}
+      disabled={props.formNode.disabled}
     />
   );
 }
@@ -147,6 +148,7 @@ function CheckBox({
       className={rendererClass(props.className, options.checkClass)}
       renderer={renderer}
       readOnly={props.readonly}
+      disabled={props.formNode.disabled}
     />
   );
 }
@@ -157,6 +159,7 @@ export function Fcheckbox({
   notValue = false,
   renderer,
   readOnly,
+  disabled,
   ...others
 }: HtmlInputProperties & {
   control: Control<boolean | null | undefined>;
@@ -164,15 +167,23 @@ export function Fcheckbox({
   notValue?: boolean;
 }) {
   const { Input } = renderer.html;
-  const { value, onChange, errorText, ref, ...theseProps } =
-    formControlProps(control);
+  const {
+    value,
+    onChange,
+    errorText,
+    ref,
+    disabled: controlDisabled,
+    ...theseProps
+  } = formControlProps(control);
+  const isDisabled = !!disabled || controlDisabled;
   return (
     <Input
       {...theseProps}
+      disabled={isDisabled}
       checked={!!value !== notValue}
       inputRef={(r) => (control.element = r)}
       onChangeChecked={
-        readOnly
+        readOnly || isDisabled
           ? () => {}
           : (e) => {
               control.touched = true;

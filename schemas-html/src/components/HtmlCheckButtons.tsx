@@ -24,6 +24,7 @@ export function HtmlCheckButtons(props: CheckButtonsProps) {
       <RenderArrayElements array={options?.filter((x) => x.value != null)}>
         {(o, i) => {
           const checked = useComputed(() => isChecked(control, o)).value;
+          const entryDisabled = disabled || !!o.disabled;
           const selOrUnsel = checked
             ? rendererClass(
                 controlClasses?.selectedClass,
@@ -50,10 +51,10 @@ export function HtmlCheckButtons(props: CheckButtonsProps) {
                   type={type}
                   name={name}
                   readOnly={readonly}
-                  disabled={disabled}
+                  disabled={entryDisabled}
                   checked={checked}
                   onChange={(x) => {
-                    !(readonly || disabled) &&
+                    !(readonly || entryDisabled) &&
                       setChecked(control, o, x.target.checked);
                   }}
                 />

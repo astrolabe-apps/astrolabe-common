@@ -26,6 +26,7 @@ export function RNCheckButtons(props: CheckButtonsProps) {
       <RenderArrayElements array={options?.filter((x) => x.value != null)}>
         {(o, i) => {
           const checked = useComputed(() => isChecked(control, o)).value;
+          const entryDisabled = !!disabled || !!o.disabled;
           const selOrUnsel = checked
             ? rendererClass(
                 controlClasses?.selectedClass,
@@ -45,7 +46,7 @@ export function RNCheckButtons(props: CheckButtonsProps) {
                 selOrUnsel,
               )}
               onClick={() =>
-                !(readonly || disabled) && setChecked(control, o, !checked)
+                !(readonly || entryDisabled) && setChecked(control, o, !checked)
               }
               notWrapInText
             >
@@ -56,10 +57,10 @@ export function RNCheckButtons(props: CheckButtonsProps) {
                   type={type}
                   name={name}
                   readOnly={readonly}
-                  disabled={disabled}
+                  disabled={entryDisabled}
                   checked={checked}
                   onChangeChecked={(x) => {
-                    !readonly && setChecked(control, o, x);
+                    !(readonly || entryDisabled) && setChecked(control, o, x);
                   }}
                 />
                 <Label

@@ -178,16 +178,23 @@ export function Fcheckbox({
   disabled?: boolean;
 }) {
   const { Input } = renderer.html;
-  const { value, onChange, errorText, ref, disabled: _, ...theseProps } =
-    formControlProps(control);
+  const {
+    value,
+    onChange,
+    errorText,
+    ref,
+    disabled: controlDisabled,
+    ...theseProps
+  } = formControlProps(control);
+  const isDisabled = !!disabled || controlDisabled;
   return (
     <Input
       {...theseProps}
-      disabled={disabled}
+      disabled={isDisabled}
       checked={!!value !== notValue}
       inputRef={(r) => (control.element = r)}
       onChangeChecked={
-        readOnly
+        readOnly || isDisabled
           ? () => {}
           : (e) => {
               control.touched = true;
