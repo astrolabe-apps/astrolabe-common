@@ -2,6 +2,18 @@
   "name": "@react-typed-forms/schemas-rn",
   "entries": [
     {
+      "version": "2.2.8",
+      "tag": "@react-typed-forms/schemas-rn_v2.2.8",
+      "date": "Fri, 04 Sep 2026 03:36:41 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Honour FieldOption.disabled in the radio/checklist check buttons, so an individual option renders disabled and cannot be toggled, and make the Checkbox/ElementSelected renderers respect the form node's disabled state (previously the element-selected checkbox ignored it entirely, as it renders a synthetic control)"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.2.7",
       "tag": "@react-typed-forms/schemas-rn_v2.2.7",
       "date": "Wed, 29 Jul 2026 23:41:04 GMT",

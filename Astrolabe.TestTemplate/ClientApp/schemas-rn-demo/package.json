@@ -12,7 +12,7 @@
   "dependencies": {
     "@astroapps/client": "^2.7.0",
     "@astroapps/controls": "^1.4.0",
-    "@astroapps/forms-core": "^2.2.0",
+    "@astroapps/forms-core": "^2.3.0",
     "@astroapps/searchstate": "^2.1.0",
     "expo": "53.0.22",
     "expo-asset": "~11.1.7",

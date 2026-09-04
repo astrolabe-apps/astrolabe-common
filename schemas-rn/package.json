@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas-rn",
-  "version": "2.2.7",
+  "version": "2.2.8",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",

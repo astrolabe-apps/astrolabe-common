@@ -29,7 +29,7 @@
     "@dnd-kit/utilities": "^3.2.1",
     "@react-typed-forms/core": "^4.6.0",
     "@react-typed-forms/schemas": "^18.0.1",
-    "@react-typed-forms/schemas-html": "^5.2.2",
+    "@react-typed-forms/schemas-html": "^5.2.3",
     "react": "^18.2.0 || ^19"
   },
   "dependencies": {
@@ -41,7 +41,7 @@
     "@dnd-kit/utilities": "^3.2.1",
     "@react-typed-forms/core": "^4.6.0",
     "@react-typed-forms/schemas": "^18.0.1",
-    "@react-typed-forms/schemas-html": "^5.2.2",
+    "@react-typed-forms/schemas-html": "^5.2.3",
     "@react-typed-forms/transform": "^0.4.0",
     "react": "^18.2.0 || ^19",
     "react-dom": "^18.2.0 || ^19",
