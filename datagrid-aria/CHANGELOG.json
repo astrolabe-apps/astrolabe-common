@@ -2,6 +2,18 @@
   "name": "@astroapps/datagrid-aria",
   "entries": [
     {
+      "version": "0.5.0",
+      "tag": "@astroapps/datagrid-aria_v0.5.0",
+      "date": "Mon, 07 Sep 2026 03:16:32 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "The header funnel now uses a distinct filled icon (`filterActive`, overridable through `AriaDataGridIcons`) on a column that has a filter applied, instead of only recolouring the outline funnel, and the idle funnel is drawn a size up so it doesn't wash out next to the header text"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.4.0",
       "tag": "@astroapps/datagrid-aria_v0.4.0",
       "date": "Thu, 03 Sep 2026 07:35:03 GMT",

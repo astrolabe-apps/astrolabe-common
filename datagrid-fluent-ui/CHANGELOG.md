@@ -1,6 +1,13 @@
 # Change Log - @astroapps/datagrid-fluent-ui
 
-This log was last generated on Thu, 03 Sep 2026 07:35:03 GMT and should not be manually modified.
+This log was last generated on Mon, 07 Sep 2026 03:16:32 GMT and should not be manually modified.
+
+## 0.5.1
+Mon, 07 Sep 2026 03:16:32 GMT
+
+### Patches
+
+- A filtered column's header now shows Fluent's filled filter icon rather than the same outline icon in the brand colour, so the filtered state doesn't depend on colour alone
 
 ## 0.5.0
 Thu, 03 Sep 2026 07:35:03 GMT

@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/datagrid-aria",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Style @astroapps/datagrid with tailwind, using react-aria for the overlays",
   "type": "module",
   "main": "lib/index.cjs",

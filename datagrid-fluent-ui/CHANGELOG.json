@@ -2,6 +2,18 @@
   "name": "@astroapps/datagrid-fluent-ui",
   "entries": [
     {
+      "version": "0.5.1",
+      "tag": "@astroapps/datagrid-fluent-ui_v0.5.1",
+      "date": "Mon, 07 Sep 2026 03:16:32 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "A filtered column's header now shows Fluent's filled filter icon rather than the same outline icon in the brand colour, so the filtered state doesn't depend on colour alone"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.5.0",
       "tag": "@astroapps/datagrid-fluent-ui_v0.5.0",
       "date": "Thu, 03 Sep 2026 07:35:03 GMT",
