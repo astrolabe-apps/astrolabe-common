@@ -48,7 +48,7 @@ export interface FluentDataGridProps<T, D = unknown>
  * A Fluent v9-styled grid over a `GridSearch`.
  *
  * Everything it renders follows from the search: sort arrows appear for columns
- * with a `sortField`, funnels for columns whose filter options resolve, and the
+ * with a `sortField`, filter buttons for columns whose options resolve, and the
  * pager only when there's more than one page (or `pageSizes` is offered). A grid
  * with none of those renders as a plain table.
  *

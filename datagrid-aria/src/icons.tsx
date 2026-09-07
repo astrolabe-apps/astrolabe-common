@@ -33,9 +33,29 @@ export const ArrowDownIcon = () => (
   </svg>
 );
 
+/**
+ * The funnel of a column with no filter applied: outline only.
+ *
+ * Drawn a size up from the other header icons (14px, not 12px) with the stroke
+ * scaling to match, because at 12px a hairline funnel disappears against the
+ * header text next to it.
+ */
 export const FilterIcon = () => (
-  <svg {...svgProps} className="w-3 h-3">
-    <path d="M1.5 2.5h9L7 6.5v3.5L5 9V6.5z" />
+  <svg {...svgProps} className="w-3.5 h-3.5">
+    <path d="M1.25 2.5h9.5L7 6.75v3.5l-2-1V6.75z" />
+  </svg>
+);
+
+/**
+ * The same funnel filled in, for a column that *is* filtered.
+ *
+ * A separate shape rather than only a colour change: colour alone fails
+ * WCAG 1.4.1, and on a grid with several filterable columns the filled funnel is
+ * what makes "this one is narrowing your data" readable at a glance.
+ */
+export const FilterActiveIcon = () => (
+  <svg {...svgProps} fill="currentColor" className="w-3.5 h-3.5">
+    <path d="M1.25 2.5h9.5L7 6.75v3.5l-2-1V6.75z" />
   </svg>
 );
 
@@ -102,6 +122,8 @@ export interface AriaDataGridIcons {
   sortAscending?: ReactNode;
   sortDescending?: ReactNode;
   filter?: ReactNode;
+  /** Shown instead of `filter` on a column that has a filter applied. */
+  filterActive?: ReactNode;
   previousPage?: ReactNode;
   nextPage?: ReactNode;
   search?: ReactNode;
@@ -113,6 +135,7 @@ export const defaultIcons: Required<AriaDataGridIcons> = {
   sortAscending: <ArrowUpIcon />,
   sortDescending: <ArrowDownIcon />,
   filter: <FilterIcon />,
+  filterActive: <FilterActiveIcon />,
   previousPage: <ChevronLeftIcon />,
   nextPage: <ChevronRightIcon />,
   search: <SearchIcon />,

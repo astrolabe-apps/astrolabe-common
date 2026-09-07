@@ -14,7 +14,7 @@ export interface FluentHeaderContentOptions<T, D = unknown> {
   /** Replaces every column's popup body. A column's own `render` wins over this. */
   renderFilterPopup?: (props: FilterPopupProps<T>) => ReactNode;
   /**
-   * Replaces the funnel button *and* its popup, for a column that wants an inline
+   * Replaces the filter button *and* its popup, for a column that wants an inline
    * control instead. Return undefined to fall back to the standard popover.
    */
   renderFilterControl?: (
@@ -96,7 +96,7 @@ export function fluentHeaderContent<T, D = unknown>(
   function renderFilter(column: ColumnDef<T, D>) {
     const custom = renderFilterControl?.(column, search);
     if (custom !== undefined && custom !== null) return custom;
-    // No option source resolves ⇒ no funnel, rather than a button opening an
+    // No option source resolves ⇒ no filter button, rather than one opening an
     // empty popup.
     if (!search.canFilter(column)) return null;
     return (

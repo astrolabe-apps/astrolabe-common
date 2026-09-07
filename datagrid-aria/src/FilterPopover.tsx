@@ -77,7 +77,7 @@ export function AriaFilterPopover<T, D = unknown>({
           active && parts.filterButtonActive,
         )}
       >
-        {resolved.filter}
+        {active ? resolved.filterActive : resolved.filter}
       </Button>
       <Popover placement="bottom start" className="outline-none">
         <Dialog

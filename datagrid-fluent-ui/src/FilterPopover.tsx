@@ -11,7 +11,11 @@ import {
   tokens,
   typographyStyles,
 } from "@fluentui/react-components";
-import { DismissRegular, FilterRegular } from "@fluentui/react-icons";
+import {
+  DismissRegular,
+  FilterFilled,
+  FilterRegular,
+} from "@fluentui/react-icons";
 import { useControl } from "@react-typed-forms/core";
 import type { ColumnDef } from "@astroapps/datagrid";
 import {
@@ -99,11 +103,11 @@ export interface FluentFilterPopoverProps<T, D = unknown> {
 }
 
 /**
- * The funnel button in a header cell, and the popup it opens.
+ * The filter button in a header cell, and the popup it opens.
  *
  * The body is a separate component so it mounts only when the popover is open —
- * which is what makes an async option source lazy: no request until the funnel is
- * clicked, and none at all for a column nobody filters.
+ * which is what makes an async option source lazy: no request until the button
+ * is clicked, and none at all for a column nobody filters.
  */
 export function FluentFilterPopover<T, D = unknown>({
   search,
@@ -136,7 +140,7 @@ export function FluentFilterPopover<T, D = unknown>({
           size="small"
           aria-label={
             // Always names the column: with several filterable columns, a bare
-            // "Filter" is the same accessible name on every funnel, so neither a
+            // "Filter" is the same accessible name on every one of them, so neither a
             // screen reader nor `getByLabelText` can tell them apart.
             active
               ? `${ariaLabel} (${column.title}, filtered)`
@@ -146,10 +150,19 @@ export function FluentFilterPopover<T, D = unknown>({
             fluentDataGridClassNames.filterButton,
             parts.filterButton,
           )}
+          // Filled vs outlined, not just brand-coloured: colour alone fails
+          // WCAG 1.4.1, and Filled-for-active is the convention the Fluent icon
+          // set is built around.
+          //
+          // Note this glyph is three descending lines, not a funnel — Fluent
+          // ships no funnel, and this is what `Filter` looks like in their set.
+          // Deliberate: a Fluent-styled grid should use Fluent's own icon.
           icon={
-            <FilterRegular
-              className={active ? parts.filterButtonActive : undefined}
-            />
+            active ? (
+              <FilterFilled className={parts.filterButtonActive} />
+            ) : (
+              <FilterRegular />
+            )
           }
         />
       </PopoverTrigger>
