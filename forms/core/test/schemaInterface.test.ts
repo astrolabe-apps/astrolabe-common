@@ -9,7 +9,7 @@ import {
   FieldOption,
   isCompoundField,
 } from "../src";
-import { newControl } from "@astroapps/controls";
+import { newControl } from "@react-typed-forms/core";
 import { randomSchemaField, randomValueForField } from "./gen-schema";
 
 describe("DefaultSchemaInterface property tests", () => {

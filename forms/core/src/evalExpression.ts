@@ -16,7 +16,7 @@ import {
   createAsyncEffect,
   createSyncEffect,
   trackedValue,
-} from "@astroapps/controls";
+} from "@react-typed-forms/core";
 import { schemaDataForFieldRef, SchemaDataNode } from "./schemaDataNode";
 import { SchemaInterface } from "./schemaInterface";
 import jsonata from "jsonata";

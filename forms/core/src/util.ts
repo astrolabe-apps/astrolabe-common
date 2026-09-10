@@ -4,7 +4,7 @@ import {
   Control, ControlSetup,
   newControl,
   updateComputedValue
-} from "@astroapps/controls";
+} from "@react-typed-forms/core";
 
 /**
  * Type representing a JSON path, which can be a string or a number.

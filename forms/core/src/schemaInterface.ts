@@ -6,7 +6,7 @@ import {
 } from "./schemaField";
 import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaNode } from "./schemaNode";
-import { Control, ControlSetup } from "@astroapps/controls";
+import { Control, ControlSetup } from "@react-typed-forms/core";
 
 /**
  * Interface for schema-related operations.

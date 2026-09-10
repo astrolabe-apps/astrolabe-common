@@ -3,7 +3,7 @@ import {
   Control,
   createScopedEffect,
   updateComputedValue,
-} from "@astroapps/controls";
+} from "@react-typed-forms/core";
 import { isCompoundField, SchemaTags } from "./schemaField";
 import { SchemaNode } from "./schemaNode";
 import { createOverrideProxy } from "./overrideProxy";

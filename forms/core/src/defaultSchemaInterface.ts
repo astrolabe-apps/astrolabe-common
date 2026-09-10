@@ -8,7 +8,7 @@ import {
 import { SchemaInterface } from "./schemaInterface";
 import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaNode } from "./schemaNode";
-import { Control, ControlSetup } from "@astroapps/controls";
+import { Control, ControlSetup } from "@react-typed-forms/core";
 import { parseDateTime as pdt } from "@internationalized/date";
 
 export class DefaultSchemaInterface implements SchemaInterface {

@@ -19,7 +19,7 @@ import {
   createCleanupScope,
   createEffect,
   trackControlChange,
-} from "@astroapps/controls";
+} from "@react-typed-forms/core";
 import { ValidationMessageType } from "./schemaField";
 import { SchemaInterface } from "./schemaInterface";
 import { jsonataEval } from "./evalExpression";

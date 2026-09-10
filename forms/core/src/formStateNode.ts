@@ -14,7 +14,7 @@ import {
   newControl,
   updateComputedValue,
   updateElements,
-} from "@astroapps/controls";
+} from "@react-typed-forms/core";
 import { createEvalExpr, ExpressionEvalContext } from "./evalExpression";
 import { EntityExpression, ExpressionType } from "./entityExpression";
 import {

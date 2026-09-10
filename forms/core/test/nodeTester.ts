@@ -21,7 +21,7 @@ import {
   createSyncEffect,
   deepEquals,
   newControl,
-} from "@astroapps/controls";
+} from "@react-typed-forms/core";
 import { FieldAndValue } from "./gen-schema";
 
 export interface TestNodeOptions {

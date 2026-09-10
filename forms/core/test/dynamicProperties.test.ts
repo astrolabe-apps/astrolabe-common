@@ -37,7 +37,7 @@ import {
   Control,
   createSyncEffect,
   newControl,
-} from "@astroapps/controls";
+} from "@react-typed-forms/core";
 import { changePromise, testNodeState, withScript } from "./nodeTester";
 import { intField, stringField } from "../src/schemaBuilder";
 

@@ -12,7 +12,7 @@ import { DefaultTabsRenderOptions } from "../rendererOptions";
 import React, { Fragment, useEffect } from "react";
 import clsx from "clsx";
 import { useControl } from "@react-typed-forms/core";
-import { Control } from "@astroapps/controls";
+import { Control } from "@react-typed-forms/core";
 
 export function createTabsRenderer(options: DefaultTabsRenderOptions = {}) {
   return createGroupRenderer(

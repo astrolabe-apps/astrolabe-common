@@ -3,7 +3,7 @@ import {
   ensureMetaValue,
   newControl,
   updateComputedValue,
-} from "@astroapps/controls";
+} from "@react-typed-forms/core";
 import { missingField } from "./schemaField";
 import { createSchemaNode, resolveSchemaNode, SchemaNode } from "./schemaNode";
 import { SchemaInterface } from "./schemaInterface";

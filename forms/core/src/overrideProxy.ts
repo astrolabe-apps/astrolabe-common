@@ -1,4 +1,4 @@
-import { Control, getCurrentFields } from "@astroapps/controls";
+import { Control, getCurrentFields } from "@react-typed-forms/core";
 
 export function createOverrideProxy<
   A extends object,

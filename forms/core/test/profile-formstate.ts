@@ -22,7 +22,7 @@ import {
   defaultEvaluators,
   SchemaField,
 } from "../src";
-import { newControl } from "@astroapps/controls";
+import { newControl } from "@react-typed-forms/core";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

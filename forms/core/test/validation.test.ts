@@ -16,7 +16,7 @@ import {
 } from "../src";
 import { deepEqualPromise, testNodeState } from "./nodeTester";
 import { normalDate, randomValueForField, rootCompound } from "./gen-schema";
-import { Control, createSyncEffect, newControl } from "@astroapps/controls";
+import { Control, createSyncEffect, newControl } from "@react-typed-forms/core";
 import { escapeJsonataField } from "./gen";
 
 describe("validator types", () => {

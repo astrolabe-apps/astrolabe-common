@@ -16,7 +16,7 @@ import {
   FormTreeLookup,
   SchemaField,
 } from "../src";
-import { newControl } from "@astroapps/controls";
+import { newControl } from "@react-typed-forms/core";
 import { FormStateNode } from "../src/formStateNode";
 
 function childVisibility(node: FormStateNode) {

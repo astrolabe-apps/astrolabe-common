@@ -3,7 +3,7 @@ import {
   CleanupScope,
   Control,
   trackedValue,
-} from "@astroapps/controls";
+} from "@react-typed-forms/core";
 import {
   ControlDefinition,
   ControlDefinitionType,
