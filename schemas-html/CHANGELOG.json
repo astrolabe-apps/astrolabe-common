@@ -2,6 +2,18 @@
   "name": "@react-typed-forms/schemas-html",
   "entries": [
     {
+      "version": "5.3.0",
+      "tag": "@react-typed-forms/schemas-html_v5.3.0",
+      "date": "Wed, 16 Sep 2026 05:48:22 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "The default label renderer now emits a plain `<label>`/`<span>` instead of going through `HtmlComponents` (`Label`/`Span`), and `labelEnd` markup (help text, icons, optional adornments) is rendered inside the `<label>` after the text rather than as a sibling of it. `LabelType.Text` labels are returned as-is instead of being wrapped in a `<span>`. Adds a `textClassLabelEnd` label option, applied to the label text only when `labelEnd` markup is present, which the tailwind theme uses for `mr-2` spacing between the text and the adornment"
+          }
+        ]
+      }
+    },
+    {
       "version": "5.2.3",
       "tag": "@react-typed-forms/schemas-html_v5.2.3",
       "date": "Fri, 04 Sep 2026 03:36:41 GMT",
