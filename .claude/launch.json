@@ -4,9 +4,22 @@
     {
       "name": "formServer",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "cwd": "Astrolabe.TestTemplate/ClientApp/sites/formServer",
       "port": 8000
+    },
+    {
+      "name": "rnDemo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "web"
+      ],
+      "cwd": "Astrolabe.TestTemplate/ClientApp/schemas-rn-demo",
+      "port": 8081
     }
   ]
 }

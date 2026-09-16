@@ -5,6 +5,7 @@ import { DefaultRendererOptions } from "./rendererOptions";
 export const defaultTailwindTheme = {
   label: {
     groupLabelClass: "font-bold",
+    textClassLabelEnd: "mr-2",
     requiredElement: ({ Span }) => <Span className="text-red-500"> *</Span>,
   },
   array: {

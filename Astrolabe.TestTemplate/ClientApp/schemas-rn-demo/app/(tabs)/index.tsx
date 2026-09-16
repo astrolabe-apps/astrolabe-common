@@ -16,6 +16,7 @@ import {
     RenderForm, textfieldOptions
 } from '@react-typed-forms/schemas';
 import {FormDataDisplay} from '../../components/FormDataDisplay';
+import {createRNHelpTextRenderer, helpTextAdornment} from '../../components/RNHelpTextRenderer';
 
 // Schema definition for user profile using buildSchema
 const profileSchema = buildSchema<UserProfile>({
@@ -69,10 +70,23 @@ const profileForm = [
   groupedControl([
     dataControl('firstName', 'First Name'),
     dataControl('lastName', 'Last Name'),
-    dataControl('email', 'Email'),
-    dataControl('phone', 'Phone Number'),
+    dataControl('email', 'Email', {
+      adornments: [
+        helpTextAdornment("We'll only use this to contact you about your account."),
+      ],
+    }),
+    dataControl('phone', 'Phone Number', {
+      adornments: [
+        helpTextAdornment('Include the country code, e.g. +1 (555) 123-4567.', 'Format'),
+      ],
+    }),
     dataControl('dateOfBirth', 'Date of Birth'),
-    dataControl('bio', 'Biography', textfieldOptions({multiline: true })),
+    dataControl('bio', 'Biography', {
+      ...textfieldOptions({multiline: true}),
+      adornments: [
+        helpTextAdornment('A short summary shown on your public profile.'),
+      ],
+    }),
     dataControl('age', 'Age'),
     dataControl('isActive', 'Account Active', {
       renderOptions: { type: DataRenderType.Checkbox },
@@ -107,7 +121,10 @@ const initialProfile: UserProfile = {
 export default function ProfileScreen() {
   const control = useControl<UserProfile>(initialProfile);
 
-  const renderer = createFormRenderer([], createDefaultRenderers(defaultRnTailwindTheme));
+  const renderer = createFormRenderer(
+    [createRNHelpTextRenderer(defaultRnTailwindTheme.adornment?.helpText)],
+    createDefaultRenderers(defaultRnTailwindTheme),
+  );
   const schemaTree = createSchemaTree(profileSchema);
   const formTree = createFormTree(profileForm);
   const dataNode = createSchemaDataNode(schemaTree.rootNode, control);
@@ -119,6 +136,7 @@ export default function ProfileScreen() {
           <Text className="text-2xl font-bold text-gray-900 mb-2">User Profile</Text>
           <Text className="text-gray-600 mb-6">
             This form demonstrates text inputs, date picker, numeric input, and boolean toggle.
+            Fields with an info icon show a HelpText adornment rendered at the end of the label.
           </Text>
           
           <RenderForm

@@ -5,6 +5,8 @@ import { fontAwesomeIcon } from "@react-typed-forms/schemas";
 // Default tailwind theme adapted for React Native
 export const defaultTailwindTheme = {
   label: {
+    className: "flex flex-row items-center",
+    textClassLabelEnd: "mr-2",
     groupLabelClass: "font-bold",
     requiredElement: ({ Span }) =>
       React.createElement(Span, { className: "text-red-500" }, " *"),
