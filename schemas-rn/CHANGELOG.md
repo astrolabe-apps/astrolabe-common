@@ -1,6 +1,13 @@
 # Change Log - @react-typed-forms/schemas-rn
 
-This log was last generated on Wed, 16 Sep 2026 05:48:22 GMT and should not be manually modified.
+This log was last generated on Thu, 17 Sep 2026 00:41:12 GMT and should not be manually modified.
+
+## 2.3.1
+Thu, 17 Sep 2026 00:41:12 GMT
+
+### Patches
+
+- Fix default label styles
 
 ## 2.3.0
 Wed, 16 Sep 2026 05:48:22 GMT

@@ -2,6 +2,18 @@
   "name": "@react-typed-forms/schemas-rn",
   "entries": [
     {
+      "version": "2.3.1",
+      "tag": "@react-typed-forms/schemas-rn_v2.3.1",
+      "date": "Thu, 17 Sep 2026 00:41:12 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix default label styles"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.3.0",
       "tag": "@react-typed-forms/schemas-rn_v2.3.0",
       "date": "Wed, 16 Sep 2026 05:48:22 GMT",
