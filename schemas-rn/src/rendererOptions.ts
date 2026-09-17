@@ -221,6 +221,7 @@ export interface DefaultAdornmentRendererOptions {
 export interface DefaultLabelRendererOptions {
   className?: string;
   textClass?: string;
+  textClassLabelEnd?: string;
   groupLabelClass?: string;
   groupLabelTextClass?: string;
   controlLabelClass?: string;

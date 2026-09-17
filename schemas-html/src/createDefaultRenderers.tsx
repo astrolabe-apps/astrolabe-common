@@ -367,6 +367,7 @@ export function createDefaultLabelRenderer(
     groupLabelClass,
     controlLabelClass,
     textClass,
+    textClassLabelEnd,
     labelContainer,
   } = {
     labelContainer: (c: ReactElement) => c,
@@ -374,37 +375,41 @@ export function createDefaultLabelRenderer(
   };
   return {
     render: (props, labelStart, labelEnd, renderers) => {
-      const { Label, Span } = renderers.html;
       const requiredElement =
-        options?.requiredElement ?? (({ Span }) => <Span> *</Span>);
-      if (props.type == LabelType.Text) return <Span>{props.label}</Span>;
+        options?.requiredElement ?? (() => <span> *</span>);
+      if (props.type == LabelType.Text) {
+        return props.label;
+      }
+
+      const textClassName = rendererClass(
+        props.textClass,
+        clsx(
+          textClass,
+          props.type === LabelType.Group && groupLabelTextClass,
+          props.type === LabelType.Control && controlLabelTextClass,
+          labelEnd ? textClassLabelEnd : null,
+        ),
+      );
+
       return labelContainer(
-        <>
-          <Label
-            htmlFor={props.forId}
-            className={rendererClass(
-              props.className,
-              clsx(
-                className,
-                props.type === LabelType.Group && groupLabelClass,
-                props.type === LabelType.Control && controlLabelClass,
-              ),
-            )}
-            textClass={rendererClass(
-              props.textClass,
-              clsx(
-                textClass,
-                props.type === LabelType.Group && groupLabelTextClass,
-                props.type === LabelType.Control && controlLabelTextClass,
-              ),
-            )}
-          >
-            {labelStart}
+        <label
+          htmlFor={props.forId}
+          className={rendererClass(
+            props.className,
+            clsx(
+              className,
+              props.type === LabelType.Group && groupLabelClass,
+              props.type === LabelType.Control && controlLabelClass,
+            ),
+          )}
+        >
+          {labelStart}
+          <span className={textClassName}>
             {renderers.renderLabelText(props.label)}
             {props.required && requiredElement(renderers.html)}
-          </Label>
+          </span>
           {labelEnd}
-        </>,
+        </label>,
       );
     },
     type: "label",

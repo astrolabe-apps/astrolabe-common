@@ -1,6 +1,24 @@
 # Change Log - @react-typed-forms/schemas-rn
 
-This log was last generated on Fri, 04 Sep 2026 03:36:41 GMT and should not be manually modified.
+This log was last generated on Thu, 17 Sep 2026 00:41:12 GMT and should not be manually modified.
+
+## 2.3.1
+Thu, 17 Sep 2026 00:41:12 GMT
+
+### Patches
+
+- Fix default label styles
+
+## 2.3.0
+Wed, 16 Sep 2026 05:48:22 GMT
+
+### Minor changes
+
+- The default label renderer now renders `View`/`Text` directly instead of going through `HtmlComponents` (`Label`/`Span`), and `labelEnd` markup (help text, icons, optional adornments) is rendered inside the label container after the text rather than as a sibling of it. Adds a `textClassLabelEnd` label option, applied to the label text only when `labelEnd` markup is present, and the tailwind theme now gives the label `flex flex-row items-center` plus `mr-2` between the text and the adornment (without the row direction the label end would stack below the text)
+
+### Patches
+
+- Fix the dropdown renderer throwing `Cannot read properties of undefined (reading 'requiredText')` on a data control that has options but no explicit `renderOptions` - `requiredText` and `portalHost` are now read optionally, matching SelectDataRenderer
 
 ## 2.2.8
 Fri, 04 Sep 2026 03:36:41 GMT

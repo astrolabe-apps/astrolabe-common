@@ -29,7 +29,9 @@ export interface ExtendedDropdown {
 export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
   return createDataRenderer(
     (props, asArray) => {
-      const renderOptions = props.definition.renderOptions as ExtendedDropdown;
+      const renderOptions = props.definition.renderOptions as
+        | ExtendedDropdown
+        | undefined;
       return (
         <RNSelectRenderer
           className={rendererClass(props.className, options.className)}
@@ -40,9 +42,9 @@ export function createRNSelectRenderer(options: SelectRendererOptions = {}) {
           options={props.options ?? []}
           required={props.required}
           emptyText={options.emptyText}
-          requiredText={renderOptions.requiredText ?? options.requiredText}
+          requiredText={renderOptions?.requiredText ?? options.requiredText}
           convert={createSelectConversion(props.field.type)}
-          portalHost={renderOptions.portalHost}
+          portalHost={renderOptions?.portalHost}
         />
       );
     },

@@ -1,6 +1,13 @@
 # Change Log - @react-typed-forms/schemas-html
 
-This log was last generated on Fri, 04 Sep 2026 03:36:41 GMT and should not be manually modified.
+This log was last generated on Wed, 16 Sep 2026 05:48:22 GMT and should not be manually modified.
+
+## 5.3.0
+Wed, 16 Sep 2026 05:48:22 GMT
+
+### Minor changes
+
+- The default label renderer now emits a plain `<label>`/`<span>` instead of going through `HtmlComponents` (`Label`/`Span`), and `labelEnd` markup (help text, icons, optional adornments) is rendered inside the `<label>` after the text rather than as a sibling of it. `LabelType.Text` labels are returned as-is instead of being wrapped in a `<span>`. Adds a `textClassLabelEnd` label option, applied to the label text only when `labelEnd` markup is present, which the tailwind theme uses for `mr-2` spacing between the text and the adornment
 
 ## 5.2.3
 Fri, 04 Sep 2026 03:36:41 GMT
