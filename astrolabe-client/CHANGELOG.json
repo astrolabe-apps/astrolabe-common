@@ -2,6 +2,18 @@
   "name": "@astroapps/client",
   "entries": [
     {
+      "version": "3.0.0",
+      "tag": "@astroapps/client_v3.0.0",
+      "date": "Thu, 17 Sep 2026 05:09:18 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "The peer dependency on `@react-typed-forms/core` moves from `^4.6.0` to `^5.0.0`. v5 folds the `@astroapps/controls` engine in and is ESM-only, and a consuming app must mount `<ControlContextProvider value={getCompatContext()}>` above its tree — v5 has no implicit control context and no no-provider fallback"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.7.0",
       "tag": "@astroapps/client_v2.7.0",
       "date": "Wed, 29 Jul 2026 02:36:51 GMT",

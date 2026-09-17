@@ -1,9 +1,9 @@
 {
-  "name": "@astroapps/schemas-turnstile",
+  "name": "@astroapps/basic-editor",
   "entries": [
     {
-      "version": "2.0.0",
-      "tag": "@astroapps/schemas-turnstile_v2.0.0",
+      "version": "1.0.0",
+      "tag": "@astroapps/basic-editor_v1.0.0",
       "date": "Thu, 17 Sep 2026 05:09:18 GMT",
       "comments": {
         "major": [
@@ -16,22 +16,13 @@
             "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^18.0.1` to `19.0.0`"
           },
           {
-            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^18.0.1` to `19.0.0`"
-          }
-        ]
-      }
-    },
-    {
-      "version": "1.0.2",
-      "tag": "@astroapps/schemas-turnstile_v1.0.2",
-      "date": "Fri, 08 May 2026 00:59:16 GMT",
-      "comments": {
-        "dependency": [
-          {
-            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^17.0.0` to `18.0.0`"
+            "comment": "Updating dependency \"@react-typed-forms/schemas-html\" from `^5.3.0` to `6.0.0`"
           },
           {
-            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^16.0.0` to `18.0.0`"
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^18.0.1` to `19.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas-html\" from `^5.3.0` to `6.0.0`"
           }
         ]
       }

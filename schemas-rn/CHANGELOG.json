@@ -2,6 +2,26 @@
   "name": "@react-typed-forms/schemas-rn",
   "entries": [
     {
+      "version": "3.0.0",
+      "tag": "@react-typed-forms/schemas-rn_v3.0.0",
+      "date": "Thu, 17 Sep 2026 05:09:18 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "The peer dependency on `@react-typed-forms/core` moves from `^4.6.0` to `^5.0.0`. v5 folds the `@astroapps/controls` engine in and is ESM-only, and a consuming app must mount `<ControlContextProvider value={getCompatContext()}>` above its tree — v5 has no implicit control context and no no-provider fallback. The `@astroapps/controls` peer dependency is dropped: nothing in the package has imported it since the engine moved into core"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^18.0.1` to `19.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@react-typed-forms/schemas\" from `^18.0.1` to `19.0.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "2.3.1",
       "tag": "@react-typed-forms/schemas-rn_v2.3.1",
       "date": "Thu, 17 Sep 2026 00:41:12 GMT",

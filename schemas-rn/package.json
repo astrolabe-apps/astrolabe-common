@@ -1,6 +1,6 @@
 {
   "name": "@react-typed-forms/schemas-rn",
-  "version": "2.3.1",
+  "version": "3.0.0",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -48,7 +48,7 @@
   },
   "peerDependencies": {
     "@react-typed-forms/core": "^5.0.0",
-    "@react-typed-forms/schemas": "^18.0.1",
+    "@react-typed-forms/schemas": "^19.0.0",
     "nativewind": "^4.2.1",
     "react": "^18.3.1 || ^19",
     "react-dom": "^18.3.1 || ^19",
@@ -64,7 +64,7 @@
   "devDependencies": {
     "@babel/core": ">=7.25.2",
     "@react-typed-forms/core": "^5.0.0",
-    "@react-typed-forms/schemas": "^18.0.1",
+    "@react-typed-forms/schemas": "^19.0.0",
     "@react-typed-forms/transform": "^0.4.0",
     "@types/react": "^18.3.1 || ~19",
     "@types/uuid": "^10.0.0",

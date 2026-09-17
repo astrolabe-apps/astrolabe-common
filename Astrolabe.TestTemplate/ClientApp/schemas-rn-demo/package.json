@@ -10,8 +10,8 @@
     "build": "tsc --noEmit"
   },
   "dependencies": {
-    "@astroapps/client": "^2.7.0",
-    "@astroapps/forms-core": "^2.3.0",
+    "@astroapps/client": "^3.0.0",
+    "@astroapps/forms-core": "^3.0.0",
     "@astroapps/searchstate": "^2.1.0",
     "expo": "~54.0.34",
     "expo-asset": "~12.0.13",
@@ -48,7 +48,7 @@
     "@rn-primitives/portal": "^1.4.0",
     "@rn-primitives/switch": "^1.4.0",
     "@react-typed-forms/core": "^5.0.0",
-    "@react-typed-forms/schemas": "^18.0.1",
+    "@react-typed-forms/schemas": "^19.0.0",
     "@react-typed-forms/schemas-rn": "workspace:*",
     "nativewind": "^4.2.3",
     "class-variance-authority": "^0.7.0",

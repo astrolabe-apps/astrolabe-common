@@ -1,6 +1,13 @@
 # Change Log - @react-typed-forms/schemas
 
-This log was last generated on Wed, 29 Jul 2026 23:41:04 GMT and should not be manually modified.
+This log was last generated on Thu, 17 Sep 2026 05:09:18 GMT and should not be manually modified.
+
+## 19.0.0
+Thu, 17 Sep 2026 05:09:18 GMT
+
+### Breaking changes
+
+- The peer dependency on `@react-typed-forms/core` moves from `^4.6.0` to `^5.0.0` and `@astroapps/forms-core` to `^3.0.0`. v5 folds the `@astroapps/controls` engine in and is ESM-only, and a consuming app must mount `<ControlContextProvider value={getCompatContext()}>` above its tree — v5 has no implicit control context and no no-provider fallback. The package re-exports `@astroapps/forms-core` wholesale, so its removal of `SchemaInterface.makeEqualityFunc`, `makeControlSetup`, `DefaultSchemaInterface.compoundFieldEquality`, `compoundFieldSetup` and the `EqualityFunc` type drops them from this surface too
 
 ## 18.0.1
 Wed, 29 Jul 2026 23:41:04 GMT

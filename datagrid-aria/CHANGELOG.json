@@ -2,6 +2,26 @@
   "name": "@astroapps/datagrid-aria",
   "entries": [
     {
+      "version": "1.0.0",
+      "tag": "@astroapps/datagrid-aria_v1.0.0",
+      "date": "Thu, 17 Sep 2026 05:09:18 GMT",
+      "comments": {
+        "major": [
+          {
+            "comment": "The peer dependency on `@react-typed-forms/core` moves from `^4.6.0` to `^5.0.0`. v5 folds the `@astroapps/controls` engine in and is ESM-only, and a consuming app must mount `<ControlContextProvider value={getCompatContext()}>` above its tree — v5 has no implicit control context and no no-provider fallback"
+          }
+        ],
+        "dependency": [
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" to `1.0.0`"
+          },
+          {
+            "comment": "Updating dependency \"@astroapps/datagrid-search\" from `^0.3.0` to `1.0.0`"
+          }
+        ]
+      }
+    },
+    {
       "version": "0.5.0",
       "tag": "@astroapps/datagrid-aria_v0.5.0",
       "date": "Mon, 07 Sep 2026 03:16:32 GMT",
