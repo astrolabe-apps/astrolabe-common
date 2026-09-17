@@ -30,12 +30,12 @@
     "forms"
   ],
   "peerDependencies": {
-    "@react-typed-forms/core": "^4.6.0",
+    "@react-typed-forms/core": "^5.0.0",
     "@react-typed-forms/schemas": "^18.0.1",
     "react": "^18"
   },
   "devDependencies": {
-    "@react-typed-forms/core": "workspace:*",
+    "@react-typed-forms/core": "^5.0.0",
     "@react-typed-forms/schemas": "workspace:*",
     "react": "^18",
     "@react-typed-forms/transform": "^0.2.0",

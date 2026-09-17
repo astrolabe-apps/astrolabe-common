@@ -1,5 +1,4 @@
 import {
-  EqualityFunc,
   FieldOption,
   FieldType,
   SchemaField,
@@ -8,7 +7,7 @@ import {
 import { SchemaInterface } from "./schemaInterface";
 import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaNode } from "./schemaNode";
-import { Control, ControlSetup } from "@react-typed-forms/core";
+import { Control } from "@react-typed-forms/core";
 import { parseDateTime as pdt } from "@internationalized/date";
 
 export class DefaultSchemaInterface implements SchemaInterface {
@@ -158,58 +157,6 @@ export class DefaultSchemaInterface implements SchemaInterface {
       default:
         return 0;
     }
-  }
-
-  compoundFieldSetup(f: SchemaNode): [string, ControlSetup<any>][] {
-    return f.getChildNodes().map((x) => {
-      const { field } = x.field;
-      return [field, this.makeControlSetup(x)];
-    });
-  }
-
-  compoundFieldEquality(f: SchemaNode): [string, EqualityFunc][] {
-    return f.getChildNodes().map((x) => {
-      const { field } = x.field;
-      return [field, (a, b) => this.makeEqualityFunc(x)(a[field], b[field])];
-    });
-  }
-
-  makeEqualityFunc(field: SchemaNode, element?: boolean): EqualityFunc {
-    if (field.field.collection && !element) {
-      const elemEqual = this.makeEqualityFunc(field, true);
-      return (a, b) => {
-        if (a === b) return true;
-        if (a == null || b == null) return false;
-        if (a.length !== b.length) return false;
-        for (let i = 0; i < a.length; i++) {
-          if (!elemEqual(a[i], b[i])) return false;
-        }
-        return true;
-      };
-    }
-    switch (field.field.type) {
-      case FieldType.Compound:
-        const allChecks = this.compoundFieldEquality(field);
-        return (a, b) =>
-          a === b ||
-          (a != null && b != null && allChecks.every((x) => x[1](a, b)));
-      default:
-        return (a, b) => a === b;
-    }
-  }
-  makeControlSetup(field: SchemaNode, element?: boolean): ControlSetup<any> {
-    let setup: ControlSetup<any> = {
-      equals: this.makeEqualityFunc(field, element),
-    };
-    if (field.field.collection && !element) {
-      setup.elems = this.makeControlSetup(field, true);
-      return setup;
-    }
-    switch (field.field.type) {
-      case FieldType.Compound:
-        setup.fields = Object.fromEntries(this.compoundFieldSetup(field));
-    }
-    return setup;
   }
 }
 

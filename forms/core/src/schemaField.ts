@@ -1,7 +1,5 @@
 import { SchemaValidator } from "./schemaValidator";
 
-export type EqualityFunc = (a: any, b: any) => boolean;
-
 /**
  * Represents a schema field with various properties.
  */

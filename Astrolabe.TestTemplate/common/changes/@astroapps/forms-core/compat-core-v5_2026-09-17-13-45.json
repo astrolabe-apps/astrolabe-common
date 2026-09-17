@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/forms-core",
+      "comment": "The engine moves from `@astroapps/controls@^1.4` to `@react-typed-forms/core@^5.0.0`, which is now a peer dependency. v5 folds the `@astroapps/controls` engine in and is ESM-only, and a consuming app must mount `<ControlContextProvider value={getCompatContext()}>` above its tree — v5 has no implicit control context and no no-provider fallback. `SchemaInterface.makeEqualityFunc` and `makeControlSetup` are removed, along with `DefaultSchemaInterface.compoundFieldEquality`, `compoundFieldSetup` and the `EqualityFunc` type. They existed to build a per-field `ControlSetup.equals`, which the v5 engine no longer honours — it has context-level `deepEquals` only, and would have ignored a supplied comparator with nothing worse than a dev-mode warning. Removing them turns that silent loss into a compile error. A consumer overriding `makeEqualityFunc` for custom equality has no replacement in this API and must compare values itself",
+      "type": "major"
+    }
+  ],
+  "packageName": "@astroapps/forms-core"
+}

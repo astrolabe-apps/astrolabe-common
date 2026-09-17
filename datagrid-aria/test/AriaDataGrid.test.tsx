@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "./renderWithControls";
 import * as React from "react";
 import { newControl, useComponentTracking } from "@react-typed-forms/core";
 import { columnDefinitions, type ColumnDef } from "@astroapps/datagrid";

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "@jest/globals";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "./renderWithControls";
 import * as React from "react";
 import { FluentProvider, webLightTheme } from "@fluentui/react-components";
 import { newControl, useComponentTracking } from "@react-typed-forms/core";

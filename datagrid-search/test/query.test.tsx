@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "@jest/globals";
-import { act, cleanup, render, waitFor } from "@testing-library/react";
+import { act, cleanup, render, waitFor } from "./renderWithControls";
 import * as React from "react";
 import { newControl, useComponentTracking } from "@react-typed-forms/core";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";

@@ -10,12 +10,12 @@
  *
  * These are the runtime imports only. Type-only imports (`SearchRequest`,
  * `ColumnDef`) are erased at compile time and never resolved.
+ *
+ * `@react-typed-forms/core` is not in here: v5 is ESM-only and publishes no
+ * `lib/index.cjs` to map onto, so it is transformed instead — see
+ * `transformIgnorePatterns` below.
  */
 const workspaceCjs = {
-  "^@react-typed-forms/core$":
-    "<rootDir>/node_modules/@react-typed-forms/core/lib/index.cjs",
-  "^@astroapps/controls$":
-    "<rootDir>/node_modules/@react-typed-forms/core/node_modules/@astroapps/controls/lib/index.cjs",
   "^@astroapps/searchstate$":
     "<rootDir>/node_modules/@astroapps/searchstate/lib/index.cjs",
   "^@astroapps/datagrid$":
@@ -37,6 +37,24 @@ export default {
     // and ESM it needs — see babel.jest.cjs. Types are checked by `tsc --noEmit`,
     // not by the test run.
     "^.+.tsx?$": ["babel-jest", babelConfig],
+    // `@react-typed-forms/core` v5 and the `@rx-controls/*` engine beneath it
+    // ship ESM only — v4 shipped dual (`lib/index.cjs` + a `require` export
+    // condition). Jest runs CJS here, so those packages must be transformed
+    // rather than passed through untouched. ts-jest can't do it (it only
+    // handles the project's own TS), hence babel-jest for the `.js` in
+    // node_modules.
+    "^.+\\.jsx?$": [
+      "babel-jest",
+      { presets: [["@babel/preset-env", { targets: { node: "current" } }]] },
+    ],
   },
+  // Anchored on the whole path rather than one `/node_modules/` segment: pnpm
+  // stores the real files under `.pnpm/<name>@<version>/node_modules/<name>`, so
+  // a per-segment pattern matches at the `.pnpm` segment and ignores them again.
+  // This ignores a node_modules path only when neither package appears anywhere
+  // in it, in either pnpm's `+` spelling or the plain `/` one.
+  transformIgnorePatterns: [
+    "node_modules/(?!.*(@react-typed-forms|@rx-controls)[+/])",
+  ],
   moduleNameMapper: workspaceCjs,
 };

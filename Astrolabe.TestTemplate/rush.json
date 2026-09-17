@@ -527,11 +527,6 @@
       "shouldPublish": true
     },
     {
-      "packageName": "@react-typed-forms/core",
-      "projectFolder": "../core",
-      "shouldPublish": true
-    },
-    {
       "packageName": "@react-typed-forms/mui",
       "projectFolder": "../mui",
       "shouldPublish": true
@@ -594,11 +589,6 @@
     {
       "packageName": "@astroapps/client-msal",
       "projectFolder": "../astrolabe-client-msal",
-      "shouldPublish": true
-    },
-    {
-      "packageName": "@astroapps/controls",
-      "projectFolder": "../astrolabe-controls",
       "shouldPublish": true
     },
     {

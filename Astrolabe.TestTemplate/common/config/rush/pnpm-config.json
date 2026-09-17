@@ -130,8 +130,6 @@
     "@astroapps/forms-core": "workspace:*",
     "@astroapps/client": "workspace:*",
     "@astroapps/client-localusers": "workspace:*",
-    "@astroapps/controls": "workspace:*",
-    "@react-typed-forms/core": "workspace:*",
     "@react-typed-forms/schemas": "workspace:*",
     "@react-typed-forms/schemas-html": "workspace:*",
     "@astroapps/aria-base": "workspace:*",

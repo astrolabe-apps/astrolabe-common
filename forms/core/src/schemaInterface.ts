@@ -1,12 +1,11 @@
 import {
-  EqualityFunc,
   FieldOption,
   SchemaField,
   ValidationMessageType,
 } from "./schemaField";
 import { SchemaDataNode } from "./schemaDataNode";
 import { SchemaNode } from "./schemaNode";
-import { Control, ControlSetup } from "@react-typed-forms/core";
+import { Control } from "@react-typed-forms/core";
 
 /**
  * Interface for schema-related operations.
@@ -128,8 +127,4 @@ export interface SchemaInterface {
    * @returns The search text.
    */
   searchText(field: SchemaField, value: any): string;
-
-  makeEqualityFunc(field: SchemaNode, element?: boolean): EqualityFunc;
-
-  makeControlSetup(field: SchemaNode, element?: boolean): ControlSetup<any>;
 }

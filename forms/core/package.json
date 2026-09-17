@@ -1,6 +1,6 @@
 {
   "name": "@astroapps/forms-core",
-  "version": "3.0.0-alpha.1",
+  "version": "2.3.0",
   "description": "",
   "type": "module",
   "main": "lib/index.cjs",
@@ -32,12 +32,12 @@
     "@internationalized/date": "^3.10.0"
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^5.0.0-alpha.1"
+    "@react-typed-forms/core": "^5.0.0"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.26.0",
     "@jest/globals": "^29.7.0",
-    "@react-typed-forms/core": "^5.0.0-alpha.1",
+    "@react-typed-forms/core": "^5.0.0",
     "@types/react": "^18.2.28",
     "@types/uuid": "^10.0.0",
     "babel-jest": "^29.7.0",

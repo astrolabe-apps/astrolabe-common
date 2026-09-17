@@ -50,7 +50,7 @@
     "@react-navigation/elements": "^2.2.5",
     "nativewind": "^4.1.21",
     "tailwindcss": "^3.4.17",
-    "@react-typed-forms/core": "workspace:*",
+    "@react-typed-forms/core": "^5.0.0",
     "@react-typed-forms/schemas": "workspace:*",
     "@react-typed-forms/schemas-html": "workspace:*",
     "@react-typed-forms/schemas-rn": "workspace:*",
