@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/datagrid-fluent-ui",
+      "comment": "Added datatable disabled, sort precedence and style options",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/datagrid-fluent-ui"
+}

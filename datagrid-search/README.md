@@ -84,6 +84,10 @@ sort.toggle(column, ev); // ev?.shiftKey matters in "shift" mode
 `cycleUnsorted` adds the third step, so clicks go default → reverse → unsorted
 instead of flipping between two.
 
+`newSortFirst` puts a newly added column first instead of last, so the column
+just clicked becomes the primary sort and the others move down. A click on a
+column that's already sorted still only changes its direction, keeping its place.
+
 Note what isn't here: applying the sort to rows. That belongs to the data source,
 and its absence is how a server source says "these rows are already ordered".
 

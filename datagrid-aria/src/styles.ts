@@ -251,17 +251,22 @@ export function ariaDataGridClasses(
           // and stop at the title inside it. Inheriting explicitly makes the
           // documented override path do what it looks like it does.
           "[text-transform:inherit]",
+          // Named, so the icons below dim for this button's `disabled` and not
+          // for some unrelated `group` a caller has put on the header cell.
+          "group/sort",
           focusRing,
         ),
         classes.sortButton,
       ),
       sortButtonLabel: part("truncate", classes.sortButtonLabel),
+      // The icons dim when the header is disabled; the title doesn't, so the
+      // column stays readable.
       sortIcon: part(
-        "flex items-center shrink-0 [&>svg]:w-3 [&>svg]:h-3",
+        "flex items-center shrink-0 [&>svg]:w-3 [&>svg]:h-3 group-disabled/sort:opacity-50",
         classes.sortIcon,
       ),
       sortPriority: part(
-        "text-[10px] text-surface-500 shrink-0",
+        "text-[10px] text-surface-500 shrink-0 group-disabled/sort:opacity-50",
         classes.sortPriority,
       ),
       // Sits outside the sort button — nesting interactive elements is invalid —
@@ -270,6 +275,7 @@ export function ariaDataGridClasses(
         clsx(
           "flex items-center justify-center shrink-0 w-5 h-5 p-0 rounded",
           "bg-transparent border-0 cursor-pointer text-surface-500 hover:bg-surface-100",
+          "disabled:opacity-50 disabled:cursor-default disabled:hover:bg-transparent",
           focusRing,
         ),
         classes.filterButton,

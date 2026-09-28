@@ -32,6 +32,16 @@ export interface SortOptions {
    * ascending ↔ descending like Fluent's DataGrid.
    */
   cycleUnsorted?: boolean;
+  /**
+   * Where a newly sorted column goes when others are kept (multiple mode, or a
+   * shift-click in shift mode). Off by default: it's appended, least significant.
+   * On: it's put first, so the column you just clicked becomes the primary sort
+   * and the rest move down one.
+   *
+   * Either way, clicking a column that's already sorted only changes its
+   * direction — it keeps its place.
+   */
+  newSortFirst?: boolean;
 }
 
 export interface GridSort {
@@ -72,19 +82,21 @@ export function nextSortDirection(
  *
  * In multiple mode an already-sorted column keeps its precedence rather than
  * jumping to the front — a click should change direction, not silently reorder
- * the other columns — and a newly sorted one is appended as least significant.
+ * the other columns. A newly sorted one is appended as least significant, or
+ * put first with `newFirst`.
  */
 export function applySortField(
   sorts: string[],
   field: string,
   dir: SortDirection | undefined,
   multiple: boolean,
+  newFirst = false,
 ): string[] {
   if (!multiple) return dir ? [encodeSortField(field, dir)] : [];
   const index = sorts.findIndex((s) => sortEntryField(s) === field);
   if (!dir) return sorts.filter((s) => sortEntryField(s) !== field);
   const entry = encodeSortField(field, dir);
-  if (index < 0) return [...sorts, entry];
+  if (index < 0) return newFirst ? [entry, ...sorts] : [...sorts, entry];
   const next = [...sorts];
   next[index] = entry;
   return next;
@@ -94,7 +106,11 @@ export function makeGridSort<S extends SearchRequest>(
   state: Control<S>,
   options: SortOptions = {},
 ): GridSort {
-  const { mode = "single", cycleUnsorted = false } = options;
+  const {
+    mode = "single",
+    cycleUnsorted = false,
+    newSortFirst = false,
+  } = options;
   const sortControl = state.fields.sort;
   const sorts = sortControl.value ?? [];
 
@@ -122,7 +138,13 @@ export function makeGridSort<S extends SearchRequest>(
       );
       const multiple =
         mode === "multiple" || (mode === "shift" && !!ev?.shiftKey);
-      sortControl.value = applySortField(sorts, field, next, multiple);
+      sortControl.value = applySortField(
+        sorts,
+        field,
+        next,
+        multiple,
+        newSortFirst,
+      );
       // Re-sorting makes the current page meaningless — "page 5" of a different
       // order shows unrelated rows — so paging always goes back to the start.
       state.fields.offset.value = 0;

@@ -11,6 +11,13 @@ export interface AriaHeaderContentOptions<T, D = unknown> {
   sortable?: boolean;
   /** Turn filtering off grid-wide. */
   filterable?: boolean;
+  /** Disable the sort buttons and filter triggers grid-wide. */
+  disabled?: boolean;
+  /**
+   * Show the "sorted 2nd" number beside each sorted column in multi-sort.
+   * Defaults to true. Off only hides the numbers; sorting is unchanged.
+   */
+  showSortPriority?: boolean;
   /** Replaces every column's popup body. A column's own `render` wins over this. */
   renderFilterPopup?: (props: FilterPopupProps<T>) => ReactNode;
   /**
@@ -52,6 +59,8 @@ export function ariaHeaderContent<T, D = unknown>(
   const {
     sortable = true,
     filterable = true,
+    disabled,
+    showSortPriority = true,
     renderFilterPopup,
     renderFilterControl,
     renderHeaderExtra,
@@ -63,16 +72,19 @@ export function ariaHeaderContent<T, D = unknown>(
   return (column) => {
     const canSort = sortable && search.sort.isSortable(column);
     const direction = canSort ? search.sort.direction(column) : undefined;
-    const priority = canSort ? search.sort.priority(column) : undefined;
+    const priority =
+      canSort && showSortPriority ? search.sort.priority(column) : undefined;
 
     return (
       <>
+        {/* Native rather than React Aria's Button, which strips `aria-sort`. */}
         <button
           type="button"
           className={clsx(names.sortButton, parts.sortButton)}
           // Passing the event through is what makes shift-click multi-sort work
           // in `mode: "shift"`; other modes ignore it.
           onClick={canSort ? (ev) => search.sort.toggle(column, ev) : undefined}
+          disabled={disabled}
           aria-sort={
             direction === "asc"
               ? "ascending"
@@ -114,6 +126,7 @@ export function ariaHeaderContent<T, D = unknown>(
         parts={parts}
         renderBody={renderFilterPopup}
         icons={icons}
+        disabled={disabled}
       />
     );
   }

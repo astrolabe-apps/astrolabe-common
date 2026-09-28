@@ -28,6 +28,7 @@ export interface AriaFilterPopoverProps<T, D = unknown> {
   renderBody?: (props: FilterPopupProps<T>) => ReactNode;
   icons?: AriaDataGridIcons;
   ariaLabel?: string;
+  disabled?: boolean;
 }
 
 /**
@@ -46,6 +47,7 @@ export function AriaFilterPopover<T, D = unknown>({
   renderBody,
   icons,
   ariaLabel = "Filter",
+  disabled,
 }: AriaFilterPopoverProps<T, D>) {
   const [open, setOpen] = useState(false);
   // Focusable (out of tab order) so the body can put focus back on it — see the
@@ -61,6 +63,7 @@ export function AriaFilterPopover<T, D = unknown>({
   return (
     <DialogTrigger isOpen={open} onOpenChange={setOpen}>
       <Button
+        isDisabled={disabled}
         aria-label={
           // Always names the column: with several filterable columns, a bare
           // "Filter" is the same accessible name on every funnel, so neither a

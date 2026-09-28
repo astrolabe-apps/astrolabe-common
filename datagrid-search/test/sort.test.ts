@@ -88,6 +88,26 @@ describe("applySortField", () => {
     ]);
   });
 
+  it("puts a new field first with newFirst", () => {
+    expect(applySortField(["afile"], "size", "desc", true, true)).toEqual([
+      "dsize",
+      "afile",
+    ]);
+  });
+
+  it("keeps precedence on a direction change even with newFirst", () => {
+    // 'size' is already sorted, so reversing it mustn't also promote it.
+    expect(
+      applySortField(["afile", "dsize"], "size", "asc", true, true),
+    ).toEqual(["afile", "asize"]);
+  });
+
+  it("ignores newFirst in single mode", () => {
+    expect(applySortField(["afile"], "size", "desc", false, true)).toEqual([
+      "dsize",
+    ]);
+  });
+
   it("removes just that field in multiple mode", () => {
     expect(applySortField(["afile", "dsize"], "file", undefined, true)).toEqual(
       ["dsize"],
@@ -145,6 +165,24 @@ describe("makeGridSort", () => {
     const state = stateWith({ sort: ["afile"] });
     makeGridSort(state, { mode: "multiple" }).toggle(size);
     expect(state.fields.sort.value).toEqual(["afile", "dsize"]);
+  });
+
+  it("makes the clicked column primary with newSortFirst", () => {
+    const state = stateWith({ sort: ["afile"] });
+    const opts = { mode: "multiple" as const, newSortFirst: true };
+    makeGridSort(state, opts).toggle(size);
+    expect(state.fields.sort.value).toEqual(["dsize", "afile"]);
+    const sort = makeGridSort(state, opts);
+    expect(sort.priority(size)).toBe(1);
+    expect(sort.priority(file)).toBe(2);
+  });
+
+  it("puts a shift-clicked column first with newSortFirst", () => {
+    const state = stateWith({ sort: ["afile"] });
+    makeGridSort(state, { mode: "shift", newSortFirst: true }).toggle(size, {
+      shiftKey: true,
+    });
+    expect(state.fields.sort.value).toEqual(["dsize", "afile"]);
   });
 
   it("adds only on shift-click in shift mode", () => {

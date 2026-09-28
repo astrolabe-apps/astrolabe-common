@@ -35,6 +35,8 @@ export interface UseAriaDataGridOptions<T, D = unknown>
   selectionColumn?: AriaSelectionColumnOptions<T>;
   /** See `AriaRowWrapperOptions.selectOnRowClick`. Defaults to true. */
   selectOnRowClick?: boolean;
+  /** See `AriaRowWrapperOptions.rowClass`. */
+  rowClass?: (row: T, index: number) => string;
   /** Row keys, so React reorders rather than rebuilds on sort. */
   rowKey?: (row: T, index: number) => Key;
 }
@@ -64,6 +66,7 @@ export function useAriaDataGrid<T, D = unknown>(
     selection,
     selectionColumn,
     selectOnRowClick,
+    rowClass,
     rowKey,
     size,
     defaultColumnTemplate,
@@ -99,7 +102,7 @@ export function useAriaDataGrid<T, D = unknown>(
       ...gridClasses,
       renderHeaderContent: ariaHeaderContent(search, parts, headerOptions),
       wrapBodyRow: ariaRowWrapper<T>(
-        { getRow, rowKey, selection, selectOnRowClick },
+        { getRow, rowKey, selection, selectOnRowClick, rowClass },
         parts,
       ),
       // Cell content is produced by a render callback, outside any component, so
