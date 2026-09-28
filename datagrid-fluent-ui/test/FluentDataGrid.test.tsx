@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it } from "@jest/globals";
 import { cleanup, fireEvent, render, screen } from "./renderWithControls";
 import * as React from "react";
-import { FluentProvider, webLightTheme } from "@fluentui/react-components";
+import {
+  FluentProvider,
+  makeStyles,
+  webLightTheme,
+} from "@fluentui/react-components";
 import { newControl, useComponentTracking } from "@react-typed-forms/core";
 import { columnDefinitions, type ColumnDef } from "@astroapps/datagrid";
 import {
@@ -13,12 +17,15 @@ import {
   useClientData,
   useGridSearch,
   type GetColumnFilter,
+  type SortOptions,
 } from "@astroapps/datagrid-search";
 import {
   FilterOptionList,
   fluentDataGridClassNames,
   FluentDataGrid,
+  fluentRowWrapper,
   makeGridSelection,
+  useFluentDataGridStyles,
 } from "../src";
 
 interface Row {
@@ -51,6 +58,10 @@ function Harness({
   pager,
   pageSizes,
   renderHeaderExtra,
+  disabled,
+  rowClass,
+  sort,
+  showSortPriority,
   state: ownedState,
 }: {
   columns: ColumnDef<Row, unknown>[];
@@ -59,6 +70,10 @@ function Harness({
   pager?: boolean;
   pageSizes?: number[];
   renderHeaderExtra?: (column: ColumnDef<Row, unknown>) => React.ReactNode;
+  disabled?: boolean;
+  rowClass?: (row: Row, index: number) => string;
+  sort?: SortOptions;
+  showSortPriority?: boolean;
   /**
    * A state control owned by the test, for asserting what an interaction wrote.
    * Without one the harness makes a fresh control per render — fine for
@@ -85,6 +100,7 @@ function Harness({
       columns,
       data,
       getColumnFilter,
+      sort,
     });
     return (
       <FluentProvider theme={webLightTheme}>
@@ -93,6 +109,9 @@ function Harness({
           pager={pager}
           pageSizes={pageSizes}
           renderHeaderExtra={renderHeaderExtra}
+          disabled={disabled}
+          rowClass={rowClass}
+          showSortPriority={showSortPriority}
         />
       </FluentProvider>
     );
@@ -133,6 +152,109 @@ describe("a grid with nothing enabled", () => {
   it("renders no selection column", () => {
     render(<Harness columns={plainColumns} />);
     expect(screen.queryByLabelText(/Select/)).toBeNull();
+  });
+});
+
+/** Two sortable columns, for multi-sort precedence. */
+const sortableColumns = columnDefinitions<Row>(
+  { title: "File", getter: (r) => r.file, sortField: "file" },
+  { title: "Kind", getter: (r) => r.kind, sortField: "kind" },
+);
+
+const useStripe = makeStyles({
+  stripe: { "& > *": { backgroundColor: "rgb(1, 2, 3)" } },
+});
+
+/** Rows through `fluentRowWrapper`, with row 1 selected and every row striped. */
+function StripedRows() {
+  const { parts } = useFluentDataGridStyles();
+  const { stripe } = useStripe();
+  const wrap = fluentRowWrapper<Row>(
+    { rows, isSelected: (_, i) => i === 1, rowClass: () => stripe },
+    parts,
+  );
+  return <div>{rows.map((_, i) => wrap(i, (r) => <span>{r.file}</span>))}</div>;
+}
+
+describe("header disabling and row classes", () => {
+  it("disables the sort buttons and filter triggers on request", () => {
+    const state = newControl<SearchRequest>({
+      ...defaultSearchOptions,
+      length: 10,
+    });
+    render(<Harness columns={richColumns} state={state} disabled />);
+    const sortButton = screen.getByRole("button", { name: "File" });
+    const filterButton = screen.getByLabelText("Filter (Kind)");
+    expect(sortButton).toHaveProperty("disabled", true);
+    expect(filterButton).toHaveProperty("disabled", true);
+    fireEvent.click(sortButton);
+    fireEvent.click(filterButton);
+    expect(state.fields.sort.value).toEqual([]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("makes the last-clicked column the primary sort with newSortFirst", () => {
+    const state = newControl<SearchRequest>({
+      ...defaultSearchOptions,
+      length: 10,
+    });
+    render(
+      <Harness
+        columns={sortableColumns}
+        state={state}
+        sort={{ mode: "multiple", newSortFirst: true }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "File" }));
+    fireEvent.click(screen.getByRole("button", { name: "Kind" }));
+    expect(state.fields.sort.value).toEqual(["akind", "afile"]);
+    // The badges follow: Kind, clicked last, is 1st.
+    expect(
+      Array.from(
+        document.querySelectorAll(`.${fluentDataGridClassNames.sortPriority}`),
+      ).map((el) => el.textContent),
+    ).toEqual(["2", "1"]);
+  });
+
+  it("hides the sort priority numbers with showSortPriority off", () => {
+    render(
+      <Harness
+        columns={sortableColumns}
+        over={{ sort: ["afile", "akind"] }}
+        sort={{ mode: "multiple" }}
+        showSortPriority={false}
+      />,
+    );
+    expect(
+      document.querySelectorAll(`.${fluentDataGridClassNames.sortPriority}`),
+    ).toHaveLength(0);
+    // Still multi-sorted: both columns keep their arrows.
+    expect(document.querySelectorAll("[aria-sort]")).toHaveLength(2);
+  });
+
+  it("adds rowClass to the rows it returns a class for", () => {
+    render(
+      <Harness
+        columns={plainColumns}
+        rowClass={(row) => (row.kind === "img" ? "stripe" : "")}
+      />,
+    );
+    const painted = Array.from(
+      document.querySelectorAll(`.${fluentDataGridClassNames.row}`),
+    ).map((el) => el.classList.contains("stripe"));
+    expect(painted).toEqual([false, true, false]);
+  });
+
+  it("lets the selected background paint over a rowClass stripe", () => {
+    render(
+      <FluentProvider theme={webLightTheme}>
+        <StripedRows />
+      </FluentProvider>,
+    );
+    const background = (text: string) =>
+      getComputedStyle(screen.getByText(text)).backgroundColor;
+    expect(background("notes")).toBe("rgb(1, 2, 3)");
+    expect(background("logo")).not.toBe("rgb(1, 2, 3)");
   });
 });
 

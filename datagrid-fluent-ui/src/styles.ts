@@ -178,6 +178,17 @@ const useStyles = makeStyles({
       outlineStyle: "solid",
       outlineColor: tokens.colorStrokeFocus2,
     },
+    // The icons take Fluent's disabled colour, as the disabled filter Button
+    // beside them does; the title keeps its own so the column stays readable.
+    ":disabled": {
+      cursor: "default",
+      "& .astro-FluentDataGrid__sortIcon": {
+        color: tokens.colorNeutralForegroundDisabled,
+      },
+      "& .astro-FluentDataGrid__sortPriority": {
+        color: tokens.colorNeutralForegroundDisabled,
+      },
+    },
   },
   sortButtonLabel: {
     overflow: "hidden",

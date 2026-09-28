@@ -100,6 +100,7 @@ export interface FluentFilterPopoverProps<T, D = unknown> {
   /** Replaces the popup body, keeping this trigger and shell. */
   renderBody?: (props: FilterPopupProps<T>) => ReactNode;
   ariaLabel?: string;
+  disabled?: boolean;
 }
 
 /**
@@ -115,6 +116,7 @@ export function FluentFilterPopover<T, D = unknown>({
   parts,
   renderBody,
   ariaLabel = "Filter",
+  disabled,
 }: FluentFilterPopoverProps<T, D>) {
   const styles = useStyles();
   const [open, setOpen] = useState(false);
@@ -138,6 +140,7 @@ export function FluentFilterPopover<T, D = unknown>({
         <Button
           appearance="transparent"
           size="small"
+          disabled={disabled}
           aria-label={
             // Always names the column: with several filterable columns, a bare
             // "Filter" is the same accessible name on every one of them, so neither a
@@ -159,7 +162,11 @@ export function FluentFilterPopover<T, D = unknown>({
           // Deliberate: a Fluent-styled grid should use Fluent's own icon.
           icon={
             active ? (
-              <FilterFilled className={parts.filterButtonActive} />
+              // No brand colour while disabled, so the icon takes the Button's
+              // disabled colour; Filled still says the column is filtered.
+              <FilterFilled
+                className={disabled ? undefined : parts.filterButtonActive}
+              />
             ) : (
               <FilterRegular />
             )

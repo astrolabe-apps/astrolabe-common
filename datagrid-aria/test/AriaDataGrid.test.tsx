@@ -13,11 +13,13 @@ import {
   useGridSearch,
   type FilterMode,
   type GetColumnFilter,
+  type SortOptions,
 } from "@astroapps/datagrid-search";
 import {
   AriaDataGrid,
   ariaDataGridClassNames,
   ariaDataGridClasses,
+  ariaRowWrapper,
   FilterOptionList,
   makeGridSelection,
   mergeClasses,
@@ -46,6 +48,18 @@ const richColumns = columnDefinitions<Row>(
   { title: "Kind", getter: (r) => r.kind, filterField: "kind" },
 );
 
+/** Two sortable columns, for multi-sort precedence. */
+const sortableColumns = columnDefinitions<Row>(
+  { title: "File", getter: (r) => r.file, sortField: "file" },
+  { title: "Kind", getter: (r) => r.kind, sortField: "kind" },
+);
+
+/** The priority badges, in column order. */
+const sortPriorities = (className: string) =>
+  Array.from(document.querySelectorAll(`.${className}`)).map(
+    (el) => el.textContent,
+  );
+
 const { parts } = ariaDataGridClasses();
 
 function Harness({
@@ -57,6 +71,10 @@ function Harness({
   renderHeaderExtra,
   deferApply,
   filterMode,
+  disabled,
+  rowClass,
+  sort,
+  showSortPriority,
   state: ownedState,
 }: {
   columns: ColumnDef<Row, unknown>[];
@@ -67,6 +85,10 @@ function Harness({
   renderHeaderExtra?: (column: ColumnDef<Row, unknown>) => React.ReactNode;
   deferApply?: boolean;
   filterMode?: FilterMode;
+  disabled?: boolean;
+  rowClass?: (row: Row, index: number) => string;
+  sort?: SortOptions;
+  showSortPriority?: boolean;
   /**
    * A state control owned by the test, for asserting what an interaction wrote.
    * Without one the harness makes a fresh control per render — fine for
@@ -94,6 +116,7 @@ function Harness({
       getColumnFilter,
       deferApply,
       filterMode,
+      sort,
     });
     return (
       <AriaDataGrid
@@ -101,6 +124,9 @@ function Harness({
         pager={pager}
         pageSizes={pageSizes}
         renderHeaderExtra={renderHeaderExtra}
+        disabled={disabled}
+        rowClass={rowClass}
+        showSortPriority={showSortPriority}
       />
     );
   } finally {
@@ -192,6 +218,90 @@ describe("a grid with sort and filter available", () => {
   it("still suppresses the pager on request with page sizes offered", () => {
     render(<Harness columns={richColumns} pageSizes={[2, 10]} pager={false} />);
     expect(screen.queryByLabelText("Rows per page")).toBeNull();
+  });
+
+  it("disables the sort buttons and filter triggers on request", () => {
+    const state = newControl<SearchRequest>({
+      ...defaultSearchOptions,
+      length: 10,
+    });
+    render(<Harness columns={richColumns} state={state} disabled />);
+    const sortButton = screen.getByRole("button", { name: "File" });
+    const filterButton = screen.getByLabelText("Filter (Kind)");
+    expect(sortButton).toHaveProperty("disabled", true);
+    expect(filterButton).toHaveProperty("disabled", true);
+    fireEvent.click(sortButton);
+    fireEvent.click(filterButton);
+    expect(state.fields.sort.value).toEqual([]);
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("makes the last-clicked column the primary sort with newSortFirst", () => {
+    const state = newControl<SearchRequest>({
+      ...defaultSearchOptions,
+      length: 10,
+    });
+    render(
+      <Harness
+        columns={sortableColumns}
+        state={state}
+        sort={{ mode: "multiple", newSortFirst: true }}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "File" }));
+    fireEvent.click(screen.getByRole("button", { name: "Kind" }));
+    expect(state.fields.sort.value).toEqual(["akind", "afile"]);
+    // The badges follow: Kind, clicked last, is 1st.
+    expect(sortPriorities(ariaDataGridClassNames.sortPriority)).toEqual([
+      "2",
+      "1",
+    ]);
+  });
+
+  it("hides the sort priority numbers with showSortPriority off", () => {
+    render(
+      <Harness
+        columns={sortableColumns}
+        over={{ sort: ["afile", "akind"] }}
+        sort={{ mode: "multiple" }}
+        showSortPriority={false}
+      />,
+    );
+    expect(sortPriorities(ariaDataGridClassNames.sortPriority)).toEqual([]);
+    // Still multi-sorted: both columns keep their arrows.
+    expect(document.querySelectorAll("[aria-sort]")).toHaveLength(2);
+  });
+
+  it("adds rowClass to the rows it returns a class for", () => {
+    const rowClass = jest.fn((row: Row) =>
+      row.kind === "img" ? "[&>*]:bg-red-50" : "",
+    );
+    render(<Harness columns={plainColumns} rowClass={rowClass} />);
+    const painted = Array.from(
+      document.querySelectorAll(`.${ariaDataGridClassNames.row}`),
+    ).map((el) => el.classList.contains("[&>*]:bg-red-50"));
+    expect(painted).toEqual([false, true, false]);
+    expect(rowClass).toHaveBeenCalledWith(rows[1], 1);
+  });
+
+  it("lets the selected background paint over a rowClass stripe", () => {
+    // Same `[&>*]:` variant, so tailwind-merge keeps only one of the two
+    // backgrounds; a stripe must not be the one that survives on a selected row.
+    const wrap = ariaRowWrapper<Row>(
+      {
+        rows,
+        isSelected: (_, i) => i === 1,
+        rowClass: () => "[&>*]:bg-surface-50",
+      },
+      parts,
+    );
+    render(<div>{rows.map((_, i) => wrap(i, (r) => r.file))}</div>);
+    const classes = Array.from(
+      document.querySelectorAll(`.${ariaDataGridClassNames.row}`),
+    ).map((el) => el.classList);
+    expect(classes[0].contains("[&>*]:bg-surface-50")).toBe(true);
+    expect(classes[1].contains("[&>*]:bg-primary-50")).toBe(true);
+    expect(classes[1].contains("[&>*]:bg-surface-50")).toBe(false);
   });
 
   it("reports no data without inventing rows", () => {

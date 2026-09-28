@@ -14,7 +14,12 @@
  */
 
 import React, { useState } from "react";
-import { FluentProvider, webLightTheme } from "@fluentui/react-components";
+import {
+  FluentProvider,
+  makeStyles,
+  tokens,
+  webLightTheme,
+} from "@fluentui/react-components";
 import { useControl } from "@react-typed-forms/core";
 import { columnDefinitions } from "@astroapps/datagrid";
 import {
@@ -83,12 +88,36 @@ const getColumnFilter: GetColumnFilter<FileRow> = (column) =>
       ? {}
       : undefined;
 
+/**
+ * The stripe is the default hover colour, so a striped row also steps its hover
+ * and press up a shade — `rowClass` is merged over the row's own hover classes,
+ * and under the selected ones, so a selected row still paints over all of this.
+ */
+const striped = (_: FileRow, index: number) =>
+  index % 2
+    ? "[&>*]:bg-surface-50 [&:hover>*]:bg-surface-100 [&:active>*]:bg-surface-200"
+    : "";
+
+/**
+ * The Fluent grid is styled by Griffel, not tailwind, so its stripe is a
+ * `makeStyles` class. Fluent's row hover is already darker than this token, so
+ * no hover step is needed.
+ */
+const useFluentStripe = makeStyles({
+  stripe: { "& > *": { backgroundColor: tokens.colorNeutralBackground2 } },
+});
+
 export default function AriaGridPage() {
   const [size, setSize] = useState<AriaDataGridSize>("md");
   const [selectable, setSelectable] = useState(true);
   const [multiSort, setMultiSort] = useState(false);
+  const [newSortFirst, setNewSortFirst] = useState(true);
+  const [showSortPriority, setShowSortPriority] = useState(true);
   const [filterMode, setFilterMode] = useState<FilterMode>("immediate");
   const [branded, setBranded] = useState(false);
+  const [stripes, setStripes] = useState(false);
+  const [headersDisabled, setHeadersDisabled] = useState(false);
+  const fluentStripe = useFluentStripe().stripe;
 
   const state = useControl<SearchRequest>({
     ...defaultSearchOptions,
@@ -102,7 +131,7 @@ export default function AriaGridPage() {
     data,
     getColumnFilter,
     filterMode,
-    sort: { mode: multiSort ? "shift" : "single" },
+    sort: { mode: multiSort ? "shift" : "single", newSortFirst },
   });
 
   // Page-scoped by design: tick rows, page on, and the header checkbox reflects
@@ -149,6 +178,12 @@ export default function AriaGridPage() {
         <Toggle checked={multiSort} onChange={setMultiSort}>
           Multi-sort (shift-click)
         </Toggle>
+        <Toggle checked={newSortFirst} onChange={setNewSortFirst}>
+          Newest sort first
+        </Toggle>
+        <Toggle checked={showSortPriority} onChange={setShowSortPriority}>
+          Sort numbers
+        </Toggle>
         <label className="flex items-center gap-2">
           Filters
           <select
@@ -163,6 +198,12 @@ export default function AriaGridPage() {
         </label>
         <Toggle checked={branded} onChange={setBranded}>
           Class overrides
+        </Toggle>
+        <Toggle checked={stripes} onChange={setStripes}>
+          Striped rows
+        </Toggle>
+        <Toggle checked={headersDisabled} onChange={setHeadersDisabled}>
+          Disabled headers
         </Toggle>
         <span className="ml-auto text-surface-600">
           {selectedIds.value.length} selected
@@ -180,6 +221,9 @@ export default function AriaGridPage() {
             selection={selection}
             rowKey={(r) => r.id}
             pageSizes={[5, 10, 25]}
+            rowClass={stripes ? striped : undefined}
+            disabled={headersDisabled}
+            showSortPriority={showSortPriority}
             classes={
               branded
                 ? {
@@ -209,6 +253,11 @@ export default function AriaGridPage() {
               selection={selection}
               rowKey={(r) => r.id}
               pageSizes={[5, 10, 25]}
+              rowClass={
+                stripes ? (_, i) => (i % 2 ? fluentStripe : "") : undefined
+              }
+              disabled={headersDisabled}
+              showSortPriority={showSortPriority}
             />
           </FluentProvider>
         </Panel>
@@ -256,6 +305,31 @@ export default function AriaGridPage() {
             Multi-sort shows a small priority number beside the second and later
             sorted columns. Fluent's own DataGrid is single-sort, so that badge
             is an addition rather than a copy.
+          </li>
+          <li>
+            <strong>Newest sort first</strong> (with multi-sort on): a
+            shift-clicked column becomes the primary sort, badge 1, and the
+            others move down. Off, it joins at the end instead. Either way,
+            clicking a column that&apos;s already sorted only flips its
+            direction — it keeps its place.
+          </li>
+          <li>
+            <strong>Sort numbers</strong> off hides the priority numbers but
+            leaves multi-sort alone: shift-click still adds columns, and each
+            sorted column keeps its arrow.
+          </li>
+          <li>
+            <strong>Striped rows</strong> passes a <code>rowClass</code> to
+            both grids — tailwind classes to the aria grid, a{" "}
+            <code>makeStyles</code> class to the Fluent one. Tick a striped row
+            and hover it: the selected and hover colours still paint over the
+            stripe.
+          </li>
+          <li>
+            <strong>Disabled headers</strong> turns off every sort button and
+            filter button in both grids. The aria grid dims its icons to half
+            opacity; the Fluent grid uses Fluent&apos;s own disabled colour.
+            Sort a column first to have an arrow to watch.
           </li>
         </ul>
       </section>

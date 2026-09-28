@@ -1,5 +1,5 @@
 import React, { type Key, type ReactNode } from "react";
-import clsx from "clsx";
+import { mergeClasses } from "@fluentui/react-components";
 import {
   shouldIgnoreRowClick,
   type GridSelection,
@@ -24,6 +24,15 @@ export interface FluentRowWrapperOptions<T> {
    * labelled. Which clicks don't count is `shouldIgnoreRowClick`'s call.
    */
   selectOnRowClick?: boolean;
+  /**
+   * Extra classes for a row — striping, a status tint. The row is
+   * `display: contents`, so style its cells: `{ "& > *": { backgroundColor } }`.
+   *
+   * Use `makeStyles` classes: they're combined with Griffel's `mergeClasses`,
+   * before the selected classes, so a background here gives way to the selected
+   * one rather than racing it on insertion order. Hover wins on specificity.
+   */
+  rowClass?: (row: T, index: number) => string;
 }
 
 /**
@@ -47,6 +56,7 @@ export function fluentRowWrapper<T>(
     selection,
     isSelected,
     selectOnRowClick = true,
+    rowClass,
   } = options;
   const rowAt = getRow ?? ((index: number) => rows![index]);
   const selected =
@@ -65,9 +75,13 @@ export function fluentRowWrapper<T>(
         // and paging; the index doesn't, and is here for the grids without one.
         data-row-key={key}
         data-row-index={rowIndex}
-        className={clsx(
+        // Griffel's merge, not clsx: with a `rowClass` in the mix, the selected
+        // background has to replace a stripe's rather than depend on which
+        // stylesheet Griffel happened to insert last.
+        className={mergeClasses(
           fluentDataGridClassNames.row,
           parts.row,
+          rowClass?.(row, rowIndex),
           clickToSelect && parts.rowClickable,
           selected?.(row, rowIndex) && parts.rowSelected,
         )}

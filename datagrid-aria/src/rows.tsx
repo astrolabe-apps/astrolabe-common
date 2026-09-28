@@ -24,6 +24,16 @@ export interface AriaRowWrapperOptions<T> {
    * labelled. Which clicks don't count is `shouldIgnoreRowClick`'s call.
    */
   selectOnRowClick?: boolean;
+  /**
+   * Extra classes for a row — striping, a status tint. The row is
+   * `display: contents`, so target its cells with `[&>*]:`: `[&>*]:bg-red-50`,
+   * not `bg-red-50`.
+   *
+   * Hover and selected still paint over it. Merged before the selected classes,
+   * so a `[&>*]:bg-*` here gives way to the selected background rather than
+   * deleting it; hover wins on specificity (`:hover` in the selector).
+   */
+  rowClass?: (row: T, index: number) => string;
 }
 
 /**
@@ -47,6 +57,7 @@ export function ariaRowWrapper<T>(
     selection,
     isSelected,
     selectOnRowClick = true,
+    rowClass,
   } = options;
   const rowAt = getRow ?? ((index: number) => rows![index]);
   const selected =
@@ -70,6 +81,7 @@ export function ariaRowWrapper<T>(
         className={mergeClasses(
           ariaDataGridClassNames.row,
           parts.row,
+          rowClass?.(row, rowIndex),
           clickToSelect && parts.rowClickable,
           selected?.(row, rowIndex) && parts.rowSelected,
         )}

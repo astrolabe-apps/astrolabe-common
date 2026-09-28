@@ -37,6 +37,8 @@ export interface UseFluentDataGridOptions<T, D = unknown>
   selectionColumn?: FluentSelectionColumnOptions<T>;
   /** See `FluentRowWrapperOptions.selectOnRowClick`. Defaults to true. */
   selectOnRowClick?: boolean;
+  /** See `FluentRowWrapperOptions.rowClass`. */
+  rowClass?: (row: T, index: number) => string;
   /** Row keys, so React reorders rather than rebuilds on sort. */
   rowKey?: (row: T, index: number) => Key;
 }
@@ -66,6 +68,7 @@ export function useFluentDataGrid<T, D = unknown>(
     selection,
     selectionColumn,
     selectOnRowClick,
+    rowClass,
     rowKey,
     size,
     defaultColumnTemplate,
@@ -99,7 +102,7 @@ export function useFluentDataGrid<T, D = unknown>(
       ...gridClasses,
       renderHeaderContent: fluentHeaderContent(search, parts, headerOptions),
       wrapBodyRow: fluentRowWrapper<T>(
-        { getRow, rowKey, selection, selectOnRowClick },
+        { getRow, rowKey, selection, selectOnRowClick, rowClass },
         parts,
       ),
       // Cell content is produced by a render callback, outside any component, so
