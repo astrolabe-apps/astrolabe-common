@@ -2,6 +2,18 @@
   "name": "@astroapps/datagrid-search",
   "entries": [
     {
+      "version": "1.1.0",
+      "tag": "@astroapps/datagrid-search_v1.1.0",
+      "date": "Mon, 28 Sep 2026 02:55:12 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Added sort precedence"
+          }
+        ]
+      }
+    },
+    {
       "version": "1.0.0",
       "tag": "@astroapps/datagrid-search_v1.0.0",
       "date": "Thu, 17 Sep 2026 05:09:18 GMT",

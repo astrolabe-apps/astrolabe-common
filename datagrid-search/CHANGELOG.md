@@ -1,6 +1,13 @@
 # Change Log - @astroapps/datagrid-search
 
-This log was last generated on Thu, 17 Sep 2026 05:09:18 GMT and should not be manually modified.
+This log was last generated on Mon, 28 Sep 2026 02:55:12 GMT and should not be manually modified.
+
+## 1.1.0
+Mon, 28 Sep 2026 02:55:12 GMT
+
+### Minor changes
+
+- Added sort precedence
 
 ## 1.0.0
 Thu, 17 Sep 2026 05:09:18 GMT
