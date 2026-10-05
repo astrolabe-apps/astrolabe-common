@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/client-nextjs",
+      "comment": "Fix the query sync cancelling an in-flight navigation ",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@astroapps/client-nextjs"
+}
