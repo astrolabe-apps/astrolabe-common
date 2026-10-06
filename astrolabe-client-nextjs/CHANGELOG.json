@@ -2,6 +2,18 @@
   "name": "@astroapps/client-nextjs",
   "entries": [
     {
+      "version": "2.1.4",
+      "tag": "@astroapps/client-nextjs_v2.1.4",
+      "date": "Tue, 06 Oct 2026 00:07:20 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix the query sync cancelling an in-flight navigation "
+          }
+        ]
+      }
+    },
+    {
       "version": "2.1.3",
       "tag": "@astroapps/client-nextjs_v2.1.3",
       "date": "Wed, 12 Aug 2026 03:42:15 GMT",

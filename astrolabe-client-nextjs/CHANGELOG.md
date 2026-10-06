@@ -1,6 +1,13 @@
 # Change Log - @astroapps/client-nextjs
 
-This log was last generated on Wed, 12 Aug 2026 03:42:15 GMT and should not be manually modified.
+This log was last generated on Tue, 06 Oct 2026 00:07:20 GMT and should not be manually modified.
+
+## 2.1.4
+Tue, 06 Oct 2026 00:07:20 GMT
+
+### Patches
+
+- Fix the query sync cancelling an in-flight navigation 
 
 ## 2.1.3
 Wed, 12 Aug 2026 03:42:15 GMT
