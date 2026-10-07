@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@astroapps/client": "^3.0.0",
-    "@astroapps/forms-core": "^3.0.0",
+    "@astroapps/forms-core": "^3.0.1",
     "@astroapps/searchstate": "^2.1.0",
     "expo": "~54.0.34",
     "expo-asset": "~12.0.13",
@@ -47,7 +47,7 @@
     "@rn-primitives/tooltip": "^1.4.0",
     "@rn-primitives/portal": "^1.4.0",
     "@rn-primitives/switch": "^1.4.0",
-    "@react-typed-forms/core": "^5.0.0",
+    "@react-typed-forms/core": "^5.1.4",
     "@react-typed-forms/schemas": "^19.0.0",
     "@react-typed-forms/schemas-rn": "workspace:*",
     "nativewind": "^4.2.3",

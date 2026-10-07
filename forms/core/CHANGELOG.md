@@ -1,6 +1,13 @@
 # Change Log - @astroapps/forms-core
 
-This log was last generated on Thu, 17 Sep 2026 05:09:18 GMT and should not be manually modified.
+This log was last generated on Wed, 07 Oct 2026 22:05:34 GMT and should not be manually modified.
+
+## 3.0.1
+Wed, 07 Oct 2026 22:05:34 GMT
+
+### Patches
+
+- A Data control's form node no longer cascades touched to its child controls; touched follows the form tree, so validating one wizard page no longer touches other pages' fields under the same compound. Requires @react-typed-forms/core 5.1.4
 
 ## 3.0.0
 Thu, 17 Sep 2026 05:09:18 GMT

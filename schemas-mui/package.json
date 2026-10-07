@@ -34,7 +34,7 @@
     "date-fns": "^2.29.3"
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^5.0.0",
+    "@react-typed-forms/core": "^5.1.4",
     "@react-typed-forms/mui": "^5.0.0",
     "@react-typed-forms/schemas": "^19.0.0",
     "react": "^18.2.0 || ^19",
@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^5.0.0",
+    "@react-typed-forms/core": "^5.1.4",
     "@react-typed-forms/mui": "workspace:^5.0.0",
     "@react-typed-forms/schemas": "^19.0.0",
     "@mui/icons-material": "^5",

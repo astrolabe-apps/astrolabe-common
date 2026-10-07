@@ -25,12 +25,12 @@
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^5.0.0",
+    "@react-typed-forms/core": "^5.1.4",
     "@react-typed-forms/schemas": "^19.0.0"
   },
   "devDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^5.0.0",
+    "@react-typed-forms/core": "^5.1.4",
     "@react-typed-forms/schemas": "^19.0.0",
     "@react-typed-forms/transform": "^0.2.0",
     "@babel/core": "^7.23.7",

@@ -47,7 +47,7 @@
     "tailwind-merge": "1.14.0"
   },
   "peerDependencies": {
-    "@react-typed-forms/core": "^5.0.0",
+    "@react-typed-forms/core": "^5.1.4",
     "@react-typed-forms/schemas": "^19.0.0",
     "nativewind": "^4.2.1",
     "react": "^18.3.1 || ^19",
@@ -63,7 +63,7 @@
   },
   "devDependencies": {
     "@babel/core": ">=7.25.2",
-    "@react-typed-forms/core": "^5.0.0",
+    "@react-typed-forms/core": "^5.1.4",
     "@react-typed-forms/schemas": "^19.0.0",
     "@react-typed-forms/transform": "^0.4.0",
     "@types/react": "^18.3.1 || ~19",
