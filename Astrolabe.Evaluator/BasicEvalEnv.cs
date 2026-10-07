@@ -39,9 +39,16 @@ public class BasicEvalEnv(
         if (_evalCache.TryGetValue(name, out var cached))
             return cached;
 
-        var result = EvaluateExpr(binding);
-        _evalCache[name] = result;
-        return result;
+        return EvaluateBinding(
+            name,
+            sourceExpr,
+            () =>
+            {
+                var result = EvaluateExpr(binding);
+                _evalCache[name] = result;
+                return result;
+            }
+        );
     }
 
     public override EvalExpr EvaluateExpr(EvalExpr expr)
