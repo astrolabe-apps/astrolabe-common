@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/evaluator",
+      "comment": "Report circular let references as errors instead of overflowing the stack, add freeVariables, and make let type checking order independent",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/evaluator"
+}
