@@ -74,6 +74,54 @@ public class CircularReferenceTests
         Assert.Throws<ArgumentOutOfRangeException>(() => env.EvaluateExpr(new VarExpr("a")));
     }
 
+    public static TheoryData<string> EnvKinds => new() { "basic", "partial" };
+
+    [Theory]
+    [MemberData(nameof(EnvKinds))]
+    public void SharedEnv_ConcurrentEvaluation_DoesNotReportFalseCycle(string kind)
+    {
+        // Several threads read the same slow variable from one shared env at once, as a
+        // caller does when it evaluates many expressions concurrently against one env
+        FunctionHandler slow = (_, _) =>
+        {
+            Thread.Sleep(50);
+            return new ValueExpr(1);
+        };
+        var vars = new Dictionary<string, EvalExpr>
+        {
+            ["slow"] = new ValueExpr(slow),
+            ["shared"] = TestHelpers.Parse("$slow()"),
+        };
+        EvalEnv env =
+            kind == "basic"
+                ? EvalEnvFactory.BasicEnv(null).NewScope(vars)
+                : EvalEnvFactory.PartialEnv(null).NewScope(vars);
+
+        const int threadCount = 8;
+        var barrier = new Barrier(threadCount);
+        var results = new EvalExpr[threadCount];
+        var threads = Enumerable
+            .Range(0, threadCount)
+            .Select(i => new Thread(() =>
+            {
+                barrier.SignalAndWait();
+                results[i] = env.EvaluateExpr(TestHelpers.Parse("$shared + 1"));
+            }))
+            .ToList();
+        threads.ForEach(t => t.Start());
+        threads.ForEach(t => t.Join());
+
+        Assert.All(
+            results,
+            r =>
+            {
+                var value = Assert.IsType<ValueExpr>(r);
+                Assert.Empty(ValueExpr.CollectAllErrors(value));
+                TestHelpers.AssertNumericEqual(2, value.Value);
+            }
+        );
+    }
+
     /// <summary>An expression type no env knows how to evaluate, so evaluation throws.</summary>
     private record UnknownExpr(
         SourceLocation? Location = null,

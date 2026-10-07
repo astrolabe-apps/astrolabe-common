@@ -29,9 +29,6 @@ public class BasicEvalEnv(
             : parent?.GetCurrentValue();
     }
 
-    // Sentinel value to detect circular evaluation
-    private static readonly EvalExpr EvaluatingSentinel = new VarExpr("__evaluating__");
-
     private EvalExpr EvaluateVariable(string name, EvalExpr sourceExpr)
     {
         // Check local scope first
@@ -40,26 +37,18 @@ public class BasicEvalEnv(
                 ? parent.EvaluateVariable(name, sourceExpr)
                 : sourceExpr.WithError($"Variable ${name} not declared");
         if (_evalCache.TryGetValue(name, out var cached))
-            return ReferenceEquals(cached, EvaluatingSentinel)
-                ? sourceExpr.WithError($"Circular reference to ${name}")
-                : cached;
+            return cached;
 
-        // Set sentinel before evaluating to detect cycles
-        _evalCache[name] = EvaluatingSentinel;
-        var completed = false;
-        try
-        {
-            var result = EvaluateExpr(binding);
-            _evalCache[name] = result;
-            completed = true;
-            return result;
-        }
-        finally
-        {
-            // Don't leave the sentinel behind if evaluation threw
-            if (!completed)
-                _evalCache.Remove(name);
-        }
+        return EvaluateBinding(
+            name,
+            sourceExpr,
+            () =>
+            {
+                var result = EvaluateExpr(binding);
+                _evalCache[name] = result;
+                return result;
+            }
+        );
     }
 
     public override EvalExpr EvaluateExpr(EvalExpr expr)

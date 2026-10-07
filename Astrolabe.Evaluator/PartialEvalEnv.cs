@@ -53,44 +53,31 @@ public class PartialEvalEnv : EvalEnv
             : _parent?.GetCurrentValue();
     }
 
-    // Sentinel value to detect circular evaluation
-    private static readonly EvalExpr EvaluatingSentinel = new VarExpr("__evaluating__");
-
     private EvalExpr EvaluateVariable(string name, EvalExpr sourceExpr)
     {
         // Check local scope
         if (_localVars.TryGetValue(name, out var binding))
         {
             if (_evalCache.TryGetValue(name, out var cached))
-            {
-                return ReferenceEquals(cached, EvaluatingSentinel)
-                    ? sourceExpr.WithError($"Circular reference to ${name}")
-                    : cached;
-            }
+                return cached;
 
-            // Set sentinel before evaluating to detect cycles
-            _evalCache[name] = EvaluatingSentinel;
-            var completed = false;
-            try
-            {
-                var result = EvaluateExpr(binding);
-
-                // Tag with inline data for uninlining (internal use)
-                if (!result.HasData(InlineDataKey))
+            return EvaluateBinding(
+                name,
+                sourceExpr,
+                () =>
                 {
-                    result = result.WithData(InlineDataKey, new InlineData(name, ScopeId));
-                }
+                    var result = EvaluateExpr(binding);
 
-                _evalCache[name] = result;
-                completed = true;
-                return result;
-            }
-            finally
-            {
-                // Don't leave the sentinel behind if evaluation threw
-                if (!completed)
-                    _evalCache.Remove(name);
-            }
+                    // Tag with inline data for uninlining (internal use)
+                    if (!result.HasData(InlineDataKey))
+                    {
+                        result = result.WithData(InlineDataKey, new InlineData(name, ScopeId));
+                    }
+
+                    _evalCache[name] = result;
+                    return result;
+                }
+            );
         }
 
         // Delegate to parent
