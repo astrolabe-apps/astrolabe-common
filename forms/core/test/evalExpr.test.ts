@@ -277,6 +277,29 @@ describe("expression evaluators", () => {
     const typeNode = result.children[0].children[0];
     await deepEqualPromise(() => typeNode.definition.title, "constant");
   });
+
+  it("jsonata object results have Object.prototype", async () => {
+    const schema = stringField("Field")("field");
+    const result = testNodeState(
+      dataControl("field", undefined, {
+        dynamic: [
+          {
+            type: DynamicPropertyType.LayoutStyle,
+            expr: jsonataExpr('{"display": "none", "inner": [{"a": 1}]}'),
+          },
+        ],
+      }),
+      schema,
+      { data: {} },
+    );
+    await deepEqualPromise(() => result.definition.layoutStyle, {
+      display: "none",
+      inner: [{ a: 1 }],
+    });
+    const style = result.definition.layoutStyle as any;
+    expect(Object.getPrototypeOf(style)).toBe(Object.prototype);
+    expect(Object.getPrototypeOf(style.inner[0])).toBe(Object.prototype);
+  });
 });
 
 function testLabelExpr(schema: SchemaField, data: any, expr: EntityExpression) {

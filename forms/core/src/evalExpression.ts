@@ -73,6 +73,22 @@ function ensurePathNavigable(data: any, path: PathSegment[]): any {
   });
 }
 
+/**
+ * jsonata 2.2 builds objects with Object.create(null), which breaks consumers
+ * expecting Object.prototype methods (e.g. React's style handling calls
+ * hasOwnProperty). Copies null-prototype objects into plain objects and maps
+ * arrays (dropping jsonata's sequence flags); everything else is left as is.
+ */
+function toPlainResult(v: any): any {
+  if (Array.isArray(v)) return v.map(toPlainResult);
+  if (v != null && typeof v === "object" && Object.getPrototypeOf(v) === null) {
+    const result: Record<string, any> = {};
+    for (const [k, val] of Object.entries(v)) result[k] = toPlainResult(val);
+    return result;
+  }
+  return v;
+}
+
 function getSchemaPath(dataNode: SchemaDataNode): PathSegment[] {
   return traverseParents(
     dataNode,
@@ -170,7 +186,7 @@ export const jsonataEval: ExpressionEval<JsonataExpression> = (
       console.error(`Error in Jsonata expression: ${fullExpr}`, e);
       evalResult = undefined;
     }
-    collectChanges(effect.collectUsage, () => returnResult(evalResult));
+    collectChanges(effect.collectUsage, () => returnResult(toPlainResult(evalResult)));
   }
 
   const asyncEffect = createAsyncEffect(runJsonata, scope);
