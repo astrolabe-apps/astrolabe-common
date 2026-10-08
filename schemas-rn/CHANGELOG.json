@@ -2,6 +2,18 @@
   "name": "@react-typed-forms/schemas-rn",
   "entries": [
     {
+      "version": "3.1.0",
+      "tag": "@react-typed-forms/schemas-rn_v3.1.0",
+      "date": "Thu, 08 Oct 2026 03:26:04 GMT",
+      "comments": {
+        "minor": [
+          {
+            "comment": "Support Expo SDK 57 / React Native 0.86 / React 19.2: widen react-native-worklets peer to >=0.5.1 and @react-native-community/datetimepicker to ^8.4.4 || ^9.1.0. React Native 0.81 remains supported. DefaultWizardRenderOptions.actions now declares navActionId and validateActionId (already passed through at runtime)."
+          }
+        ]
+      }
+    },
+    {
       "version": "3.0.0",
       "tag": "@react-typed-forms/schemas-rn_v3.0.0",
       "date": "Thu, 17 Sep 2026 05:09:18 GMT",

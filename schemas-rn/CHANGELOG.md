@@ -1,6 +1,13 @@
 # Change Log - @react-typed-forms/schemas-rn
 
-This log was last generated on Thu, 17 Sep 2026 05:09:18 GMT and should not be manually modified.
+This log was last generated on Thu, 08 Oct 2026 03:26:04 GMT and should not be manually modified.
+
+## 3.1.0
+Thu, 08 Oct 2026 03:26:04 GMT
+
+### Minor changes
+
+- Support Expo SDK 57 / React Native 0.86 / React 19.2: widen react-native-worklets peer to >=0.5.1 and @react-native-community/datetimepicker to ^8.4.4 || ^9.1.0. React Native 0.81 remains supported. DefaultWizardRenderOptions.actions now declares navActionId and validateActionId (already passed through at runtime).
 
 ## 3.0.0
 Thu, 17 Sep 2026 05:09:18 GMT
