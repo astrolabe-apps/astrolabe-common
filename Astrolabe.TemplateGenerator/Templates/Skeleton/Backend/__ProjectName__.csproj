@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NSwag.AspNetCore" Version="14.0.3" />
+    <PackageReference Include="Astrolabe.JSON" Version="1.2.1" />
+    <PackageReference Include="Astrolabe.Common" Version="1.1.0" />
+    <PackageReference Include="Astrolabe.Schemas" Version="*" />
+    <PackageReference Include="Astrolabe.Validation" Version="*" />
+    <PackageReference Include="Astrolabe.Web.Common" Version="*" />
+    <PackageReference Include="Astrolabe.CodeGen" Version="*" />
+    <PackageReference Include="Astrolabe.SearchState" Version="*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="ClientApp\**" />
+    <EmbeddedResource Remove="ClientApp\**" />
+    <Content Remove="ClientApp\**" />
+    <None Remove="ClientApp\**" />
+  </ItemGroup>
+
+</Project>
