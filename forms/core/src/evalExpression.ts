@@ -35,6 +35,9 @@ interface PathSegment {
  * without using the broken ?? operator (jsonata issue 773). Uses schema info
  * to return [] for collection fields and {} for compound fields. Preserves
  * the navigation chain so the % parent operator works correctly.
+ *
+ * The segment is also reported as an own property even when it's missing from
+ * the data, since jsonata 2.2's lookup checks hasOwnProperty before reading.
  */
 function ensurePathNavigable(data: any, path: PathSegment[]): any {
   if (path.length === 0 || data == null || typeof data !== "object")
@@ -42,14 +45,30 @@ function ensurePathNavigable(data: any, path: PathSegment[]): any {
   const { key, collection } = path[0];
   const segment = String(key);
   const rest = path.slice(1);
+  const isSegment = (p: string | symbol) =>
+    typeof p === "string" && p === segment;
   return new Proxy(data, {
     get(target, p, receiver) {
       const val = Reflect.get(target, p, receiver);
-      if (typeof p === "string" && p === segment) {
+      if (isSegment(p)) {
         if (val == null) return ensurePathNavigable(collection ? [] : {}, rest);
         return ensurePathNavigable(val, rest);
       }
       return val;
+    },
+    has(target, p) {
+      return isSegment(p) || Reflect.has(target, p);
+    },
+    getOwnPropertyDescriptor(target, p) {
+      const desc = Reflect.getOwnPropertyDescriptor(target, p);
+      // A missing property can't be reported on a non-extensible target
+      if (desc || !isSegment(p) || !Reflect.isExtensible(target)) return desc;
+      return {
+        value: undefined,
+        writable: true,
+        enumerable: false,
+        configurable: true,
+      };
     },
   });
 }
