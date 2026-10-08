@@ -2,6 +2,18 @@
   "name": "@astroapps/forms-core",
   "entries": [
     {
+      "version": "3.0.3",
+      "tag": "@astroapps/forms-core_v3.0.3",
+      "date": "Thu, 08 Oct 2026 05:56:02 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Convert jsonata 2.2 null-prototype object results (object literals, $merge, etc.) to plain objects, fixing React errors such as \"styles.hasOwnProperty is not a function\" for Style/LayoutStyle expressions"
+          }
+        ]
+      }
+    },
+    {
       "version": "3.0.2",
       "tag": "@astroapps/forms-core_v3.0.2",
       "date": "Thu, 08 Oct 2026 05:44:50 GMT",

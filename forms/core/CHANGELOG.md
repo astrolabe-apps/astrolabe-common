@@ -1,6 +1,13 @@
 # Change Log - @astroapps/forms-core
 
-This log was last generated on Thu, 08 Oct 2026 05:44:50 GMT and should not be manually modified.
+This log was last generated on Thu, 08 Oct 2026 05:56:02 GMT and should not be manually modified.
+
+## 3.0.3
+Thu, 08 Oct 2026 05:56:02 GMT
+
+### Patches
+
+- Convert jsonata 2.2 null-prototype object results (object literals, $merge, etc.) to plain objects, fixing React errors such as "styles.hasOwnProperty is not a function" for Style/LayoutStyle expressions
 
 ## 3.0.2
 Thu, 08 Oct 2026 05:44:50 GMT
