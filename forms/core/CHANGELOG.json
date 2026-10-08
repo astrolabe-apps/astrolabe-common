@@ -2,6 +2,18 @@
   "name": "@astroapps/forms-core",
   "entries": [
     {
+      "version": "3.0.2",
+      "tag": "@astroapps/forms-core_v3.0.2",
+      "date": "Thu, 08 Oct 2026 05:44:50 GMT",
+      "comments": {
+        "patch": [
+          {
+            "comment": "Fix jsonata expressions on fields whose parent objects are missing from the data under jsonata 2.2 (previously evaluated to undefined). jsonata dependency raised to ^2.2.2"
+          }
+        ]
+      }
+    },
+    {
       "version": "3.0.1",
       "tag": "@astroapps/forms-core_v3.0.1",
       "date": "Wed, 07 Oct 2026 22:05:34 GMT",

@@ -1,6 +1,13 @@
 # Change Log - @astroapps/forms-core
 
-This log was last generated on Wed, 07 Oct 2026 22:05:34 GMT and should not be manually modified.
+This log was last generated on Thu, 08 Oct 2026 05:44:50 GMT and should not be manually modified.
+
+## 3.0.2
+Thu, 08 Oct 2026 05:44:50 GMT
+
+### Patches
+
+- Fix jsonata expressions on fields whose parent objects are missing from the data under jsonata 2.2 (previously evaluated to undefined). jsonata dependency raised to ^2.2.2
 
 ## 3.0.1
 Wed, 07 Oct 2026 22:05:34 GMT
