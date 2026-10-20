@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/prettier-plugin-evaluator",
+      "comment": "Initial release: a Prettier plugin for evaluator expressions (.al files), built on the Lezer grammar from @astroapps/evaluator",
+      "type": "minor"
+    }
+  ],
+  "packageName": "@astroapps/prettier-plugin-evaluator"
+}

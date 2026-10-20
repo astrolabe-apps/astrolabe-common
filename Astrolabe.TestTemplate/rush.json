@@ -558,6 +558,11 @@
       "shouldPublish": true
     },
     {
+      "packageName": "@astroapps/prettier-plugin-evaluator",
+      "projectFolder": "../prettier-plugin-evaluator",
+      "shouldPublish": true
+    },
+    {
       "packageName": "@astroapps/schemas-datagrid",
       "projectFolder": "../astrolabe-schemas-datagrid",
       "shouldPublish": true
