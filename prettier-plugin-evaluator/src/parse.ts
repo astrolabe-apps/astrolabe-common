@@ -3,6 +3,8 @@ import { parser } from "@astroapps/evaluator";
 type TreeCursor = ReturnType<ReturnType<typeof parser.parse>["cursor"]>;
 
 export interface AlComment {
+  // Source offset, which keeps comments in order as they move between nodes.
+  from: number;
   text: string;
   block: boolean;
   // On its own line: after the node it trails, or before the node it leads.
@@ -90,7 +92,13 @@ function liftLeading(node: AlNode) {
   if (lifted.length === 0) return;
   const kept = first.leading.filter((c) => !lifted.includes(c));
   first.leading = kept.length ? kept : undefined;
-  node.leading = [...lifted, ...(node.leading ?? [])];
+  addLeading(node, ...lifted);
+}
+
+function addLeading(node: AlNode, ...comments: AlComment[]) {
+  node.leading = [...(node.leading ?? []), ...comments].sort(
+    (a, b) => a.from - b.from,
+  );
 }
 
 function isComment(node: AlNode) {
@@ -111,7 +119,8 @@ function attach(
   const sameLine =
     before !== undefined &&
     !source.slice(before.to, comment.from).includes("\n");
-  const text = source.slice(comment.from, comment.to).trimEnd();
+  const { from } = comment;
+  const text = source.slice(from, comment.to).trimEnd();
   const block = comment.type === "BlockComment";
   // A block comment followed on the same line by a node describes that node.
   const leadsNext =
@@ -120,9 +129,8 @@ function attach(
     !source.slice(comment.to, after.from).includes("\n");
   if (!after && !sameLine && !closed.has(parent.type)) orphans.push(comment);
   else if (before && (sameLine || !after) && !leadsNext)
-    (before.trailing ??= []).push({ text, block, ownLine: !sameLine });
-  else if (after)
-    (after.leading ??= []).push({ text, block, ownLine: !leadsNext });
+    (before.trailing ??= []).push({ from, text, block, ownLine: !sameLine });
+  else if (after) addLeading(after, { from, text, block, ownLine: !leadsNext });
   else
     throw syntaxError(source, comment.from, "Comment has nothing to attach to");
 }
