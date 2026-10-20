@@ -1,0 +1,5 @@
+lib/
+.rush/
+*.log
+*.tsbuildinfo
+*.tgz

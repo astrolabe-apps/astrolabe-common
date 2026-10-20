@@ -1,0 +1,53 @@
+{
+  "name": "@astroapps/prettier-plugin-evaluator",
+  "version": "0.0.0",
+  "description": "Prettier plugin for evaluator expressions (.al files)",
+  "keywords": [
+    "prettier",
+    "prettier-plugin",
+    "evaluator"
+  ],
+  "homepage": "https://github.com/astrolabe-apps/astrolabe-common/tree/main/prettier-plugin-evaluator#readme",
+  "bugs": {
+    "url": "https://github.com/astrolabe-apps/astrolabe-common/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/astrolabe-apps/astrolabe-common.git",
+    "directory": "prettier-plugin-evaluator"
+  },
+  "license": "ISC",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    }
+  },
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "tsc && tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:dist": "node --no-experimental-strip-types --test test-dist/package.mjs"
+  },
+  "dependencies": {
+    "@astroapps/evaluator": "workspace:^"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "prettier": "^3.8.0",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.11"
+  },
+  "peerDependencies": {
+    "prettier": "^3.8.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
