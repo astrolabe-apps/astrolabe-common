@@ -113,6 +113,12 @@ describe("comments", () => {
     expect(await fmt("! // c\n$a and $b", 8)).toBe("// c\n!$a and\n\t$b\n");
   });
 
+  it("keeps comments in source order when one moves above a unary operator", async () => {
+    expect(await fmt("// first\n!\n// second\n$x")).toBe(
+      "// first\n// second\n!$x\n",
+    );
+  });
+
   it("keeps a comment between an operator and its operand", async () => {
     expect(await fmt("$a and // why\n$b")).toBe("$a and // why\n\t$b\n");
   });
