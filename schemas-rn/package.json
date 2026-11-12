@@ -81,7 +81,7 @@
     "react-native-safe-area-context": ">=5.6.0",
     "react-native-svg": ">=15.12.1",
     "react-native-web": ">=0.21.0",
-    "rimraf": "^3.0.2",
+    "rimraf": "^6.1.4",
     "tailwindcss": "^3.4.17",
     "typescript": ">=5.9.2",
     "react-native-worklets": "0.5.1",

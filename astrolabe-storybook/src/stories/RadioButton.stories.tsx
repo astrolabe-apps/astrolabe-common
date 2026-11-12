@@ -50,12 +50,11 @@ export const RadioButtonGroup: Story = {
     return (
       <div className="flex flex-col gap-2">
         {Array.from({ length: 4 }).map((r, i) => (
-          <label className="flex gap-2 justify-center">
+          <label key={i} className="flex gap-2 justify-center">
             <RadioButton
               control={args.control}
               radioValue={i}
               disabled={i === 2}
-              key={i}
             />
             <span className="text-primary-900">Radio button {i + 1}</span>
           </label>

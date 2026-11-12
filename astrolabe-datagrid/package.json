@@ -37,6 +37,6 @@
     "@types/react": "^18.2.37",
     "prettier": "^3.0.3",
     "microbundle": "^0.15.1",
-    "rimraf": "^3.0.2"
+    "rimraf": "^6.1.4"
   }
 }

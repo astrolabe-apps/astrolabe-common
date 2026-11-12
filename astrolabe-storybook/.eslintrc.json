@@ -1,2 +1,14 @@
 {
+  "extends": [
+    "next/core-web-vitals",
+    "plugin:storybook/recommended"
+  ],
+  "overrides": [
+    {
+      "files": ["*.stories.tsx", "*.stories.ts"],
+      "rules": {
+        "react-hooks/rules-of-hooks": "off"
+      }
+    }
+  ]
 }

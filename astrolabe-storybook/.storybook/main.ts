@@ -1,3 +1,4 @@
+import path from "path";
 import type { StorybookConfig } from "@storybook/nextjs";
 
 const config: StorybookConfig = {
@@ -11,10 +12,23 @@ const config: StorybookConfig = {
   ],
   framework: {
     name: "@storybook/nextjs",
-    options: {},
+    // Storybook 7 only picks the createRoot renderer when react-dom's version
+    // starts with "18"; the repo pins react-dom 19, so force it explicitly.
+    options: { legacyRootApi: false },
   },
   docs: {
     autodocs: true,
+  },
+  // Mirror the tsconfig "paths" aliases. @storybook/nextjs only applies tsconfig
+  // paths when "baseUrl" is set, which TypeScript 6 deprecates.
+  webpackFinal: async (config) => {
+    config.resolve ??= {};
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@astrolabe/ui": path.resolve(__dirname, "../../astrolabe-ui/src"),
+      "@": path.resolve(__dirname, "../src"),
+    };
+    return config;
   },
 };
 export default config;
