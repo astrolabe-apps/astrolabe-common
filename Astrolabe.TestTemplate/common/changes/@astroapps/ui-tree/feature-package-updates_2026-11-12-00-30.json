@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/ui-tree",
+      "comment": "Update rimraf dependency from 3.0.2 to 6.1.4. For consistency with other Astrolabe packages and to remove dependency on deprecated rimraf versions.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@astroapps/ui-tree"
+}

@@ -1,0 +1,10 @@
+{
+  "changes": [
+    {
+      "packageName": "@astroapps/schemas-signature",
+      "comment": "Update rimraf dependency from 5.0.7 to 6.1.4. For consistency with other Astrolabe packages.",
+      "type": "patch"
+    }
+  ],
+  "packageName": "@astroapps/schemas-signature"
+}
