@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   arrayExpr,
   callExpr,
+  collectAllErrors,
   EvalEnv,
   letExpr,
   propertyExpr,
@@ -443,8 +444,9 @@ describe("Partial Evaluation", () => {
       const expr = letExpr([[varExpr("x"), varExpr("x")]], varExpr("x"));
       const result = evalPartial(env, expr);
 
-      // x references itself, which becomes symbolic
-      expect(printExpr(result)).toContain("$x");
+      // x references itself, which is a circular reference
+      expect(result.type).toBe("value");
+      expect(collectAllErrors(result)).toContain("Circular reference to $x");
     });
 
     test("null and undefined handling", () => {
@@ -1062,12 +1064,7 @@ describe("Partial Evaluation", () => {
         expect(printed).toContain("$c = 0");
       });
 
-      test.skip("shadowing with self-reference should return error not infinite loop", () => {
-        // TODO: Implement circular reference detection - currently causes stack overflow
-        // This test documents the desired behavior for self-referential bindings.
-        // Currently both TypeScript and C# infinitely recurse on this expression.
-        // The expected behavior is to detect the circular reference and return
-        // a ValueExpr with null value and an error message.
+      test("shadowing with self-reference should return error not infinite loop", () => {
         const env = partialEnv();
         const expr = letExpr(
           [[varExpr("x"), valueExpr(5)]],
@@ -1081,13 +1078,10 @@ describe("Partial Evaluation", () => {
         // Should return null with an error about circular reference
         expect(result.type).toBe("value");
         expect((result as ValueExpr).value).toBeNull();
-        expect((result as ValueExpr).error).toBeDefined();
-        expect((result as ValueExpr).error?.length).toBeGreaterThan(0);
+        expect(collectAllErrors(result)).toContain("Circular reference to $x");
       });
 
-      test.skip("direct self-reference should return error not infinite loop", () => {
-        // TODO: Implement circular reference detection - currently causes stack overflow
-        // Even simpler case: let $x := $x + 1 in $x
+      test("direct self-reference should return error not infinite loop", () => {
         // The binding directly references the variable being defined.
         const env = partialEnv();
         const expr = letExpr(
@@ -1099,8 +1093,7 @@ describe("Partial Evaluation", () => {
         // Should return null with an error about circular reference
         expect(result.type).toBe("value");
         expect((result as ValueExpr).value).toBeNull();
-        expect((result as ValueExpr).error).toBeDefined();
-        expect((result as ValueExpr).error?.length).toBeGreaterThan(0);
+        expect(collectAllErrors(result)).toContain("Circular reference to $x");
       });
     });
   });

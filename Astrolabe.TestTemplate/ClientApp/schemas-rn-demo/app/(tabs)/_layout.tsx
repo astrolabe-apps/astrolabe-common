@@ -59,6 +59,15 @@ export default function TabLayout() {
           ),
         }}
       />
+      <Tabs.Screen
+        name="wizard"
+        options={{
+          title: 'Wizard',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'footsteps' : 'footsteps-outline'} color={color} size={24} />
+          ),
+        }}
+      />
     </Tabs>
   );
 }

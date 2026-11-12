@@ -8,6 +8,32 @@ namespace Astrolabe.Evaluator;
 /// </summary>
 public abstract class EvalEnv
 {
+    // Variables the current thread is evaluating, by scope. Evaluation is synchronous, so a
+    // circular reference always re-enters on the same thread, and other threads sharing an
+    // env never see each other's in-progress variables.
+    [ThreadStatic]
+    private static HashSet<(EvalEnv Scope, string Name)>? _evaluating;
+
+    /// <summary>
+    /// Evaluate a variable's binding, reporting a circular reference error instead of
+    /// recursing if this thread is already evaluating the same variable in this scope.
+    /// </summary>
+    protected EvalExpr EvaluateBinding(string name, EvalExpr sourceExpr, Func<EvalExpr> evaluate)
+    {
+        _evaluating ??= [];
+        var key = (this, name);
+        if (!_evaluating.Add(key))
+            return sourceExpr.WithError($"Circular reference to ${name}");
+        try
+        {
+            return evaluate();
+        }
+        finally
+        {
+            _evaluating.Remove(key);
+        }
+    }
+
     /// <summary>
     /// Compare two values for ordering.
     /// </summary>

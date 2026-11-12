@@ -9,6 +9,7 @@ import {
 import { randomValueForField, rootCompound } from "./gen-schema";
 import {
   coerceString,
+  compoundField,
   dataControl,
   dataExpr,
   dataMatchExpr,
@@ -20,6 +21,7 @@ import {
   jsonataExpr,
   notEmptyExpr,
   SchemaField,
+  stringField,
   uuidExpr,
 } from "../src";
 
@@ -247,6 +249,57 @@ describe("expression evaluators", () => {
         },
       ),
     ));
+
+  it("jsonata expression on a field whose parents are missing", async () => {
+    const schema = compoundField("Outer", [
+      compoundField("Inner", [stringField("Type")("type")])("inner"),
+    ])("outer");
+    const result = testNodeState(
+      dataControl("outer", undefined, {
+        children: [
+          dataControl("inner", undefined, {
+            children: [
+              dataControl("type", undefined, {
+                dynamic: [
+                  {
+                    type: DynamicPropertyType.Label,
+                    expr: jsonataExpr('"constant"'),
+                  },
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+      schema,
+      { data: {} },
+    );
+    const typeNode = result.children[0].children[0];
+    await deepEqualPromise(() => typeNode.definition.title, "constant");
+  });
+
+  it("jsonata object results have Object.prototype", async () => {
+    const schema = stringField("Field")("field");
+    const result = testNodeState(
+      dataControl("field", undefined, {
+        dynamic: [
+          {
+            type: DynamicPropertyType.LayoutStyle,
+            expr: jsonataExpr('{"display": "none", "inner": [{"a": 1}]}'),
+          },
+        ],
+      }),
+      schema,
+      { data: {} },
+    );
+    await deepEqualPromise(() => result.definition.layoutStyle, {
+      display: "none",
+      inner: [{ a: 1 }],
+    });
+    const style = result.definition.layoutStyle as any;
+    expect(Object.getPrototypeOf(style)).toBe(Object.prototype);
+    expect(Object.getPrototypeOf(style.inner[0])).toBe(Object.prototype);
+  });
 });
 
 function testLabelExpr(schema: SchemaField, data: any, expr: EntityExpression) {

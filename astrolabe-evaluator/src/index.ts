@@ -2,6 +2,7 @@ export { parser } from "./parser";
 export * from "./ast";
 export * from "./evaluate";
 export * from "./partialEvaluate";
+export * from "./freeVariables";
 export * from "./parseEval";
 export * from "./printExpr";
 export * from "./defaultFunctions";

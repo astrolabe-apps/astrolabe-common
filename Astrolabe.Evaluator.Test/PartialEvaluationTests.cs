@@ -733,7 +733,7 @@ public class PartialEvaluationTests
         Assert.Contains("$c = 0", printed);
     }
 
-    [Fact(Skip = "TODO: Implement circular reference detection - currently causes stack overflow")]
+    [Fact]
     public void PartialEval_ShadowingWithSelfReference_ShouldReturnErrorNotInfiniteLoop()
     {
         // This test documents the desired behavior for self-referential bindings.
@@ -751,7 +751,7 @@ public class PartialEvaluationTests
         Assert.Contains(errors, e => e.Contains("$x") || e.Contains("circular") || e.Contains("recursive"));
     }
 
-    [Fact(Skip = "TODO: Implement circular reference detection - currently causes stack overflow")]
+    [Fact]
     public void PartialEval_DirectSelfReference_ShouldReturnErrorNotInfiniteLoop()
     {
         // Even simpler case: let $x := $x + 1 in $x

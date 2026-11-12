@@ -11,6 +11,9 @@ import {
   varExpr,
 } from "./ast";
 
+/** Sentinel cached while a variable is being evaluated, to detect cycles */
+const EvaluatingSentinel: EvalExpr = varExpr("__evaluating__");
+
 /**
  * BasicEvalEnv performs full evaluation with lazy variable evaluation and memoization.
  * Variables are stored unevaluated and cached on first access.
@@ -36,12 +39,23 @@ export class BasicEvalEnv extends EvalEnv {
     // If var is in THIS scope, check/update THIS cache
     if (name in this.localVars) {
       const cached = this.evalCache.get(name);
+      if (cached === EvaluatingSentinel)
+        return exprWithError(varExpr, `Circular reference to $${name}`);
       if (cached) return cached;
 
       const binding = this.localVars[name];
-      const result = this.evaluateExpr(binding);
-      this.evalCache.set(name, result);
-      return result;
+      // Set sentinel before evaluating to detect cycles
+      this.evalCache.set(name, EvaluatingSentinel);
+      let completed = false;
+      try {
+        const result = this.evaluateExpr(binding);
+        this.evalCache.set(name, result);
+        completed = true;
+        return result;
+      } finally {
+        // Don't leave the sentinel behind if evaluation threw
+        if (!completed) this.evalCache.delete(name);
+      }
     }
     // Delegate to parent - parent caches its own vars
     if (this.parent) {

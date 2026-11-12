@@ -47,6 +47,9 @@ const config = makeMetroConfig({
         }),
     ],
 });
+// @rnx-kit/metro-config also sets the pre-0.60 alias `blacklistRE`; `blockList` carries the same value.
+delete config.resolver.blacklistRE;
+
 module.exports = wrapWithReanimatedMetroConfig(
     withNativeWind(config, { input: "./global.css" }),
 );

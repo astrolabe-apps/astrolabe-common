@@ -2,11 +2,13 @@ import {
   compareSignificantDigits,
   EvalEnv,
   EvalExpr,
+  exprWithError,
   getExprData,
   getPropertyFromValue,
   hasExprData,
   ValueExpr,
   VarExpr,
+  varExpr,
   withExprData,
   withoutExprData,
 } from "./ast";
@@ -40,6 +42,9 @@ let nextScopeId = 0;
 /** Key used to store InlineData in expression data dictionaries */
 const INLINE_DATA_KEY = "inline";
 
+/** Sentinel cached while a variable is being evaluated, to detect cycles */
+const EvaluatingSentinel: EvalExpr = varExpr("__evaluating__");
+
 /**
  * PartialEvalEnv performs partial evaluation with lazy variable evaluation and caching.
  * Returns symbolic expressions for unknown variables and functions.
@@ -64,33 +69,40 @@ export class PartialEvalEnv extends EvalEnv {
    * For partial evaluation, unknown variables return VarExpr.
    * Results are tagged with the variable name for later uninlining.
    */
-  private evaluateVariable(name: string): EvalExpr {
+  private evaluateVariable(name: string, sourceExpr: EvalExpr): EvalExpr {
     // If var is in THIS scope, check/update THIS cache
     if (name in this.localVars) {
       const cached = this.evalCache.get(name);
+      if (cached === EvaluatingSentinel)
+        return exprWithError(sourceExpr, `Circular reference to $${name}`);
       if (cached) return cached;
 
       const binding = this.localVars[name];
-      // Detect self-referential bindings to prevent infinite recursion
-      if (binding.type === "var" && binding.variable === name) {
-        return binding;
+      // Set sentinel before evaluating to detect cycles
+      this.evalCache.set(name, EvaluatingSentinel);
+      let completed = false;
+      try {
+        const result = this.evaluateExpr(binding);
+
+        // Tag the result with the variable name and scope ID (for uninlining)
+        const tagged = !hasExprData(result, INLINE_DATA_KEY)
+          ? withExprData(result, INLINE_DATA_KEY, {
+              inlinedFrom: name,
+              scopeId: this.scopeId,
+            } as InlineData)
+          : result;
+
+        this.evalCache.set(name, tagged);
+        completed = true;
+        return tagged;
+      } finally {
+        // Don't leave the sentinel behind if evaluation threw
+        if (!completed) this.evalCache.delete(name);
       }
-      const result = this.evaluateExpr(binding);
-
-      // Tag the result with the variable name and scope ID (for uninlining)
-      const tagged = !hasExprData(result, INLINE_DATA_KEY)
-        ? withExprData(result, INLINE_DATA_KEY, {
-            inlinedFrom: name,
-            scopeId: this.scopeId,
-          } as InlineData)
-        : result;
-
-      this.evalCache.set(name, tagged);
-      return tagged;
     }
     // Delegate to parent - parent caches its own vars
     if (this.parent) {
-      return this.parent.evaluateVariable(name);
+      return this.parent.evaluateVariable(name, sourceExpr);
     }
     // For partial evaluation, return the VarExpr itself (not error)
     return { type: "var", variable: name };
@@ -104,7 +116,7 @@ export class PartialEvalEnv extends EvalEnv {
   getCurrentValue(): EvalExpr | undefined {
     // Check if _ is defined in this scope or parent scopes
     if ("_" in this.localVars) {
-      return this.evaluateVariable("_");
+      return this.evaluateVariable("_", varExpr("_"));
     }
     return this.parent?.getCurrentValue();
   }
@@ -112,7 +124,7 @@ export class PartialEvalEnv extends EvalEnv {
   evaluateExpr(expr: EvalExpr): EvalExpr {
     switch (expr.type) {
       case "var":
-        return this.evaluateVariable(expr.variable);
+        return this.evaluateVariable(expr.variable, expr);
 
       case "let": {
         const bindings: Record<string, EvalExpr> = {};
@@ -127,7 +139,7 @@ export class PartialEvalEnv extends EvalEnv {
         return expr;
 
       case "call": {
-        const funcExpr = this.evaluateVariable(expr.function);
+        const funcExpr = this.evaluateVariable(expr.function, expr);
         if (funcExpr.type !== "value" || !funcExpr.function) {
           // For partial evaluation, return the CallExpr itself (not error)
           return expr;

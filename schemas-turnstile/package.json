@@ -27,7 +27,7 @@
   },
   "peerDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^5.0.0",
+    "@react-typed-forms/core": "^5.1.4",
     "@react-typed-forms/schemas": "^19.0.0"
   },
   "dependencies": {
@@ -36,7 +36,7 @@
   },
   "devDependencies": {
     "react": "^18.2.0 || ^19",
-    "@react-typed-forms/core": "^5.0.0",
+    "@react-typed-forms/core": "^5.1.4",
     "@react-typed-forms/schemas": "^19.0.0",
     "microbundle": "^0.15.1",
     "@react-typed-forms/transform": "^0.2.0",

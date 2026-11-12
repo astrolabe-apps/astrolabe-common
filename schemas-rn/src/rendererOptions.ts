@@ -131,6 +131,8 @@ export interface DefaultWizardRenderOptions {
   actions?: {
     next?: WizardNavActionOptions;
     prev?: WizardNavActionOptions;
+    navActionId?: string;
+    validateActionId?: string;
   };
   renderNavigation?: (props: CustomNavigationProps) => ReactNode;
 }

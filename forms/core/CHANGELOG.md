@@ -1,6 +1,27 @@
 # Change Log - @astroapps/forms-core
 
-This log was last generated on Thu, 17 Sep 2026 05:09:18 GMT and should not be manually modified.
+This log was last generated on Thu, 08 Oct 2026 05:56:02 GMT and should not be manually modified.
+
+## 3.0.3
+Thu, 08 Oct 2026 05:56:02 GMT
+
+### Patches
+
+- Convert jsonata 2.2 null-prototype object results (object literals, $merge, etc.) to plain objects, fixing React errors such as "styles.hasOwnProperty is not a function" for Style/LayoutStyle expressions
+
+## 3.0.2
+Thu, 08 Oct 2026 05:44:50 GMT
+
+### Patches
+
+- Fix jsonata expressions on fields whose parent objects are missing from the data under jsonata 2.2 (previously evaluated to undefined). jsonata dependency raised to ^2.2.2
+
+## 3.0.1
+Wed, 07 Oct 2026 22:05:34 GMT
+
+### Patches
+
+- A Data control's form node no longer cascades touched to its child controls; touched follows the form tree, so validating one wizard page no longer touches other pages' fields under the same compound. Requires @react-typed-forms/core 5.1.4
 
 ## 3.0.0
 Thu, 17 Sep 2026 05:09:18 GMT

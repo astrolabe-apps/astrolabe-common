@@ -136,10 +136,10 @@ public static class PartialEvaluation
                             newBound.Add(varExpr.Name);
                         }
 
-                        // Visit bindings with current scope
+                        // Let is recursive: every binding sees every other binding and itself
                         foreach (var (_, bindingExpr) in le.Vars)
                         {
-                            Visit(bindingExpr, boundVars);
+                            Visit(bindingExpr, newBound);
                         }
 
                         // Visit body with extended scope

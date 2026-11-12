@@ -568,10 +568,14 @@ function initFormState(
     }
   }, scope);
 
+  // Touched follows the form tree, not the data tree: only mark this node's own
+  // control. Data it renders is touched through its own child form nodes, since
+  // setTouched cascades down the form tree; data it doesn't render (e.g. other
+  // wizard pages' fields under the same compound) shouldn't be touched at all.
   createSyncEffect(() => {
     const dn = dataNode.value;
     if (dn) {
-      dn.control.touched = base.touched;
+      dn.control.setTouched(base.touched, true);
     }
   }, scope);
 

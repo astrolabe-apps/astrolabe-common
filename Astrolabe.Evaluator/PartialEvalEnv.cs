@@ -48,44 +48,40 @@ public class PartialEvalEnv : EvalEnv
 
     public override EvalExpr? GetCurrentValue()
     {
-        return _localVars.ContainsKey("_") ? EvaluateVariable("_") : _parent?.GetCurrentValue();
+        return _localVars.ContainsKey("_")
+            ? EvaluateVariable("_", new VarExpr("_"))
+            : _parent?.GetCurrentValue();
     }
 
-    // Sentinel value to detect circular evaluation
-    private static readonly EvalExpr EvaluatingSentinel = new VarExpr("__evaluating__");
-
-    private EvalExpr EvaluateVariable(string name)
+    private EvalExpr EvaluateVariable(string name, EvalExpr sourceExpr)
     {
         // Check local scope
         if (_localVars.TryGetValue(name, out var binding))
         {
             if (_evalCache.TryGetValue(name, out var cached))
-            {
-                // If we hit the sentinel, we have a circular reference - return as VarExpr
-                return ReferenceEquals(cached, EvaluatingSentinel) ? new VarExpr(name) : cached;
-            }
+                return cached;
 
-            // Detect self-reference to prevent infinite recursion
-            if (binding is VarExpr ve && ve.Name == name)
-                return binding;
+            return EvaluateBinding(
+                name,
+                sourceExpr,
+                () =>
+                {
+                    var result = EvaluateExpr(binding);
 
-            // Set sentinel before evaluating to detect cycles
-            _evalCache[name] = EvaluatingSentinel;
+                    // Tag with inline data for uninlining (internal use)
+                    if (!result.HasData(InlineDataKey))
+                    {
+                        result = result.WithData(InlineDataKey, new InlineData(name, ScopeId));
+                    }
 
-            var result = EvaluateExpr(binding);
-
-            // Tag with inline data for uninlining (internal use)
-            if (!result.HasData(InlineDataKey))
-            {
-                result = result.WithData(InlineDataKey, new InlineData(name, ScopeId));
-            }
-
-            _evalCache[name] = result;
-            return result;
+                    _evalCache[name] = result;
+                    return result;
+                }
+            );
         }
 
         // Delegate to parent
-        return _parent != null ? _parent.EvaluateVariable(name) : new VarExpr(name); // Unknown variable - return VarExpr unchanged (partial evaluation)
+        return _parent != null ? _parent.EvaluateVariable(name, sourceExpr) : new VarExpr(name); // Unknown variable - return VarExpr unchanged (partial evaluation)
     }
 
     private const string InlineDataKey = "inline";
@@ -94,7 +90,7 @@ public class PartialEvalEnv : EvalEnv
     {
         return expr switch
         {
-            VarExpr ve => EvaluateVariable(ve.Name),
+            VarExpr ve => EvaluateVariable(ve.Name, ve),
             LetExpr le => EvaluateLetPartial(le),
             ValueExpr v => v,
             CallExpr ce => EvaluateCallPartial(ce),
@@ -118,7 +114,7 @@ public class PartialEvalEnv : EvalEnv
 
     private EvalExpr EvaluateCallPartial(CallExpr ce)
     {
-        var funcExpr = EvaluateVariable(ce.Function);
+        var funcExpr = EvaluateVariable(ce.Function, ce);
         return funcExpr is not ValueExpr { Value: FunctionHandler handler }
             ? ce // Unknown function - return CallExpr unchanged
             : handler(this, ce);

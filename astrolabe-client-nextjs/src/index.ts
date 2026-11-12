@@ -39,6 +39,10 @@ export function useNextNavigationService<T = {}>(
   // Track the query string we're setting to distinguish genuine changes from stale renders
   const queryRef = useRef<string | null>(null);
 
+  // The URL as of this render, so the sync can tell when it has nothing to do
+  const currentUrlRef = useRef("");
+  currentUrlRef.current = pathname + "?" + paramString;
+
   // Only update queryControl if searchParams has genuinely changed (not just a stale render during debounce)
   if (queryRef.current !== paramString) {
     queryControl.value = { query, pathname, isReady: true };
@@ -86,7 +90,8 @@ export function useNextNavigationService<T = {}>(
   useDefaultSyncRoute(queryControl, (query, path) => {
     if (
       path !== queryControl.fields.pathname.current.value ||
-      queryRef.current === query
+      queryRef.current === query ||
+      currentUrlRef.current === path + "?" + query
     )
       return;
     router.replace(path + "?" + query, {

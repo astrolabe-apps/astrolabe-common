@@ -15,7 +15,9 @@ import {
   ValueExpr,
   CallExpr,
   getPrimitiveConstant,
+  LetExpr,
 } from "./ast";
+import { freeVariables } from "./freeVariables";
 
 export function checkAll<A, B>(
   env: CheckEnv,
@@ -51,18 +53,9 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EvalType> {
   if (!expr) debugger;
   switch (expr.type) {
     case "var":
-      return { env, value: env.vars[expr.variable] || "any" };
+      return { env, value: env.vars[expr.variable] || AnyType };
     case "let":
-      return typeCheck(
-        expr.variables.reduce((env, [varExpr, value]) => {
-          const { value: v } = typeCheck(env, value);
-          return {
-            ...env,
-            vars: { ...env.vars, [varExpr.variable]: v },
-          };
-        }, env),
-        expr.expr,
-      );
+      return typeCheck(checkLetBindings(env, expr), expr.expr);
     case "array":
       return mapCheck(
         checkAll(env, expr.values, (env, value) => typeCheck(env, value)),
@@ -90,6 +83,40 @@ export function typeCheck(env: CheckEnv, expr: EvalExpr): CheckValue<EvalType> {
     }
     return checkValue(env, primitiveType("any"));
   }
+}
+
+/**
+ * Type the bindings of a let, independent of their order. Let is recursive, so
+ * each binding's sibling dependencies are typed first, on demand. A binding in
+ * (or depending on) a cycle is typed as any, matching evaluation, where it
+ * produces a circular reference error.
+ */
+function checkLetBindings(env: CheckEnv, expr: LetExpr): CheckEnv {
+  const bindings = new Map(expr.variables.map(([v, e]) => [v.variable, e]));
+  // Siblings shadow outer variables; unresolved ones are any until typed
+  const vars: Record<string, EvalType> = { ...env.vars };
+  bindings.forEach((_, name) => (vars[name] = AnyType));
+  const resolved = new Map<string, boolean>(); // name -> is cyclic
+  const inProgress = new Set<string>();
+
+  function resolve(name: string): boolean {
+    const done = resolved.get(name);
+    if (done !== undefined) return done;
+    if (inProgress.has(name)) return true;
+    inProgress.add(name);
+    const binding = bindings.get(name)!;
+    let cyclic = false;
+    for (const dep of freeVariables(binding)) {
+      if (bindings.has(dep) && resolve(dep)) cyclic = true;
+    }
+    if (!cyclic) vars[name] = typeCheck({ ...env, vars }, binding).value;
+    inProgress.delete(name);
+    resolved.set(name, cyclic);
+    return cyclic;
+  }
+
+  bindings.forEach((_, name) => resolve(name));
+  return { ...env, vars };
 }
 
 export function valueType(value: ValueExpr): EvalType {
