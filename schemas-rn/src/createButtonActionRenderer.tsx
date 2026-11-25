@@ -31,7 +31,9 @@ export function createButtonActionRenderer(
         inline,
         actionContent,
         busy,
+        hidden,
       } = props;
+      if (hidden) return <></>;
       const busyIcon = props.busy ? options.busyIcon : undefined;
       const stdIcon = props.icon?.name ? props.icon : options.icon;
       const icon = busyIcon ?? stdIcon;
