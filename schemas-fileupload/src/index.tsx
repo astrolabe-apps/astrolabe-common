@@ -43,6 +43,7 @@ export interface FileUploadClasses {
   pendingNameClass?: string;
   progressClass?: string;
   progressBarClass?: string;
+  fileSizeClass?: string;
   renderProgress?: (
     progress: number,
     total: number,
@@ -60,6 +61,10 @@ export interface FileUploadRendererOptions {
   downloadFile?: (f: FormUpload) => Promise<any>;
   translateError?: (e: unknown) => string | undefined | null;
   classes?: FileUploadClasses;
+  /** Show the size of uploaded and pending files next to their names. */
+  showFileSize?: boolean;
+  /** Custom formatting for file sizes. Defaults to {@link formatFileSize}. */
+  formatFileSize?: (bytes: number) => string;
 }
 
 const defaultOptions = {
@@ -72,6 +77,7 @@ const defaultOptions = {
     pendingClass: "flex space-x-4 items-center my-2",
     progressClass: "flex-1 h-2 bg-gray-200 rounded overflow-hidden",
     progressBarClass: "h-full bg-blue-500 transition-all",
+    fileSizeClass: "text-sm text-gray-500",
   },
 } satisfies FileUploadRendererOptions;
 
@@ -83,6 +89,40 @@ function mergeOptions(options: FileUploadRendererOptions): MergedOptions {
 
 function defaultTranslateError(e: unknown): string {
   return e?.toString() ?? "Failed upload";
+}
+
+const fileSizeUnits = ["B", "KB", "MB", "GB", "TB"];
+
+export function formatFileSize(bytes: number): string {
+  let size = bytes;
+  let unit = 0;
+  while (size >= 1024 && unit < fileSizeUnits.length - 1) {
+    size /= 1024;
+    unit++;
+  }
+  const rounded = unit === 0 ? size.toString() : size.toFixed(1);
+  return `${rounded} ${fileSizeUnits[unit]}`;
+}
+
+function getSizeFormatter(
+  opts: FileUploadRendererOptions,
+): ((bytes: number) => string) | undefined {
+  return opts.showFileSize
+    ? (opts.formatFileSize ?? formatFileSize)
+    : undefined;
+}
+
+export function FileSize({
+  bytes,
+  format,
+  className,
+}: {
+  bytes: number | null | undefined;
+  format?: (bytes: number) => string;
+  className?: string;
+}) {
+  if (!format || bytes == null) return null;
+  return <span className={className}>{format(bytes)}</span>;
 }
 
 // ---------------------------------------------------------------------------
@@ -115,6 +155,7 @@ export function UploadedFileRow({
   divRef,
   deleteFile,
   actionRenderer,
+  formatSize,
 }: {
   file: Control<FormUpload>;
   downloadFile?: (f: FormUpload) => Promise<any>;
@@ -122,6 +163,7 @@ export function UploadedFileRow({
   divRef?: (el: HTMLDivElement | null) => void;
   actionRenderer: FormRenderer["renderAction"];
   deleteFile?: (f: FormUpload) => Promise<any>;
+  formatSize?: (bytes: number) => string;
 }) {
   return (
     <div className={classes.fileClass} ref={divRef}>
@@ -129,6 +171,11 @@ export function UploadedFileRow({
         file={file}
         downloadFile={downloadFile}
         downloadClass={classes.downloadClass}
+      />
+      <FileSize
+        bytes={file.value?.length}
+        format={formatSize}
+        className={classes.fileSizeClass}
       />
       {deleteFile && (
         <div>
@@ -184,17 +231,20 @@ export function PendingUploadRow({
   classes,
   actionRenderer,
   onCancel,
+  formatSize,
 }: {
   pending: Control<PendingUpload>;
   classes: FileUploadClasses;
   actionRenderer: FormRenderer["renderAction"];
   onCancel: () => void;
+  formatSize?: (bytes: number) => string;
 }) {
   const {
     pendingClass,
     pendingContentClass,
     pendingNameClass,
     errorClass,
+    fileSizeClass,
     renderProgress = defaultRenderProgressBar,
   } = classes;
 
@@ -204,6 +254,11 @@ export function PendingUploadRow({
     <div className={pendingClass}>
       <div className={pendingContentClass}>
         <div className={pendingNameClass}>{file.value.name}</div>
+        <FileSize
+          bytes={file.value.size}
+          format={formatSize}
+          className={fileSizeClass}
+        />
         {errV ? (
           <span className={errorClass}>{errV}</span>
         ) : (
@@ -255,6 +310,7 @@ function FormUploadArray({
     classes,
     translateError = defaultTranslateError,
   } = mergeOptions(options);
+  const formatSize = getSizeFormatter(options);
   const arrayControl = control.as<FormUpload[]>();
   const pending = useControl<PendingUpload[]>([]);
   const abortControllers = useRef(new Map<string, AbortController>());
@@ -301,6 +357,7 @@ function FormUploadArray({
           downloadFile={downloadFile}
           classes={classes}
           actionRenderer={renderer.renderAction}
+          formatSize={formatSize}
         />,
       ),
   };
@@ -319,6 +376,7 @@ function FormUploadArray({
             classes={classes}
             actionRenderer={renderer.renderAction}
             onCancel={() => cancelPending(pendingCtrl)}
+            formatSize={formatSize}
           />
         )}
       </RenderElements>
@@ -398,6 +456,7 @@ function FormUploader({
     classes,
     translateError = defaultTranslateError,
   } = mergeOptions(options);
+  const formatSize = getSizeFormatter(options);
   const pending = useControl<PendingUpload | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
@@ -424,6 +483,7 @@ function FormUploader({
               }}
               actionRenderer={actionRenderer}
               deleteFile={!readonly ? doDeleteFile : undefined}
+              formatSize={formatSize}
             />
           )}
         />
@@ -434,6 +494,7 @@ function FormUploader({
           classes={classes}
           actionRenderer={actionRenderer}
           onCancel={cancelPending}
+          formatSize={formatSize}
         />
       )}
     />
